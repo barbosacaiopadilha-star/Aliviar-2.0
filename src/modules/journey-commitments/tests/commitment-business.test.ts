@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ALLOWED_STATUS_TRANSITIONS,
   isOverdue,
@@ -6,6 +6,12 @@ import {
   sortCommitments,
 } from "@/modules/journey-commitments/types/commitment";
 import { buildStatusUpdatePayload } from "@/modules/journey-commitments/schemas/commitment";
+
+const FIXED_TODAY = new Date("2026-07-10T12:00:00");
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe("commitment business rules", () => {
   it("compromisso pertence a uma Jornada", () => {
@@ -69,29 +75,28 @@ describe("commitment business rules", () => {
   });
 
   it("identifica compromisso vencido", () => {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
+    vi.useFakeTimers();
+    vi.setSystemTime(FIXED_TODAY);
+
     const commitment = {
       id: "1",
       journey_id: "j1",
       title: "Contato",
       assigned_to: "u1",
       status: "PENDING" as const,
-      due_date: yesterday.toISOString().slice(0, 10),
+      due_date: "2026-07-09",
       completed_at: null,
       cancelled_at: null,
       created_by: "u1",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: "2026-07-01T10:00:00.000Z",
+      updated_at: "2026-07-01T10:00:00.000Z",
     };
     expect(isOverdue(commitment)).toBe(true);
   });
 
   it("ordena compromissos: vencidos primeiro", () => {
-    const today = new Date().toISOString().slice(0, 10);
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const past = yesterday.toISOString().slice(0, 10);
+    vi.useFakeTimers();
+    vi.setSystemTime(FIXED_TODAY);
 
     const commitments = [
       {
@@ -101,12 +106,12 @@ describe("commitment business rules", () => {
       },
       {
         id: "2", journey_id: "j1", title: "Vencido", assigned_to: "u1",
-        status: "PENDING" as const, due_date: past, completed_at: null,
+        status: "PENDING" as const, due_date: "2026-07-09", completed_at: null,
         cancelled_at: null, created_by: "u1", created_at: "2026-07-01", updated_at: "2026-07-01",
       },
       {
         id: "3", journey_id: "j1", title: "Futuro", assigned_to: "u1",
-        status: "PENDING" as const, due_date: today, completed_at: null,
+        status: "PENDING" as const, due_date: "2026-07-11", completed_at: null,
         cancelled_at: null, created_by: "u1", created_at: "2026-07-01", updated_at: "2026-07-01",
       },
     ];

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { signInAction } from "@/lib/actions/auth";
 
 const errorMessages: Record<string, string> = {
@@ -9,10 +10,11 @@ const errorMessages: Record<string, string> = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; redirect?: string }>;
+  searchParams: Promise<{ error?: string; redirect?: string; reset?: string }>;
 }) {
   const params = await searchParams;
   const errorMessage = params.error ? errorMessages[params.error] ?? "Não foi possível entrar." : null;
+  const resetSuccess = params.reset === "success";
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
@@ -21,6 +23,12 @@ export default async function LoginPage({
           <h1 className="font-serif text-3xl font-semibold text-ink">Aliviar OS</h1>
           <p className="mt-2 text-sm text-ink-soft">Acesso interno para colaboradores autorizados</p>
         </div>
+
+        {resetSuccess && (
+          <div className="mb-4 rounded-lg border border-[var(--sage)] bg-[var(--sage-soft)] px-4 py-3 text-sm text-ink">
+            Senha redefinida com sucesso. Faça login com sua nova senha.
+          </div>
+        )}
 
         {errorMessage && (
           <div className="mb-4 rounded-lg border border-[#B84C3C] bg-[#F5DCD6] px-4 py-3 text-sm text-[#B84C3C]">
@@ -52,6 +60,11 @@ export default async function LoginPage({
           <button type="submit" className="btn-primary w-full">
             Entrar
           </button>
+          <p className="text-center text-sm">
+            <Link href="/auth/forgot-password" className="text-ink-soft underline">
+              Esqueci minha senha
+            </Link>
+          </p>
         </form>
       </div>
     </div>
