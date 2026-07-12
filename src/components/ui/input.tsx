@@ -1,35 +1,47 @@
 import type { InputHTMLAttributes } from "react";
 
+import { cn } from "@/components/ui/cn";
+
 type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
   error?: string;
+  hideLabel?: boolean;
 };
 
 export function Input({
   id,
   label,
   error,
-  className = "",
+  hideLabel = false,
+  className,
   ...props
 }: InputProps) {
   const inputId = id ?? props.name;
 
   return (
     <div className="space-y-1.5">
-      <label htmlFor={inputId} className="block text-sm font-medium text-gray-700">
+      <label
+        htmlFor={inputId}
+        className={cn(
+          "block text-sm font-medium text-ink",
+          hideLabel && "sr-only",
+        )}
+      >
         {label}
       </label>
       <input
         id={inputId}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${inputId}-error` : undefined}
-        className={`block w-full rounded-lg border px-3 py-2.5 text-sm text-gray-900 shadow-sm transition-colors focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20 ${
-          error ? "border-red-500" : "border-gray-300"
-        } ${className}`}
+        className={cn(
+          "block w-full rounded-sm border bg-surface px-3 py-2.5 text-sm text-ink shadow-sm transition-colors duration-fast ease-standard placeholder:text-ink-muted focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/20 disabled:cursor-not-allowed disabled:opacity-60",
+          error ? "border-error" : "border-border",
+          className,
+        )}
         {...props}
       />
       {error ? (
-        <p id={`${inputId}-error`} role="alert" className="text-sm text-red-600">
+        <p id={`${inputId}-error`} role="alert" className="text-sm text-error">
           {error}
         </p>
       ) : null}

@@ -48,7 +48,10 @@ export function UpdatePasswordForm() {
       title="Nova senha"
       description="Defina uma nova senha para sua conta."
       footer={
-        <Link href="/login" className="text-teal-700 hover:text-teal-800">
+        <Link
+          href="/login"
+          className="font-medium text-brand-primary transition-colors hover:text-brand-primary-deep"
+        >
           Voltar para o login
         </Link>
       }

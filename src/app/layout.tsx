@@ -1,5 +1,21 @@
+import { Fraunces, Inter } from "next/font/google";
+
 import type { Metadata } from "next";
 import "./globals.css";
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-fraunces",
+  display: "swap",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Aliviar Conexão",
@@ -12,10 +28,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
-      <body className="min-h-screen bg-white text-gray-900 antialiased">
-        {children}
-      </body>
+    <html lang="pt-BR" className={`${fraunces.variable} ${inter.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }

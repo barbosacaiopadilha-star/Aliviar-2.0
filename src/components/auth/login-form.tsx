@@ -53,7 +53,10 @@ export function LoginForm() {
       title="Entrar"
       description="Acesse sua conta no Aliviar Conexão."
       footer={
-        <Link href="/recuperar-senha" className="text-teal-700 hover:text-teal-800">
+        <Link
+          href="/recuperar-senha"
+          className="font-medium text-brand-primary transition-colors hover:text-brand-primary-deep"
+        >
           Esqueci minha senha
         </Link>
       }
