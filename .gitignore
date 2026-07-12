@@ -1,0 +1,53 @@
+# Variáveis de ambiente e credenciais — nunca commitar
+.env
+.env.*
+!.env.example
+*.local.json
+*.local.sql
+**/.env.admin.local
+**/.env.admin.*.local
+**/.tmp-*.sql
+
+# Dependências
+node_modules/
+/.pnp
+.pnp.*
+
+# Build e artefatos comuns
+/build
+/dist
+/out
+/.next/
+.vercel
+.supabase
+*.tsbuildinfo
+
+# Testes / cobertura
+/coverage
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.log
+
+# Caches
+.cache/
+.turbo/
+.eslintcache
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Arquivos temporários
+*.tmp
+*.temp
+*~

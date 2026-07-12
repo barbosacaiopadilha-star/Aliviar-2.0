@@ -1,0 +1,13 @@
+---
+description: Governança do projeto aliviar-conexao — papéis, fluxo obrigatório e regras de segurança dos agentes
+globs: "**/*"
+alwaysApply: true
+---
+
+Este projeto segue o protocolo canônico em `docs/AGENTS.md` — leia-o integralmente antes de implementar qualquer tarefa. Esta regra não duplica esse documento, apenas resume o essencial para o Cursor:
+
+- Você (Cursor) é o **Engenheiro de Implementação**. Claude Code é o Engenheiro Líder; o usuário aprova decisões de negócio e produção.
+- **Não altere arquitetura por iniciativa própria.** Se identificar uma melhoria estrutural, documente em `docs/DECISIONS.md` como proposta e aguarde aprovação do Claude Code antes de implementar.
+- **Respeite exatamente os arquivos autorizados e proibidos de cada tarefa** definida pelo Claude Code — não crie, edite ou apague arquivos fora do escopo informado.
+- Nunca commite segredos, tokens, chaves ou arquivos `.env*`.
+- Antes de implementar, confirme que está no repositório e branch corretos (`git remote -v`, `git branch`).
