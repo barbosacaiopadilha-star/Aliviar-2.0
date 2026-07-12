@@ -10,8 +10,16 @@ import {
   signInSchema,
   updatePasswordSchema,
 } from "./schema";
+import { getAuthState } from "./session";
 
 export type ActionResult = { success: true } | { success: false; error: string };
+
+// Tipo próprio (não reaproveita ActionResult): só o login precisa informar
+// os papéis resolvidos, para o cliente decidir o destino padrão pós-login
+// quando não há `next` (ver src/modules/auth/role-home.ts).
+export type SignInActionResult =
+  | { success: true; roles: string[] }
+  | { success: false; error: string };
 
 async function getOrigin(): Promise<string> {
   const headerList = await headers();
@@ -19,9 +27,9 @@ async function getOrigin(): Promise<string> {
 }
 
 export async function signInAction(
-  _prevState: ActionResult | undefined,
+  _prevState: SignInActionResult | undefined,
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<SignInActionResult> {
   const parsed = signInSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -38,7 +46,8 @@ export async function signInAction(
     return { success: false, error: "Credenciais inválidas." };
   }
 
-  return { success: true };
+  const state = await getAuthState();
+  return { success: true, roles: state?.roles ?? [] };
 }
 
 export async function signOutAction(): Promise<never> {

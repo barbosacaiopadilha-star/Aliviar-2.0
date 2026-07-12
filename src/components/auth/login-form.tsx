@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
 import { mapZodFieldErrors } from "@/components/forms/map-zod-field-errors";
-import { signInAction, type ActionResult } from "@/modules/auth/actions";
+import { signInAction, type SignInActionResult } from "@/modules/auth/actions";
 import { getSafeRedirectPath } from "@/modules/auth/redirect-safety";
+import { getRoleHome } from "@/modules/auth/role-home";
 import { signInSchema } from "@/modules/auth/schema";
 
 export function LoginForm() {
@@ -18,14 +19,14 @@ export function LoginForm() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [state, formAction, isPending] = useActionState<ActionResult | undefined, FormData>(
+  const [state, formAction, isPending] = useActionState<SignInActionResult | undefined, FormData>(
     signInAction,
     undefined,
   );
 
   useEffect(() => {
     if (state?.success) {
-      router.push(getSafeRedirectPath(next));
+      router.push(getSafeRedirectPath(next, getRoleHome(state.roles)));
       router.refresh();
     }
   }, [state, next, router]);

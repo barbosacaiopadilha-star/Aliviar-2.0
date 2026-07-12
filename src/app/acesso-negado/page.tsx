@@ -1,17 +1,11 @@
 import Link from "next/link";
 
 import { getAuthState } from "@/modules/auth/session";
-
-const ROLE_HOME: Record<string, string> = {
-  administrador: "/admin",
-  profissional: "/profissional",
-  paciente: "/paciente",
-};
+import { getRoleHome } from "@/modules/auth/role-home";
 
 export default async function AcessoNegadoPage() {
   const state = await getAuthState();
-  const ownRole = state?.roles.find((role) => role in ROLE_HOME);
-  const backHref = ownRole ? ROLE_HOME[ownRole] : "/";
+  const backHref = getRoleHome(state?.roles ?? []);
 
   return (
     <div>

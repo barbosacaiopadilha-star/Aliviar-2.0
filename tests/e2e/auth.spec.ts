@@ -34,8 +34,8 @@ test.describe("autenticação (E2E)", () => {
     await page.getByLabel("Senha").fill(paciente!.password);
     await page.getByRole("button", { name: "Entrar" }).click();
 
-    await expect(page).toHaveURL("/");
-    await expect(page.getByRole("heading", { name: "Aliviar Conexão" })).toBeVisible();
+    await expect(page).toHaveURL("/paciente");
+    await expect(page.getByRole("heading", { name: /Olá,/ })).toBeVisible();
   });
 
   test("login inválido mostra erro e permanece na página de login", async ({ page }) => {
@@ -58,7 +58,7 @@ test.describe("autenticação (E2E)", () => {
     await page.getByLabel("E-mail").fill(account!.email);
     await page.getByLabel("Senha").fill(account!.password);
     await page.getByRole("button", { name: "Entrar" }).click();
-    await expect(page).toHaveURL("/");
+    await expect(page).toHaveURL("/profissional");
 
     await page.goto("/recuperar-senha");
     await page.getByRole("button", { name: "Sair" }).click();
@@ -88,7 +88,7 @@ test.describe("autenticação (E2E)", () => {
     await page.getByLabel("E-mail").fill(account!.email);
     await page.getByLabel("Senha").fill(account!.password);
     await page.getByRole("button", { name: "Entrar" }).click();
-    await expect(page).toHaveURL("/");
+    await expect(page).toHaveURL("/admin");
 
     await context.clearCookies();
 

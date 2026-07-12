@@ -29,4 +29,14 @@ describe("getSafeRedirectPath", () => {
   it("rejeita caminho que não começa com /", () => {
     expect(getSafeRedirectPath("evil.com")).toBe("/");
   });
+
+  it("usa o fallback customizado quando ausente ou inseguro", () => {
+    expect(getSafeRedirectPath(null, "/admin")).toBe("/admin");
+    expect(getSafeRedirectPath("//evil.com", "/admin")).toBe("/admin");
+    expect(getSafeRedirectPath("https://evil.com", "/paciente")).toBe("/paciente");
+  });
+
+  it("prioriza o caminho seguro sobre o fallback quando ambos existem", () => {
+    expect(getSafeRedirectPath("/area-restrita", "/admin")).toBe("/area-restrita");
+  });
 });

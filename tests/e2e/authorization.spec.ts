@@ -22,17 +22,16 @@ function loadTestAccounts(): TestAccount[] {
 
 const ROLE_ROUTES = ["/admin", "/profissional", "/paciente"] as const;
 
-// O login sem `next` na URL aterrissa em "/" (comportamento existente desde
-// a TASK-004B, em src/components/auth/login-form.tsx — arquivo fora do
-// escopo desta tarefa). Espera o redirecionamento pós-login se estabilizar
-// antes de prosseguir, evitando corrida entre o clique e a navegação
-// seguinte do teste.
+// O login sem `next` na URL aterrissa na home do papel resolvido
+// (src/modules/auth/role-home.ts). Espera o redirecionamento pós-login se
+// estabilizar antes de prosseguir, evitando corrida entre o clique e a
+// navegação seguinte do teste.
 async function loginAs(page: Page, account: TestAccount) {
   await page.goto("/login");
   await page.getByLabel("E-mail").fill(account.email);
   await page.getByLabel("Senha").fill(account.password);
   await page.getByRole("button", { name: "Entrar" }).click();
-  await page.waitForURL("/");
+  await page.waitForURL((url) => !url.pathname.startsWith("/login"));
 }
 
 test.describe("autorização por papel (TASK-005A)", () => {
