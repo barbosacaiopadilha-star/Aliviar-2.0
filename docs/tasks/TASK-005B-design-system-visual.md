@@ -1,6 +1,6 @@
 # TASK-005B — Implementação visual do Design System (Cursor)
 
-**Status:** Planejada e completa, **condicionada à conclusão e revisão da TASK-005A**. Não enviar ao Cursor antes disso — esta tarefa constrói sobre a estrutura de rotas/`AppShell` que a 005A cria.
+**Status:** Pronta para envio ao Cursor. TASK-005A **aprovada e publicada** (`origin/main` em `83ffd83`, que inclui o AppShell estrutural e uma correção de revisão: o redirecionamento pós-login agora usa `src/modules/auth/role-home.ts` para decidir a home de cada papel). Esta tarefa constrói sobre essa estrutura já publicada.
 
 Baseada integralmente em `docs/DESIGN_SYSTEM.md` (documento canônico) e ADR-008/ADR-009 (`docs/DECISIONS.md`). Não reinterpretar ou redecidir tokens/paleta/tipografia aqui — só implementar o que já está decidido.
 
@@ -33,12 +33,12 @@ Esta tarefa é grande — recomenda-se executar e commitar em fases internas (n�
 
 ## Restrições — não alterar
 
-`src/middleware.ts`, `src/lib/supabase/**`, `src/modules/auth/guard.ts`, `src/modules/auth/session.ts`, `src/modules/auth/redirect-safety.ts`, `src/modules/auth/actions.ts`, `src/modules/auth/schema.ts`, `supabase/**`, `scripts/**`, a estrutura de rotas/contrato do `AppShell` definida pela TASK-005A (pode estilizar por dentro, não pode mudar o contrato de props nem a lógica de autorização). Se algo na TASK-005A parecer incompleto ou incorreto para a implementação visual, **documentar o achado e parar** — não expandir escopo nem corrigir arquitetura por conta própria.
+`src/middleware.ts`, `src/lib/supabase/**`, `src/modules/auth/guard.ts`, `src/modules/auth/session.ts`, `src/modules/auth/redirect-safety.ts`, `src/modules/auth/actions.ts`, `src/modules/auth/schema.ts`, `src/modules/auth/role-home.ts` (mapa papel→rota usado no redirecionamento pós-login e em `/acesso-negado` — lógica, não estilo), `supabase/**`, `scripts/**`, a estrutura de rotas/contrato do `AppShell` definida pela TASK-005A (pode estilizar por dentro, não pode mudar o contrato de props nem a lógica de autorização). `src/components/auth/login-form.tsx` já decide corretamente o destino pós-login (`getSafeRedirectPath(next, getRoleHome(state.roles))`) — preservar essa lógica exatamente, só restilizar o formulário em volta dela. Se algo na TASK-005A parecer incompleto ou incorreto para a implementação visual, **documentar o achado e parar** — não expandir escopo nem corrigir arquitetura por conta própria.
 
 ## Testes exigidos
 
 - **Componente** (novo: `@testing-library/react` + `jsdom` — dependência justificada, não existia forma de testar componentes React antes; usar um `vitest.components.config.ts` seguindo o mesmo padrão de `vitest.integration.config.ts`): render de cada componente novo, estados (loading/disabled/error), interação básica (abrir/fechar Dialog/Drawer, navegação de Tabs).
-- **E2E (Playwright)**, estendendo `tests/e2e/auth.spec.ts` e criando `tests/e2e/appshell.spec.ts`: navegação pela sidebar (desktop) e pelo drawer (viewport mobile) funciona para cada um dos 3 papéis; dashboard mostra saudação e papel corretos; refatoração visual das telas de login/recuperação/nova senha não quebra nenhum dos 6 cenários já cobertos pela TASK-004B.
+- **E2E (Playwright)**, estendendo `tests/e2e/auth.spec.ts` e criando `tests/e2e/appshell.spec.ts`: navegação pela sidebar (desktop) e pelo drawer (viewport mobile) funciona para cada um dos 3 papéis; dashboard mostra saudação e papel corretos; refatoração visual das telas de login/recuperação/nova senha não quebra nenhum dos 16 testes já existentes (`tests/e2e/auth.spec.ts` + `tests/e2e/authorization.spec.ts`, TASK-004B/005A) — rodar `npx playwright test` completo, não só os arquivos novos.
 - Teste de contraste: documentar no relatório os pares texto/fundo verificados e a ferramenta usada.
 
 ## Segurança
@@ -53,7 +53,7 @@ Esta tarefa é grande — recomenda-se executar e commitar em fases internas (n�
 
 ## Arquivos proibidos
 
-`src/middleware.ts`, `src/lib/supabase/**`, `src/modules/auth/guard.ts`, `src/modules/auth/session.ts`, `src/modules/auth/redirect-safety.ts`, `src/modules/auth/actions.ts`, `src/modules/auth/schema.ts`, `supabase/**`, `scripts/**`, `docs/**` (exceto se pedido explicitamente).
+`src/middleware.ts`, `src/lib/supabase/**`, `src/modules/auth/guard.ts`, `src/modules/auth/session.ts`, `src/modules/auth/redirect-safety.ts`, `src/modules/auth/actions.ts`, `src/modules/auth/schema.ts`, `src/modules/auth/role-home.ts`, `supabase/**`, `scripts/**`, `docs/**` (exceto se pedido explicitamente).
 
 ## Comandos obrigatórios
 
@@ -93,7 +93,7 @@ npx playwright test
 ## Riscos
 
 - Escopo grande — se não for possível concluir 100% do catálogo nesta rodada, priorizar exatamente a ordem da seção 3 do Design System e documentar o que ficou para uma rodada seguinte, em vez de entregar tudo pela metade.
-- Refatoração visual das telas de autenticação pode quebrar os testes E2E da TASK-004B se o comportamento (não só a aparência) mudar sem querer — rodar `npx playwright test` completo, não só os testes novos.
+- Refatoração visual das telas de autenticação pode quebrar os testes E2E existentes (TASK-004B/005A) se o comportamento (não só a aparência) mudar sem querer — rodar `npx playwright test` completo, não só os testes novos.
 - Tons de sucesso/aviso/erro do Design System são provisórios — não finalizar sem checagem de contraste real.
 
 ## Git
