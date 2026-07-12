@@ -50,6 +50,8 @@ Definida em ADR-005:
 
 Não há, nesta fase, nenhuma outra dependência de infraestrutura (fila, cache, serviço de e-mail externo, etc.). Qualquer nova integração é uma decisão própria, com ADR antes de implementar.
 
+**Inconsistência identificada (FASE 6A):** os formulários implementados até agora (TASK-004B — login, recuperação de senha, nova senha) usam `useActionState` + `zod.safeParse()` manual, **não React Hook Form**, apesar de ADR-005 ter decidido React Hook Form como parte da stack. Isso funcionou bem na prática e não foi corrigido ainda. Fica como pendência de decisão explícita: manter React Hook Form como decisão formal (e migrar os formulários existentes) ou emendar ADR-005 reconhecendo o padrão `useActionState`/Zod como o adotado de fato. Nenhuma das duas ações foi tomada nesta rodada — é documentação, não decisão de arquitetura.
+
 ## 4. Estrutura de diretórios
 
 ```
@@ -57,10 +59,11 @@ aliviar-conexao/
 ├── src/
 │   ├── app/                        # Next.js App Router
 │   │   ├── (public)/                # landing, busca pública, perfil público de profissional
-│   │   ├── (auth)/                  # login, cadastro, recuperação de senha
-│   │   ├── (admin)/                 # painel administrativo
-│   │   ├── (profissional)/          # área autenticada do profissional
-│   │   └── (paciente)/              # área autenticada do paciente
+│   │   ├── (auth)/                  # login, recuperação de senha (cadastro/signup: pendente)
+│   │   ├── admin/                   # painel administrativo (segmento real, não route group — ADR-009)
+│   │   ├── profissional/            # área autenticada do profissional (segmento real — ADR-009)
+│   │   ├── paciente/                # área autenticada do paciente (segmento real — ADR-009)
+│   │   └── acesso-negado/           # autenticado, mas sem o papel exigido pela rota
 │   ├── modules/                     # módulos de domínio, isolados por pasta
 │   │   ├── auth/
 │   │   ├── profiles/                 # perfil base + perfil paciente + perfil profissional
