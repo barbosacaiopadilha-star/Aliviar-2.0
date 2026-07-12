@@ -10,7 +10,7 @@ import { dirname, resolve } from "node:path";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, "..");
 
-const result = spawnSync("npx", ["supabase", "status", "-o", "env"], {
+const result = spawnSync("npx supabase status -o env", {
   cwd: projectRoot,
   encoding: "utf-8",
   shell: true,
