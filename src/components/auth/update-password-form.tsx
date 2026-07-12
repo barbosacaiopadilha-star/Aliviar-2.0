@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState, type FormEvent } from "react";
+import { startTransition, useActionState, useEffect, useState, type FormEvent } from "react";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,9 @@ export function UpdatePasswordForm() {
     }
 
     setFieldErrors({});
-    formAction(formData);
+    startTransition(() => {
+      formAction(formData);
+    });
   }
 
   return (

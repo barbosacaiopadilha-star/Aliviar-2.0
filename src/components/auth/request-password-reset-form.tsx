@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState, type FormEvent } from "react";
+import { startTransition, useActionState, useState, type FormEvent } from "react";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,9 @@ export function RequestPasswordResetForm() {
     }
 
     setFieldErrors({});
-    formAction(formData);
+    startTransition(() => {
+      formAction(formData);
+    });
   }
 
   return (
