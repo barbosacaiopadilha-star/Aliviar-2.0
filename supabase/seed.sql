@@ -26,20 +26,29 @@ begin
   select id into v_role_pro_id from public.roles where slug = 'profissional';
   select id into v_role_paciente_id from public.roles where slug = 'paciente';
 
+  -- confirmation_token/recovery_token/email_change_token_new/email_change
+  -- não têm default no schema do GoTrue (ficam NULL se omitidos). A própria
+  -- API Admin do GoTrue quebra ao listar usuários com esses campos NULL
+  -- ("Scan error ... converting NULL to string is unsupported") — achado
+  -- durante a TASK-004A. Por isso são explicitados como '' abaixo.
   insert into auth.users (
     instance_id, id, aud, role, email, encrypted_password,
     email_confirmed_at, created_at, updated_at,
-    raw_app_meta_data, raw_user_meta_data
+    raw_app_meta_data, raw_user_meta_data,
+    confirmation_token, recovery_token, email_change_token_new, email_change
   ) values
     ('00000000-0000-0000-0000-000000000000', v_admin_id, 'authenticated', 'authenticated',
       'admin.teste@aliviar-conexao.local', extensions.crypt(v_seed_password, extensions.gen_salt('bf')),
-      now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Admin Teste"}'),
+      now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Admin Teste"}',
+      '', '', '', ''),
     ('00000000-0000-0000-0000-000000000000', v_pro_id, 'authenticated', 'authenticated',
       'profissional.teste@aliviar-conexao.local', extensions.crypt(v_seed_password, extensions.gen_salt('bf')),
-      now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Profissional Teste"}'),
+      now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Profissional Teste"}',
+      '', '', '', ''),
     ('00000000-0000-0000-0000-000000000000', v_paciente_id, 'authenticated', 'authenticated',
       'paciente.teste@aliviar-conexao.local', extensions.crypt(v_seed_password, extensions.gen_salt('bf')),
-      now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Paciente Teste"}');
+      now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Paciente Teste"}',
+      '', '', '', '');
 
   -- Os inserts acima disparam public.handle_new_user() (trigger em
   -- auth.users), que já cria profiles + user_settings automaticamente.
