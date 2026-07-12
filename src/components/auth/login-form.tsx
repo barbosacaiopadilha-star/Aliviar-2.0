@@ -53,7 +53,7 @@ export function LoginForm() {
   return (
     <AuthCard
       title="Entrar"
-      description="Acesse sua conta no Aliviar Conexão."
+      description="Acesse sua conta na Aliviar Curadoria Médica."
       footer={
         <Link
           href="/recuperar-senha"

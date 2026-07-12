@@ -25,6 +25,7 @@ function formatRoleLabel(role: string): string {
     administrador: "Administrador",
     profissional: "Profissional",
     paciente: "Paciente",
+    curador_medico: "Curador Médico",
   };
 
   return labels[role] ?? role;
@@ -95,11 +96,13 @@ export function AppShell({ role, displayName, navItems, children }: AppShellProp
       <div className="flex min-h-screen">
         <aside
           aria-label="Barra lateral"
-          className="hidden w-64 shrink-0 border-r border-border bg-surface lg:flex lg:flex-col"
+          className="hidden w-64 shrink-0 border-r border-border bg-surface print:hidden lg:flex lg:flex-col"
         >
           <div className="border-b border-border px-6 py-6">
-            <p className="font-serif text-lg font-semibold text-brand-primary">Aliviar</p>
-            <p className="mt-1 text-xs text-ink-muted">Conexão</p>
+            <p className="font-serif text-lg font-semibold leading-none text-brand-primary">Aliviar</p>
+            <p className="mt-1 text-[0.6rem] font-medium uppercase tracking-[0.14em] text-brand-sage">
+              Curadoria Médica
+            </p>
           </div>
           <nav aria-label="Navegação principal" className="flex-1 px-4 py-6">
             <ShellNav navItems={navItems} pathname={pathname} />
@@ -110,7 +113,7 @@ export function AppShell({ role, displayName, navItems, children }: AppShellProp
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-sticky-header border-b border-border bg-surface/95 backdrop-blur">
+          <header className="sticky top-0 z-sticky-header border-b border-border bg-surface/95 backdrop-blur print:hidden">
             <div className="flex min-h-[4.5rem] items-center justify-between gap-4 px-4 py-3 lg:px-8">
               <div className="flex items-center gap-3">
                 <button
@@ -136,7 +139,7 @@ export function AppShell({ role, displayName, navItems, children }: AppShellProp
 
           <main
             id="appshell-main"
-            className="mx-auto w-full max-w-content flex-1 px-4 py-6 lg:px-8 lg:py-8"
+            className="mx-auto w-full max-w-content flex-1 px-4 py-6 print:max-w-none print:p-0 lg:px-8 lg:py-8"
           >
             {children}
           </main>

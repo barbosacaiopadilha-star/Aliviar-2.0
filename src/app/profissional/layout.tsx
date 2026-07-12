@@ -13,7 +13,7 @@ export default async function ProfissionalLayout({
     <AppShell
       role="profissional"
       displayName={profile?.displayName ?? null}
-      navItems={getDefaultNavItems("/profissional")}
+      navItems={getDefaultNavItems("profissional", "/profissional")}
     >
       {children}
     </AppShell>

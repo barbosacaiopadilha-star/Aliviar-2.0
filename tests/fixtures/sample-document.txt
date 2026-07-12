@@ -1,0 +1,1 @@
+Documento de exemplo para testes e2e de upload (Portal do Paciente / Portal Administrativo).

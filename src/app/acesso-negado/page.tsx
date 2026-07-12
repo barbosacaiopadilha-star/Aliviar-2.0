@@ -1,7 +1,14 @@
 import Link from "next/link";
 
+import type { Metadata } from "next";
+
 import { getAuthState } from "@/modules/auth/session";
 import { getRoleHome } from "@/modules/auth/role-home";
+
+export const metadata: Metadata = {
+  title: "Acesso negado",
+  robots: { index: false, follow: false },
+};
 
 export default async function AcessoNegadoPage() {
   const state = await getAuthState();

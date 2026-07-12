@@ -12,6 +12,8 @@ A direção visual parte de três materiais aprovados pelo usuário: a marca "Al
 
 O placeholder atual do projeto (`public/favicon.svg`, quadrado teal com "AC") também não reflete a marca aprovada — é um placeholder técnico da TASK-001, a ser substituído quando houver asset oficial de logo (nunca recriado/redesenhado por um agente — ver seção 8).
 
+**Atualização (ADR-017):** a logo oficial "Aliviar — Curadoria Médica Independente" foi recebida e revisada visualmente — confirma integralmente a paleta abaixo (navy/sage/dourado hairline/canvas marfim), que deixa de ser provisória (seção 2.1). O arquivo de produção (SVG/vetorial) ainda não foi entregue para substituir `public/favicon.svg`; até lá, o placeholder técnico permanece, e nenhum agente deve recriar o logo a partir da imagem de referência recebida em chat.
+
 ## 1. Princípios
 
 - **Clareza** — hierarquia visual óbvia, uma ação primária por tela, texto direto.
@@ -34,7 +36,7 @@ Implementados como variáveis CSS em `:root` (`src/app/globals.css`) e espelhado
 | `--color-brand-primary-deep` | `#0E2F52` | Hover/pressed de primário, fundos escuros pontuais | Branco sobre este tom: **13,6:1** (AAA) |
 | `--color-brand-sage` | `#7F9E8C` | Superfície de badges/tags, acentos decorativos | **Não usar como texto sobre branco/marfim** (contraste 2,9:1 — reprova AA). Texto escuro (`--color-ink`) sobre sálvia: **4,6:1** (passa AA texto normal) |
 | `--color-brand-sage-light` | `#A8C0AE` | Fundos decorativos leves (faixas, ilustração de fundo) | Só decorativo — contraste 1,9:1 contra branco, nunca para texto |
-| `--color-brand-gold` | `#B08D57` (provisório) | Bordas finas, ícones pontuais, pequenos acentos — **nunca** preenchimento grande nem texto corrido | A validar contra o asset oficial de logo quando disponível |
+| `--color-brand-gold` | `#B08D57` | Bordas finas, ícones pontuais, pequenos acentos — **nunca** preenchimento grande nem texto corrido | Confirmado contra a logo oficial recebida (ADR-017) |
 | `--color-bg-canvas` | `#F7F5F1` | Fundo de página (marfim) | — |
 | `--color-bg-surface` | `#FFFFFF` | Cards, painéis, inputs | — |
 | `--color-ink` | `#1B2733` | Texto principal | Sobre `--color-bg-canvas`: **15,1:1**; sobre branco: **15,9:1** |
@@ -45,7 +47,7 @@ Implementados como variáveis CSS em `:root` (`src/app/globals.css`) e espelhado
 | `--color-warning` / `--color-warning-surface` | `#8A5A1F` / `#F5EBDD` | Texto/ícone de aviso / fundo de alerta de aviso | idem |
 | `--color-error` / `--color-error-surface` | `#8B2E2E` / `#F6E7E7` | Texto/ícone de erro / fundo de alerta de erro | idem |
 
-**Pendência explícita**: os tons de sucesso/aviso/erro acima são ponto de partida, não finais — a TASK-005B deve rodar um checador de contraste real (ex.: `axe`, WebAIM) contra os pares texto/fundo antes de finalizar. Os hexadecimais de marca (`#123B67`, `#0E2F52`, `#7F9E8C`, `#A8C0AE`, `#F7F5F1`) são os fornecidos pelo usuário nesta rodada — meus cálculos de contraste (fórmula WCAG de luminância relativa) confirmam que são utilizáveis nos papéis acima, mas o dourado ainda não tem valor final aprovado.
+**Pendência explícita**: os tons de sucesso/aviso/erro acima são ponto de partida, não finais — a TASK-005B deve rodar um checador de contraste real (ex.: `axe`, WebAIM) contra os pares texto/fundo antes de finalizar. Os hexadecimais de marca (`#123B67`, `#0E2F52`, `#7F9E8C`, `#A8C0AE`, `#B08D57`, `#F7F5F1`) são os fornecidos pelo usuário e confirmados contra a logo oficial recebida (ADR-017) — meus cálculos de contraste (fórmula WCAG de luminância relativa) confirmam que são utilizáveis nos papéis acima. Amostragem de cor foi visual (imagem de referência), não pixel-exata de arquivo-fonte; se um arquivo de produção da marca surgir com hex divergente, ele prevalece.
 
 ### 2.2 Tipografia
 

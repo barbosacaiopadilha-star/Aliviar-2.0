@@ -1,0 +1,133 @@
+"use client";
+
+import { startTransition, useActionState, useState, type FormEvent } from "react";
+
+import { Button } from "@/components/ui/button";
+import { FormField } from "@/components/ui/form-field";
+import { FormMessage } from "@/components/ui/form-message";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { mapZodFieldErrors } from "@/components/forms/map-zod-field-errors";
+import { professionalProfileSchema } from "@/modules/profiles/professional-schema";
+import type { ActionResult } from "@/modules/profiles/types";
+
+import { BRAZILIAN_STATES } from "./brazilian-states";
+
+type ProfessionalProfileFormProps = {
+  action: (prevState: ActionResult | undefined, formData: FormData) => Promise<ActionResult>;
+  submitLabel: string;
+  initialDisplayName?: string;
+  initialProfessionalIdentifier?: string;
+  initialCrm?: string;
+  initialCrmUf?: string;
+  initialProfessionalSummary?: string;
+  initialInstitutionName?: string;
+};
+
+export function ProfessionalProfileForm({
+  action,
+  submitLabel,
+  initialDisplayName = "",
+  initialProfessionalIdentifier = "",
+  initialCrm = "",
+  initialCrmUf = "",
+  initialProfessionalSummary = "",
+  initialInstitutionName = "",
+}: ProfessionalProfileFormProps) {
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [state, formAction, isPending] = useActionState<ActionResult | undefined, FormData>(
+    action,
+    undefined,
+  );
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const parsed = professionalProfileSchema.safeParse({
+      displayName: formData.get("displayName"),
+      professionalIdentifier: formData.get("professionalIdentifier"),
+      crm: formData.get("crm"),
+      crmUf: formData.get("crmUf"),
+      professionalSummary: formData.get("professionalSummary"),
+      institutionName: formData.get("institutionName"),
+    });
+
+    if (!parsed.success) {
+      setFieldErrors(mapZodFieldErrors(parsed.error));
+      return;
+    }
+
+    setFieldErrors({});
+    startTransition(() => {
+      formAction(formData);
+    });
+  }
+
+  return (
+    <form onSubmit={handleSubmit} noValidate className="space-y-5">
+      <Input
+        name="displayName"
+        type="text"
+        label="Nome de exibição"
+        defaultValue={initialDisplayName}
+        required
+        error={fieldErrors.displayName}
+      />
+
+      <Input
+        name="professionalIdentifier"
+        type="text"
+        label="Identificação profissional"
+        defaultValue={initialProfessionalIdentifier}
+        required
+        error={fieldErrors.professionalIdentifier}
+      />
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[2fr_1fr]">
+        <Input
+          name="crm"
+          type="text"
+          label="CRM (quando aplicável)"
+          defaultValue={initialCrm}
+          error={fieldErrors.crm}
+        />
+
+        <FormField label="UF do CRM" htmlFor="crmUf" error={fieldErrors.crmUf}>
+          <Select id="crmUf" name="crmUf" defaultValue={initialCrmUf} error={Boolean(fieldErrors.crmUf)}>
+            <option value="">—</option>
+            {BRAZILIAN_STATES.map((uf) => (
+              <option key={uf} value={uf}>
+                {uf}
+              </option>
+            ))}
+          </Select>
+        </FormField>
+      </div>
+
+      <Input
+        name="institutionName"
+        type="text"
+        label="Instituição (quando aplicável)"
+        defaultValue={initialInstitutionName}
+        error={fieldErrors.institutionName}
+      />
+
+      <FormField label="Resumo profissional" htmlFor="professionalSummary" error={fieldErrors.professionalSummary}>
+        <Textarea
+          id="professionalSummary"
+          name="professionalSummary"
+          defaultValue={initialProfessionalSummary}
+          error={Boolean(fieldErrors.professionalSummary)}
+        />
+      </FormField>
+
+      {state && !state.success ? <FormMessage variant="error">{state.error}</FormMessage> : null}
+      {state?.success ? <FormMessage variant="success">Salvo com sucesso.</FormMessage> : null}
+
+      <Button type="submit" isLoading={isPending} className="w-full sm:w-auto">
+        {submitLabel}
+      </Button>
+    </form>
+  );
+}

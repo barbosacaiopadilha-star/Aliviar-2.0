@@ -33,3 +33,37 @@ export async function requireRole(roleSlug: string): Promise<AuthState> {
 
   return state;
 }
+
+/**
+ * Checagem autoritativa de papel para uso dentro de Server Actions —
+ * nunca redireciona (uma Server Action pode ser chamada fora de uma
+ * navegação de página, então `redirect()` não é o comportamento certo
+ * aqui). Lança erro simples; quem chama decide como transformar isso num
+ * ActionResult de erro. RLS continua sendo a fronteira real de dado — isto
+ * aqui só evita que a ação sequer tente a operação sem o papel exigido.
+ */
+export async function requireRoleForAction(roleSlug: string): Promise<AuthState> {
+  const state = await getAuthState();
+
+  if (!state || !state.roles.includes(roleSlug)) {
+    throw new Error("Não autorizado.");
+  }
+
+  return state;
+}
+
+/**
+ * Mesma checagem de requireRoleForAction, mas aceita qualquer um dos papéis
+ * informados (papéis são cumulativos, não hierárquicos — ADR-006). Usada
+ * por ações que mais de um papel pode executar (ex.: Administrador OU
+ * Curador Médico podem criar um Caso — ÉPICO 1/SPRINT 2).
+ */
+export async function requireAnyRoleForAction(roleSlugs: string[]): Promise<AuthState> {
+  const state = await getAuthState();
+
+  if (!state || !roleSlugs.some((slug) => state.roles.includes(slug))) {
+    throw new Error("Não autorizado.");
+  }
+
+  return state;
+}

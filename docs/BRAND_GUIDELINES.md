@@ -60,7 +60,9 @@ Uma única biblioteca de traço fino e consistente (`lucide-react`, já adotada 
 
 ## Uso da marca
 
-Logo e variações são ativos oficiais, tratados como tal — nenhum agente de IA deve desenhar, recriar, reinterpretar ou gerar uma variação do logo. O `public/favicon.svg` atual (quadrado teal com "AC") é um **placeholder técnico**, não a marca aprovada — permanece até haver asset oficial. Uso do logo sempre com espaço de respiro mínimo ao redor, nunca distorcido, nunca sobre fundo que reduza o contraste ou a legibilidade.
+Logo e variações são ativos oficiais, tratados como tal — nenhum agente de IA deve desenhar, recriar, reinterpretar ou gerar uma variação do logo. O `public/favicon.svg` atual (quadrado teal com "AC") é um **placeholder técnico**, não a marca aprovada — permanece até o arquivo de produção (SVG/vetorial) ser entregue. Uso do logo sempre com espaço de respiro mínimo ao redor, nunca distorcido, nunca sobre fundo que reduza o contraste ou a legibilidade.
+
+A logo oficial ("Aliviar" em serif + "Curadoria Médica Independente" em versalete, símbolo de pessoa/mãos/coração em navy e sage) foi recebida e revisada — confirma a paleta de `docs/DESIGN_SYSTEM.md` (ADR-017). O lockup de duas linhas (nome + qualificador em versalete) é o padrão de wordmark textual a reproduzir em componentes enquanto o arquivo de imagem oficial não está disponível para uso direto.
 
 ## Espaço negativo
 

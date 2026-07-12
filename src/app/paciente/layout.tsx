@@ -13,7 +13,7 @@ export default async function PacienteLayout({
     <AppShell
       role="paciente"
       displayName={profile?.displayName ?? null}
-      navItems={getDefaultNavItems("/paciente")}
+      navItems={getDefaultNavItems("paciente", "/paciente")}
     >
       {children}
     </AppShell>

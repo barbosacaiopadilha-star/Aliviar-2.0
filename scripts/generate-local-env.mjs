@@ -34,15 +34,18 @@ for (const line of result.stdout.split(/\r?\n/)) {
 
 const apiUrl = values.API_URL;
 const anonKey = values.ANON_KEY;
+const serviceRoleKey = values.SERVICE_ROLE_KEY;
 
-if (!apiUrl || !anonKey) {
+if (!apiUrl || !anonKey || !serviceRoleKey) {
   console.error(
-    "Variáveis API_URL/ANON_KEY não encontradas na saída de `supabase status -o env`. Verifique a versão da CLI instalada.",
+    "Variáveis API_URL/ANON_KEY/SERVICE_ROLE_KEY não encontradas na saída de `supabase status -o env`. Verifique a versão da CLI instalada.",
   );
   process.exit(1);
 }
 
-const envContent = `NEXT_PUBLIC_SUPABASE_URL=${apiUrl}\nNEXT_PUBLIC_SUPABASE_ANON_KEY=${anonKey}\n`;
+// SUPABASE_SERVICE_ROLE_KEY nunca leva o prefixo NEXT_PUBLIC_ — usada só em
+// src/lib/supabase/admin.ts (server-only), nunca no bundle do cliente.
+const envContent = `NEXT_PUBLIC_SUPABASE_URL=${apiUrl}\nNEXT_PUBLIC_SUPABASE_ANON_KEY=${anonKey}\nSUPABASE_SERVICE_ROLE_KEY=${serviceRoleKey}\n`;
 
 writeFileSync(resolve(projectRoot, ".env.local"), envContent, "utf-8");
 

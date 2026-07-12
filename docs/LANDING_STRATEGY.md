@@ -1,5 +1,7 @@
 # Estratégia de Landing Page — Aliviar Conexão
 
+> **Superado na estrutura (ADR-017):** o fluxo de 8 seções abaixo foi substituído pela estrutura de 12 seções aprovada em `docs/LANDING_CREATIVE_DIRECTION.md` (documento canônico vigente para a Landing). O conteúdo de tom de voz, direção de FAQ e palavras-chave de SEO deste documento permanece válido como referência — apenas a estrutura/ordem de seções está desatualizada.
+
 Documento de **estratégia**, não de implementação — nenhum HTML, nenhum copy final de produção. Define objetivo, estrutura e critério de cada seção da landing institucional (`(public)` no produto — `docs/ENGINEERING_PLAN.md`, seção 4). A implementação (copy final, HTML/componentes) é uma tarefa futura própria, a partir deste documento.
 
 A referência pública `aliviar-temp.vercel.app` é **só inspiração visual de estrutura** (ex.: uso de vídeo no hero, cards de diferencial) — não copiar texto de lá, e sua paleta/ilustração cartoon diverge da direção aprovada (ver `docs/DESIGN_SYSTEM.md`, seção 0).

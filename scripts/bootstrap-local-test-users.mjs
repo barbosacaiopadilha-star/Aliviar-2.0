@@ -23,6 +23,7 @@ const TEST_ACCOUNTS = [
   { role: "administrador", email: "admin.teste@aliviar-conexao.local", displayName: "Admin Teste" },
   { role: "profissional", email: "profissional.teste@aliviar-conexao.local", displayName: "Profissional Teste" },
   { role: "paciente", email: "paciente.teste@aliviar-conexao.local", displayName: "Paciente Teste" },
+  { role: "curador_medico", email: "curador.teste@aliviar-conexao.local", displayName: "Curador Teste" },
 ];
 
 function readLocalSupabaseEnv() {

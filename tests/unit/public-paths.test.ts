@@ -14,6 +14,17 @@ describe("isPublicPath", () => {
     expect(isPublicPath("/auth/callback")).toBe(true);
   });
 
+  it("trata só a raiz explicativa de 'Sua História' como pública — as etapas do wizard exigem sessão (ADR-018)", () => {
+    expect(isPublicPath("/sua-historia")).toBe(true);
+    expect(isPublicPath("/sua-historia/para-quem")).toBe(false);
+    expect(isPublicPath("/sua-historia/revisao")).toBe(false);
+  });
+
+  it("trata robots.txt e sitemap.xml como públicos (buscadores nunca autenticam)", () => {
+    expect(isPublicPath("/robots.txt")).toBe(true);
+    expect(isPublicPath("/sitemap.xml")).toBe(true);
+  });
+
   it("trata qualquer outra rota como protegida por padrão", () => {
     expect(isPublicPath("/qualquer-coisa")).toBe(false);
     expect(isPublicPath("/painel-interno")).toBe(false);

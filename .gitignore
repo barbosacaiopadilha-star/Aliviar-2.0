@@ -53,6 +53,13 @@ desktop.ini
 !.vscode/extensions.json
 .idea/
 
+# Claude Code — mantém apenas configuração de projeto compartilhável
+# (launch.json, sem segredo/caminho de máquina); settings.local.json e
+# arquivos de lock de sessão são locais por definição (já cobertos também
+# por *.local.json acima).
+.claude/*
+!.claude/launch.json
+
 # Arquivos temporários
 *.tmp
 *.temp

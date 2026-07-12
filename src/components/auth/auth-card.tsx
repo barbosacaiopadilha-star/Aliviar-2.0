@@ -13,7 +13,7 @@ export function AuthCard({ title, description, children, footer }: AuthCardProps
       <div className="w-full max-w-md space-y-6 rounded-lg border border-border bg-surface p-6 shadow-sm sm:p-8">
         <header className="space-y-3 text-center">
           <p className="font-serif text-sm font-medium tracking-wide text-brand-primary">
-            Aliviar Conexão
+            Aliviar Curadoria Médica
           </p>
           <h1 className="font-serif text-3xl font-semibold text-ink">{title}</h1>
           {description ? (

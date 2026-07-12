@@ -13,7 +13,7 @@ export default async function AdminLayout({
     <AppShell
       role="administrador"
       displayName={profile?.displayName ?? null}
-      navItems={getDefaultNavItems("/admin")}
+      navItems={getDefaultNavItems("administrador", "/admin")}
     >
       {children}
     </AppShell>
