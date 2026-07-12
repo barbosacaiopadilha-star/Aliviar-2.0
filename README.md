@@ -15,6 +15,7 @@ Este repositório está em **fase de planejamento técnico**. Domínio, escopo d
 - [`docs/AGENTS.md`](docs/AGENTS.md) — documento canônico de governança dos agentes (papéis, fluxo obrigatório, segurança).
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — estado atual da arquitetura.
 - [`docs/ENGINEERING_PLAN.md`](docs/ENGINEERING_PLAN.md) — plano de engenharia: stack, estrutura, módulos, domínio, autenticação/autorização, banco, testes, deploy, roadmap e backlog.
+- [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) — identidade visual canônica: tokens, tipografia, componentes, AppShell, acessibilidade.
 - [`docs/WORKFLOW.md`](docs/WORKFLOW.md) — fluxo de trabalho detalhado.
 - [`docs/DECISIONS.md`](docs/DECISIONS.md) — histórico de decisões (ADRs).
 - [`docs/CREDENTIALS.md`](docs/CREDENTIALS.md) — inventário de credenciais (nunca com valores).

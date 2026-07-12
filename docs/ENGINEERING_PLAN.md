@@ -184,6 +184,7 @@ Nenhuma integração externa além do próprio Supabase (Auth, Postgres, Storage
 - **Fase 0 — Fundação (concluída).** Governança, documentação, ADRs.
 - **Fase 1 — Scaffold técnico.** Projeto Next.js + TS + Tailwind, estrutura modular, ferramentas de qualidade (lint/format), testes (Vitest/Playwright) configurados, client Supabase preparado. *(Primeira tarefa delegada ao Cursor — seção 16.)*
 - **Fase 2 — Autenticação e perfis.** Ambiente Supabase local (CLI + Docker) validado (ADR-007; TASK-002), migrations iniciais (`profiles`, `roles`, `user_roles`, `professional_profiles`, `specialties`) com RLS, cadastro/login de paciente e profissional, formulários de perfil. O projeto Supabase hospedado de desenvolvimento é adotado assim que houver capacidade, aplicando as mesmas migrations.
+- **Fase 2.5 — Design System e fundação visual.** Tokens semânticos, tipografia dupla, catálogo de componentes fundamentais, `AppShell` compartilhado, rotas reais por papel (`/admin`, `/profissional`, `/paciente`) (ADR-008, ADR-009; `docs/DESIGN_SYSTEM.md`; TASK-005A/TASK-005B). Pré-requisito para qualquer tela de produto além de autenticação.
 - **Fase 3 — Descoberta.** Listagem e busca/filtro público de profissionais, página de perfil público.
 - **Fase 4 — Conexão.** Solicitação de contato paciente → profissional, painel do profissional para responder.
 - **Fase 5 — Admin básico.** Painel para verificação/moderação de profissionais cadastrados.
@@ -195,6 +196,7 @@ Nenhuma integração externa além do próprio Supabase (Auth, Postgres, Storage
 2. Ambiente Supabase local (CLI + Docker) para desenvolvimento e testes, com `.env.local` gerado a partir da stack local (ADR-007; TASK-002). Projeto Supabase hospedado de desenvolvimento fica para quando houver capacidade de tier, aplicando as mesmas migrations.
 3. Modelagem de banco: `profiles`, papéis, migrations iniciais + RLS base.
 4. Fluxo de cadastro/login (paciente e profissional) via Supabase Auth.
+4a. Design System e fundação visual: tokens, componentes fundamentais, `AppShell`, rotas reais por papel (ADR-008, ADR-009; TASK-005A/TASK-005B).
 5. Formulário e persistência de perfil de profissional (especialidades, bio, modalidade, cidade).
 6. Formulário de perfil de paciente (dados básicos).
 7. Página pública de busca/listagem de profissionais com filtros.
