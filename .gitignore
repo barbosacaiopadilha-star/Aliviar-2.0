@@ -20,6 +20,8 @@ node_modules/
 /.next/
 .vercel
 .supabase
+supabase/.temp/
+supabase/.branches/
 *.tsbuildinfo
 
 # Testes / cobertura

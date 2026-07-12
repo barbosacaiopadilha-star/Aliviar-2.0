@@ -11,7 +11,12 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:status": "supabase status",
+    "supabase:reset": "supabase db reset",
+    "supabase:env": "node scripts/generate-local-env.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
@@ -32,6 +37,7 @@
     "eslint-config-prettier": "^10.1.5",
     "postcss": "^8.5.4",
     "prettier": "^3.5.3",
+    "supabase": "^2.109.1",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
     "vitest": "^3.1.4"
