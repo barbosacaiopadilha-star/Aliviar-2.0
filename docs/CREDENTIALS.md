@@ -6,7 +6,7 @@
 
 | Identificador | Finalidade | Ambiente | Local de armazenamento | Componentes consumidores | Status de rotação | Observações |
 |---|---|---|---|---|---|---|
-| _(nenhuma credencial criada ainda)_ | — | — | — | — | — | Não existe mecanismo de autenticação nem infraestrutura implementados neste repositório ainda. |
+| Contas de teste de RLS (TASK-003): `admin.teste@aliviar-conexao.local`, `profissional.teste@aliviar-conexao.local`, `paciente.teste@aliviar-conexao.local` | Validar políticas de RLS de `profiles`/`user_roles`/`audit_logs`/`user_settings` | Supabase local (Docker), recriado a cada `supabase db reset` | `supabase/seed.sql` — sem valor de senha no arquivo: a senha é gerada aleatoriamente em tempo de execução do seed, usada só para satisfazer o hash de `auth.users`, e nunca persistida em texto nem exibida | Nenhum (não há fluxo de login/cadastro implementado ainda) | Descartável — recriado do zero a cada reset, não precisa de rotação | Sem uso funcional de login hoje; existem só para simular `auth.uid()` durante testes de RLS a nível de banco. |
 
 ## Procedimento
 
