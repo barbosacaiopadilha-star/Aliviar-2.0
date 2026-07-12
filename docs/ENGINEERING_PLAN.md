@@ -148,7 +148,7 @@ Diretrizes:
 ## 9. Banco de dados
 
 - Postgres via Supabase, schema versionado por migrations em `supabase/migrations/`, aplicadas via Supabase CLI — nunca editadas ad-hoc direto no painel em ambiente compartilhado.
-- **Dois ambientes de banco, sempre separados**: projeto Supabase de desenvolvimento (tier gratuito, ADR-003) e projeto Supabase de produção, criado somente mediante autorização explícita do usuário (`docs/AGENTS.md`). Nenhum dado ou credencial de um ambiente circula no outro.
+- **Ambientes de banco sempre separados.** Enquanto a criação de um projeto Supabase hospedado de desenvolvimento estiver bloqueada pelo limite do tier gratuito, o desenvolvimento usa **Supabase local (CLI + Docker)** — estritamente local, descartável, sem cobrança e sem qualquer ligação com o `aliviar-app` (ADR-007). O projeto Supabase de produção só é criado mediante autorização explícita do usuário (`docs/AGENTS.md`), e quando houver capacidade de um projeto hospedado de desenvolvimento, ele é provisionado a partir das mesmas migrations versionadas — nunca recriando schema manualmente. Nenhum dado ou credencial circula entre ambientes.
 - Modelo de papéis via catálogo (`roles`) + associação N:N (`user_roles`), não enum fixo — ver seção 6 e ADR-006. Isso evita que adicionar um papel novo exija alterar o tipo da coluna de papel ou migrar dados existentes.
 - Nomenclatura de tabelas em `snake_case`, no plural (`profiles`, `roles`, `user_roles`, `professional_profiles`, `specialties`, `connection_requests`).
 - Toda tabela tem RLS habilitada desde a migration que a cria — não é um passo posterior.
@@ -174,7 +174,7 @@ Nenhuma integração externa além do próprio Supabase (Auth, Postgres, Storage
 
 - **GitHub** é a fonte única do código-fonte; todo deploy (preview ou produção) é disparado a partir de um push/PR no GitHub — nunca por upload manual.
 - **Vercel** hospeda o Next.js: preview deployment automático por PR/branch, produção apenas a partir de `main`.
-- **Supabase**: **ambientes de desenvolvimento e produção sempre separados** — projeto de desenvolvimento (gratuito, ADR-003) usado em preview/local; projeto de produção só é criado mediante autorização explícita do usuário, quando o produto estiver pronto para isso (regra de `docs/AGENTS.md`: nenhuma automação cria recursos com cobrança ou altera produção sem confirmação explícita). Nenhuma credencial ou dado de um ambiente é reutilizado no outro.
+- **Supabase**: **ambientes de desenvolvimento e produção sempre separados**. Desenvolvimento roda hoje em **Supabase local (CLI + Docker)**, enquanto a criação de um projeto hospedado de desenvolvimento estiver bloqueada pelo limite do tier gratuito (ADR-007); quando houver capacidade, o projeto hospedado de desenvolvimento é provisionado a partir das migrations versionadas. Produção só é criada mediante autorização explícita do usuário, quando o produto estiver pronto para isso (regra de `docs/AGENTS.md`: nenhuma automação cria recursos com cobrança ou altera produção sem confirmação explícita). Nenhuma credencial ou dado de um ambiente é reutilizado no outro.
 - Variáveis de ambiente vivem na configuração do projeto na Vercel (uma configuração por ambiente: produção/preview) e em `.env.local` (ignorado pelo Git) localmente — nunca em `.env.example`, que só lista nomes de variáveis.
 - Migrations de banco são aplicadas de forma controlada (CLI/CI) a cada ambiente separadamente, nunca diretamente no painel em ambiente compartilhado.
 - CI (lint, typecheck, testes) roda antes de qualquer merge — pipeline concreto (ex.: GitHub Actions) é uma tarefa própria do backlog (item 13 da seção 14), ainda não implementada.
@@ -183,7 +183,7 @@ Nenhuma integração externa além do próprio Supabase (Auth, Postgres, Storage
 
 - **Fase 0 — Fundação (concluída).** Governança, documentação, ADRs.
 - **Fase 1 — Scaffold técnico.** Projeto Next.js + TS + Tailwind, estrutura modular, ferramentas de qualidade (lint/format), testes (Vitest/Playwright) configurados, client Supabase preparado. *(Primeira tarefa delegada ao Cursor — seção 16.)*
-- **Fase 2 — Autenticação e perfis.** Provisionamento do Supabase de desenvolvimento, migrations iniciais (`profiles`, `professional_profiles`, `specialties`) com RLS, cadastro/login de paciente e profissional, formulários de perfil.
+- **Fase 2 — Autenticação e perfis.** Ambiente Supabase local (CLI + Docker) validado (ADR-007; TASK-002), migrations iniciais (`profiles`, `roles`, `user_roles`, `professional_profiles`, `specialties`) com RLS, cadastro/login de paciente e profissional, formulários de perfil. O projeto Supabase hospedado de desenvolvimento é adotado assim que houver capacidade, aplicando as mesmas migrations.
 - **Fase 3 — Descoberta.** Listagem e busca/filtro público de profissionais, página de perfil público.
 - **Fase 4 — Conexão.** Solicitação de contato paciente → profissional, painel do profissional para responder.
 - **Fase 5 — Admin básico.** Painel para verificação/moderação de profissionais cadastrados.
@@ -192,7 +192,7 @@ Nenhuma integração externa além do próprio Supabase (Auth, Postgres, Storage
 ## 14. Backlog priorizado
 
 1. Scaffold técnico do projeto *(delegado agora — seção 16)*.
-2. Provisionamento do projeto Supabase de desenvolvimento + variáveis de ambiente.
+2. Ambiente Supabase local (CLI + Docker) para desenvolvimento e testes, com `.env.local` gerado a partir da stack local (ADR-007; TASK-002). Projeto Supabase hospedado de desenvolvimento fica para quando houver capacidade de tier, aplicando as mesmas migrations.
 3. Modelagem de banco: `profiles`, papéis, migrations iniciais + RLS base.
 4. Fluxo de cadastro/login (paciente e profissional) via Supabase Auth.
 5. Formulário e persistência de perfil de profissional (especialidades, bio, modalidade, cidade).
