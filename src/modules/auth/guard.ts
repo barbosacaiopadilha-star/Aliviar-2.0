@@ -4,11 +4,16 @@ import { getAuthState, type AuthState } from "./session";
 
 /**
  * Checagem autoritativa de papel para uso em layouts/páginas server-side.
- * O middleware (ver middleware.ts na raiz) só faz a checagem otimista de
- * "existe sessão" — quem decide se o papel exigido bate é sempre aqui,
- * porque route groups como (admin)/(profissional)/(paciente) não aparecem
- * na URL e por isso não dá pra decidir isso de forma confiável só olhando
- * o pathname no middleware.
+ * O middleware (ver src/middleware.ts) só faz a checagem otimista de "existe
+ * sessão" — quem decide se o papel exigido bate é sempre aqui, porque as
+ * rotas /admin, /profissional, /paciente (TASK-005A; antes eram route groups
+ * invisíveis na URL) não podem ser diferenciadas de forma confiável só pelo
+ * middleware olhando o pathname.
+ *
+ * Sem sessão → /login (usuário precisa se autenticar). Com sessão mas sem o
+ * papel exigido → /acesso-negado (TASK-005A) — distinto de /login porque a
+ * pessoa já está autenticada; mandá-la de volta ao formulário de login seria
+ * confuso.
  *
  * Nunca confiar em RLS sozinho para "autorização de UI" nem confiar só
  * nesta função para segurança de dados: RLS (docs/ENGINEERING_PLAN.md,
@@ -23,7 +28,7 @@ export async function requireRole(roleSlug: string): Promise<AuthState> {
   }
 
   if (!state.roles.includes(roleSlug)) {
-    redirect("/login");
+    redirect("/acesso-negado");
   }
 
   return state;
