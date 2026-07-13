@@ -22,6 +22,7 @@
     "bootstrap:test-users": "node scripts/bootstrap-local-test-users.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.111.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.8",
     "@vercel/analytics": "^2.0.1",

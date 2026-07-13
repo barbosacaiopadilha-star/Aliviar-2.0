@@ -210,13 +210,18 @@ export async function deliverFinalCuradoria(params: DeliverFinalCuradoriaParams)
   };
 
   const llmResponse = await languageModel.run<
-    { decisionCase: DecisionCase; decisionContext: DecisionContext; humanReviewResult: HumanReviewResult },
+    {
+      decisionCase: DecisionCase;
+      decisionContext: DecisionContext;
+      humanReviewResult: HumanReviewResult;
+      compatibilityMatrix: CompatibilityMatrix;
+    },
     P010Presentation
   >({
     protocolId: "P010",
     protocolVersion: humanReviewResult.methodVersion,
     prompt: "p010-final-curadoria-delivery",
-    input: { decisionCase, decisionContext, humanReviewResult },
+    input: { decisionCase, decisionContext, humanReviewResult, compatibilityMatrix },
   });
 
   if (llmResponse.metadata.status === "error" || !llmResponse.output) {
