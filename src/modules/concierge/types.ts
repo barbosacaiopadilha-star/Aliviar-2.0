@@ -2,6 +2,7 @@ import type { ProtocolId } from "@/modules/ace/core/protocol-id";
 import type { ProviderChange, ReviewAction, ReviewStatus } from "@/modules/ace/artifacts/human-review-result";
 import type { ProviderPresentation } from "@/modules/ace/artifacts/final-curadoria";
 import type { CaseStatus } from "@/modules/cases/types";
+import type { AceLanguageModelHealthStatus } from "./language-model";
 
 // Tipos do módulo concierge (ÉPICO 1/SPRINT 3) — orquestração mínima do
 // pipeline ACE (P001-P008) sobre um Caso. Nunca modela P009/P010 — isso é
@@ -130,7 +131,12 @@ export type AceExecutionOverview = AceExecution & {
 };
 
 export type AceHealthCheck = {
-  languageModelProvider: string;
+  // GO LIVE — reflete getAceLanguageModelHealth() (language-model.ts), a
+  // única definição de "qual modelo está configurado" — nunca uma segunda
+  // fonte da verdade. Em produção, "FAKE_MODEL_NON_PRODUCTION" nunca é um
+  // estado operacional válido: languageModelHealthy vem false nesse caso.
+  languageModelStatus: AceLanguageModelHealthStatus;
+  languageModelHealthy: boolean;
   eligibleProfessionalsCount: number;
   professionalsMissingCompetencyDataCount: number;
   stuckRunningExecutions: AceExecutionOverview[];

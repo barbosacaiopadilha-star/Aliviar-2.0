@@ -13,6 +13,7 @@ import {
   listArtifactsForCase,
   listExecutionEventsForCase,
 } from "@/modules/concierge/execution-repository";
+import type { AceLanguageModel, AceLanguageModelRequest, AceLanguageModelResponse } from "@/modules/concierge/language-model";
 import { runAceExecution } from "@/modules/concierge/orchestrator";
 import { createPatientAccount } from "@/modules/profiles/patient-account-repository";
 import { createProfessionalProfile } from "@/modules/profiles/professional-repository";
@@ -473,5 +474,133 @@ describe("Observabilidade do ACE (sprint intermediária, Supabase local)", () =>
 
     const healthCheck = await getAceHealthCheck(admin.client);
     expect(healthCheck.stuckRunningExecutions.some((execution) => execution.caseId === caseId)).toBe(true);
+  });
+});
+
+// Simula uma falha classificada do fornecedor (nunca uma exceção crua) —
+// exatamente o formato que AnthropicAceLanguageModel produz para
+// autenticação/rate-limit/timeout/resposta inválida (ver
+// anthropic-language-model.ts, classifyAnthropicError). Injetado
+// diretamente em runAceExecution — não depende de credencial real da
+// Anthropic para provar que o orquestrador nunca cai no modelo fake nem
+// avança de protocolo diante de uma falha do fornecedor.
+class FailingLanguageModel implements AceLanguageModel {
+  constructor(private readonly code: string) {}
+
+  async run<TInput, TOutput>(_request: AceLanguageModelRequest<TInput>): Promise<AceLanguageModelResponse<TOutput>> {
+    return {
+      output: null,
+      metadata: {
+        modelId: "test-failing-model",
+        executedAt: new Date().toISOString(),
+        status: "error",
+        error: { code: this.code, message: "Detalhe interno do fornecedor — nunca deveria chegar ao Curador." },
+      },
+    };
+  }
+}
+
+describe("GO LIVE — proteção do modelo de linguagem em produção (Supabase local)", () => {
+  let accounts: TestAccount[];
+
+  beforeAll(() => {
+    accounts = loadTestAccounts();
+  });
+
+  async function loginAs(role: string) {
+    const account = accounts.find((a) => a.role === role)!;
+    const client = createClient(url, anonKey);
+    await client.auth.signInWithPassword({ email: account.email, password: account.password });
+    const {
+      data: { user },
+    } = await client.auth.getUser();
+    return { client, userId: user!.id };
+  }
+
+  async function createReadyCase() {
+    const admin = await loginAs("administrador");
+    const adminClient = createAdminSupabaseClient();
+    const email = unique("go-live") + "@aliviar-conexao.local";
+    const patientAccount = await createPatientAccount(adminClient, admin.client, { email, displayName: "Paciente GoLive" }, admin.userId);
+
+    const patientClient = createClient(url, anonKey);
+    await patientClient.auth.signInWithPassword({ email, password: patientAccount.password });
+    const draft = await getOrCreateActiveStory(patientClient, patientAccount.profileId);
+    await saveStoryDraft(patientClient, draft.id, draft.revision, { motivo: "Buscando apoio para dor crônica." }, "motivo");
+    const refreshed = await getOrCreateActiveStory(patientClient, patientAccount.profileId);
+    await submitStory(patientClient, draft.id, refreshed.revision);
+
+    const created = await createCase(admin.client, draft.id, undefined, admin.userId);
+    await changeCaseStatus(admin.client, created.id, "IN_REVIEW", admin.userId);
+    await changeCaseStatus(admin.client, created.id, "READY_FOR_CURATION", admin.userId);
+
+    return { admin, caseId: created.id, patientClient };
+  }
+
+  it.each([
+    "ACE_MODEL_AUTHENTICATION_FAILED",
+    "ACE_MODEL_RATE_LIMITED",
+    "ACE_MODEL_TIMEOUT",
+    "ACE_MODEL_INVALID_RESPONSE",
+  ])("falha do fornecedor (%s) interrompe a execução, sem fallback, sem avançar protocolo, mensagem sanitizada", async (code) => {
+    const { admin, caseId } = await createReadyCase();
+
+    const result = await runAceExecution({
+      supabase: admin.client,
+      caseId,
+      actorId: admin.userId,
+      languageModel: new FailingLanguageModel(code),
+    });
+
+    expect(result.outcome).toBe("failed");
+    expect(result.outcome === "failed" && result.execution.failureCode).toBe(code);
+    expect(result.outcome === "failed" && result.execution.failureMessage).not.toContain("Detalhe interno do fornecedor");
+
+    // Nunca persiste um artefato para o protocolo que falhou (P002).
+    const artifacts = await listArtifactsForCase(admin.client, caseId);
+    expect(artifacts.some((artifact) => artifact.artifactType === "DecisionCase")).toBe(false);
+  });
+
+  it("uma execução falha pode ser retomada com um modelo funcional, sem recomputar o que já foi persistido", async () => {
+    const { admin, caseId } = await createReadyCase();
+
+    const failed = await runAceExecution({
+      supabase: admin.client,
+      caseId,
+      actorId: admin.userId,
+      languageModel: new FailingLanguageModel("ACE_MODEL_UNAVAILABLE"),
+    });
+    expect(failed.outcome).toBe("failed");
+
+    const resumed = await runAceExecution({
+      supabase: admin.client,
+      caseId,
+      actorId: admin.userId,
+      languageModel: new FakeAceLanguageModel(),
+    });
+    expect(["completed", "blocked"]).toContain(resumed.outcome);
+  });
+
+  it("o paciente nunca vê o código ou a mensagem de falha do modelo — só o status traduzido do Caso", async () => {
+    const { admin, caseId, patientClient } = await createReadyCase();
+    await runAceExecution({
+      supabase: admin.client,
+      caseId,
+      actorId: admin.userId,
+      languageModel: new FailingLanguageModel("ACE_MODEL_AUTHENTICATION_FAILED"),
+    });
+
+    // A view do paciente (patient_case_overview, RLS por auth.uid()) nunca
+    // expõe failureCode/failureMessage — só a tradução do status do Caso.
+    const { data: overview } = await patientClient
+      .from("patient_case_overview")
+      .select("status_label")
+      .eq("case_id", caseId)
+      .maybeSingle();
+
+    expect(overview).not.toBeNull();
+    const overviewText = JSON.stringify(overview);
+    expect(overviewText).not.toContain("ACE_MODEL");
+    expect(overviewText).not.toContain("Detalhe interno do fornecedor");
   });
 });

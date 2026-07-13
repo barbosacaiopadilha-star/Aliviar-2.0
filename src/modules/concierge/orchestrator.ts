@@ -30,7 +30,7 @@ import {
   persistArtifact,
   updateExecution,
 } from "./execution-repository";
-import type { AceLanguageModel } from "./language-model";
+import { AceLanguageModelConfigurationError, getAceLanguageModel, type AceLanguageModel } from "./language-model";
 import { SupabaseProviderProfileRepository, SupabaseProviderRepository } from "./provider-adapters";
 import type { AceExecution, AceArtifactType } from "./types";
 
@@ -47,7 +47,12 @@ export type RunAceExecutionParams = {
   supabase: SupabaseClient;
   caseId: string;
   actorId: string;
-  languageModel: AceLanguageModel;
+  // Opcional de propósito: em produção, a resolução real (Anthropic vs
+  // falha explícita) acontece dentro do próprio orquestrador — nunca antes
+  // de existir uma execução para registrar o resultado. Testes/integrações
+  // continuam podendo injetar um modelo próprio (ex.: FakeAceLanguageModel)
+  // diretamente, sem depender de variável de ambiente.
+  languageModel?: AceLanguageModel;
   providerRepository?: ProviderRepository;
   providerProfileRepository?: ProviderProfileRepository;
 };
@@ -79,26 +84,34 @@ function buildNarrativeFromStory(story: PatientStory): Narrative {
   });
 }
 
+// Mensagem única, sempre a mesma, para toda falha relacionada ao modelo de
+// linguagem (configuração ausente, autenticação, rate limit, timeout,
+// indisponibilidade, resposta incompatível) — o Curador Médico nunca vê
+// detalhe técnico; o motivo específico (para busca/auditoria) vive só em
+// `failureCode`, nunca nesta frase.
+const ACE_MODEL_FAILURE_MESSAGE =
+  "A execução do ACE não pôde ser concluída neste momento. Verifique a configuração do modelo de linguagem ou tente novamente mais tarde.";
+
 async function failWithLanguageModelError(
   supabase: SupabaseClient,
   caseId: string,
   executionId: string,
-  protocolId: ProtocolId,
+  protocolId: ProtocolId | null,
+  failureCode: string,
 ): Promise<RunAceExecutionResult> {
-  const failureMessage = `Não foi possível obter uma resposta válida do modelo de linguagem para ${protocolId}.`;
   await updateExecution(supabase, executionId, {
     status: "FAILED",
     finishedAt: new Date().toISOString(),
-    failureCode: "LANGUAGE_MODEL_ERROR",
-    failureMessage,
+    failureCode,
+    failureMessage: ACE_MODEL_FAILURE_MESSAGE,
   });
   await logExecutionEvent(supabase, {
     executionId,
     caseId,
     eventType: "FAILED",
     protocolId,
-    message: failureMessage,
-    metadata: { failureCode: "LANGUAGE_MODEL_ERROR" },
+    message: ACE_MODEL_FAILURE_MESSAGE,
+    metadata: { failureCode },
   });
   const execution = await getExecution(supabase, executionId);
   return { outcome: "failed", execution: execution! };
@@ -111,7 +124,7 @@ async function failWithLanguageModelError(
 // próxima; retomar uma execução (chamar de novo após FAILED/BLOCKED)
 // reaproveita os artefatos já persistidos, nunca os recalcula.
 export async function runAceExecution(params: RunAceExecutionParams): Promise<RunAceExecutionResult> {
-  const { supabase, caseId, actorId, languageModel } = params;
+  const { supabase, caseId, actorId } = params;
   const providerRepository = params.providerRepository ?? new SupabaseProviderRepository(supabase);
   const providerProfileRepository = params.providerProfileRepository ?? new SupabaseProviderProfileRepository(supabase);
 
@@ -230,6 +243,14 @@ export async function runAceExecution(params: RunAceExecutionParams): Promise<Ru
   }
 
   try {
+    // Resolvida aqui dentro (não antes) de propósito: só depois que a
+    // execução já existe é possível registrar, com failureCode e timeline
+    // próprios, o caso de configuração ausente — nunca um throw cru na
+    // action, sem rastro nenhum. Em produção sem ANTHROPIC_API_KEY, isto
+    // lança AceLanguageModelConfigurationError e nunca chega a usar o
+    // modelo fake (getAceLanguageModel, language-model.ts).
+    const languageModel = params.languageModel ?? (await getAceLanguageModel());
+
     const narrative = await reuseOrPersist<Narrative>("Narrative", "P001", async () => ({
       artifact: buildNarrativeFromStory(story),
       methodVersion: ACE_METHOD_VERSION,
@@ -244,7 +265,7 @@ export async function runAceExecution(params: RunAceExecutionParams): Promise<Ru
       });
 
       if (llmResponse.metadata.status === "error" || !llmResponse.output) {
-        throw new LanguageModelFailure("P002");
+        throw new LanguageModelFailure("P002", llmResponse.metadata.error?.code ?? "ACE_MODEL_INVALID_RESPONSE");
       }
 
       const result = await p002CaseBuilder.execute({ narrative, extractedFields: llmResponse.output });
@@ -263,7 +284,7 @@ export async function runAceExecution(params: RunAceExecutionParams): Promise<Ru
       });
 
       if (llmResponse.metadata.status === "error" || !llmResponse.output) {
-        throw new LanguageModelFailure("P003");
+        throw new LanguageModelFailure("P003", llmResponse.metadata.error?.code ?? "ACE_MODEL_INVALID_RESPONSE");
       }
 
       const result = await p003CaseAudit.execute({
@@ -306,7 +327,7 @@ export async function runAceExecution(params: RunAceExecutionParams): Promise<Ru
       });
 
       if (llmResponse.metadata.status === "error" || !llmResponse.output) {
-        throw new LanguageModelFailure("P004");
+        throw new LanguageModelFailure("P004", llmResponse.metadata.error?.code ?? "ACE_MODEL_INVALID_RESPONSE");
       }
 
       const result = await p004DecisionContextModeler.execute({
@@ -378,8 +399,15 @@ export async function runAceExecution(params: RunAceExecutionParams): Promise<Ru
     await changeCaseStatus(supabase, caseId, "HUMAN_REVIEW", actorId);
     return { outcome: "completed", execution: (await getExecution(supabase, execution.id))! };
   } catch (error) {
+    // Ausência de configuração em produção (getAceLanguageModel) — nunca
+    // usa o modelo fake, nunca avança para o próximo protocolo, sempre
+    // registra a execução como FAILED com um código estável e pesquisável.
+    if (error instanceof AceLanguageModelConfigurationError) {
+      return failWithLanguageModelError(supabase, caseId, execution.id, currentProtocolId, "ACE_MODEL_NOT_CONFIGURED");
+    }
+
     if (error instanceof LanguageModelFailure) {
-      return failWithLanguageModelError(supabase, caseId, execution.id, error.protocolId);
+      return failWithLanguageModelError(supabase, caseId, execution.id, error.protocolId, error.code);
     }
 
     const isProtocolError = error instanceof ProtocolError;
@@ -407,7 +435,10 @@ export async function runAceExecution(params: RunAceExecutionParams): Promise<Ru
 }
 
 class LanguageModelFailure extends Error {
-  constructor(readonly protocolId: ProtocolId) {
-    super(`Falha do modelo de linguagem em ${protocolId}.`);
+  constructor(
+    readonly protocolId: ProtocolId,
+    readonly code: string,
+  ) {
+    super(`Falha do modelo de linguagem em ${protocolId}: ${code}`);
   }
 }

@@ -1,12 +1,37 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-const { createMock } = vi.hoisted(() => ({
+// Classes de erro reais do SDK são static properties da classe Anthropic
+// (client.d.ts: `static AuthenticationError = ...`) — o mock precisa
+// expor as mesmas static properties, senão `instanceof
+// Anthropic.AuthenticationError` (classifyAnthropicError) lança
+// "right-hand side of instanceof is not callable" em vez de classificar.
+const {
+  createMock,
+  MockAuthenticationError,
+  MockPermissionDeniedError,
+  MockRateLimitError,
+  MockAPIConnectionTimeoutError,
+  MockAPIConnectionError,
+  MockInternalServerError,
+} = vi.hoisted(() => ({
   createMock: vi.fn(),
+  MockAuthenticationError: class extends Error {},
+  MockPermissionDeniedError: class extends Error {},
+  MockRateLimitError: class extends Error {},
+  MockAPIConnectionTimeoutError: class extends Error {},
+  MockAPIConnectionError: class extends Error {},
+  MockInternalServerError: class extends Error {},
 }));
 
 vi.mock("@anthropic-ai/sdk", () => ({
   default: class {
     messages = { create: createMock };
+    static AuthenticationError = MockAuthenticationError;
+    static PermissionDeniedError = MockPermissionDeniedError;
+    static RateLimitError = MockRateLimitError;
+    static APIConnectionTimeoutError = MockAPIConnectionTimeoutError;
+    static APIConnectionError = MockAPIConnectionError;
+    static InternalServerError = MockInternalServerError;
   },
 }));
 
@@ -64,18 +89,7 @@ describe("AnthropicAceLanguageModel (GO LIVE — fornecedor real)", () => {
     expect(createMock).not.toHaveBeenCalled();
   });
 
-  it("retorna erro estruturado quando o modelo não retorna um bloco tool_use", async () => {
-    createMock.mockResolvedValue({ content: [{ type: "text", text: "resposta em texto livre" }] });
-
-    const model = new AnthropicAceLanguageModel("fake-key");
-    const narrative = createNarrative({ text: "x", closingQuestionsAnswered: { historia: true, decisao: true, objetivo: true } });
-    const response = await model.run({ protocolId: "P002", protocolVersion: "ACE-0.1", prompt: "p002", input: { narrative } });
-
-    expect(response.metadata.status).toBe("error");
-    expect(response.output).toBeNull();
-  });
-
-  it("nunca lança exceção — falha de rede/API vira erro estruturado sanitizado", async () => {
+  it("nunca lança exceção — falha desconhecida vira erro estruturado sanitizado (ACE_MODEL_EXECUTION_FAILED)", async () => {
     createMock.mockRejectedValue(new Error("connection reset by peer at internal socket 10.0.0.5:443"));
 
     const model = new AnthropicAceLanguageModel("fake-key");
@@ -84,7 +98,63 @@ describe("AnthropicAceLanguageModel (GO LIVE — fornecedor real)", () => {
 
     expect(response.metadata.status).toBe("error");
     expect(response.metadata.error?.message).not.toContain("10.0.0.5");
-    expect(response.metadata.error?.code).toBe("EXECUTION_ERROR");
+    expect(response.metadata.error?.code).toBe("ACE_MODEL_EXECUTION_FAILED");
+  });
+
+  it("classifica AuthenticationError/PermissionDeniedError como ACE_MODEL_AUTHENTICATION_FAILED, sem vazar detalhe", async () => {
+    createMock.mockRejectedValue(new MockAuthenticationError("invalid x-api-key header, request id abc-123"));
+    const model = new AnthropicAceLanguageModel("fake-key");
+    const narrative = createNarrative({ text: "x", closingQuestionsAnswered: { historia: true, decisao: true, objetivo: true } });
+
+    const response = await model.run({ protocolId: "P002", protocolVersion: "ACE-0.1", prompt: "p002", input: { narrative } });
+
+    expect(response.metadata.error?.code).toBe("ACE_MODEL_AUTHENTICATION_FAILED");
+    expect(response.metadata.error?.message).not.toContain("x-api-key");
+    expect(response.metadata.error?.message).not.toContain("abc-123");
+  });
+
+  it("classifica RateLimitError como ACE_MODEL_RATE_LIMITED", async () => {
+    createMock.mockRejectedValue(new MockRateLimitError("rate limit exceeded"));
+    const model = new AnthropicAceLanguageModel("fake-key");
+    const narrative = createNarrative({ text: "x", closingQuestionsAnswered: { historia: true, decisao: true, objetivo: true } });
+
+    const response = await model.run({ protocolId: "P002", protocolVersion: "ACE-0.1", prompt: "p002", input: { narrative } });
+
+    expect(response.metadata.error?.code).toBe("ACE_MODEL_RATE_LIMITED");
+  });
+
+  it("classifica APIConnectionTimeoutError como ACE_MODEL_TIMEOUT", async () => {
+    createMock.mockRejectedValue(new MockAPIConnectionTimeoutError("timed out"));
+    const model = new AnthropicAceLanguageModel("fake-key");
+    const narrative = createNarrative({ text: "x", closingQuestionsAnswered: { historia: true, decisao: true, objetivo: true } });
+
+    const response = await model.run({ protocolId: "P002", protocolVersion: "ACE-0.1", prompt: "p002", input: { narrative } });
+
+    expect(response.metadata.error?.code).toBe("ACE_MODEL_TIMEOUT");
+  });
+
+  it("classifica APIConnectionError/InternalServerError como ACE_MODEL_UNAVAILABLE", async () => {
+    createMock.mockRejectedValue(new MockAPIConnectionError("network unreachable"));
+    const model = new AnthropicAceLanguageModel("fake-key");
+    const narrative = createNarrative({ text: "x", closingQuestionsAnswered: { historia: true, decisao: true, objetivo: true } });
+
+    const response = await model.run({ protocolId: "P002", protocolVersion: "ACE-0.1", prompt: "p002", input: { narrative } });
+
+    expect(response.metadata.error?.code).toBe("ACE_MODEL_UNAVAILABLE");
+
+    createMock.mockRejectedValue(new MockInternalServerError("internal error"));
+    const response2 = await model.run({ protocolId: "P002", protocolVersion: "ACE-0.1", prompt: "p002", input: { narrative } });
+    expect(response2.metadata.error?.code).toBe("ACE_MODEL_UNAVAILABLE");
+  });
+
+  it("saída sem bloco tool_use é classificada como ACE_MODEL_INVALID_RESPONSE", async () => {
+    createMock.mockResolvedValue({ content: [{ type: "text", text: "resposta em texto livre" }] });
+    const model = new AnthropicAceLanguageModel("fake-key");
+    const narrative = createNarrative({ text: "x", closingQuestionsAnswered: { historia: true, decisao: true, objetivo: true } });
+
+    const response = await model.run({ protocolId: "P002", protocolVersion: "ACE-0.1", prompt: "p002", input: { narrative } });
+
+    expect(response.metadata.error?.code).toBe("ACE_MODEL_INVALID_RESPONSE");
   });
 
   it("P010: inclui os dados da CompatibilityMatrix (forças por profissional) no conteúdo enviado", async () => {

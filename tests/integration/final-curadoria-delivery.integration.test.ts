@@ -12,6 +12,7 @@ import {
 } from "@/modules/concierge/delivery-repository";
 import { FakeAceLanguageModel } from "@/modules/concierge/fake-language-model";
 import { submitHumanReview } from "@/modules/concierge/human-review-repository";
+import type { AceLanguageModel, AceLanguageModelRequest, AceLanguageModelResponse } from "@/modules/concierge/language-model";
 import { runAceExecution } from "@/modules/concierge/orchestrator";
 import { createPatientAccount } from "@/modules/profiles/patient-account-repository";
 import { createProfessionalProfile } from "@/modules/profiles/professional-repository";
@@ -248,5 +249,36 @@ describe("Última sprint do MVP — Entrega da Curadoria (P010, Supabase local)"
 
     const { data } = await curador.client.from("final_curadoria_deliveries").select("id").eq("case_id", caseId);
     expect(data ?? []).toHaveLength(1);
+  });
+
+  it("GO LIVE: falha do fornecedor na entrega nunca cai no modelo fake — retorna erro sanitizado, nenhuma entrega persistida", async () => {
+    const { admin, caseId } = await createValidatedCase();
+
+    class FailingLanguageModel implements AceLanguageModel {
+      async run<TInput, TOutput>(_request: AceLanguageModelRequest<TInput>): Promise<AceLanguageModelResponse<TOutput>> {
+        return {
+          output: null,
+          metadata: {
+            modelId: "test-failing-model",
+            executedAt: new Date().toISOString(),
+            status: "error",
+            error: { code: "ACE_MODEL_UNAVAILABLE", message: "Detalhe interno do fornecedor — nunca deveria vazar." },
+          },
+        };
+      }
+    }
+
+    const result = await deliverFinalCuradoria({
+      supabase: admin.client,
+      caseId,
+      actorId: admin.userId,
+      languageModel: new FailingLanguageModel(),
+    });
+
+    expect(result.outcome).toBe("error");
+    expect(result.outcome === "error" && result.error).not.toContain("Detalhe interno do fornecedor");
+
+    const { data } = await admin.client.from("final_curadoria_deliveries").select("id").eq("case_id", caseId);
+    expect(data ?? []).toHaveLength(0);
   });
 });

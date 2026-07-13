@@ -15,9 +15,15 @@ import { getCase, changeCaseStatus } from "@/modules/cases/repository";
 
 import { getArtifactById } from "./execution-repository";
 import { listHumanReviewResultsForCase } from "./human-review-repository";
-import type { AceLanguageModel } from "./language-model";
+import { AceLanguageModelConfigurationError, getAceLanguageModel, type AceLanguageModel } from "./language-model";
 import { SupabaseProviderPresentationRepository } from "./provider-adapters";
 import type { FinalCuradoriaDeliveryRecord } from "./types";
+
+// Mesma mensagem única do orquestrador (orchestrator.ts) para toda falha
+// relacionada ao modelo de linguagem — nunca detalhe técnico para quem
+// entrega a Curadoria.
+const ACE_MODEL_FAILURE_MESSAGE =
+  "A entrega da Curadoria não pôde ser concluída neste momento. Verifique a configuração do modelo de linguagem ou tente novamente mais tarde.";
 
 async function nameByProfileId(supabase: SupabaseClient, profileId: string): Promise<string> {
   const { data } = await supabase.from("profiles").select("display_name").eq("id", profileId).maybeSingle();
@@ -123,7 +129,11 @@ export type DeliverFinalCuradoriaParams = {
   supabase: SupabaseClient;
   caseId: string;
   actorId: string;
-  languageModel: AceLanguageModel;
+  // Opcional de propósito: em produção, a resolução real (Anthropic vs
+  // falha explícita) acontece dentro desta função — nunca antes, na action
+  // fina que chama. Testes/integrações continuam podendo injetar um
+  // modelo próprio diretamente.
+  languageModel?: AceLanguageModel;
   providerPresentationRepository?: ProviderPresentationRepository;
 };
 
@@ -139,7 +149,7 @@ export type DeliverFinalCuradoriaResult =
 // verificação abaixo) — reabertura é fluxo próprio, fora do escopo desta
 // sprint.
 export async function deliverFinalCuradoria(params: DeliverFinalCuradoriaParams): Promise<DeliverFinalCuradoriaResult> {
-  const { supabase, caseId, actorId, languageModel } = params;
+  const { supabase, caseId, actorId } = params;
   const providerPresentationRepository = params.providerPresentationRepository ?? new SupabaseProviderPresentationRepository(supabase);
 
   const kase = await getCase(supabase, caseId);
@@ -209,6 +219,20 @@ export async function deliverFinalCuradoria(params: DeliverFinalCuradoriaParams)
     methodVersion: validatedReview.methodVersion,
   };
 
+  // Resolvida aqui dentro (não antes, na action) de propósito — mesma
+  // regra do orquestrador (orchestrator.ts): em produção sem
+  // ANTHROPIC_API_KEY, lança AceLanguageModelConfigurationError e nunca
+  // chega a usar o modelo fake.
+  let languageModel: AceLanguageModel;
+  try {
+    languageModel = params.languageModel ?? (await getAceLanguageModel());
+  } catch (error) {
+    if (error instanceof AceLanguageModelConfigurationError) {
+      return { outcome: "error", error: ACE_MODEL_FAILURE_MESSAGE };
+    }
+    throw error;
+  }
+
   const llmResponse = await languageModel.run<
     {
       decisionCase: DecisionCase;
@@ -225,7 +249,7 @@ export async function deliverFinalCuradoria(params: DeliverFinalCuradoriaParams)
   });
 
   if (llmResponse.metadata.status === "error" || !llmResponse.output) {
-    return { outcome: "error", error: "Não foi possível gerar o conteúdo da entrega agora. Tente novamente." };
+    return { outcome: "error", error: ACE_MODEL_FAILURE_MESSAGE };
   }
 
   let finalCuradoria;

@@ -6,6 +6,7 @@ import type { ProtocolId } from "@/modules/ace/core/protocol-id";
 
 import type { CaseStatus } from "@/modules/cases/types";
 
+import { getAceLanguageModelHealth } from "./language-model";
 import type {
   AceArtifact,
   AceArtifactType,
@@ -502,8 +503,11 @@ export async function getAceHealthCheck(supabase: SupabaseClient): Promise<AceHe
     (execution) => execution.status === "RUNNING" && now - new Date(execution.startedAt).getTime() > thresholdMs,
   );
 
+  const languageModelHealth = getAceLanguageModelHealth();
+
   return {
-    languageModelProvider: "fake-deterministic-v1 (ambiente de testes — nenhum fornecedor real configurado)",
+    languageModelStatus: languageModelHealth.status,
+    languageModelHealthy: languageModelHealth.healthy,
     eligibleProfessionalsCount,
     professionalsMissingCompetencyDataCount: professionals.length - eligibleProfessionalsCount,
     stuckRunningExecutions,

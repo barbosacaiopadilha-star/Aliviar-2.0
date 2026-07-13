@@ -339,6 +339,47 @@ const PROTOCOL_CONFIG: Partial<Record<string, ProtocolConfig>> = {
   },
 };
 
+// Classifica falhas do fornecedor em códigos estáveis e pesquisáveis —
+// nunca propaga a mensagem bruta do SDK (que pode incluir corpo da
+// resposta HTTP, cabeçalhos ou detalhe de rede). GO LIVE: cada código
+// abaixo é o que orchestrator.ts/delivery-repository.ts persistem em
+// `failureCode` quando a falha ocorre em produção — nunca um fallback
+// silencioso para o modelo fake.
+function classifyAnthropicError(error: unknown): { code: string; message: string } {
+  if (error instanceof Anthropic.AuthenticationError || error instanceof Anthropic.PermissionDeniedError) {
+    return {
+      code: "ACE_MODEL_AUTHENTICATION_FAILED",
+      message: "Falha de autenticação com o fornecedor do modelo de linguagem.",
+    };
+  }
+
+  if (error instanceof Anthropic.RateLimitError) {
+    return {
+      code: "ACE_MODEL_RATE_LIMITED",
+      message: "O fornecedor do modelo de linguagem está limitando as requisições no momento.",
+    };
+  }
+
+  if (error instanceof Anthropic.APIConnectionTimeoutError) {
+    return {
+      code: "ACE_MODEL_TIMEOUT",
+      message: "O fornecedor do modelo de linguagem não respondeu a tempo.",
+    };
+  }
+
+  if (error instanceof Anthropic.APIConnectionError || error instanceof Anthropic.InternalServerError) {
+    return {
+      code: "ACE_MODEL_UNAVAILABLE",
+      message: "O fornecedor do modelo de linguagem está indisponível no momento.",
+    };
+  }
+
+  return {
+    code: "ACE_MODEL_EXECUTION_FAILED",
+    message: "Não foi possível obter uma resposta do modelo de linguagem.",
+  };
+}
+
 export class AnthropicAceLanguageModel implements AceLanguageModel {
   private readonly client: Anthropic;
   private readonly modelId: string;
@@ -396,7 +437,10 @@ export class AnthropicAceLanguageModel implements AceLanguageModel {
             modelId: this.modelId,
             executedAt,
             status: "error",
-            error: { code: "EXECUTION_ERROR", message: "O modelo não retornou uma saída estruturada." },
+            error: {
+              code: "ACE_MODEL_INVALID_RESPONSE",
+              message: "O modelo não retornou uma saída estruturada compatível com o schema esperado.",
+            },
           },
         };
       }
@@ -405,17 +449,15 @@ export class AnthropicAceLanguageModel implements AceLanguageModel {
         output: toolUse.input as TOutput,
         metadata: { modelId: this.modelId, executedAt, status: "ok" },
       };
-    } catch {
-      // Sanitizado de propósito — nunca propaga detalhe de infraestrutura
-      // ou da chamada de rede (mesma regra de execution-repository.ts).
+    } catch (error) {
+      // Sanitizado de propósito — nunca propaga detalhe de infraestrutura,
+      // corpo de resposta ou mensagem bruta do SDK (mesma regra de
+      // execution-repository.ts). O código classificado é o que
+      // orchestrator.ts/delivery-repository.ts persistem como
+      // `failureCode` — nunca um fallback silencioso para o modelo fake.
       return {
         output: null,
-        metadata: {
-          modelId: this.modelId,
-          executedAt,
-          status: "error",
-          error: { code: "EXECUTION_ERROR", message: "Não foi possível obter uma resposta do modelo de linguagem." },
-        },
+        metadata: { modelId: this.modelId, executedAt, status: "error", error: classifyAnthropicError(error) },
       };
     }
   }

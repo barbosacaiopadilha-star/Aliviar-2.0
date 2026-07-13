@@ -6,7 +6,6 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRoleForAction } from "@/modules/auth/guard";
 import { getCase } from "@/modules/cases/repository";
 
-import { getAceLanguageModel } from "./language-model";
 import { runAceExecution } from "./orchestrator";
 import type { ConciergeActionResult } from "./types";
 
@@ -39,11 +38,14 @@ export async function runAceExecutionAction(caseId: string): Promise<ConciergeAc
     return { success: false, error: "Você só pode executar o ACE em casos atribuídos a você." };
   }
 
+  // languageModel não é passado — o orquestrador resolve internamente
+  // (getAceLanguageModel), já dentro do registro da execução, para que uma
+  // eventual falha de configuração vire um FAILED rastreável, nunca um
+  // throw cru aqui.
   const result = await runAceExecution({
     supabase,
     caseId,
     actorId: authState.user.id,
-    languageModel: await getAceLanguageModel(),
   });
 
   revalidatePath(`/admin/casos/${caseId}`);
