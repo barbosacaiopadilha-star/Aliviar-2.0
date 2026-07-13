@@ -1,5 +1,3 @@
-import "server-only";
-
 import Anthropic from "@anthropic-ai/sdk";
 
 import type { CaseAudit } from "@/modules/ace/artifacts/case-audit";
