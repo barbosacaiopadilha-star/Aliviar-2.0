@@ -6,7 +6,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRoleForAction } from "@/modules/auth/guard";
 import { getCase } from "@/modules/cases/repository";
 
-import { FakeAceLanguageModel } from "./fake-language-model";
+import { getAceLanguageModel } from "./language-model";
 import { runAceExecution } from "./orchestrator";
 import type { ConciergeActionResult } from "./types";
 
@@ -43,7 +43,7 @@ export async function runAceExecutionAction(caseId: string): Promise<ConciergeAc
     supabase,
     caseId,
     actorId: authState.user.id,
-    languageModel: new FakeAceLanguageModel(),
+    languageModel: await getAceLanguageModel(),
   });
 
   revalidatePath(`/admin/casos/${caseId}`);

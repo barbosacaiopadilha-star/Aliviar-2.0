@@ -40,3 +40,20 @@ export type AceLanguageModelResponse<TOutput = unknown> = {
 export interface AceLanguageModel {
   run<TInput, TOutput>(request: AceLanguageModelRequest<TInput>): Promise<AceLanguageModelResponse<TOutput>>;
 }
+
+// GO LIVE — seleção de fornecedor por ambiente: usa o fornecedor real
+// (Anthropic) quando a chave está configurada; nunca em testes/dev sem
+// chave, para não exigir rede/credencial fora de produção. Os dois call
+// sites que decidiam `new FakeAceLanguageModel()` (actions.ts,
+// delivery-actions.ts) passam a chamar esta função em vez de escolher o
+// fornecedor eles mesmos — nenhuma lógica nova, só centraliza a mesma
+// decisão em um único lugar.
+export async function getAceLanguageModel(): Promise<AceLanguageModel> {
+  if (process.env.ANTHROPIC_API_KEY) {
+    const { AnthropicAceLanguageModel } = await import("./anthropic-language-model");
+    return new AnthropicAceLanguageModel();
+  }
+
+  const { FakeAceLanguageModel } = await import("./fake-language-model");
+  return new FakeAceLanguageModel();
+}

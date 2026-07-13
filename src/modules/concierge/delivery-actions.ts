@@ -7,7 +7,7 @@ import { requireAnyRoleForAction } from "@/modules/auth/guard";
 import { getCase } from "@/modules/cases/repository";
 
 import { deliverFinalCuradoria } from "./delivery-repository";
-import { FakeAceLanguageModel } from "./fake-language-model";
+import { getAceLanguageModel } from "./language-model";
 import type { ConciergeActionResult } from "./types";
 
 // Única ação para entregar a Curadoria — sempre a partir de um clique
@@ -37,7 +37,7 @@ export async function deliverFinalCuradoriaAction(caseId: string): Promise<Conci
     supabase,
     caseId,
     actorId: authState.user.id,
-    languageModel: new FakeAceLanguageModel(),
+    languageModel: await getAceLanguageModel(),
   });
 
   if (result.outcome === "error") {
