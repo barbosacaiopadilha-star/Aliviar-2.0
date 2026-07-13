@@ -1,5 +1,7 @@
 # Plano de Engenharia v1 — aliviar-conexao
 
+> **Nota de encerramento da V1 (ADR-021, `docs/DECISIONS.md`):** este documento registra o **plano original** do MVP — descoberta e conexão direta entre paciente e profissional (seções 1, 5, 13, 14 abaixo) — concebido antes da decisão de produto que criou o ACE e a Curadoria Médica Aliviar. Esse plano original **nunca foi implementado**: os módulos `discovery`/`connection` seguem como pastas reservadas vazias (ver seção 4), e o produto que efetivamente chegou à V1.0 é o descrito em `docs/PRODUCT_ARCHITECTURE.md` (jornada do Concierge, §4.2) e `docs/ace/` (o Método). A stack tecnológica (seção 3), o modelo de módulo isolado (seção 2) e o modelo de papéis/RLS (seções 6-9) permanecem válidos e foram, de fato, os adotados. O roadmap em fases (seção 13) e o backlog priorizado (seção 14) são **históricos** — não refletem o caminho real de entrega e não devem guiar trabalho futuro; consulte o changelog (`CHANGELOG.md`) para o histórico real de sprints.
+
 Este documento é o plano técnico de referência para a construção do `aliviar-conexao`. Ele se apoia em duas decisões de negócio/arquitetura já registradas: ADR-004 (domínio e escopo do MVP) e ADR-005 (stack tecnológica), em `docs/DECISIONS.md`. Este plano detalha a execução dessas decisões; não repete o protocolo de governança, que está em `docs/AGENTS.md`.
 
 Este é um documento vivo. Revisões de escopo relevantes devem ser refletidas aqui e, quando envolverem decisão de arquitetura ou de negócio, registradas também como ADR em `docs/DECISIONS.md`.

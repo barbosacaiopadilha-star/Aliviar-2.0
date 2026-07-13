@@ -167,6 +167,22 @@ Cabeçalhos de segurança HTTP (`X-Content-Type-Options`, `X-Frame-Options`, `Re
 
 Regra fixa: nenhum agente de IA executa `supabase db reset` ou qualquer comando destrutivo contra o projeto de produção.
 
+## 14. Checklist do primeiro paciente real
+
+Distinto do smoke test (seção 12, que usa dados de teste descartáveis): esta é a sequência para operar o **primeiro caso real** depois que o smoke test já passou. Cada item usa dado real de uma pessoa real, não um profissional/paciente "de teste".
+
+- [ ] **Primeiro Administrador**: já criado na etapa 6 — confirme que a pessoa certa (não uma conta de teste) tem o papel e consegue logar em produção.
+- [ ] **Primeiros profissionais reais**: cadastrar em `/admin/profissionais/novo` com dados reais — nome, identificador profissional, resumo, experiência, abordagem de intake, disponibilidade e ao menos uma área de competência real por profissional. Sem isso, esse profissional nunca aparece em nenhuma Shortlist (o Método recusando inventar dado, não um bug — ver `docs/DEBUGGING.md`). Recomendado: pelo menos 3 profissionais reais, para que o P008 tenha o que compor.
+- [ ] **Primeiro paciente real**: cadastrar em `/admin/pacientes/novo` com o e-mail real da pessoa. A senha inicial só aparece uma vez na tela — entregue com segurança (nunca por canal não confiável).
+- [ ] **Primeira História**: a pessoa loga com a própria conta e preenche "Sua História" até o fim (não uma versão de teste/rascunho abandonado).
+- [ ] **Primeiro Caso**: Administrador ou Curador Médico cria o Caso a partir dessa história real e avança para "Pronto para curadoria".
+- [ ] **Primeira execução do ACE**: iniciar a execução real no Caso. Confirmar em `/admin/ace/[executionId]` que todos os protocolos completaram (`COMPLETED`) sem `FAILED`.
+- [ ] **Primeira Revisão Humana**: um Curador Médico real (não uma conta de teste) revisa a Shortlist gerada e registra a decisão com justificativa genuína — não um texto de preenchimento.
+- [ ] **Primeira Entrega**: confirmar a entrega da Curadoria Final e que a pessoa consegue acessá-la em `/paciente/curadoria`, incluindo "Baixar em PDF".
+- [ ] **Acompanhamento**: registrar, fora do sistema (processo da equipe, não uma funcionalidade do produto), a data desta primeira entrega para o acompanhamento periódico de 12 meses previsto em `docs/PRODUCT_ARCHITECTURE.md`.
+
+Só depois deste checklist completo com uma pessoa real, ponta a ponta, a operação está de fato validada — o smoke test da seção 12 prova que o sistema funciona; este prova que a operação funciona.
+
 ## Proteção do modelo de linguagem em produção (já implementada)
 
 A checagem "produção nunca cai silenciosamente no modelo fake" está implementada e testada desde a sprint GO LIVE — ver `docs/ENVIRONMENT_VARIABLES.md` (seção "Seleção do modelo de linguagem") e `docs/DEBUGGING.md` (seção 2) para o comportamento exato e os `failureCode` possíveis.
