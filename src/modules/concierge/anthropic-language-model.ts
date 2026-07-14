@@ -385,7 +385,7 @@ export class AnthropicAceLanguageModel implements AceLanguageModel {
   private readonly modelId: string;
 
   constructor(apiKey?: string, modelId?: string) {
-    this.client = new Anthropic({ apiKey: apiKey ?? process.env.ANTHROPIC_API_KEY });
+    this.client = new Anthropic({ apiKey: apiKey ?? process.env.CLAUDE_API_KEY });
     this.modelId = modelId ?? process.env.ANTHROPIC_MODEL ?? DEFAULT_MODEL_ID;
   }
 

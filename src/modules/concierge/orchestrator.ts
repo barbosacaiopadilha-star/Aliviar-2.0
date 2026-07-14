@@ -246,7 +246,7 @@ export async function runAceExecution(params: RunAceExecutionParams): Promise<Ru
     // Resolvida aqui dentro (não antes) de propósito: só depois que a
     // execução já existe é possível registrar, com failureCode e timeline
     // próprios, o caso de configuração ausente — nunca um throw cru na
-    // action, sem rastro nenhum. Em produção sem ANTHROPIC_API_KEY, isto
+    // action, sem rastro nenhum. Em produção sem CLAUDE_API_KEY, isto
     // lança AceLanguageModelConfigurationError e nunca chega a usar o
     // modelo fake (getAceLanguageModel, language-model.ts).
     const languageModel = params.languageModel ?? (await getAceLanguageModel());

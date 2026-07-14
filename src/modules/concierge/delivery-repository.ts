@@ -221,7 +221,7 @@ export async function deliverFinalCuradoria(params: DeliverFinalCuradoriaParams)
 
   // Resolvida aqui dentro (não antes, na action) de propósito — mesma
   // regra do orquestrador (orchestrator.ts): em produção sem
-  // ANTHROPIC_API_KEY, lança AceLanguageModelConfigurationError e nunca
+  // CLAUDE_API_KEY, lança AceLanguageModelConfigurationError e nunca
   // chega a usar o modelo fake.
   let languageModel: AceLanguageModel;
   try {

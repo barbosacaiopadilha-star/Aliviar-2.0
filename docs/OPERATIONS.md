@@ -37,7 +37,7 @@ Ver `docs/ENVIRONMENT_VARIABLES.md` para o propósito de cada uma. Resumo de ond
 | `NEXT_PUBLIC_SUPABASE_URL` | Project Settings → API → Project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Project Settings → API → anon public |
 | `SUPABASE_SERVICE_ROLE_KEY` | Project Settings → API → service_role (**nunca** no navegador) |
-| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) → API Keys |
+| `CLAUDE_API_KEY` (nome renomeado de `ANTHROPIC_API_KEY` por bug de propagação confirmado na Vercel — ver `docs/ENVIRONMENT_VARIABLES.md`) | [console.anthropic.com](https://console.anthropic.com) → API Keys |
 | `ANTHROPIC_MODEL` | Opcional — deixe em branco para usar o padrão |
 
 Todas cadastradas na Vercel (etapa 9), nunca em arquivo versionado.

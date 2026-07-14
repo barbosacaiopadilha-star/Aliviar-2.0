@@ -72,7 +72,7 @@ export type AceLanguageModelHealth = {
 // Check do dashboard (decide o que mostrar) — as duas leituras da mesma
 // verdade, nunca duas definições que podem divergir.
 export function getAceLanguageModelHealth(): AceLanguageModelHealth {
-  if (process.env.ANTHROPIC_API_KEY) {
+  if (process.env.CLAUDE_API_KEY) {
     return { status: "ANTHROPIC_CONFIGURED", healthy: true };
   }
 
@@ -85,12 +85,18 @@ export function getAceLanguageModelHealth(): AceLanguageModelHealth {
 
 // Seleção de fornecedor por ambiente. Nunca cai no FakeAceLanguageModel em
 // produção — nem em silêncio, nem por omissão de configuração: se
-// ANTHROPIC_API_KEY estiver ausente em produção, lança
+// CLAUDE_API_KEY estiver ausente em produção, lança
 // AceLanguageModelConfigurationError (o orquestrador/delivery-repository
 // tratam isso como uma falha explícita da execução, nunca como um throw
 // cru sem rastro). Em qualquer ambiente não-produtivo (dev, teste, CI),
 // a ausência da chave sempre usa o modelo fake — nunca exige rede/
 // credencial fora de produção.
+//
+// Nome da variável (CLAUDE_API_KEY, não ANTHROPIC_API_KEY): contorno de um
+// bug confirmado da própria Vercel — o valor de ANTHROPIC_API_KEY chegava
+// vazio em runtime mesmo com a variável corretamente configurada no
+// painel (caso aberto no suporte deles). Nunca renomear de volta sem
+// primeiro confirmar que o bug foi corrigido do lado da Vercel.
 export async function getAceLanguageModel(): Promise<AceLanguageModel> {
   const health = getAceLanguageModelHealth();
 
@@ -101,7 +107,7 @@ export async function getAceLanguageModel(): Promise<AceLanguageModel> {
 
   if (health.status === "MODEL_NOT_CONFIGURED") {
     throw new AceLanguageModelConfigurationError(
-      "ANTHROPIC_API_KEY não configurada em produção — o ACE nunca usa o modelo fake fora de desenvolvimento/teste.",
+      "CLAUDE_API_KEY não configurada em produção — o ACE nunca usa o modelo fake fora de desenvolvimento/teste.",
     );
   }
 

@@ -18,7 +18,7 @@ const LANGUAGE_MODEL_STATUS_LABELS: Record<AceLanguageModelHealthStatus, string>
 // Diagnóstico operacional do Método, não do pipeline de uma execução
 // específica — responde "dá para confiar no ACE agora?" antes de colocar
 // pacientes reais em produção. GO LIVE: MODEL_NOT_CONFIGURED só ocorre em
-// produção sem ANTHROPIC_API_KEY — nunca um estado operacional válido,
+// produção sem CLAUDE_API_KEY — nunca um estado operacional válido,
 // por isso aparece como não saudável aqui, nunca escondido.
 export function AceHealthCheckCard({ healthCheck }: AceHealthCheckCardProps) {
   const hasStuckExecutions = healthCheck.stuckRunningExecutions.length > 0;
@@ -44,7 +44,7 @@ export function AceHealthCheckCard({ healthCheck }: AceHealthCheckCardProps) {
 
       {!healthCheck.languageModelHealthy ? (
         <Alert variant="error">
-          ANTHROPIC_API_KEY não está configurada em produção — o ACE não pode executar nenhum protocolo que dependa de
+          CLAUDE_API_KEY não está configurada em produção — o ACE não pode executar nenhum protocolo que dependa de
           modelo de linguagem até a chave ser configurada. O sistema nunca usa o modelo fake fora de
           desenvolvimento/teste.
         </Alert>

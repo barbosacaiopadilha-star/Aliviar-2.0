@@ -15,7 +15,7 @@ Todos definidos em `src/modules/concierge/anthropic-language-model.ts` (classifi
 
 | `failureCode` | Causa | Onde olhar |
 |---|---|---|
-| `ACE_MODEL_NOT_CONFIGURED` | `ANTHROPIC_API_KEY` ausente em produção | `docs/ENVIRONMENT_VARIABLES.md` — configurar a variável na Vercel. |
+| `ACE_MODEL_NOT_CONFIGURED` | `CLAUDE_API_KEY` ausente em produção | `docs/ENVIRONMENT_VARIABLES.md` — configurar a variável na Vercel. |
 | `ACE_MODEL_AUTHENTICATION_FAILED` | Chave inválida/revogada (`Anthropic.AuthenticationError`) | Verificar a chave no painel da Anthropic. |
 | `ACE_MODEL_RATE_LIMITED` | Limite de requisições excedido (`RateLimitError`) | Aguardar/verificar plano da conta Anthropic. |
 | `ACE_MODEL_TIMEOUT` | Timeout de conexão (`APIConnectionTimeoutError`) | Geralmente transitório — retomar a execução. |
