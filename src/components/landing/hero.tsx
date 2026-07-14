@@ -49,6 +49,7 @@ export function Hero({ photoSrc, videoSrc, videoPoster }: HeroProps) {
           <h1 className="mt-4 font-serif text-4xl font-semibold leading-[1.08] text-surface lg:text-5xl">
             Uma escolha de cuidado, <span className="text-brand-gold">nunca sozinho</span>.
           </h1>
+          <div aria-hidden="true" className="gold-divider mx-auto mt-5 lg:mx-0" />
           <p className="mt-5 text-lg text-surface/85">
             Você conta sua história no seu tempo. Alguém da nossa equipe organiza um caminho
             claro, com critério — e caminha ao seu lado até a conversa que importa.

@@ -147,6 +147,14 @@
   .animate-slow-zoom {
     animation: slow-zoom 18s var(--ease-standard) infinite alternate;
   }
+
+  /* Traço pontilhado dourado curto entre título e texto — mesmo divisor
+     do material de referência da Aliviar Conecta, repetido em toda seção
+     para reforçar a cor dourada da marca ("linhas douradas" a pedido). */
+  .gold-divider {
+    width: 3rem;
+    border-top: 2px dotted var(--color-brand-gold);
+  }
 }
 
 @keyframes fade-up {

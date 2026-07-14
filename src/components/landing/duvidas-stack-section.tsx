@@ -111,6 +111,7 @@ export function DuvidasStackSection() {
           <h2 className="mt-3 font-serif text-2xl font-semibold text-ink lg:text-3xl">
             Perguntas que costumam vir antes do primeiro passo
           </h2>
+          <div aria-hidden="true" className="gold-divider mx-auto mt-4 lg:mx-0" />
         </div>
         <div className="mx-auto mt-12 grid max-w-content gap-6 lg:grid-cols-2">
           {CARDS.map((card) => (
@@ -145,6 +146,7 @@ export function DuvidasStackSection() {
           <h2 className="mt-3 font-serif text-2xl font-semibold text-ink lg:text-3xl">
             Perguntas que costumam vir antes do primeiro passo
           </h2>
+          <div aria-hidden="true" className="gold-divider mx-auto mt-4" />
         </div>
 
         <div className="relative h-[22rem] w-full max-w-xs" style={{ perspective: "1600px" }}>

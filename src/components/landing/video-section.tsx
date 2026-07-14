@@ -3,6 +3,7 @@
 import { Play, Volume2, VolumeX } from "lucide-react";
 import { useRef, useState } from "react";
 
+import { GoldCornerAccent } from "@/components/landing/gold-corner-accent";
 import { SectionContainer } from "@/components/landing/section-container";
 import { SectionReveal } from "@/components/landing/section-reveal";
 import { cn } from "@/components/ui/cn";
@@ -94,8 +95,11 @@ function VideoFrame({ src, poster, compact }: { src?: string; poster?: string; c
 export function VideoSection({ src, poster, variant = "section" }: VideoSectionProps) {
   if (variant === "window") {
     return (
-      <div className="mx-auto w-full overflow-hidden rounded-2xl shadow-xl ring-1 ring-surface/15">
-        <VideoFrame src={src} poster={poster} />
+      <div className="relative mx-auto w-full">
+        <GoldCornerAccent className="-right-3 -top-3 size-20 lg:size-28" />
+        <div className="w-full overflow-hidden rounded-2xl shadow-xl ring-1 ring-surface/15">
+          <VideoFrame src={src} poster={poster} />
+        </div>
       </div>
     );
   }

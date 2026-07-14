@@ -42,6 +42,7 @@ export function WhyTrustSection() {
         <h2 className="mt-3 font-serif text-2xl font-semibold text-surface lg:text-3xl">
           Como avaliamos cada profissional
         </h2>
+        <div aria-hidden="true" className="gold-divider mx-auto mt-4" />
       </SectionReveal>
 
       <div className="mx-auto mt-10 grid max-w-content gap-6 sm:grid-cols-3">
