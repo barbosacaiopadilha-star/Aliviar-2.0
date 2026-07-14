@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 // não recebe nada. Checagem de existência em disco (build/render time, só
 // aqui, nunca em runtime do cliente) evita apontar para um arquivo
 // inexistente enquanto o vídeo definitivo não for adicionado.
-const VIDEO_INSTITUCIONAL_SRC = "/videos/video-institucional-aliviar.mp4";
+const VIDEO_INSTITUCIONAL_SRC = "/videos/video-institucional-aliviar.webm";
 const VIDEO_INSTITUCIONAL_POSTER = "/images/video-institucional-poster.webp";
 
 function resolveInstitutionalVideo(): { src?: string; poster?: string } {
