@@ -7,16 +7,16 @@ import { ConnectionZone } from "@/components/landing/connection-zone";
 import { FaqSection } from "@/components/landing/faq-section";
 import { FinalSection } from "@/components/landing/final-section";
 import { ReceptionSection } from "@/components/landing/reception-section";
-import { VideoSection } from "@/components/landing/video-section";
 
-// LANDING V3 (revisão 3 — dois ambientes): a Landing é a recepção da
-// Aliviar — ReceptionSection (ambiente 1) → VideoSection (o vídeo como
-// anfitrião, com destaque explícito, nunca escondido) → ConnectionZone
-// (travessia só de luz/tipografia, carrega o resto da jornada emocional
-// sem foto nova) → FinalSection (ambiente 2, encerramento) → FaqSection.
-// Hero, PrimaryCtaBand, HowItWorksSection, BenefitsSection,
-// WhyTrustSection, ConciergeSection e FinalCtaSection permanecem no
-// repositório (código reutilizável), só não são mais importados.
+// LANDING V3 (revisão 4 — vídeo como janela fixa): ReceptionSection agora
+// embute o vídeo institucional como uma "janela" (VideoSection
+// variant="window") que acompanha a rolagem em position: sticky — nunca
+// remontada, então o som nunca reinicia — em vez de ser uma seção
+// separada. → ConnectionZone (travessia só de luz/tipografia) →
+// FinalSection (encerramento) → FaqSection. Hero, PrimaryCtaBand,
+// HowItWorksSection, BenefitsSection, WhyTrustSection, ConciergeSection e
+// FinalCtaSection permanecem no repositório (código reutilizável), só não
+// são mais importados.
 export const metadata: Metadata = {
   title: { absolute: "Aliviar Curadoria Médica — Uma escolha de cuidado, nunca sozinho" },
   description:
@@ -61,8 +61,11 @@ export default function HomePage() {
 
   return (
     <>
-      <ReceptionSection photoSrc={receptionPhoto} />
-      <VideoSection src={institutionalVideo.src} poster={institutionalVideo.poster} />
+      <ReceptionSection
+        photoSrc={receptionPhoto}
+        videoSrc={institutionalVideo.src}
+        videoPoster={institutionalVideo.poster}
+      />
       <ConnectionZone />
       <FinalSection photoSrc={finalPhoto} />
       <FaqSection />

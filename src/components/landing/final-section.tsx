@@ -21,7 +21,10 @@ export function FinalSection({ photoSrc }: FinalSectionProps) {
           className="absolute inset-0 bg-[linear-gradient(180deg,_var(--color-bg-surface)_0%,_var(--color-bg-canvas)_100%)]"
         />
       )}
-      <div aria-hidden="true" className="absolute inset-0 bg-surface/25" />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-[linear-gradient(180deg,_color-mix(in_srgb,_var(--color-brand-sage)_18%,_transparent)_0%,_color-mix(in_srgb,_var(--color-bg-canvas)_55%,_transparent)_100%)]"
+      />
 
       <SectionReveal className="relative mx-auto flex max-w-reading flex-col items-center gap-8 text-center">
         <p className="font-serif text-3xl font-semibold leading-snug text-ink lg:text-4xl">
