@@ -8,9 +8,10 @@ import { SectionReveal } from "@/components/landing/section-reveal";
 
 // Três critérios de avaliação — no mesmo espírito de "Como avaliamos os
 // médicos parceiros" do site de referência, com o critério real da
-// Aliviar Curadoria (nunca copiado literalmente). Fundo navy escuro:
-// alterna o ritmo claro/escuro da Landing (Hero e a faixa de jornada já
-// são escuras) em vez de mais uma seção branca.
+// Aliviar Curadoria (nunca copiado literalmente). Fundo sage escuro
+// (não navy) — a Landing tinha navy em excesso (Hero, esta seção, CTA
+// final, rodapé); sage passa a ser a cor escura protagonista aqui e no
+// CTA final, invertendo o equilíbrio.
 const CRITERIA: Array<{
   icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
   title: string;
@@ -35,9 +36,11 @@ const CRITERIA: Array<{
 
 export function WhyTrustSection() {
   return (
-    <SectionContainer className="border-t border-brand-gold/25 bg-brand-primary-deep">
+    <SectionContainer className="border-t border-brand-gold/25 bg-[color-mix(in_srgb,_var(--color-brand-sage)_75%,_var(--color-ink))]">
       <SectionReveal className="mx-auto max-w-reading text-center">
-        <SectionEyebrow tone="dark">Critério, não sorte</SectionEyebrow>
+        <SectionEyebrow tone="dark" className="text-brand-gold">
+          Critério, não sorte
+        </SectionEyebrow>
         <h2 className="mt-3 font-serif text-2xl font-semibold text-surface lg:text-3xl">
           Como avaliamos cada profissional
         </h2>

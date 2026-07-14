@@ -15,9 +15,10 @@ type HeroProps = {
 // profundidade cinematográfica discreta), vídeo institucional como um
 // cartão flutuante sobre a própria foto (nunca position:fixed — faz
 // parte da composição do hero, não a acompanha pela rolagem). Gradiente
-// navy→sage (tokens da marca, verde em evidência real, não só um detalhe)
-// garante contraste do texto em qualquer ponto da foto. Traço dourado
-// fino na base marca a transição para a próxima seção.
+// navy→sage: navy mais forte só sob o texto (à esquerda, garante
+// contraste), sage dominante na metade direita — verde com presença
+// real, não só um detalhe na borda. Traço dourado fino na base marca a
+// transição para a próxima seção.
 export function Hero({ photoSrc, videoSrc, videoPoster }: HeroProps) {
   return (
     <section className="relative flex min-h-[92svh] items-center overflow-hidden bg-brand-primary-deep px-4 pb-16 pt-28 lg:px-8 lg:pt-32">
@@ -33,7 +34,7 @@ export function Hero({ photoSrc, videoSrc, videoPoster }: HeroProps) {
       )}
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-[linear-gradient(125deg,_var(--color-brand-primary-deep)_0%,_color-mix(in_srgb,_var(--color-brand-primary-deep)_82%,_transparent)_32%,_color-mix(in_srgb,_var(--color-brand-primary)_45%,_transparent)_58%,_color-mix(in_srgb,_var(--color-brand-sage)_38%,_transparent)_82%,_color-mix(in_srgb,_var(--color-brand-sage)_15%,_transparent)_100%)]"
+        className="absolute inset-0 bg-[linear-gradient(120deg,_var(--color-brand-primary-deep)_0%,_color-mix(in_srgb,_var(--color-brand-primary-deep)_85%,_transparent)_42%,_color-mix(in_srgb,_var(--color-brand-sage)_55%,_transparent)_68%,_color-mix(in_srgb,_var(--color-brand-sage)_50%,_transparent)_100%)]"
       />
       <div
         aria-hidden="true"

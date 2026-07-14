@@ -5,7 +5,7 @@ import { SectionReveal } from "@/components/landing/section-reveal";
 
 export function FinalCtaSection() {
   return (
-    <SectionContainer className="bg-[linear-gradient(160deg,_var(--color-brand-primary)_0%,_var(--color-brand-primary-deep)_100%)]">
+    <SectionContainer className="bg-[linear-gradient(160deg,_var(--color-brand-sage)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_70%,_var(--color-ink))_55%,_var(--color-brand-primary-deep)_100%)]">
       <SectionReveal className="mx-auto flex max-w-reading flex-col items-center gap-8 text-center">
         <SectionEyebrow tone="dark">Quando estiver pronto</SectionEyebrow>
         <h2 className="font-serif text-3xl font-semibold leading-snug text-surface lg:text-4xl">
