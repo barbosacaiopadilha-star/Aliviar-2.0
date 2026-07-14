@@ -72,15 +72,6 @@ export type AceLanguageModelHealth = {
 // Check do dashboard (decide o que mostrar) — as duas leituras da mesma
 // verdade, nunca duas definições que podem divergir.
 export function getAceLanguageModelHealth(): AceLanguageModelHealth {
-  // DIAGNÓSTICO TEMPORÁRIO #2 (remover após investigação com suporte Vercel)
-  // — lista só os NOMES de variáveis de ambiente que contenham "ANTHROPIC"
-  // ou "API_KEY", nunca o valor, para checar se a chave está presente sob
-  // um nome ligeiramente diferente.
-  console.log(
-    "[ace-health-debug-2] relevant env keys:",
-    Object.keys(process.env).filter((k) => k.includes("ANTHROPIC") || k.includes("API_KEY")),
-  );
-
   if (process.env.ANTHROPIC_API_KEY) {
     return { status: "ANTHROPIC_CONFIGURED", healthy: true };
   }
