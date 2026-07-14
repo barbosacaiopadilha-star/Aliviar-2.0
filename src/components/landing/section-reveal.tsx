@@ -14,9 +14,16 @@ type SectionRevealProps = {
 // biblioteca. prefers-reduced-motion já é forçado globalmente em
 // globals.css (duração ~0), então este componente nunca precisa checar a
 // preferência por conta própria.
+//
+// Estado de repouso é SEMPRE visível (nenhuma classe de opacidade por
+// padrão) — só ganha a classe de animação (que começa em opacity:0 e
+// termina em opacity:1 via @keyframes) quando o observer confirma que o
+// elemento entrou na viewport. Se o JS falhar por qualquer motivo
+// (hidratação, observer indisponível), o conteúdo nunca fica preso
+// invisível — CTAs e texto continuam sempre acessíveis.
 export function SectionReveal({ children, className }: SectionRevealProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
@@ -25,7 +32,7 @@ export function SectionReveal({ children, className }: SectionRevealProps) {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setVisible(true);
+          setAnimate(true);
           observer.disconnect();
         }
       },
@@ -36,7 +43,7 @@ export function SectionReveal({ children, className }: SectionRevealProps) {
   }, []);
 
   return (
-    <div ref={ref} className={cn(visible ? "animate-fade-up" : "opacity-0", className)}>
+    <div ref={ref} className={cn(animate && "animate-fade-up", className)}>
       {children}
     </div>
   );
