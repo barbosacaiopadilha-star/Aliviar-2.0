@@ -2,15 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { GoldenThread } from "@/components/landing/golden-thread";
 import { SectionEyebrow } from "@/components/landing/section-eyebrow";
 
-// Pilha de cards com flip 3D real (Dúvida na frente, Solução atrás),
-// fixada na tela durante a rolagem — a mesma dinâmica do site de
-// referência (aliviar-temp.vercel.app), reconstruída com GSAP +
-// ScrollTrigger (biblioteca padrão, todos os plugins gratuitos desde
-// 2024 — nunca um serviço proprietário). Mesmo padrão de conteúdo das
-// nossas dúvidas reais (não as frases literais deles, que descrevem
-// convênio/cirurgia — um produto irmão distinto).
+// Livro físico de Dúvidas — mesmos 6 pares Dúvida/Solução do mecanismo
+// anterior (DuvidasStackSection), agora com hinge real na lombada
+// (transform-origin: left, não mais o centro), sombra dinâmica que
+// aumenta no meio do giro (simulando a folha se levantando) e avanço por
+// toque/teclado além da rolagem — nunca elástico (power2.inOut),
+// respeitando docs/BRAND_GUIDELINES.md.
 type DuvidaCard = {
   duvidaTitle: [string, string];
   duvidaText: string;
@@ -57,12 +57,13 @@ const CARDS: DuvidaCard[] = [
   },
 ];
 
-export function DuvidasStackSection() {
+export function FaqBookSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
   const innerRefs = useRef<Array<HTMLDivElement | null>>([]);
   const [reduced, setReduced] = useState(false);
   const [ready, setReady] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -94,14 +95,34 @@ export function DuvidasStackSection() {
           if (!inner || !card || index === CARDS.length - 1) return;
 
           timeline
-            .to(inner, { rotateY: 180, duration: 1, ease: "power2.inOut" })
-            .to(card, { y: "-120%", opacity: 0, duration: 0.6, ease: "power1.in" }, "+=0.15");
+            .to(inner, {
+              rotateY: 180,
+              duration: 1,
+              ease: "power2.inOut",
+              onStart: () => setCurrentIndex(index),
+              onReverseComplete: () => setCurrentIndex(index),
+              onUpdate: function onUpdate() {
+                // Sombra "de folha se levantando" — mais forte no meio do
+                // giro, praticamente ausente no início/fim (nunca um
+                // bounce, só profundidade física plausível). Calculada e
+                // aplicada direto via JS (mais simples e confiável do que
+                // depender de calc() com custom property em classe
+                // arbitrária do Tailwind).
+                const lift = Math.sin(this.progress() * Math.PI);
+                card.style.boxShadow = `${4 + lift * 10}px ${8 + lift * 14}px ${18 + lift * 24}px rgba(27, 39, 51, ${0.12 + lift * 0.18})`;
+              },
+            })
+            .to(card, { y: "-120%", opacity: 0, duration: 0.6, ease: "power1.in", onStart: () => setCurrentIndex(index + 1) }, "+=0.15");
         });
       }, sectionRef);
     })();
 
     return () => ctx?.revert();
   }, []);
+
+  const advance = (direction: 1 | -1) => {
+    window.scrollBy({ top: direction * window.innerHeight, behavior: "smooth" });
+  };
 
   if (ready && reduced) {
     return (
@@ -140,7 +161,26 @@ export function DuvidasStackSection() {
 
   return (
     <div ref={sectionRef} id="duvidas" className="relative bg-canvas">
-      <div className="flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-16 lg:px-8">
+      <GoldenThread
+        d="M340 0 C 220 160, 380 360, 240 520 C 140 640, 320 720, 200 800"
+        className="left-1/2 top-0 h-full w-40 -translate-x-1/2 opacity-70 lg:w-64"
+      />
+      <div
+        role="group"
+        aria-roledescription="livro de perguntas frequentes"
+        tabIndex={0}
+        onClick={() => advance(1)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " " || event.key === "ArrowRight") {
+            event.preventDefault();
+            advance(1);
+          } else if (event.key === "ArrowLeft") {
+            event.preventDefault();
+            advance(-1);
+          }
+        }}
+        className="relative flex min-h-screen cursor-pointer flex-col items-center justify-center overflow-hidden px-4 py-16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus lg:px-8"
+      >
         <div className="mb-10 max-w-reading text-center">
           <SectionEyebrow>Suas dúvidas</SectionEyebrow>
           <h2 className="mt-3 font-serif text-2xl font-semibold text-ink lg:text-3xl">
@@ -149,14 +189,14 @@ export function DuvidasStackSection() {
           <div aria-hidden="true" className="gold-divider mx-auto mt-4" />
         </div>
 
-        <div className="relative h-[22rem] w-full max-w-xs" style={{ perspective: "1600px" }}>
+        <div className="relative h-[22rem] w-full max-w-xs" style={{ perspective: "2000px" }}>
           {CARDS.map((card, index) => (
             <div
               key={card.duvidaTitle.join()}
               ref={(el) => {
                 cardRefs.current[index] = el;
               }}
-              className="absolute inset-0"
+              className="absolute inset-0 shadow-lg"
               style={{
                 zIndex: CARDS.length - index,
                 transform: `translate(${index * 3}px, ${index * 4}px)`,
@@ -167,12 +207,16 @@ export function DuvidasStackSection() {
                   innerRefs.current[index] = el;
                 }}
                 className="relative size-full"
-                style={{ transformStyle: "preserve-3d" }}
+                style={{ transformStyle: "preserve-3d", transformOrigin: "left center" }}
               >
                 <div
-                  className="absolute inset-0 flex flex-col justify-start rounded-2xl border border-brand-gold/50 bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_35%,_var(--color-bg-surface))_100%)] p-6 pt-7 shadow-lg"
+                  className="absolute inset-0 flex flex-col justify-start rounded-r-2xl rounded-l-sm border border-brand-gold/50 bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_35%,_var(--color-bg-surface))_100%)] p-6 pl-7 pt-7"
                   style={{ backfaceVisibility: "hidden" }}
                 >
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-y-0 left-0 w-2 rounded-l-sm bg-gradient-to-r from-ink/15 to-transparent"
+                  />
                   <span className="text-xs font-medium uppercase tracking-[0.16em] text-ink-muted">Dúvida</span>
                   <p className="mt-3 font-serif text-2xl italic leading-tight text-ink">
                     {card.duvidaTitle[0]}
@@ -182,9 +226,13 @@ export function DuvidasStackSection() {
                   <p className="mt-3 text-sm text-ink-muted">{card.duvidaText}</p>
                 </div>
                 <div
-                  className="absolute inset-0 flex flex-col justify-start rounded-2xl border border-brand-gold/50 bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_var(--color-brand-sage)_100%)] p-6 pt-7 shadow-lg"
+                  className="absolute inset-0 flex flex-col justify-start rounded-r-2xl rounded-l-sm border border-brand-gold/50 bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_var(--color-brand-sage)_100%)] p-6 pl-7 pt-7"
                   style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                 >
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-y-0 left-0 w-2 rounded-l-sm bg-gradient-to-r from-ink/15 to-transparent"
+                  />
                   <span className="text-xs font-medium uppercase tracking-[0.16em] text-brand-primary-deep/70">
                     Solução
                   </span>
@@ -201,7 +249,10 @@ export function DuvidasStackSection() {
         </div>
 
         <p aria-hidden="true" className="mt-8 text-xs uppercase tracking-[0.14em] text-ink-muted">
-          Role para ver todas
+          Toque ou role para virar a página
+        </p>
+        <p aria-live="polite" className="sr-only">
+          Pergunta {Math.min(currentIndex + 1, CARDS.length)} de {CARDS.length}
         </p>
       </div>
     </div>

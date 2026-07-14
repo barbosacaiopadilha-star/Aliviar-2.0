@@ -2,6 +2,7 @@ import { BookUser, ShieldCheck, TrendingUp } from "lucide-react";
 import type { ComponentType } from "react";
 
 import { Card, CardDescription } from "@/components/ui/card";
+import { GoldenThread } from "@/components/landing/golden-thread";
 import { SectionContainer } from "@/components/landing/section-container";
 import { SectionEyebrow } from "@/components/landing/section-eyebrow";
 import { SectionReveal } from "@/components/landing/section-reveal";
@@ -36,7 +37,12 @@ const CRITERIA: Array<{
 
 export function WhyTrustSection() {
   return (
-    <SectionContainer className="border-t-2 border-brand-gold/60 bg-[color-mix(in_srgb,_var(--color-brand-sage)_75%,_var(--color-ink))]">
+    <SectionContainer className="relative overflow-hidden bg-[linear-gradient(180deg,_var(--color-bg-canvas)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_75%,_var(--color-ink))_35%,_color-mix(in_srgb,_var(--color-brand-sage)_75%,_var(--color-ink))_100%)]">
+      <GoldenThread
+        d="M300 0 C 180 120, 340 300, 200 400 C 100 470, 260 500, 180 560"
+        className="left-1/2 top-0 h-full w-40 -translate-x-1/2 opacity-70 lg:w-64"
+        viewBox="0 0 400 560"
+      />
       <SectionReveal className="mx-auto max-w-reading text-center">
         <SectionEyebrow tone="dark">Critério, não sorte</SectionEyebrow>
         <h2 className="mt-3 font-serif text-2xl font-semibold text-surface lg:text-3xl">
@@ -52,11 +58,13 @@ export function WhyTrustSection() {
               padding="lg"
               className="card-lift group h-full border-brand-gold/60 bg-surface/[0.04] text-center shadow-none"
             >
-              <span
-                aria-hidden="true"
-                className="mx-auto inline-flex size-10 items-center justify-center rounded-full border-2 border-brand-gold bg-brand-gold/10 text-brand-gold transition-transform duration-base ease-standard group-hover:rotate-6 group-hover:scale-110"
-              >
-                <criterion.icon className="size-5" aria-hidden={true} />
+              <span className="animate-breathe mx-auto inline-flex">
+                <span
+                  aria-hidden="true"
+                  className="inline-flex size-10 items-center justify-center rounded-full border-2 border-brand-gold bg-brand-gold/10 text-brand-gold transition-transform duration-base ease-standard group-hover:rotate-6 group-hover:scale-110"
+                >
+                  <criterion.icon className="size-5" aria-hidden={true} />
+                </span>
               </span>
               <h3 className="mt-4 font-serif text-lg font-semibold text-surface">{criterion.title}</h3>
               <CardDescription className="mt-2 text-surface/70">{criterion.description}</CardDescription>

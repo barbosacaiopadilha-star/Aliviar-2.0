@@ -4,21 +4,18 @@ import path from "node:path";
 import type { Metadata } from "next";
 
 import { BenefitsSection } from "@/components/landing/benefits-section";
-import { DuvidasStackSection } from "@/components/landing/duvidas-stack-section";
+import { FaqBookSection } from "@/components/landing/faq-book-section";
 import { FinalCtaSection } from "@/components/landing/final-cta-section";
-import { Hero } from "@/components/landing/hero";
-import { StageRevealSection } from "@/components/landing/stage-reveal-section";
+import { HeroJourneySection } from "@/components/landing/hero-journey-section";
 import { WhyTrustSection } from "@/components/landing/why-trust-section";
 
-// LANDING V4 — estrutura e dinâmicas de rolagem próximas da referência
-// (aliviar-temp.vercel.app, produto irmão da mesma empresa), com a
-// identidade da Aliviar Curadoria Médica (navy/sage/gold, nunca a paleta
-// teal/coral do produto irmão): Hero (foto full-bleed + vídeo
-// institucional embutido) → Benefits (3 cards) → StageRevealSection
-// (texto fixado na tela trocando de etapa conforme rolagem, com linha de
-// progresso — GSAP ScrollTrigger) → DuvidasStackSection (pilha de cards
-// com flip 3D Dúvida/Solução, fixada durante a rolagem — mesma técnica)
-// → critérios de avaliação → CTA final.
+// LANDING V5 — experiência narrativa imersiva: HeroJourneySection (texto
+// de abertura + vídeo institucional "em destaque" que acompanha a
+// jornada em 6 etapas via GSAP pin, some na metade) → Benefits (3 cards)
+// → FaqBookSection (livro físico de Dúvidas/Soluções, vira página ao
+// tocar/rolar) → critérios de avaliação → CTA final. O "fio de ouro"
+// (GoldenThread) atravessa as seções que mais precisam de continuidade
+// visual entre si.
 export const metadata: Metadata = {
   title: { absolute: "Aliviar Curadoria Médica — Uma escolha de cuidado, nunca sozinho" },
   description:
@@ -61,10 +58,13 @@ export default function HomePage() {
 
   return (
     <>
-      <Hero photoSrc={heroPhoto} videoSrc={institutionalVideo.src} videoPoster={institutionalVideo.poster} />
+      <HeroJourneySection
+        photoSrc={heroPhoto}
+        videoSrc={institutionalVideo.src}
+        videoPoster={institutionalVideo.poster}
+      />
       <BenefitsSection />
-      <StageRevealSection />
-      <DuvidasStackSection />
+      <FaqBookSection />
       <WhyTrustSection />
       <FinalCtaSection />
     </>
