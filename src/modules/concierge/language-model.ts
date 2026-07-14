@@ -72,6 +72,19 @@ export type AceLanguageModelHealth = {
 // Check do dashboard (decide o que mostrar) — as duas leituras da mesma
 // verdade, nunca duas definições que podem divergir.
 export function getAceLanguageModelHealth(): AceLanguageModelHealth {
+  // DIAGNÓSTICO TEMPORÁRIO (remover após investigação com suporte Vercel) —
+  // nunca loga o valor da chave, só presença/tamanho, para comparar com
+  // SUPABASE_SERVICE_ROLE_KEY (que funciona) sem expor segredo nenhum.
+  console.log("[ace-health-debug]", {
+    hasAnthropicKey: Boolean(process.env.ANTHROPIC_API_KEY),
+    anthropicKeyLength: process.env.ANTHROPIC_API_KEY?.length ?? 0,
+    hasServiceRoleKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+    serviceRoleKeyLength: process.env.SUPABASE_SERVICE_ROLE_KEY?.length ?? 0,
+    nodeEnv: process.env.NODE_ENV,
+    vercelEnv: process.env.VERCEL_ENV,
+    envKeyCount: Object.keys(process.env).length,
+  });
+
   if (process.env.ANTHROPIC_API_KEY) {
     return { status: "ANTHROPIC_CONFIGURED", healthy: true };
   }
