@@ -4,19 +4,21 @@ import path from "node:path";
 import type { Metadata } from "next";
 
 import { BenefitsSection } from "@/components/landing/benefits-section";
-import { FaqSection } from "@/components/landing/faq-section";
+import { DuvidasStackSection } from "@/components/landing/duvidas-stack-section";
 import { FinalCtaSection } from "@/components/landing/final-cta-section";
 import { Hero } from "@/components/landing/hero";
-import { HowItWorksSection } from "@/components/landing/how-it-works-section";
+import { StageRevealSection } from "@/components/landing/stage-reveal-section";
 import { WhyTrustSection } from "@/components/landing/why-trust-section";
 
-// LANDING V4 — estrutura próxima da referência (aliviar-temp.vercel.app,
-// produto irmão da mesma empresa), com a identidade da Aliviar Curadoria
-// Médica (navy/sage/gold, nunca a paleta teal/coral do produto irmão):
-// Hero (foto full-bleed + vídeo institucional embutido) → Benefits (3
-// cards) → jornada em faixa de etapas → Dúvidas → critérios de avaliação
-// → CTA final. Abandona o conceito "dois ambientes" da V3 (muito distante
-// da referência que o usuário pediu para seguir de perto).
+// LANDING V4 — estrutura e dinâmicas de rolagem próximas da referência
+// (aliviar-temp.vercel.app, produto irmão da mesma empresa), com a
+// identidade da Aliviar Curadoria Médica (navy/sage/gold, nunca a paleta
+// teal/coral do produto irmão): Hero (foto full-bleed + vídeo
+// institucional embutido) → Benefits (3 cards) → StageRevealSection
+// (texto fixado na tela trocando de etapa conforme rolagem, com linha de
+// progresso — GSAP ScrollTrigger) → DuvidasStackSection (pilha de cards
+// com flip 3D Dúvida/Solução, fixada durante a rolagem — mesma técnica)
+// → critérios de avaliação → CTA final.
 export const metadata: Metadata = {
   title: { absolute: "Aliviar Curadoria Médica — Uma escolha de cuidado, nunca sozinho" },
   description:
@@ -61,8 +63,8 @@ export default function HomePage() {
     <>
       <Hero photoSrc={heroPhoto} videoSrc={institutionalVideo.src} videoPoster={institutionalVideo.poster} />
       <BenefitsSection />
-      <HowItWorksSection />
-      <FaqSection />
+      <StageRevealSection />
+      <DuvidasStackSection />
       <WhyTrustSection />
       <FinalCtaSection />
     </>

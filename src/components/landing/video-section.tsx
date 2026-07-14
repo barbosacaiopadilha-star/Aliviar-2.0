@@ -1,4 +1,7 @@
-import { Play } from "lucide-react";
+"use client";
+
+import { Play, Volume2, VolumeX } from "lucide-react";
+import { useRef, useState } from "react";
 
 import { SectionContainer } from "@/components/landing/section-container";
 import { SectionReveal } from "@/components/landing/section-reveal";
@@ -14,51 +17,76 @@ type VideoSectionProps = {
   variant?: "section" | "window";
 };
 
+// Reprodução em loop, muda por padrão, com um botão próprio de "Ativar
+// Som" sobreposto — a mesma apresentação do vídeo institucional no site
+// de referência (autoplay silencioso, nunca barra de controles nativa
+// competindo com o resto do hero). Sem `src`, cai no selo de marca
+// (placeholder honesto, nunca fabricado).
 function VideoFrame({ src, poster, compact }: { src?: string; poster?: string; compact?: boolean }) {
-  return src ? (
-    <video
-      className="aspect-video w-full rounded-[inherit]"
-      src={src}
-      poster={poster}
-      controls
-      preload="none"
-    >
-      Seu navegador não é compatível com a reprodução deste vídeo.
-    </video>
-  ) : (
-    // Estado "aguardando o vídeo definitivo" — deliberadamente sem
-    // aparência técnica de placeholder (nada de borda tracejada): um
-    // gradiente e um selo de marca sutil, como se já fosse parte do
-    // design final, não um espaço vazio a preencher depois. `compact`
-    // (janela flutuante pequena, ver PersistentVideo) usa só o selo —
-    // heading/legenda não cabem numa janela de ~150-280px sem cortar.
-    <div
-      className={cn(
-        "relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-[inherit] bg-[radial-gradient(120%_140%_at_50%_0%,_var(--color-brand-primary)_0%,_var(--color-brand-primary-deep)_55%,_#0a2544_100%)] text-center",
-        compact ? "px-2" : "flex-col gap-4 px-6",
-      )}
-    >
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [muted, setMuted] = useState(true);
+
+  if (!src) {
+    return (
       <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-[0.07] mix-blend-overlay [background-image:radial-gradient(circle_at_1px_1px,_var(--color-brand-sage-light)_1px,_transparent_0)] [background-size:22px_22px]"
-      />
-      <span
-        aria-hidden="true"
         className={cn(
-          "relative inline-flex items-center justify-center rounded-full border border-surface/25 bg-surface/10 backdrop-blur-sm",
-          compact ? "size-8" : "size-16",
+          "relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-[inherit] bg-[radial-gradient(120%_140%_at_50%_0%,_var(--color-brand-primary)_0%,_var(--color-brand-primary-deep)_55%,_#0a2544_100%)] text-center",
+          compact ? "px-2" : "flex-col gap-4 px-6",
         )}
       >
-        <Play className={cn("translate-x-0.5 text-surface", compact ? "size-3.5" : "size-6")} aria-hidden="true" />
-      </span>
-      {!compact && (
-        <div className="relative space-y-1">
-          <p className="font-serif text-lg font-medium text-surface lg:text-xl">
-            Conheça a Curadoria Médica Aliviar
-          </p>
-          <p className="text-sm text-brand-sage-light">Vídeo institucional em breve.</p>
-        </div>
-      )}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-[0.07] mix-blend-overlay [background-image:radial-gradient(circle_at_1px_1px,_var(--color-brand-sage-light)_1px,_transparent_0)] [background-size:22px_22px]"
+        />
+        <span
+          aria-hidden="true"
+          className={cn(
+            "relative inline-flex items-center justify-center rounded-full border border-surface/25 bg-surface/10 backdrop-blur-sm",
+            compact ? "size-8" : "size-16",
+          )}
+        >
+          <Play className={cn("translate-x-0.5 text-surface", compact ? "size-3.5" : "size-6")} aria-hidden="true" />
+        </span>
+        {!compact && (
+          <div className="relative space-y-1">
+            <p className="font-serif text-lg font-medium text-surface lg:text-xl">
+              Conheça a Curadoria Médica Aliviar
+            </p>
+            <p className="text-sm text-brand-sage-light">Vídeo institucional em breve.</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative aspect-video w-full overflow-hidden rounded-[inherit] bg-brand-primary-deep">
+      <video
+        ref={videoRef}
+        className="size-full object-cover"
+        src={src}
+        poster={poster}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="none"
+      >
+        Seu navegador não é compatível com a reprodução deste vídeo.
+      </video>
+      <button
+        type="button"
+        onClick={() => {
+          const video = videoRef.current;
+          if (!video) return;
+          video.muted = !video.muted;
+          setMuted(video.muted);
+        }}
+        className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-ink/60 px-3 py-1.5 text-xs font-medium text-surface backdrop-blur-sm transition-colors duration-fast ease-standard hover:bg-ink/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+      >
+        {muted ? <Volume2 className="size-3.5" aria-hidden="true" /> : <VolumeX className="size-3.5" aria-hidden="true" />}
+        {muted ? "Ativar som" : "Silenciar"}
+      </button>
     </div>
   );
 }
