@@ -47,11 +47,11 @@ export function BenefitsSection() {
           <SectionReveal key={benefit.title} delayMs={index * 120}>
             <Card
               padding="lg"
-              className="card-lift h-full border-brand-gold/60 bg-[color-mix(in_srgb,_var(--color-brand-sage)_6%,_var(--color-bg-surface))] text-center"
+              className="card-lift group h-full border-brand-gold/60 bg-[color-mix(in_srgb,_var(--color-brand-sage)_6%,_var(--color-bg-surface))] text-center"
             >
               <span
                 aria-hidden="true"
-                className="mx-auto inline-flex size-12 items-center justify-center rounded-full bg-brand-sage/15 text-brand-sage"
+                className="mx-auto inline-flex size-12 items-center justify-center rounded-full bg-brand-sage/15 text-brand-sage transition-transform duration-base ease-standard group-hover:-rotate-6 group-hover:scale-110"
               >
                 <benefit.icon className="size-6" aria-hidden={true} />
               </span>

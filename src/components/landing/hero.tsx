@@ -43,25 +43,40 @@ export function Hero({ photoSrc, videoSrc, videoPoster }: HeroProps) {
 
       <div className="relative mx-auto grid w-full max-w-content items-center gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-6">
         <div className="max-w-reading text-center lg:text-left">
-          <SectionEyebrow tone="dark" align="left">
-            Curadoria médica independente
-          </SectionEyebrow>
-          <h1 className="mt-4 font-serif text-4xl font-semibold leading-[1.08] text-surface lg:text-5xl">
+          <div className="animate-fade-up" style={{ animationDelay: "0ms" }}>
+            <SectionEyebrow tone="dark" align="left">
+              Curadoria médica independente
+            </SectionEyebrow>
+          </div>
+          <h1
+            className="animate-fade-up mt-4 font-serif text-4xl font-semibold leading-[1.08] text-surface lg:text-5xl"
+            style={{ animationDelay: "90ms" }}
+          >
             Uma escolha de cuidado, <span className="text-brand-gold">nunca sozinho</span>.
           </h1>
-          <div aria-hidden="true" className="gold-divider mx-auto mt-5 lg:mx-0" />
-          <p className="mt-5 text-lg text-surface/85">
+          <div
+            aria-hidden="true"
+            className="gold-divider animate-fade-up mx-auto mt-5 lg:mx-0"
+            style={{ animationDelay: "180ms" }}
+          />
+          <p className="animate-fade-up mt-5 text-lg text-surface/85" style={{ animationDelay: "240ms" }}>
             Você conta sua história no seu tempo. Alguém da nossa equipe organiza um caminho
             claro, com critério — e caminha ao seu lado até a conversa que importa.
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
+          <div
+            className="animate-fade-up mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start"
+            style={{ animationDelay: "320ms" }}
+          >
             <LinkButton href="/sua-historia" variant="primary">
               Contar minha história
             </LinkButton>
           </div>
         </div>
 
-        <div className="mx-auto w-full max-w-sm lg:mx-0 lg:max-w-none">
+        <div
+          className="animate-fade-up mx-auto w-full max-w-sm lg:mx-0 lg:max-w-none"
+          style={{ animationDelay: "400ms" }}
+        >
           <VideoSection variant="window" src={videoSrc} poster={videoPoster} />
         </div>
       </div>

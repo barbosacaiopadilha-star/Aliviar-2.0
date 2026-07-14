@@ -50,11 +50,11 @@ export function WhyTrustSection() {
           <SectionReveal key={criterion.title} delayMs={index * 120}>
             <Card
               padding="lg"
-              className="card-lift h-full border-brand-gold/60 bg-surface/[0.04] text-center shadow-none"
+              className="card-lift group h-full border-brand-gold/60 bg-surface/[0.04] text-center shadow-none"
             >
               <span
                 aria-hidden="true"
-                className="mx-auto inline-flex size-10 items-center justify-center rounded-full border-2 border-brand-gold bg-brand-gold/10 text-brand-gold"
+                className="mx-auto inline-flex size-10 items-center justify-center rounded-full border-2 border-brand-gold bg-brand-gold/10 text-brand-gold transition-transform duration-base ease-standard group-hover:rotate-6 group-hover:scale-110"
               >
                 <criterion.icon className="size-5" aria-hidden={true} />
               </span>

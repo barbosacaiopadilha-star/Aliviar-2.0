@@ -25,7 +25,7 @@ export function LinkButton({ variant = "primary", className, ...props }: LinkBut
   return (
     <Link
       className={cn(
-        "inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-5 py-2.5 text-sm font-medium transition-colors duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2",
+        "inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-5 py-2.5 text-sm font-medium transition-[transform,background-color,border-color,box-shadow] duration-fast ease-standard hover:scale-[1.03] hover:shadow-md active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2",
         variantClasses[variant],
         variant === "primary" && goldUnderline,
         className,

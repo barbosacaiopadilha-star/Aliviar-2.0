@@ -97,7 +97,7 @@ export function VideoSection({ src, poster, variant = "section" }: VideoSectionP
     return (
       <div className="relative mx-auto w-full">
         <GoldCornerAccent className="-right-3 -top-3 size-20 lg:size-28" />
-        <div className="w-full overflow-hidden rounded-2xl shadow-xl ring-1 ring-surface/15">
+        <div className="w-full overflow-hidden rounded-2xl shadow-xl ring-1 ring-surface/15 transition-transform duration-base ease-standard hover:-translate-y-1 hover:shadow-2xl">
           <VideoFrame src={src} poster={poster} />
         </div>
       </div>

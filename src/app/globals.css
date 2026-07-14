@@ -155,6 +155,18 @@
     width: 3rem;
     border-top: 2px dotted var(--color-brand-gold);
   }
+
+  /* Desenho progressivo do arco dourado de canto — usa pathLength=1 no
+     SVG para que o traçado "se desenhe" da esquerda pra direita quando
+     entra na viewport, em vez de simplesmente aparecer. */
+  .gold-arc-path {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset 1200ms var(--ease-standard);
+  }
+  .gold-arc-path-drawn {
+    stroke-dashoffset: 0;
+  }
 }
 
 @keyframes fade-up {
