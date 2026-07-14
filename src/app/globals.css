@@ -119,14 +119,6 @@
   .link-underline:focus-visible::after {
     transform: scaleX(1);
   }
-
-  /* Deriva lenta e contínua do gradiente de fundo da Recepção — cor como
-     protagonista, nunca "piscando". prefers-reduced-motion já reduz a
-     duração da animação a ~0ms via o override global acima, então o
-     gradiente cai para estático automaticamente, sem lógica extra. */
-  .animate-gradient-drift {
-    animation: gradient-drift 22s var(--ease-standard) infinite alternate;
-  }
 }
 
 @keyframes fade-up {
@@ -137,14 +129,5 @@
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes gradient-drift {
-  from {
-    background-position: 0% 0%;
-  }
-  to {
-    background-position: 100% 100%;
   }
 }

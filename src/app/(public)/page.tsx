@@ -3,21 +3,20 @@ import path from "node:path";
 
 import type { Metadata } from "next";
 
-import { ConnectionZone } from "@/components/landing/connection-zone";
+import { BenefitsSection } from "@/components/landing/benefits-section";
 import { FaqSection } from "@/components/landing/faq-section";
-import { FinalSection } from "@/components/landing/final-section";
-import { PersistentVideo } from "@/components/landing/persistent-video";
-import { ReceptionSection } from "@/components/landing/reception-section";
+import { FinalCtaSection } from "@/components/landing/final-cta-section";
+import { Hero } from "@/components/landing/hero";
+import { HowItWorksSection } from "@/components/landing/how-it-works-section";
+import { WhyTrustSection } from "@/components/landing/why-trust-section";
 
-// LANDING V3 (revisão 5 — vídeo persistente): o vídeo institucional é
-// renderizado por PersistentVideo (position: fixed, nunca remontado — som
-// nunca reinicia), permanece visível durante toda a visita e encolhe para
-// um "companheiro" no canto assim que a Recepção sai da viewport.
-// ReceptionSection (cor como protagonista) → ConnectionZone (travessia só
-// de luz/tipografia) → FinalSection (encerramento) → FaqSection. Hero,
-// PrimaryCtaBand, HowItWorksSection, BenefitsSection, WhyTrustSection,
-// ConciergeSection e FinalCtaSection permanecem no repositório (código
-// reutilizável), só não são mais importados.
+// LANDING V4 — estrutura próxima da referência (aliviar-temp.vercel.app,
+// produto irmão da mesma empresa), com a identidade da Aliviar Curadoria
+// Médica (navy/sage/gold, nunca a paleta teal/coral do produto irmão):
+// Hero (foto full-bleed + vídeo institucional embutido) → Benefits (3
+// cards) → jornada em faixa de etapas → Dúvidas → critérios de avaliação
+// → CTA final. Abandona o conceito "dois ambientes" da V3 (muito distante
+// da referência que o usuário pediu para seguir de perto).
 export const metadata: Metadata = {
   title: { absolute: "Aliviar Curadoria Médica — Uma escolha de cuidado, nunca sozinho" },
   description:
@@ -44,11 +43,10 @@ function resolveInstitutionalVideo(): { src?: string; poster?: string } {
   };
 }
 
-// Fotos dos dois ambientes (public/scenes/) — mesmo padrão de checagem em
-// disco: cai no gradiente de fallback de cada seção até a fotografia
-// editorial real da Aliviar existir. Ver docs/LANDING_V3_SCENES.md.
-const RECEPTION_PHOTO_SRC = "/scenes/recepcao.jpg";
-const FINAL_PHOTO_SRC = "/scenes/grand-finale.jpg";
+// Foto do hero (public/scenes/) — mesmo padrão de checagem em disco: cai
+// no gradiente de fallback do Hero até a fotografia editorial real da
+// Aliviar existir.
+const HERO_PHOTO_SRC = "/scenes/recepcao.jpg";
 
 function resolveScenePhoto(relativeSrc: string): string | undefined {
   const filePath = path.join(process.cwd(), "public", relativeSrc);
@@ -57,16 +55,16 @@ function resolveScenePhoto(relativeSrc: string): string | undefined {
 
 export default function HomePage() {
   const institutionalVideo = resolveInstitutionalVideo();
-  const receptionPhoto = resolveScenePhoto(RECEPTION_PHOTO_SRC);
-  const finalPhoto = resolveScenePhoto(FINAL_PHOTO_SRC);
+  const heroPhoto = resolveScenePhoto(HERO_PHOTO_SRC);
 
   return (
     <>
-      <ReceptionSection photoSrc={receptionPhoto} />
-      <PersistentVideo videoSrc={institutionalVideo.src} videoPoster={institutionalVideo.poster} />
-      <ConnectionZone />
-      <FinalSection photoSrc={finalPhoto} />
+      <Hero photoSrc={heroPhoto} videoSrc={institutionalVideo.src} videoPoster={institutionalVideo.poster} />
+      <BenefitsSection />
+      <HowItWorksSection />
       <FaqSection />
+      <WhyTrustSection />
+      <FinalCtaSection />
     </>
   );
 }

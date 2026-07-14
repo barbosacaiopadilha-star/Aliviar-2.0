@@ -8,9 +8,9 @@ type VideoSectionProps = {
   src?: string;
   poster?: string;
   /** "section" (padrão): bloco full-bleed com heading, como seção própria.
-   *  "window": janela flutuante pequena — usada por PersistentVideo. Mesma
-   *  lógica vídeo-ou-placeholder, sem duplicar código; placeholder some
-   *  para o modo compacto (só o selo, sem heading/legenda). */
+   *  "window": cartão contido, usado dentro do Hero (ao lado do título,
+   *  nunca position:fixed). Mesma lógica vídeo-ou-placeholder, sem
+   *  duplicar código. */
   variant?: "section" | "window";
 };
 
@@ -66,8 +66,8 @@ function VideoFrame({ src, poster, compact }: { src?: string; poster?: string; c
 export function VideoSection({ src, poster, variant = "section" }: VideoSectionProps) {
   if (variant === "window") {
     return (
-      <div className="mx-auto w-full overflow-hidden rounded-2xl shadow-lg">
-        <VideoFrame src={src} poster={poster} compact />
+      <div className="mx-auto w-full overflow-hidden rounded-2xl shadow-xl ring-1 ring-surface/15">
+        <VideoFrame src={src} poster={poster} />
       </div>
     );
   }

@@ -1,59 +1,43 @@
 import { SectionContainer } from "@/components/landing/section-container";
 import { SectionReveal } from "@/components/landing/section-reveal";
 
-// Fusão de "Como funciona" (mecânica) + "Processo" (acompanhamento ao
-// longo do tempo) — eram duas seções com passos parecidos em formatos
-// diferentes (Landing V1); a V2 junta num único ritmo de jornada, em tira
-// horizontal no desktop. Reforça explicitamente "três profissionais
-// selecionados" e "a escolha final é sempre sua" (condições de conteúdo
-// da V2 — nunca ranking, nunca decisão automática).
+// Faixa de etapas curta (rótulo de duas linhas + traço conector), no
+// mesmo espírito da faixa "Triagem → Análise → Curadoria → Convênio →
+// Cirurgia → Cuidado" do site de referência (aliviar-temp.vercel.app) —
+// mas com os estágios reais da jornada Aliviar Curadoria, nunca copiados
+// literalmente (não gerimos convênio/cirurgia, isso é de outro produto
+// da mesma empresa).
 const JOURNEY_STEPS = [
-  {
-    label: "Você conta sua história",
-    description: "Sem formulário frio, no seu tempo e com suas próprias palavras.",
-  },
-  {
-    label: "Organizamos com critério",
-    description: "Sua história vira um caminho claro: três profissionais selecionados, nunca por anúncio.",
-  },
-  {
-    label: "Você conversa, acompanhado",
-    description: "No momento que importa, alguém da equipe Aliviar está com você, explicando cada passo.",
-  },
-  {
-    label: "A escolha e o cuidado continuam",
-    description: "A decisão final é sempre sua — e seguimos por perto enquanto for útil para você.",
-  },
+  { top: "Sua", bottom: "História" },
+  { top: "Curadoria", bottom: "Criteriosa" },
+  { top: "Conversa", bottom: "Acompanhada" },
+  { top: "Cuidado", bottom: "Contínuo" },
 ] as const;
 
 export function HowItWorksSection() {
   return (
-    <SectionContainer className="bg-surface">
-      <SectionReveal className="mx-auto max-w-reading text-center">
-        <h2 className="font-serif text-2xl font-semibold text-ink lg:text-3xl">Sua jornada com a Aliviar</h2>
-      </SectionReveal>
-
-      <div className="relative mt-14 grid gap-10 lg:grid-cols-4 lg:gap-6">
-        <div
-          aria-hidden="true"
-          className="absolute left-4 top-0 hidden h-px w-[calc(100%-2rem)] bg-border lg:block"
-          style={{ top: "0.55rem" }}
-        />
-        {JOURNEY_STEPS.map((step, index) => (
-          <div key={step.label} className="relative flex flex-col gap-2 pl-9 lg:pl-0">
-            <div
-              aria-hidden="true"
-              className="absolute left-0 top-0 flex size-[1.1rem] items-center justify-center lg:relative lg:mb-3"
-            >
-              <span className="size-2 rounded-full bg-brand-gold" />
-              <span className="absolute inset-0 rounded-full border border-brand-gold/30" />
+    <SectionContainer className="bg-brand-primary-deep py-10 lg:py-12">
+      <SectionReveal className="mx-auto max-w-content">
+        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-6 lg:flex-nowrap lg:justify-between">
+          {JOURNEY_STEPS.map((step, index) => (
+            <div key={step.top} className="flex items-center gap-2 lg:gap-4">
+              <div className="flex flex-col items-center text-center">
+                <span
+                  aria-hidden="true"
+                  className="mb-2 size-2 rounded-full bg-brand-gold"
+                />
+                <span className="font-serif text-base font-medium leading-tight text-surface lg:text-lg">
+                  {step.top}
+                </span>
+                <span className="text-sm text-brand-sage-light">{step.bottom}</span>
+              </div>
+              {index < JOURNEY_STEPS.length - 1 && (
+                <span aria-hidden="true" className="hidden h-px w-10 bg-surface/20 lg:block" />
+              )}
             </div>
-            <span className="font-serif text-sm text-brand-sage">{String(index + 1).padStart(2, "0")}</span>
-            <h3 className="font-sans text-lg font-semibold text-ink">{step.label}</h3>
-            <p className="text-sm text-ink-muted">{step.description}</p>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </SectionReveal>
     </SectionContainer>
   );
 }
