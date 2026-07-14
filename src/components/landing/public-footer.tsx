@@ -6,7 +6,7 @@ import Link from "next/link";
 // no site. Logo oficial em public/brand/logo-aliviar.jpeg (ver
 // public-header.tsx).
 const FOOTER_LINKS = [
-  { label: "Vídeo institucional", href: "#video-institucional" },
+  { label: "Início", href: "/" },
   { label: "Dúvidas frequentes", href: "#duvidas" },
   { label: "Contar minha história", href: "/sua-historia" },
   { label: "Entrar", href: "/login" },

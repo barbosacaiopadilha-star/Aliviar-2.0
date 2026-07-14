@@ -3,20 +3,17 @@ import path from "node:path";
 
 import type { Metadata } from "next";
 
-import { BenefitsSection } from "@/components/landing/benefits-section";
-import { ConciergeSection } from "@/components/landing/concierge-section";
 import { FaqSection } from "@/components/landing/faq-section";
-import { FinalCtaSection } from "@/components/landing/final-cta-section";
-import { Hero } from "@/components/landing/hero";
-import { HowItWorksSection } from "@/components/landing/how-it-works-section";
-import { PrimaryCtaBand } from "@/components/landing/primary-cta-band";
-import { VideoSection } from "@/components/landing/video-section";
-import { WhyTrustSection } from "@/components/landing/why-trust-section";
+import { ScrollStory } from "@/components/landing/scroll-story/scroll-story";
+import { SCROLL_STORY_SCENES } from "@/components/landing/scroll-story/scenes-data";
 
-// GO LIVE V2: ProcessSection (src/components/landing/process-section.tsx)
-// deixou de ser renderizada aqui — seu conteúdo foi fundido em
-// HowItWorksSection (uma única jornada em tira, em vez de dois grids
-// parecidos). O arquivo permanece no repositório, não foi apagado.
+// LANDING V3: a Landing deixou de ser uma pilha de seções e passou a ser
+// uma experiência de rolagem contínua (ScrollStory) — ver
+// docs/LANDING_V3_SCENES.md e o conceito aprovado. Hero, PrimaryCtaBand,
+// VideoSection, HowItWorksSection, BenefitsSection, WhyTrustSection,
+// ConciergeSection e FinalCtaSection deixaram de ser renderizados aqui;
+// os arquivos permanecem no repositório (código reutilizável), só não
+// são mais importados.
 export const metadata: Metadata = {
   title: { absolute: "Aliviar Curadoria Médica — Uma escolha de cuidado, nunca sozinho" },
   description:
@@ -43,20 +40,42 @@ function resolveInstitutionalVideo(): { src?: string; poster?: string } {
   };
 }
 
+// Loop ambiente (mudo, decorativo) para a cena 0 enquanto o vídeo
+// institucional real não existe — ver comentário em scene-background.tsx.
+const AMBIENT_VIDEO_SRC = "/scenes/recepcao-ambient.webm";
+
+function resolveAmbientVideo(): string | undefined {
+  const ambientPath = path.join(process.cwd(), "public", AMBIENT_VIDEO_SRC);
+  return existsSync(ambientPath) ? AMBIENT_VIDEO_SRC : undefined;
+}
+
+// Checagem de existência em disco (build/render time, servidor) por cena —
+// mesmo padrão do vídeo institucional: nunca aponta para um arquivo que não
+// existe, cai no gradiente de fallback até a foto real ser adicionada.
+function resolveScenePhotos(): Record<string, string | undefined> {
+  const resolved: Record<string, string | undefined> = {};
+  for (const scene of SCROLL_STORY_SCENES) {
+    if (!scene.photoSrc) continue;
+    const filePath = path.join(process.cwd(), "public", scene.photoSrc);
+    resolved[scene.id] = existsSync(filePath) ? scene.photoSrc : undefined;
+  }
+  return resolved;
+}
+
 export default function HomePage() {
   const institutionalVideo = resolveInstitutionalVideo();
+  const ambientVideoSrc = resolveAmbientVideo();
+  const resolvedPhotos = resolveScenePhotos();
 
   return (
     <>
-      <Hero />
-      <PrimaryCtaBand />
-      <VideoSection src={institutionalVideo.src} poster={institutionalVideo.poster} />
-      <HowItWorksSection />
-      <BenefitsSection />
-      <WhyTrustSection />
-      <ConciergeSection />
+      <ScrollStory
+        videoSrc={institutionalVideo.src}
+        videoPoster={institutionalVideo.poster}
+        ambientVideoSrc={ambientVideoSrc}
+        resolvedPhotos={resolvedPhotos}
+      />
       <FaqSection />
-      <FinalCtaSection />
     </>
   );
 }
