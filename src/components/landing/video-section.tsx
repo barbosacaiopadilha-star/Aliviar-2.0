@@ -1,6 +1,7 @@
 import { Play } from "lucide-react";
 
 import { SectionContainer } from "@/components/landing/section-container";
+import { SectionReveal } from "@/components/landing/section-reveal";
 
 type VideoSectionProps = {
   src?: string;
@@ -13,7 +14,7 @@ export function VideoSection({ src, poster }: VideoSectionProps) {
       id="video-institucional"
       className="scroll-mt-20 bg-brand-primary-deep py-16 lg:py-24"
     >
-      <div className="mx-auto max-w-reading text-center">
+      <SectionReveal className="mx-auto max-w-reading text-center">
         <span className="text-xs font-medium uppercase tracking-[0.14em] text-brand-sage-light">
           Cerca de 10 minutos
         </span>
@@ -23,7 +24,7 @@ export function VideoSection({ src, poster }: VideoSectionProps) {
         <p className="mt-3 text-base text-surface/80">
           O porquê, o como, e quem estará com você — em um só lugar, no seu tempo.
         </p>
-      </div>
+      </SectionReveal>
 
       <div className="mx-auto mt-10 max-w-content">
         {src ? (

@@ -1,6 +1,7 @@
 import { ChevronDown } from "lucide-react";
 
 import { SectionContainer } from "@/components/landing/section-container";
+import { SectionReveal } from "@/components/landing/section-reveal";
 
 const FAQS = [
   {
@@ -36,24 +37,31 @@ const FAQS = [
 
 export function FaqSection() {
   return (
-    <SectionContainer>
-      <div className="mx-auto max-w-reading text-center">
-        <h2 className="font-serif text-2xl font-semibold text-ink lg:text-3xl">
-          Estas são as dúvidas mais comuns
+    <SectionContainer id="duvidas" className="scroll-mt-20">
+      <SectionReveal className="mx-auto max-w-reading text-center">
+        <span className="text-xs font-medium uppercase tracking-[0.16em] text-brand-sage">
+          Suas dúvidas
+        </span>
+        <h2 className="mt-3 font-serif text-2xl font-semibold text-ink lg:text-3xl">
+          Perguntas que costumam vir antes do primeiro passo
         </h2>
-      </div>
+      </SectionReveal>
 
-      <div className="mx-auto mt-10 max-w-reading divide-y divide-border border-y border-border">
+      {/* Composição editorial em duas colunas no desktop (uma no mobile) —
+          continua usando <details>/<summary> por baixo, então a
+          acessibilidade (navegação por teclado, leitor de tela) não muda,
+          só a densidade/hierarquia visual. */}
+      <div className="mx-auto mt-12 grid max-w-content gap-x-12 gap-y-1 lg:grid-cols-2">
         {FAQS.map((faq) => (
-          <details key={faq.question} className="group py-4">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-md text-left font-sans text-base font-medium text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-canvas">
+          <details key={faq.question} className="group border-b border-border py-5">
+            <summary className="flex cursor-pointer list-none items-start justify-between gap-4 rounded-md text-left font-sans text-base font-medium text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-canvas">
               {faq.question}
               <ChevronDown
-                className="size-4 shrink-0 text-ink-muted transition-transform duration-fast ease-standard group-open:rotate-180"
+                className="mt-0.5 size-4 shrink-0 text-brand-gold transition-transform duration-fast ease-standard group-open:rotate-180"
                 aria-hidden="true"
               />
             </summary>
-            <p className="mt-3 text-sm text-ink-muted">{faq.answer}</p>
+            <p className="mt-3 max-w-reading text-sm text-ink-muted">{faq.answer}</p>
           </details>
         ))}
       </div>

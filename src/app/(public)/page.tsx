@@ -10,12 +10,15 @@ import { FinalCtaSection } from "@/components/landing/final-cta-section";
 import { Hero } from "@/components/landing/hero";
 import { HowItWorksSection } from "@/components/landing/how-it-works-section";
 import { PrimaryCtaBand } from "@/components/landing/primary-cta-band";
-import { ProcessSection } from "@/components/landing/process-section";
 import { VideoSection } from "@/components/landing/video-section";
 import { WhyTrustSection } from "@/components/landing/why-trust-section";
 
+// GO LIVE V2: ProcessSection (src/components/landing/process-section.tsx)
+// deixou de ser renderizada aqui — seu conteúdo foi fundido em
+// HowItWorksSection (uma única jornada em tira, em vez de dois grids
+// parecidos). O arquivo permanece no repositório, não foi apagado.
 export const metadata: Metadata = {
-  title: { absolute: "Aliviar Curadoria Médica — Você não precisa enfrentar isso sozinho" },
+  title: { absolute: "Aliviar Curadoria Médica — Uma escolha de cuidado, nunca sozinho" },
   description:
     "Curadoria médica independente, com acompanhamento humano em cada etapa — do primeiro contato à conversa que importa.",
 };
@@ -50,7 +53,6 @@ export default function HomePage() {
       <VideoSection src={institutionalVideo.src} poster={institutionalVideo.poster} />
       <HowItWorksSection />
       <BenefitsSection />
-      <ProcessSection />
       <WhyTrustSection />
       <ConciergeSection />
       <FaqSection />

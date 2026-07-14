@@ -3,6 +3,7 @@ import type { ComponentType } from "react";
 
 import { Card, CardDescription } from "@/components/ui/card";
 import { SectionContainer } from "@/components/landing/section-container";
+import { SectionReveal } from "@/components/landing/section-reveal";
 
 const REASONS: Array<{
   icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
@@ -37,11 +38,11 @@ const REASONS: Array<{
 export function WhyTrustSection() {
   return (
     <SectionContainer>
-      <div className="mx-auto max-w-reading text-center">
+      <SectionReveal className="mx-auto max-w-reading text-center">
         <h2 className="font-serif text-2xl font-semibold text-ink lg:text-3xl">
           É por isso que as pessoas confiam
         </h2>
-      </div>
+      </SectionReveal>
 
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {REASONS.map((reason) => (

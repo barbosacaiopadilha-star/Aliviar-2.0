@@ -1,58 +1,50 @@
-import { Clock, Compass, MessageCircle, UserCheck } from "lucide-react";
-import type { ComponentType } from "react";
-
-import { Card, CardDescription } from "@/components/ui/card";
 import { SectionContainer } from "@/components/landing/section-container";
+import { SectionReveal } from "@/components/landing/section-reveal";
 
-const BENEFITS: Array<{
-  icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
-  title: string;
-  description: string;
-}> = [
+// Tratamento editorial (numeral serifado + regra fina), deliberadamente
+// diferente do grid de cards com selo dourado de WhyTrustSection e da
+// tira de ProviderJourney (HowItWorksSection) — três seções vizinhas,
+// três composições distintas, nenhuma repetindo o mesmo bloco.
+const BENEFITS = [
   {
-    icon: UserCheck,
     title: "Um curador médico dedicado",
     description: "Alguém acompanha o seu caso do início ao fim — nunca só uma tela decidindo por você.",
   },
   {
-    icon: MessageCircle,
     title: "Companhia em tempo real",
     description:
       "No momento da conversa que importa, a equipe Aliviar está com você, explicando cada passo.",
   },
   {
-    icon: Compass,
     title: "Clareza sobre o próximo passo",
     description: "Você sempre sabe o que vem a seguir — nunca fica esperando sem entender por quê.",
   },
   {
-    icon: Clock,
     title: "No seu tempo",
     description: "Sem urgência artificial, sem prazo forçado — o ritmo é o seu.",
   },
-];
+] as const;
 
 export function BenefitsSection() {
   return (
     <SectionContainer>
-      <div className="mx-auto max-w-reading text-center">
+      <SectionReveal className="mx-auto max-w-reading text-center">
         <h2 className="font-serif text-2xl font-semibold text-ink lg:text-3xl">
           É isso que você recebe
         </h2>
-      </div>
+      </SectionReveal>
 
-      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {BENEFITS.map((benefit) => (
-          <Card key={benefit.title} padding="lg">
-            <span
-              aria-hidden="true"
-              className="inline-flex size-10 items-center justify-center rounded-full bg-brand-sage text-ink"
-            >
-              <benefit.icon className="size-5" aria-hidden={true} />
+      <div className="mx-auto mt-12 grid max-w-content gap-x-10 gap-y-8 border-t border-border pt-8 sm:grid-cols-2">
+        {BENEFITS.map((benefit, index) => (
+          <div key={benefit.title} className="flex gap-5">
+            <span aria-hidden="true" className="font-serif text-2xl font-medium text-brand-sage">
+              {String(index + 1).padStart(2, "0")}
             </span>
-            <h3 className="mt-4 font-sans text-lg font-semibold text-ink">{benefit.title}</h3>
-            <CardDescription className="mt-2">{benefit.description}</CardDescription>
-          </Card>
+            <div>
+              <h3 className="font-sans text-lg font-semibold text-ink">{benefit.title}</h3>
+              <p className="mt-1.5 text-sm text-ink-muted">{benefit.description}</p>
+            </div>
+          </div>
         ))}
       </div>
     </SectionContainer>

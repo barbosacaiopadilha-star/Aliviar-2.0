@@ -1,10 +1,11 @@
 import { LinkButton } from "@/components/landing/link-button";
 import { SectionContainer } from "@/components/landing/section-container";
+import { SectionReveal } from "@/components/landing/section-reveal";
 
 export function ConciergeSection() {
   return (
     <SectionContainer className="bg-surface">
-      <div className="mx-auto flex max-w-reading flex-col items-center gap-4 text-center">
+      <SectionReveal className="mx-auto flex max-w-reading flex-col items-center gap-4 text-center">
         <span className="text-xs font-medium uppercase tracking-[0.14em] text-brand-sage">
           Outra forma de começar
         </span>
@@ -19,7 +20,7 @@ export function ConciergeSection() {
         <LinkButton href="/sua-historia" variant="secondary">
           Pedir esse tipo de acompanhamento
         </LinkButton>
-      </div>
+      </SectionReveal>
     </SectionContainer>
   );
 }
