@@ -12,7 +12,8 @@ const REASONS: Array<{
   {
     icon: Scale,
     title: "Curadoria independente",
-    description: "Cada recomendação é escolhida com critério — nunca comprada ou patrocinada.",
+    description:
+      "Você recebe três profissionais selecionados com critério — nunca comprados ou patrocinados. A escolha final é sempre sua.",
   },
   {
     icon: HeartHandshake,
@@ -44,10 +45,10 @@ export function WhyTrustSection() {
 
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {REASONS.map((reason) => (
-          <Card key={reason.title} padding="lg">
+          <Card key={reason.title} padding="lg" className="border-brand-gold/25 bg-transparent shadow-none">
             <span
               aria-hidden="true"
-              className="inline-flex size-10 items-center justify-center rounded-full bg-brand-primary text-surface"
+              className="inline-flex size-10 items-center justify-center rounded-full border border-brand-gold/40 text-brand-gold"
             >
               <reason.icon className="size-5" aria-hidden={true} />
             </span>

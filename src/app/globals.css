@@ -90,4 +90,21 @@
   .focus-ring {
     @apply outline-none ring-2 ring-focus ring-offset-2 ring-offset-canvas;
   }
+
+  /* Entrada suave, discreta, usada só acima da dobra (Hero) — respeita
+     prefers-reduced-motion via o override global já definido acima. */
+  .animate-fade-up {
+    animation: fade-up 700ms var(--ease-standard) both;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

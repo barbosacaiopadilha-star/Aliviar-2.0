@@ -34,7 +34,7 @@ const BENEFITS: Array<{
 
 export function BenefitsSection() {
   return (
-    <SectionContainer className="bg-surface">
+    <SectionContainer>
       <div className="mx-auto max-w-reading text-center">
         <h2 className="font-serif text-2xl font-semibold text-ink lg:text-3xl">
           É isso que você recebe
