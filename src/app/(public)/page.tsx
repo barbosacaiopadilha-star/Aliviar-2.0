@@ -6,17 +6,18 @@ import type { Metadata } from "next";
 import { ConnectionZone } from "@/components/landing/connection-zone";
 import { FaqSection } from "@/components/landing/faq-section";
 import { FinalSection } from "@/components/landing/final-section";
+import { PersistentVideo } from "@/components/landing/persistent-video";
 import { ReceptionSection } from "@/components/landing/reception-section";
 
-// LANDING V3 (revisão 4 — vídeo como janela fixa): ReceptionSection agora
-// embute o vídeo institucional como uma "janela" (VideoSection
-// variant="window") que acompanha a rolagem em position: sticky — nunca
-// remontada, então o som nunca reinicia — em vez de ser uma seção
-// separada. → ConnectionZone (travessia só de luz/tipografia) →
-// FinalSection (encerramento) → FaqSection. Hero, PrimaryCtaBand,
-// HowItWorksSection, BenefitsSection, WhyTrustSection, ConciergeSection e
-// FinalCtaSection permanecem no repositório (código reutilizável), só não
-// são mais importados.
+// LANDING V3 (revisão 5 — vídeo persistente): o vídeo institucional é
+// renderizado por PersistentVideo (position: fixed, nunca remontado — som
+// nunca reinicia), permanece visível durante toda a visita e encolhe para
+// um "companheiro" no canto assim que a Recepção sai da viewport.
+// ReceptionSection (cor como protagonista) → ConnectionZone (travessia só
+// de luz/tipografia) → FinalSection (encerramento) → FaqSection. Hero,
+// PrimaryCtaBand, HowItWorksSection, BenefitsSection, WhyTrustSection,
+// ConciergeSection e FinalCtaSection permanecem no repositório (código
+// reutilizável), só não são mais importados.
 export const metadata: Metadata = {
   title: { absolute: "Aliviar Curadoria Médica — Uma escolha de cuidado, nunca sozinho" },
   description:
@@ -61,11 +62,8 @@ export default function HomePage() {
 
   return (
     <>
-      <ReceptionSection
-        photoSrc={receptionPhoto}
-        videoSrc={institutionalVideo.src}
-        videoPoster={institutionalVideo.poster}
-      />
+      <ReceptionSection photoSrc={receptionPhoto} />
+      <PersistentVideo videoSrc={institutionalVideo.src} videoPoster={institutionalVideo.poster} />
       <ConnectionZone />
       <FinalSection photoSrc={finalPhoto} />
       <FaqSection />

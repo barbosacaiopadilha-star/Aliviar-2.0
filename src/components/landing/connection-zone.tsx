@@ -5,6 +5,12 @@ import { SectionReveal } from "@/components/landing/section-reveal";
 // o aberto do Final; o resto da jornada emocional (escuta, organização,
 // companhia, critério) é carregado só por três frases isoladas, cada
 // uma com bastante respiro, nunca um bloco de texto.
+//
+// tone="light" ganha um text-shadow suave: a posição de cada frase dentro
+// do gradiente varia com o espaçamento (gap-24/32), então o texto branco
+// pode cair bem perto do stop sage (55%), onde o contraste puro cai perto
+// do mínimo AA — o halo escuro garante legibilidade sem depender de
+// recalcular a posição exata a cada ajuste de espaçamento.
 const CONNECTION_LINES = [
   { text: "Três profissionais selecionados, nunca por anúncio.", tone: "light" as const },
   { text: "Cuidado humano antes de tecnologia.", tone: "light" as const },
@@ -23,7 +29,7 @@ export function ConnectionZone() {
             className={
               line.tone === "dark"
                 ? "font-serif text-2xl font-semibold text-ink lg:text-3xl"
-                : "font-serif text-2xl font-semibold text-surface lg:text-3xl"
+                : "font-serif text-2xl font-semibold text-surface [text-shadow:0_2px_24px_rgba(10,25,44,0.85)] lg:text-3xl"
             }
           >
             {line.text}

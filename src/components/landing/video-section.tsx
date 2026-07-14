@@ -2,18 +2,19 @@ import { Play } from "lucide-react";
 
 import { SectionContainer } from "@/components/landing/section-container";
 import { SectionReveal } from "@/components/landing/section-reveal";
+import { cn } from "@/components/ui/cn";
 
 type VideoSectionProps = {
   src?: string;
   poster?: string;
   /** "section" (padrão): bloco full-bleed com heading, como seção própria.
-   *  "window": cartão contido — usado dentro de ReceptionSection como a
-   *  "janela" que acompanha parte da rolagem. Mesma lógica vídeo-ou-
-   *  placeholder, sem duplicar código. */
+   *  "window": janela flutuante pequena — usada por PersistentVideo. Mesma
+   *  lógica vídeo-ou-placeholder, sem duplicar código; placeholder some
+   *  para o modo compacto (só o selo, sem heading/legenda). */
   variant?: "section" | "window";
 };
 
-function VideoFrame({ src, poster }: { src?: string; poster?: string }) {
+function VideoFrame({ src, poster, compact }: { src?: string; poster?: string; compact?: boolean }) {
   return src ? (
     <video
       className="aspect-video w-full rounded-[inherit]"
@@ -28,24 +29,36 @@ function VideoFrame({ src, poster }: { src?: string; poster?: string }) {
     // Estado "aguardando o vídeo definitivo" — deliberadamente sem
     // aparência técnica de placeholder (nada de borda tracejada): um
     // gradiente e um selo de marca sutil, como se já fosse parte do
-    // design final, não um espaço vazio a preencher depois.
-    <div className="relative flex aspect-video w-full flex-col items-center justify-center gap-4 overflow-hidden rounded-[inherit] bg-[radial-gradient(120%_140%_at_50%_0%,_var(--color-brand-primary)_0%,_var(--color-brand-primary-deep)_55%,_#0a2544_100%)] px-6 text-center">
+    // design final, não um espaço vazio a preencher depois. `compact`
+    // (janela flutuante pequena, ver PersistentVideo) usa só o selo —
+    // heading/legenda não cabem numa janela de ~150-280px sem cortar.
+    <div
+      className={cn(
+        "relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-[inherit] bg-[radial-gradient(120%_140%_at_50%_0%,_var(--color-brand-primary)_0%,_var(--color-brand-primary-deep)_55%,_#0a2544_100%)] text-center",
+        compact ? "px-2" : "flex-col gap-4 px-6",
+      )}
+    >
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 opacity-[0.07] mix-blend-overlay [background-image:radial-gradient(circle_at_1px_1px,_var(--color-brand-sage-light)_1px,_transparent_0)] [background-size:22px_22px]"
       />
       <span
         aria-hidden="true"
-        className="relative inline-flex size-16 items-center justify-center rounded-full border border-surface/25 bg-surface/10 backdrop-blur-sm"
+        className={cn(
+          "relative inline-flex items-center justify-center rounded-full border border-surface/25 bg-surface/10 backdrop-blur-sm",
+          compact ? "size-8" : "size-16",
+        )}
       >
-        <Play className="size-6 translate-x-0.5 text-surface" aria-hidden="true" />
+        <Play className={cn("translate-x-0.5 text-surface", compact ? "size-3.5" : "size-6")} aria-hidden="true" />
       </span>
-      <div className="relative space-y-1">
-        <p className="font-serif text-lg font-medium text-surface lg:text-xl">
-          Conheça a Curadoria Médica Aliviar
-        </p>
-        <p className="text-sm text-brand-sage-light">Vídeo institucional em breve.</p>
-      </div>
+      {!compact && (
+        <div className="relative space-y-1">
+          <p className="font-serif text-lg font-medium text-surface lg:text-xl">
+            Conheça a Curadoria Médica Aliviar
+          </p>
+          <p className="text-sm text-brand-sage-light">Vídeo institucional em breve.</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -53,8 +66,8 @@ function VideoFrame({ src, poster }: { src?: string; poster?: string }) {
 export function VideoSection({ src, poster, variant = "section" }: VideoSectionProps) {
   if (variant === "window") {
     return (
-      <div className="mx-auto w-full max-w-xl overflow-hidden rounded-2xl shadow-lg">
-        <VideoFrame src={src} poster={poster} />
+      <div className="mx-auto w-full overflow-hidden rounded-2xl shadow-lg">
+        <VideoFrame src={src} poster={poster} compact />
       </div>
     );
   }
