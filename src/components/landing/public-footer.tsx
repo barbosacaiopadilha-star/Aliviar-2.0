@@ -3,10 +3,10 @@ import Link from "next/link";
 
 // Multi-coluna (Landing V2) — nenhum canal de contato inventado (sem
 // telefone/e-mail/endereço fictício): só navegação interna já existente
-// no site. Logo oficial em public/brand/logo-aliviar.jpeg (ver
-// public-header.tsx). Fundo navy escuro (não mais branco) — fecha a
-// Landing no mesmo tom do Hero/CTA final, reduzindo o branco geral da
-// página.
+// no site. Logo oficial em public/brand/logo-aliviar-transparent.png
+// (fundo removido, ver public-header.tsx). Fundo navy escuro (não mais
+// branco) — fecha a Landing no mesmo tom do Hero/CTA final, reduzindo o
+// branco geral da página.
 const FOOTER_LINKS = [
   { label: "Início", href: "/" },
   { label: "Dúvidas frequentes", href: "#duvidas" },
@@ -27,10 +27,10 @@ export function PublicFooter() {
         <div className="space-y-3">
           <Link
             href="/"
-            className="inline-block rounded-lg bg-canvas p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-brand-primary-deep"
+            className="inline-block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-brand-primary-deep"
           >
             <Image
-              src="/brand/logo-aliviar.jpeg"
+              src="/brand/logo-aliviar-transparent.png"
               alt="Aliviar — Curadoria Médica Independente"
               width={1254}
               height={1254}
