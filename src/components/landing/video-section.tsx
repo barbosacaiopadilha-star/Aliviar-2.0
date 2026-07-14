@@ -1,7 +1,7 @@
 "use client";
 
-import { Play, Volume2, VolumeX } from "lucide-react";
-import { useRef, useState } from "react";
+import { Maximize2, Play, Volume2, VolumeX, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import { GoldCornerAccent } from "@/components/landing/gold-corner-accent";
 import { SectionContainer } from "@/components/landing/section-container";
@@ -77,7 +77,8 @@ function VideoFrame({ src, poster, compact }: { src?: string; poster?: string; c
       </video>
       <button
         type="button"
-        onClick={() => {
+        onClick={(event) => {
+          event.stopPropagation();
           const video = videoRef.current;
           if (!video) return;
           video.muted = !video.muted;
@@ -92,15 +93,107 @@ function VideoFrame({ src, poster, compact }: { src?: string; poster?: string; c
   );
 }
 
-export function VideoSection({ src, poster, variant = "section" }: VideoSectionProps) {
-  if (variant === "window") {
-    return (
-      <div className="relative mx-auto w-full">
-        <GoldCornerAccent className="-right-3 -top-3 size-20 lg:size-28" />
-        <div className="w-full overflow-hidden rounded-2xl shadow-xl ring-1 ring-surface/15 transition-transform duration-base ease-standard hover:-translate-y-1 hover:shadow-2xl">
+// Popup de vídeo em tela cheia — o "efeito popup" que faltava na
+// experiência: fundo escurece (fade simples), cartão salta pra tela (leve
+// overshoot via .animate-pop-in). Esc, clique fora, ou o X fecham; foco
+// vai para o botão de fechar ao abrir e volta pro gatilho ao fechar
+// (mesmo padrão do Dialog em src/components/ui/dialog.tsx).
+function VideoModal({
+  open,
+  onClose,
+  src,
+  poster,
+}: {
+  open: boolean;
+  onClose: () => void;
+  src?: string;
+  poster?: string;
+}) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    closeButtonRef.current?.focus();
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-modal-overlay flex items-center justify-center p-4 sm:p-8">
+      <button
+        type="button"
+        aria-label="Fechar vídeo"
+        className="animate-fade-in absolute inset-0 bg-ink/80 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Vídeo institucional Aliviar"
+        className="animate-pop-in relative z-modal w-full max-w-3xl"
+      >
+        <button
+          ref={closeButtonRef}
+          type="button"
+          onClick={onClose}
+          aria-label="Fechar vídeo"
+          className="absolute -top-12 right-0 inline-flex size-10 items-center justify-center rounded-full border border-surface/25 bg-surface/10 text-surface backdrop-blur-sm transition-colors duration-fast ease-standard hover:bg-surface/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+        >
+          <X className="size-5" aria-hidden="true" />
+        </button>
+        <div className="overflow-hidden rounded-2xl shadow-2xl ring-1 ring-surface/15">
           <VideoFrame src={src} poster={poster} />
         </div>
       </div>
+    </div>
+  );
+}
+
+export function VideoSection({ src, poster, variant = "section" }: VideoSectionProps) {
+  const [modalOpen, setModalOpen] = useState(false);
+
+  if (variant === "window") {
+    return (
+      <>
+        <div className="relative mx-auto w-full">
+          <GoldCornerAccent className="-right-3 -top-3 size-20 lg:size-28" />
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => setModalOpen(true)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                setModalOpen(true);
+              }
+            }}
+            aria-label="Abrir vídeo institucional em tela cheia"
+            className="group relative w-full cursor-pointer overflow-hidden rounded-2xl shadow-xl ring-1 ring-surface/15 transition-transform duration-base ease-standard hover:-translate-y-1 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+          >
+            <VideoFrame src={src} poster={poster} />
+            <span
+              aria-hidden="true"
+              className="absolute right-3 top-3 inline-flex size-8 items-center justify-center rounded-full bg-ink/50 text-surface opacity-0 backdrop-blur-sm transition-opacity duration-base ease-standard group-hover:opacity-100"
+            >
+              <Maximize2 className="size-4" aria-hidden="true" />
+            </span>
+          </div>
+        </div>
+        <VideoModal open={modalOpen} onClose={() => setModalOpen(false)} src={src} poster={poster} />
+      </>
     );
   }
 
