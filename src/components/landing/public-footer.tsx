@@ -16,7 +16,7 @@ const FOOTER_LINKS = [
 
 export function PublicFooter() {
   return (
-    <footer className="border-t border-brand-gold/25 bg-brand-primary-deep">
+    <footer className="border-t-2 border-brand-gold/60 bg-brand-primary-deep">
       <div className="mx-auto max-w-content px-4 pt-16 lg:px-8">
         <p className="max-w-reading font-serif text-2xl font-medium leading-snug text-surface lg:text-3xl">
           Uma decisão tão importante merece companhia, do início ao fim.

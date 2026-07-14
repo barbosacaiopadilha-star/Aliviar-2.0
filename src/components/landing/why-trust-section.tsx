@@ -36,11 +36,9 @@ const CRITERIA: Array<{
 
 export function WhyTrustSection() {
   return (
-    <SectionContainer className="border-t border-brand-gold/25 bg-[color-mix(in_srgb,_var(--color-brand-sage)_75%,_var(--color-ink))]">
+    <SectionContainer className="border-t-2 border-brand-gold/60 bg-[color-mix(in_srgb,_var(--color-brand-sage)_75%,_var(--color-ink))]">
       <SectionReveal className="mx-auto max-w-reading text-center">
-        <SectionEyebrow tone="dark" className="text-brand-gold">
-          Critério, não sorte
-        </SectionEyebrow>
+        <SectionEyebrow tone="dark">Critério, não sorte</SectionEyebrow>
         <h2 className="mt-3 font-serif text-2xl font-semibold text-surface lg:text-3xl">
           Como avaliamos cada profissional
         </h2>
@@ -51,11 +49,11 @@ export function WhyTrustSection() {
           <SectionReveal key={criterion.title} delayMs={index * 120}>
             <Card
               padding="lg"
-              className="card-lift h-full border-brand-gold/30 bg-surface/[0.04] text-center shadow-none"
+              className="card-lift h-full border-brand-gold/60 bg-surface/[0.04] text-center shadow-none"
             >
               <span
                 aria-hidden="true"
-                className="mx-auto inline-flex size-10 items-center justify-center rounded-full border border-brand-gold/50 text-brand-gold"
+                className="mx-auto inline-flex size-10 items-center justify-center rounded-full border-2 border-brand-gold bg-brand-gold/10 text-brand-gold"
               >
                 <criterion.icon className="size-5" aria-hidden={true} />
               </span>

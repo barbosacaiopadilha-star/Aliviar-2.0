@@ -46,7 +46,7 @@ export function BenefitsSection() {
           <SectionReveal key={benefit.title} delayMs={index * 120}>
             <Card
               padding="lg"
-              className="card-lift h-full border-brand-gold/30 bg-[color-mix(in_srgb,_var(--color-brand-sage)_6%,_var(--color-bg-surface))] text-center"
+              className="card-lift h-full border-brand-gold/60 bg-[color-mix(in_srgb,_var(--color-brand-sage)_6%,_var(--color-bg-surface))] text-center"
             >
               <span
                 aria-hidden="true"

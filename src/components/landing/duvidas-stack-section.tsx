@@ -116,7 +116,7 @@ export function DuvidasStackSection() {
           {CARDS.map((card) => (
             <div
               key={card.duvidaTitle.join()}
-              className="rounded-2xl border border-brand-gold/20 bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_25%,_var(--color-bg-surface))_100%)] p-6"
+              className="rounded-2xl border border-brand-gold/50 bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_25%,_var(--color-bg-surface))_100%)] p-6"
             >
               <span className="text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">Dúvida</span>
               <p className="mt-2 font-serif text-lg italic text-ink">
@@ -168,7 +168,7 @@ export function DuvidasStackSection() {
                 style={{ transformStyle: "preserve-3d" }}
               >
                 <div
-                  className="absolute inset-0 flex flex-col justify-start rounded-2xl border border-brand-gold/20 bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_35%,_var(--color-bg-surface))_100%)] p-6 pt-7 shadow-lg"
+                  className="absolute inset-0 flex flex-col justify-start rounded-2xl border border-brand-gold/50 bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_35%,_var(--color-bg-surface))_100%)] p-6 pt-7 shadow-lg"
                   style={{ backfaceVisibility: "hidden" }}
                 >
                   <span className="text-xs font-medium uppercase tracking-[0.16em] text-ink-muted">Dúvida</span>
@@ -180,7 +180,7 @@ export function DuvidasStackSection() {
                   <p className="mt-3 text-sm text-ink-muted">{card.duvidaText}</p>
                 </div>
                 <div
-                  className="absolute inset-0 flex flex-col justify-start rounded-2xl border border-brand-gold/20 bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_var(--color-brand-sage)_100%)] p-6 pt-7 shadow-lg"
+                  className="absolute inset-0 flex flex-col justify-start rounded-2xl border border-brand-gold/50 bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_var(--color-brand-sage)_100%)] p-6 pt-7 shadow-lg"
                   style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                 >
                   <span className="text-xs font-medium uppercase tracking-[0.16em] text-brand-primary-deep/70">

@@ -14,14 +14,14 @@ type HeroProps = {
 // fotografia real do ambiente Aliviar (com um zoom lento e contínuo —
 // profundidade cinematográfica discreta), vídeo institucional como um
 // cartão flutuante sobre a própria foto (nunca position:fixed — faz
-// parte da composição do hero, não a acompanha pela rolagem). Gradiente
-// navy→sage: navy mais forte só sob o texto (à esquerda, garante
-// contraste), sage dominante na metade direita — verde com presença
-// real, não só um detalhe na borda. Traço dourado fino na base marca a
-// transição para a próxima seção.
+// parte da composição do hero, não a acompanha pela rolagem). Verde
+// (sage) é a cor predominante do hero — base e gradiente inteiros em
+// tons de sage, navy removido (era a cor dominante antes, invertido a
+// pedido). Traço dourado mais grosso na base marca a transição para a
+// próxima seção.
 export function Hero({ photoSrc, videoSrc, videoPoster }: HeroProps) {
   return (
-    <section className="relative flex min-h-[92svh] items-center overflow-hidden bg-brand-primary-deep px-4 pb-16 pt-28 lg:px-8 lg:pt-32">
+    <section className="relative flex min-h-[92svh] items-center overflow-hidden bg-[color-mix(in_srgb,_var(--color-brand-sage)_70%,_var(--color-ink))] px-4 pb-16 pt-28 lg:px-8 lg:pt-32">
       {photoSrc && (
         <Image
           src={photoSrc}
@@ -34,11 +34,11 @@ export function Hero({ photoSrc, videoSrc, videoPoster }: HeroProps) {
       )}
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-[linear-gradient(120deg,_var(--color-brand-primary-deep)_0%,_color-mix(in_srgb,_var(--color-brand-primary-deep)_85%,_transparent)_42%,_color-mix(in_srgb,_var(--color-brand-sage)_55%,_transparent)_68%,_color-mix(in_srgb,_var(--color-brand-sage)_50%,_transparent)_100%)]"
+        className="absolute inset-0 bg-[linear-gradient(120deg,_color-mix(in_srgb,_var(--color-brand-sage)_75%,_var(--color-ink))_0%,_color-mix(in_srgb,_var(--color-brand-sage)_75%,_var(--color-ink))_42%,_color-mix(in_srgb,_var(--color-brand-sage)_60%,_transparent)_70%,_color-mix(in_srgb,_var(--color-brand-sage)_40%,_transparent)_100%)]"
       />
       <div
         aria-hidden="true"
-        className="absolute inset-x-0 bottom-0 h-px bg-[linear-gradient(90deg,_transparent_0%,_var(--color-brand-gold)_50%,_transparent_100%)]"
+        className="absolute inset-x-0 bottom-0 h-1 bg-[linear-gradient(90deg,_transparent_0%,_var(--color-brand-gold)_50%,_transparent_100%)]"
       />
 
       <div className="relative mx-auto grid w-full max-w-content items-center gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-6">
@@ -47,7 +47,7 @@ export function Hero({ photoSrc, videoSrc, videoPoster }: HeroProps) {
             Curadoria médica independente
           </SectionEyebrow>
           <h1 className="mt-4 font-serif text-4xl font-semibold leading-[1.08] text-surface lg:text-5xl">
-            Uma escolha de cuidado, nunca sozinho.
+            Uma escolha de cuidado, <span className="text-brand-gold">nunca sozinho</span>.
           </h1>
           <p className="mt-5 text-lg text-surface/85">
             Você conta sua história no seu tempo. Alguém da nossa equipe organiza um caminho
