@@ -3,6 +3,7 @@ import type { ComponentType } from "react";
 
 import { Card, CardDescription } from "@/components/ui/card";
 import { SectionContainer } from "@/components/landing/section-container";
+import { SectionEyebrow } from "@/components/landing/section-eyebrow";
 import { SectionReveal } from "@/components/landing/section-reveal";
 
 // Grid de 3 cards com ícone — mesma densidade/proporção do bloco de
@@ -32,26 +33,28 @@ const BENEFITS: Array<{
 
 export function BenefitsSection() {
   return (
-    <SectionContainer>
+    <SectionContainer className="bg-[linear-gradient(180deg,_var(--color-bg-canvas)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_10%,_var(--color-bg-canvas))_100%)]">
       <SectionReveal className="mx-auto max-w-reading text-center">
-        <span className="text-xs font-medium uppercase tracking-[0.14em] text-brand-sage">Na prática</span>
+        <SectionEyebrow>Na prática</SectionEyebrow>
         <h2 className="mt-3 font-serif text-2xl font-semibold text-ink lg:text-3xl">
           É isso que você recebe
         </h2>
       </SectionReveal>
 
       <div className="mx-auto mt-10 grid max-w-content gap-6 sm:grid-cols-3">
-        {BENEFITS.map((benefit) => (
-          <Card key={benefit.title} padding="lg" className="border-brand-gold/20 text-center">
-            <span
-              aria-hidden="true"
-              className="mx-auto inline-flex size-12 items-center justify-center rounded-full bg-brand-primary/10 text-brand-primary"
-            >
-              <benefit.icon className="size-6" aria-hidden={true} />
-            </span>
-            <h3 className="mt-4 font-serif text-lg font-semibold text-ink">{benefit.title}</h3>
-            <CardDescription className="mt-2">{benefit.description}</CardDescription>
-          </Card>
+        {BENEFITS.map((benefit, index) => (
+          <SectionReveal key={benefit.title} delayMs={index * 120}>
+            <Card padding="lg" className="card-lift h-full border-brand-gold/30 text-center">
+              <span
+                aria-hidden="true"
+                className="mx-auto inline-flex size-12 items-center justify-center rounded-full bg-brand-sage/15 text-brand-sage"
+              >
+                <benefit.icon className="size-6" aria-hidden={true} />
+              </span>
+              <h3 className="mt-4 font-serif text-lg font-semibold text-ink">{benefit.title}</h3>
+              <CardDescription className="mt-2">{benefit.description}</CardDescription>
+            </Card>
+          </SectionReveal>
         ))}
       </div>
     </SectionContainer>

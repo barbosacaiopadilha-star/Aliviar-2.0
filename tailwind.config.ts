@@ -40,7 +40,7 @@ const config: Config = {
       },
       fontFamily: {
         serif: ["var(--font-fraunces)", "ui-serif", "Georgia", "serif"],
-        sans: ["var(--font-inter)", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["var(--font-public-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       fontSize: {
         xs: ["var(--text-xs)", { lineHeight: "var(--text-xs--line-height)" }],

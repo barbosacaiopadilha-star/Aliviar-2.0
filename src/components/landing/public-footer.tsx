@@ -4,7 +4,9 @@ import Link from "next/link";
 // Multi-coluna (Landing V2) — nenhum canal de contato inventado (sem
 // telefone/e-mail/endereço fictício): só navegação interna já existente
 // no site. Logo oficial em public/brand/logo-aliviar.jpeg (ver
-// public-header.tsx).
+// public-header.tsx). Fundo navy escuro (não mais branco) — fecha a
+// Landing no mesmo tom do Hero/CTA final, reduzindo o branco geral da
+// página.
 const FOOTER_LINKS = [
   { label: "Início", href: "/" },
   { label: "Dúvidas frequentes", href: "#duvidas" },
@@ -14,9 +16,9 @@ const FOOTER_LINKS = [
 
 export function PublicFooter() {
   return (
-    <footer className="border-t border-border bg-surface">
+    <footer className="border-t border-brand-gold/25 bg-brand-primary-deep">
       <div className="mx-auto max-w-content px-4 pt-16 lg:px-8">
-        <p className="max-w-reading font-serif text-2xl font-medium leading-snug text-brand-primary-deep lg:text-3xl">
+        <p className="max-w-reading font-serif text-2xl font-medium leading-snug text-surface lg:text-3xl">
           Uma decisão tão importante merece companhia, do início ao fim.
         </p>
       </div>
@@ -25,24 +27,24 @@ export function PublicFooter() {
         <div className="space-y-3">
           <Link
             href="/"
-            className="inline-block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+            className="inline-block rounded-lg bg-canvas p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-brand-primary-deep"
           >
             <Image
               src="/brand/logo-aliviar.jpeg"
               alt="Aliviar — Curadoria Médica Independente"
               width={1254}
               height={1254}
-              className="h-24 w-24 lg:h-28 lg:w-28"
+              className="h-20 w-20 lg:h-24 lg:w-24"
             />
           </Link>
-          <p className="max-w-reading text-sm text-ink-muted">
+          <p className="max-w-reading text-sm text-surface/70">
             Curadoria médica independente, com acompanhamento humano em cada etapa — do primeiro
             contato à conversa que importa.
           </p>
         </div>
 
         <div>
-          <span className="text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">
+          <span className="text-xs font-medium uppercase tracking-[0.14em] text-brand-sage-light">
             Navegação
           </span>
           <ul className="mt-3 space-y-2">
@@ -50,7 +52,7 @@ export function PublicFooter() {
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className="link-underline text-sm text-ink transition-colors duration-fast ease-standard hover:text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                  className="link-underline text-sm text-surface/85 transition-colors duration-fast ease-standard hover:text-brand-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-brand-primary-deep"
                 >
                   {link.label}
                 </Link>
@@ -60,8 +62,8 @@ export function PublicFooter() {
         </div>
       </div>
 
-      <div className="border-t border-border">
-        <p className="mx-auto max-w-content px-4 py-4 text-xs text-ink-muted lg:px-8">
+      <div className="border-t border-surface/10">
+        <p className="mx-auto max-w-content px-4 py-4 text-xs text-surface/60 lg:px-8">
           © {new Date().getFullYear()} Aliviar. Todos os direitos reservados.
         </p>
       </div>

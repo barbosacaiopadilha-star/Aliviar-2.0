@@ -7,6 +7,10 @@ import { cn } from "@/components/ui/cn";
 type SectionRevealProps = {
   children: ReactNode;
   className?: string;
+  /** Atraso do fade-up, em ms — permite escalonar cards vizinhos (cada um
+   *  com seu próprio SectionReveal/observer) em vez de todos entrarem
+   *  juntos. Omitido = sem atraso. */
+  delayMs?: number;
 };
 
 // Entrada suave ao rolar até o elemento, uma única vez — CSS puro
@@ -21,7 +25,7 @@ type SectionRevealProps = {
 // elemento entrou na viewport. Se o JS falhar por qualquer motivo
 // (hidratação, observer indisponível), o conteúdo nunca fica preso
 // invisível — CTAs e texto continuam sempre acessíveis.
-export function SectionReveal({ children, className }: SectionRevealProps) {
+export function SectionReveal({ children, className, delayMs }: SectionRevealProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [animate, setAnimate] = useState(false);
 
@@ -43,7 +47,11 @@ export function SectionReveal({ children, className }: SectionRevealProps) {
   }, []);
 
   return (
-    <div ref={ref} className={cn(animate && "animate-fade-up", className)}>
+    <div
+      ref={ref}
+      className={cn(animate && "animate-fade-up", className)}
+      style={animate && delayMs ? { animationDelay: `${delayMs}ms` } : undefined}
+    >
       {children}
     </div>
   );

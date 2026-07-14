@@ -9,7 +9,7 @@ type LinkButtonProps = ComponentProps<typeof Link> & {
 
 const variantClasses: Record<NonNullable<LinkButtonProps["variant"]>, string> = {
   primary:
-    "bg-brand-primary text-surface hover:bg-brand-primary-deep focus-visible:ring-offset-canvas",
+    "border border-brand-gold/50 bg-brand-primary text-surface hover:border-brand-gold hover:bg-brand-primary-deep focus-visible:ring-offset-canvas",
   secondary:
     "border border-border bg-surface text-ink hover:bg-canvas focus-visible:ring-offset-surface",
   ghost: "bg-transparent text-brand-primary hover:bg-canvas focus-visible:ring-offset-canvas",

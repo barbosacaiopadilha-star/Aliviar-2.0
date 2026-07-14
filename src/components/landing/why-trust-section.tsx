@@ -3,11 +3,14 @@ import type { ComponentType } from "react";
 
 import { Card, CardDescription } from "@/components/ui/card";
 import { SectionContainer } from "@/components/landing/section-container";
+import { SectionEyebrow } from "@/components/landing/section-eyebrow";
 import { SectionReveal } from "@/components/landing/section-reveal";
 
 // Três critérios de avaliação — no mesmo espírito de "Como avaliamos os
 // médicos parceiros" do site de referência, com o critério real da
-// Aliviar Curadoria (nunca copiado literalmente).
+// Aliviar Curadoria (nunca copiado literalmente). Fundo navy escuro:
+// alterna o ritmo claro/escuro da Landing (Hero e a faixa de jornada já
+// são escuras) em vez de mais uma seção branca.
 const CRITERIA: Array<{
   icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
   title: string;
@@ -32,28 +35,31 @@ const CRITERIA: Array<{
 
 export function WhyTrustSection() {
   return (
-    <SectionContainer className="bg-surface">
+    <SectionContainer className="border-t border-brand-gold/25 bg-brand-primary-deep">
       <SectionReveal className="mx-auto max-w-reading text-center">
-        <span className="text-xs font-medium uppercase tracking-[0.14em] text-brand-sage">
-          Critério, não sorte
-        </span>
-        <h2 className="mt-3 font-serif text-2xl font-semibold text-ink lg:text-3xl">
+        <SectionEyebrow tone="dark">Critério, não sorte</SectionEyebrow>
+        <h2 className="mt-3 font-serif text-2xl font-semibold text-surface lg:text-3xl">
           Como avaliamos cada profissional
         </h2>
       </SectionReveal>
 
       <div className="mx-auto mt-10 grid max-w-content gap-6 sm:grid-cols-3">
-        {CRITERIA.map((criterion) => (
-          <Card key={criterion.title} padding="lg" className="border-brand-gold/25 bg-transparent shadow-none">
-            <span
-              aria-hidden="true"
-              className="inline-flex size-10 items-center justify-center rounded-full border border-brand-gold/40 text-brand-gold"
+        {CRITERIA.map((criterion, index) => (
+          <SectionReveal key={criterion.title} delayMs={index * 120}>
+            <Card
+              padding="lg"
+              className="card-lift h-full border-brand-gold/30 bg-surface/[0.04] text-center shadow-none"
             >
-              <criterion.icon className="size-5" aria-hidden={true} />
-            </span>
-            <h3 className="mt-4 font-sans text-lg font-semibold text-ink">{criterion.title}</h3>
-            <CardDescription className="mt-2">{criterion.description}</CardDescription>
-          </Card>
+              <span
+                aria-hidden="true"
+                className="mx-auto inline-flex size-10 items-center justify-center rounded-full border border-brand-gold/50 text-brand-gold"
+              >
+                <criterion.icon className="size-5" aria-hidden={true} />
+              </span>
+              <h3 className="mt-4 font-serif text-lg font-semibold text-surface">{criterion.title}</h3>
+              <CardDescription className="mt-2 text-surface/70">{criterion.description}</CardDescription>
+            </Card>
+          </SectionReveal>
         ))}
       </div>
     </SectionContainer>

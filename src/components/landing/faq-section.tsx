@@ -1,4 +1,5 @@
 import { SectionContainer } from "@/components/landing/section-container";
+import { SectionEyebrow } from "@/components/landing/section-eyebrow";
 import { SectionReveal } from "@/components/landing/section-reveal";
 
 const FAQS = [
@@ -35,11 +36,9 @@ const FAQS = [
 
 export function FaqSection() {
   return (
-    <SectionContainer id="duvidas" className="scroll-mt-20 bg-surface">
+    <SectionContainer id="duvidas" className="scroll-mt-20 bg-canvas">
       <SectionReveal className="max-w-reading text-center lg:text-left">
-        <span className="text-xs font-medium uppercase tracking-[0.16em] text-brand-sage">
-          Suas dúvidas
-        </span>
+        <SectionEyebrow align="left">Suas dúvidas</SectionEyebrow>
         <h2 className="mt-3 font-serif text-2xl font-semibold text-ink lg:text-3xl">
           Perguntas que costumam vir antes do primeiro passo
         </h2>
