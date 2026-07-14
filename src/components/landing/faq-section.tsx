@@ -1,5 +1,3 @@
-import { ChevronDown } from "lucide-react";
-
 import { SectionContainer } from "@/components/landing/section-container";
 import { SectionReveal } from "@/components/landing/section-reveal";
 
@@ -37,8 +35,8 @@ const FAQS = [
 
 export function FaqSection() {
   return (
-    <SectionContainer id="duvidas" className="scroll-mt-20">
-      <SectionReveal className="mx-auto max-w-reading text-center">
+    <SectionContainer id="duvidas" className="scroll-mt-20 bg-surface">
+      <SectionReveal className="max-w-reading text-center lg:text-left">
         <span className="text-xs font-medium uppercase tracking-[0.16em] text-brand-sage">
           Suas dúvidas
         </span>
@@ -50,16 +48,24 @@ export function FaqSection() {
       {/* Composição editorial em duas colunas no desktop (uma no mobile) —
           continua usando <details>/<summary> por baixo, então a
           acessibilidade (navegação por teclado, leitor de tela) não muda,
-          só a densidade/hierarquia visual. */}
+          só a densidade/hierarquia visual. Indicador +/- é CSS puro (dois
+          spans sobrepostos), sem ícone de biblioteca. */}
       <div className="mx-auto mt-12 grid max-w-content gap-x-12 gap-y-1 lg:grid-cols-2">
         {FAQS.map((faq) => (
           <details key={faq.question} className="group border-b border-border py-5">
-            <summary className="flex cursor-pointer list-none items-start justify-between gap-4 rounded-md text-left font-sans text-base font-medium text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-canvas">
+            <summary className="flex cursor-pointer list-none items-start justify-between gap-4 rounded-md text-left font-serif text-lg font-medium text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-canvas">
               {faq.question}
-              <ChevronDown
-                className="mt-0.5 size-4 shrink-0 text-brand-gold transition-transform duration-fast ease-standard group-open:rotate-180"
+              <span
                 aria-hidden="true"
-              />
+                className="relative mt-1.5 size-3.5 shrink-0 text-brand-gold"
+              >
+                <span className="absolute inset-0 flex items-center justify-center">
+                  <span className="h-px w-3.5 bg-current" />
+                </span>
+                <span className="absolute inset-0 flex items-center justify-center transition-transform duration-fast ease-standard group-open:rotate-90">
+                  <span className="h-3.5 w-px bg-current" />
+                </span>
+              </span>
             </summary>
             <p className="mt-3 max-w-reading text-sm text-ink-muted">{faq.answer}</p>
           </details>

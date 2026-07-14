@@ -11,7 +11,7 @@ export function PrimaryCtaBand() {
         </p>
         <a
           href="#video-institucional"
-          className="mt-2 inline-flex items-center gap-1.5 rounded-md text-sm font-medium text-ink-muted transition-colors duration-fast ease-standard hover:text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+          className="link-underline mt-2 inline-flex items-center gap-1.5 rounded-md text-sm font-medium text-ink-muted transition-colors duration-fast ease-standard hover:text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         >
           Veja como, em poucos minutos
           <ChevronDown className="size-4" aria-hidden="true" />

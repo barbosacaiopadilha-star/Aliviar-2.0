@@ -37,7 +37,7 @@ const REASONS: Array<{
 
 export function WhyTrustSection() {
   return (
-    <SectionContainer>
+    <SectionContainer className="bg-surface">
       <SectionReveal className="mx-auto max-w-reading text-center">
         <h2 className="font-serif text-2xl font-semibold text-ink lg:text-3xl">
           É por isso que as pessoas confiam
