@@ -44,7 +44,10 @@ export function BenefitsSection() {
       <div className="mx-auto mt-10 grid max-w-content gap-6 sm:grid-cols-3">
         {BENEFITS.map((benefit, index) => (
           <SectionReveal key={benefit.title} delayMs={index * 120}>
-            <Card padding="lg" className="card-lift h-full border-brand-gold/30 text-center">
+            <Card
+              padding="lg"
+              className="card-lift h-full border-brand-gold/30 bg-[color-mix(in_srgb,_var(--color-brand-sage)_6%,_var(--color-bg-surface))] text-center"
+            >
               <span
                 aria-hidden="true"
                 className="mx-auto inline-flex size-12 items-center justify-center rounded-full bg-brand-sage/15 text-brand-sage"
