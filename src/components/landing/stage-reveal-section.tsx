@@ -2,12 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// Seção fixada durante a rolagem: um texto grande de duas linhas (a
-// primeira sempre discreta, a segunda sempre em destaque dourado/sálvia)
-// troca de etapa conforme o progresso, com uma linha vertical + marcador
-// indicando onde você está — a mesma dinâmica de rolagem do site de
-// referência (aliviar-temp.vercel.app: "Triagem Inicial", "Análise Do
-// Caso"...), com as etapas reais da jornada Aliviar Curadoria.
+// Seção fixada durante a rolagem: um texto grande de duas linhas (fundo
+// claro, tom suave — como visto na gravação real do site de referência
+// em mobile, nunca um bloco escuro) troca de etapa conforme o progresso,
+// com uma linha vertical + marcador indicando onde você está.
 const STAGES: Array<[string, string]> = [
   ["Sua", "História"],
   ["Curadoria", "Criteriosa"],
@@ -72,14 +70,14 @@ export function StageRevealSection() {
 
   if (ready && reduced) {
     return (
-      <section className="bg-brand-primary-deep px-4 py-16 lg:px-8">
+      <section className="bg-canvas px-4 py-16 lg:px-8">
         <div className="mx-auto flex max-w-content flex-col gap-8 sm:flex-row sm:flex-wrap sm:justify-between">
           {STAGES.map(([line1, line2]) => (
             <div key={line1 + line2} className="text-center">
-              <p className="font-serif text-2xl font-medium leading-tight">
-                <span className="text-brand-sage-light">{line1}</span>
+              <p className="font-serif text-2xl font-medium leading-tight text-ink-muted">
+                {line1}
                 <br />
-                <span className="text-brand-gold">{line2}</span>
+                {line2}
               </p>
             </div>
           ))}
@@ -89,7 +87,7 @@ export function StageRevealSection() {
   }
 
   return (
-    <div ref={sectionRef} className="relative bg-brand-primary-deep">
+    <div ref={sectionRef} className="relative bg-canvas">
       <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 lg:px-8">
         <div className="grid">
           {STAGES.map(([line1, line2], index) => (
@@ -100,20 +98,20 @@ export function StageRevealSection() {
               }}
               className="col-start-1 row-start-1 text-center"
             >
-              <p className="font-serif text-4xl font-medium leading-tight lg:text-6xl">
-                <span className="text-surface/40">{line1}</span>
+              <p className="font-serif text-4xl font-medium leading-tight text-ink-muted/70 lg:text-6xl">
+                {line1}
                 <br />
-                <span className="text-brand-gold">{line2}</span>
+                {line2}
               </p>
             </div>
           ))}
         </div>
 
-        <div className="relative mt-10 flex h-40 w-px flex-col items-center bg-surface/15">
-          <div ref={progressRef} className="w-px bg-brand-gold" style={{ height: "0%" }} />
+        <div className="relative mt-10 flex h-40 w-px flex-col items-center bg-border">
+          <div ref={progressRef} className="w-px bg-brand-sage" style={{ height: "0%" }} />
           <div
             ref={dotRef}
-            className="absolute left-1/2 size-3 -translate-x-1/2 rounded-full bg-brand-gold shadow-[0_0_0_4px_rgba(176,141,87,0.25)]"
+            className="absolute left-1/2 size-3 -translate-x-1/2 rounded-full bg-brand-sage shadow-[0_0_0_4px_rgba(127,158,140,0.2)]"
             style={{ top: "0%" }}
           />
         </div>

@@ -114,17 +114,20 @@ export function DuvidasStackSection() {
         </div>
         <div className="mx-auto mt-12 grid max-w-content gap-6 lg:grid-cols-2">
           {CARDS.map((card) => (
-            <div key={card.duvidaTitle.join()} className="rounded-lg border border-border bg-surface p-6">
+            <div
+              key={card.duvidaTitle.join()}
+              className="rounded-2xl border border-brand-gold/20 bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_25%,_var(--color-bg-surface))_100%)] p-6"
+            >
               <span className="text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">Dúvida</span>
-              <p className="mt-1 font-serif text-lg font-medium text-ink">
-                {card.duvidaTitle[0]} <em className="not-italic text-brand-primary">{card.duvidaTitle[1]}</em>
+              <p className="mt-2 font-serif text-lg italic text-ink">
+                {card.duvidaTitle[0]} {card.duvidaTitle[1]}
               </p>
               <p className="mt-2 text-sm text-ink-muted">{card.duvidaText}</p>
-              <span className="mt-4 block text-xs font-medium uppercase tracking-[0.14em] text-brand-sage">
+              <span className="mt-4 block text-xs font-medium uppercase tracking-[0.14em] text-brand-primary-deep/70">
                 Solução
               </span>
-              <p className="mt-1 font-serif text-lg font-medium text-ink">
-                {card.solucaoTitle[0]} <em className="not-italic text-brand-sage">{card.solucaoTitle[1]}</em>
+              <p className="mt-2 font-serif text-lg italic text-brand-primary-deep">
+                {card.solucaoTitle[0]} {card.solucaoTitle[1]}
               </p>
               <p className="mt-2 text-sm text-ink-muted">{card.solucaoText}</p>
             </div>
@@ -165,30 +168,30 @@ export function DuvidasStackSection() {
                 style={{ transformStyle: "preserve-3d" }}
               >
                 <div
-                  className="absolute inset-0 flex flex-col justify-center rounded-xl border border-brand-gold/25 bg-surface p-6 shadow-lg"
+                  className="absolute inset-0 flex flex-col justify-start rounded-2xl border border-brand-gold/20 bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_35%,_var(--color-bg-surface))_100%)] p-6 pt-7 shadow-lg"
                   style={{ backfaceVisibility: "hidden" }}
                 >
                   <span className="text-xs font-medium uppercase tracking-[0.16em] text-ink-muted">Dúvida</span>
-                  <p className="mt-2 font-serif text-2xl font-medium leading-tight text-ink">
+                  <p className="mt-3 font-serif text-2xl italic leading-tight text-ink">
                     {card.duvidaTitle[0]}
                     <br />
-                    <em className="not-italic text-brand-primary">{card.duvidaTitle[1]}</em>
+                    {card.duvidaTitle[1]}
                   </p>
                   <p className="mt-3 text-sm text-ink-muted">{card.duvidaText}</p>
                 </div>
                 <div
-                  className="absolute inset-0 flex flex-col justify-center rounded-xl border border-brand-gold/25 bg-brand-primary-deep p-6 shadow-lg"
+                  className="absolute inset-0 flex flex-col justify-start rounded-2xl border border-brand-gold/20 bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_var(--color-brand-sage)_100%)] p-6 pt-7 shadow-lg"
                   style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                 >
-                  <span className="text-xs font-medium uppercase tracking-[0.16em] text-brand-sage-light">
+                  <span className="text-xs font-medium uppercase tracking-[0.16em] text-brand-primary-deep/70">
                     Solução
                   </span>
-                  <p className="mt-2 font-serif text-2xl font-medium leading-tight text-surface">
+                  <p className="mt-3 font-serif text-2xl italic leading-tight text-brand-primary-deep">
                     {card.solucaoTitle[0]}
                     <br />
-                    <em className="not-italic text-brand-gold">{card.solucaoTitle[1]}</em>
+                    {card.solucaoTitle[1]}
                   </p>
-                  <p className="mt-3 text-sm text-surface/80">{card.solucaoText}</p>
+                  <p className="mt-3 text-sm text-brand-primary-deep/80">{card.solucaoText}</p>
                 </div>
               </div>
             </div>
