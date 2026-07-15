@@ -1,7 +1,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
+
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
 type TestAccount = { role: string; email: string; password: string };
 
@@ -30,6 +32,26 @@ describe("perfil profissional — RLS e fundação administrativa (Supabase loca
     expect(url, "NEXT_PUBLIC_SUPABASE_URL ausente — rode `npm run supabase:env`").toBeTruthy();
     expect(anonKey, "NEXT_PUBLIC_SUPABASE_ANON_KEY ausente — rode `npm run supabase:env`").toBeTruthy();
     accounts = loadTestAccounts();
+  });
+
+  // Isolamento de dados entre testes (mesmo achado/correção já aplicado a
+  // concierge/human-review/final-curadoria-delivery): professional_profiles
+  // é um recurso global, nunca escopado por teste — os 3 testes abaixo que
+  // efetivamente criam uma linha (administrador tem permissão; paciente e
+  // profissional são bloqueados por RLS e nunca chegam a criar nada) nunca
+  // a removiam. Nenhum deles cria professional_competency_areas,
+  // professional_documents ou conta de autenticação própria — são registros
+  // puramente administrativos (created_by aponta para o admin).
+  let createdProfessionalProfileIds: string[] = [];
+
+  afterEach(async () => {
+    if (createdProfessionalProfileIds.length === 0) {
+      return;
+    }
+    const adminClient = createAdminSupabaseClient();
+    await adminClient.from("professional_competency_areas").delete().in("professional_profile_id", createdProfessionalProfileIds);
+    await adminClient.from("professional_profiles").delete().in("id", createdProfessionalProfileIds);
+    createdProfessionalProfileIds = [];
   });
 
   it("paciente (usuário comum) não consegue criar perfil profissional", async () => {
@@ -101,6 +123,7 @@ describe("perfil profissional — RLS e fundação administrativa (Supabase loca
     expect(data?.status).toBe("ativo");
     expect(data?.publication_status).toBe("nao_publicado");
     expect(data?.created_by).toBe(user!.id);
+    if (data?.id) createdProfessionalProfileIds.push(data.id);
 
     await client.auth.signOut();
   });
@@ -126,6 +149,7 @@ describe("perfil profissional — RLS e fundação administrativa (Supabase loca
       })
       .select("id")
       .single();
+    if (created?.id) createdProfessionalProfileIds.push(created.id);
 
     const { data: updated, error } = await client
       .from("professional_profiles")
@@ -161,6 +185,7 @@ describe("perfil profissional — RLS e fundação administrativa (Supabase loca
       })
       .select("id")
       .single();
+    if (created?.id) createdProfessionalProfileIds.push(created.id);
 
     const { data: published, error: publishError } = await client
       .from("professional_profiles")
