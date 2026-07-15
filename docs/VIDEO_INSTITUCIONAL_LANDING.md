@@ -1,4 +1,6 @@
-# Vídeo Institucional da Landing (~10 minutos)
+# Vídeo Institucional da Landing (~10 minutos) — HISTÓRICO, não-normativo
+
+**[HISTÓRICO — ADR-026, `docs/DECISIONS.md`]** Este documento deixou de descrever o vídeo de lançamento da Landing. A ADR-026 aprovou o Vídeo Companheiro (ambiente, silencioso, já implementado em `PortalExperience`) como o vídeo vigente — ver `docs/LANDING_CREATIVE_DIRECTION.md` §4. O roteiro de ~10 minutos abaixo nunca chegou a ser produzido e não é implementado nesta versão da Landing. Preservado por rastreabilidade (`docs/DOCUMENTATION_GOVERNANCE_POLICY.md`, "documento histórico nunca é apagado") — permanece disponível como referência caso um vídeo explicativo longo seja produzido no futuro, para outro canal ou uma versão futura da Landing, com decisão própria.
 
 **Asset distinto do filme de marca de 80 segundos** (`docs/FILME_INSTITUCIONAL_ALIVIAR.md`, `docs/CINEMA_BIBLE.md`, `docs/KEYFRAME_GUIDE.md`, `docs/FILME_PRODUCTION_PLAN.md` — protagonista Helena, puramente emocional, Aliviar aparece menos de 15s). Aquele filme não é alterado nem substituído por este documento e continua existindo para outros canais (redes sociais, campanhas). Este é um documento de **plano/roteiro**, não de implementação — nenhum vídeo é gerado a partir daqui.
 

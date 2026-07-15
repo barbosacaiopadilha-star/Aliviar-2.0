@@ -26,7 +26,7 @@ Cada seção deve conduzir naturalmente para a próxima. O visitante nunca deve 
 
 1. "Você não precisa enfrentar isso sozinho." → **Hero**
 2. "Existe uma forma organizada de tomar essa decisão." → **CTA principal** (ponte, não venda)
-3. *(Vídeo institucional)* — agora o paciente entende completamente o conceito → **Vídeo**
+3. *(Vídeo Companheiro)* — presença silenciosa que acompanha o início da jornada, nunca uma pausa explicativa → **Vídeo**
 4. "É assim que funciona." → **Como funciona**
 5. "É por isso que as pessoas confiam." → **Por que confiar**
 6. "É isso que você recebe." → **Benefícios**
@@ -36,9 +36,11 @@ Cada seção deve conduzir naturalmente para a próxima. O visitante nunca deve 
 
 Nunca inverter essa lógica de tom, mesmo quando a ordem estrutural aprovada (seção 6) intercala seções por razões de composição visual.
 
-## 4. O vídeo é o centro
+## 4. O vídeo é companhia, não um centro explicativo
 
-O vídeo institucional (~10 minutos — roteiro em `docs/VIDEO_INSTITUCIONAL_LANDING.md`, **distinto** do filme de marca de 80 segundos da FASE 7/Helena, que continua existindo para outros canais) não é um componente qualquer — é o centro da Landing. Toda a página existe para preparar o visitante para assistir a ele e, depois, reforçar o que acabou de ser visto. Nenhuma outra seção repete o conteúdo do vídeo — cada uma aprofunda apenas o que merece mais detalhe.
+**[ATUALIZADO — ADR-026, `docs/DECISIONS.md`, supersede parcialmente a decisão (3) da ADR-017]** O vídeo de lançamento da Landing é o **Vídeo Companheiro**: ambiente, silencioso, sem controles nativos, incorporado dentro do Portal (`PortalExperience`) desde a Chegada até o início da Curadoria, quando se despede aos poucos conforme o scroll avança. Não é um tutorial, não explica o produto passo a passo, não é assistido de uma vez — é presença visual que acompanha parte da caminhada e desaparece antes da continuidade da experiência (Biblioteca de FAQ). Nenhuma seção precisa ser construída "ao redor" dele; ele nunca é o centro que a página inteira prepara e depois reforça.
+
+O plano de um vídeo institucional explicativo de ~10 minutos (`docs/VIDEO_INSTITUCIONAL_LANDING.md`) não é implementado nesta versão — o documento permanece como histórico/referência, não como vídeo vigente da Landing. O filme de marca de 80 segundos da FASE 7 (Helena) não é afetado por esta decisão e continua existindo para outros canais.
 
 ## 5. Não parecer um site médico
 
@@ -46,7 +48,9 @@ A Aliviar não deve parecer hospital, clínica, laboratório, marketplace, plano
 
 ## 6. Estrutura aprovada (12 seções)
 
-1. Header — 2. Hero — 3. CTA principal — 4. Vídeo institucional (grande destaque) — 5. Como funciona — 6. Benefícios — 7. Processo — 8. Por que confiar — 9. Concierge de Saúde — 10. FAQ — 11. CTA Final — 12. Footer.
+1. Header — 2. Hero — 3. CTA principal — 4. Vídeo Companheiro (presença ambiente, ver §4) — 5. Como funciona — 6. Benefícios — 7. Processo — 8. Por que confiar — 9. Concierge de Saúde — 10. FAQ — 11. CTA Final — 12. Footer.
+
+Ordem numérica preservada integralmente (12 itens, mesmas posições); só o nome/papel do item 4 foi atualizado, de "Vídeo institucional (grande destaque)" para "Vídeo Companheiro (presença ambiente)" (ADR-026) — nenhuma seção foi reordenada.
 
 Referência visual: `aliviar-temp.vercel.app` — inspiração de ritmo/impacto emocional apenas, nunca cópia (paleta/ilustração cartoon já rejeitadas, `docs/DESIGN_SYSTEM.md` seção 0).
 

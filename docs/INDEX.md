@@ -18,6 +18,8 @@ Novo no projeto? Vá direto para **[ONBOARDING.md](ONBOARDING.md)**, que já tra
 | Documento | Propósito |
 |---|---|
 | [`PRODUCT_ARCHITECTURE.md`](PRODUCT_ARCHITECTURE.md) | Modelagem funcional: as jornadas do paciente e da equipe Aliviar. |
+| [`PATIENT_EXPERIENCE_BLUEPRINT.md`](PATIENT_EXPERIENCE_BLUEPRINT.md) | Blueprint de serviço da jornada do paciente, etapa a etapa, verificado contra a implementação real — não propõe mudanças. |
+| [`PATIENT_ENTRY_ARCHITECTURE.md`](PATIENT_ENTRY_ARCHITECTURE.md) | Autoridade sobre a fronteira Landing↔Produto — máquina de estados da entrada do paciente, do primeiro contato à abertura do Caso; registra zonas cinzentas sem corrigi-las. |
 | [`PRODUCT_VISION.md`](PRODUCT_VISION.md) | Missão, visão, valores, posicionamento. |
 | [`PRODUCT_PRINCIPLES.md`](PRODUCT_PRINCIPLES.md) | Princípios permanentes de decisão de produto. |
 | [`DISCOVERY_ENGINE.md`](DISCOVERY_ENGINE.md) | Desenho do motor de busca/descoberta (porta "Busca Direta" — ver `PRODUCT_ARCHITECTURE.md` §1; ainda não implementada). |
@@ -62,16 +64,22 @@ Novo no projeto? Vá direto para **[ONBOARDING.md](ONBOARDING.md)**, que já tra
 | [`BRAND_GUIDELINES.md`](BRAND_GUIDELINES.md) | Personalidade, tom de voz, vocabulário, uso da marca. |
 | [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) | Tokens visuais, tipografia, componentes, acessibilidade. |
 | [`LANDING_CREATIVE_DIRECTION.md`](LANDING_CREATIVE_DIRECTION.md) | Direção criativa vigente da Landing (estrutura de 12 seções). |
+| [`LANDING_EXPERIENCE_PHILOSOPHY.md`](LANDING_EXPERIENCE_PHILOSOPHY.md) | Filosofia da experiência do primeiro contato do paciente — princípios emocionais/editoriais/de interação, não estrutura nem implementação. |
+| [`LANDING_UX_WRITING.md`](LANDING_UX_WRITING.md) | Conteúdo integral da Landing (as 12 seções), auditado contra o texto real em produção — guia editorial, glossários, regras para telas/fluxos/notificações futuras. |
+| [`LANDING_FUNCTIONAL_SPEC.md`](LANDING_FUNCTIONAL_SPEC.md) | Contrato funcional das 12 seções (comportamento, estados, transições, acessibilidade) — verificado contra a implementação real; não decide UI/código. |
+| [`LANDING_IMPLEMENTATION_ARCHITECTURE.md`](LANDING_IMPLEMENTATION_ARCHITECTURE.md) | Arquitetura de referência para implementar a Landing — módulos, motores, estados, contratos, checklists; sem código nem escolha de biblioteca. |
+| [`LANDING_IMPLEMENTATION_PLAYBOOK.md`](LANDING_IMPLEMENTATION_PLAYBOOK.md) | Playbook de execução — ordem de construção, sequência de integração dos motores, estratégia de PR/rollout, checklist de pronto-para-produção. |
+| [`LANDING_IMPLEMENTATION_AUDIT.md`](LANDING_IMPLEMENTATION_AUDIT.md) | Contrato de auditoria — matriz de critérios verificáveis por documento canônico, criticidade/impacto, checklists de PR/Produto/UX/Performance/Acessibilidade/Conteúdo/Arquitetura. |
 | [`LANDING_STRATEGY.md`](LANDING_STRATEGY.md) | Estratégia original da Landing — estrutura superada pelo documento acima; tom/voz/FAQ/SEO seguem válidos. |
 
 ## Vídeo institucional
 
-Dois vídeos distintos (ADR-017) — não confundir:
+Dois vídeos distintos (ADR-017) — não confundir. O vídeo de lançamento vigente da Landing é o Vídeo Companheiro (ambiente, já implementado — `docs/LANDING_CREATIVE_DIRECTION.md` §4, ADR-026); nenhum dos dois documentos de roteiro abaixo descreve o vídeo hoje em produção na Landing.
 
 | Documento | Propósito |
 |---|---|
-| [`VIDEO_INSTITUCIONAL_LANDING.md`](VIDEO_INSTITUCIONAL_LANDING.md) | Vídeo de ~10min explicativo, para a Landing. |
-| [`VIDEO_STORYBOARD.md`](VIDEO_STORYBOARD.md) | Roteiro do filme de marca de ~80s (Helena, 11 atos). |
+| [`VIDEO_INSTITUCIONAL_LANDING.md`](VIDEO_INSTITUCIONAL_LANDING.md) | **Histórico (ADR-026)** — roteiro de ~10min explicativo, nunca produzido; não é mais o vídeo vigente da Landing. |
+| [`VIDEO_STORYBOARD.md`](VIDEO_STORYBOARD.md) | Roteiro do filme de marca de ~80s (Helena, 11 atos) — não afetado pela ADR-026. |
 | [`FILME_INSTITUCIONAL_ALIVIAR.md`](FILME_INSTITUCIONAL_ALIVIAR.md), [`FILME_PRODUCTION_PLAN.md`](FILME_PRODUCTION_PLAN.md), [`CINEMA_BIBLE.md`](CINEMA_BIBLE.md), [`KEYFRAME_GUIDE.md`](KEYFRAME_GUIDE.md) | Produção detalhada do filme de 80s: plano de produção, bíblia cinematográfica, guia de keyframes. |
 
 ## Histórico e decisões
