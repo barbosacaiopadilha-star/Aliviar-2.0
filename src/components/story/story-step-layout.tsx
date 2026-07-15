@@ -5,7 +5,9 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { SectionContainer } from "@/components/landing/section-container";
+import { SectionReveal } from "@/components/landing/section-reveal";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/components/ui/cn";
 
 type StoryStepLayoutProps = {
   step: number;
@@ -18,6 +20,9 @@ type StoryStepLayoutProps = {
   nextLabel?: string;
   nextDisabled?: boolean;
   actionSlot?: ReactNode;
+  /** Conteúdo leve abaixo da pergunta (ex.: indicador de autosave) — nunca
+   *  parte da navegação em si. */
+  footerSlot?: ReactNode;
 };
 
 export function StoryStepLayout({
@@ -31,34 +36,51 @@ export function StoryStepLayout({
   nextLabel = "Continuar",
   nextDisabled = false,
   actionSlot,
+  footerSlot,
 }: StoryStepLayoutProps) {
   const router = useRouter();
-  const progress = Math.round((step / totalSteps) * 100);
   const hasFooter = Boolean(backHref || nextHref || actionSlot);
 
   return (
-    <SectionContainer className="pt-12 lg:pt-16">
+    <SectionContainer className="py-16 lg:py-24">
       <div className="mx-auto max-w-reading">
-        <p className="text-sm font-medium text-ink-muted">
+        {/* Sinaliza progresso sem ler como formulário administrativo — traços
+            finos em vez do texto "Passo X de Y" (mantido só para leitor de
+            tela, via sr-only). */}
+        <span className="sr-only">
           Passo {step} de {totalSteps}
-        </p>
-        <div
-          aria-hidden="true"
-          className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-border"
-        >
-          <div
-            className="h-full rounded-full bg-brand-primary transition-all duration-base ease-standard"
-            style={{ width: `${progress}%` }}
-          />
+        </span>
+        <div aria-hidden="true" className="mb-10 flex items-center gap-1.5">
+          {Array.from({ length: totalSteps }, (_, index) => index + 1).map((mark) => (
+            <span
+              key={mark}
+              className={cn(
+                "h-1 rounded-full transition-[width,background-color] duration-slow ease-standard",
+                mark === step
+                  ? "w-8 bg-brand-gold"
+                  : mark < step
+                    ? "w-3 bg-brand-gold/40"
+                    : "w-3 bg-border",
+              )}
+            />
+          ))}
         </div>
 
-        <h1 className="mt-6 font-serif text-2xl font-semibold text-ink lg:text-3xl">{title}</h1>
-        {description ? <p className="mt-2 text-base text-ink-muted">{description}</p> : null}
+        <SectionReveal>
+          <h1 className="font-serif text-3xl font-medium leading-tight text-ink lg:text-4xl">
+            {title}
+          </h1>
+          {description ? (
+            <p className="mt-4 text-base leading-relaxed text-ink-muted">{description}</p>
+          ) : null}
+        </SectionReveal>
 
-        <div className="mt-8">{children}</div>
+        <div className="mt-10">{children}</div>
+
+        {footerSlot ? <div className="mt-6">{footerSlot}</div> : null}
 
         {hasFooter ? (
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-14 flex flex-col gap-3 border-t border-border pt-8 sm:flex-row sm:items-center sm:justify-between">
             {backHref ? (
               <Link
                 href={backHref}

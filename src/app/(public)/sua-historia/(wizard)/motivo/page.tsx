@@ -1,5 +1,6 @@
 "use client";
 
+import { AutosaveIndicator } from "@/components/story/autosave-indicator";
 import { StoryStepLayout } from "@/components/story/story-step-layout";
 import { FormField } from "@/components/ui/form-field";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,13 +17,15 @@ export default function MotivoPage() {
       description="Pode ser em poucas palavras — o que fizer sentido para você agora."
       backHref="/sua-historia/para-quem"
       nextHref="/sua-historia/historia"
+      footerSlot={<AutosaveIndicator />}
     >
       <FormField label="Sua resposta" htmlFor="motivo" hint="Você pode deixar em branco se preferir.">
         <Textarea
           id="motivo"
           name="motivo"
-          rows={4}
+          rows={5}
           placeholder="Ex.: tenho sentido muita ansiedade nas últimas semanas..."
+          className="min-h-36"
           value={data.motivo ?? ""}
           onChange={(event) => update({ motivo: event.target.value })}
         />

@@ -1,5 +1,6 @@
 "use client";
 
+import { AutosaveIndicator } from "@/components/story/autosave-indicator";
 import { StoryStepLayout } from "@/components/story/story-step-layout";
 import { Radio } from "@/components/ui/radio";
 import { useStoryDraft } from "@/modules/story/use-story-draft";
@@ -15,8 +16,9 @@ export default function PreferenciasPage() {
       backHref="/sua-historia/informacoes"
       nextHref="/sua-historia/revisao"
       nextDisabled={!data.preferenciaModalidade}
+      footerSlot={<AutosaveIndicator />}
     >
-      <fieldset className="space-y-3">
+      <fieldset className="space-y-4">
         <legend className="sr-only">Como você prefere se conectar?</legend>
         <Radio
           id="preferencia-online"
@@ -43,6 +45,10 @@ export default function PreferenciasPage() {
           onChange={() => update({ preferenciaModalidade: "tanto-faz" })}
         />
       </fieldset>
+
+      <p className="mt-8 text-sm text-ink-muted">
+        Isso nos ajuda a pensar em opções que caibam na sua rotina.
+      </p>
     </StoryStepLayout>
   );
 }

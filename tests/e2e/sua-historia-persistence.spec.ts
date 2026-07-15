@@ -58,7 +58,7 @@ test.describe("Persistência de 'Sua História' (autosave, retomada — ÉPICO 1
     await loginAs(page, paciente);
 
     await page.goto("/sua-historia/revisao");
-    await page.getByRole("button", { name: "Concluir" }).click();
+    await page.getByRole("button", { name: "Enviar minha história" }).click();
 
     await expect(page.getByRole("heading", { name: "Recebemos sua história" })).toBeVisible();
     await expect(
@@ -77,6 +77,6 @@ test.describe("Persistência de 'Sua História' (autosave, retomada — ÉPICO 1
     // A história ativa já foi enviada no teste anterior; uma nova história
     // em rascunho deve ter sido criada para esta visita.
     await page.goto("/sua-historia/revisao");
-    await expect(page.getByRole("heading", { name: /Revise sua história|Recebemos sua história/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Esta é a sua história\.|Recebemos sua história/ })).toBeVisible();
   });
 });

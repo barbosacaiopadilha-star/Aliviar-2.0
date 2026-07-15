@@ -1,5 +1,6 @@
 "use client";
 
+import { AutosaveIndicator } from "@/components/story/autosave-indicator";
 import { StoryStepLayout } from "@/components/story/story-step-layout";
 import { Radio } from "@/components/ui/radio";
 import { useStoryDraft } from "@/modules/story/use-story-draft";
@@ -15,8 +16,9 @@ export default function ParaQuemPage() {
       backHref="/sua-historia"
       nextHref="/sua-historia/motivo"
       nextDisabled={!data.paraQuem}
+      footerSlot={<AutosaveIndicator />}
     >
-      <fieldset className="space-y-3">
+      <fieldset className="space-y-4">
         <legend className="sr-only">Para quem é esta busca?</legend>
         <Radio
           id="para-quem-mim"
@@ -35,6 +37,10 @@ export default function ParaQuemPage() {
           onChange={() => update({ paraQuem: "para-outra-pessoa" })}
         />
       </fieldset>
+
+      <p className="mt-8 text-sm text-ink-muted">
+        Perguntamos isso para adaptar a conversa daqui pra frente ao seu contexto real.
+      </p>
     </StoryStepLayout>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { AutosaveIndicator } from "@/components/story/autosave-indicator";
 import { StoryAttachments } from "@/components/story/story-attachments";
 import { StoryStepLayout } from "@/components/story/story-step-layout";
 import { FormField } from "@/components/ui/form-field";
@@ -17,6 +18,7 @@ export default function InformacoesPage() {
       description="Qualquer contexto que ajude nossa equipe a entender melhor o seu momento."
       backHref="/sua-historia/historia"
       nextHref="/sua-historia/preferencias"
+      footerSlot={<AutosaveIndicator />}
     >
       <FormField
         label="Sua resposta"
@@ -26,7 +28,8 @@ export default function InformacoesPage() {
         <Textarea
           id="informacoes"
           name="informacoes"
-          rows={4}
+          rows={5}
+          className="min-h-36"
           value={data.informacoesImportantes ?? ""}
           onChange={(event) => update({ informacoesImportantes: event.target.value })}
         />

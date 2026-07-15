@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 
-import { StorySummary } from "@/components/story/story-summary";
+import { SectionContainer } from "@/components/landing/section-container";
+import { SectionReveal } from "@/components/landing/section-reveal";
+import { StoryNarrative } from "@/components/story/story-narrative";
 import { StoryStepLayout } from "@/components/story/story-step-layout";
 import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
@@ -15,12 +17,24 @@ export default function RevisaoPage() {
 
   if (status === "enviada") {
     return (
-      <StoryStepLayout step={7} totalSteps={7} title="Recebemos sua história">
-        <p className="text-base text-ink-muted">
-          Ela ficará disponível para a equipe Aliviar quando a próxima etapa da sua curadoria for
-          iniciada.
-        </p>
-      </StoryStepLayout>
+      <SectionContainer className="py-16 lg:py-24">
+        <SectionReveal className="mx-auto max-w-reading text-center">
+          <h1 className="font-serif text-3xl font-medium leading-tight text-ink lg:text-4xl">
+            Recebemos sua história
+          </h1>
+          <div className="mx-auto mt-6 max-w-reading space-y-4 text-base leading-relaxed text-ink-muted">
+            <p>Agora ela será analisada com cuidado por nossa equipe médica.</p>
+            <p>
+              Nenhuma recomendação é feita automaticamente — cada história passa por revisão humana
+              antes de qualquer orientação.
+            </p>
+            <p>
+              Ela ficará disponível para a equipe Aliviar quando a próxima etapa da sua curadoria for
+              iniciada.
+            </p>
+          </div>
+        </SectionReveal>
+      </SectionContainer>
     );
   }
 
@@ -38,16 +52,16 @@ export default function RevisaoPage() {
     <StoryStepLayout
       step={7}
       totalSteps={7}
-      title="Revise sua história"
-      description="Confira o que você compartilhou. Você pode ajustar qualquer resposta antes de concluir."
+      title="Esta é a sua história."
+      description="Confira o que você compartilhou. Você pode ajustar qualquer resposta antes de enviar."
       backHref="/sua-historia/preferencias"
       actionSlot={
         <Button type="button" className="sm:w-auto" isLoading={isSubmitting} onClick={handleSubmit}>
-          Concluir
+          Enviar minha história
         </Button>
       }
     >
-      <StorySummary data={data} editable />
+      <StoryNarrative data={data} />
 
       {error ? (
         <div className="mt-4">
@@ -55,7 +69,7 @@ export default function RevisaoPage() {
         </div>
       ) : null}
 
-      <p className="mt-6 text-sm text-ink-muted">
+      <p className="mt-8 text-sm text-ink-muted">
         Nossa equipe de curadoria analisa cada história com atenção antes de qualquer indicação —
         nunca por algoritmo automático.
       </p>

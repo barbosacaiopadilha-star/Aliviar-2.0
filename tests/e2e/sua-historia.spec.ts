@@ -4,7 +4,7 @@ test.describe("jornada Sua História (E2E)", () => {
   test("fluxo completo funciona do início ao fim", async ({ page }) => {
     await page.goto("/sua-historia");
     await expect(
-      page.getByRole("heading", { name: "Vamos entender como podemos ajudar." }),
+      page.getByRole("heading", { name: "Sua história merece ser contada com calma." }),
     ).toBeVisible();
     await page.getByRole("button", { name: "Começar" }).click();
 
@@ -28,7 +28,7 @@ test.describe("jornada Sua História (E2E)", () => {
 
     await expect(page).toHaveURL("/sua-historia/revisao");
     await expect(page.getByText("Tenho buscado apoio para lidar com a ansiedade.")).toBeVisible();
-    await page.getByRole("button", { name: "Concluir" }).click();
+    await page.getByRole("button", { name: "Enviar minha história" }).click();
 
     await expect(page.getByRole("heading", { name: "Recebemos sua história" })).toBeVisible();
   });
