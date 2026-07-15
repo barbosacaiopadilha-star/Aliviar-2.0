@@ -339,3 +339,57 @@ Sem esse campo, a implementação não pode prosseguir com segurança — é uma
 - `docs/ace/METHOD_INVARIANTS_DESIGN.md` — mapeamento do P003 atualizado para referenciar esta ADR como a instância formalizada.
 
 - **Revisitar quando:** o arquiteto do projeto autorizar explicitamente a implementação (seção 7) — até lá, nenhum código, schema, prompt ou especificação é alterado por esta ADR.
+
+---
+
+## ADR-025 — Human Review: no máximo um `HumanReviewResult` `VALIDATED` por Caso, garantido por índice único parcial no banco
+
+- **Status:** Definitiva. Formaliza uma proteção já implementada e agora coberta por testes (migration `20260714000000_human_review_results_one_validated_per_case.sql`, `src/modules/concierge/human-review-repository.ts`) — nenhum código ou schema foi alterado por esta ADR.
+
+### Contexto
+
+`human_review_results` (ADR/migration `20260712140000`) é append-only por natureza — cada linha é uma decisão humana completa e imutável, e um Caso pode acumular várias ao longo do tempo (ex.: `REJECTED` hoje, `VALIDATED` depois de nova informação). Isso é correto e desejado: o histórico de decisões rejeitadas e de solicitações de mais informação nunca deve ser apagado ou substituído.
+
+Mas `reviewStatus: VALIDATED` é qualitativamente diferente das demais: é o único status que autoriza uma Curadoria Final (P010, `docs/ace/04-specs/P009-human-review/specification.md`, "somente VALIDATED pode originar uma Curadoria Validada"). Se duas linhas VALIDATED existissem para o mesmo Caso — por exemplo, um Administrador e um Curador Médico agindo quase simultaneamente sobre o mesmo Caso — o sistema teria duas curadorias simultaneamente consideradas "aprovadas", sem nenhum critério para saber qual prevalece.
+
+`submitHumanReview` (`human-review-repository.ts`) já fazia um pre-check em memória (`listHumanReviewResultsForCase` seguido de um `some(reviewStatus === "VALIDATED")`) antes de inserir. Esse pre-check tem uma janela clássica de corrida (TOCTOU — time-of-check to time-of-use): entre o `SELECT` e o `INSERT` de duas requisições concorrentes, nenhuma trava impede que ambas leiam "ainda não há VALIDATED" antes de qualquer uma commitar, ambas prossigam, e — sem uma proteção no próprio banco — ambas teriam sucesso. A garantia definitiva de unicidade só pode pertencer ao banco, nunca só à aplicação.
+
+**Auditoria desta sessão** confirmou, com evidência real (testes de integração contra Supabase local): o índice único parcial já implementado impede corretamente a colisão, o pre-check continua útil como resposta antecipada e amigável (evita uma viagem ao banco na maioria dos casos), e o tratamento do código `23505` do Postgres converte a colisão real na mesma mensagem pública do pre-check, sem vazar nenhum detalhe interno. Não foi encontrado nenhum defeito na migration nem no repositório — só faltavam os testes, agora adicionados.
+
+### Decisão
+
+- Índice único **parcial** sobre `case_id`, com predicado `where (review_status = 'VALIDATED')`:
+  ```sql
+  create unique index human_review_results_one_validated_per_case_idx
+    on public.human_review_results (case_id)
+    where (review_status = 'VALIDATED');
+  ```
+- O histórico dos demais estados (`REJECTED`, `INFORMATION_REQUESTED`) permanece livre — o índice, por ser parcial, nunca os restringe; um Caso pode ter quantas linhas `REJECTED`/`INFORMATION_REQUESTED` forem necessárias.
+- O pre-check em `submitHumanReview` é mantido — não como a garantia (que é do banco), mas como resposta antecipada e mais amigável antes de tentar o `INSERT`.
+- O código `23505` (unique_violation) do Postgres é convertido para o mesmo erro de domínio e a mesma mensagem pública do pre-check (`"Este caso já tem uma curadoria validada — não é possível registrar uma nova decisão."`) — nunca o nome da constraint, o código SQL, ou qualquer outro detalhe interno do Postgres chega ao chamador.
+
+### Consequências
+
+- Exatamente uma validação final por Caso é garantida deterministicamente pelo banco, independentemente de quantas requisições concorrentes cheguem simultaneamente (confirmado por teste de concorrência real via `Promise.all`, não simulação sequencial).
+- Múltiplos resultados não validados (`REJECTED`/`INFORMATION_REQUESTED`) continuam plenamente permitidos e preservados — nenhuma mudança ao histórico append-only já estabelecido.
+- **Fora do escopo desta ADR**: revalidar um Caso que já tem uma decisão `VALIDATED` (ex.: reabrir uma curadoria já aprovada) continua não suportado — isso exigiria uma decisão normativa adicional própria (sobre revogação, supersessão, ou nova versão da decisão), que esta ADR não cria nem antecipa.
+- Nenhuma mudança de comportamento em produção — a migration já estava aplicada e o código já implementava exatamente este desenho; esta ADR formaliza e documenta uma proteção que já existia, agora com cobertura de teste.
+
+### Alternativas consideradas
+
+| Alternativa | Por que foi descartada |
+|---|---|
+| Somente pre-check em memória | Janela TOCTOU real — comprovada nesta auditoria; nunca fecha a corrida sozinha |
+| Lock explícito (`SELECT ... FOR UPDATE` ou advisory lock) | Mais complexo, exige disciplina em todo caminho de escrita futuro; um índice único é mais simples e à prova de esquecimento |
+| Serialização na aplicação (fila, mutex em memória) | Não funciona entre múltiplas instâncias/processos do servidor; a garantia precisa ser no banco, não no processo |
+| Unique constraint não parcial (`case_id` único na tabela inteira) | Quebraria o histórico append-only intencional — impediria até `REJECTED`/`INFORMATION_REQUESTED` repetidos, que são esperados e corretos |
+| Sobrescrever a decisão anterior em vez de rejeitar a nova | Violaria a imutabilidade do histórico humano (Kernel, seção 6) e apagaria a auditoria de quem decidiu o quê |
+| **Índice único parcial sobre `case_id`, predicado `VALIDATED`** | **Aceita** — fecha a corrida no banco, preserva o histórico dos demais estados, sem exigir nenhuma disciplina adicional de aplicação |
+
+### Dependências
+
+- `docs/ace/04-specs/P009-human-review/specification.md` — define `reviewStatus`/`VALIDATED`, mas não formalizava (antes desta ADR) a multiplicidade por Caso; esta ADR preenche essa lacuna normativa.
+- Migration `20260712140000_human_review_results.sql` (tabela base, append-only, sem UPDATE/DELETE) e `20260714000000_human_review_results_one_validated_per_case.sql` (o índice desta ADR).
+- `src/modules/concierge/human-review-repository.ts` (`submitHumanReview`) — pre-check e tratamento de `23505`.
+
+- **Revisitar quando:** houver uma decisão de produto explícita para permitir revalidar um Caso já validado (revogação ou supersessão) — nesse momento, uma nova ADR define esse fluxo, sem alterar retroativamente a garantia de unicidade aqui estabelecida.
