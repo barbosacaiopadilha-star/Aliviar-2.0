@@ -13,38 +13,50 @@ export type DuvidaCard = {
 export const CARDS: DuvidaCard[] = [
   {
     duvidaTitle: ["Não sei", "por onde começar"],
-    duvidaText: "Você tem uma situação de saúde, mas não sabe como organizar os próximos passos.",
+    duvidaText:
+      "Você tem uma situação de saúde, mas não sabe como organizar os próximos passos.",
     solucaoTitle: ["Curadoria", "organizada"],
-    solucaoText: "Uma pessoa da nossa equipe entende sua história e organiza um caminho claro para você.",
+    solucaoText:
+      "Uma pessoa da nossa equipe entende sua história e organiza um caminho claro para você.",
   },
   {
     duvidaTitle: ["Tenho medo de", "ficar sem suporte"],
-    duvidaText: "A conversa migra para o WhatsApp e você teme ficar sozinho depois disso.",
+    duvidaText:
+      "A conversa migra para o WhatsApp e você teme ficar sozinho depois disso.",
     solucaoTitle: ["Acompanhamento", "em tempo real"],
-    solucaoText: "A equipe Aliviar segue com você no WhatsApp, do mesmo jeito que aqui no site.",
+    solucaoText:
+      "A equipe Aliviar segue com você no WhatsApp, do mesmo jeito que aqui no site.",
   },
   {
     duvidaTitle: ["Não sei qual", "caminho escolher"],
-    duvidaText: "Busca Direta ou Concierge de Saúde parecem opções diferentes e você não sabe qual seguir.",
-    solucaoTitle: ["É a mesma", "curadoria Aliviar"],
-    solucaoText: "Escolha só a forma mais confortável para você começar — o cuidado é o mesmo.",
+    duvidaText:
+      "Você não sabe se precisa decidir algo antes de começar, ou se existe um jeito certo de dar o primeiro passo.",
+    solucaoTitle: ["Um caminho", "único e guiado"],
+    solucaoText:
+      "Você conta sua história uma vez e a nossa equipe organiza os próximos passos com você — não existe forma errada de começar.",
   },
   {
     duvidaTitle: ["Preocupado com", "meus dados"],
-    duvidaText: "Contar sua história com uma empresa exige confiança sobre o que acontece com essa informação.",
+    duvidaText:
+      "Contar sua história com uma empresa exige confiança sobre o que acontece com essa informação.",
     solucaoTitle: ["Uso restrito", "e consentido"],
-    solucaoText: "Suas informações organizam seu atendimento e nunca são compartilhadas sem sua autorização.",
+    solucaoText:
+      "Suas informações organizam seu atendimento e nunca são compartilhadas sem sua autorização.",
   },
   {
     duvidaTitle: ["Quanto tempo", "vou esperar"],
-    duvidaText: "A incerteza sobre prazos é uma das partes mais difíceis de buscar cuidado.",
+    duvidaText:
+      "A incerteza sobre prazos é uma das partes mais difíceis de buscar cuidado.",
     solucaoTitle: ["Clareza sobre", "o próximo passo"],
-    solucaoText: "O tempo varia conforme sua situação, mas você nunca fica sem saber o que vem a seguir.",
+    solucaoText:
+      "O tempo varia conforme sua situação, mas você nunca fica sem saber o que vem a seguir.",
   },
   {
     duvidaTitle: ["A Aliviar", "substitui um médico?"],
-    duvidaText: "É natural se perguntar se a curadoria troca o acompanhamento profissional de saúde.",
+    duvidaText:
+      "É natural se perguntar se a curadoria troca o acompanhamento profissional de saúde.",
     solucaoTitle: ["Conectamos você", "a quem cuida"],
-    solucaoText: "O cuidado em si é sempre humano — nós organizamos o caminho até ele.",
+    solucaoText:
+      "O cuidado em si é sempre humano — nós organizamos o caminho até ele.",
   },
 ];
