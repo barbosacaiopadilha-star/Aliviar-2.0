@@ -9,21 +9,7 @@ import { LogoutButton } from "@/components/auth/logout-button";
 import { Drawer } from "@/components/ui/drawer";
 import { cn } from "@/components/ui/cn";
 
-type PatientNavItem = {
-  label: string;
-  href: string;
-};
-
-// Navegação exclusiva do paciente — vive aqui, não em
-// src/components/shell/nav-items.ts (que é compartilhado com admin/curador),
-// para que este ambiente não misture sua estrutura com a deles.
-const PATIENT_NAV_ITEMS: PatientNavItem[] = [
-  { label: "Início", href: "/paciente" },
-  { label: "Minha história", href: "/sua-historia" },
-  { label: "Documentos", href: "/paciente/documentos" },
-  { label: "Minha Curadoria", href: "/paciente/curadoria" },
-  { label: "Perfil", href: "/paciente/perfil" },
-];
+import { PATIENT_NAV_ITEMS } from "./patient-nav-items";
 
 function NavLinks({
   pathname,
@@ -94,7 +80,9 @@ export function PatientShell({ children }: PatientShellProps) {
               linkClassName={(active) =>
                 cn(
                   "flex min-h-11 items-center rounded-md px-3 text-sm font-medium transition-colors duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
-                  active ? "text-brand-primary" : "text-ink-muted hover:text-ink",
+                  active
+                    ? "text-brand-primary"
+                    : "text-ink-muted hover:text-ink",
                 )
               }
             />
@@ -115,7 +103,12 @@ export function PatientShell({ children }: PatientShellProps) {
         </div>
       </header>
 
-      <Drawer open={menuOpen} onClose={() => setMenuOpen(false)} title="Menu" side="right">
+      <Drawer
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        title="Menu"
+        side="right"
+      >
         <nav aria-label="Navegação principal">
           <NavLinks
             pathname={pathname}
@@ -124,7 +117,9 @@ export function PatientShell({ children }: PatientShellProps) {
             linkClassName={(active) =>
               cn(
                 "flex min-h-11 items-center rounded-md px-3 text-sm font-medium transition-colors duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
-                active ? "bg-brand-primary text-surface" : "text-ink-muted hover:bg-canvas hover:text-ink",
+                active
+                  ? "bg-brand-primary text-surface"
+                  : "text-ink-muted hover:bg-canvas hover:text-ink",
               )
             }
           />
@@ -134,7 +129,10 @@ export function PatientShell({ children }: PatientShellProps) {
         </div>
       </Drawer>
 
-      <main id="patient-main" className="mx-auto w-full max-w-content px-4 py-10 lg:px-8 lg:py-14">
+      <main
+        id="patient-main"
+        className="mx-auto w-full max-w-content px-4 py-10 lg:px-8 lg:py-14"
+      >
         {children}
       </main>
     </div>

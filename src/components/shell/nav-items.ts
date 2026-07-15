@@ -8,18 +8,18 @@ export type NavItem = {
  * entra aqui quando a página de destino já existe — um link que não leva a
  * lugar nenhum é pior do que a ausência do link (mesmo princípio já
  * registrado no Design System). "Configurações" ainda não existe para
- * nenhum papel; "Meu Perfil" (paciente) e "Profissionais" (administrador)
- * entraram na Sprint Produto 2, quando essas páginas passaram a existir.
+ * nenhum papel; "Profissionais" (administrador) entrou na Sprint Produto 2,
+ * quando essa página passou a existir.
+ *
+ * Nunca gera navegação de "paciente" (PRODUTO DO PACIENTE, Fase 2) — o
+ * paciente tem um item real fora da árvore `${basePath}` ("Minha história",
+ * em /sua-historia) que esta função, ao só concatenar `${basePath}/sufixo`,
+ * não consegue representar. A fonte única do paciente é
+ * src/components/paciente/patient-nav-items.ts, consumida por PatientShell,
+ * nunca por AppShell.
  */
 export function getDefaultNavItems(role: string, basePath: string): NavItem[] {
   const items: NavItem[] = [{ label: "Início", href: basePath }];
-
-  if (role === "paciente") {
-    items.push({ label: "Minha Curadoria", href: `${basePath}/curadoria` });
-    items.push({ label: "Meu Perfil", href: `${basePath}/perfil` });
-    items.push({ label: "Meus Documentos", href: `${basePath}/documentos` });
-    items.push({ label: "Linha do Tempo", href: `${basePath}/linha-do-tempo` });
-  }
 
   if (role === "administrador") {
     items.push({ label: "Pacientes", href: `${basePath}/pacientes` });
