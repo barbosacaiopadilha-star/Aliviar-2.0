@@ -2,6 +2,34 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/). Este arquivo registra o histórico de entregas por sprint; decisões de arquitetura/produto que motivaram cada entrega estão em `docs/DECISIONS.md` (ADRs); estado atual da arquitetura em `docs/ARCHITECTURE.md`.
 
+## [1.0.0-landing] — 2026-07-15 — Portal: reconstrução da Landing institucional
+
+Substitui a composição anterior de seções independentes da Landing (registrada no encerramento [1.0.0] abaixo como "12 seções aprovadas") por um ambiente único e contínuo.
+
+### Adicionado
+- `PortalExperience`: ambiente permanente (sticky), cobrindo Chegada → Respiro → Triagem → Análise → Curadoria, com Benefícios, Confiança e Continuação absorvidos como parte da Curadoria.
+- Motor da Caminhada: interpolação contínua de scroll (`requestAnimationFrame`) conduzindo luz ambiente, presença das bordas e compactação espacial, com inércia própria por canal.
+- Direção de fotografia (`portal-scenes.ts`): seis enquadramentos derivados da fotografia institucional da recepção, em crossfade contínuo entre cenas; configuração desacoplada da arquitetura do Portal.
+- Fio Dourado reescrito: traço sempre inteiramente visível, sem representar progresso ou avanço da rolagem.
+- Vídeo Companheiro reintegrado ao Portal, com saída conduzida pelo progresso real do scroll.
+
+### Alterado
+- Ordem das seções da Landing e composição de `src/app/(public)/page.tsx`.
+- Rodapé (`PublicFooter`) com entrada própria (`SectionReveal`).
+
+### Removido
+- `HeroJourneySection`, `BenefitsSection`, `WhyTrustSection`, `DuvidasStackSection` — substituídos pelo Portal e pela Biblioteca em formato de livro.
+- `faq-section.tsx`, `how-it-works-section.tsx` — componentes órfãos, sem uso em nenhum ponto do projeto.
+- `.animate-fade-out-release` — CSS morto, referenciava componente já removido.
+
+### Mantido sem alteração
+- Biblioteca em formato de livro (`FaqBookSection`).
+- Header sticky (`PublicHeader`).
+- Convite final (`FinalCtaSection`), copy preservada.
+
+### Preparado para V1.1
+- A estrutura de cenas (`portal-scenes.ts`) permite substituir os enquadramentos atuais por fotografias reais futuras (fachada, lounge, sala de conversa, curadoria, biblioteca, espaço final) trocando apenas configuração — sem reconstrução da arquitetura do Portal.
+
 ## [1.0.0] — Encerramento da Versão 1 (Frozen)
 
 **Produto: 1.0 · ACE: 1.0 · Status: Frozen · Desenvolvimento: Encerrado · Próxima fase: Operação** (ADR-021).
