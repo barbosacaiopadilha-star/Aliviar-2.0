@@ -157,6 +157,104 @@ describe("AnthropicAceLanguageModel (GO LIVE — fornecedor real)", () => {
     expect(response.metadata.error?.code).toBe("ACE_MODEL_INVALID_RESPONSE");
   });
 
+  it("GO LIVE (auditoria — Prioridade 3): saída com tool_use presente mas fora do schema esperado (enum inválido) é classificada como ACE_MODEL_INVALID_RESPONSE, nunca persistida", async () => {
+    createMock.mockResolvedValue(
+      toolUseResponse({
+        decisionStatement: { decision: "x", goal: "y", sourceType: "especialidade_inferida" },
+        mandatoryConstraints: [],
+        preferences: [],
+        missingInformation: [],
+      }),
+    );
+    const model = new AnthropicAceLanguageModel("fake-key");
+    const narrative = createNarrative({ text: "x", closingQuestionsAnswered: { historia: true, decisao: true, objetivo: true } });
+
+    const response = await model.run({ protocolId: "P002", protocolVersion: "ACE-0.1", prompt: "p002", input: { narrative } });
+
+    expect(response.metadata.status).toBe("error");
+    expect(response.metadata.error?.code).toBe("ACE_MODEL_INVALID_RESPONSE");
+    expect(response.output).toBeNull();
+  });
+
+  it("GO LIVE (auditoria — Prioridade 3): campo obrigatório ausente na resposta também é rejeitado antes de persistir", async () => {
+    createMock.mockResolvedValue(
+      toolUseResponse({
+        additionalFindings: [{ description: "x", category: "ausencia", severity: "blocking" }],
+      }),
+    );
+    const model = new AnthropicAceLanguageModel("fake-key");
+    const decisionCase = { decisionStatement: { decision: "x", goal: "y" }, mandatoryConstraints: [], preferences: [], missingInformation: [] } as never;
+
+    const response = await model.run({ protocolId: "P003", protocolVersion: "ACE-0.1", prompt: "p003", input: { decisionCase } });
+
+    expect(response.metadata.status).toBe("error");
+    expect(response.metadata.error?.code).toBe("ACE_MODEL_INVALID_RESPONSE");
+  });
+
+  it("GO LIVE (auditoria — Prioridade 3): P004 com resposta fora do schema (enum inválido) é rejeitada antes de persistir", async () => {
+    createMock.mockResolvedValue(
+      toolUseResponse({
+        decisionType: "buscar_avaliacao",
+        objective: "x",
+        clinicalDomain: "nao_determinado",
+        complexity: "muito_alta", // fora do enum ("baixa" | "media" | "alta")
+        urgency: "baixa",
+        strategy: "avaliacao_inicial",
+        assumptions: [],
+        rationale: "x",
+      }),
+    );
+    const model = new AnthropicAceLanguageModel("fake-key");
+    const decisionCase = { decisionStatement: { decision: "x", goal: "y" }, mandatoryConstraints: [], preferences: [], missingInformation: [] } as never;
+    const caseAudit = { status: "READY", blockingIssues: [], warnings: [] } as never;
+
+    const response = await model.run({
+      protocolId: "P004",
+      protocolVersion: "ACE-0.1",
+      prompt: "p004",
+      input: { decisionCase, caseAudit },
+    });
+
+    expect(response.metadata.status).toBe("error");
+    expect(response.metadata.error?.code).toBe("ACE_MODEL_INVALID_RESPONSE");
+    expect(response.output).toBeNull();
+  });
+
+  it("GO LIVE (auditoria — Prioridade 3): P010 com campo obrigatório ausente na resposta é rejeitado antes de persistir", async () => {
+    createMock.mockResolvedValue(
+      toolUseResponse({
+        decisionSummary: "x",
+        clientContextSummary: "x",
+        comparisonSummary: "x",
+        methodExplanation: "x",
+        // disclaimer ausente — campo obrigatório de P010_RESPONSE_SCHEMA.
+        nextSteps: ["x"],
+        providerNarratives: [],
+      }),
+    );
+    const model = new AnthropicAceLanguageModel("fake-key");
+    const decisionCase = { decisionStatement: { decision: "x", goal: "y" } } as never;
+    const decisionContext = {
+      decisionType: "buscar_avaliacao",
+      clinicalDomain: "nao_determinado",
+      complexity: "media",
+      urgency: "nao_determinado",
+    } as never;
+    const humanReviewResult = { approvedProviderIds: ["p1"], reviewRationale: "x", changes: [] } as never;
+    const compatibilityMatrix = { entries: [{ providerId: "p1", strengths: [], limitations: [] }] } as never;
+
+    const response = await model.run({
+      protocolId: "P010",
+      protocolVersion: "ACE-0.1",
+      prompt: "p010",
+      input: { decisionCase, decisionContext, humanReviewResult, compatibilityMatrix },
+    });
+
+    expect(response.metadata.status).toBe("error");
+    expect(response.metadata.error?.code).toBe("ACE_MODEL_INVALID_RESPONSE");
+    expect(response.output).toBeNull();
+  });
+
   it("P010: inclui os dados da CompatibilityMatrix (forças por profissional) no conteúdo enviado", async () => {
     createMock.mockResolvedValue(
       toolUseResponse({

@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { z } from "zod";
 
 import type { CaseAudit } from "@/modules/ace/artifacts/case-audit";
 import type { CompatibilityMatrix } from "@/modules/ace/artifacts/compatibility-matrix";
@@ -73,9 +74,19 @@ Avalie o DecisionCase recebido e produza a lista de achados adicionais
 já é estruturalmente conhecível: ausência de informação, informação
 contradição (dois elementos se opõem), ambiguidade (não permite leitura
 única), ou insuficiência (presente, mas incompleta). Para cada achado,
-classifique a severidade (blocking ou warning) e escreva uma pergunta
-recomendada clara e não indutiva — nunca sugere resposta ou direção
-clínica.
+classifique a severidade (blocking ou warning), indique a que ele se
+refere (relatedField: "decision", "goal" ou "other") e escreva uma
+pergunta recomendada clara e não indutiva — nunca sugere resposta ou
+direção clínica.
+
+Os únicos achados que podem ter severity "blocking" são: ausência da
+decisão (relatedField "decision"), ausência do objetivo (relatedField
+"goal"), uma contradição real entre dois elementos do Caso, ou uma
+ambiguidade que por si só impeça uma análise responsável. Qualquer achado
+de ausência ou insuficiência com relatedField "other" (restrição ou
+preferência prática — ex.: localização, modalidade, horário, orçamento) é
+sempre severity "warning", nunca "blocking", mesmo que a informação
+pareça útil para uma análise mais completa.
 
 Nunca produza um achado para um item que já está resolvido. Nunca
 modifique o DecisionCase original. Nunca produza diagnóstico, especialidade
@@ -208,8 +219,9 @@ const P003_SCHEMA = {
           category: { type: "string", enum: ["ausencia", "contradicao", "ambiguidade", "insuficiencia"] },
           severity: { type: "string", enum: ["blocking", "warning"] },
           recommendedQuestion: { type: "string" },
+          relatedField: { type: "string", enum: ["decision", "goal", "other"] },
         },
-        required: ["description", "category", "severity", "recommendedQuestion"],
+        required: ["description", "category", "severity", "recommendedQuestion", "relatedField"],
       },
     },
   },
@@ -266,9 +278,86 @@ const P010_SCHEMA = {
   ],
 } as const;
 
+// Espelham, em Zod, exatamente a mesma forma/permissividade dos JSON
+// Schemas acima (enviados à Anthropic) — GO LIVE (Prioridade 3, auditoria
+// do ACE): a API já é instruída a responder neste formato via tool_choice
+// forçado, mas nada garantia isso em runtime antes de confiar na resposta.
+// Nunca mais rígidos que o JSON Schema correspondente (ex.: STRING_OR_NULL
+// continua aceitando string vazia) — o contrato de cada protocolo não muda,
+// só passamos a rejeitar antes de persistir uma resposta que não bate nem
+// com o que já foi pedido ao modelo.
+const stringOrNullZod = z.string().nullable();
+
+const originEvidenceZod = z.object({
+  quote: z.string(),
+  source: z.literal("narrativa"),
+});
+
+const sourcedItemZod = z.object({
+  description: z.string(),
+  sourceType: z.enum(["fato_relatado", "inferencia_estrutural"]),
+  originEvidence: originEvidenceZod,
+});
+
+const P002_RESPONSE_SCHEMA = z.object({
+  decisionStatement: z.object({
+    decision: stringOrNullZod,
+    goal: stringOrNullZod,
+    sourceType: z.enum(["fato_relatado", "inferencia_estrutural"]),
+    originEvidence: originEvidenceZod.optional(),
+  }),
+  mandatoryConstraints: z.array(sourcedItemZod),
+  preferences: z.array(sourcedItemZod),
+  missingInformation: z.array(
+    z.object({
+      description: z.string(),
+      relatedField: z.enum(["decision", "goal", "other"]),
+    }),
+  ),
+});
+
+const P003_RESPONSE_SCHEMA = z.object({
+  additionalFindings: z.array(
+    z.object({
+      description: z.string(),
+      category: z.enum(["ausencia", "contradicao", "ambiguidade", "insuficiencia"]),
+      severity: z.enum(["blocking", "warning"]),
+      recommendedQuestion: z.string(),
+      relatedField: z.enum(["decision", "goal", "other"]),
+    }),
+  ),
+});
+
+const P004_RESPONSE_SCHEMA = z.object({
+  decisionType: z.enum(["buscar_avaliacao", "decidir_intervencao", "buscar_acompanhamento", "esclarecer_duvida"]),
+  objective: stringOrNullZod,
+  clinicalDomain: z.enum(["saude_emocional_mental", "saude_fisica", "nao_determinado"]),
+  complexity: z.enum(["baixa", "media", "alta"]),
+  urgency: z.enum(["baixa", "media", "alta", "nao_determinado"]),
+  strategy: z.enum(["conexao_direta", "aprofundamento_previo", "avaliacao_inicial"]),
+  assumptions: z.array(z.string()),
+  rationale: z.string(),
+});
+
+const P010_RESPONSE_SCHEMA = z.object({
+  decisionSummary: z.string(),
+  clientContextSummary: z.string(),
+  comparisonSummary: z.string(),
+  methodExplanation: z.string(),
+  disclaimer: z.string(),
+  nextSteps: z.array(z.string()),
+  providerNarratives: z.array(
+    z.object({
+      providerId: z.string(),
+      whyIncluded: z.string(),
+    }),
+  ),
+});
+
 type ProtocolConfig = {
   systemPrompt: string;
   schema: Record<string, unknown>;
+  responseSchema: z.ZodTypeAny;
   buildUserContent: (input: never) => unknown;
 };
 
@@ -276,11 +365,13 @@ const PROTOCOL_CONFIG: Partial<Record<string, ProtocolConfig>> = {
   P002: {
     systemPrompt: P002_SYSTEM_PROMPT,
     schema: P002_SCHEMA,
+    responseSchema: P002_RESPONSE_SCHEMA,
     buildUserContent: (input: { narrative: Narrative }) => ({ narrativeText: input.narrative.text }),
   },
   P003: {
     systemPrompt: P003_SYSTEM_PROMPT,
     schema: P003_SCHEMA,
+    responseSchema: P003_RESPONSE_SCHEMA,
     buildUserContent: (input: { decisionCase: DecisionCase }) => ({
       decision: input.decisionCase.decisionStatement.decision,
       goal: input.decisionCase.decisionStatement.goal,
@@ -292,6 +383,7 @@ const PROTOCOL_CONFIG: Partial<Record<string, ProtocolConfig>> = {
   P004: {
     systemPrompt: P004_SYSTEM_PROMPT,
     schema: P004_SCHEMA,
+    responseSchema: P004_RESPONSE_SCHEMA,
     buildUserContent: (input: { decisionCase: DecisionCase; caseAudit: CaseAudit }) => ({
       decision: input.decisionCase.decisionStatement.decision,
       goal: input.decisionCase.decisionStatement.goal,
@@ -306,6 +398,7 @@ const PROTOCOL_CONFIG: Partial<Record<string, ProtocolConfig>> = {
   P010: {
     systemPrompt: P010_SYSTEM_PROMPT,
     schema: P010_SCHEMA,
+    responseSchema: P010_RESPONSE_SCHEMA,
     buildUserContent: (input: {
       decisionCase: DecisionCase;
       decisionContext: DecisionContext;
@@ -445,8 +538,29 @@ export class AnthropicAceLanguageModel implements AceLanguageModel {
         };
       }
 
+      // GO LIVE (Prioridade 3, auditoria do ACE): revalida em runtime o que
+      // o tool_choice forçado já pediu à API — nunca confia cegamente em
+      // `toolUse.input` antes de persistir. Mesmo código de erro do ramo
+      // acima (nenhum código novo), já tratado por orchestrator.ts/
+      // delivery-repository.ts como falha do modelo, nunca avança protocolo.
+      const parsed = config.responseSchema.safeParse(toolUse.input);
+      if (!parsed.success) {
+        return {
+          output: null,
+          metadata: {
+            modelId: this.modelId,
+            executedAt,
+            status: "error",
+            error: {
+              code: "ACE_MODEL_INVALID_RESPONSE",
+              message: "O modelo não retornou uma saída estruturada compatível com o schema esperado.",
+            },
+          },
+        };
+      }
+
       return {
-        output: toolUse.input as TOutput,
+        output: parsed.data as TOutput,
         metadata: { modelId: this.modelId, executedAt, status: "ok" },
       };
     } catch (error) {
