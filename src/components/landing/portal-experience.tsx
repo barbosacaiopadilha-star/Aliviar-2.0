@@ -3,9 +3,17 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
-import { GoldenThread, type GoldenThreadHandle } from "@/components/landing/golden-thread";
-import { FRAMES, VIDEO_EXIT_AT_FRAME } from "@/components/landing/portal-frames";
+import {
+  GoldenThread,
+  type GoldenThreadHandle,
+} from "@/components/landing/golden-thread";
+import {
+  FRAMES,
+  VIDEO_EXIT_AT_FRAME,
+} from "@/components/landing/portal-frames";
 import { PORTAL_SCENE_POSITIONS } from "@/components/landing/portal-scenes";
+import { usePortalMotionPreference } from "@/components/landing/use-portal-motion-preference";
+import { usePortalRawProgress } from "@/components/landing/use-portal-raw-progress";
 import { VideoSection } from "@/components/landing/video-section";
 import { cn } from "@/components/ui/cn";
 
@@ -59,7 +67,11 @@ const BREATH_AMPLITUDE = 0.015;
 
 const lerp = (from: number, to: number, t: number) => from + (to - from) * t;
 
-export function PortalExperience({ scenes, videoSrc, videoPoster }: PortalExperienceProps) {
+export function PortalExperience({
+  scenes,
+  videoSrc,
+  videoPoster,
+}: PortalExperienceProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const sentinelRefs = useRef<Array<HTMLDivElement | null>>([]);
   const warmthGlowRef = useRef<HTMLDivElement>(null);
@@ -70,23 +82,26 @@ export function PortalExperience({ scenes, videoSrc, videoPoster }: PortalExperi
   const sceneRefs = useRef<Array<HTMLDivElement | null>>([]);
   const goldenThreadRef = useRef<GoldenThreadHandle>(null);
   const [activeFrame, setActiveFrame] = useState(0);
-  const [reduced, setReduced] = useState(false);
-  const [ready, setReady] = useState(false);
+  const { prefersReducedMotion, ready } = usePortalMotionPreference();
+  // Nenhum motor contínuo do Portal começa antes de a preferência real ser
+  // conhecida — evita que um motor chegue a agendar um quadro só para ser
+  // cancelado no instante seguinte (mesmo valor consumido pela ramificação
+  // final de render, abaixo).
+  const motorsEnabled = ready && !prefersReducedMotion;
 
   // Canal de foco: qual parada está ativa. Discreto e nítido de propósito
   // — é o conteúdo que protagoniza, o ambiente ao redor é sempre mais
   // lento e mais discreto que ele.
   useEffect(() => {
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    setReduced(reduceMotion);
-    setReady(true);
-    if (reduceMotion) return;
+    if (!motorsEnabled) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
-          const index = sentinelRefs.current.findIndex((el) => el === entry.target);
+          const index = sentinelRefs.current.findIndex(
+            (el) => el === entry.target,
+          );
           if (index !== -1) setActiveFrame(index);
         });
       },
@@ -95,14 +110,16 @@ export function PortalExperience({ scenes, videoSrc, videoPoster }: PortalExperi
 
     sentinelRefs.current.forEach((el) => el && observer.observe(el));
     return () => observer.disconnect();
-  }, []);
+  }, [motorsEnabled]);
 
   // Despedida do vídeo companheiro — conduzida pelo progresso real do
   // scroll (nunca uma animação de duração fixa desconectada do gesto):
   // opacidade, escala e blur avançam e recuam junto com o visitante ao
   // longo do trecho Curadoria → Benefícios.
   useEffect(() => {
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     if (reduceMotion || !videoSrc) return;
 
     const exitStart = sentinelRefs.current[VIDEO_EXIT_AT_FRAME - 1];
@@ -129,141 +146,150 @@ export function PortalExperience({ scenes, videoSrc, videoPoster }: PortalExperi
             },
           })
           .to(videoEl, { opacity: 0.8, ease: "none", duration: 1 })
-          .to(videoEl, { opacity: 0, scale: 0.93, filter: "blur(6px)", ease: "none", duration: 1 });
+          .to(videoEl, {
+            opacity: 0,
+            scale: 0.93,
+            filter: "blur(6px)",
+            ease: "none",
+            duration: 1,
+          });
       });
     })();
 
     return () => ctx?.revert();
   }, [videoSrc]);
 
-  // Motor da Caminhada — traduz a posição de scroll num alvo interpolado
-  // entre as duas paradas vizinhas, e três canais (calor/luz, intensidade
-  // da presença, temperatura do ambiente) perseguem esse alvo cada um com
-  // sua própria inércia. Escreve direto no DOM via refs a cada quadro
-  // (nunca via state) para não gerar dezenas de renderizações por
-  // segundo. Pausa quando o Portal sai da viewport.
-  useEffect(() => {
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion) return;
+  // Motor da Caminhada — traduz a posição de scroll (Motor de Progresso
+  // Bruto, use-portal-raw-progress.ts) num alvo interpolado entre as duas
+  // paradas vizinhas, e três canais (calor/luz, intensidade da presença,
+  // temperatura do ambiente) perseguem esse alvo cada um com sua própria
+  // inércia. Escreve direto no DOM via refs a cada quadro (nunca via
+  // state) para não gerar dezenas de renderizações por segundo. Pausa
+  // quando o Portal sai da viewport (responsabilidade do motor de
+  // progresso, não deste efeito).
+  const ambientStateRef = useRef({
+    lightX: FRAMES[0].lightX,
+    lightY: FRAMES[0].lightY,
+    intensidade: FRAMES[0].intensidade,
+    warmth: FRAMES[0].warmth,
+    compact: FRAMES[0].compact,
+  });
 
-    const state = {
-      lightX: FRAMES[0].lightX,
-      lightY: FRAMES[0].lightY,
-      intensidade: FRAMES[0].intensidade,
-      warmth: FRAMES[0].warmth,
-      compact: FRAMES[0].compact,
-    };
+  usePortalRawProgress(sectionRef, motorsEnabled, (overall, now) => {
+    const state = ambientStateRef.current;
 
-    const activeRef = { current: true };
-    const visibilityObserver = new IntersectionObserver(
-      ([entry]) => {
-        activeRef.current = entry.isIntersecting;
-      },
-      { threshold: 0 },
+    let i0 = 0;
+    while (i0 < FRAME_OFFSETS.length - 2 && FRAME_OFFSETS[i0 + 1] <= overall)
+      i0++;
+    const i1 = Math.min(i0 + 1, FRAMES.length - 1);
+    const span = FRAME_OFFSETS[i0 + 1] - FRAME_OFFSETS[i0] || 1;
+    const localT = Math.min(
+      Math.max((overall - FRAME_OFFSETS[i0]) / span, 0),
+      1,
     );
-    if (sectionRef.current) visibilityObserver.observe(sectionRef.current);
 
-    let rafId = 0;
+    const a = FRAMES[i0];
+    // Platô do Respiro: enquanto a parada de origem pedir espera
+    // (holdEntireSpan), o alvo fica travado nos próprios valores dela
+    // durante toda a extensão — nunca interpola em direção à próxima
+    // parada. A inércia (abaixo) continua agindo normalmente sobre esse
+    // alvo constante, então o ambiente converge e simplesmente
+    // permanece — nunca um congelamento abrupto, nunca uma progressão
+    // perceptível durante o platô.
+    const b = a.holdEntireSpan ? a : FRAMES[i1];
+    const effectiveT = a.holdEntireSpan ? 0 : localT;
+    const targetLightX = lerp(a.lightX, b.lightX, effectiveT);
+    const targetLightY = lerp(a.lightY, b.lightY, effectiveT);
+    const targetIntensidade = lerp(a.intensidade, b.intensidade, effectiveT);
+    const targetWarmth = lerp(a.warmth, b.warmth, effectiveT);
+    const targetCompact = lerp(a.compact, b.compact, effectiveT);
 
-    const tick = (now: number) => {
-      rafId = requestAnimationFrame(tick);
-      if (!activeRef.current || !sectionRef.current) return;
+    state.lightX += (targetLightX - state.lightX) * DAMPING.light;
+    state.lightY += (targetLightY - state.lightY) * DAMPING.light;
+    state.intensidade +=
+      (targetIntensidade - state.intensidade) * DAMPING.intensidade;
+    state.warmth += (targetWarmth - state.warmth) * DAMPING.warmth;
+    state.compact += (targetCompact - state.compact) * DAMPING.compact;
 
-      const rect = sectionRef.current.getBoundingClientRect();
-      const scrollable = Math.max(rect.height - window.innerHeight, 1);
-      const scrolled = Math.min(Math.max(-rect.top, 0), scrollable);
-      const overall = scrolled / scrollable;
+    const breath =
+      Math.sin((now / BREATH_PERIOD_MS) * Math.PI * 2) * BREATH_AMPLITUDE;
 
-      let i0 = 0;
-      while (i0 < FRAME_OFFSETS.length - 2 && FRAME_OFFSETS[i0 + 1] <= overall) i0++;
-      const i1 = Math.min(i0 + 1, FRAMES.length - 1);
-      const span = FRAME_OFFSETS[i0 + 1] - FRAME_OFFSETS[i0] || 1;
-      const localT = Math.min(Math.max((overall - FRAME_OFFSETS[i0]) / span, 0), 1);
+    // Aproximação da Biblioteca — nos últimos 12% do Portal, a
+    // fotografia se dissolve gradualmente no mesmo tom de marfim
+    // (bg-canvas) com que a Biblioteca já abre: quando o sticky soltar,
+    // o estado visual dos dois lados da emenda já é quase idêntico, e o
+    // corte estrutural deixa de ser perceptível. Paredes e calor
+    // acompanham a mesma dissolução, nunca somem sozinhos.
+    const handoff = Math.min(
+      Math.max((overall - HANDOFF_START) / (1 - HANDOFF_START), 0),
+      1,
+    );
+    const presence = 1 - handoff;
 
-      const a = FRAMES[i0];
-      // Platô do Respiro: enquanto a parada de origem pedir espera
-      // (holdEntireSpan), o alvo fica travado nos próprios valores dela
-      // durante toda a extensão — nunca interpola em direção à próxima
-      // parada. A inércia (abaixo) continua agindo normalmente sobre esse
-      // alvo constante, então o ambiente converge e simplesmente
-      // permanece — nunca um congelamento abrupto, nunca uma progressão
-      // perceptível durante o platô.
-      const b = a.holdEntireSpan ? a : FRAMES[i1];
-      const effectiveT = a.holdEntireSpan ? 0 : localT;
-      const targetLightX = lerp(a.lightX, b.lightX, effectiveT);
-      const targetLightY = lerp(a.lightY, b.lightY, effectiveT);
-      const targetIntensidade = lerp(a.intensidade, b.intensidade, effectiveT);
-      const targetWarmth = lerp(a.warmth, b.warmth, effectiveT);
-      const targetCompact = lerp(a.compact, b.compact, effectiveT);
+    // Fio Dourado (Capítulo 5, Fonte Única) — reaproveita a mesma
+    // respiração do ambiente em vez de ter um relógio próprio; o traço
+    // reflete a luz da sala, nunca acende a própria. Deliberadamente
+    // NÃO multiplicado por `presence`: o Fio é o único elemento que
+    // atravessa a costura Portal→Biblioteca sem desvanecer (decisão já
+    // registrada antes deste capítulo) — só o pulso muda, a presença
+    // do traço em si permanece contínua.
+    const threadOpacity = 0.875 + (breath / BREATH_AMPLITUDE) * 0.125;
+    goldenThreadRef.current?.setPulse(threadOpacity);
 
-      state.lightX += (targetLightX - state.lightX) * DAMPING.light;
-      state.lightY += (targetLightY - state.lightY) * DAMPING.light;
-      state.intensidade += (targetIntensidade - state.intensidade) * DAMPING.intensidade;
-      state.warmth += (targetWarmth - state.warmth) * DAMPING.warmth;
-      state.compact += (targetCompact - state.compact) * DAMPING.compact;
+    // Direção de fotografia — crossfade entre cenas (portal-scenes.ts),
+    // numa linha do tempo própria, independente dos frames de conteúdo.
+    // Nunca um corte: as duas cenas vizinhas se sobrepõem suavemente.
+    let s0 = 0;
+    while (
+      s0 < PORTAL_SCENE_POSITIONS.length - 2 &&
+      PORTAL_SCENE_POSITIONS[s0 + 1] <= overall
+    )
+      s0++;
+    const s1 = Math.min(s0 + 1, sceneRefs.current.length - 1);
+    const sceneSpan =
+      PORTAL_SCENE_POSITIONS[s1] - PORTAL_SCENE_POSITIONS[s0] || 1;
+    const sceneT = Math.min(
+      Math.max((overall - PORTAL_SCENE_POSITIONS[s0]) / sceneSpan, 0),
+      1,
+    );
+    sceneRefs.current.forEach((el, index) => {
+      if (!el) return;
+      const opacity = index === s0 ? 1 - sceneT : index === s1 ? sceneT : 0;
+      el.style.opacity = String(opacity * presence);
+    });
 
-      const breath = Math.sin((now / BREATH_PERIOD_MS) * Math.PI * 2) * BREATH_AMPLITUDE;
+    if (warmthGlowRef.current) {
+      const warmthPercent = ((state.warmth + 1) / 2) * 100;
+      warmthGlowRef.current.style.background = `radial-gradient(60% 55% at ${state.lightX}% ${state.lightY}%, color-mix(in srgb, var(--color-brand-gold) ${warmthPercent * 0.35}%, var(--color-brand-sage) ${100 - warmthPercent * 0.35}%) 0%, transparent 72%)`;
+      warmthGlowRef.current.style.opacity = String(
+        Math.max((state.intensidade * 0.55 + breath) * presence, 0),
+      );
+    }
+    // Bordas — esmaecimento orgânico e morno, nunca uma barra: formas
+    // suaves, muito desfocadas, em tons da própria paleta (nunca preto).
+    const edgeOpacity = (0.28 + state.intensidade * 0.32) * presence;
+    if (leftEdgeRef.current)
+      leftEdgeRef.current.style.opacity = String(edgeOpacity);
+    if (rightEdgeRef.current)
+      rightEdgeRef.current.style.opacity = String(edgeOpacity);
+    if (cardWrapRef.current) {
+      cardWrapRef.current.style.maxWidth = `${40 - state.compact * 6}rem`;
+      cardWrapRef.current.style.opacity = String(presence);
+    }
+  });
 
-      // Aproximação da Biblioteca — nos últimos 12% do Portal, a
-      // fotografia se dissolve gradualmente no mesmo tom de marfim
-      // (bg-canvas) com que a Biblioteca já abre: quando o sticky soltar,
-      // o estado visual dos dois lados da emenda já é quase idêntico, e o
-      // corte estrutural deixa de ser perceptível. Paredes e calor
-      // acompanham a mesma dissolução, nunca somem sozinhos.
-      const handoff = Math.min(Math.max((overall - HANDOFF_START) / (1 - HANDOFF_START), 0), 1);
-      const presence = 1 - handoff;
-
-      // Fio Dourado (Capítulo 5, Fonte Única) — reaproveita a mesma
-      // respiração do ambiente em vez de ter um relógio próprio; o traço
-      // reflete a luz da sala, nunca acende a própria. Deliberadamente
-      // NÃO multiplicado por `presence`: o Fio é o único elemento que
-      // atravessa a costura Portal→Biblioteca sem desvanecer (decisão já
-      // registrada antes deste capítulo) — só o pulso muda, a presença
-      // do traço em si permanece contínua.
-      const threadOpacity = 0.875 + (breath / BREATH_AMPLITUDE) * 0.125;
-      goldenThreadRef.current?.setPulse(threadOpacity);
-
-      // Direção de fotografia — crossfade entre cenas (portal-scenes.ts),
-      // numa linha do tempo própria, independente dos frames de conteúdo.
-      // Nunca um corte: as duas cenas vizinhas se sobrepõem suavemente.
-      let s0 = 0;
-      while (s0 < PORTAL_SCENE_POSITIONS.length - 2 && PORTAL_SCENE_POSITIONS[s0 + 1] <= overall) s0++;
-      const s1 = Math.min(s0 + 1, sceneRefs.current.length - 1);
-      const sceneSpan = PORTAL_SCENE_POSITIONS[s1] - PORTAL_SCENE_POSITIONS[s0] || 1;
-      const sceneT = Math.min(Math.max((overall - PORTAL_SCENE_POSITIONS[s0]) / sceneSpan, 0), 1);
-      sceneRefs.current.forEach((el, index) => {
-        if (!el) return;
-        const opacity = index === s0 ? 1 - sceneT : index === s1 ? sceneT : 0;
-        el.style.opacity = String(opacity * presence);
-      });
-
-      if (warmthGlowRef.current) {
-        const warmthPercent = ((state.warmth + 1) / 2) * 100;
-        warmthGlowRef.current.style.background = `radial-gradient(60% 55% at ${state.lightX}% ${state.lightY}%, color-mix(in srgb, var(--color-brand-gold) ${warmthPercent * 0.35}%, var(--color-brand-sage) ${100 - warmthPercent * 0.35}%) 0%, transparent 72%)`;
-        warmthGlowRef.current.style.opacity = String(Math.max((state.intensidade * 0.55 + breath) * presence, 0));
-      }
-      // Bordas — esmaecimento orgânico e morno, nunca uma barra: formas
-      // suaves, muito desfocadas, em tons da própria paleta (nunca preto).
-      const edgeOpacity = (0.28 + state.intensidade * 0.32) * presence;
-      if (leftEdgeRef.current) leftEdgeRef.current.style.opacity = String(edgeOpacity);
-      if (rightEdgeRef.current) rightEdgeRef.current.style.opacity = String(edgeOpacity);
-      if (cardWrapRef.current) {
-        cardWrapRef.current.style.maxWidth = `${40 - state.compact * 6}rem`;
-        cardWrapRef.current.style.opacity = String(presence);
-      }
-    };
-
-    rafId = requestAnimationFrame(tick);
-    return () => {
-      cancelAnimationFrame(rafId);
-      visibilityObserver.disconnect();
-    };
-  }, []);
-
-  if (ready && reduced) {
+  if (ready && prefersReducedMotion) {
     return (
       <section className="relative overflow-hidden bg-canvas px-4 py-16 lg:px-8">
-        {scenes[0] && <Image src={scenes[0].src} alt="" fill className="object-cover" sizes="100vw" />}
+        {scenes[0] && (
+          <Image
+            src={scenes[0].src}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="100vw"
+          />
+        )}
         <div
           aria-hidden="true"
           className="absolute inset-0 bg-[radial-gradient(120%_100%_at_50%_30%,_transparent_0%,_color-mix(in_srgb,_var(--color-bg-canvas)_55%,_transparent)_100%)]"
@@ -284,7 +310,11 @@ export function PortalExperience({ scenes, videoSrc, videoPoster }: PortalExperi
   const isVideoExiting = activeFrame >= VIDEO_EXIT_AT_FRAME;
 
   return (
-    <section ref={sectionRef} className="relative bg-canvas" style={{ height: `${TOTAL_HEIGHT_VH}svh` }}>
+    <section
+      ref={sectionRef}
+      className="relative bg-canvas"
+      style={{ height: `${TOTAL_HEIGHT_VH}svh` }}
+    >
       {FRAMES.map((frameDef, index) => {
         const top = cumulativeVh;
         cumulativeVh += frameDef.heightVh;
@@ -318,14 +348,26 @@ export function PortalExperience({ scenes, videoSrc, videoPoster }: PortalExperi
             className="pointer-events-none absolute inset-0"
             style={{ opacity: index === 0 ? 1 : 0 }}
           >
-            <Image src={scene.src} alt="" fill priority={index === 0} className="object-cover" sizes="100vw" />
+            <Image
+              src={scene.src}
+              alt=""
+              fill
+              priority={index === 0}
+              className="object-cover"
+              sizes="100vw"
+            />
           </div>
         ))}
 
         {/* Calor ambiente — nunca um holofote: um brilho morno, muito
             desfocado, que se desloca devagar e muda de temperatura
             conforme a jornada avança. Escrito pelo Motor da Caminhada. */}
-        <div ref={warmthGlowRef} aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ opacity: 0.1 }} />
+        <div
+          ref={warmthGlowRef}
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{ opacity: 0.1 }}
+        />
 
         {/* Bordas — esmaecimento orgânico e morno (nunca preto, nunca
             barra reta): formas elípticas, muito desfocadas, ancoradas
@@ -362,7 +404,11 @@ export function PortalExperience({ scenes, videoSrc, videoPoster }: PortalExperi
             style={{ pointerEvents: isVideoExiting ? "none" : "auto" }}
           >
             <div ref={videoInnerRef}>
-              <VideoSection variant="window" src={videoSrc} poster={videoPoster} />
+              <VideoSection
+                variant="window"
+                src={videoSrc}
+                poster={videoPoster}
+              />
             </div>
           </div>
         )}
@@ -394,7 +440,10 @@ export function PortalExperience({ scenes, videoSrc, videoPoster }: PortalExperi
             lugar, crossfade nítido (o foco), contrastando com o ambiente
             lento ao redor (a periferia). */}
         <div className="absolute inset-x-0 bottom-[10%] px-4">
-          <div ref={cardWrapRef} className="relative mx-auto flex min-h-[9rem] max-w-reading items-end justify-center">
+          <div
+            ref={cardWrapRef}
+            className="relative mx-auto flex min-h-[9rem] max-w-reading items-end justify-center"
+          >
             {FRAMES.slice(1).map((frameDef, offset) => {
               const index = offset + 1;
               return (
@@ -403,7 +452,9 @@ export function PortalExperience({ scenes, videoSrc, videoPoster }: PortalExperi
                   aria-hidden={activeFrame !== index}
                   className={cn(
                     "absolute inset-x-0 bottom-0 text-center transition-opacity duration-700 ease-standard",
-                    activeFrame === index ? "opacity-100" : "pointer-events-none opacity-0",
+                    activeFrame === index
+                      ? "opacity-100"
+                      : "pointer-events-none opacity-0",
                   )}
                 >
                   {frameDef.content && (
