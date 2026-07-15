@@ -4,7 +4,7 @@ import { Clock, HeartHandshake, ScanSearch } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
 
-import { GoldenThread } from "@/components/landing/golden-thread";
+import { GoldenThread, type GoldenThreadHandle } from "@/components/landing/golden-thread";
 import { LinkButton } from "@/components/landing/link-button";
 import { PORTAL_SCENE_POSITIONS } from "@/components/landing/portal-scenes";
 import { SectionEyebrow } from "@/components/landing/section-eyebrow";
@@ -84,6 +84,13 @@ type Frame = {
   /** Compactação espacial (0-1) — o quanto o ambiente se torna mais
    *  íntimo e próximo conforme o cuidado se aprofunda. */
   compact: number;
+  /** Capítulo 4/5 — Platô do Respiro: quando true, o Motor da Caminhada
+   *  mantém os alvos travados nos próprios valores desta parada durante
+   *  toda a sua extensão (nunca interpola em direção à próxima), criando
+   *  um patamar real — início e fim da parada chegam ao mesmo estado.
+   *  A transição para a parada seguinte só recomeça no limite da parada
+   *  seguinte, com a mesma inércia de sempre — nunca um salto instantâneo. */
+  holdEntireSpan?: boolean;
 };
 
 const FRAMES: Frame[] = [
@@ -122,6 +129,9 @@ const FRAMES: Frame[] = [
     intensidade: 0.34,
     warmth: 0.4,
     compact: 0.08,
+    // Platô real (Capítulo 5): o ambiente chega aqui e permanece, nunca
+    // avança perceptivelmente em direção à Triagem durante esta parada.
+    holdEntireSpan: true,
   },
   {
     id: "triagem",
@@ -266,6 +276,7 @@ export function PortalExperience({ scenes, videoSrc, videoPoster }: PortalExperi
   const cardWrapRef = useRef<HTMLDivElement>(null);
   const videoInnerRef = useRef<HTMLDivElement>(null);
   const sceneRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const goldenThreadRef = useRef<GoldenThreadHandle>(null);
   const [activeFrame, setActiveFrame] = useState(0);
   const [reduced, setReduced] = useState(false);
   const [ready, setReady] = useState(false);
@@ -378,12 +389,20 @@ export function PortalExperience({ scenes, videoSrc, videoPoster }: PortalExperi
       const localT = Math.min(Math.max((overall - FRAME_OFFSETS[i0]) / span, 0), 1);
 
       const a = FRAMES[i0];
-      const b = FRAMES[i1];
-      const targetLightX = lerp(a.lightX, b.lightX, localT);
-      const targetLightY = lerp(a.lightY, b.lightY, localT);
-      const targetIntensidade = lerp(a.intensidade, b.intensidade, localT);
-      const targetWarmth = lerp(a.warmth, b.warmth, localT);
-      const targetCompact = lerp(a.compact, b.compact, localT);
+      // Platô do Respiro: enquanto a parada de origem pedir espera
+      // (holdEntireSpan), o alvo fica travado nos próprios valores dela
+      // durante toda a extensão — nunca interpola em direção à próxima
+      // parada. A inércia (abaixo) continua agindo normalmente sobre esse
+      // alvo constante, então o ambiente converge e simplesmente
+      // permanece — nunca um congelamento abrupto, nunca uma progressão
+      // perceptível durante o platô.
+      const b = a.holdEntireSpan ? a : FRAMES[i1];
+      const effectiveT = a.holdEntireSpan ? 0 : localT;
+      const targetLightX = lerp(a.lightX, b.lightX, effectiveT);
+      const targetLightY = lerp(a.lightY, b.lightY, effectiveT);
+      const targetIntensidade = lerp(a.intensidade, b.intensidade, effectiveT);
+      const targetWarmth = lerp(a.warmth, b.warmth, effectiveT);
+      const targetCompact = lerp(a.compact, b.compact, effectiveT);
 
       state.lightX += (targetLightX - state.lightX) * DAMPING.light;
       state.lightY += (targetLightY - state.lightY) * DAMPING.light;
@@ -401,6 +420,16 @@ export function PortalExperience({ scenes, videoSrc, videoPoster }: PortalExperi
       // acompanham a mesma dissolução, nunca somem sozinhos.
       const handoff = Math.min(Math.max((overall - HANDOFF_START) / (1 - HANDOFF_START), 0), 1);
       const presence = 1 - handoff;
+
+      // Fio Dourado (Capítulo 5, Fonte Única) — reaproveita a mesma
+      // respiração do ambiente em vez de ter um relógio próprio; o traço
+      // reflete a luz da sala, nunca acende a própria. Deliberadamente
+      // NÃO multiplicado por `presence`: o Fio é o único elemento que
+      // atravessa a costura Portal→Biblioteca sem desvanecer (decisão já
+      // registrada antes deste capítulo) — só o pulso muda, a presença
+      // do traço em si permanece contínua.
+      const threadOpacity = 0.875 + (breath / BREATH_AMPLITUDE) * 0.125;
+      goldenThreadRef.current?.setPulse(threadOpacity);
 
       // Direção de fotografia — crossfade entre cenas (portal-scenes.ts),
       // numa linha do tempo própria, independente dos frames de conteúdo.
@@ -551,6 +580,7 @@ export function PortalExperience({ scenes, videoSrc, videoPoster }: PortalExperi
             continuidade — passa perto do lugar onde o conteúdo se apoia,
             como um filete discreto de acabamento, nunca um indicador. */}
         <GoldenThread
+          ref={goldenThreadRef}
           d="M260 0 C 120 100, 120 300, 240 380 C 340 440, 300 560, 180 640 C 100 690, 140 720, 220 745"
           viewBox={`0 0 400 ${TOTAL_HEIGHT_VH}`}
           className="left-[18%] top-0 h-full w-32 opacity-45 lg:w-48"

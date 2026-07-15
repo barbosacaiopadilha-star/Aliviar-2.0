@@ -160,6 +160,19 @@ export function FaqBookSection() {
 
   return (
     <div ref={sectionRef} id="duvidas" className="relative bg-canvas">
+      {/* Luz de leitura assentada (Capítulo 5) — presença estável, nunca
+          animada: ao contrário do Portal, aqui a luz não conduz mais o
+          olhar, só confirma que o livro existe dentro de um ambiente, não
+          sobre um painel de cor plano. Puramente estática (nenhum relógio,
+          nenhum loop) — o silêncio dela é o próprio sinal de assentamento. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[70%] opacity-60"
+        style={{
+          background:
+            "radial-gradient(55% 45% at 50% 15%, color-mix(in srgb, var(--color-brand-gold) 14%, transparent) 0%, transparent 70%)",
+        }}
+      />
       {/* Mesmo gesto de concha, escala cheia (seção mais alta). */}
       <GoldenThread
         d="M340 0 C 100 120, 100 420, 300 560 C 400 630, 340 720, 180 800"

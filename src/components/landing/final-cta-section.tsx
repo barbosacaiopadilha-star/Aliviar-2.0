@@ -12,7 +12,6 @@ export function FinalCtaSection() {
         d="M340 0 C 140 84, 140 294, 300 392 C 380 441, 340 504, 220 560"
         className="left-1/2 top-0 h-full w-40 -translate-x-1/2 opacity-70 lg:w-64"
         viewBox="0 0 400 560"
-        glow
       />
       <SectionReveal className="relative mx-auto flex max-w-reading flex-col items-center gap-8 text-center">
         <SectionEyebrow tone="dark">Quando estiver pronto</SectionEyebrow>
