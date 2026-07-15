@@ -4,6 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import type { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { CARDS } from "@/components/landing/faq-cards";
+import {
+  BOOK_SCROLL_VH,
+  EXIT_DURATION_UNITS,
+  FIRST_QUESTION_SETTLE_UNITS,
+  getFaqCardTargetScroll,
+  LAST_QUESTION_SETTLE_UNITS,
+  TRANSITION_EMPHASIS,
+  TURN_DURATION_UNITS,
+  TURN_TO_EXIT_GAP_UNITS,
+} from "@/components/landing/faq-book-turn";
 import { GoldenThread } from "@/components/landing/golden-thread";
 import { SectionEyebrow } from "@/components/landing/section-eyebrow";
 import { SectionReveal } from "@/components/landing/section-reveal";
@@ -15,48 +25,13 @@ import { cn } from "@/components/ui/cn";
 // aumenta no meio do giro (simulando a folha se levantando) e avanço por
 // toque/teclado além da rolagem — nunca elástico (power2.inOut),
 // respeitando docs/BRAND_GUIDELINES.md. Conteúdo das cartas em
-// faq-cards.ts (Camada de Configuração).
-
-// Ritmo narrativo (Fase 4 do Masterplan V1.1) — pesos relativos, nunca
-// segundos: o `scrub` do GSAP converte qualquer `duration` em distância
-// física de scroll, nunca em tempo real, então "unidade" aqui é sempre
-// proporção, não velocidade. Fonte única de verdade: tanto a timeline
-// (montada mais abaixo) quanto os marcos de navegação por clique/teclado
-// (MARK_PROGRESS) derivam exatamente destes números — nunca duplicados,
-// nunca podem divergir um do outro.
-const FIRST_QUESTION_SETTLE_UNITS = 1; // assentamento antes da 1ª virada
-const LAST_QUESTION_SETTLE_UNITS = 1; // assentamento da última dúvida antes de o pin liberar
-const FIRST_TURN_EMPHASIS = 1.3; // a 1ª virada recebe mais peso que as demais
-const TURN_DURATION_UNITS = 1; // peso-base de uma virada (rotateY)
-const TURN_TO_EXIT_GAP_UNITS = 0.15; // intervalo entre virada e saída (inalterado)
-const EXIT_DURATION_UNITS = 0.6; // peso-base de uma saída (inalterado)
-const TRANSITION_UNITS = TURN_DURATION_UNITS + TURN_TO_EXIT_GAP_UNITS + EXIT_DURATION_UNITS;
-
-// Percurso total da Biblioteca — reduzido de 600vh (CARDS.length * 100,
-// herança de fórmula nunca calibrada contra a leitura real) para 390vh.
-// A proporção interna entre assentamento/virada/saída não muda — o
-// scrub reparte automaticamente sobre a nova distância total.
-const BOOK_SCROLL_VH = 390;
-
-// Peso de cada uma das 5 transições reais (a última carta nunca vira —
-// ela só assenta, ver o `.forEach` mais abaixo).
-const TRANSITION_EMPHASIS: number[] = Array.from({ length: CARDS.length - 1 }, (_, index) =>
-  index === 0 ? FIRST_TURN_EMPHASIS : 1,
-);
-
-// Marcos normalizados (0 a 1) da posição de repouso de cada carta,
-// calculados a partir dos mesmos pesos usados para montar a timeline —
-// consumidos pelo avanço por clique/teclado (ver `advance`).
-const MARK_PROGRESS: number[] = (() => {
-  const marks = [0];
-  let acc = FIRST_QUESTION_SETTLE_UNITS;
-  for (const emphasis of TRANSITION_EMPHASIS) {
-    acc += TRANSITION_UNITS * emphasis;
-    marks.push(acc);
-  }
-  const total = acc + LAST_QUESTION_SETTLE_UNITS;
-  return marks.map((mark) => mark / total);
-})();
+// faq-cards.ts (Camada de Configuração); pesos, marcos e o cálculo de
+// alvo de scroll agora em faq-book-turn.ts (Motor de Virada,
+// docs/LANDING_IMPLEMENTATION_ARCHITECTURE.md §2, motor 9) — mesmos
+// valores, mesma derivação, só relocados (Playbook, Etapa 7). Fonte
+// única de verdade preservada: tanto a timeline (montada abaixo) quanto
+// o avanço por clique/teclado (`advance`) derivam exatamente dos mesmos
+// números do motor — nunca duplicados, nunca podem divergir um do outro.
 
 export function FaqBookSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -68,7 +43,9 @@ export function FaqBookSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     setReduced(reduceMotion);
     setReady(true);
     if (reduceMotion) return;
@@ -154,17 +131,25 @@ export function FaqBookSection() {
       // ScrollTrigger ainda não inicializado (import dinâmico em
       // andamento) — degrada com segurança para o comportamento
       // anterior, nunca trava a interação.
-      window.scrollBy({ top: direction * window.innerHeight, behavior: "smooth" });
+      window.scrollBy({
+        top: direction * window.innerHeight,
+        behavior: "smooth",
+      });
       return;
     }
     // Fase 4, Correção 2: avança/volta até o marco lógico real da carta
     // vizinha (posição absoluta, lida ao vivo do ScrollTrigger — nunca um
     // estado duplicado que possa divergir do progresso real do scroll),
-    // não mais uma distância fixa em pixels. Primeira e última carta são
-    // limites seguros: o índice fica sempre dentro de [0, CARDS.length-1].
-    const targetIndex = Math.min(Math.max(currentIndex + direction, 0), CARDS.length - 1);
-    const targetY = st.start + MARK_PROGRESS[targetIndex] * (st.end - st.start);
-    window.scrollTo({ top: targetY, behavior: "smooth" });
+    // não mais uma distância fixa em pixels. Cálculo delegado ao Motor de
+    // Virada (faq-book-turn.ts) — mesma fórmula, agora testada isolada.
+    const { targetScrollY } = getFaqCardTargetScroll(
+      currentIndex,
+      direction,
+      st.start,
+      st.end,
+      CARDS.length,
+    );
+    window.scrollTo({ top: targetScrollY, behavior: "smooth" });
   };
 
   if (ready && reduced) {
@@ -182,7 +167,9 @@ export function FaqBookSection() {
               key={card.duvidaTitle.join()}
               className="rounded-2xl border border-border bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_25%,_var(--color-bg-surface))_100%)] p-6"
             >
-              <span className="text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">Dúvida</span>
+              <span className="text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">
+                Dúvida
+              </span>
               <p className="mt-2 font-serif text-lg italic text-ink">
                 {card.duvidaTitle[0]} {card.duvidaTitle[1]}
               </p>
@@ -232,7 +219,11 @@ export function FaqBookSection() {
         tabIndex={0}
         onClick={() => advance(1)}
         onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " " || event.key === "ArrowRight") {
+          if (
+            event.key === "Enter" ||
+            event.key === " " ||
+            event.key === "ArrowRight"
+          ) {
             event.preventDefault();
             advance(1);
           } else if (event.key === "ArrowLeft") {
@@ -256,7 +247,10 @@ export function FaqBookSection() {
           </h2>
         </SectionReveal>
 
-        <div className="relative h-[22rem] w-full max-w-xs" style={{ perspective: "2000px" }}>
+        <div
+          className="relative h-[22rem] w-full max-w-xs"
+          style={{ perspective: "2000px" }}
+        >
           {CARDS.map((card, index) => (
             <div
               key={card.duvidaTitle.join()}
@@ -271,7 +265,8 @@ export function FaqBookSection() {
                 // o GSAP só escreve boxShadow inline aqui durante a
                 // virada em si (onUpdate da própria virada), nunca em
                 // repouso — quando o convite realmente importa.
-                index === currentIndex && "hover:shadow-2xl group-focus-visible:shadow-2xl",
+                index === currentIndex &&
+                  "hover:shadow-2xl group-focus-visible:shadow-2xl",
               )}
               style={{
                 zIndex: CARDS.length - index,
@@ -291,7 +286,8 @@ export function FaqBookSection() {
               <div
                 className={cn(
                   "relative size-full transition-transform duration-fast ease-standard",
-                  index === currentIndex && "hover:-translate-y-1 group-focus-visible:-translate-y-1",
+                  index === currentIndex &&
+                    "hover:-translate-y-1 group-focus-visible:-translate-y-1",
                 )}
               >
                 <div
@@ -299,7 +295,10 @@ export function FaqBookSection() {
                     innerRefs.current[index] = el;
                   }}
                   className="relative size-full"
-                  style={{ transformStyle: "preserve-3d", transformOrigin: "left center" }}
+                  style={{
+                    transformStyle: "preserve-3d",
+                    transformOrigin: "left center",
+                  }}
                 >
                   <div
                     className="absolute inset-0 flex flex-col justify-start rounded-r-2xl rounded-l-sm border border-border bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_35%,_var(--color-bg-surface))_100%)] p-6 pl-7 pt-7"
@@ -309,17 +308,24 @@ export function FaqBookSection() {
                       aria-hidden="true"
                       className="absolute inset-y-0 left-0 w-2 rounded-l-sm bg-gradient-to-r from-ink/15 to-transparent"
                     />
-                    <span className="text-xs font-medium uppercase tracking-[0.16em] text-ink-muted">Dúvida</span>
+                    <span className="text-xs font-medium uppercase tracking-[0.16em] text-ink-muted">
+                      Dúvida
+                    </span>
                     <p className="mt-3 font-serif text-2xl italic leading-tight text-ink">
                       {card.duvidaTitle[0]}
                       <br />
                       {card.duvidaTitle[1]}
                     </p>
-                    <p className="mt-3 text-sm text-ink-muted">{card.duvidaText}</p>
+                    <p className="mt-3 text-sm text-ink-muted">
+                      {card.duvidaText}
+                    </p>
                   </div>
                   <div
                     className="absolute inset-0 flex flex-col justify-start rounded-r-2xl rounded-l-sm border border-border bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_var(--color-brand-sage)_100%)] p-6 pl-7 pt-7"
-                    style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                    style={{
+                      backfaceVisibility: "hidden",
+                      transform: "rotateY(180deg)",
+                    }}
                   >
                     <span
                       aria-hidden="true"
@@ -333,7 +339,9 @@ export function FaqBookSection() {
                       <br />
                       {card.solucaoTitle[1]}
                     </p>
-                    <p className="mt-3 text-sm text-brand-primary-deep/80">{card.solucaoText}</p>
+                    <p className="mt-3 text-sm text-brand-primary-deep/80">
+                      {card.solucaoText}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -341,7 +349,10 @@ export function FaqBookSection() {
           ))}
         </div>
 
-        <p aria-hidden="true" className="mt-8 text-xs uppercase tracking-[0.14em] text-ink-muted">
+        <p
+          aria-hidden="true"
+          className="mt-8 text-xs uppercase tracking-[0.14em] text-ink-muted"
+        >
           Toque ou role para virar a página
         </p>
         <p aria-live="polite" className="sr-only">
