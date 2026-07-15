@@ -248,7 +248,7 @@ Log de decisões arquiteturais e de produto, formato ADR simplificado. Todas as 
 
 ## ADR-024 — Content Invariant no P003: rejeitar `severity: "blocking"` para restrição prática opcional (formalização de CAL-002)
 
-- **Status:** Definitiva quanto à decisão, à taxonomia e ao comportamento em caso de violação; **implementação não autorizada nesta ADR** — depende de aprovação explícita e separada do arquiteto do projeto.
+- **Status:** Definitiva. **Correção factual (auditoria de documentação pendente, 2026-07-15):** as seções 7 e 8 abaixo foram escritas como plano ainda não autorizado, mas a implementação foi de fato autorizada e concluída no mesmo commit que introduziu esta ADR (`502c9a4 feat(ace): enforce P003 content invariant`) — `assertNoInvalidPracticalBlocking` já está em produção em `src/modules/ace/protocols/p003-case-audit.ts`, com `relatedField` no schema/prompt e cobertura unitária/integração (seção 8). Texto original das seções 7/8 preservado como registro do desenho aprovado; ver nota de status em cada uma.
 
 ### 1. Contexto
 
@@ -329,7 +329,7 @@ Sem esse campo, a implementação não pode prosseguir com segurança — é uma
 - Adoção futura por outros protocolos é possível (P010 já tem um Content Invariant equivalente, `assertNoForbiddenLanguage`; P004 tem um candidato condicional a CAL-003), mas cada um exige sua própria calibração e evidência — esta ADR não generaliza automaticamente.
 - **Limites explícitos:** esta ADR não resolve CAL-001 nem CAL-003; não introduz um framework genérico de invariants; não adiciona retry automático; não implementa o invariant.
 
-### 7. Estratégia de implementação (não executada nesta ADR)
+### 7. Estratégia de implementação (executada — commit `502c9a4`)
 
 1. `src/modules/ace/core/error-contract.ts` — adicionar `"CONTENT_INVARIANT_VIOLATION"` a `ProtocolErrorCode`.
 2. `src/modules/concierge/anthropic-language-model.ts` — adicionar `relatedField: z.enum(["decision", "goal", "other"])` ao item de `P003_RESPONSE_SCHEMA.additionalFindings` (e ao JSON Schema correspondente enviado ao modelo).
@@ -342,7 +342,7 @@ Sem esse campo, a implementação não pode prosseguir com segurança — é uma
 6. Ordem de execução dentro de `execute()`: validação Zod (já ocorre antes, em `anthropic-language-model.ts`) → Content Invariant (novo) → `applyAdditionalFindings()` → `computeStatus()`.
 7. `orchestrator.ts`: nenhuma alteração necessária (seção 4).
 
-### 8. Estratégia de testes (não executada nesta ADR)
+### 8. Estratégia de testes (unitários e integração executados no commit `502c9a4`; Golden Set ainda pendente — ver nota abaixo)
 
 **Unitários** (`tests/unit/ace-p003-case-audit.test.ts`, mesmo arquivo/padrão existente):
 - Ausência de restrição prática (`relatedField: "other"`) + `warning` → aceita, vira `Warning`.
@@ -364,16 +364,16 @@ Sem esse campo, a implementação não pode prosseguir com segurança — é uma
 - Warnings legítimos preservados (`READY_WITH_WARNINGS`, teste já existente).
 - Suíte completa (`npm test`) permanece 100% verde — nenhuma mudança de comportamento em P001, P002, P004-P010.
 
-**Golden Set** (critério de aprovação, sem execução real nesta etapa):
-- Mínimo 3 execuções reais da fixture de "caso limpo" pós-implementação: todas `status: "READY"`, nenhuma com achado `category` em (`ausencia`, `insuficiencia`) + `relatedField: "other"` + `severity: "blocking"`.
+**Golden Set** (critério de aprovação — ainda pendente; nenhuma execução real autorizada ocorreu contra esta implementação até a data desta correção):
+- Mínimo 3 execuções reais (`ALLOW_REAL_MODEL_CALLS=true`, ADR-022) da fixture de "caso limpo" pós-implementação: todas `status: "READY"`, nenhuma com achado `category` em (`ausencia`, `insuficiencia`) + `relatedField: "other"` + `severity: "blocking"`.
 - Fixture de contradição real deve continuar `BLOCKED` nas mesmas execuções (checagem negativa, já existente).
 
 ### Documentos afetados por esta ADR
 
-- `docs/ace/CALIBRATION_REPORT.md` — entrada CAL-002 recebe um adendo referenciando esta ADR (evidência histórica preservada, não reescrita).
-- `docs/ace/METHOD_INVARIANTS_DESIGN.md` — mapeamento do P003 atualizado para referenciar esta ADR como a instância formalizada.
+- `docs/ace/CALIBRATION_REPORT.md` — entrada CAL-002 recebeu um adendo referenciando esta ADR (evidência histórica preservada, não reescrita); esse adendo ainda descreve a implementação como pendente e não foi corrigido nesta rodada — fora do escopo desta auditoria de documentação (arquivo não listado como pendente), registrado aqui para autorização futura.
+- `docs/ace/METHOD_INVARIANTS_DESIGN.md` — mapeamento do P003 corrigido nesta mesma auditoria para refletir a implementação já concluída.
 
-- **Revisitar quando:** o arquiteto do projeto autorizar explicitamente a implementação (seção 7) — até lá, nenhum código, schema, prompt ou especificação é alterado por esta ADR.
+- **Revisitar quando:** as 3 execuções reais autorizadas do Golden Set (seção 8) forem realizadas e registradas — até lá, o critério de aprovação por Golden Set desta calibração permanece em aberto, embora a implementação em código já esteja em produção.
 
 ---
 
