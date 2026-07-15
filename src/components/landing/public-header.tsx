@@ -4,6 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import {
+  HEADER_COMPACT_SCROLL_THRESHOLD,
+  shouldCompactHeader,
+} from "@/components/landing/header-compaction";
 import { LinkButton } from "@/components/landing/link-button";
 import { cn } from "@/components/ui/cn";
 
@@ -16,7 +20,10 @@ export function PublicHeader() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
+    const onScroll = () =>
+      setScrolled(
+        shouldCompactHeader(window.scrollY, HEADER_COMPACT_SCROLL_THRESHOLD),
+      );
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
