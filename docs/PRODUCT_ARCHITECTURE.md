@@ -8,6 +8,8 @@ Este documento **modela, não implementa**. Nenhuma decisão aqui gera código, 
 
 **Princípio de decisão desta fase:** toda escolha de produto responde primeiro a "isto melhora a experiência do paciente?" — se a resposta é não, não pertence ao produto, independentemente de conveniência técnica, comercial ou de prazo.
 
+**Nota de auditoria (2026-07-15):** este documento foi escrito na Fase 2, antes da maior parte da jornada abaixo existir em código. A V1.0 foi entregue e congelada desde então (ADR-021, `docs/DECISIONS.md`) — boa parte do que as seções 4 e 8 tratavam como "a desenhar" já está implementada e em operação. As seções marcadas abaixo foram conferidas contra o código real (`src/app/`, `src/modules/story`, `src/modules/cases`, `src/modules/concierge`) e corrigidas onde divergiam do que foi de fato construído. Esta auditoria não altera nenhum protocolo, Constituição, Ontologia, Kernel ou schema — apenas a descrição, aqui, do que já existe.
+
 ---
 
 ## 0. O que muda nesta fase
@@ -52,18 +54,23 @@ O Concierge é o modo mais diferenciado e o que dá nome ao domínio (`aliviarcu
 ## 3. Personas
 
 ### 3.1 Paciente (pessoa buscando cuidado)
+
 Alguém em um momento vulnerável — ansiedade, luto, transição de vida, dúvida sobre iniciar ou não um tratamento — que não sabe por onde começar, ou já tentou e se frustrou com diretórios frios e comercialmente enviesados. Quer confiança antes de rapidez. Pode preferir contar sua história com calma (Concierge) ou já saber exatamente o que busca (Busca Direta).
 
 ### 3.2 Profissional parceiro
+
 Psicólogo(a), terapeuta ou profissional de saúde independente que quer ser encontrado por quem realmente precisa do seu cuidado, sem pagar por destaque e sem competir em uma vitrine de anúncios. Quer ser representado com fidelidade (bio própria, abordagem, não reduzido a "nota"), e quer receber apenas contatos genuinamente compatíveis com o que oferece — não qualquer lead.
 
 ### 3.3 Curador Médico
-Membro da equipe Aliviar com preparo para avaliar, em linguagem simples e evidências já organizadas pelo ACE, se uma proposta de curadoria está madura o suficiente para chegar ao paciente. Não é um papel técnico — é o ponto exato onde a Constituição do ACE (Princípio 9) se torna real: nenhuma decisão de cuidado sai da Aliviar sem passar por uma pessoa. **Papel oficialmente adotado nesta fase** — operacional do produto, sem exigir qualquer alteração no ACE (ver seção 17).
+
+Membro da equipe Aliviar com preparo para avaliar, em linguagem simples e evidências já organizadas pelo ACE, se uma proposta de curadoria está madura o suficiente para chegar ao paciente. Não é um papel técnico — é o ponto exato onde a Constituição do ACE (Princípio 9) se torna real: nenhuma decisão de cuidado sai da Aliviar sem passar por uma pessoa. **Papel implementado e em operação desde a V1.0** (`src/app/curador/`, Revisão Humana em `casos/[id]/revisao`) — operacional do produto, sem ter exigido qualquer alteração no ACE (ver seção 17).
 
 ### 3.4 Administrador(a) Aliviar
+
 Papel operacional interno já previsto (ADR-006): modera e verifica cadastro de profissionais, opera o painel administrativo. Pode ou não acumular o papel de Curador Médico — tratado como decisão separada (seção 17).
 
 ### 3.5 Visitante
+
 Qualquer pessoa não autenticada navegando a landing page, iniciando "sua história", ou buscando profissionais publicamente. A intake do Concierge (`sua-historia`) e a Busca Direta são deliberadamente acessíveis sem cadastro prévio até o ponto em que a identidade é realmente necessária (entrega da curadoria, solicitação de contato) — reduzir fricção antes do compromisso (Princípio 3, clareza acima de complexidade; Princípio 4, transparência acima de persuasão).
 
 ---
@@ -73,6 +80,7 @@ Qualquer pessoa não autenticada navegando a landing page, iniciando "sua histó
 A jornada tem duas portas de entrada (Busca Direta e Concierge) que convergem no mesmo destino (contato com um profissional) e podem coexistir para a mesma pessoa.
 
 ### 4.1 Jornada — Busca Direta
+
 1. Visitante chega à landing page ou direto na busca pública.
 2. Filtra por especialidade, modalidade, região, convênio, disponibilidade (`docs/DISCOVERY_ENGINE.md`, seção 6.1).
 3. Vê lista de profissionais verificados, cada um com explicação simples de "por que aparece" (seção 4.1 do Discovery Engine).
@@ -87,13 +95,15 @@ A jornada tem duas portas de entrada (Busca Direta e Concierge) que convergem no
 
 1. **Descoberta**: visitante encontra a landing page ou é indicado por conteúdo institucional. A página pública `sua-historia` (raiz) explica o que é o Concierge, mas **não permite preenchimento** sem login — só orienta a pessoa a entrar em contato com a Aliviar ou, se já tiver conta, a fazer login.
 2. **Conta já existente** (pré-requisito, §21): a pessoa já tem conta e papel "paciente", criados previamente pela equipe Aliviar por um canal próprio (fora deste fluxo) — nunca por autocadastro.
-3. **Acolhimento** (`sua-historia`, autenticado, exige papel "paciente"): logada, a pessoa conta sua história em etapas — motivo, para quem, informações, preferências, revisão. O rascunho é salvo automaticamente no servidor, vinculado ao próprio `profile_id`, com retomada exata de onde parou em qualquer dispositivo (Épico 1, Sprint 1). Ao concluir, a história fica marcada como enviada, permanentemente vinculada à conta. Um Caso é aberto a partir dela (módulo `cases`) e, quando a equipe inicia a curadoria, o módulo `concierge` orquestra o pipeline do ACE — **implementado e em operação desde o encerramento do MVP (V1.0)**.
+3. **Acolhimento** (`sua-historia`, autenticado, exige papel "paciente"): logada, a pessoa conta sua história em seis etapas — para quem é o cuidado, o motivo da busca, a história em si, informações adicionais (com anexos), preferências de atendimento, e uma revisão final antes de enviar (`src/app/(public)/sua-historia/(wizard)/`). Desde `feat(story): make patient story an editorial journey`, cada etapa é escrita como prosa calma e acolhedora, não como rótulo de formulário. O rascunho é salvo automaticamente no servidor (tabela `patient_stories`, `src/modules/story/repository.ts`) a cada 600ms de inatividade, com controle de concorrência otimista por revisão e retomada exata de onde parou em qualquer dispositivo — o `localStorage` existe apenas como cache transitório para sobreviver a uma aba fechada antes do autosave confirmar, nunca como fonte de verdade (**corrige a versão anterior desta seção, que descrevia persistência apenas local**). Ao concluir, a história fica marcada como `enviada`, permanentemente vinculada à conta — **mas isso não abre um Caso automaticamente**: a criação do Caso continua sendo uma ação manual da equipe (`createCaseAction`, disparada pelo Administrador na página do paciente), que então aciona o módulo `concierge` para orquestrar o pipeline do ACE — **implementado e em operação desde o encerramento do MVP (V1.0)**.
 4. **Curadoria em andamento** (implementado, V1.0; invisível para a pessoa, ACE P001-P008): o caso é estruturado, auditado, contextualizado, e uma proposta de composição (Shortlist) é gerada. A pessoa vê apenas um estado de "sua curadoria está sendo preparada" — nunca o detalhe técnico do pipeline (Princípio 5, tecnologia invisível).
-5. **Revisão humana** (ACE P009, implementado, V1.0; invisível para a pessoa): um Curador Médico avalia a proposta, aprova, ajusta ou — quando necessário — pede mais informação (o que pode significar retomar a etapa 2 com a pessoa) ou rejeita (raro; significa que a Aliviar não tem, hoje, uma opção responsável para aquele caso, e isso é comunicado com honestidade, não escondido).
+5. **Revisão humana** (ACE P009, implementado, V1.0; invisível para a pessoa): um Curador Médico avalia a proposta, aprova, ajusta ou — quando necessário — pede mais informação (o que pode significar retomar a etapa 2 com a pessoa) ou rejeita (raro; significa que a Aliviar não tem, hoje, uma opção responsável para aquele caso, e isso é comunicado com honestidade, não escondido). Diferente de P001-P008, o P009 nunca é disparado automaticamente pelo orquestrador — é uma ação server-side própria (`submitHumanReviewAction`), acionada só pelo Curador Médico na tela de revisão.
 6. **Entrega da Curadoria Final** (ACE P010): a pessoa recebe, de forma clara e humana, a apresentação de exatamente três profissionais, com o porquê de cada um, sem ranking, com disclaimer claro de que a escolha é dela.
 7. **Decisão e primeiro contato**: a pessoa escolhe (ou nenhum, ou pede para reabrir — ver seção 13) e solicita contato com quem preferir — mesmo módulo `connection` da Busca Direta.
 8. **Acompanhamento (meses 1-12)**: a equipe Aliviar mantém contato periódico (ver seção 12) para saber como está a experiência, sem se inserir na relação clínica em si.
 9. **Encerramento ou renovação do ciclo**: ao fim dos 12 meses (ou antes, se a pessoa pedir), o ciclo se encerra, se renova, ou uma nova curadoria é aberta se a necessidade mudou substancialmente.
+
+**Teto real de implementação (auditoria 2026-07-15, atualizado na mesma data — ADR-027):** os passos 1-6 acima (Descoberta → Entrega da Curadoria Final) estão implementados e em operação desde a V1.0, verificados diretamente em código. O passo 7 (Decisão e primeiro contato) também está implementado: o módulo `connection` deixou de estar reservado e vazio (histórico preservado em `docs/architecture/DOMAIN_CONNECTION_RELATIONSHIP.md`), validado por testes de integração contra banco real. Os passos 8-9 (Acompanhamento, Encerramento/renovação) continuam sendo modelagem de produto, não implementação: não existe ainda nenhum módulo `relationship` no repositório (nem reservado) — a jornada real de um paciente hoje termina em "escolheu um profissional e registrou intenção de contato (ou não)", sem caminho de sistema para ser acompanhado nos 12 meses ou ter o Caso reaberto por sinal de comportamento.
 
 ---
 
@@ -102,6 +112,7 @@ A jornada tem duas portas de entrada (Busca Direta e Concierge) que convergem no
 A "equipe Aliviar" cobre dois papéis funcionalmente distintos, ainda que possam ser a mesma pessoa nos primeiros meses de operação (decisão de negócio, não de arquitetura):
 
 ### 5.1 Curador Médico — responsável pela Revisão Humana (P009)
+
 1. Recebe uma fila de casos com curadoria proposta (Shortlist) aguardando revisão.
 2. Abre um caso: vê a Narrativa original, o Contexto de Decisão, a Matriz de Compatibilidade completa (todas as dimensões, forças, limitações, informações ausentes) e a Shortlist proposta — tudo já organizado pelo ACE, nunca uma tabela crua.
 3. Decide: `APPROVE` (aceita integralmente), `ADJUST` (ajusta a composição dentro do conjunto já avaliado pelo ACE), `REJECT` (com justificativa), ou `REQUEST_MORE_INFORMATION` (interrompe, sinalizando o que falta).
@@ -109,11 +120,13 @@ A "equipe Aliviar" cobre dois papéis funcionalmente distintos, ainda que possam
 5. Sua decisão gera o `HumanReviewResult` — se validada, a entrega (P010) é disparada por uma ação explícita do Curador/Administrador na própria tela de revisão (V1.0: sob confirmação, nunca automática).
 
 ### 5.2 Administrador(a) — moderação e operação
+
 1. Aprova/verifica cadastro de novos profissionais (pré-requisito para um profissional aparecer em qualquer busca ou curadoria — ver seção 5 do Discovery Engine: "toda curadoria de profissional passa por revisão humana antes de entrar no motor").
 2. Modera denúncias/inconsistências de perfil.
 3. Acompanha métricas operacionais agregadas (nunca dado clínico individual sem necessidade).
 
 ### 5.3 Time de Relacionamento (Concierge, meses 1-12)
+
 1. Acompanha, em cadência definida (proposta: mensal, revisável), como está a experiência de cada paciente em Concierge ativo.
 2. Registra sinais de que uma nova curadoria pode ser necessária (mudança de necessidade, conexão que não funcionou) — decide, com a pessoa, se abre um novo ciclo de "sua história" para aquele caso.
 3. Não substitui nem se sobrepõe ao Curador Médico do P009 — apenas identifica quando reabrir o funil é a ação certa.
@@ -147,20 +160,24 @@ A "equipe Aliviar" cobre dois papéis funcionalmente distintos, ainda que possam
 
 Reconciliando `docs/ENGINEERING_PLAN.md` (módulos já previstos) com o que a Fase 2 exige:
 
-**Já previstos no MVP técnico, ainda a construir:**
-- `auth` — identidade, sessão, papéis.
-- `profiles` — perfil base + paciente + profissional.
-- `discovery` — Busca Direta (`docs/DISCOVERY_ENGINE.md`).
-- `connection` — solicitação de contato (comum aos dois caminhos).
+**Implementados e em operação desde a V1.0 (auditoria 2026-07-15):**
 
-**Já existentes no repositório (construídos nas fases anteriores):**
-- `story` (`src/modules/story`) — o assistente "sua história"; hoje persiste em `localStorage` (ver `story-storage`), ainda não conectado ao ACE.
-- `ace` (`src/modules/ace`) — o Método completo (P001-P010), uma biblioteca de protocolos pura, sem nenhuma camada de orquestração de aplicação, persistência real ou UI ao redor.
+- `auth` — identidade, sessão, papéis, proteção de rota.
+- `profiles` — perfil base + conta de paciente + perfil de profissional.
+- `story` (`src/modules/story`) — o assistente "sua história"; persiste em `patient_stories` no Supabase, com autosave, concorrência otimista e retomada entre dispositivos (`localStorage` é só cache transitório) — **corrige a versão anterior desta lista, que descrevia persistência apenas local**.
+- `cases` (`src/modules/cases`) — a entidade Caso, com máquina de estados própria (ver seção 14 revisada).
+- `ace` (`src/modules/ace`) — o Método completo (P001-P010), biblioteca de protocolos pura.
+- `concierge` (`src/modules/concierge`) — **implementado, não mais "nome de trabalho"**: orquestra automaticamente P001-P008 a partir de uma história enviada (`orchestrator.ts`), e expõe P009 (Revisão Humana) e P010 (Entrega) como ações server-side próprias e manuais — nunca disparadas pelo orquestrador automático.
+- A fila e a interface de Revisão Humana (o que esta seção previa como módulo `curation-desk`) **não nasceu como módulo próprio** — vive como rotas de produto dentro de `src/app/curador/` e `src/app/admin/casos/`, sobre as ações do próprio `concierge`. Nome mantido aqui só como referência histórica.
+- `connection` (`src/modules/connection`) — **[ATUALIZADO 2026-07-15, ADR-027 em `docs/DECISIONS.md`]** implementado (só a parte pontual — decisão do paciente e primeiro contato). Até esta data era "reservado, vazio"; **corrige a versão anterior desta lista**, que ainda o descrevia como não construído. Domínio puro + persistência (migrations, RLS, funções de transição atômica) + Server Actions + apresentação, validado por 14 testes de integração contra Supabase local. Detalhe completo em `docs/architecture/DOMAIN_CONNECTION_RELATIONSHIP.md`.
 
-**Módulos novos que esta fase revela como necessários (ainda não desenhados em detalhe — próxima sprint de implementação):**
-- `concierge` (nome de trabalho) — orquestra a jornada: recebe a Narrativa do `story`, invoca o pipeline ACE em sequência, mantém o estado do Caso (seção 14), aciona notificações.
-- `curation-desk` (nome de trabalho) — a interface e as regras de acesso da fila de Revisão Humana (P009) para o Curador Médico.
-- `relationship` (nome de trabalho) — acompanhamento dos 12 meses de Concierge: cadência de check-in, sinalização de reabertura, encerramento.
+**Já previstos no MVP técnico, ainda não construídos:**
+
+- `discovery` — Busca Direta (`docs/DISCOVERY_ENGINE.md`) — reservado, vazio.
+
+**Ainda necessário, e ainda sem sequer uma pasta reservada:**
+
+- `relationship` (nome de trabalho) — acompanhamento dos 12 meses de Concierge: cadência de check-in, sinalização de reabertura, encerramento. Diferente de `discovery` (reservado) e `connection` (implementado), este módulo não tem nenhum placeholder no repositório hoje.
 
 **Reservados, fora de escopo (herdados do plano técnico, inalterados):** `community`, `institutions`, `benefits`, `programs`, `ai`, `partners`.
 
@@ -222,16 +239,16 @@ discovery ──(perfil público)──▶ connection ◀── paciente (Busca 
 
 Modelo proposto (primeira modelagem — a validar antes de qualquer construção):
 
-| Momento | O que acontece | Quem conduz |
-|---|---|---|
-| **Semana 0** | Acolhimento (`sua-historia`) + confirmação/cadastro. | Paciente (autosserviço) |
-| **Semana 0-1** | Pipeline ACE (P001-P008), automatizado. | ACE |
-| **Semana 1** | Revisão Humana (P009). | Curador Médico |
-| **Semana 1-2** | Entrega da Curadoria Final (P010) + comunicação humana de acompanhamento. | Produto + Time de Relacionamento |
-| **Semana 2-4** | Paciente decide, solicita contato, inicia relação com o(s) profissional(is) escolhido(s). | Paciente + Profissional |
-| **Mês 1** | Primeiro check-in: como foi o primeiro contato/consulta. | Time de Relacionamento |
-| **Meses 2-11** | Check-ins periódicos (cadência proposta: mensal ou bimestral — decisão de produto a confirmar); disponibilidade para reabrir curadoria se a necessidade mudar. | Time de Relacionamento |
-| **Mês 12** | Encerramento do ciclo: renovação, encerramento, ou transição para um novo Caso se a necessidade evoluiu. | Time de Relacionamento + Paciente |
+| Momento        | O que acontece                                                                                                                                                 | Quem conduz                       |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| **Semana 0**   | Acolhimento (`sua-historia`) + confirmação/cadastro.                                                                                                           | Paciente (autosserviço)           |
+| **Semana 0-1** | Pipeline ACE (P001-P008), automatizado.                                                                                                                        | ACE                               |
+| **Semana 1**   | Revisão Humana (P009).                                                                                                                                         | Curador Médico                    |
+| **Semana 1-2** | Entrega da Curadoria Final (P010) + comunicação humana de acompanhamento.                                                                                      | Produto + Time de Relacionamento  |
+| **Semana 2-4** | Paciente decide, solicita contato, inicia relação com o(s) profissional(is) escolhido(s).                                                                      | Paciente + Profissional           |
+| **Mês 1**      | Primeiro check-in: como foi o primeiro contato/consulta.                                                                                                       | Time de Relacionamento            |
+| **Meses 2-11** | Check-ins periódicos (cadência proposta: mensal ou bimestral — decisão de produto a confirmar); disponibilidade para reabrir curadoria se a necessidade mudar. | Time de Relacionamento            |
+| **Mês 12**     | Encerramento do ciclo: renovação, encerramento, ou transição para um novo Caso se a necessidade evoluiu.                                                       | Time de Relacionamento + Paciente |
 
 **Reabertura a qualquer momento**: se em qualquer ponto dos 12 meses a pessoa sentir que a conexão não está funcionando, ou sua necessidade mudar, ela pode solicitar uma nova curadoria — isso abre um **novo Caso** (nova Narrativa, novo ciclo P001-P010), nunca uma edição do anterior. O histórico de Casos anteriores permanece consultável pela pessoa e pela equipe (continuidade, `docs/PRODUCT_PRINCIPLES.md`, princípio 15).
 
@@ -270,30 +287,37 @@ Encerrado / Renovado / Novo Caso Aberto
 
 Uma pessoa pode estar, simultaneamente, "Conectado" via Busca Direta em paralelo a um Concierge ativo — os dois caminhos não são mutuamente exclusivos.
 
+**Estado real de implementação (2026-07-15, nota atualizada na mesma data — ADR-027):** o `paciente/page.tsx` hoje deriva um estado de Home a partir de sinais reais (`no_story`, `draft`, `submitted_without_case`, `case_available` — `src/modules/paciente/home-state.ts`), sem tentar reclassificar localmente o `statusLabel` do Caso. Esse modelo de implementação é deliberadamente mais simples que o diagrama conceitual acima — ainda não distingue "Curadoria Recebida-Decidindo" de "Conectado" de "Em Acompanhamento". Para "Conectado", a causa não é mais ausência do módulo — `connection` está implementado (`src/modules/connection`) — e sim que `home-state.ts` ainda não consome `connection_records` para essa distinção (achado registrado, correção fora do escopo desta nota factual). Para "Em Acompanhamento", a causa permanece a original: o módulo `relationship` não existe. O diagrama acima permanece o modelo-alvo; a implementação de hoje só alcança até "Em Curadoria"/"Curadoria Recebida".
+
 ---
 
 ## 14. Estados do caso
 
-"Caso", no produto, é a materialização funcional do que o ACE processa (Narrative → ... → FinalCuradoria) mais os estados de produto ao redor dele:
+**Atualizado em 2026-07-15 contra a implementação real** (`src/modules/cases/state-machine.ts`) — a versão anterior desta seção propunha nomes de estado (Aberto/Enviado/Em Processamento/Validado/Rejeitado) que não correspondem 1:1 ao que foi implementado. Os nove estados reais e as transições permitidas entre eles:
 
 ```
-Aberto (história em preenchimento)
-   ▼
-Enviado (história confirmada, aguardando pipeline)
-   ▼
-Em Processamento (ACE P001-P008)
-   ▼
-Aguardando Revisão Humana (Shortlist proposta, P008 concluído)
-   ▼
-   ├─▶ Bloqueado — Poucas Opções (Shortlist BLOCKED, INSUFFICIENT_*)
-   ├─▶ Bloqueado — Composição Ambígua (Shortlist BLOCKED, AMBIGUOUS_COMPOSITION)
-   └─▶ Em Revisão (P009 em andamento)
-           ├─▶ Validado (P009 VALIDATED) ──▶ Entregue (P010 concluído)
-           ├─▶ Rejeitado (P009 REJECT)
-           └─▶ Aguardando Mais Informação (P009 REQUEST_MORE_INFORMATION) ──▶ volta a "Aberto" (novo ciclo parcial de história) ou a "Em Processamento" (retorno a um estágio específico do pipeline, via returnToProtocol)
+NEW ──▶ IN_REVIEW ──▶ READY_FOR_CURATION ──▶ IN_CURATION ──▶ HUMAN_REVIEW ──▶ DELIVERED ──▶ CLOSED
+  │         │                                     │                │
+  │         ▼                                     ▼                ▼
+  │  WAITING_FOR_INFORMATION ◀────────────────────┴────────────────┘
+  │         │
+  │         ▼ (retorna)
+  │      IN_REVIEW
+  └──▶ CANCELLED (a partir de qualquer estado não-terminal)
 ```
 
-Um caso "Bloqueado" ou "Rejeitado" **nunca é apresentado ao paciente como falha silenciosa** — é sempre comunicado com honestidade (Princípio 7, confiança construída lentamente) e com um caminho claro do que acontece a seguir (novo contato do Time de Relacionamento, pedido de mais informação, ou reconhecimento honesto de que a Aliviar não tem, hoje, uma opção responsável).
+- `NEW` — Caso recém-criado pela equipe (ação manual, seção 4.2 passo 3), história já enviada.
+- `IN_REVIEW` — equipe avaliando a história antes de iniciar a curadoria.
+- `WAITING_FOR_INFORMATION` — estado de bloqueio compartilhado, alcançável tanto de `IN_CURATION` (quando a Auditoria do Caso, P003, retorna `BLOCKED` por informação insuficiente) quanto de `HUMAN_REVIEW` (quando o Curador Médico pede mais informação) — volta para `IN_REVIEW` quando resolvido.
+- `READY_FOR_CURATION` — pronto para o pipeline automático começar.
+- `IN_CURATION` — pipeline ACE P001-P008 em execução (`orchestrator.ts`).
+- `HUMAN_REVIEW` — Shortlist (P008) pronta, aguardando ou em decisão do Curador Médico (P009, ação manual separada do pipeline automático).
+- `DELIVERED` — Curadoria Final (P010) entregue — também uma ação manual separada, nunca automática.
+- `CLOSED` / `CANCELLED` — estados terminais.
+
+Diferente da proposta anterior, não existem estados de produto distintos para "Bloqueado — Poucas Opções" e "Bloqueado — Composição Ambígua" (os dois tipos de `Shortlist BLOCKED` levam o Caso a `HUMAN_REVIEW` mesmo assim, para decisão humana), nem um estado `REJECTED` próprio do Caso — uma rejeição do Curador Médico fica registrada no histórico de `HumanReviewResult` (append-only, ADR-025), não como um estado do Caso em si.
+
+Um caso bloqueado (`WAITING_FOR_INFORMATION`) ou uma revisão rejeitada **nunca é apresentado ao paciente como falha silenciosa** — princípio de produto mantido (Princípio 7, confiança construída lentamente), independentemente do nome exato do estado técnico.
 
 ---
 
