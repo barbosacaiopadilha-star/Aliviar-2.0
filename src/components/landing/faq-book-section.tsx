@@ -6,6 +6,7 @@ import type { ScrollTrigger } from "gsap/ScrollTrigger";
 import { GoldenThread } from "@/components/landing/golden-thread";
 import { SectionEyebrow } from "@/components/landing/section-eyebrow";
 import { SectionReveal } from "@/components/landing/section-reveal";
+import { cn } from "@/components/ui/cn";
 
 // Livro físico de Dúvidas — mesmos 6 pares Dúvida/Solução do mecanismo
 // anterior (DuvidasStackSection), agora com hinge real na lombada
@@ -282,7 +283,7 @@ export function FaqBookSection() {
             advance(-1);
           }
         }}
-        className="relative flex min-h-screen cursor-pointer flex-col items-center justify-center overflow-hidden px-4 py-16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus lg:px-8"
+        className="group relative flex min-h-screen cursor-pointer flex-col items-center justify-center overflow-hidden px-4 py-16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus lg:px-8"
       >
         {/* Presença Residual (Fase 2): o preâmbulo (eyebrow + heading)
             nasce em SectionReveal — o mesmo fade-up já usado no CTA e no
@@ -305,52 +306,78 @@ export function FaqBookSection() {
               ref={(el) => {
                 cardRefs.current[index] = el;
               }}
-              className="absolute inset-0 shadow-lg"
+              className={cn(
+                "absolute inset-0 shadow-lg transition-shadow duration-fast ease-standard",
+                // Convite Prévio (Fase 5): só a carta ativa reage — mesma
+                // fonte de estado já usada pelo aria-live, nenhum estado
+                // novo. A sombra pode viver neste elemento com segurança:
+                // o GSAP só escreve boxShadow inline aqui durante a
+                // virada em si (onUpdate da própria virada), nunca em
+                // repouso — quando o convite realmente importa.
+                index === currentIndex && "hover:shadow-2xl group-focus-visible:shadow-2xl",
+              )}
               style={{
                 zIndex: CARDS.length - index,
                 transform: `translate(${index * 3}px, ${index * 4}px)`,
               }}
             >
+              {/* Elevação isolada num wrapper que o GSAP nunca toca. O
+                  `card` acima carrega o transform de empilhamento — lido
+                  pelo GSAP como referência fixa no momento em que a
+                  timeline é montada — e, durante a saída, seu próprio
+                  transform (`y: "-120%"`) escrito pelo GSAP. Compor a
+                  elevação no mesmo elemento arriscaria a saída "esquecer"
+                  o deslocamento de hover (o GSAP fixa essa referência uma
+                  única vez, na montagem, não a cada quadro). Este wrapper
+                  isola a elevação num transform que o GSAP nunca escreve,
+                  então nunca há conflito nem resíduo. */}
               <div
-                ref={(el) => {
-                  innerRefs.current[index] = el;
-                }}
-                className="relative size-full"
-                style={{ transformStyle: "preserve-3d", transformOrigin: "left center" }}
+                className={cn(
+                  "relative size-full transition-transform duration-fast ease-standard",
+                  index === currentIndex && "hover:-translate-y-1 group-focus-visible:-translate-y-1",
+                )}
               >
                 <div
-                  className="absolute inset-0 flex flex-col justify-start rounded-r-2xl rounded-l-sm border border-border bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_35%,_var(--color-bg-surface))_100%)] p-6 pl-7 pt-7"
-                  style={{ backfaceVisibility: "hidden" }}
+                  ref={(el) => {
+                    innerRefs.current[index] = el;
+                  }}
+                  className="relative size-full"
+                  style={{ transformStyle: "preserve-3d", transformOrigin: "left center" }}
                 >
-                  <span
-                    aria-hidden="true"
-                    className="absolute inset-y-0 left-0 w-2 rounded-l-sm bg-gradient-to-r from-ink/15 to-transparent"
-                  />
-                  <span className="text-xs font-medium uppercase tracking-[0.16em] text-ink-muted">Dúvida</span>
-                  <p className="mt-3 font-serif text-2xl italic leading-tight text-ink">
-                    {card.duvidaTitle[0]}
-                    <br />
-                    {card.duvidaTitle[1]}
-                  </p>
-                  <p className="mt-3 text-sm text-ink-muted">{card.duvidaText}</p>
-                </div>
-                <div
-                  className="absolute inset-0 flex flex-col justify-start rounded-r-2xl rounded-l-sm border border-border bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_var(--color-brand-sage)_100%)] p-6 pl-7 pt-7"
-                  style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
-                >
-                  <span
-                    aria-hidden="true"
-                    className="absolute inset-y-0 left-0 w-2 rounded-l-sm bg-gradient-to-r from-ink/15 to-transparent"
-                  />
-                  <span className="text-xs font-medium uppercase tracking-[0.16em] text-brand-primary-deep/70">
-                    Solução
-                  </span>
-                  <p className="mt-3 font-serif text-2xl italic leading-tight text-brand-primary-deep">
-                    {card.solucaoTitle[0]}
-                    <br />
-                    {card.solucaoTitle[1]}
-                  </p>
-                  <p className="mt-3 text-sm text-brand-primary-deep/80">{card.solucaoText}</p>
+                  <div
+                    className="absolute inset-0 flex flex-col justify-start rounded-r-2xl rounded-l-sm border border-border bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_35%,_var(--color-bg-surface))_100%)] p-6 pl-7 pt-7"
+                    style={{ backfaceVisibility: "hidden" }}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-y-0 left-0 w-2 rounded-l-sm bg-gradient-to-r from-ink/15 to-transparent"
+                    />
+                    <span className="text-xs font-medium uppercase tracking-[0.16em] text-ink-muted">Dúvida</span>
+                    <p className="mt-3 font-serif text-2xl italic leading-tight text-ink">
+                      {card.duvidaTitle[0]}
+                      <br />
+                      {card.duvidaTitle[1]}
+                    </p>
+                    <p className="mt-3 text-sm text-ink-muted">{card.duvidaText}</p>
+                  </div>
+                  <div
+                    className="absolute inset-0 flex flex-col justify-start rounded-r-2xl rounded-l-sm border border-border bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_var(--color-brand-sage)_100%)] p-6 pl-7 pt-7"
+                    style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-y-0 left-0 w-2 rounded-l-sm bg-gradient-to-r from-ink/15 to-transparent"
+                    />
+                    <span className="text-xs font-medium uppercase tracking-[0.16em] text-brand-primary-deep/70">
+                      Solução
+                    </span>
+                    <p className="mt-3 font-serif text-2xl italic leading-tight text-brand-primary-deep">
+                      {card.solucaoTitle[0]}
+                      <br />
+                      {card.solucaoTitle[1]}
+                    </p>
+                    <p className="mt-3 text-sm text-brand-primary-deep/80">{card.solucaoText}</p>
+                  </div>
                 </div>
               </div>
             </div>
