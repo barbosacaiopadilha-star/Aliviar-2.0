@@ -35,12 +35,13 @@ Não duplica: `docs/DESIGN_SYSTEM.md` (tokens visuais, componentes), `docs/ENGIN
 
 ## Testes
 
-Quatro camadas, cada uma com seu próprio config Vitest/Playwright — não misturar responsabilidade entre elas:
+Cinco camadas, cada uma com seu próprio config Vitest/Playwright — não misturar responsabilidade entre elas:
 
 - `tests/unit/` (`vitest.config.ts`, ambiente `node`) — regras de domínio e funções puras (schemas, helpers). Toda regra de negócio nova ganha teste aqui.
 - `tests/components/` (`vitest.components.config.ts`, `jsdom` + Testing Library) — comportamento de componente isolado.
 - `tests/integration/` (`vitest.integration.config.ts`, `node`) — fluxos que tocam Supabase local de verdade.
 - `tests/e2e/` (`playwright.config.ts`) — fluxos críticos de usuário ponta a ponta.
+- `tests/golden/` (`vitest.golden.config.ts`, `node`, script `npm run test:golden`) — regressão de conteúdo dos protocolos ACE que chamam o modelo de linguagem (P002/P003/P004/P010), contra a API Anthropic real. **Opt-in, nunca em `npm test`/CI automática** — requer `CLAUDE_API_KEY`; a suíte inteira é pulada sem ela. Rodar depois de editar um `prompt.md` do ACE ou trocar de modelo — ver `docs/ace/05-knowledge/golden-set-testing.md`.
 
 ## Nomenclatura
 

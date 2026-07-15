@@ -31,6 +31,9 @@ supabase/.branches/
 /blob-report/
 /playwright/.cache/
 
+# Golden Set — diagnóstico local de falhas (sanitizado, mas nunca commitado)
+/.golden-results/
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
