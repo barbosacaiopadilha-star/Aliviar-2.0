@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { GoldenThread } from "@/components/landing/golden-thread";
 import { SectionEyebrow } from "@/components/landing/section-eyebrow";
+import { SectionReveal } from "@/components/landing/section-reveal";
 
 // Livro físico de Dúvidas — mesmos 6 pares Dúvida/Solução do mecanismo
 // anterior (DuvidasStackSection), agora com hinge real na lombada
@@ -173,10 +174,15 @@ export function FaqBookSection() {
             "radial-gradient(55% 45% at 50% 15%, color-mix(in srgb, var(--color-brand-gold) 14%, transparent) 0%, transparent 70%)",
         }}
       />
-      {/* Mesmo gesto de concha, escala cheia (seção mais alta). */}
+      {/* Presença Residual (Fase 2): ponto de entrada realinhado a partir
+          de x=150 (antes 340) e ancoragem à esquerda em 18% (antes
+          centralizada) — mesma referência horizontal usada pelo Fio do
+          Portal (left-[18%]), para que o traço pareça o mesmo fio
+          chegando, não um segundo traço nascendo do zero. O restante da
+          curva (mesmo gesto de concha, escala cheia) permanece intacto. */}
       <GoldenThread
-        d="M340 0 C 100 120, 100 420, 300 560 C 400 630, 340 720, 180 800"
-        className="left-1/2 top-0 h-full w-40 -translate-x-1/2 opacity-70 lg:w-64"
+        d="M150 0 C 100 120, 100 420, 300 560 C 400 630, 340 720, 180 800"
+        className="left-[18%] top-0 h-full w-40 opacity-70 lg:w-64"
       />
       <div
         role="group"
@@ -194,12 +200,19 @@ export function FaqBookSection() {
         }}
         className="relative flex min-h-screen cursor-pointer flex-col items-center justify-center overflow-hidden px-4 py-16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus lg:px-8"
       >
-        <div className="mb-10 max-w-reading text-center">
+        {/* Presença Residual (Fase 2): o preâmbulo (eyebrow + heading)
+            nasce em SectionReveal — o mesmo fade-up já usado no CTA e no
+            Rodapé — para que ele já esteja surgindo enquanto o Portal
+            ainda termina de esmaecer, em vez de aparecer pronto e
+            instantâneo. Estado de repouso do SectionReveal é sempre
+            visível (nunca há dependência de JS para ler o conteúdo). O
+            livro (abaixo) fica deliberadamente fora deste wrapper. */}
+        <SectionReveal className="mb-10 max-w-reading text-center">
           <SectionEyebrow>Suas dúvidas</SectionEyebrow>
           <h2 className="mt-3 font-serif text-2xl font-semibold text-ink lg:text-3xl">
             Perguntas que costumam vir antes do primeiro passo
           </h2>
-        </div>
+        </SectionReveal>
 
         <div className="relative h-[22rem] w-full max-w-xs" style={{ perspective: "2000px" }}>
           {CARDS.map((card, index) => (
