@@ -500,6 +500,50 @@ class FailingLanguageModel implements AceLanguageModel {
   }
 }
 
+// ADR-024 (docs/DECISIONS.md) — simula uma resposta bem formada do P003
+// (passaria validação de schema) que classifica uma restrição prática
+// opcional como bloqueante — a violação de conteúdo que o Content
+// Invariant do P003 rejeita. P002 retorna uma extração válida (decisão e
+// objetivo definidos) para isolar o teste no comportamento do P003.
+class P003ContentInvariantViolationModel implements AceLanguageModel {
+  async run<TInput, TOutput>(request: AceLanguageModelRequest<TInput>): Promise<AceLanguageModelResponse<TOutput>> {
+    if (request.protocolId === "P002") {
+      return {
+        output: {
+          decisionStatement: {
+            decision: "Encontrar um profissional para apoio à dor crônica.",
+            goal: "Reduzir o impacto da dor crônica no dia a dia.",
+            sourceType: "fato_relatado",
+          },
+          mandatoryConstraints: [],
+          preferences: [],
+          missingInformation: [],
+        } as unknown as TOutput,
+        metadata: { modelId: "test-p003-invariant-violation", executedAt: new Date().toISOString(), status: "ok" },
+      };
+    }
+
+    if (request.protocolId === "P003") {
+      return {
+        output: {
+          additionalFindings: [
+            {
+              description: "Não ficou claro qual a localização preferida para o atendimento.",
+              category: "ausencia",
+              severity: "blocking",
+              recommendedQuestion: "Você tem preferência de localização para o atendimento?",
+              relatedField: "other",
+            },
+          ],
+        } as unknown as TOutput,
+        metadata: { modelId: "test-p003-invariant-violation", executedAt: new Date().toISOString(), status: "ok" },
+      };
+    }
+
+    throw new Error(`P003ContentInvariantViolationModel: protocolo inesperado neste teste (${request.protocolId}).`);
+  }
+}
+
 describe("GO LIVE — proteção do modelo de linguagem em produção (Supabase local)", () => {
   let accounts: TestAccount[];
 
@@ -579,6 +623,34 @@ describe("GO LIVE — proteção do modelo de linguagem em produção (Supabase 
       languageModel: new FakeAceLanguageModel(),
     });
     expect(["completed", "blocked"]).toContain(resumed.outcome);
+  });
+
+  it("ADR-024 — violação do Content Invariant do P003 nunca vira CASE_AUDIT_BLOCKED, nem move o Caso para WAITING_FOR_INFORMATION", async () => {
+    const { admin, caseId } = await createReadyCase();
+
+    const result = await runAceExecution({
+      supabase: admin.client,
+      caseId,
+      actorId: admin.userId,
+      languageModel: new P003ContentInvariantViolationModel(),
+    });
+
+    expect(result.outcome).toBe("failed");
+    expect(result.outcome === "failed" && result.execution.failureCode).toBe("CONTENT_INVARIANT_VIOLATION");
+    expect(result.outcome === "failed" && result.execution.failureCode).not.toBe("CASE_AUDIT_BLOCKED");
+
+    // Nunca persiste um CaseAudit malformado para o protocolo que violou o invariant.
+    const artifacts = await listArtifactsForCase(admin.client, caseId);
+    expect(artifacts.some((artifact) => artifact.artifactType === "CaseAudit")).toBe(false);
+
+    // O catch genérico (orchestrator.ts) nunca chama changeCaseStatus — o
+    // Caso permanece em IN_CURATION (transição já aplicada no início de
+    // qualquer execução, orchestrator.ts:180-181, antes de qualquer
+    // protocolo rodar) — nunca é redirecionado para pedir informação ao
+    // paciente por um problema que não é dele.
+    const afterCase = await getCase(admin.client, caseId);
+    expect(afterCase?.status).toBe("IN_CURATION");
+    expect(afterCase?.status).not.toBe("WAITING_FOR_INFORMATION");
   });
 
   it("o paciente nunca vê o código ou a mensagem de falha do modelo — só o status traduzido do Caso", async () => {

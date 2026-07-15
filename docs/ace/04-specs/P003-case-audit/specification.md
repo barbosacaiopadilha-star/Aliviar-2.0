@@ -55,6 +55,7 @@ O P003 nunca:
 - Uma pergunta por item, linguagem clara e não indutiva (nunca sugere resposta ou direção clínica).
 - O protocolo distingue explicitamente, via categoria: ausência de informação, informação contraditória, informação ambígua, informação insuficiente.
 - O DecisionCase avaliado nunca é modificado — o CaseAudit é sempre um artefato novo e separado.
+- **Content Invariant (ADR-024, `docs/DECISIONS.md`):** cada achado adicional de auditoria semântica (categoria `ausencia` ou `insuficiencia`) também indica a que se refere (`relatedField`: `decision`, `goal` ou `other`). Um achado com `relatedField: "other"` (restrição ou preferência prática opcional) nunca pode ter `severity: "blocking"` — o protocolo rejeita deterministicamente (nunca corrige) uma resposta do modelo que viole essa regra, antes de construir o CaseAudit.
 
 ## Saída
 

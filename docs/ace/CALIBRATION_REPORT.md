@@ -183,6 +183,14 @@ Condição objetiva para reavaliação.
 
 **Revisitar quando:** o arquiteto do projeto aprovar (ou rejeitar) o ajuste mínimo proposto em `prompt.md`.
 
+### Adendo — 2026-07-15 — Reforço de prompt testado e insuficiente; formalização como Content Invariant (ADR-024)
+
+O ajuste mínimo de prompt (Opção B, citado acima) foi implementado e testado 3 vezes contra a API Anthropic real — as 3 execuções reproduziram identicamente a mesma classificação incorreta (`severity: "blocking"` para ausência de restrição prática). Um traço completo de `p003-case-audit.ts` confirmou que nenhuma transformação de código toca `severity` — a causa é comprovadamente comportamento do modelo, não prompt, código ou especificação.
+
+**Evidência adicional:** o payload da execução real de produção ("Curisco1") que originalmente motivou esta investigação **não existe mais** — foi removido durante a limpeza de dados de teste autorizada na mesma sessão (Etapa 3 do Go-Live). A evidência disponível a partir deste adendo é composta pelas execuções documentadas nesta entrada e nas reexecuções do Golden Set (estruturalmente equivalentes), nunca o payload específico já apagado.
+
+Esta calibração foi formalizada em **ADR-024** (`docs/DECISIONS.md`): decisão de implementar um Content Invariant no P003 que rejeita deterministicamente (nunca corrige) uma resposta do modelo classificando restrição prática opcional como bloqueante — incluindo taxonomia completa, comportamento de erro (`ProtocolErrorCode: "CONTENT_INVARIANT_VIOLATION"`, distinto de `CASE_AUDIT_BLOCKED`), pré-condição de schema (`relatedField`) e estratégia de implementação/testes. **Status desta entrada permanece "Em análise" quanto à implementação** — a ADR-024 documenta a decisão e o desenho; a implementação em si aguarda autorização explícita separada.
+
 ---
 
 ## 2026-07-14 — P004 (Decision Context Modeler) — urgência instável frente a prazo operacional

@@ -11,9 +11,10 @@
 
 import { randomUUID } from "node:crypto";
 
+import { ProtocolError } from "@/modules/ace/core/error-contract";
 import { assertFieldPolicy } from "@/modules/ace/core/field-policy";
 import type { ProtocolContract } from "@/modules/ace/core/protocol-contract";
-import type { DecisionCase } from "@/modules/ace/artifacts/decision-case";
+import type { DecisionCase, MissingInformationField } from "@/modules/ace/artifacts/decision-case";
 import {
   createCaseAudit,
   type BlockingIssue,
@@ -31,6 +32,10 @@ export type P003AdditionalFinding = {
   category: IssueCategory;
   severity: "blocking" | "warning";
   recommendedQuestion: string;
+  // ADR-024 (docs/DECISIONS.md) — de que a lacuna/insuficiência trata:
+  // decisão, objetivo, ou outro aspecto (ex.: restrição prática opcional).
+  // Mesmo campo de DecisionCase.missingInformation (decision-case.ts).
+  relatedField: MissingInformationField;
 };
 
 export type P003Input = {
@@ -99,6 +104,31 @@ function auditMissingInformation(decisionCase: DecisionCase): {
   return { warnings, recommendedQuestions };
 }
 
+// ADR-024 (docs/DECISIONS.md) — Content Invariant do P003. Rejeita
+// deterministicamente (nunca corrige) um achado do modelo que classifique
+// uma restrição/preferência prática opcional (categoria "ausencia" ou
+// "insuficiencia" não relacionada a decisão nem objetivo, isto é,
+// relatedField: "other") como bloqueio — especificação.md (Casos de
+// Exceção) determina que essa lacuna é sempre Warning. Ausência de decisão
+// e ausência de objetivo continuam sempre bloqueantes (relatedField
+// "decision"/"goal"); contradição e ambiguidade ficam fora deste invariant
+// (specification.md já permite ambiguidade bloqueante quando impede uma
+// análise responsável).
+function assertNoInvalidPracticalBlocking(findings: P003AdditionalFinding[]): void {
+  for (const finding of findings) {
+    const isPracticalGapCategory = finding.category === "ausencia" || finding.category === "insuficiencia";
+
+    if (finding.severity === "blocking" && isPracticalGapCategory && finding.relatedField === "other") {
+      throw new ProtocolError({
+        code: "CONTENT_INVARIANT_VIOLATION",
+        protocolId: "P003",
+        message:
+          "Uma restrição ou preferência prática opcional nunca pode ser classificada como bloqueio (severity: \"blocking\") — apenas ausência de decisão, ausência de objetivo, contradição real ou ambiguidade que impeça uma análise responsável podem bloquear o Caso.",
+      });
+    }
+  }
+}
+
 function applyAdditionalFindings(findings: P003AdditionalFinding[]): {
   blockingIssues: BlockingIssue[];
   warnings: CaseWarning[];
@@ -144,6 +174,7 @@ export const p003CaseAudit: ProtocolContract<P003Input, CaseAudit> = {
       "P003",
       "additionalFindings",
     );
+    assertNoInvalidPracticalBlocking(input.additionalFindings ?? []);
 
     const statementAudit = auditDecisionStatement(input.decisionCase);
     const missingAudit = auditMissingInformation(input.decisionCase);

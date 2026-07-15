@@ -7,7 +7,8 @@ export type ProtocolErrorCode =
   | "INVALID_INPUT"
   | "VALIDATION_FAILED"
   | "FORBIDDEN_FIELD_PRESENT"
-  | "MISSING_REQUIRED_FIELD";
+  | "MISSING_REQUIRED_FIELD"
+  | "CONTENT_INVARIANT_VIOLATION";
 
 export class ProtocolError extends Error {
   readonly code: ProtocolErrorCode;

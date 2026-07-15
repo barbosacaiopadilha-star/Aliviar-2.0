@@ -208,3 +208,134 @@ Log de decisões arquiteturais e de produto, formato ADR simplificado. Todas as 
 - **Decisão:** a partir desta ADR, **Produto: versão 1.0**, **ACE: versão 1.0**, **Status: Frozen**, **Desenvolvimento: Encerrado**, **Próxima fase: Operação**. Nenhum novo módulo, tela, API, protocolo do ACE, migration ou alteração de UX/fluxo/arquitetura é criado a partir daqui sem uma decisão explícita e documentada de iniciar uma V2. A única categoria de trabalho permitida sobre o código existente é **correção de bugs** — nunca melhoria, refatoração sem necessidade ou expansão de escopo. O escopo de trabalho operacional (configuração de produção, deploy, ambiente, domínio, segurança, monitoramento, logs, backups, variáveis de ambiente, validações, scripts operacionais, runbooks, documentação operacional, smoke tests) permanece explicitamente permitido e não constitui "desenvolvimento" para os fins desta ADR.
 - **Consequência:** `docs/ENGINEERING_PLAN.md` (plano original de MVP restrito a descoberta/conexão direta, nunca implementado) e as seções de `docs/PRODUCT_ARCHITECTURE.md` que ainda descreviam partes do ACE como "não implementado" foram corrigidas para refletir a realidade entregue — o produto que chegou à V1.0 é a Curadoria Médica Aliviar (jornada do Concierge, ACE P001-P010, Revisão Humana, Entrega Final), não o MVP original de busca direta. `CHANGELOG.md` (novo) passa a ser a fonte única do histórico de entregas por sprint. `README.md` e `docs/ARCHITECTURE.md` foram atualizados para declarar o status Frozen.
 - **Revisitar quando:** houver decisão de negócio explícita para iniciar uma V2 — nesse momento, uma nova ADR reabre desenvolvimento de produto/arquitetura, definindo escopo e critérios próprios, sem reverter esta decisão retroativamente.
+
+---
+
+## ADR-024 — Content Invariant no P003: rejeitar `severity: "blocking"` para restrição prática opcional (formalização de CAL-002)
+
+- **Status:** Definitiva quanto à decisão, à taxonomia e ao comportamento em caso de violação; **implementação não autorizada nesta ADR** — depende de aprovação explícita e separada do arquiteto do projeto.
+
+### 1. Contexto
+
+`p003-case-audit.ts` (`applyAdditionalFindings`, `computeStatus`) é um repasse fiel do que o modelo retorna: lê `finding.severity` sem nenhuma transformação e deriva `status` (`BLOCKED`/`READY_WITH_WARNINGS`/`READY`) só contando os arrays resultantes. A validação Zod (`P003_RESPONSE_SCHEMA`, `anthropic-language-model.ts`) garante a forma da resposta (enum fechado de `category`/`severity`), mas não garante que a **combinação** categoria+severidade obedece a uma regra de conteúdo do Método — Zod não expressa "esta categoria, dado este conteúdo, nunca pode ter esta severidade".
+
+CAL-002 (`docs/ace/CALIBRATION_REPORT.md`, entrada 2026-07-14) documentou a violação: para um `DecisionCase` com decisão e objetivo claros, o modelo classificou a ausência de uma restrição prática opcional (localização/modalidade/horário/orçamento) como `severity: "blocking"`, contrariando `specification.md` (Casos de Exceção: restrição/preferência opcional ausente é sempre `Warning`, nunca bloqueante). Um reforço de prompt (Opção B — regra explícita e redundante em duas seções de `prompt.md`) foi implementado e testado, mas **não estabilizou o comportamento**: quatro execuções reais subsequentes contra a API Anthropic reproduziram a mesma classificação incorreta. Uma investigação de código (traço completo de `p003-case-audit.ts`) confirmou que nenhuma transformação toca `severity` — o problema é comprovadamente de comportamento do modelo, não de código, especificação ou prompt.
+
+**Nota sobre evidência:** o payload exato da execução real do Caso de produção "Curisco1" (`ace_artifacts`/`ace_execution_events`) não existe mais — foi removido durante a limpeza de dados de teste autorizada nesta mesma sessão (Etapa 3 do Go-Live). A evidência que sustenta esta ADR é composta pelas quatro execuções equivalentes já documentadas na calibração (Golden Set + reexecuções reais), estruturalmente idênticas ao que ocorreu no Caso de produção, nunca o payload específico já apagado.
+
+**Impacto operacional:** cada vez que isso ocorre, `orchestrator.ts` (linhas ~297-315) marca a execução como `BLOCKED`, `failureCode: CASE_AUDIT_BLOCKED`, e move o Caso para `WAITING_FOR_INFORMATION` — devolvendo ao paciente um pedido de informação desnecessária, para um Caso que a própria especificação já considera pronto para prosseguir.
+
+### 2. Decisão
+
+Um **Content Invariant** (categoria já formalizada em ADR-023) é criado para o P003: uma verificação determinística, aplicada à saída já validada estruturalmente pelo schema, antes de `applyAdditionalFindings()`/`computeStatus()`, que **rejeita** (nunca corrige) uma resposta do modelo que classifique como `blocking` um achado que a especificação já determina que nunca pode ser bloqueante.
+
+- Vive em `src/modules/ace/protocols/p003-case-audit.ts`, entre a validação Zod (que ocorre antes, em `anthropic-language-model.ts`) e `applyAdditionalFindings()`.
+- É determinístico — nunca "IA validando IA" (alternativa já descartada no design aprovado de `METHOD_INVARIANTS_DESIGN.md`).
+- Escopo desta ADR: **somente P003**. Não se estende a P002/P004/P010 — cada protocolo que precisar de um Content Invariant próprio exige sua própria calibração e, se aplicável, sua própria ADR de extensão.
+- Preserva a separação já estabelecida: o modelo continua exercendo julgamento semântico livre; o protocolo continua sendo o único lugar que decide se uma resposta é aceitável; o orquestrador continua desconhecendo os detalhes do Método.
+
+### 3. Taxonomia
+
+| Conceito | Definição | Pode ser `blocking`? |
+|---|---|---|
+| Ausência (`category: "ausencia"`) | Informação que deveria existir mas não foi relatada | Depende do que se refere — ver abaixo |
+| Insuficiência (`category: "insuficiencia"`) | Informação existe mas está incompleta para avaliação responsável | Depende do que se refere — ver abaixo |
+| Contradição (`category: "contradicao"`) | Dois elementos do Caso logicamente incompatíveis | **Sim, sempre** |
+| Ambiguidade (`category: "ambiguidade"`) | Elemento presente, mas sem leitura única | Sim — `specification.md` já deixa a critério de "a ambiguidade impedir ou não uma análise responsável"; **fora do escopo deste invariant** |
+| Ausência de decisão | `decisionStatement.decision === null` | **Sim, sempre** — já garantido deterministicamente por `auditDecisionStatement()`/`missingInformation` (`relatedField: "decision"`), sem depender do modelo |
+| Ausência de objetivo | `decisionStatement.goal === null` | **Sim, sempre** — mesma garantia determinística, `relatedField: "goal"` |
+| Restrição/preferência prática opcional | Ausência ou insuficiência não relacionada a decisão nem objetivo (ex.: localização, modalidade, horário, orçamento) | **Nunca** — é exatamente a regra que este invariant mecaniza |
+
+**Achado crítico da auditoria de schema:** o `P003_RESPONSE_SCHEMA` atual não tem nenhum campo que distinga "esta ausência/insuficiência é sobre decisão/objetivo" de "é sobre uma restrição prática" — só existem `category` (enum fechado) e `description` (texto livre). Diferenciar essas duas coisas hoje exigiria inspecionar `description` por palavra-chave — um hardcode textual frágil, rejeitado como alternativa (seção 5).
+
+**Pré-condição de implementação:** o schema de `additionalFindings` precisa de um campo estruturado novo — proposta mínima: `relatedField: "decision" | "goal" | "other"`, espelhando exatamente `MissingInformationField` já existente em `src/modules/ace/artifacts/decision-case.ts` (usado por `DecisionCase.missingInformation`). Com esse campo, o invariant se torna uma comparação de enums, nunca uma busca textual:
+
+```
+rejeitar quando:
+  finding.severity === "blocking"
+  E finding.category em ("ausencia", "insuficiencia")
+  E finding.relatedField === "other"
+```
+
+Sem esse campo, a implementação não pode prosseguir com segurança — é uma dependência explícita, não uma sugestão opcional.
+
+### 4. Comportamento em caso de violação
+
+- **Erro tipado:** novo valor em `ProtocolErrorCode` (`src/modules/ace/core/error-contract.ts`) — `"CONTENT_INVARIANT_VIOLATION"`. Reutiliza a classe `ProtocolError` já existente (mesmo padrão de todo o resto do ACE), sem nova classe de erro.
+- **Dados de diagnóstico permitidos:** o achado específico que violou (`category`, `severity`, `relatedField`) — nunca prompt, chave, ou dado de paciente além do que já está no Caso.
+- **Distinção dos três desfechos possíveis do P003:**
+  - Resposta malformada (schema Zod falha) → `ACE_MODEL_INVALID_RESPONSE` (já existente, inalterado).
+  - Caso legitimamente bloqueado (decisão/objetivo ausente, contradição real, ambiguidade que impede análise) → `CASE_AUDIT_BLOCKED` (branch existente em `orchestrator.ts`, inalterado).
+  - Violação do Content Invariant (resposta bem formada, mas semanticamente inválida por classificar restrição prática como bloqueante) → `CONTENT_INVARIANT_VIOLATION` (novo).
+- **Por que nunca vira `CASE_AUDIT_BLOCKED`:** o branch de `orchestrator.ts` (linhas ~297-315) só é alcançado se `p003CaseAudit.execute()` **retornar com sucesso**. O Content Invariant lança uma exceção **antes** disso (antes de `computeStatus()` rodar) — a execução nunca chega a produzir um `CaseAudit` com `status: "BLOCKED"`; ela lança `ProtocolError("CONTENT_INVARIANT_VIOLATION")`, que cai no `catch` genérico já existente em `orchestrator.ts` (linhas ~401-433), que trata qualquer `ProtocolError` usando `error.code` como `failureCode`. **Nenhuma alteração em `orchestrator.ts` é necessária** — o catch genérico já produz o comportamento correto.
+- **Impacto no status do Caso:** o catch genérico não chama `changeCaseStatus` (diferente do branch `CASE_AUDIT_BLOCKED`, que move explicitamente para `WAITING_FOR_INFORMATION`) — o Caso **permanece no status atual**, nunca é redirecionado para pedir informação ao paciente por um problema que não é dele.
+- **Retry:** manual, como toda outra falha de execução hoje (`ACE_MODEL_TIMEOUT`, `ACE_MODEL_RATE_LIMITED` etc. também não têm retry automático — `docs/DEBUGGING.md`/`docs/RUNBOOK.md` já documentam reexecução manual como segura e idempotente). Esta ADR **não introduz** contagem de tentativas nem limite de retries — não existe esse mecanismo hoje em nenhum outro `failureCode`, e criá-lo agora seria escopo novo, não coberto por esta calibração.
+
+### 5. Alternativas consideradas
+
+| Alternativa | Vantagem | Risco | Decisão |
+|---|---|---|---|
+| Confiar só no prompt | Simples, sem código novo | Já provado insuficiente (CAL-002, 4 execuções reais) | Rejeitada, com evidência |
+| Corrigir silenciosamente `blocking` → `warning` | Resolveria o sintoma imediatamente | Mascara o julgamento do modelo; viola Constituição (Princípio 3) e o próprio conceito de Method Invariant (ADR-023: "nunca corrige") | Rejeitada por princípio |
+| Validar no Concierge (`orchestrator.ts`) | Um único lugar para regras futuras | Vaza regra de negócio do Método para a camada de orquestração, que hoje não conhece nenhuma regra do ACE | Rejeitada — quebra separação já estabelecida |
+| Validar dentro do P003 | Mantém a regra onde a especificação já vive | Nenhum risco relevante identificado | **Aceita** |
+| Mecanismo genérico de invariants em `core/` | Reutilizável desde já | Abstração prematura sem um segundo caso de uso concreto ainda | Rejeitada nesta ADR — só a instância do P003 agora |
+| Hardcode textual por palavra-chave em `description` | Não exige mudança de schema | Frágil, sujeito a falso positivo/negativo por variação de fraseado — exatamente o que esta investigação rejeita | Rejeitada |
+| Evoluir o schema estruturado do achado (`relatedField`) | Torna a distinção determinística, sem depender de texto | Exige tocar `anthropic-language-model.ts`, `prompt.md`, `specification.md` e o tipo `P003AdditionalFinding` | **Aceita como pré-condição** |
+
+### 6. Consequências
+
+- Fecha definitivamente CAL-002 sem depender de o modelo "aprender" — a garantia passa a ser determinística.
+- Custo de manutenção: uma função nova e pequena, testada; mais um valor no enum de erro; um campo novo no schema/prompt/especificação do P003.
+- Risco de falso positivo (rejeitar uma resposta que era aceitável): baixo, se a taxonomia da seção 3 for seguida à risca — decisão/objetivo ausentes e contradições continuam podendo bloquear.
+- Risco de falso negativo (deixar passar uma violação real): baixo — depende do modelo preencher `relatedField` corretamente, mas Zod já torna esse campo obrigatório, então uma resposta sem ele falha na validação de forma antes mesmo do invariant rodar.
+- Observabilidade: novo código de falha pesquisável (`CONTENT_INVARIANT_VIOLATION`), distinto de `CASE_AUDIT_BLOCKED` — melhora, não piora, a distinção entre "Caso com pendência real" e "resposta do modelo inválida".
+- Custo de API: uma violação exige nova chamada manual ao modelo, mesmo custo de qualquer outra falha hoje — não introduz custo recorrente automático.
+- Adoção futura por outros protocolos é possível (P010 já tem um Content Invariant equivalente, `assertNoForbiddenLanguage`; P004 tem um candidato condicional a CAL-003), mas cada um exige sua própria calibração e evidência — esta ADR não generaliza automaticamente.
+- **Limites explícitos:** esta ADR não resolve CAL-001 nem CAL-003; não introduz um framework genérico de invariants; não adiciona retry automático; não implementa o invariant.
+
+### 7. Estratégia de implementação (não executada nesta ADR)
+
+1. `src/modules/ace/core/error-contract.ts` — adicionar `"CONTENT_INVARIANT_VIOLATION"` a `ProtocolErrorCode`.
+2. `src/modules/concierge/anthropic-language-model.ts` — adicionar `relatedField: z.enum(["decision", "goal", "other"])` ao item de `P003_RESPONSE_SCHEMA.additionalFindings` (e ao JSON Schema correspondente enviado ao modelo).
+3. `docs/ace/04-specs/P003-case-audit/prompt.md` — instruir o modelo a preencher `relatedField` para cada achado adicional.
+4. `docs/ace/04-specs/P003-case-audit/specification.md` — registrar `relatedField` como parte da saída de `additionalFindings` (a especificação sempre vence o prompt).
+5. `src/modules/ace/protocols/p003-case-audit.ts`:
+   - Atualizar o tipo `P003AdditionalFinding` com `relatedField`.
+   - Nova função (nome provisório `assertNoInvalidPracticalBlocking`), chamada no início de `execute()`, antes de `applyAdditionalFindings()`.
+   - Lança `ProtocolError({ code: "CONTENT_INVARIANT_VIOLATION", protocolId: "P003", message: "..." })` quando a condição da seção 3 for violada.
+6. Ordem de execução dentro de `execute()`: validação Zod (já ocorre antes, em `anthropic-language-model.ts`) → Content Invariant (novo) → `applyAdditionalFindings()` → `computeStatus()`.
+7. `orchestrator.ts`: nenhuma alteração necessária (seção 4).
+
+### 8. Estratégia de testes (não executada nesta ADR)
+
+**Unitários** (`tests/unit/ace-p003-case-audit.test.ts`, mesmo arquivo/padrão existente):
+- Ausência de restrição prática (`relatedField: "other"`) + `warning` → aceita, vira `Warning`.
+- Ausência de restrição prática + `blocking` → rejeita, lança `ProtocolError("CONTENT_INVARIANT_VIOLATION")`.
+- Insuficiência de restrição prática + `blocking` → rejeita.
+- Contradição real + `blocking` → aceita (comportamento inalterado).
+- Ausência de decisão/objetivo (via `missingInformation`, caminho já determinístico) + `blocking` → aceita (comportamento inalterado).
+- Múltiplos achados, um inválido entre achados válidos → toda a resposta é rejeitada (nunca aceitação parcial).
+- Achado rejeitado não sofre nenhuma mutação — só é descartado com exceção.
+
+**Integração:**
+- P003 recebe resposta válida → produz `READY`/`READY_WITH_WARNINGS` normalmente.
+- P003 recebe violação → produz `ProtocolError` tipado, nunca um `CaseAudit` malformado.
+- Concierge não move o Caso para `WAITING_FOR_INFORMATION` quando a falha é do invariant — confirma `ace_executions.status: "FAILED"`, `failureCode: "CONTENT_INVARIANT_VIOLATION"`, Caso no status anterior inalterado.
+
+**Regressão:**
+- Fixture de contradição real (`tests/golden/fixtures/p003-case-audit.ts`, já existente) continua bloqueando.
+- Fixture de "caso limpo" (mesma suíte) não sofre bloqueio falso.
+- Warnings legítimos preservados (`READY_WITH_WARNINGS`, teste já existente).
+- Suíte completa (`npm test`) permanece 100% verde — nenhuma mudança de comportamento em P001, P002, P004-P010.
+
+**Golden Set** (critério de aprovação, sem execução real nesta etapa):
+- Mínimo 3 execuções reais da fixture de "caso limpo" pós-implementação: todas `status: "READY"`, nenhuma com achado `category` em (`ausencia`, `insuficiencia`) + `relatedField: "other"` + `severity: "blocking"`.
+- Fixture de contradição real deve continuar `BLOCKED` nas mesmas execuções (checagem negativa, já existente).
+
+### Documentos afetados por esta ADR
+
+- `docs/ace/CALIBRATION_REPORT.md` — entrada CAL-002 recebe um adendo referenciando esta ADR (evidência histórica preservada, não reescrita).
+- `docs/ace/METHOD_INVARIANTS_DESIGN.md` — mapeamento do P003 atualizado para referenciar esta ADR como a instância formalizada.
+
+- **Revisitar quando:** o arquiteto do projeto autorizar explicitamente a implementação (seção 7) — até lá, nenhum código, schema, prompt ou especificação é alterado por esta ADR.
