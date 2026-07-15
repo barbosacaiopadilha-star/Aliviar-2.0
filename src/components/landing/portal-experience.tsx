@@ -1,27 +1,37 @@
 "use client";
 
-import { BookUser, Clock, HeartHandshake, ScanSearch, ShieldCheck, TrendingUp } from "lucide-react";
+import { Clock, HeartHandshake, ScanSearch } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
 
+import { GoldenThread } from "@/components/landing/golden-thread";
 import { LinkButton } from "@/components/landing/link-button";
 import { SectionEyebrow } from "@/components/landing/section-eyebrow";
+import { VideoSection } from "@/components/landing/video-section";
 import { cn } from "@/components/ui/cn";
 
 type PortalExperienceProps = {
   photoSrc?: string;
+  videoSrc?: string;
+  videoPoster?: string;
 };
 
-// ETAPA 1 (arquitetura) + ETAPA 2 (Motor da Caminhada). O ambiente nunca
-// nasce, nunca desaparece, nunca troca de cenário — a mesma fotografia do
-// início ao fim. A sensação de deslocamento nasce da combinação de oito
-// sinais discretos (luz, sombra↔parede, atmosfera, percepção espacial,
-// ritmo de leitura, comportamento do conteúdo, cadência de transição,
-// periferia-estável/centro-nítido) mais três princípios físicos — inércia
-// (nada reage instantaneamente), memória (nada reinicia, tudo evolui por
-// acúmulo contínuo) e respiração (o ambiente nunca fica congelado, mesmo
-// parado). Nenhum sinal, isolado, deveria denunciar movimento — a soma é
-// que produz a percepção. Ainda sem fio dourado, vídeo ou GSAP.
+// Vídeo Companheiro — acompanha o visitante durante Triagem, Análise e o
+// início da Curadoria (frames 2-4). Começa a se despedir ao entrar na
+// Curadoria plena (frame 4) e termina de sair ao longo de Benefícios
+// (frame 5) — nunca um corte, sempre conduzido pelo progresso real do
+// scroll. Nunca é tutorial, apresentador ou vendedor: só companhia.
+const VIDEO_EXIT_AT_FRAME = 5;
+
+// PORTAL DA ALIVIAR — a arquitetura do acolhimento, não de um edifício.
+// Cada elemento existe para proteger uma emoção específica (Regra Zero):
+// Chegada → Alívio · Respiro → Permissão para desacelerar · Triagem →
+// Segurança para falar · Análise → Confiança · Curadoria → Companhia e
+// cuidado · (Biblioteca e Convite vivem em componentes próprios, adiante
+// na página). O cenário nunca troca de figura — é a mesma fotografia do
+// início ao fim — e nunca se comporta como "foto com efeitos por cima":
+// a luz é calor ambiente, nunca um holofote; as bordas são um
+// esmaecimento orgânico e morno, nunca uma barra de interface.
 const BENEFITS: Array<{ icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>; title: string; description: string }> = [
   { icon: ScanSearch, title: "Curadoria criteriosa", description: "O caminho mais adequado ao seu caso, com critério." },
   { icon: Clock, title: "Agilidade no processo", description: "Menos espera, menos burocracia, em cada etapa." },
@@ -32,19 +42,16 @@ const BENEFITS: Array<{ icon: ComponentType<{ className?: string; "aria-hidden"?
   },
 ];
 
-const CRITERIA: Array<{ icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>; title: string; description: string }> = [
+const CRITERIA: Array<{ title: string; description: string }> = [
   {
-    icon: BookUser,
     title: "Currículo profissional",
     description: "Formação, especialização e trajetória de cada profissional na Rede Aliviar.",
   },
   {
-    icon: ShieldCheck,
     title: "Ética e conduta",
     description: "Histórico profissional e conduta ética no cuidado ao paciente.",
   },
   {
-    icon: TrendingUp,
     title: "Compatibilidade com o caso",
     description: "Experiência e abordagem compatíveis com a sua situação específica — nunca genérica.",
   },
@@ -54,35 +61,36 @@ const CONTINUACAO = ["Seleção dos profissionais", "Agendamento", "Atendimento"
 
 type Frame = {
   id: string;
-  /** Altura da parada — não é uniforme de propósito (sinal V: ritmo de
-   *  leitura). Entrada/Triagem/Análise são passagens breves; Curadoria/
-   *  Benefícios/Confiança sustentam mais permanência (a "exposição"). */
+  /** Emoção protegida por esta parada (documentação — Regra Zero). */
+  emocao: string;
+  /** Altura da parada — nunca uniforme: paradas de passagem (Respiro) são
+   *  breves; paradas de permanência (Curadoria) sustentam mais tempo. */
   heightVh: number;
   content: ReactNode | null;
-  /** Origem da luz nesta parada (0-100, percentual do palco) — números,
-   *  não strings, porque o Motor da Caminhada interpola continuamente
-   *  entre paradas vizinhas (sinal I), nunca salta de uma para outra. */
+  /** Origem do calor ambiente (0-100%, percentual do palco) — interpolada
+   *  continuamente pelo Motor da Caminhada, nunca salta entre paradas. */
   lightX: number;
   lightY: number;
-  /** Profundidade (0-1) — rege vinheta e presença das paredes (sinal II). */
-  depth: number;
-  /** Temperatura da atmosfera (-1 fria a 1 quente) — canal independente da
-   *  luz, com sua própria inércia, propositalmente dessincronizado dela
-   *  (sinal III). */
+  /** Intensidade da presença/cuidado (0-1) — cresce conforme a jornada se
+   *  aprofunda emocionalmente, não geometricamente. */
+  intensidade: number;
+  /** Temperatura do ambiente (-1 fria a 1 quente) — canal independente,
+   *  com a própria inércia, propositalmente dessincronizado da luz. */
   warmth: number;
-  /** Compactação espacial (0-1) — quanto mais fundo, mais intimista fica a
-   *  composição do conteúdo (sinal IV). */
+  /** Compactação espacial (0-1) — o quanto o ambiente se torna mais
+   *  íntimo e próximo conforme o cuidado se aprofunda. */
   compact: number;
 };
 
 const FRAMES: Frame[] = [
   {
-    id: "hero",
+    id: "chegada",
+    emocao: "Alívio — nada aqui exige justificativa, cadastro ou decisão imediata.",
     heightVh: 100,
     lightX: 50,
-    lightY: 28,
-    depth: 0,
-    warmth: 0.25,
+    lightY: 30,
+    intensidade: 0.12,
+    warmth: 0.35,
     compact: 0,
     content: (
       <div className="flex flex-col items-center gap-4">
@@ -96,58 +104,68 @@ const FRAMES: Frame[] = [
       </div>
     ),
   },
-  // Entrada no Portal — respiro de transição, sem copy própria (decisão
-  // confirmada): o conteúdo desse momento é a própria formação contínua
-  // do ambiente ao redor, nunca uma ausência.
-  { id: "entrada", heightVh: 50, content: null, lightX: 45, lightY: 32, depth: 0.42, warmth: 0.12, compact: 0.12 },
+  // Respiro — sem copy própria: a emoção protegida aqui é a permissão de
+  // desacelerar. Para nunca ler como vazio, é o próprio calor ambiente que
+  // se aprofunda de forma perceptível (ainda que lenta) nesta parada — o
+  // conteúdo do momento é essa transformação sutil, não uma ausência.
+  {
+    id: "respiro",
+    emocao: "Permissão para desacelerar — sem pressa, sem vazio, sem travamento.",
+    heightVh: 55,
+    content: null,
+    lightX: 46,
+    lightY: 34,
+    intensidade: 0.34,
+    warmth: 0.4,
+    compact: 0.08,
+  },
   {
     id: "triagem",
+    emocao: "Segurança para falar — nunca formulário, entrevista ou avaliação.",
     heightVh: 85,
-    lightX: 40,
-    lightY: 35,
-    depth: 0.52,
-    warmth: 0.05,
-    compact: 0.18,
+    lightX: 42,
+    lightY: 36,
+    intensidade: 0.42,
+    warmth: 0.32,
+    compact: 0.14,
     content: <p className="font-serif text-2xl font-medium leading-tight text-ink lg:text-4xl">Triagem</p>,
   },
   {
     id: "analise",
-    heightVh: 85,
-    lightX: 60,
-    lightY: 36,
-    depth: 0.6,
-    warmth: -0.05,
-    compact: 0.24,
+    emocao: "Confiança — nunca processo automático, frio ou genérico.",
+    heightVh: 90,
+    lightX: 58,
+    lightY: 37,
+    intensidade: 0.52,
+    warmth: 0.22,
+    compact: 0.2,
     content: <p className="font-serif text-2xl font-medium leading-tight text-ink lg:text-4xl">Análise do caso</p>,
   },
   {
     id: "curadoria",
-    heightVh: 115,
+    emocao: "Companhia e cuidado — nunca catálogo, comparação comercial ou automação impessoal.",
+    heightVh: 110,
     lightX: 50,
     lightY: 38,
-    depth: 0.68,
-    warmth: -0.1,
-    compact: 0.32,
+    intensidade: 0.6,
+    warmth: 0.28,
+    compact: 0.26,
     content: <p className="font-serif text-2xl font-medium leading-tight text-ink lg:text-4xl">Curadoria técnica</p>,
   },
   {
     id: "beneficios",
-    heightVh: 115,
-    lightX: 38,
+    emocao: "Companhia e cuidado (continuação) — o que a curadoria concretamente oferece.",
+    heightVh: 110,
+    lightX: 40,
     lightY: 40,
-    depth: 0.78,
-    warmth: 0.08,
-    compact: 0.42,
+    intensidade: 0.68,
+    warmth: 0.34,
+    compact: 0.32,
     content: (
       <div className="flex flex-col gap-4 text-left">
         {BENEFITS.map((benefit) => (
           <div key={benefit.title} className="flex items-start gap-3">
-            <span
-              aria-hidden="true"
-              className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-sage/15 text-brand-sage"
-            >
-              <benefit.icon className="size-4" aria-hidden={true} />
-            </span>
+            <benefit.icon className="mt-1 size-4 shrink-0 text-brand-sage" aria-hidden={true} />
             <div>
               <p className="font-serif text-base font-semibold text-ink">{benefit.title}</p>
               <p className="text-sm text-ink-muted">{benefit.description}</p>
@@ -159,26 +177,19 @@ const FRAMES: Frame[] = [
   },
   {
     id: "confianca",
-    heightVh: 115,
-    lightX: 62,
-    lightY: 42,
-    depth: 0.87,
-    warmth: -0.18,
-    compact: 0.5,
+    emocao: "Companhia e cuidado (continuação) — o critério por trás da curadoria, sem parecer avaliação fria.",
+    heightVh: 110,
+    lightX: 60,
+    lightY: 41,
+    intensidade: 0.76,
+    warmth: 0.2,
+    compact: 0.38,
     content: (
       <div className="flex flex-col gap-4 text-left">
         {CRITERIA.map((criterion) => (
-          <div key={criterion.title} className="flex items-start gap-3">
-            <span
-              aria-hidden="true"
-              className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-full border-2 border-brand-gold bg-brand-gold/10 text-brand-gold"
-            >
-              <criterion.icon className="size-4" aria-hidden={true} />
-            </span>
-            <div>
-              <p className="font-serif text-base font-semibold text-ink">{criterion.title}</p>
-              <p className="text-sm text-ink-muted">{criterion.description}</p>
-            </div>
+          <div key={criterion.title}>
+            <p className="font-serif text-base font-semibold text-ink">{criterion.title}</p>
+            <p className="text-sm text-ink-muted">{criterion.description}</p>
           </div>
         ))}
       </div>
@@ -186,12 +197,13 @@ const FRAMES: Frame[] = [
   },
   {
     id: "continuacao",
-    heightVh: 90,
+    emocao: "Companhia e cuidado (continuação) — o que acontece depois de escolhido o caminho.",
+    heightVh: 85,
     lightX: 50,
-    lightY: 45,
-    depth: 1,
-    warmth: -0.22,
-    compact: 0.46,
+    lightY: 43,
+    intensidade: 0.82,
+    warmth: 0.3,
+    compact: 0.34,
     content: (
       <ul className="flex flex-col gap-2 text-center">
         {CONTINUACAO.map((stage) => (
@@ -206,10 +218,9 @@ const FRAMES: Frame[] = [
 
 const TOTAL_HEIGHT_VH = FRAMES.reduce((sum, frame) => sum + frame.heightVh, 0);
 
-// Fração acumulada (0 a 1) de onde cada parada começa, dentro da altura
-// total — usado pelo Motor da Caminhada para saber entre quais duas
-// paradas interpolar em cada instante do scroll. offsets[FRAMES.length] é
-// sempre 1 (fim da última parada).
+// Fração acumulada (0 a 1) de onde cada parada começa — usada pelo Motor
+// da Caminhada para interpolar entre as duas paradas vizinhas a cada
+// instante do scroll.
 const FRAME_OFFSETS: number[] = (() => {
   const offsets: number[] = [0];
   let acc = 0;
@@ -220,45 +231,37 @@ const FRAME_OFFSETS: number[] = (() => {
   return offsets;
 })();
 
-// Princípio 9 (Inércia): cada canal persegue seu alvo numa velocidade
-// própria — nunca 1 (resposta instantânea). Constantes diferentes entre
-// canais é o que garante que eles nunca se movam sincronizados (reforça a
-// leitura de "percepção", não "efeito"): a atmosfera é a mais lenta de
-// todas (a temperatura de uma sala muda por último), a compactação
-// espacial é a mais ágil (acompanha de perto a troca de conteúdo).
+// Inércia (nada reage instantaneamente) com constantes diferentes por
+// canal — nunca sincronizados entre si, para nunca "denunciar" um efeito.
 const DAMPING = {
   light: 0.045,
-  lightOpacity: 0.06,
-  depth: 0.035,
-  walls: 0.05,
+  intensidade: 0.035,
   warmth: 0.02,
   compact: 0.08,
 };
 
-// Princípio 11 (Respiração): uma oscilação lenta e mínima, independente do
-// scroll, que nunca para — só para o ambiente nunca parecer congelado.
+// Respiração — uma oscilação lentíssima e mínima, independente do scroll,
+// que impede o ambiente de parecer congelado mesmo parado.
 const BREATH_PERIOD_MS = 9000;
-const BREATH_AMPLITUDE = 0.025;
+const BREATH_AMPLITUDE = 0.015;
 
 const lerp = (from: number, to: number, t: number) => from + (to - from) * t;
 
-export function PortalExperience({ photoSrc }: PortalExperienceProps) {
+export function PortalExperience({ photoSrc, videoSrc, videoPoster }: PortalExperienceProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const sentinelRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const lightGlowRef = useRef<HTMLDivElement>(null);
-  const vignetteRef = useRef<HTMLDivElement>(null);
-  const atmosphereRef = useRef<HTMLDivElement>(null);
-  const leftWallRef = useRef<HTMLDivElement>(null);
-  const rightWallRef = useRef<HTMLDivElement>(null);
+  const warmthGlowRef = useRef<HTMLDivElement>(null);
+  const leftEdgeRef = useRef<HTMLDivElement>(null);
+  const rightEdgeRef = useRef<HTMLDivElement>(null);
   const cardWrapRef = useRef<HTMLDivElement>(null);
+  const videoInnerRef = useRef<HTMLDivElement>(null);
   const [activeFrame, setActiveFrame] = useState(0);
   const [reduced, setReduced] = useState(false);
   const [ready, setReady] = useState(false);
 
   // Canal de foco: qual parada está ativa. Discreto e nítido de propósito
-  // (sinal VIII — periferia lenta/ambígua, foco claro), gerido pela mesma
-  // técnica de sentinela + IntersectionObserver já validada nas rodadas
-  // anteriores da Landing.
+  // — é o conteúdo que protagoniza, o ambiente ao redor é sempre mais
+  // lento e mais discreto que ele.
   useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     setReduced(reduceMotion);
@@ -280,12 +283,51 @@ export function PortalExperience({ photoSrc }: PortalExperienceProps) {
     return () => observer.disconnect();
   }, []);
 
-  // Motor da Caminhada — canal de periferia. Lê a posição de scroll a
-  // cada quadro (requestAnimationFrame, nunca um listener de scroll
-  // reagindo 1:1) e persegue os alvos interpolados entre paradas vizinhas
-  // com inércia própria por sinal — o ambiente "responde à presença" do
-  // visitante em vez de "reagir ao scroll". Escreve direto no DOM via
-  // refs (nunca via state) para não gerar 60 re-renders por segundo.
+  // Despedida do vídeo companheiro — conduzida pelo progresso real do
+  // scroll (nunca uma animação de duração fixa desconectada do gesto):
+  // opacidade, escala e blur avançam e recuam junto com o visitante ao
+  // longo do trecho Curadoria → Benefícios.
+  useEffect(() => {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion || !videoSrc) return;
+
+    const exitStart = sentinelRefs.current[VIDEO_EXIT_AT_FRAME - 1];
+    const exitEnd = sentinelRefs.current[VIDEO_EXIT_AT_FRAME];
+    const videoEl = videoInnerRef.current;
+    if (!exitStart || !exitEnd || !videoEl) return;
+
+    let ctx: { revert: () => void } | undefined;
+
+    (async () => {
+      const { gsap } = await import("gsap");
+      const { ScrollTrigger } = await import("gsap/ScrollTrigger");
+      gsap.registerPlugin(ScrollTrigger);
+
+      ctx = gsap.context(() => {
+        gsap
+          .timeline({
+            scrollTrigger: {
+              trigger: exitStart,
+              start: "top bottom",
+              endTrigger: exitEnd,
+              end: "bottom top",
+              scrub: true,
+            },
+          })
+          .to(videoEl, { opacity: 0.8, ease: "none", duration: 1 })
+          .to(videoEl, { opacity: 0, scale: 0.93, filter: "blur(6px)", ease: "none", duration: 1 });
+      });
+    })();
+
+    return () => ctx?.revert();
+  }, [videoSrc]);
+
+  // Motor da Caminhada — traduz a posição de scroll num alvo interpolado
+  // entre as duas paradas vizinhas, e três canais (calor/luz, intensidade
+  // da presença, temperatura do ambiente) perseguem esse alvo cada um com
+  // sua própria inércia. Escreve direto no DOM via refs a cada quadro
+  // (nunca via state) para não gerar dezenas de renderizações por
+  // segundo. Pausa quando o Portal sai da viewport.
   useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduceMotion) return;
@@ -293,15 +335,11 @@ export function PortalExperience({ photoSrc }: PortalExperienceProps) {
     const state = {
       lightX: FRAMES[0].lightX,
       lightY: FRAMES[0].lightY,
-      lightOpacity: 0.32,
-      depth: FRAMES[0].depth,
+      intensidade: FRAMES[0].intensidade,
       warmth: FRAMES[0].warmth,
       compact: FRAMES[0].compact,
     };
 
-    // O Portal pausa o motor quando sai de vista (rolou muito abaixo, ou
-    // ainda não chegou) — mesma disciplina de performance já usada no
-    // GoldenThread (pausar fora da viewport).
     const activeRef = { current: true };
     const visibilityObserver = new IntersectionObserver(
       ([entry]) => {
@@ -332,52 +370,30 @@ export function PortalExperience({ photoSrc }: PortalExperienceProps) {
       const b = FRAMES[i1];
       const targetLightX = lerp(a.lightX, b.lightX, localT);
       const targetLightY = lerp(a.lightY, b.lightY, localT);
-      const targetDepth = lerp(a.depth, b.depth, localT);
+      const targetIntensidade = lerp(a.intensidade, b.intensidade, localT);
       const targetWarmth = lerp(a.warmth, b.warmth, localT);
       const targetCompact = lerp(a.compact, b.compact, localT);
-      const targetLightOpacity = 0.3 + targetDepth * 0.3;
 
-      // Princípio 9 (Inércia) + 10 (Memória): cada canal persegue seu alvo
-      // com sua própria velocidade — nunca salta, nunca reinicia, só
-      // acumula continuamente na direção do novo alvo.
       state.lightX += (targetLightX - state.lightX) * DAMPING.light;
       state.lightY += (targetLightY - state.lightY) * DAMPING.light;
-      state.depth += (targetDepth - state.depth) * DAMPING.depth;
+      state.intensidade += (targetIntensidade - state.intensidade) * DAMPING.intensidade;
       state.warmth += (targetWarmth - state.warmth) * DAMPING.warmth;
       state.compact += (targetCompact - state.compact) * DAMPING.compact;
-      state.lightOpacity += (targetLightOpacity - state.lightOpacity) * DAMPING.lightOpacity;
 
-      // Princípio 11 (Respiração): nunca para, mesmo com o scroll parado.
       const breath = Math.sin((now / BREATH_PERIOD_MS) * Math.PI * 2) * BREATH_AMPLITUDE;
 
-      if (lightGlowRef.current) {
-        lightGlowRef.current.style.left = `${state.lightX}%`;
-        lightGlowRef.current.style.top = `${state.lightY}%`;
-        lightGlowRef.current.style.opacity = String(Math.max(state.lightOpacity + breath, 0));
-      }
-      if (vignetteRef.current) {
-        vignetteRef.current.style.opacity = String(state.depth * 0.42);
-      }
-      if (atmosphereRef.current) {
+      if (warmthGlowRef.current) {
         const warmthPercent = ((state.warmth + 1) / 2) * 100;
-        atmosphereRef.current.style.backgroundColor =
-          `color-mix(in srgb, var(--color-brand-gold) ${warmthPercent}%, var(--color-brand-sage) ${100 - warmthPercent}%)`;
-        atmosphereRef.current.style.opacity = String(0.05 + state.depth * 0.06);
+        warmthGlowRef.current.style.background = `radial-gradient(60% 55% at ${state.lightX}% ${state.lightY}%, color-mix(in srgb, var(--color-brand-gold) ${warmthPercent * 0.35}%, var(--color-brand-sage) ${100 - warmthPercent * 0.35}%) 0%, transparent 72%)`;
+        warmthGlowRef.current.style.opacity = String(Math.max(state.intensidade * 0.55 + breath, 0));
       }
-      // Sinal II — relação luz↔sombra: a parede do lado oposto à luz fica
-      // discretamente mais presente (a sombra cai longe da fonte).
-      const lightOffset = (state.lightX - 50) / 50;
-      const baseWall = 0.5 + state.depth * 0.35;
-      if (leftWallRef.current) {
-        leftWallRef.current.style.opacity = String(Math.max(baseWall * (1 - lightOffset * 0.25), 0));
-      }
-      if (rightWallRef.current) {
-        rightWallRef.current.style.opacity = String(Math.max(baseWall * (1 + lightOffset * 0.25), 0));
-      }
-      // Sinal IV — percepção espacial: o ambiente fica sutilmente mais
-      // intimista (cartão mais estreito) conforme o visitante avança.
+      // Bordas — esmaecimento orgânico e morno, nunca uma barra: formas
+      // suaves, muito desfocadas, em tons da própria paleta (nunca preto).
+      const edgeOpacity = 0.28 + state.intensidade * 0.32;
+      if (leftEdgeRef.current) leftEdgeRef.current.style.opacity = String(edgeOpacity);
+      if (rightEdgeRef.current) rightEdgeRef.current.style.opacity = String(edgeOpacity);
       if (cardWrapRef.current) {
-        cardWrapRef.current.style.maxWidth = `${40 - state.compact * 7}rem`;
+        cardWrapRef.current.style.maxWidth = `${40 - state.compact * 6}rem`;
       }
     };
 
@@ -408,7 +424,8 @@ export function PortalExperience({ photoSrc }: PortalExperienceProps) {
   }
 
   let cumulativeVh = 0;
-  const isThreshold = activeFrame === 0; // Hero — ainda do lado de fora.
+  const isThreshold = activeFrame === 0;
+  const isVideoExiting = activeFrame >= VIDEO_EXIT_AT_FRAME;
 
   return (
     <section ref={sectionRef} className="relative bg-canvas" style={{ height: `${TOTAL_HEIGHT_VH}svh` }}>
@@ -428,59 +445,68 @@ export function PortalExperience({ photoSrc }: PortalExperienceProps) {
         );
       })}
 
-      {/* O palco — cenário permanente. Nunca nasce, nunca desaparece,
-          nunca troca de cenário: a mesma fotografia do início ao fim. */}
+      {/* O ambiente — permanente, nunca troca de cenário: a mesma
+          fotografia do início ao fim. */}
       <div className="sticky top-0 h-svh w-full overflow-hidden">
         {photoSrc && <Image src={photoSrc} alt="" fill priority className="object-cover" sizes="100vw" />}
 
-        {/* Sinal I — luz com origem própria, reagindo à foto por baixo
-            (mix-blend-mode), nunca um filtro plano. Posição/opacidade
-            escritas pelo Motor da Caminhada a cada quadro. */}
+        {/* Calor ambiente — nunca um holofote: um brilho morno, muito
+            desfocado, que se desloca devagar e muda de temperatura
+            conforme a jornada avança. Escrito pelo Motor da Caminhada. */}
+        <div ref={warmthGlowRef} aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ opacity: 0.1 }} />
+
+        {/* Bordas — esmaecimento orgânico e morno (nunca preto, nunca
+            barra reta): formas elípticas, muito desfocadas, ancoradas
+            fora da tela, só a franja mais suave é visível. */}
         <div
-          ref={lightGlowRef}
+          ref={leftEdgeRef}
           aria-hidden="true"
-          className="pointer-events-none absolute size-[85vmax] max-w-none -translate-x-1/2 -translate-y-1/2 rounded-full"
+          className="pointer-events-none absolute -left-1/4 top-0 h-full w-1/2 blur-3xl"
           style={{
-            left: `${FRAMES[0].lightX}%`,
-            top: `${FRAMES[0].lightY}%`,
-            opacity: 0.32,
             background:
-              "radial-gradient(circle, color-mix(in srgb, var(--color-brand-gold) 30%, white) 0%, transparent 68%)",
-            mixBlendMode: "soft-light",
+              "radial-gradient(closest-side, color-mix(in srgb, var(--color-brand-primary-deep) 55%, transparent), transparent)",
+            opacity: 0,
+          }}
+        />
+        <div
+          ref={rightEdgeRef}
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-1/4 top-0 h-full w-1/2 blur-3xl"
+          style={{
+            background:
+              "radial-gradient(closest-side, color-mix(in srgb, var(--color-brand-primary-deep) 55%, transparent), transparent)",
+            opacity: 0,
           }}
         />
 
-        {/* Profundidade — vinheta de centro fixo, só a intensidade muda. */}
-        <div
-          ref={vignetteRef}
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(130%_110%_at_50%_40%,_transparent_0%,_rgba(0,0,0,0.45)_100%)]"
-          style={{ opacity: 0 }}
+        {/* Vídeo Companheiro — presença, nunca apresentador. Acompanha o
+            visitante desde a Chegada até o início da Curadoria, depois se
+            despede devagar (ver useEffect da saída, conduzido pelo
+            scroll). Nunca maior que o espaço que ocupa, nunca competindo
+            com o cartão de conteúdo. */}
+        {videoSrc && (
+          <div
+            className="absolute left-1/2 top-[26%] w-full max-w-[13rem] -translate-x-1/2 -translate-y-1/2 px-4"
+            style={{ pointerEvents: isVideoExiting ? "none" : "auto" }}
+          >
+            <div ref={videoInnerRef}>
+              <VideoSection variant="window" src={videoSrc} poster={videoPoster} />
+            </div>
+          </div>
+        )}
+
+        {/* Fio Dourado — único, contínuo, integrado à arquitetura: não
+            representa progresso, etapas nem carregamento. É presença e
+            continuidade — passa perto do lugar onde o conteúdo se apoia,
+            como um filete discreto de acabamento, nunca um indicador. */}
+        <GoldenThread
+          d="M260 0 C 120 100, 120 300, 240 380 C 340 440, 300 560, 180 640 C 100 690, 140 720, 220 745"
+          viewBox={`0 0 400 ${TOTAL_HEIGHT_VH}`}
+          className="left-[18%] top-0 h-full w-32 opacity-45 lg:w-48"
         />
 
-        {/* Sinal III — atmosfera: temperatura de cor, canal independente
-            da luz e da vinheta, com a própria inércia (a mais lenta de
-            todas — "o ar" é o que mais demora a mudar numa sala real). */}
-        <div ref={atmosphereRef} aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ opacity: 0.05 }} />
-
-        {/* Sinal II — paredes, reagindo à mesma leitura de profundidade e
-            à posição da luz (a sombra cai do lado oposto à fonte). */}
-        <div
-          ref={leftWallRef}
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-0 w-6 lg:w-16"
-          style={{ background: "linear-gradient(to right, rgba(0,0,0,0.4), transparent)", opacity: 0 }}
-        />
-        <div
-          ref={rightWallRef}
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 right-0 w-6 lg:w-16"
-          style={{ background: "linear-gradient(to left, rgba(0,0,0,0.4), transparent)", opacity: 0 }}
-        />
-
-        {/* Hero como limiar — sem chrome de cartão, sem paredes, sem
-            vinheta: o visitante está do lado de fora, olhando pra dentro,
-            antes de atravessar. */}
+        {/* Chegada — sem chrome de cartão: o visitante está sendo
+            recebido, ainda não "dentro" de uma conversa. */}
         <div
           aria-hidden={!isThreshold}
           className={cn(
@@ -491,9 +517,9 @@ export function PortalExperience({ photoSrc }: PortalExperienceProps) {
           {FRAMES[0].content}
         </div>
 
-        {/* Dentro do Portal — cartão translúcido, mesma posição para
-            todas as paradas depois do limiar. A Entrada não tem cartão —
-            seu conteúdo é a própria formação contínua do ambiente. */}
+        {/* Conteúdo das paradas seguintes — cartão translúcido no mesmo
+            lugar, crossfade nítido (o foco), contrastando com o ambiente
+            lento ao redor (a periferia). */}
         <div className="absolute inset-x-0 bottom-[10%] px-4">
           <div ref={cardWrapRef} className="relative mx-auto flex min-h-[9rem] max-w-reading items-end justify-center">
             {FRAMES.slice(1).map((frameDef, offset) => {
@@ -508,7 +534,7 @@ export function PortalExperience({ photoSrc }: PortalExperienceProps) {
                   )}
                 >
                   {frameDef.content && (
-                    <div className="mx-auto inline-flex flex-col items-center gap-3 rounded-3xl bg-surface/60 px-6 py-5 backdrop-blur-md">
+                    <div className="mx-auto inline-flex flex-col items-center gap-3 rounded-3xl bg-surface/65 px-6 py-5 backdrop-blur-md">
                       {frameDef.content}
                     </div>
                   )}

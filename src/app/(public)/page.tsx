@@ -7,19 +7,39 @@ import { FaqBookSection } from "@/components/landing/faq-book-section";
 import { FinalCtaSection } from "@/components/landing/final-cta-section";
 import { PortalExperience } from "@/components/landing/portal-experience";
 
-// LANDING — PORTAL, ETAPA 1 (arquitetura base). PortalExperience é o
-// ambiente único e permanente (Hero → Entrada → Triagem → Análise →
-// Curadoria, com Benefícios/Confiança/Seleção/Agendamento/Atendimento
-// absorvidos dentro da parada Curadoria) — sem fio dourado, sem vídeo,
-// sem GSAP ainda: só a arquitetura do lugar (paredes, profundidade,
-// iluminação, crossfade). FaqBookSection e FinalCtaSection seguem como
-// estão até as Etapas 5 e 6 do plano do Portal reconstruírem a Biblioteca
-// e a coreografia de Convite/Saída.
+// LANDING — ARQUITETURA DO ACOLHIMENTO. PortalExperience é o ambiente
+// único e permanente (Chegada → Respiro → Triagem → Análise → Curadoria,
+// com Benefícios/Confiança/Seleção-Agendamento-Atendimento absorvidos
+// como continuação da Curadoria) — cada parada existe para proteger uma
+// emoção específica, nunca para demonstrar arquitetura. O Vídeo
+// Companheiro acompanha até o início da Curadoria e se despede aos
+// poucos; o Fio Dourado atravessa a experiência inteira como presença
+// discreta. FaqBookSection (Biblioteca) e FinalCtaSection (Convite)
+// seguem como componentes próprios, com paleta alinhada ao mesmo
+// ambiente acolhedor.
 export const metadata: Metadata = {
   title: { absolute: "Aliviar Curadoria Médica — Uma escolha de cuidado, nunca sozinho" },
   description:
     "Curadoria médica independente, com acompanhamento humano em cada etapa — do primeiro contato à conversa que importa.",
 };
+
+// Caminhos oficiais reservados para o vídeo institucional da Landing
+// (docs/VIDEO_INSTITUCIONAL_LANDING.md) — checagem de existência em disco
+// (build/render time) evita apontar para um arquivo inexistente enquanto
+// o vídeo definitivo não for adicionado.
+const VIDEO_INSTITUCIONAL_SRC = "/videos/video-institucional-aliviar.webm";
+const VIDEO_INSTITUCIONAL_POSTER = "/images/video-institucional-poster.webp";
+
+function resolveInstitutionalVideo(): { src?: string; poster?: string } {
+  const videoPath = path.join(process.cwd(), "public", VIDEO_INSTITUCIONAL_SRC);
+  if (!existsSync(videoPath)) return {};
+
+  const posterPath = path.join(process.cwd(), "public", VIDEO_INSTITUCIONAL_POSTER);
+  return {
+    src: VIDEO_INSTITUCIONAL_SRC,
+    poster: existsSync(posterPath) ? VIDEO_INSTITUCIONAL_POSTER : undefined,
+  };
+}
 
 // Foto do hero (public/scenes/) — versão com luz reforçada
 // (recepcao-bright.jpg, tratada a partir do original via sharp: exposição
@@ -35,10 +55,11 @@ function resolveScenePhoto(relativeSrc: string): string | undefined {
 
 export default function HomePage() {
   const heroPhoto = resolveScenePhoto(HERO_PHOTO_SRC);
+  const institutionalVideo = resolveInstitutionalVideo();
 
   return (
     <>
-      <PortalExperience photoSrc={heroPhoto} />
+      <PortalExperience photoSrc={heroPhoto} videoSrc={institutionalVideo.src} videoPoster={institutionalVideo.poster} />
       <FaqBookSection />
       <FinalCtaSection />
     </>
