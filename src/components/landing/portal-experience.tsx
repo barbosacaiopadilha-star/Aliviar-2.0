@@ -6,12 +6,16 @@ import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 
 
 import { GoldenThread } from "@/components/landing/golden-thread";
 import { LinkButton } from "@/components/landing/link-button";
+import { PORTAL_SCENE_POSITIONS } from "@/components/landing/portal-scenes";
 import { SectionEyebrow } from "@/components/landing/section-eyebrow";
 import { VideoSection } from "@/components/landing/video-section";
 import { cn } from "@/components/ui/cn";
 
 type PortalExperienceProps = {
-  photoSrc?: string;
+  /** Direção de fotografia já resolvida em disco (page.tsx) — sempre um
+   *  array não vazio, na mesma ordem de PORTAL_SCENES. Trocar fotografias
+   *  no futuro é editar portal-scenes.ts, nunca este componente. */
+  scenes: Array<{ id: string; src: string }>;
   videoSrc?: string;
   videoPoster?: string;
 };
@@ -253,7 +257,7 @@ const BREATH_AMPLITUDE = 0.015;
 
 const lerp = (from: number, to: number, t: number) => from + (to - from) * t;
 
-export function PortalExperience({ photoSrc, videoSrc, videoPoster }: PortalExperienceProps) {
+export function PortalExperience({ scenes, videoSrc, videoPoster }: PortalExperienceProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const sentinelRefs = useRef<Array<HTMLDivElement | null>>([]);
   const warmthGlowRef = useRef<HTMLDivElement>(null);
@@ -261,7 +265,7 @@ export function PortalExperience({ photoSrc, videoSrc, videoPoster }: PortalExpe
   const rightEdgeRef = useRef<HTMLDivElement>(null);
   const cardWrapRef = useRef<HTMLDivElement>(null);
   const videoInnerRef = useRef<HTMLDivElement>(null);
-  const photoWrapRef = useRef<HTMLDivElement>(null);
+  const sceneRefs = useRef<Array<HTMLDivElement | null>>([]);
   const [activeFrame, setActiveFrame] = useState(0);
   const [reduced, setReduced] = useState(false);
   const [ready, setReady] = useState(false);
@@ -398,9 +402,20 @@ export function PortalExperience({ photoSrc, videoSrc, videoPoster }: PortalExpe
       const handoff = Math.min(Math.max((overall - HANDOFF_START) / (1 - HANDOFF_START), 0), 1);
       const presence = 1 - handoff;
 
-      if (photoWrapRef.current) {
-        photoWrapRef.current.style.opacity = String(presence);
-      }
+      // Direção de fotografia — crossfade entre cenas (portal-scenes.ts),
+      // numa linha do tempo própria, independente dos frames de conteúdo.
+      // Nunca um corte: as duas cenas vizinhas se sobrepõem suavemente.
+      let s0 = 0;
+      while (s0 < PORTAL_SCENE_POSITIONS.length - 2 && PORTAL_SCENE_POSITIONS[s0 + 1] <= overall) s0++;
+      const s1 = Math.min(s0 + 1, sceneRefs.current.length - 1);
+      const sceneSpan = PORTAL_SCENE_POSITIONS[s1] - PORTAL_SCENE_POSITIONS[s0] || 1;
+      const sceneT = Math.min(Math.max((overall - PORTAL_SCENE_POSITIONS[s0]) / sceneSpan, 0), 1);
+      sceneRefs.current.forEach((el, index) => {
+        if (!el) return;
+        const opacity = index === s0 ? 1 - sceneT : index === s1 ? sceneT : 0;
+        el.style.opacity = String(opacity * presence);
+      });
+
       if (warmthGlowRef.current) {
         const warmthPercent = ((state.warmth + 1) / 2) * 100;
         warmthGlowRef.current.style.background = `radial-gradient(60% 55% at ${state.lightX}% ${state.lightY}%, color-mix(in srgb, var(--color-brand-gold) ${warmthPercent * 0.35}%, var(--color-brand-sage) ${100 - warmthPercent * 0.35}%) 0%, transparent 72%)`;
@@ -427,7 +442,7 @@ export function PortalExperience({ photoSrc, videoSrc, videoPoster }: PortalExpe
   if (ready && reduced) {
     return (
       <section className="relative overflow-hidden bg-canvas px-4 py-16 lg:px-8">
-        {photoSrc && <Image src={photoSrc} alt="" fill className="object-cover" sizes="100vw" />}
+        {scenes[0] && <Image src={scenes[0].src} alt="" fill className="object-cover" sizes="100vw" />}
         <div
           aria-hidden="true"
           className="absolute inset-0 bg-[radial-gradient(120%_100%_at_50%_30%,_transparent_0%,_color-mix(in_srgb,_var(--color-bg-canvas)_55%,_transparent)_100%)]"
@@ -465,14 +480,25 @@ export function PortalExperience({ photoSrc, videoSrc, videoPoster }: PortalExpe
         );
       })}
 
-      {/* O ambiente — permanente, nunca troca de cenário: a mesma
-          fotografia do início ao fim, dissolvendo-se no marfim da
-          Biblioteca só nos últimos instantes (ver "handoff" no Motor da
-          Caminhada), nunca cortando. */}
+      {/* O ambiente — permanente, nunca troca de cenário abrupto: seis
+          enquadramentos da MESMA locação (portal-scenes.ts), em crossfade
+          contínuo conforme o visitante avança — como olhar para o mesmo
+          lugar de ângulos diferentes, nunca fotografias independentes.
+          Dissolve-se no marfim da Biblioteca só nos últimos instantes (ver
+          "handoff" no Motor da Caminhada). */}
       <div className="sticky top-0 h-svh w-full overflow-hidden bg-canvas">
-        <div ref={photoWrapRef} className="absolute inset-0">
-          {photoSrc && <Image src={photoSrc} alt="" fill priority className="object-cover" sizes="100vw" />}
-        </div>
+        {scenes.map((scene, index) => (
+          <div
+            key={scene.id}
+            ref={(el) => {
+              sceneRefs.current[index] = el;
+            }}
+            className="absolute inset-0"
+            style={{ opacity: index === 0 ? 1 : 0 }}
+          >
+            <Image src={scene.src} alt="" fill priority={index === 0} className="object-cover" sizes="100vw" />
+          </div>
+        ))}
 
         {/* Calor ambiente — nunca um holofote: um brilho morno, muito
             desfocado, que se desloca devagar e muda de temperatura

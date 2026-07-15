@@ -6,17 +6,19 @@ import type { Metadata } from "next";
 import { FaqBookSection } from "@/components/landing/faq-book-section";
 import { FinalCtaSection } from "@/components/landing/final-cta-section";
 import { PortalExperience } from "@/components/landing/portal-experience";
+import { PORTAL_SCENES } from "@/components/landing/portal-scenes";
 
 // LANDING — ARQUITETURA DO ACOLHIMENTO. PortalExperience é o ambiente
 // único e permanente (Chegada → Respiro → Triagem → Análise → Curadoria,
 // com Benefícios/Confiança/Seleção-Agendamento-Atendimento absorvidos
 // como continuação da Curadoria) — cada parada existe para proteger uma
-// emoção específica, nunca para demonstrar arquitetura. O Vídeo
-// Companheiro acompanha até o início da Curadoria e se despede aos
-// poucos; o Fio Dourado atravessa a experiência inteira como presença
-// discreta. FaqBookSection (Biblioteca) e FinalCtaSection (Convite)
-// seguem como componentes próprios, com paleta alinhada ao mesmo
-// ambiente acolhedor.
+// emoção específica, nunca para demonstrar arquitetura. A direção de
+// fotografia (portal-scenes.ts) é seis enquadramentos da mesma locação,
+// resolvidos aqui em disco. O Vídeo Companheiro acompanha até o início
+// da Curadoria e se despede aos poucos; o Fio Dourado atravessa a
+// experiência inteira como presença discreta. FaqBookSection (Biblioteca)
+// e FinalCtaSection (Convite) seguem como componentes próprios, com
+// paleta alinhada ao mesmo ambiente acolhedor.
 export const metadata: Metadata = {
   title: { absolute: "Aliviar Curadoria Médica — Uma escolha de cuidado, nunca sozinho" },
   description:
@@ -41,25 +43,34 @@ function resolveInstitutionalVideo(): { src?: string; poster?: string } {
   };
 }
 
-// Foto do hero (public/scenes/) — versão com luz reforçada
-// (recepcao-bright.jpg, tratada a partir do original via sharp: exposição
-// e temperatura de cor levemente realçadas, mesma foto, nunca substituída
-// por banco de imagens). Mesmo padrão de checagem em disco: cai no
-// gradiente de fallback do Hero até a fotografia editorial real existir.
-const HERO_PHOTO_SRC = "/scenes/recepcao-bright.jpg";
+// Resolve cada cena de portal-scenes.ts em disco — se algum arquivo
+// específico ainda não existir (ex.: uma cena da V1.1 ainda não
+// fotografada), cai para a última cena que existir antes dela, nunca
+// quebra e nunca mostra uma imagem ausente.
+function resolvePortalScenes(): Array<{ id: string; src: string }> {
+  const resolved: Array<{ id: string; src: string }> = [];
+  let lastSrc: string | undefined;
 
-function resolveScenePhoto(relativeSrc: string): string | undefined {
-  const filePath = path.join(process.cwd(), "public", relativeSrc);
-  return existsSync(filePath) ? relativeSrc : undefined;
+  for (const scene of PORTAL_SCENES) {
+    const filePath = path.join(process.cwd(), "public", scene.src);
+    if (existsSync(filePath)) {
+      lastSrc = scene.src;
+      resolved.push({ id: scene.id, src: scene.src });
+    } else if (lastSrc) {
+      resolved.push({ id: scene.id, src: lastSrc });
+    }
+  }
+
+  return resolved;
 }
 
 export default function HomePage() {
-  const heroPhoto = resolveScenePhoto(HERO_PHOTO_SRC);
+  const scenes = resolvePortalScenes();
   const institutionalVideo = resolveInstitutionalVideo();
 
   return (
     <>
-      <PortalExperience photoSrc={heroPhoto} videoSrc={institutionalVideo.src} videoPoster={institutionalVideo.poster} />
+      <PortalExperience scenes={scenes} videoSrc={institutionalVideo.src} videoPoster={institutionalVideo.poster} />
       <FaqBookSection />
       <FinalCtaSection />
     </>
