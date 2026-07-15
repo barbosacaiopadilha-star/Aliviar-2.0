@@ -9,13 +9,16 @@ import { FinalCtaSection } from "@/components/landing/final-cta-section";
 import { HeroJourneySection } from "@/components/landing/hero-journey-section";
 import { WhyTrustSection } from "@/components/landing/why-trust-section";
 
-// LANDING V6 — a página inteira é a recepção da Aliviar: HeroJourneySection
-// é o cenário (foto + vídeo, ambos parados — position:sticky, nunca pin/
-// scale/fade) com a legenda trocando por crossfade conforme a rolagem
-// passa pelas 6 etapas → Benefits (3 cards) → FaqBookSection (livro
-// físico de Dúvidas/Soluções, vira página ao tocar/rolar) → critérios de
-// avaliação → CTA final. O "fio de ouro" (GoldenThread) atravessa as
-// seções com a curvatura do símbolo da marca (mãos em concha).
+// LANDING V7 — a página inteira é uma única narrativa contínua de scroll,
+// do primeiro pixel ao rodapé: HeroJourneySection é o cenário (foto +
+// vídeo em sticky) com a legenda trocando por crossfade e o vídeo saindo
+// de forma cinematográfica (conduzida pelo progresso do scroll) ao fim
+// das 6 etapas → Benefits (3 cards) → WhyTrust (critérios de avaliação)
+// → FaqBookSection (livro físico de Dúvidas/Soluções) → CTA final →
+// rodapé com entrada própria. Ordem alinhada a docs/DECISIONS.md (ADR-017):
+// confiança/diferenciais antes das dúvidas, dúvidas por último antes do
+// fechamento. O "fio de ouro" (GoldenThread) atravessa as seções com a
+// curvatura do símbolo da marca (mãos em concha).
 export const metadata: Metadata = {
   title: { absolute: "Aliviar Curadoria Médica — Uma escolha de cuidado, nunca sozinho" },
   description:
@@ -66,8 +69,8 @@ export default function HomePage() {
         videoPoster={institutionalVideo.poster}
       />
       <BenefitsSection />
-      <FaqBookSection />
       <WhyTrustSection />
+      <FaqBookSection />
       <FinalCtaSection />
     </>
   );

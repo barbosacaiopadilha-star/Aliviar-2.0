@@ -226,6 +226,14 @@
     stroke-dasharray: 1;
     stroke-dashoffset: 1;
   }
+
+  /* Brilho curto (8% do traçado) que desliza em loop lento pelo fio
+     dourado — dashoffset conduzido via GSAP, só a forma do segmento fica
+     fixa aqui. */
+  .golden-thread-glint {
+    stroke-dasharray: 0.08 0.92;
+    opacity: 0.85;
+  }
 }
 
 @keyframes fade-in {

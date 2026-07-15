@@ -34,8 +34,18 @@ const STAGES = [
 
 const FRAME_COUNT = STAGES.length + 1;
 
+// O vídeo acompanha Triagem → Curadoria Técnica (frames 0-3) e sai de
+// forma cinematográfica ao avançar para "Seleção dos profissionais"
+// (frame 4) — a partir daí o paciente já entrou no fluxo e as etapas
+// seguintes assumem o protagonismo sozinhas. Fade + leve redução de
+// escala + blur progressivo, conduzido pelo próprio progresso do scroll
+// (ScrollTrigger scrub, não uma transição de duração fixa) — nunca
+// abrupto, nunca elástico.
+const VIDEO_EXIT_AT_FRAME = 4;
+
 export function HeroJourneySection({ photoSrc, videoSrc, videoPoster }: HeroJourneySectionProps) {
   const sentinelRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const videoWrapperRef = useRef<HTMLDivElement>(null);
   const [activeFrame, setActiveFrame] = useState(0);
   const [reduced, setReduced] = useState(false);
   const [ready, setReady] = useState(false);
@@ -61,6 +71,46 @@ export function HeroJourneySection({ photoSrc, videoSrc, videoPoster }: HeroJour
     return () => observer.disconnect();
   }, []);
 
+  // Saída do vídeo conduzida pelo progresso real do scroll (não um
+  // crossfade de duração fixa): "Curadoria Técnica" (frame 3) dá início
+  // ao vídeo perdendo protagonismo (leve dim de opacidade); "Seleção dos
+  // profissionais" (frame 4) é onde ele de fato esvanece por completo —
+  // opacidade/escala/blur avançam e recuam junto com o gesto de rolagem.
+  useEffect(() => {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) return;
+
+    const dimStartSentinel = sentinelRefs.current[VIDEO_EXIT_AT_FRAME - 1];
+    const exitEndSentinel = sentinelRefs.current[VIDEO_EXIT_AT_FRAME];
+    const videoEl = videoWrapperRef.current;
+    if (!dimStartSentinel || !exitEndSentinel || !videoEl) return;
+
+    let ctx: { revert: () => void } | undefined;
+
+    (async () => {
+      const { gsap } = await import("gsap");
+      const { ScrollTrigger } = await import("gsap/ScrollTrigger");
+      gsap.registerPlugin(ScrollTrigger);
+
+      ctx = gsap.context(() => {
+        gsap
+          .timeline({
+            scrollTrigger: {
+              trigger: dimStartSentinel,
+              start: "top bottom",
+              endTrigger: exitEndSentinel,
+              end: "bottom top",
+              scrub: true,
+            },
+          })
+          .to(videoEl, { opacity: 0.85, ease: "none", duration: 1 })
+          .to(videoEl, { opacity: 0, scale: 0.92, filter: "blur(8px)", ease: "none", duration: 1 });
+      });
+    })();
+
+    return () => ctx?.revert();
+  }, []);
+
   const introFrame = (
     <div className="flex flex-col items-center gap-4">
       <SectionEyebrow>Curadoria médica independente</SectionEyebrow>
@@ -83,6 +133,7 @@ export function HeroJourneySection({ photoSrc, videoSrc, videoPoster }: HeroJour
   ));
 
   const captionFrames = [introFrame, ...stageFrames];
+  const isVideoExiting = activeFrame >= VIDEO_EXIT_AT_FRAME;
 
   if (ready && reduced) {
     return (
@@ -149,15 +200,38 @@ export function HeroJourneySection({ photoSrc, videoSrc, videoPoster }: HeroJour
           glow
         />
 
-        {/* O palco — vídeo, sempre no mesmo lugar, no mesmo tamanho. */}
-        <div className="absolute left-1/2 top-[38%] w-full max-w-[15rem] -translate-x-1/2 -translate-y-1/2 px-4">
-          <VideoSection variant="window" src={videoSrc} poster={videoPoster} />
+        {/* O palco — vídeo, sempre no mesmo lugar, no mesmo tamanho,
+            durante Triagem → Curadoria Técnica. Sai com fade + leve
+            redução de escala + blur progressivo, conduzido pelo scroll
+            (ver ScrollTrigger acima) — nunca abrupto, nunca elástico.
+            Posicionamento (centralização) fica num wrapper estático, para
+            nunca competir com o `transform` que o GSAP escreve no vídeo. */}
+        <div
+          className="absolute left-1/2 top-[38%] w-full max-w-[15rem] -translate-x-1/2 -translate-y-1/2 px-4"
+          style={{ pointerEvents: isVideoExiting ? "none" : "auto" }}
+        >
+          <div ref={videoWrapperRef}>
+            <VideoSection variant="window" src={videoSrc} poster={videoPoster} />
+          </div>
         </div>
 
         {/* A legenda — único elemento que "acontece": crossfade no mesmo
-            lugar, nunca deslizando, nunca entrando de lado. */}
-        <div className="absolute inset-x-0 bottom-[10%] px-4">
-          <div className="relative mx-auto flex min-h-[9rem] max-w-reading items-end justify-center">
+            lugar, nunca deslizando, nunca entrando de lado. Depois que o
+            vídeo esvanece, a legenda recentraliza para ocupar o espaço
+            liberado — o desaparecimento do vídeo abre espaço, não encerra
+            a narrativa. */}
+        <div
+          className={cn(
+            "absolute inset-x-0 px-4",
+            isVideoExiting ? "inset-y-0 flex items-center justify-center" : "bottom-[10%]",
+          )}
+        >
+          <div
+            className={cn(
+              "relative mx-auto flex min-h-[9rem] max-w-reading justify-center",
+              isVideoExiting ? "items-center" : "items-end",
+            )}
+          >
             {captionFrames.map((frame, index) => (
               <div
                 key={index}

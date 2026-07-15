@@ -28,6 +28,7 @@ type GoldenThreadProps = {
 export function GoldenThread({ d, viewBox = "0 0 400 800", className, glow = false }: GoldenThreadProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
+  const glintRef = useRef<SVGPathElement>(null);
   const [reduced, setReduced] = useState(false);
 
   useEffect(() => {
@@ -73,6 +74,29 @@ export function GoldenThread({ d, viewBox = "0 0 400 800", className, glow = fal
             },
           );
         }
+
+        // Brilho discreto percorrendo o traçado — um segmento curto (8%
+        // do comprimento) deslizando em loop lento (7s), nunca "elétrico"
+        // ou piscante. Só roda enquanto a seção está visível (pausa fora
+        // de tela, sem gastar ciclo à toa).
+        if (glintRef.current) {
+          const glintTween = gsap.fromTo(
+            glintRef.current,
+            { strokeDashoffset: 1 },
+            { strokeDashoffset: 0, duration: 7, ease: "none", repeat: -1 },
+          );
+          glintTween.pause();
+
+          ScrollTrigger.create({
+            trigger: section,
+            start: "top bottom",
+            end: "bottom top",
+            onEnter: () => glintTween.play(),
+            onEnterBack: () => glintTween.play(),
+            onLeave: () => glintTween.pause(),
+            onLeaveBack: () => glintTween.pause(),
+          });
+        }
       }, section as Element);
     })();
 
@@ -98,6 +122,19 @@ export function GoldenThread({ d, viewBox = "0 0 400 800", className, glow = fal
         className="golden-thread-path"
         style={reduced ? { strokeDashoffset: 0 } : undefined}
       />
+      {!reduced && (
+        <path
+          ref={glintRef}
+          aria-hidden="true"
+          d={d}
+          fill="none"
+          stroke="color-mix(in srgb, var(--color-brand-gold) 45%, white)"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          pathLength={1}
+          className="golden-thread-glint"
+        />
+      )}
     </svg>
   );
 }

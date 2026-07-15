@@ -1,12 +1,19 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { SectionReveal } from "@/components/landing/section-reveal";
+
 // Multi-coluna (Landing V2) — nenhum canal de contato inventado (sem
 // telefone/e-mail/endereço fictício): só navegação interna já existente
 // no site. Logo oficial em public/brand/logo-aliviar-transparent.png
 // (fundo removido, ver public-header.tsx). Fundo navy escuro (não mais
 // branco) — fecha a Landing no mesmo tom do Hero/CTA final, reduzindo o
 // branco geral da página.
+//
+// O rodapé é o último capítulo da narrativa contínua da Landing (V7): a
+// entrada em SectionReveal (mesmo fade-up já usado no resto da página)
+// evita que a experiência termine "seca" — é a única seção que antes não
+// tinha nenhum tratamento de entrada.
 const FOOTER_LINKS = [
   { label: "Início", href: "/" },
   { label: "Dúvidas frequentes", href: "#duvidas" },
@@ -17,13 +24,16 @@ const FOOTER_LINKS = [
 export function PublicFooter() {
   return (
     <footer className="bg-brand-primary-deep">
-      <div className="mx-auto max-w-content px-4 pt-16 lg:px-8">
+      <SectionReveal className="mx-auto max-w-content px-4 pt-16 lg:px-8">
         <p className="max-w-reading font-serif text-2xl font-medium leading-snug text-surface lg:text-3xl">
           Uma decisão tão importante merece companhia, do início ao fim.
         </p>
-      </div>
+      </SectionReveal>
 
-      <div className="mx-auto grid w-full max-w-content gap-10 px-4 pb-14 pt-10 lg:grid-cols-[1.3fr_1fr] lg:px-8">
+      <SectionReveal
+        delayMs={100}
+        className="mx-auto grid w-full max-w-content gap-10 px-4 pb-14 pt-10 lg:grid-cols-[1.3fr_1fr] lg:px-8"
+      >
         <div className="space-y-3">
           <Link
             href="/"
@@ -60,7 +70,7 @@ export function PublicFooter() {
             ))}
           </ul>
         </div>
-      </div>
+      </SectionReveal>
 
       <div className="border-t border-surface/10">
         <p className="mx-auto max-w-content px-4 py-4 text-xs text-surface/60 lg:px-8">
