@@ -148,26 +148,6 @@
     animation: slow-zoom 18s var(--ease-standard) infinite alternate;
   }
 
-  /* Traço pontilhado dourado curto entre título e texto — mesmo divisor
-     do material de referência da Aliviar Conecta, repetido em toda seção
-     para reforçar a cor dourada da marca ("linhas douradas" a pedido). */
-  .gold-divider {
-    width: 3rem;
-    border-top: 2px dotted var(--color-brand-gold);
-  }
-
-  /* Desenho progressivo do arco dourado de canto — usa pathLength=1 no
-     SVG para que o traçado "se desenhe" da esquerda pra direita quando
-     entra na viewport, em vez de simplesmente aparecer. */
-  .gold-arc-path {
-    stroke-dasharray: 1;
-    stroke-dashoffset: 1;
-    transition: stroke-dashoffset 1200ms var(--ease-standard);
-  }
-  .gold-arc-path-drawn {
-    stroke-dashoffset: 0;
-  }
-
   /* Popup do vídeo institucional: fundo escurece com um fade simples, o
      cartão do vídeo "salta" pra tela (leve overshoot de escala) — o
      efeito de popup que faltava na experiência, usado ao abrir o vídeo
@@ -184,32 +164,6 @@
      WhyTrust em repouso). Amplitude pequena de propósito. */
   .animate-breathe {
     animation: breathe 4s ease-in-out infinite;
-  }
-
-  /* Traço de luz diagonal que desliza no hover do botão primário —
-     reforça o acento dourado sem virar preenchimento (proibido em
-     BRAND_GUIDELINES.md). Usa ::before para não competir com o
-     ::after do goldUnderline já existente em link-button.tsx. */
-  .btn-sheen {
-    position: relative;
-    overflow: hidden;
-  }
-  .btn-sheen::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      115deg,
-      transparent 30%,
-      color-mix(in srgb, var(--color-brand-gold) 35%, transparent) 50%,
-      transparent 70%
-    );
-    transform: translateX(-120%);
-    transition: transform var(--duration-slow) var(--ease-standard);
-  }
-  .btn-sheen:hover::before,
-  .btn-sheen:focus-visible::before {
-    transform: translateX(120%);
   }
 
   /* Traçado do fio dourado orgânico (GoldenThread) — sempre inteiramente

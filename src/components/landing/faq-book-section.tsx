@@ -132,13 +132,12 @@ export function FaqBookSection() {
           <h2 className="mt-3 font-serif text-2xl font-semibold text-ink lg:text-3xl">
             Perguntas que costumam vir antes do primeiro passo
           </h2>
-          <div aria-hidden="true" className="gold-divider mx-auto mt-4 lg:mx-0" />
         </div>
         <div className="mx-auto mt-12 grid max-w-content gap-6 lg:grid-cols-2">
           {CARDS.map((card) => (
             <div
               key={card.duvidaTitle.join()}
-              className="rounded-2xl border border-brand-gold/50 bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_25%,_var(--color-bg-surface))_100%)] p-6"
+              className="rounded-2xl border border-border bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_25%,_var(--color-bg-surface))_100%)] p-6"
             >
               <span className="text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">Dúvida</span>
               <p className="mt-2 font-serif text-lg italic text-ink">
@@ -187,7 +186,6 @@ export function FaqBookSection() {
           <h2 className="mt-3 font-serif text-2xl font-semibold text-ink lg:text-3xl">
             Perguntas que costumam vir antes do primeiro passo
           </h2>
-          <div aria-hidden="true" className="gold-divider mx-auto mt-4" />
         </div>
 
         <div className="relative h-[22rem] w-full max-w-xs" style={{ perspective: "2000px" }}>
@@ -211,7 +209,7 @@ export function FaqBookSection() {
                 style={{ transformStyle: "preserve-3d", transformOrigin: "left center" }}
               >
                 <div
-                  className="absolute inset-0 flex flex-col justify-start rounded-r-2xl rounded-l-sm border border-brand-gold/50 bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_35%,_var(--color-bg-surface))_100%)] p-6 pl-7 pt-7"
+                  className="absolute inset-0 flex flex-col justify-start rounded-r-2xl rounded-l-sm border border-border bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_35%,_var(--color-bg-surface))_100%)] p-6 pl-7 pt-7"
                   style={{ backfaceVisibility: "hidden" }}
                 >
                   <span
@@ -227,7 +225,7 @@ export function FaqBookSection() {
                   <p className="mt-3 text-sm text-ink-muted">{card.duvidaText}</p>
                 </div>
                 <div
-                  className="absolute inset-0 flex flex-col justify-start rounded-r-2xl rounded-l-sm border border-brand-gold/50 bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_var(--color-brand-sage)_100%)] p-6 pl-7 pt-7"
+                  className="absolute inset-0 flex flex-col justify-start rounded-r-2xl rounded-l-sm border border-border bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_var(--color-brand-sage)_100%)] p-6 pl-7 pt-7"
                   style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                 >
                   <span

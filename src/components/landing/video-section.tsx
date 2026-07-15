@@ -3,7 +3,6 @@
 import { Maximize2, Play, Volume2, VolumeX, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import { GoldCornerAccent } from "@/components/landing/gold-corner-accent";
 import { SectionContainer } from "@/components/landing/section-container";
 import { SectionReveal } from "@/components/landing/section-reveal";
 import { cn } from "@/components/ui/cn";
@@ -169,7 +168,6 @@ export function VideoSection({ src, poster, variant = "section" }: VideoSectionP
     return (
       <>
         <div className="relative mx-auto w-full">
-          <GoldCornerAccent className="-right-3 -top-3 size-20 lg:size-28" />
           <div
             role="button"
             tabIndex={0}

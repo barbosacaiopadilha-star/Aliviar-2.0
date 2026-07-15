@@ -10,14 +10,15 @@ type SectionEyebrowProps = {
   tone?: "light" | "dark";
 };
 
-// Selo dourado (borda + fundo translúcido) + rótulo — "acabamento"
-// consistente repetido no início de cada seção da Landing, com presença
-// de dourado bem mais forte do que um simples traço fino.
+// Rótulo editorial (versalete, tracking largo) + um único marcador dourado
+// mínimo — sem pílula, borda ou fundo (Capítulo 2, Direção de Arte: o selo
+// preenchido lia como badge de interface, não como "acabamento editorial").
+// O dourado aqui é o ponto de 1,5px, nunca uma área.
 export function SectionEyebrow({ children, className, align = "center", tone = "light" }: SectionEyebrowProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2 rounded-full border border-brand-gold bg-brand-gold/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em]",
+        "inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em]",
         tone === "light" ? "text-brand-primary-deep" : "text-surface",
         align === "left" && "lg:justify-start",
         className,
