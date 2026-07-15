@@ -12,7 +12,13 @@ export function FinalCtaSection() {
     // usada em todas as outras fronteiras de seção da Landing, aplicada
     // aqui pela primeira vez. Os estágios 55%/100% originais permanecem
     // intactos.
-    <SectionContainer className="relative overflow-hidden bg-[linear-gradient(160deg,_var(--color-bg-canvas)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_75%,_var(--color-ink))_10%,_color-mix(in_srgb,_var(--color-brand-sage)_70%,_var(--color-ink))_55%,_var(--color-brand-primary-deep)_100%)]">
+    // Progressão Hierárquica (Fase 3): py-24/lg:py-32 sobrescreve, só
+    // aqui, o padding padrão de SectionContainer (py-12/lg:py-20, via
+    // twMerge em cn.ts — nenhuma outra seção que usa SectionContainer é
+    // afetada). Mais respiro reservado, não um novo viewport cheio de
+    // vazio — o conteúdo (título maior + ações) ocupa naturalmente mais
+    // desse espaço.
+    <SectionContainer className="relative overflow-hidden py-24 bg-[linear-gradient(160deg,_var(--color-bg-canvas)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_75%,_var(--color-ink))_10%,_color-mix(in_srgb,_var(--color-brand-sage)_70%,_var(--color-ink))_55%,_var(--color-brand-primary-deep)_100%)] lg:py-32">
       {/* Presença Residual (Fase 2): fecha o abraço, mesma curva de
           WhyTrust — ponto de entrada realinhado para x=180 (antes 340),
           continuando exatamente onde o Fio da Biblioteca termina (mesmo
@@ -27,7 +33,12 @@ export function FinalCtaSection() {
       />
       <SectionReveal className="relative mx-auto flex max-w-reading flex-col items-center gap-8 text-center">
         <SectionEyebrow tone="dark">Quando estiver pronto</SectionEyebrow>
-        <h2 className="font-serif text-3xl font-semibold leading-snug text-surface lg:text-4xl">
+        {/* Progressão Hierárquica (Fase 3): mesma escala do H1 da Chegada
+            (text-4xl/lg:text-5xl) — o único trecho da Landing, além da
+            própria Chegada, a ocupar esse patamar tipográfico. Família,
+            peso, alinhamento e texto preservados; nenhum acento dourado
+            adicionado. */}
+        <h2 className="font-serif text-4xl font-semibold leading-snug text-surface lg:text-5xl">
           Estamos aqui — sem pressa e sem urgência artificial.
         </h2>
         <FinalActions />
