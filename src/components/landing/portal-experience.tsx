@@ -8,13 +8,15 @@ import {
   type GoldenThreadHandle,
 } from "@/components/landing/golden-thread";
 import {
-  FRAMES,
-  VIDEO_EXIT_AT_FRAME,
-} from "@/components/landing/portal-frames";
+  COMPANION_VIDEO_EXIT_TIMELINE,
+  getCompanionVideoExitFrameRange,
+  isCompanionVideoExiting,
+} from "@/components/landing/portal-companion-video";
 import {
   createEnvironmentEngine,
   type EnvironmentEngine,
 } from "@/components/landing/portal-environment";
+import { FRAMES } from "@/components/landing/portal-frames";
 import {
   computeNarrativeFrame,
   TOTAL_HEIGHT_VH,
@@ -101,15 +103,20 @@ export function PortalExperience({
   // Despedida do vídeo companheiro — conduzida pelo progresso real do
   // scroll (nunca uma animação de duração fixa desconectada do gesto):
   // opacidade, escala e blur avançam e recuam junto com o visitante ao
-  // longo do trecho Curadoria → Benefícios.
+  // longo do trecho Curadoria → Benefícios. A montagem do GSAP continua
+  // aqui (é imperativa, ligada a DOM/refs/elemento de vídeo) — só os
+  // valores de configuração (índices de sentinela, keyframes do tween)
+  // vêm agora do Motor de Vídeo Companheiro (portal-companion-video.ts).
+  // Achado registrado ali, não corrigido aqui: este efeito nunca leu o
+  // Progresso Bruto — o ScrollTrigger do GSAP tem seu próprio mecanismo
+  // de observação de scroll, independente do nosso.
   useEffect(() => {
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    if (reduceMotion || !videoSrc) return;
+    if (!motorsEnabled || !videoSrc) return;
 
-    const exitStart = sentinelRefs.current[VIDEO_EXIT_AT_FRAME - 1];
-    const exitEnd = sentinelRefs.current[VIDEO_EXIT_AT_FRAME];
+    const { startFrameIndex, endFrameIndex } =
+      getCompanionVideoExitFrameRange();
+    const exitStart = sentinelRefs.current[startFrameIndex];
+    const exitEnd = sentinelRefs.current[endFrameIndex];
     const videoEl = videoInnerRef.current;
     if (!exitStart || !exitEnd || !videoEl) return;
 
@@ -121,29 +128,23 @@ export function PortalExperience({
       gsap.registerPlugin(ScrollTrigger);
 
       ctx = gsap.context(() => {
-        gsap
-          .timeline({
-            scrollTrigger: {
-              trigger: exitStart,
-              start: "top bottom",
-              endTrigger: exitEnd,
-              end: "bottom top",
-              scrub: true,
-            },
-          })
-          .to(videoEl, { opacity: 0.8, ease: "none", duration: 1 })
-          .to(videoEl, {
-            opacity: 0,
-            scale: 0.93,
-            filter: "blur(6px)",
-            ease: "none",
-            duration: 1,
-          });
+        const timeline = gsap.timeline({
+          scrollTrigger: {
+            trigger: exitStart,
+            start: "top bottom",
+            endTrigger: exitEnd,
+            end: "bottom top",
+            scrub: true,
+          },
+        });
+        for (const step of COMPANION_VIDEO_EXIT_TIMELINE) {
+          timeline.to(videoEl, step);
+        }
       });
     })();
 
     return () => ctx?.revert();
-  }, [videoSrc]);
+  }, [motorsEnabled, videoSrc]);
 
   // Motor da Caminhada — traduz a posição de scroll (Motor de Progresso
   // Bruto, use-portal-raw-progress.ts) num alvo interpolado entre as duas
@@ -263,7 +264,7 @@ export function PortalExperience({
 
   let cumulativeVh = 0;
   const isThreshold = activeFrame === 0;
-  const isVideoExiting = activeFrame >= VIDEO_EXIT_AT_FRAME;
+  const isVideoExiting = isCompanionVideoExiting(activeFrame);
 
   return (
     <section
