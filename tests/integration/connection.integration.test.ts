@@ -147,13 +147,11 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       })
       .eq("id", professional.id);
 
-    await adminClient
-      .from("professional_competency_areas")
-      .insert({
-        professional_profile_id: professional.id,
-        domain: "nao_determinado",
-        focus: "avaliacao",
-      });
+    await adminClient.from("professional_competency_areas").insert({
+      professional_profile_id: professional.id,
+      domain: "nao_determinado",
+      focus: "avaliacao",
+    });
 
     createdProfessionalIds.push(professional.id);
     return professional.id;
@@ -841,5 +839,242 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     expect(after?.status).toBe(before?.status);
     expect(after?.status).toBe("DELIVERED");
     expect(deliveryAfter).toEqual(deliveryBefore);
+  });
+
+  // Fase 4 — os testes acima cobrem concorrência na CRIAÇÃO (23505, via
+  // create_connection_with_event) e defesa de RLS/trigger sobre um
+  // ConnectionRecord já existente do próprio paciente. Os quatro testes
+  // abaixo fecham lacunas reais identificadas na auditoria de integração:
+  // concorrência otimista numa TRANSIÇÃO (apply_connection_transition,
+  // 55000 — mecanismo distinto do 23505 da criação, nunca antes exercitado
+  // contra o banco real) e defesa em profundidade do banco (RLS de insert
+  // e os dois triggers do PR1) quando a chamada contorna o domínio
+  // (commands.ts) — provando que a garantia não depende só da aplicação.
+
+  it("concorrência real numa transição (RPC apply_connection_transition, 55000): duas tentativas simultâneas de registerContactIntent a partir do mesmo estado — exatamente uma sucede", async () => {
+    const {
+      caseId,
+      patientProfileId,
+      patientClient,
+      professionalIds,
+      finalCuradoriaDeliveryId,
+    } = await createDeliveredCase();
+    const repository = new SupabaseConnectionRepository(patientClient);
+    const now = new Date().toISOString();
+
+    const created0 = createConnection(
+      {
+        caseId,
+        finalCuradoriaDeliveryId,
+        patientProfileId,
+        professionalProfileId: professionalIds[0],
+        actorId: patientProfileId,
+        occurredAt: now,
+        recordedAt: now,
+      },
+      { eligibleProfessionalProfileIds: professionalIds },
+    );
+    const record0 = await repository.create(created0.record, created0.event);
+
+    const attempt = () => {
+      const contact = registerContactIntent(record0, {
+        requestedByPatientProfileId: patientProfileId,
+        actorId: patientProfileId,
+        occurredAt: now,
+        recordedAt: now,
+      });
+      return repository.update(record0.status, contact.record, contact.event);
+    };
+
+    const outcomes = await Promise.allSettled([attempt(), attempt()]);
+    const fulfilled = outcomes.filter((o) => o.status === "fulfilled");
+    const rejected = outcomes.filter(
+      (o): o is PromiseRejectedResult => o.status === "rejected",
+    );
+
+    expect(fulfilled).toHaveLength(1);
+    expect(rejected).toHaveLength(1);
+    expect(rejected[0].reason).toBeInstanceOf(ConnectionError);
+    expect((rejected[0].reason as ConnectionError).code).toBe(
+      "CONCURRENT_CONFLICT",
+    );
+
+    const final = await repository.findById(record0.id);
+    expect(final?.status).toBe("CONTATO_INICIADO");
+
+    // Só o evento da transição aceita foi persistido — a rejeitada não
+    // deixou evento órfão (apply_connection_transition insere o evento e
+    // atualiza o estado na mesma transação implícita; se a cláusula WHERE
+    // não afeta linhas, a exceção desfaz o INSERT do evento também).
+    const events = await repository.listEvents(record0.id);
+    expect(events.map((e) => e.eventType)).toEqual([
+      "DECISAO_REGISTRADA",
+      "CONTATO_INICIADO",
+    ]);
+  });
+
+  it("RLS insert: paciente não consegue criar Connection atribuindo a decisão a outro paciente (defesa em profundidade, contornando o domínio)", async () => {
+    const {
+      caseId,
+      patientProfileId: ownerProfileId,
+      professionalIds,
+      finalCuradoriaDeliveryId,
+    } = await createDeliveredCase();
+
+    // Segundo paciente, sem nenhuma relação com este Caso — usa o próprio
+    // client autenticado (auth.uid() = seu próprio id) para tentar criar um
+    // Connection cujo patient_profile_id é o do DONO real do Caso. A
+    // policy "connection_records_insert_own_patient" exige
+    // patient_profile_id = auth.uid(); como os dois nunca coincidem aqui,
+    // a rejeição precisa vir do banco, não da aplicação (que nem chega a
+    // rodar — chamamos o repository diretamente, pulando commands.ts).
+    const admin = await loginAs("administrador");
+    const adminClient = createAdminSupabaseClient();
+    const otherEmail = unique("connection-spoof") + "@aliviar-conexao.local";
+    const otherAccount = await createPatientAccount(
+      adminClient,
+      admin.client,
+      { email: otherEmail, displayName: "Paciente Sem Relação" },
+      admin.userId,
+    );
+    createdPatientProfileIds.push(otherAccount.profileId);
+    const otherClient = createClient(url, anonKey);
+    await otherClient.auth.signInWithPassword({
+      email: otherEmail,
+      password: otherAccount.password,
+    });
+
+    const repository = new SupabaseConnectionRepository(otherClient);
+    const now = new Date().toISOString();
+    const spoofed = createConnection(
+      {
+        caseId,
+        finalCuradoriaDeliveryId,
+        patientProfileId: ownerProfileId,
+        professionalProfileId: professionalIds[0],
+        actorId: ownerProfileId,
+        occurredAt: now,
+        recordedAt: now,
+      },
+      { eligibleProfessionalProfileIds: professionalIds },
+    );
+
+    await expect(
+      repository.create(spoofed.record, spoofed.event),
+    ).rejects.toThrow();
+
+    const stillEmpty = await repository.findByCaseId(caseId);
+    expect(stillEmpty).toBeNull();
+  });
+
+  it("trigger connection_records_assert_professional_in_delivery: profissional fora da entrega é rejeitado mesmo contornando o domínio", async () => {
+    const {
+      caseId,
+      patientProfileId,
+      patientClient,
+      finalCuradoriaDeliveryId,
+    } = await createDeliveredCase();
+    const repository = new SupabaseConnectionRepository(patientClient);
+    const now = new Date().toISOString();
+
+    // Profissional real, publicável, mas NUNCA apresentado nesta entrega —
+    // o domínio (assertProfessionalEligible) barraria isso antes de chegar
+    // ao banco; aqui chamamos o repository diretamente para provar que o
+    // trigger do PR1 também barra, independentemente da aplicação.
+    const adminClient = createAdminSupabaseClient();
+    const admin = await loginAs("administrador");
+    const outsiderId = await seedPresentableProfessional(
+      adminClient,
+      admin.userId,
+    );
+    createdProfessionalIds.push(outsiderId);
+
+    const attempt = createConnection(
+      {
+        caseId,
+        finalCuradoriaDeliveryId,
+        patientProfileId,
+        professionalProfileId: outsiderId,
+        actorId: patientProfileId,
+        occurredAt: now,
+        recordedAt: now,
+      },
+      // eligibleProfessionalProfileIds mentindo de propósito — simula uma
+      // chamada que pulou a validação de domínio; a garantia real deve vir
+      // do banco.
+      { eligibleProfessionalProfileIds: [outsiderId] },
+    );
+
+    await expect(
+      repository.create(attempt.record, attempt.event),
+    ).rejects.toThrow();
+
+    const stillEmpty = await repository.findByCaseId(caseId);
+    expect(stillEmpty).toBeNull();
+  });
+
+  it("trigger connection_records_assert_valid_transition: correção de profissional após estado terminal é rejeitada pelo banco, não só pelo domínio", async () => {
+    const {
+      caseId,
+      patientProfileId,
+      patientClient,
+      professionalIds,
+      finalCuradoriaDeliveryId,
+    } = await createDeliveredCase();
+    const repository = new SupabaseConnectionRepository(patientClient);
+    const now = new Date().toISOString();
+
+    const created0 = createConnection(
+      {
+        caseId,
+        finalCuradoriaDeliveryId,
+        patientProfileId,
+        professionalProfileId: professionalIds[0],
+        actorId: patientProfileId,
+        occurredAt: now,
+        recordedAt: now,
+      },
+      { eligibleProfessionalProfileIds: professionalIds },
+    );
+    const record0 = await repository.create(created0.record, created0.event);
+
+    const contact = registerContactIntent(record0, {
+      requestedByPatientProfileId: patientProfileId,
+      actorId: patientProfileId,
+      occurredAt: now,
+      recordedAt: now,
+    });
+    const record1 = await repository.update(
+      record0.status,
+      contact.record,
+      contact.event,
+    );
+
+    const confirm = confirmFirstAppointment(record1, {
+      requestedByPatientProfileId: patientProfileId,
+      actorId: patientProfileId,
+      occurredAt: now,
+      recordedAt: now,
+    });
+    const record2 = await repository.update(
+      record1.status,
+      confirm.record,
+      confirm.event,
+    );
+    expect(record2.status).toBe("PRIMEIRO_ATENDIMENTO_REALIZADO");
+
+    // O domínio já rejeita correctChoice em estado terminal antes de tocar
+    // o banco (coberto no teste de correctChoice acima). Aqui provamos que
+    // o próprio trigger também rejeita, inserindo diretamente contra a
+    // tabela — a mesma defesa em profundidade já aplicada ao status.
+    const adminClient = createAdminSupabaseClient();
+    const directUpdate = await adminClient
+      .from("connection_records")
+      .update({ professional_profile_id: professionalIds[1] })
+      .eq("id", record2.id);
+    expect(directUpdate.error).not.toBeNull();
+
+    const stillIntact = await repository.findById(record2.id);
+    expect(stillIntact?.professionalProfileId).toBe(professionalIds[0]);
   });
 });
