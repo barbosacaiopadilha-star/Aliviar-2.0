@@ -12,12 +12,16 @@ type PortalExperienceProps = {
   photoSrc?: string;
 };
 
-// ETAPA 1 — Arquitetura Base do Portal. Só o ambiente: paredes, profundidade,
-// iluminação evoluindo por parada, e a troca de conteúdo por crossfade. Sem
-// fio dourado, sem vídeo, sem GSAP — isso é "o lugar"; "a vida" (fio, vídeo,
-// motion fino) entra nas etapas seguintes, por decisão explícita do
-// processo (ver plano). O mecanismo de sentinela + IntersectionObserver é a
-// mesma técnica já validada em rodadas anteriores desta Landing.
+// ETAPA 1 (arquitetura) + ETAPA 2 (Motor da Caminhada). O ambiente nunca
+// nasce, nunca desaparece, nunca troca de cenário — a mesma fotografia do
+// início ao fim. A sensação de deslocamento nasce da combinação de oito
+// sinais discretos (luz, sombra↔parede, atmosfera, percepção espacial,
+// ritmo de leitura, comportamento do conteúdo, cadência de transição,
+// periferia-estável/centro-nítido) mais três princípios físicos — inércia
+// (nada reage instantaneamente), memória (nada reinicia, tudo evolui por
+// acúmulo contínuo) e respiração (o ambiente nunca fica congelado, mesmo
+// parado). Nenhum sinal, isolado, deveria denunciar movimento — a soma é
+// que produz a percepção. Ainda sem fio dourado, vídeo ou GSAP.
 const BENEFITS: Array<{ icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>; title: string; description: string }> = [
   { icon: ScanSearch, title: "Curadoria criteriosa", description: "O caminho mais adequado ao seu caso, com critério." },
   { icon: Clock, title: "Agilidade no processo", description: "Menos espera, menos burocracia, em cada etapa." },
@@ -50,26 +54,36 @@ const CONTINUACAO = ["Seleção dos profissionais", "Agendamento", "Atendimento"
 
 type Frame = {
   id: string;
+  /** Altura da parada — não é uniforme de propósito (sinal V: ritmo de
+   *  leitura). Entrada/Triagem/Análise são passagens breves; Curadoria/
+   *  Benefícios/Confiança sustentam mais permanência (a "exposição"). */
   heightVh: number;
   content: ReactNode | null;
-  /** Posição da origem da luz nesta parada (percentuais do palco) — a luz
-   *  se desloca pelo ambiente conforme o visitante avança, no lugar de
-   *  mover a fotografia. Ver nota "REPROJEÇÃO DA LUZ" abaixo. */
-  lightX: string;
-  lightY: string;
-  /** Profundidade da parada (0 a 1) — quanto mais fundo na Curadoria, mais
-   *  presentes ficam a vinheta e as paredes. Hero fica em 0 (ainda do lado
-   *  de fora, sem ambiente formado ao redor). */
+  /** Origem da luz nesta parada (0-100, percentual do palco) — números,
+   *  não strings, porque o Motor da Caminhada interpola continuamente
+   *  entre paradas vizinhas (sinal I), nunca salta de uma para outra. */
+  lightX: number;
+  lightY: number;
+  /** Profundidade (0-1) — rege vinheta e presença das paredes (sinal II). */
   depth: number;
+  /** Temperatura da atmosfera (-1 fria a 1 quente) — canal independente da
+   *  luz, com sua própria inércia, propositalmente dessincronizado dela
+   *  (sinal III). */
+  warmth: number;
+  /** Compactação espacial (0-1) — quanto mais fundo, mais intimista fica a
+   *  composição do conteúdo (sinal IV). */
+  compact: number;
 };
 
 const FRAMES: Frame[] = [
   {
     id: "hero",
     heightVh: 100,
-    lightX: "50%",
-    lightY: "28%",
+    lightX: 50,
+    lightY: 28,
     depth: 0,
+    warmth: 0.25,
+    compact: 0,
     content: (
       <div className="flex flex-col items-center gap-4">
         <SectionEyebrow>Curadoria médica independente</SectionEyebrow>
@@ -83,40 +97,47 @@ const FRAMES: Frame[] = [
     ),
   },
   // Entrada no Portal — respiro de transição, sem copy própria (decisão
-  // confirmada): o visitante segue no mesmo ambiente, só sem legenda. O
-  // momento em si é a formação do ambiente ao redor (paredes fechando,
-  // vinheta aprofundando, luz se assentando) — nunca uma ausência.
-  { id: "entrada", heightVh: 50, content: null, lightX: "45%", lightY: "32%", depth: 0.5 },
+  // confirmada): o conteúdo desse momento é a própria formação contínua
+  // do ambiente ao redor, nunca uma ausência.
+  { id: "entrada", heightVh: 50, content: null, lightX: 45, lightY: 32, depth: 0.42, warmth: 0.12, compact: 0.12 },
   {
     id: "triagem",
-    heightVh: 100,
-    lightX: "40%",
-    lightY: "35%",
-    depth: 0.6,
+    heightVh: 85,
+    lightX: 40,
+    lightY: 35,
+    depth: 0.52,
+    warmth: 0.05,
+    compact: 0.18,
     content: <p className="font-serif text-2xl font-medium leading-tight text-ink lg:text-4xl">Triagem</p>,
   },
   {
     id: "analise",
-    heightVh: 100,
-    lightX: "60%",
-    lightY: "36%",
-    depth: 0.68,
+    heightVh: 85,
+    lightX: 60,
+    lightY: 36,
+    depth: 0.6,
+    warmth: -0.05,
+    compact: 0.24,
     content: <p className="font-serif text-2xl font-medium leading-tight text-ink lg:text-4xl">Análise do caso</p>,
   },
   {
     id: "curadoria",
-    heightVh: 100,
-    lightX: "50%",
-    lightY: "38%",
-    depth: 0.76,
+    heightVh: 115,
+    lightX: 50,
+    lightY: 38,
+    depth: 0.68,
+    warmth: -0.1,
+    compact: 0.32,
     content: <p className="font-serif text-2xl font-medium leading-tight text-ink lg:text-4xl">Curadoria técnica</p>,
   },
   {
     id: "beneficios",
-    heightVh: 100,
-    lightX: "38%",
-    lightY: "40%",
-    depth: 0.85,
+    heightVh: 115,
+    lightX: 38,
+    lightY: 40,
+    depth: 0.78,
+    warmth: 0.08,
+    compact: 0.42,
     content: (
       <div className="flex flex-col gap-4 text-left">
         {BENEFITS.map((benefit) => (
@@ -138,10 +159,12 @@ const FRAMES: Frame[] = [
   },
   {
     id: "confianca",
-    heightVh: 100,
-    lightX: "62%",
-    lightY: "42%",
-    depth: 0.92,
+    heightVh: 115,
+    lightX: 62,
+    lightY: 42,
+    depth: 0.87,
+    warmth: -0.18,
+    compact: 0.5,
     content: (
       <div className="flex flex-col gap-4 text-left">
         {CRITERIA.map((criterion) => (
@@ -163,10 +186,12 @@ const FRAMES: Frame[] = [
   },
   {
     id: "continuacao",
-    heightVh: 100,
-    lightX: "50%",
-    lightY: "45%",
+    heightVh: 90,
+    lightX: 50,
+    lightY: 45,
     depth: 1,
+    warmth: -0.22,
+    compact: 0.46,
     content: (
       <ul className="flex flex-col gap-2 text-center">
         {CONTINUACAO.map((stage) => (
@@ -181,18 +206,59 @@ const FRAMES: Frame[] = [
 
 const TOTAL_HEIGHT_VH = FRAMES.reduce((sum, frame) => sum + frame.heightVh, 0);
 
-// Curva de easing padrão da marca (nunca elástico/bounce) — mesma usada em
-// todo o resto da Landing, aqui como constante porque as transições da luz
-// e das paredes são escritas via style inline (não Tailwind), então não
-// herdam a variável CSS automaticamente num contexto de string JS.
-const PORTAL_EASE = "cubic-bezier(0.4, 0, 0.2, 1)";
+// Fração acumulada (0 a 1) de onde cada parada começa, dentro da altura
+// total — usado pelo Motor da Caminhada para saber entre quais duas
+// paradas interpolar em cada instante do scroll. offsets[FRAMES.length] é
+// sempre 1 (fim da última parada).
+const FRAME_OFFSETS: number[] = (() => {
+  const offsets: number[] = [0];
+  let acc = 0;
+  for (const f of FRAMES) {
+    acc += f.heightVh;
+    offsets.push(acc / TOTAL_HEIGHT_VH);
+  }
+  return offsets;
+})();
+
+// Princípio 9 (Inércia): cada canal persegue seu alvo numa velocidade
+// própria — nunca 1 (resposta instantânea). Constantes diferentes entre
+// canais é o que garante que eles nunca se movam sincronizados (reforça a
+// leitura de "percepção", não "efeito"): a atmosfera é a mais lenta de
+// todas (a temperatura de uma sala muda por último), a compactação
+// espacial é a mais ágil (acompanha de perto a troca de conteúdo).
+const DAMPING = {
+  light: 0.045,
+  lightOpacity: 0.06,
+  depth: 0.035,
+  walls: 0.05,
+  warmth: 0.02,
+  compact: 0.08,
+};
+
+// Princípio 11 (Respiração): uma oscilação lenta e mínima, independente do
+// scroll, que nunca para — só para o ambiente nunca parecer congelado.
+const BREATH_PERIOD_MS = 9000;
+const BREATH_AMPLITUDE = 0.025;
+
+const lerp = (from: number, to: number, t: number) => from + (to - from) * t;
 
 export function PortalExperience({ photoSrc }: PortalExperienceProps) {
+  const sectionRef = useRef<HTMLElement>(null);
   const sentinelRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const lightGlowRef = useRef<HTMLDivElement>(null);
+  const vignetteRef = useRef<HTMLDivElement>(null);
+  const atmosphereRef = useRef<HTMLDivElement>(null);
+  const leftWallRef = useRef<HTMLDivElement>(null);
+  const rightWallRef = useRef<HTMLDivElement>(null);
+  const cardWrapRef = useRef<HTMLDivElement>(null);
   const [activeFrame, setActiveFrame] = useState(0);
   const [reduced, setReduced] = useState(false);
   const [ready, setReady] = useState(false);
 
+  // Canal de foco: qual parada está ativa. Discreto e nítido de propósito
+  // (sinal VIII — periferia lenta/ambígua, foco claro), gerido pela mesma
+  // técnica de sentinela + IntersectionObserver já validada nas rodadas
+  // anteriores da Landing.
   useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     setReduced(reduceMotion);
@@ -212,6 +278,114 @@ export function PortalExperience({ photoSrc }: PortalExperienceProps) {
 
     sentinelRefs.current.forEach((el) => el && observer.observe(el));
     return () => observer.disconnect();
+  }, []);
+
+  // Motor da Caminhada — canal de periferia. Lê a posição de scroll a
+  // cada quadro (requestAnimationFrame, nunca um listener de scroll
+  // reagindo 1:1) e persegue os alvos interpolados entre paradas vizinhas
+  // com inércia própria por sinal — o ambiente "responde à presença" do
+  // visitante em vez de "reagir ao scroll". Escreve direto no DOM via
+  // refs (nunca via state) para não gerar 60 re-renders por segundo.
+  useEffect(() => {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) return;
+
+    const state = {
+      lightX: FRAMES[0].lightX,
+      lightY: FRAMES[0].lightY,
+      lightOpacity: 0.32,
+      depth: FRAMES[0].depth,
+      warmth: FRAMES[0].warmth,
+      compact: FRAMES[0].compact,
+    };
+
+    // O Portal pausa o motor quando sai de vista (rolou muito abaixo, ou
+    // ainda não chegou) — mesma disciplina de performance já usada no
+    // GoldenThread (pausar fora da viewport).
+    const activeRef = { current: true };
+    const visibilityObserver = new IntersectionObserver(
+      ([entry]) => {
+        activeRef.current = entry.isIntersecting;
+      },
+      { threshold: 0 },
+    );
+    if (sectionRef.current) visibilityObserver.observe(sectionRef.current);
+
+    let rafId = 0;
+
+    const tick = (now: number) => {
+      rafId = requestAnimationFrame(tick);
+      if (!activeRef.current || !sectionRef.current) return;
+
+      const rect = sectionRef.current.getBoundingClientRect();
+      const scrollable = Math.max(rect.height - window.innerHeight, 1);
+      const scrolled = Math.min(Math.max(-rect.top, 0), scrollable);
+      const overall = scrolled / scrollable;
+
+      let i0 = 0;
+      while (i0 < FRAME_OFFSETS.length - 2 && FRAME_OFFSETS[i0 + 1] <= overall) i0++;
+      const i1 = Math.min(i0 + 1, FRAMES.length - 1);
+      const span = FRAME_OFFSETS[i0 + 1] - FRAME_OFFSETS[i0] || 1;
+      const localT = Math.min(Math.max((overall - FRAME_OFFSETS[i0]) / span, 0), 1);
+
+      const a = FRAMES[i0];
+      const b = FRAMES[i1];
+      const targetLightX = lerp(a.lightX, b.lightX, localT);
+      const targetLightY = lerp(a.lightY, b.lightY, localT);
+      const targetDepth = lerp(a.depth, b.depth, localT);
+      const targetWarmth = lerp(a.warmth, b.warmth, localT);
+      const targetCompact = lerp(a.compact, b.compact, localT);
+      const targetLightOpacity = 0.3 + targetDepth * 0.3;
+
+      // Princípio 9 (Inércia) + 10 (Memória): cada canal persegue seu alvo
+      // com sua própria velocidade — nunca salta, nunca reinicia, só
+      // acumula continuamente na direção do novo alvo.
+      state.lightX += (targetLightX - state.lightX) * DAMPING.light;
+      state.lightY += (targetLightY - state.lightY) * DAMPING.light;
+      state.depth += (targetDepth - state.depth) * DAMPING.depth;
+      state.warmth += (targetWarmth - state.warmth) * DAMPING.warmth;
+      state.compact += (targetCompact - state.compact) * DAMPING.compact;
+      state.lightOpacity += (targetLightOpacity - state.lightOpacity) * DAMPING.lightOpacity;
+
+      // Princípio 11 (Respiração): nunca para, mesmo com o scroll parado.
+      const breath = Math.sin((now / BREATH_PERIOD_MS) * Math.PI * 2) * BREATH_AMPLITUDE;
+
+      if (lightGlowRef.current) {
+        lightGlowRef.current.style.left = `${state.lightX}%`;
+        lightGlowRef.current.style.top = `${state.lightY}%`;
+        lightGlowRef.current.style.opacity = String(Math.max(state.lightOpacity + breath, 0));
+      }
+      if (vignetteRef.current) {
+        vignetteRef.current.style.opacity = String(state.depth * 0.42);
+      }
+      if (atmosphereRef.current) {
+        const warmthPercent = ((state.warmth + 1) / 2) * 100;
+        atmosphereRef.current.style.backgroundColor =
+          `color-mix(in srgb, var(--color-brand-gold) ${warmthPercent}%, var(--color-brand-sage) ${100 - warmthPercent}%)`;
+        atmosphereRef.current.style.opacity = String(0.05 + state.depth * 0.06);
+      }
+      // Sinal II — relação luz↔sombra: a parede do lado oposto à luz fica
+      // discretamente mais presente (a sombra cai longe da fonte).
+      const lightOffset = (state.lightX - 50) / 50;
+      const baseWall = 0.5 + state.depth * 0.35;
+      if (leftWallRef.current) {
+        leftWallRef.current.style.opacity = String(Math.max(baseWall * (1 - lightOffset * 0.25), 0));
+      }
+      if (rightWallRef.current) {
+        rightWallRef.current.style.opacity = String(Math.max(baseWall * (1 + lightOffset * 0.25), 0));
+      }
+      // Sinal IV — percepção espacial: o ambiente fica sutilmente mais
+      // intimista (cartão mais estreito) conforme o visitante avança.
+      if (cardWrapRef.current) {
+        cardWrapRef.current.style.maxWidth = `${40 - state.compact * 7}rem`;
+      }
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(rafId);
+      visibilityObserver.disconnect();
+    };
   }, []);
 
   if (ready && reduced) {
@@ -234,12 +408,10 @@ export function PortalExperience({ photoSrc }: PortalExperienceProps) {
   }
 
   let cumulativeVh = 0;
-  const frame = FRAMES[activeFrame] ?? FRAMES[0];
   const isThreshold = activeFrame === 0; // Hero — ainda do lado de fora.
-  const wallsIn = !isThreshold;
 
   return (
-    <section className="relative bg-canvas" style={{ height: `${TOTAL_HEIGHT_VH}svh` }}>
+    <section ref={sectionRef} className="relative bg-canvas" style={{ height: `${TOTAL_HEIGHT_VH}svh` }}>
       {FRAMES.map((frameDef, index) => {
         const top = cumulativeVh;
         cumulativeVh += frameDef.heightVh;
@@ -257,78 +429,58 @@ export function PortalExperience({ photoSrc }: PortalExperienceProps) {
       })}
 
       {/* O palco — cenário permanente. Nunca nasce, nunca desaparece,
-          nunca troca de cenário: a mesma fotografia do início ao fim. O
-          que muda é a luz que incide sobre ela (posição, não a foto em
-          si) e o quanto o ambiente ao redor (paredes, profundidade) está
-          formado — nunca um corte, sempre transição. */}
+          nunca troca de cenário: a mesma fotografia do início ao fim. */}
       <div className="sticky top-0 h-svh w-full overflow-hidden">
         {photoSrc && <Image src={photoSrc} alt="" fill priority className="object-cover" sizes="100vw" />}
 
-        {/* REPROJEÇÃO DA LUZ (ajuste 1) — não é mais um véu plano cobrindo
-            a tela. É uma fonte com origem e posição própria (lightX/lightY
-            de cada parada), aplicada via mix-blend-mode "soft-light" para
-            que reaja à luminância da própria fotografia por baixo — uma
-            luz incidindo na cena, não um filtro de cor sobreposto. A
-            posição se desloca lentamente entre paradas: é o deslocamento
-            da luz, não da câmera, que sugere que o visitante andou. */}
+        {/* Sinal I — luz com origem própria, reagindo à foto por baixo
+            (mix-blend-mode), nunca um filtro plano. Posição/opacidade
+            escritas pelo Motor da Caminhada a cada quadro. */}
         <div
+          ref={lightGlowRef}
           aria-hidden="true"
           className="pointer-events-none absolute size-[85vmax] max-w-none -translate-x-1/2 -translate-y-1/2 rounded-full"
           style={{
-            left: frame.lightX,
-            top: frame.lightY,
-            opacity: isThreshold ? 0.35 : 0.55 + frame.depth * 0.25,
+            left: `${FRAMES[0].lightX}%`,
+            top: `${FRAMES[0].lightY}%`,
+            opacity: 0.32,
             background:
               "radial-gradient(circle, color-mix(in srgb, var(--color-brand-gold) 30%, white) 0%, transparent 68%)",
             mixBlendMode: "soft-light",
-            transition: `left 1600ms ${PORTAL_EASE}, top 1600ms ${PORTAL_EASE}, opacity 1200ms ${PORTAL_EASE}`,
           }}
         />
 
-        {/* Profundidade — vinheta de centro fixo (só a intensidade muda;
-            coordenadas dentro de um radial-gradient() não interpolam via
-            CSS transition, então quem se desloca é só o glow de luz
-            acima, via left/top de verdade). Cresce conforme o visitante
-            avança na Curadoria — a escuridão nas bordas é a ausência da
-            mesma luz, não uma camada à parte. */}
+        {/* Profundidade — vinheta de centro fixo, só a intensidade muda. */}
         <div
+          ref={vignetteRef}
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(130%_110%_at_50%_40%,_transparent_0%,_rgba(0,0,0,0.45)_100%)] transition-opacity"
-          style={{
-            opacity: frame.depth * 0.42,
-            transitionDuration: "1200ms",
-            transitionTimingFunction: PORTAL_EASE,
-          }}
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(130%_110%_at_50%_40%,_transparent_0%,_rgba(0,0,0,0.45)_100%)]"
+          style={{ opacity: 0 }}
         />
 
-        {/* PAREDES (ajuste 2) — pertencem ao mesmo sistema de luz: no
-            Hero (limiar) ainda não existem — o ambiente ainda não se
-            formou ao redor do visitante. Assim que ele cruza para dentro
-            (Entrada), elas se formam junto com a profundidade, e seguem
-            reagindo à mesma leitura de profundidade da parada atual. */}
+        {/* Sinal III — atmosfera: temperatura de cor, canal independente
+            da luz e da vinheta, com a própria inércia (a mais lenta de
+            todas — "o ar" é o que mais demora a mudar numa sala real). */}
+        <div ref={atmosphereRef} aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ opacity: 0.05 }} />
+
+        {/* Sinal II — paredes, reagindo à mesma leitura de profundidade e
+            à posição da luz (a sombra cai do lado oposto à fonte). */}
         <div
+          ref={leftWallRef}
           aria-hidden="true"
           className="pointer-events-none absolute inset-y-0 left-0 w-6 lg:w-16"
-          style={{
-            background: "linear-gradient(to right, rgba(0,0,0,0.4), transparent)",
-            opacity: wallsIn ? 0.5 + frame.depth * 0.35 : 0,
-            transition: `opacity 1400ms ${PORTAL_EASE}`,
-          }}
+          style={{ background: "linear-gradient(to right, rgba(0,0,0,0.4), transparent)", opacity: 0 }}
         />
         <div
+          ref={rightWallRef}
           aria-hidden="true"
           className="pointer-events-none absolute inset-y-0 right-0 w-6 lg:w-16"
-          style={{
-            background: "linear-gradient(to left, rgba(0,0,0,0.4), transparent)",
-            opacity: wallsIn ? 0.5 + frame.depth * 0.35 : 0,
-            transition: `opacity 1400ms ${PORTAL_EASE}`,
-          }}
+          style={{ background: "linear-gradient(to left, rgba(0,0,0,0.4), transparent)", opacity: 0 }}
         />
 
-        {/* HERO COMO LIMIAR (ajuste 3) — nunca o "frame 0" com o mesmo
-            invólucro de cartão das paradas seguintes. Sem chrome, sem
-            vinheta, sem paredes: o visitante está do lado de fora,
-            olhando para dentro, antes de atravessar. */}
+        {/* Hero como limiar — sem chrome de cartão, sem paredes, sem
+            vinheta: o visitante está do lado de fora, olhando pra dentro,
+            antes de atravessar. */}
         <div
           aria-hidden={!isThreshold}
           className={cn(
@@ -340,13 +492,10 @@ export function PortalExperience({ photoSrc }: PortalExperienceProps) {
         </div>
 
         {/* Dentro do Portal — cartão translúcido, mesma posição para
-            todas as paradas depois do limiar (Entrada em diante). A
-            Entrada (ajuste 4) não tem cartão — seu conteúdo é a própria
-            formação do ambiente acontecendo acima (paredes fechando,
-            vinheta se aprofundando, luz se assentando), não uma
-            ausência. */}
+            todas as paradas depois do limiar. A Entrada não tem cartão —
+            seu conteúdo é a própria formação contínua do ambiente. */}
         <div className="absolute inset-x-0 bottom-[10%] px-4">
-          <div className="relative mx-auto flex min-h-[9rem] max-w-reading items-end justify-center">
+          <div ref={cardWrapRef} className="relative mx-auto flex min-h-[9rem] max-w-reading items-end justify-center">
             {FRAMES.slice(1).map((frameDef, offset) => {
               const index = offset + 1;
               return (
