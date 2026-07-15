@@ -200,6 +200,16 @@ export async function submitHumanReview(
     .single();
 
   if (error || !data) {
+    // 23505 = violação da constraint única human_review_results_one_validated_per_case_idx
+    // (duas decisões VALIDATED concorrentes para o mesmo Caso) — mesma
+    // mensagem já usada no pre-check acima (linha ~140), nunca um throw cru
+    // escapando sem tratamento pela Server Action.
+    if (error?.code === "23505") {
+      return {
+        outcome: "error",
+        error: "Este caso já tem uma curadoria validada — não é possível registrar uma nova decisão.",
+      };
+    }
     throw new Error("Não foi possível persistir a decisão do Human Review.");
   }
 

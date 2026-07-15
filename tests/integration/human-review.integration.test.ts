@@ -1,16 +1,23 @@
+import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { changeCaseStatus, createCase, getCase } from "@/modules/cases/repository";
 import { FakeAceLanguageModel } from "@/modules/concierge/fake-language-model";
+import { getLatestArtifactByType, getLatestExecution } from "@/modules/concierge/execution-repository";
 import { listHumanReviewResultsForCase, submitHumanReview } from "@/modules/concierge/human-review-repository";
 import { runAceExecution } from "@/modules/concierge/orchestrator";
 import { createPatientAccount } from "@/modules/profiles/patient-account-repository";
 import { createProfessionalProfile } from "@/modules/profiles/professional-repository";
 import { getOrCreateActiveStory, saveStoryDraft, submitStory } from "@/modules/story/repository";
+
+// Mesmo texto de erro exposto pelos dois caminhos de human-review-repository.ts
+// (pre-check em memória e colisão real via constraint de banco, 23505) —
+// nunca deve divergir, nem vazar detalhe interno do Postgres.
+const ALREADY_VALIDATED_MESSAGE = "Este caso já tem uma curadoria validada — não é possível registrar uma nova decisão.";
 
 type TestAccount = { role: string; email: string; password: string };
 
@@ -37,6 +44,30 @@ describe("Fase Beta / Sprint P009 — Human Review (Supabase local)", () => {
 
   beforeAll(() => {
     accounts = loadTestAccounts();
+  });
+
+  // Isolamento de dados entre testes (mesmo achado/correção já aplicado a
+  // concierge.integration.test.ts): professional_profiles/professional_
+  // competency_areas são um recurso global no Supabase local, nunca
+  // escopado por Caso — sem isto, cada teste seguinte herda os
+  // profissionais já criados pelos anteriores, ultrapassando o total de 3
+  // que a Shortlist assume e tornando-a AMBIGUOUS_COMPOSITION.
+  // ADR-025: os testes de unicidade/concorrência abaixo criam Casos
+  // completos (3 profissionais cada) em sequência — sem limpar entre eles,
+  // o pool global ultrapassa 3 e a Shortlist deixa de ser COMPOSED
+  // (AMBIGUOUS_COMPOSITION), quebrando os próprios testes desta garantia.
+  // Registrado como afterEach próprio (Vitest aceita múltiplos por bloco)
+  // para não depender do teardown mais amplo de contas/Casos.
+  let createdProfessionalIds: string[] = [];
+
+  afterEach(async () => {
+    if (createdProfessionalIds.length === 0) {
+      return;
+    }
+    const adminClient = createAdminSupabaseClient();
+    await adminClient.from("professional_competency_areas").delete().in("professional_profile_id", createdProfessionalIds);
+    await adminClient.from("professional_profiles").delete().in("id", createdProfessionalIds);
+    createdProfessionalIds = [];
   });
 
   async function loginAs(role: string) {
@@ -69,6 +100,7 @@ describe("Fase Beta / Sprint P009 — Human Review (Supabase local)", () => {
       .from("professional_competency_areas")
       .insert({ professional_profile_id: professional.id, domain: "nao_determinado", focus: "avaliacao" });
 
+    createdProfessionalIds.push(professional.id);
     return professional.id;
   }
 
@@ -148,7 +180,7 @@ describe("Fase Beta / Sprint P009 — Human Review (Supabase local)", () => {
     expect(updatedCase?.status).toBe("WAITING_FOR_INFORMATION");
   });
 
-  it("uma segunda revisão após já existir uma decisão VALIDATED é rejeitada", async () => {
+  it("uma segunda revisão após já existir uma decisão VALIDATED é rejeitada pelo pre-check (mensagem pública sem detalhe interno)", async () => {
     const { admin, caseId } = await createCaseInHumanReview();
 
     await submitHumanReview(admin.client, {
@@ -172,6 +204,159 @@ describe("Fase Beta / Sprint P009 — Human Review (Supabase local)", () => {
     });
 
     expect(second.outcome).toBe("error");
+    expect(second.outcome === "error" && second.error).toBe(ALREADY_VALIDATED_MESSAGE);
+    expect(second.outcome === "error" && second.error).not.toMatch(/23505|constraint|duplicate key|postgres/i);
+
+    const results = await listHumanReviewResultsForCase(admin.client, caseId);
+    expect(results.filter((r) => r.reviewStatus === "VALIDATED")).toHaveLength(1);
+  });
+
+  it("ADR-024-style: colisão real na constraint de banco (23505) produz a mesma mensagem pública do pre-check", async () => {
+    const { admin, caseId } = await createCaseInHumanReview();
+
+    const execution = await getLatestExecution(admin.client, caseId);
+    const shortlistArtifact = await getLatestArtifactByType(admin.client, caseId, "Shortlist");
+    const compatibilityMatrixArtifact = await getLatestArtifactByType(admin.client, caseId, "CompatibilityMatrix");
+    expect(execution).not.toBeNull();
+    expect(shortlistArtifact).not.toBeNull();
+    expect(compatibilityMatrixArtifact).not.toBeNull();
+
+    const baseRow = {
+      case_id: caseId,
+      execution_id: execution!.id,
+      reviewer_id: admin.userId,
+      reviewed_at: new Date().toISOString(),
+      review_action: "APPROVE" as const,
+      original_shortlist_artifact_id: shortlistArtifact!.id,
+      original_shortlist_artifact_version: shortlistArtifact!.version,
+      compatibility_matrix_artifact_id: compatibilityMatrixArtifact!.id,
+      compatibility_matrix_artifact_version: compatibilityMatrixArtifact!.version,
+      approved_provider_ids: [],
+      changes: [],
+      review_rationale: "Linha inserida diretamente para provar a constraint de banco, sem passar por submitHumanReview.",
+      evidence_references: [],
+      return_to_protocol: null,
+      method_version: "ACE-0.1",
+      version: 1,
+    };
+
+    // Insere diretamente na tabela (não via submitHumanReview) — prova que a
+    // proteção existe no PRÓPRIO banco, não só na camada de aplicação.
+    const first = await admin.client
+      .from("human_review_results")
+      .insert({ id: randomUUID(), ...baseRow, review_status: "VALIDATED" })
+      .select("id")
+      .single();
+    expect(first.error).toBeNull();
+
+    const second = await admin.client
+      .from("human_review_results")
+      .insert({ id: randomUUID(), ...baseRow, review_status: "VALIDATED" })
+      .select("id")
+      .single();
+    expect(second.error).not.toBeNull();
+    expect(second.error?.code).toBe("23505");
+
+    // Estados não bloqueados continuam permitidos livremente para o mesmo Caso
+    // (o índice é parcial — só restringe review_status = 'VALIDATED').
+    const rejected1 = await admin.client
+      .from("human_review_results")
+      .insert({ id: randomUUID(), ...baseRow, review_status: "REJECTED" })
+      .select("id")
+      .single();
+    expect(rejected1.error).toBeNull();
+
+    const rejected2 = await admin.client
+      .from("human_review_results")
+      .insert({ id: randomUUID(), ...baseRow, review_status: "REJECTED" })
+      .select("id")
+      .single();
+    expect(rejected2.error).toBeNull();
+
+    const infoRequested = await admin.client
+      .from("human_review_results")
+      .insert({ id: randomUUID(), ...baseRow, review_status: "INFORMATION_REQUESTED" })
+      .select("id")
+      .single();
+    expect(infoRequested.error).toBeNull();
+
+    const results = await listHumanReviewResultsForCase(admin.client, caseId);
+    expect(results.filter((r) => r.reviewStatus === "VALIDATED")).toHaveLength(1);
+    expect(results.filter((r) => r.reviewStatus === "REJECTED")).toHaveLength(2);
+    expect(results.filter((r) => r.reviewStatus === "INFORMATION_REQUESTED")).toHaveLength(1);
+  });
+
+  it("dois Casos diferentes têm seus próprios resultados VALIDATED, sem interferência mútua (índice é por case_id, não global)", async () => {
+    const first = await createCaseInHumanReview();
+    const firstResult = await submitHumanReview(first.admin.client, {
+      caseId: first.caseId,
+      reviewerId: first.admin.userId,
+      reviewAction: "APPROVE",
+      reviewRationale: "Primeiro Caso.",
+      evidenceReferences: ["Shortlist.compositionRationale"],
+      changes: [],
+      returnToProtocol: null,
+    });
+    expect(firstResult.outcome).toBe("recorded");
+
+    // Limpa os profissionais do primeiro Caso ANTES de criar o segundo,
+    // dentro do mesmo teste — sem isso, os profissionais dos dois Casos se
+    // somariam no pool global (nunca escopado por Caso) e a Shortlist do
+    // segundo deixaria de ter exatamente 3 qualificados.
+    const adminClient = createAdminSupabaseClient();
+    await adminClient.from("professional_competency_areas").delete().in("professional_profile_id", createdProfessionalIds);
+    await adminClient.from("professional_profiles").delete().in("id", createdProfessionalIds);
+    createdProfessionalIds = [];
+
+    const second = await createCaseInHumanReview();
+    const secondResult = await submitHumanReview(second.admin.client, {
+      caseId: second.caseId,
+      reviewerId: second.admin.userId,
+      reviewAction: "APPROVE",
+      reviewRationale: "Segundo Caso, independente do primeiro.",
+      evidenceReferences: ["Shortlist.compositionRationale"],
+      changes: [],
+      returnToProtocol: null,
+    });
+    expect(secondResult.outcome).toBe("recorded");
+
+    const firstCaseResults = await listHumanReviewResultsForCase(first.admin.client, first.caseId);
+    const secondCaseResults = await listHumanReviewResultsForCase(second.admin.client, second.caseId);
+    expect(firstCaseResults.filter((r) => r.reviewStatus === "VALIDATED")).toHaveLength(1);
+    expect(secondCaseResults.filter((r) => r.reviewStatus === "VALIDATED")).toHaveLength(1);
+  });
+
+  it("concorrência real: duas tentativas simultâneas de validar o mesmo Caso — exatamente uma sucede", async () => {
+    const { admin, caseId } = await createCaseInHumanReview();
+
+    const attempt = (rationale: string) =>
+      submitHumanReview(admin.client, {
+        caseId,
+        reviewerId: admin.userId,
+        reviewAction: "APPROVE",
+        reviewRationale: rationale,
+        evidenceReferences: ["Shortlist.compositionRationale"],
+        changes: [],
+        returnToProtocol: null,
+      });
+
+    // Promise.all dispara as duas chamadas verdadeiramente em paralelo — cada
+    // uma faz seu próprio pre-check (SELECT) antes de qualquer uma ter
+    // inserido, então ambas podem "ver" o caso como ainda não validado. Só a
+    // constraint de banco decide qual das duas realmente vence.
+    const [first, second] = await Promise.all([attempt("Primeira tentativa concorrente."), attempt("Segunda tentativa concorrente.")]);
+
+    const outcomes = [first, second];
+    const succeeded = outcomes.filter((o) => o.outcome === "recorded");
+    const failed = outcomes.filter((o) => o.outcome === "error");
+
+    expect(succeeded).toHaveLength(1);
+    expect(failed).toHaveLength(1);
+    expect(failed[0].outcome === "error" && failed[0].error).toBe(ALREADY_VALIDATED_MESSAGE);
+    expect(failed[0].outcome === "error" && failed[0].error).not.toMatch(/23505|constraint|duplicate key|postgres/i);
+
+    const results = await listHumanReviewResultsForCase(admin.client, caseId);
+    expect(results.filter((r) => r.reviewStatus === "VALIDATED")).toHaveLength(1);
   });
 
   it("rejeita revisar um caso que não está em HUMAN_REVIEW", async () => {
