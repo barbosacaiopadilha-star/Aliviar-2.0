@@ -103,6 +103,72 @@ describe("FinalCuradoria", () => {
     expect(() => createFinalCuradoria(input)).toThrow(ProtocolError);
   });
 
+  it("rejeita a palavra 'percentual' mesmo sem o símbolo %", () => {
+    const input = buildValidInput();
+    input.comparisonSummary = "A avaliação percentual de compatibilidade foi alta.";
+
+    expect(() => createFinalCuradoria(input)).toThrow(ProtocolError);
+  });
+
+  it("rejeita 'score' em qualquer texto", () => {
+    const input = buildValidInput();
+    input.methodExplanation = "Cada provider recebe um score de compatibilidade.";
+
+    expect(() => createFinalCuradoria(input)).toThrow(ProtocolError);
+  });
+
+  it("rejeita 'o melhor profissional'", () => {
+    const input = buildValidInput();
+    input.providerPresentations[0].whyIncluded = "Este é o melhor profissional disponível.";
+
+    expect(() => createFinalCuradoria(input)).toThrow(ProtocolError);
+  });
+
+  // GO LIVE (auditoria do Golden Set) — "ranking" negando sua própria
+  // existência é exatamente o que specification.md do P010 exige
+  // (comparisonSummary "explica que não há ranking entre os três") e o
+  // que prompt.md pede ao modelo para escrever. Essas construções nunca
+  // podem ser tratadas como violação.
+  it.each([
+    "Não existe ranking entre os profissionais apresentados.",
+    "Sem ranking entre os profissionais.",
+    "Nunca construímos um ranking de providers.",
+    "A Aliviar não cria ranking algum entre os profissionais.",
+    // CAL-001 — amostra real do Golden Set, não coberta pela primeira
+    // correção (lista fechada de verbos): "funciona como" não estava
+    // enumerado. A verificação por cláusula/gatilho cobre sem enumerar.
+    "Não funciona como um ranking.",
+    "Isso não é um ranking.",
+    "Sem qualquer ranking entre eles.",
+    "Nenhum ranking foi feito.",
+    "Jamais apresentamos os profissionais como um ranking.",
+    "As opções não devem ser interpretadas como um ranking.",
+  ])("aceita negação explícita de ranking: %s", (comparisonSummary) => {
+    const input = buildValidInput();
+    input.comparisonSummary = comparisonSummary;
+
+    expect(() => createFinalCuradoria(input)).not.toThrow();
+  });
+
+  it.each([
+    "Este profissional ocupa o primeiro lugar no ranking.",
+    "O ranking indica que este é o mais compatível.",
+    "Confira o ranking de compatibilidade abaixo.",
+    // CAL-001 — casos adversariais: uma negação real, mas de uma oração
+    // anterior e não relacionada, nunca pode "alcançar" um ranking
+    // afirmado em outra oração. Cada um destes teria sido erroneamente
+    // aceito por um gatilho de negação sem delimitação de cláusula.
+    "Não sei se você reparou, mas este é o primeiro no ranking.",
+    "Não há garantia de resultado; porém, o ranking mostra o mais indicado.",
+    "Não analisamos preço. Entretanto, este é o primeiro no ranking.",
+    "Não existe empate: o ranking apresenta uma ordem definitiva.",
+  ])("rejeita afirmação de ranking (sem negação): %s", (comparisonSummary) => {
+    const input = buildValidInput();
+    input.comparisonSummary = comparisonSummary;
+
+    expect(() => createFinalCuradoria(input)).toThrow(ProtocolError);
+  });
+
   it("aceita a menção a 'diagnóstico' no disclaimer obrigatório (nunca substitui, não é uma claim)", () => {
     const input = buildValidInput();
     input.disclaimer = "Esta curadoria não substitui consulta, diagnóstico ou tratamento médico.";
