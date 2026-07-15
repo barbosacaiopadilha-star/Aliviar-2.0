@@ -11,6 +11,10 @@ import {
   FRAMES,
   VIDEO_EXIT_AT_FRAME,
 } from "@/components/landing/portal-frames";
+import {
+  computeNarrativeFrame,
+  TOTAL_HEIGHT_VH,
+} from "@/components/landing/portal-narrative";
 import { PORTAL_SCENE_POSITIONS } from "@/components/landing/portal-scenes";
 import { usePortalMotionPreference } from "@/components/landing/use-portal-motion-preference";
 import { usePortalRawProgress } from "@/components/landing/use-portal-raw-progress";
@@ -29,27 +33,14 @@ type PortalExperienceProps = {
 // Física + conteúdo de cada parada agora vivem em portal-frames.tsx
 // (Camada de Configuração, docs/LANDING_IMPLEMENTATION_ARCHITECTURE.md
 // §1) — este componente é o motor que as interpreta, nunca a fonte delas.
-
-const TOTAL_HEIGHT_VH = FRAMES.reduce((sum, frame) => sum + frame.heightVh, 0);
+// TOTAL_HEIGHT_VH e FRAME_OFFSETS agora vivem em portal-narrative.ts
+// (Motor Narrativo) — mesmo valor, mesma derivação, só relocados.
 
 // Fração do scroll total (0-1) em que começa a aproximação da Biblioteca
 // — os últimos 12% do Portal dissolvem a fotografia no tom de marfim que
 // a Biblioteca já usa, para que a emenda estrutural (fim do sticky) não
 // seja perceptível como corte.
 const HANDOFF_START = 0.88;
-
-// Fração acumulada (0 a 1) de onde cada parada começa — usada pelo Motor
-// da Caminhada para interpolar entre as duas paradas vizinhas a cada
-// instante do scroll.
-const FRAME_OFFSETS: number[] = (() => {
-  const offsets: number[] = [0];
-  let acc = 0;
-  for (const f of FRAMES) {
-    acc += f.heightVh;
-    offsets.push(acc / TOTAL_HEIGHT_VH);
-  }
-  return offsets;
-})();
 
 // Inércia (nada reage instantaneamente) com constantes diferentes por
 // canal — nunca sincronizados entre si, para nunca "denunciar" um efeito.
@@ -178,26 +169,16 @@ export function PortalExperience({
   usePortalRawProgress(sectionRef, motorsEnabled, (overall, now) => {
     const state = ambientStateRef.current;
 
-    let i0 = 0;
-    while (i0 < FRAME_OFFSETS.length - 2 && FRAME_OFFSETS[i0 + 1] <= overall)
-      i0++;
-    const i1 = Math.min(i0 + 1, FRAMES.length - 1);
-    const span = FRAME_OFFSETS[i0 + 1] - FRAME_OFFSETS[i0] || 1;
-    const localT = Math.min(
-      Math.max((overall - FRAME_OFFSETS[i0]) / span, 0),
-      1,
-    );
-
-    const a = FRAMES[i0];
-    // Platô do Respiro: enquanto a parada de origem pedir espera
-    // (holdEntireSpan), o alvo fica travado nos próprios valores dela
-    // durante toda a extensão — nunca interpola em direção à próxima
-    // parada. A inércia (abaixo) continua agindo normalmente sobre esse
-    // alvo constante, então o ambiente converge e simplesmente
-    // permanece — nunca um congelamento abrupto, nunca uma progressão
-    // perceptível durante o platô.
-    const b = a.holdEntireSpan ? a : FRAMES[i1];
-    const effectiveT = a.holdEntireSpan ? 0 : localT;
+    // Interpretação de "onde estou narrativamente" delegada ao Motor
+    // Narrativo (portal-narrative.ts) — mesma matemática de sempre
+    // (índice por FRAME_OFFSETS, fração local, platô do Respiro), agora
+    // testada isoladamente. `a`/`b`/`effectiveT` preservados com os
+    // mesmos nomes para não alterar nada do laço de interpolação abaixo.
+    const {
+      frame: a,
+      targetFrame: b,
+      localProgress: effectiveT,
+    } = computeNarrativeFrame(overall);
     const targetLightX = lerp(a.lightX, b.lightX, effectiveT);
     const targetLightY = lerp(a.lightY, b.lightY, effectiveT);
     const targetIntensidade = lerp(a.intensidade, b.intensidade, effectiveT);
