@@ -169,6 +169,80 @@ describe("FinalCuradoria", () => {
     expect(() => createFinalCuradoria(input)).toThrow(ProtocolError);
   });
 
+  // CAL-004 — mesma classe de problema do CAL-001, expressão diferente:
+  // "mais indicado" saiu de ABSOLUTE_FORBIDDEN_PHRASES (proibição sempre
+  // absoluta) para CONTEXTUAL_FORBIDDEN_PHRASES (proibida só quando
+  // afirmada) — reaproveitando a mesma infraestrutura de cláusula local do
+  // CAL-001, sem duplicar lógica. A primeira frase abaixo é a amostra real
+  // do Golden Set (methodExplanation) que motivou esta calibração.
+  it.each([
+    'O Método Aliviar (ACE) é uma forma de curadoria independente — nunca uma classificação de quem é "o melhor" ou "o mais indicado" de forma absoluta.',
+    "Nenhum profissional é apresentado como mais indicado.",
+    "Isso não significa que um deles seja o mais indicado.",
+    "Não determinamos quem é o mais indicado.",
+    "Sem indicar quem seria o mais indicado.",
+  ])("aceita negação explícita de 'mais indicado': %s", (methodExplanation) => {
+    const input = buildValidInput();
+    input.methodExplanation = methodExplanation;
+
+    expect(() => createFinalCuradoria(input)).not.toThrow();
+  });
+
+  it.each([
+    "Este profissional é o mais indicado para o seu caso.",
+    // Casos adversariais equivalentes ao CAL-001: negação de oração
+    // anterior não relacionada, nunca pode "alcançar" a afirmação de
+    // "mais indicado" na oração seguinte.
+    "Não há garantia de resultado, mas este é o profissional mais indicado.",
+    "Não comparamos preços; entretanto, este é o mais indicado.",
+  ])("rejeita afirmação de 'mais indicado' (sem negação local): %s", (methodExplanation) => {
+    const input = buildValidInput();
+    input.methodExplanation = methodExplanation;
+
+    expect(() => createFinalCuradoria(input)).toThrow(ProtocolError);
+  });
+
+  // CAL-004 — limitação conhecida, não resolvida nesta TASK: litotes
+  // ("não sem X" nega X, ou seja, AFIRMA o que vem depois). Ex.: "Ele foi
+  // apontado, não sem alguma hesitação, como o mais indicado." — o
+  // gatilho "não" está presente e na mesma cláusula de "mais indicado",
+  // então o mecanismo atual (gatilho de negação + cláusula local, sem
+  // entender a dupla negação de "não sem") o trata como negado (aceito),
+  // quando na verdade a frase afirma que o profissional é o mais
+  // indicado. Esse comportamento atual NÃO é considerado correto — seria
+  // um falso negativo real (o único tipo de erro que a prioridade de
+  // segurança do CAL-001/CAL-004 trata como inaceitável). Resolver isso
+  // exige uma decisão futura específica (ex.: reconhecer "não sem" como
+  // padrão de dupla negação, não como gatilho simples) — fora do escopo
+  // desta TASK.
+  it.todo(
+    "rejeitar afirmação de 'mais indicado' expressa por litotes (ex.: 'não sem alguma hesitação'), mesmo quando existe gatilho de negação local",
+  );
+
+  // Demonstra que "ranking" (CAL-001) e "mais indicado" (CAL-004)
+  // compartilham exatamente o mesmo mecanismo de cláusula local — mesma
+  // negação simples aceita, mesma ruptura de oração rejeitada para as
+  // duas expressões, provando a parametrização sem expor internals.
+  it.each([
+    { label: "ranking", text: "Não existe ranking entre os profissionais." },
+    { label: "mais indicado", text: "Não existe alguém mais indicado entre os profissionais." },
+  ])("infraestrutura compartilhada — aceita negação local de $label", ({ text }) => {
+    const input = buildValidInput();
+    input.comparisonSummary = text;
+
+    expect(() => createFinalCuradoria(input)).not.toThrow();
+  });
+
+  it.each([
+    { label: "ranking", text: "Não sei se você reparou, mas este é o primeiro no ranking." },
+    { label: "mais indicado", text: "Não sei se você reparou, mas este é o profissional mais indicado." },
+  ])("infraestrutura compartilhada — rejeita ruptura de oração para $label", ({ text }) => {
+    const input = buildValidInput();
+    input.comparisonSummary = text;
+
+    expect(() => createFinalCuradoria(input)).toThrow(ProtocolError);
+  });
+
   it("aceita a menção a 'diagnóstico' no disclaimer obrigatório (nunca substitui, não é uma claim)", () => {
     const input = buildValidInput();
     input.disclaimer = "Esta curadoria não substitui consulta, diagnóstico ou tratamento médico.";

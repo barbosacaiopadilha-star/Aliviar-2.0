@@ -82,9 +82,10 @@ const REQUIRED_PROVIDER_COUNT = 3;
 // que não há ranking entre os três"): negar a existência de ranking
 // exige nomeá-lo. Banir a substring bare bloquearia exatamente a frase
 // que o prompt.md pede ao modelo para escrever. Ver
-// isRankingOccurrenceNegated/hasUnnegatedRanking abaixo — mesmo
+// isPhraseOccurrenceNegated/hasUnnegatedOccurrenceOfPhrase abaixo — mesmo
 // raciocínio já aplicado a "diagnóstico"/"tratamento" (não banidos por
-// causa do disclaimer), agora generalizado para "ranking".
+// causa do disclaimer), agora generalizado para "ranking" (CAL-001) e
+// "mais indicado" (CAL-004).
 const ABSOLUTE_FORBIDDEN_PHRASES = [
   "primeiro lugar",
   "segundo lugar",
@@ -95,7 +96,6 @@ const ABSOLUTE_FORBIDDEN_PHRASES = [
   "melhor opção",
   "melhor profissional",
   "mais recomendado",
-  "mais indicado",
   "vencedor",
   "vencedora",
   "score",
@@ -109,27 +109,38 @@ const ABSOLUTE_FORBIDDEN_PHRASES = [
 // ("não funciona como um ranking" é uma amostra real do modelo que uma
 // lista de verbos não previu). A verificação abaixo troca "qual verbo
 // específico nega?" por "existe QUALQUER gatilho de negação dentro da
-// MESMA cláusula que este 'ranking'?" — pequena, determinística, auditável
+// MESMA cláusula que esta expressão?" — pequena, determinística, auditável
 // em funções isoladas (nunca uma regex monolítica cobrindo negação e
 // ruptura de cláusula ao mesmo tempo).
+//
+// CAL-004: a mesma infraestrutura (cláusula local + gatilho de negação),
+// antes exclusiva de "ranking", agora é parametrizada pela expressão-alvo
+// — reutilizada por "mais indicado" (mesma classe de problema: o modelo
+// nega legitimamente uma expressão da lista de vocabulário proibido, e uma
+// checagem de substring simples não distingue negação de afirmação).
+// "Ranking" continua se comportando exatamente como antes (mesmas funções,
+// mesmo texto, só chamadas com o parâmetro "ranking" explícito) — nenhuma
+// mudança de comportamento para o CAL-001, comprovada pelos testes
+// existentes continuando a passar sem alteração.
 //
 // Gatilhos de negação: conjunto pequeno e fechado (não/nunca/sem/
 // nenhum+flexões/jamais) — não um verbo específico.
 const NEGATION_TRIGGER_PATTERN = /\bn[ãa]o\b|\bnunca\b|\bsem\b|\bnenhum\w*\b|\bjamais\b/;
 
 // Qualquer um destes encerra a cláusula local — uma negação anterior a eles
-// nunca "alcança" um "ranking" posterior. Pontuação forte sempre delimita;
-// conjunções adversativas delimitam mesmo sem pontuação forte (mudança de
-// oração real: "não sei se você reparou, MAS este é o primeiro no
-// ranking" — a negação pertence à oração anterior, não a esta). Vírgula
-// sozinha nunca delimita por si só — só quando efetivamente acompanha uma
-// das conjunções acima, o que a própria conjunção já cobre.
+// nunca "alcança" uma expressão proibida posterior. Pontuação forte sempre
+// delimita; conjunções adversativas delimitam mesmo sem pontuação forte
+// (mudança de oração real: "não sei se você reparou, MAS este é o
+// primeiro no ranking" — a negação pertence à oração anterior, não a
+// esta). Vírgula sozinha nunca delimita por si só — só quando efetivamente
+// acompanha uma das conjunções acima, o que a própria conjunção já cobre.
 function findClauseBoundaryPattern(): RegExp {
   return /[.?!\n;:]|\bmas\b|\bpor[ée]m\b|\bcontudo\b|\bentretanto\b|\btodavia\b|\bno entanto\b/g;
 }
 
 // Recorta o trecho de texto entre o limite de cláusula mais próximo (antes
-// de `index`) e `index` — a "cláusula local" de uma ocorrência de "ranking".
+// de `index`) e `index` — a "cláusula local" de uma ocorrência da expressão
+// avaliada.
 function extractLocalClauseBefore(text: string, index: number): string {
   const preceding = text.slice(0, index);
   const boundaryPattern = findClauseBoundaryPattern();
@@ -143,11 +154,23 @@ function extractLocalClauseBefore(text: string, index: number): string {
   return preceding.slice(clauseStart);
 }
 
-// Índices de todas as ocorrências da palavra "ranking" no texto — cada uma
-// é avaliada de forma independente (uma pode estar negada, outra não).
-function findRankingOccurrenceIndices(text: string): number[] {
+// Escapa caracteres especiais de regex antes de montar o padrão de
+// ocorrência — `phrase` hoje só recebe literais fixos ("ranking", "mais
+// indicado"), nenhum dos dois contém metacaractere, mas a função existe
+// para que a parametrização nunca dependa desse acaso.
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Índices de todas as ocorrências da expressão-alvo no texto — cada uma é
+// avaliada de forma independente (uma pode estar negada, outra não).
+// `phrase` pode ser uma palavra única ("ranking") ou uma expressão de
+// várias palavras ("mais indicado") — o espaço interno já casa
+// literalmente com o texto (sempre já normalizado para minúsculas antes
+// de chegar aqui).
+function findPhraseOccurrenceIndices(text: string, phrase: string): number[] {
   const indices: number[] = [];
-  const pattern = /\branking\b/g;
+  const pattern = new RegExp(`\\b${escapeRegExp(phrase)}\\b`, "g");
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(text)) !== null) {
     indices.push(match.index);
@@ -155,8 +178,8 @@ function findRankingOccurrenceIndices(text: string): number[] {
   return indices;
 }
 
-function isRankingOccurrenceNegated(text: string, rankingIndex: number): boolean {
-  const localClause = extractLocalClauseBefore(text, rankingIndex);
+function isPhraseOccurrenceNegated(text: string, phraseIndex: number): boolean {
+  const localClause = extractLocalClauseBefore(text, phraseIndex);
   return NEGATION_TRIGGER_PATTERN.test(localClause);
 }
 
@@ -164,13 +187,25 @@ function isRankingOccurrenceNegated(text: string, rankingIndex: number): boolean
 // (ABSOLUTE_FORBIDDEN_PHRASES) — assertNoForbiddenLanguage já a executa
 // antes desta função, então nenhuma cláusula avaliada abaixo pode conter
 // "vencedor"/"melhor opção"/etc. sem já ter lançado ProtocolError primeiro.
-function hasUnnegatedRanking(text: string): boolean {
-  if (!text.includes("ranking")) {
+function hasUnnegatedOccurrenceOfPhrase(text: string, phrase: string): boolean {
+  if (!text.includes(phrase)) {
     return false;
   }
 
-  return findRankingOccurrenceIndices(text).some((index) => !isRankingOccurrenceNegated(text, index));
+  return findPhraseOccurrenceIndices(text, phrase).some((index) => !isPhraseOccurrenceNegated(text, index));
 }
+
+// Expressões proibidas apenas quando AFIRMADAS — uma negação explícita e
+// local (mesmo mecanismo de cláusula acima) é permitida. Distinto de
+// ABSOLUTE_FORBIDDEN_PHRASES (nunca aceitas, mesmo negadas). "ranking"
+// (CAL-001) e "mais indicado" (CAL-004) chegaram aqui pelo mesmo motivo:
+// specification.md do P010 já exige negar "ranking" no texto
+// (comparisonSummary), e o modelo produziu, de forma real e observada, a
+// mesma necessidade para "mais indicado" (methodExplanation). Nenhuma
+// outra entrada de ABSOLUTE_FORBIDDEN_PHRASES foi avaliada nem promovida
+// para cá — cada promoção exige sua própria calibração registrada em
+// docs/ace/CALIBRATION_REPORT.md, nunca em lote.
+const CONTEXTUAL_FORBIDDEN_PHRASES = ["ranking", "mais indicado"];
 
 function isSortedByProviderId(ids: string[]): boolean {
   return ids.every((id, index) => index === 0 || ids[index - 1].localeCompare(id) <= 0);
@@ -221,13 +256,14 @@ function assertNoForbiddenLanguage(input: CreateFinalCuradoriaInput, protocolId:
     }
   }
 
-  if (hasUnnegatedRanking(allText)) {
-    throw new ProtocolError({
-      code: "VALIDATION_FAILED",
-      protocolId,
-      message:
-        'FinalCuradoria não pode conter "ranking" fora de uma negação explícita (ex.: "sem ranking", "não existe ranking") — nunca ranking, nota, vencedor ou conteúdo clínico.',
-    });
+  for (const phrase of CONTEXTUAL_FORBIDDEN_PHRASES) {
+    if (hasUnnegatedOccurrenceOfPhrase(allText, phrase)) {
+      throw new ProtocolError({
+        code: "VALIDATION_FAILED",
+        protocolId,
+        message: `FinalCuradoria não pode conter "${phrase}" fora de uma negação explícita (ex.: "sem ${phrase}", "não existe ${phrase}") — nunca ranking, nota, vencedor ou conteúdo clínico.`,
+      });
+    }
   }
 }
 
