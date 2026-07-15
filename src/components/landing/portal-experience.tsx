@@ -218,14 +218,27 @@ const FRAMES: Frame[] = [
     intensidade: 0.82,
     warmth: 0.3,
     compact: 0.34,
+    // Ponte narrativa (Fase 1 do Masterplan V1.1): a Continuação deixa de
+    // ser uma lista solta de etapas e passa a fechar o arco da Curadoria —
+    // uma frase de abertura torna os três passos reais concretos, uma
+    // frase de fechamento reconhece que dúvidas ainda podem existir, sem
+    // nomear a Biblioteca (isso é Presença Residual, Fase 2). Hierarquia
+    // deliberadamente menor que a Chegada e o CTA final (Progressão
+    // Hierárquica) — a moldura nunca compete com os extremos da jornada.
     content: (
-      <ul className="flex flex-col gap-2 text-center">
-        {CONTINUACAO.map((stage) => (
-          <li key={stage} className="font-serif text-xl text-ink">
-            {stage}
-          </li>
-        ))}
-      </ul>
+      <div className="flex flex-col items-center gap-4 text-center">
+        <p className="font-serif text-xl font-medium leading-snug text-ink lg:text-2xl">
+          O que vem depois já tem forma.
+        </p>
+        <ul className="flex flex-col gap-1.5">
+          {CONTINUACAO.map((stage) => (
+            <li key={stage} className="font-serif text-lg text-ink">
+              {stage}
+            </li>
+          ))}
+        </ul>
+        <p className="text-sm text-ink-muted">E, se ainda houver dúvidas, há espaço para elas também.</p>
+      </div>
     ),
   },
 ];
