@@ -1,7 +1,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
 type TestAccount = { role: string; email: string; password: string };
 
@@ -21,11 +23,54 @@ const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 
 describe("perfil do paciente — RLS e repositório (Supabase local)", () => {
   let accounts: TestAccount[];
+  let patientProfileId: string;
+  let originalPatientProfileRow: Record<string, unknown> | null = null;
 
-  beforeAll(() => {
+  // patient_profiles não tem policy de DELETE por desenho (migration
+  // 20260712050000: "desativação é sempre via status = 'inativo', nunca
+  // exclusão de linha") — nem o grant concede delete a `authenticated`. A
+  // conta fixa de bootstrap "paciente" é compartilhada por toda a suíte e
+  // por execuções consecutivas sem reset; para o teste de inicialização
+  // preguiçosa (linha ausente) continuar significativo, capturamos aqui —
+  // via cliente admin (service_role, único com grant all) — o estado
+  // exatamente como estava antes desta suíte rodar, removemos a linha para
+  // este arquivo poder testar a ausência de verdade, e restauramos
+  // exatamente esse estado no afterAll (nunca uma exclusão real que
+  // sobreviva ao arquivo).
+  beforeAll(async () => {
     expect(url, "NEXT_PUBLIC_SUPABASE_URL ausente — rode `npm run supabase:env`").toBeTruthy();
     expect(anonKey, "NEXT_PUBLIC_SUPABASE_ANON_KEY ausente — rode `npm run supabase:env`").toBeTruthy();
     accounts = loadTestAccounts();
+
+    const paciente = accounts.find((a) => a.role === "paciente")!;
+    const client = createClient(url, anonKey);
+    await client.auth.signInWithPassword({ email: paciente.email, password: paciente.password });
+    const {
+      data: { user },
+    } = await client.auth.getUser();
+    patientProfileId = user!.id;
+    await client.auth.signOut();
+
+    const adminClient = createAdminSupabaseClient();
+    const { data: existing } = await adminClient
+      .from("patient_profiles")
+      .select("*")
+      .eq("profile_id", patientProfileId)
+      .maybeSingle();
+    originalPatientProfileRow = existing;
+
+    if (existing) {
+      await adminClient.from("patient_profiles").delete().eq("profile_id", patientProfileId);
+    }
+  });
+
+  afterAll(async () => {
+    const adminClient = createAdminSupabaseClient();
+    if (originalPatientProfileRow) {
+      await adminClient.from("patient_profiles").upsert(originalPatientProfileRow, { onConflict: "profile_id" });
+    } else {
+      await adminClient.from("patient_profiles").delete().eq("profile_id", patientProfileId);
+    }
   });
 
   it("perfil do paciente não existe até o primeiro salvamento (inicialização preguiçosa)", async () => {
@@ -36,9 +81,6 @@ describe("perfil do paciente — RLS e repositório (Supabase local)", () => {
     const {
       data: { user },
     } = await client.auth.getUser();
-
-    // Garante estado limpo antes do teste (idempotente entre execuções).
-    await client.from("patient_profiles").delete().eq("profile_id", user!.id);
 
     const { data, error } = await client
       .from("patient_profiles")
