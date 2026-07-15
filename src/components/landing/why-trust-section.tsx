@@ -38,8 +38,10 @@ const CRITERIA: Array<{
 export function WhyTrustSection() {
   return (
     <SectionContainer className="relative overflow-hidden bg-[linear-gradient(180deg,_var(--color-bg-canvas)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_75%,_var(--color-ink))_35%,_color-mix(in_srgb,_var(--color-brand-sage)_75%,_var(--color-ink))_100%)]">
+      {/* Espelha a curva de Benefits (mesmo gesto, mão oposta) — reforça
+          a sensação de fio contínuo entre seções. */}
       <GoldenThread
-        d="M300 0 C 180 120, 340 300, 200 400 C 100 470, 260 500, 180 560"
+        d="M60 0 C 260 84, 260 294, 100 392 C 20 441, 60 504, 180 560"
         className="left-1/2 top-0 h-full w-40 -translate-x-1/2 opacity-70 lg:w-64"
         viewBox="0 0 400 560"
       />

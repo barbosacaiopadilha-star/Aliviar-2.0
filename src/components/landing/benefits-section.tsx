@@ -18,25 +18,28 @@ const BENEFITS: Array<{
   {
     icon: ScanSearch,
     title: "Curadoria criteriosa",
-    description: "Análise personalizada para indicar o caminho mais adequado ao seu caso.",
+    description: "O caminho mais adequado ao seu caso, com critério.",
   },
   {
     icon: Clock,
     title: "Agilidade no processo",
-    description: "Acompanhamos cada etapa para reduzir a espera e a burocracia.",
+    description: "Menos espera, menos burocracia, em cada etapa.",
   },
   {
     icon: HeartHandshake,
     title: "Cuidado completo",
-    description: "Alguém dedicado te acompanha do primeiro contato à conversa que importa.",
+    description: "Alguém dedicado, do primeiro contato à conversa que importa.",
   },
 ];
 
 export function BenefitsSection() {
   return (
     <SectionContainer className="relative overflow-hidden bg-[linear-gradient(180deg,_color-mix(in_srgb,_var(--color-brand-sage)_45%,_var(--color-bg-canvas))_0%,_var(--color-bg-canvas)_45%,_var(--color-bg-canvas)_100%)]">
+      {/* Curva única e ampla — o mesmo gesto de "mão em concha" da logo
+          (dois arcos abraçando o coração), nunca uma linha ondulada
+          genérica. */}
       <GoldenThread
-        d="M40 0 C 160 100, 20 260, 140 340 C 220 400, 60 460, 160 520"
+        d="M340 0 C 140 78, 140 273, 300 364 C 380 410, 340 468, 220 520"
         className="left-1/2 top-0 h-full w-40 -translate-x-1/2 opacity-60 lg:w-64"
         viewBox="0 0 400 520"
       />

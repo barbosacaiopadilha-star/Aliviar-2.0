@@ -161,8 +161,9 @@ export function FaqBookSection() {
 
   return (
     <div ref={sectionRef} id="duvidas" className="relative bg-canvas">
+      {/* Mesmo gesto de concha, escala cheia (seção mais alta). */}
       <GoldenThread
-        d="M340 0 C 220 160, 380 360, 240 520 C 140 640, 320 720, 200 800"
+        d="M340 0 C 100 120, 100 420, 300 560 C 400 630, 340 720, 180 800"
         className="left-1/2 top-0 h-full w-40 -translate-x-1/2 opacity-70 lg:w-64"
       />
       <div

@@ -9,13 +9,13 @@ import { FinalCtaSection } from "@/components/landing/final-cta-section";
 import { HeroJourneySection } from "@/components/landing/hero-journey-section";
 import { WhyTrustSection } from "@/components/landing/why-trust-section";
 
-// LANDING V5 — experiência narrativa imersiva: HeroJourneySection (texto
-// de abertura + vídeo institucional "em destaque" que acompanha a
-// jornada em 6 etapas via GSAP pin, some na metade) → Benefits (3 cards)
-// → FaqBookSection (livro físico de Dúvidas/Soluções, vira página ao
-// tocar/rolar) → critérios de avaliação → CTA final. O "fio de ouro"
-// (GoldenThread) atravessa as seções que mais precisam de continuidade
-// visual entre si.
+// LANDING V6 — a página inteira é a recepção da Aliviar: HeroJourneySection
+// é o cenário (foto + vídeo, ambos parados — position:sticky, nunca pin/
+// scale/fade) com a legenda trocando por crossfade conforme a rolagem
+// passa pelas 6 etapas → Benefits (3 cards) → FaqBookSection (livro
+// físico de Dúvidas/Soluções, vira página ao tocar/rolar) → critérios de
+// avaliação → CTA final. O "fio de ouro" (GoldenThread) atravessa as
+// seções com a curvatura do símbolo da marca (mãos em concha).
 export const metadata: Metadata = {
   title: { absolute: "Aliviar Curadoria Médica — Uma escolha de cuidado, nunca sozinho" },
   description:
@@ -42,10 +42,12 @@ function resolveInstitutionalVideo(): { src?: string; poster?: string } {
   };
 }
 
-// Foto do hero (public/scenes/) — mesmo padrão de checagem em disco: cai
-// no gradiente de fallback do Hero até a fotografia editorial real da
-// Aliviar existir.
-const HERO_PHOTO_SRC = "/scenes/recepcao.jpg";
+// Foto do hero (public/scenes/) — versão com luz reforçada
+// (recepcao-bright.jpg, tratada a partir do original via sharp: exposição
+// e temperatura de cor levemente realçadas, mesma foto, nunca substituída
+// por banco de imagens). Mesmo padrão de checagem em disco: cai no
+// gradiente de fallback do Hero até a fotografia editorial real existir.
+const HERO_PHOTO_SRC = "/scenes/recepcao-bright.jpg";
 
 function resolveScenePhoto(relativeSrc: string): string | undefined {
   const filePath = path.join(process.cwd(), "public", relativeSrc);
