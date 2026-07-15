@@ -3,8 +3,8 @@
 import { Maximize2, Play, Volume2, VolumeX, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import { SectionContainer } from "@/components/landing/section-container";
-import { SectionReveal } from "@/components/landing/section-reveal";
+import { SectionContainer } from "@/components/ui/section-container";
+import { SectionReveal } from "@/components/ui/section-reveal";
 import { cn } from "@/components/ui/cn";
 
 type VideoSectionProps = {
@@ -22,7 +22,15 @@ type VideoSectionProps = {
 // de referência (autoplay silencioso, nunca barra de controles nativa
 // competindo com o resto do hero). Sem `src`, cai no selo de marca
 // (placeholder honesto, nunca fabricado).
-function VideoFrame({ src, poster, compact }: { src?: string; poster?: string; compact?: boolean }) {
+function VideoFrame({
+  src,
+  poster,
+  compact,
+}: {
+  src?: string;
+  poster?: string;
+  compact?: boolean;
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
 
@@ -45,14 +53,22 @@ function VideoFrame({ src, poster, compact }: { src?: string; poster?: string; c
             compact ? "size-8" : "size-16",
           )}
         >
-          <Play className={cn("translate-x-0.5 text-surface", compact ? "size-3.5" : "size-6")} aria-hidden="true" />
+          <Play
+            className={cn(
+              "translate-x-0.5 text-surface",
+              compact ? "size-3.5" : "size-6",
+            )}
+            aria-hidden="true"
+          />
         </span>
         {!compact && (
           <div className="relative space-y-1">
             <p className="font-serif text-lg font-medium text-surface lg:text-xl">
               Conheça a Curadoria Médica Aliviar
             </p>
-            <p className="text-sm text-brand-sage-light">Vídeo institucional em breve.</p>
+            <p className="text-sm text-brand-sage-light">
+              Vídeo institucional em breve.
+            </p>
           </div>
         )}
       </div>
@@ -85,7 +101,11 @@ function VideoFrame({ src, poster, compact }: { src?: string; poster?: string; c
         }}
         className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-ink/60 px-3 py-1.5 text-xs font-medium text-surface backdrop-blur-sm transition-colors duration-fast ease-standard hover:bg-ink/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
       >
-        {muted ? <Volume2 className="size-3.5" aria-hidden="true" /> : <VolumeX className="size-3.5" aria-hidden="true" />}
+        {muted ? (
+          <Volume2 className="size-3.5" aria-hidden="true" />
+        ) : (
+          <VolumeX className="size-3.5" aria-hidden="true" />
+        )}
         {muted ? "Ativar som" : "Silenciar"}
       </button>
     </div>
@@ -161,7 +181,11 @@ function VideoModal({
   );
 }
 
-export function VideoSection({ src, poster, variant = "section" }: VideoSectionProps) {
+export function VideoSection({
+  src,
+  poster,
+  variant = "section",
+}: VideoSectionProps) {
   const [modalOpen, setModalOpen] = useState(false);
 
   if (variant === "window") {
@@ -190,7 +214,12 @@ export function VideoSection({ src, poster, variant = "section" }: VideoSectionP
             </span>
           </div>
         </div>
-        <VideoModal open={modalOpen} onClose={() => setModalOpen(false)} src={src} poster={poster} />
+        <VideoModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          src={src}
+          poster={poster}
+        />
       </>
     );
   }
@@ -208,7 +237,8 @@ export function VideoSection({ src, poster, variant = "section" }: VideoSectionP
           Entenda a Aliviar antes de dar o próximo passo
         </h2>
         <p className="mt-3 text-base text-surface/80">
-          O porquê, o como, e quem estará com você — em um só lugar, no seu tempo.
+          O porquê, o como, e quem estará com você — em um só lugar, no seu
+          tempo.
         </p>
       </SectionReveal>
 

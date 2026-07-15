@@ -1,8 +1,8 @@
 import { FinalActions } from "@/components/landing/final-actions";
 import { GoldenThread } from "@/components/landing/golden-thread";
-import { SectionContainer } from "@/components/landing/section-container";
 import { SectionEyebrow } from "@/components/landing/section-eyebrow";
-import { SectionReveal } from "@/components/landing/section-reveal";
+import { SectionContainer } from "@/components/ui/section-container";
+import { SectionReveal } from "@/components/ui/section-reveal";
 
 export function FinalCtaSection() {
   return (

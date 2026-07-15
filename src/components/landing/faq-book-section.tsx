@@ -16,8 +16,8 @@ import {
 } from "@/components/landing/faq-book-turn";
 import { GoldenThread } from "@/components/landing/golden-thread";
 import { SectionEyebrow } from "@/components/landing/section-eyebrow";
-import { SectionReveal } from "@/components/landing/section-reveal";
 import { cn } from "@/components/ui/cn";
+import { SectionReveal } from "@/components/ui/section-reveal";
 
 // Livro físico de Dúvidas — mesmos 6 pares Dúvida/Solução do mecanismo
 // anterior (DuvidasStackSection), agora com hinge real na lombada

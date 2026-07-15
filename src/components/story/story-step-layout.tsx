@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { SectionContainer } from "@/components/landing/section-container";
-import { SectionReveal } from "@/components/landing/section-reveal";
+import { SectionContainer } from "@/components/ui/section-container";
+import { SectionReveal } from "@/components/ui/section-reveal";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 
@@ -51,19 +51,21 @@ export function StoryStepLayout({
           Passo {step} de {totalSteps}
         </span>
         <div aria-hidden="true" className="mb-10 flex items-center gap-1.5">
-          {Array.from({ length: totalSteps }, (_, index) => index + 1).map((mark) => (
-            <span
-              key={mark}
-              className={cn(
-                "h-1 rounded-full transition-[width,background-color] duration-slow ease-standard",
-                mark === step
-                  ? "w-8 bg-brand-gold"
-                  : mark < step
-                    ? "w-3 bg-brand-gold/40"
-                    : "w-3 bg-border",
-              )}
-            />
-          ))}
+          {Array.from({ length: totalSteps }, (_, index) => index + 1).map(
+            (mark) => (
+              <span
+                key={mark}
+                className={cn(
+                  "h-1 rounded-full transition-[width,background-color] duration-slow ease-standard",
+                  mark === step
+                    ? "w-8 bg-brand-gold"
+                    : mark < step
+                      ? "w-3 bg-brand-gold/40"
+                      : "w-3 bg-border",
+                )}
+              />
+            ),
+          )}
         </div>
 
         <SectionReveal>
@@ -71,7 +73,9 @@ export function StoryStepLayout({
             {title}
           </h1>
           {description ? (
-            <p className="mt-4 text-base leading-relaxed text-ink-muted">{description}</p>
+            <p className="mt-4 text-base leading-relaxed text-ink-muted">
+              {description}
+            </p>
           ) : null}
         </SectionReveal>
 

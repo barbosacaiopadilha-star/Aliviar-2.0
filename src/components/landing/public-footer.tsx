@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { SectionReveal } from "@/components/landing/section-reveal";
+import { SectionReveal } from "@/components/ui/section-reveal";
 
 // Multi-coluna (Landing V2) — nenhum canal de contato inventado (sem
 // telefone/e-mail/endereço fictício): só navegação interna já existente
@@ -54,8 +54,8 @@ export function PublicFooter() {
             />
           </Link>
           <p className="max-w-reading text-sm text-surface/70">
-            Curadoria médica independente, com acompanhamento humano em cada etapa — do primeiro
-            contato à conversa que importa.
+            Curadoria médica independente, com acompanhamento humano em cada
+            etapa — do primeiro contato à conversa que importa.
           </p>
         </div>
 

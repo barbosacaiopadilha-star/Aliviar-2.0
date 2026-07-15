@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 
-import { SectionContainer } from "@/components/landing/section-container";
-import { SectionReveal } from "@/components/landing/section-reveal";
+import { SectionContainer } from "@/components/ui/section-container";
+import { SectionReveal } from "@/components/ui/section-reveal";
 import { StoryNarrative } from "@/components/story/story-narrative";
 import { StoryStepLayout } from "@/components/story/story-step-layout";
 import { Button } from "@/components/ui/button";
@@ -25,12 +25,12 @@ export default function RevisaoPage() {
           <div className="mx-auto mt-6 max-w-reading space-y-4 text-base leading-relaxed text-ink-muted">
             <p>Agora ela será analisada com cuidado por nossa equipe médica.</p>
             <p>
-              Nenhuma recomendação é feita automaticamente — cada história passa por revisão humana
-              antes de qualquer orientação.
+              Nenhuma recomendação é feita automaticamente — cada história passa
+              por revisão humana antes de qualquer orientação.
             </p>
             <p>
-              Ela ficará disponível para a equipe Aliviar quando a próxima etapa da sua curadoria for
-              iniciada.
+              Ela ficará disponível para a equipe Aliviar quando a próxima etapa
+              da sua curadoria for iniciada.
             </p>
           </div>
         </SectionReveal>
@@ -43,7 +43,9 @@ export default function RevisaoPage() {
     setError(null);
     const result = await submit();
     if (!result.success) {
-      setError(result.error ?? "Não foi possível concluir agora. Tente novamente.");
+      setError(
+        result.error ?? "Não foi possível concluir agora. Tente novamente.",
+      );
     }
     setIsSubmitting(false);
   }
@@ -56,7 +58,12 @@ export default function RevisaoPage() {
       description="Confira o que você compartilhou. Você pode ajustar qualquer resposta antes de enviar."
       backHref="/sua-historia/preferencias"
       actionSlot={
-        <Button type="button" className="sm:w-auto" isLoading={isSubmitting} onClick={handleSubmit}>
+        <Button
+          type="button"
+          className="sm:w-auto"
+          isLoading={isSubmitting}
+          onClick={handleSubmit}
+        >
           Enviar minha história
         </Button>
       }
@@ -70,8 +77,8 @@ export default function RevisaoPage() {
       ) : null}
 
       <p className="mt-8 text-sm text-ink-muted">
-        Nossa equipe de curadoria analisa cada história com atenção antes de qualquer indicação —
-        nunca por algoritmo automático.
+        Nossa equipe de curadoria analisa cada história com atenção antes de
+        qualquer indicação — nunca por algoritmo automático.
       </p>
     </StoryStepLayout>
   );

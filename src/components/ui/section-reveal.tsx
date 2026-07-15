@@ -4,6 +4,12 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { cn } from "@/components/ui/cn";
 
+// Primitivo genérico de entrada — movido de components/landing/ (PRODUTO
+// DO PACIENTE, Fase 2): usa só IntersectionObserver + uma classe CSS
+// global (@keyframes fade-up, globals.css, não específica da Landing),
+// nenhuma configuração narrativa ou motor da Landing. Consumido pela
+// Landing e pelo wizard "Sua História" — nenhum dos dois importa o outro
+// por causa deste primitivo compartilhado.
 type SectionRevealProps = {
   children: ReactNode;
   className?: string;
@@ -25,7 +31,11 @@ type SectionRevealProps = {
 // elemento entrou na viewport. Se o JS falhar por qualquer motivo
 // (hidratação, observer indisponível), o conteúdo nunca fica preso
 // invisível — CTAs e texto continuam sempre acessíveis.
-export function SectionReveal({ children, className, delayMs }: SectionRevealProps) {
+export function SectionReveal({
+  children,
+  className,
+  delayMs,
+}: SectionRevealProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [animate, setAnimate] = useState(false);
 
@@ -50,7 +60,9 @@ export function SectionReveal({ children, className, delayMs }: SectionRevealPro
     <div
       ref={ref}
       className={cn(animate && "animate-fade-up", className)}
-      style={animate && delayMs ? { animationDelay: `${delayMs}ms` } : undefined}
+      style={
+        animate && delayMs ? { animationDelay: `${delayMs}ms` } : undefined
+      }
     >
       {children}
     </div>
