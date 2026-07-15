@@ -218,13 +218,12 @@
     animation: fade-out-release 900ms var(--ease-standard) both;
   }
 
-  /* Traçado do fio dourado orgânico (GoldenThread) — mesma técnica do
-     gold-arc-path (pathLength=1 no SVG), mas o dashoffset é escrito via
-     GSAP ScrollTrigger (JS), não CSS transition — a classe só fixa o
-     estado inicial (invisível até o scroll começar a desenhar). */
+  /* Traçado do fio dourado orgânico (GoldenThread) — sempre inteiramente
+     visível (nunca "se desenha" com o scroll — isso seria lido como
+     barra de progresso). A opacidade é a única coisa animada (respiração
+     muito lenta, via GSAP), nunca o comprimento do traço. */
   .golden-thread-path {
-    stroke-dasharray: 1;
-    stroke-dashoffset: 1;
+    opacity: 1;
   }
 
   /* Brilho curto (8% do traçado) que desliza em loop lento pelo fio

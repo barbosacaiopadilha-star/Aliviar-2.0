@@ -18,13 +18,14 @@ type GoldenThreadProps = {
   glow?: boolean;
 };
 
-// Segmento do "fio de ouro" orgânico que atravessa a Landing — um SVG por
-// seção (não um único path page-inteira: o fundo opaco de cada seção
-// ocultaria o traço nas emendas, e a altura total mudaria a cada edição
-// de conteúdo). O dashoffset é conduzido por ScrollTrigger (scrub) em vez
-// da técnica de reveal único do GoldCornerAccent — o traço "se desenha"
-// continuamente enquanto a seção rola, e cada segmento entra/sai em
-// pontos de borda consistentes para parecer um fio contínuo.
+// Fio dourado — presença e continuidade, nunca progresso. O traçado fica
+// sempre inteiramente visível (não "se desenha" conforme o scroll — isso
+// seria lido como barra de progresso/timeline, proibido). O único
+// movimento é ornamental: uma respiração muito lenta e de baixa amplitude
+// (opacidade), independente da posição do scroll, mais o brilho
+// percorrendo o traçado em loop (já existente) e, quando `glow` está
+// ativo, uma intensidade de brilho reagindo à proximidade do scroll
+// (não ao progresso total da página). Pausa fora da viewport.
 export function GoldenThread({ d, viewBox = "0 0 400 800", className, glow = false }: GoldenThreadProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
@@ -47,15 +48,16 @@ export function GoldenThread({ d, viewBox = "0 0 400 800", className, glow = fal
       gsap.registerPlugin(ScrollTrigger);
 
       ctx = gsap.context(() => {
-        gsap.to(pathRef.current, {
-          strokeDashoffset: 0,
-          ease: "none",
-          scrollTrigger: {
-            trigger: section,
-            start: "top bottom",
-            end: "bottom top",
-            scrub: 1,
-          },
+        // Respiração — muito lenta, baixíssima amplitude, independente do
+        // scroll: existe para o fio nunca parecer congelado, nunca para
+        // indicar avanço. Pausa/retoma conforme a seção entra/sai de
+        // vista (mesma disciplina de performance já usada no glint).
+        const breatheTween = gsap.to(pathRef.current, {
+          opacity: 0.75,
+          duration: 5,
+          ease: "sine.inOut",
+          repeat: -1,
+          yoyo: true,
         });
 
         if (glow) {
@@ -79,24 +81,37 @@ export function GoldenThread({ d, viewBox = "0 0 400 800", className, glow = fal
         // do comprimento) deslizando em loop lento (7s), nunca "elétrico"
         // ou piscante. Só roda enquanto a seção está visível (pausa fora
         // de tela, sem gastar ciclo à toa).
+        let glintTween: gsap.core.Tween | undefined;
         if (glintRef.current) {
-          const glintTween = gsap.fromTo(
+          glintTween = gsap.fromTo(
             glintRef.current,
             { strokeDashoffset: 1 },
             { strokeDashoffset: 0, duration: 7, ease: "none", repeat: -1 },
           );
           glintTween.pause();
-
-          ScrollTrigger.create({
-            trigger: section,
-            start: "top bottom",
-            end: "bottom top",
-            onEnter: () => glintTween.play(),
-            onEnterBack: () => glintTween.play(),
-            onLeave: () => glintTween.pause(),
-            onLeaveBack: () => glintTween.pause(),
-          });
         }
+
+        ScrollTrigger.create({
+          trigger: section,
+          start: "top bottom",
+          end: "bottom top",
+          onEnter: () => {
+            glintTween?.play();
+            breatheTween.play();
+          },
+          onEnterBack: () => {
+            glintTween?.play();
+            breatheTween.play();
+          },
+          onLeave: () => {
+            glintTween?.pause();
+            breatheTween.pause();
+          },
+          onLeaveBack: () => {
+            glintTween?.pause();
+            breatheTween.pause();
+          },
+        });
       }, section as Element);
     })();
 
@@ -118,9 +133,7 @@ export function GoldenThread({ d, viewBox = "0 0 400 800", className, glow = fal
         stroke="var(--color-brand-gold)"
         strokeWidth="1.5"
         strokeLinecap="round"
-        pathLength={1}
         className="golden-thread-path"
-        style={reduced ? { strokeDashoffset: 0 } : undefined}
       />
       {!reduced && (
         <path

@@ -218,6 +218,12 @@ const FRAMES: Frame[] = [
 
 const TOTAL_HEIGHT_VH = FRAMES.reduce((sum, frame) => sum + frame.heightVh, 0);
 
+// Fração do scroll total (0-1) em que começa a aproximação da Biblioteca
+// — os últimos 12% do Portal dissolvem a fotografia no tom de marfim que
+// a Biblioteca já usa, para que a emenda estrutural (fim do sticky) não
+// seja perceptível como corte.
+const HANDOFF_START = 0.88;
+
 // Fração acumulada (0 a 1) de onde cada parada começa — usada pelo Motor
 // da Caminhada para interpolar entre as duas paradas vizinhas a cada
 // instante do scroll.
@@ -255,6 +261,7 @@ export function PortalExperience({ photoSrc, videoSrc, videoPoster }: PortalExpe
   const rightEdgeRef = useRef<HTMLDivElement>(null);
   const cardWrapRef = useRef<HTMLDivElement>(null);
   const videoInnerRef = useRef<HTMLDivElement>(null);
+  const photoWrapRef = useRef<HTMLDivElement>(null);
   const [activeFrame, setActiveFrame] = useState(0);
   const [reduced, setReduced] = useState(false);
   const [ready, setReady] = useState(false);
@@ -382,18 +389,31 @@ export function PortalExperience({ photoSrc, videoSrc, videoPoster }: PortalExpe
 
       const breath = Math.sin((now / BREATH_PERIOD_MS) * Math.PI * 2) * BREATH_AMPLITUDE;
 
+      // Aproximação da Biblioteca — nos últimos 12% do Portal, a
+      // fotografia se dissolve gradualmente no mesmo tom de marfim
+      // (bg-canvas) com que a Biblioteca já abre: quando o sticky soltar,
+      // o estado visual dos dois lados da emenda já é quase idêntico, e o
+      // corte estrutural deixa de ser perceptível. Paredes e calor
+      // acompanham a mesma dissolução, nunca somem sozinhos.
+      const handoff = Math.min(Math.max((overall - HANDOFF_START) / (1 - HANDOFF_START), 0), 1);
+      const presence = 1 - handoff;
+
+      if (photoWrapRef.current) {
+        photoWrapRef.current.style.opacity = String(presence);
+      }
       if (warmthGlowRef.current) {
         const warmthPercent = ((state.warmth + 1) / 2) * 100;
         warmthGlowRef.current.style.background = `radial-gradient(60% 55% at ${state.lightX}% ${state.lightY}%, color-mix(in srgb, var(--color-brand-gold) ${warmthPercent * 0.35}%, var(--color-brand-sage) ${100 - warmthPercent * 0.35}%) 0%, transparent 72%)`;
-        warmthGlowRef.current.style.opacity = String(Math.max(state.intensidade * 0.55 + breath, 0));
+        warmthGlowRef.current.style.opacity = String(Math.max((state.intensidade * 0.55 + breath) * presence, 0));
       }
       // Bordas — esmaecimento orgânico e morno, nunca uma barra: formas
       // suaves, muito desfocadas, em tons da própria paleta (nunca preto).
-      const edgeOpacity = 0.28 + state.intensidade * 0.32;
+      const edgeOpacity = (0.28 + state.intensidade * 0.32) * presence;
       if (leftEdgeRef.current) leftEdgeRef.current.style.opacity = String(edgeOpacity);
       if (rightEdgeRef.current) rightEdgeRef.current.style.opacity = String(edgeOpacity);
       if (cardWrapRef.current) {
         cardWrapRef.current.style.maxWidth = `${40 - state.compact * 6}rem`;
+        cardWrapRef.current.style.opacity = String(presence);
       }
     };
 
@@ -446,9 +466,13 @@ export function PortalExperience({ photoSrc, videoSrc, videoPoster }: PortalExpe
       })}
 
       {/* O ambiente — permanente, nunca troca de cenário: a mesma
-          fotografia do início ao fim. */}
-      <div className="sticky top-0 h-svh w-full overflow-hidden">
-        {photoSrc && <Image src={photoSrc} alt="" fill priority className="object-cover" sizes="100vw" />}
+          fotografia do início ao fim, dissolvendo-se no marfim da
+          Biblioteca só nos últimos instantes (ver "handoff" no Motor da
+          Caminhada), nunca cortando. */}
+      <div className="sticky top-0 h-svh w-full overflow-hidden bg-canvas">
+        <div ref={photoWrapRef} className="absolute inset-0">
+          {photoSrc && <Image src={photoSrc} alt="" fill priority className="object-cover" sizes="100vw" />}
+        </div>
 
         {/* Calor ambiente — nunca um holofote: um brilho morno, muito
             desfocado, que se desloca devagar e muda de temperatura
