@@ -24,19 +24,36 @@ async function loginAs(page: Page, account: TestAccount) {
   await page.waitForURL((url) => !url.pathname.startsWith("/login"));
 }
 
+// Um dos quatro títulos de estado da Home (src/components/paciente/patient-home-state.tsx)
+// — qual deles aparece depende do estado real do paciente de teste no banco local,
+// que muda conforme outras suítes (Sua História) rodam antes desta.
+const HOME_STATE_HEADINGS = [
+  "Este espaço começa com a sua história.",
+  "Sua história continua aqui.",
+  "Sua história já está conosco.",
+  "Seu cuidado está em andamento.",
+];
+
 test.describe("Portal do Paciente", () => {
-  test("dashboard nunca mostra mensagem fria, sempre explica o próximo passo", async ({ page }) => {
+  test("Home sempre explica o próximo passo, nunca uma mensagem fria ou técnica", async ({ page }) => {
     const paciente = loadTestAccounts().find((a) => a.role === "paciente")!;
     await loginAs(page, paciente);
 
     await page.goto("/paciente");
 
-    await expect(page.getByRole("heading", { name: "Status da sua curadoria" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Próximos passos" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Mensagens da Aliviar" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Notificações" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Olá,/, level: 1 })).toBeVisible();
 
-    for (const cold of ["Nenhum dado encontrado.", "Nenhum registro.", "Nenhum caso."]) {
+    const visibleStateHeadings = await Promise.all(
+      HOME_STATE_HEADINGS.map((name) => page.getByRole("heading", { name, level: 2 }).isVisible()),
+    );
+    expect(visibleStateHeadings.some(Boolean)).toBe(true);
+
+    for (const cold of [
+      "Nenhum dado encontrado.",
+      "Nenhum registro.",
+      "Nenhum caso.",
+      "Status da sua curadoria",
+    ]) {
       await expect(page.getByText(cold, { exact: true })).toHaveCount(0);
     }
   });
@@ -81,20 +98,25 @@ test.describe("Portal do Paciente", () => {
 test.describe("Portal do Paciente — mobile (ÉPICO 1/SPRINT 2)", () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
-  test("card de status da curadoria é legível em mobile", async ({ page }) => {
+  test("Home é legível em mobile", async ({ page }) => {
     const paciente = loadTestAccounts().find((a) => a.role === "paciente")!;
     await loginAs(page, paciente);
 
     await page.goto("/paciente");
-    await expect(page.getByRole("heading", { name: "Status da sua curadoria" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Olá,/, level: 1 })).toBeVisible();
+
+    const visibleStateHeadings = await Promise.all(
+      HOME_STATE_HEADINGS.map((name) => page.getByRole("heading", { name, level: 2 }).isVisible()),
+    );
+    expect(visibleStateHeadings.some(Boolean)).toBe(true);
   });
 
-  test("(ÉPICO 1/SPRINT 3) dashboard mobile nunca revela vocabulário interno do ACE", async ({ page }) => {
+  test("(ÉPICO 1/SPRINT 3) Home mobile nunca revela vocabulário interno do ACE", async ({ page }) => {
     const paciente = loadTestAccounts().find((a) => a.role === "paciente")!;
     await loginAs(page, paciente);
 
     await page.goto("/paciente");
-    await expect(page.getByRole("heading", { name: "Status da sua curadoria" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Olá,/, level: 1 })).toBeVisible();
 
     const bodyText = (await page.textContent("body")) ?? "";
     for (const forbidden of ["Shortlist", "P001", "P008", "fake-deterministic", "protocolo", "ACE"]) {
