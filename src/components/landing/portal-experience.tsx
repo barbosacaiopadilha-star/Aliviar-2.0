@@ -12,10 +12,12 @@ import {
   getCompanionVideoExitFrameRange,
   isCompanionVideoExiting,
 } from "@/components/landing/portal-companion-video";
+import { computeContinuousPresence } from "@/components/landing/portal-continuous-presence";
 import {
   createEnvironmentEngine,
   type EnvironmentEngine,
 } from "@/components/landing/portal-environment";
+import { computePortalExitState } from "@/components/landing/portal-exit-transition";
 import { FRAMES } from "@/components/landing/portal-frames";
 import {
   computeNarrativeFrame,
@@ -42,18 +44,10 @@ type PortalExperienceProps = {
 // TOTAL_HEIGHT_VH e FRAME_OFFSETS agora vivem em portal-narrative.ts
 // (Motor Narrativo) — mesmo valor, mesma derivação, só relocados.
 
-// Fração do scroll total (0-1) em que começa a aproximação da Biblioteca
-// — os últimos 12% do Portal dissolvem a fotografia no tom de marfim que
-// a Biblioteca já usa, para que a emenda estrutural (fim do sticky) não
-// seja perceptível como corte.
-const HANDOFF_START = 0.88;
-
-// Respiração — uma oscilação lentíssima e mínima, independente do scroll,
-// que impede o ambiente de parecer congelado mesmo parado. Não deriva de
-// NarrativeFrame (só do relógio), por isso fica fora do Motor de
-// Ambiente — ver portal-environment.ts.
-const BREATH_PERIOD_MS = 9000;
-const BREATH_AMPLITUDE = 0.015;
+// HANDOFF_START (Transição de Saída) e BREATH_PERIOD_MS/BREATH_AMPLITUDE
+// (Presença Contínua) agora vivem em portal-exit-transition.ts e
+// portal-continuous-presence.ts — mesmos valores, mesma derivação, só
+// relocados (Playbook, Etapa 6).
 
 export function PortalExperience({
   scenes,
@@ -172,29 +166,17 @@ export function PortalExperience({
     const narrative = computeNarrativeFrame(overall);
     const state = environmentEngineRef.current.step(narrative);
 
-    const breath =
-      Math.sin((now / BREATH_PERIOD_MS) * Math.PI * 2) * BREATH_AMPLITUDE;
+    // Presença Contínua (Fio Dourado) e Transição de Saída (aproximação
+    // da Biblioteca) — dois motores de acabamento independentes um do
+    // outro (Playbook, Etapa 6): o primeiro só de `now`, o segundo só de
+    // `overall`. Nenhum dos dois conhece o outro nem o Ambiente.
+    const { breath, threadOpacity } = computeContinuousPresence(now);
+    const { portalPresence: presence } = computePortalExitState(overall);
 
-    // Aproximação da Biblioteca — nos últimos 12% do Portal, a
-    // fotografia se dissolve gradualmente no mesmo tom de marfim
-    // (bg-canvas) com que a Biblioteca já abre: quando o sticky soltar,
-    // o estado visual dos dois lados da emenda já é quase idêntico, e o
-    // corte estrutural deixa de ser perceptível. Paredes e calor
-    // acompanham a mesma dissolução, nunca somem sozinhos.
-    const handoff = Math.min(
-      Math.max((overall - HANDOFF_START) / (1 - HANDOFF_START), 0),
-      1,
-    );
-    const presence = 1 - handoff;
-
-    // Fio Dourado (Capítulo 5, Fonte Única) — reaproveita a mesma
-    // respiração do ambiente em vez de ter um relógio próprio; o traço
-    // reflete a luz da sala, nunca acende a própria. Deliberadamente
-    // NÃO multiplicado por `presence`: o Fio é o único elemento que
-    // atravessa a costura Portal→Biblioteca sem desvanecer (decisão já
-    // registrada antes deste capítulo) — só o pulso muda, a presença
-    // do traço em si permanece contínua.
-    const threadOpacity = 0.875 + (breath / BREATH_AMPLITUDE) * 0.125;
+    // Fio Dourado — deliberadamente NÃO multiplicado por `presence`: é o
+    // único elemento que atravessa a costura Portal→Biblioteca sem
+    // desvanecer (decisão já registrada antes desta etapa) — só o pulso
+    // muda, a presença do traço em si permanece contínua.
     goldenThreadRef.current?.setPulse(threadOpacity);
 
     // Direção de fotografia — crossfade entre cenas (Motor de
