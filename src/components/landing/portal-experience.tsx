@@ -114,11 +114,22 @@ export function PortalExperience({
     const videoEl = videoInnerRef.current;
     if (!exitStart || !exitEnd || !videoEl) return;
 
+    // `cancelled` fecha uma corrida real entre este import assíncrono e a
+    // limpeza do efeito: se o componente desmontar (ou motorsEnabled/
+    // videoSrc mudar) antes de `import("gsap")` resolver, a função de
+    // limpeza abaixo roda primeiro, com `ctx` ainda `undefined` — sem esta
+    // flag, `ctx?.revert()` seria um no-op e o `gsap.context`/ScrollTrigger
+    // criado depois, quando o import finalmente resolve, nunca seria
+    // revertido (achado real de hardening, Etapa 9 — React Strict Mode
+    // reproduz isso a cada carga em desenvolvimento, montando e
+    // desmontando o efeito antes do import assíncrono terminar).
+    let cancelled = false;
     let ctx: { revert: () => void } | undefined;
 
     (async () => {
       const { gsap } = await import("gsap");
       const { ScrollTrigger } = await import("gsap/ScrollTrigger");
+      if (cancelled) return;
       gsap.registerPlugin(ScrollTrigger);
 
       ctx = gsap.context(() => {
@@ -137,7 +148,10 @@ export function PortalExperience({
       });
     })();
 
-    return () => ctx?.revert();
+    return () => {
+      cancelled = true;
+      ctx?.revert();
+    };
   }, [motorsEnabled, videoSrc]);
 
   // Motor da Caminhada — traduz a posição de scroll (Motor de Progresso

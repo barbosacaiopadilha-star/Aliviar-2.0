@@ -50,11 +50,17 @@ export function FaqBookSection() {
     setReady(true);
     if (reduceMotion) return;
 
+    // `cancelled` fecha a mesma corrida registrada em portal-experience.tsx
+    // (Etapa 9): sem ela, desmontar antes de `import("gsap")` resolver
+    // deixaria este pin/timeline (e o ScrollTrigger da Biblioteca inteira)
+    // vivo para sempre, nunca revertido.
+    let cancelled = false;
     let ctx: { revert: () => void } | undefined;
 
     (async () => {
       const { gsap } = await import("gsap");
       const { ScrollTrigger } = await import("gsap/ScrollTrigger");
+      if (cancelled) return;
       gsap.registerPlugin(ScrollTrigger);
 
       ctx = gsap.context(() => {
@@ -120,6 +126,7 @@ export function FaqBookSection() {
     })();
 
     return () => {
+      cancelled = true;
       ctx?.revert();
       scrollTriggerRef.current = null;
     };
