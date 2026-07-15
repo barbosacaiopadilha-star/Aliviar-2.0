@@ -12,6 +12,10 @@ import {
   VIDEO_EXIT_AT_FRAME,
 } from "@/components/landing/portal-frames";
 import {
+  createEnvironmentEngine,
+  type EnvironmentEngine,
+} from "@/components/landing/portal-environment";
+import {
   computeNarrativeFrame,
   TOTAL_HEIGHT_VH,
 } from "@/components/landing/portal-narrative";
@@ -42,21 +46,12 @@ type PortalExperienceProps = {
 // seja perceptível como corte.
 const HANDOFF_START = 0.88;
 
-// Inércia (nada reage instantaneamente) com constantes diferentes por
-// canal — nunca sincronizados entre si, para nunca "denunciar" um efeito.
-const DAMPING = {
-  light: 0.045,
-  intensidade: 0.035,
-  warmth: 0.02,
-  compact: 0.08,
-};
-
 // Respiração — uma oscilação lentíssima e mínima, independente do scroll,
-// que impede o ambiente de parecer congelado mesmo parado.
+// que impede o ambiente de parecer congelado mesmo parado. Não deriva de
+// NarrativeFrame (só do relógio), por isso fica fora do Motor de
+// Ambiente — ver portal-environment.ts.
 const BREATH_PERIOD_MS = 9000;
 const BREATH_AMPLITUDE = 0.015;
-
-const lerp = (from: number, to: number, t: number) => from + (to - from) * t;
 
 export function PortalExperience({
   scenes,
@@ -158,39 +153,23 @@ export function PortalExperience({
   // state) para não gerar dezenas de renderizações por segundo. Pausa
   // quando o Portal sai da viewport (responsabilidade do motor de
   // progresso, não deste efeito).
-  const ambientStateRef = useRef({
-    lightX: FRAMES[0].lightX,
-    lightY: FRAMES[0].lightY,
-    intensidade: FRAMES[0].intensidade,
-    warmth: FRAMES[0].warmth,
-    compact: FRAMES[0].compact,
-  });
+  const environmentEngineRef = useRef<EnvironmentEngine>(
+    createEnvironmentEngine({
+      lightX: FRAMES[0].lightX,
+      lightY: FRAMES[0].lightY,
+      intensidade: FRAMES[0].intensidade,
+      warmth: FRAMES[0].warmth,
+      compact: FRAMES[0].compact,
+    }),
+  );
 
   usePortalRawProgress(sectionRef, motorsEnabled, (overall, now) => {
-    const state = ambientStateRef.current;
-
-    // Interpretação de "onde estou narrativamente" delegada ao Motor
-    // Narrativo (portal-narrative.ts) — mesma matemática de sempre
-    // (índice por FRAME_OFFSETS, fração local, platô do Respiro), agora
-    // testada isoladamente. `a`/`b`/`effectiveT` preservados com os
-    // mesmos nomes para não alterar nada do laço de interpolação abaixo.
-    const {
-      frame: a,
-      targetFrame: b,
-      localProgress: effectiveT,
-    } = computeNarrativeFrame(overall);
-    const targetLightX = lerp(a.lightX, b.lightX, effectiveT);
-    const targetLightY = lerp(a.lightY, b.lightY, effectiveT);
-    const targetIntensidade = lerp(a.intensidade, b.intensidade, effectiveT);
-    const targetWarmth = lerp(a.warmth, b.warmth, effectiveT);
-    const targetCompact = lerp(a.compact, b.compact, effectiveT);
-
-    state.lightX += (targetLightX - state.lightX) * DAMPING.light;
-    state.lightY += (targetLightY - state.lightY) * DAMPING.light;
-    state.intensidade +=
-      (targetIntensidade - state.intensidade) * DAMPING.intensidade;
-    state.warmth += (targetWarmth - state.warmth) * DAMPING.warmth;
-    state.compact += (targetCompact - state.compact) * DAMPING.compact;
+    // Onde estou narrativamente (Motor Narrativo) → parâmetros
+    // atmosféricos contínuos (Motor de Ambiente, portal-environment.ts)
+    // — mesma matemática de sempre (lerp por canal + amortecimento
+    // independente), agora testada isoladamente nos dois motores.
+    const narrative = computeNarrativeFrame(overall);
+    const state = environmentEngineRef.current.step(narrative);
 
     const breath =
       Math.sin((now / BREATH_PERIOD_MS) * Math.PI * 2) * BREATH_AMPLITUDE;
