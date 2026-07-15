@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { changeCaseStatus, createCase, getCase } from "@/modules/cases/repository";
@@ -46,6 +46,26 @@ describe("Execução controlada do ACE (ÉPICO 1/SPRINT 3, Supabase local)", () 
     expect(url).toBeTruthy();
     expect(anonKey).toBeTruthy();
     accounts = loadTestAccounts();
+  });
+
+  // Isolamento de dados entre testes (triagem das 3 falhas de Shortlist):
+  // professional_profiles/professional_competency_areas são um recurso
+  // global no Supabase local, nunca escopado por Caso — cada profissional
+  // criado por seedEligibleProfessional() precisa ser removido ao final do
+  // teste que o criou, nunca deixado para trás, senão contamina a
+  // avaliação de elegibilidade (P006) de qualquer teste seguinte, nesta
+  // execução ou em execuções futuras do comando.
+  let createdProfessionalIds: string[] = [];
+
+  afterEach(async () => {
+    if (createdProfessionalIds.length === 0) {
+      return;
+    }
+    const adminClient = createAdminSupabaseClient();
+    // Ordem respeita a FK: competency_areas referencia professional_profiles.
+    await adminClient.from("professional_competency_areas").delete().in("professional_profile_id", createdProfessionalIds);
+    await adminClient.from("professional_profiles").delete().in("id", createdProfessionalIds);
+    createdProfessionalIds = [];
   });
 
   async function loginAs(role: string) {
@@ -104,6 +124,7 @@ describe("Execução controlada do ACE (ÉPICO 1/SPRINT 3, Supabase local)", () 
       .from("professional_competency_areas")
       .insert({ professional_profile_id: professional.id, domain: "nao_determinado", focus: "avaliacao" });
 
+    createdProfessionalIds.push(professional.id);
     return professional.id;
   }
 
@@ -319,6 +340,21 @@ describe("Observabilidade do ACE (sprint intermediária, Supabase local)", () =>
     accounts = loadTestAccounts();
   });
 
+  // Mesmo isolamento de dados do describe anterior — escopo próprio de
+  // rastreamento, já que cada describe define seu próprio
+  // seedEligibleProfessional().
+  let createdProfessionalIds: string[] = [];
+
+  afterEach(async () => {
+    if (createdProfessionalIds.length === 0) {
+      return;
+    }
+    const adminClient = createAdminSupabaseClient();
+    await adminClient.from("professional_competency_areas").delete().in("professional_profile_id", createdProfessionalIds);
+    await adminClient.from("professional_profiles").delete().in("id", createdProfessionalIds);
+    createdProfessionalIds = [];
+  });
+
   async function loginAs(role: string) {
     const account = accounts.find((a) => a.role === role)!;
     const client = createClient(url, anonKey);
@@ -370,6 +406,7 @@ describe("Observabilidade do ACE (sprint intermediária, Supabase local)", () =>
       .from("professional_competency_areas")
       .insert({ professional_profile_id: professional.id, domain: "nao_determinado", focus: "avaliacao" });
 
+    createdProfessionalIds.push(professional.id);
     return professional.id;
   }
 
