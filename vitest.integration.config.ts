@@ -7,6 +7,15 @@ export default defineConfig({
     include: ["tests/integration/**/*.test.ts"],
     setupFiles: ["./tests/integration/setup-env.ts"],
     testTimeout: 20000,
+    // Todos os arquivos desta suíte compartilham o mesmo Supabase local —
+    // tabelas globais sem namespace por arquivo (ex.: professional_profiles).
+    // Rodar arquivos em paralelo (padrão do Vitest) faz dois arquivos
+    // contenderem pelo mesmo pool global ao mesmo tempo, produzindo falhas
+    // não determinísticas alheias ao que cada teste individualmente
+    // verifica. Execução serial entre arquivos é uma propriedade necessária
+    // desta suíte, não uma otimização — nunca desativar sem antes dar a
+    // cada recurso global um escopo próprio por arquivo/teste.
+    fileParallelism: false,
   },
   resolve: {
     alias: {
