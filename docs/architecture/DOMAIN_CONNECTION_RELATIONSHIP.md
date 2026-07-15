@@ -1,6 +1,8 @@
 # Domínio: Connection & Relationship Engine
 
-**Estado**: Conceitual (Fase 0 concluída). Nenhuma lógica está implementada. `src/modules/connection/` existe apenas como pasta reservada, com um único arquivo (`index.ts`) contendo o comentário `// Módulo reservado — aguarda implementação no MVP.` — nenhum código funcional. `src/modules/relationship/` não existe, nem mesmo como placeholder.
+**Estado**: **Implementação em Auditoria** (`docs/DECISIONS.md`, ADR-027, 2026-07-15) — só a parte **Connection** (pontual: decisão do paciente + primeiro contato). `src/modules/connection/` tem domínio puro, persistência (migrations + RLS + funções de transição atômica), Server Actions e dois componentes de apresentação (`ConnectionChoicePanel`, `ConnectionProgressPanel`), com testes unitários, de componente, de integração e e2e. **Relationship** (a parte longitudinal — continuidade de atendimento, encerramento, reabertura) permanece exatamente como descrito abaixo: `src/modules/relationship/` não existe, nem mesmo como placeholder, e nada nesta ADR autoriza sua criação.
+
+**Estado anterior (histórico, preservado — nunca apagado)**: até 2026-07-15, este domínio era classificado como _"Conceitual (Fase 0 concluída). Nenhuma lógica está implementada. `src/modules/connection/` existe apenas como pasta reservada, com um único arquivo (`index.ts`) contendo o comentário `// Módulo reservado — aguarda implementação no MVP.` — nenhum código funcional."_ A implementação real surgiu no working tree **antes** desta atualização documental ter sido autorizada — este documento não afirma que a autorização já existia quando o código foi escrito (ver ADR-027 para o relato completo do achado e da decisão de governança).
 
 ## Missão
 
@@ -18,22 +20,24 @@ Cobrir o que acontece depois que a Curadoria é entregue: o momento pontual de c
 
 ## Entradas
 
-- `FinalCuradoria`/`DeliveryArtifact` (da Curadoria).
-- Ações do paciente e do profissional após a entrega (hoje nenhuma capturada — não implementado).
+- `FinalCuradoria`/`DeliveryArtifact` (da Curadoria) — implementado: `connection_records.final_curadoria_delivery_id` referencia `final_curadoria_deliveries`, lido via `getFinalCuradoriaDeliveryForCase`.
+- Ações do paciente após a entrega — implementado para a parte Connection (decisão, correção de escolha, intenção de contato, confirmação de primeiro atendimento, encerramento sem relacionamento). Ações do profissional após a entrega, e qualquer sinal da parte Relationship (continuidade, reabertura), continuam não capturadas — não implementado.
 
 ## Saídas
 
-- Estado de relacionamento (ex.: ativo, encerrado, reaberto) — formato ainda não desenhado.
-- Sinal bruto de comportamento (ex.: reabertura) disponível para Compatibility Intelligence consumir como evidência.
+- Estado de `ConnectionRecord` (`DECISAO_REGISTRADA` → `CONTATO_INICIADO` → `PRIMEIRO_ATENDIMENTO_REALIZADO`/`ENCERRADO_SEM_RELACIONAMENTO`) — implementado, `connection_records`/`connection_events` (migrations PR1/PR3, `docs/DECISIONS.md` ADR-027).
+- Estado de relacionamento longitudinal (ex.: reaberto) — formato ainda não desenhado, não implementado (Relationship).
+- Sinal bruto de comportamento (ex.: reabertura) disponível para Compatibility Intelligence consumir como evidência — ainda não implementado (depende de Relationship).
 
 ## Dependências
 
-- Depende da Curadoria para saber que uma entrega aconteceu.
-- É a única fonte possível, hoje, para os sinais de Camada 3 (experiência vivida) do CI — mas o CI depende deste domínio, não o contrário.
+- Depende da Curadoria para saber que uma entrega aconteceu — implementado (`getFinalCuradoriaDeliveryForCase`, `modules/cases/repository.ts`).
+- É a única fonte possível, hoje, para os sinais de Camada 3 (experiência vivida) do CI — mas o CI depende deste domínio, não o contrário. Nenhuma integração com Compatibility Intelligence foi implementada nesta fase.
 
 ## Fonte oficial da verdade
 
-- Ainda não existe — este domínio não tem implementação, logo não tem fonte de dado real hoje. Quando implementado, seria a fonte oficial exclusiva do "estado de relacionamento" do Caso pós-entrega.
+- Para a parte Connection: `connection_records`/`connection_events` (Postgres, RLS aplicado) são a fonte oficial exclusiva do estado de decisão/primeiro contato de um Caso — implementado.
+- Para a parte Relationship (estado de relacionamento longitudinal do Caso pós-entrega): ainda não existe — nenhuma implementação.
 
 ## Invariantes
 

@@ -8,19 +8,19 @@ Documento canônico da arquitetura conceitual da Aliviar. Consolida em um único
 
 ## Os sete domínios oficiais
 
-| # | Domínio | Estado | Documento |
-|---|---|---|---|
-| 1 | Jornada do Paciente | Implementado | [`DOMAIN_JOURNEY.md`](./DOMAIN_JOURNEY.md) |
-| 2 | Aliviar Curation Engine (ACE) | Implementado (P001–P008) | [`DOMAIN_ACE.md`](./DOMAIN_ACE.md) |
-| 3 | Curadoria (Human Review + Entrega) | Implementado (P009–P010) | [`DOMAIN_CURATION.md`](./DOMAIN_CURATION.md) |
-| 4 | Connection & Relationship Engine | Conceitual (Fase 0) | [`DOMAIN_CONNECTION_RELATIONSHIP.md`](./DOMAIN_CONNECTION_RELATIONSHIP.md) |
-| 5 | Compatibility Intelligence (CI) | Conceitual (Fases 0–6 completas) | [`DOMAIN_COMPATIBILITY_INTELLIGENCE.md`](./DOMAIN_COMPATIBILITY_INTELLIGENCE.md) |
-| 6 | Observatório da Experiência | Protocolo ativo, sem dado real ainda | [`DOMAIN_EXPERIENCE_OBSERVATORY.md`](./DOMAIN_EXPERIENCE_OBSERVATORY.md) |
-| 7 | Governança do Conhecimento | Conceitual | [`DOMAIN_KNOWLEDGE_GOVERNANCE.md`](./DOMAIN_KNOWLEDGE_GOVERNANCE.md) |
+| #   | Domínio                            | Estado                                                                                                                                                                                                                   | Documento                                                                        |
+| --- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| 1   | Jornada do Paciente                | Implementado                                                                                                                                                                                                             | [`DOMAIN_JOURNEY.md`](./DOMAIN_JOURNEY.md)                                       |
+| 2   | Aliviar Curation Engine (ACE)      | Implementado (P001–P008)                                                                                                                                                                                                 | [`DOMAIN_ACE.md`](./DOMAIN_ACE.md)                                               |
+| 3   | Curadoria (Human Review + Entrega) | Implementado (P009–P010)                                                                                                                                                                                                 | [`DOMAIN_CURATION.md`](./DOMAIN_CURATION.md)                                     |
+| 4   | Connection & Relationship Engine   | Connection: **Implementação em Auditoria** (`docs/DECISIONS.md` ADR-027, 2026-07-15; até então, Conceitual/Fase 0 — histórico preservado no documento de domínio). Relationship: continua Conceitual, nada implementado. | [`DOMAIN_CONNECTION_RELATIONSHIP.md`](./DOMAIN_CONNECTION_RELATIONSHIP.md)       |
+| 5   | Compatibility Intelligence (CI)    | Conceitual (Fases 0–6 completas)                                                                                                                                                                                         | [`DOMAIN_COMPATIBILITY_INTELLIGENCE.md`](./DOMAIN_COMPATIBILITY_INTELLIGENCE.md) |
+| 6   | Observatório da Experiência        | Protocolo ativo, sem dado real ainda                                                                                                                                                                                     | [`DOMAIN_EXPERIENCE_OBSERVATORY.md`](./DOMAIN_EXPERIENCE_OBSERVATORY.md)         |
+| 7   | Governança do Conhecimento         | Conceitual                                                                                                                                                                                                               | [`DOMAIN_KNOWLEDGE_GOVERNANCE.md`](./DOMAIN_KNOWLEDGE_GOVERNANCE.md)             |
 
 Todos os invariantes permanentes que atravessam mais de um domínio estão consolidados em [`ARCHITECTURAL_INVARIANTS.md`](./ARCHITECTURAL_INVARIANTS.md) — cada documento de domínio lista só os invariantes que lhe são próprios, e referencia o consolidado para os demais.
 
-**Regra de governança arquitetural** (2026-07-15): a partir desta consolidação, nenhum domínio novo deve ser criado sem justificar explicitamente por que os sete domínios existentes não conseguem absorver a nova responsabilidade. Evolução futura deve, por padrão, ocorrer *dentro* de um domínio já definido.
+**Regra de governança arquitetural** (2026-07-15): a partir desta consolidação, nenhum domínio novo deve ser criado sem justificar explicitamente por que os sete domínios existentes não conseguem absorver a nova responsabilidade. Evolução futura deve, por padrão, ocorrer _dentro_ de um domínio já definido.
 
 ## Diagrama Mestre
 
@@ -56,17 +56,17 @@ Este é o diagrama de referência usado, sem variação, em todos os documentos 
 
 ## Fontes oficiais da verdade (resumo — detalhe em cada domínio)
 
-| Informação | Fonte oficial |
-|---|---|
-| Caso (estado, transições) | ACE + Curadoria (`src/modules/cases`) |
-| Narrativa | ACE — P001 |
-| Compatibilidade técnica (elegibilidade) | ACE — P006/P007 |
-| Compatibilidade humana (padrão aprovado) | Governança do Conhecimento |
-| Relacionamento (estado, ciclo de vida) | Connection & Relationship Engine |
-| Prioridades declaradas | Jornada do Paciente |
-| Evidências | Múltiplas fontes catalogadas (Connection/Relationship, Jornada, justificativa do Curador) — ver `DOMAIN_COMPATIBILITY_INTELLIGENCE.md` |
-| Hipóteses | Compatibility Intelligence, exclusivamente |
-| Padrões (conhecimento aprovado) | Governança do Conhecimento, exclusivamente |
+| Informação                               | Fonte oficial                                                                                                                          |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Caso (estado, transições)                | ACE + Curadoria (`src/modules/cases`)                                                                                                  |
+| Narrativa                                | ACE — P001                                                                                                                             |
+| Compatibilidade técnica (elegibilidade)  | ACE — P006/P007                                                                                                                        |
+| Compatibilidade humana (padrão aprovado) | Governança do Conhecimento                                                                                                             |
+| Relacionamento (estado, ciclo de vida)   | Connection & Relationship Engine                                                                                                       |
+| Prioridades declaradas                   | Jornada do Paciente                                                                                                                    |
+| Evidências                               | Múltiplas fontes catalogadas (Connection/Relationship, Jornada, justificativa do Curador) — ver `DOMAIN_COMPATIBILITY_INTELLIGENCE.md` |
+| Hipóteses                                | Compatibility Intelligence, exclusivamente                                                                                             |
+| Padrões (conhecimento aprovado)          | Governança do Conhecimento, exclusivamente                                                                                             |
 
 ## Auditoria de consistência (verificação final desta consolidação)
 
