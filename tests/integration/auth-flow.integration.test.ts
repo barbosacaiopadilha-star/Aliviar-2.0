@@ -31,15 +31,19 @@ describe("fluxo de autenticação (Supabase local)", () => {
     accounts = loadTestAccounts();
   });
 
-  it("existem as 3 contas de bootstrap (administrador, profissional, paciente)", () => {
-    expect(accounts.map((a) => a.role).sort()).toEqual([
-      "administrador",
-      "paciente",
-      "profissional",
-    ]);
+  // Contrato oficial de scripts/bootstrap-local-test-users.mjs — 4 contas
+  // fixas, uma por papel, upsert idempotente por (profile_id, role_id).
+  // curador_medico foi adicionado ao bootstrap no commit 45e6610 ("MVP
+  // completo"), bem antes desta suíte — este teste só não acompanhava.
+  const BOOTSTRAP_ROLES = ["administrador", "curador_medico", "paciente", "profissional"];
+
+  it("existem exatamente as 4 contas de bootstrap, uma por papel, sem duplicidade", () => {
+    const roles = accounts.map((a) => a.role);
+    expect(roles.sort()).toEqual(BOOTSTRAP_ROLES);
+    expect(new Set(roles).size).toBe(roles.length);
   });
 
-  it.each(["administrador", "profissional", "paciente"])(
+  it.each(BOOTSTRAP_ROLES)(
     "login funciona e resolve o papel correto para %s",
     async (role) => {
       const account = accounts.find((a) => a.role === role);
