@@ -24,9 +24,15 @@ const FOOTER_LINKS = [
 export function PublicFooter() {
   return (
     <footer className="bg-brand-primary-deep">
+      {/* Fase 6 (Origem Emocional) — a última voz da Landing ecoa a
+          primeira ("nunca sozinho", acento dourado no H1 da Chegada) em
+          vez de repetir "sem pressa" literalmente. Curta, não acionável,
+          sem nenhuma reivindicação factual a verificar — puramente
+          emocional, claramente subordinada ao CTA que já apareceu antes
+          dela. */}
       <SectionReveal className="mx-auto max-w-content px-4 pt-16 lg:px-8">
         <p className="max-w-reading font-serif text-2xl font-medium leading-snug text-surface lg:text-3xl">
-          Uma decisão tão importante merece companhia, do início ao fim.
+          Você não precisa decidir sozinho.
         </p>
       </SectionReveal>
 

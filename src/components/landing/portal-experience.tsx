@@ -36,28 +36,49 @@ const VIDEO_EXIT_AT_FRAME = 5;
 // início ao fim — e nunca se comporta como "foto com efeitos por cima":
 // a luz é calor ambiente, nunca um holofote; as bordas são um
 // esmaecimento orgânico e morno, nunca uma barra de interface.
+// Fase 6 (Origem Emocional) — cada carta nasce de uma necessidade real de
+// quem chega, verificada contra o comportamento real do produto antes de
+// ser escrita (nunca uma afirmação além do que o sistema realmente
+// garante): status traduzido ao paciente já existe (carta 1); a história
+// nunca precisa ser recontada, embora só a curadoria interna a leia, nunca
+// o profissional de saúde final (carta 2, redação deliberadamente não
+// nomeia quem lê); acompanhamento existe a cada etapa, mas a continuidade
+// de "uma única pessoa" do início ao fim não é garantida pelo sistema hoje
+// (carta 3, por isso fala em "apoio disponível", não em "alguém" fixo).
 const BENEFITS: Array<{ icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>; title: string; description: string }> = [
-  { icon: ScanSearch, title: "Curadoria criteriosa", description: "O caminho mais adequado ao seu caso, com critério." },
-  { icon: Clock, title: "Agilidade no processo", description: "Menos espera, menos burocracia, em cada etapa." },
+  { icon: Clock, title: "Você sabe o que vem a seguir", description: "Cada etapa é explicada antes de acontecer — para você nunca ficar perdido no meio do caminho." },
+  {
+    icon: ScanSearch,
+    title: "Você conta sua história uma vez",
+    description: "O que você compartilha acompanha a análise do seu caso — sem precisar repetir do zero.",
+  },
   {
     icon: HeartHandshake,
-    title: "Cuidado completo",
-    description: "Alguém dedicado, do primeiro contato à conversa que importa.",
+    title: "Você encontra acompanhamento em cada etapa",
+    description: "Do primeiro contato à conversa que importa, sempre com apoio disponível.",
   },
 ];
 
+// Fase 6 — "verificadas" foi trocado por "organizados/reunidos": o schema
+// real (professional_documents) não tem status formal de aprovação, só
+// upload administrado pela equipe. A carta de conduta original ("Ética e
+// conduta") não era sustentada por nenhum campo do sistema (nenhum
+// histórico/incidente/revalidação existe) — substituída pela Revisão
+// Humana obrigatória (P009), que é o pilar de confiança mais forte e
+// melhor documentado do produto real ("a IA nunca decide sozinha", Kernel
+// seção 6).
 const CRITERIA: Array<{ title: string; description: string }> = [
   {
-    title: "Currículo profissional",
-    description: "Formação, especialização e trajetória de cada profissional na Rede Aliviar.",
+    title: "Perfis organizados com cuidado",
+    description: "Formação, experiência e área de atuação de cada profissional são reunidas pela nossa equipe — nunca um perfil solto ou incompleto.",
   },
   {
-    title: "Ética e conduta",
-    description: "Histórico profissional e conduta ética no cuidado ao paciente.",
+    title: "Uma pessoa revisa antes de chegar até você",
+    description: "Nenhuma indicação segue adiante sem a revisão de alguém da nossa equipe.",
   },
   {
-    title: "Compatibilidade com o caso",
-    description: "Experiência e abordagem compatíveis com a sua situação específica — nunca genérica.",
+    title: "Pensado para o seu caso",
+    description: "Nunca um encaixe genérico — a indicação considera a sua situação real, não uma lista pronta.",
   },
 ];
 
@@ -164,7 +185,18 @@ const FRAMES: Frame[] = [
     intensidade: 0.6,
     warmth: 0.28,
     compact: 0.26,
-    content: <p className="font-serif text-2xl font-medium leading-tight text-ink lg:text-4xl">Curadoria técnica</p>,
+    // Fase 6 (Origem Emocional) — de rótulo de duas palavras ("Curadoria
+    // técnica") para uma frase que nasce da dúvida real de quem chega
+    // ("como vocês vão encontrar alguém adequado ao meu caso?"). Sem
+    // nomear "alguém" especificamente (o produto real não garante, com
+    // certeza, o momento exato em que um humano lê o caso versus quando
+    // o pipeline do ACE processa) — só a sequência garantida
+    // estruturalmente: entendimento sempre antes de qualquer caminho.
+    content: (
+      <p className="font-serif text-2xl font-medium leading-tight text-ink lg:text-4xl">
+        O seu caso é entendido antes de qualquer caminho aparecer.
+      </p>
+    ),
   },
   {
     id: "beneficios",
