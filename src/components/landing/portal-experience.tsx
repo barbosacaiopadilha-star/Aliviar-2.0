@@ -19,7 +19,7 @@ import {
   computeNarrativeFrame,
   TOTAL_HEIGHT_VH,
 } from "@/components/landing/portal-narrative";
-import { PORTAL_SCENE_POSITIONS } from "@/components/landing/portal-scenes";
+import { computePhotographyFrame } from "@/components/landing/portal-photography";
 import { usePortalMotionPreference } from "@/components/landing/use-portal-motion-preference";
 import { usePortalRawProgress } from "@/components/landing/use-portal-raw-progress";
 import { VideoSection } from "@/components/landing/video-section";
@@ -196,22 +196,18 @@ export function PortalExperience({
     const threadOpacity = 0.875 + (breath / BREATH_AMPLITUDE) * 0.125;
     goldenThreadRef.current?.setPulse(threadOpacity);
 
-    // Direção de fotografia — crossfade entre cenas (portal-scenes.ts),
-    // numa linha do tempo própria, independente dos frames de conteúdo.
-    // Nunca um corte: as duas cenas vizinhas se sobrepõem suavemente.
-    let s0 = 0;
-    while (
-      s0 < PORTAL_SCENE_POSITIONS.length - 2 &&
-      PORTAL_SCENE_POSITIONS[s0 + 1] <= overall
-    )
-      s0++;
-    const s1 = Math.min(s0 + 1, sceneRefs.current.length - 1);
-    const sceneSpan =
-      PORTAL_SCENE_POSITIONS[s1] - PORTAL_SCENE_POSITIONS[s0] || 1;
-    const sceneT = Math.min(
-      Math.max((overall - PORTAL_SCENE_POSITIONS[s0]) / sceneSpan, 0),
-      1,
-    );
+    // Direção de fotografia — crossfade entre cenas (Motor de
+    // Fotografia, portal-photography.ts), numa linha do tempo própria,
+    // independente dos frames de conteúdo. Nunca um corte: as duas cenas
+    // vizinhas se sobrepõem suavemente. `scenes.length` (a prop já
+    // resolvida em disco) substitui a antiga leitura de
+    // `sceneRefs.current.length` — mesmo número, por construção (um ref
+    // por cena renderizada), sem o motor precisar tocar em ref.
+    const {
+      fromIndex: s0,
+      toIndex: s1,
+      localProgress: sceneT,
+    } = computePhotographyFrame(overall, scenes.length);
     sceneRefs.current.forEach((el, index) => {
       if (!el) return;
       const opacity = index === s0 ? 1 - sceneT : index === s1 ? sceneT : 0;
