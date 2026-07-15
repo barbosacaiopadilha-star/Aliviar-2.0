@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { changeCaseStatus, createCase, getCase } from "@/modules/cases/repository";
@@ -45,6 +45,51 @@ describe("Última sprint do MVP — Entrega da Curadoria (P010, Supabase local)"
     accounts = loadTestAccounts();
   });
 
+  // Isolamento de dados entre testes (mesmo achado/correção já aplicado a
+  // concierge.integration.test.ts e human-review.integration.test.ts):
+  // professional_profiles/professional_competency_areas são um recurso
+  // global no Supabase local, nunca escopado por Caso — sem isto, cada
+  // teste seguinte herda os profissionais já criados pelos anteriores,
+  // ultrapassando o total de 3 que a Shortlist assume e tornando-a
+  // AMBIGUOUS_COMPOSITION.
+  let createdProfessionalIds: string[] = [];
+
+  // Cada createPatientAccount() cria uma conta real (auth.users + profiles
+  // via handle_new_user + user_roles). Junto com ela, cada Caso criado a
+  // partir dela arrasta patient_stories, cases, e (via cascade de case_id)
+  // ace_executions/ace_artifacts/ace_execution_events/human_review_results/
+  // case_notes/final_curadoria_deliveries. Rastreamos só o profileId
+  // (= auth.users.id): o resto é limpo por cascade de FK, na ordem já
+  // validada nesta sessão (Etapa 3 do Go-Live / Human Review) para não
+  // esbarrar em cases.source_story_id (NO ACTION contra patient_stories)
+  // nem no trigger log_user_role_change (exige profiles ainda existente
+  // quando o DELETE de user_roles dispara).
+  let createdPatientProfileIds: string[] = [];
+
+  afterEach(async () => {
+    const adminClient = createAdminSupabaseClient();
+
+    if (createdProfessionalIds.length > 0) {
+      await adminClient.from("professional_competency_areas").delete().in("professional_profile_id", createdProfessionalIds);
+      await adminClient.from("professional_profiles").delete().in("id", createdProfessionalIds);
+      createdProfessionalIds = [];
+    }
+
+    if (createdPatientProfileIds.length > 0) {
+      // cases cascade automaticamente para ace_executions, ace_artifacts,
+      // ace_execution_events, human_review_results, case_notes e
+      // final_curadoria_deliveries.
+      await adminClient.from("cases").delete().in("patient_profile_id", createdPatientProfileIds);
+      await adminClient.from("patient_stories").delete().in("profile_id", createdPatientProfileIds);
+      await adminClient.from("patient_profiles").delete().in("profile_id", createdPatientProfileIds);
+      await adminClient.from("user_roles").delete().in("profile_id", createdPatientProfileIds);
+      for (const profileId of createdPatientProfileIds) {
+        await adminClient.auth.admin.deleteUser(profileId);
+      }
+      createdPatientProfileIds = [];
+    }
+  });
+
   async function loginAs(role: string) {
     const account = accounts.find((a) => a.role === role)!;
     const client = createClient(url, anonKey);
@@ -81,6 +126,7 @@ describe("Última sprint do MVP — Entrega da Curadoria (P010, Supabase local)"
       .from("professional_competency_areas")
       .insert({ professional_profile_id: professional.id, domain: "nao_determinado", focus: "avaliacao" });
 
+    createdProfessionalIds.push(professional.id);
     return professional.id;
   }
 
@@ -91,6 +137,7 @@ describe("Última sprint do MVP — Entrega da Curadoria (P010, Supabase local)"
     const adminClient = createAdminSupabaseClient();
     const email = unique("entrega") + "@aliviar-conexao.local";
     const patientAccount = await createPatientAccount(adminClient, admin.client, { email, displayName: "Paciente Entrega" }, admin.userId);
+    createdPatientProfileIds.push(patientAccount.profileId);
 
     const patientClient = createClient(url, anonKey);
     await patientClient.auth.signInWithPassword({ email, password: patientAccount.password });
@@ -175,6 +222,7 @@ describe("Última sprint do MVP — Entrega da Curadoria (P010, Supabase local)"
     const adminClient = createAdminSupabaseClient();
     const email = unique("sem-revisao") + "@aliviar-conexao.local";
     const patientAccount = await createPatientAccount(adminClient, admin.client, { email, displayName: "Paciente Sem Revisão" }, admin.userId);
+    createdPatientProfileIds.push(patientAccount.profileId);
     const patientClient = createClient(url, anonKey);
     await patientClient.auth.signInWithPassword({ email, password: patientAccount.password });
     const draft = await getOrCreateActiveStory(patientClient, patientAccount.profileId);
@@ -227,6 +275,15 @@ describe("Última sprint do MVP — Entrega da Curadoria (P010, Supabase local)"
 
     const { data: curadorView } = await curador.client.from("final_curadoria_deliveries").select("id").eq("case_id", caseId);
     expect(curadorView ?? []).toHaveLength(0);
+
+    // Limpa os profissionais do primeiro Caso ANTES de criar o segundo,
+    // dentro do mesmo teste — sem isso, os profissionais dos dois Casos se
+    // somariam no pool global (nunca escopado por Caso) e a Shortlist do
+    // segundo deixaria de ter exatamente 3 qualificados.
+    const adminClient = createAdminSupabaseClient();
+    await adminClient.from("professional_competency_areas").delete().in("professional_profile_id", createdProfessionalIds);
+    await adminClient.from("professional_profiles").delete().in("id", createdProfessionalIds);
+    createdProfessionalIds = [];
 
     const outroPaciente = await createValidatedCase();
     const { data: crossPatientView } = await outroPaciente.patientClient

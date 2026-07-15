@@ -46,12 +46,6 @@ describe("Fase Beta / Sprint P009 — Human Review (Supabase local)", () => {
     accounts = loadTestAccounts();
   });
 
-  // Isolamento de dados entre testes (mesmo achado/correção já aplicado a
-  // concierge.integration.test.ts): professional_profiles/professional_
-  // competency_areas são um recurso global no Supabase local, nunca
-  // escopado por Caso — sem isto, cada teste seguinte herda os
-  // profissionais já criados pelos anteriores, ultrapassando o total de 3
-  // que a Shortlist assume e tornando-a AMBIGUOUS_COMPOSITION.
   // ADR-025: os testes de unicidade/concorrência abaixo criam Casos
   // completos (3 profissionais cada) em sequência — sem limpar entre eles,
   // o pool global ultrapassa 3 e a Shortlist deixa de ser COMPOSED
@@ -68,6 +62,35 @@ describe("Fase Beta / Sprint P009 — Human Review (Supabase local)", () => {
     await adminClient.from("professional_competency_areas").delete().in("professional_profile_id", createdProfessionalIds);
     await adminClient.from("professional_profiles").delete().in("id", createdProfessionalIds);
     createdProfessionalIds = [];
+  });
+
+  // Isolamento de dados entre testes: cada createPatientAccount() cria uma
+  // conta real (auth.users + profiles via handle_new_user + user_roles) —
+  // junto com ela, cada Caso criado a partir dela arrasta patient_stories,
+  // cases, e (via cascade de case_id) ace_executions/ace_artifacts/
+  // ace_execution_events/human_review_results/case_notes. Rastreamos só o
+  // profileId (= auth.users.id): o resto é limpo por cascade de FK, na
+  // ordem já validada nesta sessão (Etapa 3 do Go-Live) para não esbarrar
+  // em cases.source_story_id (NO ACTION contra patient_stories) nem no
+  // trigger log_user_role_change (exige profiles ainda existente quando o
+  // DELETE de user_roles dispara).
+  let createdPatientProfileIds: string[] = [];
+
+  afterEach(async () => {
+    if (createdPatientProfileIds.length === 0) {
+      return;
+    }
+    const adminClient = createAdminSupabaseClient();
+    // cases cascade automaticamente para ace_executions, ace_artifacts,
+    // ace_execution_events, human_review_results e case_notes.
+    await adminClient.from("cases").delete().in("patient_profile_id", createdPatientProfileIds);
+    await adminClient.from("patient_stories").delete().in("profile_id", createdPatientProfileIds);
+    await adminClient.from("patient_profiles").delete().in("profile_id", createdPatientProfileIds);
+    await adminClient.from("user_roles").delete().in("profile_id", createdPatientProfileIds);
+    for (const profileId of createdPatientProfileIds) {
+      await adminClient.auth.admin.deleteUser(profileId);
+    }
+    createdPatientProfileIds = [];
   });
 
   async function loginAs(role: string) {
@@ -112,6 +135,7 @@ describe("Fase Beta / Sprint P009 — Human Review (Supabase local)", () => {
     const adminClient = createAdminSupabaseClient();
     const email = unique("review") + "@aliviar-conexao.local";
     const patientAccount = await createPatientAccount(adminClient, admin.client, { email, displayName: "Paciente Review" }, admin.userId);
+    createdPatientProfileIds.push(patientAccount.profileId);
 
     const patientClient = createClient(url, anonKey);
     await patientClient.auth.signInWithPassword({ email, password: patientAccount.password });
@@ -364,6 +388,7 @@ describe("Fase Beta / Sprint P009 — Human Review (Supabase local)", () => {
     const adminClient = createAdminSupabaseClient();
     const email = unique("review-invalido") + "@aliviar-conexao.local";
     const patientAccount = await createPatientAccount(adminClient, admin.client, { email, displayName: "Paciente Estado Inválido" }, admin.userId);
+    createdPatientProfileIds.push(patientAccount.profileId);
     const patientClient = createClient(url, anonKey);
     await patientClient.auth.signInWithPassword({ email, password: patientAccount.password });
     const draft = await getOrCreateActiveStory(patientClient, patientAccount.profileId);
