@@ -493,7 +493,8 @@ export function PortalExperience({ scenes, videoSrc, videoPoster }: PortalExperi
             ref={(el) => {
               sceneRefs.current[index] = el;
             }}
-            className="absolute inset-0"
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0"
             style={{ opacity: index === 0 ? 1 : 0 }}
           >
             <Image src={scene.src} alt="" fill priority={index === 0} className="object-cover" sizes="100vw" />

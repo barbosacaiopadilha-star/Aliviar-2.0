@@ -212,12 +212,6 @@
     transform: translateX(120%);
   }
 
-  /* Liberação do vídeo-guia da HeroJourneySection: some com um leve
-     encolhimento de escala — nunca elástico, uma única vez, permanente. */
-  .animate-fade-out-release {
-    animation: fade-out-release 900ms var(--ease-standard) both;
-  }
-
   /* Traçado do fio dourado orgânico (GoldenThread) — sempre inteiramente
      visível (nunca "se desenha" com o scroll — isso seria lido como
      barra de progresso). A opacidade é a única coisa animada (respiração
@@ -295,16 +289,5 @@
   }
   50% {
     transform: scale(1.03);
-  }
-}
-
-@keyframes fade-out-release {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.94);
   }
 }
