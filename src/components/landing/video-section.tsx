@@ -3,18 +3,20 @@
 import { Maximize2, Play, Volume2, VolumeX, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import { SectionContainer } from "@/components/ui/section-container";
-import { SectionReveal } from "@/components/ui/section-reveal";
 import { cn } from "@/components/ui/cn";
 
 type VideoSectionProps = {
   src?: string;
   poster?: string;
-  /** "section" (padrão): bloco full-bleed com heading, como seção própria.
-   *  "window": cartão contido, usado dentro do Hero (ao lado do título,
-   *  nunca position:fixed). Mesma lógica vídeo-ou-placeholder, sem
-   *  duplicar código. */
-  variant?: "section" | "window";
+  /** Aceito só por compatibilidade com o único call site existente
+   *  (portal-experience.tsx) — o componente sempre se comporta como a
+   *  antiga variante "window" (cartão contido, nunca position:fixed). A
+   *  variante "section" (bloco full-bleed com heading própria) foi
+   *  removida (Fase 13 — Consolidação Final da Estrutura): nunca teve
+   *  consumidor real, e sua copy ("Cerca de 10 minutos") descrevia o
+   *  vídeo institucional de 10 minutos já superado por ADR-026 (o Vídeo
+   *  Companheiro ambiente é o vídeo de lançamento real). */
+  variant?: "window";
 };
 
 // Reprodução em loop, muda por padrão, com um botão próprio de "Ativar
@@ -181,70 +183,40 @@ function VideoModal({
   );
 }
 
-export function VideoSection({
-  src,
-  poster,
-  variant = "section",
-}: VideoSectionProps) {
+export function VideoSection({ src, poster }: VideoSectionProps) {
   const [modalOpen, setModalOpen] = useState(false);
 
-  if (variant === "window") {
-    return (
-      <>
-        <div className="relative mx-auto w-full">
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => setModalOpen(true)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                setModalOpen(true);
-              }
-            }}
-            aria-label="Abrir vídeo institucional em tela cheia"
-            className="group relative w-full cursor-pointer overflow-hidden rounded-2xl shadow-xl ring-1 ring-surface/15 transition-transform duration-base ease-standard hover:-translate-y-1 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
-          >
-            <VideoFrame src={src} poster={poster} />
-            <span
-              aria-hidden="true"
-              className="absolute right-3 top-3 inline-flex size-8 items-center justify-center rounded-full bg-ink/50 text-surface opacity-0 backdrop-blur-sm transition-opacity duration-base ease-standard group-hover:opacity-100"
-            >
-              <Maximize2 className="size-4" aria-hidden="true" />
-            </span>
-          </div>
-        </div>
-        <VideoModal
-          open={modalOpen}
-          onClose={() => setModalOpen(false)}
-          src={src}
-          poster={poster}
-        />
-      </>
-    );
-  }
-
   return (
-    <SectionContainer
-      id="video-institucional"
-      className="scroll-mt-20 bg-brand-primary-deep py-16 lg:py-24"
-    >
-      <SectionReveal className="mx-auto max-w-reading text-center">
-        <span className="text-xs font-medium uppercase tracking-[0.14em] text-brand-sage-light">
-          Cerca de 10 minutos
-        </span>
-        <h2 className="mt-3 font-serif text-2xl font-semibold text-surface lg:text-4xl">
-          Entenda a Aliviar antes de dar o próximo passo
-        </h2>
-        <p className="mt-3 text-base text-surface/80">
-          O porquê, o como, e quem estará com você — em um só lugar, no seu
-          tempo.
-        </p>
-      </SectionReveal>
-
-      <div className="mx-auto mt-10 max-w-content overflow-hidden rounded-lg border border-brand-primary shadow-lg">
-        <VideoFrame src={src} poster={poster} />
+    <>
+      <div className="relative mx-auto w-full">
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => setModalOpen(true)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              setModalOpen(true);
+            }
+          }}
+          aria-label="Abrir vídeo institucional em tela cheia"
+          className="group relative w-full cursor-pointer overflow-hidden rounded-2xl shadow-xl ring-1 ring-surface/15 transition-transform duration-base ease-standard hover:-translate-y-1 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+        >
+          <VideoFrame src={src} poster={poster} />
+          <span
+            aria-hidden="true"
+            className="absolute right-3 top-3 inline-flex size-8 items-center justify-center rounded-full bg-ink/50 text-surface opacity-0 backdrop-blur-sm transition-opacity duration-base ease-standard group-hover:opacity-100"
+          >
+            <Maximize2 className="size-4" aria-hidden="true" />
+          </span>
+        </div>
       </div>
-    </SectionContainer>
+      <VideoModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        src={src}
+        poster={poster}
+      />
+    </>
   );
 }
