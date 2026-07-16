@@ -350,12 +350,13 @@ export async function confirmFirstAppointmentAction(
       recordedAt: now,
     });
 
-    const result = await context.repository.confirmFirstAppointmentAndBirthRelationship(
-      context.record.status,
-      confirmed.record,
-      confirmed.event,
-      relationshipBirth.event,
-    );
+    const result =
+      await context.repository.confirmFirstAppointmentAndBirthRelationship(
+        context.record.status,
+        confirmed.record,
+        confirmed.event,
+        relationshipBirth.event,
+      );
     // Reconstrói (nunca uma segunda gravação) só para validar que a
     // linha retornada pela RPC é um RelationshipRecord bem formado —
     // esta action não precisa devolver o Relationship ao cliente

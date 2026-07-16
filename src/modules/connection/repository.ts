@@ -255,9 +255,7 @@ export class SupabaseConnectionRepository implements ConnectionRepository {
           message: "Este Connection foi alterado por outra ação simultânea.",
         });
       }
-      throw new Error(
-        "Não foi possível confirmar o primeiro atendimento.",
-      );
+      throw new Error("Não foi possível confirmar o primeiro atendimento.");
     }
 
     const [row] = data as Array<{

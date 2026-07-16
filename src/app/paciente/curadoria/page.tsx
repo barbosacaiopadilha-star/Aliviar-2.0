@@ -22,7 +22,10 @@ export default async function PatientCuradoriaPage() {
   const authState = await requireRole("paciente");
   const supabase = await createServerSupabaseClient();
 
-  const delivery = await getLatestFinalCuradoriaDeliveryForPatient(supabase, authState.user.id);
+  const delivery = await getLatestFinalCuradoriaDeliveryForPatient(
+    supabase,
+    authState.user.id,
+  );
 
   if (!delivery) {
     return (
@@ -48,7 +51,11 @@ export default async function PatientCuradoriaPage() {
   return (
     <div className="space-y-4">
       <FinalCuradoriaView delivery={delivery} />
-      <ConnectionChoicePanel caseId={delivery.caseId} providerPresentations={delivery.providerPresentations} connection={connection} />
+      <ConnectionChoicePanel
+        caseId={delivery.caseId}
+        providerPresentations={delivery.providerPresentations}
+        connection={connection}
+      />
       {relationship ? (
         <RelationshipStatusPanel
           caseId={delivery.caseId}
