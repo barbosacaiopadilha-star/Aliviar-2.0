@@ -1,6 +1,7 @@
 "use server";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { revalidatePath } from "next/cache";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
@@ -173,6 +174,7 @@ export async function declarePlannedRelationshipClosureAction(
       result.record,
       result.event,
     );
+    revalidatePath("/paciente/curadoria");
     return { success: true };
   } catch (error) {
     return { success: false, error: mapErrorToMessage(error) };
@@ -239,6 +241,7 @@ export async function declareRelationshipInterruptionAction(
       recordedAt: now,
     });
     await repository.update(record.status, result.record, result.event);
+    revalidatePath("/paciente/curadoria");
     return { success: true };
   } catch (error) {
     return { success: false, error: mapErrorToMessage(error) };
@@ -339,6 +342,7 @@ export async function registerObservedRelationshipReopeningAction(
       recordedAt: now,
     });
     await repository.registerReopening(record.id, result.event);
+    revalidatePath("/paciente/curadoria");
     return { success: true };
   } catch (error) {
     return { success: false, error: mapErrorToMessage(error) };
