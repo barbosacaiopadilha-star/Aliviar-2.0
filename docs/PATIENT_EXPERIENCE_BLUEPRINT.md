@@ -143,7 +143,7 @@ Estado atual, verificado contra `src/modules/connection` e validado por 14 teste
 - **Protocolos envolvidos**: nenhum (fora do ACE por definição, `PRODUCT_ARCHITECTURE.md` §11) — `connection` só lê `FinalCuradoriaDelivery` já entregue, nunca escreve em artefato do ACE.
 - **Estados do Caso**: `cases.status` não é alterado por `connection` — a máquina de estados de `ConnectionRecord` é própria e independente (`DECISAO_REGISTRADA` → `CONTATO_INICIADO` → `PRIMEIRO_ATENDIMENTO_REALIZADO`/`ENCERRADO_SEM_RELACIONAMENTO`).
 - **Pontos de atrito possíveis**: nenhum novo identificado nesta atualização — auditoria técnica completa registrada no relatório da fase que produziu esta correção.
-- **Oportunidades futuras** _(apenas registro)_: Relationship (Etapa 10/11 abaixo) permanece inteiramente não implementado; `PRIMEIRO_ATENDIMENTO_REALIZADO` já está identificado no domínio como o marco de nascimento de um futuro `Relationship`, mas nenhum Relationship é criado hoje.
+- **Oportunidades futuras** _(apenas registro)_: `PRIMEIRO_ATENDIMENTO_REALIZADO` é, desde 2026-07-15 (`docs/DECISIONS.md` ADR-028), o marco real de nascimento atômico de um `Relationship` (ver Etapa 11) — não mais apenas identificado no domínio, já implementado. O acompanhamento contínuo (Etapa 10) permanece não implementado.
 
 ### Etapa 10 — Acompanhamento (12 meses) `[MODELO — não implementado]`
 
@@ -155,15 +155,20 @@ Estado atual, verificado contra `src/modules/connection` e validado por 14 teste
 - **Pontos de atrito possíveis**: não aplicável — não implementado.
 - **Oportunidades futuras** _(apenas registro)_: nenhum placeholder de módulo existe no repositório para isto (diferente de `connection`/`discovery`) — fato já registrado em `PRODUCT_ARCHITECTURE.md` §8.
 
-### Etapa 11 — Encerramento, renovação ou reabertura `[MODELO — não implementado]`
+### Etapa 11 — Encerramento e reabertura `[IMPLEMENTAÇÃO EM AUDITORIA — docs/DECISIONS.md ADR-028]`
 
-- **Objetivo do paciente/sistema** _(modelado)_: encerrar, renovar, ou abrir um novo Caso do zero (nunca editar o anterior).
-- **Informações produzidas/consumidas**: nenhuma — `CLOSED` existe como estado técnico do Caso, mas nenhum fluxo de produto o aciona hoje fora de uma transição manual direta.
-- **Decisões humanas existentes**: nenhuma modelada em código.
-- **Protocolos envolvidos**: nenhum.
-- **Estados do Caso**: `DELIVERED → CLOSED` é uma transição válida na máquina de estados, mas sem UI/ação de produto observada que a dispare com o significado de "ciclo de 12 meses encerrado" especificamente (pode ser usada para qualquer encerramento administrativo).
-- **Pontos de atrito possíveis**: não aplicável — não implementado.
-- **Oportunidades futuras** _(apenas registro)_: nenhuma.
+**Histórico (preservado)**: até 2026-07-15 esta etapa era `[MODELO — não implementado]`, nomeada "Encerramento, renovação ou reabertura", com o texto abaixo (mantido por rastreabilidade, nunca apagado): _"Objetivo do paciente/sistema (modelado): encerrar, renovar, ou abrir um novo Caso do zero (nunca editar o anterior). Informações produzidas/consumidas: nenhuma — `CLOSED` existe como estado técnico do Caso, mas nenhum fluxo de produto o aciona hoje fora de uma transição manual direta. Decisões humanas existentes: nenhuma modelada em código. Protocolos envolvidos: nenhum. Estados do Caso: `DELIVERED → CLOSED` é uma transição válida na máquina de estados, mas sem UI/ação de produto observada que a dispare com o significado de "ciclo de 12 meses encerrado" especificamente. Pontos de atrito possíveis: não aplicável — não implementado."_ **Achado, registrado sem inventar resolução**: "renovação" nunca existiu como conceito na teoria formal do domínio Relationship (`docs/architecture/DOMAIN_RELATIONSHIP.md`, Veredito A) — a teoria testou e rejeitou explicitamente qualquer noção de ciclo temporal fixo; reabertura é sempre um Caso/Connection/Relationship inteiramente novos, nunca uma renovação do registro anterior. O nome da etapa foi ajustado para não sugerir uma capacidade que a teoria aprovada não prevê.
+
+Estado atual, verificado contra `src/modules/relationship` e validado por 37 testes de integração contra Supabase local (Fase 6.1/6.2, 2026-07-15):
+
+- **Objetivo do paciente**: registrar o encerramento planejado ou a interrupção de um Relationship ATIVO (`RelationshipStatusPanel`); reabertura observada é registrada pela equipe (Curador/Administrador), nunca pelo paciente diretamente — gera sempre um Caso novo, nunca reabre o Relationship encerrado.
+- **Objetivo do sistema**: `modules/relationship/actions.ts` medeia encerramento/interrupção, sempre exigindo autoria do próprio paciente; `register_relationship_reopening` (RPC) exige Relationship terminal e um Caso novo real.
+- **Informações produzidas/consumidas**: `relationship_records`/`relationship_events` (Postgres, RLS) — estado atual (ATIVO/ENCERRADO) + histórico append-only de eventos, incluindo `REABERTURA_OBSERVADA`.
+- **Decisões humanas existentes**: encerramento/interrupção são sempre declaração explícita do paciente; reabertura é sempre declaração explícita da equipe, nunca inferida de tempo decorrido ou silêncio.
+- **Protocolos envolvidos**: nenhum (fora do ACE por definição) — abrir o novo Caso decorrente de uma reabertura é responsabilidade da Jornada/ACE, não deste domínio.
+- **Estados do Caso**: não alterados por Relationship — `cases.status` permanece de responsabilidade exclusiva da Jornada/Curadoria.
+- **Pontos de atrito possíveis**: nenhum novo identificado nesta atualização.
+- **Oportunidades futuras** _(apenas registro)_: Correção de Registro, Contestação, Resolução de Efeito Operacional, Provenance completo, Encerramento por Falecimento e Troca de Profissional são previstos pela arquitetura técnica aprovada mas ainda não implementados — ver `docs/DECISIONS.md` ADR-028 para a matriz de capacidades completa.
 
 ---
 
@@ -270,7 +275,7 @@ Nove textos distintos cobrem os nove estados técnicos do Caso — a jornada vis
 7. **Curador Médico** abre um Caso específico (`curador/casos/[id]/revisao`) e decide `APPROVE`/`ADJUST`/`REJECT`/`REQUEST_MORE_INFORMATION`.
 8. **Curador Médico ou Administrador** aciona a entrega da Curadoria Final, sob confirmação explícita (`FinalCuradoriaDeliveryPanel`).
 9. **Administrador** acompanha, em paralelo a todo o resto, a observabilidade cross-Caso do ACE (`admin/ace`: health check, métricas, execuções) — não é uma etapa sequencial, é um painel contínuo.
-10. _(modelo, não implementado)_ **Time de Relacionamento** conduziria check-ins mensais/bimestrais e decidiria reabertura — nenhuma tela, ação ou tabela existe para isso hoje.
+10. **Curador Médico ou Administrador** registra reabertura observada contra um Relationship terminal, vinculada a um Caso novo real (`register_relationship_reopening`, `docs/DECISIONS.md` ADR-028, 2026-07-15) — implementado, sem UI dedicada (via RPC/repository; nenhuma tela de equipe para isso ainda). _(modelo, não implementado)_ check-ins periódicos de acompanhamento continuam sem nenhuma tela, ação ou tabela.
 
 ---
 
@@ -279,7 +284,7 @@ Nove textos distintos cobrem os nove estados técnicos do Caso — a jornada vis
 Registro factual de onde a arquitetura atual já deixa uma fronteira aberta — nenhuma proposta de solução:
 
 - **`connection`** — **[IMPLEMENTADO, 2026-07-15, ADR-027]** deixou de ser pasta reservada vazia; implementa "decisão e primeiro contato" (Etapa 9) para o caminho Concierge, validado por testes de integração contra banco real (Fase 4). **Achado, registrado sem resolver**: este documento e `PRODUCT_ARCHITECTURE.md` descrevem `connection` como convergência das duas portas de entrada (Concierge e Busca Direta), "a origem é só um metadado, nunca uma ramificação de lógica" — mas o schema implementado (`connection_records.final_curadoria_delivery_id uuid not null`) exige uma `FinalCuradoriaDelivery`, que só o caminho Concierge produz; Busca Direta/`discovery` não existe, então hoje não há como o módulo servir os dois caminhos como projetado. Nenhum dos dois documentos foi alterado para resolver essa divergência — decisão de produto/arquitetura própria, fora do escopo desta correção factual.
-- **`relationship`** — nem existe como pasta reservada. É o domínio natural para o acompanhamento de 12 meses (Etapa 10) e para qualquer sinalização de reabertura de Caso (Etapa 11). Diferente de `connection`, não há nenhum artefato no repositório hoje, nem mesmo um `README.md` de placeholder.
+- **`relationship`** — **[IMPLEMENTAÇÃO EM AUDITORIA, 2026-07-15, ADR-028]** deixou de ser inexistente; implementa encerramento e reabertura (Etapa 11), validado por 37 testes de integração contra banco real. O acompanhamento contínuo/cadência de check-in (Etapa 10) segue sem nenhum artefato.
 - **`discovery`** — pasta reservada, vazia. Fora do escopo da jornada Concierge mapeada aqui (é a porta "Busca Direta", `docs/DISCOVERY_ENGINE.md`), mas compartilha o mesmo `connection` como ponto de convergência.
 - **Compatibility Intelligence (CI)** — já avaliado conceitualmente e formalmente congelado (ver decisão de 2026-07-15, registrada fora deste documento). Fica apenas registrado aqui, sem retomar o desenho: os pontos de sinal identificados nesse trabalho anterior — declaração de preferência (hoje só o campo `preferencias` do wizard) e experiência vivida (hoje inexistente, dependeria de `relationship`) — coincidem exatamente com as duas lacunas de módulo acima. Isso não é uma recomendação de sequência, apenas uma coincidência estrutural observada.
 
