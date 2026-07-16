@@ -91,7 +91,9 @@ function mapRecordRow(row: RelationshipRecordRow): RelationshipRecord {
 // precise reimplementar a lógica de mapeamento de uma linha de
 // relationship_records — o único acoplamento permitido na direção
 // Connection → Relationship é este, puramente de leitura/reconstrução.
-export function reconstructRelationshipRecordFromRow(row: unknown): RelationshipRecord {
+export function reconstructRelationshipRecordFromRow(
+  row: unknown,
+): RelationshipRecord {
   return mapRecordRow(row as RelationshipRecordRow);
 }
 
@@ -228,7 +230,9 @@ export class SupabaseRelationshipRepository implements RelationshipRepository {
           message: "Este Relationship foi alterado por outra ação simultânea.",
         });
       }
-      throw new Error("Não foi possível registrar esta alteração de Relationship.");
+      throw new Error(
+        "Não foi possível registrar esta alteração de Relationship.",
+      );
     }
 
     return mapRecordRow(data as RelationshipRecordRow);
@@ -239,7 +243,8 @@ export class SupabaseRelationshipRepository implements RelationshipRepository {
     event: RelationshipEventDraft,
   ): Promise<RelationshipEvent> {
     const payload = event.payload as { newCaseId?: unknown };
-    const newCaseId = typeof payload.newCaseId === "string" ? payload.newCaseId : null;
+    const newCaseId =
+      typeof payload.newCaseId === "string" ? payload.newCaseId : null;
 
     if (!newCaseId) {
       // Defesa em profundidade — o domínio (registerReopening,

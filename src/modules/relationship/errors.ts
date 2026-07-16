@@ -25,7 +25,13 @@ export type RelationshipErrorCode =
 export class RelationshipError extends Error {
   readonly code: RelationshipErrorCode;
 
-  constructor({ code, message }: { code: RelationshipErrorCode; message: string }) {
+  constructor({
+    code,
+    message,
+  }: {
+    code: RelationshipErrorCode;
+    message: string;
+  }) {
     super(message);
     this.name = "RelationshipError";
     this.code = code;
