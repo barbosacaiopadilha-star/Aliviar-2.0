@@ -63,12 +63,19 @@ export function PublicFooter() {
           <span className="text-xs font-medium uppercase tracking-[0.14em] text-brand-sage-light">
             Navegação
           </span>
-          <ul className="mt-3 space-y-2">
+          <ul className="mt-3 space-y-1">
             {FOOTER_LINKS.map((link) => (
               <li key={link.href}>
+                {/* py-1 (Fase 2 — Hardening, Etapa 4): alvo de toque media
+                    16px de altura antes deste ajuste, abaixo do mínimo de
+                    24px (WCAG 2.2, 2.5.8) — só padding, nenhuma mudança de
+                    tamanho de fonte ou aparência visual do texto.
+                    space-y-2 (8px) do <ul> reduzido para space-y-1 (4px)
+                    para compensar a altura adicionada por link, mantendo o
+                    bloco de navegação com a mesma altura total de antes. */}
                 <Link
                   href={link.href}
-                  className="link-underline text-sm text-surface/85 transition-colors duration-fast ease-standard hover:text-brand-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-brand-primary-deep"
+                  className="link-underline inline-block py-1 text-sm text-surface/85 transition-colors duration-fast ease-standard hover:text-brand-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-brand-primary-deep"
                 >
                   {link.label}
                 </Link>

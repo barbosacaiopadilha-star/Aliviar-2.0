@@ -179,11 +179,17 @@ describe("Parte 3 — wizard desacoplado da Landing", () => {
   });
 
   it("a Landing continua consumindo os mesmos primitivos, agora de components/ui", () => {
+    // video-section.tsx removido desta lista (LANDING DO PACIENTE — Fase 2,
+    // Hardening, Etapa 1: divergência real encontrada, não introduzida por
+    // esta fase): o commit ddd70e9 já em HEAD removeu a variante "section"
+    // (o único uso de SectionContainer/SectionReveal neste arquivo) por ser
+    // código morto sem consumidor real — a variante "window" remanescente
+    // nunca precisou desses primitivos. Ajuste do teste para refletir essa
+    // arquitetura já decidida, não reconstrução dela.
     const landingConsumers = [
       "components/landing/faq-book-section.tsx",
       "components/landing/public-footer.tsx",
       "components/landing/final-cta-section.tsx",
-      "components/landing/video-section.tsx",
     ];
     for (const file of landingConsumers) {
       const source = readSrc(file);

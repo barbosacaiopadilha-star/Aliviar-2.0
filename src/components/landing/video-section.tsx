@@ -5,6 +5,24 @@ import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@/components/ui/cn";
 
+// Mesmo padrão inline já usado em faq-book-section.tsx (cada consumidor lê
+// sua própria preferência, sem hook compartilhado) — lida uma única vez na
+// montagem, mesma limitação já registrada para o Portal (não reflete
+// mudança de preferência feita pelo SO durante a sessão). `ready` existe
+// pelo mesmo motivo de usePortalMotionPreference: a primeira renderização
+// (servidor/hidratação) nunca pode presumir "sem redução" — decidir
+// autoplay antes de `ready` arriscaria tocar o vídeo por um instante antes
+// da preferência real chegar.
+function usePrefersReducedMotion(): { reduced: boolean; ready: boolean } {
+  const [reduced, setReduced] = useState(false);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    setReady(true);
+  }, []);
+  return { reduced, ready };
+}
+
 type VideoSectionProps = {
   src?: string;
   poster?: string;
@@ -35,6 +53,22 @@ function VideoFrame({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
+  const { reduced: prefersReducedMotion, ready } = usePrefersReducedMotion();
+  const [started, setStarted] = useState(false);
+
+  // Autoplay é sempre disparado por aqui, nunca pelo atributo `autoPlay`
+  // do elemento — evita que o vídeo comece a tocar num quadro antes de
+  // `ready`/`prefersReducedMotion` serem conhecidos (mesmo risco de
+  // temporização já resolvido para o Portal por usePortalMotionPreference).
+  // Com movimento reduzido, o vídeo permanece pausado até uma ação manual.
+  useEffect(() => {
+    if (ready && !prefersReducedMotion) videoRef.current?.play();
+  }, [ready, prefersReducedMotion]);
+
+  function startPlayback() {
+    videoRef.current?.play();
+    setStarted(true);
+  }
 
   if (!src) {
     return (
@@ -77,6 +111,9 @@ function VideoFrame({
     );
   }
 
+  const showManualPlayAffordance =
+    ready && prefersReducedMotion && !started;
+
   return (
     <div className="relative aspect-video w-full overflow-hidden rounded-[inherit] bg-brand-primary-deep">
       <video
@@ -84,14 +121,32 @@ function VideoFrame({
         className="size-full object-cover"
         src={src}
         poster={poster}
-        autoPlay
         muted
         loop
         playsInline
         preload="none"
+        onPlay={() => setStarted(true)}
       >
         Seu navegador não é compatível com a reprodução deste vídeo.
       </video>
+      {showManualPlayAffordance && (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            startPlayback();
+          }}
+          aria-label="Reproduzir vídeo"
+          className="absolute inset-0 flex items-center justify-center bg-brand-primary-deep/40 transition-colors duration-fast ease-standard hover:bg-brand-primary-deep/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+        >
+          <span
+            aria-hidden="true"
+            className="inline-flex size-16 items-center justify-center rounded-full border border-surface/25 bg-surface/10 backdrop-blur-sm"
+          >
+            <Play className="size-6 translate-x-0.5 text-surface" aria-hidden="true" />
+          </span>
+        </button>
+      )}
       <button
         type="button"
         onClick={(event) => {
