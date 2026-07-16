@@ -69,12 +69,18 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
         .from("professional_competency_areas")
         .delete()
         .in("professional_profile_id", createdProfessionalIds);
-      await adminClient.from("professional_profiles").delete().in("id", createdProfessionalIds);
+      await adminClient
+        .from("professional_profiles")
+        .delete()
+        .in("id", createdProfessionalIds);
       createdProfessionalIds = [];
     }
 
     if (createdPatientProfileIds.length > 0) {
-      await adminClient.from("cases").delete().in("patient_profile_id", createdPatientProfileIds);
+      await adminClient
+        .from("cases")
+        .delete()
+        .in("patient_profile_id", createdPatientProfileIds);
       await adminClient
         .from("patient_stories")
         .delete()
@@ -83,7 +89,10 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
         .from("patient_profiles")
         .delete()
         .in("profile_id", createdPatientProfileIds);
-      await adminClient.from("user_roles").delete().in("profile_id", createdPatientProfileIds);
+      await adminClient
+        .from("user_roles")
+        .delete()
+        .in("profile_id", createdPatientProfileIds);
       for (const profileId of createdPatientProfileIds) {
         await adminClient.auth.admin.deleteUser(profileId);
       }
@@ -94,7 +103,10 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
   async function loginAs(role: string) {
     const account = accounts.find((a) => a.role === role)!;
     const client = createClient(url, anonKey);
-    await client.auth.signInWithPassword({ email: account.email, password: account.password });
+    await client.auth.signInWithPassword({
+      email: account.email,
+      password: account.password,
+    });
     const {
       data: { user },
     } = await client.auth.getUser();
@@ -110,7 +122,8 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
       professionalIdentifier: unique("ident"),
       crm: null,
       crmUf: null,
-      professionalSummary: "Profissional com experiência em acolhimento e escuta ativa.",
+      professionalSummary:
+        "Profissional com experiência em acolhimento e escuta ativa.",
       institutionName: null,
       createdBy: adminUserId,
     });
@@ -151,8 +164,14 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
     createdPatientProfileIds.push(patientAccount.profileId);
 
     const patientClient = createClient(url, anonKey);
-    await patientClient.auth.signInWithPassword({ email, password: patientAccount.password });
-    const draft = await getOrCreateActiveStory(patientClient, patientAccount.profileId);
+    await patientClient.auth.signInWithPassword({
+      email,
+      password: patientAccount.password,
+    });
+    const draft = await getOrCreateActiveStory(
+      patientClient,
+      patientAccount.profileId,
+    );
     await saveStoryDraft(
       patientClient,
       draft.id,
@@ -160,12 +179,25 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
       { motivo: "Buscando continuidade de acompanhamento." },
       "motivo",
     );
-    const refreshed = await getOrCreateActiveStory(patientClient, patientAccount.profileId);
+    const refreshed = await getOrCreateActiveStory(
+      patientClient,
+      patientAccount.profileId,
+    );
     await submitStory(patientClient, draft.id, refreshed.revision);
 
-    const created = await createCase(admin.client, draft.id, undefined, admin.userId);
+    const created = await createCase(
+      admin.client,
+      draft.id,
+      undefined,
+      admin.userId,
+    );
     await changeCaseStatus(admin.client, created.id, "IN_REVIEW", admin.userId);
-    await changeCaseStatus(admin.client, created.id, "READY_FOR_CURATION", admin.userId);
+    await changeCaseStatus(
+      admin.client,
+      created.id,
+      "READY_FOR_CURATION",
+      admin.userId,
+    );
 
     const professionalIds = [
       await seedPresentableProfessional(adminClient, admin.userId),
@@ -185,7 +217,8 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
       caseId: created.id,
       reviewerId: admin.userId,
       reviewAction: "APPROVE",
-      reviewRationale: "Composição adequada às necessidades relatadas na história.",
+      reviewRationale:
+        "Composição adequada às necessidades relatadas na história.",
       evidenceReferences: ["Shortlist.compositionRationale"],
       changes: [],
       returnToProtocol: null,
@@ -197,9 +230,12 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
       actorId: admin.userId,
       languageModel: new FakeAceLanguageModel(),
     });
-    const deliveryRecord = delivery.outcome === "delivered" ? delivery.delivery : null;
+    const deliveryRecord =
+      delivery.outcome === "delivered" ? delivery.delivery : null;
 
-    const connectionRepository = new SupabaseConnectionRepository(patientClient);
+    const connectionRepository = new SupabaseConnectionRepository(
+      patientClient,
+    );
     const now = new Date().toISOString();
     const created0 = createConnection(
       {
@@ -213,7 +249,10 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
       },
       { eligibleProfessionalProfileIds: professionalIds },
     );
-    const connectionRecord = await connectionRepository.create(created0.record, created0.event);
+    const connectionRecord = await connectionRepository.create(
+      created0.record,
+      created0.event,
+    );
 
     return {
       admin,
@@ -228,19 +267,39 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
   }
 
   it("confirmação válida: Connection transiciona para PRIMEIRO_ATENDIMENTO_REALIZADO e o Relationship nasce em ATIVO, atomicamente", async () => {
-    const { connectionRepository, connectionRecord, patientProfileId, caseId, professionalIds } =
-      await createConnectionAwaitingFirstAppointment();
+    const {
+      connectionRepository,
+      connectionRecord,
+      patientProfileId,
+      caseId,
+      professionalIds,
+    } = await createConnectionAwaitingFirstAppointment();
     const now = new Date().toISOString();
 
-    const result = await connectionRepository.confirmFirstAppointmentAndBirthRelationship(
-      connectionRecord.status,
-      { ...connectionRecord, status: "PRIMEIRO_ATENDIMENTO_REALIZADO" },
-      { eventType: "PRIMEIRO_ATENDIMENTO_REALIZADO", actorId: patientProfileId, payload: {}, occurredAt: now, recordedAt: now },
-      { eventType: "RELACIONAMENTO_INICIADO", actorId: patientProfileId, payload: {}, occurredAt: now, recordedAt: now },
-    );
+    const result =
+      await connectionRepository.confirmFirstAppointmentAndBirthRelationship(
+        connectionRecord.status,
+        { ...connectionRecord, status: "PRIMEIRO_ATENDIMENTO_REALIZADO" },
+        {
+          eventType: "PRIMEIRO_ATENDIMENTO_REALIZADO",
+          actorId: patientProfileId,
+          payload: {},
+          occurredAt: now,
+          recordedAt: now,
+        },
+        {
+          eventType: "RELACIONAMENTO_INICIADO",
+          actorId: patientProfileId,
+          payload: {},
+          occurredAt: now,
+          recordedAt: now,
+        },
+      );
 
     expect(result.connection.status).toBe("PRIMEIRO_ATENDIMENTO_REALIZADO");
-    const relationship = reconstructRelationshipRecordFromRow(result.relationshipRow);
+    const relationship = reconstructRelationshipRecordFromRow(
+      result.relationshipRow,
+    );
     expect(relationship.status).toBe("ATIVO");
     expect(relationship.connectionId).toBe(connectionRecord.id);
     expect(relationship.caseId).toBe(caseId);
@@ -248,38 +307,73 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
     expect(relationship.professionalProfileId).toBe(professionalIds[0]);
     // Postgres serializa timestamps como +00:00, não Z — mesmo instante,
     // comparado por valor, nunca por igualdade de string exata.
-    expect(new Date(relationship.startedAt).getTime()).toBe(new Date(now).getTime());
+    expect(new Date(relationship.startedAt).getTime()).toBe(
+      new Date(now).getTime(),
+    );
   });
 
   it("cria exatamente um evento em cada domínio, com occurredAt/recordedAt preservados", async () => {
-    const { connectionRepository, connectionRecord, patientProfileId, patientClient } =
-      await createConnectionAwaitingFirstAppointment();
+    const {
+      connectionRepository,
+      connectionRecord,
+      patientProfileId,
+      patientClient,
+    } = await createConnectionAwaitingFirstAppointment();
     const now = new Date().toISOString();
 
-    const result = await connectionRepository.confirmFirstAppointmentAndBirthRelationship(
-      connectionRecord.status,
-      { ...connectionRecord, status: "PRIMEIRO_ATENDIMENTO_REALIZADO" },
-      { eventType: "PRIMEIRO_ATENDIMENTO_REALIZADO", actorId: patientProfileId, payload: {}, occurredAt: now, recordedAt: now },
-      { eventType: "RELACIONAMENTO_INICIADO", actorId: patientProfileId, payload: {}, occurredAt: now, recordedAt: now },
+    const result =
+      await connectionRepository.confirmFirstAppointmentAndBirthRelationship(
+        connectionRecord.status,
+        { ...connectionRecord, status: "PRIMEIRO_ATENDIMENTO_REALIZADO" },
+        {
+          eventType: "PRIMEIRO_ATENDIMENTO_REALIZADO",
+          actorId: patientProfileId,
+          payload: {},
+          occurredAt: now,
+          recordedAt: now,
+        },
+        {
+          eventType: "RELACIONAMENTO_INICIADO",
+          actorId: patientProfileId,
+          payload: {},
+          occurredAt: now,
+          recordedAt: now,
+        },
+      );
+    const relationship = reconstructRelationshipRecordFromRow(
+      result.relationshipRow,
     );
-    const relationship = reconstructRelationshipRecordFromRow(result.relationshipRow);
 
-    const connectionEvents = await connectionRepository.listEvents(connectionRecord.id);
+    const connectionEvents = await connectionRepository.listEvents(
+      connectionRecord.id,
+    );
     const finalAppointmentEvents = connectionEvents.filter(
       (e) => e.eventType === "PRIMEIRO_ATENDIMENTO_REALIZADO",
     );
     expect(finalAppointmentEvents).toHaveLength(1);
-    expect(new Date(finalAppointmentEvents[0].occurredAt).getTime()).toBe(new Date(now).getTime());
-    expect(new Date(finalAppointmentEvents[0].recordedAt).getTime()).toBe(new Date(now).getTime());
+    expect(new Date(finalAppointmentEvents[0].occurredAt).getTime()).toBe(
+      new Date(now).getTime(),
+    );
+    expect(new Date(finalAppointmentEvents[0].recordedAt).getTime()).toBe(
+      new Date(now).getTime(),
+    );
 
     // Reaproveita o mesmo client autenticado como paciente — leitura
     // permitida pela mesma RLS já validada em PR1/PR3.
-    const relationshipRepository = new SupabaseRelationshipRepository(patientClient);
-    const relationshipEvents = await relationshipRepository.listEvents(relationship.id);
+    const relationshipRepository = new SupabaseRelationshipRepository(
+      patientClient,
+    );
+    const relationshipEvents = await relationshipRepository.listEvents(
+      relationship.id,
+    );
     expect(relationshipEvents).toHaveLength(1);
     expect(relationshipEvents[0].eventType).toBe("RELACIONAMENTO_INICIADO");
-    expect(new Date(relationshipEvents[0].occurredAt).getTime()).toBe(new Date(now).getTime());
-    expect(new Date(relationshipEvents[0].recordedAt).getTime()).toBe(new Date(now).getTime());
+    expect(new Date(relationshipEvents[0].occurredAt).getTime()).toBe(
+      new Date(now).getTime(),
+    );
+    expect(new Date(relationshipEvents[0].recordedAt).getTime()).toBe(
+      new Date(now).getTime(),
+    );
   });
 
   it("repetição após sucesso não duplica o Relationship — falha explícita (CONCURRENT_CONFLICT)", async () => {
@@ -290,8 +384,20 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
     await connectionRepository.confirmFirstAppointmentAndBirthRelationship(
       connectionRecord.status,
       { ...connectionRecord, status: "PRIMEIRO_ATENDIMENTO_REALIZADO" },
-      { eventType: "PRIMEIRO_ATENDIMENTO_REALIZADO", actorId: patientProfileId, payload: {}, occurredAt: now, recordedAt: now },
-      { eventType: "RELACIONAMENTO_INICIADO", actorId: patientProfileId, payload: {}, occurredAt: now, recordedAt: now },
+      {
+        eventType: "PRIMEIRO_ATENDIMENTO_REALIZADO",
+        actorId: patientProfileId,
+        payload: {},
+        occurredAt: now,
+        recordedAt: now,
+      },
+      {
+        eventType: "RELACIONAMENTO_INICIADO",
+        actorId: patientProfileId,
+        payload: {},
+        occurredAt: now,
+        recordedAt: now,
+      },
     );
 
     // Repetir com o MESMO previousStatus original (DECISAO_REGISTRADA) —
@@ -302,15 +408,29 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
       connectionRepository.confirmFirstAppointmentAndBirthRelationship(
         connectionRecord.status,
         { ...connectionRecord, status: "PRIMEIRO_ATENDIMENTO_REALIZADO" },
-        { eventType: "PRIMEIRO_ATENDIMENTO_REALIZADO", actorId: patientProfileId, payload: {}, occurredAt: now, recordedAt: now },
-        { eventType: "RELACIONAMENTO_INICIADO", actorId: patientProfileId, payload: {}, occurredAt: now, recordedAt: now },
+        {
+          eventType: "PRIMEIRO_ATENDIMENTO_REALIZADO",
+          actorId: patientProfileId,
+          payload: {},
+          occurredAt: now,
+          recordedAt: now,
+        },
+        {
+          eventType: "RELACIONAMENTO_INICIADO",
+          actorId: patientProfileId,
+          payload: {},
+          occurredAt: now,
+          recordedAt: now,
+        },
       ),
     ).rejects.toMatchObject({ code: "CONCURRENT_CONFLICT" });
 
     const relationshipRepository = new SupabaseRelationshipRepository(
       createAdminSupabaseClient(),
     );
-    const relationship = await relationshipRepository.findByCaseId(connectionRecord.caseId);
+    const relationship = await relationshipRepository.findByCaseId(
+      connectionRecord.caseId,
+    );
     expect(relationship).not.toBeNull();
   });
 
@@ -323,8 +443,20 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
       connectionRepository.confirmFirstAppointmentAndBirthRelationship(
         connectionRecord.status,
         { ...connectionRecord, status: "PRIMEIRO_ATENDIMENTO_REALIZADO" },
-        { eventType: "PRIMEIRO_ATENDIMENTO_REALIZADO", actorId: patientProfileId, payload: {}, occurredAt: now, recordedAt: now },
-        { eventType: "RELACIONAMENTO_INICIADO", actorId: patientProfileId, payload: {}, occurredAt: now, recordedAt: now },
+        {
+          eventType: "PRIMEIRO_ATENDIMENTO_REALIZADO",
+          actorId: patientProfileId,
+          payload: {},
+          occurredAt: now,
+          recordedAt: now,
+        },
+        {
+          eventType: "RELACIONAMENTO_INICIADO",
+          actorId: patientProfileId,
+          payload: {},
+          occurredAt: now,
+          recordedAt: now,
+        },
       );
 
     const [first, second] = await Promise.allSettled([attempt(), attempt()]);
@@ -336,7 +468,9 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
     expect(fulfilled).toHaveLength(1);
     expect(rejected).toHaveLength(1);
     expect(rejected[0].reason).toBeInstanceOf(ConnectionError);
-    expect((rejected[0].reason as ConnectionError).code).toBe("CONCURRENT_CONFLICT");
+    expect((rejected[0].reason as ConnectionError).code).toBe(
+      "CONCURRENT_CONFLICT",
+    );
 
     const adminClient = createAdminSupabaseClient();
     const { data: relationships } = await adminClient
@@ -366,8 +500,20 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
       connectionRepository.confirmFirstAppointmentAndBirthRelationship(
         connectionRecord.status,
         { ...connectionRecord, status: "PRIMEIRO_ATENDIMENTO_REALIZADO" },
-        { eventType: "PRIMEIRO_ATENDIMENTO_REALIZADO", actorId: patientProfileId, payload: {}, occurredAt: now, recordedAt: now },
-        { eventType: "RELACIONAMENTO_INICIADO", actorId: patientProfileId, payload: {}, occurredAt: now, recordedAt: now },
+        {
+          eventType: "PRIMEIRO_ATENDIMENTO_REALIZADO",
+          actorId: patientProfileId,
+          payload: {},
+          occurredAt: now,
+          recordedAt: now,
+        },
+        {
+          eventType: "RELACIONAMENTO_INICIADO",
+          actorId: patientProfileId,
+          payload: {},
+          occurredAt: now,
+          recordedAt: now,
+        },
       );
 
     const closeResult = closeWithoutRelationship(connectionRecord, {
@@ -377,7 +523,11 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
       recordedAt: now,
     });
     const closeAttempt = () =>
-      connectionRepository.update(connectionRecord.status, closeResult.record, closeResult.event);
+      connectionRepository.update(
+        connectionRecord.status,
+        closeResult.record,
+        closeResult.event,
+      );
 
     const [confirmSettled, closeSettled] = await Promise.allSettled([
       confirmAttempt(),
@@ -386,7 +536,9 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
 
     const outcomes = [confirmSettled, closeSettled];
     const fulfilled = outcomes.filter((r) => r.status === "fulfilled");
-    const rejected = outcomes.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+    const rejected = outcomes.filter(
+      (r): r is PromiseRejectedResult => r.status === "rejected",
+    );
 
     expect(fulfilled).toHaveLength(1);
     expect(rejected).toHaveLength(1);
@@ -397,9 +549,10 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
       .select("status")
       .eq("id", connectionRecord.id)
       .maybeSingle();
-    expect(["PRIMEIRO_ATENDIMENTO_REALIZADO", "ENCERRADO_SEM_RELACIONAMENTO"]).toContain(
-      finalConnection?.status,
-    );
+    expect([
+      "PRIMEIRO_ATENDIMENTO_REALIZADO",
+      "ENCERRADO_SEM_RELACIONAMENTO",
+    ]).toContain(finalConnection?.status);
 
     const { data: relationships } = await adminClient
       .from("relationship_records")
@@ -426,7 +579,11 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
       occurredAt: now,
       recordedAt: now,
     });
-    await connectionRepository.update(connectionRecord.status, closeResult.record, closeResult.event);
+    await connectionRepository.update(
+      connectionRecord.status,
+      closeResult.record,
+      closeResult.event,
+    );
 
     // Contorna o domínio de propósito — chama a função transacional
     // diretamente com o status ANTIGO como esperado, mesmo o Connection
@@ -436,8 +593,20 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
       connectionRepository.confirmFirstAppointmentAndBirthRelationship(
         connectionRecord.status,
         { ...connectionRecord, status: "PRIMEIRO_ATENDIMENTO_REALIZADO" },
-        { eventType: "PRIMEIRO_ATENDIMENTO_REALIZADO", actorId: patientProfileId, payload: {}, occurredAt: now, recordedAt: now },
-        { eventType: "RELACIONAMENTO_INICIADO", actorId: patientProfileId, payload: {}, occurredAt: now, recordedAt: now },
+        {
+          eventType: "PRIMEIRO_ATENDIMENTO_REALIZADO",
+          actorId: patientProfileId,
+          payload: {},
+          occurredAt: now,
+          recordedAt: now,
+        },
+        {
+          eventType: "RELACIONAMENTO_INICIADO",
+          actorId: patientProfileId,
+          payload: {},
+          occurredAt: now,
+          recordedAt: now,
+        },
       ),
     ).rejects.toMatchObject({ code: "CONCURRENT_CONFLICT" });
 
@@ -463,7 +632,10 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
     );
     createdPatientProfileIds.push(otherAccount.profileId);
     const otherClient = createClient(url, anonKey);
-    await otherClient.auth.signInWithPassword({ email: otherEmail, password: otherAccount.password });
+    await otherClient.auth.signInWithPassword({
+      email: otherEmail,
+      password: otherAccount.password,
+    });
 
     const otherRepository = new SupabaseConnectionRepository(otherClient);
 
@@ -471,8 +643,20 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
       otherRepository.confirmFirstAppointmentAndBirthRelationship(
         connectionRecord.status,
         { ...connectionRecord, status: "PRIMEIRO_ATENDIMENTO_REALIZADO" },
-        { eventType: "PRIMEIRO_ATENDIMENTO_REALIZADO", actorId: otherAccount.profileId, payload: {}, occurredAt: now, recordedAt: now },
-        { eventType: "RELACIONAMENTO_INICIADO", actorId: otherAccount.profileId, payload: {}, occurredAt: now, recordedAt: now },
+        {
+          eventType: "PRIMEIRO_ATENDIMENTO_REALIZADO",
+          actorId: otherAccount.profileId,
+          payload: {},
+          occurredAt: now,
+          recordedAt: now,
+        },
+        {
+          eventType: "RELACIONAMENTO_INICIADO",
+          actorId: otherAccount.profileId,
+          payload: {},
+          occurredAt: now,
+          recordedAt: now,
+        },
       ),
     ).rejects.toThrow();
 
@@ -485,8 +669,13 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
   });
 
   it("nenhuma ação de nascimento altera Caso ou Curadoria; nenhum ExperienceSignal ou reabertura é criado", async () => {
-    const { connectionRepository, connectionRecord, patientProfileId, caseId, adminClient } =
-      await createConnectionAwaitingFirstAppointment();
+    const {
+      connectionRepository,
+      connectionRecord,
+      patientProfileId,
+      caseId,
+      adminClient,
+    } = await createConnectionAwaitingFirstAppointment();
     const now = new Date().toISOString();
 
     const { data: caseBefore } = await adminClient
@@ -500,13 +689,28 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
       .eq("case_id", caseId)
       .maybeSingle();
 
-    const result = await connectionRepository.confirmFirstAppointmentAndBirthRelationship(
-      connectionRecord.status,
-      { ...connectionRecord, status: "PRIMEIRO_ATENDIMENTO_REALIZADO" },
-      { eventType: "PRIMEIRO_ATENDIMENTO_REALIZADO", actorId: patientProfileId, payload: {}, occurredAt: now, recordedAt: now },
-      { eventType: "RELACIONAMENTO_INICIADO", actorId: patientProfileId, payload: {}, occurredAt: now, recordedAt: now },
+    const result =
+      await connectionRepository.confirmFirstAppointmentAndBirthRelationship(
+        connectionRecord.status,
+        { ...connectionRecord, status: "PRIMEIRO_ATENDIMENTO_REALIZADO" },
+        {
+          eventType: "PRIMEIRO_ATENDIMENTO_REALIZADO",
+          actorId: patientProfileId,
+          payload: {},
+          occurredAt: now,
+          recordedAt: now,
+        },
+        {
+          eventType: "RELACIONAMENTO_INICIADO",
+          actorId: patientProfileId,
+          payload: {},
+          occurredAt: now,
+          recordedAt: now,
+        },
+      );
+    const relationship = reconstructRelationshipRecordFromRow(
+      result.relationshipRow,
     );
-    const relationship = reconstructRelationshipRecordFromRow(result.relationshipRow);
 
     const { data: caseAfter } = await adminClient
       .from("cases")
@@ -526,7 +730,85 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
       .from("relationship_events")
       .select("event_type")
       .eq("relationship_id", relationship.id);
-    expect(relationshipEvents!.map((e) => e.event_type)).toEqual(["RELACIONAMENTO_INICIADO"]);
-    expect(relationshipEvents!.some((e) => e.event_type === "REABERTURA_OBSERVADA")).toBe(false);
+    expect(relationshipEvents!.map((e) => e.event_type)).toEqual([
+      "RELACIONAMENTO_INICIADO",
+    ]);
+    expect(
+      relationshipEvents!.some((e) => e.event_type === "REABERTURA_OBSERVADA"),
+    ).toBe(false);
+  });
+
+  // [Fase 6.2 — Parte 7] paciente/curadoria/page.tsx só busca o
+  // Relationship quando `connection?.status === "PRIMEIRO_ATENDIMENTO_
+  // REALIZADO"`, via `relationshipRepository.findByCaseId(delivery.caseId)`
+  // — exatamente a chamada exercida aqui. A página não tem nenhuma lógica
+  // de domínio própria (auditado, Fase 6.2 Parte 2); portanto provar que
+  // esta chamada retorna null antes do nascimento e o registro correto
+  // depois é o teste mais próximo possível de "testar a página" dado que
+  // Server Components com `createServerSupabaseClient()` não rodam sob
+  // Vitest (mesma limitação transversal já documentada para Server
+  // Actions em `docs/architecture/DOMAIN_CONNECTION_RELATIONSHIP.md`).
+  it("página de Curadoria: findByCaseId(caseId) — null antes do nascimento, ATIVO depois, nunca vaza para outro paciente", async () => {
+    const {
+      connectionRepository,
+      connectionRecord,
+      patientProfileId,
+      caseId,
+      patientClient,
+      admin,
+    } = await createConnectionAwaitingFirstAppointment();
+    const now = new Date().toISOString();
+
+    const relationshipRepositoryAsPatient = new SupabaseRelationshipRepository(
+      patientClient,
+    );
+    const beforeBirth =
+      await relationshipRepositoryAsPatient.findByCaseId(caseId);
+    expect(beforeBirth).toBeNull();
+
+    await connectionRepository.confirmFirstAppointmentAndBirthRelationship(
+      connectionRecord.status,
+      { ...connectionRecord, status: "PRIMEIRO_ATENDIMENTO_REALIZADO" },
+      {
+        eventType: "PRIMEIRO_ATENDIMENTO_REALIZADO",
+        actorId: patientProfileId,
+        payload: {},
+        occurredAt: now,
+        recordedAt: now,
+      },
+      {
+        eventType: "RELACIONAMENTO_INICIADO",
+        actorId: patientProfileId,
+        payload: {},
+        occurredAt: now,
+        recordedAt: now,
+      },
+    );
+
+    const afterBirth =
+      await relationshipRepositoryAsPatient.findByCaseId(caseId);
+    expect(afterBirth?.status).toBe("ATIVO");
+    expect(afterBirth?.caseId).toBe(caseId);
+
+    const otherEmail = unique("pr4-page-outsider") + "@aliviar-conexao.local";
+    const adminClient = createAdminSupabaseClient();
+    const otherAccount = await createPatientAccount(
+      adminClient,
+      admin.client,
+      { email: otherEmail, displayName: "Paciente Sem Relação (página)" },
+      admin.userId,
+    );
+    createdPatientProfileIds.push(otherAccount.profileId);
+    const otherClient = createClient(url, anonKey);
+    await otherClient.auth.signInWithPassword({
+      email: otherEmail,
+      password: otherAccount.password,
+    });
+    const relationshipRepositoryAsOutsider = new SupabaseRelationshipRepository(
+      otherClient,
+    );
+    const asOutsider =
+      await relationshipRepositoryAsOutsider.findByCaseId(caseId);
+    expect(asOutsider).toBeNull();
   });
 });
