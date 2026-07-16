@@ -127,7 +127,7 @@ describe("Decisão 2 — carta 3 do FAQ reescrita", () => {
     }
   });
 
-  it("as outras cinco cartas permanecem byte a byte inalteradas", () => {
+  it("as outras quatro cartas (0, 3, 4, 5) permanecem byte a byte inalteradas desde a Fase 10", () => {
     expect(CARDS[0]).toEqual({
       duvidaTitle: ["Não sei", "por onde começar"],
       duvidaText:
@@ -135,14 +135,6 @@ describe("Decisão 2 — carta 3 do FAQ reescrita", () => {
       solucaoTitle: ["Curadoria", "organizada"],
       solucaoText:
         "Uma pessoa da nossa equipe entende sua história e organiza um caminho claro para você.",
-    });
-    expect(CARDS[1]).toEqual({
-      duvidaTitle: ["Tenho medo de", "ficar sem suporte"],
-      duvidaText:
-        "A conversa migra para o WhatsApp e você teme ficar sozinho depois disso.",
-      solucaoTitle: ["Acompanhamento", "em tempo real"],
-      solucaoText:
-        "A equipe Aliviar segue com você no WhatsApp, do mesmo jeito que aqui no site.",
     });
     expect(CARDS[3]).toEqual({
       duvidaTitle: ["Preocupado com", "meus dados"],
@@ -168,6 +160,37 @@ describe("Decisão 2 — carta 3 do FAQ reescrita", () => {
       solucaoText:
         "O cuidado em si é sempre humano — nós organizamos o caminho até ele.",
     });
+  });
+});
+
+describe("Retorno Controlado — carta 2 do FAQ sem promessa de canal inexistente", () => {
+  it("a carta 2 (índice 1) tem o texto autorizado, sem mencionar WhatsApp ou qualquer canal específico", () => {
+    expect(CARDS[1]).toEqual({
+      duvidaTitle: ["Tenho medo de", "ficar sem suporte"],
+      duvidaText: "Você teme ficar sozinho depois do primeiro contato.",
+      solucaoTitle: ["Acompanhamento", "contínuo"],
+      solucaoText:
+        "A equipe Aliviar continua com você em cada etapa do processo. Você sempre sabe qual é o próximo passo e nunca precisa enfrentar esse caminho sozinho.",
+    });
+  });
+
+  it("nenhuma carta do FAQ menciona WhatsApp, telefone, e-mail, Curador, Atendente ou Concierge", () => {
+    for (const card of CARDS) {
+      const fullText = [
+        ...card.duvidaTitle,
+        card.duvidaText,
+        ...card.solucaoTitle,
+        card.solucaoText,
+      ].join(" ");
+      expect(fullText).not.toMatch(/whatsapp/i);
+      expect(fullText).not.toMatch(/telefone/i);
+      expect(fullText).not.toMatch(/e-mail/i);
+      // \b evita falso positivo com "Curadoria" (termo já aprovado e em
+      // uso na Landing) — só barra "Curador"/"curador" como palavra própria.
+      expect(fullText).not.toMatch(/\bcurador\b/i);
+      expect(fullText).not.toMatch(/atendente/i);
+      expect(fullText).not.toMatch(/concierge/i);
+    }
   });
 });
 

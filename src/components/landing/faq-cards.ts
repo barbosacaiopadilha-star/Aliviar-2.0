@@ -21,11 +21,10 @@ export const CARDS: DuvidaCard[] = [
   },
   {
     duvidaTitle: ["Tenho medo de", "ficar sem suporte"],
-    duvidaText:
-      "A conversa migra para o WhatsApp e você teme ficar sozinho depois disso.",
-    solucaoTitle: ["Acompanhamento", "em tempo real"],
+    duvidaText: "Você teme ficar sozinho depois do primeiro contato.",
+    solucaoTitle: ["Acompanhamento", "contínuo"],
     solucaoText:
-      "A equipe Aliviar segue com você no WhatsApp, do mesmo jeito que aqui no site.",
+      "A equipe Aliviar continua com você em cada etapa do processo. Você sempre sabe qual é o próximo passo e nunca precisa enfrentar esse caminho sozinho.",
   },
   {
     duvidaTitle: ["Não sei qual", "caminho escolher"],
