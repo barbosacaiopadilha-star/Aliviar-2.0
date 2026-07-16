@@ -4,6 +4,11 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRoleForAction } from "@/modules/auth/guard";
 import { getCase } from "@/modules/cases/repository";
 import { getFinalCuradoriaDeliveryForCase } from "@/modules/concierge";
+import {
+  createRelationship,
+  reconstructRelationshipRecordFromRow,
+  RelationshipError,
+} from "@/modules/relationship";
 
 import {
   closeWithoutRelationship,
@@ -54,6 +59,13 @@ function mapErrorToMessage(error: unknown): string {
       default:
         return "Não foi possível concluir esta ação.";
     }
+  }
+  // Defensivo — createRelationship (chamado internamente por
+  // confirmFirstAppointmentAction, PR4) só lança RelationshipError se o
+  // autor não for "sistema", o que esta action nunca constrói de forma
+  // diferente; nunca deveria ocorrer em operação normal.
+  if (error instanceof RelationshipError) {
+    return "Não foi possível concluir esta ação.";
   }
   return "Não foi possível concluir esta ação.";
 }
@@ -316,17 +328,41 @@ export async function confirmFirstAppointmentAction(
   const now = new Date().toISOString();
 
   try {
-    // Marco oficial de nascimento de um futuro Relationship (Fase 2,
-    // Decisão 4) — nenhum Relationship é criado aqui; apenas a transição
-    // de estado é persistida.
-    const result = confirmFirstAppointment(context.record, {
+    // Marco oficial de nascimento do Relationship (Fase 2, Decisão 4;
+    // Fase 3/PR4) — os dois comandos puros (Connection e Relationship)
+    // são chamados aqui, nunca contornados; a persistência dos dois
+    // efeitos é uma única escrita atômica (RPC dedicada, PR4), nunca duas
+    // chamadas separadas.
+    const confirmed = confirmFirstAppointment(context.record, {
       requestedByPatientProfileId: authState.user.id,
       actorId: authState.user.id,
       occurredAt: now,
       recordedAt: now,
     });
 
-    return await persistTransition(context.repository, context.record, result);
+    const relationshipBirth = createRelationship({
+      connectionId: context.record.id,
+      caseId: context.record.caseId,
+      patientProfileId: context.record.patientProfileId,
+      professionalProfileId: context.record.professionalProfileId,
+      author: { kind: "sistema", actorId: authState.user.id },
+      occurredAt: now,
+      recordedAt: now,
+    });
+
+    const result = await context.repository.confirmFirstAppointmentAndBirthRelationship(
+      context.record.status,
+      confirmed.record,
+      confirmed.event,
+      relationshipBirth.event,
+    );
+    // Reconstrói (nunca uma segunda gravação) só para validar que a
+    // linha retornada pela RPC é um RelationshipRecord bem formado —
+    // esta action não precisa devolver o Relationship ao cliente
+    // (ConnectionActionResult carrega só sucesso/erro).
+    reconstructRelationshipRecordFromRow(result.relationshipRow);
+
+    return { success: true };
   } catch (error) {
     return { success: false, error: mapErrorToMessage(error) };
   }

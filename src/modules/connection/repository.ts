@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { RelationshipEventDraft } from "@/modules/relationship";
+
 import { ConnectionError } from "./errors";
 import type { ConnectionRepository } from "./ports/connection-repository";
 import {
@@ -211,5 +213,61 @@ export class SupabaseConnectionRepository implements ConnectionRepository {
     }
 
     return mapRecordRow(data as ConnectionRecordRow);
+  }
+
+  // RELATIONSHIP ENGINE — PR4 (nascimento automático). Único ponto de
+  // toque de Connection sobre Relationship em toda a base — chama a
+  // função transacional dedicada (confirm_first_appointment_and_birth_
+  // relationship, PR4) em vez de apply_connection_transition, apenas para
+  // esta transição específica. Nunca faz duas chamadas separadas (update
+  // do Connection e depois create do Relationship) — os dois efeitos são
+  // uma única escrita atômica no banco. Retorna o ConnectionRecord (esta
+  // classe já sabe mapeá-lo) e a linha bruta de relationship_records, que
+  // quem chamar pode reconstruir via
+  // reconstructRelationshipRecordFromRow (relationship/repository.ts) —
+  // sem nenhuma segunda gravação.
+  async confirmFirstAppointmentAndBirthRelationship(
+    previousStatus: ConnectionStatus,
+    record: ConnectionRecord,
+    connectionEvent: ConnectionEventDraft,
+    relationshipEvent: RelationshipEventDraft,
+  ): Promise<{ connection: ConnectionRecord; relationshipRow: unknown }> {
+    const { data, error } = await this.supabase.rpc(
+      "confirm_first_appointment_and_birth_relationship",
+      {
+        p_connection_id: record.id,
+        p_expected_status: previousStatus,
+        p_actor_id: connectionEvent.actorId,
+        p_connection_event_payload: connectionEvent.payload,
+        p_relationship_event_payload: relationshipEvent.payload,
+        p_occurred_at: connectionEvent.occurredAt,
+        p_recorded_at: connectionEvent.recordedAt,
+      },
+    );
+
+    if (error) {
+      // 55000 = mesma semântica de concorrência otimista de
+      // apply_connection_transition, agora também cobrindo a criação do
+      // Relationship na mesma transação.
+      if (error.code === "55000") {
+        throw new ConnectionError({
+          code: "CONCURRENT_CONFLICT",
+          message: "Este Connection foi alterado por outra ação simultânea.",
+        });
+      }
+      throw new Error(
+        "Não foi possível confirmar o primeiro atendimento.",
+      );
+    }
+
+    const [row] = data as Array<{
+      connection_record: ConnectionRecordRow;
+      relationship_record: unknown;
+    }>;
+
+    return {
+      connection: mapRecordRow(row.connection_record),
+      relationshipRow: row.relationship_record,
+    };
   }
 }
