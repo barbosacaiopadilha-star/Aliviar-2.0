@@ -100,7 +100,9 @@ export function AppShell({ role, displayName, navItems, children }: AppShellProp
         >
           <div className="border-b border-border px-6 py-6">
             <p className="font-serif text-lg font-semibold leading-none text-brand-primary">Aliviar</p>
-            <p className="mt-1 text-[0.6rem] font-medium uppercase tracking-[0.14em] text-brand-sage">
+            {/* Navy (não sálvia): sálvia como texto sobre branco reprova AA —
+                2,9:1, vedado em docs/DESIGN_SYSTEM.md §2.1. */}
+            <p className="mt-1 text-[0.6rem] font-medium uppercase tracking-[0.14em] text-brand-primary">
               Curadoria Médica
             </p>
           </div>

@@ -74,7 +74,7 @@ Azul profundo/petróleo como cor primária de marca, verde sálvia como acento o
 
 ## Tipografia
 
-Serif editorial (`Fraunces`) só para marca, títulos institucionais e destaques editoriais; sans-serif funcional (`Inter`) para toda interface, formulário e texto operacional. Nunca misturar os papéis (serif em botão/formulário, ou sans-serif em destaque de marca). Detalhes de escala e pesos em `docs/DESIGN_SYSTEM.md`, seção 2.2.
+Serif editorial (`Fraunces`) só para marca, títulos institucionais e destaques editoriais; sans-serif funcional (`Public Sans`) para toda interface, formulário e texto operacional. Nunca misturar os papéis (serif em botão/formulário, ou sans-serif em destaque de marca). Detalhes de escala e pesos em `docs/DESIGN_SYSTEM.md`, seção 2.2.
 
 ## Animações
 

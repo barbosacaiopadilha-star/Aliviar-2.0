@@ -32,7 +32,9 @@ function NarrativePassage({ question, answer, editHref }: NarrativePassageProps)
   return (
     <div className="border-b border-border py-8 last:border-b-0">
       <div className="flex items-start justify-between gap-4">
-        <p className="text-xs font-medium uppercase tracking-[0.14em] text-brand-gold">{question}</p>
+        {/* Navy-deep (não dourado): dourado como texto pequeno sobre fundo
+            claro reprova AA (~2,9:1); mesmo tom validado do SectionEyebrow. */}
+        <p className="text-xs font-medium uppercase tracking-[0.14em] text-brand-primary-deep">{question}</p>
         <Link
           href={editHref}
           className="link-underline shrink-0 text-sm font-medium text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface"

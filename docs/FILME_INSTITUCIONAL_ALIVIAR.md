@@ -109,7 +109,7 @@ Nenhuma frase de efeito vazia — cada linha é uma afirmação concreta, verifi
 
 ## 8. Texto das legendas
 
-Idêntico à narração, cena a cena (nunca um resumo paralelo — mesmo princípio de `docs/DESIGN_SYSTEM.md`, seção 9, estendido a vídeo). Sempre presentes, mesmo nas versões com áudio, para acessibilidade e para consumo com som desligado (essencial nas versões de rede social). Tipografia sans-serif funcional (`Inter`), alto contraste, nunca sobreposta a área de rosto/olhos.
+Idêntico à narração, cena a cena (nunca um resumo paralelo — mesmo princípio de `docs/DESIGN_SYSTEM.md`, seção 9, estendido a vídeo). Sempre presentes, mesmo nas versões com áudio, para acessibilidade e para consumo com som desligado (essencial nas versões de rede social). Tipografia sans-serif funcional (`Public Sans`), alto contraste, nunca sobreposta a área de rosto/olhos.
 
 ## 9. Fotografia
 
@@ -178,7 +178,7 @@ Reveal extremamente contido: escala de 98% para 100% com leve fade-in (nunca um 
 
 ## 21. Encerramento
 
-Fundo marfim, espaço negativo generoso — espelha visualmente a cena 1 (janela/horizonte), fechando o filme com a mesma respiração com que começou. Símbolo completo, nome da marca em serif (`Fraunces`), uma linha de assinatura abaixo em sans-serif (`Inter`), discreta.
+Fundo marfim, espaço negativo generoso — espelha visualmente a cena 1 (janela/horizonte), fechando o filme com a mesma respiração com que começou. Símbolo completo, nome da marca em serif (`Fraunces`), uma linha de assinatura abaixo em sans-serif (`Public Sans`), discreta.
 
 ## 22. CTA final
 

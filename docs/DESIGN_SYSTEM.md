@@ -61,7 +61,7 @@ Duas famílias, papéis distintos (nunca misturar):
 | Papel | Fonte recomendada | Por quê |
 |---|---|---|
 | Serif editorial | **Fraunces** (Google Fonts) | Serifa contemporânea com caráter editorial/premium sem ser clássica-corporativa; suporte completo a diacríticos do português (subset `latin`); alternativa mais conservadora: **Lora** |
-| Sans-serif funcional | **Inter** (Google Fonts) | Altíssima legibilidade em tamanhos pequenos (tabelas, formulários), hinting excelente, suporte completo a português, adotada amplamente em produtos "premium/consultivo" sem parecer genérica; alternativa mais "humana": **Public Sans** |
+| Sans-serif funcional | **Public Sans** (Google Fonts) | Escolha **em vigor** desde o refinamento visual da Landing pedido pelo usuário (commit `3a241e2`, 2026-07-14): tom mais refinado/"humano", mantendo alta legibilidade em tamanhos pequenos e suporte completo a português. Era a alternativa já listada nesta análise; a recomendação original (**Inter**) fica registrada como histórico, não como pendência |
 
 Ambas via `next/font/google`, **nunca** `<link>` externo ou `@import` de CSS: isso resolve simultaneamente os quatro critérios pedidos — **desempenho** (self-hosted no build, sem requisição externa em runtime), **privacidade** (nenhum IP do usuário é enviado ao Google Fonts em runtime), **offline/local** (arquivos ficam embutidos no build, funcionam sem rede), e **suporte a português** (subset `latin` do Google Fonts cobre todos os diacríticos usados em pt-BR). Carregar **só os pesos usados** (400/500/600 para ambas as famílias) — nunca a família inteira.
 

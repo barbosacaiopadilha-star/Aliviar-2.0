@@ -29,7 +29,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     <Suspense
       fallback={
         <AuthCard title="Entrar" description="Carregando...">
-          <p className="text-center text-sm text-gray-500">Aguarde...</p>
+          <p className="text-center text-sm text-ink-muted">Aguarde...</p>
         </AuthCard>
       }
     >

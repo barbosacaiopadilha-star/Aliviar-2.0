@@ -54,7 +54,7 @@ Instrumental minimalista (piano e/ou cordas, sem batida eletrônica agressiva), 
 
 ## Legendas
 
-Sempre presentes (acessibilidade — `docs/DESIGN_SYSTEM.md`, seção 9, estendida a vídeo), alto contraste, tipografia sans-serif funcional (`Inter`), nunca sobre fundo que reduza legibilidade. Sincronizadas com a narração, não um resumo paralelo.
+Sempre presentes (acessibilidade — `docs/DESIGN_SYSTEM.md`, seção 9, estendida a vídeo), alto contraste, tipografia sans-serif funcional (`Public Sans`), nunca sobre fundo que reduza legibilidade. Sincronizadas com a narração, não um resumo paralelo.
 
 ## Motion (diretrizes gerais)
 
