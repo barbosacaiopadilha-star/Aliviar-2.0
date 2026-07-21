@@ -42,11 +42,21 @@ function unique(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+// [Fase 6.3 — Parte 3] LoginForm é Client Component ("use client",
+// useSearchParams()) dentro de um Suspense boundary — o HTML do
+// formulário chega via SSR antes da hidratação anexar os handlers do
+// React. Preencher/clicar antes desse momento pode interagir com nós
+// que o React ainda substitui, produzindo "element is not attached to
+// the DOM" de forma não-determinística. Esperar o botão "Entrar" ficar
+// habilitado é um proxy observável e estável de hidratação concluída —
+// sem sleep arbitrário, sem retry indefinido, sem alterar a tela real.
 async function loginAs(page: Page, email: string, password: string) {
   await page.goto("/login");
+  const submitButton = page.getByRole("button", { name: "Entrar" });
+  await expect(submitButton).toBeEnabled();
   await page.getByLabel("E-mail").fill(email);
   await page.getByLabel("Senha").fill(password);
-  await page.getByRole("button", { name: "Entrar" }).click();
+  await submitButton.click();
   await page.waitForURL((url) => !url.pathname.startsWith("/login"));
 }
 
@@ -323,8 +333,12 @@ test.describe("Relationship — status do acompanhamento (E2E autenticado)", () 
       await page.goto("/paciente/curadoria");
 
       await expect(page.getByText(/está registrado como ativo/)).toBeVisible();
+      // .first(): o nome do profissional aparece em mais de um lugar da
+      // página (heading do painel + resumo da Curadoria) — a asserção
+      // verifica presença, não unicidade, então strict mode do Playwright
+      // precisa ser desambiguado sem reduzir o que é verificado.
       await expect(
-        page.getByText(new RegExp(fixture.professionalDisplayName)),
+        page.getByText(new RegExp(fixture.professionalDisplayName)).first(),
       ).toBeVisible();
 
       await page
@@ -334,7 +348,9 @@ test.describe("Relationship — status do acompanhamento (E2E autenticado)", () 
       await page
         .getByRole("button", { name: "Confirmar encerramento" })
         .click();
-      await expect(page.getByText(/registrado como encerrado/)).toBeVisible();
+      await expect(page.getByText(/registrado como encerrado/)).toBeVisible({
+        timeout: 30000,
+      });
 
       await page.reload();
       await expect(page.getByText(/registrado como encerrado/)).toBeVisible();

@@ -9,7 +9,12 @@ import { Button } from "@/components/ui/button";
 // aparece no documento impresso/salvo.
 export function PrintButton() {
   return (
-    <Button type="button" variant="secondary" className="w-auto print:hidden" onClick={() => window.print()}>
+    <Button
+      type="button"
+      variant="secondary"
+      className="w-auto print:hidden"
+      onClick={() => window.print()}
+    >
       Imprimir ou salvar como PDF
     </Button>
   );
