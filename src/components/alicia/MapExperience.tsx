@@ -1,11 +1,23 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
-import { filterDoctors, getFilterOptions } from "@/alicia/lib/filter-doctors";
-import { MOCK_DOCTORS } from "@/alicia/mocks/doctors";
+import {
+  buildDiscoveryInsights,
+  buildDiscoverySummary,
+  buildEmptyStateSuggestion,
+  detectViewportLabel,
+  getActiveFilterChips,
+} from "@/alicia/lib/discovery-summary";
+import { filterDoctors, filterDoctorsByBounds, getFilterOptions } from "@/alicia/lib/filter-doctors";
+import type { MapBounds } from "@/alicia/lib/geo";
+import { useIsClient } from "@/alicia/lib/use-is-client";
+import { listDoctors } from "@/alicia/catalog";
 import { EMPTY_FILTERS, type Doctor } from "@/alicia/types";
+import { ActiveFilterChips } from "@/components/alicia/ActiveFilterChips";
+import { DiscoveryInsightsPanel } from "@/components/alicia/DiscoveryInsightsPanel";
+import { DiscoverySummary } from "@/components/alicia/DiscoverySummary";
 import { DoctorFiltersPanel } from "@/components/alicia/DoctorFiltersPanel";
 import { DoctorPreviewCard } from "@/components/alicia/DoctorPreviewCard";
 import { DoctorResultsList } from "@/components/alicia/DoctorResultsList";
@@ -13,64 +25,136 @@ import { MapSkeleton } from "@/components/alicia/Skeletons";
 
 const DoctorMap = dynamic(
   () => import("@/components/alicia/DoctorMap").then((module) => module.DoctorMap),
-  { ssr: false, loading: () => <MapSkeleton /> },
+  { ssr: false },
 );
 
 export function MapExperience() {
+  const mounted = useIsClient();
   const [filters, setFilters] = useState(EMPTY_FILTERS);
-  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+  const [previewDoctor, setPreviewDoctor] = useState<Doctor | null>(null);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
+  const [hasUserMovedMap, setHasUserMovedMap] = useState(false);
 
-  const filterOptions = useMemo(() => getFilterOptions(MOCK_DOCTORS), []);
+  const doctors = useMemo(() => listDoctors(), []);
+  const filterOptions = useMemo(() => getFilterOptions(doctors), [doctors]);
+
   const filteredDoctors = useMemo(
-    () => filterDoctors(MOCK_DOCTORS, filters),
-    [filters],
+    () => filterDoctors(doctors, filters),
+    [doctors, filters],
   );
 
-  const handleSelect = (doctor: Doctor) => {
-    setSelectedDoctor(doctor);
+  const visibleDoctors = useMemo(() => {
+    if (!hasUserMovedMap || !mapBounds) {
+      return filteredDoctors;
+    }
+
+    return filterDoctorsByBounds(filteredDoctors, mapBounds);
+  }, [filteredDoctors, hasUserMovedMap, mapBounds]);
+
+  const viewportLabel = useMemo(() => {
+    if (!hasUserMovedMap || !mapBounds) {
+      return null;
+    }
+
+    return detectViewportLabel(mapBounds, filteredDoctors);
+  }, [filteredDoctors, hasUserMovedMap, mapBounds]);
+
+  const summary = useMemo(
+    () => buildDiscoverySummary(visibleDoctors.length, filters, viewportLabel),
+    [filters, viewportLabel, visibleDoctors.length],
+  );
+
+  const insights = useMemo(() => buildDiscoveryInsights(visibleDoctors), [visibleDoctors]);
+  const activeChips = useMemo(() => getActiveFilterChips(filters), [filters]);
+  const emptyState = useMemo(
+    () => buildEmptyStateSuggestion(filters, doctors.length),
+    [doctors.length, filters],
+  );
+
+  const handlePinSelect = (doctor: Doctor) => {
+    setPreviewDoctor(doctor);
+    setHighlightedId(doctor.id);
   };
+
+  const handleReset = () => {
+    setFilters(EMPTY_FILTERS);
+    setPreviewDoctor(null);
+    setHighlightedId(null);
+    setMapBounds(null);
+    setHasUserMovedMap(false);
+  };
+
+  const handleFiltersChange = (nextFilters: typeof filters) => {
+    setFilters(nextFilters);
+    setPreviewDoctor(null);
+  };
+
+  const handleBoundsChange = useCallback((bounds: MapBounds) => {
+    setHasUserMovedMap(true);
+    setMapBounds(bounds);
+  }, []);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-serif text-3xl font-semibold text-ink">Mapa de médicos</h1>
-        <p className="mt-2 max-w-2xl text-sm text-ink-soft">
-          Explore a formação e a trajetória de médicos no Brasil. Clique em um pin para ver um
-          preview ou use os filtros para refinar sua busca.
+        <h1 className="font-serif text-3xl font-semibold text-ink">
+          Encontre médicos no Espírito Santo
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-soft">
+          Filtre por especialidade, cidade ou formação. Toque em um ponto no mapa para um resumo
+          rápido — ou abra o perfil completo na lista.
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-        <div className="space-y-4">
+      <DiscoverySummary summary={summary} />
+
+      {activeChips.length > 0 && (
+        <ActiveFilterChips chips={activeChips} filters={filters} onChange={handleFiltersChange} />
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,320px)_1fr]">
+        <div className="order-2 space-y-4 lg:order-1">
           <DoctorFiltersPanel
             filters={filters}
             options={filterOptions}
-            resultCount={filteredDoctors.length}
-            onChange={setFilters}
-            onReset={() => {
-              setFilters(EMPTY_FILTERS);
-              setSelectedDoctor(null);
-            }}
+            onChange={handleFiltersChange}
+            onReset={handleReset}
           />
+          <DiscoveryInsightsPanel insights={insights} />
           <DoctorResultsList
-            doctors={filteredDoctors}
-            selectedId={selectedDoctor?.id ?? null}
-            onSelect={handleSelect}
+            doctors={visibleDoctors}
+            selectedId={highlightedId}
+            onHighlight={(doctor) => setHighlightedId(doctor?.id ?? null)}
+            emptyState={emptyState}
+            filters={filters}
+            onChangeFilters={handleFiltersChange}
           />
         </div>
 
-        <div className="relative">
+        <div className="relative order-1 lg:order-2">
           <div className="card overflow-hidden p-1">
-            <DoctorMap
-              doctors={filteredDoctors}
-              selectedId={selectedDoctor?.id ?? null}
-              onSelect={handleSelect}
-            />
+            {mounted ? (
+              <DoctorMap
+                doctors={visibleDoctors}
+                selectedId={highlightedId ?? previewDoctor?.id ?? null}
+                onSelect={handlePinSelect}
+                onBoundsChange={handleBoundsChange}
+              />
+            ) : (
+              <MapSkeleton />
+            )}
           </div>
-          {selectedDoctor && (
+          <p className="pointer-events-none absolute left-4 top-4 z-[500] rounded-full bg-paper-raised/95 px-3 py-1 text-xs font-medium text-ink shadow-sm">
+            {visibleDoctors.length === 1
+              ? "1 médico nesta busca"
+              : `${visibleDoctors.length} médicos nesta busca`}
+            {hasUserMovedMap ? " · região visível" : ""}
+          </p>
+          {previewDoctor && (
             <DoctorPreviewCard
-              doctor={selectedDoctor}
-              onClose={() => setSelectedDoctor(null)}
+              doctor={previewDoctor}
+              onClose={() => setPreviewDoctor(null)}
             />
           )}
         </div>
