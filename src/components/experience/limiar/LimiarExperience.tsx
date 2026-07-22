@@ -116,7 +116,9 @@ export function LimiarExperience({ filmSrc }: LimiarExperienceProps) {
         filmSrc={filmSrc}
         videoRef={videoRef}
         visible={showFilm}
+        readyToLoad={gestureReady}
         onEnded={handleFilmEnded}
+        onError={handleFilmEnded}
       />
 
       {phase === "after" && (

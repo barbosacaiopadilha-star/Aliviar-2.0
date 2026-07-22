@@ -714,6 +714,15 @@ a {
   background: var(--paper);
 }
 
+.limiar-film__image:focus {
+  outline: none;
+}
+
+.landing-loading {
+  min-height: 100dvh;
+  background: var(--paper);
+}
+
 .limiar-film__image::-webkit-media-controls {
   display: none !important;
 }

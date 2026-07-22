@@ -4,6 +4,8 @@ import { FILM_CONSOLIDATION_LINE } from "./continuation-model";
 import {
   FILM_ASSIMILATION_MS,
   FILM_OPENING_MS,
+  FILM_POSTER_SRC,
+  FILM_PROVISIONAL_ASSET,
   resolveFilmSrc,
 } from "./film-model";
 import { THRESHOLD_FORBIDDEN_WORDS } from "./threshold-model";
@@ -15,6 +17,8 @@ describe("film-model", () => {
     expect(resolveFilmSrc("https://example.com/filme.mp4")).toBe(
       "https://example.com/filme.mp4",
     );
+    expect(FILM_POSTER_SRC).toBe("/film/poster.svg");
+    expect(FILM_PROVISIONAL_ASSET).toBe("aliviar-1.0");
   });
 
   it("reserva tempo de abertura e assimilação", () => {
