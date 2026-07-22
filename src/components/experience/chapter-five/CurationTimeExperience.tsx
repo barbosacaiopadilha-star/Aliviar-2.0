@@ -43,6 +43,16 @@ export function CurationTimeExperience({ daysSinceStart }: CurationTimeExperienc
           ))}
         </section>
 
+        {phase === "report_announced" && (
+          <Link
+            href="/relatorio"
+            className="chapter-one__cta conversation__next-chapter chapter-one__letter-line"
+            style={{ animationDelay: `${0.12 + lines.length * 0.2}s` }}
+          >
+            Receber com calma
+          </Link>
+        )}
+
         <p
           className="curation-presence__rest chapter-one__letter-line"
           style={{ animationDelay: `${0.12 + lines.length * 0.2}s` }}

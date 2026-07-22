@@ -13,6 +13,7 @@ describe("curation-time-model", () => {
     expect(resolveCurationTimePhase(1)).toBe("early_days");
     expect(resolveCurationTimePhase(3)).toBe("deepening");
     expect(resolveCurationTimePhase(7)).toBe("sustained");
+    expect(resolveCurationTimePhase(10)).toBe("report_announced");
   });
 
   it("calcula dias entre datas por calendário", () => {
@@ -26,7 +27,7 @@ describe("curation-time-model", () => {
   });
 
   it("transmite companhia contínua em cada fase", () => {
-    const phases = ["return_same_day", "early_days", "deepening", "sustained"] as const;
+    const phases = ["return_same_day", "early_days", "deepening", "sustained", "report_announced"] as const;
 
     for (const phase of phases) {
       const lines = buildCurationTimeLines(phase);
@@ -38,7 +39,7 @@ describe("curation-time-model", () => {
   });
 
   it("não usa linguagem de status, contador ou abandono", () => {
-    const phases = ["return_same_day", "early_days", "deepening", "sustained"] as const;
+    const phases = ["return_same_day", "early_days", "deepening", "sustained", "report_announced"] as const;
     const text = phases
       .flatMap((phase) => buildCurationTimeLines(phase))
       .map((line) => line.text)

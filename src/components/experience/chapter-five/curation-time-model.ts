@@ -4,7 +4,8 @@ export type CurationTimePhase =
   | "return_same_day"
   | "early_days"
   | "deepening"
-  | "sustained";
+  | "sustained"
+  | "report_announced";
 
 export type CurationTimeLine = {
   text: string;
@@ -21,7 +22,8 @@ export function resolveCurationTimePhase(daysSinceStart: number): CurationTimePh
   if (daysSinceStart < 1) return "return_same_day";
   if (daysSinceStart < 3) return "early_days";
   if (daysSinceStart < 7) return "deepening";
-  return "sustained";
+  if (daysSinceStart < 10) return "sustained";
+  return "report_announced";
 }
 
 export function buildCurationTimeGreeting(phase: CurationTimePhase): string {
@@ -34,6 +36,8 @@ export function buildCurationTimeGreeting(phase: CurationTimePhase): string {
       return "Ainda aqui, com o seu caso.";
     case "sustained":
       return "O tempo passou, e seguimos com você.";
+    case "report_announced":
+      return "A curadoria foi concluída.";
   }
 }
 
@@ -113,6 +117,19 @@ export function buildCurationTimeLines(phase: CurationTimePhase): CurationTimeLi
         {
           text: "Enquanto você segue sua vida, alguém continua cuidando de você.",
           emphasis: true,
+        },
+        { text: `Com presença,\n${CURATION_HOST}` },
+      ];
+    case "report_announced":
+      return [
+        { text: "Olá," },
+        { text: greeting, emphasis: true },
+        {
+          text: "Seu relatório de curadoria está pronto — um trabalho feito para o seu caso, com o cuidado que este momento pede.",
+          emphasis: true,
+        },
+        {
+          text: "Quando estiver pronto para recebê-lo com calma, estamos aqui.",
         },
         { text: `Com presença,\n${CURATION_HOST}` },
       ];

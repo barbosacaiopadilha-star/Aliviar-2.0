@@ -698,6 +698,35 @@ a {
   margin-top: 1.75rem;
 }
 
+.report-ready__letter {
+  width: 100%;
+  padding: 0.5rem 0 1rem;
+}
+
+.report-ready__line {
+  margin-top: 1.4rem;
+  font-size: 1.0625rem;
+  line-height: 1.85;
+  color: var(--ink-soft);
+}
+
+.report-ready__line--emphasis {
+  font-family: var(--font-serif);
+  font-size: 1.1875rem;
+  line-height: 1.65;
+  color: var(--ink);
+}
+
+.report-ready__closing {
+  margin-top: 2.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  font-style: italic;
+  opacity: 0;
+  animation: chapter-letter-in 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 @keyframes conversation-line-in {
   from {
     opacity: 0;
