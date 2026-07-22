@@ -1,6 +1,7 @@
 import type { Application } from "@/infrastructure/composition-root";
 import { toApplicationResult } from "@/application/shared/to-application-result";
 import { resolveStaffAccess } from "@/lib/auth/resolve-staff-access";
+import { instrumentOperation } from "../../shared/observability/instrument-operation";
 import { mapValidationToApiResponse } from "../../shared/errors/application-error-mapper";
 import { handleApplicationResult } from "../../shared/http/handle-application-result";
 import { errorResponse } from "../../shared/http/response";
@@ -59,10 +60,18 @@ export async function handleAbrirSessaoCurador(
   const staff = await requireStaff();
   if (!staff.ok) return staff.response;
 
-  return handleApplicationResult(
-    toApplicationResult(app.abrirSessaoCuradoriaComWorkspace.execute(jornadaId)),
-    () => ({ sessao_aberta: true }),
-  );
+  return instrumentOperation({
+    operationType: "SESSAO_INICIO",
+    jornadaId,
+    curatorId: staff.userId,
+    actorId: staff.userId,
+    actorRole: "STAFF",
+    execute: () =>
+      handleApplicationResult(
+        toApplicationResult(app.abrirSessaoCuradoriaComWorkspace.execute(jornadaId)),
+        () => ({ sessao_aberta: true }),
+      ),
+  });
 }
 
 export async function handleSalvarConjuntoElegivel(
@@ -104,15 +113,24 @@ export async function handleRegistrarOpcoes(
     return errorResponse(mapped.status, mapped.body);
   }
 
-  return handleApplicationResult(
-    toApplicationResult(
-      app.registrarTresOpcoes.execute(
-        jornadaId,
-        request.opcoes as import("@/curator-flow/contracts/curador-view").OpcaoRegistradaView[],
+  return instrumentOperation({
+    operationType: "OPCOES_REGISTRADAS",
+    jornadaId,
+    curatorId: staff.userId,
+    actorId: staff.userId,
+    actorRole: "STAFF",
+    metadata: { opcoes: request.opcoes.length },
+    execute: () =>
+      handleApplicationResult(
+        toApplicationResult(
+          app.registrarTresOpcoes.execute(
+            jornadaId,
+            request.opcoes as import("@/curator-flow/contracts/curador-view").OpcaoRegistradaView[],
+          ),
+        ),
+        (data) => data,
       ),
-    ),
-    (data) => data,
-  );
+  });
 }
 
 export async function handleRegistrarComentario(
@@ -150,10 +168,18 @@ export async function handleAprovarEntrega(
   const staff = await requireStaff();
   if (!staff.ok) return staff.response;
 
-  return handleApplicationResult(
-    toApplicationResult(app.aprovarEntregaCurador.execute(jornadaId, staff.userId)),
-    () => ({ aprovado: true }),
-  );
+  return instrumentOperation({
+    operationType: "APROVACAO",
+    jornadaId,
+    curatorId: staff.userId,
+    actorId: staff.userId,
+    actorRole: "STAFF",
+    execute: () =>
+      handleApplicationResult(
+        toApplicationResult(app.aprovarEntregaCurador.execute(jornadaId, staff.userId)),
+        () => ({ aprovado: true }),
+      ),
+  });
 }
 
 export async function handlePublicarEntrega(
@@ -163,8 +189,16 @@ export async function handlePublicarEntrega(
   const staff = await requireStaff();
   if (!staff.ok) return staff.response;
 
-  return handleApplicationResult(
-    toApplicationResult(app.publicarEntregaCurador.execute(jornadaId)),
-    () => ({ publicado: true }),
-  );
+  return instrumentOperation({
+    operationType: "PUBLICACAO",
+    jornadaId,
+    curatorId: staff.userId,
+    actorId: staff.userId,
+    actorRole: "STAFF",
+    execute: () =>
+      handleApplicationResult(
+        toApplicationResult(app.publicarEntregaCurador.execute(jornadaId)),
+        () => ({ publicado: true }),
+      ),
+  });
 }

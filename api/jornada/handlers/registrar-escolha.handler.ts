@@ -1,6 +1,7 @@
 import type { Application } from "@/infrastructure/composition-root";
 import { toApplicationResult } from "@/application/shared/to-application-result";
 import { resolvePatientAccess } from "@/lib/auth/resolve-patient-access";
+import { instrumentOperation } from "../../shared/observability/instrument-operation";
 import { mapNotFoundToApiResponse, mapValidationToApiResponse } from "../../shared/errors/application-error-mapper";
 import { handleApplicationResult } from "../../shared/http/handle-application-result";
 import { errorResponse } from "../../shared/http/response";
@@ -28,14 +29,23 @@ export async function handleRegistrarEscolha(app: Application, body: unknown): P
     return errorResponse(mapped.status, mapped.body);
   }
 
-  return handleApplicationResult(
-    toApplicationResult(
-      app.registrarEscolhaPaciente.execute({
-        jornadaId: jornada.jornadaId,
-        opcaoIndice: request.opcao_indice,
-        observacao: request.observacao ?? null,
-      }),
-    ),
-    toObterJornadaDoPacienteResponse,
-  );
+  return instrumentOperation({
+    operationType: "ESCOLHA_PACIENTE",
+    patientId: access.patientId,
+    jornadaId: jornada.jornadaId,
+    actorId: access.authUserId,
+    actorRole: "PATIENT",
+    metadata: { opcao_indice: request.opcao_indice },
+    execute: () =>
+      handleApplicationResult(
+        toApplicationResult(
+          app.registrarEscolhaPaciente.execute({
+            jornadaId: jornada.jornadaId,
+            opcaoIndice: request.opcao_indice!,
+            observacao: request.observacao ?? null,
+          }),
+        ),
+        toObterJornadaDoPacienteResponse,
+      ),
+  });
 }

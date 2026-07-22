@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import type { Application } from "@/infrastructure/composition-root";
 import { toApplicationResult } from "@/application/shared/to-application-result";
 import { resolvePatientAccess } from "@/lib/auth/resolve-patient-access";
+import { instrumentOperation } from "../../shared/observability/instrument-operation";
 import { mapNotFoundToApiResponse, mapValidationToApiResponse } from "../../shared/errors/application-error-mapper";
 import { handleApplicationResult } from "../../shared/http/handle-application-result";
 import { errorResponse } from "../../shared/http/response";
@@ -45,10 +46,19 @@ export async function handleAvancarOnboarding(app: Application): Promise<Respons
     return errorResponse(mapped.status, mapped.body);
   }
 
-  return handleApplicationResult(
-    toApplicationResult(app.avancarOnboardingPaciente.execute(jornada.jornadaId)),
-    toObterJornadaDoPacienteResponse,
-  );
+  return instrumentOperation({
+    operationType: "JORNADA_ALTERADA",
+    patientId: access.patientId,
+    jornadaId: jornada.jornadaId,
+    actorId: access.authUserId,
+    actorRole: "PATIENT",
+    metadata: { acao: "onboarding_avancar" },
+    execute: () =>
+      handleApplicationResult(
+        toApplicationResult(app.avancarOnboardingPaciente.execute(jornada.jornadaId)),
+        toObterJornadaDoPacienteResponse,
+      ),
+  });
 }
 
 export async function handleAvancarParaEscolha(app: Application): Promise<Response> {
@@ -65,8 +75,17 @@ export async function handleAvancarParaEscolha(app: Application): Promise<Respon
     return errorResponse(mapped.status, mapped.body);
   }
 
-  return handleApplicationResult(
-    toApplicationResult(app.avancarParaEscolhaPaciente.execute(jornada.jornadaId)),
-    toObterJornadaDoPacienteResponse,
-  );
+  return instrumentOperation({
+    operationType: "JORNADA_ALTERADA",
+    patientId: access.patientId,
+    jornadaId: jornada.jornadaId,
+    actorId: access.authUserId,
+    actorRole: "PATIENT",
+    metadata: { acao: "entrega_avancar_escolha" },
+    execute: () =>
+      handleApplicationResult(
+        toApplicationResult(app.avancarParaEscolhaPaciente.execute(jornada.jornadaId)),
+        toObterJornadaDoPacienteResponse,
+      ),
+  });
 }

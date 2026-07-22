@@ -1,5 +1,6 @@
 import type { Application } from "@/infrastructure/composition-root";
 import { toApplicationResult } from "@/application/shared/to-application-result";
+import { instrumentOperation } from "../../shared/observability/instrument-operation";
 import { mapValidationToApiResponse } from "../../shared/errors/application-error-mapper";
 import { handleApplicationResult } from "../../shared/http/handle-application-result";
 import { errorResponse } from "../../shared/http/response";
@@ -30,9 +31,16 @@ export async function handleExecutarAnaliseInicial(
 
   const command = toExecutarAnaliseInicialCommand(jornadaId, request);
 
-  return handleApplicationResult(
-    toApplicationResult(app.executarAnaliseInicial.execute(command)),
-    toExecutarAnaliseInicialResponse,
-    201,
-  );
+  return instrumentOperation({
+    operationType: "JORNADA_ALTERADA",
+    jornadaId,
+    actorRole: "STAFF",
+    metadata: { acao: "analise_inicial" },
+    execute: () =>
+      handleApplicationResult(
+        toApplicationResult(app.executarAnaliseInicial.execute(command)),
+        toExecutarAnaliseInicialResponse,
+        201,
+      ),
+  });
 }

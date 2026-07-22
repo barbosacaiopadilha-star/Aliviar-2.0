@@ -21,6 +21,7 @@ export const EXPECTED_TABLES = [
   "patient_documents",
   "curator_case_workspaces",
   "operational_assignment_events",
+  "operational_audit_events",
   "journey_events",
 ];
 
@@ -30,6 +31,8 @@ export const EXPECTED_MIGRATION_MARKERS = [
   "20260723180000_patient_portal",
   "20260724180000_curator_portal",
   "20260725180000_operational_workflow",
+  "20260726180000_patient_document_storage",
+  "20260727180000_operational_audit_trail",
 ];
 
 export const ADMIN_EMAIL = "padilhacaiobarbosa@gmail.com";

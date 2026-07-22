@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { linkPatientAuthByEmail } from "@/lib/auth/resolve-patient-access";
+import { logAuthEventWithAudit } from "@/lib/auth/auth-log";
 import { createClient } from "@/lib/supabase/server";
 
 async function getRequestOrigin() {
@@ -31,11 +32,29 @@ export async function requestPatientMagicLinkAction(formData: FormData) {
   const supabase = await createClient();
   const origin = await getRequestOrigin();
 
-  await supabase.auth.signInWithOtp({
+  const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
       emailRedirectTo: `${origin}/auth/confirm?next=${encodeURIComponent(safeRedirect)}&portal=1`,
     },
+  });
+
+  if (error) {
+    await logAuthEventWithAudit({
+      step: "patient_magic_link",
+      code: "otp_failed",
+      hasSession: false,
+      actorRole: "PATIENT",
+    });
+    redirect(
+      `/portal/entrar?error=otp_failed&redirect=${encodeURIComponent(safeRedirect)}&email=${encodeURIComponent(email)}`,
+    );
+  }
+
+  await logAuthEventWithAudit({
+    step: "patient_magic_link_sent",
+    hasSession: false,
+    actorRole: "PATIENT",
   });
 
   redirect(`/portal/entrar?sent=1&email=${encodeURIComponent(email)}`);
