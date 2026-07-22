@@ -11,7 +11,11 @@ import {
 } from "react";
 
 import type { JornadaDoPacienteView } from "@/experience-flow/contracts/jornada-view";
-import { fetchJornadaView, JornadaApiError } from "@/experience-layer/api/jornada-client";
+import {
+  fetchJornadaView,
+  fetchMeJornadaView,
+  JornadaApiError,
+} from "@/experience-layer/api/jornada-client";
 import type { CanonicalExperienceSnapshot } from "@/experience-layer/contracts/experience-models";
 import { resolveCanonicalExperience } from "@/experience-layer/resolve-canonical-experience";
 
@@ -36,6 +40,7 @@ const ExperienceContext = createContext<ExperienceContextValue | null>(null);
 
 interface ExperienceProviderProps {
   jornadaId: string | null;
+  mode?: "jornada-id" | "authenticated-patient";
   children: ReactNode;
 }
 
@@ -46,20 +51,34 @@ async function loadJornadaExperience(
   return { view, experience: resolveCanonicalExperience(view) };
 }
 
-export function ExperienceProvider({ jornadaId, children }: ExperienceProviderProps) {
+async function loadMeJornadaExperience(): Promise<{
+  view: JornadaDoPacienteView;
+  experience: CanonicalExperienceSnapshot;
+}> {
+  const view = await fetchMeJornadaView();
+  return { view, experience: resolveCanonicalExperience(view) };
+}
+
+export function ExperienceProvider({
+  jornadaId,
+  mode = "jornada-id",
+  children,
+}: ExperienceProviderProps) {
   const [fetchState, setFetchState] = useState<ExperienceFetchState>({ status: "loading" });
 
-  const loadState: ExperienceLoadState = jornadaId ? fetchState : { status: "idle" };
+  const isPortalMode = mode === "authenticated-patient";
+  const hasSource = isPortalMode || jornadaId !== null;
+  const loadState: ExperienceLoadState = hasSource ? fetchState : { status: "idle" };
 
   const refresh = useCallback(async () => {
-    if (!jornadaId) {
+    if (!hasSource) {
       return;
     }
 
     setFetchState({ status: "loading" });
 
     try {
-      const loaded = await loadJornadaExperience(jornadaId);
+      const loaded = isPortalMode ? await loadMeJornadaExperience() : await loadJornadaExperience(jornadaId!);
       setFetchState({ status: "ready", ...loaded });
     } catch (error) {
       const apiError = error instanceof JornadaApiError ? error : null;
@@ -69,20 +88,21 @@ export function ExperienceProvider({ jornadaId, children }: ExperienceProviderPr
         code: apiError?.code ?? "UNKNOWN_ERROR",
       });
     }
-  }, [jornadaId]);
+  }, [hasSource, isPortalMode, jornadaId]);
 
   useEffect(() => {
-    if (!jornadaId) {
+    if (!hasSource) {
       return;
     }
 
-    const activeJornadaId = jornadaId;
     let cancelled = false;
 
     async function load() {
       setFetchState({ status: "loading" });
       try {
-        const loaded = await loadJornadaExperience(activeJornadaId);
+        const loaded = isPortalMode
+          ? await loadMeJornadaExperience()
+          : await loadJornadaExperience(jornadaId!);
         if (!cancelled) {
           setFetchState({ status: "ready", ...loaded });
         }
@@ -102,16 +122,17 @@ export function ExperienceProvider({ jornadaId, children }: ExperienceProviderPr
     return () => {
       cancelled = true;
     };
-  }, [jornadaId]);
+  }, [hasSource, isPortalMode, jornadaId]);
 
   const value = useMemo<ExperienceContextValue>(() => {
     const view = loadState.status === "ready" ? loadState.view : null;
+    const resolvedJornadaId = view?.jornada_id ?? jornadaId;
 
     return {
-      jornadaId,
+      jornadaId: resolvedJornadaId,
       loadState,
       refresh,
-      hasJornada: jornadaId !== null && loadState.status === "ready",
+      hasJornada: loadState.status === "ready",
       isBlocked: view?.bloqueio !== null && view?.bloqueio !== undefined,
       isCompleted: view?.concluida_em !== null && view?.concluida_em !== undefined,
     };

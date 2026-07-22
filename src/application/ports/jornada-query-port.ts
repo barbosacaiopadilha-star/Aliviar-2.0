@@ -2,6 +2,7 @@ import type { JornadaDoPacienteReadModel } from "@/application/jornada/jornada-d
 
 export interface JornadaQueryPort {
   obterPorId(jornadaId: string): Promise<JornadaDoPacienteReadModel | null>;
+  obterPorPacienteId(pacienteId: string): Promise<JornadaDoPacienteReadModel | null>;
 }
 
 export interface JornadaProjectionPort {

@@ -50,7 +50,9 @@ export class SupabaseEntregaRepository implements EntregaRepositoryPort {
 
     const projecaoAtual = await jornadaProjection.obterPorId(input.jornadaId);
     if (projecaoAtual) {
-      await jornadaProjection.salvar(avancarProjecaoAposEntrega(projecaoAtual, produzidaEm));
+      await jornadaProjection.salvar(
+        avancarProjecaoAposEntrega(projecaoAtual, produzidaEm, entregaId, input.conteudo),
+      );
     }
 
     return {

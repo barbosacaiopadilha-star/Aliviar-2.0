@@ -21,6 +21,12 @@ describe("jornada-client", () => {
       iniciada_em: "2026-01-01T00:00:00Z",
       atualizada_em: "2026-01-01T00:00:00Z",
       concluida_em: null,
+      extensoes: {
+        tempo_estimado: null,
+        documentos: [],
+        entrega: null,
+        escolha_registrada: null,
+      },
     };
 
     vi.stubGlobal(

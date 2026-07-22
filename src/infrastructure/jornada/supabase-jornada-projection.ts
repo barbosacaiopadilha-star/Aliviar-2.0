@@ -1,13 +1,14 @@
 import type { JornadaProjectionPort } from "@/application/ports/jornada-query-port";
 import type { JornadaDoPacienteReadModel } from "@/application/jornada/jornada-do-paciente-read-model";
+import type { JornadaDoPacienteView } from "@/experience-flow/contracts/jornada-view";
 import { BusinessRuleError } from "@/domain/shared/errors/business-rule-error";
 import { createClient } from "@/lib/supabase/server";
+import { normalizarExtensoes } from "./jornada-view-extensoes";
 import { readModelToView, viewToReadModel } from "./jornada-view-projection";
-import type { JornadaDoPacienteView } from "@/experience-flow/contracts/jornada-view";
 
 function parseViewData(raw: unknown): JornadaDoPacienteReadModel {
   const view = raw as JornadaDoPacienteView;
-  return viewToReadModel(view);
+  return viewToReadModel({ ...view, extensoes: normalizarExtensoes(view.extensoes) });
 }
 
 export class SupabaseJornadaProjection implements JornadaProjectionPort {

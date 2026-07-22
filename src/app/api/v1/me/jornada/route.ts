@@ -1,0 +1,13 @@
+import { application } from "@/infrastructure/composition-root";
+import { handleObterMinhaJornada } from "api/jornada/handlers/me-jornada.handler";
+import { mapUnknownToApiResponse } from "api/shared/errors/application-error-mapper";
+import { errorResponse } from "api/shared/http/response";
+
+export async function GET() {
+  try {
+    return handleObterMinhaJornada(application);
+  } catch (error) {
+    const mapped = mapUnknownToApiResponse(error);
+    return errorResponse(mapped.status, mapped.body);
+  }
+}

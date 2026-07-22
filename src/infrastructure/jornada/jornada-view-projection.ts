@@ -1,5 +1,10 @@
 import type { JornadaDoPacienteReadModel } from "@/application/jornada/jornada-do-paciente-read-model";
-import type { JornadaDoPacienteView } from "@/experience-flow/contracts/jornada-view";
+import type { EntregaDetalheView, JornadaDoPacienteView } from "@/experience-flow/contracts/jornada-view";
+import {
+  criarEntregaDetalhePadrao,
+  parseEntregaDetalhe,
+} from "./jornada-projection-helpers";
+import { EXTENSOES_VAZIAS, normalizarExtensoes } from "./jornada-view-extensoes";
 
 export function readModelToView(model: JornadaDoPacienteReadModel): JornadaDoPacienteView {
   return {
@@ -15,6 +20,7 @@ export function readModelToView(model: JornadaDoPacienteReadModel): JornadaDoPac
     iniciada_em: model.iniciadaEm,
     atualizada_em: model.atualizadaEm,
     concluida_em: model.concluidaEm,
+    extensoes: model.extensoes,
   };
 }
 
@@ -32,6 +38,7 @@ export function viewToReadModel(view: JornadaDoPacienteView): JornadaDoPacienteR
     iniciadaEm: view.iniciada_em,
     atualizadaEm: view.atualizada_em,
     concluidaEm: view.concluida_em,
+    extensoes: normalizarExtensoes(view.extensoes),
   };
 }
 
@@ -81,6 +88,10 @@ export function criarProjecaoInicial(params: {
     iniciadaEm: params.iniciadaEm,
     atualizadaEm: params.iniciadaEm,
     concluidaEm: null,
+    extensoes: {
+      ...EXTENSOES_VAZIAS,
+      tempo_estimado: "Alguns dias para conhecer sua história",
+    },
   };
 }
 
@@ -159,7 +170,12 @@ export function avancarProjecaoAposSessaoCuradoria(
 export function avancarProjecaoAposEntrega(
   atual: JornadaDoPacienteReadModel,
   ocorridoEm: string,
+  entregaId: string,
+  conteudo: string,
 ): JornadaDoPacienteReadModel {
+  const entregaDetalhe: EntregaDetalheView =
+    parseEntregaDetalhe(entregaId, conteudo) ?? criarEntregaDetalhePadrao(entregaId, conteudo);
+
   return {
     ...atual,
     etapaAtual: "ENTREGA",
@@ -167,9 +183,14 @@ export function avancarProjecaoAposEntrega(
     estadoVisivel: "ENTREGA_DISPONIVEL",
     proximoPasso: {
       titulo: "Sua curadoria está pronta",
-      descricao: "Agende o momento para conhecer as opções.",
+      descricao: "Conheça as três opções preparadas para você.",
       dono: "PACIENTE",
       acao_disponivel: true,
+    },
+    extensoes: {
+      ...atual.extensoes,
+      entrega: entregaDetalhe,
+      tempo_estimado: "Reserve um momento tranquilo para revisar",
     },
     timeline: [
       ...atual.timeline,

@@ -2,12 +2,18 @@ import { RegistrarCasoDeclarado } from "@/application/caso/registrar-caso-declar
 import { ExecutarAnaliseInicial } from "@/application/analise/executar-analise-inicial";
 import { AbrirSessaoDeCuradoria } from "@/application/curadoria/abrir-sessao-de-curadoria";
 import { ProduzirEntregaAoPaciente } from "@/application/entrega/produzir-entrega-ao-paciente";
+import { RegistrarDocumentoPaciente } from "@/application/documentos/registrar-documento-paciente";
+import { AvancarOnboardingPaciente } from "@/application/jornada/avancar-onboarding-paciente";
+import { AvancarParaEscolhaPaciente } from "@/application/jornada/avancar-para-escolha-paciente";
 import { ObterJornadaDoPaciente } from "@/application/jornada/obter-jornada-do-paciente";
+import { ObterJornadaDoPacienteAutenticado } from "@/application/jornada/obter-jornada-do-paciente-autenticado";
+import { RegistrarEscolhaPaciente } from "@/application/jornada/registrar-escolha-paciente";
 import { SupabaseAuthContextAdapter } from "@/infrastructure/auth/supabase-auth-context-adapter";
 import { SupabaseCasoRepository } from "@/infrastructure/caso/supabase-caso-repository";
 import { SupabaseAnaliseRepository } from "@/infrastructure/analise/supabase-analise-repository";
 import { SupabaseCuradoriaRepository } from "@/infrastructure/curadoria/supabase-curadoria-repository";
 import { SupabaseEntregaRepository } from "@/infrastructure/entrega/supabase-entrega-repository";
+import { SupabaseJornadaProjection } from "@/infrastructure/jornada/supabase-jornada-projection";
 import { SupabaseJornadaQuery } from "@/infrastructure/jornada/supabase-jornada-query";
 
 const auth = new SupabaseAuthContextAdapter();
@@ -16,6 +22,7 @@ const analiseRepository = new SupabaseAnaliseRepository();
 const curadoriaRepository = new SupabaseCuradoriaRepository();
 const entregaRepository = new SupabaseEntregaRepository();
 const jornadaQuery = new SupabaseJornadaQuery();
+const jornadaProjection = new SupabaseJornadaProjection();
 
 export const application = {
   registrarCasoDeclarado: new RegistrarCasoDeclarado(auth, casoRepository),
@@ -23,6 +30,12 @@ export const application = {
   abrirSessaoDeCuradoria: new AbrirSessaoDeCuradoria(auth, curadoriaRepository),
   produzirEntregaAoPaciente: new ProduzirEntregaAoPaciente(auth, entregaRepository),
   obterJornadaDoPaciente: new ObterJornadaDoPaciente(jornadaQuery),
+  obterJornadaDoPacienteAutenticado: new ObterJornadaDoPacienteAutenticado(jornadaQuery),
+  avancarOnboardingPaciente: new AvancarOnboardingPaciente(jornadaProjection),
+  avancarParaEscolhaPaciente: new AvancarParaEscolhaPaciente(jornadaProjection),
+  registrarEscolhaPaciente: new RegistrarEscolhaPaciente(jornadaProjection),
+  registrarDocumentoPaciente: new RegistrarDocumentoPaciente(),
+  jornadaQuery,
 };
 
 export type Application = typeof application;

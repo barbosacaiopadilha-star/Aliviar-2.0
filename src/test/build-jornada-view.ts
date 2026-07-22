@@ -50,7 +50,7 @@ export function buildJornadaViewEntrega(): JornadaDoPacienteView {
     ),
     "2026-01-14T10:00:00Z",
   );
-  return readModelToView(avancarProjecaoAposEntrega(curadoria, "2026-01-16T10:00:00Z"));
+  return readModelToView(avancarProjecaoAposEntrega(curadoria, "2026-01-16T10:00:00Z", "entrega-test", "Conteúdo de entrega de teste"));
 }
 
 export function buildJornadaViewBloqueio(): JornadaDoPacienteView {

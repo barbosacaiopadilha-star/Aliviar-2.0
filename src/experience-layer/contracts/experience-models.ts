@@ -68,6 +68,7 @@ export interface MinhaJornadaExperienceModel {
   bloqueio: JornadaDoPacienteView["bloqueio"];
   mapa_etapas: MapaEtapaView[];
   ace_disponivel: boolean;
+  tempo_estimado: string | null;
 }
 
 export type AceVisibilidade = "PRESENTE" | "SILENCIOSO" | "AUSENTE";
@@ -87,4 +88,46 @@ export interface CanonicalExperienceSnapshot {
   onboarding: OnboardingExperienceModel | null;
   minhaJornada: MinhaJornadaExperienceModel | null;
   ace: AceExperienceModel | null;
+  curadoria: CuradoriaExperienceModel | null;
+  entrega: EntregaExperienceModel | null;
+  escolha: EscolhaExperienceModel | null;
+  acompanhamento: AcompanhamentoExperienceModel | null;
+  documentos: DocumentosExperienceModel | null;
+}
+
+export interface CuradoriaExperienceModel {
+  jornada_id: string;
+  status: "AGUARDANDO" | "EM_ANDAMENTO" | "CONCLUIDA";
+  proximo_passo: ProximoPassoView;
+  responsavel: ResponsavelView;
+  explicacao: string;
+}
+
+export interface EntregaExperienceModel {
+  jornada_id: string;
+  entrega: NonNullable<JornadaDoPacienteView["extensoes"]["entrega"]>;
+  proximo_passo: ProximoPassoView;
+}
+
+export interface EscolhaExperienceModel {
+  jornada_id: string;
+  opcoes: NonNullable<JornadaDoPacienteView["extensoes"]["entrega"]>["opcoes"];
+  comparativo: NonNullable<JornadaDoPacienteView["extensoes"]["entrega"]>["comparativo"];
+  proximo_passo: ProximoPassoView;
+}
+
+export interface AcompanhamentoExperienceModel {
+  jornada_id: string;
+  timeline: TimelineItemView[];
+  proximos_eventos: TimelineItemView[];
+  responsavel: ResponsavelView;
+  escolha: JornadaDoPacienteView["extensoes"]["escolha_registrada"];
+  tempo_estimado: string | null;
+}
+
+export interface DocumentosExperienceModel {
+  jornada_id: string;
+  documentos: JornadaDoPacienteView["extensoes"]["documentos"];
+  bloqueio: JornadaDoPacienteView["bloqueio"];
+  proximo_passo: ProximoPassoView;
 }

@@ -23,6 +23,32 @@ export class JornadaApiError extends Error {
   }
 }
 
+export async function fetchMeJornadaView(): Promise<JornadaDoPacienteView> {
+  const response = await fetch("/api/v1/me/jornada", {
+    method: "GET",
+    headers: { Accept: "application/json" },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    let code = "UNKNOWN_ERROR";
+    let message = "Não foi possível carregar sua jornada.";
+
+    try {
+      const body = (await response.json()) as ApiErrorBody;
+      code = body.error?.code ?? code;
+      message = body.error?.message ?? message;
+    } catch {
+      // mantém mensagem padrão
+    }
+
+    throw new JornadaApiError(response.status, code, message);
+  }
+
+  const body = (await response.json()) as ApiSuccessEnvelope<JornadaDoPacienteView>;
+  return body.data;
+}
+
 export async function fetchJornadaView(jornadaId: string): Promise<JornadaDoPacienteView> {
   const response = await fetch(`/api/v1/jornadas/${encodeURIComponent(jornadaId)}`, {
     method: "GET",

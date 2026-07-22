@@ -27,6 +27,12 @@ export function MinhaJornadaSurface({ model, ace }: MinhaJornadaSurfaceProps) {
           <JourneyStatus estado_visivel={model.estado_visivel} />
         </div>
 
+        {model.tempo_estimado ? (
+          <p className="text-sm text-ink-soft" data-testid="tempo-estimado">
+            Tempo estimado: {model.tempo_estimado}
+          </p>
+        ) : null}
+
         <NextStepCard proximo_passo={model.proximo_passo} />
 
         {model.bloqueio ? <BlockingCard bloqueio={model.bloqueio} /> : null}

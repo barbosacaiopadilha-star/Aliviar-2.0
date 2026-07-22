@@ -14,8 +14,9 @@ describe("handleObterJornadaDoPaciente", () => {
   const app = {
     obterJornadaDoPaciente: new ObterJornadaDoPaciente({
       obterPorId: async (id) => (id === "j-1" ? model : null),
+      obterPorPacienteId: async () => null,
     }),
-  } as Application;
+  } as unknown as Application;
 
   it("retorna JornadaDoPacienteView para jornada existente", async () => {
     const response = await handleObterJornadaDoPaciente(app, "j-1");

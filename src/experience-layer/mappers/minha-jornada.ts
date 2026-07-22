@@ -59,5 +59,6 @@ export function mapMinhaJornadaExperienceModel(
     bloqueio: view.bloqueio,
     mapa_etapas: derivarMapaEtapas(view),
     ace_disponivel,
+    tempo_estimado: view.extensoes.tempo_estimado,
   };
 }

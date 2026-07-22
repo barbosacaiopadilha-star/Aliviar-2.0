@@ -48,7 +48,7 @@ describe("Canonical components", () => {
   it("renderiza LandingSurface sem estado interno", () => {
     render(<LandingSurface model={mapLandingExperienceModel()} />);
     expect(screen.getByTestId("landing-surface")).toBeInTheDocument();
-    expect(screen.getByTestId("landing-cta")).toHaveAttribute("href", "/comecar");
+    expect(screen.getByTestId("landing-cta")).toHaveAttribute("href", "/portal/entrar");
   });
 
   it("renderiza OnboardingSurface com progresso", () => {
