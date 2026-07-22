@@ -62,6 +62,25 @@ describe("RuntimeBootstrap", () => {
     expect(error).toMatchObject({ code: "BOOTSTRAP_SEALED" });
   });
 
+  it("build() é único: a segunda chamada falha e nenhuma dependência inicia duas vezes", async () => {
+    const calls: string[] = [];
+    const bootstrap = new RuntimeBootstrap().register(makeDep("config", calls));
+
+    const runtime = bootstrap.build();
+    await runtime.start();
+
+    let error: unknown;
+    try {
+      bootstrap.build();
+    } catch (thrown) {
+      error = thrown;
+    }
+
+    expect(error).toMatchObject({ code: "BOOTSTRAP_SEALED" });
+    expect(calls).toEqual(["start:config"]);
+    expect(runtime.state).toBe("READY");
+  });
+
   it("propaga o listener interno de eventos ao runtime", async () => {
     const seen: string[] = [];
     const runtime = new RuntimeBootstrap()

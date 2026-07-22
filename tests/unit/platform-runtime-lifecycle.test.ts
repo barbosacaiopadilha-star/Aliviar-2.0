@@ -368,6 +368,22 @@ describe("RuntimeLifecycle — imutabilidade", () => {
   });
 });
 
+describe("RuntimeLifecycle — nomes de dependência únicos", () => {
+  it("rejeita nomes duplicados na construção, antes de qualquer inicialização", () => {
+    const calls: string[] = [];
+    let error: unknown;
+    try {
+      new RuntimeLifecycle([makeDep("a", calls), makeDep("a", calls)]);
+    } catch (thrown) {
+      error = thrown;
+    }
+
+    expect(error).toBeInstanceOf(RuntimeError);
+    expect(error).toMatchObject({ code: "DUPLICATE_DEPENDENCY" });
+    expect(calls).toEqual([]);
+  });
+});
+
 describe("RuntimeLifecycle — ausência de estado parcial", () => {
   it("depois de um bootstrap falho, nenhuma dependência permanece exposta", async () => {
     const runtime = new RuntimeLifecycle([

@@ -48,6 +48,21 @@ export class RuntimeLifecycle {
     dependencies: readonly RuntimeDependency[],
     options: RuntimeLifecycleOptions = {},
   ) {
+    // Nomes únicos são pré-condição de todo o ciclo de vida (plano de
+    // shutdown e rollback resolvem dependência por nome) — a guarda do
+    // RuntimeBootstrap não basta porque este construtor é público.
+    // Falha aqui, antes de qualquer inicialização.
+    const names = new Set<string>();
+    for (const dependency of dependencies) {
+      if (names.has(dependency.name)) {
+        throw new RuntimeError({
+          code: "DUPLICATE_DEPENDENCY",
+          message: `Dependência duplicada: "${dependency.name}".`,
+        });
+      }
+      names.add(dependency.name);
+    }
+
     // Cópia congelada: mutações externas do array original nunca alcançam
     // o runtime (imutabilidade exigida pelo WP3).
     this.dependencies = Object.freeze([...dependencies]);

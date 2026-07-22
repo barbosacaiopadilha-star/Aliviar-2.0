@@ -35,6 +35,16 @@ export class RuntimeBootstrap {
   }
 
   build(options: BuildOptions = {}): RuntimeLifecycle {
+    if (this.sealed) {
+      // Dono único do ciclo de vida: um segundo build() criaria um segundo
+      // runtime sobre as MESMAS instâncias de dependência (dois start()
+      // sobre o mesmo recurso). Falha determinística, nunca clonagem.
+      throw new RuntimeError({
+        code: "BOOTSTRAP_SEALED",
+        message:
+          "O RuntimeBootstrap já materializou um runtime — build() é único.",
+      });
+    }
     this.sealed = true;
     return new RuntimeLifecycle(this.dependencies, options);
   }
