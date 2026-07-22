@@ -10,7 +10,11 @@ export type OperationalAuditEventType =
   | "ESCOLHA_PACIENTE"
   | "CONFIG_ALTERADA"
   | "USUARIO_ALTERADO"
-  | "FEATURE_FLAG_ALTERADA";
+  | "FEATURE_FLAG_ALTERADA"
+  | "CURATOR_FAVORITO"
+  | "CURATOR_NOTA"
+  | "CURATOR_CHECKLIST"
+  | "CURATOR_TEMPLATE";
 
 export type AuditActorRole = "STAFF" | "PATIENT" | "SYSTEM";
 

@@ -7,6 +7,7 @@ import { EntregaCuradorSurface } from "@/components/curador/surfaces/EntregaCura
 import { OpcoesCuradorSurface } from "@/components/curador/surfaces/OpcoesCuradorSurface";
 import { TimelineCuradorSurface } from "@/components/curador/surfaces/TimelineCuradorSurface";
 import { WorkspaceCuradorSurface } from "@/components/curador/surfaces/WorkspaceCuradorSurface";
+import { CuradorCaseTools } from "@/components/curador/tools/CuradorCaseTools";
 import { resolveCuratorCaseSurface } from "@/curator-layer/resolve-curator-experience";
 
 export function CasoCuradorRouter() {
@@ -72,6 +73,11 @@ export function CasoCuradorRouter() {
       {surface === "entrega" ? <EntregaCuradorSurface model={model} onAction={refresh} /> : null}
 
       <TimelineCuradorSurface model={model} onComment={refresh} />
+
+      <CuradorCaseTools
+        jornadaId={model.caso.jornada_id}
+        jornadaTitulo={model.caso.titulo_jornada}
+      />
     </div>
   );
 }

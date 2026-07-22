@@ -20,6 +20,10 @@ const AUDITABLE_EVENTS = new Set<OperationalAuditEventType>([
   "CONFIG_ALTERADA",
   "USUARIO_ALTERADO",
   "FEATURE_FLAG_ALTERADA",
+  "CURATOR_FAVORITO",
+  "CURATOR_NOTA",
+  "CURATOR_CHECKLIST",
+  "CURATOR_TEMPLATE",
 ]);
 
 export interface InstrumentOperationInput {
