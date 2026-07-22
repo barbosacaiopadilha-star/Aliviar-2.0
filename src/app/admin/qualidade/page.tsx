@@ -1,17 +1,14 @@
 import Link from "next/link";
 
-import { AdminPortalContent } from "@/components/admin/AdminPortalContent";
+import { AdminQualidadeContent } from "@/components/admin/AdminQualidadeContent";
 import { signOutAction } from "@/lib/actions/auth";
 import { requireGovernancePermission } from "@/lib/auth/rbac";
 import { redirect } from "next/navigation";
 
-export default async function AdminPage() {
-  const access = await requireGovernancePermission("admin.config.read");
+export default async function AdminQualidadePage() {
+  const access = await requireGovernancePermission("admin.quality.read");
   if (!access.ok) {
-    const health = await requireGovernancePermission("admin.health.read");
-    if (!health.ok) {
-      redirect("/login?redirect=/admin");
-    }
+    redirect("/login?redirect=/admin/qualidade");
   }
 
   return (
@@ -19,15 +16,12 @@ export default async function AdminPage() {
       <header className="border-b border-line bg-paper-raised">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
           <div>
-            <p className="font-serif text-xl font-semibold text-ink">Portal Administrativo</p>
-            <p className="text-sm text-ink-soft">Governança operacional</p>
+            <p className="font-serif text-xl font-semibold text-ink">Qualidade Operacional</p>
+            <p className="text-sm text-ink-soft">Feedback e incidentes</p>
           </div>
           <nav className="flex items-center gap-2">
-            <Link href="/admin/qualidade" className="btn-secondary">
-              Qualidade
-            </Link>
-            <Link href="/workspace" className="btn-secondary">
-              Workspace
+            <Link href="/admin" className="btn-secondary">
+              Admin
             </Link>
             <form action={signOutAction}>
               <button type="submit" className="btn-secondary">
@@ -38,7 +32,7 @@ export default async function AdminPage() {
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-8">
-        <AdminPortalContent />
+        <AdminQualidadeContent />
       </main>
     </div>
   );

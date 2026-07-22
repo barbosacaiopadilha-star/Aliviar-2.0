@@ -9,7 +9,9 @@ export type GovernancePermission =
   | "admin.flags.read"
   | "admin.flags.write"
   | "admin.health.read"
-  | "admin.audit.read";
+  | "admin.audit.read"
+  | "admin.quality.read"
+  | "admin.quality.write";
 
 export const GOVERNANCE_ROLE_LABELS: Record<GovernanceRole, string> = {
   ADMIN: "Administrador",
@@ -29,6 +31,8 @@ export const PERMISSION_MATRIX: Record<GovernancePermission, readonly Governance
   "admin.flags.write": ["ADMIN"],
   "admin.health.read": ["ADMIN", "AUDITOR", "OPERADOR"],
   "admin.audit.read": ["ADMIN", "AUDITOR"],
+  "admin.quality.read": ["ADMIN", "AUDITOR", "OPERADOR"],
+  "admin.quality.write": ["ADMIN", "OPERADOR"],
 };
 
 export interface PermissionMatrixView {

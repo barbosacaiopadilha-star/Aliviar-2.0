@@ -15,6 +15,7 @@ import {
   removerFavorito,
   salvarChecklist,
 } from "@/curator-layer/api/curador-tools-client";
+import { registrarFeedbackCurador } from "@/quality-layer/api/quality-client";
 import type {
   CuratorChecklistItemView,
   CuratorChecklistView,
@@ -45,6 +46,8 @@ export function CuradorCaseTools({
   const [templateTitulo, setTemplateTitulo] = useState("");
   const [templateConteudo, setTemplateConteudo] = useState("");
   const [loading, setLoading] = useState(false);
+  const [feedbackSugestoes, setFeedbackSugestoes] = useState("");
+  const [feedbackEnviado, setFeedbackEnviado] = useState(false);
 
   const jornadaFavoritada = favoritos.some(
     (f) => f.entity_type === "JORNADA" && f.entity_id === jornadaId,
@@ -319,6 +322,40 @@ export function CuradorCaseTools({
             </div>
           </dl>
         ) : null}
+      </section>
+
+      <section className="card p-5" data-testid="curador-feedback">
+        <h2 className="font-medium text-ink">Feedback operacional</h2>
+        <p className="mt-1 text-xs text-ink-soft">Opcional — dificuldades, informações ausentes ou sugestões.</p>
+        {feedbackEnviado ? (
+          <p className="mt-2 text-sm text-ink-soft">Feedback registrado. Obrigado.</p>
+        ) : (
+          <>
+            <textarea
+              className="mt-3 w-full rounded-lg border border-line px-3 py-2 text-sm"
+              rows={3}
+              placeholder="Sugestões ou problemas operacionais..."
+              value={feedbackSugestoes}
+              onChange={(e) => setFeedbackSugestoes(e.target.value)}
+            />
+            <button
+              type="button"
+              className="btn-secondary mt-2"
+              disabled={loading || !feedbackSugestoes.trim()}
+              onClick={() => {
+                setLoading(true);
+                void registrarFeedbackCurador({
+                  jornada_id: jornadaId,
+                  sugestoes: feedbackSugestoes.trim(),
+                })
+                  .then(() => setFeedbackEnviado(true))
+                  .finally(() => setLoading(false));
+              }}
+            >
+              Enviar feedback
+            </button>
+          </>
+        )}
       </section>
     </div>
   );

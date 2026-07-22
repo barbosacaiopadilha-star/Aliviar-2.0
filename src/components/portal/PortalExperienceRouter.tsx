@@ -15,6 +15,7 @@ import { EntregaPortalSurface } from "@/components/portal/surfaces/EntregaPortal
 import { EscolhaPortalSurface } from "@/components/portal/surfaces/EscolhaPortalSurface";
 import { OnboardingPortalSurface } from "@/components/portal/surfaces/OnboardingPortalSurface";
 import { PortalTimelineSection } from "@/components/portal/PortalTimelineSection";
+import { PortalFeedbackSection } from "@/components/portal/PortalFeedbackSection";
 import { resolvePortalSurface } from "@/experience-layer/resolve-canonical-experience";
 import { listarNotificacoes } from "@/experience-layer/api/notificacoes-client";
 import { integrarNotificacoesNaTimeline } from "@/infrastructure/notifications/journey-notification-engine";
@@ -109,6 +110,10 @@ function PortalReadySurface({ onRefresh }: { onRefresh: () => Promise<void> }) {
         ) : null}
 
         {showTimeline ? <PortalTimelineSection items={timelineIntegrada} /> : null}
+
+        {surface === "acompanhamento" || surface === "minha-jornada" ? (
+          <PortalFeedbackSection jornadaId={view.jornada_id} />
+        ) : null}
 
         {surface === "onboarding" && experience.onboarding ? (
           <OnboardingProgress

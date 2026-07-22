@@ -9,7 +9,8 @@ describe("portal administrativo", () => {
       "/api/v1/admin/feature-flags",
       "/api/v1/admin/saude",
       "/api/v1/admin/auditoria",
+      "/api/v1/admin/qualidade",
     ];
-    expect(modules).toHaveLength(6);
+    expect(modules).toHaveLength(7);
   });
 });

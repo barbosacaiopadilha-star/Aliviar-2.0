@@ -27,6 +27,10 @@ const AUDITABLE_EVENTS = new Set<OperationalAuditEventType>([
   "NOTIFICACAO_GERADA",
   "NOTIFICACAO_LIDA",
   "NOTIFICACAO_PREFERENCIA",
+  "FEEDBACK_REGISTRADO",
+  "INCIDENTE_CRIADO",
+  "INCIDENTE_ATUALIZADO",
+  "INCIDENTE_ENCERRADO",
 ]);
 
 export interface InstrumentOperationInput {
