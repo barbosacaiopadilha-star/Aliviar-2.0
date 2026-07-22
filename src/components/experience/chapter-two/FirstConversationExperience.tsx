@@ -19,6 +19,7 @@ import {
   type ConversationMessage,
   type ConversationTurn,
 } from "./conversation-model";
+import { ExperienceAtmosphere, ExperienceStaffFooter } from "../shared";
 
 function prefersReducedMotion(): boolean {
   if (typeof window === "undefined") return false;
@@ -140,9 +141,7 @@ export function FirstConversationExperience() {
 
   return (
     <div className="conversation">
-      <div className="chapter-one__atmosphere" aria-hidden="true">
-        <div className="chapter-one__glow chapter-one__glow--warm" />
-      </div>
+      <ExperienceAtmosphere />
 
       <main className="conversation__main">
         <div className="conversation__thread" aria-live="polite">
@@ -277,11 +276,7 @@ export function FirstConversationExperience() {
         )}
       </main>
 
-      <footer className="chapter-one__footer">
-        <Link href="/login" className="chapter-one__staff-link">
-          Equipe Aliviar
-        </Link>
-      </footer>
+      <ExperienceStaffFooter />
     </div>
   );
 }

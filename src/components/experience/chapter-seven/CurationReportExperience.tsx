@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { CURATION_HOST } from "../chapter-four/curation-model";
+import { ExperienceShell } from "../shared";
 import {
   getExemplarCurationReport,
   professionalSectionLabel,
@@ -10,13 +11,11 @@ export function CurationReportExperience() {
   const report = getExemplarCurationReport();
 
   return (
-    <div className="chapter-one curation-report">
-      <div className="chapter-one__atmosphere" aria-hidden="true">
-        <div className="chapter-one__glow chapter-one__glow--warm" />
-      </div>
-
-      <main className="chapter-one__main curation-report__main">
-        <article className="curation-report__document" aria-label={report.title}>
+    <ExperienceShell
+      rootClassName="chapter-one curation-report"
+      mainClassName="chapter-one__main curation-report__main"
+    >
+      <article className="curation-report__document" aria-label={report.title}>
           <header className="curation-report__header">
             <p className="curation-report__eyebrow">Aliviar · Curadoria Médica</p>
             <h1 className="curation-report__title">{report.title}</h1>
@@ -112,13 +111,6 @@ export function CurationReportExperience() {
             </p>
           </footer>
         </article>
-      </main>
-
-      <footer className="chapter-one__footer">
-        <Link href="/login" className="chapter-one__staff-link">
-          Equipe Aliviar
-        </Link>
-      </footer>
-    </div>
+    </ExperienceShell>
   );
 }

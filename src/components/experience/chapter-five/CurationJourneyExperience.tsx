@@ -5,6 +5,7 @@ import { useState } from "react";
 import { CurationPresenceExperience } from "../chapter-four/CurationPresenceExperience";
 import { CurationTimeExperience } from "./CurationTimeExperience";
 import { readCurationJourneyView, type CurationJourneyView } from "./curation-journey-storage";
+import { ExperienceShell } from "../shared";
 
 export function CurationJourneyExperience() {
   const [view] = useState<CurationJourneyView | null>(() =>
@@ -13,12 +14,9 @@ export function CurationJourneyExperience() {
 
   if (!view) {
     return (
-      <div className="chapter-one curation-journey">
-        <div className="chapter-one__atmosphere" aria-hidden="true">
-          <div className="chapter-one__glow chapter-one__glow--warm" />
-        </div>
-        <main className="chapter-one__main" aria-hidden="true" />
-      </div>
+      <ExperienceShell rootClassName="chapter-one curation-journey" mainAriaHidden>
+        {null}
+      </ExperienceShell>
     );
   }
 
