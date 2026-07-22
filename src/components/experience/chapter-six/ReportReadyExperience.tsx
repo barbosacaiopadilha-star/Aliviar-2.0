@@ -45,6 +45,15 @@ export function ReportReadyExperience() {
         >
           {closingNote}
         </p>
+
+        <p
+          className="report-ready__cta-wrap chapter-one__letter-line"
+          style={{ animationDelay: `${0.14 + (lines.length + 1) * 0.21}s` }}
+        >
+          <Link href="/relatorio/leitura" className="chapter-one__cta">
+            Ler meu relatório
+          </Link>
+        </p>
       </main>
 
       <footer className="chapter-one__footer">
