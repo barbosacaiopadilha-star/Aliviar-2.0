@@ -176,6 +176,51 @@ a {
   }
 }
 
+.alicia-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.alicia-timeline__item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.5rem 1fr;
+  gap: 1rem;
+  padding-bottom: 2rem;
+}
+
+.alicia-timeline__item:last-child {
+  padding-bottom: 0;
+}
+
+.alicia-timeline__item:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 0.4375rem;
+  top: 1.25rem;
+  bottom: 0;
+  width: 2px;
+  background: var(--line);
+}
+
+.alicia-timeline__marker {
+  width: 0.875rem;
+  height: 0.875rem;
+  margin-top: 0.35rem;
+  border-radius: 999px;
+  border: 2px solid var(--coral);
+  background: var(--paper-raised);
+}
+
+.alicia-timeline__item:last-child .alicia-timeline__marker {
+  background: var(--coral);
+}
+
+.alicia-timeline__content {
+  min-width: 0;
+}
+
 /* ——— Capítulo 1: Primeiro contato ——— */
 
 .chapter-one {
@@ -554,6 +599,29 @@ a {
   line-height: 1.7;
   color: var(--ink-soft);
   font-style: italic;
+}
+
+.conversation__next-chapter {
+  margin-top: 1.75rem;
+}
+
+.consultation__host-name {
+  font-family: var(--font-serif);
+  font-size: 1.375rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.consultation__host-role {
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.consultation__host-role + .conversation__line {
+  margin-top: 2rem;
 }
 
 @keyframes conversation-line-in {

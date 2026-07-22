@@ -268,7 +268,12 @@ export function FirstConversationExperience() {
         )}
 
         {turn === "closing" && !isAnaSpeaking && (
-          <p className="conversation__closing-note">Por enquanto, é isso. Estamos com você.</p>
+          <div className="conversation__composer">
+            <p className="conversation__closing-note">Por enquanto, é isso. Estamos com você.</p>
+            <Link href="/consulta" className="chapter-one__cta conversation__next-chapter">
+              Preparar consulta inicial
+            </Link>
+          </div>
         )}
       </main>
 
