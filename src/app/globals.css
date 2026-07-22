@@ -434,6 +434,7 @@ a {
 
 .limiar {
   --stage-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  color-scheme: light;
   --stage-duration-arrival: 2800ms;
   --stage-duration-reveal: 1350ms;
   --stage-duration-cross: 1800ms;
@@ -611,6 +612,7 @@ a {
 @keyframes stage-voice-in {
   to {
     opacity: 1;
+    visibility: visible;
     transform: translateY(0);
   }
 }
@@ -654,7 +656,7 @@ a {
 }
 
 .limiar__lamp--awaiting {
-  cursor: default;
+  cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -802,12 +804,14 @@ a {
 
 .limiar__reveal-line,
 .limiar__continuation-line {
+  visibility: hidden;
   opacity: 0;
   transform: translateY(var(--stage-shift-reveal));
   animation: stage-voice-in var(--stage-duration-reveal) var(--stage-ease) forwards;
 }
 
 .limiar__footer {
+  visibility: hidden;
   position: relative;
   z-index: 1;
   padding: 0 1.5rem 1.75rem;
@@ -857,7 +861,14 @@ a {
   .limiar__reveal-line {
     animation: none;
     opacity: 1;
+    visibility: visible;
     transform: none;
+  }
+
+  .limiar__footer {
+    animation: none;
+    opacity: 1;
+    visibility: visible;
   }
 
   .limiar__presence-leak,
@@ -875,11 +886,6 @@ a {
 
   .limiar__staff-link {
     transition: none;
-  }
-
-  .limiar__footer {
-    animation: none;
-    opacity: 1;
   }
 
   .limiar-film,

@@ -37,7 +37,7 @@ describe("craft-model", () => {
     }
   });
 
-  it("nomeia o ofício — estudar, comparar, permanecer", () => {
+  it("nomeia o ofício — estudar e comparar", () => {
     const text = buildCraftLines()
       .map((line) => line.text)
       .join(" ")
@@ -45,6 +45,6 @@ describe("craft-model", () => {
 
     expect(text).toContain("estuda");
     expect(text).toContain("compara");
-    expect(text).toContain("permanece");
+    expect(text).not.toContain("permanece");
   });
 });

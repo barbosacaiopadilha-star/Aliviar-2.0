@@ -15,7 +15,7 @@ export function buildCraftLines(): LandingRevealLine[] {
       delayMs: begin,
     },
     {
-      text: "Alguém estuda, compara e permanece.",
+      text: "Alguém estuda e compara.",
       delayMs: begin + gap,
     },
   ];

@@ -13,7 +13,7 @@ const FAREWELL_LINE = buildFarewellLine();
 export function LimiarInviteSection() {
   return (
     <>
-      <section className="limiar__invite" aria-label="Convite">
+      <section className="limiar__invite">
         <p
           className="limiar__voice limiar__reveal-line limiar__reveal-line--1"
           style={{ animationDelay: `${INVITE_LINES[0].delayMs}ms` }}

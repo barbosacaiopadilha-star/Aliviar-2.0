@@ -123,22 +123,13 @@ export function LimiarExperience({ filmSrc }: LimiarExperienceProps) {
 
       {phase === "after" && (
         <>
-          <main className="limiar__main limiar__main--landing" aria-live="polite">
+          <main className="limiar__main limiar__main--landing">
             <LimiarRevealSection
               lines={FILM_CONTINUATION_LINES}
               className="limiar__continuation"
-              label="Continuação"
             />
-            <LimiarRevealSection
-              lines={CRAFT_LINES}
-              className="limiar__craft"
-              label="O ofício"
-            />
-            <LimiarRevealSection
-              lines={PATH_LINES}
-              className="limiar__path"
-              label="O caminho"
-            />
+            <LimiarRevealSection lines={CRAFT_LINES} className="limiar__craft" />
+            <LimiarRevealSection lines={PATH_LINES} className="limiar__path" />
             <LimiarInviteSection />
           </main>
 
@@ -147,7 +138,7 @@ export function LimiarExperience({ filmSrc }: LimiarExperienceProps) {
             style={{ animationDelay: `${LANDING_SECTION_MS.farewell}ms` }}
           >
             <Link href="/login" className="limiar__staff-link">
-              Equipe Aliviar
+              Equipe
             </Link>
           </footer>
         </>

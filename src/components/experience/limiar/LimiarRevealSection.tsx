@@ -3,12 +3,12 @@ import type { LandingRevealLine } from "./landing-line-model";
 type LimiarRevealSectionProps = {
   lines: LandingRevealLine[];
   className: string;
-  label: string;
+  label?: string;
 };
 
 export function LimiarRevealSection({ lines, className, label }: LimiarRevealSectionProps) {
   return (
-    <section className={className} aria-label={label}>
+    <section className={className} {...(label ? { "aria-label": label } : {})}>
       {lines.map((line, index) => (
         <p
           key={line.text}
