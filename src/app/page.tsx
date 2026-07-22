@@ -4,7 +4,7 @@ import { ThresholdExperience } from "@/components/experience/limiar/ThresholdExp
 
 export const metadata: Metadata = {
   title: "Aliviar",
-  description: "A luz ficou acesa.",
+  description: "A luz ficou acesa. Pessoas que escutam com calma.",
 };
 
 export default function HomePage() {
