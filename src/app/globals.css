@@ -756,8 +756,43 @@ a {
 }
 
 .limiar__craft,
-.limiar__path {
+.limiar__path,
+.limiar__invite {
   margin-top: clamp(5rem, 20vh, 8rem);
+}
+
+.limiar__invite {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2.75rem, 11vh, 4.5rem);
+  width: 100%;
+}
+
+.limiar__invite-gesture {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(216, 102, 74, 0.22);
+  padding-bottom: 0.125rem;
+  transition: border-color 0.3s var(--stage-ease), opacity 0.3s ease;
+}
+
+.limiar__invite-gesture:hover {
+  border-color: rgba(216, 102, 74, 0.42);
+  opacity: 0.92;
+}
+
+.limiar__invite-gesture:focus-visible {
+  outline: 1px solid rgba(216, 102, 74, 0.25);
+  outline-offset: 0.35rem;
+  border-color: transparent;
+}
+
+.limiar__farewell {
+  margin-top: clamp(5.5rem, 22vh, 9rem);
+  max-width: 26rem;
+  margin-inline: auto;
+  font-size: clamp(1rem, 3.2vw, 1.1875rem);
+  opacity: 0;
 }
 
 .limiar__reveal-line,
@@ -805,7 +840,13 @@ a {
     opacity: 1;
   }
 
-  .limiar-film,
+  .limiar__invite-gesture {
+    transition: none;
+  }
+
+  .limiar__invite-gesture:hover {
+    opacity: 1;
+  }
   .limiar--opening .limiar__main,
   .limiar--film .limiar__main,
   .limiar--assimilation .limiar__main,

@@ -4,11 +4,14 @@ import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "re
 
 import { buildCraftLines } from "./craft-model";
 import { buildFilmContinuationLines } from "./continuation-model";
+import {
   FILM_ASSIMILATION_MS,
   FILM_OPENING_MS,
 } from "./film-model";
+import { buildPathLines } from "./path-model";
 import { LimiarAtmosphere } from "./LimiarAtmosphere";
 import { LimiarFilm } from "./LimiarFilm";
+import { LimiarInviteSection } from "./LimiarInviteSection";
 import { LimiarPresence } from "./LimiarPresence";
 import { LimiarRevealSection } from "./LimiarRevealSection";
 import { THRESHOLD_FIRST_LINE } from "./threshold-model";
@@ -131,6 +134,7 @@ export function LimiarExperience({ filmSrc }: LimiarExperienceProps) {
             className="limiar__path"
             label="O caminho"
           />
+          <LimiarInviteSection />
         </main>
       )}
     </div>
