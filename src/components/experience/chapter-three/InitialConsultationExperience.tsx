@@ -34,6 +34,7 @@ export function InitialConsultationExperience() {
   const [open, setOpen] = useState("");
   const [started, setStarted] = useState(false);
   const [isMarinaSpeaking, setIsMarinaSpeaking] = useState(false);
+  const [closingOutcome, setClosingOutcome] = useState<"none" | "follow" | "pause">("none");
   const timeoutsRef = useRef<number[]>([]);
 
   const clearScheduled = useCallback(() => {
@@ -128,11 +129,13 @@ export function InitialConsultationExperience() {
   };
 
   const confirmFollow = () => {
+    setClosingOutcome("follow");
     setMessages((current) => [...current, { from: "patient", text: "Sim, quero seguir." }]);
     speakAsMarina(buildConfirmYesLines(), () => setTurn("closing"));
   };
 
   const confirmPause = () => {
+    setClosingOutcome("pause");
     setMessages((current) => [
       ...current,
       { from: "patient", text: "Ainda preciso de tempo." },
@@ -252,9 +255,16 @@ export function InitialConsultationExperience() {
         )}
 
         {turn === "closing" && !isMarinaSpeaking && (
-          <p className="conversation__closing-note">
-            Sua história foi recebida com cuidado. Seguimos no seu ritmo.
-          </p>
+          <div className="conversation__composer">
+            <p className="conversation__closing-note">
+              Sua história foi recebida com cuidado. Seguimos no seu ritmo.
+            </p>
+            {closingOutcome === "follow" && (
+              <Link href="/curadoria" className="chapter-one__cta conversation__next-chapter">
+                Ver como seguimos com seu caso
+              </Link>
+            )}
+          </div>
         )}
       </main>
 

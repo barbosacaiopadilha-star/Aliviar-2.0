@@ -624,6 +624,57 @@ a {
   margin-top: 2rem;
 }
 
+.curation-presence__letter {
+  width: 100%;
+  padding: 0.5rem 0 1rem;
+}
+
+.curation-presence__host-name {
+  font-family: var(--font-serif);
+  font-size: 1.375rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.curation-presence__host-role {
+  margin-top: 0.25rem;
+  margin-bottom: 2rem;
+  font-size: 0.8125rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.curation-presence__line {
+  margin-top: 1.5rem;
+  font-size: 1.0625rem;
+  line-height: 1.85;
+  color: var(--ink-soft);
+}
+
+.curation-presence__line--emphasis {
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  color: var(--ink);
+}
+
+.curation-presence__signoff {
+  margin-top: 2.25rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.curation-presence__rest {
+  margin-top: 2.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  font-style: italic;
+  opacity: 0;
+  animation: chapter-letter-in 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 @keyframes conversation-line-in {
   from {
     opacity: 0;
