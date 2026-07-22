@@ -22,6 +22,8 @@ export const STAGE_MS = {
   filmAssimilation: 4800,
   consolidationDelay: 600,
   consolidationIn: 1400,
+  continuationLine2Delay: 4200,
+  continuationLine3Delay: 8600,
 } as const;
 
 /** Durações de fade para CSS (ms). */

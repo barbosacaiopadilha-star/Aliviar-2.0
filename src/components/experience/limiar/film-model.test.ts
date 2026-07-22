@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { THRESHOLD_FORBIDDEN_WORDS } from "./threshold-model";
+import { FILM_CONSOLIDATION_LINE } from "./continuation-model";
 import {
   FILM_ASSIMILATION_MS,
-  FILM_CONSOLIDATION_LINE,
   FILM_OPENING_MS,
   resolveFilmSrc,
 } from "./film-model";
+import { THRESHOLD_FORBIDDEN_WORDS } from "./threshold-model";
 
 describe("film-model", () => {
   it("resolve a fonte do filme com fallback canônico", () => {

@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 
+import { buildFilmContinuationLines } from "./continuation-model";
 import {
   FILM_ASSIMILATION_MS,
-  FILM_CONSOLIDATION_LINE,
   FILM_OPENING_MS,
 } from "./film-model";
 import { LimiarAtmosphere } from "./LimiarAtmosphere";
@@ -23,6 +23,8 @@ type LimiarPhase =
 type LimiarExperienceProps = {
   filmSrc: string;
 };
+
+const FILM_CONTINUATION_LINES = buildFilmContinuationLines();
 
 export function LimiarExperience({ filmSrc }: LimiarExperienceProps) {
   const [phase, setPhase] = useState<LimiarPhase>("threshold");
@@ -110,8 +112,18 @@ export function LimiarExperience({ filmSrc }: LimiarExperienceProps) {
       />
 
       {phase === "after" && (
-        <main className="limiar__main">
-          <p className="limiar__voice limiar__consolidation">{FILM_CONSOLIDATION_LINE}</p>
+        <main className="limiar__main limiar__main--continuation">
+          <section className="limiar__continuation" aria-label="Continuação">
+            {FILM_CONTINUATION_LINES.map((line, index) => (
+              <p
+                key={line.text}
+                className={`limiar__voice limiar__continuation-line limiar__continuation-line--${index + 1}`}
+                style={{ animationDelay: `${line.delayMs}ms` }}
+              >
+                {line.text}
+              </p>
+            ))}
+          </section>
         </main>
       )}
     </div>

@@ -15,4 +15,13 @@ describe("stage-tokens", () => {
     expect(STAGE_MS.filmOpening).toBe(1800);
     expect(STAGE_MS.filmAssimilation).toBe(4800);
   });
+
+  it("espaça a continuação após a consolidação", () => {
+    expect(STAGE_MS.continuationLine2Delay).toBeGreaterThan(
+      STAGE_MS.consolidationDelay + STAGE_MS.consolidationIn,
+    );
+    expect(STAGE_MS.continuationLine3Delay).toBeGreaterThan(
+      STAGE_MS.continuationLine2Delay + STAGE_MS.consolidationIn,
+    );
+  });
 });
