@@ -33,11 +33,7 @@ export function LandingSurface({ model }: LandingSurfaceProps) {
               {model.convite_contato.titulo}
             </h2>
             <p className="mt-2 text-ink-soft">{model.convite_contato.descricao}</p>
-            <Link
-              href="/onboarding?fixture=primeiro-contato"
-              className="btn-primary mt-6"
-              data-testid="landing-cta"
-            >
+            <Link href="/comecar" className="btn-primary mt-6" data-testid="landing-cta">
               {model.convite_contato.acao}
             </Link>
           </div>

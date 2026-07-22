@@ -2,8 +2,12 @@ import type { CuradoriaRepositoryPort } from "@/application/ports/curadoria-repo
 import type { SessaoCuradoria } from "@/domain/curadoria/sessao-curadoria";
 import { BusinessRuleError } from "@/domain/shared/errors/business-rule-error";
 import { NotFoundError } from "@/domain/shared/errors/not-found-error";
+import { avancarProjecaoAposSessaoCuradoria } from "@/infrastructure/jornada/jornada-view-projection";
+import { SupabaseJornadaProjection } from "@/infrastructure/jornada/supabase-jornada-projection";
 import { createClient } from "@/lib/supabase/server";
 import { randomUUID } from "crypto";
+
+const jornadaProjection = new SupabaseJornadaProjection();
 
 export class SupabaseCuradoriaRepository implements CuradoriaRepositoryPort {
   async abrirSessao(
@@ -42,6 +46,13 @@ export class SupabaseCuradoriaRepository implements CuradoriaRepositoryPort {
 
     if (error) {
       throw new BusinessRuleError(error.message);
+    }
+
+    const projecaoAtual = await jornadaProjection.obterPorId(input.jornadaId);
+    if (projecaoAtual) {
+      await jornadaProjection.salvar(
+        avancarProjecaoAposSessaoCuradoria(projecaoAtual, abertaEm),
+      );
     }
 
     return {

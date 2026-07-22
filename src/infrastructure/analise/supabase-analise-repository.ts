@@ -2,7 +2,11 @@ import type { AnaliseRepositoryPort } from "@/application/ports/analise-reposito
 import type { AnaliseInicial } from "@/domain/analise/analise-inicial";
 import { BusinessRuleError } from "@/domain/shared/errors/business-rule-error";
 import { NotFoundError } from "@/domain/shared/errors/not-found-error";
+import { avancarProjecaoAposAnaliseInicial } from "@/infrastructure/jornada/jornada-view-projection";
+import { SupabaseJornadaProjection } from "@/infrastructure/jornada/supabase-jornada-projection";
 import { createClient } from "@/lib/supabase/server";
+
+const jornadaProjection = new SupabaseJornadaProjection();
 
 export class SupabaseAnaliseRepository implements AnaliseRepositoryPort {
   async executarAnaliseInicial(
@@ -42,12 +46,20 @@ export class SupabaseAnaliseRepository implements AnaliseRepositoryPort {
       throw new BusinessRuleError(error.message);
     }
 
+    const executadaEm = new Date().toISOString();
+    const projecaoAtual = await jornadaProjection.obterPorId(input.jornadaId);
+    if (projecaoAtual) {
+      await jornadaProjection.salvar(
+        avancarProjecaoAposAnaliseInicial(projecaoAtual, executadaEm),
+      );
+    }
+
     return {
       analiseId: eventId as string,
       jornadaId: input.jornadaId,
       observacoes: input.observacoes,
       contexto: input.contexto ?? null,
-      executadaEm: new Date().toISOString(),
+      executadaEm,
       executadaPor,
     };
   }

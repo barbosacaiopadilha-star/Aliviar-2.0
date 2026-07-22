@@ -1,8 +1,12 @@
 import type { CasoRepositoryPort } from "@/application/ports/caso-repository-port";
 import type { CasoDeclarado } from "@/domain/caso/caso-declarado";
 import { BusinessRuleError } from "@/domain/shared/errors/business-rule-error";
+import { criarProjecaoInicial } from "@/infrastructure/jornada/jornada-view-projection";
+import { SupabaseJornadaProjection } from "@/infrastructure/jornada/supabase-jornada-projection";
 import { createClient } from "@/lib/supabase/server";
 import { emptyToNull, parsePriority } from "@/lib/validations/patient-journey";
+
+const jornadaProjection = new SupabaseJornadaProjection();
 
 export class SupabaseCasoRepository implements CasoRepositoryPort {
   async registrarCasoDeclarado(
@@ -45,6 +49,11 @@ export class SupabaseCasoRepository implements CasoRepositoryPort {
         "Não foi possível concluir o cadastro. A Jornada inicial não foi criada.",
       );
     }
+
+    const iniciadaEm = new Date().toISOString();
+    await jornadaProjection.salvar(
+      criarProjecaoInicial({ jornadaId: journeyId, pacienteId: patientId, iniciadaEm }),
+    );
 
     return {
       casoId: journeyId,

@@ -1,15 +1,6 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 
-import { MinhaJornadaSurface } from "@/components/canonical/surfaces/MinhaJornadaSurface";
-import {
-  isFixtureId,
-  loadJornadaView,
-} from "@/experience-layer/fixtures/jornada-fixtures";
-import {
-  resolveCanonicalExperience,
-  resolveCanonicalRoute,
-} from "@/experience-layer/resolve-canonical-experience";
+import { CanonicalExperiencePage } from "@/components/canonical/CanonicalExperiencePage";
 
 export const metadata: Metadata = {
   title: "Minha Jornada",
@@ -17,32 +8,12 @@ export const metadata: Metadata = {
 };
 
 interface MinhaJornadaPageProps {
-  searchParams: Promise<{ fixture?: string }>;
+  searchParams: Promise<{ jornada?: string }>;
 }
 
 export default async function MinhaJornadaPage({ searchParams }: MinhaJornadaPageProps) {
   const params = await searchParams;
-  const fixtureId = params.fixture && isFixtureId(params.fixture) ? params.fixture : "ace";
-  const view = loadJornadaView(fixtureId);
+  const jornadaId = params.jornada?.trim() || null;
 
-  if (!view) {
-    redirect("/");
-  }
-
-  const route = resolveCanonicalRoute(view);
-  if (route === "/") {
-    redirect("/");
-  }
-  if (route === "/onboarding") {
-    redirect(`/onboarding?fixture=${fixtureId}`);
-  }
-
-  const experience = resolveCanonicalExperience(view);
-  if (!experience.minhaJornada) {
-    redirect("/");
-  }
-
-  return (
-    <MinhaJornadaSurface model={experience.minhaJornada} ace={experience.ace} />
-  );
+  return <CanonicalExperiencePage jornadaId={jornadaId} surface="minha-jornada" />;
 }

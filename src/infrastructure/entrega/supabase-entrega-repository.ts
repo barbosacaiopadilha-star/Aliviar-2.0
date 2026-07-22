@@ -2,8 +2,12 @@ import type { EntregaRepositoryPort } from "@/application/ports/entrega-reposito
 import type { EntregaAoPaciente } from "@/domain/entrega/entrega-paciente";
 import { BusinessRuleError } from "@/domain/shared/errors/business-rule-error";
 import { NotFoundError } from "@/domain/shared/errors/not-found-error";
+import { avancarProjecaoAposEntrega } from "@/infrastructure/jornada/jornada-view-projection";
+import { SupabaseJornadaProjection } from "@/infrastructure/jornada/supabase-jornada-projection";
 import { createClient } from "@/lib/supabase/server";
 import { randomUUID } from "crypto";
+
+const jornadaProjection = new SupabaseJornadaProjection();
 
 export class SupabaseEntregaRepository implements EntregaRepositoryPort {
   async produzirEntrega(
@@ -42,6 +46,11 @@ export class SupabaseEntregaRepository implements EntregaRepositoryPort {
 
     if (error) {
       throw new BusinessRuleError(error.message);
+    }
+
+    const projecaoAtual = await jornadaProjection.obterPorId(input.jornadaId);
+    if (projecaoAtual) {
+      await jornadaProjection.salvar(avancarProjecaoAposEntrega(projecaoAtual, produzidaEm));
     }
 
     return {

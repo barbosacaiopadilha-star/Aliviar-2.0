@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import {
   HumanContactCard,
   JourneyHeader,
@@ -41,12 +39,6 @@ export function OnboardingSurface({ model }: OnboardingSurfaceProps) {
             <p className="mt-2 text-sm text-ink-soft">{model.pedido_atual.descricao}</p>
           </section>
         ) : null}
-
-        <footer className="border-t border-line pt-6">
-          <Link href="/minha-jornada?fixture=ace" className="text-sm text-ink-soft underline">
-            Ver demonstração de Minha Jornada
-          </Link>
-        </footer>
       </main>
     </div>
   );

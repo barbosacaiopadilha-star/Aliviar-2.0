@@ -5,4 +5,4 @@ export * from "./mappers/minha-jornada";
 export * from "./mappers/ace";
 export * from "./mappers/estado-visivel";
 export * from "./resolve-canonical-experience";
-export * from "./fixtures/jornada-fixtures";
+export * from "./api/jornada-client";

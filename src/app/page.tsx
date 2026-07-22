@@ -1,20 +1,12 @@
-import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 
-import { LandingSurface } from "@/components/canonical/surfaces/LandingSurface";
-import { mapLandingExperienceModel } from "@/experience-layer/mappers/landing";
-import { loadJornadaView } from "@/experience-layer/fixtures/jornada-fixtures";
-import { resolveCanonicalRoute } from "@/experience-layer/resolve-canonical-experience";
+import { CanonicalExperiencePage } from "@/components/canonical/CanonicalExperiencePage";
+
+export const metadata: Metadata = {
+  title: "Aliviar — Curadoria Médica",
+  description: "Você não precisa navegar a saúde sozinho.",
+};
 
 export default function HomePage() {
-  const fixtureId = null;
-  const view = loadJornadaView(fixtureId);
-
-  if (view) {
-    const route = resolveCanonicalRoute(view);
-    if (route !== "/") {
-      redirect(route);
-    }
-  }
-
-  return <LandingSurface model={mapLandingExperienceModel()} />;
+  return <CanonicalExperiencePage jornadaId={null} surface="landing" />;
 }
