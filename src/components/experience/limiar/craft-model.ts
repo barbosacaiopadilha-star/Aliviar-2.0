@@ -11,16 +11,12 @@ export function buildCraftLines(): LandingRevealLine[] {
 
   return [
     {
-      text: "O que muda não é a doença — é o peso de decidir sozinho.",
+      text: "Deixa de pesar decidir sozinho.",
       delayMs: begin,
     },
     {
-      text: "Alguém escuta, estuda, compara — com rigor, sem pressa.",
+      text: "Alguém estuda, compara e permanece.",
       delayMs: begin + gap,
-    },
-    {
-      text: "Você ganha clareza. E companhia no caminho.",
-      delayMs: begin + gap * 2,
     },
   ];
 }

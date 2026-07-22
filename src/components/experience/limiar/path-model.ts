@@ -15,12 +15,8 @@ export function buildPathLines(): LandingRevealLine[] {
       delayMs: begin,
     },
     {
-      text: "Não há roteiro para decorar — há uma conversa que ganha profundidade.",
+      text: "O caminho se revela devagar.",
       delayMs: begin + gap,
-    },
-    {
-      text: "O caminho se revela devagar, no seu ritmo.",
-      delayMs: begin + gap * 2,
     },
   ];
 }

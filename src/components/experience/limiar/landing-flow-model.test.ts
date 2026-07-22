@@ -11,7 +11,7 @@ import { THRESHOLD_FORBIDDEN_WORDS } from "./threshold-model";
 describe("landing-flow-model", () => {
   it("compõe a landing na ordem emocional canônica", () => {
     const lines = buildLandingFlowLines();
-    expect(lines).toHaveLength(12);
+    expect(lines).toHaveLength(10);
     expect(lines[0].text).toBe("Isso fica com você.");
     expect(lines[lines.length - 1].text).toBe("Pode fechar esta página. A luz fica acesa.");
   });
@@ -40,6 +40,12 @@ describe("landing-flow-model", () => {
     expect(text).not.toContain("faq");
     expect(text).not.toContain("card");
     expect(text).not.toContain("grid");
+    expect(text).not.toContain("clareza");
+    expect(text).not.toContain("roteiro");
+    expect(text).not.toContain("rigor");
+
+    const escutaCount = (text.match(/escuta/g) ?? []).length;
+    expect(escutaCount).toBeLessThanOrEqual(1);
 
     for (const word of THRESHOLD_FORBIDDEN_WORDS) {
       expect(text).not.toContain(word);

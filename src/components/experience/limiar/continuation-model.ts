@@ -23,7 +23,7 @@ export function buildFilmContinuationLines(): FilmContinuationLine[] {
       delayMs: STAGE_MS.continuationLine2Delay,
     },
     {
-      text: "Que permanecem no caminho — com você, não por você.",
+      text: "Permanecem com você — não por você.",
       delayMs: STAGE_MS.continuationLine3Delay,
     },
   ];

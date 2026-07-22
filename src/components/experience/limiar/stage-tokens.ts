@@ -24,18 +24,18 @@ export const STAGE_MS = {
   consolidationIn: 1400,
   continuationLine2Delay: 4200,
   continuationLine3Delay: 8600,
-  sectionBreath: 3200,
-  sectionLineGap: 3800,
+  sectionBreath: 2800,
+  sectionLineGap: 3600,
 } as const;
 
 const CRAFT_BEGIN_MS =
   STAGE_MS.continuationLine3Delay + STAGE_MS.consolidationIn + STAGE_MS.sectionBreath;
 
 const PATH_BEGIN_MS =
-  CRAFT_BEGIN_MS + STAGE_MS.sectionLineGap * 3 + STAGE_MS.sectionBreath;
+  CRAFT_BEGIN_MS + STAGE_MS.sectionLineGap * 2 + STAGE_MS.sectionBreath;
 
 const INVITE_BEGIN_MS =
-  PATH_BEGIN_MS + STAGE_MS.sectionLineGap * 3 + STAGE_MS.sectionBreath;
+  PATH_BEGIN_MS + STAGE_MS.sectionLineGap * 2 + STAGE_MS.sectionBreath;
 
 /** Início de cada bloco pós-filme (ms desde fase `after`). */
 export const LANDING_SECTION_MS = {

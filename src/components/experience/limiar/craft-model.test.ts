@@ -7,7 +7,7 @@ import { THRESHOLD_FORBIDDEN_WORDS } from "./threshold-model";
 describe("craft-model", () => {
   it("revela o ofício após a continuação, com ritmo espaçado", () => {
     const lines = buildCraftLines();
-    expect(lines).toHaveLength(3);
+    expect(lines).toHaveLength(2);
     expect(lines[0].delayMs).toBeGreaterThan(
       STAGE_MS.continuationLine3Delay + STAGE_MS.consolidationIn,
     );
@@ -21,27 +21,30 @@ describe("craft-model", () => {
       .join(" ")
       .toLowerCase();
 
-    expect(text).toContain("clareza");
+    expect(text).toContain("sozinho");
+    expect(text).not.toContain("clareza");
+    expect(text).not.toContain("ganha");
     expect(text).not.toContain("curadoria");
     expect(text).not.toContain("empresa");
     expect(text).not.toContain("benefício");
     expect(text).not.toContain("plataforma");
     expect(text).not.toContain("comece");
     expect(text).not.toContain("cadastr");
+    expect(text).not.toContain("rigor");
 
     for (const word of THRESHOLD_FORBIDDEN_WORDS) {
       expect(text).not.toContain(word);
     }
   });
 
-  it("nomeia o ofício — escutar, estudar, comparar", () => {
+  it("nomeia o ofício — estudar, comparar, permanecer", () => {
     const text = buildCraftLines()
       .map((line) => line.text)
       .join(" ")
       .toLowerCase();
 
-    expect(text).toContain("escuta");
     expect(text).toContain("estuda");
     expect(text).toContain("compara");
+    expect(text).toContain("permanece");
   });
 });

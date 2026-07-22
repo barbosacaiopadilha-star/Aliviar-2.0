@@ -753,7 +753,7 @@ a {
 .limiar__craft,
 .limiar__path,
 .limiar__invite {
-  margin-top: clamp(5rem, 20vh, 8rem);
+  margin-top: clamp(3.75rem, 15vh, 6rem);
 }
 
 .limiar__continuation .limiar__reveal-line,
@@ -784,7 +784,7 @@ a {
 }
 
 .limiar__farewell {
-  margin-top: clamp(5.5rem, 22vh, 9rem);
+  margin-top: clamp(4.5rem, 18vh, 7rem);
   max-width: 26rem;
   margin-inline: auto;
   font-size: clamp(1rem, 3.2vw, 1.1875rem);
@@ -803,6 +803,8 @@ a {
   z-index: 1;
   padding: 0 1.5rem 1.75rem;
   text-align: center;
+  opacity: 0;
+  animation: stage-voice-in var(--stage-duration-reveal) var(--stage-ease) forwards;
 }
 
 .limiar__staff-link {
@@ -864,6 +866,11 @@ a {
 
   .limiar__staff-link {
     transition: none;
+  }
+
+  .limiar__footer {
+    animation: none;
+    opacity: 1;
   }
 
   .limiar-film,

@@ -15,6 +15,7 @@ import { LimiarInviteSection } from "./LimiarInviteSection";
 import { LimiarPresence } from "./LimiarPresence";
 import { LimiarRevealSection } from "./LimiarRevealSection";
 import { buildPathLines } from "./path-model";
+import { LANDING_SECTION_MS } from "./stage-tokens";
 import { THRESHOLD_FIRST_LINE } from "./threshold-model";
 import { THRESHOLD_GESTURE_READY_MS } from "./threshold-gesture";
 
@@ -139,7 +140,10 @@ export function LimiarExperience({ filmSrc }: LimiarExperienceProps) {
             <LimiarInviteSection />
           </main>
 
-          <footer className="limiar__footer">
+          <footer
+            className="limiar__footer"
+            style={{ animationDelay: `${LANDING_SECTION_MS.farewell}ms` }}
+          >
             <Link href="/login" className="limiar__staff-link">
               Equipe Aliviar
             </Link>
