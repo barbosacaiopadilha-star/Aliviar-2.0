@@ -1,9 +1,11 @@
-import type {
-  AceAnalysisRunView,
-  AceAnaliseCuradorView,
-  AceStructuredResult,
-  AceTriggerSource,
+import {
+  ACE_MELHORADO_VERSION,
+  type AceAnalysisRunView,
+  type AceAnaliseCuradorView,
+  type AceStructuredResult,
+  type AceTriggerSource,
 } from "@/ace-flow/contracts/ace-analysis";
+import type { AnaliseRepositoryPort } from "@/application/ports/analise-repository-port";
 import type { JornadaDoPacienteView } from "@/experience-flow/contracts/jornada-view";
 import {
   buildAceInputPayload,
@@ -12,7 +14,7 @@ import {
 } from "@/infrastructure/ace/improved-ace-engine";
 import { avancarProjecaoAposAnaliseInicial } from "@/infrastructure/jornada/jornada-view-projection";
 import { SupabaseJornadaProjection } from "@/infrastructure/jornada/supabase-jornada-projection";
-import { readModelToView, viewToReadModel } from "@/infrastructure/jornada/jornada-view-projection";
+import { readModelToView } from "@/infrastructure/jornada/jornada-view-projection";
 import { createCorrelationId } from "@/infrastructure/observability/correlation-id";
 import { createClient } from "@/lib/supabase/server";
 import { recordOperationalAudit } from "api/shared/observability/instrument-operation";
@@ -20,9 +22,11 @@ import { recordOperationalAudit } from "api/shared/observability/instrument-oper
 const jornadaProjection = new SupabaseJornadaProjection();
 
 function mapRun(row: Record<string, unknown>): AceAnalysisRunView {
+  const id = row.id as string;
   const result = row.result_payload as AceStructuredResult | null;
   return {
-    id: row.id as string,
+    id,
+    execution_id: id,
     jornada_id: row.journey_id as string,
     ace_version: row.ace_version as string,
     status: row.status as AceAnalysisRunView["status"],
@@ -40,6 +44,7 @@ export function toAceAnaliseCuradorView(run: AceAnalysisRunView): AceAnaliseCura
   if (!run.resultado) return null;
   return {
     run_id: run.id,
+    execution_id: run.execution_id,
     versao: run.ace_version,
     status: run.status,
     resumo_para_curador: run.resultado.resumo_para_curador,
@@ -82,7 +87,7 @@ export class ImprovedAceService {
       .insert({
         journey_id: params.jornadaId,
         patient_id: view.paciente_id,
-        ace_version: "2.0.0",
+        ace_version: ACE_MELHORADO_VERSION,
         input_payload: inputPayload,
         status: "INICIADO",
         correlation_id: correlationId,
@@ -104,7 +109,7 @@ export class ImprovedAceService {
       actorId: params.actorId ?? null,
       actorRole: params.actorId ? "STAFF" : "SYSTEM",
       resultado: "SUCESSO",
-      metadata: { trigger: params.trigger, ace_version: "2.0.0" },
+      metadata: { trigger: params.trigger, ace_version: ACE_MELHORADO_VERSION },
     });
 
     let resultado: AceStructuredResult;
@@ -121,7 +126,7 @@ export class ImprovedAceService {
     } catch {
       status = "FALHA";
       resultado = {
-        versao: "2.0.0",
+        versao: ACE_MELHORADO_VERSION,
         status: "FALHA",
         documentos_analisados: [],
         contexto_operacional: "Falha na análise operacional.",
@@ -162,7 +167,8 @@ export class ImprovedAceService {
       durationMs,
       metadata: {
         trigger: params.trigger,
-        ace_version: "2.0.0",
+        ace_version: ACE_MELHORADO_VERSION,
+        execution_id: runRow.id as string,
         status,
         duration_ms: durationMs,
       },
@@ -254,3 +260,31 @@ export class ImprovedAceService {
 }
 
 export const improvedAceService = new ImprovedAceService();
+
+/** Adapter canônico — única entrada de análise via ACE Melhorado. */
+export const improvedAceAnaliseAdapter: AnaliseRepositoryPort = {
+  async executarAnaliseInicial(input, executadaPor) {
+    const run = await improvedAceService.executarParaJornada({
+      jornadaId: input.jornadaId,
+      trigger: "STAFF",
+      actorId: executadaPor,
+      observacoesStaff: input.observacoes,
+      contextoStaff: input.contexto ?? null,
+      avancarProjecao: true,
+    });
+
+    return {
+      analiseId: run.id,
+      executionId: run.execution_id,
+      jornadaId: input.jornadaId,
+      observacoes: input.observacoes,
+      contexto: input.contexto ?? null,
+      executadaEm: run.concluido_em ?? run.iniciado_em,
+      executadaPor,
+      aceVersion: run.ace_version,
+      correlationId: run.correlation_id,
+      status: run.status,
+      durationMs: run.duration_ms,
+    };
+  },
+};

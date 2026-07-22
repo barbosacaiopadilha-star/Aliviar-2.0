@@ -7,7 +7,7 @@ export function AceAnaliseCuradorSurface({ analise }: { analise: AceAnaliseCurad
     <section className="card p-5" data-testid="ace-analise-curador">
       <h2 className="font-medium text-ink">Análise ACE Melhorado</h2>
       <p className="mt-1 text-xs text-ink-soft">
-        v{analise.versao} — {analise.status} — apoio operacional, sem decisão clínica
+        v{analise.versao} — {analise.status} — exec {analise.execution_id.slice(0, 8)}…
       </p>
       <p className="mt-3 text-sm text-ink">{analise.resumo_para_curador}</p>
 

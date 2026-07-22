@@ -5,7 +5,11 @@
  */
 import { describe, expect, it } from "vitest";
 
+import type { AceAnaliseCuradorView } from "@/ace-flow/contracts/ace-analysis";
 import type { CasoDeCuradoriaView, OpcaoRegistradaView } from "@/curator-flow/contracts/curador-view";
+import { ACE_MELHORADO_VERSION } from "@/ace-flow/contracts/ace-analysis";
+import { executarAceMelhorado } from "@/infrastructure/ace/improved-ace-engine";
+import { toAceAnaliseCuradorView } from "@/infrastructure/ace/improved-ace-service";
 import type { JornadaDoPacienteReadModel } from "@/application/jornada/jornada-do-paciente-read-model";
 import { derivarEstadoOperacionalCurador } from "@/infrastructure/curador/curador-estado-operacional";
 import {
@@ -67,6 +71,7 @@ function buildCasoCuradoriaView(
   view: ReturnType<typeof readModelToView>,
   workspace = WORKSPACE_VAZIO,
   curadorId: string | null = null,
+  aceAnalise: AceAnaliseCuradorView | null = null,
 ): CasoDeCuradoriaView {
   const opcoesOk = opcoesEstaoCompletas(workspace.opcoes_registradas);
   const aprovada = entregaEstaAprovada(workspace.rascunho_entrega);
@@ -91,7 +96,7 @@ function buildCasoCuradoriaView(
     timeline_jornada: view.timeline,
     timeline_operacional: [],
     comentarios: workspace.comentarios,
-    ace_analise: null,
+    ace_analise: aceAnalise,
   };
 }
 
@@ -113,6 +118,7 @@ function simularFluxoCompleto(): { etapas: EtapaValidacao[]; problemas: string[]
 
   let workspace = WORKSPACE_VAZIO;
   let curadorId: string | null = null;
+  let aceCuradorView: AceAnaliseCuradorView | null = null;
   let etapaAnterior = readModel.etapaAtual;
   let workflowAnterior = resolverEstadoWorkflowCaso({
     view: readModelToView(readModel),
@@ -197,16 +203,50 @@ function simularFluxoCompleto(): { etapas: EtapaValidacao[]; problemas: string[]
     experience_atualizou: surfaceDocs === "documentos",
   });
 
-  // 3. Análise inicial (operação)
+  // 3. ACE Melhorado → Curadoria
+  const viewComDocs = readModelToView(readModel);
+  const aceResultado = executarAceMelhorado({ view: viewComDocs, trigger: "UPLOAD" });
+  const aceRunId = "e2e-ace-run-1";
   readModel = avancarProjecaoAposAnaliseInicial(readModel, "2026-01-12T10:00:00Z");
+  readModel = {
+    ...readModel,
+    extensoes: {
+      ...readModel.extensoes,
+      ace_analise: {
+        run_id: aceRunId,
+        versao: aceResultado.versao,
+        status: aceResultado.status,
+        resumo: aceResultado.resumo_para_curador,
+        atualizado_em: "2026-01-12T10:00:00Z",
+      },
+    },
+  };
+  aceCuradorView = toAceAnaliseCuradorView({
+    id: aceRunId,
+    execution_id: aceRunId,
+    jornada_id: readModel.jornadaId,
+    ace_version: ACE_MELHORADO_VERSION,
+    status: aceResultado.status,
+    duration_ms: 42,
+    correlation_id: "e2e-correlation",
+    retries: 0,
+    triggered_by: "UPLOAD",
+    iniciado_em: "2026-01-12T10:00:00Z",
+    concluido_em: "2026-01-12T10:00:00Z",
+    resultado: aceResultado,
+  });
+  if (!aceCuradorView || aceCuradorView.versao !== ACE_MELHORADO_VERSION) {
+    problemas.push("P0: curador não recebe saída do ACE Melhorado");
+  }
   readModel = avancarProjecaoAposSessaoCuradoria(readModel, "2026-01-13T10:00:00Z");
-  registrar("Workflow → Curadoria", {
-    responsavel: "OPERACAO",
+  registrar("ACE Melhorado", {
+    responsavel: "SISTEMA",
     jornada_mudou: readModel.etapaAtual === "CURADORIA",
     workflow_mudou:
       resolverEstadoWorkflowCaso({ view: readModelToView(readModel), curadorAtribuido: false })
         .fase_atual === "CURADOR_ATIVO",
     experience_atualizou: resolvePortalSurface(readModelToView(readModel)) === "curadoria",
+    interface_refletiria: aceCuradorView !== null,
   });
 
   // 4. Curador assume + sessão
@@ -225,7 +265,7 @@ function simularFluxoCompleto(): { etapas: EtapaValidacao[]; problemas: string[]
     ],
     atualizado_em: "2026-01-14T09:05:00Z",
   });
-  let caso = buildCasoCuradoriaView(readModelToView(readModel), workspace, curadorId);
+  let caso = buildCasoCuradoriaView(readModelToView(readModel), workspace, curadorId, aceCuradorView);
   const expCurador = mapCasoCuradorExperience(caso);
   if (expCurador.pode_registrar_opcoes !== true) {
     problemas.push("P1: sessão aberta mas pode_registrar_opcoes=false");
@@ -243,7 +283,7 @@ function simularFluxoCompleto(): { etapas: EtapaValidacao[]; problemas: string[]
 
   // 5. Registro três opções
   workspace = registrarOpcoes(workspace, TRES_OPCOES);
-  caso = buildCasoCuradoriaView(readModelToView(readModel), workspace, curadorId);
+  caso = buildCasoCuradoriaView(readModelToView(readModel), workspace, curadorId, aceCuradorView);
   if (!opcoesEstaoCompletas(workspace.opcoes_registradas)) {
     problemas.push("P0: três opções não registradas corretamente");
   }
@@ -347,7 +387,7 @@ describe("Smoke E2E — primeiro caso real", () => {
     expect(nomes).toEqual([
       "Onboarding",
       "Upload documentos",
-      "Workflow → Curadoria",
+      "ACE Melhorado",
       "Curador assume + sessão",
       "Registro três opções",
       "Entrega ao paciente",

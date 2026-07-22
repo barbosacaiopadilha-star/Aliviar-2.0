@@ -27,9 +27,14 @@ export class ExecutarAnaliseInicial {
       const analise = await this.analiseRepository.executarAnaliseInicial(input, authResult.userId);
       return ok({
         analiseId: analise.analiseId,
+        executionId: analise.executionId,
         jornadaId: analise.jornadaId,
         executadaEm: analise.executadaEm,
         executadaPor: analise.executadaPor,
+        aceVersion: analise.aceVersion,
+        correlationId: analise.correlationId,
+        status: analise.status,
+        durationMs: analise.durationMs,
       });
     } catch (error) {
       return err(error as DomainError);

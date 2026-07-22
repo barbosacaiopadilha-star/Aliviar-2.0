@@ -23,6 +23,8 @@ export interface AceStructuredResult {
 
 export interface AceAnalysisRunView {
   id: string;
+  /** Identificador único da execução ACE (mesmo valor que `id`). */
+  execution_id: string;
   jornada_id: string;
   ace_version: string;
   status: AceAnalysisStatus;
@@ -37,6 +39,7 @@ export interface AceAnalysisRunView {
 
 export interface AceAnaliseCuradorView {
   run_id: string;
+  execution_id: string;
   versao: string;
   status: AceAnalysisStatus;
   resumo_para_curador: string;

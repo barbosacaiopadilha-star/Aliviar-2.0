@@ -24,7 +24,7 @@ import { ObterWorkflowCaso } from "@/application/workflow/obter-workflow-caso";
 import { ExecutarAtribuicaoOperacional } from "@/application/workflow/executar-atribuicao-operacional";
 import { SupabaseAuthContextAdapter } from "@/infrastructure/auth/supabase-auth-context-adapter";
 import { SupabaseCasoRepository } from "@/infrastructure/caso/supabase-caso-repository";
-import { SupabaseAnaliseRepository } from "@/infrastructure/analise/supabase-analise-repository";
+import { improvedAceAnaliseAdapter } from "@/infrastructure/ace/improved-ace-service";
 import { SupabaseCuradoriaRepository } from "@/infrastructure/curadoria/supabase-curadoria-repository";
 import { SupabaseEntregaRepository } from "@/infrastructure/entrega/supabase-entrega-repository";
 import { SupabaseJornadaProjection } from "@/infrastructure/jornada/supabase-jornada-projection";
@@ -32,7 +32,7 @@ import { SupabaseJornadaQuery } from "@/infrastructure/jornada/supabase-jornada-
 
 const auth = new SupabaseAuthContextAdapter();
 const casoRepository = new SupabaseCasoRepository();
-const analiseRepository = new SupabaseAnaliseRepository();
+const analiseRepository = improvedAceAnaliseAdapter;
 const curadoriaRepository = new SupabaseCuradoriaRepository();
 const entregaRepository = new SupabaseEntregaRepository();
 const jornadaQuery = new SupabaseJornadaQuery();

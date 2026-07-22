@@ -21,8 +21,13 @@ export function toExecutarAnaliseInicialResponse(
 ): ExecutarAnaliseInicialResponse {
   return {
     analise_id: output.analiseId,
+    execution_id: output.executionId,
     jornada_id: output.jornadaId,
     executada_em: output.executadaEm,
     executada_por: output.executadaPor,
+    ace_version: output.aceVersion,
+    correlation_id: output.correlationId,
+    status: output.status,
+    duration_ms: output.durationMs,
   };
 }
