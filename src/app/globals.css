@@ -430,6 +430,183 @@ a {
   }
 }
 
+/* ——— Limiar: Capítulo Zero ——— */
+
+.limiar {
+  position: relative;
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  overflow-x: hidden;
+  background: var(--paper);
+  opacity: 0;
+  animation: limiar-arrival 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.limiar__atmosphere {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.limiar__glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(92px);
+  animation: limiar-glow-breathe 7s ease-in-out infinite;
+}
+
+.limiar__glow--warm {
+  top: 8%;
+  right: -20%;
+  width: min(68vw, 32rem);
+  height: min(68vw, 32rem);
+  background: var(--coral-soft);
+  opacity: 0.34;
+}
+
+.limiar__glow--gold {
+  bottom: 6%;
+  left: -22%;
+  width: min(58vw, 26rem);
+  height: min(58vw, 26rem);
+  background: rgba(196, 160, 98, 0.16);
+  opacity: 0.42;
+  animation-delay: 1.5s;
+}
+
+.limiar__main {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(3.25rem, 14vh, 6rem);
+  margin: 0 auto;
+  width: 100%;
+  max-width: 34rem;
+  padding: 2.75rem 1.5rem 4.5rem;
+}
+
+.limiar__line {
+  width: 100%;
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.3125rem, 4.2vw, 1.5625rem);
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--ink);
+  text-align: center;
+  opacity: 0;
+  transform: translateY(0.35rem);
+  animation: limiar-line-in 1.15s cubic-bezier(0.22, 1, 0.36, 1) 1.4s forwards;
+}
+
+.limiar__presence {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: clamp(5.5rem, 20vh, 9rem);
+  width: 100%;
+  opacity: 0;
+  animation: limiar-presence-in 1.5s cubic-bezier(0.22, 1, 0.36, 1) 2.15s forwards;
+}
+
+.limiar__presence-halo {
+  position: absolute;
+  width: min(42vw, 11rem);
+  height: min(42vw, 11rem);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(244, 223, 214, 0.55) 0%,
+    rgba(250, 246, 239, 0) 72%
+  );
+  animation: limiar-glow-breathe 5.5s ease-in-out infinite;
+  animation-delay: 2.5s;
+}
+
+.limiar__presence-pulse {
+  position: relative;
+  width: 0.32rem;
+  height: 0.32rem;
+  border-radius: 999px;
+  background: var(--ink-soft);
+  opacity: 0.35;
+  animation: limiar-presence-pulse 2.9s ease-in-out infinite;
+  animation-delay: 2.6s;
+}
+
+@keyframes limiar-arrival {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes limiar-line-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes limiar-presence-in {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes limiar-glow-breathe {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.44;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes limiar-presence-pulse {
+  0%,
+  100% {
+    opacity: 0.24;
+    transform: scale(0.9);
+  }
+
+  50% {
+    opacity: 0.52;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .limiar {
+    animation: none;
+    opacity: 1;
+  }
+
+  .limiar__glow,
+  .limiar__presence-halo,
+  .limiar__presence-pulse {
+    animation: none;
+  }
+
+  .limiar__line,
+  .limiar__presence {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* ——— Capítulo 2: Primeira conversa ——— */
 
 .conversation {

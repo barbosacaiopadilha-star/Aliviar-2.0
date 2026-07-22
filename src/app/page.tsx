@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 
-import { CanonicalExperiencePage } from "@/components/canonical/CanonicalExperiencePage";
+import { ThresholdExperience } from "@/components/experience/limiar/ThresholdExperience";
 
 export const metadata: Metadata = {
-  title: "Aliviar — Curadoria Médica",
-  description: "Você não precisa navegar a saúde sozinho.",
+  title: "Aliviar",
+  description: "Aqui dentro, o mundo desacelera.",
 };
 
 export default function HomePage() {
-  return <CanonicalExperiencePage jornadaId={null} surface="landing" />;
+  return <ThresholdExperience />;
 }
