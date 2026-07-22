@@ -737,18 +737,13 @@ a {
   gap: 0;
   justify-content: flex-start;
   padding-top: clamp(4rem, 18vh, 7rem);
-  padding-bottom: clamp(5rem, 22vh, 9rem);
-}
-
-.limiar__main--continuation {
-  gap: 0;
-  padding-top: clamp(4rem, 18vh, 7rem);
-  padding-bottom: clamp(4.5rem, 20vh, 8rem);
+  padding-bottom: clamp(4rem, 16vh, 7rem);
 }
 
 .limiar__continuation,
 .limiar__craft,
-.limiar__path {
+.limiar__path,
+.limiar__invite {
   display: flex;
   flex-direction: column;
   gap: clamp(2.75rem, 11vh, 4.5rem);
@@ -761,11 +756,12 @@ a {
   margin-top: clamp(5rem, 20vh, 8rem);
 }
 
-.limiar__invite {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(2.75rem, 11vh, 4.5rem);
-  width: 100%;
+.limiar__continuation .limiar__reveal-line,
+.limiar__craft .limiar__reveal-line,
+.limiar__path .limiar__reveal-line,
+.limiar__invite .limiar__reveal-line {
+  max-width: 28rem;
+  margin-inline: auto;
 }
 
 .limiar__invite-gesture {
@@ -802,12 +798,30 @@ a {
   animation: stage-voice-in var(--stage-duration-reveal) var(--stage-ease) forwards;
 }
 
-.limiar__continuation-line--2,
-.limiar__continuation-line--3,
-.limiar__reveal-line--2,
-.limiar__reveal-line--3 {
-  max-width: 28rem;
-  margin-inline: auto;
+.limiar__footer {
+  position: relative;
+  z-index: 1;
+  padding: 0 1.5rem 1.75rem;
+  text-align: center;
+}
+
+.limiar__staff-link {
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  opacity: 0.45;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.limiar__staff-link:hover {
+  opacity: 0.75;
+}
+
+.limiar__staff-link:focus-visible {
+  outline: 1px solid rgba(216, 102, 74, 0.2);
+  outline-offset: 0.25rem;
+  opacity: 0.85;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -847,6 +861,12 @@ a {
   .limiar__invite-gesture:hover {
     opacity: 1;
   }
+
+  .limiar__staff-link {
+    transition: none;
+  }
+
+  .limiar-film,
   .limiar--opening .limiar__main,
   .limiar--film .limiar__main,
   .limiar--assimilation .limiar__main,

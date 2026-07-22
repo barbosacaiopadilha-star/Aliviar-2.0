@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import Link from "next/link";
 
 import { buildCraftLines } from "./craft-model";
 import { buildFilmContinuationLines } from "./continuation-model";
@@ -8,12 +9,12 @@ import {
   FILM_ASSIMILATION_MS,
   FILM_OPENING_MS,
 } from "./film-model";
-import { buildPathLines } from "./path-model";
 import { LimiarAtmosphere } from "./LimiarAtmosphere";
 import { LimiarFilm } from "./LimiarFilm";
 import { LimiarInviteSection } from "./LimiarInviteSection";
 import { LimiarPresence } from "./LimiarPresence";
 import { LimiarRevealSection } from "./LimiarRevealSection";
+import { buildPathLines } from "./path-model";
 import { THRESHOLD_FIRST_LINE } from "./threshold-model";
 import { THRESHOLD_GESTURE_READY_MS } from "./threshold-gesture";
 
@@ -51,7 +52,7 @@ export function LimiarExperience({ filmSrc }: LimiarExperienceProps) {
   useEffect(() => {
     const timers = timersRef.current;
     return () => {
-      timers.forEach((id) => window.clearTimeout(id));
+      timers.forEach((timerId) => window.clearTimeout(timerId));
     };
   }, []);
 
@@ -118,24 +119,32 @@ export function LimiarExperience({ filmSrc }: LimiarExperienceProps) {
       />
 
       {phase === "after" && (
-        <main className="limiar__main limiar__main--landing">
-          <LimiarRevealSection
-            lines={FILM_CONTINUATION_LINES}
-            className="limiar__continuation"
-            label="Continuação"
-          />
-          <LimiarRevealSection
-            lines={CRAFT_LINES}
-            className="limiar__craft"
-            label="O ofício"
-          />
-          <LimiarRevealSection
-            lines={PATH_LINES}
-            className="limiar__path"
-            label="O caminho"
-          />
-          <LimiarInviteSection />
-        </main>
+        <>
+          <main className="limiar__main limiar__main--landing" aria-live="polite">
+            <LimiarRevealSection
+              lines={FILM_CONTINUATION_LINES}
+              className="limiar__continuation"
+              label="Continuação"
+            />
+            <LimiarRevealSection
+              lines={CRAFT_LINES}
+              className="limiar__craft"
+              label="O ofício"
+            />
+            <LimiarRevealSection
+              lines={PATH_LINES}
+              className="limiar__path"
+              label="O caminho"
+            />
+            <LimiarInviteSection />
+          </main>
+
+          <footer className="limiar__footer">
+            <Link href="/login" className="limiar__staff-link">
+              Equipe Aliviar
+            </Link>
+          </footer>
+        </>
       )}
     </div>
   );
