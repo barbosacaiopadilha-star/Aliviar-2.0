@@ -4,6 +4,7 @@ import { requireActiveStaffProfile } from "@/lib/auth/staff";
 
 const navItems = [
   { href: "/workspace", label: "Workspace" },
+  { href: "/curador", label: "Curador" },
   { href: "/patients", label: "Pacientes" },
   { href: "/journeys", label: "Jornadas" },
 ];

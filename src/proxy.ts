@@ -12,5 +12,6 @@ export const config = {
     "/journeys/:path*",
     "/login",
     "/portal/:path*",
+    "/curador/:path*",
   ],
 };

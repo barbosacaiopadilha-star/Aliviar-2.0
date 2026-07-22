@@ -11,6 +11,8 @@ describe("isProtectedPath", () => {
     expect(isProtectedPath("/workspace")).toBe(true);
     expect(isProtectedPath("/patients/new")).toBe(true);
     expect(isProtectedPath("/journeys/abc")).toBe(true);
+    expect(isProtectedPath("/curador")).toBe(true);
+    expect(isProtectedPath("/curador/casos/abc")).toBe(true);
   });
 
   it("não protege login e assets", () => {

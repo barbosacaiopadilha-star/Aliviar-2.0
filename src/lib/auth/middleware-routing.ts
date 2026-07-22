@@ -1,4 +1,9 @@
-export const PROTECTED_ROUTE_PREFIXES = ["/workspace", "/patients", "/journeys"] as const;
+export const PROTECTED_ROUTE_PREFIXES = [
+  "/workspace",
+  "/patients",
+  "/journeys",
+  "/curador",
+] as const;
 
 export const PATIENT_PORTAL_PREFIX = "/portal";
 

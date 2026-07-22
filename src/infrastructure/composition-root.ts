@@ -1,6 +1,15 @@
 import { RegistrarCasoDeclarado } from "@/application/caso/registrar-caso-declarado";
 import { ExecutarAnaliseInicial } from "@/application/analise/executar-analise-inicial";
-import { AbrirSessaoDeCuradoria } from "@/application/curadoria/abrir-sessao-de-curadoria";
+import { AbrirSessaoDeCuradoria } from "@/application/curadoria/abrir-sessao-de-curadoria";import { ListarFilaCasosCurador, ObterCasoDeCuradoria } from "@/application/curador/curador-casos";
+import {
+  AbrirSessaoCuradoriaComWorkspace,
+  AprovarEntregaCurador,
+  AssumirCasoCurador,
+  PublicarEntregaCurador,
+  RegistrarComentarioOperacional,
+  RegistrarTresOpcoes,
+  SalvarConjuntoElegivel,
+} from "@/application/curador/curador-comandos";
 import { ProduzirEntregaAoPaciente } from "@/application/entrega/produzir-entrega-ao-paciente";
 import { RegistrarDocumentoPaciente } from "@/application/documentos/registrar-documento-paciente";
 import { AvancarOnboardingPaciente } from "@/application/jornada/avancar-onboarding-paciente";
@@ -35,6 +44,15 @@ export const application = {
   avancarParaEscolhaPaciente: new AvancarParaEscolhaPaciente(jornadaProjection),
   registrarEscolhaPaciente: new RegistrarEscolhaPaciente(jornadaProjection),
   registrarDocumentoPaciente: new RegistrarDocumentoPaciente(),
+  listarFilaCasosCurador: new ListarFilaCasosCurador(),
+  obterCasoDeCuradoria: new ObterCasoDeCuradoria(),
+  assumirCasoCurador: new AssumirCasoCurador(),
+  abrirSessaoCuradoriaComWorkspace: new AbrirSessaoCuradoriaComWorkspace(auth, curadoriaRepository),
+  salvarConjuntoElegivel: new SalvarConjuntoElegivel(),
+  registrarTresOpcoes: new RegistrarTresOpcoes(),
+  registrarComentarioOperacional: new RegistrarComentarioOperacional(),
+  aprovarEntregaCurador: new AprovarEntregaCurador(),
+  publicarEntregaCurador: new PublicarEntregaCurador(auth, entregaRepository),
   jornadaQuery,
 };
 
