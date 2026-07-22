@@ -24,6 +24,9 @@ const AUDITABLE_EVENTS = new Set<OperationalAuditEventType>([
   "CURATOR_NOTA",
   "CURATOR_CHECKLIST",
   "CURATOR_TEMPLATE",
+  "NOTIFICACAO_GERADA",
+  "NOTIFICACAO_LIDA",
+  "NOTIFICACAO_PREFERENCIA",
 ]);
 
 export interface InstrumentOperationInput {

@@ -14,7 +14,10 @@ export type OperationalAuditEventType =
   | "CURATOR_FAVORITO"
   | "CURATOR_NOTA"
   | "CURATOR_CHECKLIST"
-  | "CURATOR_TEMPLATE";
+  | "CURATOR_TEMPLATE"
+  | "NOTIFICACAO_GERADA"
+  | "NOTIFICACAO_LIDA"
+  | "NOTIFICACAO_PREFERENCIA";
 
 export type AuditActorRole = "STAFF" | "PATIENT" | "SYSTEM";
 

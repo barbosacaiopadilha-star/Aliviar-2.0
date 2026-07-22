@@ -29,6 +29,8 @@ export const EXPECTED_TABLES = [
   "curator_private_notes",
   "curator_checklists",
   "curator_templates",
+  "patient_notifications",
+  "patient_notification_preferences",
 ];
 
 export const EXPECTED_MIGRATION_MARKERS = [
@@ -41,6 +43,7 @@ export const EXPECTED_MIGRATION_MARKERS = [
   "20260727180000_operational_audit_trail",
   "20260728180000_governance",
   "20260729180000_curator_operational_tools",
+  "20260730180000_journey_notifications",
 ];
 
 export const ADMIN_EMAIL = "padilhacaiobarbosa@gmail.com";
