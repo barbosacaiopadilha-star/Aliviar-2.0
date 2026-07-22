@@ -747,14 +747,16 @@ a {
 }
 
 .limiar__continuation,
-.limiar__craft {
+.limiar__craft,
+.limiar__path {
   display: flex;
   flex-direction: column;
   gap: clamp(2.75rem, 11vh, 4.5rem);
   width: 100%;
 }
 
-.limiar__craft {
+.limiar__craft,
+.limiar__path {
   margin-top: clamp(5rem, 20vh, 8rem);
 }
 

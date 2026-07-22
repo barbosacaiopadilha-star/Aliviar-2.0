@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "re
 
 import { buildCraftLines } from "./craft-model";
 import { buildFilmContinuationLines } from "./continuation-model";
-import {
   FILM_ASSIMILATION_MS,
   FILM_OPENING_MS,
 } from "./film-model";
@@ -28,6 +27,7 @@ type LimiarExperienceProps = {
 
 const FILM_CONTINUATION_LINES = buildFilmContinuationLines();
 const CRAFT_LINES = buildCraftLines();
+const PATH_LINES = buildPathLines();
 
 export function LimiarExperience({ filmSrc }: LimiarExperienceProps) {
   const [phase, setPhase] = useState<LimiarPhase>("threshold");
@@ -125,6 +125,11 @@ export function LimiarExperience({ filmSrc }: LimiarExperienceProps) {
             lines={CRAFT_LINES}
             className="limiar__craft"
             label="O ofício"
+          />
+          <LimiarRevealSection
+            lines={PATH_LINES}
+            className="limiar__path"
+            label="O caminho"
           />
         </main>
       )}
