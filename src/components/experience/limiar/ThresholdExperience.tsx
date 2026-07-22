@@ -6,15 +6,15 @@ export function ThresholdExperience() {
     <div className="limiar">
       <LimiarAtmosphere />
       <main className="limiar__main">
-        <p className="limiar__line">{THRESHOLD_FIRST_LINE}</p>
-
-        <div className="limiar__presence" aria-hidden="true">
-          <span className="limiar__presence-halo" />
-          <span className="limiar__presence-pulse" />
+        <div className="limiar__lamp" aria-hidden="true">
+          <span className="limiar__lamp-halo" />
+          <span className="limiar__lamp-core" />
         </div>
 
+        <p className="limiar__line">{THRESHOLD_FIRST_LINE}</p>
+
         <p className="sr-only">
-          Um vídeo de boas-vindas aguarda ser iniciado. Não há pressa.
+          Um lugar acolhedor permanece iluminado. Não há pressa.
         </p>
       </main>
     </div>
