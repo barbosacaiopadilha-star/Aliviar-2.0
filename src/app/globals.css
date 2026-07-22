@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 :root {
   --paper: #faf6ef;
@@ -221,7 +221,7 @@ a {
   min-width: 0;
 }
 
-/* ——— Capítulo 1: Primeiro contato ——— */
+/* â€”â€”â€” CapÃ­tulo 1: Primeiro contato â€”â€”â€” */
 
 .chapter-one {
   position: relative;
@@ -430,9 +430,24 @@ a {
   }
 }
 
-/* ——— Limiar: Capítulo Zero ——— */
+/* â€”â€”â€” Limiar: Palco â€”â€”â€” */
 
 .limiar {
+  --stage-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --stage-duration-arrival: 2800ms;
+  --stage-duration-reveal: 1350ms;
+  --stage-duration-cross: 1800ms;
+  --stage-duration-release: 2200ms;
+  --stage-duration-breathe: 8s;
+  --stage-opacity-atmosphere-film: 0.28;
+  --stage-opacity-room-min: 0.24;
+  --stage-opacity-room-max: 0.3;
+  --stage-opacity-lamp-min: 0.7;
+  --stage-opacity-lamp-max: 0.92;
+  --stage-opacity-presence-leak: 0.18;
+  --stage-opacity-presence-floor: 0.12;
+  --stage-shift-reveal: 0.2rem;
+
   position: relative;
   display: flex;
   min-height: 100dvh;
@@ -440,7 +455,7 @@ a {
   overflow-x: hidden;
   background: var(--paper);
   opacity: 0;
-  animation: limiar-arrival 2.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: stage-arrival var(--stage-duration-arrival) var(--stage-ease) forwards;
 }
 
 .limiar__atmosphere {
@@ -458,7 +473,7 @@ a {
   background: radial-gradient(
     ellipse 80% 70% at 50% 42%,
     transparent 0%,
-    rgba(43, 36, 32, 0.04) 100%
+    rgba(43, 36, 32, 0.035) 100%
   );
 }
 
@@ -474,11 +489,9 @@ a {
   width: min(72vw, 28rem);
   height: min(72vw, 28rem);
   background: var(--coral-soft);
-  opacity: 0.28;
+  opacity: var(--stage-opacity-room-min);
   transform: translateX(-50%);
-  animation:
-    limiar-room-breathe 8.5s ease-in-out infinite,
-    limiar-room-alive 17s ease-in-out 7.2s infinite;
+  animation: stage-room-breathe var(--stage-duration-breathe) ease-in-out infinite;
 }
 
 .limiar__main {
@@ -504,9 +517,7 @@ a {
   min-height: clamp(6rem, 22vh, 10rem);
   width: 100%;
   opacity: 0;
-  animation:
-    limiar-lamp-in 2.2s cubic-bezier(0.22, 1, 0.36, 1) 1.9s forwards,
-    limiar-lamp-drift 19s ease-in-out 7.2s infinite;
+  animation: stage-lamp-in 2200ms var(--stage-ease) 1900ms forwards;
 }
 
 .limiar__lamp-halo {
@@ -516,30 +527,24 @@ a {
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(244, 223, 214, 0.58) 0%,
-    rgba(250, 246, 239, 0.06) 58%,
+    rgba(244, 223, 214, 0.52) 0%,
+    rgba(250, 246, 239, 0.05) 58%,
     transparent 72%
   );
-  animation:
-    limiar-lamp-breathe 7.5s ease-in-out 2.4s infinite,
-    limiar-lamp-alive 13s ease-in-out 7.2s infinite;
+  animation: stage-lamp-breathe var(--stage-duration-breathe) ease-in-out 2400ms infinite;
 }
 
 .limiar__lamp-core {
   position: relative;
-  width: 0.38rem;
-  height: 0.38rem;
+  width: 0.36rem;
+  height: 0.36rem;
   border-radius: 999px;
-  background: rgba(216, 102, 74, 0.48);
-  box-shadow:
-    0 0 1rem rgba(244, 223, 214, 0.7),
-    0 0 2.25rem rgba(244, 223, 214, 0.35);
-  animation:
-    limiar-lamp-breathe 7.5s ease-in-out 2.4s infinite,
-    limiar-lamp-alive 13s ease-in-out 7.2s infinite;
+  background: rgba(216, 102, 74, 0.42);
+  box-shadow: 0 0 1.75rem rgba(244, 223, 214, 0.45);
+  animation: stage-lamp-breathe var(--stage-duration-breathe) ease-in-out 2400ms infinite;
 }
 
-.limiar__line {
+.limiar__voice {
   width: 100%;
   margin: 0;
   font-family: var(--font-serif);
@@ -549,9 +554,12 @@ a {
   letter-spacing: 0.01em;
   color: var(--ink-soft);
   text-align: center;
+}
+
+.limiar__line {
   opacity: 0;
-  transform: translateY(0.25rem);
-  animation: limiar-line-in 1.35s cubic-bezier(0.22, 1, 0.36, 1) 4.9s forwards;
+  transform: translateY(var(--stage-shift-reveal));
+  animation: stage-voice-in var(--stage-duration-reveal) var(--stage-ease) 4900ms forwards;
 }
 
 .limiar__presence {
@@ -571,14 +579,12 @@ a {
   border-radius: 50%;
   background: radial-gradient(
     ellipse 100% 80% at 40% 50%,
-    rgba(244, 223, 214, 0.22) 0%,
+    rgba(244, 223, 214, var(--stage-opacity-presence-leak)) 0%,
     rgba(250, 246, 239, 0) 72%
   );
   opacity: 0;
   filter: blur(6px);
-  animation:
-    limiar-presence-leak-in 3.8s cubic-bezier(0.22, 1, 0.36, 1) 7.2s forwards,
-    limiar-presence-leak-drift 16s ease-in-out 11s infinite;
+  animation: stage-presence-in 3800ms var(--stage-ease) 7200ms forwards;
 }
 
 .limiar__presence-floor {
@@ -589,136 +595,59 @@ a {
   height: 28%;
   background: linear-gradient(
     to top,
-    rgba(244, 223, 214, 0.14) 0%,
+    rgba(244, 223, 214, var(--stage-opacity-presence-floor)) 0%,
     rgba(250, 246, 239, 0) 78%
   );
   opacity: 0;
-  animation: limiar-presence-floor-in 4.5s cubic-bezier(0.22, 1, 0.36, 1) 7.8s forwards;
+  animation: stage-presence-in 4500ms var(--stage-ease) 7800ms forwards;
 }
 
-@keyframes limiar-arrival {
+@keyframes stage-arrival {
   to {
     opacity: 1;
   }
 }
 
-@keyframes limiar-line-in {
+@keyframes stage-voice-in {
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-@keyframes limiar-lamp-in {
+@keyframes stage-lamp-in {
   to {
     opacity: 1;
   }
 }
 
-@keyframes limiar-room-breathe {
+@keyframes stage-room-breathe {
   0%,
   100% {
-    opacity: 0.24;
+    opacity: var(--stage-opacity-room-min);
     transform: translateX(-50%) scale(1);
   }
 
   50% {
-    opacity: 0.32;
-    transform: translateX(-50%) scale(1.03);
+    opacity: var(--stage-opacity-room-max);
+    transform: translateX(-50%) scale(1.02);
   }
 }
 
-@keyframes limiar-lamp-breathe {
+@keyframes stage-lamp-breathe {
   0%,
   100% {
-    opacity: 0.72;
-    transform: scale(0.97);
+    opacity: var(--stage-opacity-lamp-min);
+    transform: scale(0.98);
   }
 
   50% {
-    opacity: 1;
+    opacity: var(--stage-opacity-lamp-max);
     transform: scale(1);
   }
 }
 
-@keyframes limiar-lamp-alive {
-  0%,
-  100% {
-    opacity: 0.74;
-    transform: scale(0.97);
-  }
-
-  28% {
-    opacity: 0.9;
-    transform: scale(0.99);
-  }
-
-  54% {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  71% {
-    opacity: 0.84;
-    transform: scale(0.985);
-  }
-}
-
-@keyframes limiar-lamp-drift {
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-
-  40% {
-    transform: translate(0.6px, -0.4px);
-  }
-
-  68% {
-    transform: translate(-0.35px, 0.25px);
-  }
-}
-
-@keyframes limiar-room-alive {
-  0%,
-  100% {
-    transform: translateX(-50%) scale(1);
-  }
-
-  45% {
-    transform: translateX(calc(-50% + 0.5%)) scale(1.012);
-  }
-
-  72% {
-    transform: translateX(calc(-50% - 0.35%)) scale(1.006);
-  }
-}
-
-@keyframes limiar-presence-leak-in {
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes limiar-presence-leak-drift {
-  0%,
-  100% {
-    transform: translate(0, 0);
-    opacity: 0.85;
-  }
-
-  38% {
-    transform: translate(0.75rem, -0.2rem);
-    opacity: 1;
-  }
-
-  66% {
-    transform: translate(0.35rem, 0.15rem);
-    opacity: 0.9;
-  }
-}
-
-@keyframes limiar-presence-floor-in {
+@keyframes stage-presence-in {
   to {
     opacity: 1;
   }
@@ -730,11 +659,8 @@ a {
 }
 
 .limiar__lamp--awaiting:focus-visible {
-  outline: none;
-}
-
-.limiar__lamp--awaiting:focus-visible .limiar__lamp-halo {
-  box-shadow: 0 0 0 1px rgba(216, 102, 74, 0.18);
+  outline: 1px solid rgba(216, 102, 74, 0.15);
+  outline-offset: 1.25rem;
 }
 
 .limiar--opening .limiar__main,
@@ -742,19 +668,19 @@ a {
 .limiar--assimilation .limiar__main {
   opacity: 0;
   pointer-events: none;
-  transition: opacity 1.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity var(--stage-duration-cross) var(--stage-ease);
 }
 
 .limiar--opening .limiar__atmosphere,
 .limiar--film .limiar__atmosphere {
-  opacity: 0.35;
-  transition: opacity 1.8s cubic-bezier(0.22, 1, 0.36, 1);
+  opacity: var(--stage-opacity-atmosphere-film);
+  transition: opacity var(--stage-duration-cross) var(--stage-ease);
 }
 
 .limiar--assimilation .limiar__atmosphere,
 .limiar--after .limiar__atmosphere {
   opacity: 1;
-  transition: opacity 2.2s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity var(--stage-duration-release) var(--stage-ease);
 }
 
 .limiar-film {
@@ -767,7 +693,7 @@ a {
   background: var(--paper);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 1.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity var(--stage-duration-cross) var(--stage-ease);
 }
 
 .limiar-film--visible {
@@ -778,7 +704,7 @@ a {
 .limiar--assimilation .limiar-film--visible {
   opacity: 0;
   pointer-events: none;
-  transition: opacity 2.2s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity var(--stage-duration-release) var(--stage-ease);
 }
 
 .limiar-film__image {
@@ -796,23 +722,10 @@ a {
   display: none !important;
 }
 
-.limiar__main--after {
-  animation: limiar-arrival 2.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
 .limiar__consolidation {
-  width: 100%;
-  margin: 0;
-  font-family: var(--font-serif);
-  font-size: clamp(1.125rem, 3.6vw, 1.375rem);
-  font-weight: 450;
-  line-height: 1.7;
-  letter-spacing: 0.01em;
-  color: var(--ink-soft);
-  text-align: center;
   opacity: 0;
-  transform: translateY(0.2rem);
-  animation: limiar-line-in 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.6s forwards;
+  transform: translateY(var(--stage-shift-reveal));
+  animation: stage-voice-in 1400ms var(--stage-ease) 600ms forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -831,7 +744,8 @@ a {
   }
 
   .limiar__line,
-  .limiar__lamp {
+  .limiar__lamp,
+  .limiar__consolidation {
     animation: none;
     opacity: 1;
     transform: none;
@@ -852,15 +766,9 @@ a {
   .limiar--after .limiar__atmosphere {
     transition: none;
   }
-
-  .limiar__consolidation {
-    animation: none;
-    opacity: 1;
-    transform: none;
-  }
 }
 
-/* ——— Capítulo 2: Primeira conversa ——— */
+/* â€”â€”â€” CapÃ­tulo 2: Primeira conversa â€”â€”â€” */
 
 .conversation {
   position: relative;

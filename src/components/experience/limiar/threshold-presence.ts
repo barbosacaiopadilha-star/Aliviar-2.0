@@ -1,3 +1,5 @@
+import { STAGE_MS } from "./stage-tokens";
+
 /**
  * Fase de presença — após a luz e a primeira frase.
  * Presença transmitida só por ambiente; nenhum texto visível.
@@ -16,7 +18,7 @@ export const THRESHOLD_PRESENCE_FORBIDDEN_PHRASES = [
 
 /** Ritmo da fase de presença (ms) — alinhado às animações CSS. */
 export const THRESHOLD_PRESENCE_TIMING = {
-  lineRevealMs: 4900,
-  lineDurationMs: 1350,
-  presenceBeginMs: 7200,
+  lineRevealMs: STAGE_MS.lineDelay,
+  lineDurationMs: STAGE_MS.lineIn,
+  presenceBeginMs: STAGE_MS.presenceBegin,
 } as const;

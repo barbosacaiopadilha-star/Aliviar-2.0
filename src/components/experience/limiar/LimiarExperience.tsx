@@ -96,7 +96,7 @@ export function LimiarExperience({ filmSrc }: LimiarExperienceProps) {
             <span className="limiar__lamp-core" />
           </div>
 
-          <p className="limiar__line">{THRESHOLD_FIRST_LINE}</p>
+          <p className="limiar__voice limiar__line">{THRESHOLD_FIRST_LINE}</p>
 
           <p className="sr-only">O ambiente permanece quieto. Não há pressa.</p>
         </main>
@@ -110,8 +110,8 @@ export function LimiarExperience({ filmSrc }: LimiarExperienceProps) {
       />
 
       {phase === "after" && (
-        <main className="limiar__main limiar__main--after">
-          <p className="limiar__consolidation">{FILM_CONSOLIDATION_LINE}</p>
+        <main className="limiar__main">
+          <p className="limiar__voice limiar__consolidation">{FILM_CONSOLIDATION_LINE}</p>
         </main>
       )}
     </div>
