@@ -890,6 +890,61 @@ a {
   color: var(--ink);
 }
 
+.curation-report__continuity-link {
+  margin-top: 2.5rem;
+}
+
+.curation-report__continuity-anchor {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--line);
+}
+
+.curation-report__continuity-anchor:hover {
+  color: var(--ink);
+  text-decoration-color: var(--coral-soft);
+}
+
+.journey-continuity__letter {
+  width: 100%;
+  padding: 0.5rem 0 1rem;
+}
+
+.journey-continuity__line {
+  margin-top: 1.4rem;
+  font-size: 1.0625rem;
+  line-height: 1.85;
+  color: var(--ink-soft);
+}
+
+.journey-continuity__line--emphasis {
+  font-family: var(--font-serif);
+  font-size: 1.1875rem;
+  line-height: 1.65;
+  color: var(--ink);
+}
+
+.journey-continuity__gratitude {
+  margin-top: 2.25rem;
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.journey-continuity__rest {
+  margin-top: 2.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  font-style: italic;
+  opacity: 0;
+  animation: chapter-letter-in 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 @keyframes conversation-line-in {
   from {
     opacity: 0;

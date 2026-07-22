@@ -104,6 +104,12 @@ export function CurationReportExperience() {
               Com presença,
               <span className="curation-report__signoff-name">{CURATION_HOST}</span>
             </p>
+
+            <p className="curation-report__continuity-link">
+              <Link href="/continuamos" className="curation-report__continuity-anchor">
+                O que vem depois da leitura
+              </Link>
+            </p>
           </footer>
         </article>
       </main>
