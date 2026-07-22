@@ -379,6 +379,10 @@ a {
   .conversation__line--appear {
     animation: none;
   }
+
+  .conversation__listening {
+    animation: none;
+  }
 }
 
 /* ——— Capítulo 2: Primeira conversa ——— */
@@ -439,22 +443,42 @@ a {
   color: var(--ink);
 }
 
+.conversation__line--patient + .conversation__line--ana {
+  margin-top: 0.5rem;
+}
+
+.conversation__line--listening {
+  min-height: 1.5rem;
+}
+
+.conversation__listening {
+  display: inline-block;
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: var(--ink-soft);
+  opacity: 0.45;
+  animation: conversation-listening 1.4s ease-in-out infinite;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .conversation__line--appear {
   animation: conversation-line-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .conversation__composer {
-  margin-top: 2.5rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--line);
-}
-
-.conversation__prompt {
-  display: block;
-  margin-bottom: 0.75rem;
-  font-size: 0.8125rem;
-  letter-spacing: 0.04em;
-  color: var(--ink-soft);
+  margin-top: 2rem;
 }
 
 .conversation__input,
@@ -540,5 +564,17 @@ a {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes conversation-listening {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(1);
   }
 }
