@@ -8,5 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  return <ThresholdExperience />;
+  const filmSrc = process.env.NEXT_PUBLIC_ALIVIAR_FILM_SRC;
+
+  return <ThresholdExperience filmSrc={filmSrc} />;
 }
