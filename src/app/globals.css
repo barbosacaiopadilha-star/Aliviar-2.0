@@ -675,6 +675,29 @@ a {
   animation: chapter-letter-in 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
+.curation-time__presence {
+  width: 100%;
+  padding: 0.5rem 0 1rem;
+}
+
+.curation-time__line {
+  margin-top: 1.35rem;
+  font-size: 1.0625rem;
+  line-height: 1.85;
+  color: var(--ink-soft);
+}
+
+.curation-time__line--emphasis {
+  font-family: var(--font-serif);
+  font-size: 1.1875rem;
+  line-height: 1.65;
+  color: var(--ink);
+}
+
+.curation-time__line--emphasis + .curation-time__line {
+  margin-top: 1.75rem;
+}
+
 @keyframes conversation-line-in {
   from {
     opacity: 0;

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { CurationPresenceExperience } from "@/components/experience/chapter-four/CurationPresenceExperience";
+import { CurationJourneyExperience } from "@/components/experience/chapter-five/CurationJourneyExperience";
 
 export const metadata: Metadata = {
   title: "Curadoria em andamento — Aliviar",
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function CuradoriaPage() {
-  return <CurationPresenceExperience />;
+  return <CurationJourneyExperience />;
 }
