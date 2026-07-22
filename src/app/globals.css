@@ -476,7 +476,9 @@ a {
   background: var(--coral-soft);
   opacity: 0.28;
   transform: translateX(-50%);
-  animation: limiar-room-breathe 8.5s ease-in-out infinite;
+  animation:
+    limiar-room-breathe 8.5s ease-in-out infinite,
+    limiar-room-alive 17s ease-in-out 7.2s infinite;
 }
 
 .limiar__main {
@@ -502,7 +504,9 @@ a {
   min-height: clamp(6rem, 22vh, 10rem);
   width: 100%;
   opacity: 0;
-  animation: limiar-lamp-in 2.2s cubic-bezier(0.22, 1, 0.36, 1) 1.9s forwards;
+  animation:
+    limiar-lamp-in 2.2s cubic-bezier(0.22, 1, 0.36, 1) 1.9s forwards,
+    limiar-lamp-drift 19s ease-in-out 7.2s infinite;
 }
 
 .limiar__lamp-halo {
@@ -512,25 +516,27 @@ a {
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(244, 223, 214, 0.62) 0%,
-    rgba(250, 246, 239, 0.08) 58%,
+    rgba(244, 223, 214, 0.58) 0%,
+    rgba(250, 246, 239, 0.06) 58%,
     transparent 72%
   );
-  animation: limiar-lamp-breathe 7.5s ease-in-out infinite;
-  animation-delay: 2.4s;
+  animation:
+    limiar-lamp-breathe 7.5s ease-in-out 2.4s infinite,
+    limiar-lamp-alive 13s ease-in-out 7.2s infinite;
 }
 
 .limiar__lamp-core {
   position: relative;
-  width: 0.42rem;
-  height: 0.42rem;
+  width: 0.38rem;
+  height: 0.38rem;
   border-radius: 999px;
-  background: rgba(216, 102, 74, 0.55);
+  background: rgba(216, 102, 74, 0.48);
   box-shadow:
-    0 0 1.25rem rgba(244, 223, 214, 0.85),
-    0 0 2.75rem rgba(244, 223, 214, 0.45);
-  animation: limiar-lamp-breathe 7.5s ease-in-out infinite;
-  animation-delay: 2.4s;
+    0 0 1rem rgba(244, 223, 214, 0.7),
+    0 0 2.25rem rgba(244, 223, 214, 0.35);
+  animation:
+    limiar-lamp-breathe 7.5s ease-in-out 2.4s infinite,
+    limiar-lamp-alive 13s ease-in-out 7.2s infinite;
 }
 
 .limiar__line {
@@ -546,6 +552,48 @@ a {
   opacity: 0;
   transform: translateY(0.25rem);
   animation: limiar-line-in 1.35s cubic-bezier(0.22, 1, 0.36, 1) 4.9s forwards;
+}
+
+.limiar__presence {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.limiar__presence-leak {
+  position: absolute;
+  bottom: 22%;
+  left: 8%;
+  width: min(36vw, 9.5rem);
+  height: min(14vw, 3.5rem);
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse 100% 80% at 40% 50%,
+    rgba(244, 223, 214, 0.22) 0%,
+    rgba(250, 246, 239, 0) 72%
+  );
+  opacity: 0;
+  filter: blur(6px);
+  animation:
+    limiar-presence-leak-in 3.8s cubic-bezier(0.22, 1, 0.36, 1) 7.2s forwards,
+    limiar-presence-leak-drift 16s ease-in-out 11s infinite;
+}
+
+.limiar__presence-floor {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 28%;
+  background: linear-gradient(
+    to top,
+    rgba(244, 223, 214, 0.14) 0%,
+    rgba(250, 246, 239, 0) 78%
+  );
+  opacity: 0;
+  animation: limiar-presence-floor-in 4.5s cubic-bezier(0.22, 1, 0.36, 1) 7.8s forwards;
 }
 
 @keyframes limiar-arrival {
@@ -593,6 +641,89 @@ a {
   }
 }
 
+@keyframes limiar-lamp-alive {
+  0%,
+  100% {
+    opacity: 0.74;
+    transform: scale(0.97);
+  }
+
+  28% {
+    opacity: 0.9;
+    transform: scale(0.99);
+  }
+
+  54% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  71% {
+    opacity: 0.84;
+    transform: scale(0.985);
+  }
+}
+
+@keyframes limiar-lamp-drift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  40% {
+    transform: translate(0.6px, -0.4px);
+  }
+
+  68% {
+    transform: translate(-0.35px, 0.25px);
+  }
+}
+
+@keyframes limiar-room-alive {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(1);
+  }
+
+  45% {
+    transform: translateX(calc(-50% + 0.5%)) scale(1.012);
+  }
+
+  72% {
+    transform: translateX(calc(-50% - 0.35%)) scale(1.006);
+  }
+}
+
+@keyframes limiar-presence-leak-in {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes limiar-presence-leak-drift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+    opacity: 0.85;
+  }
+
+  38% {
+    transform: translate(0.75rem, -0.2rem);
+    opacity: 1;
+  }
+
+  66% {
+    transform: translate(0.35rem, 0.15rem);
+    opacity: 0.9;
+  }
+}
+
+@keyframes limiar-presence-floor-in {
+  to {
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .limiar {
     animation: none;
@@ -601,7 +732,10 @@ a {
 
   .limiar__glow,
   .limiar__lamp-halo,
-  .limiar__lamp-core {
+  .limiar__lamp-core,
+  .limiar__lamp,
+  .limiar__presence-leak,
+  .limiar__presence-floor {
     animation: none;
   }
 
@@ -610,6 +744,11 @@ a {
     animation: none;
     opacity: 1;
     transform: none;
+  }
+
+  .limiar__presence-leak,
+  .limiar__presence-floor {
+    opacity: 1;
   }
 }
 
