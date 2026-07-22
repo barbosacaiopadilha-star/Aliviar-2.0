@@ -13,8 +13,11 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Aliviar OS",
-  description: "Plataforma interna da Aliviar Curadoria Médica",
+  title: {
+    default: "Aliviar — Curadoria Médica",
+    template: "%s · Aliviar",
+  },
+  description: "Você não precisa navegar a saúde sozinho.",
 };
 
 export default function RootLayout({

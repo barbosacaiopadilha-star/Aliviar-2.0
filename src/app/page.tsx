@@ -1,7 +1,12 @@
-import { redirect } from "next/navigation";
-import { getSessionUser } from "@/lib/auth/staff";
+import type { Metadata } from "next";
 
-export default async function HomePage() {
-  const user = await getSessionUser();
-  redirect(user ? "/workspace" : "/login");
+import { ChapterOneExperience } from "@/components/experience/chapter-one/ChapterOneExperience";
+
+export const metadata: Metadata = {
+  title: "Aliviar — Curadoria Médica",
+  description: "Você não precisa navegar a saúde sozinho.",
+};
+
+export default function HomePage() {
+  return <ChapterOneExperience />;
 }
