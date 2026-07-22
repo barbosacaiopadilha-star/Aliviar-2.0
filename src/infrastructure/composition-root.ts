@@ -1,6 +1,7 @@
 import { RegistrarCasoDeclarado } from "@/application/caso/registrar-caso-declarado";
 import { ExecutarAnaliseInicial } from "@/application/analise/executar-analise-inicial";
-import { AbrirSessaoDeCuradoria } from "@/application/curadoria/abrir-sessao-de-curadoria";import { ListarFilaCasosCurador, ObterCasoDeCuradoria } from "@/application/curador/curador-casos";
+import { AbrirSessaoDeCuradoria } from "@/application/curadoria/abrir-sessao-de-curadoria";
+import { ListarFilaCasosCurador, ObterCasoDeCuradoria } from "@/application/curador/curador-casos";
 import {
   AbrirSessaoCuradoriaComWorkspace,
   AprovarEntregaCurador,
@@ -17,6 +18,10 @@ import { AvancarParaEscolhaPaciente } from "@/application/jornada/avancar-para-e
 import { ObterJornadaDoPaciente } from "@/application/jornada/obter-jornada-do-paciente";
 import { ObterJornadaDoPacienteAutenticado } from "@/application/jornada/obter-jornada-do-paciente-autenticado";
 import { RegistrarEscolhaPaciente } from "@/application/jornada/registrar-escolha-paciente";
+import { ListarFilasOperacionais } from "@/application/workflow/listar-filas-operacionais";
+import { ObterPainelOperacional } from "@/application/workflow/obter-painel-operacional";
+import { ObterWorkflowCaso } from "@/application/workflow/obter-workflow-caso";
+import { ExecutarAtribuicaoOperacional } from "@/application/workflow/executar-atribuicao-operacional";
 import { SupabaseAuthContextAdapter } from "@/infrastructure/auth/supabase-auth-context-adapter";
 import { SupabaseCasoRepository } from "@/infrastructure/caso/supabase-caso-repository";
 import { SupabaseAnaliseRepository } from "@/infrastructure/analise/supabase-analise-repository";
@@ -53,6 +58,10 @@ export const application = {
   registrarComentarioOperacional: new RegistrarComentarioOperacional(),
   aprovarEntregaCurador: new AprovarEntregaCurador(),
   publicarEntregaCurador: new PublicarEntregaCurador(auth, entregaRepository),
+  listarFilasOperacionais: new ListarFilasOperacionais(),
+  obterPainelOperacional: new ObterPainelOperacional(),
+  obterWorkflowCaso: new ObterWorkflowCaso(),
+  executarAtribuicaoOperacional: new ExecutarAtribuicaoOperacional(),
   jornadaQuery,
 };
 
