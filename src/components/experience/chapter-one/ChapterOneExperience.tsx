@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { StoryReveal } from "./StoryReveal";
+import { WelcomeLetter } from "./WelcomeLetter";
 
 export function ChapterOneExperience() {
   return (
@@ -12,26 +13,8 @@ export function ChapterOneExperience() {
         <div className="chapter-one__glow chapter-one__glow--sage" />
       </div>
 
-      <header className="chapter-one__header">
-        <p className="chapter-one__wordmark">Aliviar</p>
-        <p className="chapter-one__wordmark-sub">Curadoria Médica</p>
-      </header>
-
       <main className="chapter-one__main">
-        <section className="chapter-one__opening" aria-label="Abertura">
-          <h1 className="chapter-one__hero">
-            <span className="chapter-one__hero-line chapter-one__hero-line--1">
-              Você não precisa
-            </span>
-            <span className="chapter-one__hero-line chapter-one__hero-line--2">
-              navegar a saúde
-            </span>
-            <span className="chapter-one__hero-line chapter-one__hero-line--3">sozinho.</span>
-          </h1>
-          <p className="chapter-one__hero-note chapter-one__hero-note--enter">
-            Respire. Você chegou a um lugar diferente.
-          </p>
-        </section>
+        <WelcomeLetter />
 
         <div className="chapter-one__scroll-hint chapter-one__scroll-hint--enter" aria-hidden="true">
           <span />

@@ -180,29 +180,6 @@ a {
   opacity: 0.35;
 }
 
-.chapter-one__header {
-  position: relative;
-  z-index: 1;
-  padding: 2rem 1.5rem 0;
-  text-align: center;
-}
-
-.chapter-one__wordmark {
-  font-family: var(--font-serif);
-  font-size: 1.125rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--ink);
-}
-
-.chapter-one__wordmark-sub {
-  margin-top: 0.25rem;
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-
 .chapter-one__main {
   position: relative;
   z-index: 1;
@@ -211,54 +188,82 @@ a {
   padding: 0 1.5rem 6rem;
 }
 
-.chapter-one__opening {
+.chapter-one__letter {
   display: flex;
-  min-height: 72dvh;
+  min-height: 88dvh;
   flex-direction: column;
   justify-content: center;
-  padding: 2rem 0 3rem;
+  padding: 3.5rem 0 2.5rem;
 }
 
-.chapter-one__hero {
+.chapter-one__letter-salutation {
   font-family: var(--font-serif);
-  font-size: clamp(2.25rem, 7vw, 3.5rem);
+  font-size: 1.25rem;
   font-weight: 500;
-  line-height: 1.12;
-  letter-spacing: -0.02em;
   color: var(--ink);
 }
 
-.chapter-one__hero-line {
-  display: block;
-  opacity: 0;
-  transform: translateY(1.25rem);
-  animation: chapter-hero-in 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-.chapter-one__hero-line--1 {
-  animation-delay: 0.2s;
-}
-
-.chapter-one__hero-line--2 {
-  animation-delay: 0.45s;
-}
-
-.chapter-one__hero-line--3 {
-  animation-delay: 0.7s;
-  color: var(--coral);
-}
-
-.chapter-one__hero-note {
-  margin-top: 2rem;
-  max-width: 20rem;
-  font-size: 1.0625rem;
-  line-height: 1.65;
+.chapter-one__letter-body {
+  margin-top: 1.75rem;
+  font-size: 1.125rem;
+  line-height: 1.8;
   color: var(--ink-soft);
 }
 
-.chapter-one__hero-note--enter {
+.chapter-one__letter-body em {
+  font-style: normal;
+  color: var(--ink);
+}
+
+.chapter-one__letter-signoff {
+  margin-top: 2.5rem;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.chapter-one__letter-signature {
+  display: block;
+  margin-top: 0.5rem;
+  font-family: var(--font-serif);
+  font-size: 1.375rem;
+  font-weight: 500;
+  font-style: italic;
+  color: var(--ink);
+}
+
+.chapter-one__letter-line {
   opacity: 0;
-  animation: chapter-fade-up 1s ease 1.15s forwards;
+  transform: translateY(0.75rem);
+  animation: chapter-letter-in 0.95s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.chapter-one__letter-line--1 {
+  animation-delay: 0.35s;
+}
+
+.chapter-one__letter-line--2 {
+  animation-delay: 0.7s;
+}
+
+.chapter-one__letter-line--3 {
+  animation-delay: 1.05s;
+}
+
+.chapter-one__letter-line--4 {
+  animation-delay: 1.4s;
+}
+
+.chapter-one__letter-line--5 {
+  animation-delay: 1.75s;
+}
+
+.chapter-one__letter-line--6 {
+  animation-delay: 2.1s;
+}
+
+.chapter-one__letter-line--7 {
+  animation-delay: 2.45s;
 }
 
 .chapter-one__scroll-hint {
@@ -269,7 +274,7 @@ a {
 }
 
 .chapter-one__scroll-hint--enter {
-  animation: chapter-fade-in 1.2s ease 1.8s forwards;
+  animation: chapter-fade-in 1.2s ease 3.1s forwards;
 }
 
 .chapter-one__scroll-hint span {
@@ -277,7 +282,7 @@ a {
   width: 1px;
   height: 3rem;
   background: linear-gradient(to bottom, transparent, var(--line), transparent);
-  animation: chapter-scroll-pulse 2.4s ease-in-out 2.2s infinite;
+  animation: chapter-scroll-pulse 2.4s ease-in-out 3.5s infinite;
 }
 
 .chapter-one__beats {
@@ -452,14 +457,7 @@ a {
   opacity: 0.7;
 }
 
-@keyframes chapter-hero-in {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes chapter-fade-up {
+@keyframes chapter-letter-in {
   to {
     opacity: 1;
     transform: translateY(0);
@@ -485,8 +483,7 @@ a {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .chapter-one__hero-line,
-  .chapter-one__hero-note--enter,
+  .chapter-one__letter-line,
   .chapter-one__scroll-hint--enter {
     animation: none;
     opacity: 1;
