@@ -375,4 +375,170 @@ a {
     transform: none;
     box-shadow: none;
   }
+
+  .conversation__line--appear {
+    animation: none;
+  }
+}
+
+/* ——— Capítulo 2: Primeira conversa ——— */
+
+.conversation {
+  position: relative;
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  overflow-x: hidden;
+  background: var(--paper);
+}
+
+.conversation__main {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 34rem;
+  padding: 2.5rem 1.5rem 3rem;
+}
+
+.conversation__thread {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.conversation__opening {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.conversation__line {
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  color: var(--ink-soft);
+}
+
+.conversation__line--ana {
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  color: var(--ink);
+}
+
+.conversation__line--soft {
+  font-size: 1rem;
+  color: var(--ink-soft);
+}
+
+.conversation__line--patient {
+  margin-left: auto;
+  max-width: 88%;
+  padding-left: 1.5rem;
+  text-align: right;
+  color: var(--ink);
+}
+
+.conversation__line--appear {
+  animation: conversation-line-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.conversation__composer {
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--line);
+}
+
+.conversation__prompt {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+
+.conversation__input,
+.conversation__textarea {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  padding: 0.5rem 0 0.75rem;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: var(--ink);
+  resize: vertical;
+}
+
+.conversation__input::placeholder,
+.conversation__textarea::placeholder {
+  color: var(--ink-soft);
+  opacity: 0.65;
+}
+
+.conversation__input:focus,
+.conversation__textarea:focus {
+  outline: none;
+  border-bottom-color: var(--coral);
+}
+
+.conversation__send {
+  margin-top: 1.5rem;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--coral);
+  cursor: pointer;
+}
+
+.conversation__send:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.conversation__send:not(:disabled):hover {
+  opacity: 0.85;
+}
+
+.conversation__composer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.conversation__skip {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.conversation__skip:hover {
+  color: var(--ink);
+}
+
+.conversation__closing-note {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+@keyframes conversation-line-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.4rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

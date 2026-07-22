@@ -1,4 +1,4 @@
-import { CHAPTER_ONE_CONTACT_EMAIL } from "./constants";
+import Link from "next/link";
 
 export function WelcomeLetter() {
   return (
@@ -33,13 +33,9 @@ export function WelcomeLetter() {
       </p>
 
       <p className="chapter-one__letter-cta chapter-one__letter-line chapter-one__letter-line--8">
-        <a
-          id="conversa"
-          href={`mailto:${CHAPTER_ONE_CONTACT_EMAIL}`}
-          className="chapter-one__cta"
-        >
+        <Link id="conversa" href="/conversa" className="chapter-one__cta">
           Iniciar conversa
-        </a>
+        </Link>
       </p>
     </section>
   );
