@@ -3,6 +3,8 @@ export const PROTECTED_ROUTE_PREFIXES = [
   "/patients",
   "/journeys",
   "/curador",
+  "/operacao",
+  "/admin",
 ] as const;
 
 export const PATIENT_PORTAL_PREFIX = "/portal";

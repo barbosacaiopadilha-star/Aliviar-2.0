@@ -12,8 +12,12 @@ import {
 
 const MS_POR_HORA = 60 * 60 * 1000;
 
-export function obterPoliticaSla(fila: FilaOperacionalCodigo): PoliticaSlaFila {
-  const politica = POLITICAS_SLA.find((p) => p.fila === fila);
+export function obterPoliticaSla(
+  fila: FilaOperacionalCodigo,
+  politicas?: readonly PoliticaSlaFila[],
+): PoliticaSlaFila {
+  const source = politicas ?? POLITICAS_SLA;
+  const politica = source.find((p) => p.fila === fila);
   if (!politica) {
     throw new Error(`Política SLA não definida para fila ${fila}`);
   }
@@ -38,9 +42,10 @@ export function derivarSlaEtapa(params: {
   jornadaId: string;
   view: JornadaDoPacienteView;
   referenciaAgora?: Date;
+  politicas?: readonly PoliticaSlaFila[];
 }): SlaEtapaOperacional {
   const fila = FILA_POR_ETAPA[params.view.etapa_atual];
-  const politica = obterPoliticaSla(fila);
+  const politica = obterPoliticaSla(fila, params.politicas);
   const agora = params.referenciaAgora ?? new Date();
   const inicio = new Date(params.view.atualizada_em);
   const horasDecorridas = (agora.getTime() - inicio.getTime()) / MS_POR_HORA;

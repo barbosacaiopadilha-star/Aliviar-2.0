@@ -17,6 +17,9 @@ const AUDITABLE_EVENTS = new Set<OperationalAuditEventType>([
   "APROVACAO",
   "PUBLICACAO",
   "ESCOLHA_PACIENTE",
+  "CONFIG_ALTERADA",
+  "USUARIO_ALTERADO",
+  "FEATURE_FLAG_ALTERADA",
 ]);
 
 export interface InstrumentOperationInput {

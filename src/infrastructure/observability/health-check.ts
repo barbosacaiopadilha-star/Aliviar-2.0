@@ -27,6 +27,8 @@ const EXPECTED_TABLES = [
   "curator_case_workspaces",
   "operational_assignment_events",
   "operational_audit_events",
+  "system_configuration",
+  "feature_flags",
 ] as const;
 
 const CRITICAL_ENV = [

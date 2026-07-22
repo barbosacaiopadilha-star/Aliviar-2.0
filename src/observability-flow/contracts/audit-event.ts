@@ -7,7 +7,10 @@ export type OperationalAuditEventType =
   | "OPCOES_REGISTRADAS"
   | "APROVACAO"
   | "PUBLICACAO"
-  | "ESCOLHA_PACIENTE";
+  | "ESCOLHA_PACIENTE"
+  | "CONFIG_ALTERADA"
+  | "USUARIO_ALTERADO"
+  | "FEATURE_FLAG_ALTERADA";
 
 export type AuditActorRole = "STAFF" | "PATIENT" | "SYSTEM";
 

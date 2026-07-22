@@ -1,4 +1,4 @@
-export type UserRole = "ADMIN" | "MANAGER" | "CURATOR" | "OPERATION";
+export type UserRole = "ADMIN" | "MANAGER" | "CURATOR" | "OPERATION" | "AUDITOR";
 export type PatientStatus = "ACTIVE" | "INACTIVE";
 export type JourneyStatus = "NEW" | "ACTIVE" | "WAITING" | "FINISHED" | "CANCELLED";
 export type JourneyPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
@@ -58,6 +58,7 @@ export const USER_ROLE_LABELS: Record<UserRole, string> = {
   MANAGER: "Gestor da Jornada",
   CURATOR: "Curador",
   OPERATION: "Operação",
+  AUDITOR: "Auditor",
 };
 
 export const PATIENT_STATUS_LABELS: Record<PatientStatus, string> = {
