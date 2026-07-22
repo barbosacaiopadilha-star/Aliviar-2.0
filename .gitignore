@@ -41,3 +41,14 @@ next-env.d.ts
 Aliviar Build - Sprint 1.pdf
 SPRINT-1-REPORT.md
 SPRINT-2A-REPORT.md
+
+# local MCP / migration scratch files
+.mcp-m1.json
+.migration1.sql
+
+# local admin password tooling (never commit secrets)
+scripts/local/.env.admin.local
+scripts/local/.tmp-password-update.sql
+scripts/local/.validation-env.json
+scripts/local/validation-report.json
+.env.admin.local
