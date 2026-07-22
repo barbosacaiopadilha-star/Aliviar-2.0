@@ -728,19 +728,37 @@ a {
   animation: stage-voice-in 1400ms var(--stage-ease) 600ms forwards;
 }
 
+.limiar--after {
+  min-height: 100dvh;
+  height: auto;
+}
+
+.limiar__main--landing {
+  gap: 0;
+  justify-content: flex-start;
+  padding-top: clamp(4rem, 18vh, 7rem);
+  padding-bottom: clamp(5rem, 22vh, 9rem);
+}
+
 .limiar__main--continuation {
   gap: 0;
   padding-top: clamp(4rem, 18vh, 7rem);
   padding-bottom: clamp(4.5rem, 20vh, 8rem);
 }
 
-.limiar__continuation {
+.limiar__continuation,
+.limiar__craft {
   display: flex;
   flex-direction: column;
   gap: clamp(2.75rem, 11vh, 4.5rem);
   width: 100%;
 }
 
+.limiar__craft {
+  margin-top: clamp(5rem, 20vh, 8rem);
+}
+
+.limiar__reveal-line,
 .limiar__continuation-line {
   opacity: 0;
   transform: translateY(var(--stage-shift-reveal));
@@ -748,7 +766,9 @@ a {
 }
 
 .limiar__continuation-line--2,
-.limiar__continuation-line--3 {
+.limiar__continuation-line--3,
+.limiar__reveal-line--2,
+.limiar__reveal-line--3 {
   max-width: 28rem;
   margin-inline: auto;
 }
@@ -771,7 +791,8 @@ a {
   .limiar__line,
   .limiar__lamp,
   .limiar__consolidation,
-  .limiar__continuation-line {
+  .limiar__continuation-line,
+  .limiar__reveal-line {
     animation: none;
     opacity: 1;
     transform: none;

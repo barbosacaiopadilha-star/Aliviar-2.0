@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { STAGE_MS } from "./stage-tokens";
+import { LANDING_SECTION_MS, STAGE_MS } from "./stage-tokens";
 
 describe("stage-tokens", () => {
   it("mantém a ordem emocional do palco", () => {
@@ -23,5 +23,10 @@ describe("stage-tokens", () => {
     expect(STAGE_MS.continuationLine3Delay).toBeGreaterThan(
       STAGE_MS.continuationLine2Delay + STAGE_MS.consolidationIn,
     );
+  });
+
+  it("reserva respiro entre blocos da landing", () => {
+    expect(LANDING_SECTION_MS.craft).toBeGreaterThan(STAGE_MS.continuationLine3Delay);
+    expect(LANDING_SECTION_MS.path).toBeGreaterThan(LANDING_SECTION_MS.craft);
   });
 });

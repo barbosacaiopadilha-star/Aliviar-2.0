@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 
+import { buildCraftLines } from "./craft-model";
 import { buildFilmContinuationLines } from "./continuation-model";
 import {
   FILM_ASSIMILATION_MS,
@@ -10,6 +11,7 @@ import {
 import { LimiarAtmosphere } from "./LimiarAtmosphere";
 import { LimiarFilm } from "./LimiarFilm";
 import { LimiarPresence } from "./LimiarPresence";
+import { LimiarRevealSection } from "./LimiarRevealSection";
 import { THRESHOLD_FIRST_LINE } from "./threshold-model";
 import { THRESHOLD_GESTURE_READY_MS } from "./threshold-gesture";
 
@@ -25,6 +27,7 @@ type LimiarExperienceProps = {
 };
 
 const FILM_CONTINUATION_LINES = buildFilmContinuationLines();
+const CRAFT_LINES = buildCraftLines();
 
 export function LimiarExperience({ filmSrc }: LimiarExperienceProps) {
   const [phase, setPhase] = useState<LimiarPhase>("threshold");
@@ -43,8 +46,8 @@ export function LimiarExperience({ filmSrc }: LimiarExperienceProps) {
   }, []);
 
   useEffect(() => {
+    const timers = timersRef.current;
     return () => {
-      const timers = timersRef.current;
       timers.forEach((id) => window.clearTimeout(id));
     };
   }, []);
@@ -112,18 +115,17 @@ export function LimiarExperience({ filmSrc }: LimiarExperienceProps) {
       />
 
       {phase === "after" && (
-        <main className="limiar__main limiar__main--continuation">
-          <section className="limiar__continuation" aria-label="Continuação">
-            {FILM_CONTINUATION_LINES.map((line, index) => (
-              <p
-                key={line.text}
-                className={`limiar__voice limiar__continuation-line limiar__continuation-line--${index + 1}`}
-                style={{ animationDelay: `${line.delayMs}ms` }}
-              >
-                {line.text}
-              </p>
-            ))}
-          </section>
+        <main className="limiar__main limiar__main--landing">
+          <LimiarRevealSection
+            lines={FILM_CONTINUATION_LINES}
+            className="limiar__continuation"
+            label="Continuação"
+          />
+          <LimiarRevealSection
+            lines={CRAFT_LINES}
+            className="limiar__craft"
+            label="O ofício"
+          />
         </main>
       )}
     </div>
