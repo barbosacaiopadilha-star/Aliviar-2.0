@@ -21,7 +21,9 @@ export type OperationalAuditEventType =
   | "FEEDBACK_REGISTRADO"
   | "INCIDENTE_CRIADO"
   | "INCIDENTE_ATUALIZADO"
-  | "INCIDENTE_ENCERRADO";
+  | "INCIDENTE_ENCERRADO"
+  | "ACE_ANALISE_INICIO"
+  | "ACE_ANALISE_FIM";
 
 export type AuditActorRole = "STAFF" | "PATIENT" | "SYSTEM";
 

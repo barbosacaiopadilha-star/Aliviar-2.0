@@ -26,6 +26,7 @@ import { readModelToView, viewToReadModel } from "@/infrastructure/jornada/jorna
 import type { JornadaDoPacienteView } from "@/experience-flow/contracts/jornada-view";
 import { createClient } from "@/lib/supabase/server";
 import { randomUUID } from "crypto";
+import { improvedAceService } from "@/infrastructure/ace/improved-ace-service";
 
 interface WorkspaceRow {
   journey_id: string;
@@ -216,6 +217,8 @@ export class SupabaseCuradorQuery {
       journeyData.patient?.full_name ||
       "Paciente";
 
+    const aceAnalise = await improvedAceService.obterAnaliseParaCurador(jornadaId);
+
     return {
       jornada_id: jornadaId,
       paciente_id: viewRow.patient_id as string,
@@ -240,6 +243,7 @@ export class SupabaseCuradorQuery {
       timeline_jornada: jornadaView.timeline,
       timeline_operacional: timelineOperacional,
       comentarios: workspace.comentarios,
+      ace_analise: aceAnalise,
     };
   }
 

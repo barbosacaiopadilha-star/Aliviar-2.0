@@ -25,6 +25,7 @@ function criarView(
       documentos: [],
       entrega: null,
       escolha_registrada: null,
+      ace_analise: null,
     },
     ...overrides,
   };

@@ -32,10 +32,10 @@ export async function handleExecutarAnaliseInicial(
   const command = toExecutarAnaliseInicialCommand(jornadaId, request);
 
   return instrumentOperation({
-    operationType: "JORNADA_ALTERADA",
+    operationType: "ACE_ANALISE_INICIO",
     jornadaId,
     actorRole: "STAFF",
-    metadata: { acao: "analise_inicial" },
+    metadata: { acao: "ace_melhorado", pipeline: "v2" },
     execute: () =>
       handleApplicationResult(
         toApplicationResult(app.executarAnaliseInicial.execute(command)),

@@ -26,6 +26,7 @@ describe("jornada-client", () => {
         documentos: [],
         entrega: null,
         escolha_registrada: null,
+        ace_analise: null,
       },
     };
 

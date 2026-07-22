@@ -91,6 +91,15 @@ export class SupabasePatientDocumentRepository {
       atualizadaEm: recebidoEm,
     });
 
+    if (projecao.etapaAtual === "HISTORIA") {
+      const { improvedAceService } = await import("@/infrastructure/ace/improved-ace-service");
+      await improvedAceService.executarParaJornada({
+        jornadaId: input.jornadaId,
+        trigger: "UPLOAD",
+        avancarProjecao: true,
+      });
+    }
+
     return { documentoId };
   }
 }

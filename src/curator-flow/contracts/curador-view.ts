@@ -86,6 +86,8 @@ export interface TimelineOperacionalItemView {
   ocorrido_em: string;
 }
 
+import type { AceAnaliseCuradorView } from "@/ace-flow/contracts/ace-analysis";
+
 export interface CasoDeCuradoriaView {
   jornada_id: string;
   paciente_id: string;
@@ -106,6 +108,7 @@ export interface CasoDeCuradoriaView {
   timeline_jornada: TimelineItemView[];
   timeline_operacional: TimelineOperacionalItemView[];
   comentarios: ComentarioOperacionalView[];
+  ace_analise: AceAnaliseCuradorView | null;
 }
 
 export interface CuratorWorkspaceData {

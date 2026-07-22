@@ -102,6 +102,7 @@ describe("Experience layer do curador", () => {
       timeline_jornada: view.timeline,
       timeline_operacional: [],
       comentarios: [],
+      ace_analise: null,
     };
     const model = mapCasoCuradorExperience(caso);
     expect(model.pode_publicar_entrega).toBe(false);

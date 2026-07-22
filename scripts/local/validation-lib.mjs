@@ -35,6 +35,7 @@ export const EXPECTED_TABLES = [
   "curator_journey_feedback",
   "operational_incidents",
   "operational_incident_events",
+  "ace_analysis_runs",
 ];
 
 export const EXPECTED_MIGRATION_MARKERS = [
@@ -49,6 +50,7 @@ export const EXPECTED_MIGRATION_MARKERS = [
   "20260729180000_curator_operational_tools",
   "20260730180000_journey_notifications",
   "20260731180000_operational_quality",
+  "20260732180000_ace_melhorado",
 ];
 
 export const ADMIN_EMAIL = "padilhacaiobarbosa@gmail.com";

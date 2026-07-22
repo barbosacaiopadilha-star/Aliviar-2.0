@@ -18,6 +18,7 @@ function criarEntregaExtensoes() {
     tempo_estimado: null,
     documentos: [],
     escolha_registrada: null,
+    ace_analise: null,
     entrega: {
       entrega_id: "e-1",
       curador_disponivel: true,

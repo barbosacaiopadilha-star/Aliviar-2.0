@@ -31,6 +31,8 @@ const AUDITABLE_EVENTS = new Set<OperationalAuditEventType>([
   "INCIDENTE_CRIADO",
   "INCIDENTE_ATUALIZADO",
   "INCIDENTE_ENCERRADO",
+  "ACE_ANALISE_INICIO",
+  "ACE_ANALISE_FIM",
 ]);
 
 export interface InstrumentOperationInput {

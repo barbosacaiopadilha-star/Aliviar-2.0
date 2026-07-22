@@ -125,9 +125,18 @@ export interface EscolhaResumoView {
   observacao: string | null;
 }
 
+export interface AceAnaliseResumoView {
+  run_id: string;
+  versao: string;
+  status: "CONCLUIDO" | "PARCIAL" | "FALHA";
+  resumo: string;
+  atualizado_em: string;
+}
+
 export interface JornadaViewExtensoes {
   tempo_estimado: string | null;
   documentos: DocumentoItemView[];
   entrega: EntregaDetalheView | null;
   escolha_registrada: EscolhaResumoView | null;
+  ace_analise: AceAnaliseResumoView | null;
 }

@@ -44,7 +44,11 @@ export function mapAceExperienceModel(view: JornadaDoPacienteView): AceExperienc
     jornada_id: view.jornada_id,
     ativo,
     visibilidade,
-    mensagem_contextual: ausente ? null : (view.proximo_passo?.descricao ?? flow.proximo_passo.descricao),
+    mensagem_contextual: ausente
+      ? null
+      : (view.extensoes.ace_analise?.resumo ??
+        view.proximo_passo?.descricao ??
+        flow.proximo_passo.descricao),
     pode_interagir: !ausente && visibilidade === "PRESENTE" && (view.proximo_passo?.acao_disponivel ?? true),
     ultima_atualizacao: view.atualizada_em,
     responsavel: view.responsavel,

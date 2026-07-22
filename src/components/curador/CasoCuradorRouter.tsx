@@ -8,6 +8,7 @@ import { OpcoesCuradorSurface } from "@/components/curador/surfaces/OpcoesCurado
 import { TimelineCuradorSurface } from "@/components/curador/surfaces/TimelineCuradorSurface";
 import { WorkspaceCuradorSurface } from "@/components/curador/surfaces/WorkspaceCuradorSurface";
 import { CuradorCaseTools } from "@/components/curador/tools/CuradorCaseTools";
+import { AceAnaliseCuradorSurface } from "@/components/curador/surfaces/AceAnaliseCuradorSurface";
 import { resolveCuratorCaseSurface } from "@/curator-layer/resolve-curator-experience";
 
 export function CasoCuradorRouter() {
@@ -71,6 +72,10 @@ export function CasoCuradorRouter() {
         <OpcoesCuradorSurface model={model} onSaved={refresh} />
       ) : null}
       {surface === "entrega" ? <EntregaCuradorSurface model={model} onAction={refresh} /> : null}
+
+      {model.caso.ace_analise ? (
+        <AceAnaliseCuradorSurface analise={model.caso.ace_analise} />
+      ) : null}
 
       <TimelineCuradorSurface model={model} onComment={refresh} />
 

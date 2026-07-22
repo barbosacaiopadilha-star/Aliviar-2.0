@@ -10,6 +10,7 @@ import type { JornadaDoPacienteReadModel } from "@/application/jornada/jornada-d
 import { derivarEstadoOperacionalCurador } from "@/infrastructure/curador/curador-estado-operacional";
 import {
   abrirSessaoWorkspace,
+  atualizarConjuntoElegivel,
   entregaEstaAprovada,
   opcoesEstaoCompletas,
   registrarOpcoes,
@@ -90,6 +91,7 @@ function buildCasoCuradoriaView(
     timeline_jornada: view.timeline,
     timeline_operacional: [],
     comentarios: workspace.comentarios,
+    ace_analise: null,
   };
 }
 
@@ -215,6 +217,14 @@ function simularFluxoCompleto(): { etapas: EtapaValidacao[]; problemas: string[]
     curadorId,
     "2026-01-14T09:00:00Z",
   );
+  workspace = atualizarConjuntoElegivel(workspace, {
+    candidatos: [
+      { id: "c1", nome: "Dr. A", especialidade: "Cardiologia", nota_curador: "Perfil forte" },
+      { id: "c2", nome: "Dr. B", especialidade: "Cardiologia", nota_curador: null },
+      { id: "c3", nome: "Dr. C", especialidade: "Clínica", nota_curador: null },
+    ],
+    atualizado_em: "2026-01-14T09:05:00Z",
+  });
   let caso = buildCasoCuradoriaView(readModelToView(readModel), workspace, curadorId);
   const expCurador = mapCasoCuradorExperience(caso);
   if (expCurador.pode_registrar_opcoes !== true) {
@@ -231,14 +241,14 @@ function simularFluxoCompleto(): { etapas: EtapaValidacao[]; problemas: string[]
     interface_refletiria: expCurador.pode_registrar_opcoes,
   });
 
-  // 5. Registro três opções (sem conjunto elegível — lacuna conhecida)
+  // 5. Registro três opções
   workspace = registrarOpcoes(workspace, TRES_OPCOES);
   caso = buildCasoCuradoriaView(readModelToView(readModel), workspace, curadorId);
   if (!opcoesEstaoCompletas(workspace.opcoes_registradas)) {
     problemas.push("P0: três opções não registradas corretamente");
   }
-  if (workspace.conjunto_elegivel === null) {
-    problemas.push("P2: conjunto elegível ausente — sem UI para PUT /conjunto-elegivel");
+  if (!workspace.conjunto_elegivel || workspace.conjunto_elegivel.candidatos.length < 1) {
+    problemas.push("P1: conjunto elegível ausente após curadoria");
   }
   registrar("Registro três opções", {
     responsavel: "CURADOR",
