@@ -120,3 +120,130 @@ Os mocks obedecem aos invariantes da Ontologia, e isso é verificado por teste (
 2. **Sem navegação entre módulos** — o cabeçalho só volta ao Painel. A navegação lateral entra quando houver mais de uma tela para navegar.
 3. **Sem estado de lista vazia** — um Curador sem nenhum caso ainda não tem tela. Entra com o Módulo 2.
 4. **`prefers-reduced-motion`** — não há animação nesta tela, então nada a respeitar ainda; a regra passa a valer nos módulos com transição.
+
+---
+
+# Curator Operating System (COS) — MISSÃO 101
+
+O cérebro operacional da Curadoria. Enquanto o Portal (MISSÃO 100) é a
+superfície, o COS é a lógica que sabe conduzir o Método.
+
+**Princípio central**: o Portal conduz o Método; o Curador conduz o paciente.
+O COS nunca avança uma fase sozinho, nunca decide e nunca impede o Curador de
+voltar — informar é o oposto de controlar.
+
+## Arquitetura
+
+| Arquivo | Responsabilidade |
+|---|---|
+| `cos/types.ts` | A Memória da Curadoria: um registro único de onde tudo é reconstruível. |
+| `cos/phases.ts` | As nove fases como dado canônico — objetivo, critérios de entrada/saída, informações, artefatos, estados, validações, alertas, exceções e rastreabilidade. |
+| `cos/conduction.ts` | **Motor de Condução** — responde as cinco perguntas. Puro e determinístico. |
+| `cos/memory.ts` | Linha do tempo e **teste de reconstrução** (as nove perguntas da auditoria). |
+| `cos/mock-records.ts` | Três Memórias de demonstração, em fases diferentes. |
+
+Nenhum arquivo do COS importa banco, rede ou data do sistema. A mesma Memória
+sempre produz a mesma condução — verificado por teste.
+
+## As nove fases
+
+Cada fase declara a **etapa do raciocínio** (Fundamentos §5.2) que materializa.
+É assim que o COS permanece ancorado no Método em vez de virar um fluxo
+paralelo.
+
+| # | Fase | Raciocínio |
+|---|---|---|
+| 1 | Acolhimento | Compreender |
+| 2 | História | Compreender |
+| 3 | Caso | Estruturar |
+| 4 | Filtros | Estruturar |
+| 5 | Perfil de Prioridades | Priorizar |
+| 6 | Validação | Priorizar |
+| 7 | Curadoria Técnica | Comparar |
+| 8 | Relatório | Justificar |
+| 9 | Devolutiva | Apresentar |
+
+## Motor de Condução — as cinco respostas
+
+| Pergunta | Como responde |
+|---|---|
+| Onde estou? | Primeira fase não concluída — nunca a mais avançada com algum dado, porque voltar é legítimo no Método. |
+| O que já foi concluído? | Fases cujos critérios de saída foram atendidos. Lista, nunca percentual. |
+| O que falta? | Critérios de saída não atendidos da fase atual, em linguagem de meta. |
+| Qual é o próximo passo? | Exatamente um. Um alerta de bloqueio assume o próximo passo. |
+| Inconsistências e pendências? | Códigos I-xx do Motor e pendências sempre com dono nomeado. |
+
+Detecta hoje: **I-01, I-02, I-03, I-04, I-05, I-09, I-10, I-11, I-12** e os
+alertas **E-01, E-02, C-01, C-05, C-06**.
+
+Duas decisões de redação que evitam ruído:
+
+- **I-01 só é inconsistência depois da validação.** Antes disso, "faltam 15
+  pontos" é trabalho em andamento e já aparece como critério de saída.
+- **Nenhuma pendência é criada para a fase atual do Curador** — "o que falta"
+  já responde. Repetir a mesma frase em duas seções é ruído, e ruído em um
+  copiloto é pior que silêncio.
+
+## Memória e teste de reconstrução
+
+`buildMemory` monta a linha do tempo com autor e instante em cada entrada —
+inclusive quando o autor é o Sistema, o que torna visível no uso diário a
+fronteira entre o que a máquina fez e o que uma pessoa decidiu.
+
+`runReconstructionTest` roda as nove perguntas do Engine §5.6. **A pergunta 5
+falha de propósito** em todos os casos: o registro guarda o resultado da
+análise, não o estado do cadastro no momento do cálculo (divergência 13 da
+especificação do Motor). Um teste garante que essa lacuna continue visível até
+ser resolvida — nunca esquecida.
+
+## Telas
+
+| Rota | Resolve |
+|---|---|
+| `/portal-curador/casos/[id]` | "Onde eu parei, o que falta, e o que eu faço agora?" |
+| `/portal-curador/casos/[id]/[fase]` | "O que exatamente esta fase espera de mim, e por quê?" |
+
+A tela de fase é **inteiramente dirigida por `COS_PHASE_DEFINITIONS`** — objetivo,
+critérios, regras e rastreabilidade vêm da definição canônica, nunca de texto
+escrito na tela. Mudar o Método muda a tela; nunca o contrário.
+
+## Componentes novos
+
+| Componente | Responsabilidade |
+|---|---|
+| `ConductionPanel` | As cinco respostas do Motor de Condução. |
+| `PhaseNavigator` | As nove fases com estado e, no bloqueio, o motivo. |
+| `MemoryTimeline` / `ReconstructionReport` | A Memória e o teste de reconstrução. |
+
+## Caso de ensino deliberado
+
+O caso de Marina (`caso-2041`) tem a **mesma fala registrada como filtro
+obrigatório e como critério com peso**. O Motor detecta I-03 e devolve em
+linguagem de pessoa: *"Acompanhamento contínuo está como filtro obrigatório e
+como critério com peso ao mesmo tempo. Ou elimina, ou pesa."* É o tipo de
+engano real que acontece quando a conversa flui, e o COS precisa saber apanhá-lo.
+
+## Verificações
+
+| Verificação | Resultado |
+|---|---|
+| `tsc --noEmit` | Sem erros nos arquivos novos |
+| `next lint` | Sem avisos ou erros |
+| Testes | 38 novos (28 condução + 10 memória); suíte completa 744 passando |
+| Console do navegador | Sem erros |
+| Determinismo | Verificado por teste em todas as Memórias |
+
+## Pontos de integração futura
+
+1. **Banco** — `CuradoriaRecord` é o contrato: a migration da MISSÃO 002 cobre Perfil, pesos, evidências, compatibilidade e seleção; faltam tabelas para Acolhimento, Caso, Relatório e Devolutiva.
+2. **Autenticação** — `/portal-curador` sai de `PUBLIC_PREFIXES` e passa a exigir `curador_medico`.
+3. **Motor de Compatibilidade real** — `method.ts` (MISSÃO 002) já existe e é puro; basta alimentá-lo com o cadastro real em vez do mock.
+4. **Eventos** — a Memória é montada a partir do registro; a trilha append-only do Engine §7 substitui essa derivação quando existir.
+5. **Estado histórico do Perfil Médico** — pendência estrutural que a pergunta 5 do teste de reconstrução mantém visível.
+
+## Pendências do COS
+
+1. **Telas de trabalho das fases** (Módulos 2 a 6) — hoje cada fase mostra sua definição operacional, não a interface de execução.
+2. **Sem escrita** — nada é editável ainda; o COS lê a Memória e conduz, mas não registra.
+3. **Exceções E-05, E-07, E-08, E-09, E-12** ainda não detectadas.
+4. **Inconsistências I-06, I-07, I-13** ainda não verificadas.
