@@ -26,6 +26,7 @@
     "journey-handoff:rc": "vitest run src/journey-handoff/ && npm run typecheck",
     "vertical-slice:rc": "vitest run src/vertical-slice/ && npm run typecheck",
     "curation-report:rc": "vitest run src/curation-report/ && npm run typecheck",
+    "curator-workspace:rc": "vitest run src/curator-workspace/ && npm run typecheck",
     "admin:check": "node scripts/local/check-admin-env.mjs",
     "admin:set-password": "node scripts/local/set-admin-password.mjs",
     "admin:setup": "node scripts/local/setup-admin.mjs",

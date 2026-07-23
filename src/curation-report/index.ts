@@ -52,6 +52,9 @@ export type { AddMedicalCandidateServiceInput } from "./services/add-medical-can
 export { addCuratorNote } from "./services/add-curator-note";
 export type { AddCuratorNoteServiceInput } from "./services/add-curator-note";
 
+export { submitReportForReview } from "./services/submit-report-for-review";
+export type { SubmitReportForReviewInput } from "./services/submit-report-for-review";
+
 export { approveReport } from "./services/approve-report";
 export type { ApproveReportInput } from "./services/approve-report";
 
