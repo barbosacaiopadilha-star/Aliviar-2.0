@@ -82,7 +82,7 @@ export function CompartilharContextoSurface({ initialView, onShared }: Compartil
 
         <form className="space-y-8" onSubmit={handleSubmit} data-testid="share-context-form">
           <section className="space-y-3">
-            <h2 className="text-sm text-ink/50">Observações</h2>
+            <h2 className="text-sm text-ink/50">O que você quiser acrescentar</h2>
             <label className="block text-base text-ink/80" htmlFor="observation">
               Algo que ainda não ficou claro?
             </label>
@@ -98,7 +98,7 @@ export function CompartilharContextoSurface({ initialView, onShared }: Compartil
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-sm text-ink/50">Documentos</h2>
+            <h2 className="text-sm text-ink/50">Documentos que você já tem</h2>
             <p className="text-base text-ink/70">Mencione um documento que você já tem — não precisa enviar agora.</p>
             <input
               value={documentName}
@@ -117,13 +117,13 @@ export function CompartilharContextoSurface({ initialView, onShared }: Compartil
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-sm text-ink/50">Referências</h2>
+            <h2 className="text-sm text-ink/50">Algo mais que ajude a entender</h2>
             <p className="text-base text-ink/70">Um link ou material que ajude a situar sua história.</p>
             <input
               value={referenceLabel}
               onChange={(event) => setReferenceLabel(event.target.value)}
               className="w-full rounded-lg border border-ink/15 bg-white/80 px-4 py-3"
-              placeholder="O que é essa referência"
+              placeholder="O que é isso"
               data-testid="share-reference-label"
             />
             <input

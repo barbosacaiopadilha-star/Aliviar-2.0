@@ -63,7 +63,7 @@ export function ReportReadingSurface({ initialView, onViewChange }: ReportReadin
         </section>
 
         <section className="space-y-4" data-testid="report-reading-criteria">
-          <h2 className="text-lg font-medium text-ink">Critérios utilizados</h2>
+          <h2 className="text-lg font-medium text-ink">O que consideramos no seu caso</h2>
           <ul className="space-y-2 text-base text-ink/75">
             {view.criteriaUsed.map((criterion) => (
               <li key={criterion}>• {criterion}</li>
@@ -99,7 +99,7 @@ export function ReportReadingSurface({ initialView, onViewChange }: ReportReadin
         <footer className="space-y-6 border-t border-ink/10 pt-10">
           <dl className="space-y-2 text-sm text-ink/55">
             <div>
-              <dt className="text-ink/40">Estado da jornada</dt>
+              <dt className="text-ink/40">Neste momento</dt>
               <dd data-testid="report-reading-journey-state">{view.journeyState}</dd>
             </div>
           </dl>

@@ -20,20 +20,20 @@ export function PrimeiroPortalSurface({ view }: PrimeiroPortalSurfaceProps) {
 
           <dl className="space-y-5 text-base leading-relaxed text-ink/85">
             <div>
-              <dt className="text-sm text-ink/50">Estado da jornada</dt>
+              <dt className="text-sm text-ink/50">Neste momento</dt>
               <dd data-testid="portal-journey-state">{view.journeyState}</dd>
             </div>
             <div>
-              <dt className="text-sm text-ink/50">Onde paramos</dt>
+              <dt className="text-sm text-ink/50">De onde a gente continua</dt>
               <dd data-testid="portal-narrative-checkpoint">{view.narrativeCheckpoint}</dd>
             </div>
             <div>
-              <dt className="text-sm text-ink/50">Próxima ação</dt>
+              <dt className="text-sm text-ink/50">O próximo passo</dt>
               <dd data-testid="portal-next-action">{view.nextAction}</dd>
             </div>
             {view.comprehension ? (
               <div>
-                <dt className="text-sm text-ink/50">Compreensão</dt>
+                <dt className="text-sm text-ink/50">O que já entendemos de você</dt>
                 <dd data-testid="portal-comprehension">{view.comprehension}</dd>
               </div>
             ) : null}
@@ -45,7 +45,7 @@ export function PrimeiroPortalSurface({ view }: PrimeiroPortalSurfaceProps) {
             ) : null}
             {view.trabalhoEmAndamento ? (
               <div>
-                <dt className="text-sm text-ink/50">Em andamento</dt>
+                <dt className="text-sm text-ink/50">O que estamos fazendo</dt>
                 <dd data-testid="portal-trabalho-em-andamento">{view.trabalhoEmAndamento}</dd>
               </div>
             ) : null}

@@ -37,7 +37,7 @@ export function RelatorioEmElaboracaoSurface({ view }: RelatorioEmElaboracaoSurf
         <div className="space-y-6 border-t border-ink/10 pt-10">
           <dl className="space-y-3 text-sm text-ink/55">
             <div>
-              <dt className="text-ink/40">Estado da jornada</dt>
+              <dt className="text-ink/40">Neste momento</dt>
               <dd data-testid="relatorio-elaboracao-journey-state">{view.journeyState}</dd>
             </div>
           </dl>
