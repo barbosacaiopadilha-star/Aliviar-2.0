@@ -131,6 +131,43 @@ describe("registerCase", () => {
     }
   });
 
+  it("permite bootstrap delegado com ator MANAGER mesmo quando a sessão é de paciente", async () => {
+    const staffDeps = buildDeps("OPERATION");
+    const patientIdentity = {
+      userId: "patient-auth-1",
+      role: "PATIENT" as const,
+      isActive: true,
+      patientId: "patient-1",
+    };
+    const patientContext = {
+      session: authenticatedSession(
+        createStaffUser(patientIdentity.userId, "paciente@aliviar.health"),
+        null,
+        "supabase" as const,
+      ),
+      identity: patientIdentity,
+      actor: actorFromIdentity(patientIdentity),
+      permissions: permissionsForRole("PATIENT"),
+      journeyScope: { type: "own" as const, patientId: "patient-1" },
+    };
+
+    const deps = {
+      ...staffDeps,
+      authorization: new AuthorizationService(patientContext),
+    };
+
+    const result = await registerCase(deps, {
+      actor: { id: "manager-profile-1", role: "MANAGER" },
+      intake: {
+        patient: { type: "new", data: { fullName: "Maria Bootstrap" } },
+        context: createCaseContext({ title: "Jornada do handoff", source: "INTAKE" }),
+        ownership: createJourneyOwnership("manager-profile-1"),
+      },
+    });
+
+    expect(result.ok).toBe(true);
+  });
+
   it("jornada sempre nasce do caso ÔÇö caso sem jornada permanece OPEN", () => {
     const draft = CaseAggregate.createDraft({
       id: "case-x",

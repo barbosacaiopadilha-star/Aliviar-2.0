@@ -1,4 +1,4 @@
-﻿import type { KernelActor } from "@/kernel/rbac/authorization";
+﻿import { authorize, type KernelActor } from "@/kernel/rbac/authorization";
 import { createJourney, type CreateJourneyDependencies } from "@/kernel/services/create-journey";
 import type { TimelineRepositoryPort } from "@/kernel/events/timeline-record";
 
@@ -102,7 +102,7 @@ export async function registerCase(
   deps: RegisterCaseDependencies,
   input: RegisterCaseInput,
 ): Promise<RegisterCaseResult> {
-  const permission = deps.authorization.authorize("journey.create");
+  const permission = authorize(input.actor, "journey.create");
   if (!permission.ok) {
     return { ok: false, error: { code: "FORBIDDEN", message: permission.message } };
   }
