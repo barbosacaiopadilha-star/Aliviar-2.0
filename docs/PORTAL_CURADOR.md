@@ -247,3 +247,58 @@ engano real que acontece quando a conversa flui, e o COS precisa saber apanhá-l
 2. **Sem escrita** — nada é editável ainda; o COS lê a Memória e conduz, mas não registra.
 3. **Exceções E-05, E-07, E-08, E-09, E-12** ainda não detectadas.
 4. **Inconsistências I-06, I-07, I-13** ainda não verificadas.
+
+---
+
+# Módulo 3 — Perfil de Prioridades (MISSÃO 102)
+
+Rota: `/portal-curador/casos/[id]/prioridades`
+
+### Qual problema do Curador esta tela resolve?
+
+> **"Como eu transformo o que essa pessoa me disse em critérios que ela reconheça como dela?"**
+
+### As cinco perguntas de qualidade
+
+| Pergunta | Resposta desta tela |
+|---|---|
+| Reduz ansiedade? | O total e o que falta são ditos em linguagem natural ("faltam 15 pontos"), nunca um contador que pressiona. |
+| Reduz esforço cognitivo? | A barra de proporção **é** o controle — um só elemento carrega o significado e o ajuste. O Curador não procura campo nem converte número em ideia. |
+| Aumenta clareza? | Cada peso traz, lado a lado, a pergunta que o origina e a fala que o sustenta. |
+| Torna o Método mais fácil? | A liturgia da validação está escrita na tela como roteiro de quatro passos — o Curador não precisa lembrar. |
+| Transmite confiança? | Nada autoajusta, nada sugere, nada decide. |
+
+### A decisão de design central
+
+O controle é a própria barra de proporção (range input nativo). Escolha deliberada contra a estética de planilha e de dashboard:
+
+- **Um elemento, dois papéis** — a mesma barra comunica quanto pesa e permite mudar. Um slider separado do número obrigaria o Curador a fazer a tradução mentalmente.
+- **Range nativo** — teclado, leitor de tela e `aria-valuetext` ("40 de 100 pontos") funcionam sem nenhuma reimplementação.
+- **Movimento contido** — sem transição no polegar durante o arrasto; a transição existe só na faixa preenchida. Precisão não deve virar espetáculo.
+
+### O comportamento que o Método exige, verificado
+
+Mover Localização de 15 para 30 **não alterou Continuidade nem Experiência**. O autoajuste é tecnicamente trivial e está proibido: reajustar os outros pesos tiraria do paciente o controle da própria prioridade (Engine §5.2).
+
+O total foi a 100, mas a validação continuou bloqueada pelo conflito I-03 — com o motivo dito ao lado, nunca um botão cinza sem explicação.
+
+### Componentes novos
+
+| Componente | Responsabilidade |
+|---|---|
+| `PriorityBuilder` | A distribuição dos 100 pontos, com evidência por peso e a liturgia da validação. Cliente. |
+| `EvidenceCard` | A fala que originou um peso. Na ausência, pergunta em linguagem de conversa — nunca "campo obrigatório". |
+
+### Acessibilidade
+
+- Range nativo com `<label>` associado e `aria-valuetext` em linguagem humana.
+- Todo controle alcançável por teclado, com anel de foco visível de 2px e offset.
+- Nenhuma informação transmitida só por cor: o conflito de filtro/critério aparece como texto.
+- Sem overflow horizontal.
+
+### Pendências do Módulo 3
+
+1. **Sem persistência** — o estado vive no cliente; nada é salvo. A ação de validar ainda não registra.
+2. **Alvo declarado** (`targetValue`) não é editável — critérios que o exigem (Área de atuação, Forma do primeiro encontro, Localização) mostram o peso, mas não o alvo.
+3. **Histórico de alterações** do Perfil existe na Memória, mas ainda não aparece nesta tela.
+4. **Salvamento automático** (Experience §6) entra com a persistência.
