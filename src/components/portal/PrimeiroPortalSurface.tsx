@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { PrimeiroPortalView } from "@/vertical-slice";
 
 interface PrimeiroPortalSurfaceProps {
@@ -31,6 +32,14 @@ export function PrimeiroPortalSurface({ view }: PrimeiroPortalSurfaceProps) {
               <dd data-testid="portal-next-action">{view.nextAction}</dd>
             </div>
           </dl>
+
+          <Link
+            href="/portal/compartilhar"
+            className="inline-block text-base text-ink/70 underline decoration-ink/20 underline-offset-4 hover:text-ink"
+            data-testid="portal-share-context-link"
+          >
+            Compartilhar algo que ajude a entender sua história
+          </Link>
         </div>
       </div>
     </main>
