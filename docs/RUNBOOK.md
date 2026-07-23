@@ -2,6 +2,8 @@
 
 Documento de operação, não de engenharia. Complementa `docs/OPERATIONS.md` (deploy/infra técnica) e `docs/DEBUGGING.md` (diagnóstico técnico) — aqui o foco é **quem faz o quê, em que ordem, e o que fazer quando algo dá errado**, na abertura da operação real da Aliviar Curadoria Médica. Nenhuma alteração de código, arquitetura ou Método está prevista neste documento — a V1 está congelada.
 
+**Operação de produção (leia junto):** `DEPLOY_RUNBOOK.md` (publicação do release), `RECOVERY.md` (restauração em falha, ex.: 3h da manhã), `COMMAND_CENTER.md` (dashboard/daily/incidentes/critérios de encerramento do Shadow Launch). Um operador novo assume a operação lendo estes quatro documentos + `OPERATIONS.md`.
+
 ## 1. Abertura da operação
 
 1. Confirmar que o bloqueio do ACE (integração Anthropic, bug de plataforma da Vercel) foi resolvido — ver `docs/DEBUGGING.md` §2 e o Health Check em `/admin/ace`. **Não abrir operação com o Health Check mostrando `MODEL_NOT_CONFIGURED`.**
@@ -41,24 +43,24 @@ Fora do sistema (processo da equipe, não uma funcionalidade do produto, ver `do
 
 ## 6. Tratamento de incidentes
 
-| Sintoma | Onde olhar primeiro | Ação |
-|---|---|---|
-| ACE não avança / trava | `/admin/ace` → execução em `RUNNING` há +30min | `docs/DEBUGGING.md` §1 — reexecutar é seguro (idempotente) |
-| Health Check mostra `MODEL_NOT_CONFIGURED` | `/admin/ace` | Não iniciar/retomar execuções novas até resolver — ver §8 abaixo |
-| Paciente não vê algo que deveria | Confirmar papel efetivo (`user_roles`) e RLS — `docs/DEBUGGING.md` §4 | Nunca é a aplicação decidindo, é a policy do Postgres |
-| Erro genérico na tela do paciente | Entrar como Admin/Curador, ver o Caso e a mensagem interna sanitizada + `failureCode` em `/admin/ace/[executionId]` | `docs/DEBUGGING.md` §3 |
-| Suspeita de dado sensível em log | Tratar como incidente de segurança, não como debug | `docs/DEBUGGING.md` §7 — nunca prompt/resposta/chave em log |
+| Sintoma                                    | Onde olhar primeiro                                                                                                 | Ação                                                             |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| ACE não avança / trava                     | `/admin/ace` → execução em `RUNNING` há +30min                                                                      | `docs/DEBUGGING.md` §1 — reexecutar é seguro (idempotente)       |
+| Health Check mostra `MODEL_NOT_CONFIGURED` | `/admin/ace`                                                                                                        | Não iniciar/retomar execuções novas até resolver — ver §8 abaixo |
+| Paciente não vê algo que deveria           | Confirmar papel efetivo (`user_roles`) e RLS — `docs/DEBUGGING.md` §4                                               | Nunca é a aplicação decidindo, é a policy do Postgres            |
+| Erro genérico na tela do paciente          | Entrar como Admin/Curador, ver o Caso e a mensagem interna sanitizada + `failureCode` em `/admin/ace/[executionId]` | `docs/DEBUGGING.md` §3                                           |
+| Suspeita de dado sensível em log           | Tratar como incidente de segurança, não como debug                                                                  | `docs/DEBUGGING.md` §7 — nunca prompt/resposta/chave em log      |
 
 ## 6.1 Distinção entre tipos de falha do ACE
 
 Nem toda execução `FAILED` é o mesmo tipo de problema — a ação correta depende de qual é:
 
-| `failureCode` (ou situação) | O que significa | Reexecutar automaticamente? |
-|---|---|---|
-| Falha técnica (`ACE_MODEL_TIMEOUT`, `ACE_MODEL_RATE_LIMITED`, `ACE_MODEL_NOT_CONFIGURED`) | Problema de infraestrutura/conectividade com o provedor do modelo — nenhum julgamento do Método envolvido | Sim, reexecução manual é segura e idempotente |
-| `CASE_AUDIT_BLOCKED` (P003) | O Caso genuinamente carece de informação essencial (decisão/objetivo ausente, contradição real) — o Método está funcionando corretamente | Não é uma falha para "reexecutar" — o Caso vai para `WAITING_FOR_INFORMATION`, aguardando o paciente |
-| `CONTENT_INVARIANT_VIOLATION` (P003, ADR-024) | O modelo classificou uma restrição prática opcional como bloqueante, violando uma regra fechada do Método — rejeitado antes de virar `CaseAudit` | Reexecução manual é segura (o Caso permanece no status anterior, nunca é movido para `WAITING_FOR_INFORMATION` por um problema que não é do paciente) — se persistir, é sinal de calibração, registrar como incidente (§6.2) |
-| Human Review pendente | Não é falha — o Caso está corretamente aguardando decisão humana (P009) | N/A — ação é do Curador, não reexecução |
+| `failureCode` (ou situação)                                                               | O que significa                                                                                                                                  | Reexecutar automaticamente?                                                                                                                                                                                                  |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Falha técnica (`ACE_MODEL_TIMEOUT`, `ACE_MODEL_RATE_LIMITED`, `ACE_MODEL_NOT_CONFIGURED`) | Problema de infraestrutura/conectividade com o provedor do modelo — nenhum julgamento do Método envolvido                                        | Sim, reexecução manual é segura e idempotente                                                                                                                                                                                |
+| `CASE_AUDIT_BLOCKED` (P003)                                                               | O Caso genuinamente carece de informação essencial (decisão/objetivo ausente, contradição real) — o Método está funcionando corretamente         | Não é uma falha para "reexecutar" — o Caso vai para `WAITING_FOR_INFORMATION`, aguardando o paciente                                                                                                                         |
+| `CONTENT_INVARIANT_VIOLATION` (P003, ADR-024)                                             | O modelo classificou uma restrição prática opcional como bloqueante, violando uma regra fechada do Método — rejeitado antes de virar `CaseAudit` | Reexecução manual é segura (o Caso permanece no status anterior, nunca é movido para `WAITING_FOR_INFORMATION` por um problema que não é do paciente) — se persistir, é sinal de calibração, registrar como incidente (§6.2) |
+| Human Review pendente                                                                     | Não é falha — o Caso está corretamente aguardando decisão humana (P009)                                                                          | N/A — ação é do Curador, não reexecução                                                                                                                                                                                      |
 
 ## 6.2 Como registrar um incidente
 
@@ -70,6 +72,7 @@ Nem toda execução `FAILED` é o mesmo tipo de problema — a ação correta de
 ## 7. Limpeza de dados de teste (bloqueio operacional atual)
 
 Antes do primeiro paciente real, remover do banco de produção:
+
 - 3 profissionais de teste publicados (nomes fictícios) — hoje elegíveis para aparecer numa Shortlist real assim que o ACE voltar a funcionar.
 - 1 paciente de teste com Caso aberto.
 
@@ -77,11 +80,11 @@ Isso ainda não foi executado — pendente de confirmação explícita antes da 
 
 ## 8. Rollback operacional
 
-| Situação | Ação |
-|---|---|
-| ACE falhando em produção | Não é reversível por deploy — é bloqueio de infraestrutura externa (Vercel). Pausar novos Casos até resolução; Casos já em andamento ficam retomáveis sem perda de dado (artefatos são imutáveis e reaproveitados). |
-| Deploy ruim | Vercel → Deployments → **Instant Rollback** para o deploy anterior (`docs/OPERATIONS.md` §13). |
-| Variável de ambiente errada | Corrigir no painel da Vercel e fazer **Redeploy** — não precisa reverter código. |
+| Situação                                          | Ação                                                                                                                                                                                                                                  |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ACE falhando em produção                          | Não é reversível por deploy — é bloqueio de infraestrutura externa (Vercel). Pausar novos Casos até resolução; Casos já em andamento ficam retomáveis sem perda de dado (artefatos são imutáveis e reaproveitados).                   |
+| Deploy ruim                                       | Vercel → Deployments → **Instant Rollback** para o deploy anterior (`docs/OPERATIONS.md` §13).                                                                                                                                        |
+| Variável de ambiente errada                       | Corrigir no painel da Vercel e fazer **Redeploy** — não precisa reverter código.                                                                                                                                                      |
 | Dado incorreto cadastrado (profissional/paciente) | Editar/desativar via painel administrativo; exclusão de conta segue o procedimento de cascade já documentado nesta sessão (ordem: `user_roles` antes de `auth.users`, e `patient_story_versions` antes se o paciente tiver história). |
 
 Regra fixa mantida: nenhum agente de IA executa comando destrutivo contra produção sem autorização explícita, específica, por ação.
@@ -105,16 +108,16 @@ Regra fixa mantida: nenhum agente de IA executa comando destrutivo contra produ�
 
 Estrutura atual (uma só pessoa, dois papéis — registrar aqui como realidade operacional, não como decisão de produto):
 
-| Papel | Responsável | Observação |
-|---|---|---|
-| Administrador | Caio (`barbosacaiopadilha@gmail.com`) | Único administrador cadastrado hoje |
-| Curador Médico | Caio (mesma conta) | Sem segregação entre quem administra o sistema e quem revisa curadorias — risco operacional de ponto único, registrado no checklist |
-| Suporte de infraestrutura (Vercel) | Caso aberto, aguardando resposta | Ver `docs/DEBUGGING.md` |
-| Suporte de infraestrutura (Supabase) | Não há caso aberto no momento | — |
+| Papel                                | Responsável                           | Observação                                                                                                                          |
+| ------------------------------------ | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Administrador                        | Caio (`barbosacaiopadilha@gmail.com`) | Único administrador cadastrado hoje                                                                                                 |
+| Curador Médico                       | Caio (mesma conta)                    | Sem segregação entre quem administra o sistema e quem revisa curadorias — risco operacional de ponto único, registrado no checklist |
+| Suporte de infraestrutura (Vercel)   | Caso aberto, aguardando resposta      | Ver `docs/DEBUGGING.md`                                                                                                             |
+| Suporte de infraestrutura (Supabase) | Não há caso aberto no momento         | —                                                                                                                                   |
 
 ## 10. Histórico
 
-| Versão | Data | Mudança |
-|---|---|---|
-| 0.1 | 2026-07-14 | Primeira versão — runbook operacional para a abertura da V1 com o primeiro paciente real. |
-| 0.2 | 2026-07-15 | Auditoria de documentação pendente: adiciona checagem de Supabase/migrations/RLS/backup à abertura (§1); distinção entre tipos de falha do ACE e como registrar incidente (§6.1, §6.2); regras de Human Review — unicidade, concorrência, append-only, sem revalidação (§4); seção de Golden Set operacional (§8.1); seção de Segurança (§8.2). Nenhuma mudança de código, arquitetura ou Método. |
+| Versão | Data       | Mudança                                                                                                                                                                                                                                                                                                                                                                                           |
+| ------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.1    | 2026-07-14 | Primeira versão — runbook operacional para a abertura da V1 com o primeiro paciente real.                                                                                                                                                                                                                                                                                                         |
+| 0.2    | 2026-07-15 | Auditoria de documentação pendente: adiciona checagem de Supabase/migrations/RLS/backup à abertura (§1); distinção entre tipos de falha do ACE e como registrar incidente (§6.1, §6.2); regras de Human Review — unicidade, concorrência, append-only, sem revalidação (§4); seção de Golden Set operacional (§8.1); seção de Segurança (§8.2). Nenhuma mudança de código, arquitetura ou Método. |
