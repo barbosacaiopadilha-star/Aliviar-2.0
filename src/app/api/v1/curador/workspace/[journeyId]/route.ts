@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { EVIDENCE_TYPES, type EvidenceType } from "@/curation-report";
 import {
   buildCuratorWorkspaceView,
@@ -10,143 +8,156 @@ import {
   workspaceAddCuratorNote,
   workspaceSubmitForReview,
 } from "@/curator-workspace";
+import { DEMO_MODE_FLAGS } from "@/lib/production/demo-mode-flags";
+import {
+  guardCuratorDemoAccess,
+  jsonRouteData,
+  jsonRouteMessage,
+  runGuardedDemoRoute,
+} from "@/lib/production/guard-demo-runtime";
 
 interface RouteContext {
   params: Promise<{ journeyId: string }>;
 }
 
-export async function GET(_request: Request, context: RouteContext) {
-  try {
-    const { journeyId } = await context.params;
-    const { stack, flow, curatorActorId } = await getDemoCuratorWorkspaceRuntime();
+export async function GET(request: Request, context: RouteContext) {
+  const { journeyId } = await context.params;
 
-    if (journeyId !== flow.journeyId) {
-      return NextResponse.json({ message: "Jornada não disponível no demo." }, { status: 404 });
-    }
+  return runGuardedDemoRoute(request, {
+    operation: "curador.workspace.get",
+    flag: DEMO_MODE_FLAGS.CURATOR_DEMO_MODE,
+    guard: guardCuratorDemoAccess,
+    handler: async (ctx) => {
+      const { stack, flow, curatorActorId } = await getDemoCuratorWorkspaceRuntime();
 
-    const opened = await openCuratorWorkspace(stack, {
-      journeyId: flow.journeyId,
-      handoffId: flow.handoffId,
-      curatorActorId,
-    });
+      if (journeyId !== flow.journeyId) {
+        return jsonRouteMessage(ctx, 404, "Jornada não disponível no demo.");
+      }
 
-    if (!opened.ok) {
-      return NextResponse.json({ message: opened.error.message }, { status: 404 });
-    }
+      const opened = await openCuratorWorkspace(stack, {
+        journeyId: flow.journeyId,
+        handoffId: flow.handoffId,
+        curatorActorId,
+      });
 
-    const view = await buildCuratorWorkspaceView(stack, {
-      report: opened.value,
-      handoffId: flow.handoffId,
-      curatorActorId,
-    });
+      if (!opened.ok) {
+        return jsonRouteMessage(ctx, 404, opened.error.message);
+      }
 
-    if (!view.ok) {
-      return NextResponse.json({ message: view.error.message }, { status: 404 });
-    }
+      const view = await buildCuratorWorkspaceView(stack, {
+        report: opened.value,
+        handoffId: flow.handoffId,
+        curatorActorId,
+      });
 
-    return NextResponse.json(view.value);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro ao abrir workspace.";
-    return NextResponse.json({ message }, { status: 500 });
-  }
+      if (!view.ok) {
+        return jsonRouteMessage(ctx, 404, view.error.message);
+      }
+
+      return jsonRouteData(ctx, 200, view.value);
+    },
+  });
 }
 
 export async function POST(request: Request, context: RouteContext) {
-  try {
-    const { journeyId } = await context.params;
-    const { stack, flow, curatorActorId } = await getDemoCuratorWorkspaceRuntime();
+  const { journeyId } = await context.params;
 
-    if (journeyId !== flow.journeyId) {
-      return NextResponse.json({ message: "Jornada não disponível no demo." }, { status: 404 });
-    }
+  return runGuardedDemoRoute(request, {
+    operation: "curador.workspace.post",
+    flag: DEMO_MODE_FLAGS.CURATOR_DEMO_MODE,
+    guard: guardCuratorDemoAccess,
+    handler: async (ctx) => {
+      const { stack, flow, curatorActorId } = await getDemoCuratorWorkspaceRuntime();
 
-    const opened = await openCuratorWorkspace(stack, {
-      journeyId: flow.journeyId,
-      handoffId: flow.handoffId,
-      curatorActorId,
-    });
-
-    if (!opened.ok) {
-      return NextResponse.json({ message: opened.error.message }, { status: 404 });
-    }
-
-    const body = (await request.json()) as {
-      action: "add_evidence" | "add_candidate" | "add_note" | "submit_for_review";
-      evidence?: {
-        origin: string;
-        description: string;
-        type: string;
-        confidence: number;
-        reference: string;
-      };
-      candidate?: {
-        identification: string;
-        specialty: string;
-        justification: string;
-        relatedEvidenceIds: string[];
-        priority: number;
-        selectionReasons: Array<{ criterion: string; rationale: string }>;
-      };
-      content?: string;
-    };
-
-    const mutationContext = {
-      handoffId: flow.handoffId,
-      curatorActorId,
-    };
-
-    let result;
-    switch (body.action) {
-      case "add_evidence": {
-        const raw = body.evidence;
-        if (!raw) {
-          return NextResponse.json({ message: "Evidência obrigatória." }, { status: 400 });
-        }
-        if (!EVIDENCE_TYPES.includes(raw.type as EvidenceType)) {
-          return NextResponse.json({ message: "Tipo de evidência inválido." }, { status: 400 });
-        }
-        result = await workspaceAddEvidence(stack, {
-          reportId: opened.value.id,
-          actorId: curatorActorId,
-          evidence: { ...raw, type: raw.type as EvidenceType },
-          ...mutationContext,
-        });
-        break;
+      if (journeyId !== flow.journeyId) {
+        return jsonRouteMessage(ctx, 404, "Jornada não disponível no demo.");
       }
-      case "add_candidate":
-        result = await workspaceAddMedicalCandidate(stack, {
-          reportId: opened.value.id,
-          actorId: curatorActorId,
-          candidate: body.candidate!,
-          ...mutationContext,
-        });
-        break;
-      case "add_note":
-        result = await workspaceAddCuratorNote(stack, {
-          reportId: opened.value.id,
-          actorId: curatorActorId,
-          content: body.content ?? "",
-          ...mutationContext,
-        });
-        break;
-      case "submit_for_review":
-        result = await workspaceSubmitForReview(stack, {
-          reportId: opened.value.id,
-          actorId: curatorActorId,
-          ...mutationContext,
-        });
-        break;
-      default:
-        return NextResponse.json({ message: "Ação inválida." }, { status: 400 });
-    }
 
-    if (!result.ok) {
-      return NextResponse.json({ message: result.error.message }, { status: 400 });
-    }
+      const opened = await openCuratorWorkspace(stack, {
+        journeyId: flow.journeyId,
+        handoffId: flow.handoffId,
+        curatorActorId,
+      });
 
-    return NextResponse.json(result.value);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro na operação do workspace.";
-    return NextResponse.json({ message }, { status: 500 });
-  }
+      if (!opened.ok) {
+        return jsonRouteMessage(ctx, 404, opened.error.message);
+      }
+
+      const body = (await request.json()) as {
+        action: "add_evidence" | "add_candidate" | "add_note" | "submit_for_review";
+        evidence?: {
+          origin: string;
+          description: string;
+          type: string;
+          confidence: number;
+          reference: string;
+        };
+        candidate?: {
+          identification: string;
+          specialty: string;
+          justification: string;
+          relatedEvidenceIds: string[];
+          priority: number;
+          selectionReasons: Array<{ criterion: string; rationale: string }>;
+        };
+        content?: string;
+      };
+
+      const mutationContext = {
+        handoffId: flow.handoffId,
+        curatorActorId,
+      };
+
+      let result;
+      switch (body.action) {
+        case "add_evidence": {
+          const raw = body.evidence;
+          if (!raw) {
+            return jsonRouteMessage(ctx, 400, "Evidência obrigatória.");
+          }
+          if (!EVIDENCE_TYPES.includes(raw.type as EvidenceType)) {
+            return jsonRouteMessage(ctx, 400, "Tipo de evidência inválido.");
+          }
+          result = await workspaceAddEvidence(stack, {
+            reportId: opened.value.id,
+            actorId: curatorActorId,
+            evidence: { ...raw, type: raw.type as EvidenceType },
+            ...mutationContext,
+          });
+          break;
+        }
+        case "add_candidate":
+          result = await workspaceAddMedicalCandidate(stack, {
+            reportId: opened.value.id,
+            actorId: curatorActorId,
+            candidate: body.candidate!,
+            ...mutationContext,
+          });
+          break;
+        case "add_note":
+          result = await workspaceAddCuratorNote(stack, {
+            reportId: opened.value.id,
+            actorId: curatorActorId,
+            content: body.content ?? "",
+            ...mutationContext,
+          });
+          break;
+        case "submit_for_review":
+          result = await workspaceSubmitForReview(stack, {
+            reportId: opened.value.id,
+            actorId: curatorActorId,
+            ...mutationContext,
+          });
+          break;
+        default:
+          return jsonRouteMessage(ctx, 400, "Ação inválida.");
+      }
+
+      if (!result.ok) {
+        return jsonRouteMessage(ctx, 400, result.error.message);
+      }
+
+      return jsonRouteData(ctx, 200, result.value);
+    },
+  });
 }

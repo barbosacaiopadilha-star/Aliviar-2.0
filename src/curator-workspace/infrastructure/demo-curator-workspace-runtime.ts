@@ -7,6 +7,7 @@ import {
   sharePatientContext,
   signInPatient,
 } from "@/vertical-slice";
+import { assertDemoRuntimeAllowed, DEMO_MODE_FLAGS } from "@/lib/production/demo-mode-flags";
 import { getDemoPortalSession, seedDemoPortalSession } from "@/vertical-slice/infrastructure/demo-portal-store";
 
 import {
@@ -84,6 +85,8 @@ async function bootstrapPatientFlow(stack: CuratorWorkspaceStack): Promise<Publi
 }
 
 export async function getDemoCuratorWorkspaceRuntime(): Promise<DemoCuratorWorkspaceRuntime> {
+  assertDemoRuntimeAllowed(DEMO_MODE_FLAGS.CURATOR_DEMO_MODE);
+
   if (!demoStack) {
     demoStack = await createCuratorWorkspaceStack();
   }

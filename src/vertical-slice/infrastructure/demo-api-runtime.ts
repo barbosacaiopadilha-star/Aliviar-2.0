@@ -6,6 +6,8 @@ import {
 import type { VerticalSliceStack } from "../composition/vertical-slice-stack";
 import { runPublicToPortalFlow } from "../services/run-public-to-portal-flow";
 import type { PublicToPortalFlowResult } from "../services/run-public-to-portal-flow";
+import { assertDemoRuntimeAllowed, DEMO_MODE_FLAGS } from "@/lib/production/demo-mode-flags";
+
 import { getDemoPortalSession, seedDemoPortalSession } from "./demo-portal-store";
 
 export const DEMO_USER_ID = "demo-patient-1";
@@ -19,6 +21,8 @@ export interface DemoApiRuntime {
 }
 
 export async function getDemoApiRuntime(): Promise<DemoApiRuntime> {
+  assertDemoRuntimeAllowed(DEMO_MODE_FLAGS.PATIENT_DEMO_MODE);
+
   if (!demoStack) {
     demoStack = await createVerticalSliceStack();
   }

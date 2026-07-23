@@ -16,6 +16,7 @@ import {
   sharePatientContext,
   signInPatient,
 } from "@/vertical-slice";
+import { assertDemoRuntimeAllowed, DEMO_MODE_FLAGS } from "@/lib/production/demo-mode-flags";
 import { getDemoPortalSession, seedDemoPortalSession } from "@/vertical-slice/infrastructure/demo-portal-store";
 import type { PublicToPortalFlowResult } from "@/vertical-slice/services/run-public-to-portal-flow";
 
@@ -123,6 +124,8 @@ async function bootstrapPublishedReport(stack: SystemIntegrationStack): Promise<
 }
 
 export async function getDemoReportReadingRuntime(): Promise<DemoReportReadingRuntime> {
+  assertDemoRuntimeAllowed(DEMO_MODE_FLAGS.REPORT_DEMO_MODE);
+
   if (!demoStack) {
     demoStack = await createSystemIntegrationStack();
   }

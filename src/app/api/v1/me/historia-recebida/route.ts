@@ -1,31 +1,38 @@
-import { NextResponse } from "next/server";
-
+import { DEMO_MODE_FLAGS } from "@/lib/production/demo-mode-flags";
+import {
+  guardPatientDemoAccess,
+  jsonRouteData,
+  jsonRouteMessage,
+  runGuardedDemoRoute,
+} from "@/lib/production/guard-demo-runtime";
 import { buildHistoriaRecebidaView } from "@/vertical-slice";
 import { getDemoApiRuntime } from "@/vertical-slice/infrastructure/demo-api-runtime";
 
-export async function GET() {
-  try {
-    const { stack, userId, flow } = await getDemoApiRuntime();
+export async function GET(request: Request) {
+  return runGuardedDemoRoute(request, {
+    operation: "me.historia-recebida",
+    flag: DEMO_MODE_FLAGS.PATIENT_DEMO_MODE,
+    guard: guardPatientDemoAccess,
+    handler: async (context) => {
+      const { stack, userId, flow } = await getDemoApiRuntime();
 
-    const patient = await stack.patientRepository.findById(flow.patientId);
-    if (!patient) {
-      return NextResponse.json({ message: "Paciente não encontrado." }, { status: 404 });
-    }
+      const patient = await stack.patientRepository.findById(flow.patientId);
+      if (!patient) {
+        return jsonRouteMessage(context, 404, "Paciente não encontrado.");
+      }
 
-    const view = await buildHistoriaRecebidaView(stack, {
-      journeyId: flow.journeyId,
-      patientId: flow.patientId,
-      actorId: userId,
-      patientName: patient.fullName,
-    });
+      const view = await buildHistoriaRecebidaView(stack, {
+        journeyId: flow.journeyId,
+        patientId: flow.patientId,
+        actorId: userId,
+        patientName: patient.fullName,
+      });
 
-    if (!view.ok) {
-      return NextResponse.json({ message: view.error.message }, { status: 404 });
-    }
+      if (!view.ok) {
+        return jsonRouteMessage(context, 404, view.error.message);
+      }
 
-    return NextResponse.json(view.value);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro ao carregar confirmação.";
-    return NextResponse.json({ message }, { status: 500 });
-  }
+      return jsonRouteData(context, 200, view.value);
+    },
+  });
 }

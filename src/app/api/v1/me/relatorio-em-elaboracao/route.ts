@@ -1,31 +1,38 @@
-import { NextResponse } from "next/server";
-
+import { DEMO_MODE_FLAGS } from "@/lib/production/demo-mode-flags";
+import {
+  guardPatientDemoAccess,
+  jsonRouteData,
+  jsonRouteMessage,
+  runGuardedDemoRoute,
+} from "@/lib/production/guard-demo-runtime";
 import { elaborarRelatorioCaso } from "@/vertical-slice";
 import { getDemoApiRuntime } from "@/vertical-slice/infrastructure/demo-api-runtime";
 
-export async function GET() {
-  try {
-    const { stack, userId, flow } = await getDemoApiRuntime();
+export async function GET(request: Request) {
+  return runGuardedDemoRoute(request, {
+    operation: "me.relatorio-em-elaboracao",
+    flag: DEMO_MODE_FLAGS.PATIENT_DEMO_MODE,
+    guard: guardPatientDemoAccess,
+    handler: async (context) => {
+      const { stack, userId, flow } = await getDemoApiRuntime();
 
-    const patient = await stack.patientRepository.findById(flow.patientId);
-    if (!patient) {
-      return NextResponse.json({ message: "Paciente não encontrado." }, { status: 404 });
-    }
+      const patient = await stack.patientRepository.findById(flow.patientId);
+      if (!patient) {
+        return jsonRouteMessage(context, 404, "Paciente não encontrado.");
+      }
 
-    const elaboration = await elaborarRelatorioCaso(stack, {
-      journeyId: flow.journeyId,
-      patientId: flow.patientId,
-      actorId: userId,
-      patientName: patient.fullName,
-    });
+      const elaboration = await elaborarRelatorioCaso(stack, {
+        journeyId: flow.journeyId,
+        patientId: flow.patientId,
+        actorId: userId,
+        patientName: patient.fullName,
+      });
 
-    if (!elaboration.ok) {
-      return NextResponse.json({ message: elaboration.error.message }, { status: 400 });
-    }
+      if (!elaboration.ok) {
+        return jsonRouteMessage(context, 400, elaboration.error.message);
+      }
 
-    return NextResponse.json(elaboration.value);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro ao iniciar elaboração.";
-    return NextResponse.json({ message }, { status: 500 });
-  }
+      return jsonRouteData(context, 200, elaboration.value);
+    },
+  });
 }

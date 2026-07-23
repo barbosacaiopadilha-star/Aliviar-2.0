@@ -1,26 +1,33 @@
-import { NextResponse } from "next/server";
-
+import { DEMO_MODE_FLAGS } from "@/lib/production/demo-mode-flags";
+import {
+  guardPatientDemoAccess,
+  jsonRouteData,
+  jsonRouteMessage,
+  runGuardedDemoRoute,
+} from "@/lib/production/guard-demo-runtime";
 import { buildPrimeiroPortalView } from "@/vertical-slice";
 import { getDemoApiRuntime } from "@/vertical-slice/infrastructure/demo-api-runtime";
 
-export async function GET() {
-  try {
-    const { stack, userId, flow } = await getDemoApiRuntime();
+export async function GET(request: Request) {
+  return runGuardedDemoRoute(request, {
+    operation: "me.primeiro-portal",
+    flag: DEMO_MODE_FLAGS.PATIENT_DEMO_MODE,
+    guard: guardPatientDemoAccess,
+    handler: async (context) => {
+      const { stack, userId, flow } = await getDemoApiRuntime();
 
-    const view = await buildPrimeiroPortalView(stack, {
-      handoffId: flow.handoffId,
-      journeyId: flow.journeyId,
-      patientId: flow.patientId,
-      actorId: userId,
-    });
+      const view = await buildPrimeiroPortalView(stack, {
+        handoffId: flow.handoffId,
+        journeyId: flow.journeyId,
+        patientId: flow.patientId,
+        actorId: userId,
+      });
 
-    if (!view.ok) {
-      return NextResponse.json({ message: view.error.message }, { status: 404 });
-    }
+      if (!view.ok) {
+        return jsonRouteMessage(context, 404, view.error.message);
+      }
 
-    return NextResponse.json(view.value);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro ao carregar portal.";
-    return NextResponse.json({ message }, { status: 500 });
-  }
+      return jsonRouteData(context, 200, view.value);
+    },
+  });
 }
