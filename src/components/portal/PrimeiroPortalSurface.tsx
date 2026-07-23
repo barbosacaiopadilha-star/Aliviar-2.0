@@ -43,6 +43,12 @@ export function PrimeiroPortalSurface({ view }: PrimeiroPortalSurfaceProps) {
                 <dd data-testid="portal-journey-evolution">{view.journeyEvolution}</dd>
               </div>
             ) : null}
+            {view.trabalhoEmAndamento ? (
+              <div>
+                <dt className="text-sm text-ink/50">Em andamento</dt>
+                <dd data-testid="portal-trabalho-em-andamento">{view.trabalhoEmAndamento}</dd>
+              </div>
+            ) : null}
           </dl>
 
           <Link

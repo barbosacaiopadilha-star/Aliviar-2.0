@@ -24,6 +24,8 @@ describe("PrimeiroPortalSurface", () => {
           comprehension: null,
           curadoriaIniciada: false,
           journeyEvolution: null,
+          relatorioEmElaboracao: false,
+          trabalhoEmAndamento: null,
         }}
       />,
     );

@@ -1,25 +1,25 @@
 import { buildJourneyMemory } from "@/journey-memory";
 import type { OperationalStage } from "@/kernel/jornada/operational-stage";
 
-import type { CuradoriaComecouView } from "../model/curadoria-comecou-view";
+import type { RelatorioEmElaboracaoView } from "../model/relatorio-em-elaboracao-view";
 import type { VerticalSliceStack } from "../composition/vertical-slice-stack";
 import { PatientSharingMemoryAccess } from "../infrastructure/patient-sharing-memory-access";
 import {
-  CURADORIA_COMECOU_COPY,
-  CURADORIA_STARTED_PORTAL_TITLE,
   OPERATIONAL_STAGE_LABELS,
+  RELATORIO_ELABORACAO_COPY,
+  RELATORIO_ELABORACAO_PORTAL_TITLE,
 } from "../labels";
-import { hasCuradoriaIniciada } from "./context-projection-helpers";
+import { hasRelatorioEmElaboracao } from "./context-projection-helpers";
 
-export interface BuildCuradoriaComecouViewInput {
+export interface BuildRelatorioEmElaboracaoViewInput {
   journeyId: string;
   patientId: string;
   actorId: string;
   patientName: string;
 }
 
-export type BuildCuradoriaComecouViewResult =
-  | { ok: true; value: CuradoriaComecouView }
+export type BuildRelatorioEmElaboracaoViewResult =
+  | { ok: true; value: RelatorioEmElaboracaoView }
   | { ok: false; error: { code: "NOT_FOUND"; message: string } };
 
 function memoryDeps(stack: VerticalSliceStack) {
@@ -33,10 +33,10 @@ function memoryDeps(stack: VerticalSliceStack) {
   };
 }
 
-export async function buildCuradoriaComecouView(
+export async function buildRelatorioEmElaboracaoView(
   stack: VerticalSliceStack,
-  input: BuildCuradoriaComecouViewInput,
-): Promise<BuildCuradoriaComecouViewResult> {
+  input: BuildRelatorioEmElaboracaoViewInput,
+): Promise<BuildRelatorioEmElaboracaoViewResult> {
   const [journey, memoryResult] = await Promise.all([
     stack.journeyRepository.findById(input.journeyId),
     buildJourneyMemory(memoryDeps(stack), {
@@ -47,30 +47,30 @@ export async function buildCuradoriaComecouView(
   ]);
 
   if (!journey || !memoryResult.ok) {
-    return { ok: false, error: { code: "NOT_FOUND", message: "Evolução da jornada indisponível." } };
+    return { ok: false, error: { code: "NOT_FOUND", message: "Elaboração indisponível." } };
   }
 
-  if (!hasCuradoriaIniciada(memoryResult.value.timeline)) {
+  if (!hasRelatorioEmElaboracao(memoryResult.value.timeline)) {
     return {
       ok: false,
-      error: { code: "NOT_FOUND", message: "A curadoria ainda não começou para esta jornada." },
+      error: { code: "NOT_FOUND", message: "O relatório ainda não está em elaboração." },
     };
   }
 
-  const started = memoryResult.value.timeline.find(
-    (entry) => entry.title === CURADORIA_STARTED_PORTAL_TITLE,
+  const elaboration = memoryResult.value.timeline.find(
+    (entry) => entry.title === RELATORIO_ELABORACAO_PORTAL_TITLE,
   );
 
   return {
     ok: true,
     value: {
-      headline: CURADORIA_COMECOU_COPY.headline,
-      narrative: CURADORIA_COMECOU_COPY.narrative,
-      continuation: CURADORIA_COMECOU_COPY.continuation,
+      headline: RELATORIO_ELABORACAO_COPY.headline,
+      narrative: RELATORIO_ELABORACAO_COPY.narrative,
+      continuation: RELATORIO_ELABORACAO_COPY.continuation,
       patientName: input.patientName,
       journeyState: OPERATIONAL_STAGE_LABELS[journey.currentStage as OperationalStage],
-      portalHref: "/portal/relatorio-em-elaboracao",
-      startedAt: started?.occurredAt ?? journey.updatedAt,
+      portalHref: "/portal",
+      elaborationStartedAt: elaboration?.occurredAt ?? journey.updatedAt,
     },
   };
 }

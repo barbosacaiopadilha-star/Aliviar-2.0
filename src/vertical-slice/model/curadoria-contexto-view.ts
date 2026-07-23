@@ -11,6 +11,9 @@ export interface CuradoriaContextoView {
   sinalCuradoria: string | null;
   casoProntoParaAnalise: boolean;
   aberturaCuradoria: string | null;
+  casoEmElaboracao: boolean;
+  sinalElaboracao: string | null;
+  espacoRelatorioPreparado: boolean;
   organizacao: ContextOrganizationGroup[];
   historico: ContextHistoryEntry[];
   memorySummary: string;

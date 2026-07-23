@@ -9,4 +9,6 @@ export interface PrimeiroPortalView {
   comprehension: string | null;
   curadoriaIniciada: boolean;
   journeyEvolution: string | null;
+  relatorioEmElaboracao: boolean;
+  trabalhoEmAndamento: string | null;
 }

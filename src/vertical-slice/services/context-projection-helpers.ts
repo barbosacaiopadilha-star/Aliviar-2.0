@@ -7,7 +7,7 @@ import type {
   ContextOrganizationGroup,
   SharedContextItemView,
 } from "../model/compartilhar-contexto-view";
-import { STORY_RECEPTION_CURADORIA_TITLE, STORY_RECEPTION_PORTAL_TITLE, CURADORIA_READY_TITLE, CURADORIA_STARTED_PORTAL_TITLE } from "../labels";
+import { STORY_RECEPTION_CURADORIA_TITLE, STORY_RECEPTION_PORTAL_TITLE, CURADORIA_READY_TITLE, CURADORIA_STARTED_PORTAL_TITLE, RELATORIO_ELABORACAO_CURADORIA_TITLE, RELATORIO_ELABORACAO_PORTAL_TITLE, RELATORIO_ESPACO_CURADORIA_TITLE } from "../labels";
 
 function isDocumentRef(ref: AttachmentReference): boolean {
   return ref.category === "DOCUMENTO" || Boolean(ref.mimeType);
@@ -96,6 +96,18 @@ export function hasCuradoriaIniciada(timeline: MemoryTimelineEntry[]): boolean {
 
 export function hasCasoProntoParaAnalise(timeline: MemoryTimelineEntry[]): boolean {
   return timeline.some((entry) => entry.title === CURADORIA_READY_TITLE);
+}
+
+export function hasRelatorioEmElaboracao(timeline: MemoryTimelineEntry[]): boolean {
+  return timeline.some((entry) => entry.title === RELATORIO_ELABORACAO_PORTAL_TITLE);
+}
+
+export function hasCasoEmElaboracao(timeline: MemoryTimelineEntry[]): boolean {
+  return timeline.some((entry) => entry.title === RELATORIO_ELABORACAO_CURADORIA_TITLE);
+}
+
+export function hasEspacoRelatorioPreparado(timeline: MemoryTimelineEntry[]): boolean {
+  return timeline.some((entry) => entry.title === RELATORIO_ESPACO_CURADORIA_TITLE);
 }
 
 export function countSharedItems(groups: ContextOrganizationGroup[]): number {

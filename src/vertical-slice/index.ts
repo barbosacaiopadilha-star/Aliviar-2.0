@@ -3,6 +3,7 @@ export type { CompartilharContextoView } from "./model/compartilhar-contexto-vie
 export type { CuradoriaContextoView } from "./model/curadoria-contexto-view";
 export type { HistoriaRecebidaView } from "./model/historia-recebida-view";
 export type { CuradoriaComecouView } from "./model/curadoria-comecou-view";
+export type { RelatorioEmElaboracaoView } from "./model/relatorio-em-elaboracao-view";
 export type {
   SharePatientContextInput,
   SharePatientContextResult,
@@ -12,10 +13,14 @@ export {
   PUBLIC_CHAPTER_LABELS,
   HISTORIA_RECEBIDA_COPY,
   CURADORIA_COMECOU_COPY,
+  RELATORIO_ELABORACAO_COPY,
   STORY_RECEPTION_PORTAL_TITLE,
   STORY_RECEPTION_CURADORIA_TITLE,
   CURADORIA_STARTED_PORTAL_TITLE,
   CURADORIA_READY_TITLE,
+  RELATORIO_ELABORACAO_PORTAL_TITLE,
+  RELATORIO_ELABORACAO_CURADORIA_TITLE,
+  RELATORIO_ESPACO_CURADORIA_TITLE,
 } from "./labels";
 export {
   createVerticalSliceStack,
@@ -47,6 +52,8 @@ export { buildHistoriaRecebidaView } from "./services/build-historia-recebida-vi
 export { buildCuradoriaComecouView } from "./services/build-curadoria-comecou-view";
 export { confirmHistoriaRecebida } from "./services/confirm-historia-recebida";
 export { iniciarCuradoriaCaso } from "./services/iniciar-curadoria-caso";
+export { elaborarRelatorioCaso } from "./services/elaborar-relatorio-caso";
+export { buildRelatorioEmElaboracaoView } from "./services/build-relatorio-em-elaboracao-view";
 export { sharePatientContext } from "./services/share-patient-context";
 export {
   organizeSharedContext,
@@ -55,5 +62,8 @@ export {
   hasNovoContextoParaCuradoria,
   hasCuradoriaIniciada,
   hasCasoProntoParaAnalise,
+  hasRelatorioEmElaboracao,
+  hasCasoEmElaboracao,
+  hasEspacoRelatorioPreparado,
 } from "./services/context-projection-helpers";
 export { getDemoApiRuntime, resetDemoApiRuntime, DEMO_USER_ID } from "./infrastructure/demo-api-runtime";

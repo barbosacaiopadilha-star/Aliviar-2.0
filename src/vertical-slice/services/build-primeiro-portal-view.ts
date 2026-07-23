@@ -3,10 +3,10 @@ import { projectNarrativeForAudience } from "@/journey-memory";
 import { projectPortalContinuation } from "@/journey-handoff";
 import type { OperationalStage } from "@/kernel/jornada/operational-stage";
 
-import { OPERATIONAL_STAGE_LABELS, PUBLIC_CHAPTER_LABELS, HISTORIA_RECEBIDA_COPY, CURADORIA_COMECOU_COPY } from "../labels";
+import { OPERATIONAL_STAGE_LABELS, PUBLIC_CHAPTER_LABELS, HISTORIA_RECEBIDA_COPY, CURADORIA_COMECOU_COPY, RELATORIO_ELABORACAO_COPY } from "../labels";
 import type { PrimeiroPortalView } from "../model/primeiro-portal-view";
 import type { VerticalSliceStack } from "../composition/vertical-slice-stack";
-import { hasCuradoriaIniciada, hasStoryReceptionConfirmed } from "./context-projection-helpers";
+import { hasCuradoriaIniciada, hasRelatorioEmElaboracao, hasStoryReceptionConfirmed } from "./context-projection-helpers";
 
 export interface BuildPrimeiroPortalViewInput {
   handoffId: string;
@@ -73,6 +73,15 @@ export async function buildPrimeiroPortalView(
   const curadoriaIniciada = memoryResult.ok
     ? hasCuradoriaIniciada(memoryResult.value.timeline)
     : false;
+  const relatorioEmElaboracao = memoryResult.ok
+    ? hasRelatorioEmElaboracao(memoryResult.value.timeline)
+    : false;
+
+  const journeyEvolution = relatorioEmElaboracao
+    ? RELATORIO_ELABORACAO_COPY.portalEvolution
+    : curadoriaIniciada
+      ? CURADORIA_COMECOU_COPY.portalEvolution
+      : null;
 
   return {
     ok: true,
@@ -85,7 +94,9 @@ export async function buildPrimeiroPortalView(
       storyReceived,
       comprehension: storyReceived ? HISTORIA_RECEBIDA_COPY.portalComprehension : null,
       curadoriaIniciada,
-      journeyEvolution: curadoriaIniciada ? CURADORIA_COMECOU_COPY.portalEvolution : null,
+      journeyEvolution,
+      relatorioEmElaboracao,
+      trabalhoEmAndamento: relatorioEmElaboracao ? RELATORIO_ELABORACAO_COPY.narrative : null,
     },
   };
 }

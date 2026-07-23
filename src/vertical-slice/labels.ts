@@ -43,6 +43,23 @@ export const CURADORIA_COMECOU_COPY = {
 export const CURADORIA_STARTED_PORTAL_TITLE = CURADORIA_COMECOU_COPY.headline;
 export const CURADORIA_READY_TITLE = CURADORIA_COMECOU_COPY.curadoriaAbertura;
 
+/** Percepção de trabalho cuidadoso na construção do relatório — sem checklist nem progresso. */
+export const RELATORIO_ELABORACAO_COPY = {
+  headline: "O relatório está sendo construído",
+  narrative: "Estamos analisando cuidadosamente todas as informações compartilhadas.",
+  continuation:
+    "Este é um trabalho técnico e cuidadoso. Você pode acompanhar pelo portal quando quiser.",
+  portalEvolution: "Estamos analisando cuidadosamente todas as informações compartilhadas.",
+  curadoriaElaboracao: "Caso em elaboração.",
+  curadoriaBody:
+    "Contexto consolidado. Espaço preparado para a construção do relatório.",
+  espacoRelatorio: "Espaço preparado para construção do relatório.",
+} as const;
+
+export const RELATORIO_ELABORACAO_PORTAL_TITLE = RELATORIO_ELABORACAO_COPY.headline;
+export const RELATORIO_ELABORACAO_CURADORIA_TITLE = RELATORIO_ELABORACAO_COPY.curadoriaElaboracao;
+export const RELATORIO_ESPACO_CURADORIA_TITLE = RELATORIO_ELABORACAO_COPY.espacoRelatorio;
+
 export const PUBLIC_CHAPTER_LABELS: Record<PublicChapter, string> = {
   LIMIAR_THRESHOLD: "Primeiro acolhimento",
   LIMIAR_FILM: "O filme",
