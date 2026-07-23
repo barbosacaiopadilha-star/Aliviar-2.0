@@ -30,6 +30,7 @@
     "curation-report:rc": "vitest run src/curation-report/ && npm run typecheck",
     "curator-workspace:rc": "vitest run src/curator-workspace/ && npm run typecheck",
     "report-delivery:rc": "vitest run src/report-delivery/ && npm run typecheck",
+    "curation-process:rc": "vitest run src/curation-process/ && npm run typecheck",
     "admin:check": "node scripts/local/check-admin-env.mjs",
     "admin:set-password": "node scripts/local/set-admin-password.mjs",
     "admin:setup": "node scripts/local/setup-admin.mjs",
