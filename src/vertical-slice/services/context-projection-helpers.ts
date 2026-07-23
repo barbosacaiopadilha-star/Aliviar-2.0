@@ -7,7 +7,7 @@ import type {
   ContextOrganizationGroup,
   SharedContextItemView,
 } from "../model/compartilhar-contexto-view";
-import { STORY_RECEPTION_CURADORIA_TITLE, STORY_RECEPTION_PORTAL_TITLE } from "../labels";
+import { STORY_RECEPTION_CURADORIA_TITLE, STORY_RECEPTION_PORTAL_TITLE, CURADORIA_READY_TITLE, CURADORIA_STARTED_PORTAL_TITLE } from "../labels";
 
 function isDocumentRef(ref: AttachmentReference): boolean {
   return ref.category === "DOCUMENTO" || Boolean(ref.mimeType);
@@ -88,6 +88,14 @@ export function hasStoryReceptionConfirmed(timeline: MemoryTimelineEntry[]): boo
 
 export function hasNovoContextoParaCuradoria(timeline: MemoryTimelineEntry[]): boolean {
   return timeline.some((entry) => entry.title === STORY_RECEPTION_CURADORIA_TITLE);
+}
+
+export function hasCuradoriaIniciada(timeline: MemoryTimelineEntry[]): boolean {
+  return timeline.some((entry) => entry.title === CURADORIA_STARTED_PORTAL_TITLE);
+}
+
+export function hasCasoProntoParaAnalise(timeline: MemoryTimelineEntry[]): boolean {
+  return timeline.some((entry) => entry.title === CURADORIA_READY_TITLE);
 }
 
 export function countSharedItems(groups: ContextOrganizationGroup[]): number {

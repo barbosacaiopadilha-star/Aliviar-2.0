@@ -22,6 +22,8 @@ describe("PrimeiroPortalSurface", () => {
           nextAction: "1 evento(s) na linha do tempo",
           storyReceived: false,
           comprehension: null,
+          curadoriaIniciada: false,
+          journeyEvolution: null,
         }}
       />,
     );

@@ -7,4 +7,6 @@ export interface PrimeiroPortalView {
   nextAction: string;
   storyReceived: boolean;
   comprehension: string | null;
+  curadoriaIniciada: boolean;
+  journeyEvolution: string | null;
 }

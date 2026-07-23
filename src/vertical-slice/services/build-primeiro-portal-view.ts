@@ -3,10 +3,10 @@ import { projectNarrativeForAudience } from "@/journey-memory";
 import { projectPortalContinuation } from "@/journey-handoff";
 import type { OperationalStage } from "@/kernel/jornada/operational-stage";
 
-import { OPERATIONAL_STAGE_LABELS, PUBLIC_CHAPTER_LABELS, HISTORIA_RECEBIDA_COPY } from "../labels";
+import { OPERATIONAL_STAGE_LABELS, PUBLIC_CHAPTER_LABELS, HISTORIA_RECEBIDA_COPY, CURADORIA_COMECOU_COPY } from "../labels";
 import type { PrimeiroPortalView } from "../model/primeiro-portal-view";
 import type { VerticalSliceStack } from "../composition/vertical-slice-stack";
-import { hasStoryReceptionConfirmed } from "./context-projection-helpers";
+import { hasCuradoriaIniciada, hasStoryReceptionConfirmed } from "./context-projection-helpers";
 
 export interface BuildPrimeiroPortalViewInput {
   handoffId: string;
@@ -70,6 +70,9 @@ export async function buildPrimeiroPortalView(
   const storyReceived = memoryResult.ok
     ? hasStoryReceptionConfirmed(memoryResult.value.timeline)
     : false;
+  const curadoriaIniciada = memoryResult.ok
+    ? hasCuradoriaIniciada(memoryResult.value.timeline)
+    : false;
 
   return {
     ok: true,
@@ -81,6 +84,8 @@ export async function buildPrimeiroPortalView(
       nextAction,
       storyReceived,
       comprehension: storyReceived ? HISTORIA_RECEBIDA_COPY.portalComprehension : null,
+      curadoriaIniciada,
+      journeyEvolution: curadoriaIniciada ? CURADORIA_COMECOU_COPY.portalEvolution : null,
     },
   };
 }

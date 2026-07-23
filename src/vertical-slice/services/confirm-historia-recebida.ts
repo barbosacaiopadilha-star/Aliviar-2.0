@@ -125,7 +125,7 @@ export async function confirmHistoriaRecebida(
       continuation: HISTORIA_RECEBIDA_COPY.continuation,
       patientName: input.patientName,
       journeyState: OPERATIONAL_STAGE_LABELS[currentStage],
-      portalHref: "/portal",
+      portalHref: "/portal/curadoria-comecou",
       receivedAt: occurredAt,
     },
   };

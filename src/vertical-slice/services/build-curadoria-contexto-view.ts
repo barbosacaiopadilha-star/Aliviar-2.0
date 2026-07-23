@@ -6,10 +6,11 @@ import type { VerticalSliceStack } from "../composition/vertical-slice-stack";
 import { PUBLIC_CHAPTER_LABELS } from "../labels";
 import {
   buildContextHistory,
+  hasCasoProntoParaAnalise,
   hasNovoContextoParaCuradoria,
   organizeSharedContext,
 } from "./context-projection-helpers";
-import { HISTORIA_RECEBIDA_COPY } from "../labels";
+import { CURADORIA_COMECOU_COPY, HISTORIA_RECEBIDA_COPY } from "../labels";
 export interface BuildCuradoriaContextoInput {
   journeyId: string;
   patientId: string;
@@ -63,6 +64,7 @@ export async function buildCuradoriaContextoView(
 
   const itemCount = organizacao.reduce((total, group) => total + group.items.length, 0);
   const novoContextoDisponivel = hasNovoContextoParaCuradoria(memory.timeline);
+  const casoProntoParaAnalise = hasCasoProntoParaAnalise(memory.timeline);
 
   return {
     ok: true,
@@ -72,11 +74,15 @@ export async function buildCuradoriaContextoView(
       narrativeCheckpoint: PUBLIC_CHAPTER_LABELS[continuation.resumeAt.publicChapter],
       caseTitle: caseRecord?.context.title ?? "Jornada do paciente",
       comprehension:
-        itemCount > 0
-          ? HISTORIA_RECEBIDA_COPY.curadoriaComprehension
-          : "Aguardando que o paciente compartilhe mais contexto.",
+        casoProntoParaAnalise
+          ? CURADORIA_COMECOU_COPY.curadoriaBody
+          : itemCount > 0
+            ? HISTORIA_RECEBIDA_COPY.curadoriaComprehension
+            : "Aguardando que o paciente compartilhe mais contexto.",
       novoContextoDisponivel,
       sinalCuradoria: novoContextoDisponivel ? HISTORIA_RECEBIDA_COPY.curadoriaSignal : null,
+      casoProntoParaAnalise,
+      aberturaCuradoria: casoProntoParaAnalise ? CURADORIA_COMECOU_COPY.curadoriaAbertura : null,
       organizacao,
       historico,
       memorySummary: narrative.ok ? narrative.value.summary : "",

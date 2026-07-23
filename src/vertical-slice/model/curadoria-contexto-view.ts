@@ -9,6 +9,8 @@ export interface CuradoriaContextoView {
   comprehension: string;
   novoContextoDisponivel: boolean;
   sinalCuradoria: string | null;
+  casoProntoParaAnalise: boolean;
+  aberturaCuradoria: string | null;
   organizacao: ContextOrganizationGroup[];
   historico: ContextHistoryEntry[];
   memorySummary: string;

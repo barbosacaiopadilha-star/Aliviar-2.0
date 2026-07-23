@@ -37,6 +37,12 @@ export function PrimeiroPortalSurface({ view }: PrimeiroPortalSurfaceProps) {
                 <dd data-testid="portal-comprehension">{view.comprehension}</dd>
               </div>
             ) : null}
+            {view.journeyEvolution ? (
+              <div>
+                <dt className="text-sm text-ink/50">Agora</dt>
+                <dd data-testid="portal-journey-evolution">{view.journeyEvolution}</dd>
+              </div>
+            ) : null}
           </dl>
 
           <Link
