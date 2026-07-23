@@ -13,6 +13,21 @@ export const OPERATIONAL_STAGE_LABELS: Record<OperationalStage, string> = {
   ENCERRADO: "Jornada encerrada",
 };
 
+/** Textos da confirmação narrativa após compartilhamento — sem linguagem de protocolo. */
+export const HISTORIA_RECEBIDA_COPY = {
+  headline: "Nós recebemos sua história",
+  narrative: "Agora conseguimos compreender melhor a sua história.",
+  continuation:
+    "Vamos cuidar do que você trouxe com o mesmo cuidado com que você compartilhou. Quando quiser, você pode continuar pelo portal.",
+  curadoriaSignal: "Novo contexto disponível.",
+  curadoriaBody: "O paciente trouxe novos elementos para a curadoria compreender sua história.",
+  portalComprehension: "Agora conseguimos compreender melhor a sua história.",
+  curadoriaComprehension: "Agora conseguimos compreender melhor a história deste paciente.",
+} as const;
+
+export const STORY_RECEPTION_PORTAL_TITLE = HISTORIA_RECEBIDA_COPY.headline;
+export const STORY_RECEPTION_CURADORIA_TITLE = HISTORIA_RECEBIDA_COPY.curadoriaSignal;
+
 export const PUBLIC_CHAPTER_LABELS: Record<PublicChapter, string> = {
   LIMIAR_THRESHOLD: "Primeiro acolhimento",
   LIMIAR_FILM: "O filme",

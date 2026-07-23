@@ -1,17 +1,22 @@
 import { NextResponse } from "next/server";
 
-import { buildPrimeiroPortalView } from "@/vertical-slice";
+import { buildHistoriaRecebidaView } from "@/vertical-slice";
 import { getDemoApiRuntime } from "@/vertical-slice/infrastructure/demo-api-runtime";
 
 export async function GET() {
   try {
     const { stack, userId, flow } = await getDemoApiRuntime();
 
-    const view = await buildPrimeiroPortalView(stack, {
-      handoffId: flow.handoffId,
+    const patient = await stack.patientRepository.findById(flow.patientId);
+    if (!patient) {
+      return NextResponse.json({ message: "Paciente não encontrado." }, { status: 404 });
+    }
+
+    const view = await buildHistoriaRecebidaView(stack, {
       journeyId: flow.journeyId,
       patientId: flow.patientId,
       actorId: userId,
+      patientName: patient.fullName,
     });
 
     if (!view.ok) {
@@ -20,7 +25,7 @@ export async function GET() {
 
     return NextResponse.json(view.value);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro ao carregar portal.";
+    const message = error instanceof Error ? error.message : "Erro ao carregar confirmação.";
     return NextResponse.json({ message }, { status: 500 });
   }
 }

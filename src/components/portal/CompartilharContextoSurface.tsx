@@ -2,15 +2,17 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import type { CompartilharContextoView } from "@/vertical-slice";
 
 interface CompartilharContextoSurfaceProps {
   initialView: CompartilharContextoView;
-  onShared: (view: CompartilharContextoView, acknowledgement: string) => void;
+  onShared: (view: CompartilharContextoView) => void;
 }
 
 export function CompartilharContextoSurface({ initialView, onShared }: CompartilharContextoSurfaceProps) {
+  const router = useRouter();
   const [view, setView] = useState(initialView);
   const [observation, setObservation] = useState("");
   const [documentName, setDocumentName] = useState("");
@@ -18,7 +20,6 @@ export function CompartilharContextoSurface({ initialView, onShared }: Compartil
   const [referenceLabel, setReferenceLabel] = useState("");
   const [referenceUrl, setReferenceUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [acknowledgement, setAcknowledgement] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent) {
@@ -49,18 +50,18 @@ export function CompartilharContextoSurface({ initialView, onShared }: Compartil
       }
 
       const payload = (await response.json()) as {
-        acknowledgement: string;
+        confirmationPath: string;
         view: CompartilharContextoView;
       };
 
-      setAcknowledgement(payload.acknowledgement);
       setView(payload.view);
       setObservation("");
       setDocumentName("");
       setDocumentWhere("");
       setReferenceLabel("");
       setReferenceUrl("");
-      onShared(payload.view, payload.acknowledgement);
+      onShared(payload.view);
+      router.push(payload.confirmationPath);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Erro ao compartilhar.");
     } finally {
@@ -78,12 +79,6 @@ export function CompartilharContextoSurface({ initialView, onShared }: Compartil
           <p className="text-lg leading-relaxed text-ink/75">{view.invitation}</p>
           <p className="text-base leading-relaxed text-ink/60">{view.reassurance}</p>
         </div>
-
-        {acknowledgement ? (
-          <p className="rounded-lg border border-ink/10 bg-white/60 px-4 py-3 text-ink/80" data-testid="share-acknowledgement">
-            {acknowledgement}
-          </p>
-        ) : null}
 
         <form className="space-y-8" onSubmit={handleSubmit} data-testid="share-context-form">
           <section className="space-y-3">

@@ -3,9 +3,10 @@ import { projectNarrativeForAudience } from "@/journey-memory";
 import { projectPortalContinuation } from "@/journey-handoff";
 import type { OperationalStage } from "@/kernel/jornada/operational-stage";
 
-import { OPERATIONAL_STAGE_LABELS, PUBLIC_CHAPTER_LABELS } from "../labels";
+import { OPERATIONAL_STAGE_LABELS, PUBLIC_CHAPTER_LABELS, HISTORIA_RECEBIDA_COPY } from "../labels";
 import type { PrimeiroPortalView } from "../model/primeiro-portal-view";
 import type { VerticalSliceStack } from "../composition/vertical-slice-stack";
+import { hasStoryReceptionConfirmed } from "./context-projection-helpers";
 
 export interface BuildPrimeiroPortalViewInput {
   handoffId: string;
@@ -66,6 +67,9 @@ export async function buildPrimeiroPortalView(
   }
 
   const displayName = firstName(patient.fullName, patient.preferredName);
+  const storyReceived = memoryResult.ok
+    ? hasStoryReceptionConfirmed(memoryResult.value.timeline)
+    : false;
 
   return {
     ok: true,
@@ -75,6 +79,8 @@ export async function buildPrimeiroPortalView(
       journeyState: OPERATIONAL_STAGE_LABELS[journey.currentStage as OperationalStage],
       narrativeCheckpoint: PUBLIC_CHAPTER_LABELS[continuation.resumeAt.publicChapter],
       nextAction,
+      storyReceived,
+      comprehension: storyReceived ? HISTORIA_RECEBIDA_COPY.portalComprehension : null,
     },
   };
 }

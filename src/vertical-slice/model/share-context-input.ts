@@ -20,5 +20,5 @@ export interface SharePatientContextInput {
 
 export interface SharePatientContextResult {
   sharedItems: number;
-  acknowledgement: string;
+  confirmationPath: string;
 }

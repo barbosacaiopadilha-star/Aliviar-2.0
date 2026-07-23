@@ -31,6 +31,12 @@ export function PrimeiroPortalSurface({ view }: PrimeiroPortalSurfaceProps) {
               <dt className="text-sm text-ink/50">Próxima ação</dt>
               <dd data-testid="portal-next-action">{view.nextAction}</dd>
             </div>
+            {view.comprehension ? (
+              <div>
+                <dt className="text-sm text-ink/50">Compreensão</dt>
+                <dd data-testid="portal-comprehension">{view.comprehension}</dd>
+              </div>
+            ) : null}
           </dl>
 
           <Link

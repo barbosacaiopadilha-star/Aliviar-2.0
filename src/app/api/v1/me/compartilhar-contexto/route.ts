@@ -2,58 +2,24 @@ import { NextResponse } from "next/server";
 
 import {
   buildCompartilharContextoView,
-  createVerticalSliceStack,
-  getDemoPortalSession,
-  runPublicToPortalFlow,
-  registerPatientInStack,
-  seedDemoPortalSession,
+  confirmHistoriaRecebida,
   sharePatientContext,
-  signInPatient,
 } from "@/vertical-slice";
-
-const DEMO_USER_ID = "demo-patient-1";
-
-async function ensureDemoSession() {
-  const existing = getDemoPortalSession(DEMO_USER_ID);
-  if (existing) return existing;
-
-  const stack = await createVerticalSliceStack();
-  const flow = await runPublicToPortalFlow(stack, {
-    sessionId: "demo-visitor-session",
-    patientFullName: "Maria Silva",
-    patientPreferredName: "Maria",
-    patientEmail: "maria@example.com",
-    journeyTitle: "Jornada de Maria",
-  });
-
-  registerPatientInStack(stack, {
-    userId: DEMO_USER_ID,
-    email: "maria@example.com",
-    patientId: flow.patientId,
-    fullName: "Maria Silva",
-    preferredName: "Maria",
-  });
-
-  const session = { userId: DEMO_USER_ID, flow };
-  seedDemoPortalSession(session);
-  return session;
-}
+import { getDemoApiRuntime } from "@/vertical-slice/infrastructure/demo-api-runtime";
 
 export async function GET() {
   try {
-    const demo = await ensureDemoSession();
-    const stack = await createVerticalSliceStack();
-    await signInPatient(stack, demo.userId);
+    const { stack, userId, flow } = await getDemoApiRuntime();
 
-    const patient = await stack.patientRepository.findById(demo.flow.patientId);
+    const patient = await stack.patientRepository.findById(flow.patientId);
     if (!patient) {
       return NextResponse.json({ message: "Paciente não encontrado." }, { status: 404 });
     }
 
     const view = await buildCompartilharContextoView(stack, {
-      journeyId: demo.flow.journeyId,
-      patientId: demo.flow.patientId,
-      actorId: demo.userId,
+      journeyId: flow.journeyId,
+      patientId: flow.patientId,
+      actorId: userId,
       patientName: patient.fullName,
     });
 
@@ -70,9 +36,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const demo = await ensureDemoSession();
-    const stack = await createVerticalSliceStack();
-    await signInPatient(stack, demo.userId);
+    const { stack, userId, flow } = await getDemoApiRuntime();
 
     const body = (await request.json()) as {
       observation?: string | null;
@@ -81,9 +45,9 @@ export async function POST(request: Request) {
     };
 
     const shared = await sharePatientContext(stack, {
-      journeyId: demo.flow.journeyId,
-      patientId: demo.flow.patientId,
-      actorId: demo.userId,
+      journeyId: flow.journeyId,
+      patientId: flow.patientId,
+      actorId: userId,
       observation: body.observation,
       document: body.document,
       reference: body.reference,
@@ -93,11 +57,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: shared.error.message }, { status: 400 });
     }
 
-    const patient = await stack.patientRepository.findById(demo.flow.patientId);
+    const patient = await stack.patientRepository.findById(flow.patientId);
+    const confirmed = await confirmHistoriaRecebida(stack, {
+      journeyId: flow.journeyId,
+      patientId: flow.patientId,
+      actorId: userId,
+      patientName: patient?.fullName ?? "Paciente",
+    });
+
+    if (!confirmed.ok) {
+      return NextResponse.json({ message: confirmed.error.message }, { status: 400 });
+    }
+
     const view = await buildCompartilharContextoView(stack, {
-      journeyId: demo.flow.journeyId,
-      patientId: demo.flow.patientId,
-      actorId: demo.userId,
+      journeyId: flow.journeyId,
+      patientId: flow.patientId,
+      actorId: userId,
       patientName: patient?.fullName ?? "Paciente",
     });
 
@@ -106,7 +81,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      acknowledgement: shared.value.acknowledgement,
+      confirmationPath: shared.value.confirmationPath,
       sharedItems: shared.value.sharedItems,
       view: view.value,
     });

@@ -5,4 +5,6 @@ export interface PrimeiroPortalView {
   journeyState: string;
   narrativeCheckpoint: string;
   nextAction: string;
+  storyReceived: boolean;
+  comprehension: string | null;
 }

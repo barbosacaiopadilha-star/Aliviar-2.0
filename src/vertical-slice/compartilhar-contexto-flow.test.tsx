@@ -1,16 +1,23 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 import { CompartilharContextoSurface } from "@/components/portal/CompartilharContextoSurface";
 import {
   buildCompartilharContextoView,
   buildCuradoriaContextoView,
+  confirmHistoriaRecebida,
   createVerticalSliceStack,
   registerPatientInStack,
   runPublicToPortalFlow,
   sharePatientContext,
   signInPatient,
 } from "@/vertical-slice";
+
+const pushMock = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: pushMock }),
+}));
 
 describe("CompartilharContextoSurface", () => {
   it("apresenta experiência de compartilhamento, não upload", () => {
@@ -74,7 +81,14 @@ describe("fluxo Portal → Compartilhar → JourneyMemory → Curadoria", () => 
 
     expect(shared.ok).toBe(true);
     if (!shared.ok) return;
-    expect(shared.value.acknowledgement).toContain("clareza");
+    expect(shared.value.confirmationPath).toBe("/portal/recebemos-sua-historia");
+
+    await confirmHistoriaRecebida(stack, {
+      journeyId: flow.journeyId,
+      patientId: flow.patientId,
+      actorId: "patient-share-1",
+      patientName: "Ana Costa",
+    });
 
     const portalView = await buildCompartilharContextoView(stack, {
       journeyId: flow.journeyId,
@@ -98,6 +112,8 @@ describe("fluxo Portal → Compartilhar → JourneyMemory → Curadoria", () => 
     if (!curadoriaView.ok) return;
 
     expect(curadoriaView.value.comprehension).toContain("compreender melhor");
+    expect(curadoriaView.value.novoContextoDisponivel).toBe(true);
+    expect(curadoriaView.value.sinalCuradoria).toBe("Novo contexto disponível.");
     expect(curadoriaView.value.organizacao.some((g) => g.title === "Observações")).toBe(true);
     expect(curadoriaView.value.organizacao.some((g) => g.title === "Documentos")).toBe(true);
     expect(curadoriaView.value.memorySummary.length).toBeGreaterThan(0);

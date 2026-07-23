@@ -97,7 +97,7 @@ export async function sharePatientContext(
     ok: true,
     value: {
       sharedItems,
-      acknowledgement: "Isso ajuda muito. Agora conseguimos ver sua história com mais clareza.",
+      confirmationPath: "/portal/recebemos-sua-historia",
     },
   };
 }

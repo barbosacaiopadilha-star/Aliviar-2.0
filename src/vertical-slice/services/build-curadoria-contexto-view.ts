@@ -6,8 +6,10 @@ import type { VerticalSliceStack } from "../composition/vertical-slice-stack";
 import { PUBLIC_CHAPTER_LABELS } from "../labels";
 import {
   buildContextHistory,
+  hasNovoContextoParaCuradoria,
   organizeSharedContext,
 } from "./context-projection-helpers";
+import { HISTORIA_RECEBIDA_COPY } from "../labels";
 export interface BuildCuradoriaContextoInput {
   journeyId: string;
   patientId: string;
@@ -60,6 +62,7 @@ export async function buildCuradoriaContextoView(
   );
 
   const itemCount = organizacao.reduce((total, group) => total + group.items.length, 0);
+  const novoContextoDisponivel = hasNovoContextoParaCuradoria(memory.timeline);
 
   return {
     ok: true,
@@ -70,8 +73,10 @@ export async function buildCuradoriaContextoView(
       caseTitle: caseRecord?.context.title ?? "Jornada do paciente",
       comprehension:
         itemCount > 0
-          ? "Agora conseguimos compreender melhor a história deste paciente."
+          ? HISTORIA_RECEBIDA_COPY.curadoriaComprehension
           : "Aguardando que o paciente compartilhe mais contexto.",
+      novoContextoDisponivel,
+      sinalCuradoria: novoContextoDisponivel ? HISTORIA_RECEBIDA_COPY.curadoriaSignal : null,
       organizacao,
       historico,
       memorySummary: narrative.ok ? narrative.value.summary : "",

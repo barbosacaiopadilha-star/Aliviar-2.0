@@ -7,6 +7,8 @@ export interface CuradoriaContextoView {
   narrativeCheckpoint: string;
   caseTitle: string;
   comprehension: string;
+  novoContextoDisponivel: boolean;
+  sinalCuradoria: string | null;
   organizacao: ContextOrganizationGroup[];
   historico: ContextHistoryEntry[];
   memorySummary: string;

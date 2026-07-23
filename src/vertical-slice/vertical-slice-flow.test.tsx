@@ -20,6 +20,8 @@ describe("PrimeiroPortalSurface", () => {
           journeyState: "Cadastro",
           narrativeCheckpoint: "Contando sua história",
           nextAction: "1 evento(s) na linha do tempo",
+          storyReceived: false,
+          comprehension: null,
         }}
       />,
     );
