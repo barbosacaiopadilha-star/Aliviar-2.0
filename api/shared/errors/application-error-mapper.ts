@@ -48,6 +48,15 @@ export function mapValidationToApiResponse(
   });
 }
 
+export function mapNotFoundToApiResponse(
+  message: string,
+): { status: number; body: ApiErrorResponse } {
+  return mapApplicationErrorToApiResponse({
+    code: "NOT_FOUND",
+    message,
+  });
+}
+
 export function mapUnknownToApiResponse(error: unknown): { status: number; body: ApiErrorResponse } {
   const message = error instanceof Error ? error.message : "Erro interno inesperado.";
 
