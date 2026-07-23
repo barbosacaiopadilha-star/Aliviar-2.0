@@ -680,10 +680,13 @@ a {
   cursor: pointer;
 }
 
-.limiar__lamp--awaiting:focus-visible,
-.limiar__lamp-btn.limiar__lamp--awaiting:focus-visible {
-  outline: 1px solid rgba(216, 102, 74, 0.15);
-  outline-offset: 1.25rem;
+/* Foco de teclado perceptível em todo o ciclo do botão (inclusive antes do
+   gate, quando ele já é operável): anel coral sólido de 2px, contraste ≥3:1
+   sobre o papel — atende WCAG 2.4.7/2.4.11 sem quebrar a estética editorial. */
+.limiar__lamp-btn:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 0.5rem;
+  border-radius: 0.75rem;
 }
 
 .limiar__lamp--acknowledged .limiar__lamp-core,
@@ -718,7 +721,9 @@ a {
   font-size: clamp(0.9375rem, 2.8vw, 1.0625rem);
   font-weight: 400;
   letter-spacing: 0.02em;
-  color: rgba(43, 36, 32, 0.58);
+  /* Tom editorial secundário, porém legível: --ink-soft (#6b5f52) sobre o
+     papel rende ~5,6:1 — passa WCAG AA para texto normal (antes ~2,6:1). */
+  color: var(--ink-soft);
   opacity: 0;
   visibility: hidden;
   transform: translateY(var(--stage-shift-reveal));

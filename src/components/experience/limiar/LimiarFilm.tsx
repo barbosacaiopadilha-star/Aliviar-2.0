@@ -56,9 +56,11 @@ export function LimiarFilm({
         onEnded={onEnded}
         onError={onError}
       >
-        {filmAvailable && shouldLoad ? (
-          <source src={filmSrc} type="video/mp4" />
-        ) : null}
+        {/* Fonte presente já no primeiro render quando o filme existe (com
+            preload="none", nada é buscado até load()/play()). Isto permite que
+            o play() de destravamento do iOS ocorra DENTRO do gesto do usuário.
+            Sem filme disponível, nenhuma <source> é emitida (fallback editorial). */}
+        {filmAvailable ? <source src={filmSrc} type="video/mp4" /> : null}
       </video>
     </div>
   );

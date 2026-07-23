@@ -93,9 +93,23 @@ export function LimiarExperience({ filmSrc, filmAvailable }: LimiarExperiencePro
     if (filmAvailable) {
       setShouldLoadFilm(true);
 
+      // iOS: a reprodução real ocorre após a abertura (fora da task do gesto)
+      // e, sem isto, a política de autoplay a bloqueia — o filme não toca.
+      // Destravamos o elemento DENTRO do gesto com um play() mudo seguido de
+      // pause(): o som só entra no play() real, preservando a dramaturgia e o
+      // tempo da abertura. Falha aqui é inofensiva (o fallback abaixo garante).
+      const primerVideo = videoRef.current;
+      if (primerVideo) {
+        primerVideo.muted = true;
+        void Promise.resolve(primerVideo.play())
+          .then(() => primerVideo.pause())
+          .catch(() => {});
+      }
+
       schedule(() => {
         const video = videoRef.current;
         if (video) {
+          video.muted = false;
           video.currentTime = 0;
           void video.play().catch(() => {
             logLimiarFilmError({ src: filmSrc, reason: "playback_failed" });

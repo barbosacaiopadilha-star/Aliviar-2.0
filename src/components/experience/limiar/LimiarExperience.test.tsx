@@ -16,6 +16,7 @@ describe("LimiarExperience", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     HTMLVideoElement.prototype.play = vi.fn().mockResolvedValue(undefined);
+    HTMLVideoElement.prototype.pause = vi.fn();
     HTMLVideoElement.prototype.load = vi.fn();
   });
 
@@ -65,26 +66,41 @@ describe("LimiarExperience", () => {
     expect(screen.queryByText(THRESHOLD_GESTURE_HINT)).not.toBeInTheDocument();
   });
 
-  it("Enter inicia opening", () => {
+  // Enter/Espaço: a luz não tem handler de teclado próprio — é um <button>
+  // nativo, e o navegador despacha click ao receber Enter (keydown) ou Espaço
+  // (keyup). O contrato verificável que garante o teclado é ser um button real,
+  // habilitado e sem aria-disabled quando liberado; a ativação abre o filme.
+  it("Enter: a luz é um botão nativo operável e abre o filme ao ativar", () => {
     const { container } = renderLimiar(false);
     advanceGestureReady();
 
     const button = screen.getByRole("button", { name: "Tocar a luz" });
-    fireEvent.click(button);
+    expect(button.tagName).toBe("BUTTON");
+    expect(button).toHaveAttribute("type", "button");
+    expect(button).toBeEnabled();
+    expect(button).not.toHaveAttribute("aria-disabled");
 
-    expect(container.querySelector(".limiar--gesture-acknowledged")).toBeTruthy();
+    button.focus();
+    expect(button).toHaveFocus();
+
+    fireEvent.click(button); // ativação que o Enter produz nativamente
     expect(container.querySelector(".limiar--opening")).toBeTruthy();
   });
 
-  it("Espaço inicia opening", () => {
+  it("Espaço: a luz permanece operável por teclado do início ao fim do gate", () => {
     const { container } = renderLimiar(false);
+
+    // Antes do gate: focável e habilitado (aria-disabled apenas anuncia espera).
+    const awaiting = screen.getByRole("button", { name: "Aguardando a luz" });
+    expect(awaiting).toBeEnabled();
+    awaiting.focus();
+    expect(awaiting).toHaveFocus();
+
     advanceGestureReady();
 
-    const button = screen.getByRole("button", { name: "Tocar a luz" });
-    fireEvent.keyDown(button, { key: " ", code: "Space" });
-    fireEvent.click(button);
-
-    expect(container.querySelector(".limiar--gesture-acknowledged")).toBeTruthy();
+    const ready = screen.getByRole("button", { name: "Tocar a luz" });
+    expect(ready).toBeEnabled();
+    fireEvent.click(ready); // ativação que o Espaço produz nativamente
     expect(container.querySelector(".limiar--opening")).toBeTruthy();
   });
 
@@ -181,5 +197,69 @@ describe("LimiarExperience", () => {
     fireEvent.click(screen.getByRole("button", { name: "Tocar a luz" }));
 
     expect(loadSpy).toHaveBeenCalled();
+  });
+
+  it("prefers-reduced-motion não altera o fluxo (movimento é puramente CSS)", () => {
+    // O componente não ramifica em JS por reduced-motion — o respeito à
+    // preferência é feito no CSS. Este teste garante que, mesmo com a query
+    // ativa, o gate e o gesto continuam funcionando sem quebrar.
+    const original = window.matchMedia;
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query.includes("prefers-reduced-motion"),
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+
+    try {
+      const { container } = renderLimiar(false);
+      advanceGestureReady();
+
+      fireEvent.click(screen.getByRole("button", { name: "Tocar a luz" }));
+      expect(container.querySelector(".limiar--opening")).toBeTruthy();
+    } finally {
+      window.matchMedia = original;
+    }
+  });
+
+  it("play() bloqueado (autoplay) cai no fallback editorial sem travar", async () => {
+    // Simula a política de autoplay do iOS: todo play() rejeita. O primer é
+    // inofensivo e o play() real cai no catch → assimilação (a experiência
+    // continua, sem hang e sem ficar presa no vídeo).
+    HTMLVideoElement.prototype.play = vi.fn().mockRejectedValue(new Error("blocked"));
+
+    const { container } = renderLimiar(true);
+    advanceGestureReady();
+
+    fireEvent.click(screen.getByRole("button", { name: "Tocar a luz" }));
+
+    // Avança a abertura e deixa as promessas rejeitadas (primer e play real)
+    // assentarem dentro do act.
+    await act(async () => {
+      vi.advanceTimersByTime(FILM_OPENING_MS);
+    });
+
+    expect(container.querySelector(".limiar--assimilation")).toBeTruthy();
+  });
+
+  it("limpa os timers agendados ao desmontar", () => {
+    const clearSpy = vi.spyOn(globalThis, "clearTimeout");
+    const { container, unmount } = renderLimiar(false);
+    advanceGestureReady();
+
+    // Agenda os timers do fluxo de filme (opening/poster/assimilação).
+    fireEvent.click(screen.getByRole("button", { name: "Tocar a luz" }));
+    expect(container.querySelector(".limiar--opening")).toBeTruthy();
+
+    clearSpy.mockClear();
+    unmount();
+
+    // O cleanup do efeito limpa os timers pendentes em timersRef.
+    expect(clearSpy).toHaveBeenCalled();
+    clearSpy.mockRestore();
   });
 });
