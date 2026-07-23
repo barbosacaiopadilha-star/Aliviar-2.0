@@ -17,7 +17,7 @@ export const STAGE_MS = {
   presenceLeakIn: 3800,
   presenceFloorDelay: 7800,
   presenceFloorIn: 4500,
-  gestureReady: 11000,
+  gestureReady: 6500,
   filmOpening: 1800,
   filmAssimilation: 4800,
   consolidationDelay: 600,

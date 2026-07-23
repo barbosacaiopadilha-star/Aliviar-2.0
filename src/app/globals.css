@@ -510,15 +510,36 @@ a {
   padding: 3rem 1.5rem 5rem;
 }
 
-.limiar__lamp {
+.limiar__lamp,
+.limiar__lamp-btn {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: clamp(6rem, 22vh, 10rem);
+  min-width: 2.75rem;
   width: 100%;
   opacity: 0;
   animation: stage-lamp-in 2200ms var(--stage-ease) 1900ms forwards;
+}
+
+.limiar__lamp-btn {
+  margin: 0;
+  padding: 0.75rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.limiar__lamp-btn:disabled {
+  cursor: default;
+}
+
+.limiar__lamp-btn:not(:disabled)[aria-disabled="true"] {
+  cursor: default;
 }
 
 .limiar__lamp-halo {
@@ -657,12 +678,51 @@ a {
 
 .limiar__lamp--awaiting {
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
 }
 
-.limiar__lamp--awaiting:focus-visible {
+.limiar__lamp--awaiting:focus-visible,
+.limiar__lamp-btn.limiar__lamp--awaiting:focus-visible {
   outline: 1px solid rgba(216, 102, 74, 0.15);
   outline-offset: 1.25rem;
+}
+
+.limiar__lamp--acknowledged .limiar__lamp-core,
+.limiar__lamp-btn.limiar__lamp--acknowledged .limiar__lamp-core {
+  opacity: 1;
+  transform: scale(1.2);
+  background: rgba(216, 102, 74, 0.62);
+  box-shadow: 0 0 2.25rem rgba(244, 223, 214, 0.62);
+  transition:
+    transform 320ms var(--stage-ease),
+    box-shadow 320ms var(--stage-ease),
+    background 320ms var(--stage-ease);
+}
+
+.limiar__lamp--acknowledged .limiar__lamp-halo,
+.limiar__lamp-btn.limiar__lamp--acknowledged .limiar__lamp-halo {
+  opacity: 1;
+  transform: scale(1.08);
+  transition: transform 420ms var(--stage-ease), opacity 420ms var(--stage-ease);
+}
+
+.limiar--gesture-acknowledged .limiar__glow--room {
+  opacity: var(--stage-opacity-room-max);
+  transform: translateX(-50%) scale(1.04);
+  transition:
+    opacity 420ms var(--stage-ease),
+    transform 420ms var(--stage-ease);
+}
+
+.limiar__hint {
+  margin-top: -2.5rem;
+  font-size: clamp(0.9375rem, 2.8vw, 1.0625rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: rgba(43, 36, 32, 0.58);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(var(--stage-shift-reveal));
+  animation: stage-voice-in var(--stage-duration-reveal) var(--stage-ease) forwards;
 }
 
 .limiar--opening .limiar__main,
@@ -701,6 +761,11 @@ a {
 .limiar-film--visible {
   opacity: 1;
   pointer-events: auto;
+}
+
+.limiar-film--fallback .limiar-film__image {
+  object-fit: cover;
+  opacity: 0.92;
 }
 
 .limiar--assimilation .limiar-film--visible {
@@ -855,7 +920,9 @@ a {
   }
 
   .limiar__line,
+  .limiar__hint,
   .limiar__lamp,
+  .limiar__lamp-btn,
   .limiar__consolidation,
   .limiar__continuation-line,
   .limiar__reveal-line {

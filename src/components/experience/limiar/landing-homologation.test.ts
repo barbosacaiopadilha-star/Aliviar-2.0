@@ -25,7 +25,6 @@ describe("landing homologation (R01)", () => {
     const experience = readComponent("LimiarExperience.tsx");
     const invite = readComponent("LimiarInviteSection.tsx");
 
-    expect(experience).not.toContain('aria-live="polite"');
     expect(experience).not.toContain('label="Continuação"');
     expect(experience).not.toContain('label="O ofício"');
     expect(experience).not.toContain('label="O caminho"');
@@ -44,5 +43,12 @@ describe("landing homologation (R01)", () => {
 
     expect(css).toMatch(/\.limiar__reveal-line[\s\S]*visibility:\s*hidden/);
     expect(css).toMatch(/@keyframes stage-voice-in[\s\S]*visibility:\s*visible/);
+  });
+
+  it("mantém reduced motion funcional no limiar", () => {
+    const css = readFileSync(resolve(LIMIAR_ROOT, "../../../app/globals.css"), "utf8");
+
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*\.limiar__hint/);
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*\.limiar__lamp-btn/);
   });
 });

@@ -1,4 +1,5 @@
 import { resolveFilmSrc } from "./film-model";
+import { isFilmAssetDeployed } from "./film-availability.server";
 import { LimiarExperience } from "./LimiarExperience";
 
 type ThresholdExperienceProps = {
@@ -6,5 +7,10 @@ type ThresholdExperienceProps = {
 };
 
 export function ThresholdExperience({ filmSrc }: ThresholdExperienceProps) {
-  return <LimiarExperience filmSrc={resolveFilmSrc(filmSrc)} />;
+  const resolvedFilmSrc = resolveFilmSrc(filmSrc);
+  const filmAvailable = isFilmAssetDeployed(resolvedFilmSrc);
+
+  return (
+    <LimiarExperience filmSrc={resolvedFilmSrc} filmAvailable={filmAvailable} />
+  );
 }

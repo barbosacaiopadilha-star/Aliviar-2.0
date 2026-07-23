@@ -6,31 +6,35 @@ import { FILM_POSTER_SRC } from "./film-model";
 
 type LimiarFilmProps = {
   filmSrc: string;
+  filmAvailable: boolean;
   videoRef: RefObject<HTMLVideoElement | null>;
   visible: boolean;
-  readyToLoad: boolean;
+  shouldLoad: boolean;
   onEnded: () => void;
   onError: () => void;
 };
 
 export function LimiarFilm({
   filmSrc,
+  filmAvailable,
   videoRef,
   visible,
-  readyToLoad,
+  shouldLoad,
   onEnded,
   onError,
 }: LimiarFilmProps) {
   useEffect(() => {
-    if (!readyToLoad) return;
+    if (!shouldLoad || !filmAvailable) return;
+
     const video = videoRef.current;
     if (!video) return;
+
     video.load();
-  }, [readyToLoad, videoRef]);
+  }, [shouldLoad, filmAvailable, videoRef]);
 
   return (
     <div
-      className={`limiar-film${visible ? " limiar-film--visible" : ""}`}
+      className={`limiar-film${visible ? " limiar-film--visible" : ""}${!filmAvailable ? " limiar-film--fallback" : ""}`}
       aria-hidden={!visible}
     >
       <video
@@ -44,13 +48,17 @@ export function LimiarFilm({
         disablePictureInPicture
         aria-label={
           visible
-            ? "Filme institucional Aliviar — reprodução em andamento"
+            ? filmAvailable
+              ? "Filme institucional Aliviar — reprodução em andamento"
+              : "Pausa editorial — filme institucional em preparação"
             : undefined
         }
         onEnded={onEnded}
         onError={onError}
       >
-        <source src={filmSrc} type="video/mp4" />
+        {filmAvailable && shouldLoad ? (
+          <source src={filmSrc} type="video/mp4" />
+        ) : null}
       </video>
     </div>
   );
