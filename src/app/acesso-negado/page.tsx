@@ -16,8 +16,11 @@ export default async function AcessoNegadoPage() {
 
   return (
     <div>
-      <h1>Acesso negado</h1>
-      <p>Você não tem acesso a esta área com o seu perfil atual.</p>
+      <h1>Esta área não está disponível para você</h1>
+      <p>
+        Com o seu perfil atual, você não tem acesso a esta parte da plataforma.
+        Tudo bem — sua área continua logo abaixo.
+      </p>
       <p>
         <Link href={backHref}>Voltar para a minha área</Link>
       </p>

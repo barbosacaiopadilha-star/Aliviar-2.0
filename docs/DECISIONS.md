@@ -526,3 +526,13 @@ Mas `reviewStatus: VALIDATED` é qualitativamente diferente das demais: é o ún
 - **Relação com a ADR-021 e o gate de maturidade:** `platform/` **não é um oitavo domínio** — o gate dos 7 domínios trata de domínios de produto e permanece intacto. A execução do WP3 sob o congelamento foi exceção operacional decidida pelo responsável; esta ADR a registra, não a amplia — o congelamento da ADR-021 segue valendo para o produto.
 - **Consequência:** a camada `platform/` passa a existir formalmente na arquitetura registrada. Nenhum outro documento é alterado por esta ADR; o reflexo em `docs/ARCHITECTURE.md`/`docs/INDEX.md` segue o ciclo normal de manutenção documental (`docs/DOCUMENTATION_GOVERNANCE_POLICY.md`).
 - **Revisitar quando:** surgir o primeiro WP propondo novo submódulo de `platform/`, ou qualquer proposta de integração do `runtime` ao caminho de execução do produto — ambos exigem retorno a esta ADR.
+
+---
+
+## ADR-031 — Experience Continuity v1.1: descongelamento temporário e escopado da ADR-021
+
+- **Status:** Aprovada pelo responsável do projeto. Registra a decisão que o responsável rotulou "ADR-022 — Experience Continuity v1.1"; o número **022 já estava ocupado** neste log (Golden Set), então a decisão é registrada aqui como **ADR-031**, sem sobrescrever nada (log append-only).
+- **Contexto:** a ADR-021 congelou o produto V1.0 ("nunca melhoria"). Os blueprints PROGRAM-20/21 apontaram que a continuidade de experiência entre PortalExperience → Login → Sua História depende de melhorias de UX vedadas pelo congelamento. O responsável decidiu explicitamente autorizá-las para o lançamento da V1.
+- **Decisão:** a ADR-021 é **descongelada temporária e exclusivamente** para melhorias de experiência necessárias ao lançamento. **Escopo permitido:** continuidade visual, tipográfica, de animações; performance; acessibilidade; correções de UX; ajustes de copy. **Escopo proibido (inalterado da ADR-021):** novas funcionalidades, novos fluxos, alteração de domínio, mudança arquitetural, novos módulos, mudança de regra de negócio.
+- **Consequência:** trabalho de continuidade sobre `PortalExperience`, `(auth)` e `sua-historia` passa a ser permitido dentro do escopo acima, editando componentes existentes — nunca criando segunda Landing, navegação, Design System ou componente paralelo.
+- **Revisitar quando:** **ao término do lançamento da V1, o congelamento da ADR-021 volta a vigorar automaticamente** — sem necessidade de nova ADR para re-congelar; qualquer trabalho fora do escopo desta ADR permanece vedado mesmo durante a vigência dela.

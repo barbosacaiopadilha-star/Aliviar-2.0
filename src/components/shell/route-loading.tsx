@@ -4,7 +4,7 @@ export function RouteLoading() {
   return (
     <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 text-ink-muted">
       <Spinner size="lg" />
-      <p className="text-sm">Carregando...</p>
+      <p className="text-sm">Só um momento...</p>
     </div>
   );
 }

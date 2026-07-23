@@ -22,7 +22,16 @@ export default async function SuaHistoriaWizardLayout({
   return (
     <StoryDraftProvider story={story}>
       <StoryConflictBanner />
-      {children}
+      {/* Continuidade com a PortalExperience (ADR-031): calor ambiente
+          atrás dos passos e uma entrada suave, para o wizard ser sentido
+          como continuação do filme, nunca um formulário à parte. */}
+      <div className="relative min-h-screen">
+        <div
+          aria-hidden="true"
+          className="ambient-warmth pointer-events-none absolute inset-0"
+        />
+        <div className="animate-fade-up relative">{children}</div>
+      </div>
     </StoryDraftProvider>
   );
 }
