@@ -1,25 +1,18 @@
-import { DEMO_MODE_FLAGS } from "@/lib/production/demo-mode-flags";
-import {
-  guardPatientDemoAccess,
-  jsonRouteData,
-  jsonRouteMessage,
-  runGuardedDemoRoute,
-} from "@/lib/production/guard-demo-runtime";
 import {
   buildCompartilharContextoView,
   confirmHistoriaRecebida,
   sharePatientContext,
 } from "@/vertical-slice";
-import { getDemoApiRuntime } from "@/vertical-slice/infrastructure/demo-api-runtime";
+import {
+  jsonRouteData,
+  jsonRouteMessage,
+  runPatientPortalRoute,
+} from "@/infrastructure/persistence/run-persistence-route";
 
 export async function GET(request: Request) {
-  return runGuardedDemoRoute(request, {
+  return runPatientPortalRoute(request, {
     operation: "me.compartilhar-contexto.get",
-    flag: DEMO_MODE_FLAGS.PATIENT_DEMO_MODE,
-    guard: guardPatientDemoAccess,
-    handler: async (context) => {
-      const { stack, userId, flow } = await getDemoApiRuntime();
-
+    handler: async (context, { stack, userId, flow }) => {
       const patient = await stack.patientRepository.findById(flow.patientId);
       if (!patient) {
         return jsonRouteMessage(context, 404, "Paciente não encontrado.");
@@ -42,13 +35,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  return runGuardedDemoRoute(request, {
+  return runPatientPortalRoute(request, {
     operation: "me.compartilhar-contexto.post",
-    flag: DEMO_MODE_FLAGS.PATIENT_DEMO_MODE,
-    guard: guardPatientDemoAccess,
-    handler: async (context) => {
-      const { stack, userId, flow } = await getDemoApiRuntime();
-
+    handler: async (context, { stack, userId, flow }) => {
       const body = (await request.json()) as {
         observation?: string | null;
         document?: { name: string; where: string; note?: string | null } | null;

@@ -1,21 +1,14 @@
-import { DEMO_MODE_FLAGS } from "@/lib/production/demo-mode-flags";
+import { buildHistoriaRecebidaView } from "@/vertical-slice";
 import {
-  guardPatientDemoAccess,
   jsonRouteData,
   jsonRouteMessage,
-  runGuardedDemoRoute,
-} from "@/lib/production/guard-demo-runtime";
-import { buildHistoriaRecebidaView } from "@/vertical-slice";
-import { getDemoApiRuntime } from "@/vertical-slice/infrastructure/demo-api-runtime";
+  runPatientPortalRoute,
+} from "@/infrastructure/persistence/run-persistence-route";
 
 export async function GET(request: Request) {
-  return runGuardedDemoRoute(request, {
+  return runPatientPortalRoute(request, {
     operation: "me.historia-recebida",
-    flag: DEMO_MODE_FLAGS.PATIENT_DEMO_MODE,
-    guard: guardPatientDemoAccess,
-    handler: async (context) => {
-      const { stack, userId, flow } = await getDemoApiRuntime();
-
+    handler: async (context, { stack, userId, flow }) => {
       const patient = await stack.patientRepository.findById(flow.patientId);
       if (!patient) {
         return jsonRouteMessage(context, 404, "Paciente não encontrado.");

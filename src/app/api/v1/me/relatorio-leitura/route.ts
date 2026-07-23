@@ -1,24 +1,14 @@
-import { DEMO_MODE_FLAGS } from "@/lib/production/demo-mode-flags";
+import { confirmReportReading, openReportReading } from "@/product-experience/report-reading";
 import {
-  guardReportDemoAccess,
   jsonRouteData,
   jsonRouteMessage,
-  runGuardedDemoRoute,
-} from "@/lib/production/guard-demo-runtime";
-import {
-  confirmReportReading,
-  getDemoReportReadingRuntime,
-  openReportReading,
-} from "@/product-experience/report-reading";
+  runReportReadingRoute,
+} from "@/infrastructure/persistence/run-persistence-route";
 
 export async function GET(request: Request) {
-  return runGuardedDemoRoute(request, {
+  return runReportReadingRoute(request, {
     operation: "me.relatorio-leitura.get",
-    flag: DEMO_MODE_FLAGS.REPORT_DEMO_MODE,
-    guard: guardReportDemoAccess,
-    handler: async (context) => {
-      const { stack, userId, flow } = await getDemoReportReadingRuntime();
-
+    handler: async (context, { stack, userId, flow }) => {
       const opened = await openReportReading(stack, {
         journeyId: flow.journeyId,
         patientId: flow.patientId,
@@ -36,13 +26,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  return runGuardedDemoRoute(request, {
+  return runReportReadingRoute(request, {
     operation: "me.relatorio-leitura.post",
-    flag: DEMO_MODE_FLAGS.REPORT_DEMO_MODE,
-    guard: guardReportDemoAccess,
-    handler: async (context) => {
-      const { stack, userId, flow } = await getDemoReportReadingRuntime();
-
+    handler: async (context, { stack, userId, flow }) => {
       const confirmed = await confirmReportReading(stack, {
         journeyId: flow.journeyId,
         patientId: flow.patientId,

@@ -66,4 +66,3 @@ export {
   hasCasoEmElaboracao,
   hasEspacoRelatorioPreparado,
 } from "./services/context-projection-helpers";
-export { getDemoApiRuntime, resetDemoApiRuntime, DEMO_USER_ID } from "./infrastructure/demo-api-runtime";

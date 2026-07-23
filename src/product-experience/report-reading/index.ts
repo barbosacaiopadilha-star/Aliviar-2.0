@@ -14,10 +14,3 @@ export type { OpenReportReadingInput, OpenReportReadingResult } from "./services
 
 export { confirmReportReading } from "./services/confirm-report-reading";
 export type { ConfirmReportReadingInput, ConfirmReportReadingResult } from "./services/confirm-report-reading";
-
-export {
-  getDemoReportReadingRuntime,
-  resetDemoReportReadingRuntime,
-  DEMO_REPORT_READING_USER_ID,
-  DEMO_REPORT_READING_CURATOR_ID,
-} from "./infrastructure/demo-report-reading-runtime";

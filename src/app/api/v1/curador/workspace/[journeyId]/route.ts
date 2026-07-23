@@ -1,20 +1,17 @@
 import { EVIDENCE_TYPES, type EvidenceType } from "@/curation-report";
 import {
   buildCuratorWorkspaceView,
-  getDemoCuratorWorkspaceRuntime,
   openCuratorWorkspace,
   workspaceAddEvidence,
   workspaceAddMedicalCandidate,
   workspaceAddCuratorNote,
   workspaceSubmitForReview,
 } from "@/curator-workspace";
-import { DEMO_MODE_FLAGS } from "@/lib/production/demo-mode-flags";
 import {
-  guardCuratorDemoAccess,
   jsonRouteData,
   jsonRouteMessage,
-  runGuardedDemoRoute,
-} from "@/lib/production/guard-demo-runtime";
+  runCuratorWorkspaceRoute,
+} from "@/infrastructure/persistence/run-persistence-route";
 
 interface RouteContext {
   params: Promise<{ journeyId: string }>;
@@ -23,17 +20,9 @@ interface RouteContext {
 export async function GET(request: Request, context: RouteContext) {
   const { journeyId } = await context.params;
 
-  return runGuardedDemoRoute(request, {
+  return runCuratorWorkspaceRoute(request, journeyId, {
     operation: "curador.workspace.get",
-    flag: DEMO_MODE_FLAGS.CURATOR_DEMO_MODE,
-    guard: guardCuratorDemoAccess,
-    handler: async (ctx) => {
-      const { stack, flow, curatorActorId } = await getDemoCuratorWorkspaceRuntime();
-
-      if (journeyId !== flow.journeyId) {
-        return jsonRouteMessage(ctx, 404, "Jornada não disponível no demo.");
-      }
-
+    handler: async (ctx, { stack, flow, curatorActorId }) => {
       const opened = await openCuratorWorkspace(stack, {
         journeyId: flow.journeyId,
         handoffId: flow.handoffId,
@@ -62,17 +51,9 @@ export async function GET(request: Request, context: RouteContext) {
 export async function POST(request: Request, context: RouteContext) {
   const { journeyId } = await context.params;
 
-  return runGuardedDemoRoute(request, {
+  return runCuratorWorkspaceRoute(request, journeyId, {
     operation: "curador.workspace.post",
-    flag: DEMO_MODE_FLAGS.CURATOR_DEMO_MODE,
-    guard: guardCuratorDemoAccess,
-    handler: async (ctx) => {
-      const { stack, flow, curatorActorId } = await getDemoCuratorWorkspaceRuntime();
-
-      if (journeyId !== flow.journeyId) {
-        return jsonRouteMessage(ctx, 404, "Jornada não disponível no demo.");
-      }
-
+    handler: async (ctx, { stack, flow, curatorActorId }) => {
       const opened = await openCuratorWorkspace(stack, {
         journeyId: flow.journeyId,
         handoffId: flow.handoffId,

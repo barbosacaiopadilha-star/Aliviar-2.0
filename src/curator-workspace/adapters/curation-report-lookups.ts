@@ -1,5 +1,5 @@
-import type { InMemoryCaseRepository, InMemoryPatientRepository } from "@/case-registration/infrastructure/in-memory-repositories";
-import type { InMemoryJourneyKernelRepository } from "@/kernel";
+import type { CaseRepositoryPort, PatientRepositoryPort } from "@/case-registration/ports/case-registration-ports";
+import type { JourneyKernelRepositoryPort } from "@/kernel/ports/kernel-ports";
 import type {
   CaseContextRecord,
   CaseLookupPort,
@@ -10,7 +10,7 @@ import type {
 } from "@/curation-report";
 
 export class VerticalSliceCaseLookup implements CaseLookupPort {
-  constructor(private readonly repository: InMemoryCaseRepository) {}
+  constructor(private readonly repository: CaseRepositoryPort) {}
 
   async findById(caseId: string): Promise<CaseContextRecord | null> {
     const record = await this.repository.findById(caseId);
@@ -24,7 +24,7 @@ export class VerticalSliceCaseLookup implements CaseLookupPort {
 }
 
 export class VerticalSliceJourneyLookup implements JourneyLookupPort {
-  constructor(private readonly repository: InMemoryJourneyKernelRepository) {}
+  constructor(private readonly repository: JourneyKernelRepositoryPort) {}
 
   async findById(journeyId: string): Promise<JourneyContextRecord | null> {
     const record = await this.repository.findById(journeyId);
@@ -37,7 +37,7 @@ export class VerticalSliceJourneyLookup implements JourneyLookupPort {
 }
 
 export class VerticalSlicePatientLookup implements PatientLookupPort {
-  constructor(private readonly repository: InMemoryPatientRepository) {}
+  constructor(private readonly repository: PatientRepositoryPort) {}
 
   async findById(patientId: string): Promise<PatientContextRecord | null> {
     const record = await this.repository.findById(patientId);

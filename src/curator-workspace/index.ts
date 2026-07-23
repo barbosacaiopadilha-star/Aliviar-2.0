@@ -17,9 +17,3 @@ export {
   workspaceAddCuratorNote,
   workspaceSubmitForReview,
 } from "./services/workspace-mutations";
-
-export {
-  getDemoCuratorWorkspaceRuntime,
-  resetDemoCuratorWorkspaceRuntime,
-  DEMO_CURATOR_ID,
-} from "./infrastructure/demo-curator-workspace-runtime";

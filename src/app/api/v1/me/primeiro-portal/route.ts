@@ -1,21 +1,14 @@
-import { DEMO_MODE_FLAGS } from "@/lib/production/demo-mode-flags";
+import { buildPrimeiroPortalView } from "@/vertical-slice";
 import {
-  guardPatientDemoAccess,
   jsonRouteData,
   jsonRouteMessage,
-  runGuardedDemoRoute,
-} from "@/lib/production/guard-demo-runtime";
-import { buildPrimeiroPortalView } from "@/vertical-slice";
-import { getDemoApiRuntime } from "@/vertical-slice/infrastructure/demo-api-runtime";
+  runPatientPortalRoute,
+} from "@/infrastructure/persistence/run-persistence-route";
 
 export async function GET(request: Request) {
-  return runGuardedDemoRoute(request, {
+  return runPatientPortalRoute(request, {
     operation: "me.primeiro-portal",
-    flag: DEMO_MODE_FLAGS.PATIENT_DEMO_MODE,
-    guard: guardPatientDemoAccess,
-    handler: async (context) => {
-      const { stack, userId, flow } = await getDemoApiRuntime();
-
+    handler: async (context, { stack, userId, flow }) => {
       const view = await buildPrimeiroPortalView(stack, {
         handoffId: flow.handoffId,
         journeyId: flow.journeyId,
