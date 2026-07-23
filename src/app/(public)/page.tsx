@@ -5,72 +5,76 @@ import type { Metadata } from "next";
 
 import { FaqBookSection } from "@/components/landing/faq-book-section";
 import { FinalCtaSection } from "@/components/landing/final-cta-section";
-import { PortalExperience } from "@/components/landing/portal-experience";
-import { PORTAL_SCENES } from "@/components/landing/portal-scenes";
+import { HeroExperience } from "@/components/landing/v2/hero-experience";
+import {
+  ComoDecidimosSection,
+  ComoFuncionaSection,
+  MetodoSection,
+  ProblemaSection,
+} from "@/components/landing/v2/metodo-sections";
+import {
+  CompartilhadaSection,
+  PrioridadesSection,
+  RelatorioSection,
+} from "@/components/landing/v2/curadoria-sections";
+import {
+  PortalPacienteSection,
+  QuemSomosSection,
+} from "@/components/landing/v2/presenca-sections";
 
-// LANDING — ARQUITETURA DO ACOLHIMENTO. PortalExperience é o ambiente
-// único e permanente (Chegada → Respiro → Triagem → Análise → Curadoria,
-// com Benefícios/Confiança/Seleção-Agendamento-Atendimento absorvidos
-// como continuação da Curadoria) — cada parada existe para proteger uma
-// emoção específica, nunca para demonstrar arquitetura. A direção de
-// fotografia (portal-scenes.ts) é seis enquadramentos da mesma locação,
-// resolvidos aqui em disco. O Vídeo Companheiro acompanha até o início
-// da Curadoria e se despede aos poucos; o Fio Dourado atravessa a
-// experiência inteira como presença discreta. FaqBookSection (Biblioteca)
-// e FinalCtaSection (Convite) seguem como componentes próprios, com
-// paleta alinhada ao mesmo ambiente acolhedor.
+// LANDING 2.0 (MISSÃO 201, ADR-033) — a porta de entrada do Método Aliviar.
+//
+// Estrutura exata da missão: Hero → Problema → Método → Como funciona →
+// [Como tomamos decisões, seção inédita] → Perfil de Prioridades → Curadoria
+// Compartilhada → Relatório → Portal do Paciente → Quem somos → FAQ → Contato.
+//
+// O vídeo é o protagonista (ADR-033, supersede o papel ambiente da ADR-026);
+// a comunicação abandona qualquer discurso de IA — a mensagem é Método,
+// Curadoria, Critério, Decisão Compartilhada. FAQ (Biblioteca) e Contato
+// (Convite final) permanecem os componentes já aprovados — a 2.0 é evolução
+// da Landing atual, nunca outro produto.
+//
+// O PortalExperience anterior permanece no repositório como histórico até a
+// revisão decidir seu destino (ADR-033).
 export const metadata: Metadata = {
   title: { absolute: "Aliviar Curadoria Médica — Uma escolha de cuidado, nunca sozinho" },
   description:
-    "Curadoria médica independente, com acompanhamento humano em cada etapa — do primeiro contato à conversa que importa.",
+    "Um método claro para decidir sobre sua saúde: você define o que importa, um Curador conduz, e você escolhe entre três opções explicadas com calma.",
 };
 
-// Caminhos oficiais reservados para o vídeo institucional da Landing
-// (docs/VIDEO_INSTITUCIONAL_LANDING.md) — checagem de existência em disco
-// (build/render time) evita apontar para um arquivo inexistente enquanto
-// o vídeo definitivo não for adicionado.
-const VIDEO_INSTITUCIONAL_SRC = "/videos/video-institucional-aliviar.webm";
-const VIDEO_INSTITUCIONAL_POSTER = "/images/video-institucional-poster.webp";
+const VIDEO_SRC = "/videos/video-institucional-aliviar.webm";
+const VIDEO_POSTER = "/images/video-institucional-poster.webp";
 
-function resolveInstitutionalVideo(): { src?: string; poster?: string } {
-  const videoPath = path.join(process.cwd(), "public", VIDEO_INSTITUCIONAL_SRC);
+// Resolvido em disco no build/render — se o vídeo não existir, o Hero degrada
+// para mensagem + ações, sem moldura vazia e sem parecer carregando.
+function resolveVideo(): { src?: string; poster?: string } {
+  const videoPath = path.join(process.cwd(), "public", VIDEO_SRC);
   if (!existsSync(videoPath)) return {};
 
-  const posterPath = path.join(process.cwd(), "public", VIDEO_INSTITUCIONAL_POSTER);
+  const posterPath = path.join(process.cwd(), "public", VIDEO_POSTER);
   return {
-    src: VIDEO_INSTITUCIONAL_SRC,
-    poster: existsSync(posterPath) ? VIDEO_INSTITUCIONAL_POSTER : undefined,
+    src: VIDEO_SRC,
+    poster: existsSync(posterPath) ? VIDEO_POSTER : undefined,
   };
 }
 
-// Resolve cada cena de portal-scenes.ts em disco — se algum arquivo
-// específico ainda não existir (ex.: uma cena da V1.1 ainda não
-// fotografada), cai para a última cena que existir antes dela, nunca
-// quebra e nunca mostra uma imagem ausente.
-function resolvePortalScenes(): Array<{ id: string; src: string }> {
-  const resolved: Array<{ id: string; src: string }> = [];
-  let lastSrc: string | undefined;
-
-  for (const scene of PORTAL_SCENES) {
-    const filePath = path.join(process.cwd(), "public", scene.src);
-    if (existsSync(filePath)) {
-      lastSrc = scene.src;
-      resolved.push({ id: scene.id, src: scene.src });
-    } else if (lastSrc) {
-      resolved.push({ id: scene.id, src: lastSrc });
-    }
-  }
-
-  return resolved;
-}
-
 export default function HomePage() {
-  const scenes = resolvePortalScenes();
-  const institutionalVideo = resolveInstitutionalVideo();
+  const video = resolveVideo();
 
   return (
     <>
-      <PortalExperience scenes={scenes} videoSrc={institutionalVideo.src} videoPoster={institutionalVideo.poster} />
+      {/* Hero pinado com a dinâmica do vídeo de aliviar-temp (ADR-033):
+          sobe → centraliza → crossfade para o vídeo → zoom → pausa. */}
+      <HeroExperience videoSrc={video.src} videoPoster={video.poster} />
+      <ProblemaSection />
+      <MetodoSection />
+      <ComoFuncionaSection />
+      <ComoDecidimosSection />
+      <PrioridadesSection />
+      <CompartilhadaSection />
+      <RelatorioSection />
+      <PortalPacienteSection />
+      <QuemSomosSection />
       <FaqBookSection />
       <FinalCtaSection />
     </>

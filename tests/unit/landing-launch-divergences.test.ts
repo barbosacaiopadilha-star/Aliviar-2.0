@@ -248,16 +248,22 @@ describe("Ordem das 12 seções preservada", () => {
     expect(footerIndex).toBeGreaterThan(mainIndex);
   });
 
-  it("page.tsx mantém a ordem Portal → FAQ → CTA Final", () => {
+  // Atualizado pela ADR-033 (Landing 2.0, MISSÃO 201): o PortalExperience
+  // deixou de abrir a página — o Hero da 2.0 assume, com a estrutura de 11
+  // seções da missão. FAQ (Biblioteca) e CTA Final (Convite) permanecem, na
+  // mesma ordem relativa de fechamento, agora precedidos pelas seções novas.
+  it("page.tsx mantém a ordem Hero 2.0 → … → FAQ → CTA Final (ADR-033)", () => {
     const page = readFileSync(
       path.join(process.cwd(), "src", "app", "(public)", "page.tsx"),
       "utf-8",
     );
-    const portalIndex = page.indexOf("<PortalExperience");
+    const heroIndex = page.indexOf("<HeroExperience");
+    const quemSomosIndex = page.indexOf("<QuemSomosSection");
     const faqIndex = page.indexOf("<FaqBookSection");
     const ctaIndex = page.indexOf("<FinalCtaSection");
-    expect(portalIndex).toBeGreaterThan(-1);
-    expect(faqIndex).toBeGreaterThan(portalIndex);
+    expect(heroIndex).toBeGreaterThan(-1);
+    expect(quemSomosIndex).toBeGreaterThan(heroIndex);
+    expect(faqIndex).toBeGreaterThan(quemSomosIndex);
     expect(ctaIndex).toBeGreaterThan(faqIndex);
   });
 });
