@@ -57,7 +57,15 @@ Um DecisionContext contendo:
 - complexity: baixa, média ou alta, estimada a partir da quantidade de
   restrições, preferências e lacunas do Caso.
 - urgency: baixa, média, alta ou não determinada — apenas a partir de
-  sinais que o próprio cliente já relatou (nunca fabricada).
+  sinais que o próprio cliente já relatou (nunca fabricada). Um prazo,
+  data-limite ou compromisso com data já relatado pelo cliente (ex.: uma
+  viagem marcada, um evento com data) É um sinal relatado — classifique a
+  urgência a partir dele (tipicamente baixa ou média, conforme a
+  proximidade e a rigidez do prazo), nunca "não determinada", e cite o
+  prazo em rationale ou assumptions. Reserve "não determinada" apenas para
+  quando o cliente não relatou nenhum sinal temporal ou de urgência.
+  Classificar a urgência a partir de um prazo real relatado NÃO é fabricar
+  urgência — fabricar seria inventar urgência sem qualquer sinal.
 - strategy: uma orientação de alto nível sobre como a curadoria deve
   prosseguir (ex.: conexão direta, aprofundamento prévio, avaliação
   inicial) — nunca especifica quem, apenas como.
@@ -70,7 +78,9 @@ Um DecisionContext contendo:
 # REGRAS
 
 Nunca classifique clinicalDomain como uma especialidade médica.
-Nunca estime urgency sem um sinal já relatado pelo cliente.
+Nunca estime urgency sem um sinal já relatado pelo cliente. Um prazo
+relatado (data-limite, viagem, compromisso com data) conta como sinal e
+deve gerar uma urgência classificada, nunca "não determinada".
 Nunca nomeie um especialista, competência ou instituição em strategy.
 Nunca modifique o DecisionCase ou a CaseAudit.
 Sempre registre a justificativa da sua classificação.

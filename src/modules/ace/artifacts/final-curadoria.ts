@@ -93,7 +93,6 @@ const ABSOLUTE_FORBIDDEN_PHRASES = [
   "primeira opção",
   "segunda opção",
   "terceira opção",
-  "melhor opção",
   "melhor profissional",
   "mais recomendado",
   "vencedor",
@@ -125,7 +124,8 @@ const ABSOLUTE_FORBIDDEN_PHRASES = [
 //
 // Gatilhos de negação: conjunto pequeno e fechado (não/nunca/sem/
 // nenhum+flexões/jamais) — não um verbo específico.
-const NEGATION_TRIGGER_PATTERN = /\bn[ãa]o\b|\bnunca\b|\bsem\b|\bnenhum\w*\b|\bjamais\b/;
+const NEGATION_TRIGGER_PATTERN =
+  /\bn[ãa]o\b|\bnunca\b|\bsem\b|\bnenhum\w*\b|\bjamais\b/;
 
 // Qualquer um destes encerra a cláusula local — uma negação anterior a eles
 // nunca "alcança" uma expressão proibida posterior. Pontuação forte sempre
@@ -186,13 +186,15 @@ function isPhraseOccurrenceNegated(text: string, phraseIndex: number): boolean {
 // Nota: não duplica aqui a checagem de expressões absolutas proibidas
 // (ABSOLUTE_FORBIDDEN_PHRASES) — assertNoForbiddenLanguage já a executa
 // antes desta função, então nenhuma cláusula avaliada abaixo pode conter
-// "vencedor"/"melhor opção"/etc. sem já ter lançado ProtocolError primeiro.
+// "vencedor"/"melhor profissional"/etc. sem já ter lançado ProtocolError primeiro.
 function hasUnnegatedOccurrenceOfPhrase(text: string, phrase: string): boolean {
   if (!text.includes(phrase)) {
     return false;
   }
 
-  return findPhraseOccurrenceIndices(text, phrase).some((index) => !isPhraseOccurrenceNegated(text, index));
+  return findPhraseOccurrenceIndices(text, phrase).some(
+    (index) => !isPhraseOccurrenceNegated(text, index),
+  );
 }
 
 // Expressões proibidas apenas quando AFIRMADAS — uma negação explícita e
@@ -205,10 +207,24 @@ function hasUnnegatedOccurrenceOfPhrase(text: string, phrase: string): boolean {
 // outra entrada de ABSOLUTE_FORBIDDEN_PHRASES foi avaliada nem promovida
 // para cá — cada promoção exige sua própria calibração registrada em
 // docs/ace/CALIBRATION_REPORT.md, nunca em lote.
-const CONTEXTUAL_FORBIDDEN_PHRASES = ["ranking", "mais indicado"];
+//
+// CAL-005 (ADR-032): "melhor opção" saiu de ABSOLUTE para cá pelo mesmo
+// motivo de CAL-001/CAL-004 — o Golden Set (2026-07-23) produziu uma
+// amostra real em que o modelo NEGA a expressão de forma protetora
+// ("não representa uma recomendação de 'melhor opção'"), exatamente o
+// enquadramento anti-ranking que a specification.md do P010 exige. Uso
+// AFIRMADO de "melhor opção" continua rejeitado (mesma cláusula local);
+// só a negação explícita passa a ser aceita.
+const CONTEXTUAL_FORBIDDEN_PHRASES = [
+  "ranking",
+  "mais indicado",
+  "melhor opção",
+];
 
 function isSortedByProviderId(ids: string[]): boolean {
-  return ids.every((id, index) => index === 0 || ids[index - 1].localeCompare(id) <= 0);
+  return ids.every(
+    (id, index) => index === 0 || ids[index - 1].localeCompare(id) <= 0,
+  );
 }
 
 function collectFreeText(input: CreateFinalCuradoriaInput): string[] {
@@ -235,14 +251,18 @@ function collectFreeText(input: CreateFinalCuradoriaInput): string[] {
   return texts;
 }
 
-function assertNoForbiddenLanguage(input: CreateFinalCuradoriaInput, protocolId: "P010"): void {
+function assertNoForbiddenLanguage(
+  input: CreateFinalCuradoriaInput,
+  protocolId: "P010",
+): void {
   const allText = collectFreeText(input).join(" \n ").toLowerCase();
 
   if (allText.includes("%")) {
     throw new ProtocolError({
       code: "VALIDATION_FAILED",
       protocolId,
-      message: "FinalCuradoria não pode conter percentual (\"%\") em nenhum texto — nunca score, nunca ranking.",
+      message:
+        'FinalCuradoria não pode conter percentual ("%") em nenhum texto — nunca score, nunca ranking.',
     });
   }
 
@@ -267,7 +287,10 @@ function assertNoForbiddenLanguage(input: CreateFinalCuradoriaInput, protocolId:
   }
 }
 
-function assertRequiredFields(input: CreateFinalCuradoriaInput, protocolId: "P010"): void {
+function assertRequiredFields(
+  input: CreateFinalCuradoriaInput,
+  protocolId: "P010",
+): void {
   const requiredNonEmpty: Array<[string, string]> = [
     ["validatedBy", input.validatedBy],
     ["validatedAt", input.validatedAt],
@@ -306,7 +329,10 @@ function assertRequiredFields(input: CreateFinalCuradoriaInput, protocolId: "P01
   }
 }
 
-function assertProviderPresentationsInvariants(input: CreateFinalCuradoriaInput, protocolId: "P010"): void {
+function assertProviderPresentationsInvariants(
+  input: CreateFinalCuradoriaInput,
+  protocolId: "P010",
+): void {
   if (input.providerPresentations.length !== REQUIRED_PROVIDER_COUNT) {
     throw new ProtocolError({
       code: "VALIDATION_FAILED",
@@ -329,12 +355,17 @@ function assertProviderPresentationsInvariants(input: CreateFinalCuradoriaInput,
     throw new ProtocolError({
       code: "VALIDATION_FAILED",
       protocolId,
-      message: "providerPresentations deve estar em ordem neutra e determinística (por providerId) — a posição nunca representa preferência, prioridade ou recomendação superior.",
+      message:
+        "providerPresentations deve estar em ordem neutra e determinística (por providerId) — a posição nunca representa preferência, prioridade ou recomendação superior.",
     });
   }
 
   for (const presentation of input.providerPresentations) {
-    if (!presentation.displayName || !presentation.professionalSummary || !presentation.whyIncluded) {
+    if (
+      !presentation.displayName ||
+      !presentation.professionalSummary ||
+      !presentation.whyIncluded
+    ) {
       throw new ProtocolError({
         code: "MISSING_REQUIRED_FIELD",
         protocolId,
@@ -344,8 +375,14 @@ function assertProviderPresentationsInvariants(input: CreateFinalCuradoriaInput,
   }
 }
 
-export function createFinalCuradoria(input: CreateFinalCuradoriaInput): FinalCuradoria {
-  assertFieldPolicy(input as unknown as Record<string, unknown>, "P010", "FinalCuradoria");
+export function createFinalCuradoria(
+  input: CreateFinalCuradoriaInput,
+): FinalCuradoria {
+  assertFieldPolicy(
+    input as unknown as Record<string, unknown>,
+    "P010",
+    "FinalCuradoria",
+  );
   assertRequiredFields(input, "P010");
   assertProviderPresentationsInvariants(input, "P010");
   assertNoForbiddenLanguage(input, "P010");

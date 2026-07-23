@@ -17,9 +17,9 @@ O ACE está congelado na V1.0 (ADR-021) — nenhum desenvolvimento novo de produ
 
 **O que este documento registra:** cada calibração motivada por evidência empírica (Golden Set, produção, teste de integração, incidente operacional, revisão humana) — o que foi observado, a matriz de análise, e se/quando uma decisão normativa foi de fato tomada em outro lugar.
 
-**O que este documento não decide:** nenhuma entrada aqui, por si só, altera Constituição, Framework, Ontologia, Kernel, `specification.md`, `prompt.md`, `examples.md`, `tests.md`, protocolo, artefato ou o próprio Golden Set. Uma entrada pode *propor* ou *recomendar*, mas a mudança real só existe quando aplicada formalmente na camada correspondente (e, se for arquitetural, também registrada em `docs/DECISIONS.md`).
+**O que este documento não decide:** nenhuma entrada aqui, por si só, altera Constituição, Framework, Ontologia, Kernel, `specification.md`, `prompt.md`, `examples.md`, `tests.md`, protocolo, artefato ou o próprio Golden Set. Uma entrada pode _propor_ ou _recomendar_, mas a mudança real só existe quando aplicada formalmente na camada correspondente (e, se for arquitetural, também registrada em `docs/DECISIONS.md`).
 
-**Relação com o Golden Set:** o Golden Set (`tests/golden/`) é a fonte de evidência empírica mais comum para uma entrada aqui — ele mostra *o que o modelo realmente fez*; este documento registra *o que isso significa* e *o que foi decidido a respeito*.
+**Relação com o Golden Set:** o Golden Set (`tests/golden/`) é a fonte de evidência empírica mais comum para uma entrada aqui — ele mostra _o que o modelo realmente fez_; este documento registra _o que isso significa_ e _o que foi decidido a respeito_.
 
 **Relação com ADRs:** nem toda entrada vira uma ADR. Uma entrada só referencia ou gera uma ADR quando a calibração de fato altera arquitetura, protocolo ou regra normativa — nunca por padrão.
 
@@ -92,6 +92,7 @@ Condição objetiva para reavaliação.
 **Evidência observada:** `specification.md` do P010 exige que `comparisonSummary` explique que não há ranking entre os três providers. O mecanismo de verificação (`assertNoForbiddenLanguage`, `final-curadoria.ts`) rejeitava qualquer ocorrência da palavra "ranking", inclusive dentro de uma negação fiel ao que a especificação pede. Uma primeira correção (padrões de negação auditáveis: "sem ranking", "não há/existe/constitui/configura/representa/cria/gera... ranking", "nunca construímos/criamos/fazemos/geramos... ranking") resolveu o caso originalmente relatado. Uma segunda execução real, na mesma sessão, produziu uma nova amostra do modelo com a construção "não funciona como um ranking" — uma negação legítima, mas não coberta pelos padrões existentes — e voltou a ser rejeitada.
 
 **Matriz de calibração:**
+
 - Filosofia desejada: nunca apresentar a curadoria como ranking/vencedor; a escolha final é sempre do cliente.
 - Regra normativa anterior: `specification.md` exige negar ranking no texto; Kernel proíbe permanentemente vocabulário de ranking. Nenhuma das duas muda.
 - Regra normativa proposta: nenhuma — a regra em si está correta; o que está em aberto é só o mecanismo de verificação.
@@ -115,7 +116,7 @@ Condição objetiva para reavaliação.
 
 ### Adendo — 2026-07-15 — Implementação aprovada e concluída
 
-**Decisão tomada pelo arquiteto:** aceitar a taxa residual de falso-positivo como salvaguarda deliberada (alternativa já nomeada na entrada original) — trocando a estratégia de "enumerar verbos de negação específicos" por "detectar qualquer gatilho de negação pequeno e fechado (`não`/`nunca`/`sem`/`nenhum`+flexões/`jamais`) dentro da mesma cláusula semântica local da ocorrência de 'ranking'". Deixa de depender de prever a variação exata de verbo que o modelo vai usar; passa a depender apenas de existir *algum* marcador de negação na mesma oração.
+**Decisão tomada pelo arquiteto:** aceitar a taxa residual de falso-positivo como salvaguarda deliberada (alternativa já nomeada na entrada original) — trocando a estratégia de "enumerar verbos de negação específicos" por "detectar qualquer gatilho de negação pequeno e fechado (`não`/`nunca`/`sem`/`nenhum`+flexões/`jamais`) dentro da mesma cláusula semântica local da ocorrência de 'ranking'". Deixa de depender de prever a variação exata de verbo que o modelo vai usar; passa a depender apenas de existir _algum_ marcador de negação na mesma oração.
 
 **Implementação:** `hasUnnegatedRanking` (`final-curadoria.ts`) reescrita em funções pequenas e nomeadas — `findRankingOccurrenceIndices`, `extractLocalClauseBefore`, `isRankingOccurrenceNegated` — cada ocorrência de "ranking" é avaliada isoladamente contra a cláusula local que a precede, delimitada por pontuação forte (`. ? ! \n ; :`) e por conjunções adversativas (`mas`, `porém`, `contudo`, `entretanto`, `todavia`, `no entanto`) — nunca por vírgula isolada, para não bloquear negações estilisticamente pontuadas. `RANKING_NEGATION_PATTERNS` (lista fechada de padrões de verbo) foi removida — substituída por este mecanismo. `ABSOLUTE_FORBIDDEN_PHRASES` e a ordem de verificação (frases absolutas antes de "ranking") permanecem inalteradas.
 
@@ -162,6 +163,7 @@ Condição objetiva para reavaliação.
 **Evidência observada:** para um DecisionCase com decisão e objetivo claros e `mandatoryConstraints` vazio, o modelo produziu um achado adicional com `severity: "blocking"` sobre a ausência de informação prática (localização/formato/horário/orçamento), resultando em `status: "BLOCKED"`. `specification.md` do P003 (Casos de Exceção) determina, sem ambiguidade, que uma lacuna não relacionada a decisão/objetivo é sempre `Warning`, nunca bloqueante.
 
 **Matriz de calibração:**
+
 - Filosofia desejada: nunca atrasar ou bloquear o cliente por uma lacuna não essencial.
 - Regra normativa anterior: `specification.md`, Casos de Exceção — lacuna não essencial = sempre Warning. Permanece inalterada.
 - Regra normativa proposta: nenhuma — a regra normativa já está correta; a divergência é de fidelidade do `prompt.md` a ela.
@@ -204,6 +206,7 @@ Esta calibração foi formalizada em **ADR-024** (`docs/DECISIONS.md`): decisão
 **Evidência observada:** para um DecisionCase com uma restrição obrigatória de prazo (viagem de trabalho em três meses), duas execuções idênticas produziram `urgency` diferente entre si (`"nao_determinado"`, depois `"baixa"`), e nenhuma das duas correspondeu ao exemplo já documentado em `examples.md` (`"media"`). `specification.md` nunca operacionaliza a relação entre um sinal de prazo relatado e o nível de urgência resultante.
 
 **Matriz de calibração:**
+
 - Filosofia desejada: em aberto entre duas alternativas.
   - **A.** Prazo operacional influencia obrigatoriamente a classificação de urgência.
   - **B.** Prazo operacional é uma restrição de contexto e não implica necessariamente urgência clínica.
@@ -227,11 +230,119 @@ Esta calibração foi formalizada em **ADR-024** (`docs/DECISIONS.md`): decisão
 
 **Revisitar quando:** o arquiteto do projeto decidir entre a Alternativa A e a Alternativa B.
 
+### Adendo — 2026-07-23 — Alternativa A adotada (Calibration Board / ADR-032)
+
+**Decisão do responsável (Calibration Board, PROGRAM-34):** adotada a **Alternativa A** — um prazo relatado (data-limite, viagem, compromisso com data) É um sinal relatado de urgência e deve gerar uma `urgency` classificada (tipicamente baixa/média), nunca `"nao_determinado"`, com o prazo citado em `rationale`/`assumptions`. Esta decisão **inverte** a recomendação técnica anterior (Alternativa B, registrada acima) — registrada como adendo rastreável, sem reescrever a entrada original (regra de governança §2).
+
+**Fundamento (fontes canônicas):** `specification.md` linha 15 já usa "restrição de prazo" como **o exemplo** de sinal válido de urgência; Critério de Aceitação (linha 92) exige urgência rastreável a um sinal presente; `tests.md` T03 operacionaliza exatamente isso. A Alternativa A **afirma a intenção já vigente** — por isso `specification.md`/`tests.md`/`examples.md` **não** foram alterados. Reconciliação com o Kernel/BRAND: classificar urgência a partir de um prazo real relatado não é "senso de urgência artificial" — artificial seria inventar urgência sem sinal.
+
+**Evidência que motivou:** Golden Set `2026-07-23` (`claude-sonnet-5`) — o modelo devolveu `urgency: nao_determinado` para o caso da viagem em três meses, divergindo de T03. Adjudicação (PROGRAM-33): responsável = modelo (interpretação estreita "só urgência clínica").
+
+**Implementação (ADR-032):** único ajuste em `prompt.md` do P004 (seções "O QUE VOCÊ DEVE PRODUZIR" → urgency, e "REGRAS") + sincronização da cópia fiel `P004_SYSTEM_PROMPT` em `src/modules/concierge/anthropic-language-model.ts`. Nenhuma `specification.md`/`tests.md`/`examples.md`/fixture alterada.
+
+**Arquivos normativos afetados:** `docs/ace/04-specs/P004-decision-context-modeler/prompt.md`.
+
+**ADR relacionada:** ADR-032.
+
+**Validação:** reexecução do Golden Set (registrada abaixo, seção "2026-07-23").
+
+**Status:** Implementada.
+
+---
+
+## 2026-07-23 — P010 (Final Curadoria Delivery) — "melhor opção" negada rejeitada (CAL-005)
+
+**Categoria:** Adaptação ao comportamento do modelo / correção de implementação.
+
+**Status:** Implementada.
+
+**Gatilho:** Golden Set (`tests/golden/fixtures/p010-final-curadoria-delivery.ts`), execução oficial `2026-07-23`, `claude-sonnet-5`.
+
+**Evidência observada:** o modelo produziu `"melhor opção"` **apenas em forma negada/protetora** — amostra real (decisionSummary): _"Essa aprovação não representa um ranking nem uma recomendação de 'melhor opção'"_ — exatamente o enquadramento anti-ranking que a `specification.md` do P010 exige. `"melhor opção"` estava em `ABSOLUTE_FORBIDDEN_PHRASES` (proibida mesmo negada), então `assertNoForbiddenLanguage` bloqueou (`VALIDATION_FAILED`). Defesa em profundidade funcionou (artefato nunca criado), mas o bloqueio incidiu sobre linguagem segura.
+
+**Matriz de calibração:**
+
+- Filosofia desejada: nunca apresentar a curadoria como "melhor opção"; a escolha é do cliente.
+- Regra normativa: inalterada — `specification.md`/Kernel proíbem vocabulário de ranking; ambos exigem/permitem **negá-lo** no texto.
+- Divergência: verificação por substring absoluta vs. negação legítima — mesma classe de CAL-001 ("ranking") e CAL-004 ("mais indicado").
+- Menor ajuste: mover `"melhor opção"` de `ABSOLUTE_FORBIDDEN_PHRASES` para `CONTEXTUAL_FORBIDDEN_PHRASES`, reutilizando a infraestrutura de cláusula local existente (nenhuma lógica nova).
+- Impacto em produção: baixo — uso afirmado continua bloqueado; só a negação explícita passa.
+
+**Decisão tomada (Calibration Board / ADR-032):** Alternativa B do board — promover para CONTEXTUAL, por paridade com CAL-001/CAL-004.
+
+**Implementação:** `final-curadoria.ts` — `"melhor opção"` removido de `ABSOLUTE_FORBIDDEN_PHRASES`, adicionado a `CONTEXTUAL_FORBIDDEN_PHRASES`. Comentários atualizados. `tests/unit/ace-final-curadoria.test.ts` — 8 novos casos (negação aceita; afirmação e ruptura de oração rejeitadas). O teste existente de uso afirmado permanece verde.
+
+**Arquivos normativos afetados:** nenhum — `specification.md`/`prompt.md` do P010 inalterados; a mudança é só no mecanismo de verificação.
+
+**ADR relacionada:** ADR-032.
+
+**Validação:** testes determinísticos (`ace-final-curadoria.test.ts`) + reexecução do Golden Set (abaixo).
+
+**Revisitar quando:** o mesmo padrão (frase da lista negada legitimamente) aparecer para outra entrada de `ABSOLUTE_FORBIDDEN_PHRASES` — cada promoção exige sua própria calibração, nunca em lote.
+
+---
+
+## 2026-07-23 — P003 (Case Audit) — saída fora do schema (ACE_MODEL_INVALID_RESPONSE)
+
+**Categoria:** Adaptação ao comportamento do modelo (robustez de formato).
+
+**Status:** Aprovada — sem alteração (robustez aceitável).
+
+**Gatilho:** Golden Set (`tests/golden/fixtures/p003-case-audit.ts`, "caso limpo"), execução oficial `2026-07-23`, `claude-sonnet-5`.
+
+**Evidência observada:** para o caso limpo, a resposta do modelo não passou o `P003_RESPONSE_SCHEMA` (Zod) — `ACE_MODEL_INVALID_RESPONSE`, `output: null`. Falha estocástica de **forma**, não de conteúdo; o guard funcionou (status `error`, protocolo não avançou, nada persistido).
+
+**Decisão tomada (Calibration Board / ADR-032):** **nenhuma alteração** — robustez aceitável, não bloqueador. Em produção resolve por reexecução idempotente (RUNBOOK §6.1), sob vigília humana no Shadow Launch. Distinta da entrada P003 de 2026-07-14 (classificação incorreta de bloqueio → ADR-024); esta é robustez de schema.
+
+**Arquivos normativos afetados:** nenhum.
+
+**ADR relacionada:** ADR-032 (registro da decisão; nenhuma implementação).
+
+**Validação:** Golden Set (a falha é estocástica — pode ou não reaparecer em reexecuções).
+
+**Revisitar quando:** a taxa de `ACE_MODEL_INVALID_RESPONSE` do P003 se mostrar sistemática no Shadow Launch (Command Center) — aí sim seria robustez de `prompt.md` a investigar.
+
+---
+
+## 2026-07-23 (reexecução pós-ADR-032) — P010 — fixture do disclaimer é literal demais (`/não substitui/`)
+
+**Categoria:** Correção de fixture (fragilidade de asserção) — ainda pendente de decisão.
+
+**Status:** Em análise. **Fora do escopo do ADR-032** (que autorizou só o guard do P010, nunca fixtures).
+
+**Gatilho:** reexecução do Golden Set (`2026-07-23T08-13-28`, `claude-sonnet-5`) após implementar CAL-005. Com o guard corrigido, a FinalCuradoria foi **construída com sucesso** — a falha migrou para a asserção da fixture.
+
+**Evidência observada:** `p010-final-curadoria-delivery.ts` verifica `disclaimer.toMatch(/não substitui/)`. O modelo produziu um disclaimer **semanticamente equivalente e conforme** — _"não constitui diagnóstico, indicação de tratamento ou substituto de consulta médica"_ — mas com "substituto de" em vez da literal "não substitui". A exigência do Método (disclaimer de que a curadoria não substitui consulta/diagnóstico/tratamento) está **cumprida**; a asserção é que é frágil (match literal). Mesma classe de fragilidade que o `types.ts` das fixtures adverte: _"assert verifica REGRA, nunca igualdade textual"_.
+
+**Decisão tomada:** nenhuma — aguarda o responsável. Candidata a ajuste da fixture para verificar a **regra** (menção a não-substituição de consulta/diagnóstico/tratamento) por um padrão semântico mais robusto (ex.: `/substitu/` cobrindo "substitui"/"substituto"), nunca uma nova literal frágil.
+
+**Arquivos normativos afetados:** nenhum. **ADR relacionada:** nenhuma (fixture, não guard/prompt/spec).
+
+**Revisitar quando:** o responsável autorizar um ajuste de fixture (fora do ADR-032).
+
+---
+
+## 2026-07-23 (reexecução pós-ADR-032) — P003 — "caso limpo" produz warnings válidos (READY_WITH_WARNINGS)
+
+**Categoria:** Fidelidade prompt↔fixture — ainda pendente de decisão.
+
+**Status:** Em análise. **Fora do escopo do ADR-032** (autorizou só P004 e P010).
+
+**Gatilho:** reexecução do Golden Set (`2026-07-23T08-13-28`, `claude-sonnet-5`).
+
+**Evidência observada:** para o caso limpo, o modelo devolveu `status: READY_WITH_WARNINGS` com 5 achados, **todos `severity: warning`** e `relatedField: other`/`goal` (modalidade, localização, horário, orçamento ausentes + uma ambiguidade sobre o objetivo). Isso é **conforme** à `specification.md` do P003 (Casos de Exceção: lacuna opcional ausente = Warning, nunca bloqueio — e o Content Invariant ADR-024 **não** foi violado nesta rodada). A fixture, porém, espera `READY` com **zero** achados (_"o modelo não deve inventar achado"_). Divergência: a fixture assume que o caso limpo não deve sinalizar lacunas práticas opcionais; a spec permite sinalizá-las como warnings. Estocástico (rodada anterior falhou por schema inválido; esta por warnings válidos).
+
+**Decisão tomada:** nenhuma — aguarda o responsável decidir se o caso limpo deve ser estritamente `READY` (ajuste de `prompt.md` para não emitir warnings opcionais não solicitados) **ou** se `READY_WITH_WARNINGS` com warnings válidos é aceitável (ajuste da fixture). Relaciona-se à entrada P003 de 2026-07-14 (fidelidade prompt↔spec) e ao ADR-024.
+
+**Arquivos normativos afetados:** nenhum. **ADR relacionada:** relacionada a ADR-024 (não implementada).
+
+**Revisitar quando:** o responsável autorizar (fora do ADR-032) a decisão acima.
+
 ---
 
 ## Relação com ADR-022
 
-A ADR-022 (`docs/DECISIONS.md`) torna o Golden Set (`tests/golden/`) um requisito obrigatório de governança para qualquer mudança futura de prompt, modelo, SDK ou provider dos protocolos P002/P003/P004/P010. Este Calibration Report não substitui nem estende essa ADR — ele registra o que foi *aprendido* a partir do gate que a ADR-022 formalizou.
+A ADR-022 (`docs/DECISIONS.md`) torna o Golden Set (`tests/golden/`) um requisito obrigatório de governança para qualquer mudança futura de prompt, modelo, SDK ou provider dos protocolos P002/P003/P004/P010. Este Calibration Report não substitui nem estende essa ADR — ele registra o que foi _aprendido_ a partir do gate que a ADR-022 formalizou.
 
 Divisão de responsabilidade:
 

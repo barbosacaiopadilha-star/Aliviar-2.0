@@ -7,7 +7,10 @@ import {
 } from "@/modules/ace/artifacts/final-curadoria";
 import { ProtocolError } from "@/modules/ace/core/error-contract";
 
-function buildProviderPresentation(providerId: string, overrides: Partial<ProviderPresentation> = {}): ProviderPresentation {
+function buildProviderPresentation(
+  providerId: string,
+  overrides: Partial<ProviderPresentation> = {},
+): ProviderPresentation {
   return {
     providerId,
     displayName: `Provider ${providerId}`,
@@ -24,22 +27,35 @@ function buildValidInput(): CreateFinalCuradoriaInput {
   return {
     validatedBy: "reviewer-1",
     validatedAt: "2026-07-12T00:00:00.000Z",
-    humanReviewReference: { artifactId: "review-1", artifactVersion: 1, artifactType: "HumanReviewResult" },
-    caseReference: { artifactId: "case-1", artifactVersion: 1, artifactType: "DecisionCase" },
+    humanReviewReference: {
+      artifactId: "review-1",
+      artifactVersion: 1,
+      artifactType: "HumanReviewResult",
+    },
+    caseReference: {
+      artifactId: "case-1",
+      artifactVersion: 1,
+      artifactType: "DecisionCase",
+    },
     generatedAt: "2026-07-12T00:00:00.000Z",
-    decisionSummary: "Você busca um espaço de escuta para lidar com a ansiedade.",
-    clientContextSummary: "O caso foi modelado como uma busca por acompanhamento contínuo, sem urgência sinalizada.",
+    decisionSummary:
+      "Você busca um espaço de escuta para lidar com a ansiedade.",
+    clientContextSummary:
+      "O caso foi modelado como uma busca por acompanhamento contínuo, sem urgência sinalizada.",
     providerPresentations: [
       buildProviderPresentation("provider-A"),
       buildProviderPresentation("provider-B"),
       buildProviderPresentation("provider-C"),
     ],
-    comparisonSummary: "Os três providers foram selecionados por compatibilidade com o caso; a ordem de apresentação é neutra.",
+    comparisonSummary:
+      "Os três providers foram selecionados por compatibilidade com o caso; a ordem de apresentação é neutra.",
     relevantLimitations: [],
     relevantMissingInformation: [],
     nextSteps: ["Entre em contato com o provider de sua escolha."],
-    methodExplanation: "A Aliviar realizou uma curadoria independente com base no seu caso.",
-    disclaimer: "Esta curadoria não substitui consulta, diagnóstico ou tratamento médico.",
+    methodExplanation:
+      "A Aliviar realizou uma curadoria independente com base no seu caso.",
+    disclaimer:
+      "Esta curadoria não substitui consulta, diagnóstico ou tratamento médico.",
     methodVersion: "ACE-0.1",
   };
 }
@@ -91,7 +107,8 @@ describe("FinalCuradoria", () => {
 
   it("rejeita expressões de ranking/vencedor (ex.: 'melhor opção')", () => {
     const input = buildValidInput();
-    input.providerPresentations[0].whyIncluded = "Esta é a melhor opção para o seu caso.";
+    input.providerPresentations[0].whyIncluded =
+      "Esta é a melhor opção para o seu caso.";
 
     expect(() => createFinalCuradoria(input)).toThrow(ProtocolError);
   });
@@ -105,21 +122,24 @@ describe("FinalCuradoria", () => {
 
   it("rejeita a palavra 'percentual' mesmo sem o símbolo %", () => {
     const input = buildValidInput();
-    input.comparisonSummary = "A avaliação percentual de compatibilidade foi alta.";
+    input.comparisonSummary =
+      "A avaliação percentual de compatibilidade foi alta.";
 
     expect(() => createFinalCuradoria(input)).toThrow(ProtocolError);
   });
 
   it("rejeita 'score' em qualquer texto", () => {
     const input = buildValidInput();
-    input.methodExplanation = "Cada provider recebe um score de compatibilidade.";
+    input.methodExplanation =
+      "Cada provider recebe um score de compatibilidade.";
 
     expect(() => createFinalCuradoria(input)).toThrow(ProtocolError);
   });
 
   it("rejeita 'o melhor profissional'", () => {
     const input = buildValidInput();
-    input.providerPresentations[0].whyIncluded = "Este é o melhor profissional disponível.";
+    input.providerPresentations[0].whyIncluded =
+      "Este é o melhor profissional disponível.";
 
     expect(() => createFinalCuradoria(input)).toThrow(ProtocolError);
   });
@@ -195,12 +215,49 @@ describe("FinalCuradoria", () => {
     // "mais indicado" na oração seguinte.
     "Não há garantia de resultado, mas este é o profissional mais indicado.",
     "Não comparamos preços; entretanto, este é o mais indicado.",
-  ])("rejeita afirmação de 'mais indicado' (sem negação local): %s", (methodExplanation) => {
+  ])(
+    "rejeita afirmação de 'mais indicado' (sem negação local): %s",
+    (methodExplanation) => {
+      const input = buildValidInput();
+      input.methodExplanation = methodExplanation;
+
+      expect(() => createFinalCuradoria(input)).toThrow(ProtocolError);
+    },
+  );
+
+  // CAL-005 (ADR-032) — "melhor opção" migrou de ABSOLUTE_FORBIDDEN_PHRASES
+  // para CONTEXTUAL_FORBIDDEN_PHRASES, mesma classe de CAL-001/CAL-004. A
+  // primeira frase abaixo é a amostra real do Golden Set (2026-07-23,
+  // decisionSummary) que motivou esta calibração — o modelo NEGA a expressão
+  // de forma protetora, exatamente o enquadramento anti-ranking exigido.
+  it.each([
+    'Essa aprovação não representa um ranking nem uma recomendação de "melhor opção".',
+    "Esta lista não é uma recomendação de melhor opção.",
+    "Não há uma melhor opção entre os três.",
+    "Nenhum é apresentado como a melhor opção.",
+    "Sem eleger uma melhor opção entre eles.",
+  ])("aceita negação explícita de 'melhor opção': %s", (methodExplanation) => {
     const input = buildValidInput();
     input.methodExplanation = methodExplanation;
 
-    expect(() => createFinalCuradoria(input)).toThrow(ProtocolError);
+    expect(() => createFinalCuradoria(input)).not.toThrow();
   });
+
+  it.each([
+    "Esta é a melhor opção para o seu caso.",
+    // Ruptura de oração: negação de oração anterior não relacionada nunca
+    // pode "alcançar" a afirmação de "melhor opção" na oração seguinte.
+    "Não sei se você reparou, mas esta é a melhor opção.",
+    "Não comparamos preços; entretanto, esta é a melhor opção.",
+  ])(
+    "rejeita afirmação de 'melhor opção' (sem negação local): %s",
+    (methodExplanation) => {
+      const input = buildValidInput();
+      input.methodExplanation = methodExplanation;
+
+      expect(() => createFinalCuradoria(input)).toThrow(ProtocolError);
+    },
+  );
 
   // CAL-004 — limitação conhecida, não resolvida nesta TASK: litotes
   // ("não sem X" nega X, ou seja, AFIRMA o que vem depois). Ex.: "Ele foi
@@ -225,27 +282,43 @@ describe("FinalCuradoria", () => {
   // duas expressões, provando a parametrização sem expor internals.
   it.each([
     { label: "ranking", text: "Não existe ranking entre os profissionais." },
-    { label: "mais indicado", text: "Não existe alguém mais indicado entre os profissionais." },
-  ])("infraestrutura compartilhada — aceita negação local de $label", ({ text }) => {
-    const input = buildValidInput();
-    input.comparisonSummary = text;
+    {
+      label: "mais indicado",
+      text: "Não existe alguém mais indicado entre os profissionais.",
+    },
+  ])(
+    "infraestrutura compartilhada — aceita negação local de $label",
+    ({ text }) => {
+      const input = buildValidInput();
+      input.comparisonSummary = text;
 
-    expect(() => createFinalCuradoria(input)).not.toThrow();
-  });
+      expect(() => createFinalCuradoria(input)).not.toThrow();
+    },
+  );
 
   it.each([
-    { label: "ranking", text: "Não sei se você reparou, mas este é o primeiro no ranking." },
-    { label: "mais indicado", text: "Não sei se você reparou, mas este é o profissional mais indicado." },
-  ])("infraestrutura compartilhada — rejeita ruptura de oração para $label", ({ text }) => {
-    const input = buildValidInput();
-    input.comparisonSummary = text;
+    {
+      label: "ranking",
+      text: "Não sei se você reparou, mas este é o primeiro no ranking.",
+    },
+    {
+      label: "mais indicado",
+      text: "Não sei se você reparou, mas este é o profissional mais indicado.",
+    },
+  ])(
+    "infraestrutura compartilhada — rejeita ruptura de oração para $label",
+    ({ text }) => {
+      const input = buildValidInput();
+      input.comparisonSummary = text;
 
-    expect(() => createFinalCuradoria(input)).toThrow(ProtocolError);
-  });
+      expect(() => createFinalCuradoria(input)).toThrow(ProtocolError);
+    },
+  );
 
   it("aceita a menção a 'diagnóstico' no disclaimer obrigatório (nunca substitui, não é uma claim)", () => {
     const input = buildValidInput();
-    input.disclaimer = "Esta curadoria não substitui consulta, diagnóstico ou tratamento médico.";
+    input.disclaimer =
+      "Esta curadoria não substitui consulta, diagnóstico ou tratamento médico.";
 
     expect(() => createFinalCuradoria(input)).not.toThrow();
   });
@@ -265,7 +338,10 @@ describe("FinalCuradoria", () => {
   });
 
   it("rejeita campos proibidos do Kernel (ex.: finalDecision)", () => {
-    const input = { ...buildValidInput(), finalDecision: "provider-A" } as unknown as CreateFinalCuradoriaInput;
+    const input = {
+      ...buildValidInput(),
+      finalDecision: "provider-A",
+    } as unknown as CreateFinalCuradoriaInput;
 
     expect(() => createFinalCuradoria(input)).toThrow(ProtocolError);
   });

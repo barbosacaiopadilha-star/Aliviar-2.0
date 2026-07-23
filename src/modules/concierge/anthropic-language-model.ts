@@ -8,7 +8,11 @@ import type { DecisionContext } from "@/modules/ace/artifacts/decision-context";
 import type { HumanReviewResult } from "@/modules/ace/artifacts/human-review-result";
 import type { Narrative } from "@/modules/ace/artifacts/narrative";
 
-import type { AceLanguageModel, AceLanguageModelRequest, AceLanguageModelResponse } from "./language-model";
+import type {
+  AceLanguageModel,
+  AceLanguageModelRequest,
+  AceLanguageModelResponse,
+} from "./language-model";
 
 // Fornecedor real do AceLanguageModel (GO LIVE) — implementação concreta da
 // porta já existente (language-model.ts), nunca uma nova arquitetura. Cada
@@ -117,13 +121,21 @@ vida/saúde já evidente na história — nunca uma especialidade médica);
 complexity (baixa/média/alta, estimada a partir da quantidade de
 restrições, preferências e lacunas); urgency (baixa/média/alta/não
 determinada — apenas a partir de sinais já relatados pelo próprio
-cliente, nunca fabricada); strategy (orientação de alto nível de como a
+cliente, nunca fabricada; um prazo, data-limite ou compromisso com data
+já relatado (ex.: viagem marcada, evento com data) É um sinal relatado —
+classifique a urgência a partir dele, tipicamente baixa ou média conforme
+a proximidade e a rigidez do prazo, nunca "não determinada", citando o
+prazo em rationale ou assumptions; reserve "não determinada" só quando não
+houver nenhum sinal temporal relatado; classificar urgência a partir de um
+prazo real relatado não é fabricar urgência); strategy (orientação de alto nível de como a
 curadoria deve prosseguir — nunca especifica quem, apenas como);
 assumptions (premissas assumidas ao modelar); rationale (justificativa em
 linguagem simples da classificação escolhida).
 
 Nunca classifique clinicalDomain como uma especialidade médica. Nunca
-estime urgency sem um sinal já relatado. Nunca nomeie um especialista,
+estime urgency sem um sinal já relatado — mas um prazo relatado
+(data-limite, viagem, compromisso com data) conta como sinal e deve gerar
+uma urgência classificada, nunca "não determinada". Nunca nomeie um especialista,
 competência ou instituição em strategy. Nunca produza diagnóstico,
 especialidade médica inferida, competência, especialista ou
 compatibilidade.`;
@@ -171,7 +183,10 @@ const SOURCED_ITEM_SCHEMA = {
   type: "object",
   properties: {
     description: { type: "string" },
-    sourceType: { type: "string", enum: ["fato_relatado", "inferencia_estrutural"] },
+    sourceType: {
+      type: "string",
+      enum: ["fato_relatado", "inferencia_estrutural"],
+    },
     originEvidence: ORIGIN_EVIDENCE_SCHEMA,
   },
   required: ["description", "sourceType", "originEvidence"],
@@ -185,7 +200,10 @@ const P002_SCHEMA = {
       properties: {
         decision: STRING_OR_NULL,
         goal: STRING_OR_NULL,
-        sourceType: { type: "string", enum: ["fato_relatado", "inferencia_estrutural"] },
+        sourceType: {
+          type: "string",
+          enum: ["fato_relatado", "inferencia_estrutural"],
+        },
         originEvidence: ORIGIN_EVIDENCE_SCHEMA,
       },
       required: ["decision", "goal", "sourceType"],
@@ -204,7 +222,12 @@ const P002_SCHEMA = {
       },
     },
   },
-  required: ["decisionStatement", "mandatoryConstraints", "preferences", "missingInformation"],
+  required: [
+    "decisionStatement",
+    "mandatoryConstraints",
+    "preferences",
+    "missingInformation",
+  ],
 } as const;
 
 const P003_SCHEMA = {
@@ -216,12 +239,21 @@ const P003_SCHEMA = {
         type: "object",
         properties: {
           description: { type: "string" },
-          category: { type: "string", enum: ["ausencia", "contradicao", "ambiguidade", "insuficiencia"] },
+          category: {
+            type: "string",
+            enum: ["ausencia", "contradicao", "ambiguidade", "insuficiencia"],
+          },
           severity: { type: "string", enum: ["blocking", "warning"] },
           recommendedQuestion: { type: "string" },
           relatedField: { type: "string", enum: ["decision", "goal", "other"] },
         },
-        required: ["description", "category", "severity", "recommendedQuestion", "relatedField"],
+        required: [
+          "description",
+          "category",
+          "severity",
+          "recommendedQuestion",
+          "relatedField",
+        ],
       },
     },
   },
@@ -233,17 +265,40 @@ const P004_SCHEMA = {
   properties: {
     decisionType: {
       type: "string",
-      enum: ["buscar_avaliacao", "decidir_intervencao", "buscar_acompanhamento", "esclarecer_duvida"],
+      enum: [
+        "buscar_avaliacao",
+        "decidir_intervencao",
+        "buscar_acompanhamento",
+        "esclarecer_duvida",
+      ],
     },
     objective: STRING_OR_NULL,
-    clinicalDomain: { type: "string", enum: ["saude_emocional_mental", "saude_fisica", "nao_determinado"] },
+    clinicalDomain: {
+      type: "string",
+      enum: ["saude_emocional_mental", "saude_fisica", "nao_determinado"],
+    },
     complexity: { type: "string", enum: ["baixa", "media", "alta"] },
-    urgency: { type: "string", enum: ["baixa", "media", "alta", "nao_determinado"] },
-    strategy: { type: "string", enum: ["conexao_direta", "aprofundamento_previo", "avaliacao_inicial"] },
+    urgency: {
+      type: "string",
+      enum: ["baixa", "media", "alta", "nao_determinado"],
+    },
+    strategy: {
+      type: "string",
+      enum: ["conexao_direta", "aprofundamento_previo", "avaliacao_inicial"],
+    },
     assumptions: { type: "array", items: { type: "string" } },
     rationale: { type: "string" },
   },
-  required: ["decisionType", "objective", "clinicalDomain", "complexity", "urgency", "strategy", "assumptions", "rationale"],
+  required: [
+    "decisionType",
+    "objective",
+    "clinicalDomain",
+    "complexity",
+    "urgency",
+    "strategy",
+    "assumptions",
+    "rationale",
+  ],
 } as const;
 
 const P010_SCHEMA = {
@@ -320,7 +375,12 @@ const P003_RESPONSE_SCHEMA = z.object({
   additionalFindings: z.array(
     z.object({
       description: z.string(),
-      category: z.enum(["ausencia", "contradicao", "ambiguidade", "insuficiencia"]),
+      category: z.enum([
+        "ausencia",
+        "contradicao",
+        "ambiguidade",
+        "insuficiencia",
+      ]),
       severity: z.enum(["blocking", "warning"]),
       recommendedQuestion: z.string(),
       relatedField: z.enum(["decision", "goal", "other"]),
@@ -329,12 +389,25 @@ const P003_RESPONSE_SCHEMA = z.object({
 });
 
 const P004_RESPONSE_SCHEMA = z.object({
-  decisionType: z.enum(["buscar_avaliacao", "decidir_intervencao", "buscar_acompanhamento", "esclarecer_duvida"]),
+  decisionType: z.enum([
+    "buscar_avaliacao",
+    "decidir_intervencao",
+    "buscar_acompanhamento",
+    "esclarecer_duvida",
+  ]),
   objective: stringOrNullZod,
-  clinicalDomain: z.enum(["saude_emocional_mental", "saude_fisica", "nao_determinado"]),
+  clinicalDomain: z.enum([
+    "saude_emocional_mental",
+    "saude_fisica",
+    "nao_determinado",
+  ]),
   complexity: z.enum(["baixa", "media", "alta"]),
   urgency: z.enum(["baixa", "media", "alta", "nao_determinado"]),
-  strategy: z.enum(["conexao_direta", "aprofundamento_previo", "avaliacao_inicial"]),
+  strategy: z.enum([
+    "conexao_direta",
+    "aprofundamento_previo",
+    "avaliacao_inicial",
+  ]),
   assumptions: z.array(z.string()),
   rationale: z.string(),
 });
@@ -366,7 +439,9 @@ const PROTOCOL_CONFIG: Partial<Record<string, ProtocolConfig>> = {
     systemPrompt: P002_SYSTEM_PROMPT,
     schema: P002_SCHEMA,
     responseSchema: P002_RESPONSE_SCHEMA,
-    buildUserContent: (input: { narrative: Narrative }) => ({ narrativeText: input.narrative.text }),
+    buildUserContent: (input: { narrative: Narrative }) => ({
+      narrativeText: input.narrative.text,
+    }),
   },
   P003: {
     systemPrompt: P003_SYSTEM_PROMPT,
@@ -375,23 +450,36 @@ const PROTOCOL_CONFIG: Partial<Record<string, ProtocolConfig>> = {
     buildUserContent: (input: { decisionCase: DecisionCase }) => ({
       decision: input.decisionCase.decisionStatement.decision,
       goal: input.decisionCase.decisionStatement.goal,
-      mandatoryConstraints: input.decisionCase.mandatoryConstraints.map((c) => c.description),
+      mandatoryConstraints: input.decisionCase.mandatoryConstraints.map(
+        (c) => c.description,
+      ),
       preferences: input.decisionCase.preferences.map((p) => p.description),
-      missingInformation: input.decisionCase.missingInformation.map((m) => m.description),
+      missingInformation: input.decisionCase.missingInformation.map(
+        (m) => m.description,
+      ),
     }),
   },
   P004: {
     systemPrompt: P004_SYSTEM_PROMPT,
     schema: P004_SCHEMA,
     responseSchema: P004_RESPONSE_SCHEMA,
-    buildUserContent: (input: { decisionCase: DecisionCase; caseAudit: CaseAudit }) => ({
+    buildUserContent: (input: {
+      decisionCase: DecisionCase;
+      caseAudit: CaseAudit;
+    }) => ({
       decision: input.decisionCase.decisionStatement.decision,
       goal: input.decisionCase.decisionStatement.goal,
-      mandatoryConstraints: input.decisionCase.mandatoryConstraints.map((c) => c.description),
+      mandatoryConstraints: input.decisionCase.mandatoryConstraints.map(
+        (c) => c.description,
+      ),
       preferences: input.decisionCase.preferences.map((p) => p.description),
-      missingInformation: input.decisionCase.missingInformation.map((m) => m.description),
+      missingInformation: input.decisionCase.missingInformation.map(
+        (m) => m.description,
+      ),
       auditStatus: input.caseAudit.status,
-      blockingIssues: input.caseAudit.blockingIssues.map((issue) => issue.description),
+      blockingIssues: input.caseAudit.blockingIssues.map(
+        (issue) => issue.description,
+      ),
       warnings: input.caseAudit.warnings.map((warning) => warning.description),
     }),
   },
@@ -405,7 +493,12 @@ const PROTOCOL_CONFIG: Partial<Record<string, ProtocolConfig>> = {
       humanReviewResult: HumanReviewResult;
       compatibilityMatrix: CompatibilityMatrix;
     }) => {
-      const entryByProviderId = new Map(input.compatibilityMatrix.entries.map((entry) => [entry.providerId, entry]));
+      const entryByProviderId = new Map(
+        input.compatibilityMatrix.entries.map((entry) => [
+          entry.providerId,
+          entry,
+        ]),
+      );
       return {
         clientGoal: input.decisionCase.decisionStatement.goal,
         decisionType: input.decisionContext.decisionType,
@@ -419,14 +512,16 @@ const PROTOCOL_CONFIG: Partial<Record<string, ProtocolConfig>> = {
           type: change.type,
           rationale: change.rationale,
         })),
-        providers: input.humanReviewResult.approvedProviderIds.map((providerId) => {
-          const entry = entryByProviderId.get(providerId);
-          return {
-            providerId,
-            strengths: entry?.strengths ?? [],
-            limitations: entry?.limitations ?? [],
-          };
-        }),
+        providers: input.humanReviewResult.approvedProviderIds.map(
+          (providerId) => {
+            const entry = entryByProviderId.get(providerId);
+            return {
+              providerId,
+              strengths: entry?.strengths ?? [],
+              limitations: entry?.limitations ?? [],
+            };
+          },
+        ),
       };
     },
   },
@@ -438,8 +533,14 @@ const PROTOCOL_CONFIG: Partial<Record<string, ProtocolConfig>> = {
 // abaixo é o que orchestrator.ts/delivery-repository.ts persistem em
 // `failureCode` quando a falha ocorre em produção — nunca um fallback
 // silencioso para o modelo fake.
-function classifyAnthropicError(error: unknown): { code: string; message: string } {
-  if (error instanceof Anthropic.AuthenticationError || error instanceof Anthropic.PermissionDeniedError) {
+function classifyAnthropicError(error: unknown): {
+  code: string;
+  message: string;
+} {
+  if (
+    error instanceof Anthropic.AuthenticationError ||
+    error instanceof Anthropic.PermissionDeniedError
+  ) {
     return {
       code: "ACE_MODEL_AUTHENTICATION_FAILED",
       message: "Falha de autenticação com o fornecedor do modelo de linguagem.",
@@ -449,7 +550,8 @@ function classifyAnthropicError(error: unknown): { code: string; message: string
   if (error instanceof Anthropic.RateLimitError) {
     return {
       code: "ACE_MODEL_RATE_LIMITED",
-      message: "O fornecedor do modelo de linguagem está limitando as requisições no momento.",
+      message:
+        "O fornecedor do modelo de linguagem está limitando as requisições no momento.",
     };
   }
 
@@ -460,10 +562,14 @@ function classifyAnthropicError(error: unknown): { code: string; message: string
     };
   }
 
-  if (error instanceof Anthropic.APIConnectionError || error instanceof Anthropic.InternalServerError) {
+  if (
+    error instanceof Anthropic.APIConnectionError ||
+    error instanceof Anthropic.InternalServerError
+  ) {
     return {
       code: "ACE_MODEL_UNAVAILABLE",
-      message: "O fornecedor do modelo de linguagem está indisponível no momento.",
+      message:
+        "O fornecedor do modelo de linguagem está indisponível no momento.",
     };
   }
 
@@ -478,11 +584,15 @@ export class AnthropicAceLanguageModel implements AceLanguageModel {
   private readonly modelId: string;
 
   constructor(apiKey?: string, modelId?: string) {
-    this.client = new Anthropic({ apiKey: apiKey ?? process.env.CLAUDE_API_KEY });
+    this.client = new Anthropic({
+      apiKey: apiKey ?? process.env.CLAUDE_API_KEY,
+    });
     this.modelId = modelId ?? process.env.ANTHROPIC_MODEL ?? DEFAULT_MODEL_ID;
   }
 
-  async run<TInput, TOutput>(request: AceLanguageModelRequest<TInput>): Promise<AceLanguageModelResponse<TOutput>> {
+  async run<TInput, TOutput>(
+    request: AceLanguageModelRequest<TInput>,
+  ): Promise<AceLanguageModelResponse<TOutput>> {
     const executedAt = new Date().toISOString();
     const config = PROTOCOL_CONFIG[request.protocolId];
 
@@ -512,7 +622,8 @@ export class AnthropicAceLanguageModel implements AceLanguageModel {
         tools: [
           {
             name: TOOL_NAME,
-            description: "Envie a saída estruturada exigida, exatamente no formato do schema.",
+            description:
+              "Envie a saída estruturada exigida, exatamente no formato do schema.",
             input_schema: config.schema as Anthropic.Tool.InputSchema,
           },
         ],
@@ -520,7 +631,8 @@ export class AnthropicAceLanguageModel implements AceLanguageModel {
       });
 
       const toolUse = message.content.find(
-        (block): block is Anthropic.ToolUseBlock => block.type === "tool_use" && block.name === TOOL_NAME,
+        (block): block is Anthropic.ToolUseBlock =>
+          block.type === "tool_use" && block.name === TOOL_NAME,
       );
 
       if (!toolUse) {
@@ -532,7 +644,8 @@ export class AnthropicAceLanguageModel implements AceLanguageModel {
             status: "error",
             error: {
               code: "ACE_MODEL_INVALID_RESPONSE",
-              message: "O modelo não retornou uma saída estruturada compatível com o schema esperado.",
+              message:
+                "O modelo não retornou uma saída estruturada compatível com o schema esperado.",
             },
           },
         };
@@ -553,7 +666,8 @@ export class AnthropicAceLanguageModel implements AceLanguageModel {
             status: "error",
             error: {
               code: "ACE_MODEL_INVALID_RESPONSE",
-              message: "O modelo não retornou uma saída estruturada compatível com o schema esperado.",
+              message:
+                "O modelo não retornou uma saída estruturada compatível com o schema esperado.",
             },
           },
         };
@@ -571,7 +685,12 @@ export class AnthropicAceLanguageModel implements AceLanguageModel {
       // `failureCode` — nunca um fallback silencioso para o modelo fake.
       return {
         output: null,
-        metadata: { modelId: this.modelId, executedAt, status: "error", error: classifyAnthropicError(error) },
+        metadata: {
+          modelId: this.modelId,
+          executedAt,
+          status: "error",
+          error: classifyAnthropicError(error),
+        },
       };
     }
   }
