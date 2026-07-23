@@ -176,6 +176,14 @@ A tecnologia é **instrumento do Curador**, não substituto dele.
 - produz recomendações finais automaticamente;
 - substitui o Curador.
 
+**O ciclo da tecnologia.** Toda operação do sistema, sem exceção, tem a mesma forma:
+
+```
+reconhece → explica → entrega ao Curador → o Curador decide → registra
+```
+
+O sistema **emoldura** a decisão; nunca a ocupa. Entre entregar e registrar existe um passo que nenhum software executa — e esse vazio não é uma etapa ainda não automatizada, é uma etapa que nunca será. (Detalhado em `docs/CURATION_ENGINE_SPECIFICATION.md` §1.)
+
 **Consequência arquitetural direta:** nenhum artefato produzido por software tem valor decisório. Todo cálculo é **insumo para o julgamento humano**, jamais o julgamento. Um resultado de compatibilidade que chegasse ao paciente sem passar pelo Curador seria uma violação do método — não um atalho de eficiência.
 
 **Consequência de experiência:** a tecnologia é invisível para o paciente. Ele nunca ouve o nome de um mecanismo interno, nunca vê um número que não sabe interpretar, nunca é informado de que "o sistema" fez algo. Ele conversa com uma pessoa e recebe opções explicadas por uma pessoa.

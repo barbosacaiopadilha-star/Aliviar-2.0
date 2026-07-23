@@ -8,11 +8,48 @@
 
 ---
 
-## 1. A lei do Motor
+## 1. O Ciclo do Motor
 
-Uma frase governa tudo o que vem abaixo:
+Toda operação do Motor, sem exceção, tem a mesma forma:
 
-> **O Motor calcula, organiza, verifica e explica. O Motor nunca decide, nunca seleciona e nunca resolve um conflito.**
+```
+Motor reconhece
+      ↓
+Motor explica
+      ↓
+Motor entrega ao Curador
+      ↓
+Curador decide
+      ↓
+Motor registra
+```
+
+**Este ciclo é a especificação inteira em cinco passos.** Tudo o que vem abaixo é o detalhamento dele.
+
+Três leituras obrigatórias desta forma:
+
+**O Motor emoldura a decisão; nunca a ocupa.** Ele começa reconhecendo e termina registrando. Entre esses dois momentos existe um passo — *Curador decide* — que **nenhum motor executa**. Esse vazio é deliberado e é o núcleo do Método: não é uma etapa ainda não automatizada, é uma etapa que nunca será.
+
+**"Reconhece", nunca "conclui".** O Motor identifica o que já está nos dados: quem atende às restrições, quanto cada perfil se alinha às prioridades declaradas, onde falta informação. Reconhecer é constatar; concluir seria julgar. O número que o Motor produz é uma constatação sobre o encontro entre dois perfis, jamais um veredito sobre uma pessoa.
+
+**O ciclo é fechado.** O que o Motor registra ao final alimenta o que ele reconhece na próxima volta — é assim que a trilha de auditoria nasce como subproduto natural do funcionamento, e não como uma obrigação acrescentada depois.
+
+### Onde cada motor age no ciclo
+
+| Momento | Motor responsável |
+|---|---|
+| *(antes do ciclo)* — formalizar o que o paciente declarou | Motor de Pesos |
+| **Reconhece** | Motor de Filtros → Motor de Compatibilidade |
+| **Explica** | Motor de Justificativas |
+| **Entrega ao Curador** | Motor de Transparência |
+| **Curador decide** | **nenhum** |
+| **Motor registra** | Motor de Auditoria |
+
+O Motor de Pesos é o único que fica **fora** do ciclo, e por um motivo estrutural: ele não reconhece nada — ele apenas formaliza o que o paciente já declarou. Nada nele é do Motor; tudo nele é do paciente. Por isso pertence à entrada (§3), nunca ao processamento.
+
+### A lei do Motor
+
+> **O Motor reconhece, explica, entrega e registra. O Motor nunca decide, nunca seleciona e nunca resolve um conflito.**
 
 Disso derivam três leis operacionais:
 
@@ -534,3 +571,4 @@ A especificação é autoridade; a implementação se ajusta. Registradas sem co
 | Versão | Data | Mudança |
 |---|---|---|
 | 0.1 | 2026-07-23 | Primeira versão — MISSÃO 005. Lei do Motor, ciclo de vida (nascimento/evolução/término), cadeia de entrada, processamento (filtros, pesos, incompatibilidades, inconsistências, conflitos, justificativas), seis motores, 6 estados de execução, 33 eventos, 11 gatilhos, 13 inconsistências, 6 conflitos, 12 exceções, 11 artefatos, 6 barreiras de validação e dois diagramas. 7 divergências novas com a implementação registradas. Nenhum código criado ou alterado. |
+| 0.2 | 2026-07-23 | §1 reescrita a partir da formulação do responsável do projeto: o **Ciclo do Motor** (reconhece → explica → entrega ao Curador → Curador decide → Motor registra) passa a ser a forma canônica de toda operação, e a lei do Motor adota "reconhece" no lugar de "calcula". Adicionado o mapa de qual motor age em cada momento do ciclo — que revelou o Motor de Pesos como o único fora dele, por pertencer à entrada. Ciclo ecoado em `docs/FUNDAMENTOS_DO_METODO_ALIVIAR.md` §8. |
