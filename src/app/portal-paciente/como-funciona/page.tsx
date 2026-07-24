@@ -1,9 +1,12 @@
+import { SemCuradoria } from "@/components/curadoria/sem-curadoria";
 import type { Metadata } from "next";
 
 import { WhatsappContact } from "@/components/curadoria/whatsapp-contact";
 import { Card } from "@/components/ui/card";
 import { buildJornada } from "@/modules/curadoria/jornada";
-import { findRecord } from "@/modules/curadoria/cos/mock-records";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { requireRole } from "@/modules/auth/guard";
+import { listCaseIds, loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 
 export const metadata: Metadata = { title: "Como está sendo feita" };
 
@@ -19,7 +22,16 @@ export const metadata: Metadata = { title: "Como está sendo feita" };
 // O que nunca faz: nomear mecanismo interno, protocolo ou cálculo; usar
 // "processando"; ou prometer etapa que o registro não sustenta.
 
-const DEMO_CASE_ID = "caso-2024";
+// Carrega a Curadoria do próprio paciente. A RLS já garante que ele só
+// enxerga o Caso dele — nunca passamos id pela URL, para que não exista nem
+// a tentação de olhar o de outra pessoa.
+async function loadMinhaCuradoria() {
+  await requireRole("paciente");
+  const supabase = await createServerSupabaseClient();
+  const [caseId] = await listCaseIds(supabase);
+  if (!caseId) return null;
+  return loadCuradoriaRecord(supabase, caseId);
+}
 
 // As seis etapas, ditas como o paciente as vive. Os nomes internos das fases
 // do COS nunca aparecem aqui (Experience §7).
@@ -62,8 +74,9 @@ const PASSOS = [
   },
 ] as const;
 
-export default function ComoFuncionaPage() {
-  const record = findRecord(DEMO_CASE_ID)!;
+export default async function ComoFuncionaPage() {
+  const record = await loadMinhaCuradoria();
+  if (!record) return <SemCuradoria />;
   const jornada = buildJornada(record);
 
   return (

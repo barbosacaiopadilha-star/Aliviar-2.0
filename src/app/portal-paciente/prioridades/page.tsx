@@ -1,10 +1,13 @@
+import { SemCuradoria } from "@/components/curadoria/sem-curadoria";
 import type { Metadata } from "next";
 
 import { EvidenceCard } from "@/components/curadoria/evidence-card";
 import { WhatsappContact } from "@/components/curadoria/whatsapp-contact";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PERFIL_MESSAGE } from "@/modules/curadoria/jornada";
-import { findRecord } from "@/modules/curadoria/cos/mock-records";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { requireRole } from "@/modules/auth/guard";
+import { listCaseIds, loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { PRIORITY_CRITERION_LABELS } from "@/modules/curadoria/types";
 
 export const metadata: Metadata = { title: "Minhas prioridades" };
@@ -22,10 +25,20 @@ export const metadata: Metadata = { title: "Minhas prioridades" };
 // originou: o paciente não vê um número do sistema, vê a si mesmo
 // (Experiência §Momento 4).
 
-const DEMO_CASE_ID = "caso-2024";
+// Carrega a Curadoria do próprio paciente. A RLS já garante que ele só
+// enxerga o Caso dele — nunca passamos id pela URL, para que não exista nem
+// a tentação de olhar o de outra pessoa.
+async function loadMinhaCuradoria() {
+  await requireRole("paciente");
+  const supabase = await createServerSupabaseClient();
+  const [caseId] = await listCaseIds(supabase);
+  if (!caseId) return null;
+  return loadCuradoriaRecord(supabase, caseId);
+}
 
-export default function MinhasPrioridadesPage() {
-  const record = findRecord(DEMO_CASE_ID)!;
+export default async function MinhasPrioridadesPage() {
+  const record = await loadMinhaCuradoria();
+  if (!record) return <SemCuradoria />;
   const { weights, observations } = record.prioridades;
   const total = weights.reduce((sum, weight) => sum + weight.weight, 0);
 

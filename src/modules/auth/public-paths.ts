@@ -16,13 +16,12 @@ const PUBLIC_PATHS = new Set([
   "/sua-historia",
 ]);
 
-// "/portal-curador" é o Portal do Curador em construção (MISSÃO 100), sobre
-// dados de demonstração. Fica aberto porque a missão determina construir a
-// experiência antes de integrar autenticação — e porque não existe nenhum dado
-// real por trás dele: nada aqui lê banco, sessão ou paciente de verdade.
-// Quando a integração acontecer, esta entrada sai e o Portal passa a exigir o
-// papel "curador_medico" como o /curador atual.
-const PUBLIC_PREFIXES = ["/auth/callback", "/portal-curador", "/portal-paciente"];
+// Os Portais SAÍRAM daqui na MISSÃO 209, Fase 4: agora leem o banco de
+// produção e exigem sessão + papel (`curador_medico` no Portal do Curador,
+// `paciente` na Jornada), reforçado em cada rota por requireRole() e, no
+// banco, pela RLS. Enquanto liam mocks, ficar abertos não expunha nada; a
+// partir do momento em que leem dado real, ficariam expondo tudo.
+const PUBLIC_PREFIXES = ["/auth/callback"];
 
 export function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.has(pathname)) {

@@ -8,7 +8,9 @@ import { PhaseNavigator } from "@/components/curadoria/phase-navigator";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { conduct } from "@/modules/curadoria/cos/conduction";
-import { findRecord } from "@/modules/curadoria/cos/mock-records";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { requireRole } from "@/modules/auth/guard";
+import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { COS_PHASE_DEFINITIONS } from "@/modules/curadoria/cos/phases";
 import { COS_PHASES, COS_PHASE_LABELS, type CosPhaseId } from "@/modules/curadoria/cos/types";
 import { CURADORIA_STEP_LABELS } from "@/modules/curadoria/types";
@@ -37,7 +39,9 @@ function isPhase(value: string): value is CosPhaseId {
 
 export default async function FasePage({ params }: { params: Promise<{ id: string; fase: string }> }) {
   const { id, fase } = await params;
-  const record = findRecord(id);
+  await requireRole("curador_medico");
+  const supabase = await createServerSupabaseClient();
+  const record = await loadCuradoriaRecord(supabase, id);
   const phaseId = fase.toUpperCase();
 
   if (!record || !isPhase(phaseId)) {

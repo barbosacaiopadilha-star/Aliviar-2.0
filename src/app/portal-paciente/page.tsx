@@ -1,10 +1,13 @@
+import { SemCuradoria } from "@/components/curadoria/sem-curadoria";
 import Link from "next/link";
 
 import { JornadaTimeline } from "@/components/curadoria/jornada-timeline";
 import { WhatsappContact } from "@/components/curadoria/whatsapp-contact";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { buildJornada } from "@/modules/curadoria/jornada";
-import { findRecord } from "@/modules/curadoria/cos/mock-records";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { requireRole } from "@/modules/auth/guard";
+import { listCaseIds, loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 
 // TELA 1 — MINHA JORNADA
 //
@@ -19,10 +22,20 @@ import { findRecord } from "@/modules/curadoria/cos/mock-records";
 // entregue, aguardando a decisão dela. É o estado que melhor mostra a
 // distinção entre "sua vez" e "a equipe está trabalhando".
 
-const DEMO_CASE_ID = "caso-2024";
+// Carrega a Curadoria do próprio paciente. A RLS já garante que ele só
+// enxerga o Caso dele — nunca passamos id pela URL, para que não exista nem
+// a tentação de olhar o de outra pessoa.
+async function loadMinhaCuradoria() {
+  await requireRole("paciente");
+  const supabase = await createServerSupabaseClient();
+  const [caseId] = await listCaseIds(supabase);
+  if (!caseId) return null;
+  return loadCuradoriaRecord(supabase, caseId);
+}
 
-export default function MinhaJornadaPage() {
-  const record = findRecord(DEMO_CASE_ID)!;
+export default async function MinhaJornadaPage() {
+  const record = await loadMinhaCuradoria();
+  if (!record) return <SemCuradoria />;
   const jornada = buildJornada(record);
   const current = jornada.stages.find((stage) => stage.id === jornada.currentStage)!;
 

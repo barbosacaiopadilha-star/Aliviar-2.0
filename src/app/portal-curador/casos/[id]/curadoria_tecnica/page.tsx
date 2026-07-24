@@ -10,7 +10,9 @@ import { MesaWorkspace } from "@/components/curadoria/mesa-workspace";
 import { PhaseNavigator } from "@/components/curadoria/phase-navigator";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { conduct } from "@/modules/curadoria/cos/conduction";
-import { findRecord } from "@/modules/curadoria/cos/mock-records";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { requireRole } from "@/modules/auth/guard";
+import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { COS_PHASE_DEFINITIONS } from "@/modules/curadoria/cos/phases";
 
 export const metadata: Metadata = {
@@ -40,7 +42,9 @@ export const metadata: Metadata = {
 
 export default async function MesaCuradoriaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const record = findRecord(id);
+  await requireRole("curador_medico");
+  const supabase = await createServerSupabaseClient();
+  const record = await loadCuradoriaRecord(supabase, id);
 
   if (!record) {
     notFound();
