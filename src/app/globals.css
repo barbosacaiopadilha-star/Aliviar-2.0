@@ -66,6 +66,19 @@
     --z-toast: 60;
   }
 
+  /* Landing 2.0 — paleta verde premium (hotfix identidade visual).
+     Escopo exclusivo: aplicado em `(landing)/layout.tsx` via classe
+     `.theme-landing-green`. Portais e rotas autenticadas permanecem no
+     `:root` azul-marinho. */
+  .theme-landing-green {
+    --color-brand-primary: #2f6b4f;
+    --color-brand-primary-deep: #25583f;
+    --color-brand-sage: #5b8a6e;
+    --color-brand-sage-light: #e8f1ec;
+    --color-border: #b8d2c2;
+    --color-focus-ring: #2f6b4f;
+  }
+
   html {
     @apply scroll-smooth;
   }

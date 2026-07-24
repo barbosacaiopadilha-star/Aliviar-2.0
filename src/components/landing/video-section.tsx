@@ -74,7 +74,7 @@ function VideoFrame({
     return (
       <div
         className={cn(
-          "relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-[inherit] bg-[radial-gradient(120%_140%_at_50%_0%,_var(--color-brand-primary)_0%,_var(--color-brand-primary-deep)_55%,_#0a2544_100%)] text-center",
+          "relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-[inherit] bg-[radial-gradient(120%_140%_at_50%_0%,_var(--color-brand-primary)_0%,_var(--color-brand-primary-deep)_55%,_color-mix(in_srgb,_var(--color-brand-primary-deep)_80%,_#000)_100%)] text-center",
           compact ? "px-2" : "flex-col gap-4 px-6",
         )}
       >

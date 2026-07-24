@@ -1,9 +1,9 @@
 import { PublicChrome } from "@/components/landing/public-chrome";
 
-export default function PublicLayout({
+export default function LandingLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <PublicChrome>{children}</PublicChrome>;
+  return <PublicChrome className="theme-landing-green">{children}</PublicChrome>;
 }

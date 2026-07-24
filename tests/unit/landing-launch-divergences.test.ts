@@ -237,12 +237,17 @@ describe("Decisão 3 — Vídeo Companheiro aprovado, motores intocados", () => 
 describe("Ordem das 12 seções preservada", () => {
   it("layout.tsx mantém Header antes e Footer depois do conteúdo", () => {
     const layout = readFileSync(
-      path.join(process.cwd(), "src", "app", "(public)", "layout.tsx"),
+      path.join(process.cwd(), "src", "app", "(landing)", "layout.tsx"),
       "utf-8",
     );
-    const headerIndex = layout.indexOf("<PublicHeader");
-    const mainIndex = layout.indexOf("{children}");
-    const footerIndex = layout.indexOf("<PublicFooter");
+    const chrome = readFileSync(
+      path.join(process.cwd(), "src", "components", "landing", "public-chrome.tsx"),
+      "utf-8",
+    );
+    const headerIndex = chrome.indexOf("<PublicHeader");
+    const mainIndex = chrome.indexOf("{children}");
+    const footerIndex = chrome.indexOf("<PublicFooter");
+    expect(layout).toContain("theme-landing-green");
     expect(headerIndex).toBeGreaterThan(-1);
     expect(mainIndex).toBeGreaterThan(headerIndex);
     expect(footerIndex).toBeGreaterThan(mainIndex);
@@ -254,7 +259,7 @@ describe("Ordem das 12 seções preservada", () => {
   // mesma ordem relativa de fechamento, agora precedidos pelas seções novas.
   it("page.tsx mantém a ordem Hero 2.0 → … → FAQ → CTA Final (ADR-033)", () => {
     const page = readFileSync(
-      path.join(process.cwd(), "src", "app", "(public)", "page.tsx"),
+      path.join(process.cwd(), "src", "app", "(landing)", "page.tsx"),
       "utf-8",
     );
     const heroIndex = page.indexOf("<HeroExperience");
