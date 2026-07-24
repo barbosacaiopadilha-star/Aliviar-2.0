@@ -52,7 +52,12 @@ export async function signInAction(
 
 export async function signOutAction(): Promise<never> {
   const supabase = await createServerSupabaseClient();
-  await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    redirect("/login?error=logout");
+  }
+
   redirect("/login");
 }
 

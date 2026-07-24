@@ -24,7 +24,7 @@ describe("casos mockados", () => {
   it("todo caso oferece exatamente uma próxima ação", () => {
     for (const entry of MOCK_CASES) {
       expect(entry.nextAction.label.trim().length).toBeGreaterThan(0);
-      expect(entry.nextAction.href).toMatch(/^\/portal-curador\//);
+      expect(entry.nextAction.href).toMatch(/^\/coa\/curadoria\//);
     }
   });
 

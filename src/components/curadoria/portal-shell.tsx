@@ -1,5 +1,15 @@
 "use client";
 
+/**
+ * Shell compartilhado dos Portais — Curador e Paciente.
+ *
+ * @metodo Experience §3 — um ambiente coerente reduz carga cognitiva
+ * @metodo Fundamentos §2 — a interface serve ao Método, não o contrário
+ *
+ * Por que existe: o Curador precisa de um cabeçalho estável com identidade
+ * autenticada real, navegação e área de conteúdo — nunca dados fictícios.
+ */
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -14,7 +24,7 @@ type PortalShellProps = {
   homeHref: string;
   subtitle: string;
   nav?: PortalNavItem[];
-  identity?: string | null;
+  userMenu?: React.ReactNode;
   variant?: "default" | "patient";
   children: React.ReactNode;
 };
@@ -23,7 +33,7 @@ export function PortalShell({
   homeHref,
   subtitle,
   nav,
-  identity,
+  userMenu,
   variant = "default",
   children,
 }: PortalShellProps) {
@@ -58,7 +68,7 @@ export function PortalShell({
               {subtitle}
             </p>
           </Link>
-          {identity ? <p className="text-sm text-[var(--color-ink-muted)]">{identity}</p> : null}
+          {userMenu}
         </div>
 
         {nav && nav.length > 0 ? (

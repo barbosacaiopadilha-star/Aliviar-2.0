@@ -16,7 +16,7 @@ import {
   type DecisionCase,
 } from "@/modules/ace/artifacts/decision-case";
 
-import { applyP002Completeness } from "./p002-completeness";
+import { applyP002Completeness, filterUnsourcedMandatoryConstraints } from "./p002-completeness";
 
 export type P002ExtractedFields = Omit<CreateDecisionCaseInput, "sourceNarrativeId">;
 
@@ -34,6 +34,7 @@ export const p002CaseBuilder: ProtocolContract<P002Input, DecisionCase> = {
     return createDecisionCase({
       sourceNarrativeId: input.narrative.id,
       ...extractedFields,
+      mandatoryConstraints: filterUnsourcedMandatoryConstraints(extractedFields.mandatoryConstraints),
     });
   },
 };

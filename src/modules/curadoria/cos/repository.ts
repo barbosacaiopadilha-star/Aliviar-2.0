@@ -273,6 +273,8 @@ export async function loadCuradoriaRecord(
       history: [],
     },
 
+    priorityProfileId: profileId,
+
     validacao: profile?.validated_at
       ? {
           validatedAt: profile.validated_at as string,

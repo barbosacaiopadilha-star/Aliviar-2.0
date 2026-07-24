@@ -7,7 +7,9 @@ import { createNarrative, type Narrative } from "@/modules/ace/artifacts/narrati
 import type { DecisionCase } from "@/modules/ace/artifacts/decision-case";
 import type { CaseAudit } from "@/modules/ace/artifacts/case-audit";
 import { ProtocolError } from "@/modules/ace/core/error-contract";
+import { listActiveP002FieldCorrections } from "@/modules/ace/p002-field-corrections-repository";
 import { p002CaseBuilder, type P002ExtractedFields } from "@/modules/ace/protocols/p002-case-builder";
+import { applyHumanCorrectionsToMissingInformation } from "@/modules/ace/protocols/p002-human-overrides";
 import { p003CaseAudit, type P003AdditionalFinding } from "@/modules/ace/protocols/p003-case-audit";
 import { p004DecisionContextModeler, type P004Modeling } from "@/modules/ace/protocols/p004-decision-context-modeler";
 import { p005CompetencyProfileBuilder } from "@/modules/ace/protocols/p005-competency-profile-builder";
@@ -269,7 +271,21 @@ export async function runAceExecution(params: RunAceExecutionParams): Promise<Ru
       }
 
       const result = await p002CaseBuilder.execute({ narrative, extractedFields: llmResponse.output });
-      return { artifact: result, methodVersion: ACE_METHOD_VERSION };
+
+      const humanCorrections = await listActiveP002FieldCorrections(supabase, caseId);
+      const artifact: DecisionCase =
+        humanCorrections.length > 0
+          ? {
+              ...result,
+              missingInformation: applyHumanCorrectionsToMissingInformation(
+                narrative,
+                result.missingInformation,
+                humanCorrections,
+              ),
+            }
+          : result;
+
+      return { artifact, methodVersion: ACE_METHOD_VERSION };
     });
 
     const caseAudit = await reuseOrPersist<CaseAudit>("CaseAudit", "P003", async () => {

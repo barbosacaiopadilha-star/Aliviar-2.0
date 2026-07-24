@@ -189,6 +189,7 @@ export async function getLatestArtifactByType(
     .select(ARTIFACT_COLUMNS)
     .eq("case_id", caseId)
     .eq("artifact_type", artifactType)
+    .order("version", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();

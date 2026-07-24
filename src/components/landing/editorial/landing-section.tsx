@@ -6,13 +6,14 @@ import { cn } from "@/components/ui/cn";
 
 type LandingSectionProps = HTMLAttributes<HTMLElement> & {
   children: ReactNode;
-  variant?: "linen" | "white" | "forest";
+  variant?: "linen" | "warm" | "white" | "forest";
   atmosphere?: AliviarSceneKey | null;
 };
 
 const variantClasses = {
   linen: "bg-[var(--landing-linen)] text-[var(--landing-ink)]",
-  white: "bg-white/80 text-[var(--landing-ink)]",
+  warm: "bg-[var(--landing-linen-warm)] text-[var(--landing-ink)]",
+  white: "bg-[var(--color-bg-surface)]/90 text-[var(--landing-ink)]",
   forest: "landing-forest-band",
 };
 
@@ -29,22 +30,17 @@ export function LandingSection({
         <ImmersiveBackdrop
           scene={atmosphere}
           variant="landing-soft"
-          imageOpacity={variant === "forest" ? 12 : 18}
+          imageOpacity={variant === "forest" ? 10 : 16}
         />
       ) : null}
-      <div className="relative z-10 mx-auto max-w-content px-4 lg:px-8">{children}</div>
+      <div className="relative z-10 mx-auto max-w-content px-5 lg:px-10">{children}</div>
     </section>
   );
 }
 
 export function LandingEyebrow({ children, dark = false }: { children: string; dark?: boolean }) {
   return (
-    <span
-      className={cn(
-        "mb-4 inline-block text-xs font-semibold uppercase tracking-[0.16em]",
-        dark ? "text-[var(--landing-linen)]/80" : "text-[var(--color-brand-sage)]",
-      )}
-    >
+    <span className={cn("landing-eyebrow", dark && "text-[var(--landing-linen)]/75")}>
       {children}
     </span>
   );
@@ -57,5 +53,5 @@ export function LandingCard({
   children: ReactNode;
   className?: string;
 }) {
-  return <div className={cn("landing-card p-6 lg:p-8", className)}>{children}</div>;
+  return <div className={cn("landing-card p-7 lg:p-9", className)}>{children}</div>;
 }

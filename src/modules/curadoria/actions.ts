@@ -5,7 +5,8 @@ import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRoleForAction, requireRoleForAction } from "@/modules/auth/guard";
 
-import { validateSelection, validateWeightDistribution } from "./method";
+import { validateSelection } from "./method";
+import { computePriorityValidationReadiness } from "./priority-validation-readiness";
 import * as repository from "./repository";
 import {
   addMandatoryFilterInputSchema,
@@ -16,6 +17,7 @@ import {
   removeFilterInputSchema,
   removeWeightInputSchema,
   savePatientHistoryInputSchema,
+  saveAllWeightsInputSchema,
   saveSelectionInputSchema,
   saveWeightInputSchema,
   startConsultationInputSchema,
@@ -223,6 +225,43 @@ export async function saveWeightAction(input: unknown): Promise<CuradoriaActionR
   }
 }
 
+export async function saveAllWeightsAction(input: unknown): Promise<CuradoriaActionResult> {
+  try {
+    await requireCurator();
+  } catch {
+    return { success: false, error: "Não autorizado." };
+  }
+
+  const parsed = saveAllWeightsInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const profile = await repository.getPriorityProfileById(supabase, parsed.data.priorityProfileId);
+  if (!profile) return { success: false, error: "Perfil de Prioridades não encontrado." };
+  if (profile.validatedAt) {
+    return { success: false, error: "Este Perfil já foi validado e não pode ser alterado." };
+  }
+
+  try {
+    for (const weight of parsed.data.weights) {
+      await repository.saveWeight(
+        supabase,
+        parsed.data.priorityProfileId,
+        weight.criterion,
+        weight.weight,
+        weight.targetValue ?? null,
+        weight.evidence,
+      );
+    }
+    revalidateCuradoria(profile.caseId);
+    return { success: true };
+  } catch (error) {
+    return fail(error, "Não foi possível salvar os pesos.");
+  }
+}
+
 export async function removeWeightAction(input: unknown): Promise<CuradoriaActionResult> {
   try {
     await requireCurator();
@@ -266,19 +305,26 @@ export async function validateProfileAction(input: unknown): Promise<CuradoriaAc
   const profile = await repository.getPriorityProfileById(supabase, parsed.data.priorityProfileId);
   if (!profile) return { success: false, error: "Perfil de Prioridades não encontrado." };
 
-  // Validação antecipada para dar uma mensagem útil ao Curador; o banco
-  // reforça a mesma regra (nunca dependemos só da aplicação).
-  const distribution = validateWeightDistribution(
-    profile.weights.map((weight) => ({
+  if (profile.validatedAt) {
+    return { success: false, error: "Este Perfil já foi validado." };
+  }
+
+  const readiness = computePriorityValidationReadiness({
+    weights: profile.weights.map((weight) => ({
       criterion: weight.criterion,
       weight: weight.weight,
       targetValue: weight.targetValue,
       evidence: weight.evidence,
     })),
-  );
+    filterCriteria: [],
+    validated: Boolean(profile.validatedAt),
+  });
 
-  if (!distribution.valid) {
-    return { success: false, error: distribution.errors[0] ?? "A distribuição de pesos ainda não está fechada." };
+  if (!readiness.canValidate) {
+    return {
+      success: false,
+      error: readiness.blockers[0] ?? "O Perfil ainda não está pronto para validação.",
+    };
   }
 
   try {

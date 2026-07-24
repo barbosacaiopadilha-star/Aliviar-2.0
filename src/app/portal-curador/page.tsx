@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { ActivityFeed } from "@/components/curadoria/activity-feed";
 import { MethodStepper } from "@/components/curadoria/method-stepper";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -8,7 +7,7 @@ import { requireRole } from "@/modules/auth/guard";
 import { conduct } from "@/modules/curadoria/cos/conduction";
 import { listCaseIds, loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { COS_PHASE_LABELS } from "@/modules/curadoria/cos/types";
-import { MOCK_ACTIVITY } from "@/modules/curadoria/portal/mock-data";
+import { resolveGreetingFirstName } from "@/modules/auth/display-identity";
 
 // MÓDULO 1 — PAINEL INICIAL, agora sobre o banco (MISSÃO 209, Fases 3 e 4).
 //
@@ -20,7 +19,7 @@ import { MOCK_ACTIVITY } from "@/modules/curadoria/portal/mock-data";
 // produtividade aparece aqui, por decisão de método (Experience §3).
 
 export default async function PainelInicialPage() {
-  const { profile } = await requireRole("curador_medico");
+  const auth = await requireRole("curador_medico");
   const supabase = await createServerSupabaseClient();
 
   const caseIds = await listCaseIds(supabase);
@@ -45,7 +44,7 @@ export default async function PainelInicialPage() {
     });
 
   const needsCurator = conducted.filter((entry) => entry.state.nextStep.kind === "acao").length;
-  const firstName = (profile?.displayName ?? "").trim().split(/\s+/)[0] || "Curador";
+  const firstName = resolveGreetingFirstName(auth);
 
   return (
     <div className="space-y-10">
@@ -133,24 +132,6 @@ export default async function PainelInicialPage() {
         </section>
       )}
 
-      {/* A trilha de eventos do Motor (Engine §7) ainda não é emitida — esta
-          seção segue com dados de demonstração e some quando não houver Caso,
-          para não sugerir atividade que não existe. */}
-      {conducted.length > 0 ? (
-        <section aria-labelledby="atividade-heading">
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                <span id="atividade-heading">O que mudou desde sua última visita</span>
-              </CardTitle>
-              <CardDescription>
-                Cada linha nomeia quem agiu — inclusive quando quem agiu foi o sistema.
-              </CardDescription>
-            </CardHeader>
-            <ActivityFeed events={MOCK_ACTIVITY} />
-          </Card>
-        </section>
-      ) : null}
     </div>
   );
 }

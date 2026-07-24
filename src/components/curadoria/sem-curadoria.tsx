@@ -1,3 +1,12 @@
+/**
+ * Estado vazio — paciente sem Curadoria iniciada.
+ *
+ * @metodo Experience §1 — acolher sem pressionar quando ainda não há jornada
+ *
+ * Por que existe: explicar com clareza o que acontece a seguir, sem parecer
+ * erro ou abandono.
+ */
+
 import { WhatsappContact } from "@/components/curadoria/whatsapp-contact";
 import { PatientCard, PatientPageHeader } from "@/components/paciente/dashboard/patient-primitives";
 

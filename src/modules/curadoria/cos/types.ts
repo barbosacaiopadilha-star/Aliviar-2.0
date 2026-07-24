@@ -187,6 +187,8 @@ export type CuradoriaRecord = {
   caso: CasoRecord;
   filtros: FiltroRecord[];
   prioridades: PrioridadesRecord;
+  /** ID do Perfil de Prioridades ativo — necessário para persistir validação. */
+  priorityProfileId: string | null;
   validacao: ValidacaoRecord | null;
   curadoriaTecnica: CuradoriaTecnicaRecord;
   relatorio: RelatorioRecord;

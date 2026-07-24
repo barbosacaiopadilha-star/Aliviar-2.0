@@ -39,6 +39,7 @@ function baseRecord(
     },
     filtros: [],
     prioridades: { weights: [], observations: [], history: [] },
+    priorityProfileId: null,
     validacao: null,
     curadoriaTecnica: {
       computedAt: null,

@@ -15,13 +15,13 @@ type ImmersiveBackdropProps = {
 
 const overlayClasses: Record<NonNullable<ImmersiveBackdropProps["variant"]>, string> = {
   "landing-hero":
-    "bg-gradient-to-b from-[#f9f8f6]/92 via-[#f9f8f6]/78 to-[#f9f8f6]/96",
+    "bg-gradient-to-b from-[var(--color-bg-canvas)]/94 via-[var(--color-bg-canvas)]/82 to-[var(--color-bg-canvas)]/96",
   "landing-soft":
-    "bg-gradient-to-b from-[#f9f8f6]/88 via-[#f9f8f6]/94 to-[#f9f8f6]",
+    "bg-gradient-to-b from-[var(--color-bg-canvas)]/90 via-[var(--color-bg-canvas-warm)]/95 to-[var(--color-bg-canvas)]",
   "patient-intimate":
-    "bg-gradient-to-br from-[#f4f0e8]/94 via-[#f9f8f6]/90 to-[#f4f5f2]/96",
+    "bg-gradient-to-br from-[var(--color-bg-canvas-warm)]/94 via-[var(--color-bg-canvas)]/90 to-[var(--color-bg-canvas-warm)]/96",
   "patient-warm":
-    "bg-gradient-to-tr from-[#f5efe6]/95 via-[#f9f8f6]/88 to-[#f4f5f2]/94",
+    "bg-gradient-to-tr from-[var(--color-bg-canvas-warm)]/95 via-[var(--color-bg-canvas)]/88 to-[var(--color-bg-canvas-warm)]/94",
 };
 
 export function ImmersiveBackdrop({
@@ -47,7 +47,8 @@ export function ImmersiveBackdrop({
         style={{ opacity: imageOpacity / 100 }}
       />
       <div className={cn("absolute inset-0", overlayClasses[variant])} />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgb(249_248_246/0.4)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,color-mix(in_srgb,var(--color-bg-canvas)_45%,transparent)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_75%_15%,rgba(183,154,91,0.04)_0%,transparent_70%)]" />
     </div>
   );
 }

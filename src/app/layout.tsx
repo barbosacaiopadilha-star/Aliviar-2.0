@@ -1,5 +1,5 @@
 import { Analytics } from "@vercel/analytics/next";
-import { Fraunces, Public_Sans } from "next/font/google";
+import { Fraunces, Inter } from "next/font/google";
 
 import type { Metadata } from "next";
 import "./globals.css";
@@ -16,10 +16,10 @@ const fraunces = Fraunces({
   display: "swap",
 });
 
-const publicSans = Public_Sans({
+const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
-  variable: "--font-public-sans",
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -52,7 +52,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={`${fraunces.variable} ${publicSans.variable}`}>
+    <html lang="pt-BR" className={`${fraunces.variable} ${inter.variable}`}>
       <body>
         <AppProviders>{children}</AppProviders>
         <Analytics />

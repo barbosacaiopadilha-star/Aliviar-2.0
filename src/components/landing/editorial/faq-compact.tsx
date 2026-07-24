@@ -3,7 +3,6 @@
 import { useState } from "react";
 
 import { LandingSection } from "@/components/landing/editorial/landing-section";
-import { cn } from "@/components/ui/cn";
 
 const FAQ_ITEMS = [
   {
@@ -28,37 +27,32 @@ export function FaqCompactSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <LandingSection id="duvidas" variant="white">
+    <LandingSection id="duvidas" variant="warm">
       <div className="mx-auto max-w-2xl">
-        <h2 className="text-center font-serif text-3xl font-semibold leading-snug tracking-tight lg:text-4xl">
-          Dúvidas frequentes
-        </h2>
+        <h2 className="landing-heading text-center text-3xl lg:text-[2.625rem]">Dúvidas frequentes</h2>
+        <p className="landing-body mx-auto mt-5 max-w-lg text-center text-[var(--color-ink-muted)]">
+          Respostas diretas, no seu ritmo.
+        </p>
 
-        <div className="mt-12 divide-y divide-[var(--color-border)]">
+        <div className="landing-faq-book mt-14">
           {FAQ_ITEMS.map((item, index) => {
             const isOpen = openIndex === index;
 
             return (
-              <div key={item.question}>
+              <div key={item.question} className="landing-faq-item">
                 <button
                   type="button"
                   aria-expanded={isOpen}
                   onClick={() => setOpenIndex(isOpen ? null : index)}
-                  className="flex w-full items-center justify-between gap-4 py-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--landing-forest)] focus-visible:ring-offset-2"
+                  className="landing-faq-trigger flex w-full items-center justify-between gap-5 py-6 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)] focus-visible:ring-offset-2"
                 >
-                  <span className="font-medium">{item.question}</span>
-                  <span
-                    aria-hidden="true"
-                    className={cn(
-                      "shrink-0 text-xl text-[var(--color-ink-muted)] transition-transform duration-200",
-                      isOpen && "rotate-45",
-                    )}
-                  >
+                  <span className="landing-heading text-lg font-medium">{item.question}</span>
+                  <span aria-hidden="true" className="landing-faq-icon">
                     +
                   </span>
                 </button>
                 {isOpen ? (
-                  <p className="landing-body pb-5 text-[var(--color-ink-muted)]">{item.answer}</p>
+                  <p className="landing-body pb-6 pr-10 text-[var(--color-ink-muted)]">{item.answer}</p>
                 ) : null}
               </div>
             );

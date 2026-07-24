@@ -23,7 +23,7 @@ const FOOTER_LINKS = [
 
 export function PublicFooter() {
   return (
-    <footer className="bg-[var(--landing-forest,var(--color-brand-primary-deep))]">
+    <footer className="bg-[var(--color-brand-primary)]">
       {/* Fase 6 (Origem Emocional) — a última voz da Landing ecoa a
           primeira ("nunca sozinho", acento dourado no H1 da Chegada) em
           vez de repetir "sem pressa" literalmente. Curta, não acionável,
@@ -31,7 +31,7 @@ export function PublicFooter() {
           emocional, claramente subordinada ao CTA que já apareceu antes
           dela. */}
       <SectionReveal className="mx-auto max-w-content px-4 pt-16 lg:px-8">
-        <p className="max-w-reading font-serif text-2xl font-medium leading-snug text-[var(--landing-linen)] lg:text-3xl">
+        <p className="max-w-reading font-serif text-2xl font-medium leading-[1.35] text-[var(--landing-linen)] lg:text-[1.875rem]">
           Você não precisa decidir sozinho.
         </p>
       </SectionReveal>
@@ -43,7 +43,7 @@ export function PublicFooter() {
         <div className="space-y-3">
           <Link
             href="/"
-            className="inline-block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-brand-primary-deep"
+            className="inline-block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-brand-primary)]"
           >
             <Image
               src="/brand/logo-aliviar-transparent.png"
@@ -74,7 +74,7 @@ export function PublicFooter() {
                     bloco de navegação com a mesma altura total de antes. */}
                 <Link
                   href={link.href}
-                  className="link-underline inline-block py-1 text-sm text-[var(--landing-linen)]/85 transition-colors duration-fast ease-standard hover:text-[var(--landing-linen)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--landing-forest)]"
+                  className="link-underline inline-block py-1 text-sm text-[var(--landing-linen)]/85 transition-colors duration-base ease-standard hover:text-[var(--landing-linen)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-brand-primary)]"
                 >
                   {link.label}
                 </Link>

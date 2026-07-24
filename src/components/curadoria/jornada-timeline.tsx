@@ -1,5 +1,10 @@
 /**
  * Minha Jornada — linha do tempo orgânica e iluminada.
+ *
+ * @metodo Experience §2 — o paciente precisa ver onde está na jornada
+ *
+ * Por que existe: traduz o progresso da Curadoria em etapas compreensíveis
+ * para o paciente, sem expor vocabulário interno.
  */
 
 import { PatientCard } from "@/components/paciente/dashboard/patient-primitives";

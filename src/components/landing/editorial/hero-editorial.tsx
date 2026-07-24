@@ -27,22 +27,20 @@ export function HeroEditorial({ videoSrc, videoPoster }: HeroEditorialProps = {}
 
   return (
     <section className="landing-hero-immersive">
-      <ImmersiveBackdrop scene="landingHero" variant="landing-hero" imageOpacity={42} priority />
+      <ImmersiveBackdrop scene="landingHero" variant="landing-hero" imageOpacity={38} priority />
 
-      <div className="relative z-10 mx-auto w-full max-w-content px-4 lg:px-8">
+      <div className="relative z-10 mx-auto w-full max-w-content px-5 lg:px-10">
         <div className="landing-fade-in mx-auto max-w-3xl text-center">
-          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-brand-sage)]">
-            Curadoria médica independente
-          </p>
-          <h1 className="landing-hero-title text-4xl font-semibold text-[var(--landing-ink)] sm:text-5xl lg:text-[3.25rem]">
+          <p className="landing-eyebrow">Curadoria médica independente</p>
+          <h1 className="landing-hero-title text-4xl sm:text-[2.75rem] lg:text-[3.5rem]">
             Uma decisão de saúde importante.
             <br />
             Você não precisa tomá-la sozinho.
           </h1>
-          <p className="landing-body mx-auto mt-6 max-w-2xl text-lg text-[var(--color-ink-muted)]">
+          <p className="landing-body mx-auto mt-8 max-w-2xl text-lg text-[var(--color-ink-muted)]">
             Com você em cada etapa — da sua história até a escolha do médico certo para você.
           </p>
-          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <LinkButton href="/sua-historia" variant="primary" className="w-full sm:w-auto">
               Contar minha história
             </LinkButton>
@@ -53,7 +51,7 @@ export function HeroEditorial({ videoSrc, videoPoster }: HeroEditorialProps = {}
         </div>
 
         {video.src ? (
-          <div className="landing-fade-in mx-auto mt-14 max-w-4xl" style={{ animationDelay: "150ms" }}>
+          <div className="landing-fade-in mx-auto mt-16 max-w-4xl" style={{ animationDelay: "120ms" }}>
             <div className="landing-video-cinema">
               <video
                 src={video.src}
