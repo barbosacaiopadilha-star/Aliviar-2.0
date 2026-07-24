@@ -3,8 +3,10 @@
 // para o link de volta em /acesso-negado — um único lugar, não duas cópias.
 export const ROLE_HOME: Record<string, string> = {
   administrador: "/admin",
+  concierge: "/admin/crm",
   profissional: "/profissional",
   paciente: "/paciente",
+  curador_medico: "/curador",
 };
 
 export function getRoleHome(roles: string[], fallback = "/"): string {

@@ -22,11 +22,20 @@ export function getDefaultNavItems(role: string, basePath: string): NavItem[] {
   const items: NavItem[] = [{ label: "Início", href: basePath }];
 
   if (role === "administrador") {
+    items.push({ label: "CRM", href: `${basePath}/crm` });
     items.push({ label: "Pacientes", href: `${basePath}/pacientes` });
     items.push({ label: "Profissionais", href: `${basePath}/profissionais` });
     items.push({ label: "Equipe", href: `${basePath}/equipe` });
     items.push({ label: "Casos", href: `${basePath}/casos` });
     items.push({ label: "Observabilidade do ACE", href: `${basePath}/ace` });
+  }
+
+  if (role === "concierge") {
+    items.push({ label: "Painel", href: `${basePath}/crm` });
+    items.push({ label: "Contatos", href: `${basePath}/crm/contatos` });
+    items.push({ label: "Funil", href: `${basePath}/crm/funil` });
+    items.push({ label: "Tarefas", href: `${basePath}/crm/tarefas` });
+    items.push({ label: "Agenda", href: `${basePath}/crm/agenda` });
   }
 
   if (role === "curador_medico") {

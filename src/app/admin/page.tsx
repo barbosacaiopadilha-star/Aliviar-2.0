@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import type { Metadata } from "next";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { requireRole } from "@/modules/auth/guard";
+import { requireAnyRole } from "@/modules/auth/guard";
 import { listPatientAccounts, listProfessionalProfiles } from "@/modules/profiles";
 import { listRecentAuditLogs, listTeamMembers } from "@/modules/team/repository";
 
@@ -36,7 +37,10 @@ function StatCard({ label, value, href }: { label: string; value: number; href?:
 }
 
 export default async function AdminDashboardPage() {
-  const state = await requireRole("administrador");
+  const state = await requireAnyRole(["administrador", "concierge"]);
+  if (!state.roles.includes("administrador")) {
+    redirect("/admin/crm");
+  }
 
   const regularClient = await createServerSupabaseClient();
   const adminClient = createAdminSupabaseClient();

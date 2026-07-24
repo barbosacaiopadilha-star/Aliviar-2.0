@@ -58,6 +58,20 @@ export async function requireRoleForAction(roleSlug: string): Promise<AuthState>
  * por ações que mais de um papel pode executar (ex.: Administrador OU
  * Curador Médico podem criar um Caso — ÉPICO 1/SPRINT 2).
  */
+export async function requireAnyRole(roleSlugs: string[]): Promise<AuthState> {
+  const state = await getAuthState();
+
+  if (!state) {
+    redirect("/login");
+  }
+
+  if (!roleSlugs.some((slug) => state.roles.includes(slug))) {
+    redirect("/acesso-negado");
+  }
+
+  return state;
+}
+
 export async function requireAnyRoleForAction(roleSlugs: string[]): Promise<AuthState> {
   const state = await getAuthState();
 

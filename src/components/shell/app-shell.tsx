@@ -26,6 +26,7 @@ function formatRoleLabel(role: string): string {
     profissional: "Profissional",
     paciente: "Paciente",
     curador_medico: "Curador Médico",
+    concierge: "Concierge",
   };
 
   return labels[role] ?? role;
