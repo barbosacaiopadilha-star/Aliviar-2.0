@@ -1,3 +1,5 @@
+import { createServiceRoleClient } from "@/lib/supabase/admin";
+
 export type HealthCheckStatus = "ok" | "degraded" | "down";
 
 export interface HealthCheckItem {
@@ -60,12 +62,20 @@ export async function runOperationalHealthChecks(): Promise<HealthReport> {
     });
   }
 
-  let supabase: Awaited<ReturnType<typeof import("@/lib/supabase/server").createClient>> | null =
+  const serviceRoleConfigured = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
+  checks.push({
+    name: "config:SUPABASE_SERVICE_ROLE_KEY",
+    status: serviceRoleConfigured ? "ok" : "degraded",
+    detail: serviceRoleConfigured ? "presente" : "ausente",
+    latency_ms: null,
+  });
+
+  let anonSupabase: Awaited<ReturnType<typeof import("@/lib/supabase/server").createClient>> | null =
     null;
 
   try {
     const { createClient } = await import("@/lib/supabase/server");
-    supabase = await createClient();
+    anonSupabase = await createClient();
   } catch (error) {
     checks.push({
       name: "auth:client",
@@ -75,16 +85,40 @@ export async function runOperationalHealthChecks(): Promise<HealthReport> {
     });
   }
 
-  if (supabase) {
-    const authCheck = await timed(async () => supabase!.auth.getSession());
+  if (anonSupabase) {
+    const authCheck = await timed(async () => anonSupabase!.auth.getSession());
     checks.push({
       name: "auth:session",
       status: authCheck.value.error ? "degraded" : "ok",
       detail: authCheck.value.error?.message ?? "session_client_ready",
       latency_ms: authCheck.latencyMs,
     });
+  }
 
-    const dbCheck = await timed(async () => supabase!.from("journeys").select("id", { head: true }));
+  const adminSupabase = createServiceRoleClient();
+  if (!adminSupabase) {
+    checks.push({
+      name: "database:admin_client",
+      status: "degraded",
+      detail: "service_role_unavailable",
+      latency_ms: null,
+    });
+    for (const table of EXPECTED_TABLES) {
+      checks.push({
+        name: `migrations:${table}`,
+        status: "degraded",
+        detail: "service_role_unavailable",
+        latency_ms: null,
+      });
+    }
+    checks.push({
+      name: "storage:buckets",
+      status: "degraded",
+      detail: "service_role_unavailable",
+      latency_ms: null,
+    });
+  } else {
+    const dbCheck = await timed(async () => adminSupabase.from("journeys").select("id", { head: true }));
     checks.push({
       name: "database:journeys",
       status: dbCheck.value.error ? "down" : "ok",
@@ -94,7 +128,7 @@ export async function runOperationalHealthChecks(): Promise<HealthReport> {
 
     for (const table of EXPECTED_TABLES) {
       const tableCheck = await timed(async () =>
-        supabase!.from(table).select("*", { head: true, count: "exact" }),
+        adminSupabase.from(table).select("*", { head: true, count: "exact" }),
       );
       checks.push({
         name: `migrations:${table}`,
@@ -104,28 +138,17 @@ export async function runOperationalHealthChecks(): Promise<HealthReport> {
       });
     }
 
-    const storageCheck = await timed(async () => supabase!.storage.listBuckets());
+    const storageCheck = await timed(async () => adminSupabase.storage.listBuckets());
     const bucketNames = (storageCheck.value.data ?? []).map((b) => b.name);
     checks.push({
       name: "storage:buckets",
-      status: storageCheck.value.error ? "down" : bucketNames.includes("patient-documents") ? "ok" : "degraded",
+      status: storageCheck.value.error
+        ? "down"
+        : bucketNames.includes("patient-documents")
+          ? "ok"
+          : "degraded",
       detail: storageCheck.value.error?.message ?? (bucketNames.join(",") || "none"),
       latency_ms: storageCheck.latencyMs,
-    });
-  } else {
-    for (const table of EXPECTED_TABLES) {
-      checks.push({
-        name: `migrations:${table}`,
-        status: "down",
-        detail: "database_client_unavailable",
-        latency_ms: null,
-      });
-    }
-    checks.push({
-      name: "storage:buckets",
-      status: "down",
-      detail: "database_client_unavailable",
-      latency_ms: null,
     });
   }
 

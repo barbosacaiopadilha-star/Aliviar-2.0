@@ -126,7 +126,7 @@ export async function createPersistenceStack(
   const auth = new SessionIdentityAuthProvider(identity, context.email ?? null);
   const journeyScope = new StaticJourneyScopePort(journeyCatalog);
   const session = await auth.resolveSession();
-  const resolvedIdentity = await auth.resolveIdentity(session);
+  await auth.resolveIdentity(session);
   const staffContext = await resolveSessionContext({
     authProvider: auth,
     journeyScopePort: journeyScope,

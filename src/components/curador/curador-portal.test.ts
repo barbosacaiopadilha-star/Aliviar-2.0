@@ -103,6 +103,8 @@ describe("Experience layer do curador", () => {
       timeline_operacional: [],
       comentarios: [],
       ace_analise: null,
+      caso_curadoria: null,
+      dossie_versao_atual: null,
     };
     const model = mapCasoCuradorExperience(caso);
     expect(model.pode_publicar_entrega).toBe(false);

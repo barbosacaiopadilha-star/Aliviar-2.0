@@ -27,6 +27,7 @@ describe("jornada-client", () => {
         entrega: null,
         escolha_registrada: null,
         ace_analise: null,
+        dossie: null,
       },
     };
 

@@ -1,0 +1,35 @@
+{
+  "releaseBranch": "release/v1.0.0-beta",
+  "releaseTag": "v1.0.0-beta",
+  "releaseBaseCommit": "8536bc6",
+  "previousRcTag": "v0.1.0-rc1",
+  "repoName": "aliviar-app",
+  "productionUrl": "https://aliviar-os.vercel.app",
+  "deployPollSeconds": 15,
+  "deployTimeoutMinutes": 20,
+  "catalogMinProfiles": 34,
+  "prTitle": "release(alicia): v1.0.0-beta",
+  "prBase": "main",
+  "requiredDocs": [
+    "docs/releases/RELEASE_v1.0.0-beta.md",
+    "docs/releases/CHANGELOG.md"
+  ],
+  "studioBlockFiles": [
+    "src/alicia/studio/studio-access.ts",
+    "src/app/alicia/studio/layout.tsx"
+  ],
+  "smokeRoutes": {
+    "public": [
+      { "path": "/alicia", "expectStatus": [200] },
+      { "path": "/alicia/mapa", "expectStatus": [200] },
+      { "path": "/alicia/metodologia", "expectStatus": [200] },
+      { "path": "/login", "expectStatus": [200, 307] },
+      { "path": "/robots.txt", "expectStatus": [200] },
+      { "path": "/sitemap.xml", "expectStatus": [200] }
+    ],
+    "studioBlocked": [
+      { "path": "/alicia/studio", "expectStatus": [404] },
+      { "path": "/alicia/studio/inbox", "expectStatus": [404] }
+    ]
+  }
+}

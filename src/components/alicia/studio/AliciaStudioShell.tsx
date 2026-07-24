@@ -6,6 +6,14 @@ import { usePathname } from "next/navigation";
 const navItems = [
   { href: "/alicia/studio", label: "Dashboard", exact: true },
   { href: "/alicia/studio/inbox", label: "Inbox" },
+  { href: "/alicia/studio/discovery", label: "Discovery" },
+  { href: "/alicia/studio/workflow", label: "Workflow" },
+  { href: "/alicia/studio/connectors", label: "Connectors" },
+  { href: "/alicia/studio/evidence", label: "Evidence" },
+  { href: "/alicia/studio/evidence-coverage", label: "Evidence Coverage" },
+  { href: "/alicia/studio/operations", label: "Operations" },
+  { href: "/alicia/studio/factory", label: "Factory" },
+  { href: "/alicia/studio/verification", label: "Verification" },
 ];
 
 export function AliciaStudioShell({ children }: { children: React.ReactNode }) {

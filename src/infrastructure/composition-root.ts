@@ -11,6 +11,21 @@ import {
   RegistrarTresOpcoes,
   SalvarConjuntoElegivel,
 } from "@/application/curador/curador-comandos";
+import {
+  AprovarDossie,
+  ConcluirDevolutivaCuradoria,
+  ConcluirMesaCuradoria,
+  CriarVersaoDossie,
+  GarantirCasoCuradoria,
+  IniciarDossieCuradoria,
+  ObterCasoCuradoriaDossie,
+  ObterDossiePaciente,
+  PublicarDossieCuradoria,
+  RegistrarDevolutivaCuradoria,
+  RegistrarEscolhaCuradoria,
+  SalvarRascunhoDossie,
+  ValidarPerfilPrioridades,
+} from "@/application/curador/dossie-comandos";
 import { ProduzirEntregaAoPaciente } from "@/application/entrega/produzir-entrega-ao-paciente";
 import { RegistrarDocumentoPaciente } from "@/application/documentos/registrar-documento-paciente";
 import { AvancarOnboardingPaciente } from "@/application/jornada/avancar-onboarding-paciente";
@@ -26,6 +41,7 @@ import { SupabaseAuthContextAdapter } from "@/infrastructure/auth/supabase-auth-
 import { SupabaseCasoRepository } from "@/infrastructure/caso/supabase-caso-repository";
 import { improvedAceAnaliseAdapter } from "@/infrastructure/ace/improved-ace-service";
 import { SupabaseCuradoriaRepository } from "@/infrastructure/curadoria/supabase-curadoria-repository";
+import { CuradoriaRepository } from "@/infrastructure/curadoria/curadoria-repository";
 import { SupabaseEntregaRepository } from "@/infrastructure/entrega/supabase-entrega-repository";
 import { SupabaseJornadaProjection } from "@/infrastructure/jornada/supabase-jornada-projection";
 import { SupabaseJornadaQuery } from "@/infrastructure/jornada/supabase-jornada-query";
@@ -37,6 +53,7 @@ const curadoriaRepository = new SupabaseCuradoriaRepository();
 const entregaRepository = new SupabaseEntregaRepository();
 const jornadaQuery = new SupabaseJornadaQuery();
 const jornadaProjection = new SupabaseJornadaProjection();
+const registrarEscolhaPaciente = new RegistrarEscolhaPaciente(jornadaProjection);
 
 export const application = {
   registrarCasoDeclarado: new RegistrarCasoDeclarado(auth, casoRepository),
@@ -47,10 +64,23 @@ export const application = {
   obterJornadaDoPacienteAutenticado: new ObterJornadaDoPacienteAutenticado(jornadaQuery),
   avancarOnboardingPaciente: new AvancarOnboardingPaciente(jornadaProjection),
   avancarParaEscolhaPaciente: new AvancarParaEscolhaPaciente(jornadaProjection),
-  registrarEscolhaPaciente: new RegistrarEscolhaPaciente(jornadaProjection),
+  registrarEscolhaPaciente,
   registrarDocumentoPaciente: new RegistrarDocumentoPaciente(),
   listarFilaCasosCurador: new ListarFilaCasosCurador(),
   obterCasoDeCuradoria: new ObterCasoDeCuradoria(),
+  garantirCasoCuradoria: new GarantirCasoCuradoria(),
+  obterCasoCuradoriaDossie: new ObterCasoCuradoriaDossie(),
+  validarPerfilPrioridades: new ValidarPerfilPrioridades(),
+  concluirMesaCuradoria: new ConcluirMesaCuradoria(),
+  iniciarDossieCuradoria: new IniciarDossieCuradoria(),
+  salvarRascunhoDossie: new SalvarRascunhoDossie(),
+  criarVersaoDossie: new CriarVersaoDossie(),
+  aprovarDossie: new AprovarDossie(),
+  publicarDossieCuradoria: new PublicarDossieCuradoria(auth, entregaRepository),
+  registrarDevolutivaCuradoria: new RegistrarDevolutivaCuradoria(),
+  concluirDevolutivaCuradoria: new ConcluirDevolutivaCuradoria(),
+  obterDossiePaciente: new ObterDossiePaciente(),
+  registrarEscolhaCuradoria: new RegistrarEscolhaCuradoria(new CuradoriaRepository(), registrarEscolhaPaciente),
   assumirCasoCurador: new AssumirCasoCurador(),
   abrirSessaoCuradoriaComWorkspace: new AbrirSessaoCuradoriaComWorkspace(auth, curadoriaRepository),
   salvarConjuntoElegivel: new SalvarConjuntoElegivel(),

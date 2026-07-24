@@ -97,6 +97,8 @@ function buildCasoCuradoriaView(
     timeline_operacional: [],
     comentarios: workspace.comentarios,
     ace_analise: aceAnalise,
+    caso_curadoria: null,
+    dossie_versao_atual: null,
   };
 }
 

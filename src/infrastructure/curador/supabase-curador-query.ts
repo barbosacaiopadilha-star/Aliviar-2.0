@@ -27,6 +27,7 @@ import type { JornadaDoPacienteView } from "@/experience-flow/contracts/jornada-
 import { createClient } from "@/lib/supabase/server";
 import { randomUUID } from "crypto";
 import { improvedAceService } from "@/infrastructure/ace/improved-ace-service";
+import { CuradoriaRepository } from "@/infrastructure/curadoria/curadoria-repository";
 
 interface WorkspaceRow {
   journey_id: string;
@@ -218,6 +219,9 @@ export class SupabaseCuradorQuery {
       "Paciente";
 
     const aceAnalise = await improvedAceService.obterAnaliseParaCurador(jornadaId);
+    const curadoriaRepo = new CuradoriaRepository();
+    const casoCuradoria = await curadoriaRepo.obterCasoPorJornada(jornadaId);
+    const dossieVersaoAtual = await curadoriaRepo.obterVersaoCorrenteDossie(jornadaId);
 
     return {
       jornada_id: jornadaId,
@@ -244,6 +248,8 @@ export class SupabaseCuradorQuery {
       timeline_operacional: timelineOperacional,
       comentarios: workspace.comentarios,
       ace_analise: aceAnalise,
+      caso_curadoria: casoCuradoria,
+      dossie_versao_atual: dossieVersaoAtual,
     };
   }
 
@@ -319,7 +325,7 @@ export class SupabaseCuradorQuery {
   async marcarEntregaPublicada(jornadaId: string): Promise<void> {
     await this.mutarWorkspace(jornadaId, (current) => {
       if (!current.rascunho_entrega) {
-        throw new BusinessRuleError("Rascunho de entrega não encontrado.");
+        return current;
       }
       return {
         ...current,

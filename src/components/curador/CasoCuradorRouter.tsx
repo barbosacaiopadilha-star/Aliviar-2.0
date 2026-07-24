@@ -3,6 +3,8 @@
 import Link from "next/link";
 
 import { useCurator } from "@/components/curador/CuratorProvider";
+import { DevolutivaCuradorSurface } from "@/components/curador/surfaces/DevolutivaCuradorSurface";
+import { DossieCuradorSurface } from "@/components/curador/surfaces/DossieCuradorSurface";
 import { EntregaCuradorSurface } from "@/components/curador/surfaces/EntregaCuradorSurface";
 import { OpcoesCuradorSurface } from "@/components/curador/surfaces/OpcoesCuradorSurface";
 import { TimelineCuradorSurface } from "@/components/curador/surfaces/TimelineCuradorSurface";
@@ -72,6 +74,10 @@ export function CasoCuradorRouter() {
         <OpcoesCuradorSurface model={model} onSaved={refresh} />
       ) : null}
       {surface === "entrega" ? <EntregaCuradorSurface model={model} onAction={refresh} /> : null}
+      {surface === "dossie" ? <DossieCuradorSurface model={model} onAction={refresh} /> : null}
+      {surface === "devolutiva" ? (
+        <DevolutivaCuradorSurface model={model} onAction={refresh} />
+      ) : null}
 
       {model.caso.ace_analise ? (
         <AceAnaliseCuradorSurface analise={model.caso.ace_analise} />

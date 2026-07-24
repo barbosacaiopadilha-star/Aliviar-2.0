@@ -133,10 +133,28 @@ export interface AceAnaliseResumoView {
   atualizado_em: string;
 }
 
+export interface DossiePortalView {
+  dossie_id: string;
+  versao: number;
+  publicado_em: string;
+  dimensoes: Array<{ nome: string; descricao?: string }>;
+  pesos: Record<string, number>;
+  opcoes: Array<{
+    rotulo: "A" | "B" | "C";
+    nome: string;
+    especialidade: string;
+    parecer: string;
+    pontos_favoraveis: string;
+    pontos_atencao: string;
+    perguntas_sugeridas: string;
+  }>;
+}
+
 export interface JornadaViewExtensoes {
   tempo_estimado: string | null;
   documentos: DocumentoItemView[];
   entrega: EntregaDetalheView | null;
   escolha_registrada: EscolhaResumoView | null;
   ace_analise: AceAnaliseResumoView | null;
+  dossie: DossiePortalView | null;
 }

@@ -26,6 +26,7 @@ function criarView(
       entrega: null,
       escolha_registrada: null,
       ace_analise: null,
+      dossie: null,
     },
     ...overrides,
   };

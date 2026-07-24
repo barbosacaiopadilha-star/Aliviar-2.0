@@ -11,10 +11,20 @@ import {
   type ReactNode,
 } from "react";
 
+import type { ReviewCase } from "@/alicia/protocol-engine";
+import type { PipelineReviewCase } from "@/alicia/publication-pipeline";
 import { createInitialStudioState, STUDIO_STORAGE_KEY } from "@/alicia/studio/mock-data";
 import {
+  evaluateCandidateProtocol,
+  getStudioReviewCases,
+  type StudioProtocolEvaluation,
+} from "@/alicia/studio/protocol-bridge";
+import {
+  getPublicationReviewCases,
+  getSessionPublicationPipeline,
+} from "@/alicia/studio/publication-bridge";
+import {
   addSource,
-  assignNivel,
   computeDashboardMetrics,
   getCandidate,
   removeSource,
@@ -24,7 +34,6 @@ import {
 } from "@/alicia/studio/studio-store";
 import type {
   ChecklistItemState,
-  OperationalLevel,
   StudioCandidate,
   StudioCandidateStatus,
   StudioDashboardMetrics,
@@ -35,7 +44,10 @@ import type {
 type StudioContextValue = {
   state: StudioState;
   metrics: StudioDashboardMetrics;
+  reviewCases: ReviewCase[];
+  publicationReviewCases: PipelineReviewCase[];
   getCandidateById: (id: string) => StudioCandidate | undefined;
+  getProtocolEvaluation: (candidateId: string) => StudioProtocolEvaluation | undefined;
   setStatus: (candidateId: string, status: StudioCandidateStatus) => void;
   setChecklistItem: (candidateId: string, itemId: string, state: ChecklistItemState) => void;
   addCandidateSource: (candidateId: string, source: Omit<StudioSource, "id">) => void;
@@ -45,7 +57,6 @@ type StudioContextValue = {
     patch: Partial<Omit<StudioSource, "id">>,
   ) => void;
   deleteCandidateSource: (candidateId: string, sourceId: string) => void;
-  setNivel: (candidateId: string, nivel: OperationalLevel) => void;
   resetToSeed: () => void;
 };
 
@@ -85,6 +96,22 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   }, [state, hydrated]);
 
   const metrics = useMemo(() => computeDashboardMetrics(state), [state]);
+  const reviewCases = useMemo(() => getStudioReviewCases(state.candidates), [state.candidates]);
+  const publicationReviewCases = useMemo(
+    () => getPublicationReviewCases(state.candidates, getSessionPublicationPipeline()),
+    [state.candidates],
+  );
+
+  const getProtocolEvaluation = useCallback(
+    (candidateId: string) => {
+      const candidate = getCandidate(state, candidateId);
+      if (!candidate) {
+        return undefined;
+      }
+      return evaluateCandidateProtocol(candidate);
+    },
+    [state],
+  );
 
   const setStatus = useCallback((candidateId: string, status: StudioCandidateStatus) => {
     setState((current) => updateCandidateStatus(current, candidateId, status));
@@ -119,10 +146,6 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     setState((current) => removeSource(current, candidateId, sourceId));
   }, []);
 
-  const setNivel = useCallback((candidateId: string, nivel: OperationalLevel) => {
-    setState((current) => assignNivel(current, candidateId, nivel));
-  }, []);
-
   const resetToSeed = useCallback(() => {
     const seed = createInitialStudioState();
     setState(seed);
@@ -133,24 +156,28 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     () => ({
       state,
       metrics,
+      reviewCases,
+      publicationReviewCases,
       getCandidateById: (id) => getCandidate(state, id),
+      getProtocolEvaluation,
       setStatus,
       setChecklistItem,
       addCandidateSource,
       editCandidateSource,
       deleteCandidateSource,
-      setNivel,
       resetToSeed,
     }),
     [
       state,
       metrics,
+      reviewCases,
+      publicationReviewCases,
+      getProtocolEvaluation,
       setStatus,
       setChecklistItem,
       addCandidateSource,
       editCandidateSource,
       deleteCandidateSource,
-      setNivel,
       resetToSeed,
     ],
   );

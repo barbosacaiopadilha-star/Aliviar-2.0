@@ -17,6 +17,7 @@ import {
 } from "./validation-lib.mjs";
 
 async function assertOk(label, response, recorder, responsavel) {
+  const payload = response.json?.data ?? response.json;
   const ok = response.res.ok || response.res.status === 201;
   recorder.record({
     etapa: label,
@@ -24,12 +25,12 @@ async function assertOk(label, response, recorder, responsavel) {
     saiu: ok,
     responsavel,
     status: response.res.status,
-    erro: ok ? null : (response.json?.error?.message ?? response.text.slice(0, 200)),
+    erro: ok ? null : (payload?.error?.message ?? response.json?.message ?? response.text.slice(0, 200)),
   });
   if (!ok) {
     throw new Error(`${label}_failed:${response.res.status}`);
   }
-  return response.json;
+  return payload;
 }
 
 async function main() {
@@ -120,14 +121,15 @@ async function main() {
   const jornadaRes = await fetchWithCookies(env, patientSession.store, "/api/v1/me/jornada");
   await assertOk("portal_jornada", jornadaRes, recorder, "PACIENTE");
 
-  const docContent = Buffer.from("E2E validation document content").toString("base64");
+  const docBytes = Buffer.from("E2E validation document content");
+  const docContent = docBytes.toString("base64");
   const docRes = await fetchWithCookies(env, patientSession.store, "/api/v1/me/documentos", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       nome_arquivo: "exame-e2e.pdf",
       tipo_mime: "application/pdf",
-      tamanho_bytes: 35,
+      tamanho_bytes: docBytes.length,
       conteudo_base64: docContent,
     }),
   });

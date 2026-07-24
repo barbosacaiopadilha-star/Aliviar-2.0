@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 import type { CaseRecord } from "@/case-registration/model/case";
 import type { CaseRegistrationEvent } from "@/case-registration/events/case-registration-events";
 import type { CaseRepositoryPort } from "@/case-registration/ports/case-registration-ports";

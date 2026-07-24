@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { PUBLICATION_OUTCOME_LABELS } from "@/alicia/studio/protocol-bridge";
 import { checklistProgress } from "@/alicia/studio/operational-checklist";
 import {
   STUDIO_STATUSES,
@@ -15,8 +16,9 @@ import { SourcesPanel } from "./SourcesPanel";
 import { useStudio } from "./StudioProvider";
 
 export function CandidateDetail({ candidateId }: { candidateId: string }) {
-  const { getCandidateById, setStatus, setNivel } = useStudio();
+  const { getCandidateById, getProtocolEvaluation, setStatus } = useStudio();
   const candidate = getCandidateById(candidateId);
+  const protocol = getProtocolEvaluation(candidateId);
 
   if (!candidate) {
     return (
@@ -57,20 +59,16 @@ export function CandidateDetail({ candidateId }: { candidateId: string }) {
               </option>
             ))}
           </select>
-          <select
-            className="rounded-lg border border-line bg-paper-raised px-3 py-2 text-sm"
-            value={candidate.nivel ?? ""}
-            onChange={(e) => {
-              if (e.target.value === "A" || e.target.value === "B") {
-                setNivel(candidateId, e.target.value);
-              }
-            }}
-            aria-label="Nível operacional"
-          >
-            <option value="">Sem nível</option>
-            <option value="A">Nível A</option>
-            <option value="B">Nível B</option>
-          </select>
+          {protocol && (
+            <div
+              className="rounded-lg border border-line bg-paper-raised px-3 py-2 text-sm"
+              data-testid="protocol-decision"
+            >
+              <span className="text-ink-soft">Protocol Engine: </span>
+              <strong>{PUBLICATION_OUTCOME_LABELS[protocol.decision.outcome]}</strong>
+              {protocol.suggestedNivel ? ` · Nível ${protocol.suggestedNivel}` : ""}
+            </div>
+          )}
         </div>
       </div>
 
@@ -87,13 +85,31 @@ export function CandidateDetail({ candidateId }: { candidateId: string }) {
             <h2 className="text-sm font-semibold text-ink">Resumo operacional</h2>
             <p className="mt-1 text-sm text-ink-soft">
               Status: <strong>{STUDIO_STATUS_LABELS[candidate.status]}</strong>
-              {candidate.nivel ? ` · Nível ${candidate.nivel}` : ""}
+              {protocol?.suggestedNivel ? ` · Nível sugerido ${protocol.suggestedNivel}` : ""}
             </p>
           </div>
           <p className="text-sm text-ink-soft">
             Checklist: {progress.concluido}/{progress.total}
           </p>
         </div>
+
+        {protocol && (
+          <div className="mt-4 rounded-lg border border-line bg-paper p-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              Decisão do Protocol Engine
+            </h3>
+            <p className="mt-2 text-sm text-ink">{protocol.decision.justification}</p>
+            {protocol.decision.pendingRules.length > 0 && (
+              <ul className="mt-3 space-y-1">
+                {protocol.decision.pendingRules.map((rule) => (
+                  <li key={rule.id} className="text-sm text-coral">
+                    {rule.id}: {rule.message}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
 
         {candidate.pendencies.length > 0 && (
           <div className="mt-4">

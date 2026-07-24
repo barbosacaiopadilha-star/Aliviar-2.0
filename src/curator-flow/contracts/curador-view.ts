@@ -87,6 +87,10 @@ export interface TimelineOperacionalItemView {
 }
 
 import type { AceAnaliseCuradorView } from "@/ace-flow/contracts/ace-analysis";
+import type {
+  CasoCuradoriaView,
+  DossieVersaoView,
+} from "@/curadoria-flow/contracts/dossie-view";
 
 export interface CasoDeCuradoriaView {
   jornada_id: string;
@@ -109,6 +113,8 @@ export interface CasoDeCuradoriaView {
   timeline_operacional: TimelineOperacionalItemView[];
   comentarios: ComentarioOperacionalView[];
   ace_analise: AceAnaliseCuradorView | null;
+  caso_curadoria: CasoCuradoriaView | null;
+  dossie_versao_atual: DossieVersaoView | null;
 }
 
 export interface CuratorWorkspaceData {

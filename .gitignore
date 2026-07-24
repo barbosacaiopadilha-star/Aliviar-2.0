@@ -52,3 +52,4 @@ scripts/local/.tmp-password-update.sql
 scripts/local/.validation-env.json
 scripts/local/validation-report.json
 .env.admin.local
+.vercel

@@ -2,7 +2,7 @@
 
 **Versão:** 1.1  
 **Status:** Canônico — inteligência operacional interna  
-**Data de referência:** 22 de julho de 2026  
+**Data de referência:** 23 de julho de 2026  
 **Fonte de dados:** `catalog.seed.json` · `ES_COVERAGE_REPORT.md` · Ciclos Operacionais 001, 002 e Epic 08  
 **Documento complementar:** [`OPERATIONAL_DASHBOARD.md`](./OPERATIONAL_DASHBOARD.md)
 
@@ -209,6 +209,9 @@ Principais redes com múltiplos vínculos:
 | Pós-Ciclo 001 | Grande Vitória Ortopedia | 15 | 10 | 5 | ~3,2 |
 | Pós-Ciclo 002 | Grande Vitória Neurocirurgia | 21 | 10 | 11 | 4,33 |
 | Pós-Epic 08 | Expansão interior ES | **34** | **17** | **17** | **5,0** |
+| Pós-Ciclo 004 | Revisão neuro metro (pesquisa) | **34** | **17** | **17** | **5,0** |
+
+**Ciclo 004 (23/07/2026):** Pesquisa de elevação B → A para `andre-faria-teixeira` e `paulo-melo-jacques`. **0 elevações** — graduação/residência não confirmáveis em fontes nível 1–3 (Lattes bloqueado por CAPTCHA; site médico e DOI insuficientes isoladamente). Catálogo público **não alterado**.
 
 ---
 
@@ -234,4 +237,4 @@ Principais redes com múltiplos vínculos:
 
 ---
 
-*Última atualização: 22 de julho de 2026 — snapshot pós Epic 08 Expansão do Catálogo.*
+*Última atualização: 23 de julho de 2026 — snapshot pós Ciclo 004 (pesquisa KPI-Q07, 0 elevações).*

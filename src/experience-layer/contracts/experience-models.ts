@@ -83,12 +83,35 @@ export interface AceExperienceModel {
   responsavel: ResponsavelView;
 }
 
+export interface DossieOpcaoPortalView {
+  rotulo: "A" | "B" | "C";
+  nome: string;
+  especialidade: string;
+  parecer: string;
+  pontos_favoraveis: string;
+  pontos_atencao: string;
+  perguntas_sugeridas: string;
+}
+
+export interface DossieExperienceModel {
+  jornada_id: string;
+  versao: number;
+  publicado_em: string;
+  perfil_prioridades: {
+    dimensoes: Array<{ nome: string; descricao?: string }>;
+    pesos: Record<string, number>;
+  };
+  opcoes: DossieOpcaoPortalView[];
+  proximo_passo: ProximoPassoView;
+}
+
 export interface CanonicalExperienceSnapshot {
   landing: LandingExperienceModel;
   onboarding: OnboardingExperienceModel | null;
   minhaJornada: MinhaJornadaExperienceModel | null;
   ace: AceExperienceModel | null;
   curadoria: CuradoriaExperienceModel | null;
+  dossie: DossieExperienceModel | null;
   entrega: EntregaExperienceModel | null;
   escolha: EscolhaExperienceModel | null;
   acompanhamento: AcompanhamentoExperienceModel | null;

@@ -6,6 +6,7 @@ export const EXTENSOES_VAZIAS: JornadaViewExtensoes = {
   entrega: null,
   escolha_registrada: null,
   ace_analise: null,
+  dossie: null,
 };
 
 export function normalizarExtensoes(
@@ -17,5 +18,6 @@ export function normalizarExtensoes(
     entrega: extensoes?.entrega ?? null,
     escolha_registrada: extensoes?.escolha_registrada ?? null,
     ace_analise: extensoes?.ace_analise ?? null,
+    dossie: extensoes?.dossie ?? null,
   };
 }

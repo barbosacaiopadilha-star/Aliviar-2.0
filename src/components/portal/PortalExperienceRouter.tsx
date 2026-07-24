@@ -10,6 +10,7 @@ import { useExperience } from "@/components/canonical/ExperienceProvider";
 import { ExperienceStateGate } from "@/components/canonical/ExperienceStateGate";
 import { AcompanhamentoPortalSurface } from "@/components/portal/surfaces/AcompanhamentoPortalSurface";
 import { CuradoriaPortalSurface } from "@/components/portal/surfaces/CuradoriaPortalSurface";
+import { DossiePortalSurface } from "@/components/portal/surfaces/DossiePortalSurface";
 import { DocumentosPortalSurface } from "@/components/portal/surfaces/DocumentosPortalSurface";
 import { EntregaPortalSurface } from "@/components/portal/surfaces/EntregaPortalSurface";
 import { EscolhaPortalSurface } from "@/components/portal/surfaces/EscolhaPortalSurface";
@@ -91,6 +92,10 @@ function PortalReadySurface({ onRefresh }: { onRefresh: () => Promise<void> }) {
 
         {surface === "curadoria" && experience.curadoria ? (
           <CuradoriaPortalSurface model={experience.curadoria} />
+        ) : null}
+
+        {surface === "dossie" && experience.dossie ? (
+          <DossiePortalSurface model={experience.dossie} />
         ) : null}
 
         {surface === "entrega" && experience.entrega ? (

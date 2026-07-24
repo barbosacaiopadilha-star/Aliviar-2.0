@@ -10,6 +10,8 @@ import {
   type StudioCandidateStatus,
 } from "@/alicia/studio/types";
 
+import { PUBLICATION_PIPELINE_REASON_LABELS } from "@/alicia/studio/publication-bridge";
+
 import { useStudio } from "./StudioProvider";
 
 const STATUS_COLORS: Record<StudioCandidateStatus, string> = {
@@ -58,16 +60,65 @@ function CandidateCard({ candidate }: { candidate: StudioCandidate }) {
 }
 
 export function InboxBoard() {
-  const { state } = useStudio();
+  const { state, reviewCases, publicationReviewCases } = useStudio();
 
   return (
     <div className="space-y-8" data-testid="studio-inbox">
       <div>
         <h1 className="font-serif text-2xl font-semibold text-ink">Inbox</h1>
         <p className="mt-1 text-sm text-ink-soft">
-          {state.candidates.length} candidatos · arraste visual por status
+          {state.candidates.length} candidatos · {reviewCases.length} review case(s) do Protocol
+          Engine · {publicationReviewCases.length} exceção(ões) do Publication Pipeline
         </p>
       </div>
+
+      {reviewCases.length > 0 && (
+        <section className="card p-6" data-testid="studio-review-cases">
+          <h2 className="text-sm font-semibold text-ink">Review Cases — Protocol Engine</h2>
+          <p className="mt-1 text-sm text-ink-soft">
+            O Studio não decide elegibilidade. Estes casos exigem resolução humana.
+          </p>
+          <ul className="mt-4 space-y-3">
+            {reviewCases.map((reviewCase) => (
+              <li key={reviewCase.candidateId} className="rounded-lg border border-line p-3">
+                <Link
+                  href={`/alicia/studio/candidatos/${reviewCase.candidateId}`}
+                  className="font-medium text-ink hover:text-coral"
+                >
+                  {reviewCase.candidateName}
+                </Link>
+                <p className="mt-1 text-xs text-ink-soft">{reviewCase.caseId}</p>
+                <p className="mt-2 text-sm text-coral">{reviewCase.summary}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {publicationReviewCases.length > 0 && (
+        <section className="card p-6" data-testid="studio-publication-review-cases">
+          <h2 className="text-sm font-semibold text-ink">Review Cases — Publication Pipeline</h2>
+          <p className="mt-1 text-sm text-ink-soft">
+            Exceções de publicação. Não há bypass do Protocol Engine ou do preflight.
+          </p>
+          <ul className="mt-4 space-y-3">
+            {publicationReviewCases.map((reviewCase) => (
+              <li key={`${reviewCase.candidateId}-${reviewCase.reason}`} className="rounded-lg border border-line p-3">
+                <Link
+                  href={`/alicia/studio/candidatos/${reviewCase.candidateId}`}
+                  className="font-medium text-ink hover:text-coral"
+                >
+                  {reviewCase.caseId}
+                </Link>
+                <p className="mt-1 text-xs text-ink-soft">
+                  {PUBLICATION_PIPELINE_REASON_LABELS[reviewCase.reason]}
+                </p>
+                <p className="mt-2 text-sm text-coral">{reviewCase.summary}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-4 xl:grid-cols-7">
         {STUDIO_STATUSES.map((status) => {

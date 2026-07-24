@@ -1,0 +1,7 @@
+export const CONNECTOR_FRAMEWORK_VERSION = "1.0";
+
+export const DEFAULT_RATE_LIMIT_PER_MINUTE = 60;
+export const DEFAULT_RATE_LIMIT_PER_HOUR = 1000;
+export const DEFAULT_MAX_RETRIES = 3;
+export const DEFAULT_BACKOFF_BASE_MS = 500;
+export const DEFAULT_BACKOFF_MAX_MS = 30_000;

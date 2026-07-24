@@ -5,6 +5,7 @@ import { mapAcompanhamentoExperienceModel } from "./mappers/acompanhamento";
 import { mapCuradoriaExperienceModel } from "./mappers/curadoria";
 import { mapDocumentosExperienceModel } from "./mappers/documentos";
 import { mapEntregaExperienceModel } from "./mappers/entrega";
+import { mapDossieExperienceModel } from "./mappers/dossie";
 import { mapEscolhaExperienceModel } from "./mappers/escolha";
 import { mapLandingExperienceModel } from "./mappers/landing";
 import { mapMinhaJornadaExperienceModel } from "./mappers/minha-jornada";
@@ -22,6 +23,7 @@ export function resolveCanonicalExperience(
     minhaJornada: view ? mapMinhaJornadaExperienceModel(view) : null,
     ace: view ? mapAceExperienceModel(view) : null,
     curadoria: view ? mapCuradoriaExperienceModel(view) : null,
+    dossie: view ? mapDossieExperienceModel(view) : null,
     entrega: view ? mapEntregaExperienceModel(view) : null,
     escolha: view ? mapEscolhaExperienceModel(view) : null,
     acompanhamento: view ? mapAcompanhamentoExperienceModel(view) : null,
@@ -35,6 +37,7 @@ export type PortalSurface =
   | "documentos"
   | "minha-jornada"
   | "curadoria"
+  | "dossie"
   | "entrega"
   | "escolha"
   | "acompanhamento";
@@ -57,6 +60,10 @@ export function resolvePortalSurface(view: JornadaDoPacienteView | null): Portal
 
   if (experience.curadoria) {
     return "curadoria";
+  }
+
+  if (experience.dossie) {
+    return "dossie";
   }
 
   if (experience.escolha) {

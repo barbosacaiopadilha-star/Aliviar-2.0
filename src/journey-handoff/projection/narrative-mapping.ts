@@ -54,6 +54,7 @@ function viewFromEtapa(etapa: EtapaDaJornadaCodigo): JornadaDoPacienteView {
       entrega: null,
       escolha_registrada: null,
       ace_analise: null,
+      dossie: null,
     },
   };
 }

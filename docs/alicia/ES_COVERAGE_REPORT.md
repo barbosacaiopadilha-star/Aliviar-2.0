@@ -1,6 +1,6 @@
 # AliCIA — Relatório de Cobertura Espírito Santo
 
-Gerado em: 2026-07-22
+Gerado em: 2026-07-24
 
 ## Resumo
 
