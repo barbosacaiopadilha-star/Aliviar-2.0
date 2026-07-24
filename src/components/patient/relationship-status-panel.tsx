@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader } from "@/components/ui/card";
+import { PatientCard } from "@/components/paciente/dashboard/patient-primitives";
 import { FormMessage } from "@/components/ui/form-message";
 import type { ProviderPresentation } from "@/modules/ace/artifacts/final-curadoria";
 import {
@@ -83,28 +83,24 @@ export function RelationshipStatusPanel({
   // nenhuma nova Curadoria.
   if (relationship.status === "ENCERRADO") {
     return (
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">
+      <PatientCard>
+        <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
             Acompanhamento encerrado
           </h2>
-        </CardHeader>
         <p className="text-sm text-ink">
           Este acompanhamento foi registrado como encerrado.
         </p>
-      </Card>
+      </PatientCard>
     );
   }
 
   // Etapas de revisão — nada persistido ainda.
   if (reviewing === "close") {
     return (
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">
+      <PatientCard>
+        <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
             Registrar encerramento planejado
           </h2>
-        </CardHeader>
         <p className="text-sm text-ink">
           Você está registrando que o acompanhamento com {displayName} foi
           concluído de forma planejada.
@@ -135,18 +131,16 @@ export function RelationshipStatusPanel({
             Voltar
           </Button>
         </div>
-      </Card>
+      </PatientCard>
     );
   }
 
   if (reviewing === "interrupt") {
     return (
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">
+      <PatientCard>
+        <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
             Registrar interrupção
           </h2>
-        </CardHeader>
         <p className="text-sm text-ink">
           Você está registrando que o acompanhamento com {displayName} foi
           interrompido.
@@ -176,19 +170,17 @@ export function RelationshipStatusPanel({
             Voltar
           </Button>
         </div>
-      </Card>
+      </PatientCard>
     );
   }
 
   // ATIVO
   return (
-    <Card>
-      <CardHeader>
-        <h2 className="font-sans text-lg font-semibold text-ink">
-          Seu acompanhamento
-        </h2>
-      </CardHeader>
-      <p className="text-sm text-ink">
+    <PatientCard>
+      <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
+        Seu acompanhamento
+      </h2>
+      <p className="patient-body text-[var(--patient-ink)]">
         Seu acompanhamento com {displayName} está registrado como ativo.
       </p>
       {errorBanner}
@@ -211,6 +203,6 @@ export function RelationshipStatusPanel({
       >
         O acompanhamento foi interrompido
       </Button>
-    </Card>
+    </PatientCard>
   );
 }

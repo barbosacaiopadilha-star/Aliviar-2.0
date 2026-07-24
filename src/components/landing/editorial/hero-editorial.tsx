@@ -1,0 +1,75 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
+
+import { LinkButton } from "@/components/landing/link-button";
+import { ImmersiveBackdrop } from "@/components/shared/immersive-backdrop";
+
+const VIDEO_SRC = "/videos/video-institucional-aliviar.webm";
+const VIDEO_POSTER = "/images/video-institucional-poster.webp";
+
+function resolveVideo(): { src?: string; poster?: string } {
+  const videoPath = path.join(process.cwd(), "public", VIDEO_SRC);
+  if (!existsSync(videoPath)) return {};
+  const posterPath = path.join(process.cwd(), "public", VIDEO_POSTER);
+  return {
+    src: VIDEO_SRC,
+    poster: existsSync(posterPath) ? VIDEO_POSTER : undefined,
+  };
+}
+
+type HeroEditorialProps = {
+  videoSrc?: string;
+  videoPoster?: string;
+};
+
+export function HeroEditorial({ videoSrc, videoPoster }: HeroEditorialProps = {}) {
+  const video = videoSrc !== undefined ? { src: videoSrc, poster: videoPoster } : resolveVideo();
+
+  return (
+    <section className="landing-hero-immersive">
+      <ImmersiveBackdrop scene="landingHero" variant="landing-hero" imageOpacity={42} priority />
+
+      <div className="relative z-10 mx-auto w-full max-w-content px-4 lg:px-8">
+        <div className="landing-fade-in mx-auto max-w-3xl text-center">
+          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-brand-sage)]">
+            Curadoria médica independente
+          </p>
+          <h1 className="landing-hero-title text-4xl font-semibold text-[var(--landing-ink)] sm:text-5xl lg:text-[3.25rem]">
+            Uma decisão de saúde importante.
+            <br />
+            Você não precisa tomá-la sozinho.
+          </h1>
+          <p className="landing-body mx-auto mt-6 max-w-2xl text-lg text-[var(--color-ink-muted)]">
+            Com você em cada etapa — da sua história até a escolha do médico certo para você.
+          </p>
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <LinkButton href="/sua-historia" variant="primary" className="w-full sm:w-auto">
+              Contar minha história
+            </LinkButton>
+            <LinkButton href="/login" variant="secondary" className="w-full sm:w-auto">
+              Acessar minha Jornada
+            </LinkButton>
+          </div>
+        </div>
+
+        {video.src ? (
+          <div className="landing-fade-in mx-auto mt-14 max-w-4xl" style={{ animationDelay: "150ms" }}>
+            <div className="landing-video-cinema">
+              <video
+                src={video.src}
+                poster={video.poster}
+                muted
+                loop
+                playsInline
+                autoPlay
+                preload="metadata"
+                aria-label="Vídeo institucional da Aliviar — ambiente de acolhimento"
+                className="aspect-video w-full object-cover"
+              />
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}

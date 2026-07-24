@@ -1,21 +1,8 @@
 /**
- * Minha Jornada — a linha do tempo das sete etapas (Tela 1, MISSÃO 205).
- *
- * @metodo Experience §2.4 — mostra-se trabalho humano, nunca processamento: quem, o quê, quando
- * @metodo Experience §5 — UX2: a pessoa nunca precisa lembrar onde está; UX3: próximo passo sempre visível
- * @metodo Jornada §4 — o Portal do Paciente nunca mostra etapa vazia e sempre demonstra evolução
- * @metodo Fundamentos §13 — P12: a complexidade nunca chega ao paciente
- *
- * Por que existe: o paciente nunca deve precisar perguntar "em que etapa está
- * minha Curadoria?". Esta tela responde isso o tempo inteiro — cada etapa diz
- * o que aconteceu, quando, quem responde por ela, e de quem é a próxima ação.
- *
- * O que nunca faz: mostrar percentual de conclusão, barra que anda sozinha,
- * "processando", ou uma etapa futura como caixa cinza vazia. Uma etapa que
- * ainda não chegou diz o que vai acontecer.
+ * Minha Jornada — linha do tempo orgânica e iluminada.
  */
 
-import { Card } from "@/components/ui/card";
+import { PatientCard } from "@/components/paciente/dashboard/patient-primitives";
 import { cn } from "@/components/ui/cn";
 import type { Jornada, JornadaStage, JornadaStageStatus } from "@/modules/curadoria/jornada";
 
@@ -23,14 +10,14 @@ const statusLabels: Record<JornadaStageStatus, string> = {
   CONCLUIDA: "Concluída",
   EM_ANDAMENTO: "Acontecendo agora",
   AGUARDANDO_VOCE: "Sua vez",
-  A_CAMINHO: "A caminho",
+  A_CAMINHO: "Próximo passo",
 };
 
 const markerClasses: Record<JornadaStageStatus, string> = {
-  CONCLUIDA: "border-brand-sage bg-brand-sage",
-  EM_ANDAMENTO: "border-brand-primary bg-brand-primary",
-  AGUARDANDO_VOCE: "border-brand-gold bg-brand-gold",
-  A_CAMINHO: "border-border bg-surface",
+  CONCLUIDA: "bg-[var(--color-brand-sage)] ring-4 ring-[var(--color-brand-sage)]/20",
+  EM_ANDAMENTO: "bg-[var(--patient-forest)] ring-4 ring-[var(--patient-forest)]/15 shadow-md shadow-emerald-950/10",
+  AGUARDANDO_VOCE: "bg-[var(--color-brand-gold)] ring-4 ring-[var(--color-brand-gold)]/20",
+  A_CAMINHO: "bg-white ring-2 ring-[var(--color-border)]",
 };
 
 function formatDay(iso: string): string {
@@ -39,52 +26,46 @@ function formatDay(iso: string): string {
 
 function StageRow({ stage, isLast }: { stage: JornadaStage; isLast: boolean }) {
   return (
-    <li className="relative flex gap-4 pb-6 last:pb-0">
-      {/* Fio contínuo entre as etapas — a jornada é uma história, não uma
-          lista de itens soltos. */}
+    <li className="relative flex gap-5 pb-8 last:pb-0">
       {isLast ? null : (
         <span
           aria-hidden="true"
-          className="absolute left-[7px] top-5 h-full w-px bg-border"
+          className="patient-journey-line absolute left-[11px] top-6 h-[calc(100%-0.5rem)] w-0.5 rounded-full"
         />
       )}
       <span
         aria-hidden="true"
-        className={cn("relative mt-1.5 size-[15px] shrink-0 rounded-full border-2", markerClasses[stage.status])}
+        className={cn("relative mt-1 size-[22px] shrink-0 rounded-full", markerClasses[stage.status])}
       />
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3
             className={cn(
-              "font-sans text-base",
-              stage.status === "A_CAMINHO" ? "text-ink-muted" : "font-medium text-ink",
+              "font-serif text-lg",
+              stage.status === "A_CAMINHO" ? "text-[var(--color-ink-muted)]" : "font-medium text-[var(--patient-ink)]",
             )}
           >
             {stage.label}
           </h3>
-          <span className="text-xs uppercase tracking-wide text-ink-muted">
+          <span className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--color-brand-sage)]">
             {statusLabels[stage.status]}
           </span>
         </div>
 
-        <p className="mt-1 text-sm leading-relaxed text-ink-muted">{stage.description}</p>
+        <p className="patient-body mt-2 text-[var(--color-ink-muted)]">{stage.description}</p>
 
-        <div className="mt-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs text-ink-muted">
+        <div className="mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm text-[var(--color-ink-muted)]">
           {stage.updatedAt ? <span>Atualizado em {formatDay(stage.updatedAt)}</span> : null}
           <span>Com {stage.responsible}</span>
         </div>
 
         {stage.nextAction ? (
-          <p className="mt-2 text-sm">
+          <p className="mt-3 text-sm">
             {stage.nextAction.owner === "VOCE" ? (
-              <span className="font-medium text-brand-primary-deep">
-                {stage.nextAction.label}
-              </span>
+              <span className="font-medium text-[var(--patient-forest)]">{stage.nextAction.label}</span>
             ) : (
-              // Ação da equipe nunca vira botão para o paciente — ele acompanha,
-              // não executa.
-              <span className="text-ink-muted">{stage.nextAction.label}</span>
+              <span className="text-[var(--color-ink-muted)]">{stage.nextAction.label}</span>
             )}
           </p>
         ) : null}
@@ -95,16 +76,12 @@ function StageRow({ stage, isLast }: { stage: JornadaStage; isLast: boolean }) {
 
 export function JornadaTimeline({ jornada }: { jornada: Jornada }) {
   return (
-    <Card padding="lg">
+    <PatientCard className="patient-fade-in">
       <ol className="relative">
         {jornada.stages.map((stage, index) => (
-          <StageRow
-            key={stage.id}
-            stage={stage}
-            isLast={index === jornada.stages.length - 1}
-          />
+          <StageRow key={stage.id} stage={stage} isLast={index === jornada.stages.length - 1} />
         ))}
       </ol>
-    </Card>
+    </PatientCard>
   );
 }

@@ -32,8 +32,8 @@ export function PublicHeader() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-sticky-header border-b border-border bg-canvas/95 backdrop-blur transition-shadow duration-base ease-standard",
-        scrolled && "shadow-md",
+        "sticky top-0 z-sticky-header border-b border-[var(--color-border)]/50 bg-[var(--landing-linen)]/70 backdrop-blur-md transition-shadow duration-base ease-standard",
+        scrolled && "shadow-sm",
       )}
     >
       <div
@@ -54,7 +54,7 @@ export function PublicHeader() {
             priority
             className="h-10 w-auto lg:h-12"
           />
-          <span className="font-serif text-lg font-semibold text-brand-primary-deep lg:text-xl">
+          <span className="font-serif text-lg font-semibold text-[var(--landing-forest,var(--color-brand-primary-deep))] lg:text-xl">
             Aliviar
           </span>
         </Link>

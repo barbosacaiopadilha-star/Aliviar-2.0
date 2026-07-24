@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 import { EvidenceCard } from "@/components/curadoria/evidence-card";
 import { WhatsappContact } from "@/components/curadoria/whatsapp-contact";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { PatientCard, PatientPageHeader } from "@/components/paciente/dashboard/patient-primitives";
 import { PERFIL_MESSAGE } from "@/modules/curadoria/jornada";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
@@ -12,22 +12,6 @@ import { PRIORITY_CRITERION_LABELS } from "@/modules/curadoria/types";
 
 export const metadata: Metadata = { title: "Minhas prioridades" };
 
-// TELA 2 — MEU PERFIL DE PRIORIDADES
-//
-// Qual pergunta esta tela responde?
-//   "O que exatamente eu disse que importava, e como isso foi registrado?"
-//
-// É o mesmo Perfil que o Curador vê — sem simplificação, sem resumo. A
-// diferença entre as duas telas é zero (Experiência §6: não existe "versão do
-// paciente" de um artefato compartilhado).
-//
-// Mostrar os pesos aumenta credibilidade porque cada um vem com a fala que o
-// originou: o paciente não vê um número do sistema, vê a si mesmo
-// (Experiência §Momento 4).
-
-// Carrega a Curadoria do próprio paciente. A RLS já garante que ele só
-// enxerga o Caso dele — nunca passamos id pela URL, para que não exista nem
-// a tentação de olhar o de outra pessoa.
 async function loadMinhaCuradoria() {
   await requireRole("paciente");
   const supabase = await createServerSupabaseClient();
@@ -43,73 +27,73 @@ export default async function MinhasPrioridadesPage() {
   const total = weights.reduce((sum, weight) => sum + weight.weight, 0);
 
   return (
-    <div className="space-y-8">
-      <header className="max-w-reading space-y-2">
-        <h1 className="font-serif text-3xl text-ink">Suas prioridades</h1>
-        <p className="text-base leading-relaxed text-ink-muted">{PERFIL_MESSAGE}</p>
-      </header>
+    <div className="space-y-10">
+      <PatientPageHeader
+        eyebrow="Perfil confirmado"
+        title="Suas prioridades, nas suas palavras."
+        description={PERFIL_MESSAGE}
+      />
 
-      <Card padding="lg" className="space-y-6">
-        <ul className="space-y-6">
-          {weights.map((weight) => (
-            <li key={weight.criterion}>
-              <div className="flex items-baseline justify-between gap-3">
-                <h2 className="font-sans text-base font-medium text-ink">
-                  {PRIORITY_CRITERION_LABELS[weight.criterion]}
-                </h2>
-                <p className="tabular-nums font-serif text-2xl font-semibold text-brand-primary-deep">
-                  {weight.weight}
-                  <span className="ml-1 font-sans text-xs font-normal text-ink-muted">
-                    {weight.weight === 1 ? "ponto" : "pontos"}
-                  </span>
-                </p>
-              </div>
-              <div
-                aria-hidden="true"
-                className="mt-2 h-2 overflow-hidden rounded-full bg-canvas"
-              >
-                <div
-                  className="h-full rounded-full bg-brand-sage"
-                  style={{ width: `${weight.weight}%` }}
-                />
-              </div>
-              <EvidenceCard evidence={weight.evidence} className="mt-2.5" />
-            </li>
-          ))}
-        </ul>
+      <div className="space-y-5">
+        {weights.map((weight) => (
+          <PatientCard key={weight.criterion} variant="note" className="patient-fade-in">
+            <div className="flex items-baseline justify-between gap-4">
+              <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
+                {PRIORITY_CRITERION_LABELS[weight.criterion]}
+              </h2>
+              <p className="tabular-nums font-serif text-2xl font-semibold text-[var(--patient-forest)]">
+                {weight.weight}
+                <span className="ml-1 font-sans text-xs font-normal text-[var(--color-ink-muted)]">
+                  {weight.weight === 1 ? "ponto" : "pontos"}
+                </span>
+              </p>
+            </div>
 
-        <div className="flex items-baseline justify-between gap-3 border-t border-border pt-4">
-          <span className="font-sans text-sm font-medium text-ink">Total</span>
-          <span className="tabular-nums font-serif text-xl font-semibold text-ink">{total}</span>
+            <div className="patient-progress-track mt-4" aria-hidden="true">
+              <div className="patient-progress-fill" style={{ width: `${weight.weight}%` }} />
+            </div>
+
+            <EvidenceCard evidence={weight.evidence} className="mt-4 border-l-[var(--color-brand-sage)]/40 pl-4" />
+          </PatientCard>
+        ))}
+      </div>
+
+      <PatientCard>
+        <div className="flex items-baseline justify-between gap-4">
+          <span className="text-sm font-medium text-[var(--patient-ink)]">Total distribuído</span>
+          <span className="tabular-nums font-serif text-xl font-semibold text-[var(--patient-ink)]">
+            {total} pontos
+          </span>
         </div>
-      </Card>
+      </PatientCard>
 
-      {/* A frase que impede a leitura errada mais provável desta tela. */}
-      <Card className="border-brand-gold/40">
-        <p className="max-w-reading text-sm leading-relaxed text-ink">
+      <PatientCard variant="note">
+        <p className="patient-body max-w-2xl text-[var(--patient-ink)]">
           Estes pesos representam apenas a importância que{" "}
-          <strong className="font-medium">você</strong> atribuiu a cada critério durante nossa
-          conversa. Eles nunca representam nota de médico — nenhum profissional é avaliado por
-          eles. Servem para comparar o quanto cada opção responde ao que importa para você.
+          <strong className="font-medium">você</strong> atribuiu a cada critério durante nossa conversa. Eles
+          nunca representam nota de médico — nenhum profissional é avaliado por eles. Servem para comparar o
+          quanto cada opção responde ao que importa para você.
         </p>
-      </Card>
+      </PatientCard>
 
       {observations.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Também registramos</CardTitle>
-            <CardDescription>Coisas que você contou e que orientam o cuidado.</CardDescription>
-          </CardHeader>
-          <ul className="space-y-2 text-sm leading-relaxed text-ink-muted">
+        <PatientCard>
+          <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">Também registramos</h2>
+          <p className="patient-body mt-2 text-[var(--color-ink-muted)]">
+            Coisas que você contou e que orientam o cuidado.
+          </p>
+          <ul className="mt-4 space-y-3 text-[var(--color-ink-muted)]">
             {observations.map((observation) => (
-              <li key={observation}>{observation}</li>
+              <li key={observation} className="patient-body border-l-2 border-[var(--color-brand-sage)]/30 pl-4">
+                {observation}
+              </li>
             ))}
           </ul>
-        </Card>
+        </PatientCard>
       ) : null}
 
       {record.validacao ? (
-        <p className="max-w-reading text-sm text-ink-muted">
+        <p className="patient-body max-w-2xl text-sm text-[var(--color-ink-muted)]">
           Você validou este Perfil em{" "}
           {new Date(record.validacao.validatedAt).toLocaleDateString("pt-BR", {
             day: "2-digit",

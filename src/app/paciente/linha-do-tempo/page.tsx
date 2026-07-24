@@ -3,11 +3,10 @@ import type { ComponentType } from "react";
 
 import type { Metadata } from "next";
 
+import { PatientCard, PatientPageHeader } from "@/components/paciente/dashboard/patient-primitives";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import { getPatientProfile, listPatientDocuments, listPatientNotifications } from "@/modules/profiles";
-
-import { Card, CardHeader } from "@/components/ui/card";
 
 export const metadata: Metadata = {
   title: "Linha do tempo",
@@ -77,34 +76,39 @@ export default async function PatientTimelinePage() {
   events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-sans text-2xl font-semibold text-ink">Linha do tempo</h1>
-        <p className="text-sm text-ink-muted">Tudo que já aconteceu na sua jornada com a Aliviar, até aqui.</p>
-      </div>
+    <div className="space-y-10">
+      <PatientPageHeader
+        title="Linha do tempo"
+        description="Tudo que já aconteceu na sua jornada com a Aliviar, até aqui."
+      />
 
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">Sua jornada</h2>
-        </CardHeader>
+      <PatientCard>
+        <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">Sua jornada</h2>
 
-        <ul className="space-y-4">
-          {events.map((event) => (
-            <li key={event.key} className="flex items-start gap-3">
-              <span
-                aria-hidden="true"
-                className="mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-sage-light/40 text-brand-primary-deep"
-              >
-                <event.icon className="size-4" aria-hidden={true} />
-              </span>
-              <div>
-                <p className="text-sm text-ink">{event.label}</p>
-                <p className="text-xs text-ink-muted">{formatDate(event.date)}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </Card>
+        {events.length === 0 ? (
+          <p className="patient-body mt-6 text-[var(--color-ink-muted)]">
+            Ainda não há registros aqui. Conforme sua jornada avançar, cada momento importante
+            aparecerá neste espaço.
+          </p>
+        ) : (
+          <ul className="mt-6 space-y-5">
+            {events.map((event) => (
+              <li key={event.key} className="flex items-start gap-4">
+                <span
+                  aria-hidden="true"
+                  className="mt-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--patient-linen)] text-[var(--patient-forest)] shadow-sm"
+                >
+                  <event.icon className="size-4" aria-hidden={true} />
+                </span>
+                <div>
+                  <p className="text-[var(--patient-ink)]">{event.label}</p>
+                  <p className="mt-1 text-sm text-[var(--color-ink-muted)]">{formatDate(event.date)}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </PatientCard>
     </div>
   );
 }
