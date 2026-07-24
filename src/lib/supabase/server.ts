@@ -3,7 +3,7 @@ import type { SetAllCookies } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { getSupabaseEnv } from "./env";
+import { DB_SCHEMA, getSupabaseEnv } from "./env";
 
 export async function createServerSupabaseClient(): Promise<SupabaseClient> {
   const { url, anonKey } = getSupabaseEnv();
@@ -20,6 +20,7 @@ export async function createServerSupabaseClient(): Promise<SupabaseClient> {
   };
 
   return createServerClient(url, anonKey, {
+    db: { schema: DB_SCHEMA },
     cookies: {
       getAll() {
         return cookieStore.getAll();

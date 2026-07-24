@@ -3,7 +3,7 @@ import type { SetAllCookies } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { getSupabaseEnv } from "./env";
+import { DB_SCHEMA, getSupabaseEnv } from "./env";
 
 export type MiddlewareSupabase = {
   supabase: SupabaseClient;
@@ -32,6 +32,7 @@ export function createMiddlewareSupabaseClient(request: NextRequest): Middleware
   };
 
   const supabase = createServerClient(url, anonKey, {
+    db: { schema: DB_SCHEMA },
     cookies: {
       getAll() {
         return request.cookies.getAll();
