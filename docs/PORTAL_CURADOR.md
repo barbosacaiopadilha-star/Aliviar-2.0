@@ -302,3 +302,63 @@ O total foi a 100, mas a validação continuou bloqueada pelo conflito I-03 — 
 2. **Alvo declarado** (`targetValue`) não é editável — critérios que o exigem (Área de atuação, Forma do primeiro encontro, Localização) mostram o peso, mas não o alvo.
 3. **Histórico de alterações** do Perfil existe na Memória, mas ainda não aparece nesta tela.
 4. **Salvamento automático** (Experience §6) entra com a persistência.
+
+---
+
+# Módulo 4 — Mesa de Curadoria (MISSÃO 203)
+
+Rota: `/portal-curador/casos/[id]/curadoria_tecnica`
+
+### Qual problema do Curador esta tela resolve?
+
+> **"Tenho o Perfil validado e a rede aprovada. Como eu construo, com julgamento próprio, as três opções que vou apresentar?"**
+
+### As cinco áreas, sem troca de tela
+
+| Área | Componente | Papel |
+|---|---|---|
+| 1 — Contexto | `MesaContextPanel` | Paciente, caso, restrições, documentos — coluna lateral, sempre visível |
+| 2 — Perfil de Prioridades | `MesaPriorityPanel` | Pesos com evidência, quem validou e quando — leitura, nunca edição |
+| 3 — Médicos elegíveis | `MesaDoctorCard` | Só a rede aprovada; compatibilidade com a conta à vista |
+| 4 — Comparação | `MesaComparison` | Lado a lado, critério a critério, sem ranking |
+| 5 — Parecer do Curador | `MesaWorkspace` | Editor por opção + justificativa da composição |
+
+### Decisões de método
+
+| Decisão | Origem |
+|---|---|
+| **Compatibilidade sempre rotulada "com o Perfil de Prioridades"** — nunca nota, ranking ou "melhor" | Ontologia §3.10 |
+| **Nada pré-selecionado**; o quarto botão desabilita com a frase "as três já estão selecionadas — remova uma para trocar" | Fundamentos §13 (P14), Experience §6 |
+| **Colunas da comparação na ordem de adição**, nunca por score; nenhuma célula colorida por desempenho | Ontologia §8, Experience §6 |
+| **Lacuna de cadastro aparece neutra** ("sem dado"), nunca vermelha | Engine §4.2 |
+| **Limitações são campo obrigatório** do parecer — opção só com virtudes é recomendação disfarçada | Experiência §Momento 7 |
+| **O que falta aparece ao lado do botão**, item a item, nomeando o profissional | Experience §3 |
+| **Lista de eliminados é do Curador**, com aviso de que o paciente sabe o critério, nunca quem | Engine §5.5 |
+
+### Estado com `useReducer`, e por quê
+
+A Memória precisa ser escrita **na mesma transição** da mudança que registra. Com `useState` separados aparecem dois defeitos, ambos encontrados em verificação no navegador:
+
+1. Registrar a Memória de dentro de um updater **duplicava** a entrada (o React reexecuta updaters).
+2. Calcular fora do updater **perdia** seleções — três cliques no mesmo tick liam o mesmo `selectedIds`, e só a última sobrevivia.
+
+Um reducer puro resolve os dois: correto sob batching, sem efeito colateral em função de atualização.
+
+### Verificações do Módulo 4
+
+| Verificação | Resultado |
+|---|---|
+| `tsc --noEmit` | Sem erros |
+| `next lint` | Sem avisos ou erros |
+| Testes | 10 novos (`mesa-curadoria.test.ts`); suíte 768 passando |
+| Fluxo de aceite | Selecionar 3 → pareceres → encerrar: verificado no navegador |
+| Trava pós-encerramento | 24 campos e botões desabilitados |
+| Relatório | Não gerado — fora do escopo, confirmado na verificação |
+| Mobile 375px | Sem overflow da página; a tabela de comparação rola sozinha |
+
+### Pendências do Módulo 4
+
+1. **Sem persistência** — seleção, pareceres e Memória vivem no cliente.
+2. **Observação do Curador por profissional** é leitura; o campo de escrita entra com a persistência.
+3. **Especialidade, hospitais e convênios** não existem no cadastro (divergências 2 e 3 da Ontologia) — os cartões mostram o que há.
+4. **Eventos do Motor** (`OPCAO_SELECIONADA`, `SELECAO_FECHADA`) ainda não são emitidos para a trilha real.

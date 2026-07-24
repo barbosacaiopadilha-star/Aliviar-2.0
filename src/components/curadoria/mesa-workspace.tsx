@@ -1,0 +1,434 @@
+"use client";
+
+/**
+ * Selection Panel + Technical Justification + Decision Memory — Áreas 3, 4 e 5
+ * da Mesa de Curadoria, orquestradas.
+ *
+ * @metodo Fundamentos §13 — P14: o algoritmo nunca seleciona os três; a seleção é exclusivamente do Curador
+ * @metodo Engine §11 — Barreira 4: exatamente três, sem repetição, cada uma com justificativa e autoria humana
+ * @metodo Engine §4.6 — as justificativas de opção e composição são escritas pelo Curador, nunca pelo Motor
+ * @metodo Experience §3 — copiloto sinaliza a lacuna e nunca bloqueia o caminho sem explicar
+ * @metodo Ontologia §3.13 — a ordem é de apresentação, nunca colocação
+ *
+ * Por que existe: é onde o Curador exerce julgamento. Ele monta a comparação
+ * que quiser, escolhe três, e escreve o parecer de cada uma — o sistema
+ * organiza a mesa e verifica o que falta, sem nunca sugerir quem entra nem o
+ * que escrever.
+ *
+ * O que nunca faz: pré-selecionar, ordenar por score, sugerir texto de parecer,
+ * ou desabilitar o encerramento sem dizer ao lado exatamente o que falta.
+ */
+
+import { useMemo, useReducer } from "react";
+
+import { MesaComparison } from "@/components/curadoria/mesa-comparison";
+import { MesaDoctorCard } from "@/components/curadoria/mesa-doctor-card";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { cn } from "@/components/ui/cn";
+import {
+  PARECER_PROMPTS,
+  emptyParecer,
+  logEntry,
+  validateMesaClosure,
+  type MesaLogEntry,
+  type ParecerDraft,
+} from "@/modules/curadoria/mesa";
+import type { AnaliseRecord, ExclusaoRecord } from "@/modules/curadoria/cos/types";
+
+type MesaWorkspaceProps = {
+  analyses: AnaliseRecord[];
+  excluded: ExclusaoRecord[];
+  curatorName: string;
+  patientFirstName: string;
+};
+
+/**
+ * Estado da Mesa em um único átomo, com reducer puro.
+ *
+ * Por que reducer e não vários `useState`: a Memória precisa ser escrita na
+ * mesma transição que a mudança que ela registra. Com setters separados, três
+ * seleções no mesmo tick liam o mesmo valor de `selectedIds` e só a última
+ * sobrevivia — e registrar a Memória de dentro de um updater duplicava a
+ * entrada. Um reducer puro resolve os dois: correto sob batching, e sem efeito
+ * colateral dentro de função de atualização.
+ */
+type MesaState = {
+  comparisonIds: string[];
+  selectedIds: string[];
+  pareceres: ParecerDraft[];
+  compositionRationale: string;
+  log: MesaLogEntry[];
+  closed: boolean;
+};
+
+type MesaAction =
+  | { type: "TOGGLE_COMPARISON"; id: string; name: string; actor: string }
+  | { type: "TOGGLE_SELECTION"; id: string; name: string; actor: string }
+  | { type: "UPDATE_PARECER"; id: string; field: keyof Omit<ParecerDraft, "professionalId">; value: string }
+  | { type: "SET_COMPOSITION"; value: string }
+  | { type: "RECORD_JUSTIFICATION"; description: string; actor: string }
+  | { type: "CLOSE"; actor: string };
+
+const INITIAL_STATE: MesaState = {
+  comparisonIds: [],
+  selectedIds: [],
+  pareceres: [],
+  compositionRationale: "",
+  log: [],
+  closed: false,
+};
+
+function append(log: MesaLogEntry[], entry: MesaLogEntry): MesaLogEntry[] {
+  const last = log[0];
+  if (last?.kind === entry.kind && last.description === entry.description) return log;
+  return [entry, ...log];
+}
+
+function mesaReducer(state: MesaState, action: MesaAction): MesaState {
+  switch (action.type) {
+    case "TOGGLE_COMPARISON": {
+      const has = state.comparisonIds.includes(action.id);
+      return {
+        ...state,
+        comparisonIds: has
+          ? state.comparisonIds.filter((entry) => entry !== action.id)
+          : [...state.comparisonIds, action.id],
+        log: append(
+          state.log,
+          logEntry(
+            has ? "COMPARACAO_REMOVIDA" : "COMPARACAO_ADICIONADA",
+            `${action.name} ${has ? "saiu da" : "entrou na"} comparação.`,
+            action.actor,
+          ),
+        ),
+      };
+    }
+
+    case "TOGGLE_SELECTION": {
+      const has = state.selectedIds.includes(action.id);
+      // A Curadoria apresenta sempre exatamente três — nunca uma quarta.
+      if (!has && state.selectedIds.length >= 3) return state;
+
+      return {
+        ...state,
+        selectedIds: has
+          ? state.selectedIds.filter((entry) => entry !== action.id)
+          : [...state.selectedIds, action.id],
+        pareceres: has
+          ? state.pareceres.filter((draft) => draft.professionalId !== action.id)
+          : state.pareceres.some((draft) => draft.professionalId === action.id)
+            ? state.pareceres
+            : [...state.pareceres, emptyParecer(action.id)],
+        log: append(
+          state.log,
+          logEntry(
+            has ? "OPCAO_REMOVIDA" : "OPCAO_SELECIONADA",
+            `${action.name} ${has ? "saiu da" : "entrou na"} seleção.`,
+            action.actor,
+          ),
+        ),
+      };
+    }
+
+    case "UPDATE_PARECER":
+      return {
+        ...state,
+        pareceres: state.pareceres.map((draft) =>
+          draft.professionalId === action.id ? { ...draft, [action.field]: action.value } : draft,
+        ),
+      };
+
+    case "SET_COMPOSITION":
+      return { ...state, compositionRationale: action.value };
+
+    case "RECORD_JUSTIFICATION":
+      return {
+        ...state,
+        log: append(
+          state.log,
+          logEntry("JUSTIFICATIVA_REGISTRADA", action.description, action.actor),
+        ),
+      };
+
+    case "CLOSE":
+      return {
+        ...state,
+        closed: true,
+        log: append(
+          state.log,
+          logEntry(
+            "SELECAO_FECHADA",
+            "Curadoria Técnica encerrada com três opções e pareceres completos.",
+            action.actor,
+          ),
+        ),
+      };
+  }
+}
+
+export function MesaWorkspace({
+  analyses,
+  excluded,
+  curatorName,
+  patientFirstName,
+}: MesaWorkspaceProps) {
+  const [state, dispatch] = useReducer(mesaReducer, INITIAL_STATE);
+  const { comparisonIds, selectedIds, pareceres, compositionRationale, log, closed } = state;
+
+  const namesById = useMemo(
+    () => Object.fromEntries(analyses.map((entry) => [entry.professionalId, entry.professionalName])),
+    [analyses],
+  );
+
+  const missing = useMemo(
+    () =>
+      validateMesaClosure({
+        selectedIds,
+        pareceres,
+        compositionRationale,
+        curatorName,
+        namesById,
+      }),
+    [selectedIds, pareceres, compositionRationale, curatorName, namesById],
+  );
+
+  function toggleComparison(id: string) {
+    dispatch({ type: "TOGGLE_COMPARISON", id, name: namesById[id] ?? id, actor: curatorName });
+  }
+
+  function toggleSelection(id: string) {
+    dispatch({ type: "TOGGLE_SELECTION", id, name: namesById[id] ?? id, actor: curatorName });
+  }
+
+  function updateParecer(id: string, field: keyof Omit<ParecerDraft, "professionalId">, value: string) {
+    dispatch({ type: "UPDATE_PARECER", id, field, value });
+  }
+
+  function closeMesa() {
+    if (missing.length > 0) return;
+    dispatch({ type: "CLOSE", actor: curatorName });
+  }
+
+  const comparisonAnalyses = comparisonIds
+    .map((id) => analyses.find((entry) => entry.professionalId === id))
+    .filter((entry): entry is AnaliseRecord => Boolean(entry));
+
+  return (
+    <div className="space-y-6">
+      {/* ÁREA 3 — MÉDICOS ELEGÍVEIS */}
+      <section aria-labelledby="elegiveis-heading" className="space-y-4">
+        <div>
+          <h2 id="elegiveis-heading" className="font-sans text-xl font-semibold text-ink">
+            Profissionais elegíveis
+          </h2>
+          <p className="mt-1 text-sm text-ink-muted">
+            {analyses.length} da rede aprovada passaram por todas as restrições de {patientFirstName}
+            {excluded.length > 0 ? `; ${excluded.length} saíram, com o motivo registrado` : ""}. Na ordem
+            de compatibilidade — leitura, nunca classificação.
+          </p>
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-2">
+          {analyses.map((analysis) => (
+            <MesaDoctorCard
+              key={analysis.professionalId}
+              analysis={analysis}
+              inComparison={comparisonIds.includes(analysis.professionalId)}
+              selected={selectedIds.includes(analysis.professionalId)}
+              selectionFull={selectedIds.length >= 3}
+              disabled={closed}
+              onToggleComparison={() => toggleComparison(analysis.professionalId)}
+              onToggleSelection={() => toggleSelection(analysis.professionalId)}
+            />
+          ))}
+        </div>
+
+        {excluded.length > 0 ? (
+          <details className="rounded-md border border-border bg-surface p-4">
+            <summary className="cursor-pointer text-sm font-medium text-ink">
+              Quem não entrou, e por quê ({excluded.length})
+            </summary>
+            <ul className="mt-3 space-y-2">
+              {excluded.map((entry) => (
+                <li key={entry.professionalId} className="text-sm">
+                  <span className="text-ink">{entry.professionalName}</span>
+                  <span aria-hidden="true"> — </span>
+                  <span className="text-ink-muted">{entry.failures.join(" ")}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 text-xs text-ink-muted">
+              Esta lista é sua. O paciente sabe por qual critério algo foi excluído, nunca quem.
+            </p>
+          </details>
+        ) : null}
+      </section>
+
+      {/* ÁREA 4 — COMPARAÇÃO */}
+      <section aria-labelledby="comparacao-heading">
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <span id="comparacao-heading">Comparação</span>
+            </CardTitle>
+            <CardDescription>
+              Lado a lado, critério a critério. Sem ranking, sem vencedor — as colunas ficam na ordem
+              em que você adicionou.
+            </CardDescription>
+          </CardHeader>
+          <MesaComparison analyses={comparisonAnalyses} />
+        </Card>
+      </section>
+
+      {/* ÁREA 5 — PARECER DO CURADOR */}
+      <section aria-labelledby="parecer-heading" className="space-y-4">
+        <div>
+          <h2 id="parecer-heading" className="font-sans text-xl font-semibold text-ink">
+            Seu parecer técnico
+          </h2>
+          <p className="mt-1 text-sm text-ink-muted">
+            {selectedIds.length === 0
+              ? "Selecione profissionais acima para escrever o parecer de cada um."
+              : `${selectedIds.length} de 3 selecionados. Nenhuma opção existe sem justificativa.`}
+          </p>
+        </div>
+
+        {selectedIds.map((id, index) => {
+          const parecer = pareceres.find((draft) => draft.professionalId === id);
+          if (!parecer) return null;
+
+          return (
+            <Card key={id} className="space-y-5">
+              <CardHeader>
+                <CardTitle>{namesById[id]}</CardTitle>
+                <CardDescription>
+                  Opção {index + 1} de {selectedIds.length} — ordem de apresentação, nunca colocação.
+                </CardDescription>
+              </CardHeader>
+
+              {PARECER_PROMPTS.map((prompt) => (
+                <div key={prompt.field} className="space-y-1.5">
+                  <label
+                    htmlFor={`${prompt.field}-${id}`}
+                    className="block text-sm font-medium text-ink"
+                  >
+                    {prompt.title}
+                    {prompt.required ? null : (
+                      <span className="ml-2 text-xs font-normal text-ink-muted">opcional</span>
+                    )}
+                  </label>
+                  <p className="text-xs leading-relaxed text-ink-muted">{prompt.guidance}</p>
+                  <textarea
+                    id={`${prompt.field}-${id}`}
+                    value={parecer[prompt.field]}
+                    disabled={closed}
+                    onChange={(event) => updateParecer(id, prompt.field, event.target.value)}
+                    onBlur={() =>
+                      parecer[prompt.field].trim()
+                        ? dispatch({
+                            type: "RECORD_JUSTIFICATION",
+                            description: `${prompt.title} — ${namesById[id]}.`,
+                            actor: curatorName,
+                          })
+                        : undefined
+                    }
+                    rows={3}
+                    className={cn(
+                      "w-full rounded-sm border bg-surface px-3 py-2 text-sm leading-relaxed text-ink",
+                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-surface",
+                      "transition-colors duration-fast ease-standard disabled:cursor-not-allowed disabled:opacity-70",
+                      prompt.required && !parecer[prompt.field].trim()
+                        ? "border-brand-gold/50"
+                        : "border-border",
+                    )}
+                  />
+                </div>
+              ))}
+            </Card>
+          );
+        })}
+
+        {selectedIds.length > 0 ? (
+          <Card className="space-y-3">
+            <CardHeader>
+              <CardTitle>Por que estas três, juntas</CardTitle>
+              <CardDescription>
+                A justificativa da composição — o que diferencia os caminhos entre si, para que{" "}
+                {patientFirstName} escolha qual troca faz sentido.
+              </CardDescription>
+            </CardHeader>
+            <textarea
+              value={compositionRationale}
+              disabled={closed}
+              onChange={(event) => dispatch({ type: "SET_COMPOSITION", value: event.target.value })}
+              rows={4}
+              className={cn(
+                "w-full rounded-sm border bg-surface px-3 py-2 text-sm leading-relaxed text-ink",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-surface",
+                "transition-colors duration-fast ease-standard disabled:cursor-not-allowed disabled:opacity-70",
+                compositionRationale.trim() ? "border-border" : "border-brand-gold/50",
+              )}
+            />
+          </Card>
+        ) : null}
+      </section>
+
+      {/* ENCERRAMENTO — Barreira 4 */}
+      <Card className={cn("space-y-4", missing.length === 0 && !closed && "border-brand-sage/50")}>
+        <CardHeader>
+          <CardTitle>
+            {closed ? "Curadoria Técnica encerrada" : "Encerrar a Curadoria Técnica"}
+          </CardTitle>
+          <CardDescription>
+            {closed
+              ? `Três opções selecionadas por ${curatorName}, cada uma com parecer próprio. O Relatório é a próxima etapa.`
+              : "A seleção fica registrada com o seu nome — é sua, nunca do sistema."}
+          </CardDescription>
+        </CardHeader>
+
+        {closed ? null : missing.length > 0 ? (
+          <div>
+            <p className="text-sm text-ink">Para encerrar:</p>
+            <ul className="mt-1.5 space-y-1">
+              {missing.map((item) => (
+                <li key={item} className="text-sm text-ink-muted">
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={closeMesa}
+            className="inline-flex min-h-11 items-center gap-2 rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors duration-fast ease-standard hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+          >
+            Encerrar e seguir para o Relatório
+            <span aria-hidden="true">→</span>
+          </button>
+        )}
+      </Card>
+
+      {/* DECISION MEMORY */}
+      {log.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Memória desta sessão</CardTitle>
+            <CardDescription>
+              Cada movimento fica registrado com autor — inclusive as mudanças de opinião.
+            </CardDescription>
+          </CardHeader>
+          <ul className="space-y-2">
+            {log.map((entry, index) => (
+              <li key={`${entry.kind}-${index}`} className="text-sm">
+                <span className="text-ink">{entry.description}</span>
+                <span aria-hidden="true"> · </span>
+                <span className="text-xs text-ink-muted">{entry.actor}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : null}
+    </div>
+  );
+}
