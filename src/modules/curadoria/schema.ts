@@ -67,6 +67,22 @@ export const validateProfileInputSchema = z.object({
     .max(2000),
 });
 
+export const saveAllWeightsInputSchema = z.object({
+  priorityProfileId: z.string().uuid(),
+  weights: z.array(
+    z.object({
+      criterion: z.enum(PRIORITY_CRITERIA),
+      weight: z.number().int().min(0).max(100),
+      targetValue: z.string().trim().min(1).max(120).nullable().optional(),
+      evidence: z
+        .string()
+        .trim()
+        .min(1, "Registre o momento da conversa que originou este peso.")
+        .max(2000),
+    }),
+  ),
+});
+
 export const computeCompatibilityInputSchema = z.object({
   priorityProfileId: z.string().uuid(),
 });

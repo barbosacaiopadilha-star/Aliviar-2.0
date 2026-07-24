@@ -23,7 +23,7 @@ const FOOTER_LINKS = [
 
 export function PublicFooter() {
   return (
-    <footer className="bg-brand-primary-deep">
+    <footer className="bg-[var(--color-brand-primary)]">
       {/* Fase 6 (Origem Emocional) — a última voz da Landing ecoa a
           primeira ("nunca sozinho", acento dourado no H1 da Chegada) em
           vez de repetir "sem pressa" literalmente. Curta, não acionável,
@@ -31,7 +31,7 @@ export function PublicFooter() {
           emocional, claramente subordinada ao CTA que já apareceu antes
           dela. */}
       <SectionReveal className="mx-auto max-w-content px-4 pt-16 lg:px-8">
-        <p className="max-w-reading font-serif text-2xl font-medium leading-snug text-surface lg:text-3xl">
+        <p className="max-w-reading font-serif text-2xl font-medium leading-[1.35] text-[var(--landing-linen)] lg:text-[1.875rem]">
           Você não precisa decidir sozinho.
         </p>
       </SectionReveal>
@@ -43,7 +43,7 @@ export function PublicFooter() {
         <div className="space-y-3">
           <Link
             href="/"
-            className="inline-block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-brand-primary-deep"
+            className="inline-block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-brand-primary)]"
           >
             <Image
               src="/brand/logo-aliviar-transparent.png"
@@ -53,14 +53,13 @@ export function PublicFooter() {
               className="h-20 w-20 lg:h-24 lg:w-24"
             />
           </Link>
-          <p className="max-w-reading text-sm text-surface/70">
-            Curadoria médica independente, com acompanhamento humano em cada
-            etapa — do primeiro contato à conversa que importa.
+          <p className="max-w-reading text-sm text-[var(--landing-linen)]/70">
+            Curadoria médica independente — com você em cada etapa da decisão.
           </p>
         </div>
 
         <div>
-          <span className="text-xs font-medium uppercase tracking-[0.14em] text-brand-sage-light">
+          <span className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--landing-linen)]/60">
             Navegação
           </span>
           <ul className="mt-3 space-y-1">
@@ -75,7 +74,7 @@ export function PublicFooter() {
                     bloco de navegação com a mesma altura total de antes. */}
                 <Link
                   href={link.href}
-                  className="link-underline inline-block py-1 text-sm text-surface/85 transition-colors duration-fast ease-standard hover:text-brand-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-brand-primary-deep"
+                  className="link-underline inline-block py-1 text-sm text-[var(--landing-linen)]/85 transition-colors duration-base ease-standard hover:text-[var(--landing-linen)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-brand-primary)]"
                 >
                   {link.label}
                 </Link>
@@ -85,8 +84,8 @@ export function PublicFooter() {
         </div>
       </SectionReveal>
 
-      <div className="border-t border-surface/10">
-        <p className="mx-auto max-w-content px-4 py-4 text-xs text-surface/60 lg:px-8">
+      <div className="border-t border-[var(--landing-linen)]/10">
+        <p className="mx-auto max-w-content px-4 py-4 text-xs text-[var(--landing-linen)]/60 lg:px-8">
           © {new Date().getFullYear()} Aliviar. Todos os direitos reservados.
         </p>
       </div>

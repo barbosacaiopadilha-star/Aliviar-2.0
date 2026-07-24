@@ -62,7 +62,7 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
     <div className="space-y-8">
       <div>
         <Link
-          href={`/portal-curador/casos/${record.caseId}`}
+          href={`/coa/curadoria/casos/${record.caseId}`}
           className="text-sm text-brand-primary underline-offset-4 hover:underline"
         >
           ← {record.patientName}

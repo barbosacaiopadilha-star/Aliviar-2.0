@@ -55,7 +55,7 @@ export function ActivityFeed({ events }: { events: ActivityEvent[] }) {
               ·
             </span>
             <Link
-              href={`/portal-curador/casos/${event.caseId}`}
+              href={`/coa/curadoria/casos/${event.caseId}`}
               className="text-sm text-brand-primary underline-offset-4 hover:underline"
             >
               {event.patientFirstName}

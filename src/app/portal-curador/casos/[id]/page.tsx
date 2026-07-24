@@ -45,7 +45,7 @@ export default async function CasoWorkspacePage({ params }: { params: Promise<{ 
     <div className="space-y-8">
       <div>
         <Link
-          href="/portal-curador"
+          href="/coa/curadoria"
           className="text-sm text-brand-primary underline-offset-4 hover:underline"
         >
           ← Painel

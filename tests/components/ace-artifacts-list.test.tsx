@@ -34,7 +34,7 @@ describe("AceArtifactsList", () => {
 
   it("mostra só a versão mais recente de cada tipo por padrão, colapsado", () => {
     render(<AceArtifactsList artifacts={[buildArtifact()]} />);
-    expect(screen.getByText("Narrative")).toBeInTheDocument();
+    expect(screen.getByText("História organizada")).toBeInTheDocument();
     expect(screen.queryByText(/"text": "Texto original."/)).not.toBeInTheDocument();
   });
 
@@ -42,7 +42,7 @@ describe("AceArtifactsList", () => {
     const user = userEvent.setup();
     render(<AceArtifactsList artifacts={[buildArtifact()]} />);
 
-    await user.click(screen.getByRole("button", { name: /Narrative/ }));
+    await user.click(screen.getByRole("button", { name: /História organizada/ }));
     expect(screen.getByText(/"text": "Texto original."/)).toBeInTheDocument();
   });
 
@@ -67,7 +67,7 @@ describe("AceArtifactsList", () => {
 
     expect(screen.getByText("2 versões")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /Narrative/ }));
+    await user.click(screen.getByRole("button", { name: /História organizada/ }));
     expect(screen.getByText("Comparar versões")).toBeInTheDocument();
     expect(screen.getByText("text")).toBeInTheDocument();
     expect(screen.getByText('antes: "Primeira versão."')).toBeInTheDocument();
@@ -78,7 +78,7 @@ describe("AceArtifactsList", () => {
     const user = userEvent.setup();
     render(<AceArtifactsList artifacts={[buildArtifact()]} />);
 
-    await user.click(screen.getByRole("button", { name: /Narrative/ }));
+    await user.click(screen.getByRole("button", { name: /História organizada/ }));
     expect(screen.queryByText("Comparar versões")).not.toBeInTheDocument();
   });
 });

@@ -1,6 +1,5 @@
 import { requireRole } from "@/modules/auth/guard";
 import { AppShell } from "@/components/shell/app-shell";
-import { getDefaultNavItems } from "@/components/shell/nav-items";
 
 // Segmento real (ADR-009), não route group — o papel "Curador Médico" é
 // distinto de "Administrador" mesmo quando a mesma pessoa acumula os dois
@@ -16,7 +15,7 @@ export default async function CuradorLayout({
     <AppShell
       role="curador_medico"
       displayName={profile?.displayName ?? null}
-      navItems={getDefaultNavItems("curador_medico", "/curador")}
+      basePath="/curador"
     >
       {children}
     </AppShell>

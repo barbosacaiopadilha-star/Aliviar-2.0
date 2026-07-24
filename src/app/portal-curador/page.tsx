@@ -1,14 +1,14 @@
 import Link from "next/link";
 
-import { ActivityFeed } from "@/components/curadoria/activity-feed";
 import { MethodStepper } from "@/components/curadoria/method-stepper";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import { conduct } from "@/modules/curadoria/cos/conduction";
+import { getPrimaryActionLabel, phaseHref } from "@/modules/curadoria/cos/conduction-ui";
 import { listCaseIds, loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { COS_PHASE_LABELS } from "@/modules/curadoria/cos/types";
-import { listRecentActivity } from "@/modules/curadoria/portal/activity";
+import { resolveGreetingFirstName } from "@/modules/auth/display-identity";
 
 // MÓDULO 1 — PAINEL INICIAL, agora sobre o banco (MISSÃO 209, Fases 3 e 4).
 //
@@ -20,14 +20,10 @@ import { listRecentActivity } from "@/modules/curadoria/portal/activity";
 // produtividade aparece aqui, por decisão de método (Experience §3).
 
 export default async function PainelInicialPage() {
-  const { profile } = await requireRole("curador_medico");
+  const auth = await requireRole("curador_medico");
   const supabase = await createServerSupabaseClient();
 
   const caseIds = await listCaseIds(supabase);
-  // Atividade real (case_events + passagens de bastão) — o MOCK_ACTIVITY
-  // saiu na consolidação estrutural de 2026-07-24. A RLS decide o que este
-  // Curador vê; um feed vazio aqui é um fato, não um estado de erro.
-  const activity = await listRecentActivity(supabase);
   const records = (
     await Promise.all(caseIds.map((id) => loadCuradoriaRecord(supabase, id)))
   ).filter((record): record is NonNullable<typeof record> => record !== null);
@@ -49,7 +45,7 @@ export default async function PainelInicialPage() {
     });
 
   const needsCurator = conducted.filter((entry) => entry.state.nextStep.kind === "acao").length;
-  const firstName = (profile?.displayName ?? "").trim().split(/\s+/)[0] || "Curador";
+  const firstName = resolveGreetingFirstName(auth);
 
   return (
     <div className="space-y-10">
@@ -115,7 +111,7 @@ export default async function PainelInicialPage() {
                     <p className="text-sm text-ink-muted">
                       {state.nextStep.label}.{" "}
                       <Link
-                        href={`/portal-curador/casos/${record.caseId}`}
+                        href={`/coa/curadoria/casos/${record.caseId}`}
                         className="font-medium text-brand-primary underline-offset-4 hover:underline"
                       >
                         Abrir o caso
@@ -123,10 +119,10 @@ export default async function PainelInicialPage() {
                     </p>
                   ) : (
                     <Link
-                      href={`/portal-curador/casos/${record.caseId}`}
+                      href={phaseHref(record.caseId, state.nextStep.phase)}
                       className="inline-flex min-h-11 items-center gap-2 rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors duration-fast ease-standard hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
                     >
-                      {state.nextStep.label}
+                      {getPrimaryActionLabel(state)}
                       <span aria-hidden="true">→</span>
                     </Link>
                   )}
@@ -137,24 +133,6 @@ export default async function PainelInicialPage() {
         </section>
       )}
 
-      {/* A trilha de eventos do Motor (Engine §7) ainda não é emitida — esta
-          seção segue com dados de demonstração e some quando não houver Caso,
-          para não sugerir atividade que não existe. */}
-      {activity.length > 0 ? (
-        <section aria-labelledby="atividade-heading">
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                <span id="atividade-heading">O que mudou desde sua última visita</span>
-              </CardTitle>
-              <CardDescription>
-                Cada linha nomeia quem agiu — inclusive quando quem agiu foi o sistema.
-              </CardDescription>
-            </CardHeader>
-            <ActivityFeed events={activity} />
-          </Card>
-        </section>
-      ) : null}
     </div>
   );
 }

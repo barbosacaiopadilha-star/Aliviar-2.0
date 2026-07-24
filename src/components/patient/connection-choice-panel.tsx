@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useId, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader } from "@/components/ui/card";
+import { PatientCard } from "@/components/paciente/dashboard/patient-primitives";
 import { FormMessage } from "@/components/ui/form-message";
 import { Radio } from "@/components/ui/radio";
 import type { ProviderPresentation } from "@/modules/ace/artifacts/final-curadoria";
@@ -112,16 +112,12 @@ export function ConnectionChoicePanel({
   // Etapa de revisão — nada foi persistido ainda.
   if (step === "reviewing" && selectedPresentation) {
     return (
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">
-            Confirme sua escolha
-          </h2>
-        </CardHeader>
-        <p className="text-sm text-ink">
+      <PatientCard>
+        <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">Confirme sua escolha</h2>
+        <p className="patient-body mt-3 text-[var(--patient-ink)]">
           Você escolheu seguir com {selectedPresentation.displayName}.
         </p>
-        <p className="mt-2 text-sm text-ink-muted">
+        <p className="patient-body mt-2 text-[var(--color-ink-muted)]">
           Essa escolha será registrada, e você ainda poderá corrigi-la enquanto
           não iniciar o contato.
         </p>
@@ -143,7 +139,7 @@ export function ConnectionChoicePanel({
             Rever profissionais
           </Button>
         </div>
-      </Card>
+      </PatientCard>
     );
   }
 
@@ -151,16 +147,14 @@ export function ConnectionChoicePanel({
   // nenhum destaque, nenhuma ordem de preferência implícita (a própria
   // ordem já vem neutra de FinalCuradoria.providerPresentations).
   return (
-    <Card>
-      <CardHeader>
-        <h2 className="font-sans text-lg font-semibold text-ink">
-          Com quem você gostaria de seguir?
-        </h2>
-        <p className="text-sm text-ink-muted">
-          Os profissionais foram apresentados sem ordem de preferência. A
-          escolha é sua, e você pode revisar antes de iniciar o contato.
-        </p>
-      </CardHeader>
+    <PatientCard>
+      <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
+        Com quem você gostaria de seguir?
+      </h2>
+      <p className="patient-body mt-3 text-[var(--color-ink-muted)]">
+        Os profissionais foram apresentados sem ordem de preferência. A escolha é sua, e você pode
+        revisar antes de iniciar o contato.
+      </p>
       <fieldset className="space-y-3">
         <legend className="sr-only">
           Escolha um dos profissionais apresentados na sua Curadoria
@@ -203,6 +197,6 @@ export function ConnectionChoicePanel({
           </Button>
         ) : null}
       </div>
-    </Card>
+    </PatientCard>
   );
 }

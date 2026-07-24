@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { requireAnyRole } from "@/modules/auth/guard";
 
-import { PortalShell } from "@/components/curadoria/portal-shell";
+import { PortalShellContainer } from "@/components/curadoria/portal-shell-container";
 
 export const metadata: Metadata = {
   title: { default: "Atendimento", template: "%s · Atendimento" },
@@ -26,16 +26,15 @@ export const metadata: Metadata = {
 export default async function AtendimentoLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   // Administrador entra como supervisor (acesso global, §1 da Correção do
   // Administrador) — mas o ator padrão do fluxo continua sendo o Atendente.
-  const state = await requireAnyRole(["atendente", "administrador"]);
+  await requireAnyRole(["atendente", "administrador"]);
 
   return (
-    <PortalShell
+    <PortalShellContainer
       homeHref="/atendimento"
       subtitle="Atendimento"
       nav={[{ href: "/atendimento", label: "Meus leads" }]}
-      identity={state.profile?.displayName ?? null}
     >
       {children}
-    </PortalShell>
+    </PortalShellContainer>
   );
 }

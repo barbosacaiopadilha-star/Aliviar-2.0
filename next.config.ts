@@ -14,6 +14,21 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  async rewrites() {
+    return [
+      { source: "/coa/curadoria", destination: "/portal-curador" },
+      { source: "/coa/curadoria/:path*", destination: "/portal-curador/:path*" },
+    ];
+  },
+  async redirects() {
+    return [
+      { source: "/portal-curador", destination: "/coa/curadoria", permanent: false },
+      { source: "/portal-curador/:path*", destination: "/coa/curadoria/:path*", permanent: false },
+      { source: "/curador", destination: "/coa/curadoria", permanent: false },
+      { source: "/curador/:path*", destination: "/coa/curadoria/:path*", permanent: false },
+      { source: "/admin/crm", destination: "/coa/atendimento", permanent: false },
+    ];
+  },
   async headers() {
     return [
       {

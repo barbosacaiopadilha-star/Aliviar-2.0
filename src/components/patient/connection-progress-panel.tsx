@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader } from "@/components/ui/card";
+import { PatientCard } from "@/components/paciente/dashboard/patient-primitives";
 import { FormMessage } from "@/components/ui/form-message";
 import type { ProviderPresentation } from "@/modules/ace/artifacts/final-curadoria";
 import {
@@ -83,17 +83,15 @@ export function ConnectionProgressPanel({
   // pela arquitetura, nunca implementado).
   if (connection.status === "PRIMEIRO_ATENDIMENTO_REALIZADO") {
     return (
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">
+      <PatientCard>
+        <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
             Primeiro atendimento confirmado
           </h2>
-        </CardHeader>
         <p className="text-sm text-ink">
           Você seguiu com {displayName}, e o primeiro atendimento foi
           confirmado.
         </p>
-      </Card>
+      </PatientCard>
     );
   }
 
@@ -101,29 +99,25 @@ export function ConnectionProgressPanel({
   // ação, nenhuma nova Curadoria automática, nenhuma reabertura.
   if (connection.status === "ENCERRADO_SEM_RELACIONAMENTO") {
     return (
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">
+      <PatientCard>
+        <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
             Contato encerrado
           </h2>
-        </CardHeader>
         <p className="text-sm text-ink">
           Este contato com {displayName} foi encerrado sem início de
           acompanhamento.
         </p>
-      </Card>
+      </PatientCard>
     );
   }
 
   // Etapa de revisão de uma ação terminal — nada persistido ainda.
   if (reviewing === "confirmAppointment") {
     return (
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">
+      <PatientCard>
+        <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
             Confirmar primeiro atendimento
           </h2>
-        </CardHeader>
         <p className="text-sm text-ink">
           Você está confirmando que o primeiro atendimento com {displayName}{" "}
           realmente aconteceu.
@@ -152,18 +146,16 @@ export function ConnectionProgressPanel({
             Voltar
           </Button>
         </div>
-      </Card>
+      </PatientCard>
     );
   }
 
   if (reviewing === "closeWithoutRelationship") {
     return (
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">
+      <PatientCard>
+        <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
             Encerrar sem continuar
           </h2>
-        </CardHeader>
         <p className="text-sm text-ink">
           Este registro apenas informa que o contato com {displayName} não
           avançou — não avalia o profissional, não cria uma nova Curadoria, e
@@ -190,19 +182,17 @@ export function ConnectionProgressPanel({
             Voltar
           </Button>
         </div>
-      </Card>
+      </PatientCard>
     );
   }
 
   // CONTATO_INICIADO: sem correção, sem "já iniciei contato" (já feito).
   if (connection.status === "CONTATO_INICIADO") {
     return (
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">
+      <PatientCard>
+        <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
             Seu contato
           </h2>
-        </CardHeader>
         <p className="text-sm text-ink">
           Você registrou que iniciou o contato com {displayName}.
         </p>
@@ -224,18 +214,16 @@ export function ConnectionProgressPanel({
             O contato não avançou
           </Button>
         </div>
-      </Card>
+      </PatientCard>
     );
   }
 
   // DECISAO_REGISTRADA: escolha + correção (se permitida) + as três ações.
   return (
-    <Card>
-      <CardHeader>
-        <h2 className="font-sans text-lg font-semibold text-ink">
+    <PatientCard>
+      <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
           Sua escolha
         </h2>
-      </CardHeader>
       <p className="text-sm text-ink">
         Você escolheu seguir com {displayName}.
       </p>
@@ -291,6 +279,6 @@ export function ConnectionProgressPanel({
           O contato não avançou
         </Button>
       </div>
-    </Card>
+    </PatientCard>
   );
 }

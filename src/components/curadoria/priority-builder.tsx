@@ -10,27 +10,22 @@
  * @metodo Experience §6 — o total é sempre visível e o que falta é dito em linguagem natural
  *
  * Por que existe: é o núcleo do Método. O Curador conduz uma conversa em que o
- * paciente descobre o que importa para ele, e esta tela precisa acompanhar essa
- * conversa — não conduzi-la. Por isso a barra de proporção é o próprio
- * controle: um só elemento carrega o significado e o ajuste, e o Curador nunca
- * tira os olhos da pessoa para procurar um campo.
- *
- * O que nunca faz:
- *   • autoajustar os outros pesos quando um muda — tiraria do paciente o
- *     controle da própria prioridade;
- *   • sugerir uma distribuição "usual" ou herdada de casos parecidos;
- *   • pedir um número ao paciente;
- *   • desabilitar a validação sem explicar o que falta ao lado.
+ * paciente descobre o que importa, e esta tela acompanha essa conversa.
  */
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 
+import { ScrollActionLink } from "@/components/curadoria/scroll-action-link";
 import { EvidenceCard } from "@/components/curadoria/evidence-card";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { cn } from "@/components/ui/cn";
-// Import direto de `method` (puro) e `types` — nunca do índice do módulo, que
-// reexporta o repositório marcado como `server-only`.
+import {
+  saveAllWeightsAction,
+  validateProfileAction,
+} from "@/modules/curadoria/actions";
 import { TOTAL_PRIORITY_POINTS } from "@/modules/curadoria/method";
+import { computePriorityValidationReadiness } from "@/modules/curadoria/priority-validation-readiness";
 import {
   PRIORITY_CRITERIA,
   PRIORITY_CRITERION_LABELS,
@@ -46,45 +41,61 @@ export type BuilderWeight = {
 
 type PriorityBuilderProps = {
   patientFirstName: string;
+  priorityProfileId: string;
   initialWeights: BuilderWeight[];
-  /** Aspectos já declarados como filtro obrigatório — não podem também pesar. */
   filterCriteria: PriorityCriterion[];
   validated: boolean;
 };
 
 export function PriorityBuilder({
   patientFirstName,
+  priorityProfileId,
   initialWeights,
   filterCriteria,
   validated,
 }: PriorityBuilderProps) {
+  const router = useRouter();
   const [weights, setWeights] = useState<BuilderWeight[]>(initialWeights);
   const [adding, setAdding] = useState(false);
+  const [validationNote, setValidationNote] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
-  const total = useMemo(() => weights.reduce((sum, entry) => sum + entry.weight, 0), [weights]);
-  const remaining = TOTAL_PRIORITY_POINTS - total;
-  const missingEvidence = weights.filter((entry) => !entry.evidence.trim());
-  const conflicting = weights.filter((entry) => filterCriteria.includes(entry.criterion));
+  const readiness = useMemo(
+    () =>
+      computePriorityValidationReadiness({
+        weights: weights.map((entry) => ({
+          criterion: entry.criterion,
+          weight: entry.weight,
+          targetValue: null,
+          evidence: entry.evidence,
+        })),
+        filterCriteria,
+        validated,
+      }),
+    [weights, filterCriteria, validated],
+  );
 
   const available = PRIORITY_CRITERIA.filter(
     (criterion) => !weights.some((entry) => entry.criterion === criterion),
   );
 
-  const canValidate =
-    remaining === 0 && missingEvidence.length === 0 && conflicting.length === 0 && !validated;
-
   function setWeight(criterion: PriorityCriterion, value: number) {
-    // Nunca reajusta os outros. Se a soma passar de 100, o Curador vê e decide
-    // o que tirar — a escolha é da conversa, não do software.
     setWeights((current) =>
       current.map((entry) => (entry.criterion === criterion ? { ...entry, weight: value } : entry)),
     );
+    setSuccess(null);
+    setError(null);
   }
 
   function setEvidence(criterion: PriorityCriterion, value: string) {
     setWeights((current) =>
       current.map((entry) => (entry.criterion === criterion ? { ...entry, evidence: value } : entry)),
     );
+    setSuccess(null);
+    setError(null);
   }
 
   function addCriterion(criterion: PriorityCriterion) {
@@ -94,6 +105,43 @@ export function PriorityBuilder({
 
   function removeCriterion(criterion: PriorityCriterion) {
     setWeights((current) => current.filter((entry) => entry.criterion !== criterion));
+  }
+
+  function handleValidate() {
+    if (!readiness.canValidate || isPending || validated) return;
+
+    startTransition(async () => {
+      setError(null);
+      setSuccess(null);
+
+      const saveResult = await saveAllWeightsAction({
+        priorityProfileId,
+        weights: weights.map((entry) => ({
+          criterion: entry.criterion,
+          weight: entry.weight,
+          evidence: entry.evidence,
+        })),
+      });
+
+      if (!saveResult.success) {
+        setError(saveResult.error ?? "Não foi possível salvar os pesos.");
+        return;
+      }
+
+      const validateResult = await validateProfileAction({
+        priorityProfileId,
+        validationNote: validationNote.trim(),
+      });
+
+      if (!validateResult.success) {
+        setError(validateResult.error ?? "Não foi possível registrar a validação.");
+        return;
+      }
+
+      setShowConfirm(false);
+      setSuccess("Validação registrada com sucesso.");
+      router.refresh();
+    });
   }
 
   return (
@@ -113,7 +161,7 @@ export function PriorityBuilder({
             const share = Math.round((entry.weight / TOTAL_PRIORITY_POINTS) * 100);
 
             return (
-              <li key={entry.criterion} className="space-y-3">
+              <li key={entry.criterion} id={`criterio-${entry.criterion}`} className="scroll-mt-24 space-y-3">
                 <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                   <div>
                     <h3 className="font-sans text-base font-medium text-ink">
@@ -132,8 +180,6 @@ export function PriorityBuilder({
                 </div>
 
                 <div className="relative">
-                  {/* A proporção preenchida vive atrás do controle: o mesmo
-                      elemento comunica quanto pesa e permite mudar. */}
                   <div
                     aria-hidden="true"
                     className="pointer-events-none absolute inset-y-0 left-0 rounded-sm bg-brand-sage-light/50 transition-[width] duration-base ease-standard"
@@ -149,7 +195,7 @@ export function PriorityBuilder({
                     max={TOTAL_PRIORITY_POINTS}
                     step={5}
                     value={entry.weight}
-                    disabled={validated}
+                    disabled={validated || isPending}
                     onChange={(event) => setWeight(entry.criterion, Number(event.target.value))}
                     aria-valuetext={`${entry.weight} de ${TOTAL_PRIORITY_POINTS} pontos`}
                     className="weight-slider relative disabled:cursor-not-allowed disabled:opacity-70"
@@ -178,6 +224,7 @@ export function PriorityBuilder({
                       value={entry.evidence}
                       onChange={(event) => setEvidence(entry.criterion, event.target.value)}
                       rows={2}
+                      disabled={isPending}
                       placeholder={`O que ${patientFirstName} disse que originou este peso`}
                       className={cn(
                         "w-full rounded-sm border bg-surface px-3 py-2 text-sm leading-relaxed text-ink",
@@ -193,7 +240,8 @@ export function PriorityBuilder({
                   <button
                     type="button"
                     onClick={() => removeCriterion(entry.criterion)}
-                    className="text-sm text-ink-muted underline-offset-4 transition-colors duration-fast ease-standard hover:text-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                    disabled={isPending}
+                    className="text-sm text-ink-muted underline-offset-4 transition-colors duration-fast ease-standard hover:text-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
                   >
                     Tirar este critério
                   </button>
@@ -204,7 +252,7 @@ export function PriorityBuilder({
         </ul>
 
         {!validated && available.length > 0 ? (
-          <div className="border-t border-border pt-5">
+          <div id="priority-add-criterion" className="scroll-mt-24 border-t border-border pt-5">
             {adding ? (
               <div className="space-y-2">
                 <p className="text-sm text-ink-muted">Qual outro aspecto {patientFirstName} trouxe?</p>
@@ -235,62 +283,62 @@ export function PriorityBuilder({
         ) : null}
       </Card>
 
-      <DistributionState
-        remaining={remaining}
-        total={total}
-        missingEvidence={missingEvidence.length}
-        conflicting={conflicting.length}
-        canValidate={canValidate}
-        validated={validated}
+      <ValidationReview
         patientFirstName={patientFirstName}
+        readiness={readiness}
+        validated={validated}
+        validationNote={validationNote}
+        onValidationNoteChange={setValidationNote}
+        showConfirm={showConfirm}
+        onShowConfirm={setShowConfirm}
+        onValidate={handleValidate}
+        isPending={isPending}
+        error={error}
+        success={success}
       />
     </div>
   );
 }
 
-/**
- * O estado da distribuição, dito em linguagem natural. Nunca "85/100" solto —
- * o Curador lê "faltam 15 pontos" (Experience §6).
- */
-function DistributionState({
-  remaining,
-  total,
-  missingEvidence,
-  conflicting,
-  canValidate,
-  validated,
+type Readiness = ReturnType<typeof computePriorityValidationReadiness>;
+
+function ValidationReview({
   patientFirstName,
+  readiness,
+  validated,
+  validationNote,
+  onValidationNoteChange,
+  showConfirm,
+  onShowConfirm,
+  onValidate,
+  isPending,
+  error,
+  success,
 }: {
-  remaining: number;
-  total: number;
-  missingEvidence: number;
-  conflicting: number;
-  canValidate: boolean;
-  validated: boolean;
   patientFirstName: string;
+  readiness: Readiness;
+  validated: boolean;
+  validationNote: string;
+  onValidationNoteChange: (value: string) => void;
+  showConfirm: boolean;
+  onShowConfirm: (value: boolean) => void;
+  onValidate: () => void;
+  isPending: boolean;
+  error: string | null;
+  success: string | null;
 }) {
-  const blockers: string[] = [];
-  if (remaining > 0) blockers.push(`faltam ${remaining} ${remaining === 1 ? "ponto" : "pontos"}`);
-  if (remaining < 0)
-    blockers.push(`passou ${Math.abs(remaining)} ${Math.abs(remaining) === 1 ? "ponto" : "pontos"} de 100`);
-  if (missingEvidence > 0)
-    blockers.push(
-      missingEvidence === 1 ? "um peso ainda sem evidência" : `${missingEvidence} pesos ainda sem evidência`,
-    );
-  if (conflicting > 0) blockers.push("um aspecto está como filtro e como critério ao mesmo tempo");
+  const statusTitle = validated
+    ? "Perfil validado"
+    : readiness.canValidate
+      ? "Tudo pronto para validar"
+      : "Revisão final";
 
   return (
-    <Card className={cn("space-y-4", canValidate && "border-brand-sage/50")}>
+    <Card className={cn("space-y-4", readiness.canValidate && !validated && "border-brand-sage/50")}>
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 className="font-sans text-lg font-semibold text-ink">
-          {validated
-            ? "Perfil validado"
-            : remaining === 0 && blockers.length === 0
-              ? "Pronto para validar"
-              : "Distribuição em construção"}
-        </h2>
+        <h2 className="font-sans text-lg font-semibold text-ink">{statusTitle}</h2>
         <p className="tabular-nums text-sm text-ink-muted">
-          {total} de {TOTAL_PRIORITY_POINTS} pontos distribuídos
+          {readiness.total} de {TOTAL_PRIORITY_POINTS} pontos distribuídos
         </p>
       </div>
 
@@ -299,42 +347,85 @@ function DistributionState({
           {patientFirstName} reconheceu este Perfil como dele. A partir daqui ele é imutável — corrigir
           exige construir um novo, junto com {patientFirstName}.
         </p>
-      ) : blockers.length > 0 ? (
-        <p className="text-sm leading-relaxed text-ink">
-          Para validar com {patientFirstName}: {blockers.join("; ")}.
-        </p>
-      ) : (
-        <ValidationLiturgy patientFirstName={patientFirstName} />
-      )}
-    </Card>
-  );
-}
+      ) : readiness.canValidate ? (
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed text-ink">
+            Após a confirmação, os critérios serão registrados como versão validada e não poderão mais
+            ser alterados.
+          </p>
+          <ol className="space-y-1 text-sm text-ink-muted">
+            <li>1. Leia os pesos em voz alta, na ordem.</li>
+            <li>2. Diga a evidência junto de cada um.</li>
+            <li>3. Pergunte o que está faltando — hesitação é informação.</li>
+          </ol>
 
-/**
- * A liturgia da validação (Experience §2.3). Não é um checkbox — é o roteiro
- * do momento em que a decisão passa a ser do paciente.
- */
-function ValidationLiturgy({ patientFirstName }: { patientFirstName: string }) {
-  return (
-    <div className="space-y-4">
-      <ol className="space-y-2 text-sm leading-relaxed text-ink">
-        <li>1. Leia os pesos em voz alta, na ordem, em linguagem de conversa.</li>
-        <li>2. Diga a evidência junto de cada um: &ldquo;ficou assim porque você me disse que…&rdquo;</li>
-        <li>
-          3. Pergunte o que está faltando — nunca &ldquo;está tudo certo?&rdquo;, que só convida a
-          concordar.
-        </li>
-        <li>4. Se {patientFirstName} hesitar, ajuste aqui mesmo. Hesitação é informação.</li>
-      </ol>
-      <button
-        type="button"
-        className="inline-flex min-h-11 items-center gap-2 rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors duration-fast ease-standard hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-      >
-        Registrar a validação de {patientFirstName}
-      </button>
-      <p className="text-xs text-ink-muted">
-        Depois de validado, este Perfil não pode mais ser alterado.
-      </p>
-    </div>
+          {showConfirm ? (
+            <div className="space-y-3 rounded-md border border-border bg-canvas/40 p-4">
+              <label className="block text-sm font-medium text-ink" htmlFor="validation-note">
+                Como {patientFirstName} confirmou este Perfil?
+              </label>
+              <textarea
+                id="validation-note"
+                value={validationNote}
+                onChange={(event) => onValidationNoteChange(event.target.value)}
+                rows={3}
+                disabled={isPending}
+                placeholder="Registre as palavras de confirmação do paciente."
+                className="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+              />
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={onValidate}
+                  disabled={isPending || !validationNote.trim()}
+                  className="inline-flex min-h-11 items-center gap-2 rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isPending ? "Registrando…" : "Confirmar validação"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onShowConfirm(false)}
+                  disabled={isPending}
+                  className="inline-flex min-h-11 items-center rounded-md border border-border px-4 py-2.5 text-sm text-ink hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                >
+                  Voltar e revisar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onShowConfirm(true)}
+              disabled={isPending}
+              className="inline-flex min-h-11 items-center gap-2 rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Validar critérios de {patientFirstName}
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-ink">A validação ainda não pode ser concluída.</p>
+          <p className="text-sm text-ink-muted">Pendências</p>
+          <ul className="divide-y divide-border/60" role="list">
+            {readiness.blockers.map((blocker) => (
+              <li key={blocker.message}>
+                {blocker.scrollTargetId ? (
+                  <ScrollActionLink
+                    description={blocker.message}
+                    scrollTargetId={blocker.scrollTargetId}
+                  />
+                ) : (
+                  <p className="min-h-11 px-2 py-2.5 text-sm text-ink-muted">{blocker.message}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {success ? <p className="text-sm text-brand-sage">{success}</p> : null}
+    </Card>
   );
 }

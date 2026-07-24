@@ -3,7 +3,7 @@
 import { startTransition, useActionState, useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader } from "@/components/ui/card";
+import { PatientCard, PatientPageHeader } from "@/components/paciente/dashboard/patient-primitives";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FormField } from "@/components/ui/form-field";
 import { FormMessage } from "@/components/ui/form-message";
@@ -66,15 +66,13 @@ export function PatientProfileForm({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <h1 className="font-sans text-xl font-semibold text-ink sm:text-2xl">Meu perfil</h1>
-        <p className="text-sm text-ink-muted">
-          Estes dados ajudam a Aliviar a te acompanhar melhor. Nenhuma informação de saúde é
-          guardada aqui.
-        </p>
-      </CardHeader>
+    <div className="space-y-10">
+      <PatientPageHeader
+        title="Meu perfil"
+        description="Estes dados ajudam a Aliviar a te acompanhar melhor. Nenhuma informação de saúde é guardada aqui."
+      />
 
+      <PatientCard>
       <form onSubmit={handleSubmit} noValidate className="space-y-5">
         <Input
           name="phone"
@@ -136,6 +134,7 @@ export function PatientProfileForm({
           Salvar
         </Button>
       </form>
-    </Card>
+      </PatientCard>
+    </div>
   );
 }

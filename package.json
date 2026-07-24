@@ -20,7 +20,12 @@
     "supabase:status": "supabase status",
     "supabase:reset": "supabase db reset",
     "supabase:env": "node scripts/generate-local-env.mjs",
-    "bootstrap:test-users": "node scripts/bootstrap-local-test-users.mjs"
+    "bootstrap:test-users": "node scripts/bootstrap-local-test-users.mjs",
+    "admin:set-password": "node scripts/local/set-admin-password.mjs",
+    "validation:diagnose": "node scripts/local/diagnose-validation-env.mjs",
+    "validation:prepare": "node scripts/local/prepare-validation-env.mjs",
+    "validation:e2e": "node scripts/local/validate-e2e-real.mjs",
+    "validation:e2e:b6": "node scripts/local/validate-e2e-curadoria-b6.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.111.0",

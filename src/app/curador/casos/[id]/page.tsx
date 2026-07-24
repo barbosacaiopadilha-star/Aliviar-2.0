@@ -7,6 +7,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import { CASE_STATUS_LABELS, getCase, listCaseEvents, listCaseNotes } from "@/modules/cases";
 import { listArtifactsForCase, listExecutionEventsForCase, listExecutionsForCase } from "@/modules/concierge";
+import { listActiveP002FieldCorrections } from "@/modules/ace/p002-field-corrections-repository";
 import { getPatientProfile, getProfessionalDisplayNames } from "@/modules/profiles";
 import { listStoryAttachments } from "@/modules/story/attachment-repository";
 import { getStoryById } from "@/modules/story/repository";
@@ -57,10 +58,11 @@ export default async function CuradorCaseDetailPage({ params }: CuradorCaseDetai
 
   const attachments = story ? await listStoryAttachments(supabase, story.id) : [];
 
-  const [executions, executionEvents, artifacts] = await Promise.all([
+  const [executions, executionEvents, artifacts, p002Corrections] = await Promise.all([
     listExecutionsForCase(supabase, id),
     listExecutionEventsForCase(supabase, id),
     listArtifactsForCase(supabase, id),
+    listActiveP002FieldCorrections(supabase, id),
   ]);
   const execution = executions[0] ?? null;
 
@@ -166,7 +168,7 @@ export default async function CuradorCaseDetailPage({ params }: CuradorCaseDetai
         <CardHeader>
           <h2 className="font-sans text-lg font-semibold text-ink">Artefatos (P001-P008)</h2>
         </CardHeader>
-        <AceArtifactsList artifacts={artifacts} />
+        <AceArtifactsList artifacts={artifacts} caseId={caseDetail.id} p002Corrections={p002Corrections} />
       </Card>
 
       {shortlist ? (

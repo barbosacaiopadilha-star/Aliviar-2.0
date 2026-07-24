@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRole } from "@/modules/auth/guard";
 import { CASE_STATUS_LABELS, type CaseStatus } from "@/modules/cases/types";
 
-import { PortalShell } from "@/components/curadoria/portal-shell";
+import { PortalShellContainer } from "@/components/curadoria/portal-shell-container";
 import { EmptyState } from "@/components/ui/empty-state";
 
 export const metadata: Metadata = {
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
  * defeito em vez de revelá-lo.
  */
 export default async function AcompanhamentoPage() {
-  const state = await requireAnyRole(["concierge", "administrador"]);
+  await requireAnyRole(["concierge", "administrador"]);
   const supabase = await createServerSupabaseClient();
 
   const { data } = await supabase
@@ -39,11 +39,10 @@ export default async function AcompanhamentoPage() {
   const cases = (data ?? []) as { id: string; status: string; responsible_role: string | null; created_at: string }[];
 
   return (
-    <PortalShell
+    <PortalShellContainer
       homeHref="/acompanhamento"
       subtitle="Acompanhamento"
       nav={[{ href: "/acompanhamento", label: "Meus acompanhamentos" }]}
-      identity={state.profile?.displayName ?? null}
     >
       <div className="space-y-6">
         <div>
@@ -79,6 +78,6 @@ export default async function AcompanhamentoPage() {
           </ul>
         )}
       </div>
-    </PortalShell>
+    </PortalShellContainer>
   );
 }

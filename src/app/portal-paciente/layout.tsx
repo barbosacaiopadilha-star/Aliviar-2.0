@@ -27,7 +27,7 @@ export default function PortalPacienteLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <PortalShell homeHref="/portal-paciente" subtitle="Curadoria Médica" nav={NAV}>
+    <PortalShell homeHref="/portal-paciente" subtitle="Curadoria Médica" nav={NAV} variant="patient">
       {children}
     </PortalShell>
   );

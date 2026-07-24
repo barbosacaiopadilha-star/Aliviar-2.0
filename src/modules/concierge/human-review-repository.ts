@@ -11,8 +11,14 @@ import { p009HumanReview } from "@/modules/ace/protocols/p009-human-review";
 
 import { changeCaseStatus, getCase } from "@/modules/cases/repository";
 
-import { getLatestArtifactByType, getLatestExecution } from "./execution-repository";
+import {
+  getLatestArtifactByType,
+  getLatestExecution,
+  logExecutionEvent,
+  updateExecution,
+} from "./execution-repository";
 import type { HumanReviewResultRecord } from "./types";
+import { getArtifactTypesToInvalidate } from "./return-to-protocol";
 
 async function nameByProfileId(supabase: SupabaseClient, profileId: string): Promise<string> {
   const { data } = await supabase.from("profiles").select("display_name").eq("id", profileId).maybeSingle();
@@ -95,6 +101,19 @@ export async function getLatestHumanReviewResultForCase(
 ): Promise<HumanReviewResultRecord | null> {
   const results = await listHumanReviewResultsForCase(supabase, caseId);
   return results[0] ?? null;
+}
+
+export async function getLatestReturnProtocolForCase(
+  supabase: SupabaseClient,
+  caseId: string,
+): Promise<ProtocolId | null> {
+  const results = await listHumanReviewResultsForCase(supabase, caseId);
+  const latest = results.find(
+    (result) =>
+      result.returnToProtocol !== null &&
+      (result.reviewStatus === "REJECTED" || result.reviewStatus === "INFORMATION_REQUESTED"),
+  );
+  return latest?.returnToProtocol ?? null;
 }
 
 export type SubmitHumanReviewInput = {
@@ -219,6 +238,28 @@ export async function submitHumanReview(
   // para entrega é escopo do P010, ainda não implementado).
   if (humanReviewResult.reviewStatus !== "VALIDATED") {
     await changeCaseStatus(supabase, input.caseId, "WAITING_FOR_INFORMATION", input.reviewerId);
+
+    if (humanReviewResult.returnToProtocol) {
+      const invalidatedTypes = getArtifactTypesToInvalidate(humanReviewResult.returnToProtocol);
+      await updateExecution(supabase, execution.id, {
+        status: "BLOCKED",
+        currentProtocol: humanReviewResult.returnToProtocol,
+        finishedAt: new Date().toISOString(),
+        failureCode: "HUMAN_REVIEW_RETURN",
+        failureMessage: `Retorno solicitado ao estágio ${humanReviewResult.returnToProtocol}. Artefatos downstream serão recalculados na próxima execução.`,
+      });
+      await logExecutionEvent(supabase, {
+        executionId: execution.id,
+        caseId: input.caseId,
+        eventType: "BLOCKED",
+        protocolId: humanReviewResult.returnToProtocol,
+        message: `Revisão humana solicitou retorno a ${humanReviewResult.returnToProtocol}.`,
+        metadata: {
+          returnToProtocol: humanReviewResult.returnToProtocol,
+          invalidatedArtifactTypes: invalidatedTypes,
+        },
+      });
+    }
   }
 
   const record = await mapRow(supabase, data as HumanReviewResultRow);

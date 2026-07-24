@@ -1,0 +1,355 @@
+/* ==========================================================================
+   Aliviar — Landing Editorial Design System
+   Identidade boutique: algodão, pedra clara, latão, luz natural.
+   Escopado em .landing-editorial (layout público).
+   ========================================================================== */
+
+.landing-editorial {
+  /* —— Paleta canônica —— */
+  --color-bg-canvas: #faf8f4;
+  --color-bg-canvas-warm: #f3eee7;
+  --color-bg-surface: #ffffff;
+  --color-ink: #2f3a3d;
+  --color-ink-muted: #66737a;
+  --color-brand-primary: #556b5d;
+  --color-brand-primary-deep: #4a5f52;
+  --color-brand-primary-hover: #647b6d;
+  --color-brand-sage: #556b5d;
+  --color-brand-sage-light: #8a9e92;
+  --color-brand-gold: #b79a5b;
+  --color-brand-gold-hover: #c6aa68;
+  --color-border: rgba(183, 154, 91, 0.18);
+  --color-focus-ring: #556b5d;
+
+  /* Aliases semânticos da landing */
+  --landing-linen: var(--color-bg-canvas);
+  --landing-linen-warm: var(--color-bg-canvas-warm);
+  --landing-forest: var(--color-brand-primary);
+  --landing-ink: var(--color-ink);
+
+  /* Sombras quentes */
+  --shadow-sm: 0 1px 2px rgba(70, 55, 35, 0.04), 0 2px 8px rgba(70, 55, 35, 0.03);
+  --shadow-md: 0 4px 16px rgba(70, 55, 35, 0.05);
+  --shadow-lg: 0 12px 40px rgba(70, 55, 35, 0.06);
+  --shadow-card: 0 1px 2px rgba(70, 55, 35, 0.03), 0 8px 32px rgba(70, 55, 35, 0.05);
+  --shadow-card-hover: 0 4px 12px rgba(70, 55, 35, 0.05), 0 16px 48px rgba(70, 55, 35, 0.07);
+
+  /* Motion — quase invisível */
+  --duration-fast: 280ms;
+  --duration-base: 480ms;
+  --duration-slow: 640ms;
+  --ease-natural: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  /* Radius */
+  --radius-pill: 9999px;
+  --radius-card: 1.25rem;
+
+  background-color: var(--landing-linen);
+  color: var(--landing-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* —— Seções —— */
+.landing-editorial .landing-section {
+  position: relative;
+  padding-top: 7rem;
+  padding-bottom: 7rem;
+}
+
+.landing-editorial .landing-section + .landing-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: min(12rem, 40%);
+  height: 1px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-brand-gold) 30%,
+    var(--color-brand-gold) 70%,
+    transparent 100%
+  );
+  opacity: 0.45;
+}
+
+@media (min-width: 1024px) {
+  .landing-editorial .landing-section {
+    padding-top: 9rem;
+    padding-bottom: 9rem;
+  }
+}
+
+/* —— Hero —— */
+.landing-editorial .landing-hero-immersive {
+  position: relative;
+  min-height: min(94vh, 58rem);
+  display: flex;
+  align-items: center;
+  padding-top: 6rem;
+  padding-bottom: 6rem;
+  overflow: hidden;
+}
+
+.landing-editorial .landing-hero-immersive + .landing-section::before {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .landing-editorial .landing-hero-immersive {
+    padding-top: 7rem;
+    padding-bottom: 7rem;
+  }
+}
+
+/* —— Tipografia editorial —— */
+.landing-editorial .landing-hero-title {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+.landing-editorial .landing-body {
+  line-height: 1.8;
+  font-weight: 400;
+}
+
+.landing-editorial .landing-heading {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.landing-editorial .landing-eyebrow {
+  display: inline-block;
+  margin-bottom: 1.25rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-brand-gold);
+}
+
+/* —— Cards — papel premium —— */
+.landing-editorial .landing-card {
+  position: relative;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-border);
+  background:
+    linear-gradient(165deg, rgb(255 255 255 / 0.97) 0%, rgb(255 255 255 / 0.9) 100%),
+    var(--color-bg-surface);
+  box-shadow: var(--shadow-card);
+  transition:
+    box-shadow var(--duration-base) var(--ease-natural),
+    transform var(--duration-base) var(--ease-natural),
+    border-color var(--duration-base) var(--ease-natural);
+}
+
+.landing-editorial .landing-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at 20% 0%, rgb(255 255 255 / 0.6) 0%, transparent 55%);
+  pointer-events: none;
+}
+
+.landing-editorial .landing-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card-hover);
+  border-color: rgba(183, 154, 91, 0.28);
+}
+
+/* —— Faixa institucional —— */
+.landing-editorial .landing-forest-band {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--landing-forest);
+  color: var(--landing-linen);
+}
+
+.landing-editorial .landing-forest-band::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 0%, rgb(255 255 255 / 0.06) 0%, transparent 60%),
+    linear-gradient(160deg, rgb(85 107 93 / 0.98) 0%, rgb(74 95 82 / 1) 100%);
+  pointer-events: none;
+}
+
+.landing-editorial .landing-forest-band > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* —— Vídeo cinematográfico —— */
+.landing-editorial .landing-video-cinema {
+  position: relative;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  box-shadow:
+    0 24px 64px rgba(70, 55, 35, 0.1),
+    0 8px 24px rgba(70, 55, 35, 0.05);
+}
+
+.landing-editorial .landing-video-cinema::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 80px rgba(47, 58, 61, 0.06);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.landing-editorial .landing-video-cinema::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* —— FAQ — livro premium —— */
+.landing-editorial .landing-faq-book {
+  position: relative;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-border);
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.98) 0%, rgb(250 248 244 / 0.95) 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    inset 0 -3px 12px rgba(70, 55, 35, 0.03),
+    var(--shadow-lg);
+  padding: 2.5rem 2rem;
+}
+
+@media (min-width: 640px) {
+  .landing-editorial .landing-faq-book {
+    padding: 3rem 2.75rem;
+  }
+}
+
+.landing-editorial .landing-faq-book::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  border-radius: var(--radius-card) 0 0 var(--radius-card);
+  background: linear-gradient(
+    180deg,
+    var(--color-brand-gold) 0%,
+    rgba(183, 154, 91, 0.35) 100%
+  );
+  opacity: 0.7;
+}
+
+.landing-editorial .landing-faq-item {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.landing-editorial .landing-faq-item:last-child {
+  border-bottom: none;
+}
+
+.landing-editorial .landing-faq-trigger {
+  transition:
+    color var(--duration-fast) var(--ease-natural),
+    transform var(--duration-fast) var(--ease-natural);
+}
+
+.landing-editorial .landing-faq-trigger:hover {
+  color: var(--color-brand-primary);
+}
+
+.landing-editorial .landing-faq-icon {
+  display: flex;
+  size: 1.75rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  color: var(--color-brand-gold);
+  font-size: 1.125rem;
+  font-weight: 300;
+  line-height: 1;
+  transition:
+    transform var(--duration-base) var(--ease-natural),
+    border-color var(--duration-base) var(--ease-natural),
+    background-color var(--duration-base) var(--ease-natural);
+}
+
+.landing-editorial .landing-faq-trigger[aria-expanded="true"] .landing-faq-icon {
+  transform: rotate(45deg);
+  background-color: rgba(183, 154, 91, 0.08);
+  border-color: rgba(183, 154, 91, 0.35);
+}
+
+/* —— Microinterações —— */
+.landing-editorial .landing-lift {
+  transition:
+    transform var(--duration-base) var(--ease-natural),
+    box-shadow var(--duration-base) var(--ease-natural),
+    opacity var(--duration-base) var(--ease-natural);
+}
+
+.landing-editorial .landing-lift:hover {
+  transform: translateY(-3px);
+}
+
+/* —— Entrada —— */
+.landing-editorial .landing-fade-in {
+  animation: landing-fade-in var(--duration-slow) var(--ease-natural) both;
+}
+
+@keyframes landing-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* —— Número de passo —— */
+.landing-editorial .landing-step-number {
+  display: flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba(183, 154, 91, 0.3);
+  background: rgb(255 255 255 / 0.85);
+  font-family: var(--font-serif);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-brand-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-editorial .landing-fade-in,
+  .landing-editorial .landing-card,
+  .landing-editorial .landing-lift {
+    animation: none;
+    transition: none;
+  }
+
+  .landing-editorial .landing-card:hover,
+  .landing-editorial .landing-lift:hover {
+    transform: none;
+  }
+}

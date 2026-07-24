@@ -70,7 +70,7 @@ export default async function PrioridadesPage({ params }: { params: Promise<{ id
     <div className="space-y-8">
       <div>
         <Link
-          href={`/portal-curador/casos/${record.caseId}`}
+          href={`/coa/curadoria/casos/${record.caseId}`}
           className="text-sm text-brand-primary underline-offset-4 hover:underline"
         >
           ← {record.patientName}
@@ -93,16 +93,28 @@ export default async function PrioridadesPage({ params }: { params: Promise<{ id
             />
           ))}
 
-          <PriorityBuilder
-            patientFirstName={record.patientFirstName}
-            initialWeights={record.prioridades.weights.map((weight) => ({
-              criterion: weight.criterion,
-              weight: weight.weight,
-              evidence: weight.evidence,
-            }))}
-            filterCriteria={filterCriteria}
-            validated={Boolean(record.validacao)}
-          />
+          {record.priorityProfileId ? (
+            <PriorityBuilder
+              patientFirstName={record.patientFirstName}
+              priorityProfileId={record.priorityProfileId}
+              initialWeights={record.prioridades.weights.map((weight) => ({
+                criterion: weight.criterion,
+                weight: weight.weight,
+                evidence: weight.evidence,
+              }))}
+              filterCriteria={filterCriteria}
+              validated={Boolean(record.validacao)}
+            />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Perfil ainda não iniciado</CardTitle>
+                <CardDescription>
+                  O Perfil de Prioridades precisa ser criado antes desta etapa.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          )}
         </div>
 
         <aside className="space-y-6">
