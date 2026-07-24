@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { createMiddlewareSupabaseClient } from "@/lib/supabase/middleware";
-import { isDemoPortalPath, shouldBlockDemoPortals } from "@/modules/auth/demo-portals";
 import { isPublicPath } from "@/modules/auth/public-paths";
 
 // Responsabilidade do middleware: só a checagem OTIMISTA (existe sessão?) e a
@@ -19,16 +18,10 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
   const pathname = request.nextUrl.pathname;
 
-  // Portais de demonstração ficam indisponíveis em produção — antes de
-  // qualquer checagem de sessão, porque a trava não depende de quem está
-  // logado (ver demo-portals.ts).
-  if (isDemoPortalPath(pathname) && shouldBlockDemoPortals(process.env.VERCEL_ENV)) {
-    // `status: 404` é obrigatório aqui: um rewrite sem ele serve a página de
-    // "não encontrado" com status 200 (soft 404). O conteúdo ficaria correto,
-    // mas buscadores indexariam a rota como válida e qualquer verificação
-    // automática leria 200 como "no ar".
-    return NextResponse.rewrite(new URL("/404", request.url), { status: 404 });
-  }
+  // A trava que devolvia 404 para os Portais em produção saiu na MISSÃO 209:
+  // ela existia porque eles eram anônimos e mostravam dados de demonstração.
+  // Agora leem o banco real e exigem sessão + papel (requireRole em cada rota,
+  // RLS no banco) — a proteção mudou de "esconder" para "autorizar".
 
   if (!user && !isPublicPath(pathname)) {
     const loginUrl = new URL("/login", request.url);
