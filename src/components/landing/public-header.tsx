@@ -10,13 +10,18 @@ import {
 } from "@/components/landing/header-compaction";
 import { LinkButton } from "@/components/landing/link-button";
 import { cn } from "@/components/ui/cn";
+import type { AuthenticatedPortalCta } from "@/modules/auth/role-home";
+
+type PublicHeaderProps = {
+  portalCta?: AuthenticatedPortalCta | null;
+};
 
 // Ícone isolado (public/brand/logo-aliviar-icon.png, recortado do
 // logotipo oficial, fundo removido) — o lockup completo (ícone +
 // "Aliviar" + tagline) fica ilegível em 56-64px; o header usa só a marca,
 // o rodapé usa o logotipo completo (mais espaço disponível). Encolhe e
 // ganha sombra ao rolar — reforço sutil de profundidade, nunca abrupto.
-export function PublicHeader() {
+export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -59,9 +64,15 @@ export function PublicHeader() {
           </span>
         </Link>
 
-        <LinkButton href="/login" variant="secondary">
-          Entrar
-        </LinkButton>
+        {portalCta ? (
+          <LinkButton href={portalCta.href} variant="secondary">
+            {portalCta.label}
+          </LinkButton>
+        ) : (
+          <LinkButton href="/login" variant="secondary">
+            Entrar
+          </LinkButton>
+        )}
       </div>
     </header>
   );

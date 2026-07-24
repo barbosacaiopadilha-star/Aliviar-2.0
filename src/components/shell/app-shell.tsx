@@ -30,6 +30,7 @@ type AppShellProps = {
   role: string;
   displayName: string | null;
   basePath: string;
+  systemLabel?: string;
   children: ReactNode;
 };
 
@@ -111,7 +112,7 @@ function ShellNav({
   );
 }
 
-function AppShellContent({ role, displayName, basePath, children }: AppShellProps) {
+function AppShellContent({ role, displayName, basePath, systemLabel = "Sistema Operacional", children }: AppShellProps) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -170,7 +171,7 @@ function AppShellContent({ role, displayName, basePath, children }: AppShellProp
             </p>
             {!collapsed ? (
               <p className="mt-1 text-[0.6rem] font-medium uppercase tracking-[0.14em] text-brand-primary">
-                Sistema Operacional
+                {systemLabel}
               </p>
             ) : null}
           </div>
@@ -237,12 +238,17 @@ function AppShellContent({ role, displayName, basePath, children }: AppShellProp
   );
 }
 
-export function AppShell({ role, displayName, basePath, children }: AppShellProps) {
+export function AppShell({ role, displayName, basePath, systemLabel, children }: AppShellProps) {
   const navGroups = getNavGroups(role, basePath);
 
   return (
     <CommandPaletteProvider navGroups={navGroups} role={role} basePath={basePath}>
-      <AppShellContent role={role} displayName={displayName} basePath={basePath}>
+      <AppShellContent
+        role={role}
+        displayName={displayName}
+        basePath={basePath}
+        systemLabel={systemLabel}
+      >
         {children}
       </AppShellContent>
     </CommandPaletteProvider>

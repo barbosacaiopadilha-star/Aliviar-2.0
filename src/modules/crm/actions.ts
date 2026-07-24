@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRoleForAction } from "@/modules/auth/guard";
+import { CURADORIA_PIPELINE_STAGES } from "@/modules/coa/levels";
+import { recordCoaTransfer } from "@/modules/coa/transfers";
 
 import { findPossibleDuplicates } from "./duplicates";
 import { canViewContact, hasCrmPermission, CRM_OPERATOR_ROLES } from "./permissions";
@@ -14,6 +16,8 @@ import {
   createContact,
   createInteraction,
   createTask,
+  getCaseById,
+  getContactById,
   listContacts,
   updateAppointment,
   updateContact,
@@ -50,6 +54,8 @@ function revalidateCrm(contactId?: string) {
   revalidatePath("/admin/crm/funil");
   revalidatePath("/admin/crm/tarefas");
   revalidatePath("/admin/crm/agenda");
+  revalidatePath("/coa/atendimento");
+  revalidatePath("/coa/concierge");
   if (contactId) revalidatePath(`/admin/crm/contatos/${contactId}`);
 }
 
@@ -158,7 +164,46 @@ export async function changePipelineStageAction(input: unknown): Promise<CrmActi
   try {
     const supabase = await createServerSupabaseClient();
     await assertContactAccess(supabase, parsed.data.contactId, authState.roles, authState.user.id);
+
+    const contactBefore = await getContactById(supabase, parsed.data.contactId);
     await changePipelineStage(supabase, parsed.data, authState.user.id, authState.roles);
+
+    if (
+      parsed.data.toStage === "doctor_selected" &&
+      contactBefore &&
+      CURADORIA_PIPELINE_STAGES.includes(contactBefore.pipelineStage)
+    ) {
+      const activeCase = contactBefore.activeCaseId
+        ? await getCaseById(supabase, contactBefore.activeCaseId)
+        : null;
+      const conciergeId =
+        activeCase?.responsibleConciergeId ?? contactBefore.assignedTo ?? authState.user.id;
+      const conciergeName =
+        activeCase?.responsibleConciergeName ?? contactBefore.assignedToName ?? "Equipe Aliviar";
+
+      await recordCoaTransfer(
+        supabase,
+        {
+          contactId: parsed.data.contactId,
+          caseId: parsed.data.caseId ?? contactBefore.activeCaseId ?? undefined,
+          from: "CURADORIA",
+          to: "CONCIERGE",
+          toStage: "doctor_selected",
+          reason: "Assistido escolheu profissional — transferência automática para Concierge.",
+          responsibleId: conciergeId,
+          responsibleName: conciergeName,
+        },
+        authState.user.id,
+        authState.roles,
+        { skipStageChange: true },
+      );
+
+      await supabase
+        .from("crm_contacts")
+        .update({ assigned_to: conciergeId })
+        .eq("id", parsed.data.contactId);
+    }
+
     revalidateCrm(parsed.data.contactId);
     return { success: true };
   } catch (error) {

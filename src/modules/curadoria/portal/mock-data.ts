@@ -131,7 +131,7 @@ export const MOCK_CASES: PortalCase[] = [
     situation: "Conversa concluída. Faltam 15 pontos para fechar a distribuição.",
     nextAction: {
       label: "Continuar o Perfil de Prioridades",
-      href: "/portal-curador/casos/caso-2041",
+      href: "/coa/curadoria/casos/caso-2041",
       kind: "acao",
     },
     pendencies: [
@@ -155,7 +155,7 @@ export const MOCK_CASES: PortalCase[] = [
     situation: "Perfil validado por Joaquim ontem. Comparação pronta para começar.",
     nextAction: {
       label: "Comparar profissionais",
-      href: "/portal-curador/casos/caso-2038",
+      href: "/coa/curadoria/casos/caso-2038",
       kind: "acao",
     },
     pendencies: [],
@@ -172,7 +172,7 @@ export const MOCK_CASES: PortalCase[] = [
     situation: "Três opções selecionadas e justificadas. Relatório pronto para revisão final.",
     nextAction: {
       label: "Revisar o Relatório",
-      href: "/portal-curador/casos/caso-2033",
+      href: "/coa/curadoria/casos/caso-2033",
       kind: "acao",
     },
     pendencies: [],
@@ -197,7 +197,7 @@ export const MOCK_CASES: PortalCase[] = [
     situation: "As restrições de Antônio deixaram apenas dois profissionais elegíveis.",
     nextAction: {
       label: "Rever as restrições com Antônio",
-      href: "/portal-curador/casos/caso-2029",
+      href: "/coa/curadoria/casos/caso-2029",
       kind: "acao",
     },
     pendencies: [],
@@ -222,7 +222,7 @@ export const MOCK_CASES: PortalCase[] = [
     situation: "Relatório entregue pessoalmente na terça. Rosa está pensando.",
     nextAction: {
       label: "Acompanhar — sem cobrar",
-      href: "/portal-curador/casos/caso-2024",
+      href: "/coa/curadoria/casos/caso-2024",
       kind: "aguardando",
     },
     pendencies: [
@@ -246,7 +246,7 @@ export const MOCK_CASES: PortalCase[] = [
     situation: "Consulta Inicial agendada para amanhã às 10h.",
     nextAction: {
       label: "Preparar a Consulta Inicial",
-      href: "/portal-curador/casos/caso-2019",
+      href: "/coa/curadoria/casos/caso-2019",
       kind: "acao",
     },
     pendencies: [],

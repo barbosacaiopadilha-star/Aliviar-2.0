@@ -996,3 +996,68 @@ export function getAllowedStagesForContact(
     }),
   );
 }
+
+const CONCIERGE_ACTIVE_STAGES = ["doctor_selected", "scheduling_support"] as const;
+
+export type ConciergeDashboardData = {
+  activePatients: CrmContactSummary[];
+  pendingTasks: CrmTaskSummary[];
+  upcomingAppointments: CrmAppointmentSummary[];
+  metrics: {
+    activeCount: number;
+    pendingTasksCount: number;
+    appointmentsCount: number;
+    overdueCount: number;
+  };
+};
+
+export async function getConciergeDashboardData(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<ConciergeDashboardData> {
+  const [contacts, tasks, appointments] = await Promise.all([
+    listContacts(supabase),
+    listTasks(supabase),
+    listAppointments(supabase),
+  ]);
+
+  const activePatients = contacts.filter(
+    (c) =>
+      c.status === "ativo" &&
+      (CONCIERGE_ACTIVE_STAGES as readonly string[]).includes(c.pipelineStage) &&
+      (c.assignedTo === userId || c.assignedTo === null),
+  );
+
+  const pendingTasks = tasks.filter(
+    (t) =>
+      t.status !== "concluida" &&
+      t.status !== "cancelada" &&
+      activePatients.some((p) => p.id === t.contactId),
+  );
+
+  const now = new Date();
+  const upcomingAppointments = appointments
+    .filter(
+      (a) =>
+        a.status !== "cancelado" &&
+        new Date(a.startAt) >= now &&
+        activePatients.some((p) => p.id === a.contactId),
+    )
+    .slice(0, 10);
+
+  const overdueTasks = pendingTasks.filter(
+    (t) => t.dueAt && new Date(t.dueAt) < now,
+  );
+
+  return {
+    activePatients: activePatients.slice(0, 12),
+    pendingTasks: pendingTasks.slice(0, 12),
+    upcomingAppointments,
+    metrics: {
+      activeCount: activePatients.length,
+      pendingTasksCount: pendingTasks.length,
+      appointmentsCount: upcomingAppointments.length,
+      overdueCount: overdueTasks.length,
+    },
+  };
+}

@@ -77,7 +77,7 @@ export function PhaseNavigator({ phases, caseId }: { phases: PhaseState[]; caseI
           <li key={state.phase}>
             {isNavigable ? (
               <Link
-                href={`/portal-curador/casos/${caseId}/${state.phase.toLowerCase()}`}
+                href={`/coa/curadoria/casos/${caseId}/${state.phase.toLowerCase()}`}
                 className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
               >
                 {content}

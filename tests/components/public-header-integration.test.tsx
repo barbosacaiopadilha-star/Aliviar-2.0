@@ -74,4 +74,18 @@ describe("PublicHeader consumindo o Motor de Compactação", () => {
     addSpy.mockRestore();
     removeSpy.mockRestore();
   });
+
+  it("mostra Entrar quando não há sessão", () => {
+    const { getByRole } = render(<PublicHeader />);
+    expect(getByRole("link", { name: "Entrar" })).toHaveAttribute("href", "/login");
+  });
+
+  it("substitui Entrar pelo portal autenticado quando há sessão", () => {
+    const { getByRole, queryByRole } = render(
+      <PublicHeader portalCta={{ label: "Minha Jornada", href: "/paciente" }} />,
+    );
+
+    expect(queryByRole("link", { name: "Entrar" })).toBeNull();
+    expect(getByRole("link", { name: "Minha Jornada" })).toHaveAttribute("href", "/paciente");
+  });
 });

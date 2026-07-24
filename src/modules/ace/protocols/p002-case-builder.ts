@@ -16,6 +16,8 @@ import {
   type DecisionCase,
 } from "@/modules/ace/artifacts/decision-case";
 
+import { applyP002Completeness } from "./p002-completeness";
+
 export type P002ExtractedFields = Omit<CreateDecisionCaseInput, "sourceNarrativeId">;
 
 export type P002Input = {
@@ -27,9 +29,11 @@ export const p002CaseBuilder: ProtocolContract<P002Input, DecisionCase> = {
   id: "P002",
   name: "Case Builder",
   async execute(input: P002Input): Promise<DecisionCase> {
+    const extractedFields = applyP002Completeness(input.narrative, input.extractedFields);
+
     return createDecisionCase({
       sourceNarrativeId: input.narrative.id,
-      ...input.extractedFields,
+      ...extractedFields,
     });
   },
 };

@@ -1,7 +1,7 @@
 import "@/app/landing-editorial.css";
 
 import { PublicFooter } from "@/components/landing/public-footer";
-import { PublicHeader } from "@/components/landing/public-header";
+import { PublicHeaderContainer } from "@/components/landing/public-header-container";
 
 export default function PublicLayout({
   children,
@@ -17,7 +17,7 @@ export default function PublicLayout({
         Pular para o conteúdo
       </a>
 
-      <PublicHeader />
+      <PublicHeaderContainer />
 
       <main id="conteudo-principal" className="flex-1">
         {children}

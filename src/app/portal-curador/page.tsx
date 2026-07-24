@@ -111,7 +111,7 @@ export default async function PainelInicialPage() {
                     <p className="text-sm text-ink-muted">
                       {state.nextStep.label}.{" "}
                       <Link
-                        href={`/portal-curador/casos/${record.caseId}`}
+                        href={`/coa/curadoria/casos/${record.caseId}`}
                         className="font-medium text-brand-primary underline-offset-4 hover:underline"
                       >
                         Abrir o caso
@@ -119,7 +119,7 @@ export default async function PainelInicialPage() {
                     </p>
                   ) : (
                     <Link
-                      href={`/portal-curador/casos/${record.caseId}`}
+                      href={`/coa/curadoria/casos/${record.caseId}`}
                       className="inline-flex min-h-11 items-center gap-2 rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors duration-fast ease-standard hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
                     >
                       {state.nextStep.label}

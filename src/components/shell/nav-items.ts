@@ -15,10 +15,17 @@ export function isNavItemActive(pathname: string, href: string, basePath: string
 }
 
 /**
- * Navegação agrupada do Sistema Operacional Aliviar (AOS-DC).
+ * Navegação agrupada do Centro de Operações Aliviar (COA).
  * Um link só entra quando a página de destino existe.
  */
 export function getNavGroups(role: string, basePath: string): NavGroup[] {
+  if (basePath === "/coa/atendimento") {
+    return getAtendimentoNavGroups(role);
+  }
+  if (basePath === "/coa/concierge") {
+    return getConciergeNavGroups(role);
+  }
+
   const groups: NavGroup[] = [];
 
   if (role === "administrador") {
@@ -91,4 +98,63 @@ export function getNavGroups(role: string, basePath: string): NavGroup[] {
 /** @deprecated Use getNavGroups — mantido para compatibilidade temporária. */
 export function getDefaultNavItems(role: string, basePath: string): NavItem[] {
   return getNavGroups(role, basePath).flatMap((group) => group.items);
+}
+
+function getAtendimentoNavGroups(role: string): NavGroup[] {
+  const groups: NavGroup[] = [
+    {
+      label: "COA · Atendimento",
+      items: [{ label: "Fila de Leads", href: "/coa/atendimento", icon: "dashboard" }],
+    },
+    {
+      label: "Operação",
+      items: [
+        { label: "Contatos", href: "/admin/crm/contatos", icon: "contacts" },
+        { label: "Funil", href: "/admin/crm/funil", icon: "funnel" },
+        { label: "Tarefas", href: "/admin/crm/tarefas", icon: "tasks" },
+        { label: "Agenda", href: "/admin/crm/agenda", icon: "agenda" },
+      ],
+    },
+  ];
+
+  if (role === "administrador") {
+    groups.push({
+      label: "COA",
+      items: [
+        { label: "Curadoria", href: "/coa/curadoria", icon: "cases" },
+        { label: "Concierge", href: "/coa/concierge", icon: "dashboard" },
+      ],
+    });
+  }
+
+  return groups;
+}
+
+function getConciergeNavGroups(role: string): NavGroup[] {
+  const groups: NavGroup[] = [
+    {
+      label: "COA · Concierge",
+      items: [{ label: "Fila de Acompanhamentos", href: "/coa/concierge", icon: "dashboard" }],
+    },
+    {
+      label: "Operação",
+      items: [
+        { label: "Contatos", href: "/admin/crm/contatos", icon: "contacts" },
+        { label: "Tarefas", href: "/admin/crm/tarefas", icon: "tasks" },
+        { label: "Agenda", href: "/admin/crm/agenda", icon: "agenda" },
+      ],
+    },
+  ];
+
+  if (role === "administrador") {
+    groups.push({
+      label: "COA",
+      items: [
+        { label: "Atendimento", href: "/coa/atendimento", icon: "contacts" },
+        { label: "Curadoria", href: "/coa/curadoria", icon: "cases" },
+      ],
+    });
+  }
+
+  return groups;
 }

@@ -26,6 +26,7 @@ import type {
 } from "@/modules/crm/types";
 
 import { CrmStageBadge } from "./crm-stage-badge";
+import { CoaTransferPanel } from "@/components/coa/coa-transfer-panel";
 
 function formatDateTime(iso: string | null): string {
   if (!iso) return "—";
@@ -40,6 +41,8 @@ type CrmContactDetailPanelProps = {
   appointments: CrmAppointmentSummary[];
   timeline: CrmTimelineEntry[];
   allowedStages: PipelineStage[];
+  curators: Array<{ id: string; name: string }>;
+  concierges: Array<{ id: string; name: string }>;
 };
 
 export function CrmContactDetailPanel({
@@ -49,6 +52,8 @@ export function CrmContactDetailPanel({
   appointments,
   timeline,
   allowedStages,
+  curators,
+  concierges,
 }: CrmContactDetailPanelProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -101,6 +106,16 @@ export function CrmContactDetailPanel({
       {message ? (
         <StatusBanner variant={message.includes("sucesso") ? "success" : "error"}>{message}</StatusBanner>
       ) : null}
+
+      <CoaTransferPanel
+        contactId={contact.id}
+        caseId={contact.activeCaseId}
+        pipelineStage={contact.pipelineStage}
+        curators={curators}
+        concierges={concierges}
+        onTransfer={runAction}
+        isPending={isPending}
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>

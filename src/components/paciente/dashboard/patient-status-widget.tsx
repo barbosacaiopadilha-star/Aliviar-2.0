@@ -32,7 +32,8 @@ type PatientStatusWidgetProps = {
 };
 
 export function PatientStatusWidget({ jornada, currentStage }: PatientStatusWidgetProps) {
-  const copy = resolveStatusCopy(currentStage, jornada.curatorName);
+  const responsible = jornada.currentResponsible;
+  const copy = resolveStatusCopy(currentStage, responsible.name);
 
   return (
     <PatientCard className="patient-fade-in">
@@ -41,12 +42,13 @@ export function PatientStatusWidget({ jornada, currentStage }: PatientStatusWidg
       </p>
 
       <div className="mt-6 flex items-start gap-4">
-        <CuratorAvatar name={jornada.curatorName} className="size-14 text-base" />
+        <CuratorAvatar name={responsible.name} className="size-14 text-base" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm text-[var(--color-ink-muted)]">Quem está cuidando</p>
+          <p className="text-sm text-[var(--color-ink-muted)]">Quem está cuidando de mim</p>
           <p className="font-serif text-xl font-medium text-[var(--patient-forest)]">
-            {jornada.curatorName}
+            {responsible.name}
           </p>
+          <p className="mt-1 text-xs text-[var(--color-ink-muted)]">{responsible.roleLabel}</p>
         </div>
       </div>
 

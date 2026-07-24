@@ -51,6 +51,18 @@ restrições obrigatórias (condições relatadas como não-negociáveis);
 preferências (condições relatadas como desejáveis, porém flexíveis);
 informações ausentes (o que seria essencial saber, mas não foi relatado).
 
+CLASSIFICAÇÃO DE COMPLETUDE — só registre em missingInformation quando a
+informação estiver realmente ausente. Estados possíveis por campo:
+respondido, não se aplica, determinado pelo Curador, determinado pelo caso,
+ou informação realmente ausente. Regras:
+- Especialidade: determinada pelo caso — nunca pergunte ao paciente, nunca
+  gere pendência.
+- Exames: se o paciente informou que não realizou exames, a resposta está
+  completa — nunca gere pendência.
+- Preço da consulta: não pertence à Consulta Inicial — nunca gere pendência.
+- Outras doenças: se não houve relato, não crie pendência automática —
+  respeite o contexto da conversa.
+
 Nunca invente uma decisão, objetivo, restrição ou preferência sem
 correspondência clara na narrativa. Nunca preencha uma lacuna com uma
 suposição — registre como informação ausente. Quando a decisão ou o

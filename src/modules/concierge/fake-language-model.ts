@@ -7,6 +7,7 @@
 // separada (ÉPICO 1/SPRINT 3, seção "Provedor de LLM").
 
 import type { P002ExtractedFields } from "@/modules/ace/protocols/p002-case-builder";
+import { applyP002Completeness } from "@/modules/ace/protocols/p002-completeness";
 import type { P003AdditionalFinding } from "@/modules/ace/protocols/p003-case-audit";
 import type { P004Modeling } from "@/modules/ace/protocols/p004-decision-context-modeler";
 import type { P010Presentation } from "@/modules/ace/protocols/p010-final-curadoria-delivery";
@@ -126,9 +127,11 @@ export class FakeAceLanguageModel implements AceLanguageModel {
       let output: unknown;
 
       switch (request.protocolId) {
-        case "P002":
-          output = deriveP002ExtractedFields((request.input as { narrative: Narrative }).narrative);
+        case "P002": {
+          const narrative = (request.input as { narrative: Narrative }).narrative;
+          output = applyP002Completeness(narrative, deriveP002ExtractedFields(narrative));
           break;
+        }
         case "P003":
           output = { additionalFindings: deriveP003AdditionalFindings() };
           break;

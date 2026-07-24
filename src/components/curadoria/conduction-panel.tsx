@@ -56,7 +56,7 @@ export function ConductionPanel({ state, caseId }: { state: ConductionState; cas
             <p className="mt-1.5 text-base font-medium text-ink">{state.nextStep.label}</p>
             <p className="mt-0.5 text-sm text-ink-muted">{state.nextStep.description}</p>
             <Link
-              href={`/portal-curador/casos/${caseId}/${state.nextStep.phase.toLowerCase()}`}
+              href={`/coa/curadoria/casos/${caseId}/${state.nextStep.phase.toLowerCase()}`}
               className={cn(
                 "mt-3 inline-flex min-h-11 items-center gap-2 rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface",
                 "transition-colors duration-fast ease-standard hover:bg-brand-primary-deep",
