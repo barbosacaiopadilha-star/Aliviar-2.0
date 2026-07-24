@@ -9,7 +9,7 @@ type PublicChromeProps = Readonly<{
 
 export function PublicChrome({ children, className }: PublicChromeProps) {
   return (
-    <div className={cn("flex min-h-screen flex-col", className)}>
+    <div className={cn("landing-ambient relative flex min-h-screen flex-col", className)}>
       <a
         href="#conteudo-principal"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-toast focus:rounded-md focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:text-ink focus:shadow-md focus:outline-none focus:ring-2 focus:ring-focus"

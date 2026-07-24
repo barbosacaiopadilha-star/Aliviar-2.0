@@ -18,7 +18,7 @@ export function SectionEyebrow({ children, className, align = "center", tone = "
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em]",
+        "inline-flex items-center gap-2.5 text-[0.6875rem] font-semibold uppercase tracking-[0.2em]",
         tone === "light" ? "text-brand-primary-deep" : "text-surface",
         align === "left" && "lg:justify-start",
         className,

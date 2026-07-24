@@ -180,11 +180,11 @@ export function HeroExperience({ videoSrc, videoPoster }: HeroExperienceProps) {
   // prefers-reduced-motion (sem pin, sem fases): layout estático.
   if (!videoSrc || reducedMotion) {
     return (
-      <section className="bg-[linear-gradient(170deg,_var(--color-brand-primary-deep)_0%,_var(--color-brand-primary)_55%,_color-mix(in_srgb,_var(--color-brand-sage)_45%,_var(--color-brand-primary))_100%)]">
-        <div className="mx-auto flex min-h-[70vh] w-full max-w-content flex-col items-center justify-center gap-8 px-4 py-16 text-center lg:px-8">
+      <section className="landing-hero-atmosphere">
+        <div className="mx-auto flex min-h-[70vh] w-full max-w-content flex-col items-center justify-center gap-10 px-4 py-20 text-center lg:px-8">
           <HeroTitle />
           {videoSrc ? (
-            <div className="w-full max-w-3xl overflow-hidden rounded-xl border border-surface/25 shadow-lg">
+            <div className="landing-video-frame w-full max-w-3xl">
               <video
                 src={videoSrc}
                 poster={videoPoster}
@@ -208,14 +208,13 @@ export function HeroExperience({ videoSrc, videoPoster }: HeroExperienceProps) {
     <section
       ref={sectionRef}
       aria-label="Apresentação"
-      className="relative h-screen overflow-hidden"
+      className="landing-hero-vignette relative h-screen overflow-hidden"
     >
-      {/* Fundo — gradiente da marca com parallax (a referência usa foto;
-          nossa direção criativa mantém a pele da marca). */}
+      {/* Fundo atmosférico — luz natural difusa, conversa com o vídeo. */}
       <div
         ref={bgRef}
         aria-hidden="true"
-        className="absolute inset-0 will-change-transform bg-[linear-gradient(170deg,_var(--color-brand-primary-deep)_0%,_var(--color-brand-primary)_55%,_color-mix(in_srgb,_var(--color-brand-sage)_45%,_var(--color-brand-primary))_130%)]"
+        className="landing-hero-atmosphere absolute inset-0 will-change-transform"
       />
 
       {/* Título + ações — presentes desde o primeiro frame, somem no zoom. */}
@@ -233,7 +232,7 @@ export function HeroExperience({ videoSrc, videoPoster }: HeroExperienceProps) {
         className="absolute left-1/2 w-1/2 max-w-[500px] -translate-x-1/2 -translate-y-1/2 lg:w-1/5 lg:max-w-[320px]"
         style={{ top: "75%" }}
       >
-        <div className="relative overflow-hidden rounded-xl border border-surface/25 shadow-lg">
+        <div className="landing-video-frame relative">
           <video
             ref={videoRef}
             src={videoSrc}
@@ -250,7 +249,7 @@ export function HeroExperience({ videoSrc, videoPoster }: HeroExperienceProps) {
           <div
             ref={coverRef}
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[linear-gradient(150deg,_var(--color-brand-primary)_0%,_var(--color-brand-primary-deep)_100%)]"
+            className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[linear-gradient(150deg,_color-mix(in_srgb,_var(--color-brand-primary)_88%,_#1e2a24)_0%,_var(--color-brand-primary-deep)_100%)]"
           >
             <p className="font-serif text-2xl text-surface/90">Aliviar</p>
           </div>

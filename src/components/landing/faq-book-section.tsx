@@ -161,7 +161,7 @@ export function FaqBookSection() {
 
   if (ready && reduced) {
     return (
-      <section className="bg-canvas px-4 py-16 lg:px-8 lg:py-20">
+      <section className="landing-section landing-bg-linen px-4 py-20 lg:px-8 lg:py-28">
         <div className="mx-auto max-w-reading text-center lg:text-left">
           <SectionEyebrow align="left">Suas dúvidas</SectionEyebrow>
           <h2 className="mt-3 font-serif text-2xl font-semibold text-ink lg:text-3xl">
@@ -172,7 +172,7 @@ export function FaqBookSection() {
           {CARDS.map((card) => (
             <div
               key={card.duvidaTitle.join()}
-              className="rounded-2xl border border-border bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_25%,_var(--color-bg-surface))_100%)] p-6"
+              className="landing-panel p-7"
             >
               <span className="text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">
                 Dúvida
@@ -196,7 +196,7 @@ export function FaqBookSection() {
   }
 
   return (
-    <div ref={sectionRef} id="duvidas" className="relative bg-canvas">
+    <div ref={sectionRef} id="duvidas" className="landing-bg-linen relative">
       {/* Luz de leitura assentada (Capítulo 5) — presença estável, nunca
           animada: ao contrário do Portal, aqui a luz não conduz mais o
           olhar, só confirma que o livro existe dentro de um ambiente, não
@@ -265,7 +265,7 @@ export function FaqBookSection() {
                 cardRefs.current[index] = el;
               }}
               className={cn(
-                "absolute inset-0 shadow-lg transition-shadow duration-fast ease-standard",
+                "absolute inset-0 transition-shadow duration-slow ease-standard",
                 // Convite Prévio (Fase 5): só a carta ativa reage — mesma
                 // fonte de estado já usada pelo aria-live, nenhum estado
                 // novo. A sombra pode viver neste elemento com segurança:
@@ -273,7 +273,7 @@ export function FaqBookSection() {
                 // virada em si (onUpdate da própria virada), nunca em
                 // repouso — quando o convite realmente importa.
                 index === currentIndex &&
-                  "hover:shadow-2xl group-focus-visible:shadow-2xl",
+                  "hover:[box-shadow:var(--landing-shadow-lift)] group-focus-visible:[box-shadow:var(--landing-shadow-lift)]",
               )}
               style={{
                 zIndex: CARDS.length - index,
@@ -292,9 +292,9 @@ export function FaqBookSection() {
                   então nunca há conflito nem resíduo. */}
               <div
                 className={cn(
-                  "relative size-full transition-transform duration-fast ease-standard",
+                  "relative size-full transition-transform duration-slow ease-standard",
                   index === currentIndex &&
-                    "hover:-translate-y-1 group-focus-visible:-translate-y-1",
+                    "hover:-translate-y-0.5 group-focus-visible:-translate-y-0.5",
                 )}
               >
                 <div
@@ -308,7 +308,7 @@ export function FaqBookSection() {
                   }}
                 >
                   <div
-                    className="absolute inset-0 flex flex-col justify-start rounded-r-2xl rounded-l-sm border border-border bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_35%,_var(--color-bg-surface))_100%)] p-6 pl-7 pt-7"
+                    className="landing-panel absolute inset-0 flex flex-col justify-start rounded-r-2xl rounded-l-sm p-6 pl-7 pt-7"
                     style={{ backfaceVisibility: "hidden" }}
                   >
                     <span
@@ -328,7 +328,7 @@ export function FaqBookSection() {
                     </p>
                   </div>
                   <div
-                    className="absolute inset-0 flex flex-col justify-start rounded-r-2xl rounded-l-sm border border-border bg-[linear-gradient(160deg,_var(--color-bg-surface)_0%,_var(--color-brand-sage)_100%)] p-6 pl-7 pt-7"
+                    className="landing-panel-soft absolute inset-0 flex flex-col justify-start rounded-r-2xl rounded-l-sm p-6 pl-7 pt-7"
                     style={{
                       backfaceVisibility: "hidden",
                       transform: "rotateY(180deg)",

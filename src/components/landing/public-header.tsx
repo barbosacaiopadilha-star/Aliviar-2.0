@@ -32,7 +32,7 @@ export function PublicHeader() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-sticky-header border-b border-border bg-canvas/95 backdrop-blur transition-shadow duration-base ease-standard",
+        "landing-header sticky top-0 z-sticky-header border-b bg-canvas/95 backdrop-blur transition-shadow duration-slow ease-standard",
         scrolled && "shadow-md",
       )}
     >
