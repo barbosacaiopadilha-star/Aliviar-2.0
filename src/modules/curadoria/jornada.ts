@@ -137,7 +137,14 @@ export function buildJornada(record: CuradoriaRecord): Jornada {
           ? `${curator} está escrevendo o parecer de cada opção.`
           : "Você vai receber um documento explicando cada opção e sua relação com suas prioridades.",
       updatedAt: relatorio.emittedAt,
-      nextAction: dossieDone ? { label: "Ler meu Dossiê", owner: "VOCE" } : null,
+      // Sem destino enquanto a tela do Dossiê não existe. Prometer "Ler meu
+      // Dossiê" sem ter onde levar seria pior que não prometer: a MISSÃO 206
+      // exige que nenhum fluxo termine abruptamente, e um convite que não
+      // abre nada é exatamente um fim abrupto. Quando a tela existir, esta
+      // ação volta com `owner: "VOCE"`.
+      nextAction: dossieDone
+        ? { label: `${curator} vai apresentar as opções na conversa de vocês`, owner: "EQUIPE" }
+        : null,
       responsible: curator,
     },
     {

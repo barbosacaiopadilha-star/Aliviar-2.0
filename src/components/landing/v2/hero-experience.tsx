@@ -298,8 +298,11 @@ function HeroActions() {
       <LinkButton href="/sua-historia" variant="primary" className="w-full sm:w-auto">
         Contar minha história
       </LinkButton>
+      {/* Aponta para a Jornada, não para uma tela de login genérica: a
+          MISSÃO 206 encontrou aqui a ruptura mais grave da experiência — quem
+          já é paciente saía da Landing 2.0 e caía no produto antigo. */}
       <LinkButton
-        href="/login"
+        href="/portal-paciente"
         variant="secondary"
         className="w-full border-surface/40 bg-transparent text-surface hover:border-brand-gold sm:w-auto"
       >

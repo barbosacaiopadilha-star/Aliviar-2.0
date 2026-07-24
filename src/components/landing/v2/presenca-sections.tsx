@@ -38,7 +38,8 @@ export function PortalPacienteSection() {
             </p>
             <div className="pt-2">
               <p className="text-sm font-medium text-ink">Já iniciou sua Curadoria?</p>
-              <LinkButton href="/login" variant="secondary" className="mt-3">
+              {/* Continuidade, nunca uma porta para outro sistema (MISSÃO 206). */}
+              <LinkButton href="/portal-paciente" variant="secondary" className="mt-3">
                 Acessar minha Jornada
               </LinkButton>
             </div>
