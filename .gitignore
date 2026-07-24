@@ -67,3 +67,9 @@ desktop.ini
 *.tmp
 *.temp
 *~
+
+# Homologação local (nunca commitar segredos ou relatórios de execução)
+scripts/local/.validation-env.json
+scripts/local/validation-report.json
+scripts/local/.env.admin.local
+scripts/local/.tmp-password-update.sql

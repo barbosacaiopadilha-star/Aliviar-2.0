@@ -620,7 +620,13 @@ export async function registerPatientDecision(
     note,
   });
 
-  if (error) throw new Error("Não foi possível registrar sua decisão agora.");
+  if (error) {
+    if (error.code === "23505") {
+      const existing = await getPatientDecision(supabase, curatedSelectionId);
+      if (existing) return;
+    }
+    throw new Error("Não foi possível registrar sua decisão agora.");
+  }
 }
 
 export async function getPatientDecision(
