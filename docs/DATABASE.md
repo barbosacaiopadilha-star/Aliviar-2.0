@@ -1,8 +1,28 @@
 # Banco de Dados — Catálogo de Tabelas
 
-Schema versionado em `supabase/migrations/` (Postgres via Supabase), aplicado apenas por CLI — nunca editado manualmente no painel. **Migrations já aplicadas nunca são editadas**; uma correção é sempre uma nova migration. RLS habilitada desde a migration que cria cada tabela — nenhuma tabela "temporariamente aberta" (`docs/CONVENTIONS.md`).
+> ## ⚠️ Onde o schema realmente vive (MISSÃO 209, Fase 2)
+>
+> **O banco de produção usa o schema `curadoria`, não `public`.** O `public` do
+> mesmo banco (`aliviar-2-prod`) pertence à **AliCIA**, outro produto — nunca
+> escreva nele a partir deste repositório.
+>
+> **`supabase/migrations/` não descreve produção por completo.** As 7 migrations
+> que construíram o schema `curadoria` foram aplicadas fora deste repositório e
+> ainda não estão versionadas aqui; o SQL delas está em
+> `supabase_migrations.schema_migrations` e é recuperável com
+> `supabase db pull --schema curadoria`. Ver
+> `supabase/migrations-legacy-public/README.md`.
+>
+> As 32 migrations que descreviam o schema em `public.` foram **arquivadas** —
+> nunca produziram produção e não devem ser aplicadas.
+>
+> Consequência prática: `supabase db reset` local produz um schema **diferente**
+> de produção. É a causa raiz do bloqueador B6 (testes de integração sem valor
+> probatório sobre o banco real).
 
-Este catálogo é um **mapa de leitura rápida**; a fonte da verdade do schema é sempre o SQL em `supabase/migrations/`. Para gerar tipos TypeScript atualizados a partir do schema real, use o MCP do Supabase (`generate_typescript_types`) ou `supabase gen types`.
+Schema aplicado apenas por CLI ou migration dirigida — nunca editado manualmente no painel. **Migrations já aplicadas nunca são editadas**; uma correção é sempre uma nova migration. RLS habilitada desde a migration que cria cada tabela — nenhuma tabela "temporariamente aberta" (`docs/CONVENTIONS.md`).
+
+Este catálogo é um **mapa de leitura rápida**. Enquanto a reconciliação não estiver completa, a fonte da verdade do schema é o **banco de produção**, não este diretório. Para gerar tipos TypeScript a partir do schema real, use o MCP do Supabase (`generate_typescript_types`).
 
 ## Identidade e papéis
 
@@ -68,3 +88,40 @@ Este catálogo é um **mapa de leitura rápida**; a fonte da verdade do schema �
 - Tabelas de log/decisão/entrega são **append-only por design** — a garantia é a ausência de policy de `UPDATE`/`DELETE`, não uma trigger que bloqueia a aplicação.
 - Toda checagem de papel em RLS passa por uma função/helper genérica (`has_role(...)`, funções `is_case_curator_for_*`) — nunca um valor de enum espalhado pelas policies.
 - Migrations são identificadas por timestamp (`YYYYMMDDHHMMSS_descricao.sql`) e nunca reordenadas ou editadas após aplicadas — uma correção de schema é sempre uma nova migration.
+
+## Método de Curadoria Compartilhada (schema `curadoria`)
+
+Aplicado em produção pela MISSÃO 209, Fase 1 — migration `20260724022540_curadoria_stage7_metodo_curadoria_compartilhada`.
+
+| Tabela | Propósito | Invariante que o schema garante |
+|---|---|---|
+| `priority_profiles` | Perfil de Prioridades — o artefato central do Método. | Validação coerente com status; **um vigente por Caso** (índice parcial). |
+| `priority_profile_filters` | Restrições (eliminatórias) e Preferências. | Valor não-vazio. Restrição nunca recebe peso. |
+| `priority_weights` | Distribuição de 100 pontos. | **`evidence` NOT NULL e não-vazio** — peso sem Evidência de Curadoria é impossível (Inv. 10). Um por critério. |
+| `compatibility_analyses` | Análise por profissional: score interno, faixa, cobertura. | **Nenhuma policy de SELECT para o paciente** — o score interno nunca sai do nível interno (Inv. 26). |
+| `compatibility_criterion_results` | Decomposição por critério. | `alignment` nullable = lacuna de cadastro, nunca 0 disfarçado de nota baixa (Inv. 34). |
+| `curated_selections` | As três opções escolhidas. | **`selected_by` NOT NULL** — toda seleção tem autoria humana (Inv. 13). Trigger exige **exatamente três** na entrega (Inv. 17). |
+| `curated_selection_options` | Uma das três opções. | `position` 1–3; nenhum profissional repetido (Inv. 19). Ordem é apresentação, nunca colocação. |
+| `patient_curadoria_decisions` | A escolha do paciente. **Append-only.** | INSERT restrito ao próprio paciente (Inv. 14). `NONE_OF_THEM` é desfecho legítimo. |
+
+### Triggers
+
+- `enforce_priority_profile_validation` — a distribuição precisa somar **exatamente 100** no momento da validação.
+- `protect_validated_priority_profile` — Perfil validado é **imutável**; corrigir exige criar um novo (Inv. 28).
+- `enforce_selection_has_three` — entrega só acontece com exatamente três opções.
+
+### Funções auxiliares
+
+`curadoria.is_curator_for_case(uuid)` e `curadoria.is_patient_for_case(uuid)` — usadas por toda a RLS do Método. Nascem com `search_path` fixo e `EXECUTE` revogado de `anon`/`authenticated`: são infraestrutura de policy, não RPC.
+
+### Invariantes testados no banco real
+
+Verificados na Fase 1 com transação revertida ao final:
+
+| Teste | Resultado |
+|---|---|
+| Peso sem evidência | recusado |
+| Validar com 60 pontos | recusado |
+| Validar com 100 pontos | aceito |
+| Alterar Perfil já validado | recusado |
+| Entregar com 0 opções | recusado |
