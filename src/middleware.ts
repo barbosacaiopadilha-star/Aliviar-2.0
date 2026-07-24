@@ -23,7 +23,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   // qualquer checagem de sessão, porque a trava não depende de quem está
   // logado (ver demo-portals.ts).
   if (isDemoPortalPath(pathname) && shouldBlockDemoPortals(process.env.VERCEL_ENV)) {
-    return NextResponse.rewrite(new URL("/404", request.url));
+    // `status: 404` é obrigatório aqui: um rewrite sem ele serve a página de
+    // "não encontrado" com status 200 (soft 404). O conteúdo ficaria correto,
+    // mas buscadores indexariam a rota como válida e qualquer verificação
+    // automática leria 200 como "no ar".
+    return NextResponse.rewrite(new URL("/404", request.url), { status: 404 });
   }
 
   if (!user && !isPublicPath(pathname)) {
