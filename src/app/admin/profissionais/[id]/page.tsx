@@ -6,6 +6,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import {
   getProfessionalProfile,
+  listCompetencyDomains,
   setProfessionalPublicationStatusAction,
   setProfessionalStatusAction,
   updateProfessionalProfileAction,
@@ -33,6 +34,7 @@ export default async function EditProfessionalPage({ params }: EditProfessionalP
 
   const supabase = await createServerSupabaseClient();
   const professional = await getProfessionalProfile(supabase, id);
+  const competencyDomains = professional ? await listCompetencyDomains(supabase, id) : [];
 
   if (!professional) {
     notFound();
@@ -87,6 +89,11 @@ export default async function EditProfessionalPage({ params }: EditProfessionalP
           initialCrmUf={professional.crmUf ?? ""}
           initialProfessionalSummary={professional.professionalSummary ?? ""}
           initialInstitutionName={professional.institutionName ?? ""}
+          initialExperienceLevel={professional.experienceLevel ?? ""}
+          initialIntakeApproach={professional.intakeApproach ?? ""}
+          initialOffersContinuousCare={professional.offersContinuousCare}
+          initialAvailabilityWindow={professional.availabilityWindow ?? ""}
+          initialCompetencyDomains={competencyDomains}
         />
       </Card>
 

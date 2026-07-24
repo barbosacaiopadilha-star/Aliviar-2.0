@@ -9,6 +9,7 @@ import { requireRoleForAction } from "@/modules/auth/guard";
 import { professionalProfileSchema } from "./professional-schema";
 import {
   createProfessionalProfile,
+  replaceCompetencyDomains,
   setProfessionalPublicationStatus,
   setProfessionalStatus,
   updateProfessionalProfile,
@@ -71,6 +72,10 @@ export async function createProfessionalProfileAction(
     return { success: false, error: "Não foi possível criar o profissional agora. Tente novamente." };
   }
 
+  // Áreas de competência vivem em tabela própria — gravadas depois do perfil
+  // existir, porque referenciam o id dele.
+  await replaceCompetencyDomains(supabase, created.id, parsed.data.competencyDomains);
+
   revalidatePath("/admin/profissionais");
   redirect(`/admin/profissionais/${created.id}`);
 }
@@ -111,6 +116,8 @@ export async function updateProfessionalProfileAction(
   } catch {
     return { success: false, error: "Não foi possível atualizar o profissional agora. Tente novamente." };
   }
+
+  await replaceCompetencyDomains(supabase, id, parsed.data.competencyDomains);
 
   revalidatePath(`/admin/profissionais/${id}`);
   revalidatePath("/admin/profissionais");
