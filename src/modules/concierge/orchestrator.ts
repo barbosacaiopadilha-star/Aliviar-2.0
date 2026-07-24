@@ -32,6 +32,8 @@ import {
   persistArtifact,
   updateExecution,
 } from "./execution-repository";
+import { getLatestReturnProtocolForCase } from "./human-review-repository";
+import { isProtocolAtOrAfterReturnPoint } from "./return-to-protocol";
 import { AceLanguageModelConfigurationError, getAceLanguageModel, type AceLanguageModel } from "./language-model";
 import { SupabaseProviderProfileRepository, SupabaseProviderRepository } from "./provider-adapters";
 import type { AceExecution, AceArtifactType } from "./types";
@@ -187,23 +189,38 @@ export async function runAceExecution(params: RunAceExecutionParams): Promise<Ru
   // acima nunca é reatribuída, então o log de falha (catch) usa esta cópia
   // local em vez de arriscar reportar um protocolo desatualizado.
   let currentProtocolId: ProtocolId | null = execution.currentProtocol;
+  const returnProtocol = await getLatestReturnProtocolForCase(supabase, caseId);
 
   async function reuseOrPersist<T>(
     artifactType: AceArtifactType,
     protocolId: "P001" | "P002" | "P003" | "P004" | "P005" | "P006" | "P007" | "P008",
     compute: () => Promise<{ artifact: T & { id: string; version: number }; methodVersion: string; blocked?: boolean }>,
   ): Promise<T> {
-    const existing = await getLatestArtifactByType(supabase, caseId, artifactType);
-    if (existing) {
+    const skipReuse =
+      returnProtocol !== null && isProtocolAtOrAfterReturnPoint(protocolId, returnProtocol);
+
+    if (!skipReuse) {
+      const existing = await getLatestArtifactByType(supabase, caseId, artifactType);
+      if (existing) {
+        await logExecutionEvent(supabase, {
+          executionId: execution.id,
+          caseId,
+          eventType: "ARTIFACT_REUSED",
+          protocolId,
+          message: `Reaproveitando ${artifactType} já validado (versão ${existing.version}) — não recalculado.`,
+          metadata: { artifactType, version: existing.version },
+        });
+        return existing.payload as T;
+      }
+    } else {
       await logExecutionEvent(supabase, {
         executionId: execution.id,
         caseId,
-        eventType: "ARTIFACT_REUSED",
+        eventType: "PROTOCOL_STARTED",
         protocolId,
-        message: `Reaproveitando ${artifactType} já validado (versão ${existing.version}) — não recalculado.`,
-        metadata: { artifactType, version: existing.version },
+        message: `Recalculando ${artifactType} após retorno humano a ${returnProtocol}.`,
+        metadata: { artifactType, returnProtocol },
       });
-      return existing.payload as T;
     }
 
     currentProtocolId = protocolId;

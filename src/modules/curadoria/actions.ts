@@ -323,7 +323,7 @@ export async function validateProfileAction(input: unknown): Promise<CuradoriaAc
   if (!readiness.canValidate) {
     return {
       success: false,
-      error: readiness.blockers[0] ?? "O Perfil ainda não está pronto para validação.",
+      error: readiness.blockers[0]?.message ?? "O Perfil ainda não está pronto para validação.",
     };
   }
 

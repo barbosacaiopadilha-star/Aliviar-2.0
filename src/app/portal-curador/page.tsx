@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import { conduct } from "@/modules/curadoria/cos/conduction";
+import { getPrimaryActionLabel, phaseHref } from "@/modules/curadoria/cos/conduction-ui";
 import { listCaseIds, loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { COS_PHASE_LABELS } from "@/modules/curadoria/cos/types";
 import { resolveGreetingFirstName } from "@/modules/auth/display-identity";
@@ -118,10 +119,10 @@ export default async function PainelInicialPage() {
                     </p>
                   ) : (
                     <Link
-                      href={`/coa/curadoria/casos/${record.caseId}`}
+                      href={phaseHref(record.caseId, state.nextStep.phase)}
                       className="inline-flex min-h-11 items-center gap-2 rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors duration-fast ease-standard hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
                     >
-                      {state.nextStep.label}
+                      {getPrimaryActionLabel(state)}
                       <span aria-hidden="true">→</span>
                     </Link>
                   )}

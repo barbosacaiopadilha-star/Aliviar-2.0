@@ -16,6 +16,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
+import { ScrollActionLink } from "@/components/curadoria/scroll-action-link";
 import { EvidenceCard } from "@/components/curadoria/evidence-card";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { cn } from "@/components/ui/cn";
@@ -160,7 +161,7 @@ export function PriorityBuilder({
             const share = Math.round((entry.weight / TOTAL_PRIORITY_POINTS) * 100);
 
             return (
-              <li key={entry.criterion} className="space-y-3">
+              <li key={entry.criterion} id={`criterio-${entry.criterion}`} className="scroll-mt-24 space-y-3">
                 <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                   <div>
                     <h3 className="font-sans text-base font-medium text-ink">
@@ -251,7 +252,7 @@ export function PriorityBuilder({
         </ul>
 
         {!validated && available.length > 0 ? (
-          <div className="border-t border-border pt-5">
+          <div id="priority-add-criterion" className="scroll-mt-24 border-t border-border pt-5">
             {adding ? (
               <div className="space-y-2">
                 <p className="text-sm text-ink-muted">Qual outro aspecto {patientFirstName} trouxe?</p>
@@ -405,10 +406,19 @@ function ValidationReview({
       ) : (
         <div className="space-y-2">
           <p className="text-sm font-medium text-ink">A validação ainda não pode ser concluída.</p>
-          <p className="text-sm text-ink-muted">Faltam:</p>
-          <ul className="list-inside list-disc text-sm text-ink">
+          <p className="text-sm text-ink-muted">Pendências</p>
+          <ul className="divide-y divide-border/60" role="list">
             {readiness.blockers.map((blocker) => (
-              <li key={blocker}>{blocker}</li>
+              <li key={blocker.message}>
+                {blocker.scrollTargetId ? (
+                  <ScrollActionLink
+                    description={blocker.message}
+                    scrollTargetId={blocker.scrollTargetId}
+                  />
+                ) : (
+                  <p className="min-h-11 px-2 py-2.5 text-sm text-ink-muted">{blocker.message}</p>
+                )}
+              </li>
             ))}
           </ul>
         </div>
