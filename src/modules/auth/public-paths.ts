@@ -22,7 +22,7 @@ const PUBLIC_PATHS = new Set([
 // real por trás dele: nada aqui lê banco, sessão ou paciente de verdade.
 // Quando a integração acontecer, esta entrada sai e o Portal passa a exigir o
 // papel "curador_medico" como o /curador atual.
-const PUBLIC_PREFIXES = ["/auth/callback", "/portal-curador"];
+const PUBLIC_PREFIXES = ["/auth/callback", "/portal-curador", "/portal-paciente"];
 
 export function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.has(pathname)) {

@@ -43,7 +43,7 @@ export function emptyParecer(professionalId: string): ParecerDraft {
  * A estrutura sugerida do parecer — os títulos que o editor apresenta.
  * Estrutura, nunca conteúdo: nenhum campo vem com frase pronta.
  * A orientação de cada campo ecoa os três testes do Momento 7
- * (Experiência §Momento 7): nomear o critério do paciente, dizer o que
+ * (Jornada §Momento 7): nomear o critério do paciente, dizer o que
  * custa, e poder ser lido em voz alta sem tradução.
  */
 export const PARECER_PROMPTS: ReadonlyArray<{
