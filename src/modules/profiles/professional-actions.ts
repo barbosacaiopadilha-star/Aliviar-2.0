@@ -23,6 +23,11 @@ function parseProfessionalForm(formData: FormData) {
     crmUf: formData.get("crmUf"),
     professionalSummary: formData.get("professionalSummary"),
     institutionName: formData.get("institutionName"),
+    experienceLevel: formData.get("experienceLevel"),
+    intakeApproach: formData.get("intakeApproach"),
+    offersContinuousCare: formData.get("offersContinuousCare"),
+    availabilityWindow: formData.get("availabilityWindow"),
+    competencyDomains: formData.getAll("competencyDomains"),
   });
 }
 
@@ -55,6 +60,11 @@ export async function createProfessionalProfileAction(
       crmUf: parsed.data.crmUf ?? null,
       professionalSummary: parsed.data.professionalSummary ?? null,
       institutionName: parsed.data.institutionName ?? null,
+      experienceLevel: parsed.data.experienceLevel ?? null,
+      intakeApproach: parsed.data.intakeApproach ?? null,
+      offersContinuousCare: parsed.data.offersContinuousCare ?? null,
+      availabilityWindow: parsed.data.availabilityWindow ?? null,
+      competencyDomains: parsed.data.competencyDomains,
       createdBy: authState.user.id,
     });
   } catch {
@@ -91,6 +101,11 @@ export async function updateProfessionalProfileAction(
       crmUf: parsed.data.crmUf ?? null,
       professionalSummary: parsed.data.professionalSummary ?? null,
       institutionName: parsed.data.institutionName ?? null,
+      experienceLevel: parsed.data.experienceLevel ?? null,
+      intakeApproach: parsed.data.intakeApproach ?? null,
+      offersContinuousCare: parsed.data.offersContinuousCare ?? null,
+      availabilityWindow: parsed.data.availabilityWindow ?? null,
+      competencyDomains: parsed.data.competencyDomains,
       updatedBy: authState.user.id,
     });
   } catch {

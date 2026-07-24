@@ -15,6 +15,10 @@ type ProfessionalProfileRow = {
   crm_uf: string | null;
   professional_summary: string | null;
   institution_name: string | null;
+  experience_level: string | null;
+  intake_approach: string | null;
+  offers_continuous_care: boolean | null;
+  availability_window: string | null;
   created_by: string;
   updated_by: string | null;
   created_at: string;
@@ -22,7 +26,7 @@ type ProfessionalProfileRow = {
 };
 
 const SELECT_COLUMNS =
-  "id, profile_id, status, publication_status, display_name, professional_identifier, crm, crm_uf, professional_summary, institution_name, created_by, updated_by, created_at, updated_at";
+  "id, profile_id, status, publication_status, display_name, professional_identifier, crm, crm_uf, professional_summary, institution_name, experience_level, intake_approach, offers_continuous_care, availability_window, created_by, updated_by, created_at, updated_at";
 
 function mapRow(row: ProfessionalProfileRow): ProfessionalProfile {
   return {
@@ -36,6 +40,11 @@ function mapRow(row: ProfessionalProfileRow): ProfessionalProfile {
     crmUf: row.crm_uf,
     professionalSummary: row.professional_summary,
     institutionName: row.institution_name,
+    experienceLevel: row.experience_level ?? null,
+    intakeApproach: row.intake_approach ?? null,
+    offersContinuousCare: row.offers_continuous_care ?? null,
+    availabilityWindow: row.availability_window ?? null,
+    competencyDomains: [],
     createdBy: row.created_by,
     updatedBy: row.updated_by,
     createdAt: row.created_at,
@@ -96,6 +105,11 @@ export type ProfessionalProfileFields = {
   crmUf: string | null;
   professionalSummary: string | null;
   institutionName: string | null;
+  experienceLevel?: string | null;
+  intakeApproach?: string | null;
+  offersContinuousCare?: boolean | null;
+  availabilityWindow?: string | null;
+  competencyDomains?: string[];
 };
 
 export async function createProfessionalProfile(
@@ -111,6 +125,10 @@ export async function createProfessionalProfile(
       crm_uf: input.crmUf,
       professional_summary: input.professionalSummary,
       institution_name: input.institutionName,
+      experience_level: input.experienceLevel,
+      intake_approach: input.intakeApproach,
+      offers_continuous_care: input.offersContinuousCare,
+      availability_window: input.availabilityWindow,
       created_by: input.createdBy,
     })
     .select(SELECT_COLUMNS)
@@ -137,6 +155,10 @@ export async function updateProfessionalProfile(
       crm_uf: input.crmUf,
       professional_summary: input.professionalSummary,
       institution_name: input.institutionName,
+      experience_level: input.experienceLevel,
+      intake_approach: input.intakeApproach,
+      offers_continuous_care: input.offersContinuousCare,
+      availability_window: input.availabilityWindow,
       updated_by: input.updatedBy,
     })
     .eq("id", id)
@@ -180,4 +202,47 @@ export async function setProfessionalPublicationStatus(
   if (error) {
     throw new Error("Não foi possível atualizar a publicação do profissional.");
   }
+}
+
+/**
+ * Áreas de competência vivem em tabela própria porque um profissional pode ter
+ * mais de uma. Substituição total: o cadastro declara o conjunto atual, e o
+ * que não foi declarado deixa de valer — nunca acumula silenciosamente.
+ */
+export async function replaceCompetencyDomains(
+  supabase: SupabaseClient,
+  professionalProfileId: string,
+  domains: string[],
+): Promise<void> {
+  await supabase
+    .from("professional_competency_areas")
+    .delete()
+    .eq("professional_profile_id", professionalProfileId);
+
+  if (domains.length === 0) return;
+
+  // `focus` é exigido pelo schema legado do ACE. "avaliacao" é o valor neutro
+  // — o Método novo compara por domínio, não por foco, então nada aqui é
+  // inventado sobre o profissional.
+  const { error } = await supabase.from("professional_competency_areas").insert(
+    domains.map((domain) => ({
+      professional_profile_id: professionalProfileId,
+      domain,
+      focus: "avaliacao",
+    })),
+  );
+
+  if (error) throw new Error("Não foi possível salvar as áreas de atuação.");
+}
+
+export async function listCompetencyDomains(
+  supabase: SupabaseClient,
+  professionalProfileId: string,
+): Promise<string[]> {
+  const { data } = await supabase
+    .from("professional_competency_areas")
+    .select("domain")
+    .eq("professional_profile_id", professionalProfileId);
+
+  return [...new Set((data ?? []).map((row) => row.domain as string))];
 }

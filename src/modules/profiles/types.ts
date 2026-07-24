@@ -44,6 +44,11 @@ export type ProfessionalProfile = {
   crmUf: string | null;
   professionalSummary: string | null;
   institutionName: string | null;
+  experienceLevel: string | null;
+  intakeApproach: string | null;
+  offersContinuousCare: boolean | null;
+  availabilityWindow: string | null;
+  competencyDomains: string[];
   createdBy: string;
   updatedBy: string | null;
   createdAt: string;
