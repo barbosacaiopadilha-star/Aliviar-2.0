@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { createMiddlewareSupabaseClient } from "@/lib/supabase/middleware";
+import { isDemoPortalPath, shouldBlockDemoPortals } from "@/modules/auth/demo-portals";
 import { isPublicPath } from "@/modules/auth/public-paths";
 
 // Responsabilidade do middleware: só a checagem OTIMISTA (existe sessão?) e a
@@ -17,6 +18,13 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
+
+  // Portais de demonstração ficam indisponíveis em produção — antes de
+  // qualquer checagem de sessão, porque a trava não depende de quem está
+  // logado (ver demo-portals.ts).
+  if (isDemoPortalPath(pathname) && shouldBlockDemoPortals(process.env.VERCEL_ENV)) {
+    return NextResponse.rewrite(new URL("/404", request.url));
+  }
 
   if (!user && !isPublicPath(pathname)) {
     const loginUrl = new URL("/login", request.url);

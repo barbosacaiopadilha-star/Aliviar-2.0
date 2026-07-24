@@ -51,7 +51,13 @@ describe("um shell só para os dois Portais", () => {
 });
 
 describe("nenhum fluxo termina fora da experiência", () => {
-  it("a Landing leva quem já é paciente para a Jornada, nunca para uma tela genérica", () => {
+  // Ligar a Landing direto em /portal-paciente (MISSÃO 206) resolveu a
+  // ruptura, mas em produção exporia a jornada de demonstração a qualquer
+  // visitante. Enquanto a Jornada não tiver autenticação própria, o convite
+  // aponta para /login — e o destino continua sendo interno, que é o que este
+  // guarda de fato protege: nenhum convite leva para fora da experiência.
+  it("o convite à Jornada leva para dentro da experiência, nunca para fora", () => {
+    const permitidos = ["/portal-paciente", "/login"];
     const files = ["hero-experience", "presenca-sections"].map((name) =>
       read(`src/components/landing/v2/${name}.tsx`),
     );
@@ -61,7 +67,7 @@ describe("nenhum fluxo termina fora da experiência", () => {
       const beforeCta = file.slice(0, file.indexOf("Acessar minha Jornada"));
       const lastHref = beforeCta.lastIndexOf('href="');
       const href = beforeCta.slice(lastHref + 6, beforeCta.indexOf('"', lastHref + 6));
-      expect(href, "o convite para a Jornada precisa levar à Jornada").toBe("/portal-paciente");
+      expect(permitidos, `o convite aponta para ${href}`).toContain(href);
     }
   });
 

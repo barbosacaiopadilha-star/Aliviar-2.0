@@ -38,8 +38,9 @@ export function PortalPacienteSection() {
             </p>
             <div className="pt-2">
               <p className="text-sm font-medium text-ink">Já iniciou sua Curadoria?</p>
-              {/* Continuidade, nunca uma porta para outro sistema (MISSÃO 206). */}
-              <LinkButton href="/portal-paciente" variant="secondary" className="mt-3">
+              {/* Ver a nota em hero-experience.tsx: /login enquanto a Jornada
+                  não tem autenticação própria. */}
+              <LinkButton href="/login" variant="secondary" className="mt-3">
                 Acessar minha Jornada
               </LinkButton>
             </div>
