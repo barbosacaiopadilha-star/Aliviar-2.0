@@ -1,5 +1,23 @@
 # Modelo de Papéis Operacionais — Consolidação da Operação Humana
 
+> ## ⚖️ Decisão tomada — 2026-07-24
+>
+> A tensão descrita abaixo **foi resolvida pelo Fundador**. A decisão está em
+> **[`docs/CORRECAO_DOMINIO_PAPEIS_E_CASE.md`](CORRECAO_DOMINIO_PAPEIS_E_CASE.md)**,
+> que tem autoridade sobre este documento em três pontos:
+>
+> 1. **Três níveis humanos operacionais**: Atendente (Nível 1, abre o Case) →
+>    Curador (Nível 2, conduz a Curadoria) → Concierge (Nível 3, acompanha
+>    depois da Curadoria).
+> 2. **O CRM é plataforma, nunca ator.** Não abre Case, não conduz Curadoria,
+>    não decide.
+> 3. **Existe apenas `Case`** — um único registro percorre a jornada inteira,
+>    mudando de responsável, nunca de identidade.
+>
+> O papel `atendente` já existe no catálogo de produção (migration
+> `papel_atendente_nivel1`). Onde este documento divergir da Correção de
+> Domínio, vale a Correção de Domínio.
+
 **Estado**: **Proposto** — não canônico ainda. Conforme `docs/DOCUMENTATION_GOVERNANCE_POLICY.md` §4: _"Autoridade não é autodeclarada... o agente de engenharia pode propor um documento como candidato a canônico — nunca declará-lo canônico por iniciativa própria."_ Este documento consolida, pela primeira vez em um único lugar, decisões operacionais que foram comunicadas ao longo desta sessão (função da Atendente, função do Curador, Reunião de Acolhimento, entrega humana da Curadoria) — mas essas decisões, até este momento, **não têm correspondência em nenhum documento já aprovado como canônico** (`docs/architecture/DOMAIN_CURATION.md`, Implementado, define o Curador exclusivamente por P009/P010; a ADR-006, `docs/DECISIONS.md`, não lista "Atendente" no catálogo de papéis). Este documento passa a existir como **candidato**; torna-se autoridade real para os demais domínios só quando o responsável do projeto o aprovar explicitamente — inclusive decidindo se isso exige uma ADR nova (formalizar Atendente como papel do sistema) ou uma atualização direta dos documentos já existentes.
 
 **Por que este registro não pode mais ser só um registro**: a tensão entre os papéis aqui descritos e o que já está implementado/documentado apareceu, de forma independente, em **quatro momentos** desta sessão: (1) `docs/DOMAIN_RELATIONSHIP_SPECIFICATION.md`, Etapa 11; (2) auditoria da Landing ("Retorno Controlado"), Etapa 2; (3) Relationship — Fase 3 (Modelo Operacional Humano), Etapa 9; (4) este documento. Pela própria `docs/DOCUMENTATION_GOVERNANCE_POLICY.md` §1, a terceira menção de uma mesma divergência já obrigava uma decisão explícita — esta é a quarta. Este documento não tenta resolver essa decisão sozinho (não é autoridade para isso); apenas deixa de tratá-la como novidade.

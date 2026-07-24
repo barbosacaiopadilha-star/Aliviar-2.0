@@ -7,6 +7,7 @@ import { requireRole } from "@/modules/auth/guard";
 import { listCases } from "@/modules/cases";
 
 import { Card } from "@/components/ui/card";
+import { LegacySurfaceNotice } from "@/components/curadoria/legacy-surface-notice";
 
 export const metadata: Metadata = {
   title: "Curador Médico",
@@ -33,6 +34,7 @@ export default async function CuradorDashboardPage() {
 
   return (
     <div className="space-y-6">
+      <LegacySurfaceNotice portalHref="/portal-curador" />
       <div>
         <h1 className="font-sans text-2xl font-semibold text-ink">
           Olá, {state.profile?.displayName ?? "Curador Médico"}

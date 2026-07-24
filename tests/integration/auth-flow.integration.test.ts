@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import { createCuradoriaClient } from "./curadoria-client";
 import { beforeAll, describe, expect, it } from "vitest";
 
 type TestAccount = { role: string; email: string; password: string };
@@ -49,7 +50,7 @@ describe("fluxo de autenticação (Supabase local)", () => {
       const account = accounts.find((a) => a.role === role);
       expect(account).toBeDefined();
 
-      const client = createClient(url, anonKey);
+      const client = createCuradoriaClient(url, anonKey);
 
       const { data: signInData, error: signInError } = await client.auth.signInWithPassword({
         email: account!.email,
@@ -76,7 +77,7 @@ describe("fluxo de autenticação (Supabase local)", () => {
 
   it("login com senha incorreta falha", async () => {
     const account = accounts[0];
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
 
     const { error } = await client.auth.signInWithPassword({
       email: account.email,
@@ -88,7 +89,7 @@ describe("fluxo de autenticação (Supabase local)", () => {
 
   it("paciente autenticado não consegue se autoconceder o papel administrador", async () => {
     const paciente = accounts.find((a) => a.role === "paciente")!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
 
     await client.auth.signInWithPassword({
       email: paciente.email,
@@ -115,7 +116,7 @@ describe("fluxo de autenticação (Supabase local)", () => {
 
   it("paciente autenticado não consegue ler audit_logs", async () => {
     const paciente = accounts.find((a) => a.role === "paciente")!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
 
     await client.auth.signInWithPassword({
       email: paciente.email,

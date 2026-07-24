@@ -3,6 +3,8 @@
 // outros módulos só pelo que é exportado aqui.
 
 export * from "./types";
+export * from "./responsibility";
+export * from "./responsibility-actions";
 export * from "./schema";
 export * from "./state-machine";
 export * from "./repository";

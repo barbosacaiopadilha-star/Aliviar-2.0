@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import { createCuradoriaClient } from "./curadoria-client";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
@@ -51,7 +52,7 @@ describe("criação e gestão administrativa de conta de paciente (Supabase loca
 
   it("administrador (via repositório) cria paciente com senha de alta entropia, nunca em texto puro no banco", async () => {
     const administrador = accounts.find((a) => a.role === "administrador")!;
-    const adminAuthClient = createClient(url, anonKey);
+    const adminAuthClient = createCuradoriaClient(url, anonKey);
     await adminAuthClient.auth.signInWithPassword({
       email: administrador.email,
       password: administrador.password,
@@ -75,7 +76,7 @@ describe("criação e gestão administrativa de conta de paciente (Supabase loca
 
     // Confirma que o login funciona com a senha gerada — prova que ela foi
     // realmente definida no Auth, sem depender de inspecionar o banco.
-    const patientClient = createClient(url, anonKey);
+    const patientClient = createCuradoriaClient(url, anonKey);
     const { error: signInError } = await patientClient.auth.signInWithPassword({
       email,
       password: result.password,
@@ -96,7 +97,7 @@ describe("criação e gestão administrativa de conta de paciente (Supabase loca
 
   it("uma conta sem o papel administrador não consegue conceder o papel paciente (defesa em profundidade da RLS)", async () => {
     const profissional = accounts.find((a) => a.role === "profissional")!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({
       email: profissional.email,
       password: profissional.password,
@@ -118,7 +119,7 @@ describe("criação e gestão administrativa de conta de paciente (Supabase loca
 
   it("redefinição de senha gera uma nova senha e invalida a anterior", async () => {
     const administrador = accounts.find((a) => a.role === "administrador")!;
-    const adminAuthClient = createClient(url, anonKey);
+    const adminAuthClient = createCuradoriaClient(url, anonKey);
     await adminAuthClient.auth.signInWithPassword({
       email: administrador.email,
       password: administrador.password,
@@ -139,14 +140,14 @@ describe("criação e gestão administrativa de conta de paciente (Supabase loca
     const newPassword = await resetPatientPassword(adminClient, created.profileId);
     expect(newPassword).not.toBe(created.password);
 
-    const oldPasswordClient = createClient(url, anonKey);
+    const oldPasswordClient = createCuradoriaClient(url, anonKey);
     const { error: oldPasswordError } = await oldPasswordClient.auth.signInWithPassword({
       email,
       password: created.password,
     });
     expect(oldPasswordError).not.toBeNull();
 
-    const newPasswordClient = createClient(url, anonKey);
+    const newPasswordClient = createCuradoriaClient(url, anonKey);
     const { error: newPasswordError } = await newPasswordClient.auth.signInWithPassword({
       email,
       password: newPassword,
@@ -159,7 +160,7 @@ describe("criação e gestão administrativa de conta de paciente (Supabase loca
 
   it("desativar acesso bloqueia o login; ativar o restaura", async () => {
     const administrador = accounts.find((a) => a.role === "administrador")!;
-    const adminAuthClient = createClient(url, anonKey);
+    const adminAuthClient = createCuradoriaClient(url, anonKey);
     await adminAuthClient.auth.signInWithPassword({
       email: administrador.email,
       password: administrador.password,
@@ -179,7 +180,7 @@ describe("criação e gestão administrativa de conta de paciente (Supabase loca
 
     await setPatientAccountAccess(adminClient, created.profileId, false);
 
-    const blockedClient = createClient(url, anonKey);
+    const blockedClient = createCuradoriaClient(url, anonKey);
     const { error: blockedError } = await blockedClient.auth.signInWithPassword({
       email,
       password: created.password,
@@ -188,7 +189,7 @@ describe("criação e gestão administrativa de conta de paciente (Supabase loca
 
     await setPatientAccountAccess(adminClient, created.profileId, true);
 
-    const restoredClient = createClient(url, anonKey);
+    const restoredClient = createCuradoriaClient(url, anonKey);
     const { error: restoredError } = await restoredClient.auth.signInWithPassword({
       email,
       password: created.password,
@@ -201,7 +202,7 @@ describe("criação e gestão administrativa de conta de paciente (Supabase loca
 
   it("listPatientAccounts e getPatientAccount refletem o mesmo estado", async () => {
     const administrador = accounts.find((a) => a.role === "administrador")!;
-    const adminAuthClient = createClient(url, anonKey);
+    const adminAuthClient = createCuradoriaClient(url, anonKey);
     await adminAuthClient.auth.signInWithPassword({
       email: administrador.email,
       password: administrador.password,

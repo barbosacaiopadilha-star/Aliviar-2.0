@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import { createCuradoriaClient } from "./curadoria-client";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
@@ -38,7 +39,7 @@ describe("Portal do Paciente (Supabase local)", () => {
 
   it("uma nova conta de paciente recebe a notificação de boas-vindas automaticamente", async () => {
     const administrador = accounts.find((a) => a.role === "administrador")!;
-    const adminAuthClient = createClient(url, anonKey);
+    const adminAuthClient = createCuradoriaClient(url, anonKey);
     await adminAuthClient.auth.signInWithPassword({
       email: administrador.email,
       password: administrador.password,
@@ -56,7 +57,7 @@ describe("Portal do Paciente (Supabase local)", () => {
       adminUser!.id,
     );
 
-    const patientClient = createClient(url, anonKey);
+    const patientClient = createCuradoriaClient(url, anonKey);
     await patientClient.auth.signInWithPassword({ email, password: created.password });
 
     const notifications = await listPatientNotifications(patientClient, created.profileId);
@@ -69,7 +70,7 @@ describe("Portal do Paciente (Supabase local)", () => {
 
   it("um paciente não consegue ler notificações nem documentos de outro paciente (RLS)", async () => {
     const administrador = accounts.find((a) => a.role === "administrador")!;
-    const adminAuthClient = createClient(url, anonKey);
+    const adminAuthClient = createCuradoriaClient(url, anonKey);
     await adminAuthClient.auth.signInWithPassword({
       email: administrador.email,
       password: administrador.password,
@@ -95,7 +96,7 @@ describe("Portal do Paciente (Supabase local)", () => {
       adminUser!.id,
     );
 
-    const clientB = createClient(url, anonKey);
+    const clientB = createCuradoriaClient(url, anonKey);
     await clientB.auth.signInWithPassword({ email: emailB, password: patientB.password });
 
     const { data: crossNotifications } = await clientB
@@ -116,7 +117,7 @@ describe("Portal do Paciente (Supabase local)", () => {
 
   it("um paciente não consegue alterar título/corpo da própria notificação, só read_at", async () => {
     const administrador = accounts.find((a) => a.role === "administrador")!;
-    const adminAuthClient = createClient(url, anonKey);
+    const adminAuthClient = createCuradoriaClient(url, anonKey);
     await adminAuthClient.auth.signInWithPassword({
       email: administrador.email,
       password: administrador.password,
@@ -134,7 +135,7 @@ describe("Portal do Paciente (Supabase local)", () => {
       adminUser!.id,
     );
 
-    const patientClient = createClient(url, anonKey);
+    const patientClient = createCuradoriaClient(url, anonKey);
     await patientClient.auth.signInWithPassword({ email, password: created.password });
 
     const notifications = await listPatientNotifications(patientClient, created.profileId);

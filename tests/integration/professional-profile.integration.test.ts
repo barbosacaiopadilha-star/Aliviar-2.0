@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import { createCuradoriaClient } from "./curadoria-client";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
@@ -56,7 +57,7 @@ describe("perfil profissional — RLS e fundação administrativa (Supabase loca
 
   it("paciente (usuário comum) não consegue criar perfil profissional", async () => {
     const paciente = accounts.find((a) => a.role === "paciente")!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({ email: paciente.email, password: paciente.password });
 
     const {
@@ -76,7 +77,7 @@ describe("perfil profissional — RLS e fundação administrativa (Supabase loca
 
   it("profissional (mesmo autenticado) não consegue criar o próprio perfil profissional", async () => {
     const profissional = accounts.find((a) => a.role === "profissional")!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({
       email: profissional.email,
       password: profissional.password,
@@ -99,7 +100,7 @@ describe("perfil profissional — RLS e fundação administrativa (Supabase loca
 
   it("administrador cria perfil profissional", async () => {
     const administrador = accounts.find((a) => a.role === "administrador")!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({
       email: administrador.email,
       password: administrador.password,
@@ -130,7 +131,7 @@ describe("perfil profissional — RLS e fundação administrativa (Supabase loca
 
   it("administrador edita perfil profissional", async () => {
     const administrador = accounts.find((a) => a.role === "administrador")!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({
       email: administrador.email,
       password: administrador.password,
@@ -166,7 +167,7 @@ describe("perfil profissional — RLS e fundação administrativa (Supabase loca
 
   it("administrador ativa/desativa publicação", async () => {
     const administrador = accounts.find((a) => a.role === "administrador")!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({
       email: administrador.email,
       password: administrador.password,
@@ -212,7 +213,7 @@ describe("perfil profissional — RLS e fundação administrativa (Supabase loca
 
   it("profissional autenticado, ainda sem vínculo, não vê nenhum registro profissional", async () => {
     const profissional = accounts.find((a) => a.role === "profissional")!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({
       email: profissional.email,
       password: profissional.password,
@@ -230,7 +231,7 @@ describe("perfil profissional — RLS e fundação administrativa (Supabase loca
     const administrador = accounts.find((a) => a.role === "administrador")!;
     const paciente = accounts.find((a) => a.role === "paciente")!;
 
-    const pacienteClient = createClient(url, anonKey);
+    const pacienteClient = createCuradoriaClient(url, anonKey);
     await pacienteClient.auth.signInWithPassword({
       email: paciente.email,
       password: paciente.password,
@@ -240,7 +241,7 @@ describe("perfil profissional — RLS e fundação administrativa (Supabase loca
     } = await pacienteClient.auth.getUser();
     await pacienteClient.auth.signOut();
 
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({
       email: administrador.email,
       password: administrador.password,

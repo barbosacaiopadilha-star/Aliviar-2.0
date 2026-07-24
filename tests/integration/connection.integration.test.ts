@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import { createCuradoriaClient } from "./curadoria-client";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
@@ -110,7 +111,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
 
   async function loginAs(role: string) {
     const account = accounts.find((a) => a.role === role)!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({
       email: account.email,
       password: account.password,
@@ -172,7 +173,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     );
     createdPatientProfileIds.push(patientAccount.profileId);
 
-    const patientClient = createClient(url, anonKey);
+    const patientClient = createCuradoriaClient(url, anonKey);
     await patientClient.auth.signInWithPassword({
       email,
       password: patientAccount.password,
@@ -604,7 +605,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       admin.userId,
     );
     createdPatientProfileIds.push(otherAccount.profileId);
-    const otherClient = createClient(url, anonKey);
+    const otherClient = createCuradoriaClient(url, anonKey);
     await otherClient.auth.signInWithPassword({
       email: otherEmail,
       password: otherAccount.password,
@@ -690,7 +691,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       admin.userId,
     );
     createdPatientProfileIds.push(patientAccount.profileId);
-    const patientClient = createClient(url, anonKey);
+    const patientClient = createCuradoriaClient(url, anonKey);
     await patientClient.auth.signInWithPassword({
       email,
       password: patientAccount.password,
@@ -938,7 +939,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       admin.userId,
     );
     createdPatientProfileIds.push(otherAccount.profileId);
-    const otherClient = createClient(url, anonKey);
+    const otherClient = createCuradoriaClient(url, anonKey);
     await otherClient.auth.signInWithPassword({
       email: otherEmail,
       password: otherAccount.password,

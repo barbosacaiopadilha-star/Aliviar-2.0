@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import { createCuradoriaClient } from "./curadoria-client";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
@@ -70,7 +71,7 @@ describe("Execução controlada do ACE (ÉPICO 1/SPRINT 3, Supabase local)", () 
 
   async function loginAs(role: string) {
     const account = accounts.find((a) => a.role === role)!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({ email: account.email, password: account.password });
     const {
       data: { user },
@@ -84,7 +85,7 @@ describe("Execução controlada do ACE (ÉPICO 1/SPRINT 3, Supabase local)", () 
     const email = unique("ace-teste") + "@aliviar-conexao.local";
     const patientAccount = await createPatientAccount(adminClient, admin.client, { email, displayName: "Paciente ACE" }, admin.userId);
 
-    const patientClient = createClient(url, anonKey);
+    const patientClient = createCuradoriaClient(url, anonKey);
     await patientClient.auth.signInWithPassword({ email, password: patientAccount.password });
 
     const draft = await getOrCreateActiveStory(patientClient, patientAccount.profileId);
@@ -150,7 +151,7 @@ describe("Execução controlada do ACE (ÉPICO 1/SPRINT 3, Supabase local)", () 
     const adminClient = createAdminSupabaseClient();
     const email = unique("ace-invalido") + "@aliviar-conexao.local";
     const patientAccount = await createPatientAccount(adminClient, admin.client, { email, displayName: "Paciente Estado Inválido" }, admin.userId);
-    const patientClient = createClient(url, anonKey);
+    const patientClient = createCuradoriaClient(url, anonKey);
     await patientClient.auth.signInWithPassword({ email, password: patientAccount.password });
     const draft = await getOrCreateActiveStory(patientClient, patientAccount.profileId);
     await submitStory(patientClient, draft.id, draft.revision);
@@ -220,7 +221,7 @@ describe("Execução controlada do ACE (ÉPICO 1/SPRINT 3, Supabase local)", () 
     expect(updatedCase?.status).toBe("HUMAN_REVIEW");
 
     // O paciente nunca vê a Shortlist nem qualquer artefato do ACE.
-    const patientClient = createClient(url, anonKey);
+    const patientClient = createCuradoriaClient(url, anonKey);
     // (sem sessão de paciente reaproveitável aqui; a garantia de RLS já é
     // coberta pelos testes de patient-stories/cases — este teste focaliza
     // o pipeline em si.)
@@ -357,7 +358,7 @@ describe("Observabilidade do ACE (sprint intermediária, Supabase local)", () =>
 
   async function loginAs(role: string) {
     const account = accounts.find((a) => a.role === role)!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({ email: account.email, password: account.password });
     const {
       data: { user },
@@ -371,7 +372,7 @@ describe("Observabilidade do ACE (sprint intermediária, Supabase local)", () =>
     const email = unique("ace-obs") + "@aliviar-conexao.local";
     const patientAccount = await createPatientAccount(adminClient, admin.client, { email, displayName: "Paciente Obs" }, admin.userId);
 
-    const patientClient = createClient(url, anonKey);
+    const patientClient = createCuradoriaClient(url, anonKey);
     await patientClient.auth.signInWithPassword({ email, password: patientAccount.password });
 
     const draft = await getOrCreateActiveStory(patientClient, patientAccount.profileId);
@@ -590,7 +591,7 @@ describe("GO LIVE — proteção do modelo de linguagem em produção (Supabase 
 
   async function loginAs(role: string) {
     const account = accounts.find((a) => a.role === role)!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({ email: account.email, password: account.password });
     const {
       data: { user },
@@ -604,7 +605,7 @@ describe("GO LIVE — proteção do modelo de linguagem em produção (Supabase 
     const email = unique("go-live") + "@aliviar-conexao.local";
     const patientAccount = await createPatientAccount(adminClient, admin.client, { email, displayName: "Paciente GoLive" }, admin.userId);
 
-    const patientClient = createClient(url, anonKey);
+    const patientClient = createCuradoriaClient(url, anonKey);
     await patientClient.auth.signInWithPassword({ email, password: patientAccount.password });
     const draft = await getOrCreateActiveStory(patientClient, patientAccount.profileId);
     await saveStoryDraft(patientClient, draft.id, draft.revision, { motivo: "Buscando apoio para dor crônica." }, "motivo");

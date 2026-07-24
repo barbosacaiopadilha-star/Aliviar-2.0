@@ -69,6 +69,9 @@ async function main() {
 
   const admin = createClient(apiUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
+    // Consolidação estrutural 2026-07-24: o catálogo de papéis vive no schema
+    // `curadoria` (o `public` é da AliCIA). Mesmo DB_SCHEMA dos clients da app.
+    db: { schema: "curadoria" },
   });
 
   const { data: rolesData, error: rolesError } = await admin.from("roles").select("id, slug");
@@ -114,7 +117,7 @@ async function main() {
 
     const roleId = roleIdBySlug[account.role];
     if (!roleId) {
-      console.error(`Papel "${account.role}" não encontrado no catálogo public.roles.`);
+      console.error(`Papel "${account.role}" não encontrado no catálogo curadoria.roles.`);
       process.exit(1);
     }
 

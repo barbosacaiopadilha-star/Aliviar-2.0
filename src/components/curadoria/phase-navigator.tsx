@@ -38,11 +38,20 @@ const statusClasses: Record<PhaseStatus, string> = {
   BLOQUEADA: "border-border bg-canvas",
 };
 
+/**
+ * Fases com tela de trabalho própria. As demais abrem apenas a definição
+ * operacional (objetivo, critérios, regras) — informação legítima, mas não um
+ * lugar onde se executa algo. Marcá-las evita prometer navegação que leva a
+ * um beco: o Curador clica esperando trabalhar e encontra leitura.
+ */
+const PHASES_WITH_WORKSPACE = new Set(["PRIORIDADES", "CURADORIA_TECNICA"]);
+
 export function PhaseNavigator({ phases, caseId }: { phases: PhaseState[]; caseId: string }) {
   return (
     <ol className="space-y-2">
       {phases.map((state, index) => {
         const isNavigable = state.status !== "BLOQUEADA";
+        const hasWorkspace = PHASES_WITH_WORKSPACE.has(state.phase);
         const label = COS_PHASE_LABELS[state.phase];
 
         const content = (
@@ -64,7 +73,12 @@ export function PhaseNavigator({ phases, caseId }: { phases: PhaseState[]; caseI
                 {label}
               </span>
             </div>
-            <span className="text-xs text-ink-muted">{statusLabels[state.status]}</span>
+            <span className="text-xs text-ink-muted">
+              {statusLabels[state.status]}
+              {isNavigable && !hasWorkspace ? (
+                <span className="ml-2 text-ink-muted/80">· só leitura</span>
+              ) : null}
+            </span>
             {state.status === "BLOQUEADA" ? (
               // Diz o que falta, nunca só "indisponível". Bloqueio sem motivo
               // explicado é burocracia (Experience §3).

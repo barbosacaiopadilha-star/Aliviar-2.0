@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import { createCuradoriaClient } from "./curadoria-client";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
@@ -38,7 +39,7 @@ describe("gestão de papéis internos (SPRINT OPERACIONAL 1, Supabase local)", (
 
   it("administrador concede e revoga o papel curador_medico; a listagem reflete o estado atual", async () => {
     const administrador = accounts.find((a) => a.role === "administrador")!;
-    const adminAuthClient = createClient(url, anonKey);
+    const adminAuthClient = createCuradoriaClient(url, anonKey);
     await adminAuthClient.auth.signInWithPassword({
       email: administrador.email,
       password: administrador.password,
@@ -73,7 +74,7 @@ describe("gestão de papéis internos (SPRINT OPERACIONAL 1, Supabase local)", (
 
   it("uma conta sem papel administrador não consegue conceder papel algum (RLS)", async () => {
     const profissional = accounts.find((a) => a.role === "profissional")!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({
       email: profissional.email,
       password: profissional.password,

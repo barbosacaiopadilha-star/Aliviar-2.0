@@ -78,9 +78,17 @@ export default async function FasePage({ params }: { params: Promise<{ id: strin
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="space-y-6">
-          <Card>
+          {/* Esta tela é a definição operacional da fase, não o lugar onde ela
+              é executada. Dizer isso de saída evita que o Curador procure um
+              botão que não existe (Experience §5, UX3: nunca esconder o
+              próximo passo — inclusive quando ele está em outro lugar). */}
+          <Card className="border-brand-gold/40">
             <CardHeader>
               <CardTitle>Objetivo</CardTitle>
+              <CardDescription>
+                Esta tela explica o que a fase espera. O registro acontece na conversa com o
+                paciente — a tela de trabalho desta fase chega em uma próxima entrega.
+              </CardDescription>
             </CardHeader>
             <p className="max-w-reading text-base leading-relaxed text-ink">{definition.objective}</p>
           </Card>

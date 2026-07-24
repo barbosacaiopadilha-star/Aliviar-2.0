@@ -1,3 +1,4 @@
+import { LegacySurfaceNotice } from "@/components/curadoria/legacy-surface-notice";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -41,6 +42,7 @@ export default async function PacienteHomePage() {
 
   return (
     <div className="mx-auto max-w-reading space-y-12">
+      <LegacySurfaceNotice portalHref="/portal-paciente" />
       <div className="space-y-8">
         <h1 className="font-serif text-3xl font-medium leading-tight text-ink lg:text-4xl">
           Olá, {authState.profile?.displayName ?? "Paciente"}.

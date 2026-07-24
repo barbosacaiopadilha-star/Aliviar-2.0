@@ -8,7 +8,7 @@ import { requireRole } from "@/modules/auth/guard";
 import { conduct } from "@/modules/curadoria/cos/conduction";
 import { listCaseIds, loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { COS_PHASE_LABELS } from "@/modules/curadoria/cos/types";
-import { MOCK_ACTIVITY } from "@/modules/curadoria/portal/mock-data";
+import { listRecentActivity } from "@/modules/curadoria/portal/activity";
 
 // MÓDULO 1 — PAINEL INICIAL, agora sobre o banco (MISSÃO 209, Fases 3 e 4).
 //
@@ -24,6 +24,10 @@ export default async function PainelInicialPage() {
   const supabase = await createServerSupabaseClient();
 
   const caseIds = await listCaseIds(supabase);
+  // Atividade real (case_events + passagens de bastão) — o MOCK_ACTIVITY
+  // saiu na consolidação estrutural de 2026-07-24. A RLS decide o que este
+  // Curador vê; um feed vazio aqui é um fato, não um estado de erro.
+  const activity = await listRecentActivity(supabase);
   const records = (
     await Promise.all(caseIds.map((id) => loadCuradoriaRecord(supabase, id)))
   ).filter((record): record is NonNullable<typeof record> => record !== null);
@@ -136,7 +140,7 @@ export default async function PainelInicialPage() {
       {/* A trilha de eventos do Motor (Engine §7) ainda não é emitida — esta
           seção segue com dados de demonstração e some quando não houver Caso,
           para não sugerir atividade que não existe. */}
-      {conducted.length > 0 ? (
+      {activity.length > 0 ? (
         <section aria-labelledby="atividade-heading">
           <Card>
             <CardHeader>
@@ -147,7 +151,7 @@ export default async function PainelInicialPage() {
                 Cada linha nomeia quem agiu — inclusive quando quem agiu foi o sistema.
               </CardDescription>
             </CardHeader>
-            <ActivityFeed events={MOCK_ACTIVITY} />
+            <ActivityFeed events={activity} />
           </Card>
         </section>
       ) : null}

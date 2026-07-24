@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
+import { requireRole } from "@/modules/auth/guard";
+
 import { PortalShell } from "@/components/curadoria/portal-shell";
-import { CURRENT_CURATOR } from "@/modules/curadoria/portal/mock-data";
 
 export const metadata: Metadata = {
   title: { default: "Portal do Curador", template: "%s · Portal do Curador" },
@@ -10,10 +11,11 @@ export const metadata: Metadata = {
 
 // MISSÃO 100 — Portal do Curador, sob o shell único da MISSÃO 206.
 //
-// Vive em rota própria (`/portal-curador`) enquanto usa dados mockados: o
-// `/curador` atual exige autenticação real e leitura do banco, e a missão
-// determina construir a experiência antes de integrar. Quando banco e
-// autenticação entrarem, este Portal assume `/curador`.
+// Consolidação estrutural 2026-07-24: a última dependência de mock saiu — a
+// identidade no cabeçalho agora é de quem está logado, não de uma persona.
+// O guarda aqui também fecha um vão real: as páginas do Portal exigiam papel
+// individualmente, mas o layout (que mostra nome e navegação) renderizava
+// para qualquer sessão.
 //
 // Sem AppShell administrativo por decisão de método: o Portal não é um painel
 // de administração (Experience §3), e o AppShell atual carrega a gramática
@@ -21,13 +23,15 @@ export const metadata: Metadata = {
 
 const NAV = [{ href: "/portal-curador", label: "Minhas Curadorias" }];
 
-export default function PortalCuradorLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function PortalCuradorLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const state = await requireRole("curador_medico");
+
   return (
     <PortalShell
       homeHref="/portal-curador"
       subtitle="Portal do Curador"
       nav={NAV}
-      identity={CURRENT_CURATOR.displayName}
+      identity={state.profile?.displayName ?? null}
     >
       {children}
     </PortalShell>

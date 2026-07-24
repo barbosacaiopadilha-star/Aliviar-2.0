@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import { createCuradoriaClient } from "./curadoria-client";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
@@ -48,7 +49,7 @@ describe("Módulo de Caso (ÉPICO 1/SPRINT 2, Supabase local)", () => {
 
   async function loginAs(role: string) {
     const account = accounts.find((a) => a.role === role)!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({ email: account.email, password: account.password });
     const {
       data: { user },
@@ -62,7 +63,7 @@ describe("Módulo de Caso (ÉPICO 1/SPRINT 2, Supabase local)", () => {
     const email = uniqueEmail();
     const created = await createPatientAccount(adminClient, admin.client, { email, displayName: "Paciente Caso" }, admin.userId);
 
-    const patientClient = createClient(url, anonKey);
+    const patientClient = createCuradoriaClient(url, anonKey);
     await patientClient.auth.signInWithPassword({ email, password: created.password });
 
     const draft = await getOrCreateActiveStory(patientClient, created.profileId);
@@ -85,7 +86,7 @@ describe("Módulo de Caso (ÉPICO 1/SPRINT 2, Supabase local)", () => {
     const email = uniqueEmail();
     const created = await createPatientAccount(adminClient, admin.client, { email, displayName: "Paciente Rascunho" }, admin.userId);
 
-    const patientClient = createClient(url, anonKey);
+    const patientClient = createCuradoriaClient(url, anonKey);
     await patientClient.auth.signInWithPassword({ email, password: created.password });
     const draft = await getOrCreateActiveStory(patientClient, created.profileId);
 

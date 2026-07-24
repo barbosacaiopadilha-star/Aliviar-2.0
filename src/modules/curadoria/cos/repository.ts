@@ -315,12 +315,28 @@ export async function loadCuradoriaRecord(
   };
 }
 
+/**
+ * Teto defensivo do Painel.
+ *
+ * `loadCuradoriaRecord` faz ~14 consultas por Caso — o custo de montar a
+ * Memória inteira. Carregar N Casos custa 14N, um N+1 clássico: com 100
+ * pacientes seriam 1.400 consultas por abertura do Painel.
+ *
+ * O teto não resolve o N+1; impede que ele degrade a experiência antes de a
+ * correção certa existir (um carregador em lote, que agruparia as mesmas
+ * consultas com `.in()` e custaria ~14 no total). Enquanto o volume real for
+ * de dezenas, este limite nunca é atingido — e quando for, a lista é truncada
+ * em vez de a página travar.
+ */
+export const PAINEL_MAX_CASOS = 60;
+
 /** Casos visíveis para quem está chamando. A RLS já faz o recorte por papel. */
 export async function listCaseIds(supabase: SupabaseClient): Promise<string[]> {
   const { data } = await supabase
     .from("cases")
     .select("id")
-    .order("updated_at", { ascending: false });
+    .order("updated_at", { ascending: false })
+    .limit(PAINEL_MAX_CASOS);
 
   return (data ?? []).map((row) => row.id as string);
 }

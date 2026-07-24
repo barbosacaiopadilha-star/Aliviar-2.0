@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import { createCuradoriaClient } from "./curadoria-client";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
@@ -92,7 +93,7 @@ describe("Última sprint do MVP — Entrega da Curadoria (P010, Supabase local)"
 
   async function loginAs(role: string) {
     const account = accounts.find((a) => a.role === role)!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({ email: account.email, password: account.password });
     const {
       data: { user },
@@ -139,7 +140,7 @@ describe("Última sprint do MVP — Entrega da Curadoria (P010, Supabase local)"
     const patientAccount = await createPatientAccount(adminClient, admin.client, { email, displayName: "Paciente Entrega" }, admin.userId);
     createdPatientProfileIds.push(patientAccount.profileId);
 
-    const patientClient = createClient(url, anonKey);
+    const patientClient = createCuradoriaClient(url, anonKey);
     await patientClient.auth.signInWithPassword({ email, password: patientAccount.password });
     const draft = await getOrCreateActiveStory(patientClient, patientAccount.profileId);
     await saveStoryDraft(patientClient, draft.id, draft.revision, { motivo: "Buscando apoio para ansiedade recorrente." }, "motivo");
@@ -223,7 +224,7 @@ describe("Última sprint do MVP — Entrega da Curadoria (P010, Supabase local)"
     const email = unique("sem-revisao") + "@aliviar-conexao.local";
     const patientAccount = await createPatientAccount(adminClient, admin.client, { email, displayName: "Paciente Sem Revisão" }, admin.userId);
     createdPatientProfileIds.push(patientAccount.profileId);
-    const patientClient = createClient(url, anonKey);
+    const patientClient = createCuradoriaClient(url, anonKey);
     await patientClient.auth.signInWithPassword({ email, password: patientAccount.password });
     const draft = await getOrCreateActiveStory(patientClient, patientAccount.profileId);
     await submitStory(patientClient, draft.id, draft.revision);

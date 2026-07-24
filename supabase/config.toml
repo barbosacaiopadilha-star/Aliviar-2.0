@@ -6,8 +6,8 @@ project_id = "aliviar-conexao"
 [api]
 enabled = true
 port = 54321
-schemas = ["public", "graphql_public"]
-extra_search_path = ["public", "extensions"]
+schemas = ["public", "graphql_public", "curadoria"]
+extra_search_path = ["public", "extensions", "curadoria"]
 max_rows = 1000
 
 [db]
