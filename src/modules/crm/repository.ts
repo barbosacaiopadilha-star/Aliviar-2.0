@@ -3,7 +3,13 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { computeNextActionAt } from "./next-action";
-import { allowedNextStages, isPipelineStage, isTransitionAllowed, type PipelineStage } from "./pipeline";
+import {
+  allowedNextStages,
+  isPipelineStage,
+  isTransitionAllowed,
+  resolveStageTransitionContext,
+  type PipelineStage,
+} from "./pipeline";
 import { normalizeEmail, normalizePhone } from "./phone";
 import type {
   ChangePipelineStageInput,
@@ -391,12 +397,11 @@ export async function changePipelineStage(
     (a) => a.type === "consulta_inicial" && a.status !== "cancelado" && a.status !== "nao_compareceu",
   );
 
-  const context = {
+  const context = resolveStageTransitionContext(roles, {
     hasInitialConsultationAppointment,
     hasResponsibleCurator: Boolean(crmCase?.responsibleCuratorId),
-    explicitAdminOverride: input.explicitAdminOverride ?? roles.includes("administrador"),
     explicitCompletionConfirmed: input.explicitCompletionConfirmed,
-  };
+  });
 
   if (!isTransitionAllowed(contact.pipelineStage, input.toStage, context)) {
     throw new Error("Transição de etapa não permitida.");
@@ -978,12 +983,16 @@ export function getAllowedStagesForContact(
   contact: CrmContactSummary,
   crmCase: CrmCaseSummary | null,
   appointments: CrmAppointmentSummary[],
+  roles: string[],
 ): PipelineStage[] {
   const hasInitialConsultationAppointment = appointments.some(
     (a) => a.type === "consulta_inicial" && a.status !== "cancelado",
   );
-  return allowedNextStages(contact.pipelineStage, {
-    hasInitialConsultationAppointment,
-    hasResponsibleCurator: Boolean(crmCase?.responsibleCuratorId),
-  });
+  return allowedNextStages(
+    contact.pipelineStage,
+    resolveStageTransitionContext(roles, {
+      hasInitialConsultationAppointment,
+      hasResponsibleCurator: Boolean(crmCase?.responsibleCuratorId),
+    }),
+  );
 }

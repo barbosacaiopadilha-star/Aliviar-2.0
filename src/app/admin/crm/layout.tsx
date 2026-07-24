@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CrmLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const state = await requireAnyRole(["administrador", "concierge", "curador_medico"]);
+  const state = await requireAnyRole(["administrador", "concierge"]);
   if (!canAccessCrm(state.roles)) redirect("/acesso-negado");
   return <div className="space-y-6">{children}</div>;
 }

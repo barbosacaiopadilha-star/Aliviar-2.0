@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 
+import { StatusBanner } from "@/components/ads";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
@@ -25,6 +26,11 @@ import type {
 } from "@/modules/crm/types";
 
 import { CrmStageBadge } from "./crm-stage-badge";
+
+function formatDateTime(iso: string | null): string {
+  if (!iso) return "—";
+  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(iso));
+}
 
 type CrmContactDetailPanelProps = {
   contact: CrmContactDetail;
@@ -60,7 +66,6 @@ export function CrmContactDetailPanel({
       <Card padding="lg">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-2">
-            <h1 className="font-sans text-2xl font-semibold text-ink">{contact.fullName}</h1>
             <p className="text-sm text-ink-muted">{formatPhoneDisplay(contact.phoneNormalized)} · {contact.email ?? "Sem e-mail"}</p>
             <CrmStageBadge stage={contact.pipelineStage} />
             <p className="text-sm text-ink-muted">Responsável: {contact.assignedToName ?? "Sem responsável"}</p>
@@ -78,7 +83,6 @@ export function CrmContactDetailPanel({
                     contactId: contact.id,
                     toStage,
                     explicitCompletionConfirmed: toStage === "completed",
-                    explicitAdminOverride: true,
                   }),
                 );
               }}
@@ -94,7 +98,9 @@ export function CrmContactDetailPanel({
         </div>
       </Card>
 
-      {message ? <p className="text-sm text-ink-muted">{message}</p> : null}
+      {message ? (
+        <StatusBanner variant={message.includes("sucesso") ? "success" : "error"}>{message}</StatusBanner>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -104,8 +110,8 @@ export function CrmContactDetailPanel({
           <dl className="space-y-2 text-sm">
             <div><dt className="text-ink-muted">Motivo inicial</dt><dd>{contact.initialReason ?? "—"}</dd></div>
             <div><dt className="text-ink-muted">Cidade</dt><dd>{contact.city ? `${contact.city}/${contact.state ?? ""}` : "—"}</dd></div>
-            <div><dt className="text-ink-muted">Última interação</dt><dd>{contact.lastInteractionAt ?? "—"}</dd></div>
-            <div><dt className="text-ink-muted">Próxima ação</dt><dd>{contact.nextActionAt ?? "—"}</dd></div>
+            <div><dt className="text-ink-muted">Última interação</dt><dd>{formatDateTime(contact.lastInteractionAt)}</dd></div>
+            <div><dt className="text-ink-muted">Próxima ação</dt><dd>{formatDateTime(contact.nextActionAt)}</dd></div>
           </dl>
         </Card>
 
@@ -126,11 +132,14 @@ export function CrmContactDetailPanel({
           <h2 className="font-sans text-lg font-semibold text-ink">Tarefas</h2>
         </CardHeader>
         <ul className="divide-y divide-border">
-          {tasks.map((task) => (
+          {tasks.length === 0 ? (
+            <li className="py-3 text-sm text-ink-muted">Nenhuma tarefa registrada.</li>
+          ) : (
+            tasks.map((task) => (
             <li key={task.id} className="flex items-center justify-between gap-3 py-3 text-sm">
               <div>
                 <p className="font-medium text-ink">{task.title}</p>
-                <p className="text-ink-muted">{task.status} · {task.dueAt ?? "Sem prazo"}</p>
+                <p className="text-ink-muted">{task.status} · {formatDateTime(task.dueAt)}</p>
               </div>
               {task.status !== "concluida" ? (
                 <Button
@@ -143,7 +152,8 @@ export function CrmContactDetailPanel({
                 </Button>
               ) : null}
             </li>
-          ))}
+            ))
+          )}
         </ul>
       </Card>
 
@@ -152,12 +162,16 @@ export function CrmContactDetailPanel({
           <h2 className="font-sans text-lg font-semibold text-ink">Agenda</h2>
         </CardHeader>
         <ul className="divide-y divide-border">
-          {appointments.map((appointment) => (
+          {appointments.length === 0 ? (
+            <li className="py-3 text-sm text-ink-muted">Nenhum compromisso agendado.</li>
+          ) : (
+            appointments.map((appointment) => (
             <li key={appointment.id} className="py-3 text-sm">
               <p className="font-medium text-ink">{appointment.title}</p>
-              <p className="text-ink-muted">{appointment.startAt} · {appointment.status}</p>
+              <p className="text-ink-muted">{formatDateTime(appointment.startAt)} · {appointment.status}</p>
             </li>
-          ))}
+            ))
+          )}
         </ul>
       </Card>
 
@@ -166,7 +180,10 @@ export function CrmContactDetailPanel({
           <h2 className="font-sans text-lg font-semibold text-ink">Linha do tempo</h2>
         </CardHeader>
         <ul className="space-y-3">
-          {timeline.map((entry, index) => (
+          {timeline.length === 0 ? (
+            <li className="text-sm text-ink-muted">Nenhum evento na linha do tempo.</li>
+          ) : (
+            timeline.map((entry, index) => (
             <li key={`${entry.kind}-${index}`} className="rounded-sm border border-border p-3 text-sm">
               {entry.kind === "interaction" ? (
                 <>
@@ -182,9 +199,10 @@ export function CrmContactDetailPanel({
               ) : (
                 <p>Evento de auditoria</p>
               )}
-              <p className="mt-1 text-xs text-ink-muted">{entry.at}</p>
+              <p className="mt-1 text-xs text-ink-muted">{formatDateTime(entry.at)}</p>
             </li>
-          ))}
+            ))
+          )}
         </ul>
       </Card>
 

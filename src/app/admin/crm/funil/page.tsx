@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/ads";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRole } from "@/modules/auth/guard";
 import { listContacts } from "@/modules/crm/repository";
@@ -10,10 +11,14 @@ export default async function CrmFunnelPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-sans text-2xl font-semibold text-ink">Funil operacional</h1>
-        <p className="text-sm text-ink-muted">Visualize e mova contatos entre etapas com validação de transição.</p>
-      </div>
+      <PageHeader
+        title="Funil operacional"
+        description="Visualize e mova contatos entre etapas. Use o seletor em cada cartão para mudar a etapa."
+        breadcrumbs={[
+          { label: "CRM", href: "/admin/crm" },
+          { label: "Funil" },
+        ]}
+      />
       <CrmFunnelBoard contacts={contacts} />
     </div>
   );

@@ -79,4 +79,7 @@ export function canViewInteraction(roles: string[], visibility: InteractionVisib
   return hasCrmPermission(roles, "crm.view_audit");
 }
 
+export const CRM_OPERATOR_ROLES = ["administrador", "concierge"] as const;
+
+/** Papéis com qualquer acesso ao módulo CRM (inclui curador com escopo limitado via RLS). */
 export const CRM_ACCESS_ROLES = ["administrador", "concierge", "curador_medico"] as const;

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 
+import { DataToolbar, StatusBanner } from "@/components/ads";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
@@ -66,7 +67,6 @@ export function CrmFunnelBoard({ contacts }: CrmFunnelBoardProps) {
         contactId,
         toStage,
         explicitCompletionConfirmed: toStage === "completed",
-        explicitAdminOverride: toStage === "initial_consultation_scheduled" || toStage === "sent_to_curator",
       });
       setPendingId(null);
       setMessage(result.success ? "Etapa atualizada." : result.error);
@@ -75,34 +75,38 @@ export function CrmFunnelBoard({ contacts }: CrmFunnelBoardProps) {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 md:grid-cols-4">
-        <Input label="Buscar" hideLabel placeholder="Buscar nome, telefone ou e-mail" value={search} onChange={(e) => setSearch(e.target.value)} />
-        <Select value={source} onChange={(e) => setSource(e.target.value)}>
-          <option value="">Todas as origens</option>
-          {Object.entries(CONTACT_SOURCE_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </Select>
-        <Select value={assignee} onChange={(e) => setAssignee(e.target.value)}>
-          <option value="">Todos os responsáveis</option>
-          {assignees.map(([id, name]) => (
-            <option key={id} value={id}>
-              {name}
-            </option>
-          ))}
-        </Select>
-        <Select value={priority} onChange={(e) => setPriority(e.target.value)}>
-          <option value="">Todas as prioridades</option>
-          <option value="baixa">Baixa</option>
-          <option value="media">Média</option>
-          <option value="alta">Alta</option>
-          <option value="urgente">Urgente</option>
-        </Select>
-      </div>
+      <DataToolbar
+        search={<Input label="Buscar" hideLabel placeholder="Buscar nome, telefone ou e-mail" value={search} onChange={(e) => setSearch(e.target.value)} />}
+        filters={
+          <>
+            <Select value={source} onChange={(e) => setSource(e.target.value)} aria-label="Filtrar por origem">
+              <option value="">Todas as origens</option>
+              {Object.entries(CONTACT_SOURCE_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+            <Select value={assignee} onChange={(e) => setAssignee(e.target.value)} aria-label="Filtrar por responsável">
+              <option value="">Todos os responsáveis</option>
+              {assignees.map(([id, name]) => (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              ))}
+            </Select>
+            <Select value={priority} onChange={(e) => setPriority(e.target.value)} aria-label="Filtrar por prioridade">
+              <option value="">Todas as prioridades</option>
+              <option value="baixa">Baixa</option>
+              <option value="media">Média</option>
+              <option value="alta">Alta</option>
+              <option value="urgente">Urgente</option>
+            </Select>
+          </>
+        }
+      />
 
-      {message ? <p className="text-sm text-ink-muted">{message}</p> : null}
+      {message ? <StatusBanner variant={message.includes("atualizada") ? "success" : "error"}>{message}</StatusBanner> : null}
 
       <div className="flex gap-4 overflow-x-auto pb-4">
         {PIPELINE_STAGES.filter((stage) => !["archived", "lost"].includes(stage)).map((stage) => {
@@ -120,14 +124,14 @@ export function CrmFunnelBoard({ contacts }: CrmFunnelBoardProps) {
                   </Card>
                 ) : (
                   cards.map((contact) => (
-                    <Card key={contact.id} padding="sm" className={isOverdue(contact.nextActionAt) ? "border-red-300" : ""}>
+                    <Card key={contact.id} padding="sm" className={isOverdue(contact.nextActionAt) ? "border-error/40" : ""}>
                       <div className="space-y-2">
                         <div className="flex items-start justify-between gap-2">
                           <Link href={`/admin/crm/contatos/${contact.id}`} className="font-medium text-ink hover:text-brand-primary">
                             {contact.fullName}
                           </Link>
                           {!contact.assignedTo ? (
-                            <span className="text-[10px] uppercase text-amber-700">Sem responsável</span>
+                            <span className="text-[10px] font-medium uppercase text-warning">Sem responsável</span>
                           ) : null}
                         </div>
                         <p className="text-xs text-ink-muted">{CONTACT_SOURCE_LABELS[contact.source]}</p>

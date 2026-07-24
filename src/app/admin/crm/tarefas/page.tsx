@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/ads";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRole } from "@/modules/auth/guard";
 import { listTasks } from "@/modules/crm/repository";
@@ -10,10 +11,14 @@ export default async function CrmTasksPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-sans text-2xl font-semibold text-ink">Tarefas</h1>
-        <p className="text-sm text-ink-muted">Próximas ações, retornos e acompanhamentos da equipe.</p>
-      </div>
+      <PageHeader
+        title="Tarefas"
+        description="Próximas ações, retornos e acompanhamentos da equipe."
+        breadcrumbs={[
+          { label: "CRM", href: "/admin/crm" },
+          { label: "Tarefas" },
+        ]}
+      />
       <CrmTasksPanel tasks={tasks} currentUserId={state.user.id} isAdmin={state.roles.includes("administrador")} />
     </div>
   );

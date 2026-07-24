@@ -1,9 +1,15 @@
 import Link from "next/link";
 
+import { DashboardLayout, DashboardList, DashboardSection, KpiCard } from "@/components/ads";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRole } from "@/modules/auth/guard";
+import { CONTACT_SOURCE_LABELS } from "@/modules/crm/types";
+import { PIPELINE_STAGE_LABELS } from "@/modules/crm/pipeline";
 import { getDashboardData } from "@/modules/crm/repository";
-import { Card, CardHeader } from "@/components/ui/card";
+
+function formatDateTime(iso: string): string {
+  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(iso));
+}
 
 export default async function CrmDashboardPage() {
   const state = await requireAnyRole(["administrador", "concierge"]);
@@ -11,81 +17,141 @@ export default async function CrmDashboardPage() {
   const dashboard = await getDashboardData(supabase, state.user.id);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-sans text-2xl font-semibold text-ink">Painel do Concierge</h1>
-          <p className="text-sm text-ink-muted">Olá, {state.profile?.displayName ?? "Concierge"} — sua fila operacional de hoje.</p>
-        </div>
+    <DashboardLayout
+      title="Painel do Concierge"
+      description={`Olá, ${state.profile?.displayName ?? "Concierge"} — sua fila operacional de hoje.`}
+      breadcrumbs={[
+        { label: "CRM", href: "/admin/crm" },
+        { label: "Painel" },
+      ]}
+      primaryAction={
         <Link
           href="/admin/crm/contatos/novo"
-          className="inline-flex min-h-11 items-center justify-center rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface hover:bg-brand-primary-deep"
+          className="inline-flex min-h-11 items-center justify-center rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
         >
-          Novo contato
+          Criar contato
         </Link>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <MetricCard label="Novos contatos" value={dashboard.metrics.newContactsCount} />
-        <MetricCard label="Em atendimento" value={dashboard.metrics.inServiceCount} />
-        <MetricCard label="Aguardando contratação" value={dashboard.metrics.awaitingContractingCount} />
-        <MetricCard label="Contratados" value={dashboard.metrics.contractedCount} />
-        <MetricCard label="Consultas agendadas" value={dashboard.metrics.scheduledConsultationsCount} />
-        <MetricCard label="Atrasados" value={dashboard.metrics.overdueCount} />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <DashboardList title="Novos contatos" href="/admin/crm/contatos" items={dashboard.newContacts.map((c) => ({ id: c.id, label: c.fullName, meta: c.source }))} />
-        <DashboardList title="Minha fila" href="/admin/crm/contatos" items={dashboard.myQueue.map((c) => ({ id: c.id, label: c.fullName, meta: c.pipelineStage }))} />
-        <DashboardList title="Retornos de hoje" href="/admin/crm/tarefas" items={dashboard.dueToday.map((t) => ({ id: t.id, label: t.title, meta: t.contactName }))} />
-        <DashboardList title="Atrasados" href="/admin/crm/tarefas" items={dashboard.overdueTasks.map((t) => ({ id: t.id, label: t.title, meta: t.contactName }))} />
-        <DashboardList title="Sem próxima ação" href="/admin/crm/contatos" items={dashboard.withoutNextAction.map((c) => ({ id: c.id, label: c.fullName, meta: "Sem ação" }))} />
-        <DashboardList title="Consultas próximas" href="/admin/crm/agenda" items={dashboard.upcomingAppointments.map((a) => ({ id: a.id, label: a.title, meta: a.startAt }))} />
-      </div>
-    </div>
-  );
-}
-
-function MetricCard({ label, value }: { label: string; value: number }) {
-  return (
-    <Card padding="lg">
-      <p className="text-sm text-ink-muted">{label}</p>
-      <p className="mt-1 font-serif text-3xl font-semibold text-brand-primary-deep">{value}</p>
-    </Card>
-  );
-}
-
-function DashboardList({
-  title,
-  href,
-  items,
-}: {
-  title: string;
-  href: string;
-  items: Array<{ id: string; label: string; meta: string }>;
-}) {
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <h2 className="font-sans text-lg font-semibold text-ink">{title}</h2>
-          <Link href={href} className="text-sm text-brand-primary hover:text-brand-primary-deep">
-            Ver tudo
-          </Link>
+      }
+      kpis={
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <KpiCard label="Novos contatos" value={dashboard.metrics.newContactsCount} href="/admin/crm/contatos" />
+          <KpiCard label="Em atendimento" value={dashboard.metrics.inServiceCount} href="/admin/crm/funil" />
+          <KpiCard label="Aguardando contratação" value={dashboard.metrics.awaitingContractingCount} href="/admin/crm/funil" />
+          <KpiCard label="Contratados" value={dashboard.metrics.contractedCount} href="/admin/crm/funil" />
+          <KpiCard label="Consultas agendadas" value={dashboard.metrics.scheduledConsultationsCount} href="/admin/crm/agenda" />
+          <KpiCard
+            label="Atrasados"
+            value={dashboard.metrics.overdueCount}
+            href="/admin/crm/tarefas"
+            hint={dashboard.metrics.overdueCount > 0 ? "Requer atenção" : undefined}
+          />
         </div>
-      </CardHeader>
-      {items.length === 0 ? (
-        <p className="text-sm text-ink-muted">Nada pendente neste bloco.</p>
-      ) : (
-        <ul className="divide-y divide-border">
-          {items.map((item) => (
-            <li key={item.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-              <span className="font-medium text-ink">{item.label}</span>
-              <span className="text-ink-muted">{item.meta}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
+      }
+    >
+      <div className="grid gap-6 lg:grid-cols-2">
+          <DashboardSection
+            title="Novos contatos"
+            href="/admin/crm/contatos"
+            isEmpty={dashboard.newContacts.length === 0}
+            emptyTitle="Nenhum contato novo."
+            emptyDescription="Quando novos leads entrarem, eles aparecerão aqui."
+            emptyAction={
+              <Link href="/admin/crm/contatos/novo" className="text-sm font-medium text-brand-primary">
+                Criar primeiro contato
+              </Link>
+            }
+          >
+            <DashboardList
+              items={dashboard.newContacts.map((c) => ({
+                id: c.id,
+                label: c.fullName,
+                meta: CONTACT_SOURCE_LABELS[c.source],
+                href: `/admin/crm/contatos/${c.id}`,
+              }))}
+            />
+          </DashboardSection>
+
+          <DashboardSection
+            title="Minha fila"
+            href="/admin/crm/contatos"
+            isEmpty={dashboard.myQueue.length === 0}
+            emptyTitle="Sua fila está vazia."
+            emptyDescription="Contatos atribuídos a você aparecerão nesta seção."
+          >
+            <DashboardList
+              items={dashboard.myQueue.map((c) => ({
+                id: c.id,
+                label: c.fullName,
+                meta: PIPELINE_STAGE_LABELS[c.pipelineStage],
+                href: `/admin/crm/contatos/${c.id}`,
+              }))}
+            />
+          </DashboardSection>
+
+          <DashboardSection
+            title="Retornos de hoje"
+            href="/admin/crm/tarefas"
+            isEmpty={dashboard.dueToday.length === 0}
+            emptyTitle="Nenhum retorno para hoje."
+          >
+            <DashboardList
+              items={dashboard.dueToday.map((t) => ({
+                id: t.id,
+                label: t.title,
+                meta: t.contactName,
+                href: `/admin/crm/contatos/${t.contactId}`,
+              }))}
+            />
+          </DashboardSection>
+
+          <DashboardSection
+            title="Atrasados"
+            href="/admin/crm/tarefas"
+            isEmpty={dashboard.overdueTasks.length === 0}
+            emptyTitle="Nada atrasado."
+          >
+            <DashboardList
+              items={dashboard.overdueTasks.map((t) => ({
+                id: t.id,
+                label: t.title,
+                meta: t.contactName,
+                href: `/admin/crm/contatos/${t.contactId}`,
+              }))}
+            />
+          </DashboardSection>
+
+          <DashboardSection
+            title="Sem próxima ação"
+            href="/admin/crm/contatos"
+            isEmpty={dashboard.withoutNextAction.length === 0}
+            emptyTitle="Todos os contatos têm próxima ação."
+          >
+            <DashboardList
+              items={dashboard.withoutNextAction.map((c) => ({
+                id: c.id,
+                label: c.fullName,
+                meta: "Sem ação",
+                href: `/admin/crm/contatos/${c.id}`,
+              }))}
+            />
+          </DashboardSection>
+
+          <DashboardSection
+            title="Consultas próximas"
+            href="/admin/crm/agenda"
+            isEmpty={dashboard.upcomingAppointments.length === 0}
+            emptyTitle="Nenhuma consulta agendada."
+          >
+            <DashboardList
+              items={dashboard.upcomingAppointments.map((a) => ({
+                id: a.id,
+                label: a.title,
+                meta: formatDateTime(a.startAt),
+                href: `/admin/crm/contatos/${a.contactId}`,
+              }))}
+            />
+          </DashboardSection>
+        </div>
+    </DashboardLayout>
   );
 }

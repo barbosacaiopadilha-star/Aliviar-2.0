@@ -41,6 +41,10 @@ export function CrmContactsTable({ contacts }: CrmContactsTableProps) {
     <div className="space-y-4">
       <Input label="Buscar contatos" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nome, telefone, e-mail ou cidade" />
 
+      {filtered.length === 0 ? (
+        <EmptyState title="Nenhum contato encontrado" description="Ajuste a busca ou cadastre um novo contato." />
+      ) : (
+        <>
       <div className="hidden md:block">
         <Table>
           <TableHead>
@@ -88,6 +92,8 @@ export function CrmContactsTable({ contacts }: CrmContactsTableProps) {
           </Card>
         ))}
       </div>
+        </>
+      )}
     </div>
   );
 }

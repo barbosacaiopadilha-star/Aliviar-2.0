@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import type { Metadata } from "next";
 
+import { DashboardLayout, DashboardList, DashboardSection, KpiCard } from "@/components/ads";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRole } from "@/modules/auth/guard";
@@ -10,31 +11,11 @@ import { listPatientAccounts, listProfessionalProfiles } from "@/modules/profile
 import { listRecentAuditLogs, listTeamMembers } from "@/modules/team/repository";
 
 import { AuditLogList } from "@/components/admin/audit-log-list";
-import { Card, CardHeader } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
 
-// noindex: área autenticada — nunca deve ser indexada (ver também robots.ts).
 export const metadata: Metadata = {
   title: "Administrador",
   robots: { index: false, follow: false },
 };
-
-function StatCard({ label, value, href }: { label: string; value: number; href?: string }) {
-  const content = (
-    <Card padding="lg" className="h-full">
-      <p className="text-sm text-ink-muted">{label}</p>
-      <p className="mt-1 font-serif text-3xl font-semibold text-brand-primary-deep">{value}</p>
-    </Card>
-  );
-
-  return href ? (
-    <Link href={href} className="block transition-opacity hover:opacity-80">
-      {content}
-    </Link>
-  ) : (
-    content
-  );
-}
 
 export default async function AdminDashboardPage() {
   const state = await requireAnyRole(["administrador", "concierge"]);
@@ -62,63 +43,54 @@ export default async function AdminDashboardPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-sans text-2xl font-semibold text-ink">
-          Olá, {state.profile?.displayName ?? "Administrador"}
-        </h1>
-        <p className="text-sm text-ink-muted">Visão geral da operação da Aliviar.</p>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Pacientes ativos" value={activePatients} href="/admin/pacientes" />
-        <StatCard label="Profissionais ativos" value={activeProfessionals} href="/admin/profissionais" />
-        <StatCard label="Administradores" value={administradores} href="/admin/equipe" />
-        <StatCard label="Curadores médicos" value={curadores} href="/admin/equipe" />
-      </div>
-
+    <DashboardLayout
+      title={`Olá, ${state.profile?.displayName ?? "Administrador"}`}
+      description="Visão geral da operação da Aliviar."
+      breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Visão geral" }]}
+      primaryAction={
+        <Link
+          href="/admin/crm/contatos/novo"
+          className="inline-flex min-h-11 items-center justify-center rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+        >
+          Criar contato
+        </Link>
+      }
+      kpis={
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <KpiCard label="Pacientes ativos" value={activePatients} href="/admin/pacientes" />
+          <KpiCard label="Profissionais ativos" value={activeProfessionals} href="/admin/profissionais" />
+          <KpiCard label="Administradores" value={administradores} href="/admin/equipe" />
+          <KpiCard label="Curadores médicos" value={curadores} href="/admin/equipe" />
+        </div>
+      }
+    >
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <h2 className="font-sans text-lg font-semibold text-ink">Pendências</h2>
-            <p className="text-sm text-ink-muted">Profissionais ativos aguardando decisão de publicação.</p>
-          </CardHeader>
-
-          {pendingPublication.length === 0 ? (
-            <EmptyState
-              title="Nenhuma pendência no momento."
-              description="Todos os profissionais ativos já têm uma decisão de publicação registrada."
+          <DashboardSection
+            title="Pendências"
+            description="Profissionais ativos aguardando decisão de publicação."
+            isEmpty={pendingPublication.length === 0}
+            emptyTitle="Nenhuma pendência no momento."
+            emptyDescription="Todos os profissionais ativos já têm uma decisão de publicação registrada."
+          >
+            <DashboardList
+              items={pendingPublication.map((professional) => ({
+                id: professional.id,
+                label: professional.displayName,
+                meta: "Revisar",
+                href: `/admin/profissionais/${professional.id}`,
+              }))}
             />
-          ) : (
-            <ul className="divide-y divide-border">
-              {pendingPublication.map((professional) => (
-                <li key={professional.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-                  <span className="font-medium text-ink">{professional.displayName}</span>
-                  <Link
-                    href={`/admin/profissionais/${professional.id}`}
-                    className="font-medium text-brand-primary hover:text-brand-primary-deep"
-                  >
-                    Revisar
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
+          </DashboardSection>
 
-        <Card>
-          <CardHeader>
-            <h2 className="font-sans text-lg font-semibold text-ink">Atividade recente</h2>
-            <p className="text-sm text-ink-muted">Últimas concessões e revogações de papel.</p>
-          </CardHeader>
-
-          <AuditLogList
-            entries={recentActivity}
-            emptyMessage="Ainda não há atividade registrada."
-            showTarget
-          />
-        </Card>
-      </div>
-    </div>
+          <DashboardSection
+            title="Atividade recente"
+            description="Últimas concessões e revogações de papel."
+            isEmpty={recentActivity.length === 0}
+            emptyTitle="Ainda não há atividade registrada."
+          >
+            <AuditLogList entries={recentActivity} emptyMessage="" showTarget />
+          </DashboardSection>
+        </div>
+    </DashboardLayout>
   );
 }

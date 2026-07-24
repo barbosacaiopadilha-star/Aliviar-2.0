@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { findPossibleDuplicates } from "@/modules/crm/duplicates";
 import { computeNextActionAt, isOverdue } from "@/modules/crm/next-action";
 import { normalizeEmail, normalizePhone } from "@/modules/crm/phone";
-import { allowedNextStages, isTransitionAllowed } from "@/modules/crm/pipeline";
-import { hasCrmPermission } from "@/modules/crm/permissions";
+import { allowedNextStages, isTransitionAllowed, resolveStageTransitionContext } from "@/modules/crm/pipeline";
+import { hasCrmPermission, canViewContact } from "@/modules/crm/permissions";
 import type { CrmContactSummary } from "@/modules/crm/types";
 
 const baseContact = (overrides: Partial<CrmContactSummary> = {}): CrmContactSummary => ({
@@ -84,6 +84,26 @@ describe("crm pipeline transitions", () => {
   it("expõe próximas etapas válidas", () => {
     expect(allowedNextStages("new_contact")).toContain("first_response_pending");
   });
+
+  it("ignora override administrativo enviado por concierge", () => {
+    const context = resolveStageTransitionContext(["concierge"], {
+      hasInitialConsultationAppointment: false,
+    });
+    expect(context.explicitAdminOverride).toBe(false);
+    expect(
+      isTransitionAllowed("initial_consultation_scheduling", "initial_consultation_scheduled", context),
+    ).toBe(false);
+  });
+
+  it("concede override administrativo somente a administrador", () => {
+    const context = resolveStageTransitionContext(["administrador"], {
+      hasInitialConsultationAppointment: false,
+    });
+    expect(context.explicitAdminOverride).toBe(true);
+    expect(
+      isTransitionAllowed("initial_consultation_scheduling", "initial_consultation_scheduled", context),
+    ).toBe(true);
+  });
 });
 
 describe("crm next action", () => {
@@ -112,8 +132,23 @@ describe("crm permissions", () => {
     expect(hasCrmPermission(["concierge"], "crm.manage_permissions")).toBe(false);
   });
 
+  it("curador não cria contato", () => {
+    expect(hasCrmPermission(["curador_medico"], "crm.create_contact")).toBe(false);
+  });
+
+  it("concierge vê fila mas não todos os contatos", () => {
+    expect(hasCrmPermission(["concierge"], "crm.view_queue")).toBe(true);
+    expect(hasCrmPermission(["concierge"], "crm.view_all_contacts")).toBe(false);
+  });
+
   it("administrador possui acesso amplo", () => {
     expect(hasCrmPermission(["administrador"], "crm.view_audit")).toBe(true);
+  });
+
+  it("concierge acessa contato da fila ou atribuído", () => {
+    expect(canViewContact(["concierge"], { assignedTo: null }, "user-1")).toBe(true);
+    expect(canViewContact(["concierge"], { assignedTo: "user-1" }, "user-1")).toBe(true);
+    expect(canViewContact(["concierge"], { assignedTo: "user-2" }, "user-1")).toBe(false);
   });
 });
 

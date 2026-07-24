@@ -85,6 +85,23 @@ export type StageTransitionContext = {
   explicitCompletionConfirmed?: boolean;
 };
 
+/** Monta contexto de transição — override administrativo nunca vem do cliente. */
+export function resolveStageTransitionContext(
+  roles: string[],
+  input: {
+    hasInitialConsultationAppointment?: boolean;
+    hasResponsibleCurator?: boolean;
+    explicitCompletionConfirmed?: boolean;
+  } = {},
+): StageTransitionContext {
+  return {
+    hasInitialConsultationAppointment: input.hasInitialConsultationAppointment,
+    hasResponsibleCurator: input.hasResponsibleCurator,
+    explicitAdminOverride: roles.includes("administrador"),
+    explicitCompletionConfirmed: input.explicitCompletionConfirmed,
+  };
+}
+
 const BASE_TRANSITIONS: Record<PipelineStage, PipelineStage[]> = {
   new_contact: ["first_response_pending", "in_service", "lost", "archived"],
   first_response_pending: ["in_service", "lost", "archived"],

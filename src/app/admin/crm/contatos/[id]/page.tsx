@@ -12,6 +12,7 @@ import {
   listInteractionsForContact,
   listTasksForContact,
 } from "@/modules/crm/repository";
+import { PageHeader } from "@/components/ads";
 import { CrmContactDetailPanel } from "@/components/crm/crm-contact-detail-panel";
 
 type PageProps = {
@@ -19,7 +20,7 @@ type PageProps = {
 };
 
 export default async function CrmContactDetailPage({ params }: PageProps) {
-  await requireAnyRole(["administrador", "concierge", "curador_medico"]);
+  const state = await requireAnyRole(["administrador", "concierge"]);
   const { id } = await params;
   const supabase = await createServerSupabaseClient();
 
@@ -35,10 +36,20 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
   ]);
 
   const activeCase = contact.activeCaseId ? await getCaseById(supabase, contact.activeCaseId) : null;
-  const allowedStages = getAllowedStagesForContact(contact, activeCase, appointments);
+  const allowedStages = getAllowedStagesForContact(contact, activeCase, appointments, state.roles);
 
   return (
-    <CrmContactDetailPanel
+    <div className="space-y-6">
+      <PageHeader
+        title={contact.fullName}
+        description="Ficha operacional do contato."
+        breadcrumbs={[
+          { label: "CRM", href: "/admin/crm" },
+          { label: "Contatos", href: "/admin/crm/contatos" },
+          { label: contact.fullName },
+        ]}
+      />
+      <CrmContactDetailPanel
       contact={contact}
       cases={cases}
       interactions={interactions}
@@ -47,5 +58,6 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       timeline={timeline}
       allowedStages={allowedStages}
     />
+    </div>
   );
 }

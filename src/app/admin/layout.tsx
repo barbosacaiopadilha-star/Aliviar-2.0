@@ -2,12 +2,11 @@ import { redirect } from "next/navigation";
 
 import { getAuthState } from "@/modules/auth/session";
 import { AppShell } from "@/components/shell/app-shell";
-import { getDefaultNavItems } from "@/components/shell/nav-items";
 
 function resolveAdminRole(roles: string[]): string {
   if (roles.includes("administrador")) return "administrador";
   if (roles.includes("concierge")) return "concierge";
-  return roles[0] ?? "administrador";
+  return "concierge";
 }
 
 export default async function AdminLayout({
@@ -31,7 +30,7 @@ export default async function AdminLayout({
     <AppShell
       role={shellRole}
       displayName={state.profile?.displayName ?? null}
-      navItems={getDefaultNavItems(shellRole, "/admin")}
+      basePath="/admin"
     >
       {children}
     </AppShell>

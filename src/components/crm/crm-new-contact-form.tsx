@@ -87,7 +87,7 @@ export function CrmNewContactForm() {
         </label>
         {duplicateWarning ? <p className="text-sm text-amber-700">{duplicateWarning}</p> : null}
         {error ? <p className="text-sm text-error">{error}</p> : null}
-        <Button type="submit" isLoading={isPending}>
+        <Button type="submit" isLoading={isPending} fullWidth>
           Salvar contato
         </Button>
       </form>

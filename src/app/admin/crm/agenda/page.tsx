@@ -1,9 +1,14 @@
 import Link from "next/link";
 
+import { DashboardSection, PageHeader } from "@/components/ads";
+import { Card } from "@/components/ui/card";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRole } from "@/modules/auth/guard";
 import { listAppointments } from "@/modules/crm/repository";
-import { Card } from "@/components/ui/card";
+
+function formatDateTime(iso: string): string {
+  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "full", timeStyle: "short" }).format(new Date(iso));
+}
 
 export default async function CrmAgendaPage() {
   await requireAnyRole(["administrador", "concierge"]);
@@ -16,45 +21,54 @@ export default async function CrmAgendaPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-sans text-2xl font-semibold text-ink">Agenda operacional</h1>
-        <p className="text-sm text-ink-muted">Compromissos futuros e histórico recente. Sincronização com Google Calendar ainda não implementada.</p>
-      </div>
+      <PageHeader
+        title="Agenda operacional"
+        description="Compromissos futuros e histórico recente."
+        breadcrumbs={[
+          { label: "CRM", href: "/admin/crm" },
+          { label: "Agenda" },
+        ]}
+      />
 
-      <section className="space-y-3">
-        <h2 className="font-sans text-lg font-semibold text-ink">Próximos</h2>
-        {upcoming.length === 0 ? (
-          <p className="text-sm text-ink-muted">Nenhum compromisso futuro.</p>
-        ) : (
-          upcoming.map((appointment) => (
+      <DashboardSection
+        title="Próximos compromissos"
+        isEmpty={upcoming.length === 0}
+        emptyTitle="Nenhum compromisso futuro."
+        emptyDescription="Agende retornos ou consultas a partir da ficha do contato."
+      >
+        <div className="space-y-3">
+          {upcoming.map((appointment) => (
             <Card key={appointment.id} padding="sm">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="font-medium text-ink">{appointment.title}</p>
                   <p className="text-sm text-ink-muted">
-                    <Link href={`/admin/crm/contatos/${appointment.contactId}`} className="text-brand-primary">
+                    <Link href={`/admin/crm/contatos/${appointment.contactId}`} className="text-brand-primary hover:text-brand-primary-deep">
                       {appointment.contactName}
                     </Link>
                     {" · "}
-                    {new Intl.DateTimeFormat("pt-BR", { dateStyle: "full", timeStyle: "short" }).format(new Date(appointment.startAt))}
+                    {formatDateTime(appointment.startAt)}
                   </p>
                 </div>
                 <p className="text-sm text-ink-muted">{appointment.assignedToName ?? "—"} · {appointment.status}</p>
               </div>
             </Card>
-          ))
-        )}
-      </section>
+          ))}
+        </div>
+      </DashboardSection>
 
-      <section className="space-y-3">
-        <h2 className="font-sans text-lg font-semibold text-ink">Anteriores</h2>
-        {past.slice(0, 20).map((appointment) => (
-          <Card key={appointment.id} padding="sm">
-            <p className="font-medium text-ink">{appointment.title}</p>
-            <p className="text-sm text-ink-muted">{appointment.contactName} · {appointment.startAt}</p>
-          </Card>
-        ))}
-      </section>
+      <DashboardSection title="Anteriores" isEmpty={past.length === 0} emptyTitle="Nenhum compromisso anterior.">
+        <div className="space-y-3">
+          {past.slice(0, 20).map((appointment) => (
+            <Card key={appointment.id} padding="sm">
+              <p className="font-medium text-ink">{appointment.title}</p>
+              <p className="text-sm text-ink-muted">
+                {appointment.contactName} · {formatDateTime(appointment.startAt)}
+              </p>
+            </Card>
+          ))}
+        </div>
+      </DashboardSection>
     </div>
   );
 }

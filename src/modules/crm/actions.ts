@@ -6,7 +6,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRoleForAction } from "@/modules/auth/guard";
 
 import { findPossibleDuplicates } from "./duplicates";
-import { hasCrmPermission } from "./permissions";
+import { canViewContact, hasCrmPermission, CRM_OPERATOR_ROLES } from "./permissions";
 import {
   archiveContact,
   changePipelineStage,
@@ -31,7 +31,18 @@ import {
   updateTaskStatusInputSchema,
 } from "./schema";
 import type { CrmActionResult } from "./types";
-import { CRM_ACCESS_ROLES } from "./permissions";
+
+async function assertContactAccess(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  contactId: string,
+  roles: string[],
+  userId: string,
+): Promise<void> {
+  const { getContactById } = await import("./repository");
+  const contact = await getContactById(supabase, contactId);
+  if (!contact) throw new Error("Contato não encontrado.");
+  if (!canViewContact(roles, contact, userId)) throw new Error("Não autorizado.");
+}
 
 function revalidateCrm(contactId?: string) {
   revalidatePath("/admin/crm");
@@ -43,7 +54,7 @@ function revalidateCrm(contactId?: string) {
 }
 
 async function requireCrmAction(permission?: Parameters<typeof hasCrmPermission>[1]) {
-  const state = await requireAnyRoleForAction([...CRM_ACCESS_ROLES]);
+  const state = await requireAnyRoleForAction([...CRM_OPERATOR_ROLES]);
   if (permission && !hasCrmPermission(state.roles, permission)) {
     throw new Error("Não autorizado.");
   }
@@ -102,6 +113,7 @@ export async function updateContactAction(input: unknown): Promise<CrmActionResu
 
   try {
     const supabase = await createServerSupabaseClient();
+    await assertContactAccess(supabase, parsed.data.contactId, authState.roles, authState.user.id);
     await updateContact(supabase, parsed.data, authState.user.id);
     revalidateCrm(parsed.data.contactId);
     return { success: true };
@@ -123,6 +135,7 @@ export async function archiveContactAction(input: unknown): Promise<CrmActionRes
 
   try {
     const supabase = await createServerSupabaseClient();
+    await assertContactAccess(supabase, parsed.data.contactId, authState.roles, authState.user.id);
     await archiveContact(supabase, parsed.data.contactId, authState.user.id, parsed.data.reason);
     revalidateCrm(parsed.data.contactId);
     return { success: true };
@@ -144,6 +157,7 @@ export async function changePipelineStageAction(input: unknown): Promise<CrmActi
 
   try {
     const supabase = await createServerSupabaseClient();
+    await assertContactAccess(supabase, parsed.data.contactId, authState.roles, authState.user.id);
     await changePipelineStage(supabase, parsed.data, authState.user.id, authState.roles);
     revalidateCrm(parsed.data.contactId);
     return { success: true };
@@ -165,6 +179,7 @@ export async function createInteractionAction(input: unknown): Promise<CrmAction
 
   try {
     const supabase = await createServerSupabaseClient();
+    await assertContactAccess(supabase, parsed.data.contactId, authState.roles, authState.user.id);
     await createInteraction(supabase, parsed.data, authState.user.id);
     revalidateCrm(parsed.data.contactId);
     return { success: true };
@@ -186,6 +201,7 @@ export async function createTaskAction(input: unknown): Promise<CrmActionResult>
 
   try {
     const supabase = await createServerSupabaseClient();
+    await assertContactAccess(supabase, parsed.data.contactId, authState.roles, authState.user.id);
     await createTask(supabase, parsed.data, authState.user.id);
     revalidateCrm(parsed.data.contactId);
     return { success: true };
@@ -207,6 +223,9 @@ export async function updateTaskStatusAction(input: unknown): Promise<CrmActionR
 
   try {
     const supabase = await createServerSupabaseClient();
+    const { data: taskRow } = await supabase.from("crm_tasks").select("contact_id").eq("id", parsed.data.taskId).maybeSingle();
+    if (!taskRow?.contact_id) return { success: false, error: "Tarefa não encontrada." };
+    await assertContactAccess(supabase, taskRow.contact_id as string, authState.roles, authState.user.id);
     await updateTaskStatus(supabase, parsed.data.taskId, parsed.data.status, authState.user.id);
     revalidateCrm();
     return { success: true };
@@ -228,6 +247,7 @@ export async function createAppointmentAction(input: unknown): Promise<CrmAction
 
   try {
     const supabase = await createServerSupabaseClient();
+    await assertContactAccess(supabase, parsed.data.contactId, authState.roles, authState.user.id);
     await createAppointment(supabase, parsed.data, authState.user.id);
     revalidateCrm(parsed.data.contactId);
     return { success: true };
@@ -249,6 +269,13 @@ export async function updateAppointmentAction(input: unknown): Promise<CrmAction
 
   try {
     const supabase = await createServerSupabaseClient();
+    const { data: appointmentRow } = await supabase
+      .from("crm_appointments")
+      .select("contact_id")
+      .eq("id", parsed.data.appointmentId)
+      .maybeSingle();
+    if (!appointmentRow?.contact_id) return { success: false, error: "Compromisso não encontrado." };
+    await assertContactAccess(supabase, appointmentRow.contact_id as string, authState.roles, authState.user.id);
     await updateAppointment(supabase, parsed.data, authState.user.id);
     revalidateCrm();
     return { success: true };

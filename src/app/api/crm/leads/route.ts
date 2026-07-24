@@ -6,7 +6,11 @@ import { siteLeadInputSchema } from "@/modules/crm/schema";
 
 export async function POST(request: Request) {
   const secret = process.env.CRM_SITE_LEAD_SECRET;
-  if (secret) {
+  if (!secret) {
+    if (process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production") {
+      return NextResponse.json({ error: "Endpoint indisponível." }, { status: 503 });
+    }
+  } else {
     const provided = request.headers.get("x-crm-lead-secret");
     if (provided !== secret) {
       return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
