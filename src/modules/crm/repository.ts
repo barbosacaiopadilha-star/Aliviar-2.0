@@ -10,6 +10,7 @@ import {
   resolveStageTransitionContext,
   type PipelineStage,
 } from "./pipeline";
+import { LEAD_EDITABLE_STAGES, projectPipelineStage } from "./pipeline-projection";
 import { normalizeEmail, normalizePhone } from "./phone";
 import type {
   ChangePipelineStageInput,
@@ -44,7 +45,7 @@ import type {
 } from "./types";
 
 const CONTACT_COLUMNS =
-  "id, full_name, preferred_name, phone, phone_normalized, email, email_normalized, city, state, source, source_detail, status, pipeline_stage, assigned_to, priority, initial_reason, preferred_channel, consent_status, consent_recorded_at, last_interaction_at, next_action_at, active_case_id, archived_at, created_at, updated_at";
+  "id, full_name, preferred_name, phone, phone_normalized, email, email_normalized, city, state, source, source_detail, status, pipeline_stage, assigned_to, priority, initial_reason, preferred_channel, consent_status, consent_recorded_at, last_interaction_at, next_action_at, active_case_id, patient_profile_id, archived_at, created_at, updated_at";
 
 type ContactRow = {
   id: string;
@@ -69,6 +70,7 @@ type ContactRow = {
   last_interaction_at: string | null;
   next_action_at: string | null;
   active_case_id: string | null;
+  patient_profile_id: string | null;
   archived_at: string | null;
   created_at: string;
   updated_at: string;
@@ -111,6 +113,7 @@ function mapContactSummary(row: ContactRow, names: Map<string, string>, caseTitl
     consentRecordedAt: row.consent_recorded_at,
     activeCaseId: row.active_case_id,
     activeCaseTitle: caseTitle ?? null,
+    patientProfileId: row.patient_profile_id,
   };
 }
 
@@ -145,11 +148,17 @@ export async function listContacts(supabase: SupabaseClient): Promise<CrmContact
   );
 }
 
+// CONVERGÊNCIA B3: título derivado do Case canônico (curadoria.cases não tem
+// coluna de título — o "título" é a pessoa, que é o que o Atendente procura).
 async function caseTitlesByIds(supabase: SupabaseClient, caseIds: string[]): Promise<Map<string, string>> {
   const unique = Array.from(new Set(caseIds));
   if (unique.length === 0) return new Map();
-  const { data } = await supabase.from("crm_cases").select("id, title").in("id", unique);
-  return new Map((data ?? []).map((row) => [row.id as string, row.title as string]));
+  const { data } = await supabase.from("cases").select("id, patient_profile_id").in("id", unique);
+  const rows = (data ?? []) as { id: string; patient_profile_id: string }[];
+  const names = await namesByProfileIds(supabase, rows.map((row) => row.patient_profile_id));
+  return new Map(
+    rows.map((row) => [row.id, `Case — ${names.get(row.patient_profile_id) ?? "Paciente"}`]),
+  );
 }
 
 export async function getContactById(supabase: SupabaseClient, contactId: string): Promise<CrmContactDetail | null> {
@@ -222,11 +231,15 @@ export async function refreshNextActionForContact(supabase: SupabaseClient, cont
   await supabase.from("crm_contacts").update({ next_action_at: nextActionAt }).eq("id", contactId);
 }
 
+// CONVERGÊNCIA B2 (2026-07-25): criar contato NÃO cria mais Case. Lead não é
+// Case — o Case nasce exclusivamente quando o Atendente o abre
+// (open_case_from_lead), nunca de um formulário. A criação automática que
+// existia aqui era a violação de domínio que gerou as fixtures do B1.
 export async function createContact(
   supabase: SupabaseClient,
   input: CreateContactInput,
   actorId: string | null,
-): Promise<{ contactId: string; caseId: string }> {
+): Promise<{ contactId: string }> {
   const phoneNormalized = normalizePhone(input.phone);
   const emailNormalized = normalizeEmail(input.email);
   const now = new Date().toISOString();
@@ -260,31 +273,10 @@ export async function createContact(
   if (contactError || !contactRow) throw new Error(contactError?.message ?? "Não foi possível criar o contato.");
 
   const contactId = contactRow.id as string;
-  const caseTitle = `Atendimento — ${input.fullName.trim()}`;
-
-  const { data: caseRow, error: caseError } = await supabase
-    .from("crm_cases")
-    .insert({
-      contact_id: contactId,
-      title: caseTitle,
-      summary: input.initialReason?.trim() || null,
-      responsible_concierge_id: input.assignedTo !== undefined ? input.assignedTo : actorId,
-      priority: input.priority,
-      pipeline_stage: "new_contact",
-      status: "aberto",
-    })
-    .select("id")
-    .single();
-
-  if (caseError || !caseRow) throw new Error(caseError?.message ?? "Não foi possível criar o caso.");
-
-  const caseId = caseRow.id as string;
-  await supabase.from("crm_contacts").update({ active_case_id: caseId }).eq("id", contactId);
 
   if (input.initialNote?.trim() && actorId) {
     await createInteraction(supabase, {
       contactId,
-      caseId,
       type: "anotacao_interna",
       channel: input.preferredChannel ?? "interno",
       direction: "interno",
@@ -302,7 +294,7 @@ export async function createContact(
   });
 
   await refreshNextActionForContact(supabase, contactId);
-  return { contactId, caseId };
+  return { contactId };
 }
 
 export async function updateContact(
@@ -386,6 +378,16 @@ export async function changePipelineStage(
   if (!isPipelineStage(contact.pipelineStage)) throw new Error("Etapa atual inválida.");
   if (!isPipelineStage(input.toStage)) throw new Error("Etapa de destino inválida.");
 
+  // CONVERGÊNCIA B2: a etapa editável é a do LEAD (fase de Atendimento).
+  // Da entrega ao Curador em diante, a etapa é PROJETADA do Case canônico
+  // (pipeline-projection.ts) — escrever aqui recriaria o segundo estado que
+  // a Correção de Domínio proibiu. Estado desconhecido para, nunca converte.
+  if (!LEAD_EDITABLE_STAGES.includes(input.toStage)) {
+    throw new Error(
+      "Esta etapa é derivada do Case — ela muda pela transferência de responsabilidade, não por aqui.",
+    );
+  }
+
   const caseId = input.caseId ?? contact.activeCaseId;
   let crmCase: CrmCaseSummary | null = null;
   if (caseId) {
@@ -413,9 +415,8 @@ export async function changePipelineStage(
     .update({ pipeline_stage: input.toStage })
     .eq("id", input.contactId);
 
-  if (caseId) {
-    await supabase.from("crm_cases").update({ pipeline_stage: input.toStage }).eq("id", caseId);
-  }
+  // CONVERGÊNCIA B2: crm_cases não recebe mais escrita de etapa — a etapa
+  // pós-Atendimento é projeção derivada do Case canônico.
 
   await createInteraction(
     supabase,
@@ -443,82 +444,112 @@ export async function changePipelineStage(
   });
 }
 
-export async function getCaseById(supabase: SupabaseClient, caseId: string): Promise<CrmCaseSummary | null> {
+// ---------------------------------------------------------------------------
+// CONVERGÊNCIA B3 (2026-07-25): getCaseById e listCasesForContact deixaram de
+// ler crm_cases. Leem o Case canônico (curadoria.cases) e DERIVAM a etapa
+// pela projeção — a mesma fonte única de pipeline-projection.ts.
+//
+// `leadStageFallback`: quando a projeção diz que a etapa ainda é fase de
+// LEAD (Case com o Atendente / sem regra de Case), a etapa exibida é a do
+// contato — o último estado declarado por um humano; nunca inventamos uma.
+// ---------------------------------------------------------------------------
+
+type CanonicalCaseRow = {
+  id: string;
+  patient_profile_id: string;
+  status: string;
+  responsible_id: string | null;
+  responsible_role: string | null;
+  assigned_curator_id: string | null;
+  started_at: string | null;
+  closed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+const CANONICAL_CASE_COLUMNS =
+  "id, patient_profile_id, status, responsible_id, responsible_role, assigned_curator_id, started_at, closed_at, created_at, updated_at";
+
+async function mapCanonicalCase(
+  supabase: SupabaseClient,
+  row: CanonicalCaseRow,
+  leadStageFallback: PipelineStage,
+): Promise<CrmCaseSummary> {
+  const [{ data: delivery }, names] = await Promise.all([
+    supabase.from("final_curadoria_deliveries").select("id").eq("case_id", row.id).maybeSingle(),
+    namesByProfileIds(supabase, [row.patient_profile_id, row.responsible_id ?? ""]),
+  ]);
+
+  const projection = projectPipelineStage({
+    status: row.status,
+    responsibleRole: (row.responsible_role as "atendente" | "curador_medico" | "concierge" | null) ?? null,
+    startedAt: row.started_at,
+    closedAt: row.closed_at,
+    delivered: Boolean(delivery),
+  });
+
+  const stage: PipelineStage = projection.kind === "case" ? projection.stage : leadStageFallback;
+  const responsibleName = row.responsible_id ? (names.get(row.responsible_id) ?? null) : null;
+
+  return {
+    id: row.id,
+    contactId: "",
+    title: `Case — ${names.get(row.patient_profile_id) ?? "Paciente"}`,
+    summary: null,
+    status: row.closed_at ? "fechado" : "aberto",
+    pipelineStage: stage,
+    responsibleConciergeId: row.responsible_role === "concierge" ? row.responsible_id : null,
+    responsibleConciergeName: row.responsible_role === "concierge" ? responsibleName : null,
+    responsibleCuratorId:
+      row.responsible_role === "curador_medico" ? row.responsible_id : row.assigned_curator_id,
+    responsibleCuratorName: row.responsible_role === "curador_medico" ? responsibleName : null,
+    priority: "media",
+    openedAt: row.created_at,
+    closedAt: row.closed_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function getCaseById(
+  supabase: SupabaseClient,
+  caseId: string,
+  leadStageFallback: PipelineStage = "in_service",
+): Promise<CrmCaseSummary | null> {
   const { data, error } = await supabase
-    .from("crm_cases")
-    .select(
-      "id, contact_id, title, summary, status, pipeline_stage, responsible_concierge_id, responsible_curator_id, priority, opened_at, closed_at, created_at, updated_at",
-    )
+    .from("cases")
+    .select(CANONICAL_CASE_COLUMNS)
     .eq("id", caseId)
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) return null;
-
-  const names = await namesByProfileIds(supabase, [
-    data.responsible_concierge_id as string,
-    data.responsible_curator_id as string,
-  ]);
-
-  return {
-    id: data.id as string,
-    contactId: data.contact_id as string,
-    title: data.title as string,
-    summary: (data.summary as string | null) ?? null,
-    status: data.status as CrmCaseSummary["status"],
-    pipelineStage: data.pipeline_stage as PipelineStage,
-    responsibleConciergeId: (data.responsible_concierge_id as string | null) ?? null,
-    responsibleConciergeName: data.responsible_concierge_id
-      ? (names.get(data.responsible_concierge_id as string) ?? null)
-      : null,
-    responsibleCuratorId: (data.responsible_curator_id as string | null) ?? null,
-    responsibleCuratorName: data.responsible_curator_id
-      ? (names.get(data.responsible_curator_id as string) ?? null)
-      : null,
-    priority: data.priority as Priority,
-    openedAt: data.opened_at as string,
-    closedAt: (data.closed_at as string | null) ?? null,
-    createdAt: data.created_at as string,
-    updatedAt: data.updated_at as string,
-  };
+  return mapCanonicalCase(supabase, data as CanonicalCaseRow, leadStageFallback);
 }
 
-export async function listCasesForContact(supabase: SupabaseClient, contactId: string): Promise<CrmCaseSummary[]> {
+export async function listCasesForContact(
+  supabase: SupabaseClient,
+  contactId: string,
+): Promise<CrmCaseSummary[]> {
+  // O vínculo canônico contato→Case é a PESSOA: o contato aponta para o
+  // paciente que originou (patient_profile_id) e os Cases são do paciente.
+  const contact = await getContactById(supabase, contactId);
+  if (!contact) return [];
+
+  // Sem paciente vinculado (lead não convertido) → nenhum Case, por
+  // definição do domínio: lead não é Case.
+  if (!contact.patientProfileId) return [];
+  const leadStage = contact.pipelineStage;
+
   const { data, error } = await supabase
-    .from("crm_cases")
-    .select(
-      "id, contact_id, title, summary, status, pipeline_stage, responsible_concierge_id, responsible_curator_id, priority, opened_at, closed_at, created_at, updated_at",
-    )
-    .eq("contact_id", contactId)
+    .from("cases")
+    .select(CANONICAL_CASE_COLUMNS)
+    .eq("patient_profile_id", contact.patientProfileId)
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
 
-  const rows = data ?? [];
-  const names = await namesByProfileIds(
-    supabase,
-    rows.flatMap((row) => [row.responsible_concierge_id as string, row.responsible_curator_id as string]),
-  );
-
-  return rows.map((row) => ({
-    id: row.id as string,
-    contactId: row.contact_id as string,
-    title: row.title as string,
-    summary: (row.summary as string | null) ?? null,
-    status: row.status as CrmCaseSummary["status"],
-    pipelineStage: row.pipeline_stage as PipelineStage,
-    responsibleConciergeId: (row.responsible_concierge_id as string | null) ?? null,
-    responsibleConciergeName: row.responsible_concierge_id
-      ? (names.get(row.responsible_concierge_id as string) ?? null)
-      : null,
-    responsibleCuratorId: (row.responsible_curator_id as string | null) ?? null,
-    responsibleCuratorName: row.responsible_curator_id
-      ? (names.get(row.responsible_curator_id as string) ?? null)
-      : null,
-    priority: row.priority as Priority,
-    openedAt: row.opened_at as string,
-    closedAt: (row.closed_at as string | null) ?? null,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  }));
+  const rows = (data ?? []) as CanonicalCaseRow[];
+  const mapped = await Promise.all(rows.map((row) => mapCanonicalCase(supabase, row, leadStage)));
+  return mapped.map((entry) => ({ ...entry, contactId }));
 }
 
 export async function createInteraction(

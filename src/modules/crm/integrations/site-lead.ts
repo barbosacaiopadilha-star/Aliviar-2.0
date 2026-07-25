@@ -8,7 +8,7 @@ import type { SiteLeadInput } from "../schema";
 export async function ingestSiteLead(
   supabase: SupabaseClient,
   input: SiteLeadInput,
-): Promise<{ contactId: string; caseId: string }> {
+): Promise<{ contactId: string }> {
   if (input.honeypot?.trim()) {
     throw new Error("Requisição rejeitada.");
   }

@@ -9,6 +9,7 @@ import type { CrmContactSummary } from "@/modules/crm/types";
 
 const baseContact = (overrides: Partial<CrmContactSummary> = {}): CrmContactSummary => ({
   id: "c1",
+  patientProfileId: null,
   fullName: "Maria Silva",
   preferredName: null,
   phone: "(11) 99999-0000",

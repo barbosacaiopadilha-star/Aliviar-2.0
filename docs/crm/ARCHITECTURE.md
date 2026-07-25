@@ -3,7 +3,8 @@
 ## Decisões
 
 - **Módulo:** `src/modules/crm/` — domínio operacional separado da AliCIA e dos casos clínicos (`curadoria.cases`).
-- **Entidades:** `crm_contacts`, `crm_cases`, `crm_interactions`, `crm_tasks`, `crm_appointments`, `crm_audit_log` no schema `curadoria`.
+- **Entidades:** `crm_contacts` (o Lead — independente do Case), `crm_interactions`, `crm_tasks`, `crm_appointments`, `crm_audit_log` no schema `curadoria`.
+- **Case:** a plataforma NÃO tem entidade de Case própria. O Case é único e canônico em `curadoria.cases`, compartilhado por Atendimento, Curadoria e Concierge; nasce apenas pela abertura autorizada do Atendente (`open_case_from_lead`). A tabela paralela `crm_cases` foi removida na Convergência de Domínio (2026-07-25, migration `convergencia_b4_remove_crm_cases`).
 - **Papel novo:** `concierge` adicionado ao catálogo `curadoria.roles`.
 - **Rotas:** `/admin/crm/*` dentro da área administrativa existente, com layout que aceita `administrador`, `concierge` e leitura mínima de `curador_medico`.
 - **Contato ≠ paciente:** leads e acompanhamento comercial não reutilizam `patient_profiles` para evitar duplicidade semântica e mistura de funil comercial com prontuário.

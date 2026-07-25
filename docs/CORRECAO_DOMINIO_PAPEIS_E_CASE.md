@@ -73,16 +73,16 @@ Consequência para a certificação: **os testes de RLS por papel não podem pro
 
 Nenhum usuário fictício foi criado para contornar isso.
 
-### ⛔ Pendente — violação estrutural
+### ✅ Violação estrutural ELIMINADA (2026-07-25)
 
-**Existem duas entidades Case:**
+Quando este documento foi escrito existiam **duas** entidades Case, sem FK entre elas:
 
 | Tabela | Registros | Origem |
 |---|---|---|
 | `curadoria.cases` | 2 | Método/ACE |
-| `curadoria.crm_cases` | 2 | CRM |
+| ~~`curadoria.crm_cases`~~ | ~~2~~ | ~~CRM~~ — **removida na Convergência de Domínio** |
 
-Sem nenhuma FK entre elas. Isso viola a regra da fonte única e é a causa de o workflow `Atendente → Curador → Concierge` não deixar rastro no banco.
+Hoje existe **um único Case canônico** — `curadoria.cases` — compartilhado por Atendimento, Curadoria e Concierge, com cada passagem de bastão registrada em `case_responsibility_changes`. O quadro acima permanece como registro histórico do diagnóstico.
 
 **Volume trivial: 2 + 2 registros.** A unificação é viável sem risco de perda.
 
@@ -142,13 +142,18 @@ O trigger `cases_responsibility_guard` rejeita qualquer `UPDATE` que toque em `r
 
 `sem responsável → curador_medico` também é normal, por uma razão operacional: **não existe nenhuma pessoa com papel `atendente` em produção**. Fechar esse caminho pararia a operação real para impor um organograma vazio. Reavaliar quando o primeiro Atendente existir.
 
-### ⛔ Fase 3c — migrar os 2 `crm_cases` — **INTERROMPIDA**
+### ✅ Fases 3c e 4 — CONCLUÍDAS na Convergência de Domínio (2026-07-25)
 
-Três condições de parada presentes. Ver §5c.
+A interrupção original (§5c) estava correta para o momento: as fixtures não eram migráveis e havia 4 FKs entrantes + 2 funções de RLS.
 
-### ⛔ Fase 4 — remover `crm_cases`
+A Convergência de Domínio, autorizada pelo Fundador, resolveu em quatro passos — **`crm_cases` não existe mais**:
 
-Bloqueada por 4 FKs entrantes e 2 funções de RLS. Ver §5c.
+- **B1** — as 4 fixtures de smoke test foram exportadas e apagadas (nunca migradas: eram lixo de teste, não dados de paciente)
+- **B2** — as 4 FKs reapontadas para `curadoria.cases`; `can_access_crm_contact` reescrita sem `crm_cases`; **`createContact` deixou de criar Case** (Lead ≠ Case); projeção do pipeline criada com 14 golden tests
+- **B3** — aplicação convergida: 0 leitores, 0 escritores; ciclo ponta a ponta com `case_id` único
+- **B4** — tabela, 3 policies, 1 trigger, 5 índices e `is_curator_for_crm_case` removidos (migration `convergencia_b4_remove_crm_cases`); restauração extraordinária em `supabase/rollback-b4-crm-cases.sql`
+
+O §5c abaixo permanece como registro histórico do diagnóstico que levou à convergência.
 
 ---
 

@@ -143,6 +143,8 @@ export type CrmContactSummary = {
   consentRecordedAt: string | null;
   activeCaseId: string | null;
   activeCaseTitle: string | null;
+  /** Paciente originado deste lead — o vínculo canônico contato→Case (B3). */
+  patientProfileId: string | null;
 };
 
 export type CrmContactDetail = CrmContactSummary & {

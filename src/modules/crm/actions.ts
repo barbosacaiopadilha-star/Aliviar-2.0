@@ -68,7 +68,7 @@ async function requireCrmAction(permission?: Parameters<typeof hasCrmPermission>
 }
 
 export type CreateContactActionResult =
-  | { success: true; contactId: string; caseId: string }
+  | { success: true; contactId: string }
   | { success: false; error: string; duplicates?: ReturnType<typeof findPossibleDuplicates> };
 
 export async function createContactAction(input: unknown): Promise<CreateContactActionResult> {

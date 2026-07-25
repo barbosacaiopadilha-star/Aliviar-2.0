@@ -99,7 +99,7 @@ Redirects legados (`next.config.ts`):
 
 **Nenhuma migration nova.** Transferências usam tabelas existentes:
 
-- `crm_contacts`, `crm_cases` (pipeline_stage, responsible_*)
+- `crm_contacts` (Lead) e `curadoria.cases` (o Case canônico). A etapa pós-Atendimento é PROJEÇÃO derivada do Case (`pipeline-projection.ts`), nunca estado editável. `crm_cases` foi removida em 2026-07-25.
 - `crm_interactions` (registro de handoff)
 - `crm_audit_log` (auditoria append-only)
 

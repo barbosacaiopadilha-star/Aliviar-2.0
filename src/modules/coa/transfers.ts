@@ -63,21 +63,12 @@ export async function recordCoaTransfer(
     );
   }
 
-  if (input.caseId ?? contact.activeCaseId) {
-    const caseId = input.caseId ?? contact.activeCaseId!;
-    if (input.to === "CURADORIA" && input.responsibleId) {
-      await supabase
-        .from("crm_cases")
-        .update({ responsible_curator_id: input.responsibleId })
-        .eq("id", caseId);
-    }
-    if (input.to === "CONCIERGE" && input.responsibleId) {
-      await supabase
-        .from("crm_cases")
-        .update({ responsible_concierge_id: input.responsibleId })
-        .eq("id", caseId);
-    }
-  }
+  // CONVERGÊNCIA B2 (2026-07-25): este registro NÃO move mais responsabilidade
+  // de Case. Existe UM caminho de transferência — transfer_case_responsibility,
+  // auditado no banco. O que sobrevive aqui é o registro de comunicação
+  // (interação + auditoria de CRM) da passagem entre níveis; as colunas
+  // responsible_* de crm_cases eram o segundo estado que a Correção de
+  // Domínio proibiu.
 
   await createInteraction(
     supabase,
