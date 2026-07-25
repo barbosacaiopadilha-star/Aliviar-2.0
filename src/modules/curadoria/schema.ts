@@ -121,3 +121,11 @@ export const registerDecisionInputSchema = z
     message: "Escolha uma das opções ou registre que nenhuma delas serviu.",
     path: ["chosenOptionId"],
   });
+
+// Fase 1 — Acolhimento: as duas revisões que o Motor espera antes de liberar
+// a História (COS_PHASE_DEFINITIONS.ACOLHIMENTO.exitCriteria).
+export const registerAcolhimentoInputSchema = z.object({
+  caseId: z.string().uuid(),
+  contextReviewed: z.boolean(),
+  documentsReviewed: z.boolean(),
+});

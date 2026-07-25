@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import type { Metadata } from "next";
 
+import { AcolhimentoWorkspace } from "@/components/curadoria/acolhimento-workspace";
 import { CaseAlert } from "@/components/curadoria/case-alert";
 import { PhaseNavigator } from "@/components/curadoria/phase-navigator";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -86,12 +87,26 @@ export default async function FasePage({ params }: { params: Promise<{ id: strin
             <CardHeader>
               <CardTitle>Objetivo</CardTitle>
               <CardDescription>
-                Esta tela explica o que a fase espera. O registro acontece na conversa com o
-                paciente — a tela de trabalho desta fase chega em uma próxima entrega.
+                {phaseId === "ACOLHIMENTO"
+                  ? "Esta tela explica o que a fase espera — e é onde você registra as revisões do Acolhimento."
+                  : "Esta tela explica o que a fase espera. O registro acontece na conversa com o paciente — a tela de trabalho desta fase chega em uma próxima entrega."}
               </CardDescription>
             </CardHeader>
             <p className="max-w-reading text-base leading-relaxed text-ink">{definition.objective}</p>
           </Card>
+
+          {/* Fase 1 ganhou tela de trabalho (achado do Fundador em produção,
+              2026-07-24): os itens em aberto agora são resolvíveis aqui, e o
+              prosseguir aparece quando o Motor reconhece a fase como
+              concluída. */}
+          {phaseId === "ACOLHIMENTO" ? (
+            <AcolhimentoWorkspace
+              caseId={record.caseId}
+              contextReviewed={record.acolhimento.contextReviewed}
+              documentsReviewed={record.acolhimento.documentsReviewed}
+              nextPhaseHref={`/coa/curadoria/casos/${record.caseId}/historia`}
+            />
+          ) : null}
 
           {phaseAlerts.length > 0 || phaseInconsistencies.length > 0 ? (
             <div className="space-y-3">

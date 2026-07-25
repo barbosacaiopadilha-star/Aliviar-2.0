@@ -13,6 +13,7 @@ import {
   addPreferenceInputSchema,
   computeCompatibilityInputSchema,
   deliverSelectionInputSchema,
+  registerAcolhimentoInputSchema,
   registerDecisionInputSchema,
   removeFilterInputSchema,
   removeWeightInputSchema,
@@ -469,4 +470,52 @@ export async function registerDecisionAction(input: unknown): Promise<CuradoriaA
   } catch (error) {
     return fail(error, "Não foi possível registrar sua decisão.");
   }
+}
+
+// ---------------------------------------------------------------------------
+// Fase 1 — Acolhimento (correção reportada pelo Fundador em 2026-07-24: a
+// tela explicava a fase mas não oferecia como RESOLVER os itens em aberto).
+// ---------------------------------------------------------------------------
+
+export async function registerAcolhimentoAction(input: unknown): Promise<CuradoriaActionResult> {
+  let authState;
+  try {
+    authState = await requireCurator();
+  } catch {
+    return { success: false, error: "Não autorizado." };
+  }
+
+  const parsed = registerAcolhimentoInputSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: "Dados inválidos." };
+
+  const { caseId, contextReviewed, documentsReviewed } = parsed.data;
+  const supabase = await createServerSupabaseClient();
+
+  // Upsert por case_id: a Consulta Inicial é uma por Caso. Registrar a
+  // revisão NÃO desmarca o que já foi revisado antes — o Acolhimento é
+  // acumulativo, nunca regressivo (o paciente nunca recomeça do zero).
+  const { data: existing, error: readError } = await supabase
+    .from("consultation_records")
+    .select("id, context_reviewed, documents_reviewed")
+    .eq("case_id", caseId)
+    .maybeSingle();
+
+  if (readError) return { success: false, error: "Não foi possível ler o Acolhimento." };
+
+  const next = {
+    context_reviewed: Boolean(existing?.context_reviewed) || contextReviewed,
+    documents_reviewed: Boolean(existing?.documents_reviewed) || documentsReviewed,
+  };
+
+  const { error } = existing
+    ? await supabase.from("consultation_records").update(next).eq("id", existing.id)
+    : await supabase
+        .from("consultation_records")
+        .insert({ case_id: caseId, curator_id: authState.user.id, ...next });
+
+  if (error) return { success: false, error: "Não foi possível registrar o Acolhimento." };
+
+  revalidateCuradoria(caseId);
+  revalidatePath(`/portal-curador/casos/${caseId}/acolhimento`);
+  return { success: true };
 }
