@@ -48,9 +48,15 @@ function NavLinks({
 
 type PatientShellProps = {
   children: ReactNode;
+  /**
+   * Menu de usuário unificado (AuthenticatedUserMenu), resolvido no layout server.
+   * Substitui o LogoutButton solto do desktop: a plataforma inteira tem UM
+   * componente de usuário autenticado, não um por módulo.
+   */
+  userMenu?: ReactNode;
 };
 
-export function PatientShell({ children }: PatientShellProps) {
+export function PatientShell({ children, userMenu }: PatientShellProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -89,9 +95,7 @@ export function PatientShell({ children }: PatientShellProps) {
             />
           </nav>
 
-          <div className="hidden lg:block">
-            <LogoutButton className="w-auto" />
-          </div>
+          <div className="hidden lg:block">{userMenu ?? <LogoutButton className="w-auto" />}</div>
 
           <button
             type="button"

@@ -55,9 +55,12 @@ export function LoginForm() {
       title="Entrar"
       description="Acesse sua conta na Aliviar Curadoria Médica."
       footer={
+        // min-h-11: o alvo de toque media 17px — abaixo até do mínimo AA de
+        // 24px (WCAG 2.5.8), num link crítico de recuperação de acesso.
+        // Achado da auditoria de interação, 2026-07-24.
         <Link
           href="/recuperar-senha"
-          className="font-medium text-brand-primary transition-colors hover:text-brand-primary-deep"
+          className="inline-flex min-h-11 items-center font-medium text-brand-primary transition-colors hover:text-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
         >
           Esqueci minha senha
         </Link>

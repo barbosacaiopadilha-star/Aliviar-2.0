@@ -17,10 +17,9 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { LogoutButton } from "@/components/auth/logout-button";
+import { AuthenticatedUserMenu } from "@/components/auth/authenticated-user-menu";
 import { CommandPaletteProvider, useCommandPalette } from "@/components/ads/command-palette-provider";
 import { IconButton } from "@/components/ads/icon-button";
-import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/components/ui/cn";
 import { Drawer } from "@/components/ui/drawer";
 
@@ -215,13 +214,10 @@ function AppShellContent({ role, displayName, basePath, systemLabel = "Sistema O
                 <IconButton label="Abrir busca global" className="md:hidden" onClick={() => setOpen(true)}>
                   <Search className="size-5" />
                 </IconButton>
-                <div className="hidden min-w-0 sm:block">
-                  <p className="truncate text-sm font-medium text-ink">{greeting}</p>
-                  <Badge variant="sage" className="mt-0.5 normal-case">
-                    {formatRoleLabel(role)}
-                  </Badge>
-                </div>
-                <Avatar name={displayName ?? role} />
+                {/* Menu de usuário unificado da plataforma (BUG CRÍTICO
+                    2026-07-24): o avatar era estático — identidade sem saída.
+                    Agora é o mesmo AuthenticatedUserMenu de todos os módulos. */}
+                <AuthenticatedUserMenu displayName={displayName ?? greeting} roleLabel={formatRoleLabel(role)} />
               </div>
             </div>
           </header>

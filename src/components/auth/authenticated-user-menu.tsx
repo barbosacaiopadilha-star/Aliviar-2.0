@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Menu do usuário autenticado no Portal.
+ * Menu ÚNICO de usuário autenticado da plataforma — Administrador, Atendente, Curador, Concierge e Paciente usam exatamente esta peça. Nunca criar variação por módulo.
  *
  * @metodo Fundamentos §13 — o operador humano é identificável em todo momento
  * @metodo Experience §3 — saída segura e papel visível reduzem ansiedade
@@ -10,18 +10,19 @@
  * com um clique — nunca um nome fictício ou texto solto sem menu.
  */
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { LogoutButton } from "@/components/auth/logout-button";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/components/ui/cn";
 
-type PortalUserMenuProps = {
+type AuthenticatedUserMenuProps = {
   displayName: string;
   roleLabel: string;
 };
 
-export function PortalUserMenu({ displayName, roleLabel }: PortalUserMenuProps) {
+export function AuthenticatedUserMenu({ displayName, roleLabel }: AuthenticatedUserMenuProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -31,8 +32,20 @@ export function PortalUserMenu({ displayName, roleLabel }: PortalUserMenuProps) 
         setOpen(false);
       }
     }
+    // Teclado é cidadão de primeira classe: Escape fecha e devolve o foco ao
+    // gatilho — sem isso, quem navega por teclado fica preso no menu aberto.
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+        (rootRef.current?.querySelector("button[aria-haspopup]") as HTMLButtonElement | null)?.focus();
+      }
+    }
     document.addEventListener("mousedown", onPointerDown);
-    return () => document.removeEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
   }, []);
 
   const initials = displayName
@@ -70,9 +83,19 @@ export function PortalUserMenu({ displayName, roleLabel }: PortalUserMenuProps) 
             <p className="truncate text-sm font-medium text-ink">{displayName}</p>
             <p className="text-xs text-ink-muted">{roleLabel}</p>
           </div>
-          <div className="pt-2">
-            <LogoutButton className="justify-center" />
-          </div>
+          {/* "Alterar senha" leva ao fluxo de redefinição por e-mail — o único
+              que existe hoje. Quando houver página de conta, entra aqui como
+              "Minha conta". */}
+          <Link
+            role="menuitem"
+            href="/recuperar-senha"
+            onClick={() => setOpen(false)}
+            className="mt-2 flex min-h-10 items-center rounded-md px-3 text-sm text-ink transition-colors hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          >
+            Alterar senha
+          </Link>
+          <div role="separator" className="my-2 border-t border-border" />
+          <LogoutButton className="justify-center" />
         </div>
       ) : null}
     </div>

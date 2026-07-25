@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
-import { PortalShell } from "@/components/curadoria/portal-shell";
+import { requireRole } from "@/modules/auth/guard";
+
+import { PortalShellContainer } from "@/components/curadoria/portal-shell-container";
 
 export const metadata: Metadata = {
   title: { default: "Minha Jornada", template: "%s · Aliviar" },
@@ -23,12 +25,23 @@ const NAV = [
   { href: "/portal-paciente/como-funciona", label: "Como está sendo feita" },
 ];
 
-export default function PortalPacienteLayout({
+// BUG CRÍTICO corrigido (2026-07-24): esta é a home do papel `paciente`, e o
+// layout renderizava sem identidade e SEM SAÍDA — quem entrava não tinha como
+// encerrar a sessão. O container resolve a sessão real e monta o mesmo menu
+// de usuário de toda a plataforma (nome, papel, alterar senha, Sair).
+export default async function PortalPacienteLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  await requireRole("paciente");
+
   return (
-    <PortalShell homeHref="/portal-paciente" subtitle="Curadoria Médica" nav={NAV} variant="patient">
+    <PortalShellContainer
+      homeHref="/portal-paciente"
+      subtitle="Curadoria Médica"
+      nav={NAV}
+      variant="patient"
+    >
       {children}
-    </PortalShell>
+    </PortalShellContainer>
   );
 }

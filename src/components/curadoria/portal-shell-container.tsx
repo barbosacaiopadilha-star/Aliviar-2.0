@@ -9,7 +9,7 @@
  */
 
 import { PortalShell } from "@/components/curadoria/portal-shell";
-import { PortalUserMenu } from "@/components/curadoria/portal-user-menu";
+import { AuthenticatedUserMenu } from "@/components/auth/authenticated-user-menu";
 import { getAuthState } from "@/modules/auth/session";
 import {
   resolveAuthenticatedDisplayName,
@@ -22,6 +22,7 @@ type PortalShellContainerProps = {
   homeHref: string;
   subtitle: string;
   nav?: PortalNavItem[];
+  variant?: "default" | "patient";
   children: React.ReactNode;
 };
 
@@ -29,19 +30,20 @@ export async function PortalShellContainer({
   homeHref,
   subtitle,
   nav,
+  variant,
   children,
 }: PortalShellContainerProps) {
   const auth = await getAuthState();
 
   const userMenu = auth ? (
-    <PortalUserMenu
+    <AuthenticatedUserMenu
       displayName={resolveAuthenticatedDisplayName(auth)}
       roleLabel={resolvePrimaryRoleLabel(auth.roles)}
     />
   ) : null;
 
   return (
-    <PortalShell homeHref={homeHref} subtitle={subtitle} nav={nav} userMenu={userMenu}>
+    <PortalShell homeHref={homeHref} subtitle={subtitle} nav={nav} variant={variant} userMenu={userMenu}>
       {children}
     </PortalShell>
   );
