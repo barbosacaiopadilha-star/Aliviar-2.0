@@ -101,7 +101,11 @@ export function PortalShell({
         {children}
       </main>
 
-      {isPatient ? null : (
+      {/* Aviso de ambiente de trabalho: NUNCA em produção. Um Atendente real
+          atendendo gente real não pode ler "dados de demonstração" no rodapé
+          da própria ferramenta (Polimento 2026-07-24). Condicionado por
+          código, não por CSS — em produção o nó não existe. */}
+      {isPatient || process.env.NODE_ENV === "production" ? null : (
         <footer className="mx-auto w-full max-w-content px-4 pb-10 lg:px-8">
           <p className="border-t border-border pt-4 text-xs text-ink-muted">
             Ambiente de construção da experiência — dados de demonstração.

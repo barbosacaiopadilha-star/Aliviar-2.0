@@ -66,15 +66,15 @@ export default async function PainelInicialPage() {
         // deixar uma tela muda.
         <Card padding="lg" className="max-w-reading space-y-3">
           <CardHeader>
-            <CardTitle>Ainda não há Curadorias aqui</CardTitle>
+            <CardTitle>Ainda não há Curadorias na sua fila</CardTitle>
             <CardDescription>
-              Assim que um Caso for aberto e atribuído a você, ele aparece nesta tela com o próximo
+              Quando o Atendimento encaminhar um Case ao seu nome, ele aparece aqui com o próximo
               passo já indicado.
             </CardDescription>
           </CardHeader>
           <p className="text-sm leading-relaxed text-ink-muted">
-            Nada foi perdido e nada está carregando — a lista está vazia porque ainda não existe
-            Caso atribuído ao seu nome.
+            A fila está atualizada — nada foi perdido e nada está carregando. Você não precisa
+            fazer nada agora; esta tela se renova a cada visita.
           </p>
         </Card>
       ) : (

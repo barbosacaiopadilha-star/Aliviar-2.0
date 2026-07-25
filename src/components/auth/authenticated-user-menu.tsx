@@ -10,6 +10,7 @@
  * com um clique — nunca um nome fictício ou texto solto sem menu.
  */
 
+import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
@@ -27,7 +28,11 @@ export function AuthenticatedUserMenu({ displayName, roleLabel }: AuthenticatedU
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function onPointerDown(event: MouseEvent) {
+    // pointerdown cobre mouse E touch com um único listener. Importante: o
+    // clique DENTRO do menu não fecha nada aqui (contains = true) — o item
+    // executa o próprio handler antes de qualquer fechamento. Fechar no
+    // pointerdown de fora nunca corta um clique de dentro.
+    function onPointerDown(event: PointerEvent) {
       if (!rootRef.current?.contains(event.target as Node)) {
         setOpen(false);
       }
@@ -40,10 +45,10 @@ export function AuthenticatedUserMenu({ displayName, roleLabel }: AuthenticatedU
         (rootRef.current?.querySelector("button[aria-haspopup]") as HTMLButtonElement | null)?.focus();
       }
     }
-    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
     return () => {
-      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
   }, []);
@@ -56,13 +61,18 @@ export function AuthenticatedUserMenu({ displayName, roleLabel }: AuthenticatedU
 
   return (
     <div ref={rootRef} className="relative">
+      {/* aria-label fixo: abaixo de `sm` o nome some do gatilho e, sem isto,
+          o botão viraria um avatar sem nome acessível. min-h-11: área de
+          toque de 44px no mobile. O chevron é a indicação visual de que
+          existe um menu — e gira quando aberto, sem depender só de cor. */}
       <button
         type="button"
+        aria-label={`Menu do usuário — ${displayName}, ${roleLabel}`}
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => setOpen((value) => !value)}
         className={cn(
-          "flex min-h-10 items-center gap-2 rounded-full border border-border bg-surface px-2 py-1.5 pl-1.5 pr-3",
+          "flex min-h-11 items-center gap-2 rounded-full border border-border bg-surface px-2 py-1.5 pl-1.5 pr-2.5",
           "transition-colors duration-fast ease-standard hover:bg-canvas",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2",
         )}
@@ -72,6 +82,13 @@ export function AuthenticatedUserMenu({ displayName, roleLabel }: AuthenticatedU
           <span className="block max-w-[10rem] truncate text-sm font-medium text-ink">{displayName}</span>
           <span className="block text-xs text-ink-muted">{roleLabel}</span>
         </span>
+        <ChevronDown
+          aria-hidden="true"
+          className={cn(
+            "size-4 shrink-0 text-ink-muted transition-transform duration-fast ease-standard",
+            open && "rotate-180",
+          )}
+        />
       </button>
 
       {open ? (

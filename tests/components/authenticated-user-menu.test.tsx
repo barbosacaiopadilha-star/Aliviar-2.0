@@ -65,3 +65,57 @@ describe("AuthenticatedUserMenu — o componente único de usuário autenticado"
     expect(screen.getByRole("menuitem", { name: "Alterar senha" })).toHaveFocus();
   });
 });
+
+describe("interação completa do menu (Polimento 2026-07-24)", () => {
+  it("clicar fora fecha o menu", async () => {
+    const user = userEvent.setup();
+    render(
+      <div>
+        <AuthenticatedUserMenu displayName="Helena Souza" roleLabel="Curador Médico" />
+        <button type="button">Fora</button>
+      </div>,
+    );
+    await user.click(screen.getByRole("button", { expanded: false }));
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Fora" }));
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+
+  it("Sair recebe foco e dispara o envio do logout — e o menu não fecha antes", async () => {
+    const user = userEvent.setup();
+    renderMenu();
+    await user.click(screen.getByRole("button", { expanded: false }));
+
+    const sair = screen.getByRole("button", { name: "Sair" });
+    sair.focus();
+    expect(sair).toHaveFocus();
+
+    // O clique DENTRO do menu não pode fechá-lo antes do handler: o form de
+    // logout precisa continuar montado no momento do submit.
+    const form = sair.closest("form");
+    expect(form).not.toBeNull();
+    let submissoes = 0;
+    form!.addEventListener("submit", (e) => {
+      e.preventDefault();
+      submissoes += 1;
+    });
+
+    await user.click(sair);
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+    expect(submissoes).toBe(1);
+  });
+
+  it("não existe nesting inválido de elementos interativos", async () => {
+    const user = userEvent.setup();
+    const { container } = renderMenu();
+    await user.click(screen.getByRole("button", { expanded: false }));
+    expect(container.querySelectorAll("button button, button a, a button, a a").length).toBe(0);
+  });
+
+  it("o gatilho tem nome acessível mesmo quando o texto some no mobile", () => {
+    renderMenu();
+    expect(
+      screen.getByRole("button", { name: /Menu do usuário — Helena Souza, Curador Médico/ }),
+    ).toBeInTheDocument();
+  });
+});

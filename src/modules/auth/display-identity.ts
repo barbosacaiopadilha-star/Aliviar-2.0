@@ -2,6 +2,9 @@ import type { AuthState } from "./session";
 
 const ROLE_LABELS: Record<string, string> = {
   administrador: "Administrador",
+  // Polimento 2026-07-24: `atendente` faltava aqui — um Atendente logado era
+  // rotulado "Usuário", com o papel real disponível na sessão.
+  atendente: "Atendente",
   curador_medico: "Curador Médico",
   concierge: "Concierge",
   paciente: "Paciente",
@@ -23,7 +26,7 @@ export function resolveAuthenticatedDisplayName(state: AuthState): string {
 }
 
 export function resolvePrimaryRoleLabel(roles: string[]): string {
-  const priority = ["administrador", "curador_medico", "concierge", "profissional", "paciente"];
+  const priority = ["administrador", "atendente", "curador_medico", "concierge", "profissional", "paciente"];
   for (const role of priority) {
     if (roles.includes(role)) {
       return ROLE_LABELS[role] ?? role;
