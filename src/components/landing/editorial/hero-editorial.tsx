@@ -27,7 +27,7 @@ export function HeroEditorial({ videoSrc, videoPoster }: HeroEditorialProps = {}
 
   return (
     <section className="landing-hero-immersive">
-      <ImmersiveBackdrop scene="landingHero" variant="landing-hero" imageOpacity={38} priority />
+      <ImmersiveBackdrop scene="landingHero" variant="landing-hero" imageOpacity={62} priority />
 
       <div className="relative z-10 mx-auto w-full max-w-content px-5 lg:px-10">
         <div className="landing-fade-in mx-auto max-w-3xl text-center">
@@ -51,7 +51,7 @@ export function HeroEditorial({ videoSrc, videoPoster }: HeroEditorialProps = {}
         </div>
 
         {video.src ? (
-          <div className="landing-fade-in mx-auto mt-16 max-w-4xl" style={{ animationDelay: "120ms" }}>
+          <div className="landing-approach mx-auto mt-20 max-w-4xl" style={{ animationDelay: "160ms" }}>
             <div className="landing-video-cinema">
               <video
                 src={video.src}

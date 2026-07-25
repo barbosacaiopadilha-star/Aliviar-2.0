@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactNode } from "react";
+import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
 
 import { ImmersiveBackdrop } from "@/components/shared/immersive-backdrop";
 import type { AliviarSceneKey } from "@/lib/aliviar-environments";
@@ -49,9 +49,15 @@ export function LandingEyebrow({ children, dark = false }: { children: string; d
 export function LandingCard({
   children,
   className,
+  style,
 }: {
   children: ReactNode;
   className?: string;
+  style?: CSSProperties;
 }) {
-  return <div className={cn("landing-card p-7 lg:p-9", className)}>{children}</div>;
+  return (
+    <div className={cn("landing-card p-7 lg:p-10", className)} style={style}>
+      {children}
+    </div>
+  );
 }

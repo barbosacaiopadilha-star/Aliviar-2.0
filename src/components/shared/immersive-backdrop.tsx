@@ -15,7 +15,7 @@ type ImmersiveBackdropProps = {
 
 const overlayClasses: Record<NonNullable<ImmersiveBackdropProps["variant"]>, string> = {
   "landing-hero":
-    "bg-gradient-to-b from-[var(--color-bg-canvas)]/94 via-[var(--color-bg-canvas)]/82 to-[var(--color-bg-canvas)]/96",
+    "bg-gradient-to-b from-[var(--color-bg-canvas)]/88 via-[var(--color-bg-canvas)]/45 to-[var(--color-bg-canvas)]/90",
   "landing-soft":
     "bg-gradient-to-b from-[var(--color-bg-canvas)]/90 via-[var(--color-bg-canvas-warm)]/95 to-[var(--color-bg-canvas)]",
   "patient-intimate":

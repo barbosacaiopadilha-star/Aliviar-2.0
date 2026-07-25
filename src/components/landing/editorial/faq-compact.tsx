@@ -29,12 +29,14 @@ export function FaqCompactSection() {
   return (
     <LandingSection id="duvidas" variant="warm">
       <div className="mx-auto max-w-2xl">
-        <h2 className="landing-heading text-center text-3xl lg:text-[2.625rem]">Dúvidas frequentes</h2>
-        <p className="landing-body mx-auto mt-5 max-w-lg text-center text-[var(--color-ink-muted)]">
-          Respostas diretas, no seu ritmo.
-        </p>
+        <div className="landing-reveal">
+          <h2 className="landing-heading text-center text-3xl lg:text-[2.625rem]">Dúvidas frequentes</h2>
+          <p className="landing-body mx-auto mt-6 max-w-lg text-center text-[var(--color-ink-muted)]">
+            Respostas diretas, no seu ritmo.
+          </p>
+        </div>
 
-        <div className="landing-faq-book mt-14">
+        <div className="landing-reveal landing-faq-book mt-16">
           {FAQ_ITEMS.map((item, index) => {
             const isOpen = openIndex === index;
 
@@ -52,7 +54,9 @@ export function FaqCompactSection() {
                   </span>
                 </button>
                 {isOpen ? (
-                  <p className="landing-body pb-6 pr-10 text-[var(--color-ink-muted)]">{item.answer}</p>
+                  <p className="landing-faq-answer landing-body pb-7 pr-10 text-[var(--color-ink-muted)]">
+                    {item.answer}
+                  </p>
                 ) : null}
               </div>
             );

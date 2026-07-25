@@ -10,6 +10,7 @@ import {
 } from "@/components/landing/editorial/editorial-sections";
 import { FaqCompactSection } from "@/components/landing/editorial/faq-compact";
 import { HeroEditorial } from "@/components/landing/editorial/hero-editorial";
+import { RevealGroup } from "@/components/landing/editorial/reveal";
 
 export const metadata: Metadata = {
   title: { absolute: "Aliviar Curadoria Médica — Uma decisão de saúde importante" },
@@ -21,13 +22,15 @@ export default function HomePage() {
   return (
     <>
       <HeroEditorial />
-      <ProblemaSection />
-      <MetodoSection />
-      <ComoFuncionaSection />
-      <PrioridadesSection />
-      <RelatorioJornadaSection />
-      <QuemSomosSection />
-      <FaqCompactSection />
+      <RevealGroup>
+        <ProblemaSection />
+        <MetodoSection />
+        <ComoFuncionaSection />
+        <PrioridadesSection />
+        <RelatorioJornadaSection />
+        <QuemSomosSection />
+        <FaqCompactSection />
+      </RevealGroup>
     </>
   );
 }
