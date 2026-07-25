@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { AcolhimentoWorkspace } from "@/components/curadoria/acolhimento-workspace";
+import { PhaseDeclarationWorkspace } from "@/components/curadoria/phase-declaration-workspace";
 import { CaseAlert } from "@/components/curadoria/case-alert";
 import { PhaseNavigator } from "@/components/curadoria/phase-navigator";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -87,9 +88,9 @@ export default async function FasePage({ params }: { params: Promise<{ id: strin
             <CardHeader>
               <CardTitle>Objetivo</CardTitle>
               <CardDescription>
-                {phaseId === "ACOLHIMENTO"
-                  ? "Esta tela explica o que a fase espera — e é onde você registra as revisões do Acolhimento."
-                  : "Esta tela explica o que a fase espera. O registro acontece na conversa com o paciente — a tela de trabalho desta fase chega em uma próxima entrega."}
+                {["ACOLHIMENTO", "HISTORIA", "CASO", "VALIDACAO"].includes(phaseId)
+                  ? "Esta tela explica o que a fase espera — e a ação para resolvê-la está logo abaixo."
+                  : "Esta tela explica o que a fase espera. A tela de trabalho desta fase tem rota própria — o painel do caso leva até ela."}
               </CardDescription>
             </CardHeader>
             <p className="max-w-reading text-base leading-relaxed text-ink">{definition.objective}</p>
@@ -106,6 +107,49 @@ export default async function FasePage({ params }: { params: Promise<{ id: strin
               documentsReviewed={record.acolhimento.documentsReviewed}
               nextPhaseHref={`/coa/curadoria/casos/${record.caseId}/historia`}
             />
+          ) : null}
+
+          {/* ONE ALIVIAR, Problema 1: nenhuma fase termina sem CTA. As fases
+              2 e 3 ganham a mesma tela de declaração; a 6 aponta para onde a
+              validação de fato acontece (o Perfil de Prioridades). */}
+          {phaseId === "HISTORIA" ? (
+            <PhaseDeclarationWorkspace
+              phase="historia"
+              caseId={record.caseId}
+              initialText={record.historia.narrative}
+              understandingConfirmedAt={record.historia.understandingConfirmedAt}
+              nextPhaseHref={`/coa/curadoria/casos/${record.caseId}/caso`}
+              nextPhaseLabel="Prosseguir para o Caso"
+            />
+          ) : null}
+
+          {phaseId === "CASO" ? (
+            <PhaseDeclarationWorkspace
+              phase="caso"
+              caseId={record.caseId}
+              initialText={record.caso.clinicalContext}
+              nextPhaseHref={`/coa/curadoria/casos/${record.caseId}/filtros`}
+              nextPhaseLabel="Prosseguir para os Filtros"
+            />
+          ) : null}
+
+          {phaseId === "VALIDACAO" ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Validar com o paciente</CardTitle>
+                <CardDescription>
+                  A distribuição dos 100 pontos e o ato de validação acontecem no Perfil de
+                  Prioridades — com a evidência de cada peso à vista.
+                </CardDescription>
+              </CardHeader>
+              <Link
+                href={`/coa/curadoria/casos/${record.caseId}/prioridades`}
+                className="inline-flex min-h-11 items-center gap-2 rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors duration-fast ease-standard hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+              >
+                Abrir o Perfil de Prioridades
+                <span aria-hidden="true">→</span>
+              </Link>
+            </Card>
           ) : null}
 
           {phaseAlerts.length > 0 || phaseInconsistencies.length > 0 ? (

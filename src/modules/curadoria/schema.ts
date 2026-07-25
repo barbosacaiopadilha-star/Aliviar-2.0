@@ -129,3 +129,21 @@ export const registerAcolhimentoInputSchema = z.object({
   contextReviewed: z.boolean(),
   documentsReviewed: z.boolean(),
 });
+
+// Fase 2 — História: narrativa organizada + reconhecimento do paciente.
+export const registerHistoriaInputSchema = z
+  .object({
+    caseId: z.string().uuid(),
+    narrative: z.string().trim().max(8000).optional(),
+    confirmUnderstanding: z.boolean().optional(),
+  })
+  .refine((v) => Boolean(v.narrative?.trim()) || v.confirmUnderstanding, {
+    message: "Registre a história ou confirme o reconhecimento.",
+  });
+
+// Fase 3 — Caso: contexto clínico como fato relatado (a Aliviar nunca
+// diagnostica nem interpreta exame — comentário da própria tabela).
+export const registerCasoInputSchema = z.object({
+  caseId: z.string().uuid(),
+  clinicalContext: z.string().trim().min(1, "Descreva o contexto clínico relatado.").max(8000),
+});

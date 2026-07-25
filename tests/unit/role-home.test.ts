@@ -8,7 +8,7 @@ describe("getRoleHome", () => {
     expect(getRoleHome(["profissional"])).toBe("/profissional");
     // Paciente e Curador vão para as superfícies do Método, não para os
     // painéis do ACE antigo (consolidação, MISSÃO 210).
-    expect(getRoleHome(["paciente"])).toBe("/portal-paciente");
+    expect(getRoleHome(["paciente"])).toBe("/paciente");
     expect(getRoleHome(["curador_medico"])).toBe("/portal-curador");
     // Os três níveis humanos têm superfície própria — a que executa as
     // operações auditadas do domínio (Correção de Domínio, 2026-07-24).
@@ -37,7 +37,7 @@ describe("getRoleHome", () => {
   });
 
   it("usa o primeiro papel conhecido quando há mais de um", () => {
-    expect(getRoleHome(["papel-desconhecido", "paciente"])).toBe("/portal-paciente");
+    expect(getRoleHome(["papel-desconhecido", "paciente"])).toBe("/paciente");
   });
 });
 
@@ -48,7 +48,7 @@ describe("getAuthenticatedPortalCta", () => {
   it("prioriza a experiência do paciente sobre qualquer papel de equipe", () => {
     expect(getAuthenticatedPortalCta(["paciente", "administrador"])).toEqual({
       label: "Minha Jornada",
-      href: "/portal-paciente",
+      href: "/paciente",
     });
   });
 

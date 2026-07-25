@@ -14,6 +14,8 @@ import {
   computeCompatibilityInputSchema,
   deliverSelectionInputSchema,
   registerAcolhimentoInputSchema,
+  registerCasoInputSchema,
+  registerHistoriaInputSchema,
   registerDecisionInputSchema,
   removeFilterInputSchema,
   removeWeightInputSchema,
@@ -517,5 +519,83 @@ export async function registerAcolhimentoAction(input: unknown): Promise<Curador
 
   revalidateCuradoria(caseId);
   revalidatePath(`/portal-curador/casos/${caseId}/acolhimento`);
+  return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// Fases 2 e 3 — História e Caso (ONE ALIVIAR, Problema 1: nenhuma fase
+// termina sem CTA; toda declaração é ato do Curador).
+// ---------------------------------------------------------------------------
+
+export async function registerHistoriaAction(input: unknown): Promise<CuradoriaActionResult> {
+  try {
+    await requireCurator();
+  } catch {
+    return { success: false, error: "Não autorizado." };
+  }
+
+  const parsed = registerHistoriaInputSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+
+  const { caseId, narrative, confirmUnderstanding } = parsed.data;
+  const supabase = await createServerSupabaseClient();
+
+  const { data: existing, error: readError } = await supabase
+    .from("consultation_records")
+    .select("id, narrative, understanding_confirmed_at")
+    .eq("case_id", caseId)
+    .maybeSingle();
+
+  if (readError) return { success: false, error: "Não foi possível ler a História." };
+  if (!existing) {
+    // A História pressupõe o Acolhimento — que cria o registro da Consulta.
+    return { success: false, error: "Conclua o Acolhimento antes de registrar a História." };
+  }
+
+  const patch: Record<string, unknown> = {};
+  if (narrative?.trim()) patch.narrative = narrative.trim();
+  // Confirmação é acumulativa: uma vez reconhecida, nunca regride (P5).
+  if (confirmUnderstanding && !existing.understanding_confirmed_at) {
+    patch.understanding_confirmed_at = new Date().toISOString();
+  }
+  if (Object.keys(patch).length === 0) return { success: true };
+
+  const { error } = await supabase.from("consultation_records").update(patch).eq("id", existing.id);
+  if (error) return { success: false, error: "Não foi possível registrar a História." };
+
+  revalidateCuradoria(caseId);
+  revalidatePath(`/portal-curador/casos/${caseId}/historia`);
+  return { success: true };
+}
+
+export async function registerCasoAction(input: unknown): Promise<CuradoriaActionResult> {
+  try {
+    await requireCurator();
+  } catch {
+    return { success: false, error: "Não autorizado." };
+  }
+
+  const parsed = registerCasoInputSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+
+  const { caseId, clinicalContext } = parsed.data;
+  const supabase = await createServerSupabaseClient();
+
+  const { data: existing, error: readError } = await supabase
+    .from("case_clinical_context")
+    .select("id")
+    .eq("case_id", caseId)
+    .maybeSingle();
+
+  if (readError) return { success: false, error: "Não foi possível ler o Caso." };
+
+  const { error } = existing
+    ? await supabase.from("case_clinical_context").update({ clinical_context: clinicalContext }).eq("id", existing.id)
+    : await supabase.from("case_clinical_context").insert({ case_id: caseId, clinical_context: clinicalContext });
+
+  if (error) return { success: false, error: "Não foi possível registrar o contexto clínico." };
+
+  revalidateCuradoria(caseId);
+  revalidatePath(`/portal-curador/casos/${caseId}/caso`);
   return { success: true };
 }

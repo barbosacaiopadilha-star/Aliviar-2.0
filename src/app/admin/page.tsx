@@ -166,15 +166,17 @@ export default async function AdminDashboardPage({
         </nav>
       </div>
 
-      <section aria-labelledby="aquisicao">
-        <h2 id="aquisicao" className="mb-2 text-sm font-semibold text-ink-muted">
-          Aquisição
+      {/* ONE ALIVIAR, Problema 5: a Home responde "onde preciso agir agora?"
+          — os números que doem vêm primeiro; aquisição e estatística, depois. */}
+      <section aria-labelledby="pendencias">
+        <h2 id="pendencias" className="mb-2 text-sm font-semibold text-ink-muted">
+          Onde agir agora
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Leads novos" value={indicators.leadsNovos} />
-          <StatCard label="Em qualificação" value={indicators.leadsEmQualificacao} />
-          <StatCard label="Conversão lead → paciente" value={indicators.taxaConversaoLead} suffix="%" />
-          <StatCard label="Pacientes ativos" value={indicators.pacientesAtivos} href="/admin/pacientes" />
+          <StatCard label="Sem responsável" value={indicators.casesSemResponsavel} href="/admin/casos" emphasis />
+          <StatCard label="Cases atrasados" value={indicators.casesAtrasados} emphasis />
+          <StatCard label="Tarefas vencidas" value={indicators.tarefasVencidas} emphasis />
+          <StatCard label="Compromissos em 7 dias" value={indicators.compromissosProximos} />
         </div>
       </section>
 
@@ -184,21 +186,21 @@ export default async function AdminDashboardPage({
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="Cases abertos" value={indicators.casesAbertos} href="/admin/casos" />
-          <StatCard label="Sem responsável" value={indicators.casesSemResponsavel} href="/admin/casos" emphasis />
           <StatCard label="Com o Concierge" value={indicators.casesNoConcierge} />
           <StatCard label="Concluídos" value={indicators.casesConcluidos} />
+          <StatCard label="Documentos pendentes" value={indicators.documentosPendentes} />
         </div>
       </section>
 
-      <section aria-labelledby="pendencias">
-        <h2 id="pendencias" className="mb-2 text-sm font-semibold text-ink-muted">
-          Pendências e atrasos
+      <section aria-labelledby="aquisicao">
+        <h2 id="aquisicao" className="mb-2 text-sm font-semibold text-ink-muted">
+          Aquisição
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Cases atrasados" value={indicators.casesAtrasados} emphasis />
-          <StatCard label="Tarefas vencidas" value={indicators.tarefasVencidas} emphasis />
-          <StatCard label="Compromissos em 7 dias" value={indicators.compromissosProximos} />
-          <StatCard label="Documentos pendentes" value={indicators.documentosPendentes} />
+          <StatCard label="Leads novos" value={indicators.leadsNovos} />
+          <StatCard label="Em qualificação" value={indicators.leadsEmQualificacao} />
+          <StatCard label="Conversão lead → paciente" value={indicators.taxaConversaoLead} suffix="%" />
+          <StatCard label="Pacientes ativos" value={indicators.pacientesAtivos} href="/admin/pacientes" />
         </div>
       </section>
 

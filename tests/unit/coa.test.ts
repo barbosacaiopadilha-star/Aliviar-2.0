@@ -39,7 +39,7 @@ describe("COA — permissões", () => {
   });
 
   it("resolve home por papel", () => {
-    expect(resolveCoaHomePath(["concierge"])).toBe("/coa/atendimento");
+    expect(resolveCoaHomePath(["concierge"])).toBe("/acompanhamento");
     expect(resolveCoaHomePath(["curador_medico"])).toBe("/coa/curadoria");
   });
 });

@@ -5,18 +5,20 @@ import { LEAD_SOURCE_LABELS } from "@/modules/crm/lead";
 import { nextStepForLead, sortLeadQueue } from "@/modules/crm/lead-next-step";
 import { listLeadsForAtendente } from "@/modules/crm/lead-repository";
 
-import { EmptyState } from "@/components/ui/empty-state";
+import { EmptyJourneyState, JourneyHeader } from "@/components/journey";
 
 export const metadata = { title: "Meus leads" };
 
 /**
- * Fila do Atendente.
+ * Fila do Atendente — a home da jornada do Nível 1.
  *
- * @metodo Experience §5 — UX3: nunca esconder o próximo passo
+ * @metodo Guided Experience §2 — as Cinco Perguntas
+ * @metodo UX_PRINCIPLES P6 — filas ordenam pelo que falta fazer
  *
  * A fila é ordenada pelo que falta fazer, não pela data. Um lead que espera
  * qualificação há três dias é mais urgente que um convertido hoje, e a lista
- * precisa dizer isso sem que ninguém tenha que ler tudo.
+ * precisa dizer isso sem que ninguém tenha que ler tudo. Cada card já É a
+ * próxima ação daquela pessoa (rótulo pelo efeito, nunca "Continuar").
  */
 
 const TOM: Record<string, string> = {
@@ -36,21 +38,27 @@ export default async function AtendimentoPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-sans text-2xl font-semibold text-ink">Meus leads</h1>
-        <p className="text-sm text-ink-muted">
-          {leads.length === 0
-            ? "Nenhum contato na fila."
+      <JourneyHeader
+        moment="Meus leads"
+        context={
+          leads.length === 0
+            ? undefined
             : aguardando === 0
               ? "Todos os contatos já viraram paciente."
-              : `${aguardando} ${aguardando === 1 ? "contato aguarda" : "contatos aguardam"} sua próxima ação.`}
-        </p>
-      </div>
+              : `${aguardando} ${aguardando === 1 ? "contato aguarda" : "contatos aguardam"} sua próxima ação — o primeiro da lista é o mais urgente.`
+        }
+        nothingPendingLabel={
+          leads.length > 0 && aguardando === 0
+            ? "Nada depende de você agora — os Cases seguem com o Curador."
+            : undefined
+        }
+      />
 
       {leads.length === 0 ? (
-        <EmptyState
-          title="Nenhum lead na fila."
-          description="Quando alguém entrar em contato pelo site, WhatsApp ou indicação, o contato aparece aqui para você acolher e qualificar."
+        <EmptyJourneyState
+          title="Nenhum contato na fila"
+          becauseOf="Ninguém entrou em contato ainda."
+          whatWillHappen="Quando alguém escrever pelo site, WhatsApp ou indicação, o contato aparece aqui para você acolher e qualificar."
         />
       ) : (
         <ul className="space-y-2">

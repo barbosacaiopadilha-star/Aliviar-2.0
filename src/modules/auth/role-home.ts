@@ -24,7 +24,7 @@ export const ROLE_HOME: Record<string, string> = {
   curador_medico: "/portal-curador",
   concierge: "/acompanhamento",
   profissional: "/profissional",
-  paciente: "/portal-paciente",
+  paciente: "/paciente",
 };
 
 const ROLE_PORTAL_LABELS: Record<string, string> = {

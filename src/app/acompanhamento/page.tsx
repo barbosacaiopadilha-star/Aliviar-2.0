@@ -5,7 +5,7 @@ import { requireAnyRole } from "@/modules/auth/guard";
 import { CASE_STATUS_LABELS, type CaseStatus } from "@/modules/cases/types";
 
 import { PortalShellContainer } from "@/components/curadoria/portal-shell-container";
-import { EmptyState } from "@/components/ui/empty-state";
+import { EmptyJourneyState, JourneyHeader } from "@/components/journey";
 
 export const metadata: Metadata = {
   title: "Acompanhamento",
@@ -45,17 +45,19 @@ export default async function AcompanhamentoPage() {
       nav={[{ href: "/acompanhamento", label: "Meus acompanhamentos" }]}
     >
       <div className="space-y-6">
-        <div>
-          <h1 className="font-sans text-2xl font-semibold text-ink">Meus acompanhamentos</h1>
-          <p className="text-sm text-ink-muted">
-            Cases que já passaram pela Curadoria e seguem com você até o encerramento.
-          </p>
-        </div>
+        <JourneyHeader
+          moment="Meus acompanhamentos"
+          context="Cases que já passaram pela Curadoria e seguem com você até o encerramento."
+          nothingPendingLabel={
+            cases.length === 0 ? undefined : `${cases.length} em acompanhamento — o mais frio primeiro.`
+          }
+        />
 
         {cases.length === 0 ? (
-          <EmptyState
-            title="Nenhum acompanhamento no momento."
-            description="Quando um Curador concluir uma Curadoria e encaminhar o Case, ele aparece aqui — o mesmo Case, com você como responsável."
+          <EmptyJourneyState
+            title="Nenhum acompanhamento no momento"
+            becauseOf="Nenhuma Curadoria foi concluída e encaminhada a você ainda."
+            whatWillHappen="Quando um Curador concluir e encaminhar, o Case aparece aqui — o mesmo Case, com você como responsável."
           />
         ) : (
           <ul className="space-y-2">

@@ -48,13 +48,23 @@ export function canAccessCoaLevel(roles: string[], level: CoaLevel): boolean {
 
 export function resolveDefaultCoaLevel(roles: string[]): CoaLevel | null {
   if (roles.includes("curador_medico")) return "CURADORIA";
-  if (roles.includes("concierge")) return "ATENDIMENTO";
+  // ONE ALIVIAR: o Concierge é Nível 3 — o nível dele, nunca o Atendimento
+  // (resíduo de quando o papel operava a fila do CRM).
+  if (roles.includes("concierge")) return "CONCIERGE";
   if (roles.includes("administrador")) return "ATENDIMENTO";
   return null;
 }
 
+// ONE ALIVIAR: as homes de nível são as jornadas auditadas — o mesmo destino
+// do hub /coa e do ROLE_HOME, nunca um terceiro mapa que possa divergir.
+const COA_LEVEL_HOMES: Record<CoaLevel, string> = {
+  ATENDIMENTO: "/atendimento",
+  CURADORIA: "/coa/curadoria",
+  CONCIERGE: "/acompanhamento",
+};
+
 export function resolveCoaHomePath(roles: string[]): string {
   const level = resolveDefaultCoaLevel(roles);
   if (!level) return "/acesso-negado";
-  return `/coa/${level.toLowerCase()}`;
+  return COA_LEVEL_HOMES[level];
 }
