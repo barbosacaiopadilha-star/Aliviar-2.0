@@ -3,7 +3,9 @@ import type { Metadata } from "next";
 
 import { PatientWelcome } from "@/components/paciente/dashboard/patient-primitives";
 import { PatientHomeState } from "@/components/paciente/patient-home-state";
-import { ProgressTimeline, type JourneyStage } from "@/components/journey";
+import { NextActionCard, ProgressTimeline, type JourneyStage } from "@/components/journey";
+import { LinkButton } from "@/components/landing/link-button";
+import { derivePatientPending, patientStageHref } from "@/modules/paciente/next-action";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import { getPatientCaseOverview } from "@/modules/cases";
@@ -53,6 +55,9 @@ export default async function PacienteHomePage() {
           stage.nextAction && stage.nextAction.owner === "VOCE"
             ? `${stage.description} — ${stage.nextAction.label}.`
             : stage.description,
+        // Uma etapa vira link só quando existe onde chegar. Nunca uma caixa
+        // clicável que abre algo sem relação com ela.
+        href: patientStageHref(stage.id),
       }))
     : null;
 
@@ -61,6 +66,10 @@ export default async function PacienteHomePage() {
     caseOverview,
   });
 
+  // A pendência com nome e endereço — no lugar do rótulo de estado do Case,
+  // que dizia que faltava algo sem dizer o quê.
+  const pending = derivePatientPending({ homeState: state, jornada });
+
   const displayName = authState.profile?.displayName ?? "Paciente";
 
   return (
@@ -68,6 +77,34 @@ export default async function PacienteHomePage() {
       <div className="space-y-8">
         <PatientWelcome name={displayName} />
         <PatientHomeState state={state} />
+
+        {/* O que falta, por que importa, o que acontece depois — e o caminho
+            direto até lá. Quando nada depende dela, o cartão diz isso por
+            extenso: silêncio declarado é cuidado, silêncio mudo é abandono. */}
+        {pending.kind === "action" ? (
+          <NextActionCard
+            title={pending.action.title}
+            why={pending.action.why}
+            whatHappensNext={pending.action.whatHappensNext}
+            action={
+              pending.action.cta ? (
+                <LinkButton href={pending.action.cta.href}>{pending.action.cta.label}</LinkButton>
+              ) : (
+                <p className="text-sm leading-relaxed text-ink-muted">
+                  Isso acontece na conversa com {jornada?.curatorName ?? "seu Curador"} — não há
+                  nada para preencher aqui.
+                </p>
+              )
+              /* Sem CTA, `happensInConversation` é verdadeiro por contrato do
+                 módulo (teste XOR) — por isso a frase acima é sempre a certa. */
+            }
+          />
+        ) : (
+          <NextActionCard
+            nothingPending={pending.message}
+            whatHappensNext={pending.whatHappensNext}
+          />
+        )}
       </div>
 
       {reguaStages ? (

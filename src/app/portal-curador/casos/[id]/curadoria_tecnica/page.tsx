@@ -4,16 +4,18 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { CaseAlert } from "@/components/curadoria/case-alert";
+import { CompatibilityRunner } from "@/components/curadoria/compatibility-runner";
 import { MesaContextPanel } from "@/components/curadoria/mesa-context-panel";
 import { MesaPriorityPanel } from "@/components/curadoria/mesa-priority-panel";
 import { MesaWorkspace } from "@/components/curadoria/mesa-workspace";
-import { PhaseNavigator } from "@/components/curadoria/phase-navigator";
+import { JourneyNavigator } from "@/components/curadoria/journey-navigator";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { conduct } from "@/modules/curadoria/cos/conduction";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { COS_PHASE_DEFINITIONS } from "@/modules/curadoria/cos/phases";
+import { buildCuratorJourney, journeyStepHref } from "@/modules/curadoria/cos/journey";
 
 export const metadata: Metadata = {
   title: "Mesa de Curadoria",
@@ -51,12 +53,42 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
   }
 
   const state = conduct(record);
+  const journey = buildCuratorJourney(record, state);
   const definition = COS_PHASE_DEFINITIONS.CURADORIA_TECNICA;
   const phaseState = state.phases.find((entry) => entry.phase === "CURADORIA_TECNICA")!;
   const phaseAlerts = state.alerts.filter((alert) => alert.phase === "CURADORIA_TECNICA");
   const { analyses, excluded, computedAt } = record.curadoriaTecnica;
 
   const blocked = phaseState.status === "BLOQUEADA";
+
+  // A Mesa reabre onde parou: seleção e pareceres vêm do que já foi gravado.
+  // O parecer persiste no Relatório (curadoria_report_options), que é onde os
+  // cinco campos da Mesa cabem inteiros — a seleção guarda só o essencial.
+  const entregue = Boolean(record.relatorio.emittedAt) || state.phases.some(
+    (phase) => phase.phase === "DEVOLUTIVA" && phase.status !== "BLOQUEADA",
+  );
+
+  const persisted =
+    record.curadoriaTecnica.selectedProfessionalIds.length > 0
+      ? {
+          selectedIds: record.curadoriaTecnica.selectedProfessionalIds,
+          compositionRationale: record.relatorio.compositionRationale ?? "",
+          closed: true,
+          pareceres: record.curadoriaTecnica.selectedProfessionalIds.map((professionalId) => {
+            const option = record.relatorio.options.find(
+              (entry) => entry.professionalId === professionalId,
+            );
+            return {
+              professionalId,
+              whyIncluded: option?.justification ?? "",
+              prioritiesServed: option?.relationToWeights ?? "",
+              limitations: option?.attentionPoints.join(" ") ?? "",
+              questions: option?.suggestedQuestions.join(" ") ?? "",
+              observations: option?.curatorObservations ?? "",
+            };
+          }),
+        }
+      : undefined;
 
   return (
     <div className="space-y-8">
@@ -95,22 +127,33 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
                 aparência de método.
               </p>
             </Card>
-          ) : !computedAt ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Comparação ainda não executada</CardTitle>
-                <CardDescription>
-                  O Perfil está validado — falta aplicar à rede aprovada.
-                </CardDescription>
-              </CardHeader>
-            </Card>
           ) : (
-            <MesaWorkspace
-              analyses={analyses}
-              excluded={excluded}
-              curatorName={record.curatorName}
-              patientFirstName={record.patientFirstName}
-            />
+            <>
+              {/* O chamador que faltava: `computeCompatibilityAction` existia
+                  pronta e sem nenhuma superfície — a Mesa dizia "comparação
+                  ainda não executada" e parava ali, sem caminho pela interface. */}
+              {record.priorityProfileId ? (
+                <CompatibilityRunner
+                  priorityProfileId={record.priorityProfileId}
+                  patientFirstName={record.patientFirstName}
+                  hasRun={Boolean(computedAt)}
+                  eligibleCount={analyses.length}
+                />
+              ) : null}
+
+              {computedAt && record.priorityProfileId ? (
+                <MesaWorkspace
+                  analyses={analyses}
+                  excluded={excluded}
+                  curatorName={record.curatorName}
+                  patientFirstName={record.patientFirstName}
+                  priorityProfileId={record.priorityProfileId}
+                  persisted={persisted}
+                  locked={entregue}
+                  reportHref={journeyStepHref(record.caseId, "RELATORIO")}
+                />
+              ) : null}
+            </>
           )}
         </div>
 
@@ -118,8 +161,8 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
           <MesaContextPanel record={record} />
           <MesaPriorityPanel record={record} />
           <div className="space-y-3">
-            <h2 className="text-xs uppercase tracking-wide text-ink-muted">As nove fases</h2>
-            <PhaseNavigator phases={state.phases} caseId={record.caseId} />
+            <h2 className="text-xs uppercase tracking-wide text-ink-muted">A Curadoria inteira</h2>
+            <JourneyNavigator journey={journey} caseId={record.caseId} />
           </div>
         </aside>
       </div>

@@ -24,6 +24,12 @@ const TEST_ACCOUNTS = [
   { role: "profissional", email: "profissional.teste@aliviar-conexao.local", displayName: "Profissional Teste" },
   { role: "paciente", email: "paciente.teste@aliviar-conexao.local", displayName: "Paciente Teste" },
   { role: "curador_medico", email: "curador.teste@aliviar-conexao.local", displayName: "Curador Teste" },
+  // Acrescentados na captura do Briefing (ACE Missão 3): a RLS das tabelas de
+  // alinhamento precisa ser provada contra TODOS os papéis humanos, não só os
+  // quatro que já existiam. Atendente e Concierge alcançam Cases pelo
+  // can_access_case — por isso é justamente neles que a fronteira importa.
+  { role: "atendente", email: "atendente.teste@aliviar-conexao.local", displayName: "Atendente Teste" },
+  { role: "concierge", email: "concierge.teste@aliviar-conexao.local", displayName: "Concierge Teste" },
 ];
 
 function readLocalSupabaseEnv() {

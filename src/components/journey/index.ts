@@ -8,6 +8,8 @@
 //   NextActionCard     — a Próxima Ação com endereço fixo (ou o silêncio certo)
 //   ProgressTimeline   — etapas com estado e dependência explícita
 //   EmptyJourneyState  — vazio que responde por quê / o que virá / se está atualizado
+//   StepStatus         — o que já sabemos × o que ainda precisa ser decidido
+//   LastUpdate         — quem tocou nisto por último, e quando
 //
 // Componentes já existentes que cumprem papéis da biblioteca (não duplicar):
 //   Identidade   → @/components/auth/authenticated-user-menu
@@ -18,3 +20,5 @@ export * from "./journey-header";
 export * from "./next-action-card";
 export * from "./progress-timeline";
 export * from "./empty-journey-state";
+export * from "./step-status";
+export * from "./last-update";

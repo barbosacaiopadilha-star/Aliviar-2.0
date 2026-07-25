@@ -32,13 +32,23 @@ describe("fluxo de autenticação (Supabase local)", () => {
     accounts = loadTestAccounts();
   });
 
-  // Contrato oficial de scripts/bootstrap-local-test-users.mjs — 4 contas
-  // fixas, uma por papel, upsert idempotente por (profile_id, role_id).
+  // Contrato oficial de scripts/bootstrap-local-test-users.mjs — uma conta
+  // fixa por papel humano, upsert idempotente por (profile_id, role_id).
   // curador_medico foi adicionado ao bootstrap no commit 45e6610 ("MVP
   // completo"), bem antes desta suíte — este teste só não acompanhava.
-  const BOOTSTRAP_ROLES = ["administrador", "curador_medico", "paciente", "profissional"];
+  // atendente e concierge entraram na captura do Briefing (ACE Missão 3):
+  // provar a RLS das tabelas de alinhamento exige TODOS os papéis humanos,
+  // e faltavam justamente os dois que alcançam Case por responsabilidade.
+  const BOOTSTRAP_ROLES = [
+    "administrador",
+    "atendente",
+    "concierge",
+    "curador_medico",
+    "paciente",
+    "profissional",
+  ];
 
-  it("existem exatamente as 4 contas de bootstrap, uma por papel, sem duplicidade", () => {
+  it("existe exatamente uma conta de bootstrap por papel, sem duplicidade", () => {
     const roles = accounts.map((a) => a.role);
     expect(roles.sort()).toEqual(BOOTSTRAP_ROLES);
     expect(new Set(roles).size).toBe(roles.length);

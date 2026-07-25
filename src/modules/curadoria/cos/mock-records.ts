@@ -38,7 +38,7 @@ function baseRecord(
       limitations: [],
     },
     filtros: [],
-    prioridades: { weights: [], observations: [], history: [] },
+    prioridades: { weights: [], observations: [], preferencias: [], history: [] },
     priorityProfileId: null,
     validacao: null,
     curadoriaTecnica: {
@@ -48,8 +48,10 @@ function baseRecord(
       selectedProfessionalIds: [],
       selectedBy: null,
       selectedAt: null,
+
+      curatedSelectionId: null,
     },
-    relatorio: { options: [], compositionRationale: null, emittedAt: null },
+    relatorio: { options: [], compositionRationale: null, emittedAt: null, deliveredAt: null },
     devolutiva: {
       presentedAt: null,
       patientQuestions: [],
@@ -140,6 +142,7 @@ const marina: CuradoriaRecord = baseRecord({
       "Prefere consultas pela manhã — o pai fica mais disposto.",
       "Marina participa das consultas; considera isso inegociável.",
     ],
+    preferencias: [],
     history: [
       { at: "2026-07-22T14:10:00-03:00", description: "Continuidade recebeu 40 pontos." },
       { at: "2026-07-22T14:20:00-03:00", description: "Experiência recebeu 30 pontos." },
@@ -222,6 +225,7 @@ const joaquim: CuradoriaRecord = baseRecord({
       },
     ],
     observations: ["Prefere atendimento no fim do dia, depois das 18h."],
+    preferencias: [],
     history: [
       { at: "2026-07-22T16:55:00-03:00", description: "Experiência corrigida de 30 para 20 por Joaquim." },
     ],
@@ -404,6 +408,8 @@ const joaquim: CuradoriaRecord = baseRecord({
     selectedProfessionalIds: [],
     selectedBy: null,
     selectedAt: null,
+
+    curatedSelectionId: null,
   },
 });
 
@@ -472,6 +478,7 @@ const rosa: CuradoriaRecord = baseRecord({
       },
     ],
     observations: [],
+    preferencias: [],
     history: [],
   },
   validacao: {
@@ -515,6 +522,8 @@ const rosa: CuradoriaRecord = baseRecord({
     selectedProfessionalIds: ["prof-114", "prof-087", "prof-203"],
     selectedBy: "Helena Vasconcelos",
     selectedAt: "2026-07-16T14:00:00-03:00",
+
+    curatedSelectionId: null,
   },
   relatorio: {
     options: [
@@ -552,6 +561,8 @@ const rosa: CuradoriaRecord = baseRecord({
     compositionRationale:
       "As três respondem à prioridade de experiência de formas diferentes: uma pela trajetória, outra pelo equilíbrio com o tempo de espera, a terceira pela rapidez de início. Rosa escolhe qual troca faz sentido para ela.",
     emittedAt: "2026-07-20T09:00:00-03:00",
+
+    deliveredAt: null,
   },
   devolutiva: {
     presentedAt: "2026-07-21T16:00:00-03:00",

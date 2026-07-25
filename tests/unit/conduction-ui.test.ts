@@ -15,11 +15,21 @@ const marina = MOCK_RECORDS["caso-2041"]!;
 const rosa = MOCK_RECORDS["caso-2024"]!;
 
 describe("conduction-ui — rotas e rótulos", () => {
-  it("gera href canônico por fase", () => {
-    expect(phaseHref("abc", "HISTORIA")).toBe("/coa/curadoria/casos/abc/historia");
+  // Simplificação da Jornada: a rota de uma fase é a da ETAPA que a contém.
+  // O Motor continua raciocinando em nove fases; a tela tem sete endereços.
+  it("leva cada fase à etapa da jornada onde ela se resolve", () => {
+    expect(phaseHref("abc", "HISTORIA")).toBe("/coa/curadoria/casos/abc/compreender");
+    expect(phaseHref("abc", "CASO")).toBe("/coa/curadoria/casos/abc/compreender");
+    expect(phaseHref("abc", "FILTROS")).toBe("/coa/curadoria/casos/abc/criterios");
+    expect(phaseHref("abc", "PRIORIDADES")).toBe("/coa/curadoria/casos/abc/criterios");
     expect(phaseHref("abc", "CURADORIA_TECNICA")).toBe(
       "/coa/curadoria/casos/abc/curadoria_tecnica",
     );
+  });
+
+  it("duas fases da mesma etapa nunca produzem dois endereços", () => {
+    expect(phaseHref("abc", "HISTORIA")).toBe(phaseHref("abc", "CASO"));
+    expect(phaseHref("abc", "FILTROS")).toBe(phaseHref("abc", "PRIORIDADES"));
   });
 
   it("nunca usa rótulo genérico Continuar", () => {
@@ -31,7 +41,7 @@ describe("conduction-ui — rotas e rótulos", () => {
   it("descreve ação específica no botão principal", () => {
     const state = conduct(marina);
     const label = getPrimaryActionLabel(state);
-    expect(label).toBe("Distribuir Prioridades");
+    expect(label).toBe("Definir os critérios");
     expect(label.toLowerCase()).not.toContain("continuar");
   });
 
@@ -88,7 +98,7 @@ describe("conduction-ui — action links de pendências", () => {
     const inconsistencies = items.filter((item) => item.kind === "inconsistency");
     expect(inconsistencies.length).toBeGreaterThan(0);
     for (const item of inconsistencies) {
-      expect(item.href).toContain("/prioridades");
+      expect(item.href).toContain("/criterios");
     }
   });
 

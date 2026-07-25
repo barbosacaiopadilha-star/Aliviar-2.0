@@ -33,9 +33,27 @@ const STATUS_META: Record<JourneyStage["status"], { symbol: string; label: strin
   blocked: { symbol: "🔒", label: "Bloqueada" },
 };
 
-export function ProgressTimeline({ stages, ariaLabel }: { stages: JourneyStage[]; ariaLabel: string }) {
+export function ProgressTimeline({
+  stages,
+  ariaLabel,
+  summary,
+}: {
+  stages: JourneyStage[];
+  ariaLabel: string;
+  /**
+   * Uma frase de progresso — "4 de 7 etapas concluídas".
+   *
+   * Deliberadamente sem barra, sem percentual e sem estimativa de tempo: a
+   * plataforma não sabe quanto tempo uma conversa sobre saúde leva, e inventar
+   * um prazo seria pressão disfarçada de ajuda (UX_PRINCIPLES P7 — "não sei"
+   * nunca vira número). Nas superfícies do paciente, omitir este resumo é a
+   * escolha certa: contagem vira cobrança para quem está com medo.
+   */
+  summary?: string;
+}) {
   return (
     <nav aria-label={ariaLabel}>
+      {summary ? <p className="mb-3 text-sm text-ink-muted">{summary}</p> : null}
       <ol className="space-y-2">
         {stages.map((stage, index) => {
           const meta = STATUS_META[stage.status];

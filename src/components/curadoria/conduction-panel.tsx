@@ -26,11 +26,22 @@ import {
   getPrimaryActionLabel,
   phaseHref,
 } from "@/modules/curadoria/cos/conduction-ui";
-import { COS_PHASE_LABELS, type ConductionState } from "@/modules/curadoria/cos/types";
-import { CURADORIA_STEP_LABELS } from "@/modules/curadoria/types";
+import type { ConductionState } from "@/modules/curadoria/cos/types";
+import {
+  CURATOR_JOURNEY_DEFINITIONS,
+  type CuratorJourney,
+} from "@/modules/curadoria/cos/journey";
 import { cn } from "@/components/ui/cn";
 
-export function ConductionPanel({ state, caseId }: { state: ConductionState; caseId: string }) {
+export function ConductionPanel({
+  state,
+  caseId,
+  journey,
+}: {
+  state: ConductionState;
+  caseId: string;
+  journey: CuratorJourney;
+}) {
   const isWaiting = state.nextStep.kind === "aguardando";
   const actionItems = buildPendingActionItems(state, caseId);
   const actionableItems = actionItems.filter((item) => item.href !== null);
@@ -43,11 +54,12 @@ export function ConductionPanel({ state, caseId }: { state: ConductionState; cas
       <CardHeader>
         <CardTitle>Onde você está</CardTitle>
         <CardDescription>
-          {COS_PHASE_LABELS[state.currentPhase]}
+          {/* A etapa da jornada, no vocabulário do Curador — não a fase interna.
+              A etapa do raciocínio saiu do cabeçalho: é vocabulário do Método
+              que ele já carrega, e disputava atenção com o próximo passo. */}
+          {CURATOR_JOURNEY_DEFINITIONS[journey.currentStep].label}
           <span aria-hidden="true"> · </span>
-          etapa do raciocínio: {CURADORIA_STEP_LABELS[state.currentReasoningStep]}
-          <span aria-hidden="true"> · </span>
-          {state.completedPhases.length} de 9 fases concluídas
+          {journey.completedCount} de {journey.totalCount} etapas concluídas
         </CardDescription>
       </CardHeader>
 

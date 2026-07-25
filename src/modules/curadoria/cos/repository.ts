@@ -218,9 +218,11 @@ export async function loadCuradoriaRecord(
       reason: (row.note as string | null) ?? "",
     }));
 
-  const observations = (filterRows.data ?? [])
+  const preferencias = (filterRows.data ?? [])
     .filter((row) => row.nature === "PREFERENCIA")
-    .map((row) => row.value as string);
+    .map((row) => ({ id: row.id as string, value: row.value as string }));
+
+  const observations = preferencias.map((entry) => entry.value);
 
   const reportOptions: OpcaoRelatorio[] = (reportOptionRows.data ?? []).map((row) => ({
     professionalId: row.professional_profile_id as string,
@@ -270,6 +272,7 @@ export async function loadCuradoriaRecord(
     prioridades: {
       weights,
       observations,
+      preferencias,
       history: [],
     },
 
@@ -290,6 +293,8 @@ export async function loadCuradoriaRecord(
       // Ausência aqui é ausência, nunca uma lista fabricada.
       excluded: [] as ExclusaoRecord[],
       selectedProfessionalIds: (optionRows.data ?? []).map((row) => row.professional_profile_id as string),
+      // O id da seleção é o que a entrega precisa endereçar.
+      curatedSelectionId: selectionId,
       selectedBy: selectionRow.data ? curatorName : null,
       selectedAt: (selectionRow.data?.created_at as string | null) ?? null,
     },
@@ -298,6 +303,7 @@ export async function loadCuradoriaRecord(
       options: reportOptions,
       compositionRationale: (reportRow.data?.composition_rationale as string | null) ?? null,
       emittedAt: (reportRow.data?.emitted_at as string | null) ?? null,
+      deliveredAt: (reportRow.data?.delivered_at as string | null) ?? null,
     },
 
     devolutiva: {

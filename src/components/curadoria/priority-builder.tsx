@@ -22,6 +22,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { cn } from "@/components/ui/cn";
 import {
   saveAllWeightsAction,
+  removeWeightAction,
   validateProfileAction,
 } from "@/modules/curadoria/actions";
 import { TOTAL_PRIORITY_POINTS } from "@/modules/curadoria/method";
@@ -103,8 +104,59 @@ export function PriorityBuilder({
     setAdding(false);
   }
 
+  /**
+   * Remover um critério precisa chegar ao banco.
+   *
+   * `saveAllWeightsAction` faz upsert do que recebe — ela nunca apaga o que
+   * saiu da lista. Sem esta chamada, um critério tirado da tela continuava
+   * gravado, e a soma que o Curador via não era a soma que o Motor lia.
+   */
   function removeCriterion(criterion: PriorityCriterion) {
+    const persistido = initialWeights.some((entry) => entry.criterion === criterion);
     setWeights((current) => current.filter((entry) => entry.criterion !== criterion));
+    setSuccess(null);
+    setError(null);
+
+    if (!persistido || validated) return;
+
+    startTransition(async () => {
+      const result = await removeWeightAction({ priorityProfileId, criterion });
+      if (!result.success) {
+        setError(result.error ?? "Não foi possível remover o critério.");
+      }
+    });
+  }
+
+  /**
+   * Salvar o trabalho sem validar.
+   *
+   * Antes, os pesos só eram gravados no instante da validação: distribuir os
+   * 100 pontos e fechar a aba jogava fora a conversa inteira. Mas a validação
+   * tem liturgia própria e costuma ser outro momento — o Método separa os dois,
+   * e a tela precisava separar também.
+   */
+  function salvarRascunho() {
+    if (isPending || validated) return;
+    setError(null);
+    setSuccess(null);
+
+    startTransition(async () => {
+      const result = await saveAllWeightsAction({
+        priorityProfileId,
+        weights: weights.map((entry) => ({
+          criterion: entry.criterion,
+          weight: entry.weight,
+          evidence: entry.evidence,
+        })),
+      });
+
+      if (result.success) {
+        setSuccess("Pesos salvos. Você pode continuar depois, de onde parou.");
+        router.refresh();
+      } else {
+        setError(result.error ?? "Não foi possível salvar os pesos.");
+      }
+    });
   }
 
   function handleValidate() {
@@ -279,6 +331,25 @@ export function PriorityBuilder({
                 Acrescentar um critério
               </button>
             )}
+          </div>
+        ) : null}
+
+        {/* Salvar sem validar: a distribuição é uma conversa que pode durar
+            mais de uma sessão. A validação continua sendo um ato à parte. */}
+        {!validated && weights.length > 0 ? (
+          <div className="border-t border-border pt-5">
+            <button
+              type="button"
+              onClick={salvarRascunho}
+              disabled={isPending}
+              className="inline-flex min-h-11 items-center rounded-md border border-border bg-surface px-4 py-2.5 text-sm font-medium text-ink transition-colors duration-fast ease-standard hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-60"
+            >
+              {isPending ? "Salvando…" : "Salvar o que já definimos"}
+            </button>
+            <p className="mt-2 max-w-reading text-xs leading-relaxed text-ink-muted">
+              Guarda os pesos como estão, sem validar. A validação é um momento com{" "}
+              {patientFirstName}, e acontece quando vocês estiverem prontos.
+            </p>
           </div>
         ) : null}
       </Card>

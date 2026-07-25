@@ -150,8 +150,8 @@ export function PhaseDeclarationWorkspace({
         ) : (
           <p className="text-xs text-ink-muted">
             {isHistoria
-              ? "A próxima fase abre com a história registrada e o reconhecimento confirmado."
-              : "A próxima fase abre com o contexto clínico registrado."}
+              ? "O próximo passo abre com a história registrada e o reconhecimento confirmado."
+              : "O próximo passo abre com o contexto clínico registrado."}
           </p>
         )}
       </div>

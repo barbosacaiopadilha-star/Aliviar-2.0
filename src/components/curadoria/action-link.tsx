@@ -9,8 +9,8 @@
 
 import Link from "next/link";
 
-import { COS_PHASE_LABELS, type CosPhaseId } from "@/modules/curadoria/cos/types";
-import { PHASE_ACTION_LABELS } from "@/modules/curadoria/cos/conduction-ui";
+import type { CosPhaseId } from "@/modules/curadoria/cos/types";
+import { PHASE_ACTION_LABELS, phaseStepLabel } from "@/modules/curadoria/cos/conduction-ui";
 import { cn } from "@/components/ui/cn";
 
 type ActionLinkProps = {
@@ -51,7 +51,7 @@ export function ActionLink({ description, phase, href, ownerLabel, className }: 
         className="mt-0.5 shrink-0 text-xs text-ink-muted opacity-0 transition-opacity duration-fast group-hover:opacity-100 group-focus-visible:opacity-100"
         aria-hidden="true"
       >
-        {COS_PHASE_LABELS[phase]} →
+        {phaseStepLabel(phase)} →
       </span>
     </Link>
   );

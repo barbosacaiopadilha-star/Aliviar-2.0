@@ -95,6 +95,8 @@ export type PesoRecord = {
 export type PrioridadesRecord = {
   weights: PesoRecord[];
   observations: string[];
+  /** As mesmas preferências, com id — para poderem ser retiradas pela tela. */
+  preferencias: { id: string; value: string }[];
   /** Histórico de alterações — o Curador consegue ver como a conversa evoluiu. */
   history: { at: string; description: string }[];
 };
@@ -138,6 +140,8 @@ export type CuradoriaTecnicaRecord = {
   selectedProfessionalIds: string[];
   selectedBy: string | null;
   selectedAt: string | null;
+  /** A seleção gravada — é o que a entrega ao paciente endereça. */
+  curatedSelectionId: string | null;
 };
 
 export type OpcaoRelatorio = {
@@ -156,6 +160,8 @@ export type RelatorioRecord = {
   options: OpcaoRelatorio[];
   compositionRationale: string | null;
   emittedAt: string | null;
+  /** Quando o paciente passou a ter acesso. Depois disso o documento não muda. */
+  deliveredAt: string | null;
 };
 
 export type DevolutivaRecord = {

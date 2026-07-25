@@ -3,12 +3,17 @@ import { notFound } from "next/navigation";
 
 import type { Metadata } from "next";
 
+import { AlignmentCapture } from "@/components/curadoria/alignment-capture";
 import { ConductionPanel } from "@/components/curadoria/conduction-panel";
+import { CuradoriaBriefing } from "@/components/curadoria/curadoria-briefing";
+import { ObservationCapture } from "@/components/curadoria/observation-capture";
+import { loadBriefing } from "@/modules/briefing/repository";
 import { MemoryTimeline, ReconstructionReport } from "@/components/curadoria/memory-timeline";
-import { PhaseNavigator } from "@/components/curadoria/phase-navigator";
+import { JourneyNavigator } from "@/components/curadoria/journey-navigator";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { conduct } from "@/modules/curadoria/cos/conduction";
 import { buildMemory, runReconstructionTest } from "@/modules/curadoria/cos/memory";
+import { buildCuratorJourney } from "@/modules/curadoria/cos/journey";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
@@ -29,7 +34,7 @@ export const metadata: Metadata = {
 
 export default async function CasoWorkspacePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await requireRole("curador_medico");
+  const authState = await requireRole("curador_medico");
   const supabase = await createServerSupabaseClient();
   const record = await loadCuradoriaRecord(supabase, id);
 
@@ -38,8 +43,31 @@ export default async function CasoWorkspacePage({ params }: { params: Promise<{ 
   }
 
   const state = conduct(record);
+  const journey = buildCuratorJourney(record, state);
   const memory = buildMemory(record);
   const reconstruction = runReconstructionTest(record);
+
+  // BRIEFING DA CURADORIA — camada de contexto, acrescentada ao workspace.
+  // As opções vêm do Relatório já construído pela Curadoria: o Briefing
+  // NUNCA seleciona nem reordena profissional — ele recebe quem já está em
+  // avaliação e só descreve o encontro entre o que cada um declarou.
+  const nomesPorId = new Map(
+    record.curadoriaTecnica.analyses.map((analise) => [analise.professionalId, analise.professionalName] as const),
+  );
+  const professionalsInReview = record.relatorio.options
+    .slice()
+    .sort((a, b) => a.position - b.position)
+    .map((option) => ({
+      profileId: option.professionalId,
+      displayName: nomesPorId.get(option.professionalId) ?? "Profissional",
+    }));
+
+  const briefing = await loadBriefing(
+    supabase,
+    record.caseId,
+    record.patientName.split(/\s+/)[0] ?? record.patientName,
+    professionalsInReview,
+  );
 
   return (
     <div className="space-y-8">
@@ -61,7 +89,27 @@ export default async function CasoWorkspacePage({ params }: { params: Promise<{ 
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="space-y-6">
-          <ConductionPanel state={state} caseId={record.caseId} />
+          <ConductionPanel state={state} caseId={record.caseId} journey={journey} />
+
+          {/* Contexto para a apresentação. Vem depois do Motor de Condução
+              (o que fazer agora) e antes da história — é o que o Curador
+              consulta quando vai conversar com a pessoa. */}
+          <CuradoriaBriefing data={briefing} />
+
+          {/* As duas superfícies de captura ficam DEPOIS do Briefing: o Curador
+              primeiro vê o contexto que já existe, e só então registra o que
+              acabou de escutar. Registrar nunca é etapa obrigatória. */}
+          <AlignmentCapture
+            caseId={record.caseId}
+            patientFirstName={record.patientFirstName}
+            answers={briefing.patientAnswers}
+          />
+
+          <ObservationCapture
+            caseId={record.caseId}
+            observations={briefing.observations}
+            viewerId={authState.user.id}
+          />
 
           {record.historia.narrative ? (
             <Card>
@@ -104,8 +152,8 @@ export default async function CasoWorkspacePage({ params }: { params: Promise<{ 
         </div>
 
         <aside className="space-y-3">
-          <h2 className="text-xs uppercase tracking-wide text-ink-muted">As nove fases</h2>
-          <PhaseNavigator phases={state.phases} caseId={record.caseId} />
+          <h2 className="text-xs uppercase tracking-wide text-ink-muted">A Curadoria inteira</h2>
+          <JourneyNavigator journey={journey} caseId={record.caseId} />
         </aside>
       </div>
     </div>

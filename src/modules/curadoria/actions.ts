@@ -8,21 +8,23 @@ import { requireAnyRoleForAction, requireRoleForAction } from "@/modules/auth/gu
 import { validateSelection } from "./method";
 import { computePriorityValidationReadiness } from "./priority-validation-readiness";
 import * as repository from "./repository";
+import * as reportRepository from "./report-repository";
 import {
   addMandatoryFilterInputSchema,
   addPreferenceInputSchema,
   computeCompatibilityInputSchema,
   deliverSelectionInputSchema,
+  emitReportInputSchema,
   registerAcolhimentoInputSchema,
   registerCasoInputSchema,
-  registerHistoriaInputSchema,
   registerDecisionInputSchema,
+  registerDevolutivaInputSchema,
+  registerHistoriaInputSchema,
   removeFilterInputSchema,
   removeWeightInputSchema,
-  savePatientHistoryInputSchema,
   saveAllWeightsInputSchema,
+  saveReportInputSchema,
   saveSelectionInputSchema,
-  saveWeightInputSchema,
   startConsultationInputSchema,
   validateProfileInputSchema,
 } from "./schema";
@@ -39,6 +41,12 @@ function fail(error: unknown, fallback: string): CuradoriaActionResult {
 }
 
 function revalidateCuradoria(caseId: string) {
+  // As rotas reais do Portal do Curador são `/coa/curadoria/...`. Até aqui a
+  // revalidação apontava só para `/curador/casos/...`, que é redirect legado —
+  // ou seja, nenhuma tela do Curador era de fato revalidada depois de gravar.
+  // As duas ficam: quem tem link antigo aberto também recarrega.
+  revalidatePath(`/coa/curadoria/casos/${caseId}`, "layout");
+  revalidatePath(`/coa/curadoria`);
   revalidatePath(`/curador/casos/${caseId}/curadoria`);
   revalidatePath(`/curador/casos/${caseId}`);
   revalidatePath("/paciente");
@@ -79,29 +87,11 @@ export async function startConsultationAction(input: unknown): Promise<StartCons
   }
 }
 
-export async function savePatientHistoryAction(input: unknown): Promise<CuradoriaActionResult> {
-  try {
-    await requireCurator();
-  } catch {
-    return { success: false, error: "Não autorizado." };
-  }
-
-  const parsed = savePatientHistoryInputSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
-  }
-
-  const supabase = await createServerSupabaseClient();
-
-  try {
-    await repository.savePatientHistory(supabase, parsed.data.priorityProfileId, parsed.data.patientHistory);
-    const profile = await repository.getPriorityProfileById(supabase, parsed.data.priorityProfileId);
-    if (profile) revalidateCuradoria(profile.caseId);
-    return { success: true };
-  } catch (error) {
-    return fail(error, "Não foi possível salvar a história.");
-  }
-}
+// `savePatientHistoryAction` foi removida na missão Curadoria Executável: ela
+// gravava a história em `priority_profiles.patient_history`, enquanto a fase
+// História do COS lê a narrativa que `registerHistoriaAction` escreve. Eram
+// dois lugares para a mesma história, e o Motor só olhava para um — quem
+// usasse o outro veria a fase "em aberto" depois de ter escrito tudo.
 
 // ---------------------------------------------------------------------------
 // Filtros e preferências
@@ -197,36 +187,11 @@ export async function removeFilterAction(input: unknown): Promise<CuradoriaActio
 // Pesos
 // ---------------------------------------------------------------------------
 
-export async function saveWeightAction(input: unknown): Promise<CuradoriaActionResult> {
-  try {
-    await requireCurator();
-  } catch {
-    return { success: false, error: "Não autorizado." };
-  }
-
-  const parsed = saveWeightInputSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
-  }
-
-  const supabase = await createServerSupabaseClient();
-
-  try {
-    await repository.saveWeight(
-      supabase,
-      parsed.data.priorityProfileId,
-      parsed.data.criterion,
-      parsed.data.weight,
-      parsed.data.targetValue ?? null,
-      parsed.data.evidence,
-    );
-    const profile = await repository.getPriorityProfileById(supabase, parsed.data.priorityProfileId);
-    if (profile) revalidateCuradoria(profile.caseId);
-    return { success: true };
-  } catch (error) {
-    return fail(error, "Não foi possível salvar o peso.");
-  }
-}
+// `saveWeightAction` (peso a peso) foi removida na missão Curadoria Executável:
+// era capacidade duplicada de `saveAllWeightsAction`, que já grava o conjunto
+// chamando o mesmo `repository.saveWeight`. Duas portas para a mesma escrita
+// significam duas regras possíveis para o mesmo invariante. O repositório
+// continua intacto — só o segundo caminho de entrada deixou de existir.
 
 export async function saveAllWeightsAction(input: unknown): Promise<CuradoriaActionResult> {
   try {
@@ -420,9 +385,22 @@ export async function deliverSelectionAction(input: unknown): Promise<CuradoriaA
 
   try {
     await repository.deliverSelection(supabase, parsed.data.curatedSelectionId);
+
+    // Entregar a seleção sem entregar o documento deixaria o paciente com
+    // acesso a três nomes e a nenhuma explicação — as policies do Relatório
+    // liberam a leitura dele justamente por `delivered_at`.
+    const report = await reportRepository.getReportBySelection(
+      supabase,
+      parsed.data.curatedSelectionId,
+    );
+    if (report) {
+      await reportRepository.markReportDelivered(supabase, report.id);
+    }
+
     revalidatePath("/paciente");
     revalidatePath("/paciente/curadoria");
     revalidatePath("/curador/casos");
+    revalidatePath("/coa/curadoria", "layout");
     return { success: true };
   } catch (error) {
     return fail(error, "Não foi possível entregar a Curadoria.");
@@ -598,4 +576,148 @@ export async function registerCasoAction(input: unknown): Promise<CuradoriaActio
   revalidateCuradoria(caseId);
   revalidatePath(`/portal-curador/casos/${caseId}/caso`);
   return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// Fase 8 — Relatório
+//
+// A seleção (curated_selections) e o Relatório (curadoria_reports) são
+// artefatos distintos da Ontologia: a seleção é a escolha; o Relatório é o
+// documento que o paciente relê sozinho. `saveSelectionAction` continua
+// cuidando da primeira — nada foi duplicado aqui.
+// ---------------------------------------------------------------------------
+
+type SelectionLookup =
+  | { ok: true; selection: NonNullable<Awaited<ReturnType<typeof repository.getSelection>>> }
+  | { ok: false; error: string };
+
+async function selectionForProfile(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  priorityProfileId: string,
+): Promise<SelectionLookup> {
+  const selection = await repository.getSelection(supabase, priorityProfileId);
+  if (!selection) {
+    return {
+      ok: false,
+      error:
+        "A Curadoria Técnica ainda não foi encerrada — o Relatório nasce das três opções selecionadas.",
+    };
+  }
+  return { ok: true, selection };
+}
+
+export async function saveReportAction(input: unknown): Promise<CuradoriaActionResult> {
+  try {
+    await requireCurator();
+  } catch {
+    return { success: false, error: "Não autorizado." };
+  }
+
+  const parsed = saveReportInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const found = await selectionForProfile(supabase, parsed.data.priorityProfileId);
+  if (!found.ok) return { success: false, error: found.error };
+
+  try {
+    await reportRepository.saveReport(
+      supabase,
+      found.selection.caseId,
+      found.selection.id,
+      parsed.data.compositionRationale,
+      parsed.data.options.map((option) => ({
+        professionalProfileId: option.professionalProfileId,
+        justification: option.justification,
+        relationToWeights: option.relationToWeights,
+        attentionPoints: option.attentionPoints,
+        favorablePoints: option.favorablePoints,
+        suggestedQuestions: option.suggestedQuestions,
+        curatorObservations: option.curatorObservations ?? null,
+      })),
+    );
+    revalidateCuradoria(found.selection.caseId);
+    return { success: true };
+  } catch (error) {
+    return fail(error, "Não foi possível salvar o Relatório.");
+  }
+}
+
+/**
+ * Emitir é o Curador dizer "está pronto". Entregar é o paciente receber —
+ * são atos separados porque entre eles existe uma conversa a combinar.
+ */
+export async function emitReportAction(input: unknown): Promise<CuradoriaActionResult> {
+  try {
+    await requireCurator();
+  } catch {
+    return { success: false, error: "Não autorizado." };
+  }
+
+  const parsed = emitReportInputSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: "Dados inválidos." };
+
+  const supabase = await createServerSupabaseClient();
+  const found = await selectionForProfile(supabase, parsed.data.priorityProfileId);
+  if (!found.ok) return { success: false, error: found.error };
+
+  const report = await reportRepository.getReportBySelection(supabase, found.selection.id);
+  if (!report) {
+    return { success: false, error: "Escreva o Relatório antes de emiti-lo." };
+  }
+
+  try {
+    await reportRepository.emitReport(supabase, report.id);
+    revalidateCuradoria(found.selection.caseId);
+    return { success: true };
+  } catch (error) {
+    return fail(error, "Não foi possível emitir o Relatório.");
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Fase 9 — Devolutiva: o registro do encontro
+// ---------------------------------------------------------------------------
+
+export async function registerDevolutivaAction(input: unknown): Promise<CuradoriaActionResult> {
+  let authState;
+  try {
+    authState = await requireCurator();
+  } catch {
+    return { success: false, error: "Não autorizado." };
+  }
+
+  const parsed = registerDevolutivaInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const found = await selectionForProfile(supabase, parsed.data.priorityProfileId);
+  if (!found.ok) return { success: false, error: found.error };
+
+  const report = await reportRepository.getReportBySelection(supabase, found.selection.id);
+  if (!report?.deliveredAt) {
+    return {
+      success: false,
+      error: "Entregue a Curadoria antes de registrar o encontro em que ela foi apresentada.",
+    };
+  }
+
+  try {
+    await reportRepository.registerDevolutiva(supabase, {
+      caseId: found.selection.caseId,
+      reportId: report.id,
+      presentedBy: authState.user.id,
+      patientQuestions: parsed.data.patientQuestions,
+      observations: parsed.data.observations,
+      nextSteps: parsed.data.nextSteps,
+    });
+    revalidateCuradoria(found.selection.caseId);
+    return { success: true };
+  } catch (error) {
+    return fail(error, "Não foi possível registrar a apresentação.");
+  }
 }

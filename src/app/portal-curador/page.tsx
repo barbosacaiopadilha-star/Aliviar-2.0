@@ -1,13 +1,12 @@
 import Link from "next/link";
 
-import { MethodStepper } from "@/components/curadoria/method-stepper";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import { conduct } from "@/modules/curadoria/cos/conduction";
 import { getPrimaryActionLabel, phaseHref } from "@/modules/curadoria/cos/conduction-ui";
 import { listCaseIds, loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
-import { COS_PHASE_LABELS } from "@/modules/curadoria/cos/types";
+import { buildCuratorJourney } from "@/modules/curadoria/cos/journey";
 import { resolveGreetingFirstName } from "@/modules/auth/display-identity";
 
 // MÓDULO 1 — PAINEL INICIAL, agora sobre o banco (MISSÃO 209, Fases 3 e 4).
@@ -43,6 +42,14 @@ export default async function PainelInicialPage() {
               : 3;
       return rank(a) - rank(b);
     });
+
+  // A etapa da jornada de cada caso, para a fila falar a língua do Curador.
+  const journeys = new Map(
+    conducted.map(({ record, state }) => {
+      const journey = buildCuratorJourney(record, state);
+      return [record.caseId, journey.steps.find((step) => step.id === journey.currentStep)!] as const;
+    }),
+  );
 
   const needsCurator = conducted.filter((entry) => entry.state.nextStep.kind === "acao").length;
   const firstName = resolveGreetingFirstName(auth);
@@ -91,14 +98,20 @@ export default async function PainelInicialPage() {
           <div className="grid gap-4 lg:grid-cols-2">
             {conducted.map(({ record, state }) => (
               <Card key={record.caseId} className="space-y-4">
+                {/* A fila fala em ETAPAS DA JORNADA, não nas etapas do
+                    raciocínio. As duas eram sete e apareciam com as mesmas
+                    palavras ("etapa 3 de 7") significando coisas diferentes —
+                    e a que ajuda a escolher quem abrir é a da jornada. O
+                    raciocínio continua no Método, fora da fila. */}
                 <div>
                   <h3 className="font-sans text-lg font-semibold text-ink">{record.patientName}</h3>
-                  <MethodStepper current={state.currentReasoningStep} variant="compact" />
+                  <p className="mt-0.5 text-xs uppercase tracking-wide text-ink-muted">
+                    {journeys.get(record.caseId)!.label} · etapa{" "}
+                    {journeys.get(record.caseId)!.order} de 7
+                  </p>
                 </div>
 
-                <p className="text-sm leading-relaxed text-ink">
-                  {COS_PHASE_LABELS[state.currentPhase]} — {state.nextStep.description}
-                </p>
+                <p className="text-sm leading-relaxed text-ink">{state.nextStep.description}</p>
 
                 {state.alerts.map((alert) => (
                   <p key={alert.code} className="text-sm text-ink-muted">

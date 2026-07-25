@@ -147,3 +147,53 @@ export const registerCasoInputSchema = z.object({
   caseId: z.string().uuid(),
   clinicalContext: z.string().trim().min(1, "Descreva o contexto clínico relatado.").max(8000),
 });
+
+// ---------------------------------------------------------------------------
+// Fase 8 — Relatório: o documento que o paciente relê sozinho.
+//
+// Os critérios de saída da fase (COS_PHASE_DEFINITIONS.RELATORIO) exigem, das
+// três opções, justificativa + relação com os pesos + ao menos um ponto de
+// atenção, mais a justificativa da composição. O schema exige exatamente isso:
+// uma opção sem o que ela custa é recomendação disfarçada (Experience §2.5).
+// ---------------------------------------------------------------------------
+export const saveReportInputSchema = z.object({
+  priorityProfileId: z.string().uuid(),
+  compositionRationale: z
+    .string()
+    .trim()
+    .min(1, "Explique por que estas três, juntas, servem a este paciente.")
+    .max(4000),
+  options: z
+    .array(
+      z.object({
+        professionalProfileId: z.string().uuid(),
+        justification: z.string().trim().min(1, "Explique por que esta opção está aqui.").max(4000),
+        relationToWeights: z
+          .string()
+          .trim()
+          .min(1, "Relacione esta opção com os pesos que o paciente validou.")
+          .max(4000),
+        attentionPoints: z
+          .array(z.string().trim().min(1))
+          .min(1, "Toda opção precisa dizer o que custa."),
+        favorablePoints: z.array(z.string().trim().min(1)).default([]),
+        suggestedQuestions: z.array(z.string().trim().min(1)).default([]),
+        curatorObservations: z.string().trim().max(4000).nullable().optional(),
+      }),
+    )
+    .length(3, "A Curadoria apresenta sempre exatamente três opções."),
+});
+
+export const emitReportInputSchema = z.object({
+  priorityProfileId: z.string().uuid(),
+});
+
+// Fase 9 — Devolutiva: o registro do encontro em que as opções foram
+// apresentadas. Não é a decisão do paciente — essa é ato dele, e a RLS de
+// patient_curadoria_decisions só aceita a própria pessoa.
+export const registerDevolutivaInputSchema = z.object({
+  priorityProfileId: z.string().uuid(),
+  patientQuestions: z.array(z.string().trim().min(1)).default([]),
+  observations: z.array(z.string().trim().min(1)).default([]),
+  nextSteps: z.array(z.string().trim().min(1)).default([]),
+});

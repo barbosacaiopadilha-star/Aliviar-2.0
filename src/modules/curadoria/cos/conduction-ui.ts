@@ -2,30 +2,50 @@
  * Camada de apresentação do Motor de Condução — rotas, rótulos de ação e
  * itens clicáveis. Não altera regras de negócio; apenas traduz ConductionState
  * em navegação operacional para o Curador.
+ *
+ * Desde a Simplificação da Jornada, esta camada traduz para as SETE etapas
+ * (`journey.ts`). O Motor continua raciocinando em nove fases — a tradução
+ * acontece só aqui, na fronteira com a tela.
  */
 
+import {
+  CURATOR_JOURNEY_DEFINITIONS,
+  JOURNEY_ACTION_LABELS,
+  journeyStepHref,
+  stepOfPhase,
+} from "./journey";
 import type {
   ConductionState,
   CosPhaseId,
   PhaseStatus,
 } from "./types";
-import { COS_PHASE_LABELS } from "./types";
 
-/** Rótulos de ação específicos — nunca genéricos como "Continuar". */
+/**
+ * Rótulos de ação específicos — nunca genéricos como "Continuar".
+ *
+ * Uma fase leva ao rótulo da etapa que a contém: História e Caso levam ambas a
+ * "Registrar o que entendi", porque é isso que o Curador vai fazer ao chegar lá.
+ */
 export const PHASE_ACTION_LABELS: Record<CosPhaseId, string> = {
-  ACOLHIMENTO: "Revisar Acolhimento",
-  HISTORIA: "Abrir História",
-  CASO: "Abrir Caso",
-  FILTROS: "Definir Filtros",
-  PRIORIDADES: "Distribuir Prioridades",
-  VALIDACAO: "Acompanhar Validação",
-  CURADORIA_TECNICA: "Abrir Curadoria Técnica",
-  RELATORIO: "Gerar Relatório",
-  DEVOLUTIVA: "Registrar Devolutiva",
+  ACOLHIMENTO: JOURNEY_ACTION_LABELS.ACOLHER,
+  HISTORIA: JOURNEY_ACTION_LABELS.COMPREENDER,
+  CASO: JOURNEY_ACTION_LABELS.COMPREENDER,
+  FILTROS: JOURNEY_ACTION_LABELS.CRITERIOS,
+  PRIORIDADES: JOURNEY_ACTION_LABELS.CRITERIOS,
+  VALIDACAO: JOURNEY_ACTION_LABELS.VALIDAR,
+  CURADORIA_TECNICA: JOURNEY_ACTION_LABELS.COMPARAR,
+  RELATORIO: JOURNEY_ACTION_LABELS.RELATORIO,
+  DEVOLUTIVA: JOURNEY_ACTION_LABELS.FINALIZAR,
 };
 
+/** O nome que a tela dá a uma fase: o da etapa da jornada que a contém. */
+export function phaseStepLabel(phase: CosPhaseId): string {
+  return CURATOR_JOURNEY_DEFINITIONS[stepOfPhase(phase)].label;
+}
+
+/** Toda pendência de uma fase leva à etapa onde ela se resolve. */
 export function phaseHref(caseId: string, phase: CosPhaseId): string {
-  return `/coa/curadoria/casos/${caseId}/${phase.toLowerCase()}`;
+  return journeyStepHref(caseId, stepOfPhase(phase));
 }
 
 export function isPhaseNavigable(status: PhaseStatus): boolean {
@@ -36,7 +56,7 @@ export function isPhaseNavigable(status: PhaseStatus): boolean {
 export function getPrimaryActionLabel(state: ConductionState): string {
   const blockingAlert = state.alerts.find((alert) => alert.severity === "bloqueio");
   if (blockingAlert) {
-    return `Resolver em ${COS_PHASE_LABELS[blockingAlert.phase]}`;
+    return `Resolver em ${phaseStepLabel(blockingAlert.phase)}`;
   }
   return PHASE_ACTION_LABELS[state.nextStep.phase];
 }
