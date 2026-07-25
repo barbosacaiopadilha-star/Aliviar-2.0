@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRoleForAction, requireRoleForAction } from "@/modules/auth/guard";
@@ -12,6 +11,7 @@ import {
   createCaseInputSchema,
   reassignCuratorInputSchema,
 } from "./schema";
+import { revalidateCaseSurfaces } from "./revalidate";
 import type { CaseActionResult, CaseNote } from "./types";
 
 export type CreateCaseActionResult = { success: true; caseId: string } | { success: false; error: string };
@@ -33,9 +33,7 @@ export async function createCaseAction(input: unknown): Promise<CreateCaseAction
 
   try {
     const created = await createCase(supabase, parsed.data.storyId, parsed.data.assignedCuratorId, authState.user.id);
-    revalidatePath("/admin/casos");
-    revalidatePath("/curador/casos");
-    revalidatePath(`/admin/casos/${created.id}`);
+    revalidateCaseSurfaces(created.id);
     return { success: true, caseId: created.id };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Não foi possível criar o caso." };
@@ -66,9 +64,7 @@ export async function reassignCuratorAction(input: unknown): Promise<CaseActionR
     return { success: false, error: error instanceof Error ? error.message : "Não foi possível reatribuir o caso." };
   }
 
-  revalidatePath(`/admin/casos/${parsed.data.caseId}`);
-  revalidatePath("/admin/casos");
-  revalidatePath("/curador/casos");
+  revalidateCaseSurfaces(parsed.data.caseId);
   return { success: true };
 }
 
@@ -93,11 +89,7 @@ export async function changeCaseStatusAction(input: unknown): Promise<CaseAction
     return { success: false, error: error instanceof Error ? error.message : "Não foi possível mudar o status." };
   }
 
-  revalidatePath(`/admin/casos/${parsed.data.caseId}`);
-  revalidatePath(`/curador/casos/${parsed.data.caseId}`);
-  revalidatePath("/admin/casos");
-  revalidatePath("/curador/casos");
-  revalidatePath("/paciente");
+  revalidateCaseSurfaces(parsed.data.caseId);
   return { success: true };
 }
 
@@ -122,8 +114,7 @@ export async function addCaseNoteAction(input: unknown): Promise<AddCaseNoteActi
 
   try {
     const note = await addCaseNote(supabase, parsed.data.caseId, parsed.data.body, authState.user.id);
-    revalidatePath(`/admin/casos/${parsed.data.caseId}`);
-    revalidatePath(`/curador/casos/${parsed.data.caseId}`);
+    revalidateCaseSurfaces(parsed.data.caseId);
     return { success: true, note };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Não foi possível salvar a nota." };

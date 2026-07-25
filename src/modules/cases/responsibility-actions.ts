@@ -1,10 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRoleForAction } from "@/modules/auth/guard";
 
+import { revalidateCaseSurfaces } from "./revalidate";
 import { transferCaseResponsibilityInputSchema } from "./schema";
 import type { CaseActionResult } from "./types";
 
@@ -58,9 +57,6 @@ export async function transferCaseResponsibilityAction(input: unknown): Promise<
     return { success: false, error: error.message };
   }
 
-  revalidatePath("/portal-curador");
-  revalidatePath(`/portal-curador/casos/${caseId}`);
-  revalidatePath("/admin/casos");
-  revalidatePath(`/admin/casos/${caseId}`);
+  revalidateCaseSurfaces(caseId);
   return { success: true };
 }
