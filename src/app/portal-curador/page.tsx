@@ -1,11 +1,12 @@
 import Link from "next/link";
 
+import { AvailableCases } from "@/components/curadoria/available-cases";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import { conduct } from "@/modules/curadoria/cos/conduction";
 import { getPrimaryActionLabel, phaseHref } from "@/modules/curadoria/cos/conduction-ui";
-import { listCaseIds, loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
+import { listAvailableCases, listCaseIds, loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { buildCuratorJourney } from "@/modules/curadoria/cos/journey";
 import { resolveGreetingFirstName } from "@/modules/auth/display-identity";
 
@@ -22,7 +23,12 @@ export default async function PainelInicialPage() {
   const auth = await requireRole("curador_medico");
   const supabase = await createServerSupabaseClient();
 
-  const caseIds = await listCaseIds(supabase);
+  // A fila de disponíveis é lida junto: um Case sem dono não aparecia para
+  // ninguém, e ficava esperando sem que nenhum Curador soubesse que existia.
+  const [caseIds, disponiveis] = await Promise.all([
+    listCaseIds(supabase),
+    listAvailableCases(supabase),
+  ]);
   const records = (
     await Promise.all(caseIds.map((id) => loadCuradoriaRecord(supabase, id)))
   ).filter((record): record is NonNullable<typeof record> => record !== null);
@@ -146,6 +152,10 @@ export default async function PainelInicialPage() {
         </section>
       )}
 
+      {/* Depois das suas: o que ainda não é de ninguém. Vem por último de
+          propósito — quem já está com você tem precedência sobre o que você
+          poderia pegar. */}
+      <AvailableCases cases={disponiveis} curatorProfileId={auth.user.id} />
     </div>
   );
 }

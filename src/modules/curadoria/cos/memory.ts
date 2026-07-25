@@ -80,7 +80,13 @@ export function buildMemory(record: CuradoriaRecord): MemoryEntry[] {
       at: record.historia.registeredAt ?? record.openedAt,
       phase: "FILTROS",
       event: "RESTRICAO_ADICIONADA",
-      description: `${filtro.label}: ${filtro.value} — ${filtro.reason}`,
+      // Um filtro booleano já é afirmação pelo próprio rótulo — "Oferece
+      // acompanhamento contínuo", nunca "…: true". Mesmo cuidado que a tela
+      // de critérios já tinha; a Memória não o tinha.
+      description:
+        filtro.value === "true"
+          ? `${filtro.label} — ${filtro.reason}`
+          : `${filtro.label}: ${filtro.value} — ${filtro.reason}`,
       actor: record.curatorName,
     });
   }

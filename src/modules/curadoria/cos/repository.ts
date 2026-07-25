@@ -10,7 +10,8 @@ import type {
   OpcaoRelatorio,
   PesoRecord,
 } from "./types";
-import type { CompatibilityBand, PriorityCriterion } from "../types";
+import type { CompatibilityBand, MandatoryFilterKind, PriorityCriterion } from "../types";
+import { MANDATORY_FILTER_LABELS } from "../types";
 
 /**
  * Leitura da Memória da Curadoria a partir do banco (MISSÃO 209, Fase 3).
@@ -213,7 +214,12 @@ export async function loadCuradoriaRecord(
     .map((row) => ({
       id: row.id as string,
       kind: row.kind as string,
-      label: row.kind as string,
+      // O rótulo é humano, nunca o enum. Achado do teste em produção: a tela
+      // exibia "CUIDADO_CONTINUO" — sigla interna em tela é proibida
+      // (Guided Experience §5). O `kind` cru fica no campo `kind`, para
+      // auditoria; a tela lê `label`.
+      label:
+        MANDATORY_FILTER_LABELS[row.kind as MandatoryFilterKind] ?? (row.kind as string),
       value: row.value as string,
       reason: (row.note as string | null) ?? "",
     }));
@@ -347,4 +353,60 @@ export async function listCaseIds(supabase: SupabaseClient): Promise<string[]> {
     .limit(PAINEL_MAX_CASOS);
 
   return (data ?? []).map((row) => row.id as string);
+}
+
+export type AvailableCase = {
+  caseId: string;
+  patientName: string;
+  openedAt: string;
+  /** Há quantos dias este Case espera alguém. */
+  waitingDays: number;
+};
+
+/**
+ * Curadorias que não são de ninguém.
+ *
+ * @metodo Fundamentos §5 — nenhum paciente espera sem que alguém saiba
+ * @metodo UX_PRINCIPLES P6 — a fila ordena pelo que falta fazer, nunca por produtividade
+ *
+ * Por que existe: um Case sem curador atribuído era invisível para todos os
+ * curadores — a RLS só mostrava o que já era seu. O trabalho ficava parado sem
+ * dono e sem ninguém para descobrir que estava parado.
+ *
+ * A ordem é por tempo de espera: quem espera há mais tempo aparece primeiro.
+ * Não é métrica de produtividade — é a pessoa que está há mais tempo sem
+ * resposta.
+ */
+export async function listAvailableCases(
+  supabase: SupabaseClient,
+  now: Date = new Date(),
+): Promise<AvailableCase[]> {
+  const { data } = await supabase
+    .from("cases")
+    .select("id, created_at, patient_profile_id")
+    .is("assigned_curator_id", null)
+    .is("responsible_id", null)
+    .order("created_at", { ascending: true })
+    .limit(PAINEL_MAX_CASOS);
+
+  const rows = data ?? [];
+  if (rows.length === 0) return [];
+
+  const names = await displayNames(
+    supabase,
+    rows.map((row) => row.patient_profile_id as string),
+  );
+
+  return rows.map((row) => {
+    const openedAt = row.created_at as string;
+    const dias = Math.floor((now.getTime() - new Date(openedAt).getTime()) / 86_400_000);
+    return {
+      caseId: row.id as string,
+      // Sem o nome, a fila obrigaria o Curador a abrir cada caso para saber de
+      // quem é. A RLS agora permite ao Curador ler o nome — e só o nome.
+      patientName: names.get(row.patient_profile_id as string) ?? "Paciente",
+      openedAt,
+      waitingDays: Math.max(0, dias),
+    };
+  });
 }
