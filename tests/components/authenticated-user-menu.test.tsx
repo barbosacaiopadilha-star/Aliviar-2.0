@@ -107,9 +107,11 @@ describe("interação completa do menu (Polimento 2026-07-24)", () => {
 
   it("não existe nesting inválido de elementos interativos", async () => {
     const user = userEvent.setup();
-    const { container } = renderMenu();
+    renderMenu();
     await user.click(screen.getByRole("button", { expanded: false }));
-    expect(container.querySelectorAll("button button, button a, a button, a a").length).toBe(0);
+    // O menu vive em PORTAL no body — a varredura precisa olhar o documento
+    // inteiro, não o container do render.
+    expect(document.body.querySelectorAll("button button, button a, a button, a a").length).toBe(0);
   });
 
   it("o gatilho tem nome acessível mesmo quando o texto some no mobile", () => {
@@ -118,4 +120,16 @@ describe("interação completa do menu (Polimento 2026-07-24)", () => {
       screen.getByRole("button", { name: /Menu do usuário — Helena Souza, Curador Médico/ }),
     ).toBeInTheDocument();
   });
+});
+
+// Regressão do bug de produção (clique morto nos itens): o menu DEVE render
+// em portal como filho direto do body. Dentro de um header com stacking
+// context (backdrop-filter sem z-index), o dropdown era pintado atrás do
+// conteúdo da página e o mouse não o alcançava.
+it("o menu renderiza em portal, fora de qualquer stacking context de header", async () => {
+  const user = userEvent.setup();
+  renderMenu();
+  await user.click(screen.getByRole("button", { expanded: false }));
+  const menu = screen.getByRole("menu");
+  expect(menu.parentElement).toBe(document.body);
 });
