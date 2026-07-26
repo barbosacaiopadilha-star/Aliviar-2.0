@@ -182,6 +182,9 @@ export default async function CriteriosPage({ params }: { params: Promise<{ id: 
                   initialWeights={record.prioridades.weights.map((weight) => ({
                     criterion: weight.criterion,
                     weight: weight.weight,
+                    // Sem isto o alvo gravado se perdia ao reabrir a tela, e o
+                    // Curador precisava escolher de novo a cada visita.
+                    targetValue: weight.targetValue,
                     evidence: weight.evidence,
                   }))}
                   filterCriteria={filterCriteria}

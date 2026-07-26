@@ -25,8 +25,15 @@ import {
   removeWeightAction,
   validateProfileAction,
 } from "@/modules/curadoria/actions";
+import { Select } from "@/components/ui/select";
 import { TOTAL_PRIORITY_POINTS } from "@/modules/curadoria/method";
 import { computePriorityValidationReadiness } from "@/modules/curadoria/priority-validation-readiness";
+import {
+  PRIORITY_TARGET_OPTIONS,
+  PRIORITY_TARGET_QUESTIONS,
+  requiresTarget,
+  targetLabel,
+} from "@/modules/curadoria/priority-targets";
 import {
   PRIORITY_CRITERIA,
   PRIORITY_CRITERION_LABELS,
@@ -38,6 +45,8 @@ export type BuilderWeight = {
   criterion: PriorityCriterion;
   weight: number;
   evidence: string;
+  /** O que a pessoa declarou, nos critérios que exigem alvo (I-04). */
+  targetValue?: string | null;
 };
 
 type PriorityBuilderProps = {
@@ -70,7 +79,9 @@ export function PriorityBuilder({
         weights: weights.map((entry) => ({
           criterion: entry.criterion,
           weight: entry.weight,
-          targetValue: null,
+          // Passava `null` fixo aqui: a prontidão nunca enxergava o alvo, então
+          // a validação seguia bloqueada mesmo com o alvo escolhido na tela.
+          targetValue: entry.targetValue ?? null,
           evidence: entry.evidence,
         })),
         filterCriteria,
@@ -86,6 +97,16 @@ export function PriorityBuilder({
   function setWeight(criterion: PriorityCriterion, value: number) {
     setWeights((current) =>
       current.map((entry) => (entry.criterion === criterion ? { ...entry, weight: value } : entry)),
+    );
+    setSuccess(null);
+    setError(null);
+  }
+
+  function setTarget(criterion: PriorityCriterion, value: string) {
+    setWeights((current) =>
+      current.map((entry) =>
+        entry.criterion === criterion ? { ...entry, targetValue: value || null } : entry,
+      ),
     );
     setSuccess(null);
     setError(null);
@@ -146,6 +167,7 @@ export function PriorityBuilder({
         weights: weights.map((entry) => ({
           criterion: entry.criterion,
           weight: entry.weight,
+          targetValue: entry.targetValue ?? null,
           evidence: entry.evidence,
         })),
       });
@@ -171,6 +193,7 @@ export function PriorityBuilder({
         weights: weights.map((entry) => ({
           criterion: entry.criterion,
           weight: entry.weight,
+          targetValue: entry.targetValue ?? null,
           evidence: entry.evidence,
         })),
       });
@@ -259,6 +282,53 @@ export function PriorityBuilder({
                     {PRIORITY_CRITERION_LABELS[entry.criterion]} já é um filtro obrigatório. Ou elimina,
                     ou pesa — nunca os dois.
                   </p>
+                ) : null}
+
+                {/* O ALVO DECLARADO. Três critérios não são monotônicos: para
+                    região, área e forma do primeiro encontro, "mais" não é
+                    "melhor" — depende do que ESTA pessoa quer. Sem o alvo, o
+                    Motor não tem contra o que comparar e a Invariante I-04
+                    impede a validação. Antes o campo não existia, e quem
+                    escolhesse um desses três ficava travado sem saída. */}
+                {requiresTarget(entry.criterion) ? (
+                  <div className="space-y-2">
+                    <label
+                      className="block text-xs uppercase tracking-wide text-ink-muted"
+                      htmlFor={`alvo-${entry.criterion}`}
+                    >
+                      {PRIORITY_TARGET_QUESTIONS[entry.criterion]}
+                    </label>
+                    {validated ? (
+                      <p className="text-sm text-ink">
+                        {targetLabel(entry.criterion, entry.targetValue ?? null) ??
+                          "Não declarado."}
+                      </p>
+                    ) : (
+                      <>
+                        <Select
+                          id={`alvo-${entry.criterion}`}
+                          value={entry.targetValue ?? ""}
+                          disabled={isPending}
+                          error={!entry.targetValue}
+                          onChange={(event) => setTarget(entry.criterion, event.target.value)}
+                        >
+                          {/* Nunca uma opção pré-escolhida: quem responde é ela. */}
+                          <option value="">Escolha o que ela declarou</option>
+                          {(PRIORITY_TARGET_OPTIONS[entry.criterion] ?? []).map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </Select>
+                        {!entry.targetValue ? (
+                          <p className="text-xs leading-relaxed text-ink-muted">
+                            Sem isto, não há contra o que comparar — este critério ficaria com peso
+                            e sem sentido.
+                          </p>
+                        ) : null}
+                      </>
+                    )}
+                  </div>
                 ) : null}
 
                 <div className="space-y-2">
