@@ -25,8 +25,11 @@ export default async function PainelInicialPage() {
 
   // A fila de disponíveis é lida junto: um Case sem dono não aparecia para
   // ninguém, e ficava esperando sem que nenhum Curador soubesse que existia.
+  // `auth.user.id` explícito: desde que a RLS passou a mostrar ao Curador os
+  // Cases sem dono, "visível" deixou de significar "meu". Sem este filtro, um
+  // Case disponível aparecia nas duas listas ao mesmo tempo.
   const [caseIds, disponiveis] = await Promise.all([
-    listCaseIds(supabase),
+    listCaseIds(supabase, auth.user.id),
     listAvailableCases(supabase),
   ]);
   const records = (

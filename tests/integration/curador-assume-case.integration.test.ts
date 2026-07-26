@@ -6,7 +6,7 @@ import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createCase } from "@/modules/cases/repository";
 import { createPatientAccount } from "@/modules/profiles/patient-account-repository";
 import { getOrCreateActiveStory, submitStory } from "@/modules/story/repository";
-import { listAvailableCases } from "@/modules/curadoria/cos/repository";
+import { listAvailableCases, listCaseIds } from "@/modules/curadoria/cos/repository";
 
 import { createCuradoriaClient } from "./curadoria-client";
 
@@ -143,6 +143,34 @@ describe("Curadorias disponíveis e autoassunção", () => {
     // gravação aconteceu está garantido pela transação: se o insert da
     // auditoria falhasse, o Case não teria se movido, e as três asserções
     // acima falhariam.
+  }, 60_000);
+
+  it("um Case disponível NÃO aparece em 'Suas Curadorias' — as duas listas são disjuntas", async () => {
+    // Regressão real: ao abrir a RLS para o Curador ver Cases sem dono,
+    // `listCaseIds` — que sempre usou a RLS como recorte de "meus" — passou a
+    // devolver os disponíveis também. O Case aparecia nas DUAS listas, e
+    // assumir não mudava nada visível, porque ele já estava na de cima.
+    const { caseId } = await createUnclaimedCase(`Paciente Disjunto ${Date.now()}`);
+    const curador = await loginAs("curador_medico");
+
+    const meus = await listCaseIds(curador.client, curador.userId);
+    expect(meus, "Case sem dono não é meu").not.toContain(caseId);
+
+    // Mas ele é alcançável — a RLS continua permitindo. Asserção direta, e não
+    // pela fila, que mostra os mais antigos primeiro e tem limite de janela.
+    const { data: alcancavel } = await curador.client.from("cases").select("id").eq("id", caseId);
+    expect(alcancavel ?? []).toHaveLength(1);
+
+    // Depois de assumir, ele troca de lista — e só então.
+    await curador.client.schema("curadoria").rpc("transfer_case_responsibility", {
+      _case_id: caseId,
+      _new_responsible_id: curador.userId,
+      _new_role: "curador_medico",
+      _reason: "Assumindo para conduzir.",
+    });
+
+    expect(await listCaseIds(curador.client, curador.userId)).toContain(caseId);
+    expect((await listAvailableCases(curador.client)).some((e) => e.caseId === caseId)).toBe(false);
   }, 60_000);
 
   it("assumir sem motivo é recusado — a auditoria não aceita silêncio", async () => {

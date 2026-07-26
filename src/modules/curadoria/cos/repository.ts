@@ -344,13 +344,30 @@ export async function loadCuradoriaRecord(
  */
 export const PAINEL_MAX_CASOS = 60;
 
-/** Casos visíveis para quem está chamando. A RLS já faz o recorte por papel. */
-export async function listCaseIds(supabase: SupabaseClient): Promise<string[]> {
-  const { data } = await supabase
-    .from("cases")
-    .select("id")
-    .order("updated_at", { ascending: false })
-    .limit(PAINEL_MAX_CASOS);
+/**
+ * Casos visíveis para quem está chamando.
+ *
+ * `ownedBy` existe porque "visível" deixou de ser sinônimo de "meu". Quando a
+ * RLS passou a mostrar ao Curador os Cases sem dono — para ele poder assumi-los
+ * — esta função, que sempre confiou na RLS como recorte, começou a devolver
+ * também o que não é dele. Consequência observada em produção: um Case
+ * disponível aparecia em "Suas Curadorias" E na fila de disponíveis ao mesmo
+ * tempo, e assumir não mudava nada visível, porque ele já estava na lista.
+ *
+ * A lição: ao ampliar uma policy, todo código que usava a RLS como filtro
+ * implícito muda de significado em silêncio. Quem quer "os meus" precisa dizer.
+ */
+export async function listCaseIds(
+  supabase: SupabaseClient,
+  ownedBy?: string,
+): Promise<string[]> {
+  let query = supabase.from("cases").select("id");
+
+  if (ownedBy) {
+    query = query.or(`responsible_id.eq.${ownedBy},assigned_curator_id.eq.${ownedBy}`);
+  }
+
+  const { data } = await query.order("updated_at", { ascending: false }).limit(PAINEL_MAX_CASOS);
 
   return (data ?? []).map((row) => row.id as string);
 }
