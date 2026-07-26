@@ -1,13 +1,8 @@
-// Congelamento profundo — garante que artefatos sejam imutáveis mesmo em
-// campos aninhados (Object.freeze sozinho só congela o nível superior).
+// Congelamento profundo — agora mantido pela Plataforma.
+//
+// A implementação foi absorvida em `src/platform/immutability/deep-freeze.ts`,
+// onde ganhou tratamento de ciclo, suporte a Map/Set e segurança com getters.
+// Este arquivo permanece como o ponto de entrada que o ACE já usava: nada
+// deixou de existir, e a disciplina passou a ter uma implementação só.
 
-export function deepFreeze<T>(value: T): T {
-  if (value !== null && typeof value === "object" && !Object.isFrozen(value)) {
-    for (const key of Object.getOwnPropertyNames(value)) {
-      deepFreeze((value as Record<string, unknown>)[key]);
-    }
-    Object.freeze(value);
-  }
-
-  return value;
-}
+export { deepFreeze, isDeeplyFrozen, type DeepReadonly } from "@/platform/immutability/deep-freeze";
