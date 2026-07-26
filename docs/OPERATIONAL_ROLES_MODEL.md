@@ -198,7 +198,7 @@ Fim do ciclo (ou Reabertura → novo ciclo completo)
 - **não** substitui o profissional escolhido;
 - **não** garante resultado clínico.
 
-**Achado técnico, registrado, não resolvido nesta fase**: das duas funções, só a Função 2 tem correspondência parcial com um evento já implementado (`deliverFinalCuradoriaAction`, P010) — a Função 1 (Reunião de Acolhimento) não tem, hoje, nenhum registro estruturado no sistema; é inteiramente extra-sistêmica.
+**Achado técnico, registrado, não resolvido nesta fase**: das duas funções, só a Função 2 tem correspondência parcial com um evento já implementado — a entrega da Curadoria — enquanto a Função 1 (Reunião de Acolhimento) não tem, hoje, nenhum registro estruturado no sistema; é inteiramente extra-sistêmica. _(Atualizado em 2026-07-26: o evento de entrega era o do ACE/P010, descontinuado pela ADR-036; a entrega canônica passou a ser a do Método — Relatório entregue sobre seleção entregue —, reconhecida pelo contrato em `src/modules/curadoria/delivery-contract.ts`. A correspondência parcial da Função 2 permanece; o que mudou foi qual evento a materializa.)_
 
 ---
 
