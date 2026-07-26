@@ -1,5 +1,7 @@
 import "server-only";
 
+import { randomUUID } from "node:crypto";
+
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { computeNextActionAt } from "./next-action";
@@ -10,6 +12,8 @@ import {
   resolveStageTransitionContext,
   type PipelineStage,
 } from "./pipeline";
+import { hasDeliveredCuradoria } from "@/modules/curadoria/delivery-contract";
+
 import { LEAD_EDITABLE_STAGES, projectPipelineStage } from "./pipeline-projection";
 import { normalizeEmail, normalizePhone } from "./phone";
 import type {
@@ -244,9 +248,23 @@ export async function createContact(
   const emailNormalized = normalizeEmail(input.email);
   const now = new Date().toISOString();
 
-  const { data: contactRow, error: contactError } = await supabase
+  // O id é gerado aqui, e o INSERT não pede `RETURNING`.
+  //
+  // Por quê: a policy de SELECT de `crm_contacts` é `can_access_crm_contact(id)`,
+  // que resolve o acesso com uma subconsulta na PRÓPRIA tabela. A linha que
+  // está sendo inserida ainda não é visível a essa subconsulta, então o
+  // `RETURNING` do `.select()` nunca satisfaz a policy — o Postgres levanta
+  // 42501 e desfaz a transação inteira. O INSERT sozinho passa e persiste; era
+  // só o retorno que falhava, para qualquer papel.
+  //
+  // Conhecer o id de antemão remove a leitura desnecessária sem afrouxar
+  // nenhuma autorização: quem não pode inserir continua não inserindo.
+  const contactId = randomUUID();
+
+  const { error: contactError } = await supabase
     .from("crm_contacts")
     .insert({
+      id: contactId,
       full_name: input.fullName.trim(),
       preferred_name: input.preferredName?.trim() || null,
       phone: input.phone?.trim() || null,
@@ -266,13 +284,9 @@ export async function createContact(
       next_action_at: input.nextActionAt ?? null,
       pipeline_stage: "new_contact",
       status: "ativo",
-    })
-    .select("id")
-    .single();
+    });
 
-  if (contactError || !contactRow) throw new Error(contactError?.message ?? "Não foi possível criar o contato.");
-
-  const contactId = contactRow.id as string;
+  if (contactError) throw new Error(contactError.message ?? "Não foi possível criar o contato.");
 
   if (input.initialNote?.trim() && actorId) {
     await createInteraction(supabase, {
@@ -475,8 +489,13 @@ async function mapCanonicalCase(
   row: CanonicalCaseRow,
   leadStageFallback: PipelineStage,
 ): Promise<CrmCaseSummary> {
-  const [{ data: delivery }, names] = await Promise.all([
-    supabase.from("final_curadoria_deliveries").select("id").eq("case_id", row.id).maybeSingle(),
+  // A pergunta é do contrato canônico, não da tabela: o CRM não sabe — e não
+  // deve saber — se a entrega veio da Curadoria do Método ou do motor antigo.
+  // Antes ele consultava `final_curadoria_deliveries` direto, e por isso um
+  // Case entregue pelo Método chegava aqui como não entregue, travando o
+  // quadro do Concierge antes de `report_delivered`.
+  const [delivered, names] = await Promise.all([
+    hasDeliveredCuradoria(supabase, row.id),
     namesByProfileIds(supabase, [row.patient_profile_id, row.responsible_id ?? ""]),
   ]);
 
@@ -485,7 +504,7 @@ async function mapCanonicalCase(
     responsibleRole: (row.responsible_role as "atendente" | "curador_medico" | "concierge" | null) ?? null,
     startedAt: row.started_at,
     closedAt: row.closed_at,
-    delivered: Boolean(delivery),
+    delivered,
   });
 
   const stage: PipelineStage = projection.kind === "case" ? projection.stage : leadStageFallback;

@@ -31,6 +31,8 @@ export type PatientCuradoriaOption = {
 
 export type PatientCuradoria = {
   curatedSelectionId: string;
+  /** O Case desta Curadoria — de onde o acompanhamento a jusante parte. */
+  caseId: string;
   curatorName: string | null;
   deliveredAt: string;
   compositionRationale: string | null;
@@ -132,6 +134,7 @@ export async function loadPatientCuradoria(
 
   return {
     curatedSelectionId: selectionId,
+    caseId: selection.case_id as string,
     curatorName: null,
     deliveredAt: report.delivered_at as string,
     compositionRationale:

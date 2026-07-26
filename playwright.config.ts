@@ -23,6 +23,41 @@ import { defineConfig, devices } from "@playwright/test";
 // construído.
 require("./tests/e2e/stubs/server-only-register.cjs");
 
+// ALVO DO E2E — uma fonte só, verificada antes de qualquer coisa acontecer.
+//
+// O `.env.local` deste repositório aponta para PRODUÇÃO. O runner e as
+// fixtures recebem as variáveis locais por injeção no comando, mas o
+// `webServer` é um processo de shell separado (`npx next start`) que carrega
+// `.env.local` por conta própria — e passava a autenticar contra o banco
+// remoto, onde o paciente criado pela fixture não existe.
+//
+// Duas consequências tratadas aqui:
+//  1. `env` abaixo repassa o alvo local ao servidor;
+//  2. a guarda impede que uma execução sem injeção toque produção em silêncio.
+//
+// ATENÇÃO — variáveis `NEXT_PUBLIC_*` são embutidas no bundle em tempo de
+// BUILD. Passá-las ao `next start` alinha o código de servidor, mas o cliente
+// que roda no browser carrega o que estava presente durante `npm run build`.
+// Por isso o build do E2E precisa ser feito com as MESMAS variáveis locais.
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const LOCAL_HOSTS = ["127.0.0.1", "localhost", "[::1]"];
+
+function assertLocalSupabase(): void {
+  if (!SUPABASE_URL) {
+    throw new Error(
+      "E2E bloqueado: NEXT_PUBLIC_SUPABASE_URL ausente. Injete as variáveis do Supabase local antes de rodar o Playwright.",
+    );
+  }
+  const { hostname } = new URL(SUPABASE_URL);
+  if (!LOCAL_HOSTS.includes(hostname)) {
+    throw new Error(
+      `E2E bloqueado: Supabase remoto detectado (${hostname}). O E2E cria e apaga contas — nunca deve apontar para um ambiente que não seja local.`,
+    );
+  }
+}
+
+assertLocalSupabase();
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
@@ -45,5 +80,14 @@ export default defineConfig({
     url: "http://127.0.0.1:3001",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    // Herda o ambiente e sobrescreve explicitamente o alvo do Supabase, para
+    // que o servidor nunca caia no `.env.local` de produção.
+    env: {
+      ...(process.env as Record<string, string>),
+      NEXT_PUBLIC_SUPABASE_URL: SUPABASE_URL,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+      SUPABASE_URL: process.env.SUPABASE_URL ?? SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
+    },
   },
 });

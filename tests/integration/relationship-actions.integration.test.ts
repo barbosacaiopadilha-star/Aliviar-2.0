@@ -1,6 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createCuradoriaClient } from "./curadoria-client";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
@@ -15,10 +14,9 @@ import {
   createConnection,
 } from "@/modules/connection/commands";
 import { SupabaseConnectionRepository } from "@/modules/connection/repository";
-import { deliverFinalCuradoria } from "@/modules/concierge/delivery-repository";
-import { FakeAceLanguageModel } from "@/modules/concierge/fake-language-model";
-import { submitHumanReview } from "@/modules/concierge/human-review-repository";
-import { runAceExecution } from "@/modules/concierge/orchestrator";
+import * as curadoria from "@/modules/curadoria/repository";
+import * as reports from "@/modules/curadoria/report-repository";
+import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { createPatientAccount } from "@/modules/profiles/patient-account-repository";
 import { createProfessionalProfile } from "@/modules/profiles/professional-repository";
 import {
@@ -48,10 +46,6 @@ import {
 } from "@/modules/relationship/commands";
 import { RelationshipError } from "@/modules/relationship/errors";
 import { SupabaseRelationshipRepository } from "@/modules/relationship/repository";
-import type {
-  RelationshipAuthor,
-  RelationshipRecord,
-} from "@/modules/relationship/types";
 
 type TestAccount = { role: string; email: string; password: string };
 
@@ -73,7 +67,10 @@ function unique(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-describe("Relationship Engine — MVP — PR3 (repository, actions — Supabase local)", () => {
+// A preparação canônica (Curadoria completa + Connection + primeiro
+// atendimento + Relationship) leva mais que o limite global de 20s. O limite
+// é de infraestrutura, não de comportamento: nenhum assert muda por causa dele.
+describe("Relationship Engine — MVP — PR3 (repository, actions — Supabase local)", { timeout: 90000 }, () => {
   let accounts: TestAccount[];
 
   beforeAll(() => {
@@ -171,6 +168,85 @@ describe("Relationship Engine — MVP — PR3 (repository, actions — Supabase 
     return professional.id;
   }
 
+  /**
+   * A Curadoria do Método, do critério à entrega, pelas mesmas funções que as
+   * telas chamam. Devolve o Relatório entregue e os três profissionais que
+   * chegaram ao paciente — nenhum protocolo do ACE participa.
+   */
+  async function deliverCanonically(
+    curador: { client: ReturnType<typeof createCuradoriaClient>; userId: string },
+    caseId: string,
+  ) {
+    const cliente = curador.client;
+
+    await cliente.from("consultation_records").insert({
+      case_id: caseId,
+      curator_id: curador.userId,
+      context_reviewed: true,
+      documents_reviewed: true,
+      narrative: "Ela contou a história inteira, e eu devolvi organizada.",
+      understanding_confirmed_at: new Date().toISOString(),
+    });
+    await cliente
+      .from("case_clinical_context")
+      .insert({ case_id: caseId, clinical_context: "Contexto clínico relatado por ela." });
+
+    const priorityProfileId = await curadoria.createPriorityProfile(cliente, caseId, curador.userId);
+    await curadoria.addFilter(
+      cliente,
+      priorityProfileId,
+      "FILTRO_OBRIGATORIO",
+      "CUIDADO_CONTINUO",
+      "true",
+      "Ela quer alguém que acompanhe do começo ao fim.",
+    );
+    await curadoria.saveWeight(cliente, priorityProfileId, "EXPERIENCIA", 60, null, "Quer quem já viu muitos casos.");
+    await curadoria.saveWeight(cliente, priorityProfileId, "CONTINUIDADE", 40, null, "Quer a mesma pessoa do começo ao fim.");
+    await curadoria.validatePriorityProfile(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
+    await curadoria.runCompatibility(cliente, priorityProfileId);
+
+    const record = await loadCuradoriaRecord(cliente, caseId);
+    const tres = record!.curadoriaTecnica.analyses.slice(0, 3);
+    expect(tres, "a rede local precisa ter três elegíveis para este cenário").toHaveLength(3);
+
+    await curadoria.saveSelection(
+      cliente,
+      caseId,
+      priorityProfileId,
+      curador.userId,
+      "Os três cobrem experiência e continuidade de formas diferentes.",
+      tres.map((a) => ({
+        professionalProfileId: a.professionalId,
+        band: a.band,
+        rationale: "Entra porque atende o que ela pediu.",
+        tradeOff: "Agenda mais concorrida.",
+      })),
+    );
+    const selection = await curadoria.getSelection(cliente, priorityProfileId);
+
+    await reports.saveReport(
+      cliente,
+      caseId,
+      selection!.id,
+      "Os três cobrem experiência e continuidade de formas diferentes.",
+      tres.map((a) => ({
+        professionalProfileId: a.professionalId,
+        justification: "Responde ao critério que ela nomeou.",
+        relationToWeights: "Cobre experiência, que ela pesou mais.",
+        attentionPoints: ["Agenda mais concorrida."],
+        favorablePoints: [],
+        suggestedQuestions: ["Quantos casos como o meu você acompanha por ano?"],
+        curatorObservations: null,
+      })),
+    );
+    const report = await reports.getReportBySelection(cliente, selection!.id);
+    await reports.emitReport(cliente, report!.id);
+    await curadoria.deliverSelection(cliente, selection!.id);
+    await reports.markReportDelivered(cliente, report!.id);
+
+    return { reportId: report!.id, professionalIds: tres.map((a) => a.professionalId) };
+  }
+
   async function createDeliveredCaseWithRelationship() {
     const admin = await loginAs("administrador");
     const adminClient = createAdminSupabaseClient();
@@ -205,10 +281,11 @@ describe("Relationship Engine — MVP — PR3 (repository, actions — Supabase 
     );
     await submitStory(patientClient, draft.id, refreshed.revision);
 
+    const curador = await loginAs("curador_medico");
     const created = await createCase(
       admin.client,
       draft.id,
-      undefined,
+      curador.userId,
       admin.userId,
     );
     await changeCaseStatus(admin.client, created.id, "IN_REVIEW", admin.userId);
@@ -219,39 +296,11 @@ describe("Relationship Engine — MVP — PR3 (repository, actions — Supabase 
       admin.userId,
     );
 
-    const professionalIds = [
-      await seedPresentableProfessional(adminClient, admin.userId),
-      await seedPresentableProfessional(adminClient, admin.userId),
-      await seedPresentableProfessional(adminClient, admin.userId),
-    ];
+    await seedPresentableProfessional(adminClient, admin.userId);
+    await seedPresentableProfessional(adminClient, admin.userId);
+    await seedPresentableProfessional(adminClient, admin.userId);
 
-    const execution = await runAceExecution({
-      supabase: admin.client,
-      caseId: created.id,
-      actorId: admin.userId,
-      languageModel: new FakeAceLanguageModel(),
-    });
-    expect(execution.outcome).toBe("completed");
-
-    await submitHumanReview(admin.client, {
-      caseId: created.id,
-      reviewerId: admin.userId,
-      reviewAction: "APPROVE",
-      reviewRationale:
-        "Composição adequada às necessidades relatadas na história.",
-      evidenceReferences: ["Shortlist.compositionRationale"],
-      changes: [],
-      returnToProtocol: null,
-    });
-
-    const delivery = await deliverFinalCuradoria({
-      supabase: admin.client,
-      caseId: created.id,
-      actorId: admin.userId,
-      languageModel: new FakeAceLanguageModel(),
-    });
-    const deliveryRecord =
-      delivery.outcome === "delivered" ? delivery.delivery : null;
+    const entregues = await deliverCanonically(curador, created.id);
 
     const connectionRepository = new SupabaseConnectionRepository(
       patientClient,
@@ -260,14 +309,14 @@ describe("Relationship Engine — MVP — PR3 (repository, actions — Supabase 
     const created0 = createConnection(
       {
         caseId: created.id,
-        finalCuradoriaDeliveryId: deliveryRecord!.id,
+        anchor: { source: "METODO" as const, reportId: entregues.reportId },
         patientProfileId: patientAccount.profileId,
-        professionalProfileId: professionalIds[0],
+        professionalProfileId: entregues.professionalIds[0],
         actorId: patientAccount.profileId,
         occurredAt: now,
         recordedAt: now,
       },
-      { eligibleProfessionalProfileIds: professionalIds },
+      { eligibleProfessionalProfileIds: entregues.professionalIds },
     );
     const connectionRecord = await connectionRepository.create(
       created0.record,
@@ -293,7 +342,7 @@ describe("Relationship Engine — MVP — PR3 (repository, actions — Supabase 
         connectionId: finalConnection.id,
         caseId: created.id,
         patientProfileId: patientAccount.profileId,
-        professionalProfileId: professionalIds[0],
+        professionalProfileId: entregues.professionalIds[0],
         status: "ATIVO",
         startedAt: now,
       },
@@ -312,7 +361,8 @@ describe("Relationship Engine — MVP — PR3 (repository, actions — Supabase 
       caseId: created.id,
       patientProfileId: patientAccount.profileId,
       patientClient,
-      professionalIds,
+      // Os três efetivamente entregues — é sobre eles que o Relationship existe.
+      professionalIds: entregues.professionalIds,
       relationship,
       relationshipRepository,
     };

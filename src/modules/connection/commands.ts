@@ -13,6 +13,7 @@ import {
   isValidConnectionTransition,
 } from "./state-machine";
 import type {
+  ConnectionAnchor,
   ConnectionRecord,
   ConnectionRecordDraft,
   CreateConnectionResult,
@@ -73,7 +74,7 @@ function assertTransition(
 
 export type CreateConnectionInput = {
   caseId: string;
-  finalCuradoriaDeliveryId: string;
+  anchor: ConnectionAnchor;
   patientProfileId: string;
   professionalProfileId: string;
   actorId: string;
@@ -94,7 +95,7 @@ export function createConnection(
 
   const record: ConnectionRecordDraft = {
     caseId: input.caseId,
-    finalCuradoriaDeliveryId: input.finalCuradoriaDeliveryId,
+    anchor: input.anchor,
     patientProfileId: input.patientProfileId,
     professionalProfileId: input.professionalProfileId,
     status: "DECISAO_REGISTRADA",
