@@ -40,34 +40,61 @@ export default async function PatientCuradoriaPage() {
     );
   }
 
-  const connection = delivery
-    ? await new SupabaseConnectionRepository(supabase).findByCaseId(delivery.caseId)
+  // O Case do qual o acompanhamento depende — vindo da Curadoria do Método
+  // quando ela existe, e só então do registro legado. Antes, Connection e
+  // Relationship só apareciam se houvesse entrega do motor antigo: pelo
+  // caminho canônico a pessoa lia as três opções e não tinha como seguir.
+  const caseId = curadoria?.caseId ?? delivery?.caseId ?? null;
+
+  const connection = caseId
+    ? await new SupabaseConnectionRepository(supabase).findByCaseId(caseId)
     : null;
 
   const relationship =
-    delivery && connection?.status === "PRIMEIRO_ATENDIMENTO_REALIZADO"
-      ? await new SupabaseRelationshipRepository(supabase).findByCaseId(delivery.caseId)
+    caseId && connection?.status === "PRIMEIRO_ATENDIMENTO_REALIZADO"
+      ? await new SupabaseRelationshipRepository(supabase).findByCaseId(caseId)
       : null;
+
+  // As três opções entregues, na forma que os painéis de acompanhamento leem.
+  // Só os campos com correspondência real são preenchidos: `attentionPoints`
+  // é o que a opção custa, e é exatamente o que o painel chama de limitação.
+  const options = curadoria
+    ? curadoria.options.map((option) => ({
+        providerId: option.professionalProfileId,
+        displayName: option.professionalName,
+        professionalSummary: option.relationToWeights,
+        whyIncluded: option.justification,
+        strengthsForThisCase: [],
+        relevantLimitations: option.attentionPoints,
+        practicalConsiderations: [],
+      }))
+    : (delivery?.providerPresentations ?? []);
 
   return (
     <div className="space-y-8">
       {curadoria ? <PatientCuradoriaView curadoria={curadoria} /> : null}
 
-      {delivery ? (
+      {delivery ? <FinalCuradoriaView delivery={delivery} /> : null}
+
+      {caseId && options.length > 0 ? (
         <>
-          <FinalCuradoriaView delivery={delivery} />
           <ConnectionChoicePanel
-            caseId={delivery.caseId}
-            providerPresentations={delivery.providerPresentations}
+            caseId={caseId}
+            providerPresentations={options}
             connection={connection}
           />
           {relationship ? (
             <RelationshipStatusPanel
-              caseId={delivery.caseId}
+              caseId={caseId}
               relationship={relationship}
-              providerPresentations={delivery.providerPresentations}
+              providerPresentations={options}
             />
           ) : null}
+        </>
+      ) : null}
+
+      {delivery ? (
+        <>
           <Link
             href="/paciente/curadoria/imprimir"
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-white px-5 py-2.5 text-sm font-medium text-[var(--patient-ink)] shadow-sm transition-all hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"

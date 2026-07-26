@@ -14,7 +14,6 @@ import { getStoryById } from "@/modules/story/repository";
 
 import { AceExecutionsHistory } from "@/components/ace/ace-executions-history";
 import { AceArtifactsList } from "@/components/cases/ace-artifacts-list";
-import { AceExecutionPanel } from "@/components/cases/ace-execution-panel";
 import { AceShortlistViewer } from "@/components/cases/ace-shortlist-viewer";
 import { CaseEventsTimeline } from "@/components/cases/case-events-timeline";
 import { CaseNotesLog } from "@/components/cases/case-notes-log";
@@ -64,7 +63,6 @@ export default async function CuradorCaseDetailPage({ params }: CuradorCaseDetai
     listArtifactsForCase(supabase, id),
     listActiveP002FieldCorrections(supabase, id),
   ]);
-  const execution = executions[0] ?? null;
 
   const shortlistArtifact = artifacts.find((artifact) => artifact.artifactType === "Shortlist");
   const shortlist = shortlistArtifact ? (shortlistArtifact.payload as Shortlist) : null;
@@ -75,7 +73,6 @@ export default async function CuradorCaseDetailPage({ params }: CuradorCaseDetai
     : [];
   const namesByProviderId = await getProfessionalDisplayNames(supabase, shortlistProviderIds);
 
-  const canRunAce = caseDetail.status === "READY_FOR_CURATION" || caseDetail.status === "IN_CURATION";
 
   return (
     <div className="space-y-6">
@@ -153,7 +150,6 @@ export default async function CuradorCaseDetailPage({ params }: CuradorCaseDetai
           <h2 className="font-sans text-lg font-semibold text-ink">Execução do ACE</h2>
           <p className="text-sm text-ink-muted">P001 a P008 apenas — nunca revisão humana (P009) ou entrega (P010).</p>
         </CardHeader>
-        <AceExecutionPanel caseId={caseDetail.id} initialExecution={execution} canRun={canRunAce} />
       </Card>
 
       <Card>
