@@ -134,7 +134,7 @@ function MesaHeader({
 // Bloco 2 — Orçamento de pontos
 // ---------------------------------------------------------------------------
 
-function BudgetPanel({ view }: { view: MesaCruzamentoView }) {
+export function BudgetPanel({ view }: { view: MesaCruzamentoView }) {
   const router = useRouter();
   const [weights, setWeights] = useState<Partial<Record<CruzamentoCriterion, number>>>(view.weights);
   const [error, setError] = useState<string | null>(null);
@@ -245,7 +245,7 @@ function BudgetPanel({ view }: { view: MesaCruzamentoView }) {
 
 const GROUP_ORDER = ["AGUARDANDO_DECLARACAO", "ELEGIVEL", "PENDENTE_DE_INFORMACAO", "ELIMINADO"] as const;
 
-function EligibilityPanel({ view }: { view: MesaCruzamentoView }) {
+export function EligibilityPanel({ view }: { view: MesaCruzamentoView }) {
   if (view.professionals.length === 0) {
     return (
       <Card>
@@ -472,7 +472,7 @@ function AreaDeclarationForm({
 // Bloco 4 — Comparação
 // ---------------------------------------------------------------------------
 
-function ComparisonPanel({ view }: { view: MesaCruzamentoView }) {
+export function ComparisonPanel({ view }: { view: MesaCruzamentoView }) {
   const [openEvidence, setOpenEvidence] = useState<string | null>(null);
   const [mobileIndex, setMobileIndex] = useState(0);
 

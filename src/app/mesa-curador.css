@@ -1,0 +1,283 @@
+/* ---------------------------------------------------------------------------
+   MESA DO CURADOR — ambiente de investigação.
+
+   O paciente percorre uma jornada; o Curador conduz uma investigação. A
+   diferença aparece aqui: a área do paciente respira em cartões macios e luz
+   quente; a Mesa é densa, objetiva e rápida. Mesma identidade — papel, verde
+   floresta, serifada nos títulos —, outra função.
+
+   O Curador trabalha horas seguidas: nada aqui pulsa, brilha ou se move sem
+   ele pedir. Poucas bordas, grandes áreas, muito espaço branco.
+--------------------------------------------------------------------------- */
+.mesa {
+  --mesa-line: rgb(26 46 38 / 0.10);
+  --mesa-line-strong: rgb(26 46 38 / 0.22);
+  --mesa-surface: rgb(255 255 255 / 0.72);
+  --mesa-motion: 140ms;
+  --mesa-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ------------------------------- PAINEL A: cabeçalho fixo ---------------- */
+.mesa-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 0.875rem 0 0.75rem;
+  background: rgb(249 248 246 / 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--mesa-line);
+}
+
+.mesa-meta {
+  font-size: 0.75rem;
+  color: var(--color-ink-muted);
+  letter-spacing: 0.01em;
+}
+
+.mesa-alerta {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--color-ink);
+  border-left: 2px solid rgb(138 115 85 / 0.55);
+  padding-left: 0.625rem;
+}
+
+/* ------------------------------- PAINEL B: etapas ------------------------ */
+.mesa-steps {
+  position: sticky;
+  top: 5.25rem;
+  z-index: 15;
+  padding: 0.5rem 0;
+  background: rgb(249 248 246 / 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.mesa-steps__list {
+  display: flex;
+  gap: 0.125rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.mesa-steps__list::-webkit-scrollbar {
+  display: none;
+}
+
+.mesa-step {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  min-height: 2.25rem;
+  padding: 0 0.75rem;
+  border-radius: 0.5rem;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  color: var(--color-ink-muted);
+  transition: background-color var(--mesa-motion) var(--mesa-ease), color var(--mesa-motion) var(--mesa-ease);
+}
+
+.mesa-step:hover {
+  background: rgb(26 46 38 / 0.045);
+  color: var(--color-ink);
+}
+
+.mesa-step:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+
+.mesa-step--ativa {
+  background: rgb(26 46 38 / 0.075);
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.mesa-step__marca {
+  font-size: 0.6875rem;
+  line-height: 1;
+}
+
+.mesa-step__marca--pronta {
+  color: var(--color-brand-sage);
+}
+
+.mesa-step__marca--pendente {
+  color: var(--color-brand-primary);
+}
+
+.mesa-step__marca--aguarda {
+  color: rgb(26 46 38 / 0.3);
+}
+
+/* Onde está a próxima decisão. Um ponto, não um badge: sinaliza sem gritar. */
+.mesa-step__destino {
+  width: 0.3125rem;
+  height: 0.3125rem;
+  border-radius: 9999px;
+  background: var(--color-brand-gold);
+}
+
+/* ------------------------------- PAINEL C: área de trabalho -------------- */
+.mesa-work {
+  min-width: 0;
+  padding-top: 1.75rem;
+}
+
+.mesa-work__title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--color-brand-sage);
+}
+
+.mesa-work__question {
+  margin-top: 0.375rem;
+  font-family: var(--font-serif, serif);
+  font-size: 1.25rem;
+  line-height: 1.35;
+  color: var(--color-ink);
+}
+
+/* Grandes áreas, poucas bordas: separação por espaço e por uma linha fina,
+   nunca por cartão dentro de cartão. */
+.mesa-bloco + .mesa-bloco {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--mesa-line);
+}
+
+/* ------------------------------- PAINEL D: contexto persistente ---------- */
+.mesa-aside {
+  font-size: 0.8125rem;
+}
+
+.mesa-aside__section + .mesa-aside__section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--mesa-line);
+}
+
+.mesa-aside__title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--color-brand-sage);
+}
+
+/* ------------------------------- evidências como chips ------------------- */
+.mesa-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  min-height: 1.75rem;
+  padding: 0 0.625rem;
+  border-radius: 9999px;
+  border: 1px solid var(--mesa-line);
+  background: var(--mesa-surface);
+  font-size: 0.75rem;
+  color: var(--color-ink);
+  transition: border-color var(--mesa-motion) var(--mesa-ease);
+}
+
+button.mesa-chip:hover {
+  border-color: var(--mesa-line-strong);
+}
+
+button.mesa-chip:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+
+.mesa-chip--ok {
+  border-color: rgb(90 125 106 / 0.4);
+}
+
+.mesa-chip--alerta {
+  border-color: rgb(138 115 85 / 0.5);
+  background: rgb(138 115 85 / 0.06);
+}
+
+.mesa-chip--ausente {
+  color: var(--color-ink-muted);
+  border-style: dashed;
+}
+
+/* ------------------------------- estados vazios -------------------------- */
+.mesa-vazio {
+  padding: 2.5rem 0;
+  max-width: 46ch;
+}
+
+/* ------------------------------- linha do tempo -------------------------- */
+.mesa-timeline {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.mesa-timeline::-webkit-scrollbar {
+  display: none;
+}
+
+.mesa-timeline__item {
+  display: flex;
+  flex: 1 0 auto;
+  min-width: 4rem;
+  flex-direction: column;
+  gap: 0.375rem;
+  font-size: 0.6875rem;
+  color: var(--color-ink-muted);
+}
+
+.mesa-timeline__bar {
+  height: 0.1875rem;
+  border-radius: 9999px;
+  background: rgb(26 46 38 / 0.10);
+}
+
+.mesa-timeline__item--done .mesa-timeline__bar {
+  background: rgb(90 125 106 / 0.55);
+}
+
+.mesa-timeline__item--current .mesa-timeline__bar {
+  background: var(--color-brand-primary);
+}
+
+.mesa-timeline__item--current {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+/* ------------------------------- responsividade -------------------------- */
+/* Desktop é o ambiente principal: trabalho e contexto lado a lado.
+   Tablet e celular empilham — no celular a Mesa é consulta, e a edição
+   complexa continua sendo trabalho de mesa, não de mão. */
+.mesa-layout {
+  display: grid;
+  gap: 2rem;
+}
+
+@media (min-width: 1280px) {
+  .mesa-layout {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    align-items: start;
+  }
+
+  .mesa-aside {
+    position: sticky;
+    top: 8.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mesa-step,
+  .mesa-chip {
+    transition: none;
+  }
+}
