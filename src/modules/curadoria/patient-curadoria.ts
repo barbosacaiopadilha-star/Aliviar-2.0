@@ -2,6 +2,12 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import {
+  compatibilityLevelOf,
+  PATIENT_DIMENSIONS,
+  type PatientDimension,
+} from "@/modules/paciente/experiencia";
+
 /**
  * A Curadoria entregue, do ponto de vista do paciente.
  *
@@ -29,6 +35,14 @@ export type PatientCuradoriaOption = {
   favorablePoints: string[];
   attentionPoints: string[];
   suggestedQuestions: string[];
+  /**
+   * O quanto este caminho responde a cada dimensão, nos quatro estados que a
+   * pessoa lê. Vem da declaração do Curador (`criterion_declarations`), nunca
+   * de interpretação do texto do Relatório. Vazio enquanto não houver
+   * declaração — a carta mostra as dimensões como "ainda precisamos
+   * confirmar", que é a verdade.
+   */
+  dimensions: PatientDimension[];
 };
 
 export type PatientCuradoria = {
@@ -104,6 +118,32 @@ export async function loadPatientCuradoria(
     (profiles ?? []).map((row) => [row.id as string, row.display_name as string]),
   );
 
+  // A avaliação por dimensão vem da declaração do Curador. A RLS só a libera
+  // depois da entrega — antes disso, a Curadoria ainda está sendo construída.
+  const { data: criterionRows } = await supabase
+    .from("criterion_declarations")
+    .select("professional_profile_id, criterion, assessment")
+    .eq("case_id", selection.case_id as string);
+
+  const levelByProfessional = new Map<string, Map<string, string>>();
+  for (const row of criterionRows ?? []) {
+    const professional = row.professional_profile_id as string;
+    const current = levelByProfessional.get(professional) ?? new Map<string, string>();
+    current.set(row.criterion as string, row.assessment as string);
+    levelByProfessional.set(professional, current);
+  }
+
+  const dimensionsFor = (professionalProfileId: string): PatientDimension[] => {
+    const declared = levelByProfessional.get(professionalProfileId);
+    return PATIENT_DIMENSIONS.map((dimension) => ({
+      criterion: dimension.criterion,
+      label: dimension.label,
+      // Sem declaração, "ainda precisamos confirmar" — nunca zero, nunca
+      // ausência silenciosa.
+      level: compatibilityLevelOf(declared?.get(dimension.criterion) ?? ""),
+    }));
+  };
+
   // A decisão aponta para a OPÇÃO da seleção, não para o profissional.
   const selectionOptionToProfessional = new Map(
     (selectionOptions ?? []).map((row) => [
@@ -127,6 +167,7 @@ export async function loadPatientCuradoria(
       relationToWeights: (row.relation_to_weights as string) ?? "",
       favorablePoints: (row.favorable_points as string[]) ?? [],
       attentionPoints: (row.attention_points as string[]) ?? [],
+      dimensions: dimensionsFor(professionalProfileId),
       suggestedQuestions: (row.suggested_questions as string[]) ?? [],
     };
   });

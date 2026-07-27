@@ -6,7 +6,7 @@ import { PatientEmptyState } from "@/components/paciente/dashboard/patient-primi
 import { ConnectionChoicePanel } from "@/components/patient/connection-choice-panel";
 import { FinalCuradoriaView } from "@/components/patient/final-curadoria-view";
 import { RelationshipStatusPanel } from "@/components/patient/relationship-status-panel";
-import { PatientCuradoriaView } from "@/components/patient/patient-curadoria-view";
+import { CaminhosPanel } from "@/components/paciente/caminhos/caminhos-panel";
 import { loadPatientCuradoria } from "@/modules/curadoria/patient-curadoria";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
@@ -72,7 +72,7 @@ export default async function PatientCuradoriaPage() {
 
   return (
     <div className="space-y-8">
-      {curadoria ? <PatientCuradoriaView curadoria={curadoria} /> : null}
+      {curadoria ? <CaminhosPanel curadoria={curadoria} /> : null}
 
       {delivery ? <FinalCuradoriaView delivery={delivery} /> : null}
 

@@ -2,9 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { PerfilPanel } from "@/components/paciente/perfil-panel";
-import { PatientCuradoriaView } from "@/components/patient/patient-curadoria-view";
 import { buildPerfilView, violatesPatientVocabulary } from "@/modules/paciente/experiencia";
-import type { PatientCuradoria } from "@/modules/curadoria/patient-curadoria";
 
 afterEach(cleanup);
 
@@ -51,45 +49,6 @@ describe("PerfilPanel — importância em palavras, construção honesta", () =>
 
   it("nada na tela viola o vocabulário do paciente", () => {
     const { container } = render(<PerfilPanel perfil={buildPerfilView(PESOS, true)} />);
-    expect(violatesPatientVocabulary(container.textContent ?? "")).toBeNull();
-  });
-});
-
-const CURADORIA: PatientCuradoria = {
-  curatedSelectionId: "sel-1",
-  caseId: "case-1",
-  curatorName: null,
-  deliveredAt: "2026-07-27T12:00:00.000Z",
-  compositionRationale: "Os três cobrem a área exigida por caminhos diferentes.",
-  options: [
-    {
-      id: "opt-a",
-      professionalProfileId: "a",
-      professionalName: "Dra. Helena Monteiro",
-      justification: "Esta opção foi incluída por apresentar aderência ao caso em Experiência Profissional.",
-      relationToWeights: "Em relação ao Perfil validado: Continuidade do Cuidado atende plenamente.",
-      favorablePoints: ["Formação específica para o seu caso."],
-      attentionPoints: ["Histórico Profissional atende parcialmente ao que este caso exige."],
-      suggestedQuestions: ["Como funciona o acompanhamento após a primeira consulta?"],
-    },
-  ],
-  decision: null,
-};
-
-describe("PatientCuradoriaView — a narrativa do Relatório, literal", () => {
-  it("mostra 'O que encontramos' com o texto exato do Relatório", () => {
-    render(<PatientCuradoriaView curadoria={CURADORIA} />);
-    expect(screen.getByText("O que encontramos")).toBeInTheDocument();
-    expect(screen.getByText("Formação específica para o seu caso.")).toBeInTheDocument();
-    // O ponto de atenção é o do Relatório, palavra por palavra.
-    expect(
-      screen.getByText("Histórico Profissional atende parcialmente ao que este caso exige."),
-    ).toBeInTheDocument();
-  });
-
-  it("nenhuma linguagem de posição ou nota — e a ordem se declara como apresentação", () => {
-    const { container } = render(<PatientCuradoriaView curadoria={CURADORIA} />);
-    expect(screen.getByText(/ordem abaixo é de apresentação, não de preferência/)).toBeInTheDocument();
     expect(violatesPatientVocabulary(container.textContent ?? "")).toBeNull();
   });
 });

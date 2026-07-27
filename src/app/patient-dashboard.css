@@ -234,6 +234,116 @@
   opacity: 0.6;
 }
 
+/* ---------------------------------------------------------------------------
+   Cartas dos caminhos — álbum, nunca catálogo.
+   No celular deslizam na horizontal com swipe natural; no desktop viram grade
+   e a carta aberta ocupa a largura inteira, para o detalhe respirar.
+--------------------------------------------------------------------------- */
+.patient-dashboard .patient-cartas {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 0.5rem;
+  margin-inline: -1rem;
+  padding-inline: 1rem;
+  scrollbar-width: none;
+}
+
+.patient-dashboard .patient-cartas::-webkit-scrollbar {
+  display: none;
+}
+
+.patient-dashboard .patient-carta {
+  flex: 0 0 88%;
+  scroll-snap-align: center;
+  border-radius: 1.25rem;
+  background: rgb(255 255 255 / 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 1.5rem;
+  box-shadow:
+    0 1px 2px rgb(26 46 38 / 0.03),
+    0 8px 28px rgb(26 46 38 / 0.06);
+  transition:
+    box-shadow 400ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.patient-dashboard .patient-carta:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 2px 6px rgb(26 46 38 / 0.05),
+    0 18px 44px rgb(26 46 38 / 0.09);
+}
+
+/* Já conhecida: presença mais serena, nunca apagada — ela continua sendo uma
+   das três opções legítimas. */
+.patient-dashboard .patient-carta--conhecida {
+  background: rgb(255 255 255 / 0.72);
+}
+
+@media (min-width: 1024px) {
+  .patient-dashboard .patient-cartas {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+    margin-inline: 0;
+    padding-inline: 0;
+  }
+
+  .patient-dashboard .patient-carta {
+    flex: initial;
+    padding: 1.75rem;
+  }
+
+  /* A carta aberta cresce e assume a linha — o resto continua visível ao
+     redor, porque ela nunca deixou de pertencer ao ambiente. */
+  .patient-dashboard .patient-carta--aberta {
+    grid-column: 1 / -1;
+  }
+}
+
+.patient-dashboard .patient-carta--aberta {
+  background: rgb(255 255 255 / 0.97);
+  box-shadow:
+    0 4px 10px rgb(26 46 38 / 0.06),
+    0 24px 60px rgb(26 46 38 / 0.12);
+}
+
+.patient-dashboard .patient-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 9999px;
+  padding: 0.375rem 0.875rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.patient-dashboard .patient-chip--favoravel {
+  background: rgb(90 125 106 / 0.12);
+  color: #33513f;
+}
+
+.patient-dashboard .patient-chip--favoravel::before {
+  content: "✓";
+  font-size: 0.75rem;
+}
+
+.patient-dashboard .patient-chip--pergunta {
+  background: rgb(255 255 255 / 0.8);
+  border: 1px solid var(--color-border);
+  color: var(--color-ink-muted);
+}
+
+/* Atenção nunca escondida, nunca diminuída: mesmo peso do que oferece, com
+   uma marca lateral que a torna encontrável sem alarme. */
+.patient-dashboard .patient-atencao {
+  border-left: 3px solid rgb(138 115 85 / 0.45);
+  padding-left: 1rem;
+}
+
 .patient-dashboard .patient-fade-in {
   animation: patient-fade-in 600ms cubic-bezier(0.4, 0, 0.2, 1) both;
 }
@@ -256,8 +366,14 @@
 
   .patient-dashboard .patient-card,
   .patient-dashboard .patient-progress-fill,
-  .patient-dashboard .patient-walk__dot {
+  .patient-dashboard .patient-walk__dot,
+  .patient-dashboard .patient-carta {
     transition: none;
+  }
+
+  /* Sem elevação no hover: movimento por apontar é o primeiro a incomodar. */
+  .patient-dashboard .patient-carta:hover {
+    transform: none;
   }
 
   /* A cena continua, sem o zoom que sugere movimento. */

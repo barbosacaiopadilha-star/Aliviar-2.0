@@ -145,6 +145,69 @@ export const WALK_LABELS: Record<JornadaStageId, string> = {
   ACOMPANHAMENTO: "Acompanhamento",
 };
 
+// ---------------------------------------------------------------------------
+// Compatibilidade por dimensão — quatro estados, nenhuma nota
+// ---------------------------------------------------------------------------
+
+/**
+ * O que o paciente lê sobre cada dimensão. Os quatro estados do motor
+ * traduzidos para a língua dele: `INFORMACAO_INSUFICIENTE` vira "ainda
+ * precisamos confirmar" — lacuna nossa, nunca falha do profissional.
+ */
+export const COMPATIBILITY_LEVELS = ["PLENO", "PARCIAL", "A_CONFIRMAR", "NAO_ATENDE"] as const;
+export type CompatibilityLevel = (typeof COMPATIBILITY_LEVELS)[number];
+
+export const COMPATIBILITY_LABELS: Record<CompatibilityLevel, string> = {
+  PLENO: "Atende plenamente",
+  PARCIAL: "Atende parcialmente",
+  A_CONFIRMAR: "Ainda precisamos confirmar",
+  NAO_ATENDE: "Não atende",
+};
+
+/**
+ * Quantos traços de dez a barra preenche. É representação visual, não
+ * medida: os degraus são fixos por estado, e não existe valor intermediário
+ * — barra contínua convidaria a comparar comprimento como quem compara nota.
+ *
+ * `A_CONFIRMAR` não preenche nada e recebe tratamento visual próprio na
+ * tela: vazio por ausência de informação nunca deve parecer vazio por
+ * demérito.
+ */
+export const COMPATIBILITY_FILL: Record<CompatibilityLevel, number> = {
+  PLENO: 10,
+  PARCIAL: 6,
+  A_CONFIRMAR: 0,
+  NAO_ATENDE: 1,
+};
+
+export function compatibilityLevelOf(assessment: string): CompatibilityLevel {
+  switch (assessment) {
+    case "ATENDE_PLENAMENTE":
+      return "PLENO";
+    case "ATENDE_PARCIALMENTE":
+      return "PARCIAL";
+    case "NAO_ATENDE":
+      return "NAO_ATENDE";
+    default:
+      return "A_CONFIRMAR";
+  }
+}
+
+/** As cinco dimensões que a pessoa lê, na ordem em que fazem sentido a ela. */
+export const PATIENT_DIMENSIONS = [
+  { criterion: "FORMACAO", label: "Formação" },
+  { criterion: "EXPERIENCIA", label: "Experiência" },
+  { criterion: "CONTINUIDADE_DO_CUIDADO", label: "Continuidade" },
+  { criterion: "MODELO_DE_ATENDIMENTO", label: "Modelo de atendimento" },
+  { criterion: "ACESSO", label: "Acesso" },
+] as const;
+
+export type PatientDimension = {
+  criterion: string;
+  label: string;
+  level: CompatibilityLevel;
+};
+
 /** Onde a jornada está, em duas palavras — o eyebrow do hero. */
 export const STAGE_EYEBROWS: Record<JornadaStageId, string> = {
   CONSULTA_INICIAL: "Sua jornada começa",
