@@ -16,6 +16,8 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 
+import { resolverAlvoLocal } from "./env-guard.mjs";
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, "..");
 
@@ -62,9 +64,19 @@ function generatePassword() {
 }
 
 async function main() {
-  const env = readLocalSupabaseEnv();
-  const apiUrl = env.API_URL;
-  const serviceRoleKey = env.SERVICE_ROLE_KEY;
+  // O alvo é validado antes de qualquer chamada externa: este script cria e
+  // sobrescreve senhas de conta. Injeção explícita (`test-users:local`) tem
+  // precedência e também passa pela guarda; sem ela, pergunta-se à stack.
+  let apiUrl;
+  let serviceRoleKey;
+  try {
+    const alvo = resolverAlvoLocal("Bootstrap de contas de teste", { cwd: projectRoot });
+    apiUrl = alvo.NEXT_PUBLIC_SUPABASE_URL;
+    serviceRoleKey = alvo.SUPABASE_SERVICE_ROLE_KEY || readLocalSupabaseEnv().SERVICE_ROLE_KEY;
+  } catch (erro) {
+    console.error(erro.message);
+    process.exit(1);
+  }
 
   if (!apiUrl || !serviceRoleKey) {
     console.error(
