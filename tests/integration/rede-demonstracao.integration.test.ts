@@ -54,7 +54,10 @@ describe("rede de demonstração — o banco recusa, não a tela (Supabase local
       .eq("id", id);
 
     expect(error).not.toBeNull();
-    expect(error!.message.toLowerCase()).toContain("professional_demo_never_published");
+    // Duas guardas cobrem isto — o CHECK e o gatilho de requisitos de
+    // publicação. Qual delas responde primeiro é detalhe de ordenação; o que
+    // importa é a recusa dizer do que se trata.
+    expect(error!.message.toLowerCase()).toMatch(/demonstracao|demo_never_published/);
   });
 
   it("perfil de demonstração não pode nascer publicado", async () => {
@@ -69,8 +72,28 @@ describe("rede de demonstração — o banco recusa, não a tela (Supabase local
     expect(error).not.toBeNull();
   });
 
-  it("profissional real pode ser publicado", async () => {
-    const id = await criarProfissional({ is_demo: false });
+  it("profissional real que cumpre os requisitos pode ser publicado", async () => {
+    const agora = new Date().toISOString();
+    const autor = (await admin.from("profiles").select("id").limit(1).single()).data!.id;
+
+    const id = await criarProfissional({
+      is_demo: false,
+      crm: "654321",
+      crm_uf: "SP",
+      registration_status: "regular",
+      registration_source: "Consulta ao conselho (teste)",
+      registration_verified_at: agora,
+      registration_verified_by: autor,
+    });
+
+    await admin.from("professional_practice_areas").insert({
+      professional_profile_id: id,
+      raw_text: "Área declarada para exercício do fluxo de teste.",
+      source: "Teste de integração",
+      verification_status: "verificado",
+      verified_at: agora,
+      verified_by: autor,
+    });
 
     const { error } = await admin
       .from("professional_profiles")
@@ -78,6 +101,17 @@ describe("rede de demonstração — o banco recusa, não a tela (Supabase local
       .eq("id", id);
 
     expect(error).toBeNull();
+  });
+
+  it("profissional real sem os requisitos não é publicado — ser real não basta", async () => {
+    const id = await criarProfissional({ is_demo: false });
+
+    const { error } = await admin
+      .from("professional_profiles")
+      .update({ publication_status: "publicado" })
+      .eq("id", id);
+
+    expect(error).not.toBeNull();
   });
 
   it("perfil de demonstração não entra numa seleção", async () => {

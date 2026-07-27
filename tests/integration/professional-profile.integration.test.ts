@@ -177,16 +177,37 @@ describe("perfil profissional — RLS e fundação administrativa (Supabase loca
       data: { user },
     } = await client.auth.getUser();
 
+    // Publicar deixou de ser um botão e virou uma porta com condições
+    // (política de fontes): CRM, registro consultado no conselho e área de
+    // atuação verificada, cada um com fonte, autor e data. O teste percorre o
+    // caminho inteiro porque é ele que a produção exige.
+    const agora = new Date().toISOString();
+
     const { data: created } = await client
       .from("professional_profiles")
       .insert({
         display_name: "Para Publicar",
         professional_identifier: uniqueIdentifier(),
         created_by: user!.id,
+        crm: uniqueIdentifier().slice(0, 20),
+        crm_uf: "SP",
+        registration_status: "regular",
+        registration_source: "Consulta ao conselho profissional (teste)",
+        registration_verified_at: agora,
+        registration_verified_by: user!.id,
       })
       .select("id")
       .single();
     if (created?.id) createdProfessionalProfileIds.push(created.id);
+
+    await client.from("professional_practice_areas").insert({
+      professional_profile_id: created!.id,
+      raw_text: "Área declarada para exercício do fluxo de teste.",
+      source: "Teste de integração",
+      verification_status: "verificado",
+      verified_at: agora,
+      verified_by: user!.id,
+    });
 
     const { data: published, error: publishError } = await client
       .from("professional_profiles")

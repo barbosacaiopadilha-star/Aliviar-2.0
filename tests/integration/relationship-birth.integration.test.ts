@@ -15,7 +15,7 @@ import * as curadoria from "@/modules/curadoria/repository";
 import * as reports from "@/modules/curadoria/report-repository";
 import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { createPatientAccount } from "@/modules/profiles/patient-account-repository";
-import { createProfessionalProfile } from "@/modules/profiles/professional-repository";
+import { seedPublishedProfessional } from "./rede-fixture";
 import { reconstructRelationshipRecordFromRow } from "@/modules/relationship";
 import { SupabaseRelationshipRepository } from "@/modules/relationship/repository";
 import {
@@ -124,36 +124,9 @@ describe("Relationship Engine — MVP — PR4 (nascimento automático — Supaba
     adminClient: ReturnType<typeof createAdminSupabaseClient>,
     adminUserId: string,
   ) {
-    const professional = await createProfessionalProfile(adminClient, {
-      displayName: `Profissional PR4 ${unique("p")}`,
-      professionalIdentifier: unique("ident"),
-      crm: null,
-      crmUf: null,
-      professionalSummary:
-        "Profissional com experiência em acolhimento e escuta ativa.",
-      institutionName: null,
-      createdBy: adminUserId,
-    });
-
-    await adminClient
-      .from("professional_profiles")
-      .update({
-        experience_level: "experiente",
-        intake_approach: "ambos",
-        offers_continuous_care: true,
-        availability_window: "flexible",
-        practical_considerations: ["Atende também por telemedicina."],
-      })
-      .eq("id", professional.id);
-
-    await adminClient.from("professional_competency_areas").insert({
-      professional_profile_id: professional.id,
-      domain: "nao_determinado",
-      focus: "avaliacao",
-    });
-
-    createdProfessionalIds.push(professional.id);
-    return professional.id;
+    const id = await seedPublishedProfessional(adminClient, adminUserId, "Profissional PR4");
+    createdProfessionalIds.push(id);
+    return id;
   }
 
   /**

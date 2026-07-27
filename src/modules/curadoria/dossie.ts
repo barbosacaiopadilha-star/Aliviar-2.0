@@ -36,13 +36,14 @@ import {
   type PatientCriterion,
   type TechnicalCriterion,
 } from "./cruzamento";
+import { isStale, type InformationKind, type VerificationState } from "./fontes";
 
 // ---------------------------------------------------------------------------
 // Proveniência
 // ---------------------------------------------------------------------------
 
-export const VERIFICATION_STATUSES = ["nao_verificado", "verificado", "divergente"] as const;
-export type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
+export { VERIFICATION_STATES as VERIFICATION_STATUSES } from "./fontes";
+export type VerificationStatus = VerificationState;
 
 export type Provenance = {
   source: string | null;
@@ -51,9 +52,22 @@ export type Provenance = {
   verifiedBy: string | null;
 };
 
-/** Um dado só conta como verificado quando alguém olhou a fonte e confirmou. */
-export function isVerified(provenance: Provenance | null | undefined): boolean {
-  return provenance?.verificationStatus === "verificado";
+/**
+ * Um dado só conta como verificado quando alguém olhou a fonte e confirmou —
+ * e quando essa confirmação ainda vale.
+ *
+ * `nao_localizado` não é verificado e também não é negativo: procurou-se e não
+ * se achou. `desatualizado` já foi verificado e venceu; volta a não contar,
+ * porque um "verificado" antigo sobre onde alguém atende tem a aparência de
+ * conferido sem ser.
+ */
+export function isVerified(
+  provenance: Provenance | null | undefined,
+  options?: { kind?: InformationKind; now?: string },
+): boolean {
+  if (provenance?.verificationStatus !== "verificado") return false;
+  if (!options?.kind || !options.now) return true;
+  return !isStale(options.kind, provenance.verifiedAt, options.now);
 }
 
 // ---------------------------------------------------------------------------
@@ -208,15 +222,24 @@ export type ReadinessReport = {
  * Fora isso, a conta é de quantidade: tudo verificado é pronto, parte
  * verificada é parcial.
  */
-export function assessReadiness(dossier: ProfessionalDossier): ReadinessReport {
+export function assessReadiness(dossier: ProfessionalDossier, now?: string): ReadinessReport {
+  // Sem `now`, o tempo não entra na conta e um `verificado` vale pelo que
+  // está gravado. Com `now`, verificação vencida deixa de contar.
+  const at = (kind: InformationKind) => (now ? { kind, now } : undefined);
+
+  const registrationCurrent =
+    isRegistrationVerified(dossier.registration) &&
+    (!now || !isStale("SITUACAO_DO_REGISTRO", dossier.registration?.verifiedAt ?? null, now));
+  const areaCurrent = isVerified(dossier.practiceArea, at("AREA_DE_ATUACAO"));
+
   const blocks: { label: string; verified: boolean }[] = [
-    { label: "Registro profissional", verified: isRegistrationVerified(dossier.registration) },
-    { label: "Área de atuação", verified: isVerified(dossier.practiceArea) },
-    { label: "Formação", verified: dossier.education.some(isVerified) },
-    { label: "Experiência", verified: isVerified(dossier.experience) },
-    { label: "Trajetória", verified: dossier.career.some(isVerified) },
-    { label: "Modelo de atendimento", verified: isVerified(dossier.careModel) },
-    { label: "Comunicação", verified: isVerified(dossier.communication) },
+    { label: "Registro profissional", verified: registrationCurrent },
+    { label: "Área de atuação", verified: areaCurrent },
+    { label: "Formação", verified: dossier.education.some((entry) => isVerified(entry, at("GRADUACAO"))) },
+    { label: "Experiência", verified: isVerified(dossier.experience, at("EXPERIENCIA_EM_TIPO_DE_CASO")) },
+    { label: "Trajetória", verified: dossier.career.some((entry) => isVerified(entry, at("VINCULO_INSTITUCIONAL"))) },
+    { label: "Modelo de atendimento", verified: isVerified(dossier.careModel, at("CUIDADO_CONTINUO")) },
+    { label: "Comunicação", verified: isVerified(dossier.communication, at("IDIOMAS")) },
   ];
 
   const verifiedBlocks = blocks.filter((block) => block.verified).length;
@@ -224,10 +247,14 @@ export function assessReadiness(dossier: ProfessionalDossier): ReadinessReport {
 
   const blockedBy = dossier.isDemo
     ? "Perfil de demonstração — não participa de Curadoria real."
-    : !isRegistrationVerified(dossier.registration)
-      ? "Registro profissional não verificado no conselho."
-      : !isVerified(dossier.practiceArea)
-        ? "Área de atuação não verificada — é ela que decide se o profissional participa."
+    : !registrationCurrent
+      ? isRegistrationVerified(dossier.registration)
+        ? "A verificação do registro profissional venceu — precisa ser consultada de novo."
+        : "Registro profissional não verificado no conselho."
+      : !areaCurrent
+        ? isVerified(dossier.practiceArea)
+          ? "A verificação da área de atuação venceu."
+          : "Área de atuação não verificada — é ela que decide se o profissional participa."
         : null;
 
   const readiness: Readiness = blockedBy

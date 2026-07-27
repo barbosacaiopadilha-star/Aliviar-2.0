@@ -235,9 +235,18 @@ export async function validatePriorityProfile(
 // ---------------------------------------------------------------------------
 
 /**
- * A Rede operacional. `is_demo` sai daqui porque este é o ponto exato em que
- * um perfil entra numa Curadoria real — filtrar depois, na seleção, deixaria
- * o Curador comparando e ponderando alguém que ele nunca poderia escolher.
+ * A Rede operacional — quem o Curador pode comparar num Case real.
+ *
+ * Quatro exclusões, e todas são o mesmo princípio: o Curador não deve gastar
+ * julgamento sobre alguém que não poderia escolher.
+ *
+ * - inativo — saiu da Rede;
+ * - demonstração — nunca existiu;
+ * - não publicado — o cadastro ainda está em construção ou verificação;
+ * - divergência crítica em aberto — duas fontes discordam sobre um dado que
+ *   importa, e enquanto ninguém resolver não há o que oferecer. O perfil pode
+ *   ter sido publicado antes de a divergência aparecer; some daqui na hora,
+ *   sem esperar decisão de despublicar.
  */
 export async function listApprovedProviders(supabase: SupabaseClient): Promise<ProviderSnapshot[]> {
   const { data, error } = await supabase
@@ -246,11 +255,19 @@ export async function listApprovedProviders(supabase: SupabaseClient): Promise<P
       "id, display_name, status, experience_level, intake_approach, offers_continuous_care, availability_window, crm_uf",
     )
     .eq("status", "ativo")
-    .eq("is_demo", false);
+    .eq("is_demo", false)
+    .eq("publication_status", "publicado");
 
   if (error) throw new Error("Não foi possível carregar os profissionais da Rede.");
 
-  const rows = data ?? [];
+  const { data: divergentes } = await supabase
+    .from("verification_divergences")
+    .select("professional_profile_id")
+    .eq("status", "aberta")
+    .eq("severity", "critica");
+
+  const bloqueados = new Set((divergentes ?? []).map((row) => row.professional_profile_id as string));
+  const rows = (data ?? []).filter((row) => !bloqueados.has(row.id as string));
   const ids = rows.map((row) => row.id as string);
 
   const { data: areas } = await supabase
