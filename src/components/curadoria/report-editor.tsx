@@ -9,6 +9,7 @@ import { cn } from "@/components/ui/cn";
 import {
   deliverSelectionAction,
   emitReportAction,
+  generateAssistedDraftAction,
   saveReportAction,
 } from "@/modules/curadoria/actions";
 
@@ -48,6 +49,8 @@ type Props = {
   initialComposition: string;
   emittedAt: string | null;
   deliveredAt: string | null;
+  /** Quando o rascunho assistido foi gerado — null se o texto nasceu humano. */
+  assistedGeneratedAt?: string | null;
   /** Para onde ir depois de entregar. */
   nextStepHref: string;
 };
@@ -98,6 +101,7 @@ export function ReportEditor({
   initialComposition,
   emittedAt,
   deliveredAt,
+  assistedGeneratedAt = null,
   nextStepHref,
 }: Props) {
   const router = useRouter();
@@ -183,6 +187,22 @@ export function ReportEditor({
     });
   }
 
+  function gerarRascunho(force: boolean) {
+    setErro(null);
+    setAviso(null);
+    startTransition(async () => {
+      const result = await generateAssistedDraftAction({ priorityProfileId, force });
+      if (result.success) {
+        setAviso(
+          "Rascunho assistido gerado a partir do que já foi declarado e verificado. Cada frase tem origem registrada — revise, corrija e assuma a versão final.",
+        );
+        router.refresh();
+      } else {
+        setErro(result.error ?? "Não foi possível gerar o rascunho assistido.");
+      }
+    });
+  }
+
   function entregar() {
     setErro(null);
     setAviso(null);
@@ -205,9 +225,39 @@ export function ReportEditor({
           <CardDescription>
             {entregue
               ? "Já entregue. O que está aqui é exatamente o que ela recebeu — por isso não muda mais."
-              : "O rascunho veio da Mesa, com o que você já escreveu lá. Leia com calma e corrija o que precisar."}
+              : assistedGeneratedAt
+                ? "Rascunho assistido: o texto abaixo foi montado a partir das suas declarações e das evidências registradas — nada foi presumido. A versão final é sua: revise, corrija e emita."
+                : "O rascunho veio da Mesa, com o que você já escreveu lá. Leia com calma e corrija o que precisar."}
           </CardDescription>
         </CardHeader>
+
+        {!emitido ? (
+          <div className="mt-2">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={pending}
+              onClick={() => gerarRascunho(false)}
+            >
+              Gerar rascunho assistido
+            </Button>
+            <p className="mt-1 text-xs text-ink-muted">
+              Determinístico, sem IA: transforma o que você já declarou na Mesa em texto organizado.
+              Nunca sobrescreve o que você editou sem pedir.
+            </p>
+            {erro?.includes("Regenerar substituiria o texto") ? (
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={pending}
+                onClick={() => gerarRascunho(true)}
+                className="mt-2"
+              >
+                Regenerar mesmo assim, descartando minhas edições
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
       </Card>
 
       {options.map((option, index) => (

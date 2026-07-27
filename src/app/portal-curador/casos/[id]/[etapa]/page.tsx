@@ -19,6 +19,7 @@ import { buildMemory } from "@/modules/curadoria/cos/memory";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
+import { getReportLifecycle } from "@/modules/curadoria/relatorio-assistido";
 import {
   CURATOR_JOURNEY_DEFINITIONS,
   buildCuratorJourney,
@@ -169,6 +170,10 @@ export default async function EtapaPage({ params }: { params: Promise<{ id: stri
               patientFirstName={record.patientFirstName}
               emittedAt={record.relatorio.emittedAt}
               deliveredAt={record.relatorio.deliveredAt}
+              assistedGeneratedAt={
+                (await getReportLifecycle(supabase, record.curadoriaTecnica.curatedSelectionId))
+                  ?.assistedGeneratedAt ?? null
+              }
               nextStepHref={journeyStepHref(record.caseId, "FINALIZAR")}
               initialComposition={record.relatorio.compositionRationale ?? ""}
               initialOptions={record.curadoriaTecnica.selectedProfessionalIds.map((professionalId) => {

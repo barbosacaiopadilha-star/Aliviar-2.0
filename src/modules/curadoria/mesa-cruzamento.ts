@@ -126,10 +126,10 @@ export async function declareCriterion(
 export async function loadCriterionDeclarations(
   supabase: SupabaseClient,
   caseId: string,
-): Promise<CriterionDeclaration[]> {
+): Promise<(CriterionDeclaration & { declaredBy: string; declaredAt: string })[]> {
   const { data, error } = await supabase
     .from("criterion_declarations")
-    .select("professional_profile_id, criterion, assessment, evidence")
+    .select("professional_profile_id, criterion, assessment, evidence, declared_by, declared_at")
     .eq("case_id", caseId);
 
   if (error) throw new Error(error.message);
@@ -139,6 +139,8 @@ export async function loadCriterionDeclarations(
     criterion: row.criterion as CruzamentoCriterion,
     assessment: row.assessment as Assessment,
     evidence: row.evidence as string,
+    declaredBy: row.declared_by as string,
+    declaredAt: row.declared_at as string,
   }));
 }
 

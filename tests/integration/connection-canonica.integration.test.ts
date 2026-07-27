@@ -179,6 +179,8 @@ describe("Connection canônica — sem final_curadoria_deliveries", () => {
       })),
     );
     const report = await reports.getReportBySelection(cliente, selection!.id);
+    // Emitir exige aprovação prévia — o Curador assume a autoria da versão final.
+    await reports.approveReport(cliente, report!.id, curador.userId);
     await reports.emitReport(cliente, report!.id);
     await curadoria.deliverSelection(cliente, selection!.id);
     await reports.markReportDelivered(cliente, report!.id);

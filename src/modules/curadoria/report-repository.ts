@@ -106,11 +106,42 @@ export async function saveReport(
 }
 
 /**
+ * O Curador assume a autoria da versão final. Salvar não é aprovar; aprovar
+ * é o ato explícito que separa "texto em revisão" de "documento meu". Sem
+ * isto, emitir é impossível — o banco recusa (trigger assert_report_lifecycle).
+ */
+export async function approveReport(
+  supabase: SupabaseClient,
+  reportId: string,
+  approvedBy: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("curadoria_reports")
+    .update({ approved_at: new Date().toISOString(), approved_by: approvedBy, updated_at: new Date().toISOString() })
+    .eq("id", reportId);
+  if (error) throw new Error(error.message);
+}
+
+/** Marca que o Curador tocou no documento — salvar não é aprovar. */
+export async function markReportReviewed(
+  supabase: SupabaseClient,
+  reportId: string,
+  reviewedBy: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("curadoria_reports")
+    .update({ reviewed_at: new Date().toISOString(), reviewed_by: reviewedBy, updated_at: new Date().toISOString() })
+    .eq("id", reportId);
+  if (error) throw new Error(error.message);
+}
+
+/**
  * Emite o Relatório — o documento passa a existir como versão fechada.
  *
  * Emitir não é entregar: emitir é o Curador dizer "está pronto"; entregar é o
  * paciente receber. Separados de propósito, porque entre um e outro existe
- * uma conversa a ser combinada.
+ * uma conversa a ser combinada. Exige aprovação prévia — um rascunho
+ * (assistido ou não) nunca vira documento sem autoria assumida.
  */
 export async function emitReport(supabase: SupabaseClient, reportId: string): Promise<void> {
   const { error } = await supabase

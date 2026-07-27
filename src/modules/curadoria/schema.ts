@@ -188,6 +188,12 @@ export const emitReportInputSchema = z.object({
   priorityProfileId: z.string().uuid(),
 });
 
+export const generateAssistedDraftInputSchema = z.object({
+  priorityProfileId: z.string().uuid(),
+  /** Regenerar sobre texto já editado exige intenção explícita. */
+  force: z.boolean().optional(),
+});
+
 // Fase 9 — Devolutiva: o registro do encontro em que as opções foram
 // apresentadas. Não é a decisão do paciente — essa é ato dele, e a RLS de
 // patient_curadoria_decisions só aceita a própria pessoa.

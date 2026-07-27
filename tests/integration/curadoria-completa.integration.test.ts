@@ -196,6 +196,8 @@ describe("Curadoria completa — sem SQL, sem script, sem intervenção técnica
 
     const report = await reports.getReportBySelection(cliente, selection!.id);
     expect(report).toBeTruthy();
+    // Emitir exige aprovação prévia — o Curador assume a autoria da versão final.
+    await reports.approveReport(cliente, report!.id, curador.userId);
     await reports.emitReport(cliente, report!.id);
 
     // ---------------------------------------------------------- 7 — Entrega

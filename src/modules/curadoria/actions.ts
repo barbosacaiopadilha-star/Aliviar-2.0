@@ -15,6 +15,7 @@ import {
   computeCompatibilityInputSchema,
   deliverSelectionInputSchema,
   emitReportInputSchema,
+  generateAssistedDraftInputSchema,
   registerAcolhimentoInputSchema,
   registerCasoInputSchema,
   registerDecisionInputSchema,
@@ -623,7 +624,7 @@ export async function saveReportAction(input: unknown): Promise<CuradoriaActionR
   if (!found.ok) return { success: false, error: found.error };
 
   try {
-    await reportRepository.saveReport(
+    const reportId = await reportRepository.saveReport(
       supabase,
       found.selection.caseId,
       found.selection.id,
@@ -638,6 +639,9 @@ export async function saveReportAction(input: unknown): Promise<CuradoriaActionR
         curatorObservations: option.curatorObservations ?? null,
       })),
     );
+    // Salvar é revisar — o texto passa a carregar mão humana. Não é aprovar.
+    const authState = await requireCurator();
+    await reportRepository.markReportReviewed(supabase, reportId, authState.user.id);
     revalidateCuradoria(found.selection.caseId);
     return { success: true };
   } catch (error) {
@@ -648,10 +652,16 @@ export async function saveReportAction(input: unknown): Promise<CuradoriaActionR
 /**
  * Emitir é o Curador dizer "está pronto". Entregar é o paciente receber —
  * são atos separados porque entre eles existe uma conversa a combinar.
+ *
+ * Emitir pela interface é também o ato explícito em que o Curador assume a
+ * autoria da versão final: a aprovação é registrada com o nome dele antes da
+ * emissão, e o banco recusa qualquer emissão sem ela. Um rascunho assistido
+ * jamais chega aqui sem passar por essa assinatura.
  */
 export async function emitReportAction(input: unknown): Promise<CuradoriaActionResult> {
+  let authState;
   try {
-    await requireCurator();
+    authState = await requireCurator();
   } catch {
     return { success: false, error: "Não autorizado." };
   }
@@ -669,11 +679,47 @@ export async function emitReportAction(input: unknown): Promise<CuradoriaActionR
   }
 
   try {
+    await reportRepository.approveReport(supabase, report.id, authState.user.id);
     await reportRepository.emitReport(supabase, report.id);
     revalidateCuradoria(found.selection.caseId);
     return { success: true };
   } catch (error) {
     return fail(error, "Não foi possível emitir o Relatório.");
+  }
+}
+
+/**
+ * Gera o rascunho assistido do Relatório a partir do que já foi declarado e
+ * verificado. Determinístico, sem IA: cada frase é rastreável a uma
+ * declaração registrada. Nunca sobrescreve trabalho humano em silêncio —
+ * regenerar sobre texto editado exige `force` explícito, e sobre aprovado ou
+ * emitido não acontece de forma alguma.
+ */
+export async function generateAssistedDraftAction(input: unknown): Promise<CuradoriaActionResult> {
+  try {
+    await requireCurator();
+  } catch {
+    return { success: false, error: "Não autorizado." };
+  }
+
+  const parsed = generateAssistedDraftInputSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: "Dados inválidos." };
+
+  const supabase = await createServerSupabaseClient();
+  const found = await selectionForProfile(supabase, parsed.data.priorityProfileId);
+  if (!found.ok) return { success: false, error: found.error };
+
+  try {
+    const { generateAndSaveAssistedDraft } = await import("./relatorio-assistido");
+    await generateAndSaveAssistedDraft(supabase, {
+      caseId: found.selection.caseId,
+      priorityProfileId: parsed.data.priorityProfileId,
+      force: parsed.data.force ?? false,
+    });
+    revalidateCuradoria(found.selection.caseId);
+    return { success: true };
+  } catch (error) {
+    return fail(error, "Não foi possível gerar o rascunho assistido.");
   }
 }
 
