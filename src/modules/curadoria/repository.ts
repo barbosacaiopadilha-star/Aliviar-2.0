@@ -234,13 +234,19 @@ export async function validatePriorityProfile(
 // Comparar — a base já aprovada da Aliviar, nunca uma busca externa
 // ---------------------------------------------------------------------------
 
+/**
+ * A Rede operacional. `is_demo` sai daqui porque este é o ponto exato em que
+ * um perfil entra numa Curadoria real — filtrar depois, na seleção, deixaria
+ * o Curador comparando e ponderando alguém que ele nunca poderia escolher.
+ */
 export async function listApprovedProviders(supabase: SupabaseClient): Promise<ProviderSnapshot[]> {
   const { data, error } = await supabase
     .from("professional_profiles")
     .select(
       "id, display_name, status, experience_level, intake_approach, offers_continuous_care, availability_window, crm_uf",
     )
-    .eq("status", "ativo");
+    .eq("status", "ativo")
+    .eq("is_demo", false);
 
   if (error) throw new Error("Não foi possível carregar os profissionais da Rede.");
 
@@ -442,6 +448,29 @@ export type SelectionOptionInput = {
   tradeOff?: string;
 };
 
+/**
+ * Um gatilho no banco já recusa perfil de demonstração em
+ * `curated_selection_options`. Aqui a recusa vira frase antes de a escrita
+ * começar — o Curador precisa saber qual foi o problema, não receber um erro
+ * de constraint no meio de uma seleção pela metade.
+ */
+async function rejectDemoProviders(supabase: SupabaseClient, providerIds: string[]): Promise<void> {
+  if (providerIds.length === 0) return;
+
+  const { data } = await supabase
+    .from("professional_profiles")
+    .select("display_name")
+    .in("id", providerIds)
+    .eq("is_demo", true);
+
+  if ((data ?? []).length > 0) {
+    const nomes = (data ?? []).map((row) => row.display_name as string).join(", ");
+    throw new Error(
+      `Perfil de demonstração não pode ser oferecido a um paciente: ${nomes}. Estes perfis existem para exercitar o fluxo.`,
+    );
+  }
+}
+
 export async function saveSelection(
   supabase: SupabaseClient,
   caseId: string,
@@ -450,6 +479,8 @@ export async function saveSelection(
   compositionRationale: string,
   options: SelectionOptionInput[],
 ): Promise<string> {
+  await rejectDemoProviders(supabase, options.map((option) => option.professionalProfileId));
+
   const { data: existing } = await supabase
     .from("curated_selections")
     .select("id, status")

@@ -14,6 +14,7 @@ import {
   type PracticeArea,
   type ProfessionalDossier,
   type Provenance,
+  type Registration,
 } from "@/modules/curadoria/dossie";
 
 const VERIFICADO: Provenance = {
@@ -87,10 +88,21 @@ const COMUNICACAO: Communication = {
   resources: ["Material impresso"],
 };
 
+const REGISTRO: Registration = {
+  crm: "123456",
+  crmUf: "SP",
+  status: "regular",
+  source: "Consulta ao CRM-SP",
+  verifiedAt: "2026-07-27T12:00:00.000Z",
+  verifiedBy: "curador-1",
+};
+
 function dossier(overrides: Partial<ProfessionalDossier> = {}): ProfessionalDossier {
   return {
     professionalProfileId: "prof-1",
     displayName: "Dra. Exemplo",
+    isDemo: false,
+    registration: REGISTRO,
     practiceArea: AREA,
     education: [FORMACAO],
     experience: EXPERIENCIA,
@@ -161,6 +173,37 @@ describe("Prontidão do cadastro — quantidade verificada, nunca mérito", () =
     expect(assessReadiness(dossier({ practiceArea: { ...AREA, ...NAO_VERIFICADO } })).readiness).toBe(
       "INSUFICIENTE",
     );
+  });
+
+  it("sem registro verificado no conselho o cadastro é insuficiente", () => {
+    expect(assessReadiness(dossier({ registration: null })).readiness).toBe("INSUFICIENTE");
+
+    // CRM digitado não é CRM conferido.
+    const semConsulta = assessReadiness(
+      dossier({ registration: { ...REGISTRO, status: null, verifiedAt: null, verifiedBy: null } }),
+    );
+    expect(semConsulta.readiness).toBe("INSUFICIENTE");
+    expect(semConsulta.blockedBy).toContain("Registro profissional");
+  });
+
+  it("registro irregular ou não localizado não passa", () => {
+    expect(assessReadiness(dossier({ registration: { ...REGISTRO, status: "irregular" } })).readiness).toBe(
+      "INSUFICIENTE",
+    );
+    expect(assessReadiness(dossier({ registration: { ...REGISTRO, status: "nao_localizado" } })).readiness).toBe(
+      "INSUFICIENTE",
+    );
+  });
+
+  it("perfil de demonstração nunca fica pronto, ainda que o cadastro esteja completo e verificado", () => {
+    const completo = assessReadiness(dossier());
+    expect(completo.readiness).toBe("PRONTO");
+
+    const demo = assessReadiness(dossier({ isDemo: true }));
+    // Mesmos dados, mesma contagem de blocos verificados — e mesmo assim não.
+    expect(demo.verifiedBlocks).toBe(completo.verifiedBlocks);
+    expect(demo.readiness).toBe("INSUFICIENTE");
+    expect(demo.blockedBy).toContain("demonstração");
   });
 
   it("dado registrado mas não verificado não conta como pronto", () => {
@@ -327,6 +370,8 @@ describe("Nenhuma ausência vira zero — a regra que atravessa a camada inteira
       dossier: {
         professionalProfileId: "prof-vazio",
         displayName: "Sem cadastro",
+        isDemo: false,
+        registration: null,
         practiceArea: null,
         education: [],
         experience: null,

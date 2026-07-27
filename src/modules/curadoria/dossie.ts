@@ -108,9 +108,32 @@ export type Communication = {
   resources: string[];
 } & Provenance;
 
+/**
+ * Identidade e regularidade profissional.
+ *
+ * `crm` digitado e `crm` conferido no conselho são a mesma string e coisas
+ * inteiramente diferentes. `status` null significa que ninguém consultou —
+ * jamais "regular".
+ */
+export type Registration = {
+  crm: string | null;
+  crmUf: string | null;
+  status: "regular" | "irregular" | "nao_localizado" | null;
+  source: string | null;
+  verifiedAt: string | null;
+  verifiedBy: string | null;
+};
+
+export function isRegistrationVerified(registration: Registration | null | undefined): boolean {
+  return registration?.status === "regular" && registration.verifiedAt !== null;
+}
+
 export type ProfessionalDossier = {
   professionalProfileId: string;
   displayName: string;
+  /** Perfil de demonstração nunca fica pronto para Curadoria real. */
+  isDemo: boolean;
+  registration: Registration | null;
   practiceArea: PracticeArea | null;
   education: EducationEntry[];
   experience: ExperienceSummary | null;
@@ -161,6 +184,8 @@ export type ReadinessReport = {
   verifiedBlocks: number;
   totalBlocks: number;
   missing: string[];
+  /** Por que o cadastro é insuficiente, quando for. */
+  blockedBy: string | null;
 };
 
 /**
@@ -171,11 +196,21 @@ export type ReadinessReport = {
  * pela metade é "parcialmente pronto", e isso é sobre o nosso trabalho de
  * verificação, não sobre ele.
  *
- * Sem área de atuação verificada, o cadastro é insuficiente independentemente
- * do resto — é ela que decide se o profissional sequer participa.
+ * Três condições eliminatórias, e nenhuma tem a ver com mérito:
+ *
+ * - **Demonstração** — existe para exercitar o fluxo. Nenhum grau de cadastro
+ *   completo torna real quem não é.
+ * - **Registro não verificado** — sem consulta ao conselho não se sabe se a
+ *   pessoa exerce legalmente. Oferecer alguém nessa condição é apostar a
+ *   segurança do paciente num campo digitado.
+ * - **Área não verificada** — é ela que decide se o profissional participa.
+ *
+ * Fora isso, a conta é de quantidade: tudo verificado é pronto, parte
+ * verificada é parcial.
  */
 export function assessReadiness(dossier: ProfessionalDossier): ReadinessReport {
   const blocks: { label: string; verified: boolean }[] = [
+    { label: "Registro profissional", verified: isRegistrationVerified(dossier.registration) },
     { label: "Área de atuação", verified: isVerified(dossier.practiceArea) },
     { label: "Formação", verified: dossier.education.some(isVerified) },
     { label: "Experiência", verified: isVerified(dossier.experience) },
@@ -186,15 +221,22 @@ export function assessReadiness(dossier: ProfessionalDossier): ReadinessReport {
 
   const verifiedBlocks = blocks.filter((block) => block.verified).length;
   const missing = blocks.filter((block) => !block.verified).map((block) => block.label);
-  const hasArea = isVerified(dossier.practiceArea);
 
-  const readiness: Readiness = !hasArea
+  const blockedBy = dossier.isDemo
+    ? "Perfil de demonstração — não participa de Curadoria real."
+    : !isRegistrationVerified(dossier.registration)
+      ? "Registro profissional não verificado no conselho."
+      : !isVerified(dossier.practiceArea)
+        ? "Área de atuação não verificada — é ela que decide se o profissional participa."
+        : null;
+
+  const readiness: Readiness = blockedBy
     ? "INSUFICIENTE"
     : verifiedBlocks === blocks.length
       ? "PRONTO"
       : "PARCIALMENTE_PRONTO";
 
-  return { readiness, verifiedBlocks, totalBlocks: blocks.length, missing };
+  return { readiness, verifiedBlocks, totalBlocks: blocks.length, missing, blockedBy };
 }
 
 // ---------------------------------------------------------------------------
