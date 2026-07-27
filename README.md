@@ -1,18 +1,24 @@
 # Aliviar Curadoria Médica
 
-Curadoria médica humana e independente: uma pessoa conta sua história, o **Método ACE (Aliviar Curation Engine)** analisa o caso, e um **Curador Médico** valida a proposta antes de qualquer entrega. O paciente nunca recebe uma lista de profissionais — recebe uma Curadoria, sempre explicada, sempre validada por humano, nunca por posição paga.
+Curadoria médica humana e independente: uma pessoa conta sua história, e um **Curador Médico** conduz a Curadoria na Mesa até entregar três caminhos explicados. O paciente nunca recebe uma lista de profissionais — recebe uma Curadoria, sempre explicada, sempre de autoria humana, nunca por posição paga.
 
-## Status: Versão 1.0 — Frozen
+**A Curadoria tem uma única autoridade decisória: o Curador** (ADR-035). A decisão sobre qual dos três caminhos seguir é, e continua sendo, exclusivamente do paciente.
 
-**O desenvolvimento da Versão 1 está oficialmente encerrado** (ADR-021, [`docs/DECISIONS.md`](docs/DECISIONS.md)). Arquitetura, o Método ACE e o produto estão congelados: nenhuma funcionalidade nova, tela, API, protocolo do ACE ou mudança estrutural é aceita sem uma decisão explícita de iniciar uma V2. **Correções de bugs continuam permitidas.** O projeto está em fase de implantação em produção em [`www.aliviarcuradoriamedica.com.br`](https://www.aliviarcuradoriamedica.com.br); a próxima fase é exclusivamente **operação**, não desenvolvimento. Histórico completo de entregas em [`CHANGELOG.md`](CHANGELOG.md).
+## Status: arquitetura canônica publicada
+
+A migração para a arquitetura canônica foi **publicada em produção em 2026-07-27** (ADR-035, ADR-036, ADR-037). A referência oficial do estado atual é
+[`docs/BASELINE_CANONICAL_ARCHITECTURE.md`](docs/BASELINE_CANONICAL_ARCHITECTURE.md) — comece por ela antes de propor qualquer mudança estrutural.
+
+A ADR-021 congelou a V1.0 e registrou o ACE como motor de Curadoria daquela versão; a ADR-035 **supersede esse ponto específico**, por decisão explícita do responsável. O restante da ADR-021 permanece vigente. Daqui em diante, toda mudança é tratada como **evolução de produto**, não como parte da migração arquitetural. Histórico completo de entregas em [`CHANGELOG.md`](CHANGELOG.md).
 
 ## O que existe hoje
 
 - **Sua História** — acolhimento em etapas, persistido no servidor, para pacientes com conta já criada pela equipe Aliviar (nunca autocadastro público).
-- **Caso** — conecta a história da pessoa ao pipeline do ACE, com máquina de estados e histórico auditável.
-- **ACE (P001–P010)** — protocolo congelado que estrutura, audita, contextualiza e compõe a curadoria, sempre com um Curador Médico revisando (P009) antes de qualquer entrega (P010).
-- **Portais** — Administrador, Curador Médico, Profissional e Paciente, cada um com seu próprio segmento real (`/admin`, `/curador`, `/profissional`, `/paciente`).
-- **Observabilidade do ACE** — dashboard, timeline, health check, métricas e histórico de execuções, para a equipe acompanhar o Método em operação.
+- **Caso** — o registro único que atravessa toda a jornada, com máquina de estados, responsabilidade auditada e histórico.
+- **Curadoria do Método** — Perfil de Prioridades, Mesa, seleção humana e Relatório entregue com exatamente três opções distintas. É a **entrega canônica**, reconhecida pelo contrato em `src/modules/curadoria/delivery-contract.ts`.
+- **Connection e Relationship** — a escolha da pessoa nasce ancorada no Relatório entregue (`connection_records.curadoria_report_id`) e evolui até o acompanhamento.
+- **Portais** — Administrador, Curador Médico, Profissional e Paciente, mais o Centro de Operações (`/coa/*`) por onde a Curadoria é conduzida.
+- **ACE (P001–P008)** — preservado como **motor histórico sob observação** (ADR-037): sem rota, sem Server Action, sem painel operacional. Não seleciona profissionais, não aprova Curadoria e não produz entrega. `/admin/ace` observa ferramentas da Plataforma, nunca uma segunda Curadoria.
 
 ## Onde está a documentação
 

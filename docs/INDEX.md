@@ -54,7 +54,9 @@ Consolidação dos sete domínios oficiais (`docs/architecture/`) — mapa e inv
 
 | Documento                                              | Propósito                                                                                                           |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md)                   | Estado atual da arquitetura técnica — comece por aqui para "como o sistema é montado".                              |
+| [`BASELINE_CANONICAL_ARCHITECTURE.md`](BASELINE_CANONICAL_ARCHITECTURE.md) | **Referência oficial** do estado publicado em 2026-07-27: fluxo canônico, entrega, módulos, tabelas, funções, grants e limites conhecidos. Comece por aqui. |
+| [`BACKLOG_TECNICO.md`](BACKLOG_TECNICO.md)             | Dívida técnica aberta no encerramento da migração canônica, com a evidência de cada item.                           |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md)                   | Estado atual da arquitetura técnica — como o sistema é montado.                                                     |
 | [`CODEBASE_MAP.md`](CODEBASE_MAP.md)                   | Onde cada módulo/rota/componente vive em `src/`.                                                                    |
 | [`CONVENTIONS.md`](CONVENTIONS.md)                     | Padrões de código já em vigor — siga antes de inventar um novo.                                                     |
 | [`DATABASE.md`](DATABASE.md)                           | Catálogo de tabelas, migrations, o que é append-only.                                                               |

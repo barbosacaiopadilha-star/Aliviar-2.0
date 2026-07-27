@@ -274,8 +274,8 @@ Nove textos distintos cobrem os nove estados técnicos do Caso — a jornada vis
 4. **Administrador** abre o Caso a partir de uma história `enviada` (`StartCaseButton`).
 5. **Sistema** roda P001–P008 automaticamente — nenhuma ação de equipe durante esta janela.
 6. **Curador Médico** monitora a fila (`curador/page.tsx`: casos atribuídos, contagem "aguardando informação", contagem "pronto para curadoria"; `curador/casos/page.tsx`: lista completa).
-7. **Curador Médico** abre um Caso específico (`curador/casos/[id]/revisao`) e decide `APPROVE`/`ADJUST`/`REJECT`/`REQUEST_MORE_INFORMATION`.
-8. **Curador Médico ou Administrador** aciona a entrega da Curadoria Final, sob confirmação explícita (`FinalCuradoriaDeliveryPanel`).
+7. **Curador Médico** conduz a Curadoria na Mesa (`/coa/curadoria/casos/[id]/…`): critérios, comparação e seleção humana de exatamente três profissionais. _(Até 2026-07-26 esta etapa era a revisão P009 em `curador/casos/[id]/revisao`, descontinuada pela ADR-036.)_
+8. **Curador Médico** emite e entrega o Relatório — a entrega canônica, reconhecida por `curadoria.case_has_delivered_curadoria`. _(Até 2026-07-26 era a entrega P010 pelo `FinalCuradoriaDeliveryPanel`, descontinuado pela ADR-036.)_
 9. **Administrador** acompanha, em paralelo a todo o resto, a observabilidade cross-Caso do ACE (`admin/ace`: health check, métricas, execuções) — não é uma etapa sequencial, é um painel contínuo.
 10. **Curador Médico ou Administrador** registra reabertura observada contra um Relationship terminal, vinculada a um Caso novo real (`register_relationship_reopening`, `docs/DECISIONS.md` ADR-028, 2026-07-15) — implementado, sem UI dedicada (via RPC/repository; nenhuma tela de equipe para isso ainda). _(modelo, não implementado)_ check-ins periódicos de acompanhamento continuam sem nenhuma tela, ação ou tabela.
 
