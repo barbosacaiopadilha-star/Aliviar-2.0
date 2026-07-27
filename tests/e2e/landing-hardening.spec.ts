@@ -22,9 +22,7 @@ test("home page carrega sem erro de console ou de página", async ({
 
   await page.goto("/");
   await expect(
-    page.getByRole("heading", {
-      name: "Uma escolha de cuidado, nunca sozinho.",
-    }),
+    page.getByRole("heading", { name: /Você não precisa tomá-la sozinho/ }),
   ).toBeVisible();
 
   expect(pageErrors, pageErrors.join("\n")).toHaveLength(0);

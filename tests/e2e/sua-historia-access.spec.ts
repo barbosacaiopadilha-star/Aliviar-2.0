@@ -27,7 +27,7 @@ async function loginAs(page: Page, account: TestAccount) {
 test.describe("Acesso a 'Sua História' (ADR-018 — nunca preenchimento anônimo)", () => {
   test("a raiz explicativa continua acessível sem sessão", async ({ page }) => {
     await page.goto("/sua-historia");
-    await expect(page.getByRole("heading", { name: "Vamos entender como podemos ajudar." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Sua história merece ser contada com calma." })).toBeVisible();
   });
 
   test("sem sessão, qualquer etapa do wizard redireciona para /login com next", async ({ page }) => {

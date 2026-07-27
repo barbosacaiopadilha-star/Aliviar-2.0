@@ -12,7 +12,7 @@ test("home page loads and shows the landing journey", async ({ page }) => {
   await page.goto("/");
 
   await expect(
-    page.getByRole("heading", { name: "Uma escolha de cuidado, nunca sozinho." }),
+    page.getByRole("heading", { name: /Você não precisa tomá-la sozinho/ }),
   ).toBeVisible();
 
   // Marco posterior ao topo — heading real da Biblioteca.
