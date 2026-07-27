@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createCuradoriaClient } from "./curadoria-client";
+import { seedPublishedProfessional } from "./rede-fixture";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
@@ -170,6 +171,20 @@ describe("Relationship Engine — MVP — PR1 (persistência, RLS, triggers, RPC
     caseId: string,
   ) {
     const cliente = curador.client;
+
+    // A Rede que este cenário exige. Antes ela vinha de sobra deixada por
+    // outra suíte que rodava antes — dependência invisível entre arquivos,
+    // que só apareceu quando a limpeza automática passou a funcionar. Agora
+    // o cenário monta a própria Rede, e o `afterEach` a desfaz.
+    const clienteAdmin = createAdminSupabaseClient();
+    for (let i = 0; i < 3; i += 1) {
+      // A fixture publicada — a única que `listApprovedProviders` devolve.
+      // O helper local deste arquivo cria profissional apresentável, não
+      // publicado: servia quando a Rede vinha pronta de outro lugar.
+      createdProfessionalIds.push(
+        await seedPublishedProfessional(clienteAdmin, curador.userId, "Profissional Relationship"),
+      );
+    }
 
     await cliente.from("consultation_records").insert({
       case_id: caseId,

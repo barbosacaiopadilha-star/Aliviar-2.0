@@ -14,6 +14,7 @@ import { buildCuratorJourney } from "@/modules/curadoria/cos/journey";
 import { loadPatientCuradoria } from "@/modules/curadoria/patient-curadoria";
 
 import { createCuradoriaClient } from "./curadoria-client";
+import { seedPublishedProfessional } from "./rede-fixture";
 
 /**
  * A CURADORIA INTEIRA, DO ACOLHIMENTO AO ENCERRAMENTO.
@@ -78,6 +79,15 @@ describe("Curadoria completa — sem SQL, sem script, sem intervenção técnica
       { email, displayName: "Paciente Curadoria Completa" },
       admin.userId,
     );
+
+    // A Rede que esta Curadoria vai atravessar. Antes ela vinha de sobra
+    // deixada por outras suítes — o cenário parecia autossuficiente e não
+    // era. Seguir a fixture real (publicada, verificada, com proveniência) é
+    // o oposto de fabricar profissional para o teste passar: é declarar em
+    // voz alta a pré-condição que sempre existiu, escondida.
+    await seedPublishedProfessional(service, admin.userId, "Profissional Curadoria Completa");
+    await seedPublishedProfessional(service, admin.userId, "Profissional Curadoria Completa");
+    await seedPublishedProfessional(service, admin.userId, "Profissional Curadoria Completa");
 
     const patientClient = createCuradoriaClient(url, anonKey);
     await patientClient.auth.signInWithPassword({ email, password: paciente.password });
