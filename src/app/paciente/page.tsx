@@ -1,14 +1,20 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
-import { PatientWelcome } from "@/components/paciente/dashboard/patient-primitives";
 import { PatientHomeState } from "@/components/paciente/patient-home-state";
-import { PerfilPanel } from "@/components/paciente/perfil-panel";
-import { mensagemPrincipal } from "@/modules/paciente/experiencia";
+import { AmbientHero } from "@/components/paciente/experiencia/ambient-hero";
+import { CuradoriaCard } from "@/components/paciente/experiencia/curadoria-card";
+import { JourneyWalk, type WalkStage } from "@/components/paciente/experiencia/journey-walk";
+import { ProfileCard } from "@/components/paciente/experiencia/profile-card";
+import { PatientWelcome } from "@/components/paciente/dashboard/patient-primitives";
+import { derivePatientPending } from "@/modules/paciente/next-action";
+import {
+  mensagemPrincipal,
+  STAGE_EYEBROWS,
+  WALK_LABELS,
+  walkStatusOf,
+} from "@/modules/paciente/experiencia";
 import { loadPatientPerfil } from "@/modules/paciente/experiencia-loader";
-import { NextActionCard, ProgressTimeline, type JourneyStage } from "@/components/journey";
-import { LinkButton } from "@/components/landing/link-button";
-import { derivePatientPending, patientStageHref } from "@/modules/paciente/next-action";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import { getPatientCaseOverview } from "@/modules/cases";
@@ -26,9 +32,21 @@ const SECONDARY_LINKS = [
   { label: "Minha história", href: "/sua-historia" },
   { label: "Documentos", href: "/paciente/documentos" },
   { label: "Minha Curadoria", href: "/paciente/curadoria" },
-  { label: "Perfil", href: "/paciente/perfil" },
+  { label: "Conta", href: "/paciente/perfil" },
 ];
 
+/**
+ * A home do paciente — quatro blocos, uma ideia cada.
+ *
+ * Hero ambiental · Jornada como caminhada · Meu Perfil (resumo) · Minha
+ * Curadoria (uma frase, uma ação). Tudo o mais abre por Progressive
+ * Disclosure, no mesmo ambiente.
+ *
+ * A régua de sete cartões com descrição, o cartão de próxima ação com três
+ * parágrafos e o painel do Perfil aberto por padrão saíram da primeira
+ * dobra: eram cinco ideias competindo em quem só queria saber se algo andou.
+ * Nada foi removido do produto — mudou de momento.
+ */
 export default async function PacienteHomePage() {
   const authState = await requireRole("paciente");
   const supabase = await createServerSupabaseClient();
@@ -39,122 +57,93 @@ export default async function PacienteHomePage() {
     listCaseIds(supabase),
   ]);
 
-  // DECISÃO A (2026-07-25): home única do paciente. A régua de etapas da
-  // Jornada — antes exclusiva de /portal-paciente — vive aqui. RLS decide o
-  // que este paciente vê; um caso só, o dele.
   const record = caseIds.length > 0 ? await loadCuradoriaRecord(supabase, caseIds[0]) : null;
   const jornada = record ? buildJornada(record) : null;
-
-  // O Perfil da pessoa, como importância — nunca como cálculo. A mensagem
-  // principal vem da etapa atual da jornada: a mesma fonte de verdade que a
-  // régua abaixo, nunca uma segunda máquina de estados.
   const perfil = record ? await loadPatientPerfil(supabase, record.caseId) : null;
-  const mensagem = jornada ? mensagemPrincipal(jornada.currentStage) : null;
-  const reguaStages: JourneyStage[] | null = jornada
-    ? jornada.stages.map((stage) => ({
-        id: stage.id,
-        label: stage.label,
-        status:
-          stage.status === "CONCLUIDA"
-            ? "done"
-            : stage.status === "EM_ANDAMENTO" || stage.status === "AGUARDANDO_VOCE"
-              ? "current"
-              : "blocked",
-        detail:
-          stage.nextAction && stage.nextAction.owner === "VOCE"
-            ? `${stage.description} — ${stage.nextAction.label}.`
-            : stage.description,
-        // Uma etapa vira link só quando existe onde chegar. Nunca uma caixa
-        // clicável que abre algo sem relação com ela.
-        href: patientStageHref(stage.id),
-      }))
-    : null;
 
   const state = derivePatientHomeState({
     storyStatuses: stories.map((story) => story.status),
     caseOverview,
   });
-
-  // A pendência com nome e endereço — no lugar do rótulo de estado do Case,
-  // que dizia que faltava algo sem dizer o quê.
   const pending = derivePatientPending({ homeState: state, jornada });
 
   const displayName = authState.profile?.displayName ?? "Paciente";
+  const firstName = displayName.split(/\s+/)[0] ?? displayName;
 
-  return (
-    <div className="mx-auto max-w-3xl space-y-12">
-      <div className="space-y-8">
+  // Sem Case ainda: a jornada não começou, e a home diz isso sem simular
+  // uma trilha vazia.
+  if (!jornada) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-10">
         <PatientWelcome name={displayName} />
         <PatientHomeState state={state} />
+        <QuickLinks />
+      </div>
+    );
+  }
 
-        {/* A mensagem principal da etapa — a mesma fonte de verdade da régua. */}
-        {mensagem ? (
-          <p aria-live="polite" className="max-w-reading text-sm leading-relaxed text-ink">
-            {mensagem}
-          </p>
-        ) : null}
+  const walkStages: WalkStage[] = jornada.stages.map((stage) => ({
+    id: stage.id,
+    label: WALK_LABELS[stage.id],
+    status: walkStatusOf(stage.status),
+  }));
 
-        {/* Seu Perfil: importâncias em palavras, construção e validação. */}
-        {perfil ? <PerfilPanel perfil={perfil} /> : null}
+  const currentStage = jornada.stages.find((stage) => stage.id === jornada.currentStage);
 
-        {/* O que falta, por que importa, o que acontece depois — e o caminho
-            direto até lá. Quando nada depende dela, o cartão diz isso por
-            extenso: silêncio declarado é cuidado, silêncio mudo é abandono. */}
-        {pending.kind === "action" ? (
-          <NextActionCard
-            title={pending.action.title}
-            why={pending.action.why}
-            whatHappensNext={pending.action.whatHappensNext}
-            action={
-              pending.action.cta ? (
-                <LinkButton href={pending.action.cta.href}>{pending.action.cta.label}</LinkButton>
-              ) : (
-                <p className="text-sm leading-relaxed text-ink-muted">
-                  Isso acontece na conversa com {jornada?.curatorName ?? "seu Curador"} — não há
-                  nada para preencher aqui.
-                </p>
-              )
-              /* Sem CTA, `happensInConversation` é verdadeiro por contrato do
-                 módulo (teste XOR) — por isso a frase acima é sempre a certa. */
-            }
-          />
-        ) : (
-          <NextActionCard
-            nothingPending={pending.message}
-            whatHappensNext={pending.whatHappensNext}
-          />
-        )}
+  // A ação principal do cartão da Curadoria: onde ela continua. Só existe
+  // quando há de fato uma tela para continuar.
+  const curadoriaAction =
+    jornada.currentStage === "DOSSIE" ||
+    jornada.currentStage === "REUNIAO" ||
+    jornada.currentStage === "ESCOLHA" ||
+    jornada.currentStage === "ACOMPANHAMENTO"
+      ? { label: "Acompanhar", href: "/paciente/curadoria" }
+      : undefined;
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-8">
+      <AmbientHero
+        firstName={firstName}
+        stage={jornada.currentStage}
+        eyebrow={STAGE_EYEBROWS[jornada.currentStage]}
+      />
+
+      <JourneyWalk stages={walkStages} currentDetail={currentStage?.description} />
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {perfil ? <ProfileCard perfil={perfil} /> : null}
+
+        <CuradoriaCard
+          message={mensagemPrincipal(jornada.currentStage)}
+          action={curadoriaAction}
+          aside={
+            pending.kind === "action" && !pending.action.cta
+              ? `Isso acontece na conversa com ${jornada.curatorName}.`
+              : undefined
+          }
+        />
       </div>
 
-      {reguaStages ? (
-        <section aria-labelledby="jornada-regua" className="border-t border-[var(--color-border)] pt-8">
-          <p
-            id="jornada-regua"
-            className="mb-4 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-brand-sage)]"
-          >
-            Sua jornada, etapa por etapa
-          </p>
-          <ProgressTimeline stages={reguaStages} ariaLabel="Etapas da sua jornada" />
-        </section>
-      ) : null}
-
-      <nav aria-label="Acessos rápidos" className="border-t border-[var(--color-border)] pt-8">
-        <p className="mb-4 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-brand-sage)]">
-          Acessos rápidos
-        </p>
-        <ul className="flex flex-wrap gap-x-8 gap-y-3">
-          {SECONDARY_LINKS.map((link) => (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                className="text-sm font-medium text-[var(--patient-forest)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
-              >
-                {link.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      <QuickLinks />
     </div>
+  );
+}
+
+function QuickLinks() {
+  return (
+    <nav aria-label="Acessos rápidos" className="border-t border-[var(--color-border)] pt-6">
+      <ul className="flex flex-wrap gap-x-8 gap-y-3">
+        {SECONDARY_LINKS.map((link) => (
+          <li key={link.href}>
+            <Link
+              href={link.href}
+              className="text-sm font-medium text-[var(--patient-forest)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+            >
+              {link.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 }

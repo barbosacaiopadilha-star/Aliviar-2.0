@@ -50,7 +50,12 @@ describe.skipIf(!process.env.SEED_MESA)("seed — validação de usabilidade da 
     accounts = JSON.parse(readFileSync(TEST_USERS_PATH, "utf-8"));
   });
 
-  it("deixa o Case de certificação pronto para a sessão e imprime o endereço", async () => {
+  // A conta do paciente sintético existe para alguém abrir a tela e olhar.
+  // O acesso é impresso ao final: é conta local, sintética, criada por este
+  // seed, e sem ela a sessão do paciente não acontece.
+  let patientLogin: { email: string; password: string } | null = null;
+
+  it("deixa o Case de certificação pronto para a sessão e imprime os endereços", async () => {
     const adminAccount = accounts.find((a) => a.role === "administrador")!;
     const adminAuth = createCuradoriaClient(url, anonKey);
     await adminAuth.auth.signInWithPassword({ email: adminAccount.email, password: adminAccount.password });
@@ -83,30 +88,28 @@ describe.skipIf(!process.env.SEED_MESA)("seed — validação de usabilidade da 
     if (existente) {
       caseId = existente.id as string;
     } else {
+      // Conta sem Case é resíduo de uma limpeza anterior (as suítes apagam
+      // Cases de certificação, não a conta). Recriar é local e sintético —
+      // pedir intervenção manual só transferiria o trabalho para a pessoa.
       const { data: pacienteExistente } = await service.auth.admin.listUsers({ perPage: 1000 });
-      const jaExiste = pacienteExistente?.users.find((u) => u.email === SEED_PATIENT_EMAIL);
+      const residuo = pacienteExistente?.users.find((u) => u.email === SEED_PATIENT_EMAIL);
 
-      let pacienteProfileId: string;
-      let pacientePassword: string | null = null;
-
-      if (jaExiste) {
-        pacienteProfileId = jaExiste.id;
-      } else {
-        const paciente = await createPatientAccount(
-          service,
-          adminAuth,
-          { email: SEED_PATIENT_EMAIL, displayName: "Paciente de Validação (sintético)" },
-          adminUser!.id,
-        );
-        pacienteProfileId = paciente.profileId;
-        pacientePassword = paciente.password;
+      if (residuo) {
+        await service.from("patient_stories").delete().eq("profile_id", residuo.id);
+        await service.from("patient_profiles").delete().eq("profile_id", residuo.id);
+        await service.from("user_roles").delete().eq("profile_id", residuo.id);
+        await service.auth.admin.deleteUser(residuo.id);
       }
 
-      if (!pacientePassword) {
-        throw new Error(
-          "A conta do paciente de validação já existe mas o Case não. Apague a conta validacao-mesa@example.test e rode o seed de novo.",
-        );
-      }
+      const paciente = await createPatientAccount(
+        service,
+        adminAuth,
+        { email: SEED_PATIENT_EMAIL, displayName: "Paciente de Validação (sintético)" },
+        adminUser!.id,
+      );
+      const pacienteProfileId = paciente.profileId;
+      const pacientePassword = paciente.password;
+      patientLogin = { email: SEED_PATIENT_EMAIL, password: pacientePassword };
 
       const patientClient = createCuradoriaClient(url, anonKey);
       await patientClient.auth.signInWithPassword({ email: SEED_PATIENT_EMAIL, password: pacientePassword });
@@ -158,7 +161,19 @@ describe.skipIf(!process.env.SEED_MESA)("seed — validação de usabilidade da 
     expect(declaracoes.data).toHaveLength(0);
     expect(selecao.data).toBeNull();
 
+    const linhas = [
+      "",
+      "=== SESSÃO PRONTA ===",
+      `Mesa do Curador: http://localhost:3000/coa/curadoria/casos/${caseId}/curadoria_tecnica`,
+      "  entrar como curador_medico (test-users.local.json)",
+      "",
+      "Dashboard do Paciente: http://localhost:3000/paciente",
+      patientLogin
+        ? `  entrar como ${patientLogin.email} / ${patientLogin.password}`
+        : "  (conta reaproveitada — rode o seed de novo para gerar novo acesso)",
+      "",
+    ];
     // eslint-disable-next-line no-console
-    console.log(`\n=== SESSÃO PRONTA ===\nMesa: http://localhost:3000/coa/curadoria/casos/${caseId}/curadoria_tecnica\nEntrar como: curador_medico (test-users.local.json)\n`);
+    console.log(linhas.join("\n"));
   }, 120_000);
 });

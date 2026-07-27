@@ -114,6 +114,48 @@ export function mensagemPrincipal(currentStage: JornadaStageId): string {
   return STAGE_MESSAGES[currentStage];
 }
 
+/**
+ * A jornada como caminhada: passado, presente e futuro — três estados, não
+ * quatro. `AGUARDANDO_VOCE` e `EM_ANDAMENTO` viram ambos "atual" porque, no
+ * caminho, a diferença entre "a equipe trabalha" e "é a sua vez" pertence à
+ * frase da etapa, não à marca no percurso.
+ */
+export type WalkStatus = "done" | "current" | "ahead";
+
+export function walkStatusOf(
+  stageStatus: "CONCLUIDA" | "EM_ANDAMENTO" | "AGUARDANDO_VOCE" | "A_CAMINHO",
+): WalkStatus {
+  if (stageStatus === "CONCLUIDA") return "done";
+  if (stageStatus === "A_CAMINHO") return "ahead";
+  return "current";
+}
+
+/**
+ * A etiqueta curta do percurso. A jornada tem rótulos completos ("Perfil de
+ * Prioridades", "Curadoria em andamento") que servem à leitura detalhada e
+ * pesam demais numa trilha de sete marcas no celular.
+ */
+export const WALK_LABELS: Record<JornadaStageId, string> = {
+  CONSULTA_INICIAL: "Consulta",
+  PERFIL_DE_PRIORIDADES: "Perfil",
+  CURADORIA: "Curadoria",
+  DOSSIE: "Relatório",
+  REUNIAO: "Conversa",
+  ESCOLHA: "Escolha",
+  ACOMPANHAMENTO: "Acompanhamento",
+};
+
+/** Onde a jornada está, em duas palavras — o eyebrow do hero. */
+export const STAGE_EYEBROWS: Record<JornadaStageId, string> = {
+  CONSULTA_INICIAL: "Sua jornada começa",
+  PERFIL_DE_PRIORIDADES: "Construindo seu Perfil",
+  CURADORIA: "Curadoria em andamento",
+  DOSSIE: "Sua Curadoria está pronta",
+  REUNIAO: "Vamos conversar",
+  ESCOLHA: "Os caminhos encontrados",
+  ACOMPANHAMENTO: "Seguimos com você",
+};
+
 // ---------------------------------------------------------------------------
 // A fronteira de vocabulário — o que jamais chega à tela do paciente
 // ---------------------------------------------------------------------------

@@ -124,6 +124,116 @@
   );
 }
 
+/* ---------------------------------------------------------------------------
+   Hero ambiental — a cena da etapa atual, não uma faixa decorativa.
+   A foto é lavada até virar atmosfera: o texto precisa continuar legível com
+   folga, então o véu garante o contraste em vez de depender da imagem.
+--------------------------------------------------------------------------- */
+.patient-dashboard .patient-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  padding: 2.5rem 1.5rem;
+  isolation: isolate;
+}
+
+@media (min-width: 1024px) {
+  .patient-dashboard .patient-hero {
+    padding: 4rem 3.5rem;
+  }
+}
+
+.patient-dashboard .patient-hero__scene {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-size: cover;
+  background-position: center 35%;
+  opacity: 0.4;
+  filter: saturate(0.9);
+  transform: scale(1.02);
+}
+
+.patient-dashboard .patient-hero__veil {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    105deg,
+    rgb(249 248 246 / 0.96) 0%,
+    rgb(249 248 246 / 0.88) 45%,
+    rgb(245 239 230 / 0.62) 100%
+  );
+}
+
+.patient-dashboard .patient-hero__content {
+  position: relative;
+}
+
+.patient-dashboard .patient-section-title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--color-brand-sage);
+}
+
+/* ---------------------------------------------------------------------------
+   Caminhada da jornada — trilha horizontal, marcas discretas.
+--------------------------------------------------------------------------- */
+.patient-dashboard .patient-walk__track {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 1.25rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scrollbar-width: none;
+}
+
+.patient-dashboard .patient-walk__track::-webkit-scrollbar {
+  display: none;
+}
+
+.patient-dashboard .patient-walk__step {
+  display: flex;
+  flex: 1 0 auto;
+  min-width: 4.5rem;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.patient-dashboard .patient-walk__dot {
+  position: relative;
+  display: block;
+  height: 0.25rem;
+  border-radius: 9999px;
+  background: rgb(26 46 38 / 0.12);
+  transition: background-color 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.patient-dashboard .patient-walk__step--done .patient-walk__dot {
+  background: rgb(90 125 106 / 0.55);
+}
+
+.patient-dashboard .patient-walk__step--current .patient-walk__dot {
+  background: var(--patient-forest);
+}
+
+.patient-dashboard .patient-walk__label {
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: var(--color-ink-muted);
+}
+
+.patient-dashboard .patient-walk__step--current .patient-walk__label {
+  font-weight: 600;
+  color: var(--patient-ink);
+}
+
+.patient-dashboard .patient-walk__step--ahead .patient-walk__label {
+  opacity: 0.6;
+}
+
 .patient-dashboard .patient-fade-in {
   animation: patient-fade-in 600ms cubic-bezier(0.4, 0, 0.2, 1) both;
 }
@@ -145,7 +255,13 @@
   }
 
   .patient-dashboard .patient-card,
-  .patient-dashboard .patient-progress-fill {
+  .patient-dashboard .patient-progress-fill,
+  .patient-dashboard .patient-walk__dot {
     transition: none;
+  }
+
+  /* A cena continua, sem o zoom que sugere movimento. */
+  .patient-dashboard .patient-hero__scene {
+    transform: none;
   }
 }
