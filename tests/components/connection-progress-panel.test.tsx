@@ -61,7 +61,7 @@ function buildConnection(
   return {
     id: "connection-1",
     caseId: CASE_ID,
-    finalCuradoriaDeliveryId: "delivery-1",
+    anchor: { source: "ACE_LEGADO" as const, finalDeliveryId: "delivery-1" },
     patientProfileId: "patient-1",
     professionalProfileId: PROVIDER_A,
     status: "DECISAO_REGISTRADA",

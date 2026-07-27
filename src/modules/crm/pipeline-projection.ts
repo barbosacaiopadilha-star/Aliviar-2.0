@@ -40,7 +40,11 @@ export type CaseProjectionFacts = {
   /** Consulta Inicial iniciada (cases.started_at). */
   startedAt: string | null;
   closedAt: string | null;
-  /** Entrega ao paciente registrada (final_curadoria_delivery). */
+  /**
+   * Existe uma Curadoria validamente entregue para este Case, segundo o
+   * contrato canônico — independente de ter vindo da Curadoria do Método ou do
+   * motor antigo. Esta projeção nunca sabe qual das duas.
+   */
   delivered: boolean;
 };
 
@@ -75,12 +79,12 @@ export function projectPipelineStage(caseFacts: CaseProjectionFacts | null): Pip
 
   if (responsibleRole === "concierge") {
     return delivered
-      ? { kind: "case", stage: "scheduling_support", reason: "Com o Concierge após a entrega (responsible_role + delivery)." }
+      ? { kind: "case", stage: "scheduling_support", reason: "Com o Concierge após a entrega (responsible_role + entrega reconhecida)." }
       : { kind: "case", stage: "doctor_selected", reason: "Com o Concierge (responsible_role) antes do registro de entrega." };
   }
 
   if (delivered) {
-    return { kind: "case", stage: "report_delivered", reason: "Entrega registrada (final_curadoria_delivery)." };
+    return { kind: "case", stage: "report_delivered", reason: "Curadoria entregue ao paciente (contrato canônico de entrega)." };
   }
 
   if (responsibleRole === "curador_medico") {

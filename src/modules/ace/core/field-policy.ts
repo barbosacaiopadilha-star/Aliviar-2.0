@@ -11,8 +11,16 @@
 // 3. assertFieldPolicy — aplica as duas camadas acima a um artefato,
 //    dado o protocolo que o produziu.
 
+// O MECANISMO (busca recursiva de chaves, comparação de ordem de estágio) foi
+// absorvido em `src/platform/information/field-policy.ts`. O que permanece
+// aqui é o VOCABULÁRIO — quais campos o Método Aliviar proíbe e a partir de
+// qual etapa cada um passa a ser legítimo —, que é conhecimento do ACE e de
+// mais ninguém. A API pública deste arquivo não mudou.
+
+import { findFieldViolations, type FieldPolicy } from "@/platform/information/field-policy";
+
 import { ProtocolError } from "./error-contract";
-import { stageOrder, type PipelineStageId } from "./pipeline-stage";
+import { PIPELINE_STAGE_ORDER, type PipelineStageId } from "./pipeline-stage";
 import type { ProtocolId } from "./protocol-id";
 
 export const KERNEL_FORBIDDEN_FIELDS = [
@@ -86,37 +94,27 @@ export const STAGE_RESERVED_FIELDS: Record<string, PipelineStageId> = {
   disclaimer: "P010",
 };
 
-function collectKeys(candidate: unknown, found: Set<string>): void {
-  if (candidate === null || typeof candidate !== "object") {
-    return;
-  }
-
-  for (const key of Object.keys(candidate as Record<string, unknown>)) {
-    found.add(key);
-    collectKeys((candidate as Record<string, unknown>)[key], found);
-  }
-}
+// A política do Método Aliviar, na forma que a Plataforma entende.
+const ACE_FIELD_POLICY: FieldPolicy<PipelineStageId> = {
+  permanentlyForbidden: KERNEL_FORBIDDEN_FIELDS,
+  reservedUntil: STAGE_RESERVED_FIELDS as Readonly<Record<string, PipelineStageId>>,
+  stageOrder: PIPELINE_STAGE_ORDER,
+};
 
 export function findKernelViolations(candidate: Record<string, unknown>): string[] {
-  const keys = new Set<string>();
-  collectKeys(candidate, keys);
-
-  return [...keys].filter((key) => (KERNEL_FORBIDDEN_FIELDS as readonly string[]).includes(key));
+  // O estágio aqui é irrelevante: proibição permanente não depende de etapa.
+  return findFieldViolations(candidate, ACE_FIELD_POLICY, "P001")
+    .filter((violation) => violation.kind === "permanently_forbidden")
+    .map((violation) => violation.field);
 }
 
 export function findStageViolations(
   candidate: Record<string, unknown>,
   producedBy: PipelineStageId,
 ): string[] {
-  const keys = new Set<string>();
-  collectKeys(candidate, keys);
-
-  const producedByOrder = stageOrder(producedBy);
-
-  return [...keys].filter((key) => {
-    const availableFrom = STAGE_RESERVED_FIELDS[key];
-    return availableFrom !== undefined && stageOrder(availableFrom) > producedByOrder;
-  });
+  return findFieldViolations(candidate, ACE_FIELD_POLICY, producedBy)
+    .filter((violation) => violation.kind === "anticipated")
+    .map((violation) => violation.field);
 }
 
 export function assertFieldPolicy(

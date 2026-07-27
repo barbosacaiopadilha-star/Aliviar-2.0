@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import type { Metadata } from "next";
@@ -17,7 +16,6 @@ import { CASE_STATUS_LABELS } from "@/modules/cases/types";
 
 import { AceExecutionsHistory } from "@/components/ace/ace-executions-history";
 import { AceArtifactsList } from "@/components/cases/ace-artifacts-list";
-import { AceExecutionPanel } from "@/components/cases/ace-execution-panel";
 import { AceShortlistViewer } from "@/components/cases/ace-shortlist-viewer";
 import { CaseCuratorAssignment } from "@/components/cases/case-curator-assignment";
 import { CaseEventsTimeline } from "@/components/cases/case-events-timeline";
@@ -70,7 +68,6 @@ export default async function AdminCaseDetailPage({ params }: AdminCaseDetailPag
     listArtifactsForCase(regularClient, id),
     listActiveP002FieldCorrections(regularClient, id),
   ]);
-  const execution = executions[0] ?? null;
 
   const shortlistArtifact = artifacts.find((artifact) => artifact.artifactType === "Shortlist");
   const shortlist = shortlistArtifact ? (shortlistArtifact.payload as Shortlist) : null;
@@ -81,7 +78,6 @@ export default async function AdminCaseDetailPage({ params }: AdminCaseDetailPag
     : [];
   const namesByProviderId = await getProfessionalDisplayNames(regularClient, shortlistProviderIds);
 
-  const canRunAce = caseDetail.status === "READY_FOR_CURATION" || caseDetail.status === "IN_CURATION";
 
   return (
     <div className="space-y-6">
@@ -91,12 +87,6 @@ export default async function AdminCaseDetailPage({ params }: AdminCaseDetailPag
           <Badge variant={caseDetail.status === "DELIVERED" || caseDetail.status === "CLOSED" ? "sage" : "default"}>
             {CASE_STATUS_LABELS[caseDetail.status]}
           </Badge>
-          <Link
-            href={`/admin/casos/${caseDetail.id}/revisao`}
-            className="text-sm font-medium text-brand-primary hover:text-brand-primary-deep"
-          >
-            Human Review →
-          </Link>
         </div>
         <p className="text-sm text-ink-muted">
           Criado em {new Date(caseDetail.createdAt).toLocaleDateString("pt-BR")} — a história original nunca é
@@ -181,7 +171,6 @@ export default async function AdminCaseDetailPage({ params }: AdminCaseDetailPag
           <h2 className="font-sans text-lg font-semibold text-ink">Execução do ACE</h2>
           <p className="text-sm text-ink-muted">P001 a P008 apenas — nunca revisão humana (P009) ou entrega (P010).</p>
         </CardHeader>
-        <AceExecutionPanel caseId={caseDetail.id} initialExecution={execution} canRun={canRunAce} />
       </Card>
 
       <Card>

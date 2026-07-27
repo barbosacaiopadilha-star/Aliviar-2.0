@@ -17,7 +17,7 @@ export type PipelineStageId =
   | "P009"
   | "P010";
 
-const STAGE_ORDER: Record<PipelineStageId, number> = {
+export const PIPELINE_STAGE_ORDER: Readonly<Record<PipelineStageId, number>> = {
   P001: 1,
   P002: 2,
   P003: 3,
@@ -31,5 +31,5 @@ const STAGE_ORDER: Record<PipelineStageId, number> = {
 };
 
 export function stageOrder(stage: PipelineStageId): number {
-  return STAGE_ORDER[stage];
+  return PIPELINE_STAGE_ORDER[stage];
 }

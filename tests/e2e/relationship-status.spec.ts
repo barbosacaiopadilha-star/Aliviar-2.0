@@ -1,5 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+
+import { createCuradoriaClient } from "../integration/curadoria-client";
 import { expect, test, type Page } from "@playwright/test";
 
 // RELATIONSHIP ENGINE — MVP — PR5 (E2E). Mesma disciplina já usada em
@@ -9,16 +11,15 @@ import { expect, test, type Page } from "@playwright/test";
 // confirmação de primeiro atendimento, ponta a ponta e real, diretamente
 // no beforeAll.
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import * as curadoria from "@/modules/curadoria/repository";
+import * as reports from "@/modules/curadoria/report-repository";
+import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { changeCaseStatus, createCase } from "@/modules/cases/repository";
 import {
   confirmFirstAppointment,
   createConnection,
 } from "@/modules/connection/commands";
 import { SupabaseConnectionRepository } from "@/modules/connection/repository";
-import { deliverFinalCuradoria } from "@/modules/concierge/delivery-repository";
-import { FakeAceLanguageModel } from "@/modules/concierge/fake-language-model";
-import { submitHumanReview } from "@/modules/concierge/human-review-repository";
-import { runAceExecution } from "@/modules/concierge/orchestrator";
 import { createPatientAccount } from "@/modules/profiles/patient-account-repository";
 import { createProfessionalProfile } from "@/modules/profiles/professional-repository";
 import {
@@ -66,6 +67,8 @@ type ActiveRelationshipFixture = {
   patientProfileId: string;
   caseId: string;
   professionalDisplayName: string;
+  /** Profissionais criados por ESTA execução — âncora do cleanup. */
+  createdProfessionalIds: string[];
 };
 
 async function seedPresentableProfessional(
@@ -113,7 +116,6 @@ async function seedActiveRelationship(): Promise<ActiveRelationshipFixture> {
   const adminClient = createAdminSupabaseClient();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-  const { createClient } = await import("@supabase/supabase-js");
 
   const adminEmail =
     unique("relationship-e2e-admin") + "@aliviar-conexao.local";
@@ -134,7 +136,7 @@ async function seedActiveRelationship(): Promise<ActiveRelationshipFixture> {
     ).data!.id,
   });
 
-  const adminSessionClient = createClient(url, anonKey);
+  const adminSessionClient = createCuradoriaClient(url, anonKey);
   await adminSessionClient.auth.signInWithPassword({
     email: adminEmail,
     password: "senha-temporaria-123",
@@ -149,7 +151,7 @@ async function seedActiveRelationship(): Promise<ActiveRelationshipFixture> {
     adminUserId,
   );
 
-  const patientClient = createClient(url, anonKey);
+  const patientClient = createCuradoriaClient(url, anonKey);
   await patientClient.auth.signInWithPassword({
     email: patientEmail,
     password: patientAccount.password,
@@ -174,7 +176,7 @@ async function seedActiveRelationship(): Promise<ActiveRelationshipFixture> {
   const created = await createCase(
     adminSessionClient,
     draft.id,
-    undefined,
+    adminUserId,
     adminUserId,
   );
   await changeCaseStatus(
@@ -190,63 +192,95 @@ async function seedActiveRelationship(): Promise<ActiveRelationshipFixture> {
     adminUserId,
   );
 
-  const professionalDisplayName = "Ana E2E Relationship";
-  const professionalId = await seedPresentableProfessional(
-    adminClient,
-    adminUserId,
-    professionalDisplayName,
-  );
-  await seedPresentableProfessional(
-    adminClient,
-    adminUserId,
-    "Bruno E2E Relationship",
-  );
-  await seedPresentableProfessional(
-    adminClient,
-    adminUserId,
-    "Carla E2E Relationship",
-  );
-
-  const execution = await runAceExecution({
-    supabase: adminSessionClient,
-    caseId: created.id,
-    actorId: adminUserId,
-    languageModel: new FakeAceLanguageModel(),
-  });
-  if (execution.outcome !== "completed") {
-    throw new Error("Fixture E2E: execução do ACE não completou.");
+  // Nomes únicos por execução — o E2E localiza pelo nome acessível, e nomes
+  // fixos colidem quando uma execução anterior deixa resíduo.
+  const runId = unique("run");
+  const createdProfessionalIds: string[] = [];
+  for (const nome of ["Ana", "Bruno", "Carla"]) {
+    createdProfessionalIds.push(
+      await seedPresentableProfessional(adminClient, adminUserId, nome + " E2E Rel " + runId),
+    );
   }
 
-  const review = await submitHumanReview(adminSessionClient, {
-    caseId: created.id,
-    reviewerId: adminUserId,
-    reviewAction: "APPROVE",
-    reviewRationale:
-      "Composição adequada às necessidades relatadas na história.",
-    evidenceReferences: ["Shortlist.compositionRationale"],
-    changes: [],
-    returnToProtocol: null,
+  // ENTREGA CANÔNICA — o mesmo caminho das telas. Nenhum protocolo do ACE.
+  const cliente = adminSessionClient;
+
+  await cliente.from("consultation_records").insert({
+    case_id: created.id,
+    curator_id: adminUserId,
+    context_reviewed: true,
+    documents_reviewed: true,
+    narrative: "Ela contou a história inteira, e eu devolvi organizada.",
+    understanding_confirmed_at: new Date().toISOString(),
   });
-  if (review.outcome !== "recorded") {
-    throw new Error("Fixture E2E: Human Review não foi registrado.");
+  await cliente
+    .from("case_clinical_context")
+    .insert({ case_id: created.id, clinical_context: "Contexto clínico relatado por ela." });
+
+  const priorityProfileId = await curadoria.createPriorityProfile(cliente, created.id, adminUserId);
+  await curadoria.addFilter(
+    cliente,
+    priorityProfileId,
+    "FILTRO_OBRIGATORIO",
+    "CUIDADO_CONTINUO",
+    "true",
+    "Ela quer alguém que acompanhe do começo ao fim.",
+  );
+  await curadoria.saveWeight(cliente, priorityProfileId, "EXPERIENCIA", 60, null, "Quer quem já viu muitos casos.");
+  await curadoria.saveWeight(cliente, priorityProfileId, "CONTINUIDADE", 40, null, "Quer a mesma pessoa do começo ao fim.");
+  await curadoria.validatePriorityProfile(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
+  await curadoria.runCompatibility(cliente, priorityProfileId);
+
+  const record = await loadCuradoriaRecord(cliente, created.id);
+  const tres = record!.curadoriaTecnica.analyses.slice(0, 3);
+  if (tres.length < 3) {
+    throw new Error("Fixture E2E: a rede local não tem três profissionais elegíveis.");
   }
 
-  const delivery = await deliverFinalCuradoria({
-    supabase: adminSessionClient,
-    caseId: created.id,
-    actorId: adminUserId,
-    languageModel: new FakeAceLanguageModel(),
-  });
-  if (delivery.outcome !== "delivered") {
-    throw new Error("Fixture E2E: entrega da Curadoria falhou.");
-  }
+  await curadoria.saveSelection(
+    cliente,
+    created.id,
+    priorityProfileId,
+    adminUserId,
+    "Os três cobrem experiência e continuidade de formas diferentes.",
+    tres.map((a) => ({
+      professionalProfileId: a.professionalId,
+      band: a.band,
+      rationale: "Entra porque atende o que ela pediu.",
+      tradeOff: "Agenda mais concorrida.",
+    })),
+  );
+  const selection = await curadoria.getSelection(cliente, priorityProfileId);
+
+  await reports.saveReport(
+    cliente,
+    created.id,
+    selection!.id,
+    "Os três cobrem experiência e continuidade de formas diferentes.",
+    tres.map((a) => ({
+      professionalProfileId: a.professionalId,
+      justification: "Responde ao critério que ela nomeou.",
+      relationToWeights: "Cobre experiência, que ela pesou mais.",
+      attentionPoints: ["Agenda mais concorrida."],
+      favorablePoints: [],
+      suggestedQuestions: ["Quantos casos como o meu você acompanha por ano?"],
+      curatorObservations: null,
+    })),
+  );
+  const report = await reports.getReportBySelection(cliente, selection!.id);
+  await reports.emitReport(cliente, report!.id);
+  await curadoria.deliverSelection(cliente, selection!.id);
+  await reports.markReportDelivered(cliente, report!.id);
+
+  const professionalId = tres[0]!.professionalId;
+  const professionalDisplayName = tres[0]!.professionalName;
 
   const connectionRepository = new SupabaseConnectionRepository(patientClient);
   const now = new Date().toISOString();
   const created0 = createConnection(
     {
       caseId: created.id,
-      finalCuradoriaDeliveryId: delivery.delivery.id,
+      anchor: { source: "METODO" as const, reportId: report!.id },
       patientProfileId: patientAccount.profileId,
       professionalProfileId: professionalId,
       actorId: patientAccount.profileId,
@@ -254,8 +288,7 @@ async function seedActiveRelationship(): Promise<ActiveRelationshipFixture> {
       recordedAt: now,
     },
     {
-      eligibleProfessionalProfileIds:
-        delivery.delivery.providerPresentations.map((p) => p.providerId),
+      eligibleProfessionalProfileIds: tres.map((a) => a.professionalId),
     },
   );
   const connectionRecord = await connectionRepository.create(
@@ -288,34 +321,54 @@ async function seedActiveRelationship(): Promise<ActiveRelationshipFixture> {
     patientProfileId: patientAccount.profileId,
     caseId: created.id,
     professionalDisplayName,
+    createdProfessionalIds,
   };
 }
 
 async function cleanupFixture(fixture: ActiveRelationshipFixture) {
   const adminClient = createAdminSupabaseClient();
-  await adminClient
-    .from("cases")
-    .delete()
-    .eq("patient_profile_id", fixture.patientProfileId);
-  await adminClient
-    .from("patient_stories")
-    .delete()
-    .eq("profile_id", fixture.patientProfileId);
-  await adminClient
-    .from("patient_profiles")
-    .delete()
-    .eq("profile_id", fixture.patientProfileId);
-  await adminClient
-    .from("user_roles")
-    .delete()
-    .eq("profile_id", fixture.patientProfileId);
+
+  // Todo DELETE verifica erro: um cleanup que falha em silêncio deixa Case e
+  // Connection para trás e contamina a execução seguinte.
+  const apagar = async (tabela: string, coluna: string, valor: string) => {
+    const { error } = await adminClient.from(tabela).delete().eq(coluna, valor);
+    if (error) {
+      throw new Error(`Falha ao limpar ${tabela}: ${error.message}`);
+    }
+  };
+
+  await apagar("cases", "patient_profile_id", fixture.patientProfileId);
+  await apagar("patient_stories", "profile_id", fixture.patientProfileId);
+  await apagar("patient_profiles", "profile_id", fixture.patientProfileId);
+  await apagar("user_roles", "profile_id", fixture.patientProfileId);
   await adminClient.auth.admin.deleteUser(fixture.patientProfileId);
+
+  // Profissionais por último: a Curadoria canônica grava
+  // `curated_selection_options` e `curadoria_report_options` com FK para
+  // `professional_profiles`. Antes do Case sair, o DELETE falha por FK — e o
+  // erro ignorado deixava o perfil sobreviver à rodada.
+  const ids = fixture.createdProfessionalIds ?? [];
+  if (ids.length > 0) {
+    await adminClient
+      .from("professional_competency_areas")
+      .delete()
+      .in("professional_profile_id", ids);
+    const { error } = await adminClient.from("professional_profiles").delete().in("id", ids);
+    if (error) {
+      throw new Error(`Falha ao remover profissionais da fixture: ${error.message}`);
+    }
+  }
 }
 
 test.describe("Relationship — status do acompanhamento (E2E autenticado)", () => {
   // Serial pelo mesmo motivo já documentado em connection-choice.spec.ts:
   // professional_profiles é global, não escopado por Caso.
-  test.describe.configure({ mode: "serial" });
+  // Cada teste leva ~6s: constrói a Curadoria canônica inteira, cria a
+  // Connection, confirma o primeiro atendimento e dirige o navegador. O limite
+  // global de 30s era suficiente na média e estourava na primeira execução
+  // depois de um build, com o servidor ainda frio — daí a intermitência.
+  // 60s dá dez vezes a duração típica sem mascarar lentidão real.
+  test.describe.configure({ mode: "serial", timeout: 60_000 });
 
   // [CORRIGIDO — Fase 6.1] O fluxo anterior exercitava ativo -> pausa ->
   // retomada -> encerramento planejado — construído sobre uma teoria de
@@ -360,7 +413,19 @@ test.describe("Relationship — status do acompanhamento (E2E autenticado)", () 
       await expect(
         page.getByRole("button", { name: "Retomar acompanhamento" }),
       ).toHaveCount(0);
-      await expect(page.getByRole("button")).toHaveCount(0);
+      // Estado terminal: nenhuma ação sobre o acompanhamento. Escopado às CTAs
+      // proibidas — o cabeçalho do paciente tem controles legítimos, e exigir
+      // zero botões na página testava layout, não produto.
+      for (const cta of [
+        "Registrar encerramento planejado",
+        "O acompanhamento foi interrompido",
+        "Pausar acompanhamento",
+        "Retomar acompanhamento",
+        "Confirmar encerramento",
+        "Confirmar interrupção",
+      ]) {
+        await expect(page.getByRole("button", { name: cta })).toHaveCount(0);
+      }
     } finally {
       await cleanupFixture(fixture);
     }
@@ -383,7 +448,19 @@ test.describe("Relationship — status do acompanhamento (E2E autenticado)", () 
 
       await page.reload();
       await expect(page.getByText(/registrado como encerrado/)).toBeVisible();
-      await expect(page.getByRole("button")).toHaveCount(0);
+      // Estado terminal: nenhuma ação sobre o acompanhamento. Escopado às CTAs
+      // proibidas — o cabeçalho do paciente tem controles legítimos, e exigir
+      // zero botões na página testava layout, não produto.
+      for (const cta of [
+        "Registrar encerramento planejado",
+        "O acompanhamento foi interrompido",
+        "Pausar acompanhamento",
+        "Retomar acompanhamento",
+        "Confirmar encerramento",
+        "Confirmar interrupção",
+      ]) {
+        await expect(page.getByRole("button", { name: cta })).toHaveCount(0);
+      }
     } finally {
       await cleanupFixture(fixture);
     }
@@ -397,10 +474,9 @@ test.describe("Relationship — status do acompanhamento (E2E autenticado)", () 
       // Encerra via chamada real de repository (equivalente ao que a UI
       // faria) para preparar o estado terminal antes da checagem de
       // segurança abaixo.
-      const { createClient } = await import("@supabase/supabase-js");
       const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
       const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-      const patientClient = createClient(url, anonKey);
+      const patientClient = createCuradoriaClient(url, anonKey);
       await patientClient.auth.signInWithPassword({
         email: fixture.patientEmail,
         password: fixture.patientPassword,
@@ -432,7 +508,7 @@ test.describe("Relationship — status do acompanhamento (E2E autenticado)", () 
             .single()
         ).data!.id,
       });
-      const outsiderAdminSession = createClient(url, anonKey);
+      const outsiderAdminSession = createCuradoriaClient(url, anonKey);
       await outsiderAdminSession.auth.signInWithPassword({
         email: adminEmail,
         password: "senha-temporaria-123",

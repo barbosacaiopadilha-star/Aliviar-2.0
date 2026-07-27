@@ -18,14 +18,15 @@ import {
 } from "./types";
 
 const RECORD_COLUMNS =
-  "id, case_id, final_curadoria_delivery_id, patient_profile_id, professional_profile_id, status, decided_at, created_at, updated_at";
+  "id, case_id, curadoria_report_id, final_curadoria_delivery_id, patient_profile_id, professional_profile_id, status, decided_at, created_at, updated_at";
 const EVENT_COLUMNS =
   "id, connection_id, event_type, actor_id, payload, occurred_at, recorded_at";
 
 type ConnectionRecordRow = {
   id: string;
   case_id: string;
-  final_curadoria_delivery_id: string;
+  curadoria_report_id: string | null;
+  final_curadoria_delivery_id: string | null;
   patient_profile_id: string;
   professional_profile_id: string;
   status: string;
@@ -73,7 +74,11 @@ function mapRecordRow(row: ConnectionRecordRow): ConnectionRecord {
   return {
     id: row.id,
     caseId: row.case_id,
-    finalCuradoriaDeliveryId: row.final_curadoria_delivery_id,
+    // O banco garante exatamente uma das duas (connection_records_exactly_one_anchor),
+    // então o canônico primeiro e o legado como o outro caso é exaustivo.
+    anchor: row.curadoria_report_id
+      ? { source: "METODO", reportId: row.curadoria_report_id }
+      : { source: "ACE_LEGADO", finalDeliveryId: row.final_curadoria_delivery_id ?? "" },
     patientProfileId: row.patient_profile_id,
     professionalProfileId: row.professional_profile_id,
     status: row.status,
@@ -147,20 +152,42 @@ export class SupabaseConnectionRepository implements ConnectionRepository {
     record: ConnectionRecordDraft,
     event: ConnectionEventDraft,
   ): Promise<ConnectionRecord> {
-    const { data, error } = await this.supabase.rpc(
-      "create_connection_with_event",
-      {
-        p_case_id: record.caseId,
-        p_final_curadoria_delivery_id: record.finalCuradoriaDeliveryId,
-        p_patient_profile_id: record.patientProfileId,
-        p_professional_profile_id: record.professionalProfileId,
-        p_decided_at: record.decidedAt,
-        p_actor_id: event.actorId,
-        p_event_payload: event.payload,
-        p_occurred_at: event.occurredAt,
-        p_recorded_at: event.recordedAt,
-      },
-    );
+    // Caminho canônico: a função deriva Case e paciente do próprio Relatório,
+    // e é idempotente — repetir a mesma escolha devolve a Connection existente
+    // em vez de tentar criar uma segunda.
+    const { data, error } =
+      record.anchor.source === "METODO"
+        ? await this.supabase.rpc("create_connection_from_report", {
+            p_report_id: record.anchor.reportId,
+            p_professional_profile_id: record.professionalProfileId,
+            p_decided_at: record.decidedAt,
+            p_actor_id: event.actorId,
+            p_event_payload: event.payload,
+            p_occurred_at: event.occurredAt,
+            p_recorded_at: event.recordedAt,
+          })
+        : await this.supabase.rpc("create_connection_with_event", {
+            p_case_id: record.caseId,
+            p_final_curadoria_delivery_id: record.anchor.finalDeliveryId,
+            p_patient_profile_id: record.patientProfileId,
+            p_professional_profile_id: record.professionalProfileId,
+            p_decided_at: record.decidedAt,
+            p_actor_id: event.actorId,
+            p_event_payload: event.payload,
+            p_occurred_at: event.occurredAt,
+            p_recorded_at: event.recordedAt,
+          });
+
+    // Escrita pela âncora legada não deveria mais acontecer em caso novo. Não
+    // bloqueia — um Caso antigo legitimamente passa por aqui —, mas fica
+    // visível, porque uma escrita legada silenciosa é como a dependência
+    // reapareceria sem ninguém notar.
+    if (record.anchor.source === "ACE_LEGADO" && !error) {
+      console.warn(
+        "[connection] escrita pela âncora legada (final_curadoria_delivery_id)",
+        { caseId: record.caseId },
+      );
+    }
 
     if (error) {
       // 23505 = connection_records_case_id_key (PR1) — este Caso já possui

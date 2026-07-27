@@ -32,8 +32,14 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   return getResponse();
 }
 
+// `_vercel` fica de fora junto com os assets estáticos: é o prefixo que a
+// própria plataforma serve (Analytics/Speed Insights), nunca uma rota do
+// produto. Sem esta exclusão, `/_vercel/insights/script.js` cai na regra de
+// "sem sessão → /login", devolve HTML no lugar de JavaScript, e o browser
+// recusa o script por MIME type — a telemetria simplesmente não carrega para
+// quem não está autenticado, que é justamente a Landing.
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm|vtt)$).*)",
+    "/((?!_next/static|_next/image|_vercel|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm|vtt)$).*)",
   ],
 };

@@ -1,4 +1,3 @@
-import { CuradoriaDecisionPanel } from "@/components/patient/curadoria-decision-panel";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { PatientCuradoria } from "@/modules/curadoria/patient-curadoria";
 
@@ -8,6 +7,21 @@ import type { PatientCuradoria } from "@/modules/curadoria/patient-curadoria";
  * @metodo Ontologia §3.13 — a ordem é de apresentação, nunca colocação
  * @metodo Experience §2.5 — toda opção diz o que custa
  * @metodo Fundamentos §13 — P14: nem o algoritmo nem a Aliviar escolhem
+ *
+ * SUPERFÍCIE DE LEITURA, NUNCA DE DECISÃO.
+ *
+ * Este componente apresenta a Curadoria entregue: o que o Curador escreveu,
+ * as três opções e o que cada uma custa. Ele NÃO oferece seleção e NÃO grava
+ * decisão nenhuma.
+ *
+ * Por quê: a escolha entre os três é um ato só, e tem um registro só — a
+ * Connection, feita no `ConnectionChoicePanel`. Enquanto este componente
+ * também tinha rádios, a mesma página oferecia duas formas de escolher e
+ * gravava dois fatos concorrentes (`patient_curadoria_decisions` aqui, uma
+ * Connection lá). O paciente via os três profissionais duas vezes, e o
+ * domínio ficava sem saber qual registro valia.
+ *
+ * Compreensão mora aqui. Decisão mora na Connection.
  *
  * Por que existe: o Relatório escrito pelo Curador não tinha nenhuma tela do
  * lado de quem ele foi escrito para ler.
@@ -89,14 +103,6 @@ export function PatientCuradoriaView({ curadoria }: { curadoria: PatientCuradori
         </Card>
       ))}
 
-      <CuradoriaDecisionPanel
-        curatedSelectionId={curadoria.curatedSelectionId}
-        options={curadoria.options.map((option) => ({
-          id: option.id,
-          professionalName: option.professionalName,
-        }))}
-        decided={curadoria.decision}
-      />
     </section>
   );
 }

@@ -33,10 +33,17 @@ test.describe("dashboard administrativo (SPRINT OPERACIONAL 1)", () => {
 
     await page.goto("/admin");
 
-    await expect(page.getByText("Pacientes ativos")).toBeVisible();
-    await expect(page.getByText("Profissionais ativos")).toBeVisible();
-    await expect(page.getByText("Administradores")).toBeVisible();
-    await expect(page.getByText("Curadores médicos")).toBeVisible();
+    // Os indicadores deixaram de ser contagens de cadastro (profissionais,
+    // administradores, curadores) e passaram a medir a operação de ponta a
+    // ponta — aquisição, conversão e tempo entre etapas. O que o teste protege
+    // continua sendo o mesmo: são números reais da operação, não o painel
+    // genérico de placeholder.
+    await expect(page.getByText("Leads novos", { exact: true })).toBeVisible();
+    await expect(page.getByText("Em qualificação", { exact: true })).toBeVisible();
+    await expect(page.getByText("Conversão lead → paciente", { exact: true })).toBeVisible();
+    await expect(page.getByText("Pacientes ativos", { exact: true })).toBeVisible();
+    await expect(page.getByText("De Curadoria até o Concierge", { exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Pessoas por papel" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Pendências" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Atividade recente" })).toBeVisible();
 
