@@ -18,6 +18,8 @@ export type MesaFoco = {
   indice: number;
   total: number;
   mover: (delta: number) => void;
+  /** Foco direto — o toque no celular, onde não há J/K. */
+  irPara: (indice: number) => void;
   /** Detalhe da célula/ficha em foco. Nunca abre sozinho. */
   detalhes: boolean;
   alternarDetalhes: () => void;
@@ -28,6 +30,7 @@ const INERTE: MesaFoco = {
   indice: -1,
   total: 0,
   mover: () => {},
+  irPara: () => {},
   detalhes: false,
   alternarDetalhes: () => {},
   fechar: () => {},
@@ -61,6 +64,7 @@ export function MesaFocoProvider({ total, children }: { total: number; children:
       indice: indice >= total ? -1 : indice,
       total,
       mover,
+      irPara: setIndice,
       detalhes,
       alternarDetalhes: () => setDetalhes((atual) => !atual),
       fechar: () => setDetalhes(false),

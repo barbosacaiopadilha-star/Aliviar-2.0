@@ -16,7 +16,7 @@
 
 import { useMesaNavegacao } from "@/components/curadoria/mesa/mesa-navegacao";
 import type { AtencaoItem, AtencaoTipo } from "@/modules/curadoria/mesa-investigacao";
-import type { MesaEtapaId } from "@/modules/curadoria/mesa-etapas";
+import { MESA_ETAPA_LABELS, type MesaEtapaId } from "@/modules/curadoria/mesa-etapas";
 
 const MARCA: Record<AtencaoTipo, string> = {
   DIVERGENCIA: "⚠",
@@ -63,9 +63,12 @@ export function PainelAtencao({
               <span className="sr-only"> — {TIPO_LABEL[item.tipo]}</span>
             </p>
             <p className="text-ink-muted">{item.frase}</p>
+            {/* O rótulo diz PARA ONDE leva. Repetido cinco vezes, "Resolver
+                nesta etapa" virava ruído idêntico e não dizia se o próximo
+                clique trocava de assunto. */}
             {ir ? (
               <button type="button" className="mesa-atencao__ir" onClick={() => ir(item.etapa)}>
-                Resolver nesta etapa
+                Resolver em {MESA_ETAPA_LABELS[item.etapa]}
               </button>
             ) : null}
           </div>

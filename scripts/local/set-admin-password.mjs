@@ -5,7 +5,7 @@
 import { ADMIN_USER_ID, loadValidationEnv } from "./validation-lib.mjs";
 
 async function main() {
-  const env = loadValidationEnv();
+  const env = loadValidationEnv({ comando: "admin:set-password" });
 
   if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY || !env.ADMIN_NEW_PASSWORD) {
     console.error("SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY e ADMIN_NEW_PASSWORD são obrigatórios.");

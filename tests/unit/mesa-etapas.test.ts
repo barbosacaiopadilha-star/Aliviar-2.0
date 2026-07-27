@@ -79,7 +79,7 @@ describe("Uma decisão por vez", () => {
     const facts = { ...ZERADO, budgetsComplete: true, professionalsFound: 4, awaitingAreaDeclaration: 4 };
     const decisao = proximaDecisao(buildMesaEtapas(facts), true);
     expect(decisao.etapa).toBe("REDE");
-    expect(decisao.label).toContain("4 profissional");
+    expect(decisao.label).toBe("Declarar a área de 4 profissionais.");
   });
 
   it("com área declarada, passa a ser avaliar os critérios que faltam", () => {

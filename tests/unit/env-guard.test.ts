@@ -11,6 +11,11 @@ import {
   PROJETOS_PROIBIDOS,
   refDoProjeto,
 } from "../../scripts/env-guard.mjs";
+import {
+  AMBIENTES_CONHECIDOS,
+  assertValidacaoAutorizada,
+  descreverAmbiente,
+} from "../../scripts/local/validation-guard.mjs";
 
 const RAIZ = path.resolve(__dirname, "../..");
 const PRODUCAO = "https://awdlmeykminwyifnygkm.supabase.co";
@@ -163,6 +168,77 @@ describe("Recusas, nos scripts de verdade", () => {
     ]);
     expect(comDbUrl.status).toBe(1);
     expect(comDbUrl.saida).toContain("Reset bloqueado");
+  }, 30_000);
+});
+
+describe("Validações hospedadas — allowlist explícita por project ref", () => {
+  const LEGADO = "https://jfhxtwumrurqghuueawi.supabase.co";
+
+  it("a allowlist nasce vazia — projeto não reconhecido é recusado", () => {
+    expect(() =>
+      assertValidacaoAutorizada("https://umprojetoqualquerxxx.supabase.co", "validation:e2e", {}),
+    ).toThrow(/não está na allowlist/);
+  });
+
+  it("produção nunca é autorizável, nem com a variável apontando para ela", () => {
+    expect(() =>
+      assertValidacaoAutorizada(PRODUCAO, "validation:e2e", {
+        ALIVIAR_VALIDATION_PROJECT_REF: "awdlmeykminwyifnygkm",
+      }),
+    ).toThrow(/nenhuma autorização o libera/);
+  });
+
+  it("o projeto legado de estado desconhecido fica bloqueado", () => {
+    expect(() =>
+      assertValidacaoAutorizada(LEGADO, "validation:e2e:b6", {
+        ALIVIAR_VALIDATION_PROJECT_REF: "jfhxtwumrurqghuueawi",
+      }),
+    ).toThrow(/estado desconhecido/);
+    expect(AMBIENTES_CONHECIDOS.jfhxtwumrurqghuueawi.autorizavel).toBe(false);
+  });
+
+  it("autorização de um projeto não libera outro", () => {
+    expect(() =>
+      assertValidacaoAutorizada("https://projetoalvoxxxxxxxxx.supabase.co", "validation:e2e", {
+        ALIVIAR_VALIDATION_PROJECT_REF: "outroprojetoxxxxxxxx",
+      }),
+    ).toThrow(/vale para um projeto só/);
+  });
+
+  it("um projeto autorizado explicitamente passa", () => {
+    const alvo = "https://projetoautorizadoxxx.supabase.co";
+    expect(
+      assertValidacaoAutorizada(alvo, "validation:e2e", {
+        ALIVIAR_VALIDATION_PROJECT_REF: "projetoautorizadoxxx",
+      }),
+    ).toBe(alvo);
+  });
+
+  it("a stack local sempre passa", () => {
+    expect(assertValidacaoAutorizada(LOCAL, "validation:e2e", {})).toBe(LOCAL);
+  });
+
+  it("o ambiente é descrito antes de qualquer execução", () => {
+    expect(descreverAmbiente(PRODUCAO)).toContain("produção");
+    expect(descreverAmbiente(LOCAL)).toContain("LOCAL");
+    expect(descreverAmbiente("https://desconhecidoxxxxxxxx.supabase.co")).toContain(
+      "não reconhecido",
+    );
+  });
+
+  it.each([
+    ["validation:e2e", "scripts/local/validate-e2e-real.mjs"],
+    ["validation:e2e:b6", "scripts/local/validate-e2e-curadoria-b6.mjs"],
+  ])("%s falha antes de criar ou excluir conta", (_nome, script) => {
+    const { status, saida } = rodar([script], {
+      // Sem injeção, o script cai em `.env.local` — que aponta para produção.
+      // É exatamente o cenário que precisa ser recusado.
+      ALIVIAR_VALIDATION_PROJECT_REF: "awdlmeykminwyifnygkm",
+    });
+    expect(status).not.toBe(0);
+    expect(saida).toContain("[ambiente]");
+    expect(saida).toContain("bloqueado");
+    expect(saida).not.toMatch(/conta criada|usuário criado|deleteUser/i);
   }, 30_000);
 });
 

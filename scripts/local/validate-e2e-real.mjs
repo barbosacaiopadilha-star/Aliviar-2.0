@@ -34,7 +34,7 @@ async function assertOk(label, response, recorder, responsavel) {
 }
 
 async function main() {
-  const env = loadValidationEnv();
+  const env = loadValidationEnv({ comando: "validation:e2e" });
   const recorder = new StepRecorder();
   const problemas = [];
   const ts = Date.now();

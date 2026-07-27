@@ -221,7 +221,10 @@ export function itensDeAtencao(profissionais: InvestigacaoProfissional[]): Atenc
         id: `${profissional.id}:filtros`,
         tipo: "INSUFICIENTE",
         quem: profissional.nome,
-        frase: `${profissional.filtrosSemInformacao} filtro(s) obrigatório(s) sem informação localizada — verificar o cadastro, não descartar.`,
+        frase:
+          profissional.filtrosSemInformacao === 1
+            ? "1 filtro obrigatório sem informação localizada — verificar o cadastro, não descartar."
+            : `${profissional.filtrosSemInformacao} filtros obrigatórios sem informação localizada — verificar o cadastro, não descartar.`,
         etapa: "REDE",
       });
     }
@@ -230,7 +233,10 @@ export function itensDeAtencao(profissionais: InvestigacaoProfissional[]): Atenc
         id: `${profissional.id}:insuficientes`,
         tipo: "INSUFICIENTE",
         quem: profissional.nome,
-        frase: `${profissional.criteriosInsuficientes} critério(s) declarado(s) como informação insuficiente.`,
+        frase:
+          profissional.criteriosInsuficientes === 1
+            ? "1 critério declarado como informação insuficiente."
+            : `${profissional.criteriosInsuficientes} critérios declarados como informação insuficiente.`,
         etapa: "AVALIACAO",
       });
     }
@@ -254,7 +260,10 @@ export function itensDeAtencao(profissionais: InvestigacaoProfissional[]): Atenc
         id: `${profissional.id}:avaliacao`,
         tipo: "AVALIACAO",
         quem: profissional.nome,
-        frase: `${profissional.criteriosPendentes} critério(s) sem avaliação.`,
+        frase:
+          profissional.criteriosPendentes === 1
+            ? "1 critério sem avaliação."
+            : `${profissional.criteriosPendentes} critérios sem avaliação.`,
         etapa: "AVALIACAO",
       });
     }

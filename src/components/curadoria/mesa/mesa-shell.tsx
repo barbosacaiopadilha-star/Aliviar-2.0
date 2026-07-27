@@ -25,7 +25,7 @@
 
 import "@/app/mesa-curador.css";
 
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { MesaFocoProvider, useMesaFoco } from "@/components/curadoria/mesa/mesa-foco";
 import { MesaHeader } from "@/components/curadoria/mesa/mesa-header";
@@ -97,6 +97,26 @@ function MesaAmbiente({
   const [ajuda, setAjuda] = useState(false);
   const foco = useMesaFoco();
 
+  // A altura real do topo fixo vira variável CSS. O contexto lateral precisa
+  // dela para saber onde começar e onde parar — e ela muda com alertas, com a
+  // quebra do cabeçalho e com a largura da tela. Medir é mais honesto do que
+  // um número mágico que fica errado no primeiro alerta.
+  const topo = useRef<HTMLDivElement>(null);
+  const mesa = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const alvo = topo.current;
+    const raiz = mesa.current;
+    if (!alvo || !raiz || typeof ResizeObserver === "undefined") return;
+
+    const medir = () => raiz.style.setProperty("--mesa-topo", `${alvo.offsetHeight}px`);
+    medir();
+
+    const observador = new ResizeObserver(medir);
+    observador.observe(alvo);
+    return () => observador.disconnect();
+  }, []);
+
   const executar = useCallback(
     (acao: MesaAcao) => {
       const destino = ATALHO_DESTINO[acao];
@@ -147,22 +167,24 @@ function MesaAmbiente({
 
   return (
     <MesaNavegacaoProvider value={setEtapaAtual}>
-      <div className="mesa">
-        <MesaHeader
-          patientName={patientName}
-          areaRequirement={areaRequirement}
-          curatorName={curatorName}
-          progress={progress}
-          decisao={decisao}
-          alerts={alerts}
-        />
+      <div className="mesa" ref={mesa}>
+        <div className="mesa-topo" ref={topo}>
+          <MesaHeader
+            patientName={patientName}
+            areaRequirement={areaRequirement}
+            curatorName={curatorName}
+            progress={progress}
+            decisao={decisao}
+            alerts={alerts}
+          />
 
-        <MesaSteps
-          etapas={etapas}
-          atual={etapaAtual}
-          proxima={decisao.etapa}
-          onSelecionar={setEtapaAtual}
-        />
+          <MesaSteps
+            etapas={etapas}
+            atual={etapaAtual}
+            proxima={decisao.etapa}
+            onSelecionar={setEtapaAtual}
+          />
+        </div>
 
         <div className="mesa-layout">
           <main className="mesa-work" aria-live="polite">
@@ -174,12 +196,18 @@ function MesaAmbiente({
             <div className="mt-6">{conteudo[etapaAtual]}</div>
           </main>
 
+          {/* Ordem do contexto: primeiro o que ainda depende dele, depois o
+              que ele já declarou, e só então a orientação temporal. A linha do
+              tempo abria o painel e empurrava as pendências para fora da
+              altura útil — orientação é consultada uma vez, pendência é
+              consultada a cada decisão. */}
           <aside className="mesa-aside" aria-label="Contexto do Case">
+            {contexto}
+
             <section className="mesa-aside__section">
               <h2 className="mesa-aside__title">Linha do tempo</h2>
               <div className="mt-3">{timeline}</div>
             </section>
-            {contexto}
 
             <div className="mesa-aside__section">
               <AtalhosDica onAbrir={() => setAjuda(true)} />

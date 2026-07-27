@@ -146,9 +146,16 @@ describe("Comparação — colunas limpas, uma célula por vez", () => {
 
   it("os dois cruzamentos aparecem separados — nunca somados", () => {
     render(<ComparacaoPremium colunas={COLUNAS} />);
-    expect(
-      screen.getByText(/Avaliação Técnica 80 de 100 · Compatibilidade Assistencial 60 de 100/),
-    ).toBeInTheDocument();
+    // Os dois cruzamentos vivem em linhas próprias, cada um com o próprio
+    // número — nunca numa soma e nunca na mesma frase.
+    const linhas = screen
+      .getAllByRole("cell")
+      .flatMap((celula) => [...celula.querySelectorAll(".mesa-matriz__linha")])
+      .map((linha) => linha.textContent?.replace(/\s+/g, " ").trim());
+
+    expect(linhas).toContain("Avaliação Técnica 80 de 100");
+    expect(linhas).toContain("Compatibilidade Assistencial 60 de 100");
+    expect(linhas.some((linha) => /total|soma|140|de 200/i.test(linha ?? ""))).toBe(false);
   });
 
   it("a legenda traduz cada marca — quem não vê cor lê a mesma coisa", () => {
@@ -319,7 +326,7 @@ describe("Painel lateral inteligente", () => {
     );
 
     expect(screen.getByText("Dra. Helena")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Resolver nesta etapa" }));
+    await user.click(screen.getByRole("button", { name: "Resolver em Rede elegível" }));
     expect(ida).toEqual(["REDE"]);
   });
 

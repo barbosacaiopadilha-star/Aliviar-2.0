@@ -18,7 +18,7 @@
  * texto e forma próprios.
  */
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 import { cn } from "@/components/ui/cn";
 import { useMesaFoco } from "@/components/curadoria/mesa/mesa-foco";
@@ -26,6 +26,7 @@ import {
   CELULA_LABEL,
   CELULA_MARCA,
   celulaEstado,
+  CRITERION_BLOCO,
   type CelulaEstado,
 } from "@/modules/curadoria/mesa-investigacao";
 import type { Assessment, CruzamentoCriterion } from "@/modules/curadoria/cruzamento";
@@ -48,6 +49,11 @@ export type ComparacaoColuna = {
   technicalCoverageSentence: string;
   patientCoverageSentence: string;
 };
+
+const BLOCO_TITULO = {
+  TECNICO: "Avaliação Técnica — 100 pontos",
+  PRIORIDADES: "Compatibilidade Assistencial — 100 pontos",
+} as const;
 
 const CLASSE: Record<CelulaEstado, string> = {
   PLENO: "mesa-celula--pleno",
@@ -74,6 +80,25 @@ export function ComparacaoPremium({ colunas }: { colunas: ComparacaoColuna[] }) 
         As colunas seguem a ordem da Rede — não há colocação. Toque numa célula para ver a
         evidência daquele critério.
       </p>
+
+      {/* No celular só cabe uma coluna por vez — e sem isto ela seria sempre a
+          mesma. `J`/`K` resolvem no teclado; quem está no telefone não tem
+          teclado, e ficaria sem enxergar os outros profissionais. */}
+      {colunas.length > 1 ? (
+        <div className="mt-3 flex flex-wrap gap-1.5 md:hidden">
+          {colunas.map((coluna, indice) => (
+            <button
+              key={coluna.id}
+              type="button"
+              aria-pressed={indice === emFoco}
+              onClick={() => foco.irPara(indice)}
+              className={cn("mesa-chip", indice === emFoco && "mesa-chip--ativo")}
+            >
+              {coluna.nome}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       <div className="mt-4 overflow-x-auto">
         <table className="mesa-matriz">
@@ -104,11 +129,30 @@ export function ComparacaoPremium({ colunas }: { colunas: ComparacaoColuna[] }) 
           </thead>
 
           <tbody>
-            {criterios.map((referencia) => (
-              <tr key={referencia.criterion}>
-                <th scope="row" className="mesa-matriz__criterio">
-                  {referencia.label}
-                </th>
+            {criterios.map((referencia, posicao) => (
+              <Fragment key={referencia.criterion}>
+                {/* Os dois cruzamentos nunca somam (Modelo v1.0 §4). Seis
+                    linhas iguais faziam parecer uma lista só de critérios
+                    comparáveis entre si — o cabeçalho de bloco devolve a
+                    fronteira que o domínio exige. */}
+                {posicao === 0 ||
+                CRITERION_BLOCO[referencia.criterion] !==
+                  CRITERION_BLOCO[criterios[posicao - 1]!.criterion] ? (
+                  <tr>
+                    <th
+                      scope="colgroup"
+                      colSpan={colunas.length + 1}
+                      className="mesa-matriz__bloco"
+                    >
+                      {BLOCO_TITULO[CRITERION_BLOCO[referencia.criterion]]}
+                    </th>
+                  </tr>
+                ) : null}
+
+                <tr>
+                  <th scope="row" className="mesa-matriz__criterio">
+                    {referencia.label}
+                  </th>
                 {colunas.map((coluna, indice) => {
                   const celula =
                     coluna.celulas.find((entrada) => entrada.criterion === referencia.criterion) ??
@@ -149,10 +193,11 @@ export function ComparacaoPremium({ colunas }: { colunas: ComparacaoColuna[] }) 
                             : "Nenhuma evidência foi registrada para este critério."}
                         </p>
                       ) : null}
-                    </td>
-                  );
-                })}
-              </tr>
+                      </td>
+                    );
+                  })}
+                </tr>
+              </Fragment>
             ))}
 
             <tr>
@@ -167,7 +212,15 @@ export function ComparacaoPremium({ colunas }: { colunas: ComparacaoColuna[] }) 
                     indice !== emFoco && "hidden md:table-cell",
                   )}
                 >
-                  {coluna.technicalCoverageSentence} {coluna.patientCoverageSentence}
+                  {/* Cada cobertura nomeada. As duas frases vêm do domínio com
+                      a mesma redação; lado a lado, sem rótulo, liam como
+                      duplicação acidental. */}
+                  <span className="mesa-matriz__linha">
+                    Técnica — {coluna.technicalCoverageSentence}
+                  </span>
+                  <span className="mesa-matriz__linha">
+                    Assistencial — {coluna.patientCoverageSentence}
+                  </span>
                 </td>
               ))}
             </tr>
@@ -184,8 +237,14 @@ export function ComparacaoPremium({ colunas }: { colunas: ComparacaoColuna[] }) 
                     indice !== emFoco && "hidden md:table-cell",
                   )}
                 >
-                  Avaliação Técnica {coluna.technicalScore} de 100 · Compatibilidade Assistencial{" "}
-                  {coluna.patientScore} de 100
+                  <span className="mesa-matriz__linha">
+                    Avaliação Técnica <b className="mesa-matriz__numero">{coluna.technicalScore}</b>{" "}
+                    de 100
+                  </span>
+                  <span className="mesa-matriz__linha">
+                    Compatibilidade Assistencial{" "}
+                    <b className="mesa-matriz__numero">{coluna.patientScore}</b> de 100
+                  </span>
                 </td>
               ))}
             </tr>

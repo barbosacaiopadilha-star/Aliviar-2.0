@@ -103,14 +103,18 @@ export function buildMesaEtapas(facts: MesaFacts): MesaEtapaState[] {
         ? etapa(
             "REDE",
             "PENDENTE",
-            `Declarar a área de ${facts.awaitingAreaDeclaration} profissional(is).`,
+            `Declarar a área de ${facts.awaitingAreaDeclaration} profissiona${facts.awaitingAreaDeclaration === 1 ? "l" : "is"}.`,
           )
         : etapa("REDE", "PRONTA", null),
 
     !temElegiveis
       ? etapa("AVALIACAO", "AGUARDA", null, "Depende de haver ao menos um profissional elegível.")
       : facts.criteriaAwaiting > 0
-        ? etapa("AVALIACAO", "PENDENTE", `${facts.criteriaAwaiting} critério(s) sem avaliação.`)
+        ? etapa(
+            "AVALIACAO",
+            "PENDENTE",
+            `${facts.criteriaAwaiting} critério${facts.criteriaAwaiting === 1 ? "" : "s"} sem avaliação.`,
+          )
         : etapa("AVALIACAO", "PRONTA", null),
 
     !temElegiveis

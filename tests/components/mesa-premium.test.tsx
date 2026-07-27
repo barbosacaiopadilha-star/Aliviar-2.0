@@ -74,7 +74,7 @@ describe("Painel A — contexto que não sai da tela", () => {
   it("diz qual é a próxima decisão, e ela é anunciada", () => {
     montar();
     const decisao = screen.getByText(/Sua vez:/);
-    expect(decisao).toHaveTextContent("6 critério(s) sem avaliação");
+    expect(decisao).toHaveTextContent("6 critérios sem avaliação");
     expect(decisao).toHaveAttribute("aria-live", "polite");
   });
 
