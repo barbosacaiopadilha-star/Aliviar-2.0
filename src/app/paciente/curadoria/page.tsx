@@ -64,7 +64,7 @@ export default async function PatientCuradoriaPage() {
         displayName: option.professionalName,
         professionalSummary: option.relationToWeights,
         whyIncluded: option.justification,
-        strengthsForThisCase: [],
+        strengthsForThisCase: option.favorablePoints,
         relevantLimitations: option.attentionPoints,
         practicalConsiderations: [],
       }))

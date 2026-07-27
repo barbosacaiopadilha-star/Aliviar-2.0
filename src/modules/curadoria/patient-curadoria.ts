@@ -25,6 +25,8 @@ export type PatientCuradoriaOption = {
   professionalName: string;
   justification: string;
   relationToWeights: string;
+  /** "O que encontramos" — literal do Relatório, nunca reescrito aqui. */
+  favorablePoints: string[];
   attentionPoints: string[];
   suggestedQuestions: string[];
 };
@@ -75,7 +77,7 @@ export async function loadPatientCuradoria(
     supabase
       .from("curadoria_report_options")
       .select(
-        "id, professional_profile_id, position, justification, relation_to_weights, attention_points, suggested_questions",
+        "id, professional_profile_id, position, justification, relation_to_weights, favorable_points, attention_points, suggested_questions",
       )
       .eq("report_id", report.id as string)
       .order("position"),
@@ -123,6 +125,7 @@ export async function loadPatientCuradoria(
       professionalName: nameById.get(professionalProfileId) ?? "Profissional",
       justification: (row.justification as string) ?? "",
       relationToWeights: (row.relation_to_weights as string) ?? "",
+      favorablePoints: (row.favorable_points as string[]) ?? [],
       attentionPoints: (row.attention_points as string[]) ?? [],
       suggestedQuestions: (row.suggested_questions as string[]) ?? [],
     };

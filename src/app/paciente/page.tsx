@@ -3,6 +3,9 @@ import type { Metadata } from "next";
 
 import { PatientWelcome } from "@/components/paciente/dashboard/patient-primitives";
 import { PatientHomeState } from "@/components/paciente/patient-home-state";
+import { PerfilPanel } from "@/components/paciente/perfil-panel";
+import { mensagemPrincipal } from "@/modules/paciente/experiencia";
+import { loadPatientPerfil } from "@/modules/paciente/experiencia-loader";
 import { NextActionCard, ProgressTimeline, type JourneyStage } from "@/components/journey";
 import { LinkButton } from "@/components/landing/link-button";
 import { derivePatientPending, patientStageHref } from "@/modules/paciente/next-action";
@@ -41,6 +44,12 @@ export default async function PacienteHomePage() {
   // que este paciente vê; um caso só, o dele.
   const record = caseIds.length > 0 ? await loadCuradoriaRecord(supabase, caseIds[0]) : null;
   const jornada = record ? buildJornada(record) : null;
+
+  // O Perfil da pessoa, como importância — nunca como cálculo. A mensagem
+  // principal vem da etapa atual da jornada: a mesma fonte de verdade que a
+  // régua abaixo, nunca uma segunda máquina de estados.
+  const perfil = record ? await loadPatientPerfil(supabase, record.caseId) : null;
+  const mensagem = jornada ? mensagemPrincipal(jornada.currentStage) : null;
   const reguaStages: JourneyStage[] | null = jornada
     ? jornada.stages.map((stage) => ({
         id: stage.id,
@@ -77,6 +86,16 @@ export default async function PacienteHomePage() {
       <div className="space-y-8">
         <PatientWelcome name={displayName} />
         <PatientHomeState state={state} />
+
+        {/* A mensagem principal da etapa — a mesma fonte de verdade da régua. */}
+        {mensagem ? (
+          <p aria-live="polite" className="max-w-reading text-sm leading-relaxed text-ink">
+            {mensagem}
+          </p>
+        ) : null}
+
+        {/* Seu Perfil: importâncias em palavras, construção e validação. */}
+        {perfil ? <PerfilPanel perfil={perfil} /> : null}
 
         {/* O que falta, por que importa, o que acontece depois — e o caminho
             direto até lá. Quando nada depende dela, o cartão diz isso por

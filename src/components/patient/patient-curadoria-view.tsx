@@ -71,6 +71,21 @@ export function PatientCuradoriaView({ curadoria }: { curadoria: PatientCuradori
             </p>
           </div>
 
+          {/* Literal do Relatório — nunca reescrito, nunca resumido: as duas
+              superfícies contam a mesma história porque leem a mesma frase. */}
+          {option.favorablePoints.length > 0 ? (
+            <div>
+              <h3 className="text-xs uppercase tracking-wide text-ink-muted">O que encontramos</h3>
+              <ul className="mt-1 space-y-1">
+                {option.favorablePoints.map((point) => (
+                  <li key={point} className="max-w-reading text-sm leading-relaxed text-ink">
+                    {point}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
           {/* O que custa vem com o mesmo destaque do que oferece: assimetria
               de entusiasmo é indução (Experience §2.5). */}
           {option.attentionPoints.length > 0 ? (
