@@ -123,10 +123,10 @@ describe("Mesa do Cruzamento — banco e montagem (Supabase local)", () => {
     expect(mesa.comparison).toHaveLength(0);
   });
 
-  it("um bloco que não fecha em 50 não é persistido nem pela metade", async () => {
+  it("um cruzamento que não fecha em 100 não é persistido nem pela metade", async () => {
     await expect(
-      saveCruzamentoBlockWeights(curador.client, caseId, "TECNICO", { FORMACAO: 15, EXPERIENCIA: 25 }, curador.userId),
-    ).rejects.toThrow(/Restam 10/);
+      saveCruzamentoBlockWeights(curador.client, caseId, "TECNICO", { FORMACAO: 30, EXPERIENCIA: 50 }, curador.userId),
+    ).rejects.toThrow(/Restam 20/);
 
     const weights = await loadCruzamentoWeights(curador.client, caseId);
     expect(Object.keys(weights)).toHaveLength(0);
@@ -138,25 +138,25 @@ describe("Mesa do Cruzamento — banco e montagem (Supabase local)", () => {
         curador.client,
         caseId,
         "TECNICO",
-        { FORMACAO: 25, ACESSO: 25 },
+        { FORMACAO: 50, ACESSO: 50 },
         curador.userId,
       ),
     ).rejects.toThrow(/não pertence a este bloco/);
   });
 
-  it("os dois blocos fecham em 50 e persistem", async () => {
+  it("os dois cruzamentos fecham em 100 e persistem", async () => {
     await saveCruzamentoBlockWeights(
       curador.client,
       caseId,
       "TECNICO",
-      { FORMACAO: 15, EXPERIENCIA: 25, TRAJETORIA: 10 },
+      { FORMACAO: 30, EXPERIENCIA: 50, HISTORICO: 20 },
       curador.userId,
     );
     await saveCruzamentoBlockWeights(
       curador.client,
       caseId,
       "PRIORIDADES",
-      { ACESSO: 15, FORMA_DE_CUIDADO: 25, COMPATIBILIDADE_PESSOAL: 10 },
+      { ACESSO: 30, CONTINUIDADE_DO_CUIDADO: 50, MODELO_DE_ATENDIMENTO: 20 },
       curador.userId,
     );
 
@@ -207,7 +207,7 @@ describe("Mesa do Cruzamento — banco e montagem (Supabase local)", () => {
     expect(continuo.professionalValue).toBe("oferece");
   });
 
-  it("as declarações de critério alimentam a comparação, e a lacuna vira cobertura 90", async () => {
+  it("as declarações de critério alimentam a comparação, e a lacuna vira cobertura 80 do próprio cruzamento", async () => {
     const declarar = (professionalKey: string, criterion: string, assessment: string, evidence: string) =>
       declareCriterion(curador.client, caseId, {
         professionalProfileId: professionalIds[professionalKey]!,
@@ -220,10 +220,10 @@ describe("Mesa do Cruzamento — banco e montagem (Supabase local)", () => {
     const completo: [string, string][] = [
       ["FORMACAO", "ATENDE_PLENAMENTE"],
       ["EXPERIENCIA", "ATENDE_PLENAMENTE"],
-      ["TRAJETORIA", "ATENDE_PARCIALMENTE"],
+      ["HISTORICO", "ATENDE_PARCIALMENTE"],
       ["ACESSO", "ATENDE_PLENAMENTE"],
-      ["FORMA_DE_CUIDADO", "ATENDE_PLENAMENTE"],
-      ["COMPATIBILIDADE_PESSOAL", "ATENDE_PLENAMENTE"],
+      ["CONTINUIDADE_DO_CUIDADO", "ATENDE_PLENAMENTE"],
+      ["MODELO_DE_ATENDIMENTO", "ATENDE_PLENAMENTE"],
     ];
     for (const [criterion, assessment] of completo) {
       await declarar("fixture-a", criterion, assessment, `Avaliação do Curador sobre ${criterion}.`);
@@ -233,10 +233,10 @@ describe("Mesa do Cruzamento — banco e montagem (Supabase local)", () => {
     for (const [criterion, assessment] of [
       ["FORMACAO", "ATENDE_PLENAMENTE"],
       ["EXPERIENCIA", "ATENDE_PLENAMENTE"],
-      ["TRAJETORIA", "ATENDE_PLENAMENTE"],
+      ["HISTORICO", "ATENDE_PLENAMENTE"],
       ["ACESSO", "ATENDE_PARCIALMENTE"],
-      ["FORMA_DE_CUIDADO", "ATENDE_PLENAMENTE"],
-      ["COMPATIBILIDADE_PESSOAL", "INFORMACAO_INSUFICIENTE"],
+      ["CONTINUIDADE_DO_CUIDADO", "ATENDE_PLENAMENTE"],
+      ["MODELO_DE_ATENDIMENTO", "INFORMACAO_INSUFICIENTE"],
     ] as [string, string][]) {
       await declarar("fixture-b", criterion, assessment, `Avaliação do Curador sobre ${criterion}.`);
     }
@@ -246,18 +246,22 @@ describe("Mesa do Cruzamento — banco e montagem (Supabase local)", () => {
     const colunaA = mesa.comparison.find((c) => c.professionalProfileId === professionalIds["fixture-a"])!;
     const colunaB = mesa.comparison.find((c) => c.professionalProfileId === professionalIds["fixture-b"])!;
 
-    expect(colunaA.result.coverage).toBe(100);
-    expect(colunaB.result.coverage).toBe(90);
-    expect(colunaB.coverageSentence).toBe("Avaliação construída sobre 90 dos 100 pontos possíveis.");
+    expect(colunaA.result.technical.coveredWeight).toBe(100);
+    expect(colunaA.result.patient.coveredWeight).toBe(100);
+    // Modelo de Atendimento (20 pts) insuficiente: só a cobertura ASSISTENCIAL da B cai.
+    expect(colunaB.result.technical.coveredWeight).toBe(100);
+    expect(colunaB.result.patient.coveredWeight).toBe(80);
+    expect(colunaB.patientCoverageSentence).toBe("Avaliação construída sobre 80 dos 100 pontos possíveis.");
 
     // A lacuna não virou zero: o critério aparece como não avaliável.
-    const compat = colunaB.cells.find((cell) => cell.criterion === "COMPATIBILIDADE_PESSOAL")!;
+    const compat = colunaB.cells.find((cell) => cell.criterion === "MODELO_DE_ATENDIMENTO")!;
     expect(compat.pointsSentence).toBe("não avaliável");
 
     // A fixture-c segue sem declaração de critérios: cobertura zero, presente
     // na comparação, aguardando o Curador — nunca reprovada.
     const colunaC = mesa.comparison.find((c) => c.professionalProfileId === professionalIds["fixture-c"])!;
-    expect(colunaC.result.coverage).toBe(0);
+    expect(colunaC.result.technical.coveredWeight).toBe(0);
+    expect(colunaC.result.patient.coveredWeight).toBe(0);
     expect(mesa.awaitingDeclaration[professionalIds["fixture-c"]!]).toHaveLength(6);
   });
 

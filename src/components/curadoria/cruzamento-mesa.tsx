@@ -14,7 +14,7 @@
  * avaliar critérios e escolher três.
  *
  * 1. Cabeçalho do Case — números que orientam, nunca métricas administrativas
- * 2. Orçamento de pontos — dois blocos de 50, o Curador nunca soma
+ * 2. Orçamento de pontos — dois cruzamentos de 100, o Curador nunca soma
  * 3. Elegibilidade — declaração de área lado a lado, filtros com resultado dito
  * 4. Comparação — células que explicam; ordenação de leitura, jamais pódio
  *
@@ -202,7 +202,7 @@ function BudgetPanel({ view }: { view: MesaCruzamentoView }) {
                       type="number"
                       inputMode="numeric"
                       min={0}
-                      max={50}
+                      max={100}
                       value={value}
                       onChange={(event) => setWeight(criterion, Number(event.target.value) || 0)}
                       className="w-14 rounded-md border border-line bg-surface px-2 py-1 text-center text-sm text-ink"
@@ -506,7 +506,7 @@ function ComparisonPanel({ view }: { view: MesaCruzamentoView }) {
         <CardHeader>
           <CardTitle>Comparação</CardTitle>
           <CardDescription>
-            Ordenação interna para facilitar a leitura. A seleção pertence ao Curador.
+            As colunas seguem a ordem da Rede — não há colocação. A seleção pertence ao Curador.
           </CardDescription>
         </CardHeader>
 
@@ -598,7 +598,7 @@ function ComparisonPanel({ view }: { view: MesaCruzamentoView }) {
                     key={column.professionalProfileId}
                     className={cn("py-2 pr-3 text-ink", index !== mobileIndex && "hidden md:table-cell")}
                   >
-                    {column.coverageSentence}
+                    {column.technicalCoverageSentence} {column.patientCoverageSentence.replace("Avaliação construída", "Assistencial construída")}
                   </td>
                 ))}
               </tr>
@@ -615,7 +615,7 @@ function ComparisonPanel({ view }: { view: MesaCruzamentoView }) {
                       index !== mobileIndex && "hidden md:table-cell",
                     )}
                   >
-                    Técnico {column.result.technical.score} de 50 · Pessoal {column.result.patient.score} de 50
+                    Avaliação Técnica {column.result.technical.score} de 100 · Compatibilidade Assistencial {column.result.patient.score} de 100
                   </td>
                 ))}
               </tr>

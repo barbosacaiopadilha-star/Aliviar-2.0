@@ -23,7 +23,6 @@ import {
   balanceOfBlock,
   coverageSentence,
   cruzar,
-  organizeForCurator,
   type CriterionEvaluation,
   type CriterionWeight,
 } from "@/modules/curadoria/cruzamento";
@@ -49,16 +48,16 @@ function loadTestAccounts(): TestAccount[] {
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 
-// Os pesos do Case sintético — dois blocos de 50, como o Método exige.
+// Os pesos do Case sintético — dois cruzamentos de 100, como o Modelo v1.0 exige.
 const TECNICO: CriterionWeight[] = [
-  { criterion: "FORMACAO", weight: 15 },
-  { criterion: "EXPERIENCIA", weight: 25 },
-  { criterion: "TRAJETORIA", weight: 10 },
+  { criterion: "FORMACAO", weight: 30 },
+  { criterion: "EXPERIENCIA", weight: 50 },
+  { criterion: "HISTORICO", weight: 20 },
 ];
 const PRIORIDADES: CriterionWeight[] = [
-  { criterion: "ACESSO", weight: 15 },
-  { criterion: "FORMA_DE_CUIDADO", weight: 25 },
-  { criterion: "COMPATIBILIDADE_PESSOAL", weight: 10 },
+  { criterion: "ACESSO", weight: 30 },
+  { criterion: "CONTINUIDADE_DO_CUIDADO", weight: 50 },
+  { criterion: "MODELO_DE_ATENDIMENTO", weight: 20 },
 ];
 
 /** As avaliações que o Curador declara para cada fixture. */
@@ -66,27 +65,27 @@ const AVALIACOES: Record<string, CriterionEvaluation[]> = {
   "fixture-a": [
     { criterion: "FORMACAO", assessment: "ATENDE_PLENAMENTE", evidence: "Residência em ortopedia e especialização em cirurgia da coluna, ambas verificadas." },
     { criterion: "EXPERIENCIA", assessment: "ATENDE_PLENAMENTE", evidence: "14 anos declarados em casos degenerativos, traumáticos e cirúrgicos da coluna." },
-    { criterion: "TRAJETORIA", assessment: "ATENDE_PARCIALMENTE", evidence: "Vínculos consistentes, com menos evidências específicas em coluna do que a formação." },
+    { criterion: "HISTORICO", assessment: "ATENDE_PARCIALMENTE", evidence: "Vínculos consistentes, com menos evidências específicas em coluna do que a formação." },
     { criterion: "ACESSO", assessment: "ATENDE_PLENAMENTE", evidence: "Atende em São Paulo, presencial e online, em cerca de 10 dias." },
-    { criterion: "FORMA_DE_CUIDADO", assessment: "ATENDE_PLENAMENTE", evidence: "Acompanhamento contínuo com retornos previstos." },
-    { criterion: "COMPATIBILIDADE_PESSOAL", assessment: "ATENDE_PLENAMENTE", evidence: "Decisão compartilhada e participação da família declaradas." },
+    { criterion: "CONTINUIDADE_DO_CUIDADO", assessment: "ATENDE_PLENAMENTE", evidence: "Acompanhamento contínuo com retornos previstos." },
+    { criterion: "MODELO_DE_ATENDIMENTO", assessment: "ATENDE_PLENAMENTE", evidence: "Decisão compartilhada e participação da família declaradas." },
   ],
   "fixture-b": [
     { criterion: "FORMACAO", assessment: "ATENDE_PLENAMENTE", evidence: "Residência, fellowship em cirurgia da coluna e formação complementar em deformidades." },
     { criterion: "EXPERIENCIA", assessment: "ATENDE_PLENAMENTE", evidence: "17 anos declarados, com casos de maior complexidade." },
-    { criterion: "TRAJETORIA", assessment: "ATENDE_PLENAMENTE", evidence: "Passagem hospitalar longa e vínculo atual em instituto de coluna." },
+    { criterion: "HISTORICO", assessment: "ATENDE_PLENAMENTE", evidence: "Passagem hospitalar longa e vínculo atual em instituto de coluna." },
     { criterion: "ACESSO", assessment: "ATENDE_PARCIALMENTE", evidence: "Atende em Campinas, com cerca de 20 dias — exige deslocamento maior." },
-    { criterion: "FORMA_DE_CUIDADO", assessment: "ATENDE_PLENAMENTE", evidence: "Acompanhamento contínuo com retornos previstos." },
+    { criterion: "CONTINUIDADE_DO_CUIDADO", assessment: "ATENDE_PLENAMENTE", evidence: "Acompanhamento contínuo com retornos previstos." },
     // O ponto do exercício: um critério que ninguém pode responder.
-    { criterion: "COMPATIBILIDADE_PESSOAL", assessment: "INFORMACAO_INSUFICIENTE", evidence: "A participação da família não está declarada no cadastro — nada foi presumido." },
+    { criterion: "MODELO_DE_ATENDIMENTO", assessment: "INFORMACAO_INSUFICIENTE", evidence: "A participação da família não está declarada no cadastro — nada foi presumido." },
   ],
   "fixture-c": [
     { criterion: "FORMACAO", assessment: "ATENDE_PARCIALMENTE", evidence: "Residência e especialização em coluna, com menos elementos verificados que a prática." },
     { criterion: "EXPERIENCIA", assessment: "ATENDE_PLENAMENTE", evidence: "12 anos em tratamento conservador, indicação cirúrgica e pós-procedimento." },
-    { criterion: "TRAJETORIA", assessment: "ATENDE_PARCIALMENTE", evidence: "Vínculos em clínica e centro de reabilitação, com menos histórico hospitalar." },
+    { criterion: "HISTORICO", assessment: "ATENDE_PARCIALMENTE", evidence: "Vínculos em clínica e centro de reabilitação, com menos histórico hospitalar." },
     { criterion: "ACESSO", assessment: "ATENDE_PLENAMENTE", evidence: "Atende em São Paulo em cerca de 7 dias." },
-    { criterion: "FORMA_DE_CUIDADO", assessment: "ATENDE_PLENAMENTE", evidence: "Acompanhamento contínuo com equipe multidisciplinar e reabilitação integrada." },
-    { criterion: "COMPATIBILIDADE_PESSOAL", assessment: "ATENDE_PLENAMENTE", evidence: "Decisão compartilhada, família e acessibilidade declaradas." },
+    { criterion: "CONTINUIDADE_DO_CUIDADO", assessment: "ATENDE_PLENAMENTE", evidence: "Acompanhamento contínuo com equipe multidisciplinar e reabilitação integrada." },
+    { criterion: "MODELO_DE_ATENDIMENTO", assessment: "ATENDE_PLENAMENTE", evidence: "Decisão compartilhada, família e acessibilidade declaradas." },
   ],
 };
 
@@ -304,13 +303,14 @@ describe("Certificação do ciclo da Curadoria — fixtures isoladas (Supabase l
   // ----------------------------------------------------------------- pesos
 
   describe("pesos do Case", () => {
-    it("cada bloco fecha em 50 e o total em 100", () => {
+    it("cada cruzamento fecha em 100, separadamente — nenhuma soma cruzada existe", () => {
       const tecnico = balanceOfBlock(TECNICO, "TECNICO");
       const pessoal = balanceOfBlock(PRIORIDADES, "PRIORIDADES");
 
       expect(tecnico.valid).toBe(true);
       expect(pessoal.valid).toBe(true);
-      expect(tecnico.total + pessoal.total).toBe(100);
+      expect(tecnico.total).toBe(100);
+      expect(pessoal.total).toBe(100);
     });
   });
 
@@ -390,52 +390,56 @@ describe("Certificação do ciclo da Curadoria — fixtures isoladas (Supabase l
       });
     }
 
-    it("os três produzem resultados diferentes e compreensíveis", () => {
+    it("os três produzem resultados diferentes e compreensíveis, em dois eixos separados", () => {
       const a = cruzarFixture("fixture-a");
       const b = cruzarFixture("fixture-b");
       const c = cruzarFixture("fixture-c");
 
-      expect(a.total).not.toBe(b.total);
-      expect(b.total).not.toBe(c.total);
+      // Cada fixture responde diferente em pelo menos um dos dois cruzamentos.
+      expect(a.technical.score).not.toBe(c.technical.score);
+      expect(a.patient.score).not.toBe(b.patient.score);
       for (const r of [a, b, c]) {
         expect(r.narrative).toHaveLength(6);
-        expect(r.total).toBeGreaterThan(0);
-        expect(r.total).toBeLessThanOrEqual(100);
+        expect(r.technical.score).toBeGreaterThan(0);
+        expect(r.technical.score).toBeLessThanOrEqual(100);
+        expect(r.patient.score).toBeLessThanOrEqual(100);
+        // O número de 200 não existe (Modelo v1.0 §7).
+        expect(r).not.toHaveProperty("total");
       }
     });
 
-    it("a Fixture B tem cobertura abaixo de 100 sem receber zero no critério ausente", () => {
+    it("a Fixture B tem cobertura assistencial abaixo de 100 sem receber zero no critério ausente", () => {
       const b = cruzarFixture("fixture-b");
 
-      // Compatibilidade Pessoal vale 10 e não pôde ser avaliada.
-      expect(b.coverage).toBe(90);
-      expect(coverageSentence(b)).toBe("Avaliação construída sobre 90 dos 100 pontos possíveis.");
+      // Modelo de Atendimento vale 20 e não pôde ser avaliado: a cobertura do
+      // cruzamento ASSISTENCIAL cai; a técnica não é afetada.
+      expect(b.patient.coveredWeight).toBe(80);
+      expect(b.technical.coveredWeight).toBe(100);
+      expect(coverageSentence(b.patient)).toBe("Avaliação construída sobre 80 dos 100 pontos possíveis.");
       expect(b.patient.criteriaWithoutData).toBe(1);
 
-      const criterio = b.patient.criteria.find((c) => c.criterion === "COMPATIBILIDADE_PESSOAL")!;
+      const criterio = b.patient.criteria.find((c) => c.criterion === "MODELO_DE_ATENDIMENTO")!;
       expect(criterio.alignment).toBeNull();
       expect(criterio.contribution).toBe(0);
 
-      // E o que importa: o bloco não foi punido. B pontua no bloco pessoal
-      // sobre os 40 pontos que puderam ser olhados, não sobre 50.
-      expect(b.patient.coveredWeight).toBe(40);
+      // E o que importa: o cruzamento não foi punido. B pontua sobre os 80
+      // pontos que puderam ser olhados, não sobre os 100.
       expect(b.patient.score).toBeGreaterThan(0);
     });
 
-    it("os outros dois têm cobertura total", () => {
-      expect(cruzarFixture("fixture-a").coverage).toBe(100);
-      expect(cruzarFixture("fixture-c").coverage).toBe(100);
+    it("os outros dois têm cobertura total nos dois cruzamentos", () => {
+      for (const key of ["fixture-a", "fixture-c"]) {
+        const r = cruzarFixture(key);
+        expect(r.technical.coveredWeight).toBe(100);
+        expect(r.patient.coveredWeight).toBe(100);
+      }
     });
 
-    it("a organização ordena a leitura sem eleger ninguém", () => {
-      const organizados = organizeForCurator([
-        cruzarFixture("fixture-a"),
-        cruzarFixture("fixture-b"),
-        cruzarFixture("fixture-c"),
-      ]);
+    it("os resultados se apresentam sem eleger ninguém", () => {
+      const resultados = [cruzarFixture("fixture-a"), cruzarFixture("fixture-b"), cruzarFixture("fixture-c")];
 
-      expect(organizados).toHaveLength(3);
-      const texto = JSON.stringify(organizados).toLowerCase();
+      expect(resultados).toHaveLength(3);
+      const texto = JSON.stringify(resultados).toLowerCase();
       for (const proibido of ["melhor", "vencedor", "primeiro colocado", "recomendado", "ranking"]) {
         expect(texto, `vocabulário de pódio: ${proibido}`).not.toContain(proibido);
       }

@@ -17,8 +17,8 @@ import {
   PATIENT_CRITERIA,
   TECHNICAL_CRITERIA,
   applyAreaGate,
+  coverageSentence,
   cruzar,
-  organizeForCurator,
   type AreaCompatibility,
   type Assessment,
   type CriterionEvaluation,
@@ -232,7 +232,9 @@ export type ComparisonColumn = {
   professionalProfileId: string;
   result: CruzamentoResult;
   cells: ComparisonCell[];
-  coverageSentence: string;
+  /** Uma frase de cobertura por cruzamento — cada um tem o próprio orçamento. */
+  technicalCoverageSentence: string;
+  patientCoverageSentence: string;
 };
 
 export function buildComparison(
@@ -266,17 +268,14 @@ export function buildComparison(
       professionalProfileId,
       result,
       cells,
-      coverageSentence: `Avaliação construída sobre ${result.coverage} dos 100 pontos possíveis.`,
+      technicalCoverageSentence: coverageSentence(result.technical),
+      patientCoverageSentence: coverageSentence(result.patient),
     };
   });
 
-  // Ordenação interna para facilitar a leitura — a seleção pertence ao
-  // Curador. Sem número de posição, sem medalha, sem pré-marcação.
-  return organizeForCurator(columns.map((column) => ({ ...column, total: column.result.total }))).map(
-    (entry) => {
-      const { total, ...column } = entry;
-      void total;
-      return column;
-    },
-  );
+  // Sem ordenação automática: ela ordenava pelo total combinado, que o
+  // Modelo v1.0 aboliu. Escolher uma nova chave (técnica? assistencial?)
+  // seria uma decisão de domínio — exige ADR. As colunas seguem a ordem em
+  // que a Rede devolve; sem número de posição, sem medalha, sem pré-marcação.
+  return columns;
 }

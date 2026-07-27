@@ -40,7 +40,7 @@ const ALL_CRITERIA = [...TECHNICAL_CRITERIA, ...PATIENT_CRITERIA] as const;
 const saveBlockWeightsSchema = z.object({
   caseId: z.string().uuid(),
   block: z.enum(["TECNICO", "PRIORIDADES"]),
-  weights: z.record(z.enum(ALL_CRITERIA), z.number().int().min(0).max(50)),
+  weights: z.record(z.enum(ALL_CRITERIA), z.number().int().min(0).max(100)),
 });
 
 export async function saveCruzamentoWeightsAction(input: unknown): Promise<CuradoriaActionResult> {

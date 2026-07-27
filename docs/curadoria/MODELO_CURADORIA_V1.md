@@ -277,22 +277,22 @@ código novo, documento novo ou tela nova:
 
 ---
 
-## 11. Estado da implementação (2026-07-27)
+## 11. Estado da implementação (atualizado 2026-07-27, missão de alinhamento)
 
 Registrar a distância entre o modelo e o código é parte do modelo — é o que
-impede reinterpretação silenciosa. O que está em produção hoje implementa a
-**geração anterior** deste modelo, e as diferenças são estas:
+impede reinterpretação silenciosa. Após a missão de alinhamento:
 
-| Tema | Este modelo (v1.0) | Implementado hoje | Consequência |
+| Tema | Este modelo (v1.0) | Estado | Fechado por |
 |---|---|---|---|
-| Orçamentos | dois orçamentos de **100** pontos, resultados **separados** | dois blocos de **50** somados num total de 0–100 (`cruzamento.ts`, `BLOCK_POINTS = 50`, `TOTAL_POINTS = 100`) | migração de escala e remoção do total combinado exigem missão própria |
-| Critérios do paciente | Acesso · **Continuidade do cuidado** · **Modelo de atendimento** | `ACESSO` · `FORMA_DE_CUIDADO` · `COMPATIBILIDADE_PESSOAL` | renomeação conceitual: "Forma de Cuidado" → "Continuidade do cuidado"; "Compatibilidade Pessoal" → "Modelo de atendimento" |
-| Terceiro critério técnico | **Histórico Profissional** ("transmite segurança?") | `TRAJETORIA` ("responde ao caso?") | renomeação com mudança de pergunta |
-| Perfil Assistencial | camada nomeada, três eixos | existe como tabelas (`professional_care_model`, `professional_communication`, experiência/trajetória) sem o nome nem o agrupamento em eixos | consolidação de leitura, dados já existem |
-| Rascunho do Relatório a partir de evidências | previsto | não existe | funcionalidade futura |
+| Orçamentos | dois orçamentos de **100** pontos, resultados **separados**, sem total combinado | **alinhado** — `BLOCK_POINTS = 100`, `CruzamentoResult` sem `total`/`coverage` combinados; teste pina a ausência do campo | missão de alinhamento (2026-07-27) |
+| Critérios do paciente | Acesso · Continuidade do Cuidado · Modelo de Atendimento | **alinhado** — identificadores `ACESSO` / `CONTINUIDADE_DO_CUIDADO` / `MODELO_DE_ATENDIMENTO` no código e no banco (migration `20260727100000`) | missão de alinhamento |
+| Terceiro critério técnico | **Histórico Profissional** ("transmite segurança?") | **alinhado** — identificador `HISTORICO`, pergunta do §4 palavra por palavra | missão de alinhamento |
+| Perfil Assistencial | camada nomeada, três eixos | **alinhado** — `PerfilAssistencial` + `assistencialProfile()` em `dossie.ts` agrupam os fatos nos três eixos, sem pontuação | missão de alinhamento |
+| Rascunho do Relatório a partir de evidências | previsto (§8.3) | **pendente** — funcionalidade futura, missão própria | — |
+| Ordenação interna de leitura | permitida (§8.2) | **sem chave definida** — a ordenação pelo total combinado foi removida junto com ele; escolher a nova chave (técnica? assistencial?) é decisão de domínio e exige ADR. Até lá, a comparação apresenta na ordem da Rede | — |
 
-Nenhuma dessas diferenças autoriza mudança de código sem missão específica.
-Quando a missão vier, ela referencia este documento e ajusta esta tabela.
+Nenhuma pendência autoriza mudança de código sem missão específica que
+referencie este documento e ajuste esta tabela.
 
 ---
 
@@ -306,3 +306,31 @@ Quando a missão vier, ela referencia este documento e ajusta esta tabela.
 - Documentos anteriores (Ontologia, Engine Specification, Fundamentos)
   permanecem como fontes históricas de rastreabilidade (`@metodo`); onde
   divergirem deste modelo, **este modelo vale**.
+
+---
+
+## 13. Congelamento do Domínio (em vigor desde 2026-07-27)
+
+Com o código alinhado a este modelo, o domínio da Curadoria está
+**congelado**. A partir deste momento, não podem ser implementados
+diretamente:
+
+- novos critérios;
+- novos perfis;
+- novos conceitos;
+- alterações de pesos ou de orçamentos;
+- mudanças na estrutura do motor;
+- alterações do processo da Curadoria.
+
+Qualquer mudança deverá, antes de qualquer linha de código:
+
+1. **justificar o problema** que pretende resolver;
+2. **demonstrar por que o Modelo v1.0 não responde** ao problema;
+3. **possuir ADR específica** que referencie este documento;
+4. **preservar compatibilidade** ou apresentar plano explícito de migração.
+
+O objetivo é impedir evolução contínua do domínio sem validação operacional,
+preservando a estabilidade do Método Aliviar. O congelamento não impede
+correção de defeito (código que contraria este documento é defeito, §12) nem
+as funcionalidades já previstas aqui e pendentes no §11 — impede conceito
+novo entrando sem porta.

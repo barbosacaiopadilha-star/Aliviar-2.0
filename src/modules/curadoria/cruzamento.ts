@@ -1,29 +1,22 @@
 /**
- * MOTOR DE CRUZAMENTO — dois perfis, peso igual.
+ * MOTOR DE CRUZAMENTO — dois cruzamentos independentes.
  *
- * O modelo anterior distribuía 100 pontos entre seis critérios misturados:
- * "Experiência" e "Localização" disputavam o mesmo bolo, como se fossem a
- * mesma natureza de coisa. Não são. Uma pergunta se o profissional é
- * tecnicamente legítimo para este caso; a outra, se ele serve à vida desta
- * pessoa. Misturá-las deixava a Curadoria decidir sozinha qual das duas
- * importava mais — e essa é uma decisão que ninguém tinha tomado
- * explicitamente.
+ * Implementa o Modelo da Curadoria v1.0 (docs/curadoria/MODELO_CURADORIA_V1.md,
+ * §7). Alterações conceituais exigem ADR que referencie aquele documento.
  *
- * Agora são dois perfis de 50 pontos cada:
+ * Dois cruzamentos, cada um com orçamento próprio de 100 pontos:
  *
- *   Perfil Técnico do Profissional  × dados do profissional  → 0–50
- *   Perfil de Prioridades do Paciente × modelo de atendimento → 0–50
+ *   Necessidade técnica do caso × Perfil Técnico do Profissional
+ *     → Avaliação Técnica (0–100)
  *
- * Peso igual, por decisão de Método: a escolha nunca é exclusivamente técnica
- * nem exclusivamente pessoal. Um profissional impecável que ela não consegue
- * acessar não é uma opção; um profissional conveniente que não dá conta do
- * caso, muito menos.
+ *   Perfil Assistencial do Profissional × Perfil de Prioridades do Paciente
+ *     → Compatibilidade Assistencial (0–100)
  *
- * O nome do primeiro bloco é "Perfil Técnico do Profissional", e não "do
- * Caso": o Curador distribui pontos entre formação, experiência e trajetória
- * — aspectos do profissional —, calibrando-os para este caso. Chamar de "do
- * Caso" sugeriria que o objeto avaliado é o caso, e o objeto é sempre o
- * profissional.
+ * Os dois resultados permanecem SEPARADOS. Nunca existe um número de 200 —
+ * somá-los faria técnica comprar deficiência assistencial, e vice-versa. Um
+ * profissional impecável que ela não consegue acessar não é uma opção; um
+ * profissional conveniente que não dá conta do caso, muito menos. As duas
+ * perguntas são respondidas lado a lado, nunca uma pela outra.
  *
  * O que este módulo NÃO faz: escolher. Ele organiza, compara e explica. A
  * seleção dos três caminhos é do Curador (ADR-035), e o resultado nunca é
@@ -133,13 +126,16 @@ export function applyAreaGate(assessment: AreaAssessment): AreaGateOutcome {
 // Os dois blocos
 // ---------------------------------------------------------------------------
 
-export const BLOCK_POINTS = 50;
-export const TOTAL_POINTS = BLOCK_POINTS * 2;
+/** Cada cruzamento tem orçamento próprio de 100 pontos (Modelo v1.0 §4 e §6). */
+export const BLOCK_POINTS = 100;
 
-export const TECHNICAL_CRITERIA = ["FORMACAO", "EXPERIENCIA", "TRAJETORIA"] as const;
+export const TECHNICAL_CRITERIA = ["FORMACAO", "EXPERIENCIA", "HISTORICO"] as const;
 export type TechnicalCriterion = (typeof TECHNICAL_CRITERIA)[number];
 
-export const PATIENT_CRITERIA = ["ACESSO", "FORMA_DE_CUIDADO", "COMPATIBILIDADE_PESSOAL"] as const;
+// Os três critérios do paciente usam exatamente os eixos do Perfil
+// Assistencial (Modelo v1.0 §5-§6) — é o que torna o cruzamento assistencial
+// uma comparação entre duas declarações, e não uma inferência.
+export const PATIENT_CRITERIA = ["ACESSO", "CONTINUIDADE_DO_CUIDADO", "MODELO_DE_ATENDIMENTO"] as const;
 export type PatientCriterion = (typeof PATIENT_CRITERIA)[number];
 
 export type CruzamentoCriterion = TechnicalCriterion | PatientCriterion;
@@ -147,37 +143,38 @@ export type CruzamentoCriterion = TechnicalCriterion | PatientCriterion;
 export const CRITERION_LABELS: Record<CruzamentoCriterion, string> = {
   FORMACAO: "Formação Profissional",
   EXPERIENCIA: "Experiência Profissional",
-  TRAJETORIA: "Trajetória Profissional",
+  HISTORICO: "Histórico Profissional",
   ACESSO: "Acesso",
-  FORMA_DE_CUIDADO: "Forma de Cuidado",
-  COMPATIBILIDADE_PESSOAL: "Compatibilidade Pessoal",
+  CONTINUIDADE_DO_CUIDADO: "Continuidade do Cuidado",
+  MODELO_DE_ATENDIMENTO: "Modelo de Atendimento",
 };
 
 /**
- * A pergunta que o Curador responde ao distribuir os pontos.
+ * A pergunta que o Curador responde ao distribuir os pontos (Modelo v1.0
+ * §4 e §6, palavra por palavra).
  *
  * As três primeiras são sobre o caso ("responde a este caso?"); as três
  * últimas, sobre a pessoa ("quanto pesa para ela?"). A diferença gramatical
- * é proposital — é o que impede que o bloco de prioridades vire uma segunda
+ * é proposital — é o que impede que o Perfil de Prioridades vire uma segunda
  * avaliação técnica disfarçada.
  */
 export const CRITERION_QUESTIONS: Record<CruzamentoCriterion, string> = {
-  FORMACAO: "Quanto a formação deste profissional responde às necessidades técnicas deste caso?",
+  FORMACAO: "Quanto a formação deste profissional responde ao caso?",
   EXPERIENCIA: "Quanto a experiência deste profissional responde ao caso?",
-  TRAJETORIA: "A trajetória profissional transmite confiança para este caso?",
-  ACESSO: "Quanto pesa para esta pessoa conseguir acessar esse profissional?",
-  FORMA_DE_CUIDADO: "Quanto pesa a forma como o profissional acompanha o paciente?",
-  COMPATIBILIDADE_PESSOAL: "Quanto pesa a forma como esta pessoa deseja ser cuidada?",
+  HISTORICO: "A trajetória profissional transmite segurança para este caso?",
+  ACESSO: "Quanto pesa conseguir acessar este profissional?",
+  CONTINUIDADE_DO_CUIDADO: "Quanto pesa que este profissional acompanhe toda a sua jornada?",
+  MODELO_DE_ATENDIMENTO: "Quanto pesa a forma como você deseja ser cuidada?",
 };
 
-/** O que cada critério olha — para a tela explicar sem inventar. */
+/** As evidências que cada critério olha — para a tela explicar sem inventar. */
 export const CRITERION_SCOPE: Record<CruzamentoCriterion, readonly string[]> = {
-  FORMACAO: ["graduação", "residência", "especializações", "fellowships", "pós-graduação", "cursos relevantes"],
-  EXPERIENCIA: ["tempo de atuação", "recorrência em casos semelhantes", "experiência recente", "complexidade dos casos"],
-  TRAJETORIA: ["vínculos institucionais", "estabilidade", "regularidade", "histórico verificável", "coerência da carreira"],
-  ACESSO: ["localização", "deslocamento", "presencial ou online", "disponibilidade", "tempo até o atendimento"],
-  FORMA_DE_CUIDADO: ["acompanhamento contínuo", "continuidade assistencial", "disponibilidade entre consultas", "coordenação do cuidado"],
-  COMPATIBILIDADE_PESSOAL: ["estilo de comunicação", "participação na decisão", "clareza", "acolhimento", "necessidades individuais"],
+  FORMACAO: ["graduação", "residência", "especializações", "fellowships", "pós-graduação", "atualização", "instituições"],
+  EXPERIENCIA: ["tempo de atuação", "casos semelhantes", "atuação atual", "complexidade", "frequência"],
+  HISTORICO: ["instituições", "vínculos", "regularidade", "histórico verificável", "produção científica e docência quando relevantes", "divergências"],
+  ACESSO: ["estado e cidade", "presencial ou online", "disponibilidade", "tempo médio para consulta", "deslocamento"],
+  CONTINUIDADE_DO_CUIDADO: ["acompanhamento contínuo", "retornos", "pós-operatório", "coordenação do tratamento", "equipe multidisciplinar"],
+  MODELO_DE_ATENDIMENTO: ["decisão compartilhada", "participação familiar", "idiomas", "acessibilidade", "tempo da primeira consulta"],
 };
 
 export function isTechnicalCriterion(criterion: CruzamentoCriterion): criterion is TechnicalCriterion {
@@ -198,8 +195,8 @@ export type BlockBalance = {
 };
 
 /**
- * Cada bloco fecha em 50, separadamente. O saldo é devolvido para a tela
- * mostrar quanto falta — o Curador nunca deve somar de cabeça.
+ * Cada cruzamento fecha em 100, separadamente. O saldo é devolvido para a
+ * tela mostrar quanto falta — o Curador nunca deve somar de cabeça.
  */
 export function balanceOfBlock(
   weights: CriterionWeight[],
@@ -299,9 +296,9 @@ export type CriterionOutcome = {
 };
 
 export type BlockOutcome = {
-  /** 0 a 50. Normalizado sobre o que pôde ser avaliado. */
+  /** 0 a 100. Normalizado sobre o que pôde ser avaliado. */
   score: number;
-  /** Dos 50 pontos do bloco, quantos tinham dado para avaliar. */
+  /** Dos 100 pontos deste cruzamento, quantos tinham dado para avaliar. */
   coveredWeight: number;
   criteriaWithoutData: number;
   criteria: CriterionOutcome[];
@@ -338,7 +335,7 @@ function evaluateBlock(weights: CriterionWeight[], evaluations: CriterionEvaluat
     criteria.push({ criterion, weight, assessment, alignment, contribution, evidence });
   }
 
-  // Normaliza sobre o coberto, não sobre os 50 cheios: quem tem cadastro
+  // Normaliza sobre o coberto, não sobre os 100 cheios: quem tem cadastro
   // incompleto não é punido com nota baixa, é sinalizado com cobertura baixa.
   // Punir seria transformar ausência de informação em julgamento.
   const score = coveredWeight === 0 ? 0 : round2((weightedSum / coveredWeight) * BLOCK_POINTS);
@@ -359,16 +356,20 @@ export type CruzamentoInput = {
 
 export type CruzamentoResult = {
   professionalProfileId: string;
+  /** Avaliação Técnica — 0 a 100, com cobertura própria. */
   technical: BlockOutcome;
+  /** Compatibilidade Assistencial — 0 a 100, com cobertura própria. */
   patient: BlockOutcome;
-  /** 0 a 100 — a soma dos dois blocos, nunca apresentada como colocação. */
-  total: number;
-  /** Sobre quantos dos 100 pontos esta análise foi construída. */
-  coverage: number;
   /** Uma frase por critério, para o Relatório nunca depender de um número. */
   narrative: string[];
 };
 
+/**
+ * Os dois resultados saem lado a lado e assim permanecem. Não existe campo
+ * de total combinado, e não deve voltar a existir: somá-los criaria o número
+ * de 200 que o Modelo v1.0 §7 proíbe — técnica comprando deficiência
+ * assistencial, e vice-versa.
+ */
 export function cruzar(input: CruzamentoInput): CruzamentoResult {
   const technical = evaluateBlock(input.technicalWeights, input.evaluations);
   const patient = evaluateBlock(input.patientWeights, input.evaluations);
@@ -377,8 +378,6 @@ export function cruzar(input: CruzamentoInput): CruzamentoResult {
     professionalProfileId: input.professionalProfileId,
     technical,
     patient,
-    total: round2(technical.score + patient.score),
-    coverage: technical.coveredWeight + patient.coveredWeight,
     narrative: buildNarrative(technical, patient),
   };
 }
@@ -401,28 +400,20 @@ function buildNarrative(technical: BlockOutcome, patient: BlockOutcome): string[
 }
 
 /**
- * "Avaliação construída sobre 86 dos 100 pontos possíveis."
+ * "Avaliação construída sobre 80 dos 100 pontos possíveis."
  *
- * Existe para ser lida em voz alta na Mesa. Cobertura baixa com nota alta não
- * é excelência — é incerteza, e o Curador precisa saber a diferença antes de
- * escolher.
+ * Por cruzamento — cada um tem a própria cobertura, porque cada um tem o
+ * próprio orçamento. Existe para ser lida em voz alta na Mesa: cobertura
+ * baixa com avaliação alta não é excelência, é incerteza, e o Curador
+ * precisa saber a diferença antes de escolher.
  */
-export function coverageSentence(result: CruzamentoResult): string {
-  return `Avaliação construída sobre ${result.coverage} dos ${TOTAL_POINTS} pontos possíveis.`;
+export function coverageSentence(block: BlockOutcome): string {
+  return `Avaliação construída sobre ${block.coveredWeight} dos ${BLOCK_POINTS} pontos possíveis.`;
 }
 
-// ---------------------------------------------------------------------------
-// Organização para leitura
-// ---------------------------------------------------------------------------
-
-/**
- * Ordena para o Curador ler, e só. Não corta, não seleciona, não devolve "os
- * três". Empate mantém a ordem de entrada — um desempate arbitrário pareceria
- * uma decisão, e decisão aqui é dele.
- */
-export function organizeForCurator<T extends { total: number }>(results: T[]): T[] {
-  return [...results]
-    .map((result, index) => ({ result, index }))
-    .sort((a, b) => b.result.total - a.result.total || a.index - b.index)
-    .map((entry) => entry.result);
-}
+// A função `organizeForCurator` deste módulo foi removida no alinhamento ao
+// Modelo v1.0: ela ordenava pelo total combinado, que deixou de existir.
+// Definir uma nova chave de ordenação de leitura (técnica? assistencial?) é
+// uma decisão de domínio que exige ADR — até lá, a comparação apresenta os
+// profissionais na ordem em que a Rede os devolve. O motor legado tem a sua
+// própria versão em method.ts, intocada.

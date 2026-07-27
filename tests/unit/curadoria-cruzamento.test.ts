@@ -7,22 +7,20 @@ import {
   BLOCK_POINTS,
   coverageSentence,
   cruzar,
-  organizeForCurator,
-  TOTAL_POINTS,
   type CriterionEvaluation,
   type CriterionWeight,
 } from "@/modules/curadoria/cruzamento";
 
 const TECNICO: CriterionWeight[] = [
-  { criterion: "FORMACAO", weight: 20 },
-  { criterion: "EXPERIENCIA", weight: 20 },
-  { criterion: "TRAJETORIA", weight: 10 },
+  { criterion: "FORMACAO", weight: 30 },
+  { criterion: "EXPERIENCIA", weight: 50 },
+  { criterion: "HISTORICO", weight: 20 },
 ];
 
 const PRIORIDADES: CriterionWeight[] = [
-  { criterion: "ACESSO", weight: 20 },
-  { criterion: "FORMA_DE_CUIDADO", weight: 15 },
-  { criterion: "COMPATIBILIDADE_PESSOAL", weight: 15 },
+  { criterion: "ACESSO", weight: 30 },
+  { criterion: "CONTINUIDADE_DO_CUIDADO", weight: 50 },
+  { criterion: "MODELO_DE_ATENDIMENTO", weight: 20 },
 ];
 
 function evaluation(
@@ -35,10 +33,10 @@ function evaluation(
 const TODAS_PLENAS: CriterionEvaluation[] = [
   evaluation("FORMACAO", "ATENDE_PLENAMENTE"),
   evaluation("EXPERIENCIA", "ATENDE_PLENAMENTE"),
-  evaluation("TRAJETORIA", "ATENDE_PLENAMENTE"),
+  evaluation("HISTORICO", "ATENDE_PLENAMENTE"),
   evaluation("ACESSO", "ATENDE_PLENAMENTE"),
-  evaluation("FORMA_DE_CUIDADO", "ATENDE_PLENAMENTE"),
-  evaluation("COMPATIBILIDADE_PESSOAL", "ATENDE_PLENAMENTE"),
+  evaluation("CONTINUIDADE_DO_CUIDADO", "ATENDE_PLENAMENTE"),
+  evaluation("MODELO_DE_ATENDIMENTO", "ATENDE_PLENAMENTE"),
 ];
 
 describe("Área de atuação — porta de entrada, não pontuação", () => {
@@ -89,33 +87,33 @@ describe("Área de atuação — porta de entrada, não pontuação", () => {
   });
 });
 
-describe("Distribuição de pontos — cada bloco fecha em 50", () => {
-  it("aceita um bloco que soma exatamente 50", () => {
+describe("Distribuição de pontos — cada cruzamento fecha em 100", () => {
+  it("aceita um cruzamento que soma exatamente 100", () => {
     const balance = balanceOfBlock(TECNICO, "TECNICO");
     expect(balance.valid).toBe(true);
     expect(balance.total).toBe(BLOCK_POINTS);
     expect(balance.remaining).toBe(0);
   });
 
-  it("recusa soma diferente de 50 e devolve o saldo que falta", () => {
+  it("recusa soma diferente de 100 e devolve o saldo que falta", () => {
     const balance = balanceOfBlock(
       [
-        { criterion: "FORMACAO", weight: 20 },
-        { criterion: "EXPERIENCIA", weight: 10 },
-        { criterion: "TRAJETORIA", weight: 5 },
+        { criterion: "FORMACAO", weight: 30 },
+        { criterion: "EXPERIENCIA", weight: 30 },
+        { criterion: "HISTORICO", weight: 10 },
       ],
       "TECNICO",
     );
     expect(balance.valid).toBe(false);
-    expect(balance.total).toBe(35);
-    expect(balance.remaining).toBe(15);
+    expect(balance.total).toBe(70);
+    expect(balance.remaining).toBe(30);
   });
 
-  it("recusa critério do outro bloco", () => {
+  it("recusa critério do outro cruzamento", () => {
     const balance = balanceOfBlock(
       [
-        { criterion: "FORMACAO", weight: 25 },
-        { criterion: "EXPERIENCIA", weight: 25 },
+        { criterion: "FORMACAO", weight: 50 },
+        { criterion: "EXPERIENCIA", weight: 50 },
         { criterion: "ACESSO", weight: 0 },
       ],
       "TECNICO",
@@ -124,16 +122,17 @@ describe("Distribuição de pontos — cada bloco fecha em 50", () => {
     expect(balance.errors.join(" ")).toContain("não pertence a este bloco");
   });
 
-  it("cobra que todos os três critérios do bloco sejam distribuídos", () => {
-    const balance = balanceOfBlock([{ criterion: "FORMACAO", weight: 50 }], "TECNICO");
+  it("cobra que todos os três critérios do cruzamento sejam distribuídos", () => {
+    const balance = balanceOfBlock([{ criterion: "FORMACAO", weight: 100 }], "TECNICO");
     expect(balance.valid).toBe(false);
     expect(balance.errors.join(" ")).toContain("Falta distribuir");
   });
 
-  it("os dois blocos somados fecham os 100 pontos", () => {
-    expect(balanceOfBlock(TECNICO, "TECNICO").total + balanceOfBlock(PRIORIDADES, "PRIORIDADES").total).toBe(
-      TOTAL_POINTS,
-    );
+  it("os dois cruzamentos são orçamentos separados — não existe um bolo de 200", () => {
+    // Cada um fecha em 100 por conta própria; nenhuma soma cruzada é válida
+    // nem necessária.
+    expect(balanceOfBlock(TECNICO, "TECNICO").valid).toBe(true);
+    expect(balanceOfBlock(PRIORIDADES, "PRIORIDADES").valid).toBe(true);
   });
 });
 
@@ -146,8 +145,8 @@ describe("Escala de avaliação — quatro estados", () => {
   });
 });
 
-describe("Cruzamento — dois perfis de peso igual", () => {
-  it("tudo pleno entrega 50 + 50 com cobertura total", () => {
+describe("Cruzamento — dois resultados independentes", () => {
+  it("tudo pleno entrega 100 e 100, lado a lado", () => {
     const result = cruzar({
       professionalProfileId: "p1",
       technicalWeights: TECNICO,
@@ -155,13 +154,27 @@ describe("Cruzamento — dois perfis de peso igual", () => {
       evaluations: TODAS_PLENAS,
     });
 
-    expect(result.technical.score).toBe(50);
-    expect(result.patient.score).toBe(50);
-    expect(result.total).toBe(100);
-    expect(result.coverage).toBe(TOTAL_POINTS);
+    expect(result.technical.score).toBe(100);
+    expect(result.patient.score).toBe(100);
+    expect(result.technical.coveredWeight).toBe(100);
+    expect(result.patient.coveredWeight).toBe(100);
   });
 
-  it("os blocos são independentes: técnico impecável não compensa acesso inviável", () => {
+  it("o resultado não carrega total combinado — os 200 pontos não existem", () => {
+    const result = cruzar({
+      professionalProfileId: "p1",
+      technicalWeights: TECNICO,
+      patientWeights: PRIORIDADES,
+      evaluations: TODAS_PLENAS,
+    });
+
+    // A proibição do Modelo v1.0 §7, pinada: se alguém reintroduzir um campo
+    // somado, este teste quebra.
+    expect(result).not.toHaveProperty("total");
+    expect(result).not.toHaveProperty("coverage");
+  });
+
+  it("os cruzamentos são independentes: técnico impecável não compensa acesso inviável", () => {
     const result = cruzar({
       professionalProfileId: "p1",
       technicalWeights: TECNICO,
@@ -169,22 +182,21 @@ describe("Cruzamento — dois perfis de peso igual", () => {
       evaluations: [
         evaluation("FORMACAO", "ATENDE_PLENAMENTE"),
         evaluation("EXPERIENCIA", "ATENDE_PLENAMENTE"),
-        evaluation("TRAJETORIA", "ATENDE_PLENAMENTE"),
+        evaluation("HISTORICO", "ATENDE_PLENAMENTE"),
         evaluation("ACESSO", "NAO_ATENDE"),
-        evaluation("FORMA_DE_CUIDADO", "NAO_ATENDE"),
-        evaluation("COMPATIBILIDADE_PESSOAL", "NAO_ATENDE"),
+        evaluation("CONTINUIDADE_DO_CUIDADO", "NAO_ATENDE"),
+        evaluation("MODELO_DE_ATENDIMENTO", "NAO_ATENDE"),
       ],
     });
 
-    // O teto de um perfil tecnicamente perfeito que não serve à vida da
-    // pessoa é 50 de 100 — nunca mais. É a consequência de os blocos terem
-    // peso igual.
-    expect(result.technical.score).toBe(50);
+    // As duas perguntas são respondidas lado a lado, nunca uma pela outra: a
+    // Avaliação Técnica fica em 100 E a Compatibilidade Assistencial em 0 —
+    // e nenhum número tenta conciliá-las.
+    expect(result.technical.score).toBe(100);
     expect(result.patient.score).toBe(0);
-    expect(result.total).toBe(50);
   });
 
-  it("informação insuficiente sai do cálculo e reaparece como cobertura", () => {
+  it("informação insuficiente sai do cálculo e reaparece como cobertura do próprio cruzamento", () => {
     const result = cruzar({
       professionalProfileId: "p1",
       technicalWeights: TECNICO,
@@ -192,18 +204,19 @@ describe("Cruzamento — dois perfis de peso igual", () => {
       evaluations: [
         evaluation("FORMACAO", "ATENDE_PLENAMENTE"),
         evaluation("EXPERIENCIA", "ATENDE_PLENAMENTE"),
-        evaluation("TRAJETORIA", "INFORMACAO_INSUFICIENTE"),
-        ...TODAS_PLENAS.filter((e) => !["FORMACAO", "EXPERIENCIA", "TRAJETORIA"].includes(e.criterion)),
+        evaluation("HISTORICO", "INFORMACAO_INSUFICIENTE"),
+        ...TODAS_PLENAS.filter((e) => !["FORMACAO", "EXPERIENCIA", "HISTORICO"].includes(e.criterion)),
       ],
     });
 
-    // Trajetória valia 10 e não pôde ser avaliada: o bloco continua valendo
-    // 50 sobre o que foi possível olhar, e a cobertura cai para 90.
-    expect(result.technical.score).toBe(50);
-    expect(result.technical.coveredWeight).toBe(40);
+    // Histórico valia 20 e não pôde ser avaliado: a Avaliação Técnica segue
+    // valendo 100 sobre o que foi possível olhar, e a cobertura DELA cai para
+    // 80. O cruzamento assistencial não é afetado.
+    expect(result.technical.score).toBe(100);
+    expect(result.technical.coveredWeight).toBe(80);
     expect(result.technical.criteriaWithoutData).toBe(1);
-    expect(result.coverage).toBe(90);
-    expect(coverageSentence(result)).toBe("Avaliação construída sobre 90 dos 100 pontos possíveis.");
+    expect(result.patient.coveredWeight).toBe(100);
+    expect(coverageSentence(result.technical)).toBe("Avaliação construída sobre 80 dos 100 pontos possíveis.");
   });
 
   it("critério não avaliado é tratado como informação insuficiente, nunca como zero", () => {
@@ -211,17 +224,17 @@ describe("Cruzamento — dois perfis de peso igual", () => {
       professionalProfileId: "p1",
       technicalWeights: TECNICO,
       patientWeights: PRIORIDADES,
-      // TRAJETORIA sequer foi avaliada.
-      evaluations: TODAS_PLENAS.filter((e) => e.criterion !== "TRAJETORIA"),
+      // HISTORICO sequer foi avaliado.
+      evaluations: TODAS_PLENAS.filter((e) => e.criterion !== "HISTORICO"),
     });
 
-    const trajetoria = result.technical.criteria.find((c) => c.criterion === "TRAJETORIA")!;
-    expect(trajetoria.assessment).toBe("INFORMACAO_INSUFICIENTE");
-    expect(trajetoria.alignment).toBeNull();
-    expect(trajetoria.evidence).toContain("nada foi presumido");
+    const historico = result.technical.criteria.find((c) => c.criterion === "HISTORICO")!;
+    expect(historico.assessment).toBe("INFORMACAO_INSUFICIENTE");
+    expect(historico.alignment).toBeNull();
+    expect(historico.evidence).toContain("nada foi presumido");
   });
 
-  it("cadastro vazio não vira nota zero — vira cobertura zero", () => {
+  it("cadastro vazio não vira nota zero — vira cobertura zero nos dois cruzamentos", () => {
     const result = cruzar({
       professionalProfileId: "p1",
       technicalWeights: TECNICO,
@@ -229,10 +242,12 @@ describe("Cruzamento — dois perfis de peso igual", () => {
       evaluations: [],
     });
 
-    expect(result.coverage).toBe(0);
-    expect(result.total).toBe(0);
+    expect(result.technical.score).toBe(0);
+    expect(result.patient.score).toBe(0);
     // O que distingue este caso de "não atende nada" é a cobertura: aqui não
     // se sabe, ali se sabe que não.
+    expect(result.technical.coveredWeight).toBe(0);
+    expect(result.patient.coveredWeight).toBe(0);
     expect(result.technical.criteriaWithoutData).toBe(3);
     expect(result.patient.criteriaWithoutData).toBe(3);
   });
@@ -246,22 +261,26 @@ describe("Cruzamento — dois perfis de peso igual", () => {
     });
 
     expect(result.narrative).toHaveLength(6);
-    expect(result.narrative[0]).toContain("20 pts");
-    expect(result.narrative.at(-1)).toContain("10 pts");
+    expect(result.narrative[0]).toContain("50 pts");
+    expect(result.narrative.at(-1)).toContain("20 pts");
     expect(result.narrative[0]).toContain("Atende plenamente");
   });
-});
 
-describe("Organização para leitura", () => {
-  it("ordena por total sem cortar nem selecionar", () => {
-    const organized = organizeForCurator([{ total: 70 }, { total: 91 }, { total: 84 }]);
-    expect(organized.map((r) => r.total)).toEqual([91, 84, 70]);
-    expect(organized).toHaveLength(3);
-  });
+  it("as frases falam o vocabulário oficial: Histórico, Continuidade do Cuidado, Modelo de Atendimento", () => {
+    const result = cruzar({
+      professionalProfileId: "p1",
+      technicalWeights: TECNICO,
+      patientWeights: PRIORIDADES,
+      evaluations: TODAS_PLENAS,
+    });
 
-  it("empate mantém a ordem de entrada — desempate arbitrário pareceria decisão", () => {
-    const a = { total: 80, id: "a" };
-    const b = { total: 80, id: "b" };
-    expect(organizeForCurator([a, b]).map((r) => r.id)).toEqual(["a", "b"]);
+    const texto = result.narrative.join(" ");
+    expect(texto).toContain("Histórico Profissional");
+    expect(texto).toContain("Continuidade do Cuidado");
+    expect(texto).toContain("Modelo de Atendimento");
+    // A língua antiga não volta.
+    expect(texto).not.toContain("Trajetória");
+    expect(texto).not.toContain("Forma de Cuidado");
+    expect(texto).not.toContain("Compatibilidade Pessoal");
   });
 });

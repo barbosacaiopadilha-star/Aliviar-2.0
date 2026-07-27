@@ -17,43 +17,43 @@ const FILTROS_OK: MandatoryFilterCheck[] = [
 ];
 
 describe("Orçamento de pontos — o Curador nunca soma", () => {
-  it("começa em 0 de 50 e diz quanto resta", () => {
+  it("começa em 0 de 100 e diz quanto resta", () => {
     const budget = budgetOf({}, "TECNICO");
     expect(budget.used).toBe(0);
-    expect(budget.remaining).toBe(50);
+    expect(budget.remaining).toBe(100);
     expect(budget.complete).toBe(false);
-    expect(budget.sentence).toContain("Restam 50 pontos");
+    expect(budget.sentence).toContain("Restam 100 pontos");
   });
 
-  it("fecha em 50 com a frase de conclusão", () => {
-    const budget = budgetOf({ FORMACAO: 15, EXPERIENCIA: 25, TRAJETORIA: 10 }, "TECNICO");
+  it("fecha em 100 com a frase de conclusão", () => {
+    const budget = budgetOf({ FORMACAO: 30, EXPERIENCIA: 50, HISTORICO: 20 }, "TECNICO");
     expect(budget.complete).toBe(true);
-    expect(budget.sentence).toBe("50 de 50 — distribuição concluída");
+    expect(budget.sentence).toBe("100 de 100 — distribuição concluída");
   });
 
   it("saldo parcial diz exatamente o que falta", () => {
-    const budget = budgetOf({ FORMACAO: 15, EXPERIENCIA: 25 }, "TECNICO");
-    expect(budget.sentence).toBe("40 de 50 distribuídos. Restam 10 pontos.");
+    const budget = budgetOf({ FORMACAO: 30, EXPERIENCIA: 50 }, "TECNICO");
+    expect(budget.sentence).toBe("80 de 100 distribuídos. Restam 20 pontos.");
   });
 
-  it("critério do outro bloco não conta no saldo", () => {
-    // ACESSO é do bloco pessoal; o técnico não o enxerga.
-    const budget = budgetOf({ FORMACAO: 15, ACESSO: 20 }, "TECNICO");
-    expect(budget.used).toBe(15);
+  it("critério do outro cruzamento não conta no saldo", () => {
+    // ACESSO é do cruzamento assistencial; o técnico não o enxerga.
+    const budget = budgetOf({ FORMACAO: 30, ACESSO: 40 }, "TECNICO");
+    expect(budget.used).toBe(30);
   });
 
-  it("o bloco pessoal tem o próprio saldo de 50", () => {
-    const budget = budgetOf({ ACESSO: 15, FORMA_DE_CUIDADO: 25, COMPATIBILIDADE_PESSOAL: 10 }, "PRIORIDADES");
+  it("o cruzamento assistencial tem o próprio saldo de 100", () => {
+    const budget = budgetOf({ ACESSO: 30, CONTINUIDADE_DO_CUIDADO: 50, MODELO_DE_ATENDIMENTO: 20 }, "PRIORIDADES");
     expect(budget.complete).toBe(true);
   });
 
   it("clamp impede negativo e impede ultrapassar o saldo", () => {
-    const weights = { FORMACAO: 15, EXPERIENCIA: 25 };
-    expect(clampWeight(weights, "TRAJETORIA", -5)).toBe(0);
-    // Restam 10; pedir 20 devolve 10.
-    expect(clampWeight(weights, "TRAJETORIA", 20)).toBe(10);
+    const weights = { FORMACAO: 30, EXPERIENCIA: 50 };
+    expect(clampWeight(weights, "HISTORICO", -5)).toBe(0);
+    // Restam 20; pedir 40 devolve 20.
+    expect(clampWeight(weights, "HISTORICO", 40)).toBe(20);
     // Aumentar um critério existente respeita o que os outros já usam.
-    expect(clampWeight(weights, "EXPERIENCIA", 40)).toBe(35);
+    expect(clampWeight(weights, "EXPERIENCIA", 90)).toBe(70);
   });
 });
 
@@ -144,12 +144,12 @@ describe("Cabeçalho — os números e a vez", () => {
 
 describe("Comparação — explica, não elege", () => {
   const WEIGHTS: CriterionWeight[] = [
-    { criterion: "FORMACAO", weight: 15 },
-    { criterion: "EXPERIENCIA", weight: 25 },
-    { criterion: "TRAJETORIA", weight: 10 },
-    { criterion: "ACESSO", weight: 15 },
-    { criterion: "FORMA_DE_CUIDADO", weight: 25 },
-    { criterion: "COMPATIBILIDADE_PESSOAL", weight: 10 },
+    { criterion: "FORMACAO", weight: 30 },
+    { criterion: "EXPERIENCIA", weight: 50 },
+    { criterion: "HISTORICO", weight: 20 },
+    { criterion: "ACESSO", weight: 30 },
+    { criterion: "CONTINUIDADE_DO_CUIDADO", weight: 50 },
+    { criterion: "MODELO_DE_ATENDIMENTO", weight: 20 },
   ];
 
   function evals(assessments: Partial<Record<string, CriterionEvaluation["assessment"]>>): CriterionEvaluation[] {
@@ -163,44 +163,47 @@ describe("Comparação — explica, não elege", () => {
   const COMPLETO = evals({
     FORMACAO: "ATENDE_PLENAMENTE",
     EXPERIENCIA: "ATENDE_PLENAMENTE",
-    TRAJETORIA: "ATENDE_PARCIALMENTE",
+    HISTORICO: "ATENDE_PARCIALMENTE",
     ACESSO: "ATENDE_PLENAMENTE",
-    FORMA_DE_CUIDADO: "ATENDE_PLENAMENTE",
-    COMPATIBILIDADE_PESSOAL: "ATENDE_PLENAMENTE",
+    CONTINUIDADE_DO_CUIDADO: "ATENDE_PLENAMENTE",
+    MODELO_DE_ATENDIMENTO: "ATENDE_PLENAMENTE",
   });
 
   const SEM_COMPAT = evals({
     FORMACAO: "ATENDE_PLENAMENTE",
     EXPERIENCIA: "ATENDE_PLENAMENTE",
-    TRAJETORIA: "ATENDE_PLENAMENTE",
+    HISTORICO: "ATENDE_PLENAMENTE",
     ACESSO: "ATENDE_PARCIALMENTE",
-    FORMA_DE_CUIDADO: "ATENDE_PLENAMENTE",
-    COMPATIBILIDADE_PESSOAL: "INFORMACAO_INSUFICIENTE",
+    CONTINUIDADE_DO_CUIDADO: "ATENDE_PLENAMENTE",
+    MODELO_DE_ATENDIMENTO: "INFORMACAO_INSUFICIENTE",
   });
 
   it("cada célula traz estado, pontos aproveitados sobre o peso, e a frase", () => {
     const [column] = buildComparison(["a"], WEIGHTS, new Map([["a", COMPLETO]]));
     const experiencia = column!.cells.find((cell) => cell.criterion === "EXPERIENCIA")!;
-    expect(experiencia.pointsSentence).toBe("25/25");
-    const trajetoria = column!.cells.find((cell) => cell.criterion === "TRAJETORIA")!;
-    expect(trajetoria.pointsSentence).toBe("5/10");
-    expect(trajetoria.evidence).toContain("TRAJETORIA");
+    expect(experiencia.pointsSentence).toBe("50/50");
+    const historico = column!.cells.find((cell) => cell.criterion === "HISTORICO")!;
+    expect(historico.pointsSentence).toBe("10/20");
+    expect(historico.evidence).toContain("HISTORICO");
   });
 
   it("informação insuficiente aparece como não avaliável, nunca como zero", () => {
     const [column] = buildComparison(["b"], WEIGHTS, new Map([["b", SEM_COMPAT]]));
-    const compat = column!.cells.find((cell) => cell.criterion === "COMPATIBILIDADE_PESSOAL")!;
+    const compat = column!.cells.find((cell) => cell.criterion === "MODELO_DE_ATENDIMENTO")!;
     expect(compat.pointsSentence).toBe("não avaliável");
     expect(compat.pointsSentence).not.toContain("0/");
   });
 
-  it("a cobertura de quem tem lacuna cai para 90 e vira frase", () => {
+  it("a cobertura de quem tem lacuna cai no próprio cruzamento e vira frase", () => {
     const [column] = buildComparison(["b"], WEIGHTS, new Map([["b", SEM_COMPAT]]));
-    expect(column!.result.coverage).toBe(90);
-    expect(column!.coverageSentence).toBe("Avaliação construída sobre 90 dos 100 pontos possíveis.");
+    // Modelo de Atendimento (20 pts) sem informação: só a cobertura ASSISTENCIAL cai.
+    expect(column!.result.patient.coveredWeight).toBe(80);
+    expect(column!.result.technical.coveredWeight).toBe(100);
+    expect(column!.patientCoverageSentence).toBe("Avaliação construída sobre 80 dos 100 pontos possíveis.");
+    expect(column!.technicalCoverageSentence).toBe("Avaliação construída sobre 100 dos 100 pontos possíveis.");
   });
 
-  it("ordena a leitura sem posições, medalhas ou vocabulário de pódio", () => {
+  it("apresenta sem posições, medalhas ou vocabulário de pódio — e sem total combinado", () => {
     const columns = buildComparison(
       ["a", "b"],
       WEIGHTS,
@@ -215,13 +218,15 @@ describe("Comparação — explica, não elege", () => {
     for (const proibido of ["melhor", "vencedor", "recomendado", "ranking", "colocado", "posição"]) {
       expect(texto, `vocabulário de pódio: ${proibido}`).not.toContain(proibido);
     }
-    // Nenhuma coluna carrega número de posição.
+    // Nenhuma coluna carrega posição nem o número de 200 que o Modelo proíbe.
     expect(Object.keys(columns[0]!)).not.toContain("position");
+    expect(columns[0]!.result).not.toHaveProperty("total");
   });
 
   it("quem não foi avaliado em nada aparece com cobertura zero, não com nota zero", () => {
     const [column] = buildComparison(["c"], WEIGHTS, new Map());
-    expect(column!.result.coverage).toBe(0);
+    expect(column!.result.technical.coveredWeight).toBe(0);
+    expect(column!.result.patient.coveredWeight).toBe(0);
     expect(column!.cells.every((cell) => cell.pointsSentence === "não avaliável")).toBe(true);
   });
 });

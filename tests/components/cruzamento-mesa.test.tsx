@@ -44,12 +44,12 @@ function professional(id: string, name: string, overrides: Partial<MesaProfessio
 }
 
 const WEIGHTS_FULL = {
-  FORMACAO: 15,
-  EXPERIENCIA: 25,
-  TRAJETORIA: 10,
-  ACESSO: 15,
-  FORMA_DE_CUIDADO: 25,
-  COMPATIBILIDADE_PESSOAL: 10,
+  FORMACAO: 30,
+  EXPERIENCIA: 50,
+  HISTORICO: 20,
+  ACESSO: 30,
+  CONTINUIDADE_DO_CUIDADO: 50,
+  MODELO_DE_ATENDIMENTO: 20,
 } as const;
 
 const WEIGHT_LIST: CriterionWeight[] = Object.entries(WEIGHTS_FULL).map(([criterion, weight]) => ({
@@ -82,8 +82,8 @@ function view(overrides: Partial<MesaCruzamentoView> = {}): MesaCruzamentoView {
     profileValidated: true,
     weights: {},
     budgets: {
-      technical: { block: "TECNICO", used: 0, remaining: 50, limit: 50, complete: false, sentence: "0 de 50 distribuídos. Restam 50 pontos." },
-      patient: { block: "PRIORIDADES", used: 0, remaining: 50, limit: 50, complete: false, sentence: "0 de 50 distribuídos. Restam 50 pontos." },
+      technical: { block: "TECNICO", used: 0, remaining: 100, limit: 100, complete: false, sentence: "0 de 100 distribuídos. Restam 100 pontos." },
+      patient: { block: "PRIORIDADES", used: 0, remaining: 100, limit: 100, complete: false, sentence: "0 de 100 distribuídos. Restam 100 pontos." },
     },
     professionals,
     counts,
@@ -125,11 +125,11 @@ describe("CruzamentoMesa — orçamento de pontos", () => {
     const bloco = screen.getByRole("group", { name: "Avaliação Técnica do Profissional" });
     const aumentar = within(bloco).getByRole("button", { name: "Aumentar Formação Profissional" });
 
-    for (let i = 0; i < 12; i += 1) await user.click(aumentar); // 12 × 5 = 60, mas trava em 50
-    expect(within(bloco).getByText("50 de 50 — distribuição concluída")).toBeInTheDocument();
+    for (let i = 0; i < 22; i += 1) await user.click(aumentar); // 22 × 5 = 110, mas trava em 100
+    expect(within(bloco).getByText("100 de 100 — distribuição concluída")).toBeInTheDocument();
 
     const campo = within(bloco).getByLabelText("Formação Profissional") as HTMLInputElement;
-    expect(Number(campo.value)).toBe(50);
+    expect(Number(campo.value)).toBe(100);
   });
 
   it("salvar fica bloqueado até o bloco fechar em 50", async () => {
@@ -137,17 +137,17 @@ describe("CruzamentoMesa — orçamento de pontos", () => {
     render(<CruzamentoMesa view={view()} patientFirstName="Maria" necessidade={null} />);
 
     const bloco = screen.getByRole("group", { name: "Avaliação Técnica do Profissional" });
-    expect(within(bloco).getByRole("button", { name: /Distribua os 50 pontos restantes/ })).toBeDisabled();
+    expect(within(bloco).getByRole("button", { name: /Distribua os 100 pontos restantes/ })).toBeDisabled();
 
     const formacao = within(bloco).getByLabelText("Formação Profissional");
     const experiencia = within(bloco).getByLabelText("Experiência Profissional");
-    const trajetoria = within(bloco).getByLabelText("Trajetória Profissional");
+    const trajetoria = within(bloco).getByLabelText("Histórico Profissional");
     await user.clear(formacao);
-    await user.type(formacao, "15");
+    await user.type(formacao, "30");
     await user.clear(experiencia);
-    await user.type(experiencia, "25");
+    await user.type(experiencia, "50");
     await user.clear(trajetoria);
-    await user.type(trajetoria, "10");
+    await user.type(trajetoria, "20");
 
     const salvar = within(bloco).getByRole("button", { name: "Salvar bloco" });
     expect(salvar).toBeEnabled();
@@ -156,7 +156,7 @@ describe("CruzamentoMesa — orçamento de pontos", () => {
     expect(saveWeights).toHaveBeenCalledWith({
       caseId: CASE_ID,
       block: "TECNICO",
-      weights: { FORMACAO: 15, EXPERIENCIA: 25, TRAJETORIA: 10 },
+      weights: { FORMACAO: 30, EXPERIENCIA: 50, HISTORICO: 20 },
     });
   });
 
@@ -249,10 +249,10 @@ describe("CruzamentoMesa — comparação", () => {
           evals({
             FORMACAO: "ATENDE_PLENAMENTE",
             EXPERIENCIA: "ATENDE_PLENAMENTE",
-            TRAJETORIA: "ATENDE_PARCIALMENTE",
+            HISTORICO: "ATENDE_PARCIALMENTE",
             ACESSO: "ATENDE_PLENAMENTE",
-            FORMA_DE_CUIDADO: "ATENDE_PLENAMENTE",
-            COMPATIBILIDADE_PESSOAL: "ATENDE_PLENAMENTE",
+            CONTINUIDADE_DO_CUIDADO: "ATENDE_PLENAMENTE",
+            MODELO_DE_ATENDIMENTO: "ATENDE_PLENAMENTE",
           }),
         ],
         [
@@ -260,10 +260,10 @@ describe("CruzamentoMesa — comparação", () => {
           evals({
             FORMACAO: "ATENDE_PLENAMENTE",
             EXPERIENCIA: "ATENDE_PLENAMENTE",
-            TRAJETORIA: "ATENDE_PLENAMENTE",
+            HISTORICO: "ATENDE_PLENAMENTE",
             ACESSO: "ATENDE_PARCIALMENTE",
-            FORMA_DE_CUIDADO: "ATENDE_PLENAMENTE",
-            COMPATIBILIDADE_PESSOAL: "INFORMACAO_INSUFICIENTE",
+            CONTINUIDADE_DO_CUIDADO: "ATENDE_PLENAMENTE",
+            MODELO_DE_ATENDIMENTO: "INFORMACAO_INSUFICIENTE",
           }),
         ],
       ]),
@@ -272,8 +272,8 @@ describe("CruzamentoMesa — comparação", () => {
       professionals: [a, b],
       weights: { ...WEIGHTS_FULL },
       budgets: {
-        technical: { block: "TECNICO", used: 50, remaining: 0, limit: 50, complete: true, sentence: "50 de 50 — distribuição concluída" },
-        patient: { block: "PRIORIDADES", used: 50, remaining: 0, limit: 50, complete: true, sentence: "50 de 50 — distribuição concluída" },
+        technical: { block: "TECNICO", used: 100, remaining: 0, limit: 100, complete: true, sentence: "100 de 100 — distribuição concluída" },
+        patient: { block: "PRIORIDADES", used: 100, remaining: 0, limit: 100, complete: true, sentence: "100 de 100 — distribuição concluída" },
       },
       comparison,
     });
@@ -283,9 +283,9 @@ describe("CruzamentoMesa — comparação", () => {
     render(<CruzamentoMesa view={comparisonView()} patientFirstName="Maria" necessidade={null} />);
 
     const tabela = screen.getByRole("table");
-    expect(within(tabela).getAllByText(/25\/25/).length).toBeGreaterThan(0);
+    expect(within(tabela).getAllByText(/50\/50/).length).toBeGreaterThan(0);
     expect(within(tabela).getByText(/não avaliável/)).toBeInTheDocument();
-    expect(within(tabela).getByText("Avaliação construída sobre 90 dos 100 pontos possíveis.")).toBeInTheDocument();
+    expect(within(tabela).getByText(/construída sobre 80 dos 100 pontos possíveis/)).toBeInTheDocument();
   });
 
   it("as evidências abrem no lugar, sem nova rota", async () => {
@@ -310,6 +310,6 @@ describe("CruzamentoMesa — comparação", () => {
     for (const proibido of ["melhor", "vencedor", "primeiro colocado", "mais recomendado", "ranking", "score"]) {
       expect(texto, `vocabulário proibido: ${proibido}`).not.toContain(proibido);
     }
-    expect(screen.getByText(/Ordenação interna para facilitar a leitura/)).toBeInTheDocument();
+    expect(screen.getByText(/não há colocação. A seleção pertence ao Curador/)).toBeInTheDocument();
   });
 });

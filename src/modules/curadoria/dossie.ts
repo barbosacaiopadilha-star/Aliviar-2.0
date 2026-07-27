@@ -489,7 +489,70 @@ export function buildTechnicalBriefing(dossier: ProfessionalDossier): TechnicalB
     return `${entry.institution}${entry.role ? ` · ${entry.role}` : ""}${entry.bond ? ` · ${entry.bond}` : ""}${periodo}${describeProvenance(entry)}`;
   });
 
-  return { FORMACAO: formacao, EXPERIENCIA: experiencia, TRAJETORIA: trajetoria };
+  return { FORMACAO: formacao, EXPERIENCIA: experiencia, HISTORICO: trajetoria };
+}
+
+// ---------------------------------------------------------------------------
+// Perfil Assistencial do Profissional — a camada 3 do Modelo v1.0, nomeada
+// ---------------------------------------------------------------------------
+
+/**
+ * Como o profissional cuida, agrupado nos três eixos do Modelo v1.0 §5.
+ *
+ * Não recebe pontuação — é leitura. Os dados já viviam nas tabelas de modelo
+ * de atendimento e comunicação; o que faltava era o nome e o agrupamento que
+ * o Perfil de Prioridades do Paciente espelha, eixo a eixo. Só fatos
+ * verificáveis, nunca opiniões.
+ */
+export type PerfilAssistencial = {
+  acesso: {
+    states: string[];
+    cities: string[];
+    servesInPerson: boolean | null;
+    servesOnline: boolean | null;
+    availabilityWindow: string | null;
+    avgDaysToFirstAppointment: number | null;
+  };
+  continuidadeDoCuidado: {
+    offersContinuousCare: boolean | null;
+    offersReturnVisits: boolean | null;
+    multidisciplinaryTeam: boolean | null;
+  };
+  modeloDeAtendimento: {
+    sharedDecision: boolean | null;
+    familyCare: boolean | null;
+    languages: string[];
+    accessibility: string[];
+    resources: string[];
+  };
+};
+
+export function assistencialProfile(dossier: ProfessionalDossier): PerfilAssistencial {
+  const care = dossier.careModel;
+  const communication = dossier.communication;
+
+  return {
+    acesso: {
+      states: care?.states ?? [],
+      cities: care?.cities ?? [],
+      servesInPerson: care?.servesInPerson ?? null,
+      servesOnline: care?.servesOnline ?? null,
+      availabilityWindow: care?.availabilityWindow ?? null,
+      avgDaysToFirstAppointment: care?.avgDaysToFirstAppointment ?? null,
+    },
+    continuidadeDoCuidado: {
+      offersContinuousCare: care?.offersContinuousCare ?? null,
+      offersReturnVisits: care?.offersReturnVisits ?? null,
+      multidisciplinaryTeam: care?.multidisciplinaryTeam ?? null,
+    },
+    modeloDeAtendimento: {
+      sharedDecision: communication?.sharedDecision ?? null,
+      familyCare: communication?.familyCare ?? null,
+      languages: communication?.languages ?? [],
+      accessibility: communication?.accessibility ?? [],
+      resources: communication?.resources ?? [],
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -515,8 +578,8 @@ const PATIENT_DERIVERS: Record<
   (declaration: PatientPriorityDeclaration, dossier: ProfessionalDossier) => Derived
 > = {
   ACESSO: (declaration, dossier) => deriveAcesso(declaration, dossier.careModel),
-  FORMA_DE_CUIDADO: (declaration, dossier) => deriveFormaDeCuidado(declaration, dossier.careModel),
-  COMPATIBILIDADE_PESSOAL: (declaration, dossier) => deriveCompatibilidadePessoal(declaration, dossier.communication),
+  CONTINUIDADE_DO_CUIDADO: (declaration, dossier) => deriveFormaDeCuidado(declaration, dossier.careModel),
+  MODELO_DE_ATENDIMENTO: (declaration, dossier) => deriveCompatibilidadePessoal(declaration, dossier.communication),
 };
 
 /**
@@ -534,7 +597,7 @@ export function adaptToEvaluations(input: AdaptationInput): AdaptationOutput {
   );
   const awaitingCurator: TechnicalCriterion[] = [];
 
-  for (const criterion of ["FORMACAO", "EXPERIENCIA", "TRAJETORIA"] as const) {
+  for (const criterion of ["FORMACAO", "EXPERIENCIA", "HISTORICO"] as const) {
     const declared = declaredByCriterion.get(criterion);
     if (declared) {
       evaluations.push({ criterion, assessment: declared.assessment, evidence: declared.evidence });
@@ -548,7 +611,7 @@ export function adaptToEvaluations(input: AdaptationInput): AdaptationOutput {
     });
   }
 
-  for (const criterion of ["ACESSO", "FORMA_DE_CUIDADO", "COMPATIBILIDADE_PESSOAL"] as const) {
+  for (const criterion of ["ACESSO", "CONTINUIDADE_DO_CUIDADO", "MODELO_DE_ATENDIMENTO"] as const) {
     const derived = input.declaration
       ? PATIENT_DERIVERS[criterion](input.declaration, input.dossier)
       : UNKNOWN("Esta pessoa ainda não declarou suas prioridades na Consulta Inicial");
