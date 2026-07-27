@@ -1,5 +1,11 @@
 # Manual da Curadoria
 
+> **SUBSTITUÍDO (2026-07-27):** este manual descreve a geração anterior ao
+> Modelo da Curadoria v1.0 (blocos de 50 somados, vocabulário antigo). A
+> referência oficial de treinamento, auditoria e operação passou a ser
+> [`MANUAL_CURADOR.md`](MANUAL_CURADOR.md). Este arquivo permanece como
+> histórico e não deve orientar operação nova.
+
 Para o Curador Médico. Descreve como conduzir uma Curadoria do início ao fim, na plataforma, com as regras que o sistema efetivamente cobra.
 
 Não é teoria do Método — é o passo a passo da operação. Onde o sistema impede algo, o manual diz por quê: a regra quase sempre existe para proteger a pessoa do outro lado.

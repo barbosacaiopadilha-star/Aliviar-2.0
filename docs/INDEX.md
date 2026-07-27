@@ -81,7 +81,8 @@ Consolidação dos sete domínios oficiais (`docs/architecture/`) — mapa e inv
 
 | Documento                          | Propósito                                                                     |
 | ---------------------------------- | ----------------------------------------------------------------------------- |
-| [`MANUAL_DA_CURADORIA.md`](MANUAL_DA_CURADORIA.md) | **Para o Curador Médico**: como conduzir uma Curadoria do Acolhimento à entrega, com as regras que o sistema cobra e o porquê de cada trava. |
+| [`MANUAL_CURADOR.md`](MANUAL_CURADOR.md) | **Para o Curador Médico** — Manual Operacional v1.0, alinhado ao Modelo da Curadoria: papel, jornada, os dois cruzamentos, Relatório assistido, apresentação, situações especiais, auditoria e FAQ. Referência oficial de treinamento e operação. |
+| [`MANUAL_DA_CURADORIA.md`](MANUAL_DA_CURADORIA.md) | Manual anterior (pré-Modelo v1.0) — **substituído**, mantido como histórico. |
 | [`OPERATIONS.md`](OPERATIONS.md)   | Runbook de deploy/ativação de produção, passo a passo.                        |
 | [`DEBUGGING.md`](DEBUGGING.md)     | Por onde começar a diagnosticar os problemas mais prováveis.                  |
 | [`CREDENTIALS.md`](CREDENTIALS.md) | Inventário de credenciais — identificador/finalidade/ambiente, nunca valores. |
