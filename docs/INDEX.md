@@ -116,5 +116,6 @@ Dois vídeos distintos (ADR-017) — não confundir. O vídeo de lançamento vig
 
 | Documento                      | Propósito                                                                                                 |
 | ------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| [`RETENCAO_E_DESCARTE_DE_CASES.md`](RETENCAO_E_DESCARTE_DE_CASES.md) | Análise e decisão (ADR-038, **proposta**) sobre descartar um Case com histórico append-only: por que ele é indestrutível hoje, o que a imutabilidade pretendia garantir, e a porta administrativa auditada recomendada. |
 | [`DECISIONS.md`](DECISIONS.md) | Log de ADRs — consulte quando precisar entender **por que** algo é do jeito que é.                        |
 | [`tasks/`](tasks/)             | Tarefas historicamente delegadas ao Cursor (TASK-001 a TASK-005B) — arquivo histórico, não backlog ativo. |
