@@ -275,9 +275,303 @@ button.mesa-chip:focus-visible {
   }
 }
 
+/* ------------------------------- rótulo comum --------------------------- */
+.mesa-rotulo {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--color-brand-sage);
+}
+
+/* ------------------------------- linha de investigação ------------------- */
+/* O raciocínio, não o workflow: sem botão, sem seta clicável, sem promessa de
+   ordem obrigatória. */
+.mesa-raciocinio {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 0.75rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(26 46 38 / 0.35);
+}
+
+.mesa-raciocinio__item + .mesa-raciocinio__item::before {
+  content: "→";
+  margin-right: 0.75rem;
+  color: rgb(26 46 38 / 0.2);
+}
+
+.mesa-raciocinio__item--percorrida {
+  color: var(--color-brand-sage);
+}
+
+.mesa-raciocinio__item--agora {
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+/* ------------------------------- chips: estados completos ---------------- */
+.mesa-chip--aguardando {
+  border-style: dotted;
+}
+
+.mesa-chip--ativo {
+  border-color: var(--color-brand-primary);
+  background: rgb(26 46 38 / 0.07);
+  font-weight: 600;
+}
+
+.mesa-chip__contagem {
+  margin-left: 0.125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink-muted);
+}
+
+.mesa-chip__detalhe {
+  margin-top: 0.75rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--mesa-line-strong);
+}
+
+/* ------------------------------- filtros rápidos ------------------------- */
+.mesa-filtros__limpar {
+  min-height: 1.75rem;
+  padding: 0 0.375rem;
+  font-size: 0.75rem;
+  color: var(--color-ink-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.mesa-filtros__limpar:hover {
+  color: var(--color-ink);
+}
+
+/* ------------------------------- comparação ------------------------------ */
+.mesa-matriz {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.mesa-matriz__canto,
+.mesa-matriz__criterio {
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  text-align: left;
+  font-weight: 400;
+  color: var(--color-ink-muted);
+  white-space: nowrap;
+}
+
+.mesa-matriz__canto {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--color-brand-sage);
+}
+
+.mesa-matriz__coluna {
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-ink);
+  border-bottom: 1px solid var(--mesa-line-strong);
+}
+
+/* Coluna em foco pelo teclado: um fio, não um destaque — realçar demais
+   pareceria a Mesa apontando um preferido. */
+.mesa-matriz__coluna--foco {
+  box-shadow: inset 0 -2px 0 var(--color-brand-sage);
+}
+
+.mesa-matriz__celula,
+.mesa-matriz__rodape {
+  padding: 0.375rem 0.75rem 0.375rem 0;
+  vertical-align: top;
+  border-top: 1px solid var(--mesa-line);
+}
+
+.mesa-matriz__rodape {
+  font-size: 0.75rem;
+  color: var(--color-ink-muted);
+  line-height: 1.5;
+}
+
+/* Cada estado tem marca, forma e texto — nunca só cor. */
+.mesa-celula {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  min-height: 1.75rem;
+  padding: 0 0.375rem;
+  border-radius: 0.375rem;
+  border-left: 2px solid transparent;
+  text-align: left;
+  color: var(--color-ink);
+  transition: background-color var(--mesa-motion) var(--mesa-ease);
+}
+
+.mesa-celula:hover {
+  background: rgb(26 46 38 / 0.045);
+}
+
+.mesa-celula:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+
+.mesa-celula__marca {
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.mesa-celula__pontos {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink-muted);
+}
+
+.mesa-celula--pleno {
+  border-left-color: var(--color-brand-sage);
+}
+
+.mesa-celula--parcial {
+  border-left-color: rgb(90 125 106 / 0.4);
+}
+
+.mesa-celula--nao {
+  border-left-color: rgb(26 46 38 / 0.25);
+}
+
+.mesa-celula--insuficiente {
+  border-left-color: rgb(138 115 85 / 0.6);
+  border-left-style: dashed;
+}
+
+.mesa-celula--vazio {
+  border-left-style: dotted;
+  border-left-color: rgb(26 46 38 / 0.2);
+  color: var(--color-ink-muted);
+}
+
+.mesa-celula__evidencia {
+  margin-top: 0.375rem;
+  max-width: 34ch;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--color-ink-muted);
+}
+
+.mesa-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--mesa-line);
+  font-size: 0.6875rem;
+  color: var(--color-ink-muted);
+}
+
+/* ------------------------------- painel inteligente ---------------------- */
+.mesa-atencao {
+  display: grid;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.mesa-atencao__item {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.mesa-atencao__marca {
+  flex: none;
+  margin-top: 0.125rem;
+  font-size: 0.6875rem;
+  color: var(--color-brand-sage);
+}
+
+.mesa-atencao__ir {
+  margin-top: 0.25rem;
+  font-size: 0.6875rem;
+  color: var(--color-brand-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.mesa-atencao__ir:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+
+/* ------------------------------- hipóteses ------------------------------- */
+.mesa-hipotese {
+  font-size: 0.8125rem;
+}
+
+.mesa-hipotese__status {
+  margin-top: 0.5rem;
+  display: inline-block;
+  padding: 0.0625rem 0.5rem;
+  border: 1px dashed var(--mesa-line-strong);
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  color: var(--color-ink-muted);
+}
+
+.mesa-hipotese__status--conferida {
+  border-style: solid;
+  border-color: rgb(90 125 106 / 0.5);
+  color: var(--color-ink);
+}
+
+/* ------------------------------- atalhos --------------------------------- */
+.mesa-tecla {
+  display: inline-block;
+  min-width: 1.25rem;
+  padding: 0 0.25rem;
+  border: 1px solid var(--mesa-line-strong);
+  border-radius: 0.25rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.625rem;
+  text-align: center;
+  color: var(--color-ink);
+}
+
+.mesa-ajuda__dica {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.6875rem;
+  color: var(--color-ink-muted);
+}
+
+.mesa-ajuda__dica:hover {
+  color: var(--color-ink);
+}
+
+.mesa-ajuda {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--mesa-line);
+  border-radius: 0.5rem;
+  background: var(--mesa-surface);
+}
+
+/* ------------------------------- linha do tempo dupla -------------------- */
+.mesa-dupla__segunda {
+  margin-top: 0.875rem;
+  padding-top: 0.875rem;
+  border-top: 1px dashed var(--mesa-line);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mesa-step,
-  .mesa-chip {
+  .mesa-chip,
+  .mesa-celula {
     transition: none;
   }
 }

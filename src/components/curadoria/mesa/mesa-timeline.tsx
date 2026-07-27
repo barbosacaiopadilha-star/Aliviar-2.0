@@ -26,9 +26,9 @@ const ESTADO: Record<CaseTimelineMark["status"], string> = {
   ahead: "ainda por vir",
 };
 
-export function MesaTimeline({ marks }: { marks: CaseTimelineMark[] }) {
+export function MesaTimeline({ marks, label }: { marks: CaseTimelineMark[]; label?: string }) {
   return (
-    <ol className="mesa-timeline">
+    <ol className="mesa-timeline" aria-label={label}>
       {marks.map((mark) => (
         <li
           key={mark.id}
@@ -41,5 +41,41 @@ export function MesaTimeline({ marks }: { marks: CaseTimelineMark[] }) {
         </li>
       ))}
     </ol>
+  );
+}
+
+/**
+ * LINHA DO TEMPO DUPLA — onde o paciente está, onde a investigação está.
+ *
+ * As duas correm no mesmo tempo e quase nunca no mesmo ponto: o paciente pode
+ * estar esperando há uma semana enquanto a investigação ainda reúne
+ * evidência. Ver as duas juntas é o que impede a Mesa de virar um ambiente
+ * fechado em si mesmo — do outro lado tem alguém contando os dias.
+ *
+ * Continua sem navegação: duas linhas de orientação, nenhum clique.
+ */
+export function MesaTimelineDupla({
+  paciente,
+  investigacao,
+}: {
+  paciente: CaseTimelineMark[];
+  investigacao: CaseTimelineMark[];
+}) {
+  return (
+    <div className="mesa-dupla">
+      <div>
+        <p className="mesa-rotulo">Jornada do paciente</p>
+        <div className="mt-1.5">
+          <MesaTimeline marks={paciente} label="Jornada do paciente" />
+        </div>
+      </div>
+
+      <div className="mesa-dupla__segunda">
+        <p className="mesa-rotulo">Investigação do Curador</p>
+        <div className="mt-1.5">
+          <MesaTimeline marks={investigacao} label="Investigação do Curador" />
+        </div>
+      </div>
+    </div>
   );
 }

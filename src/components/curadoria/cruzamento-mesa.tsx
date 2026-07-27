@@ -245,7 +245,20 @@ export function BudgetPanel({ view }: { view: MesaCruzamentoView }) {
 
 const GROUP_ORDER = ["AGUARDANDO_DECLARACAO", "ELEGIVEL", "PENDENTE_DE_INFORMACAO", "ELIMINADO"] as const;
 
-export function EligibilityPanel({ view }: { view: MesaCruzamentoView }) {
+export function EligibilityPanel({
+  view,
+  somente,
+}: {
+  view: MesaCruzamentoView;
+  /** Recorte de leitura dos filtros rápidos. Ausente = a Rede inteira. */
+  somente?: string[];
+}) {
+  const exibidos = somente
+    ? view.professionals.filter((professional) =>
+        somente.includes(professional.professionalProfileId),
+      )
+    : view.professionals;
+
   if (view.professionals.length === 0) {
     return (
       <Card>
@@ -268,8 +281,14 @@ export function EligibilityPanel({ view }: { view: MesaCruzamentoView }) {
         </p>
       ) : null}
 
+      {somente && exibidos.length === 0 ? (
+        <p className="text-sm text-ink">
+          Nenhum profissional atende ao recorte atual. Limpe os filtros para ver a Rede inteira.
+        </p>
+      ) : null}
+
       {GROUP_ORDER.map((state) => {
-        const group = view.professionals.filter((professional) => professional.eligibility.state === state);
+        const group = exibidos.filter((professional) => professional.eligibility.state === state);
         if (group.length === 0) return null;
         return (
           <div key={state} className="space-y-3">

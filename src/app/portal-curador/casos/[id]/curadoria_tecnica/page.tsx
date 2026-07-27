@@ -5,13 +5,11 @@ import type { Metadata } from "next";
 
 import { CaseAlert } from "@/components/curadoria/case-alert";
 import { CompatibilityRunner } from "@/components/curadoria/compatibility-runner";
-import {
-  BudgetPanel,
-  ComparisonPanel,
-  EligibilityPanel,
-} from "@/components/curadoria/cruzamento-mesa";
+import { BudgetPanel, EligibilityPanel } from "@/components/curadoria/cruzamento-mesa";
+import { ComparacaoPremium } from "@/components/curadoria/mesa/comparacao-premium";
+import { HipoteseEmFoco } from "@/components/curadoria/mesa/hipotese-em-foco";
 import { MesaShell } from "@/components/curadoria/mesa/mesa-shell";
-import { MesaTimeline, type CaseTimelineMark } from "@/components/curadoria/mesa/mesa-timeline";
+import { MesaTimelineDupla, type CaseTimelineMark } from "@/components/curadoria/mesa/mesa-timeline";
 import {
   AvaliacaoSemElegiveis,
   CruzamentoNaoIniciado,
@@ -19,6 +17,8 @@ import {
   RedeVazia,
   RelatorioNaoGerado,
 } from "@/components/curadoria/mesa/mesa-vazios";
+import { PainelAtencao } from "@/components/curadoria/mesa/painel-atencao";
+import { RedeFiltravel } from "@/components/curadoria/mesa/rede-filtravel";
 import { MesaContextPanel } from "@/components/curadoria/mesa-context-panel";
 import { MesaPriorityPanel } from "@/components/curadoria/mesa-priority-panel";
 import { MesaWorkspace } from "@/components/curadoria/mesa-workspace";
@@ -27,6 +27,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { buildCuratorJourney, journeyStepHref } from "@/modules/curadoria/cos/journey";
+import { CRITERION_LABELS } from "@/modules/curadoria/cruzamento";
 import { loadMesaCruzamento } from "@/modules/curadoria/mesa-cruzamento";
 import {
   buildMesaEtapas,
@@ -34,6 +35,13 @@ import {
   proximaDecisao,
   type MesaEtapaId,
 } from "@/modules/curadoria/mesa-etapas";
+import {
+  CRITERION_BLOCO,
+  hipoteseDe,
+  itensDeAtencao,
+  linhaDeInvestigacao,
+  type InvestigacaoProfissional,
+} from "@/modules/curadoria/mesa-investigacao";
 import { getReportLifecycle } from "@/modules/curadoria/relatorio-assistido";
 
 export const metadata: Metadata = {
@@ -49,13 +57,13 @@ export const metadata: Metadata = {
  * de quem investiga: tudo está disponível, mas só o que serve à decisão de
  * agora ganha destaque.
  *
- * A tela empilhava orçamento, elegibilidade, comparação e seleção na mesma
- * rolagem — dez painéis competindo por quem precisa decidir uma coisa de cada
- * vez. Agora são quatro painéis: cabeçalho fixo (A), navegação das sete
- * etapas (B), área de trabalho (C) e contexto persistente (D). Trocar de
- * etapa não troca de tela e não perde contexto.
+ * Quatro painéis: cabeçalho fixo (A), navegação das sete etapas (B), área de
+ * trabalho (C) e contexto persistente (D). Sobre a área de trabalho corre a
+ * linha de investigação — hipótese, evidências, conferência, conclusão — que
+ * mostra onde o raciocínio está, não onde o processo está.
  *
- * Nenhuma regra mudou: os mesmos painéis certificados, distribuídos.
+ * Nenhuma regra mudou: os mesmos painéis certificados, distribuídos, com
+ * recorte de leitura, comparação em matriz e atalhos por cima.
  */
 export default async function MesaCuradoriaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -104,6 +112,72 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
 
   const decisao = proximaDecisao(etapas, view.profileValidated);
 
+  // ------------------------------------------------------------------
+  // A leitura da investigação — tudo derivado do que já está na Mesa.
+  // ------------------------------------------------------------------
+
+  const colunaPorId = new Map(view.comparison.map((coluna) => [coluna.professionalProfileId, coluna]));
+
+  const profissionais: InvestigacaoProfissional[] = view.professionals.map((profissional) => {
+    const coluna = colunaPorId.get(profissional.professionalProfileId);
+    return {
+      id: profissional.professionalProfileId,
+      nome: profissional.displayName,
+      estado: profissional.eligibility.state,
+      areaDeclarada: Boolean(profissional.declaration),
+      temDivergencia: profissional.areaVerificationStatus === "divergente",
+      filtrosSemInformacao: profissional.eligibility.filters.filter(
+        (filtro) => filtro.passes === null,
+      ).length,
+      criteriosPendentes:
+        view.awaitingDeclaration[profissional.professionalProfileId]?.length ?? 0,
+      criteriosInsuficientes:
+        coluna?.cells.filter((celula) => celula.assessment === "INFORMACAO_INSUFICIENTE").length ??
+        0,
+    };
+  });
+
+  const criteriaTotal = Object.keys(view.awaitingDeclaration).length * 6;
+
+  const linha = linhaDeInvestigacao({
+    budgetsComplete: view.budgets.technical.complete && view.budgets.patient.complete,
+    eligible: view.counts.eligible,
+    criteriaDeclared: criteriaTotal - criteriaAwaiting,
+    criteriaTotal,
+    selected: view.counts.selected,
+  });
+
+  const atencao = itensDeAtencao(profissionais);
+
+  const nomeDe = (professionalProfileId: string) =>
+    view.professionals.find((p) => p.professionalProfileId === professionalProfileId)
+      ?.displayName ?? "Profissional";
+
+  const colunas = view.comparison.map((coluna) => ({
+    id: coluna.professionalProfileId,
+    nome: nomeDe(coluna.professionalProfileId),
+    celulas: coluna.cells,
+    technicalScore: coluna.result.technical.score,
+    patientScore: coluna.result.patient.score,
+    technicalCoverageSentence: coluna.technicalCoverageSentence,
+    patientCoverageSentence: coluna.patientCoverageSentence,
+  }));
+
+  const hipoteses = view.comparison.map((coluna) =>
+    hipoteseDe({
+      professionalProfileId: coluna.professionalProfileId,
+      nome: nomeDe(coluna.professionalProfileId),
+      celulas: coluna.cells.map((celula) => ({
+        label: celula.label,
+        bloco: CRITERION_BLOCO[celula.criterion],
+        assessment: celula.assessment,
+      })),
+      pendentes: (view.awaitingDeclaration[coluna.professionalProfileId] ?? []).map(
+        (criterio) => CRITERION_LABELS[criterio],
+      ),
+    }),
+  );
+
   const entregue =
     Boolean(record.relatorio.emittedAt) ||
     state.phases.some((phase) => phase.phase === "DEVOLUTIVA" && phase.status !== "BLOQUEADA");
@@ -130,25 +204,57 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
         }
       : undefined;
 
-  // A linha do tempo do Case — orientação, nunca navegação: um clique
+  // ------------------------------------------------------------------
+  // As duas linhas do tempo — orientação, nunca navegação: um clique
   // acidental perderia o trabalho em curso.
-  const marks: CaseTimelineMark[] = [
-    { id: "CONSULTA", label: "Consulta", done: Boolean(record.historia.understandingConfirmedAt) },
-    { id: "PERFIL", label: "Perfil", done: Boolean(record.validacao?.validatedAt) },
-    { id: "VALIDACAO", label: "Validação", done: Boolean(record.validacao?.validatedAt) },
-    { id: "CURADORIA", label: "Curadoria", done: view.counts.selected === 3 },
-    { id: "RELATORIO", label: "Relatório", done: Boolean(lifecycle?.emittedAt) },
-    { id: "ENTREGA", label: "Entrega", done: Boolean(record.relatorio.deliveredAt) },
-  ].map((mark, index, all) => {
-    const firstOpen = all.findIndex((entry) => !entry.done);
-    return {
+  // ------------------------------------------------------------------
+
+  const fase = (nome: string) =>
+    state.phases.find((phase) => phase.phase === nome)?.status === "CONCLUIDA";
+
+  const marcar = (marks: { id: string; label: string; done: boolean }[]): CaseTimelineMark[] => {
+    const primeiraAberta = marks.findIndex((entrada) => !entrada.done);
+    return marks.map((mark, index) => ({
       id: mark.id,
       label: mark.label,
-      status: mark.done ? "done" : index === firstOpen ? "current" : "ahead",
-    };
-  });
+      status: mark.done ? "done" : index === primeiraAberta ? "current" : "ahead",
+    }));
+  };
+
+  const linhaPaciente = marcar([
+    { id: "CONSULTA", label: "Consulta", done: Boolean(record.historia.understandingConfirmedAt) },
+    { id: "PERFIL", label: "Perfil", done: Boolean(record.validacao?.validatedAt) },
+    { id: "CURADORIA", label: "Curadoria", done: fase("CURADORIA_TECNICA") },
+    { id: "RELATORIO", label: "Relatório", done: Boolean(lifecycle?.emittedAt) },
+    { id: "ESCOLHA", label: "Escolha", done: fase("DEVOLUTIVA") },
+  ]);
+
+  const rotuloDaInvestigacao: Partial<Record<MesaEtapaId, string>> = { CAMINHOS: "Seleção" };
+
+  const linhaInvestigacao = marcar(
+    etapas
+      .filter((etapa) => etapa.id !== "CRUZAMENTO")
+      .map((etapa) => ({
+        id: etapa.id,
+        label: rotuloDaInvestigacao[etapa.id] ?? etapa.label,
+        done: etapa.status === "PRONTA",
+      })),
+  );
 
   const semElegiveis = view.counts.eligible === 0;
+
+  const comparacao =
+    colunas.length > 0 ? (
+      <ComparacaoPremium colunas={colunas} />
+    ) : (
+      <CruzamentoNaoIniciado
+        motivo={
+          !view.budgets.technical.complete || !view.budgets.patient.complete
+            ? "Os dois cruzamentos precisam ter os 100 pontos distribuídos antes de produzir leitura."
+            : "Ainda não há profissional elegível com avaliação registrada."
+        }
+      />
+    );
 
   const conteudo: Record<MesaEtapaId, React.ReactNode> = {
     PERFIL: view.profileValidated ? (
@@ -161,24 +267,18 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
       />
     ),
 
-    REDE: view.counts.found === 0 ? <RedeVazia /> : <EligibilityPanel view={view} />,
+    REDE:
+      view.counts.found === 0 ? (
+        <RedeVazia />
+      ) : (
+        <RedeFiltravel view={view} profissionais={profissionais} />
+      ),
 
     AVALIACAO: semElegiveis ? <AvaliacaoSemElegiveis /> : <EligibilityPanel view={view} />,
 
-    COMPATIBILIDADE: semElegiveis ? <AvaliacaoSemElegiveis /> : <ComparisonPanel view={view} />,
+    COMPATIBILIDADE: semElegiveis ? <AvaliacaoSemElegiveis /> : comparacao,
 
-    CRUZAMENTO:
-      view.comparison.length > 0 ? (
-        <ComparisonPanel view={view} />
-      ) : (
-        <CruzamentoNaoIniciado
-          motivo={
-            !view.budgets.technical.complete || !view.budgets.patient.complete
-              ? "Os dois cruzamentos precisam ter os 100 pontos distribuídos antes de produzir leitura."
-              : "Ainda não há profissional elegível com avaliação registrada."
-          }
-        />
-      ),
+    CRUZAMENTO: comparacao,
 
     CAMINHOS: (
       <div className="mesa-bloco">
@@ -243,9 +343,23 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
         decisao={decisao}
         alerts={phaseAlerts.map((alert) => alert.title)}
         etapas={etapas}
+        linha={linha}
+        totalProfissionais={colunas.length}
         conteudo={conteudo}
         contexto={
           <>
+            <section className="mesa-aside__section">
+              <h2 className="mesa-aside__title">Merece atenção</h2>
+              <div className="mt-3">
+                <PainelAtencao itens={atencao} />
+              </div>
+            </section>
+            <section className="mesa-aside__section">
+              <h2 className="mesa-aside__title">O que suas declarações indicam</h2>
+              <div className="mt-3">
+                <HipoteseEmFoco hipoteses={hipoteses} />
+              </div>
+            </section>
             <section className="mesa-aside__section">
               <h2 className="mesa-aside__title">O caso</h2>
               <div className="mt-3">
@@ -260,7 +374,9 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
             </section>
           </>
         }
-        timeline={<MesaTimeline marks={marks} />}
+        timeline={
+          <MesaTimelineDupla paciente={linhaPaciente} investigacao={linhaInvestigacao} />
+        }
       />
 
       <p className="sr-only">
