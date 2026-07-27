@@ -26,16 +26,23 @@ async function loginAs(page: Page, account: TestAccount) {
 }
 
 test.describe("Área do Curador Médico (ÉPICO 1/SPRINT 2)", () => {
-  test("curador médico vê o dashboard e a fila de casos", async ({ page }) => {
+  // O dashboard com KPIs em /curador deixou de ser a superfície do Curador: o
+  // COA passou a conduzir a Curadoria, e /curador redireciona para
+  // /coa/curadoria (next.config.ts). O teste segue o produto — a fila do COA —
+  // em vez de manter viva uma tela que ninguém alcança.
+  test("curador médico chega à fila de Curadorias do COA", async ({ page }) => {
     const curador = loadTestAccounts().find((a) => a.role === "curador_medico")!;
     await loginAs(page, curador);
 
     await page.goto("/curador");
-    await expect(page.getByText("Casos atribuídos")).toBeVisible();
+    await expect(page).toHaveURL("/coa/curadoria");
 
-    await page.getByRole("link", { name: "Ver meus casos" }).click();
-    await expect(page).toHaveURL("/curador/casos");
-    await expect(page.getByRole("heading", { name: "Meus casos" })).toBeVisible();
+    // Saudação e navegação existem com ou sem fila — nunca dependem de dado
+    // deixado por outro spec.
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Bom dia,");
+    await expect(
+      page.getByRole("navigation").getByRole("link", { name: "Fila de Curadorias" }),
+    ).toBeVisible();
   });
 
   test("paciente e profissional não acessam /curador", async ({ page }) => {

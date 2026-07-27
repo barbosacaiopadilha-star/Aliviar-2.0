@@ -22,6 +22,11 @@ function loadTestAccounts(): TestAccount[] {
 }
 
 async function loginAs(page: import("@playwright/test").Page, account: TestAccount) {
+  // Sempre parte de uma sessão limpa: /login redireciona quem já está
+  // autenticado, então trocar de papel dentro do mesmo teste nunca chegaria ao
+  // formulário. A sessão do browser vive em cookies (createBrowserClient do
+  // pacote @supabase/ssr) — é o cookie que precisa sair.
+  await page.context().clearCookies();
   await page.goto("/login");
   await page.getByLabel("E-mail").fill(account.email);
   await page.getByLabel("Senha").fill(account.password);
@@ -36,7 +41,10 @@ test.describe("AppShell visual (TASK-005B)", () => {
   // testado em "PatientShell visual" abaixo) — admin/curador continuam
   // intocados neste shell.
   for (const scenario of [
-    { role: "administrador", route: "/admin", label: "Início" },
+    // O rótulo é o real de cada papel na sidebar (shell/nav-items.ts): o
+    // Administrador ganhou "Visão geral" quando a navegação passou a ser
+    // agrupada por área.
+    { role: "administrador", route: "/admin", label: "Visão geral" },
     { role: "profissional", route: "/profissional", label: "Início" },
   ] as const) {
     test(`sidebar desktop navega para ${scenario.route}`, async ({ page }) => {

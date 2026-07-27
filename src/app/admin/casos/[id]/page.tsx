@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import type { Metadata } from "next";
@@ -88,12 +87,6 @@ export default async function AdminCaseDetailPage({ params }: AdminCaseDetailPag
           <Badge variant={caseDetail.status === "DELIVERED" || caseDetail.status === "CLOSED" ? "sage" : "default"}>
             {CASE_STATUS_LABELS[caseDetail.status]}
           </Badge>
-          <Link
-            href={`/admin/casos/${caseDetail.id}/revisao`}
-            className="text-sm font-medium text-brand-primary hover:text-brand-primary-deep"
-          >
-            Human Review →
-          </Link>
         </div>
         <p className="text-sm text-ink-muted">
           Criado em {new Date(caseDetail.createdAt).toLocaleDateString("pt-BR")} — a história original nunca é

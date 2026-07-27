@@ -17,6 +17,11 @@ function loadTestAccounts(): TestAccount[] {
 }
 
 async function loginAs(page: Page, account: TestAccount) {
+  // Sempre parte de uma sessão limpa: /login redireciona quem já está
+  // autenticado, então trocar de papel dentro do mesmo teste nunca chegaria ao
+  // formulário. A sessão do browser vive em cookies (createBrowserClient do
+  // pacote @supabase/ssr) — é o cookie que precisa sair.
+  await page.context().clearCookies();
   await page.goto("/login");
   await page.getByLabel("E-mail").fill(account.email);
   await page.getByLabel("Senha").fill(account.password);
@@ -48,12 +53,19 @@ test.describe("Observabilidade do ACE — /admin/ace (sprint intermediária)", (
     await expect(page).toHaveURL("/acesso-negado");
   });
 
-  test("link 'Observabilidade do ACE' aparece na navegação do administrador", async ({ page }) => {
+  // O rótulo real na sidebar é "Observabilidade ACE", no grupo Analytics
+  // (shell/nav-items.ts) — o link não foi adicionado nem renomeado para o
+  // teste; o teste é que passou a usar o nome que existe.
+  test("link de Observabilidade ACE aparece na navegação do administrador", async ({ page }) => {
     const admin = loadTestAccounts().find((a) => a.role === "administrador")!;
     await loginAs(page, admin);
 
     await page.goto("/admin");
-    await page.getByRole("link", { name: "Observabilidade do ACE" }).click();
+    await page
+      .getByRole("navigation")
+      .getByRole("link", { name: "Observabilidade ACE" })
+      .first()
+      .click();
     await expect(page).toHaveURL("/admin/ace");
   });
 });

@@ -1,33 +1,29 @@
 import { expect, test } from "@playwright/test";
 
-// Smoke test da Landing — confirma só que a rota carrega e que marcos
-// estáveis do topo, do meio e do fim da jornada estão presentes. Nunca
-// testa timeline/GSAP/hover/alinhamento do Fio (isso é validação manual
-// no preview). Os três headings e o link escolhidos são reais e existem
-// tanto na branch animada quanto na branch de `prefers-reduced-motion`
-// (H1 vem de FRAMES[0].content em ambas; os dois H2 e o link "Contar
-// minha história" não têm nenhuma branch condicional própria) — o teste
-// não força nenhuma preferência de movimento porque não precisa.
+// Smoke test da Landing — confirma só que a rota carrega e que marcos estáveis
+// do topo, do meio e do fim da jornada estão presentes. Nunca testa
+// timeline/GSAP/hover/alinhamento (isso é validação manual no preview).
+//
+// Os marcos foram atualizados com o redesenho editorial: a Biblioteca em
+// formato de livro e o convite final (FinalCtaSection) deixaram de ser
+// montados na Landing. Os três headings abaixo são os que a página realmente
+// renderiza hoje, na ordem em que aparecem (src/app/(public)/page.tsx).
 test("home page loads and shows the landing journey", async ({ page }) => {
   await page.goto("/");
 
+  // Chegada.
   await expect(
     page.getByRole("heading", { name: /Você não precisa tomá-la sozinho/ }),
   ).toBeVisible();
 
-  // Marco posterior ao topo — heading real da Biblioteca.
-  await expect(
-    page.getByRole("heading", { name: "Perguntas que costumam vir antes do primeiro passo" }),
-  ).toBeVisible();
+  // Meio da jornada — quem conduz a Curadoria.
+  await expect(page.getByRole("heading", { name: "Curadores independentes." })).toBeVisible();
 
-  // Marco de encerramento — heading real do convite final.
-  await expect(
-    page.getByRole("heading", { name: "Estamos aqui — sem pressa e sem urgência artificial." }),
-  ).toBeVisible();
+  // Encerramento — a última seção montada.
+  await expect(page.getByRole("heading", { name: "Dúvidas frequentes" })).toBeVisible();
 
-  // Ação principal disponível — "Contar minha história" se repete de
-  // propósito (Chegada, convite final, rodapé); .first() desambigua
-  // texto igual repetido por design, não é dependência de posição
-  // estrutural frágil.
+  // Ação principal disponível — "Contar minha história" se repete de propósito
+  // (Chegada, rodapé); .first() desambigua texto igual repetido por design,
+  // não é dependência de posição estrutural frágil.
   await expect(page.getByRole("link", { name: "Contar minha história" }).first()).toBeVisible();
 });
