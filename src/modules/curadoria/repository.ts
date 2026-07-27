@@ -247,8 +247,15 @@ export async function validatePriorityProfile(
  *   importa, e enquanto ninguém resolver não há o que oferecer. O perfil pode
  *   ter sido publicado antes de a divergência aparecer; some daqui na hora,
  *   sem esperar decisão de despublicar.
+ *
+ * E um emparelhamento: Case real vê só profissional real; Case de certificação
+ * vê só fixture. Nas duas direções, porque a regra num sentido só deixaria
+ * aberta exatamente a porta perigosa — um perfil sintético num Case real.
  */
-export async function listApprovedProviders(supabase: SupabaseClient): Promise<ProviderSnapshot[]> {
+export async function listApprovedProviders(
+  supabase: SupabaseClient,
+  options?: { certification?: boolean },
+): Promise<ProviderSnapshot[]> {
   const { data, error } = await supabase
     .from("professional_profiles")
     .select(
@@ -256,6 +263,7 @@ export async function listApprovedProviders(supabase: SupabaseClient): Promise<P
     )
     .eq("status", "ativo")
     .eq("is_demo", false)
+    .eq("is_test_fixture", options?.certification === true)
     .eq("publication_status", "publicado");
 
   if (error) throw new Error("Não foi possível carregar os profissionais da Rede.");
@@ -316,7 +324,17 @@ export async function runCompatibility(
     throw new Error("A comparação só acontece depois que o paciente valida o Perfil de Prioridades.");
   }
 
-  const providers = await listApprovedProviders(supabase);
+  // O Case decide qual Rede é a dele. Nada aqui escolhe: o emparelhamento é
+  // lido do próprio Case.
+  const { data: caso } = await supabase
+    .from("cases")
+    .select("is_certification")
+    .eq("id", profile.caseId)
+    .maybeSingle();
+
+  const providers = await listApprovedProviders(supabase, {
+    certification: caso?.is_certification === true,
+  });
 
   const mandatory = profile.mandatoryFilters.map((filter) => ({
     kind: filter.kind as MandatoryFilterKind,

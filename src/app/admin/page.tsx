@@ -120,8 +120,16 @@ export default async function AdminDashboardPage({
   const porOrigem = leadsBySource(source, period, now);
   const serie = buildTimeSeries(source, period, now);
 
+  // Indicador é sobre a Rede real. Demonstração e fixture de certificação
+  // existem para exercitar telas e contratos; contá-las aqui faria o
+  // Administrador ver trabalho pendente que não existe — e, pior, faria a
+  // Rede parecer maior do que é.
   const pendingPublication = professionals.filter(
-    (professional) => professional.status === "ativo" && professional.publicationStatus === "nao_publicado",
+    (professional) =>
+      professional.status === "ativo" &&
+      professional.publicationStatus === "nao_publicado" &&
+      !professional.isDemo &&
+      !professional.isTestFixture,
   );
 
   // Papéis contados por PESSOA, não por concessão. Alguém que acumula

@@ -46,6 +46,9 @@ export type ProfessionalProfile = {
   // oferecido a um paciente. O banco impede que um deles seja publicado,
   // entre numa seleção ou vire conexão.
   isDemo: boolean;
+  // Perfil sintético de certificação: percorre os contratos reais, mas só
+  // dentro de um Case marcado como certificação. Nunca alcança paciente.
+  isTestFixture: boolean;
   displayName: string;
   professionalIdentifier: string;
   crm: string | null;

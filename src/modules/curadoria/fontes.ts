@@ -252,6 +252,32 @@ export type SourceAssessment = {
   reason: string;
 };
 
+// ---------------------------------------------------------------------------
+// Evidência sintética
+// ---------------------------------------------------------------------------
+
+/**
+ * Domínios reservados pela IETF (RFC 2606/6761) e o prefixo de registro que a
+ * fixture de certificação usa. Nada aqui pode sustentar um cadastro real —
+ * são endereços que, por definição, não pertencem a ninguém.
+ */
+const SYNTHETIC_MARKERS = ["example.com", "example.org", "example.net", "example.test", "CRM-TEST-"];
+
+export function isSyntheticEvidence(value: string | null | undefined): boolean {
+  if (!value) return false;
+  const lower = value.toLowerCase();
+  return SYNTHETIC_MARKERS.some((marker) => lower.includes(marker.toLowerCase()));
+}
+
+export type AssessOptions = {
+  /**
+   * Modo de certificação. Só o ambiente de teste liga isto, e ligá-lo não
+   * afrouxa nada além de aceitar evidência declaradamente sintética — a
+   * matriz, a autoridade e a exigência de proveniência continuam valendo.
+   */
+  certification?: boolean;
+};
+
 /**
  * Classifica uma evidência. O nome é `assess`, não `verify`, e a diferença é
  * o módulo inteiro: o retorno diz o que a evidência **permite**, e quem
@@ -260,8 +286,19 @@ export type SourceAssessment = {
  * O melhor resultado possível aqui é `allowsVerification: true` sobre o estado
  * `nao_verificado` — "pode ser verificado por alguém", não "está verificado".
  */
-export function assessSource(evidence: SourceEvidence): SourceAssessment {
+export function assessSource(evidence: SourceEvidence, options?: AssessOptions): SourceAssessment {
   const policy = SOURCE_MATRIX[evidence.kind];
+
+  // Antes de qualquer outra coisa: a evidência é de brinquedo? Fora do modo de
+  // certificação isto não é uma fonte fraca, é uma fonte que não existe.
+  if (isSyntheticEvidence(evidence.reference) && !options?.certification) {
+    return {
+      eligibleState: "nao_verificado",
+      allowsVerification: false,
+      reason:
+        "Esta é uma referência sintética (domínio reservado ou registro de teste). Serve à certificação automatizada, nunca a um cadastro real.",
+    };
+  }
 
   if (evidence.tier === "INADEQUADA") {
     return {

@@ -10,6 +10,7 @@ type ProfessionalProfileRow = {
   status: ProfileStatus;
   publication_status: PublicationStatus;
   is_demo: boolean;
+  is_test_fixture: boolean;
   display_name: string;
   professional_identifier: string;
   crm: string | null;
@@ -31,7 +32,7 @@ type ProfessionalProfileRow = {
 };
 
 const SELECT_COLUMNS =
-  "id, profile_id, status, publication_status, is_demo, display_name, professional_identifier, crm, crm_uf, registration_status, registration_source, registration_verified_at, registration_verified_by, professional_summary, institution_name, experience_level, intake_approach, offers_continuous_care, availability_window, created_by, updated_by, created_at, updated_at";
+  "id, profile_id, status, publication_status, is_demo, is_test_fixture, display_name, professional_identifier, crm, crm_uf, registration_status, registration_source, registration_verified_at, registration_verified_by, professional_summary, institution_name, experience_level, intake_approach, offers_continuous_care, availability_window, created_by, updated_by, created_at, updated_at";
 
 function mapRow(row: ProfessionalProfileRow): ProfessionalProfile {
   return {
@@ -40,6 +41,7 @@ function mapRow(row: ProfessionalProfileRow): ProfessionalProfile {
     status: row.status,
     publicationStatus: row.publication_status,
     isDemo: row.is_demo,
+    isTestFixture: row.is_test_fixture,
     displayName: row.display_name,
     professionalIdentifier: row.professional_identifier,
     crm: row.crm,
