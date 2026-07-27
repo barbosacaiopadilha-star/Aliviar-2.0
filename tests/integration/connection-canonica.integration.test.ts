@@ -678,7 +678,12 @@ describe("Connection canônica — sem final_curadoria_deliveries", () => {
 
     expect(await findDeliveredCuradoria(scenario.patientClient, scenario.caseId)).toBeNull();
 
-    const { data: ok } = await scenario.service.rpc("canonical_delivery_matches", {
+    // Pelo cliente do paciente, não pelo service role: as funções canônicas
+    // deixaram de ser executáveis por PUBLIC (e, com isso, por `anon` e pelo
+    // service role, que só as alcançavam por herança). `authenticated` é o
+    // único papel de cliente autorizado — e é assim que a policy de INSERT e o
+    // trigger de coerência as invocam em produção.
+    const { data: ok } = await scenario.patientClient.rpc("canonical_delivery_matches", {
       p_report_id: scenario.reportId,
       p_case_id: scenario.caseId,
       p_patient_profile_id: scenario.patientProfileId,
