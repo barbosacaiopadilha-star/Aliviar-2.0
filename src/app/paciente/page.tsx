@@ -3,11 +3,13 @@ import type { Metadata } from "next";
 
 import { PatientHomeState } from "@/components/paciente/patient-home-state";
 import { AmbientHero } from "@/components/paciente/experiencia/ambient-hero";
+import { CuradoriaNaoIniciada } from "@/components/paciente/experiencia/estados-vazios";
 import { CuradoriaCard } from "@/components/paciente/experiencia/curadoria-card";
 import { JourneyWalk, type WalkStage } from "@/components/paciente/experiencia/journey-walk";
 import { ProfileCard } from "@/components/paciente/experiencia/profile-card";
 import { PatientWelcome } from "@/components/paciente/dashboard/patient-primitives";
 import { derivePatientPending } from "@/modules/paciente/next-action";
+import { currentHourInBrazil, greetingFor } from "@/modules/paciente/ambiente";
 import {
   mensagemPrincipal,
   STAGE_EYEBROWS,
@@ -67,6 +69,7 @@ export default async function PacienteHomePage() {
   });
   const pending = derivePatientPending({ homeState: state, jornada });
 
+  const saudacao = greetingFor(currentHourInBrazil());
   const displayName = authState.profile?.displayName ?? "Paciente";
   const firstName = displayName.split(/\s+/)[0] ?? displayName;
 
@@ -74,9 +77,10 @@ export default async function PacienteHomePage() {
   // uma trilha vazia.
   if (!jornada) {
     return (
-      <div className="mx-auto max-w-3xl space-y-10">
-        <PatientWelcome name={displayName} />
+      <div className="mx-auto max-w-3xl space-y-8">
+        <PatientWelcome name={displayName} subtitle={`${saudacao}. Estamos por aqui.`} />
         <PatientHomeState state={state} />
+        <CuradoriaNaoIniciada />
         <QuickLinks />
       </div>
     );
@@ -106,6 +110,7 @@ export default async function PacienteHomePage() {
         firstName={firstName}
         stage={jornada.currentStage}
         eyebrow={STAGE_EYEBROWS[jornada.currentStage]}
+        greeting={saudacao}
       />
 
       <JourneyWalk stages={walkStages} currentDetail={currentStage?.description} />

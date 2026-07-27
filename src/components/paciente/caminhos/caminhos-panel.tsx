@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { CartaCaminho } from "@/components/paciente/caminhos/carta-caminho";
 import { ComparacaoCaminhos } from "@/components/paciente/caminhos/comparacao-caminhos";
+import { ComparacaoNaoIniciada } from "@/components/paciente/experiencia/estados-vazios";
 import { PatientCard } from "@/components/paciente/dashboard/patient-primitives";
 import type { PatientCuradoria } from "@/modules/curadoria/patient-curadoria";
 
@@ -90,7 +91,11 @@ export function CaminhosPanel({ curadoria }: { curadoria: PatientCuradoria }) {
         ))}
       </div>
 
-      {selecionadas.length >= 2 ? <ComparacaoCaminhos options={selecionadas} /> : null}
+      {selecionadas.length >= 2 ? (
+        <ComparacaoCaminhos options={selecionadas} />
+      ) : (
+        <ComparacaoNaoIniciada />
+      )}
 
       {/* A preparação para a escolha só aparece depois que ela conheceu os
           três: convidar a decidir antes disso seria apressar. */}

@@ -17,11 +17,14 @@ export function AmbientHero({
   firstName,
   stage,
   eyebrow,
+  greeting,
 }: {
   firstName: string;
   stage: JornadaStageId;
   /** Onde a jornada está, em duas palavras. */
   eyebrow: string;
+  /** "Bom dia" / "Boa tarde" / "Boa noite" — resolvido no servidor, sem flash. */
+  greeting?: string;
 }) {
   const ambience = ambienceFor(stage);
 
@@ -42,9 +45,9 @@ export function AmbientHero({
           id="patient-hero-title"
           className="mt-3 font-serif text-3xl font-medium leading-snug tracking-tight text-[var(--patient-ink)] lg:text-[2.6rem]"
         >
-          Olá, {firstName}.
+          {greeting ? `${greeting}, ${firstName}.` : `Olá, ${firstName}.`}
         </h1>
-        <p className="patient-body mt-3 max-w-xl text-lg text-[var(--color-ink-muted)]">
+        <p className="p-read-mid mt-3 max-w-xl text-lg text-[var(--color-ink-muted)]">
           {ambience.message}
         </p>
         <p className="sr-only">{ambience.sceneDescription}</p>

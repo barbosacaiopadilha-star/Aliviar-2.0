@@ -105,6 +105,8 @@ describe("Certificação do ciclo da Curadoria — fixtures isoladas (Supabase l
   let curador: { client: ReturnType<typeof createCuradoriaClient>; userId: string };
   let admin: { client: ReturnType<typeof createCuradoriaClient>; userId: string };
   let pacienteProfileId: string;
+  /** Contas criadas por testes que precisam de um Case real próprio. */
+  const pacientesDescartaveis: string[] = [];
 
   async function loginAs(role: string) {
     const account = accounts.find((entry) => entry.role === role)!;
@@ -168,11 +170,17 @@ describe("Certificação do ciclo da Curadoria — fixtures isoladas (Supabase l
 
   afterAll(async () => {
     await cleanupCuradoriaCertificationFixture(service);
-    if (pacienteProfileId) {
-      await service.from("patient_stories").delete().eq("profile_id", pacienteProfileId);
-      await service.from("patient_profiles").delete().eq("profile_id", pacienteProfileId);
-      await service.from("user_roles").delete().eq("profile_id", pacienteProfileId);
-      await service.auth.admin.deleteUser(pacienteProfileId);
+
+    // Cases primeiro, contas depois: a ordem inversa esbarra na FK de
+    // `cases.source_story_id` e deixa profissional e paciente sobrevivendo à
+    // rodada — foi assim que a rede local cresceu antes.
+    for (const profileId of [...pacientesDescartaveis, pacienteProfileId].filter(Boolean)) {
+      await service.from("cases").delete().eq("patient_profile_id", profileId);
+      await service.from("patient_story_versions").delete().eq("created_by", profileId);
+      await service.from("patient_stories").delete().eq("profile_id", profileId);
+      await service.from("patient_profiles").delete().eq("profile_id", profileId);
+      await service.from("user_roles").delete().eq("profile_id", profileId);
+      await service.auth.admin.deleteUser(profileId);
     }
   }, 60_000);
 
@@ -207,26 +215,36 @@ describe("Certificação do ciclo da Curadoria — fixtures isoladas (Supabase l
     });
 
     it("fixture não entra em Case real", async () => {
-      const { data: caseReal } = await service
-        .from("cases")
-        .select("id")
-        .eq("is_certification", false)
-        .limit(1)
-        .maybeSingle();
-      expect(caseReal, "nenhum Case real no banco local").toBeTruthy();
+      // O Case real é construído aqui, pelo caminho de sempre. Pegar "o
+      // primeiro Case real do banco" fazia o teste depender de resíduo de
+      // outra suíte: com o banco limpo ele não tinha o que provar, e com o
+      // banco sujo provava sobre o Case de outra pessoa.
+      const email = `isolamento-${Date.now()}@example.test`;
+      const pacienteReal = await createPatientAccount(
+        service,
+        admin.client,
+        { email, displayName: "Paciente de Case real (teste de isolamento)" },
+        admin.userId,
+      );
+      pacientesDescartaveis.push(pacienteReal.profileId);
 
-      const { data: perfilReal } = await service
-        .from("priority_profiles")
-        .select("id")
-        .eq("case_id", caseReal!.id)
-        .maybeSingle();
-      if (!perfilReal) return;
+      const clienteReal = createCuradoriaClient(url, anonKey);
+      await clienteReal.auth.signInWithPassword({ email, password: pacienteReal.password });
+      const rascunho = await getOrCreateActiveStory(clienteReal, pacienteReal.profileId);
+      const historia = await submitStory(clienteReal, rascunho.id, rascunho.revision);
+
+      const caseReal = await createCase(admin.client, historia.id, curador.userId, admin.userId);
+      const perfilReal = await curadoria.createPriorityProfile(
+        curador.client,
+        caseReal.id,
+        curador.userId,
+      );
 
       const { data: selecao } = await service
         .from("curated_selections")
         .insert({
-          case_id: caseReal!.id,
-          priority_profile_id: perfilReal.id,
+          case_id: caseReal.id,
+          priority_profile_id: perfilReal,
           selected_by: curador.userId,
           composition_rationale: "Tentativa de usar fixture em Case real.",
         })
@@ -245,6 +263,7 @@ describe("Certificação do ciclo da Curadoria — fixtures isoladas (Supabase l
       expect(error!.message).toContain("nao entra em Case real");
 
       await service.from("curated_selections").delete().eq("id", selecao!.id);
+      await service.from("cases").delete().eq("id", caseReal.id);
     });
 
     it("fixture não gera conexão real", async () => {

@@ -99,6 +99,35 @@ export function ambienceFor(stage: JornadaStageId): StageAmbience {
 }
 
 /**
+ * A saudação pelo horário. Sem exagero: "Bom dia" e o nome, nada de
+ * comentário sobre o dia dela nem emoji.
+ *
+ * O corte da noite é às 18h e o da manhã às 5h — quem abre a plataforma às
+ * 23h está acordado por algum motivo, e "boa noite" é a única coisa gentil a
+ * dizer.
+ */
+export function greetingFor(hour: number): "Bom dia" | "Boa tarde" | "Boa noite" {
+  if (hour >= 5 && hour < 12) return "Bom dia";
+  if (hour >= 12 && hour < 18) return "Boa tarde";
+  return "Boa noite";
+}
+
+/**
+ * A hora local de quem lê. O servidor não sabe o fuso da pessoa, e o cadastro
+ * não guarda: usamos o fuso do Brasil, onde a Aliviar atende. Errar por uma
+ * hora numa saudação é aceitável; um "Bom dia" às 22h não seria.
+ */
+export function currentHourInBrazil(now: Date = new Date()): number {
+  return Number(
+    new Intl.DateTimeFormat("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      hour: "numeric",
+      hour12: false,
+    }).format(now),
+  );
+}
+
+/**
  * A saudação do hero. Uma ideia principal por tela: o nome de quem chegou e
  * onde a jornada dela está — nada mais.
  */

@@ -16,9 +16,87 @@
   --patient-warm: #f5efe6;
   --patient-forest: #1a2e26;
   --patient-ink: #2c3531;
+
+  /* -------------------------------------------------------------------------
+     TOKENS DA EXPERIÊNCIA — uma linguagem só.
+     Antes, cada componente escolhia a própria sombra, o próprio raio e a
+     própria duração: a interface soava como três pessoas falando ao mesmo
+     tempo. Daqui em diante tudo vem daqui.
+  ------------------------------------------------------------------------- */
+
+  /* Elevação em três degraus. Mais que três vira ruído: a pessoa deixa de
+     perceber hierarquia e passa a perceber sombra. */
+  --p-elev-1:
+    0 1px 2px rgb(26 46 38 / 0.03),
+    0 8px 28px rgb(26 46 38 / 0.05);
+  --p-elev-2:
+    0 2px 6px rgb(26 46 38 / 0.05),
+    0 18px 44px rgb(26 46 38 / 0.08);
+  --p-elev-3:
+    0 4px 10px rgb(26 46 38 / 0.06),
+    0 28px 64px rgb(26 46 38 / 0.12);
+
+  --p-radius-sm: 0.75rem;
+  --p-radius-md: 1rem;
+  --p-radius-lg: 1.25rem;
+  --p-radius-pill: 9999px;
+
+  --p-blur: 14px;
+
+  /* Ritmo vertical: uma escala só, para o espaçamento ter cadência em vez de
+     números avulsos. */
+  --p-space-xs: 0.5rem;
+  --p-space-sm: 0.75rem;
+  --p-space-md: 1.25rem;
+  --p-space-lg: 2rem;
+  --p-space-xl: 3rem;
+
+  /* MOTION BUDGET.
+     Interação responde em até 250ms — acima disso a pessoa sente a interface
+     em vez da jornada. Ambiente (respiração da cena) é lento de propósito:
+     lento o bastante para não ser percebido como movimento.
+     Nada elástico: sem overshoot, sem bounce. Calma, nunca espetáculo. */
+  --p-motion-instant: 120ms;
+  --p-motion-interaction: 220ms;
+  --p-motion-transition: 380ms;
+  --p-motion-ambient: 14s;
+  --p-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --p-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
   position: relative;
   background-color: var(--patient-mist);
   color: var(--patient-ink);
+}
+
+/* ---------------------------------------------------------------------------
+   TRÊS VELOCIDADES DE LEITURA
+   Rápida: o que responde em um relance (rótulos, estados, chips).
+   Intermediária: o que orienta (títulos, mensagens de etapa).
+   Profunda: o que a pessoa lê com calma (narrativa, atenção, justificativa).
+   Nunca tudo no mesmo peso — peso uniforme é o que faz texto virar bloco.
+--------------------------------------------------------------------------- */
+.patient-dashboard .p-read-fast {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  color: var(--color-ink-muted);
+}
+
+.patient-dashboard .p-read-mid {
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--patient-ink);
+}
+
+.patient-dashboard .p-read-deep {
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  max-width: 62ch;
+  color: var(--patient-ink);
+}
+
+.patient-dashboard .p-stack > * + * {
+  margin-top: var(--p-space-md);
 }
 
 .patient-dashboard .patient-ambient-layer {
@@ -69,22 +147,18 @@
 }
 
 .patient-dashboard .patient-card {
-  border-radius: 1rem;
+  border-radius: var(--p-radius-md);
   background: rgb(255 255 255 / 0.9);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow:
-    0 1px 2px rgb(26 46 38 / 0.03),
-    0 8px 28px rgb(26 46 38 / 0.05);
+  backdrop-filter: blur(var(--p-blur));
+  -webkit-backdrop-filter: blur(var(--p-blur));
+  box-shadow: var(--p-elev-1);
   transition:
-    box-shadow 400ms cubic-bezier(0.4, 0, 0.2, 1),
-    transform 400ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow var(--p-motion-interaction) var(--p-ease),
+    transform var(--p-motion-interaction) var(--p-ease);
 }
 
 .patient-dashboard .patient-card:hover {
-  box-shadow:
-    0 2px 4px rgb(26 46 38 / 0.04),
-    0 16px 40px rgb(26 46 38 / 0.07);
+  box-shadow: var(--p-elev-2);
 }
 
 .patient-dashboard .patient-card--note {
@@ -112,7 +186,7 @@
   height: 100%;
   border-radius: 9999px;
   background: linear-gradient(90deg, #5a7d6a 0%, #1a2e26 100%);
-  transition: width 600ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width var(--p-motion-transition) var(--p-ease);
 }
 
 .patient-dashboard .patient-journey-line {
@@ -132,7 +206,7 @@
 .patient-dashboard .patient-hero {
   position: relative;
   overflow: hidden;
-  border-radius: 1.25rem;
+  border-radius: var(--p-radius-lg);
   padding: 2.5rem 1.5rem;
   isolation: isolate;
 }
@@ -143,15 +217,31 @@
   }
 }
 
+/* A cena respira: 14s por ciclo, deslocamento de menos de 1% e variação de
+   luz quase imperceptível. Lento o bastante para não ser lido como movimento
+   — a pessoa sente o ambiente vivo sem nunca olhar para a animação. */
 .patient-dashboard .patient-hero__scene {
   position: absolute;
-  inset: 0;
+  inset: -2%;
   z-index: -2;
   background-size: cover;
   background-position: center 35%;
   opacity: 0.4;
   filter: saturate(0.9);
   transform: scale(1.02);
+  animation: patient-breathe var(--p-motion-ambient) var(--p-ease) infinite alternate;
+  will-change: transform, filter;
+}
+
+@keyframes patient-breathe {
+  from {
+    transform: scale(1.02) translate3d(0, 0, 0);
+    filter: saturate(0.9) brightness(1);
+  }
+  to {
+    transform: scale(1.045) translate3d(0, -0.6%, 0);
+    filter: saturate(0.95) brightness(1.03);
+  }
 }
 
 .patient-dashboard .patient-hero__veil {
@@ -208,15 +298,33 @@
   height: 0.25rem;
   border-radius: 9999px;
   background: rgb(26 46 38 / 0.12);
-  transition: background-color 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color var(--p-motion-transition) var(--p-ease);
 }
 
 .patient-dashboard .patient-walk__step--done .patient-walk__dot {
   background: rgb(90 125 106 / 0.55);
 }
 
+/* O caminho já percorrido permanece iluminado — não apaga atrás da pessoa. */
+.patient-dashboard .patient-walk__step--done .patient-walk__label {
+  color: var(--color-brand-sage);
+}
+
+/* A etapa atual tem um pulso lento e contido: sinal de que algo acontece
+   agora, nunca um alerta piscando. */
 .patient-dashboard .patient-walk__step--current .patient-walk__dot {
   background: var(--patient-forest);
+  animation: patient-pulse 3.2s var(--p-ease) infinite;
+}
+
+@keyframes patient-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
 }
 
 .patient-dashboard .patient-walk__label {
@@ -257,24 +365,32 @@
 .patient-dashboard .patient-carta {
   flex: 0 0 88%;
   scroll-snap-align: center;
-  border-radius: 1.25rem;
+  border-radius: var(--p-radius-lg);
   background: rgb(255 255 255 / 0.92);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(var(--p-blur));
+  -webkit-backdrop-filter: blur(var(--p-blur));
   padding: 1.5rem;
-  box-shadow:
-    0 1px 2px rgb(26 46 38 / 0.03),
-    0 8px 28px rgb(26 46 38 / 0.06);
+  box-shadow: var(--p-elev-1);
+  /* A carta é um objeto: borda de luz no topo, sombra embaixo. Sem a borda,
+     o branco sobre branco some e ela vira container. */
+  border: 1px solid rgb(255 255 255 / 0.6);
   transition:
-    box-shadow 400ms cubic-bezier(0.4, 0, 0.2, 1),
-    transform 400ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow var(--p-motion-interaction) var(--p-ease),
+    transform var(--p-motion-interaction) var(--p-ease),
+    border-color var(--p-motion-interaction) var(--p-ease);
 }
 
 .patient-dashboard .patient-carta:hover {
   transform: translateY(-2px);
-  box-shadow:
-    0 2px 6px rgb(26 46 38 / 0.05),
-    0 18px 44px rgb(26 46 38 / 0.09);
+  border-color: rgb(90 125 106 / 0.28);
+  box-shadow: var(--p-elev-2);
+}
+
+/* Foco visível no objeto inteiro quando o teclado entra nele — não só no
+   botão. Quem navega por Tab precisa saber em qual carta está. */
+.patient-dashboard .patient-carta:focus-within {
+  border-color: rgb(26 46 38 / 0.45);
+  box-shadow: var(--p-elev-2);
 }
 
 /* Já conhecida: presença mais serena, nunca apagada — ela continua sendo uma
@@ -306,9 +422,8 @@
 
 .patient-dashboard .patient-carta--aberta {
   background: rgb(255 255 255 / 0.97);
-  box-shadow:
-    0 4px 10px rgb(26 46 38 / 0.06),
-    0 24px 60px rgb(26 46 38 / 0.12);
+  border-color: rgb(90 125 106 / 0.2);
+  box-shadow: var(--p-elev-3);
 }
 
 .patient-dashboard .patient-chip {
@@ -359,9 +474,47 @@
   }
 }
 
+/* ---------------------------------------------------------------------------
+   Skeletons — a forma do que vem, nunca um spinner genérico.
+   O carregamento tem o desenho do conteúdo que vai chegar: quando ele chega,
+   nada salta de lugar. Pulso longo e suave; sem flash.
+--------------------------------------------------------------------------- */
+.patient-dashboard .p-skeleton {
+  border-radius: var(--p-radius-sm);
+  background: linear-gradient(
+    100deg,
+    rgb(26 46 38 / 0.05) 30%,
+    rgb(26 46 38 / 0.09) 50%,
+    rgb(26 46 38 / 0.05) 70%
+  );
+  background-size: 220% 100%;
+  animation: patient-shimmer 1.9s var(--p-ease) infinite;
+}
+
+@keyframes patient-shimmer {
+  from {
+    background-position: 140% 0;
+  }
+  to {
+    background-position: -40% 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .patient-dashboard .patient-fade-in {
     animation: none;
+  }
+
+  /* O ambiente para de respirar, o pulso para, o brilho para. A informação
+     continua inteira: nada aqui era animação carregando significado. */
+  .patient-dashboard .patient-hero__scene,
+  .patient-dashboard .patient-walk__step--current .patient-walk__dot,
+  .patient-dashboard .p-skeleton {
+    animation: none;
+  }
+
+  .patient-dashboard .p-skeleton {
+    background: rgb(26 46 38 / 0.07);
   }
 
   .patient-dashboard .patient-card,
