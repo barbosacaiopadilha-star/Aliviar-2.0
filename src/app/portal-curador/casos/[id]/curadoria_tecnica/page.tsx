@@ -5,6 +5,8 @@ import type { Metadata } from "next";
 
 import { CaseAlert } from "@/components/curadoria/case-alert";
 import { CompatibilityRunner } from "@/components/curadoria/compatibility-runner";
+import { CruzamentoMesa } from "@/components/curadoria/cruzamento-mesa";
+import { loadMesaCruzamento } from "@/modules/curadoria/mesa-cruzamento";
 import { MesaContextPanel } from "@/components/curadoria/mesa-context-panel";
 import { MesaPriorityPanel } from "@/components/curadoria/mesa-priority-panel";
 import { MesaWorkspace } from "@/components/curadoria/mesa-workspace";
@@ -60,6 +62,14 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
   const { analyses, excluded, computedAt } = record.curadoriaTecnica;
 
   const blocked = phaseState.status === "BLOQUEADA";
+
+  // Blocos 1–4 do Dashboard: cabeçalho, orçamento 50/50, elegibilidade por
+  // área e comparação. A seleção (bloco 5) continua no MesaWorkspace abaixo.
+  const cruzamentoView = await loadMesaCruzamento(
+    supabase,
+    record.caseId,
+    record.curadoriaTecnica.selectedProfessionalIds.length,
+  );
 
   // A Mesa reabre onde parou: seleção e pareceres vêm do que já foi gravado.
   // O parecer persiste no Relatório (curadoria_report_options), que é onde os
@@ -129,6 +139,12 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
             </Card>
           ) : (
             <>
+              <CruzamentoMesa
+                view={cruzamentoView}
+                patientFirstName={record.patientFirstName}
+                necessidade={cruzamentoView.areaRequirement}
+              />
+
               {/* O chamador que faltava: `computeCompatibilityAction` existia
                   pronta e sem nenhuma superfície — a Mesa dizia "comparação
                   ainda não executada" e parava ali, sem caminho pela interface. */}

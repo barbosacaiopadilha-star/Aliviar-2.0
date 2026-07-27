@@ -9,13 +9,86 @@
 // service_role passaria por cima dela — e passar é exatamente o que não pode
 // acontecer.
 
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import { createCase } from "@/modules/cases/repository";
+import { createPatientAccount } from "@/modules/profiles/patient-account-repository";
+import { getOrCreateActiveStory, submitStory } from "@/modules/story/repository";
+
+import { createCuradoriaClient } from "./curadoria-client";
 
 const admin = createAdminSupabaseClient();
 
 let criados: string[] = [];
+
+// A cadeia própria dos testes que precisam de Case/paciente/seleção. A versão
+// anterior pegava o primeiro Case do banco — o Case de OUTRA suíte — e o
+// atalho só apareceu quando um reset mudou a ordem de execução: além de
+// falhar, contaminava a suíte dona do Case com uma seleção órfã.
+let pacienteProfileId: string | null = null;
+let ownCaseId: string | null = null;
+let ownPriorityProfileId: string | null = null;
+
+async function ensureOwnChain(): Promise<{ caseId: string; priorityProfileId: string; patientProfileId: string }> {
+  if (ownCaseId && ownPriorityProfileId && pacienteProfileId) {
+    return { caseId: ownCaseId, priorityProfileId: ownPriorityProfileId, patientProfileId: pacienteProfileId };
+  }
+
+  const TEST_USERS_PATH = path.resolve(__dirname, "../../test-users.local.json");
+  if (!existsSync(TEST_USERS_PATH)) throw new Error("test-users.local.json não existe.");
+  const accounts = JSON.parse(readFileSync(TEST_USERS_PATH, "utf-8")) as {
+    role: string;
+    email: string;
+    password: string;
+  }[];
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+
+  const adminAccount = accounts.find((a) => a.role === "administrador")!;
+  const adminAuth = createCuradoriaClient(url, anonKey);
+  await adminAuth.auth.signInWithPassword({ email: adminAccount.email, password: adminAccount.password });
+  const {
+    data: { user: adminUser },
+  } = await adminAuth.auth.getUser();
+
+  const email = `rede-demo-${Date.now()}@aliviar-conexao.local`;
+  const paciente = await createPatientAccount(
+    admin,
+    adminAuth,
+    { email, displayName: "Paciente Rede Demo (teste)" },
+    adminUser!.id,
+  );
+  pacienteProfileId = paciente.profileId;
+
+  const patientClient = createCuradoriaClient(url, anonKey);
+  await patientClient.auth.signInWithPassword({ email, password: paciente.password });
+  const draft = await getOrCreateActiveStory(patientClient, paciente.profileId);
+  const story = await submitStory(patientClient, draft.id, draft.revision);
+
+  const curadorAccount = accounts.find((a) => a.role === "curador_medico")!;
+  const curadorAuth = createCuradoriaClient(url, anonKey);
+  await curadorAuth.auth.signInWithPassword({ email: curadorAccount.email, password: curadorAccount.password });
+  const {
+    data: { user: curadorUser },
+  } = await curadorAuth.auth.getUser();
+
+  const kase = await createCase(adminAuth, story.id, curadorUser!.id, adminUser!.id);
+  ownCaseId = kase.id;
+
+  const { data: perfil, error } = await admin
+    .from("priority_profiles")
+    .insert({ case_id: kase.id, curator_id: curadorUser!.id })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  ownPriorityProfileId = perfil!.id as string;
+
+  return { caseId: ownCaseId, priorityProfileId: ownPriorityProfileId, patientProfileId: pacienteProfileId };
+}
 
 async function criarProfissional(fields: Record<string, unknown>): Promise<string> {
   const { data, error } = await admin
@@ -44,6 +117,16 @@ describe("rede de demonstração — o banco recusa, não a tela (Supabase local
     await admin.from("professional_profiles").delete().in("id", criados);
     criados = [];
   });
+
+  afterAll(async () => {
+    if (ownCaseId) await admin.from("cases").delete().eq("id", ownCaseId);
+    if (pacienteProfileId) {
+      await admin.from("patient_stories").delete().eq("profile_id", pacienteProfileId);
+      await admin.from("patient_profiles").delete().eq("profile_id", pacienteProfileId);
+      await admin.from("user_roles").delete().eq("profile_id", pacienteProfileId);
+      await admin.auth.admin.deleteUser(pacienteProfileId);
+    }
+  }, 60_000);
 
   it("perfil de demonstração não pode ser publicado", async () => {
     const id = await criarProfissional({ is_demo: true });
@@ -116,23 +199,13 @@ describe("rede de demonstração — o banco recusa, não a tela (Supabase local
 
   it("perfil de demonstração não entra numa seleção", async () => {
     const demo = await criarProfissional({ is_demo: true });
-
-    // Buscar o Perfil primeiro e o Case a partir dele — o contrário desiste
-    // sempre que o Case sorteado não tiver Consulta Inicial, e um teste que
-    // desiste em silêncio passa sem provar nada.
-    const { data: perfil } = await admin
-      .from("priority_profiles")
-      .select("id, case_id")
-      .limit(1)
-      .maybeSingle();
-
-    expect(perfil, "nenhum Perfil de Prioridades no banco local — o teste não pode provar o gatilho").toBeTruthy();
+    const { caseId, priorityProfileId } = await ensureOwnChain();
 
     const { data: selecao, error: erroSelecao } = await admin
       .from("curated_selections")
       .insert({
-        case_id: perfil!.case_id,
-        priority_profile_id: perfil!.id,
+        case_id: caseId,
+        priority_profile_id: priorityProfileId,
         selected_by: (await admin.from("profiles").select("id").limit(1).single()).data!.id,
         composition_rationale: "Seleção de teste do gatilho.",
       })
@@ -157,15 +230,11 @@ describe("rede de demonstração — o banco recusa, não a tela (Supabase local
 
   it("perfil de demonstração não vira conexão", async () => {
     const demo = await criarProfissional({ is_demo: true });
-
-    const { data: paciente } = await admin.from("patient_profiles").select("profile_id").limit(1).maybeSingle();
-    const { data: caso } = await admin.from("cases").select("id").limit(1).maybeSingle();
-    expect(paciente, "nenhum paciente no banco local").toBeTruthy();
-    expect(caso, "nenhum Case no banco local").toBeTruthy();
+    const { caseId, patientProfileId } = await ensureOwnChain();
 
     const { error } = await admin.from("connection_records").insert({
-      case_id: caso!.id,
-      patient_profile_id: paciente!.profile_id,
+      case_id: caseId,
+      patient_profile_id: patientProfileId,
       professional_profile_id: demo,
       status: "PENDING",
     });
