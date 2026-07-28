@@ -15,6 +15,7 @@ import { loadPatientCuradoria } from "@/modules/curadoria/patient-curadoria";
 
 import { createCuradoriaClient } from "./curadoria-client";
 import { seedPublishedProfessional } from "./rede-fixture";
+import { completarMapaDePrioridades } from "./support-mapa";
 
 /**
  * A CURADORIA INTEIRA, DO ACOLHIMENTO AO ENCERRAMENTO.
@@ -66,7 +67,7 @@ describe("Curadoria completa — sem SQL, sem script, sem intervenção técnica
     return { client, userId: user!.id };
   }
 
-  it("percorre as sete etapas e termina com a decisão do paciente registrada", async () => {
+  it("percorre as seis etapas e termina com a decisão do paciente registrada", async () => {
     // ---------------------------------------------------------------- cenário
     const admin = await loginAs("administrador");
     const curador = await loginAs("curador_medico");
@@ -146,6 +147,7 @@ describe("Curadoria completa — sem SQL, sem script, sem intervenção técnica
     await curadoria.saveWeight(cliente, priorityProfileId, "CONTINUIDADE", 40, null, "Ela quer a mesma pessoa do começo ao fim.");
 
     // ---------------------------------------------------------- 4 — Validar
+    await completarMapaDePrioridades(cliente, priorityProfileId);
     await curadoria.validatePriorityProfile(
       cliente,
       priorityProfileId,
@@ -257,7 +259,7 @@ describe("Curadoria completa — sem SQL, sem script, sem intervenção técnica
         .filter((step) => step.status !== "CONCLUIDA")
         .map((step) => `${step.label} (${step.missing.join("; ")})`)
         .join(" · ")}`,
-    ).toBe(7);
+    ).toBe(6);
   }, 90_000);
 
   it("o Curador não consegue registrar a decisão em nome do paciente", async () => {

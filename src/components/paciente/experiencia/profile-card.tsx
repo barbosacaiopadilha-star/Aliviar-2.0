@@ -14,7 +14,7 @@ import type { PerfilView } from "@/modules/paciente/experiencia";
  * Nenhum número de ponderação atravessa. "3 de 26" é contagem de conversa,
  * não peso: diz o quanto já foi conversado, nunca o quanto algo vale.
  */
-export function ProfileCard({ perfil }: { perfil: PerfilView }) {
+export function ProfileCard({ perfil, caseId }: { perfil: PerfilView; caseId?: string }) {
   const maisImportante = perfil.prioridades[0];
 
   return (
@@ -60,7 +60,7 @@ export function ProfileCard({ perfil }: { perfil: PerfilView }) {
         label="Conhecer meu Perfil"
         expandedLabel="Recolher meu Perfil"
       >
-        <PerfilPanel perfil={perfil} />
+        <PerfilPanel perfil={perfil} caseId={caseId} />
       </ExpandableSection>
     </PatientCard>
   );

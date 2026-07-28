@@ -23,7 +23,6 @@ import { cn } from "@/components/ui/cn";
 import {
   saveAllWeightsAction,
   removeWeightAction,
-  validateProfileAction,
 } from "@/modules/curadoria/actions";
 import { Select } from "@/components/ui/select";
 import { TOTAL_PRIORITY_POINTS } from "@/modules/curadoria/method";
@@ -202,19 +201,13 @@ export function PriorityBuilder({
         setError(saveResult.error ?? "Não foi possível salvar os pesos.");
         return;
       }
-
-      const validateResult = await validateProfileAction({
-        priorityProfileId,
-        validationNote: validationNote.trim(),
-      });
-
-      if (!validateResult.success) {
-        setError(validateResult.error ?? "Não foi possível registrar a validação.");
-        return;
-      }
-
+      // ADR-042 — daqui não sai mais reconhecimento. O ato é dela, acontece
+      // no ambiente dela e depende do Mapa de Prioridades estar completo, não
+      // destes 100 pontos. Este botão apenas grava a distribuição legada.
       setShowConfirm(false);
-      setSuccess("Validação registrada com sucesso.");
+      setSuccess(
+        "Distribuição salva. O reconhecimento do Perfil é um ato dela, no ambiente dela, quando o Mapa de Prioridades estiver completo.",
+      );
       router.refresh();
     });
   }

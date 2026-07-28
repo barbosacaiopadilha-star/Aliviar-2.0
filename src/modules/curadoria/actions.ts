@@ -6,7 +6,6 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRoleForAction, requireRoleForAction } from "@/modules/auth/guard";
 
 import { validateSelection } from "./method";
-import { computePriorityValidationReadiness } from "./priority-validation-readiness";
 import * as repository from "./repository";
 import * as reportRepository from "./report-repository";
 import {
@@ -27,7 +26,6 @@ import {
   saveReportInputSchema,
   saveSelectionInputSchema,
   startConsultationInputSchema,
-  validateProfileInputSchema,
 } from "./schema";
 import type { CuradoriaActionResult } from "./types";
 
@@ -253,57 +251,17 @@ export async function removeWeightAction(input: unknown): Promise<CuradoriaActio
   }
 }
 
-// ---------------------------------------------------------------------------
-// Validação do paciente — o ato que faz o Perfil existir
-// ---------------------------------------------------------------------------
-
-export async function validateProfileAction(input: unknown): Promise<CuradoriaActionResult> {
-  try {
-    await requireCurator();
-  } catch {
-    return { success: false, error: "Não autorizado." };
-  }
-
-  const parsed = validateProfileInputSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
-  }
-
-  const supabase = await createServerSupabaseClient();
-
-  const profile = await repository.getPriorityProfileById(supabase, parsed.data.priorityProfileId);
-  if (!profile) return { success: false, error: "Perfil de Prioridades não encontrado." };
-
-  if (profile.validatedAt) {
-    return { success: false, error: "Este Perfil já foi validado." };
-  }
-
-  const readiness = computePriorityValidationReadiness({
-    weights: profile.weights.map((weight) => ({
-      criterion: weight.criterion,
-      weight: weight.weight,
-      targetValue: weight.targetValue,
-      evidence: weight.evidence,
-    })),
-    filterCriteria: [],
-    validated: Boolean(profile.validatedAt),
-  });
-
-  if (!readiness.canValidate) {
-    return {
-      success: false,
-      error: readiness.blockers[0]?.message ?? "O Perfil ainda não está pronto para validação.",
-    };
-  }
-
-  try {
-    await repository.validatePriorityProfile(supabase, parsed.data.priorityProfileId, parsed.data.validationNote);
-    revalidateCuradoria(profile.caseId);
-    return { success: true };
-  } catch (error) {
-    return fail(error, "Não foi possível registrar a validação.");
-  }
-}
+// O RECONHECIMENTO DO PERFIL SAIU DAQUI — ADR-042.
+//
+// `validateProfileAction` exigia `requireCurator()` e os 100 pontos de
+// `priority_weights` somando exatamente 100: o ato que o Método define como
+// sendo DELA só podia ser executado por outra pessoa, e sob uma condição que
+// nunca foi dela. Foi removida, não desativada — action sem chamador é
+// capacidade morta, e o repositório tem um teste que cobra isso.
+//
+// A via vigente é `reconhecerPerfilAction` (src/modules/paciente), executada
+// por ela, condicionada só à completude do Mapa de Prioridades. Nenhum dado
+// histórico foi tocado.
 
 // ---------------------------------------------------------------------------
 // Comparar

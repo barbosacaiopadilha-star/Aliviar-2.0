@@ -80,7 +80,6 @@ describe("a Curadoria é executável de ponta a ponta pela interface", () => {
     "addPreferenceAction",
     "saveAllWeightsAction",
     "removeWeightAction",
-    "validateProfileAction",
     "computeCompatibilityAction",
     "saveSelectionAction",
     "saveReportAction",

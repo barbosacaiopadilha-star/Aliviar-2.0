@@ -16,6 +16,7 @@ import { SupabaseConnectionRepository } from "@/modules/connection/repository";
 import { createContact, createTask, getCaseById } from "@/modules/crm/repository";
 
 import { createCuradoriaClient } from "./curadoria-client";
+import { completarMapaDePrioridades } from "./support-mapa";
 
 /**
  * CERTIFICAÇÃO — Connection nasce da entrega canônica, sem o motor antigo.
@@ -140,6 +141,7 @@ describe("Connection canônica — sem final_curadoria_deliveries", () => {
     );
     await curadoria.saveWeight(cliente, priorityProfileId, "EXPERIENCIA", 60, null, "Quer quem já viu muitos casos.");
     await curadoria.saveWeight(cliente, priorityProfileId, "CONTINUIDADE", 40, null, "Quer a mesma pessoa do começo ao fim.");
+    await completarMapaDePrioridades(cliente, priorityProfileId);
     await curadoria.validatePriorityProfile(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
     await curadoria.runCompatibility(cliente, priorityProfileId);
 

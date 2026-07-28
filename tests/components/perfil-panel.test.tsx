@@ -2,6 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { PerfilPanel } from "@/components/paciente/perfil-panel";
+import { SUBCRITERION_CATALOG } from "@/modules/curadoria/mapa-prioridades";
 import { buildPerfilView, violatesPatientVocabulary } from "@/modules/paciente/experiencia";
 
 afterEach(cleanup);
@@ -15,6 +16,12 @@ const MAPA = [
   { subcriterionCode: "ACESSO_LOCALIZACAO", importance: "RELEVANTE" as const },
   { subcriterionCode: "HISTORICO_PRODUCAO_ACADEMICA", importance: "NAO_INFLUENCIA" as const },
 ];
+
+/** Mapa completo: os 26 do catálogo ativo classificados. É o único gate do ato. */
+const MAPA_COMPLETO = SUBCRITERION_CATALOG.map((sub) => ({
+  subcriterionCode: sub.code,
+  importance: "IMPORTANTE" as const,
+}));
 
 describe("PerfilPanel — o que mais importa, nas palavras dela", () => {
   it("agrupa os fatores pelos níveis que ela declarou", () => {
@@ -52,10 +59,27 @@ describe("PerfilPanel — o que mais importa, nas palavras dela", () => {
     expect(screen.getByText(/definido na conversa com seu Curador/)).toBeInTheDocument();
   });
 
-  it("sem validação, a confirmação é dita como conversa — nunca como botão", () => {
-    render(<PerfilPanel perfil={buildPerfilView(MAPA, false)} />);
-    expect(screen.getByText(/A Curadoria só começa depois desse seu sim/)).toBeInTheDocument();
+  it("com o Mapa completo, o ato é dela e está na tela dela — ADR-042", () => {
+    // Antes esta tela mandava esperar o Curador registrar por ela. O ato é
+    // dela; oferecê-lo aqui é o que torna o consentimento real.
+    render(<PerfilPanel perfil={buildPerfilView(MAPA_COMPLETO, false)} caseId="caso-1" />);
+    expect(
+      screen.getByRole("button", {
+        name: /Confirmar que este Perfil representa minhas prioridades/,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("sem o Case identificado, nenhum botão aparece — nunca um ato sem destino", () => {
+    render(<PerfilPanel perfil={buildPerfilView(MAPA_COMPLETO, false)} />);
     expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("Mapa incompleto explica o estado em vez de oferecer o ato", () => {
+    const parcial = buildPerfilView(MAPA.slice(0, 1), false);
+    render(<PerfilPanel perfil={parcial} caseId="caso-1" />);
+    expect(screen.queryByRole("button")).toBeNull();
+    expect(screen.getByText(/ainda está sendo construído/)).toBeInTheDocument();
   });
 
   it("validado, some a pergunta e a frase muda de dono", () => {

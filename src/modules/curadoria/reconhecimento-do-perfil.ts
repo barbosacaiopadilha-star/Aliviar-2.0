@@ -80,3 +80,69 @@ export function isProfileAcknowledged(
 ): boolean {
   return acknowledgementOf(status) === "RECONHECIDO";
 }
+
+// ---------------------------------------------------------------------------
+// Quando ela pode reconhecer
+// ---------------------------------------------------------------------------
+
+/**
+ * O que a decisão devolve. Cada caso tem nome próprio porque cada um pede uma
+ * resposta diferente da tela: "já está feito" não é erro, e "o Mapa ainda não
+ * está completo" não é culpa dela.
+ */
+export type AcknowledgementDecision =
+  | "PODE_RECONHECER"
+  | "JA_RECONHECIDO"
+  | "MAPA_INCOMPLETO"
+  | "PERFIL_SUBSTITUIDO";
+
+export const DECISION_MESSAGES: Record<AcknowledgementDecision, string> = {
+  PODE_RECONHECER: "Este Perfil está pronto para o seu reconhecimento.",
+  JA_RECONHECIDO: "Você já reconheceu este Perfil.",
+  MAPA_INCOMPLETO:
+    "O seu Perfil ainda está sendo construído junto com a Curadoria. Quando estiver completo, ele aparece aqui para você reconhecer.",
+  PERFIL_SUBSTITUIDO:
+    "Este Perfil foi substituído por outro. O reconhecimento acontece sobre o Perfil vigente.",
+};
+
+/**
+ * A única regra que governa o ato — e note o que NÃO aparece aqui: soma de
+ * pontos, `priority_weights`, `cruzamento_weights`, campo livre obrigatório.
+ *
+ * O reconhecimento depende de UMA coisa: o Mapa de Prioridades estar completo,
+ * porque é o Mapa que ela reconhece. Amarrá-lo aos 100 pontos era pedir que
+ * ela confirmasse uma conta que nunca foi dela.
+ *
+ * @param pendentes quantos subcritérios do catálogo ativo ainda não foram
+ *        classificados. Zero significa Mapa completo.
+ */
+export function decideAcknowledgement(
+  status: PriorityProfileStatus | null | undefined,
+  pendentes: number,
+): AcknowledgementDecision {
+  const atual = acknowledgementOf(status);
+
+  // Idempotência: reconhecer de novo não é erro, é um não-evento. A tela diz
+  // que já está feito em vez de acusar falha por algo que ela fez certo.
+  if (atual === "RECONHECIDO") return "JA_RECONHECIDO";
+  if (atual === "NAO_APLICAVEL") return "PERFIL_SUBSTITUIDO";
+  if (pendentes > 0) return "MAPA_INCOMPLETO";
+  return "PODE_RECONHECER";
+}
+
+/**
+ * O rótulo do botão. Nomeia o efeito — o que ela está confirmando — em vez de
+ * "Validar", que pedia que ela avalizasse um método que não é dela.
+ */
+export const ACKNOWLEDGE_ACTION_LABEL = "Confirmar que este Perfil representa minhas prioridades";
+
+/**
+ * O que a confirmação congela, dito antes de acontecer (EXPERIENCE_BIBLE §
+ * confirmações: sempre "o que vai acontecer", nunca "tem certeza?").
+ *
+ * A irreversibilidade não é herança do fluxo antigo: é a Invariante 28 da
+ * Ontologia — Perfil reconhecido é imutável, e corrigir exige construir um
+ * novo junto com ela. Auditada e mantida deliberadamente.
+ */
+export const ACKNOWLEDGE_CONFIRMATION =
+  "Depois de confirmado, este Perfil não muda mais — corrigir exige construir um novo junto com a Curadoria. Confirmar?";

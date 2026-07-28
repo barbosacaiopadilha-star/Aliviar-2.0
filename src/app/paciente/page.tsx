@@ -116,7 +116,7 @@ export default async function PacienteHomePage() {
       <JourneyWalk stages={walkStages} currentDetail={currentStage?.description} />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {perfil ? <ProfileCard perfil={perfil} /> : null}
+        {perfil && record ? <ProfileCard perfil={perfil} caseId={record.caseId} /> : null}
 
         <CuradoriaCard
           message={mensagemPrincipal(jornada.currentStage)}

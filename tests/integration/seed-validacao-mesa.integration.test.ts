@@ -31,6 +31,7 @@ import {
   createCuradoriaCertificationFixture,
   markCaseAsCertification,
 } from "./certificacao-fixture";
+import { completarMapaDePrioridades } from "./support-mapa";
 
 type TestAccount = { role: string; email: string; password: string };
 const TEST_USERS_PATH = path.resolve(__dirname, "../../test-users.local.json");
@@ -135,6 +136,7 @@ describe.skipIf(!process.env.SEED_MESA)("seed — validação de usabilidade da 
       await curadoria.addFilter(curadorAuth, priorityProfileId, "FILTRO_OBRIGATORIO", "CUIDADO_CONTINUO", "true", "Ela quer acompanhamento do começo ao fim.");
       await curadoria.saveWeight(curadorAuth, priorityProfileId, "EXPERIENCIA", 50, null, "Peso legado para permitir a validação do Perfil.");
       await curadoria.saveWeight(curadorAuth, priorityProfileId, "CONTINUIDADE", 50, null, "Peso legado para permitir a validação do Perfil.");
+      await completarMapaDePrioridades(curadorAuth, priorityProfileId);
       await curadoria.validatePriorityProfile(curadorAuth, priorityProfileId, "Lido em voz alta e confirmado.");
     }
 

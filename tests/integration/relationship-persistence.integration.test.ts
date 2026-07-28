@@ -21,6 +21,7 @@ import {
   saveStoryDraft,
   submitStory,
 } from "@/modules/story/repository";
+import { completarMapaDePrioridades } from "./support-mapa";
 
 // RELATIONSHIP ENGINE — MVP — PR1 (persistência). Nenhum domínio,
 // repository ou Server Action de Relationship existe ainda (isso é escopo
@@ -209,6 +210,7 @@ describe("Relationship Engine — MVP — PR1 (persistência, RLS, triggers, RPC
     );
     await curadoria.saveWeight(cliente, priorityProfileId, "EXPERIENCIA", 60, null, "Quer quem já viu muitos casos.");
     await curadoria.saveWeight(cliente, priorityProfileId, "CONTINUIDADE", 40, null, "Quer a mesma pessoa do começo ao fim.");
+    await completarMapaDePrioridades(cliente, priorityProfileId);
     await curadoria.validatePriorityProfile(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
     await curadoria.runCompatibility(cliente, priorityProfileId);
 

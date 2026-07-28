@@ -1,3 +1,4 @@
+import { ReconhecerPerfil } from "@/components/paciente/reconhecer-perfil";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { PerfilView } from "@/modules/paciente/experiencia";
 
@@ -13,11 +14,11 @@ import type { PerfilView } from "@/modules/paciente/experiencia";
  * níveis que ela declarou como pouco importantes somem: esconder o que ela
  * escolheu deixar de fora seria editar as palavras dela.
  *
- * A confirmação do Perfil acontece na conversa com o Curador — é ele quem a
- * registra, com ela. Este painel diz isso; não oferece um botão que fingiria
- * substituí-la.
+ * O reconhecimento é dela e acontece aqui (ADR-042). Antes o botão não existia
+ * nesta tela: quem registrava o ato "dela" era o Curador, do outro lado, depois
+ * que os 100 pontos fechassem.
  */
-export function PerfilPanel({ perfil }: { perfil: PerfilView }) {
+export function PerfilPanel({ perfil, caseId }: { perfil: PerfilView; caseId?: string }) {
   return (
     <Card>
       <CardHeader>
@@ -47,12 +48,12 @@ export function PerfilPanel({ perfil }: { perfil: PerfilView }) {
         </div>
       )}
 
-      {!perfil.validated && perfil.prioridades.length > 0 ? (
-        <p className="mt-5 max-w-reading text-sm leading-relaxed text-ink">
-          Este retrato representa corretamente o que é importante para você? A confirmação acontece
-          na conversa com seu Curador — se algo não estiver com a sua cara, é só dizer a ele que
-          gostaria de revisar. A Curadoria só começa depois desse seu sim.
-        </p>
+      {!perfil.validated && perfil.prioridades.length > 0 && caseId ? (
+        <ReconhecerPerfil
+          caseId={caseId}
+          pendentes={perfil.total - perfil.classificados}
+          validated={perfil.validated}
+        />
       ) : null}
     </Card>
   );

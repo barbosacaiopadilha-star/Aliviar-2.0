@@ -36,6 +36,7 @@ import {
   FIXTURE_SPECS,
   markCaseAsCertification,
 } from "./certificacao-fixture";
+import { completarMapaDePrioridades } from "./support-mapa";
 
 type TestAccount = { role: string; email: string; password: string };
 const TEST_USERS_PATH = path.resolve(__dirname, "../../test-users.local.json");
@@ -165,6 +166,7 @@ describe("Certificação do ciclo da Curadoria — fixtures isoladas (Supabase l
     await curadoria.saveWeight(curador.client, priorityProfileId, "CONTINUIDADE", 25, null, "Ela quer a mesma pessoa do começo ao fim.");
     await curadoria.saveWeight(curador.client, priorityProfileId, "DISPONIBILIDADE", 10, null, "Prefere não esperar muito.");
 
+    await completarMapaDePrioridades(curador.client, priorityProfileId);
     await curadoria.validatePriorityProfile(curador.client, priorityProfileId, "Lido em voz alta e confirmado.");
   }, 120_000);
 

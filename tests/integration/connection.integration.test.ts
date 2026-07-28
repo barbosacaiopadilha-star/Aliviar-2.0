@@ -35,6 +35,7 @@ import {
   registerContactIntent,
 } from "@/modules/connection/commands";
 import { ConnectionError } from "@/modules/connection/errors";
+import { completarMapaDePrioridades } from "./support-mapa";
 
 type TestAccount = { role: string; email: string; password: string };
 
@@ -179,6 +180,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     );
     await curadoria.saveWeight(cliente, priorityProfileId, "EXPERIENCIA", 60, null, "Quer quem já viu muitos casos.");
     await curadoria.saveWeight(cliente, priorityProfileId, "CONTINUIDADE", 40, null, "Quer a mesma pessoa do começo ao fim.");
+    await completarMapaDePrioridades(cliente, priorityProfileId);
     await curadoria.validatePriorityProfile(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
     await curadoria.runCompatibility(cliente, priorityProfileId);
 
@@ -313,6 +315,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     );
     await curadoria.saveWeight(cliente, priorityProfileId, "EXPERIENCIA", 60, null, "Quer quem já viu muitos casos.");
     await curadoria.saveWeight(cliente, priorityProfileId, "CONTINUIDADE", 40, null, "Quer a mesma pessoa do começo ao fim.");
+    await completarMapaDePrioridades(cliente, priorityProfileId);
     await curadoria.validatePriorityProfile(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
     await curadoria.runCompatibility(cliente, priorityProfileId);
 
