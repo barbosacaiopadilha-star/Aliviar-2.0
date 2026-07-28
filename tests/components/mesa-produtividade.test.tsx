@@ -40,48 +40,46 @@ const COLUNAS: ComparacaoColuna[] = [
   {
     id: "a",
     nome: "Dra. Helena",
-    technicalScore: 80,
-    patientScore: 60,
-    technicalCoverageSentence: "Avaliação construída sobre 100 dos 100 pontos.",
-    patientCoverageSentence: "Avaliação construída sobre 100 dos 100 pontos.",
+    resumo: "1 alta · 0 médias · 1 lacuna de informação · 0 sem influência neste caso",
     celulas: [
       {
-        criterion: "FORMACAO",
+        subcriterionCode: "FORMACAO",
         label: "Formação Profissional",
-        assessment: "ATENDE_PLENAMENTE",
-        pointsSentence: "40/40",
-        evidence: "Residência confirmada pelo conselho.",
+        importance: "MUITO_IMPORTANTE",
+        result: "ALTA_COMPATIBILIDADE",
+        status: "CONFIRMADO",
+        stateSentence: "Confirmado",
       },
       {
-        criterion: "ACESSO",
+        subcriterionCode: "ACESSO",
         label: "Acesso",
-        assessment: "INFORMACAO_INSUFICIENTE",
-        pointsSentence: "não avaliável",
-        evidence: "Agenda não localizada.",
+        importance: "MUITO_IMPORTANTE",
+        result: "LACUNA_DE_INFORMACAO",
+        status: null,
+        stateSentence: "Ainda não investigado",
       },
     ],
   },
   {
     id: "b",
     nome: "Dr. Marcos",
-    technicalScore: 55,
-    patientScore: 70,
-    technicalCoverageSentence: "Avaliação construída sobre 60 dos 100 pontos.",
-    patientCoverageSentence: "Avaliação construída sobre 100 dos 100 pontos.",
+    resumo: "1 alta · 0 médias · 1 lacuna de informação · 0 sem influência neste caso",
     celulas: [
       {
-        criterion: "FORMACAO",
+        subcriterionCode: "FORMACAO",
         label: "Formação Profissional",
-        assessment: "ATENDE_PARCIALMENTE",
-        pointsSentence: "20/40",
-        evidence: "Formação na área correlata.",
+        importance: "MUITO_IMPORTANTE",
+        result: "MEDIA_COMPATIBILIDADE",
+        status: "CONFIRMADO",
+        stateSentence: "Confirmado",
       },
       {
-        criterion: "ACESSO",
+        subcriterionCode: "ACESSO",
         label: "Acesso",
-        assessment: null,
-        pointsSentence: "não avaliável",
-        evidence: "",
+        importance: "MUITO_IMPORTANTE",
+        result: "LACUNA_DE_INFORMACAO",
+        status: null,
+        stateSentence: "Ainda não investigado",
       },
     ],
   },
@@ -99,10 +97,10 @@ describe("Comparação — colunas limpas, uma célula por vez", () => {
     const user = userEvent.setup();
     render(<ComparacaoPremium colunas={COLUNAS} />);
 
-    expect(screen.queryByText(/Residência confirmada/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Confirmado/)).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /Dra. Helena, Formação Profissional/ }));
 
-    expect(screen.getByText(/Residência confirmada/)).toBeInTheDocument();
+    expect(screen.getByText(/Confirmado/)).toBeInTheDocument();
     // A outra célula da mesma coluna continua fechada.
     expect(screen.queryByText(/Agenda não localizada/)).not.toBeInTheDocument();
   });
@@ -114,25 +112,25 @@ describe("Comparação — colunas limpas, uma célula por vez", () => {
     await user.click(screen.getByRole("button", { name: /Dra. Helena, Formação Profissional/ }));
     await user.click(screen.getByRole("button", { name: /Dr. Marcos, Formação Profissional/ }));
 
-    expect(screen.queryByText(/Residência confirmada/)).not.toBeInTheDocument();
-    expect(screen.getByText(/Formação na área correlata/)).toBeInTheDocument();
+    // Uma explicação aberta por vez — a anterior fechou.
+    expect(screen.getAllByText(/Confirmado/, { selector: "p" })).toHaveLength(1);
   });
 
   it("o estado da célula chega em texto, não só em cor ou marca", () => {
     render(<ComparacaoPremium colunas={COLUNAS} />);
     expect(
-      screen.getByRole("button", { name: /Dra. Helena, Acesso: informação insuficiente/ }),
+      screen.getByRole("button", { name: /Dra. Helena, Acesso: Lacuna de informação/ }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Dr. Marcos, Acesso: sem declaração/ }),
+      screen.getByRole("button", { name: /Dr. Marcos, Acesso: Lacuna de informação/ }),
     ).toBeInTheDocument();
   });
 
-  it("célula sem evidência diz isso — não abre um vazio", async () => {
+  it("a lacuna diz a origem — investigado ou não — em vez de abrir um vazio", async () => {
     const user = userEvent.setup();
     render(<ComparacaoPremium colunas={COLUNAS} />);
     await user.click(screen.getByRole("button", { name: /Dr. Marcos, Acesso/ }));
-    expect(screen.getByText(/Nenhuma evidência foi registrada/)).toBeInTheDocument();
+    expect(screen.getByText(/Ainda não investigado/)).toBeInTheDocument();
   });
 
   it("nenhuma coluna recebe posição, medalha ou pré-marcação", () => {
@@ -144,24 +142,36 @@ describe("Comparação — colunas limpas, uma célula por vez", () => {
     expect(texto).toContain("não há colocação");
   });
 
-  it("os dois cruzamentos aparecem separados — nunca somados", () => {
+  it("o rodapé conta itens por estado — e nenhuma soma vira nota", () => {
     render(<ComparacaoPremium colunas={COLUNAS} />);
-    // Os dois cruzamentos vivem em linhas próprias, cada um com o próprio
-    // número — nunca numa soma e nunca na mesma frase.
     const linhas = screen
       .getAllByRole("cell")
       .flatMap((celula) => [...celula.querySelectorAll(".mesa-matriz__linha")])
-      .map((linha) => linha.textContent?.replace(/\s+/g, " ").trim());
+      .map((linha) => linha.textContent?.replace(/s+/g, " ").trim() ?? "");
 
-    expect(linhas).toContain("Avaliação Técnica 80 de 100");
-    expect(linhas).toContain("Compatibilidade Assistencial 60 de 100");
-    expect(linhas.some((linha) => /total|soma|140|de 200/i.test(linha ?? ""))).toBe(false);
+    expect(linhas.length).toBeGreaterThan(0);
+    for (const linha of linhas) {
+      expect(linha).toMatch(/alta|média|lacuna|sem influência/);
+      // Nada que possa ser lido como nota ou cobertura em pontos.
+      expect(linha).not.toMatch(/de 100|pontos|%|total|soma/i);
+    }
   });
 
-  it("a legenda traduz cada marca — quem não vê cor lê a mesma coisa", () => {
-    render(<ComparacaoPremium colunas={COLUNAS} />);
-    const legenda = screen.getByText("atende plenamente").closest("ul")!;
-    expect(within(legenda).getAllByRole("listitem")).toHaveLength(5);
+  it("a legenda traz os quatro estados da ADR-041 — e nenhum quinto", () => {
+    const { container } = render(<ComparacaoPremium colunas={COLUNAS} />);
+    const legenda = container.querySelector(".mesa-legenda")!;
+    const itens = within(legenda as HTMLElement).getAllByRole("listitem");
+    expect(itens).toHaveLength(4);
+
+    const texto = itens.map((item) => item.textContent);
+    expect(texto).toEqual([
+      "Alta compatibilidade",
+      "Média compatibilidade",
+      "Lacuna de informação",
+      "Não relevante",
+    ]);
+    // "Baixa compatibilidade" não existe: não confirmar não é reprovar.
+    expect(legenda.textContent).not.toMatch(/baixa/i);
   });
 });
 
@@ -346,8 +356,8 @@ describe("Painel de hipóteses", () => {
           celulas: [
             {
               label: "Continuidade do Cuidado",
-              bloco: "PRIORIDADES",
-              assessment: "ATENDE_PLENAMENTE",
+              importancia: "IMPORTANTE",
+              resultado: "ALTA_COMPATIBILIDADE",
             },
           ],
           pendentes: ["Acesso"],
@@ -355,7 +365,7 @@ describe("Painel de hipóteses", () => {
       />,
     );
 
-    expect(screen.getByText(/Você declarou atendimento pleno/)).toBeInTheDocument();
+    expect(screen.getByText(/Você encontrou alta compatibilidade/)).toBeInTheDocument();
     expect(screen.getByText("Em investigação")).toBeInTheDocument();
     expect(screen.getByText(/Não é recomendação e não fica registrada/)).toBeInTheDocument();
   });

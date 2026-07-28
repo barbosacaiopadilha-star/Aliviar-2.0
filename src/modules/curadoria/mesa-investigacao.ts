@@ -15,6 +15,8 @@
  */
 
 import { ASSESSMENT_LABELS, type Assessment, type CruzamentoCriterion } from "./cruzamento";
+import { IMPORTANCE_LABELS, type ImportanceLevel } from "./mapa-prioridades";
+import type { CompatibilityResult } from "./motor-compatibilidade";
 import type { EligibilityState } from "./mesa-cruzamento-view";
 import type { MesaEtapaId } from "./mesa-etapas";
 
@@ -286,8 +288,9 @@ export const HIPOTESE_STATUS_LABELS: Record<HipoteseStatus, string> = {
 
 export type HipoteseCelula = {
   label: string;
-  bloco: "TECNICO" | "PRIORIDADES";
-  assessment: Assessment | null;
+  /** O nível que o Case declarou — ADR-042, no lugar do bloco de orçamento. */
+  importancia: ImportanceLevel;
+  resultado: CompatibilityResult;
 };
 
 export type HipoteseFacts = {
@@ -308,10 +311,7 @@ export type Hipotese = {
   lacunas: string[];
 };
 
-const BLOCO_NOME: Record<HipoteseCelula["bloco"], string> = {
-  TECNICO: "Avaliação Técnica",
-  PRIORIDADES: "Perfil de Prioridades",
-};
+
 
 /**
  * A hipótese é a leitura do que o **Curador já declarou**, devolvida para ele
@@ -325,22 +325,24 @@ const BLOCO_NOME: Record<HipoteseCelula["bloco"], string> = {
  * dele desenham, e o que falta para fechá-lo.
  */
 export function hipoteseDe(facts: HipoteseFacts): Hipotese {
-  const plenos = facts.celulas.filter((c) => c.assessment === "ATENDE_PLENAMENTE");
-  const insuficientes = facts.celulas.filter((c) => c.assessment === "INFORMACAO_INSUFICIENTE");
+  // ADR-042 — a hipótese lê o Motor. Alta compatibilidade é o que o Case
+  // declarou como importante E que está confirmado para o profissional.
+  const altos = facts.celulas.filter((c) => c.resultado === "ALTA_COMPATIBILIDADE");
+  const insuficientes = facts.celulas.filter((c) => c.resultado === "LACUNA_DE_INFORMACAO");
 
-  const porBloco = (["TECNICO", "PRIORIDADES"] as const)
-    .map((bloco) => {
-      const doBloco = plenos.filter((c) => c.bloco === bloco);
-      if (doBloco.length === 0) return null;
-      return `${doBloco.map((c) => c.label).join(" e ")} (${BLOCO_NOME[bloco]})`;
+  const porNivel = (["MUITO_IMPORTANTE", "IMPORTANTE"] as const)
+    .map((nivel) => {
+      const doNivel = altos.filter((c) => c.importancia === nivel);
+      if (doNivel.length === 0) return null;
+      return `${doNivel.map((c) => c.label).join(" e ")} (${IMPORTANCE_LABELS[nivel].toLowerCase()})`;
     })
     .filter((trecho): trecho is string => trecho !== null);
 
   const frase =
-    porBloco.length > 0
-      ? `Você declarou atendimento pleno em ${porBloco.join("; ")}.`
-      : facts.celulas.some((c) => c.assessment !== null)
-        ? "As declarações registradas até aqui não desenham um padrão de atendimento pleno."
+    porNivel.length > 0
+      ? `Você encontrou alta compatibilidade em ${porNivel.join("; ")}.`
+      : facts.celulas.some((c) => c.resultado !== "LACUNA_DE_INFORMACAO")
+        ? "As declarações registradas até aqui não desenham um padrão de alta compatibilidade."
         : "Ainda não há declaração registrada para este profissional.";
 
   const lacunas = [

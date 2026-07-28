@@ -7,19 +7,22 @@ import {
   TECHNICAL_CRITERIA,
   type Assessment,
   type CriterionEvaluation,
-  type CriterionWeight,
   type CruzamentoCriterion,
 } from "./cruzamento";
 import { listAreaDeclarations, type AreaDeclaration } from "./area-repository";
+import { loadCasePriorityMap, listSubcriterionCatalog } from "./mapa-prioridades-repository";
+import { loadProfessionalMap } from "./mapa-profissional-repository";
+import {
+  crossPriorityAndProfessional,
+  type CompatibilityReading,
+} from "./motor-compatibilidade";
 import { isProfileAcknowledged } from "./reconhecimento-do-perfil";
 import type { PriorityProfileStatus } from "./types";
 import {
-  budgetOf,
   buildComparison,
   classifyProfessional,
   headerCounts,
   nextStepSentence,
-  type BudgetView,
   type ComparisonColumn,
   type MandatoryFilterCheck,
   type ProfessionalEligibility,
@@ -40,59 +43,11 @@ import {
 // Pesos
 // ---------------------------------------------------------------------------
 
-export async function loadCruzamentoWeights(
-  supabase: SupabaseClient,
-  caseId: string,
-): Promise<Partial<Record<CruzamentoCriterion, number>>> {
-  const { data, error } = await supabase
-    .from("cruzamento_weights")
-    .select("criterion, weight")
-    .eq("case_id", caseId);
-
-  if (error) throw new Error(error.message);
-
-  return Object.fromEntries(
-    (data ?? []).map((row) => [row.criterion as CruzamentoCriterion, row.weight as number]),
-  );
-}
-
-/**
- * Grava um bloco inteiro de uma vez. O saldo é conferido aqui — um bloco que
- * não fecha em 50 não é persistido pela metade.
- */
-export async function saveCruzamentoBlockWeights(
-  supabase: SupabaseClient,
-  caseId: string,
-  block: "TECNICO" | "PRIORIDADES",
-  weights: Partial<Record<CruzamentoCriterion, number>>,
-  updatedBy: string,
-): Promise<void> {
-  const criteria = block === "TECNICO" ? TECHNICAL_CRITERIA : PATIENT_CRITERIA;
-
-  // Critério do bloco errado é recusado antes do banco.
-  for (const criterion of Object.keys(weights) as CruzamentoCriterion[]) {
-    if (!(criteria as readonly string[]).includes(criterion)) {
-      throw new Error(`O critério ${criterion} não pertence a este bloco.`);
-    }
-  }
-
-  const budget = budgetOf(weights, block);
-  if (!budget.complete) {
-    throw new Error(budget.sentence);
-  }
-
-  const { error } = await supabase.from("cruzamento_weights").upsert(
-    criteria.map((criterion) => ({
-      case_id: caseId,
-      criterion,
-      weight: weights[criterion] ?? 0,
-      updated_by: updatedBy,
-    })),
-    { onConflict: "case_id,criterion" },
-  );
-
-  if (error) throw new Error(error.message);
-}
+// `loadCruzamentoWeights` e `saveCruzamentoBlockWeights` foram removidas —
+// ADR-042. A Mesa não lê nem escreve `cruzamento_weights`: a autoridade é o
+// Mapa de Prioridades, cruzado com o Mapa do Profissional pelo Motor. A
+// tabela e todo o histórico permanecem intactos; o que deixou de existir é o
+// caminho de código, não o dado.
 
 // ---------------------------------------------------------------------------
 // Declarações de critério
@@ -168,8 +123,10 @@ export type MesaCruzamentoView = {
   isCertification: boolean;
   areaRequirement: string | null;
   profileAcknowledged: boolean;
-  weights: Partial<Record<CruzamentoCriterion, number>>;
-  budgets: { technical: BudgetView; patient: BudgetView };
+  /** A leitura do Motor por profissional — ADR-041. Nunca recalculada na tela. */
+  compatibilidade: Record<string, CompatibilityReading>;
+  /** Subcritérios do catálogo ativo que o Case ainda não classificou. */
+  mapaPendentes: number;
   professionals: MesaProfessional[];
   counts: ReturnType<typeof headerCounts>;
   nextStep: string;
@@ -185,10 +142,10 @@ export async function loadMesaCruzamento(
   caseId: string,
   selectedCount: number,
 ): Promise<MesaCruzamentoView> {
-  const [{ data: caso }, areaDeclarations, weights, criterionDeclarations] = await Promise.all([
+  const [{ data: caso }, areaDeclarations, priorityMap, criterionDeclarations] = await Promise.all([
     supabase.from("cases").select("is_certification").eq("id", caseId).single(),
     listAreaDeclarations(supabase, caseId),
-    loadCruzamentoWeights(supabase, caseId),
+    loadCasePriorityMap(supabase, caseId),
     loadCriterionDeclarations(supabase, caseId),
   ]);
 
@@ -299,11 +256,7 @@ export async function loadMesaCruzamento(
     };
   });
 
-  const budgets = {
-    technical: budgetOf(weights, "TECNICO"),
-    patient: budgetOf(weights, "PRIORIDADES"),
-  };
-  const budgetsComplete = budgets.technical.complete && budgets.patient.complete;
+  const mapaCompleto = priorityMap.completion.status === "COMPLETE";
 
   const counts = headerCounts(professionals.map((p) => p.eligibility), selectedCount);
 
@@ -327,26 +280,44 @@ export async function loadMesaCruzamento(
     );
   }
 
-  const weightList: CriterionWeight[] = ALL_CRITERIA.map((criterion) => ({
-    criterion,
-    weight: weights[criterion] ?? 0,
+  // O cruzamento vem do Motor, um por profissional elegível. A Mesa não
+  // reproduz a matriz: se reproduzisse, existiriam duas verdades sobre o
+  // mesmo par (Case, profissional).
+  const catalogo = await listSubcriterionCatalog(supabase, { includeInactive: false });
+  const activeSubcriterionCodes = catalogo.map((entry) => entry.code);
+  const casePriorities = priorityMap.items.map((item) => ({
+    subcriterionCode: item.subcriterionCode,
+    importance: item.importance,
   }));
 
-  const comparison =
-    budgetsComplete && eligibleIds.length > 0
-      ? buildComparison(eligibleIds, weightList, evaluationsByProfessional)
-      : [];
+  const readings = new Map<string, CompatibilityReading>();
+  for (const id of eligibleIds) {
+    const mapa = await loadProfessionalMap(supabase, id);
+    readings.set(
+      id,
+      crossPriorityAndProfessional({
+        casePriorities,
+        professionalStates: mapa.items.map((item) => ({
+          subcriterionCode: item.subcriterionCode,
+          status: item.status,
+        })),
+        activeSubcriterionCodes,
+      }),
+    );
+  }
+
+  const comparison = eligibleIds.length > 0 ? buildComparison(eligibleIds, readings, catalogo) : [];
 
   return {
     caseId,
     isCertification,
     areaRequirement,
     profileAcknowledged,
-    weights,
-    budgets,
+    compatibilidade: Object.fromEntries(readings),
+    mapaPendentes: priorityMap.completion.pending,
     professionals,
     counts,
-    nextStep: nextStepSentence(counts, budgetsComplete, profileAcknowledged),
+    nextStep: nextStepSentence(counts, mapaCompleto, profileAcknowledged),
     comparison,
     awaitingDeclaration,
   };

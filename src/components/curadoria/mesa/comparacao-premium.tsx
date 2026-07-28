@@ -22,45 +22,42 @@ import { Fragment, useState } from "react";
 
 import { cn } from "@/components/ui/cn";
 import { useMesaFoco } from "@/components/curadoria/mesa/mesa-foco";
-import {
-  CELULA_LABEL,
-  CELULA_MARCA,
-  celulaEstado,
-  CRITERION_BLOCO,
-  type CelulaEstado,
-} from "@/modules/curadoria/mesa-investigacao";
-import type { Assessment, CruzamentoCriterion } from "@/modules/curadoria/cruzamento";
+import { IMPORTANCE_LABELS, type ImportanceLevel } from "@/modules/curadoria/mapa-prioridades";
+import type { SubcriterionStatus } from "@/modules/curadoria/mapa-profissional";
+import { COMPATIBILITY_CELL_LABELS } from "@/modules/curadoria/mesa-cruzamento-view";
+import type { CompatibilityResult } from "@/modules/curadoria/motor-compatibilidade";
 
+/**
+ * ADR-042 — a matriz passa a ler o Motor.
+ *
+ * Era uma tabela de pontos: cada critério mostrava "25/25" e o rodapé somava
+ * dois totais de 100. Agora cada linha é um subcritério do Mapa, agrupado
+ * pelo nível que o Case declarou, e o rodapé conta itens por estado — nunca
+ * um total que pudesse ser lido como nota.
+ */
 export type ComparacaoCelula = {
-  criterion: CruzamentoCriterion;
+  subcriterionCode: string;
   label: string;
-  assessment: Assessment | null;
-  /** "25/25", "5/10", ou "não avaliável". */
-  pointsSentence: string;
-  evidence: string;
+  importance: ImportanceLevel;
+  /** `null` = ausência de registro. Nunca colapsado em NAO_INFORMADO. */
+  status: SubcriterionStatus | null;
+  result: CompatibilityResult;
+  stateSentence: string;
 };
 
 export type ComparacaoColuna = {
   id: string;
   nome: string;
   celulas: ComparacaoCelula[];
-  technicalScore: number;
-  patientScore: number;
-  technicalCoverageSentence: string;
-  patientCoverageSentence: string;
+  /** Contagens por estado — "8 altas · 7 médias · 3 lacunas · 8 sem influência". */
+  resumo: string;
 };
 
-const BLOCO_TITULO = {
-  TECNICO: "Avaliação Técnica — 100 pontos",
-  PRIORIDADES: "Compatibilidade Assistencial — 100 pontos",
-} as const;
-
-const CLASSE: Record<CelulaEstado, string> = {
-  PLENO: "mesa-celula--pleno",
-  PARCIAL: "mesa-celula--parcial",
-  NAO_ATENDE: "mesa-celula--nao",
-  INSUFICIENTE: "mesa-celula--insuficiente",
-  SEM_DECLARACAO: "mesa-celula--vazio",
+const CLASSE_RESULTADO: Record<CompatibilityResult, string> = {
+  ALTA_COMPATIBILIDADE: "mesa-celula--pleno",
+  MEDIA_COMPATIBILIDADE: "mesa-celula--parcial",
+  LACUNA_DE_INFORMACAO: "mesa-celula--sem-dado",
+  NAO_RELEVANTE: "mesa-celula--neutro",
 };
 
 export function ComparacaoPremium({ colunas }: { colunas: ComparacaoColuna[] }) {
@@ -130,21 +127,19 @@ export function ComparacaoPremium({ colunas }: { colunas: ComparacaoColuna[] }) 
 
           <tbody>
             {criterios.map((referencia, posicao) => (
-              <Fragment key={referencia.criterion}>
-                {/* Os dois cruzamentos nunca somam (Modelo v1.0 §4). Seis
-                    linhas iguais faziam parecer uma lista só de critérios
-                    comparáveis entre si — o cabeçalho de bloco devolve a
-                    fronteira que o domínio exige. */}
+              <Fragment key={referencia.subcriterionCode}>
+                {/* Agrupado pelo nível que o Case declarou. A fronteira que
+                    importa deixou de ser o bloco de orçamento e passou a ser
+                    "quanto isto importa para esta pessoa". */}
                 {posicao === 0 ||
-                CRITERION_BLOCO[referencia.criterion] !==
-                  CRITERION_BLOCO[criterios[posicao - 1]!.criterion] ? (
+                referencia.importance !== criterios[posicao - 1]!.importance ? (
                   <tr>
                     <th
                       scope="colgroup"
                       colSpan={colunas.length + 1}
                       className="mesa-matriz__bloco"
                     >
-                      {BLOCO_TITULO[CRITERION_BLOCO[referencia.criterion]]}
+                      {IMPORTANCE_LABELS[referencia.importance]}
                     </th>
                   </tr>
                 ) : null}
@@ -155,10 +150,10 @@ export function ComparacaoPremium({ colunas }: { colunas: ComparacaoColuna[] }) 
                   </th>
                 {colunas.map((coluna, indice) => {
                   const celula =
-                    coluna.celulas.find((entrada) => entrada.criterion === referencia.criterion) ??
-                    null;
-                  const estado = celulaEstado(celula?.assessment ?? null);
-                  const chave = `${coluna.id}:${referencia.criterion}`;
+                    coluna.celulas.find(
+                      (entrada) => entrada.subcriterionCode === referencia.subcriterionCode,
+                    ) ?? null;
+                  const chave = `${coluna.id}:${referencia.subcriterionCode}`;
                   const expandida = aberta === chave;
 
                   return (
@@ -173,24 +168,26 @@ export function ComparacaoPremium({ colunas }: { colunas: ComparacaoColuna[] }) 
                         type="button"
                         aria-expanded={expandida}
                         onClick={() => setAberta(expandida ? null : chave)}
-                        className={cn("mesa-celula", CLASSE[estado])}
+                        className={cn(
+                          "mesa-celula",
+                          celula ? CLASSE_RESULTADO[celula.result] : "mesa-celula--vazio",
+                        )}
                       >
-                        <span aria-hidden="true" className="mesa-celula__marca">
-                          {CELULA_MARCA[estado]}
-                        </span>
+                        {/* O estado nunca é dito só por cor. */}
                         <span className="mesa-celula__pontos">
-                          {celula?.pointsSentence ?? "não avaliável"}
+                          {celula ? COMPATIBILITY_CELL_LABELS[celula.result] : "Sem registro"}
                         </span>
                         <span className="sr-only">
-                          {coluna.nome}, {referencia.label}: {CELULA_LABEL[estado]}
+                          {coluna.nome}, {referencia.label}:{" "}
+                          {celula ? COMPATIBILITY_CELL_LABELS[celula.result] : "Sem registro"}
                         </span>
                       </button>
 
                       {expandida ? (
                         <p className="mesa-celula__evidencia">
-                          {celula?.evidence?.trim()
-                            ? celula.evidence
-                            : "Nenhuma evidência foi registrada para este critério."}
+                          {/* A distinção que o Motor não faz: "ninguém olhou"
+                              e "olharam e não havia" caem na mesma lacuna. */}
+                          {celula?.stateSentence ?? "Ainda não investigado"}
                         </p>
                       ) : null}
                       </td>
@@ -200,9 +197,11 @@ export function ComparacaoPremium({ colunas }: { colunas: ComparacaoColuna[] }) 
               </Fragment>
             ))}
 
+            {/* Contagens por estado — NUNCA uma soma geral. Um número único
+                seria lido como nota, e o Método não dá nota a ninguém. */}
             <tr>
               <th scope="row" className="mesa-matriz__criterio">
-                Cobertura
+                Compatibilidade com este caso
               </th>
               {colunas.map((coluna, indice) => (
                 <td
@@ -212,39 +211,7 @@ export function ComparacaoPremium({ colunas }: { colunas: ComparacaoColuna[] }) 
                     indice !== emFoco && "hidden md:table-cell",
                   )}
                 >
-                  {/* Cada cobertura nomeada. As duas frases vêm do domínio com
-                      a mesma redação; lado a lado, sem rótulo, liam como
-                      duplicação acidental. */}
-                  <span className="mesa-matriz__linha">
-                    Técnica — {coluna.technicalCoverageSentence}
-                  </span>
-                  <span className="mesa-matriz__linha">
-                    Assistencial — {coluna.patientCoverageSentence}
-                  </span>
-                </td>
-              ))}
-            </tr>
-
-            <tr>
-              <th scope="row" className="mesa-matriz__criterio">
-                Cruzamentos
-              </th>
-              {colunas.map((coluna, indice) => (
-                <td
-                  key={coluna.id}
-                  className={cn(
-                    "mesa-matriz__rodape",
-                    indice !== emFoco && "hidden md:table-cell",
-                  )}
-                >
-                  <span className="mesa-matriz__linha">
-                    Avaliação Técnica <b className="mesa-matriz__numero">{coluna.technicalScore}</b>{" "}
-                    de 100
-                  </span>
-                  <span className="mesa-matriz__linha">
-                    Compatibilidade Assistencial{" "}
-                    <b className="mesa-matriz__numero">{coluna.patientScore}</b> de 100
-                  </span>
+                  <span className="mesa-matriz__linha">{coluna.resumo}</span>
                 </td>
               ))}
             </tr>
@@ -252,11 +219,11 @@ export function ComparacaoPremium({ colunas }: { colunas: ComparacaoColuna[] }) 
         </table>
       </div>
 
+      {/* Os quatro estados da ADR-041 — e nenhum quinto. Não existe
+          "baixa compatibilidade": não confirmar não é reprovar. */}
       <ul className="mesa-legenda">
-        {(Object.keys(CELULA_MARCA) as CelulaEstado[]).map((estado) => (
-          <li key={estado}>
-            <span aria-hidden="true">{CELULA_MARCA[estado]}</span> {CELULA_LABEL[estado]}
-          </li>
+        {(Object.keys(COMPATIBILITY_CELL_LABELS) as CompatibilityResult[]).map((estado) => (
+          <li key={estado}>{COMPATIBILITY_CELL_LABELS[estado]}</li>
         ))}
       </ul>
     </section>

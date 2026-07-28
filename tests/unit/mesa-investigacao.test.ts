@@ -147,9 +147,9 @@ describe("Painel inteligente — só o que ainda está aberto", () => {
 
 describe("Hipóteses — leitura do que o Curador declarou, nunca recomendação", () => {
   const celulas = [
-    { label: "Formação Profissional", bloco: "TECNICO" as const, assessment: "ATENDE_PLENAMENTE" as const },
-    { label: "Continuidade do Cuidado", bloco: "PRIORIDADES" as const, assessment: "ATENDE_PLENAMENTE" as const },
-    { label: "Acesso", bloco: "PRIORIDADES" as const, assessment: "ATENDE_PARCIALMENTE" as const },
+    { label: "Formação Profissional", importancia: "MUITO_IMPORTANTE" as const, resultado: "ALTA_COMPATIBILIDADE" as const },
+    { label: "Continuidade do Cuidado", importancia: "IMPORTANTE" as const, resultado: "ALTA_COMPATIBILIDADE" as const },
+    { label: "Acesso", importancia: "IMPORTANTE" as const, resultado: "MEDIA_COMPATIBILIDADE" as const },
   ];
 
   it("devolve o padrão nas palavras do próprio Curador", () => {
@@ -159,8 +159,8 @@ describe("Hipóteses — leitura do que o Curador declarou, nunca recomendação
       celulas,
       pendentes: [],
     });
-    expect(hipotese.frase).toContain("Você declarou atendimento pleno");
-    expect(hipotese.frase).toContain("Formação Profissional (Avaliação Técnica)");
+    expect(hipotese.frase).toContain("Você encontrou alta compatibilidade");
+    expect(hipotese.frase).toContain("Formação Profissional (muito importante)");
     expect(hipotese.status).toBe("CONFERIDA");
   });
 
@@ -205,8 +205,8 @@ describe("Hipóteses — leitura do que o Curador declarou, nunca recomendação
         ...celulas,
         {
           label: "Histórico Profissional",
-          bloco: "TECNICO" as const,
-          assessment: "INFORMACAO_INSUFICIENTE" as const,
+          importancia: "MUITO_IMPORTANTE" as const,
+          resultado: "LACUNA_DE_INFORMACAO" as const,
         },
       ],
       pendentes: [],
@@ -219,7 +219,7 @@ describe("Hipóteses — leitura do que o Curador declarou, nunca recomendação
     const hipotese = hipoteseDe({
       professionalProfileId: "a",
       nome: "Dra. Helena",
-      celulas: [{ label: "Acesso", bloco: "PRIORIDADES", assessment: null }],
+      celulas: [{ label: "Acesso", importancia: "IMPORTANTE", resultado: "LACUNA_DE_INFORMACAO" }],
       pendentes: ["Acesso"],
     });
     expect(hipotese.frase).toBe("Ainda não há declaração registrada para este profissional.");

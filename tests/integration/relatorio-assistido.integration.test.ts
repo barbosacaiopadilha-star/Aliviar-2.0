@@ -15,7 +15,7 @@ import { createCase } from "@/modules/cases/repository";
 import { createPatientAccount } from "@/modules/profiles/patient-account-repository";
 import { getOrCreateActiveStory, submitStory } from "@/modules/story/repository";
 import { declareAreaCompatibility } from "@/modules/curadoria/area-repository";
-import { declareCriterion, saveCruzamentoBlockWeights } from "@/modules/curadoria/mesa-cruzamento";
+import { declareCriterion } from "@/modules/curadoria/mesa-cruzamento";
 import {
   generateAndSaveAssistedDraft,
   getReportLifecycle,
@@ -92,8 +92,6 @@ describe("Relatório assistido — geração, ciclo de vida e congelamento (Supa
     await curadoria.validatePriorityProfile(curador.client, priorityProfileId, "Confirmado.");
 
     // Pesos do Modelo v1.0 — dois cruzamentos de 100.
-    await saveCruzamentoBlockWeights(curador.client, caseId, "TECNICO", { FORMACAO: 30, EXPERIENCIA: 50, HISTORICO: 20 }, curador.userId);
-    await saveCruzamentoBlockWeights(curador.client, caseId, "PRIORIDADES", { ACESSO: 30, CONTINUIDADE_DO_CUIDADO: 50, MODELO_DE_ATENDIMENTO: 20 }, curador.userId);
 
     // Declarações de área e de critério para A, B e C.
     const declaracoesArea = {

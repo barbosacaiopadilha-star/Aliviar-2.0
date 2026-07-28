@@ -53,7 +53,7 @@ export function MesaComparison({ analyses }: { analyses: AnaliseRecord[] }) {
                 <p className="font-sans text-sm font-semibold text-ink">{analysis.professionalName}</p>
                 <p className="mt-0.5 text-xs font-normal text-ink-muted">
                   {COMPATIBILITY_BAND_LABELS[analysis.band]} · interno{" "}
-                  {analysis.internalScore.toFixed(1)} · {analysis.coveredWeight}/100 avaliáveis
+                  {analysis.criteria.filter((c) => c.alignment === null).length} item(ns) sem informação
                 </p>
               </th>
             ))}

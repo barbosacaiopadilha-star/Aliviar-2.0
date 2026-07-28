@@ -69,7 +69,7 @@ export function MesaDoctorCard({
             {COMPATIBILITY_BAND_LABELS[analysis.band]}
           </span>
           <span className="tabular-nums text-xs text-ink-muted" title="Nível interno — ferramenta sua, nunca do paciente">
-            interno {analysis.internalScore.toFixed(1)} · {analysis.coveredWeight} de 100 pontos
+            {analysis.criteria.filter((c) => c.alignment === null).length} item(ns) sem informação no cadastro
             avaliáveis
           </span>
         </div>

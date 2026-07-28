@@ -250,14 +250,19 @@ export function detectAlerts(record: CuradoriaRecord): ConductionAlert[] {
     });
   }
 
-  const averageCoverage =
-    analyses.reduce((sum, entry) => sum + entry.coveredWeight, 0) / (analyses.length || 1);
-  if (averageCoverage < 50) {
+  // ADR-042 — o alerta deixou de contar pontos e passou a contar o que falta
+  // descobrir. Ele organiza a investigação; nunca bloqueia a navegação.
+  const semDados = analyses.reduce(
+    (sum, entry) => sum + entry.criteria.filter((c) => c.alignment === null).length,
+    0,
+  );
+  if (semDados > 0) {
     found.push({
       code: "C-06",
       phase: "CURADORIA_TECNICA",
-      title: "Cobertura baixa do cadastro",
-      detail: `Em média, só ${Math.round(averageCoverage)} dos 100 pontos puderam ser avaliados. O cadastro dos profissionais está incompleto — a análise é honesta, mas menos informativa.`,
+      title: "Lacunas de informação no cadastro",
+      detail:
+        "Existem lacunas de informação que precisam ser conferidas: o Mapa do Profissional está incompleto para itens que este caso considera relevantes. A análise é honesta, mas menos informativa.",
       severity: "atencao",
     });
   }

@@ -44,7 +44,6 @@ import {
   type MesaEtapaId,
 } from "@/modules/curadoria/mesa-etapas";
 import {
-  CRITERION_BLOCO,
   hipoteseDe,
   itensDeAtencao,
   linhaDeInvestigacao,
@@ -145,16 +144,16 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
       ).length,
       criteriosPendentes:
         view.awaitingDeclaration[profissional.professionalProfileId]?.length ?? 0,
+      // Lacuna do Motor: o que o Case declarou e o profissional não respondeu.
       criteriosInsuficientes:
-        coluna?.cells.filter((celula) => celula.assessment === "INFORMACAO_INSUFICIENTE").length ??
-        0,
+        coluna?.cells.filter((celula) => celula.result === "LACUNA_DE_INFORMACAO").length ?? 0,
     };
   });
 
   const criteriaTotal = Object.keys(view.awaitingDeclaration).length * 6;
 
   const linha = linhaDeInvestigacao({
-    budgetsComplete: view.budgets.technical.complete && view.budgets.patient.complete,
+    budgetsComplete: view.mapaPendentes === 0,
     eligible: view.counts.eligible,
     criteriaDeclared: criteriaTotal - criteriaAwaiting,
     criteriaTotal,
@@ -171,10 +170,7 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
     id: coluna.professionalProfileId,
     nome: nomeDe(coluna.professionalProfileId),
     celulas: coluna.cells,
-    technicalScore: coluna.result.technical.score,
-    patientScore: coluna.result.patient.score,
-    technicalCoverageSentence: coluna.technicalCoverageSentence,
-    patientCoverageSentence: coluna.patientCoverageSentence,
+    resumo: coluna.resumo,
   }));
 
   const hipoteses = view.comparison.map((coluna) =>
@@ -183,8 +179,8 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
       nome: nomeDe(coluna.professionalProfileId),
       celulas: coluna.cells.map((celula) => ({
         label: celula.label,
-        bloco: CRITERION_BLOCO[celula.criterion],
-        assessment: celula.assessment,
+        importancia: celula.importance,
+        resultado: celula.result,
       })),
       pendentes: (view.awaitingDeclaration[coluna.professionalProfileId] ?? []).map(
         (criterio) => CRITERION_LABELS[criterio],
@@ -270,9 +266,9 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
     ) : (
       <CruzamentoNaoIniciado
         motivo={
-          !view.budgets.technical.complete || !view.budgets.patient.complete
-            ? "Os dois cruzamentos precisam ter os 100 pontos distribuídos antes de produzir leitura."
-            : "Ainda não há profissional elegível com avaliação registrada."
+          view.mapaPendentes > 0
+            ? `O Mapa de Prioridades ainda tem ${view.mapaPendentes} subcritério(s) sem classificação.`
+            : "Ainda não há profissional elegível para comparar."
         }
       />
     );

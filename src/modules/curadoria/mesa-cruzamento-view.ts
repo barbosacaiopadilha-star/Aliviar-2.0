@@ -1,83 +1,38 @@
 /**
  * MESA DO CRUZAMENTO — a visão, sem banco
  *
- * Tudo aqui é função pura sobre dados já carregados. A separação tem dois
- * motivos: o cliente pode pré-visualizar o saldo de pontos sem uma ida ao
- * servidor, e cada regra da Mesa pode ser testada sem Supabase.
+ * Tudo aqui é função pura sobre dados já carregados, para que cada regra da
+ * Mesa possa ser testada sem Supabase.
  *
- * O que este módulo NUNCA faz: decidir. Ele soma, classifica, explica e
- * ordena a leitura. Compatibilidade de área, avaliação de critério e seleção
- * são do Curador — o módulo só recusa apresentar como concluído o que ainda
- * não foi.
+ * O que este módulo NUNCA faz: decidir. Ele classifica e explica a leitura
+ * que o Motor produziu. Compatibilidade de área, avaliação de critério e
+ * seleção são do Curador — o módulo só recusa apresentar como concluído o
+ * que ainda não foi.
+ *
+ * ADR-042: o saldo de pontos saiu daqui. Não há orçamento, não há soma, e a
+ * matriz de compatibilidade não é reproduzida — vem pronta do Motor.
  */
 
 import {
-  BLOCK_POINTS,
-  CRITERION_LABELS,
-  PATIENT_CRITERIA,
-  TECHNICAL_CRITERIA,
   applyAreaGate,
-  coverageSentence,
-  cruzar,
   type AreaCompatibility,
-  type Assessment,
-  type CriterionEvaluation,
-  type CriterionWeight,
-  type CruzamentoCriterion,
-  type CruzamentoResult,
 } from "./cruzamento";
+import { SUBCRITERION_CATALOG, type ImportanceLevel, type Subcriterion } from "./mapa-prioridades";
+import type { SubcriterionStatus } from "./mapa-profissional";
+import type {
+  CompatibilityReading,
+  CompatibilityResult,
+  CompatibilitySummary,
+} from "./motor-compatibilidade";
 
 // ---------------------------------------------------------------------------
-// Orçamento de pontos — o Curador nunca soma
+// ADR-042 — o orçamento de pontos saiu daqui
 // ---------------------------------------------------------------------------
-
-export type BudgetView = {
-  block: "TECNICO" | "PRIORIDADES";
-  used: number;
-  remaining: number;
-  limit: number;
-  complete: boolean;
-  /** A frase que a tela mostra — "Restam 10 pontos" / "50 de 50 — distribuição concluída". */
-  sentence: string;
-};
-
-export function budgetOf(
-  weights: Partial<Record<CruzamentoCriterion, number>>,
-  block: "TECNICO" | "PRIORIDADES",
-): BudgetView {
-  const criteria = block === "TECNICO" ? TECHNICAL_CRITERIA : PATIENT_CRITERIA;
-  const used = criteria.reduce((total, criterion) => total + (weights[criterion] ?? 0), 0);
-  const remaining = BLOCK_POINTS - used;
-  const complete = remaining === 0;
-
-  return {
-    block,
-    used,
-    remaining,
-    limit: BLOCK_POINTS,
-    complete,
-    sentence: complete
-      ? `${BLOCK_POINTS} de ${BLOCK_POINTS} — distribuição concluída`
-      : remaining > 0
-        ? `${used} de ${BLOCK_POINTS} distribuídos. Restam ${remaining} ponto${remaining === 1 ? "" : "s"}.`
-        : `A soma passou de ${BLOCK_POINTS}. Retire ${-remaining} ponto${remaining === -1 ? "" : "s"}.`,
-  };
-}
-
-/**
- * O próximo valor de um critério, respeitando o saldo do bloco. Nunca
- * negativo, nunca acima do que resta — o excesso é recusado aqui, antes de
- * qualquer persistência.
- */
-export function clampWeight(
-  weights: Partial<Record<CruzamentoCriterion, number>>,
-  criterion: CruzamentoCriterion,
-  proposed: number,
-): number {
-  const block = (TECHNICAL_CRITERIA as readonly string[]).includes(criterion) ? "TECNICO" : "PRIORIDADES";
-  const others = budgetOf(weights, block).used - (weights[criterion] ?? 0);
-  return Math.max(0, Math.min(proposed, BLOCK_POINTS - others));
-}
+//
+// `BudgetView`, `budgetOf` e `clampWeight` foram removidos. Não existe mais
+// orçamento a distribuir nem saldo a respeitar: o Case declara quanto cada
+// subcritério importa, e nada precisa somar. A leitura de compatibilidade
+// vem pronta do Motor (ADR-041) e não é recalculada aqui.
 
 // ---------------------------------------------------------------------------
 // Elegibilidade — os quatro estados de leitura
@@ -207,9 +162,13 @@ export function headerCounts(eligibilities: ProfessionalEligibility[], selectedC
 }
 
 /** De quem é a vez, dito em uma frase. */
-export function nextStepSentence(counts: HeaderCounts, budgetsComplete: boolean, profileAcknowledged: boolean): string {
+export function nextStepSentence(
+  counts: HeaderCounts,
+  mapaCompleto: boolean,
+  profileAcknowledged: boolean,
+): string {
   if (!profileAcknowledged) return "A paciente ainda não reconheceu este Perfil como seu.";
-  if (!budgetsComplete) return "Sua vez: distribuir os pontos dos dois blocos.";
+  if (!mapaCompleto) return "Sua vez: classificar os subcritérios do Mapa de Prioridades.";
   if (counts.awaiting > 0) return "Sua vez: declarar a compatibilidade de área dos profissionais pendentes.";
   if (counts.selected < 3) return "Sua vez: comparar as opções e selecionar três.";
   return "Seleção completa. Continue para o Relatório.";
@@ -219,63 +178,106 @@ export function nextStepSentence(counts: HeaderCounts, budgetsComplete: boolean,
 // Comparação — células que explicam, nunca elegem
 // ---------------------------------------------------------------------------
 
+/**
+ * A frase de estado de um item. Existe para preservar, na tela, a distinção
+ * que o Motor não faz: `SEM_REGISTRO` e `NAO_INFORMADO` caem os dois em
+ * `LACUNA_DE_INFORMACAO`, mas um significa "ninguém olhou ainda" e o outro
+ * "olharam e não havia". São conversas diferentes com o profissional.
+ */
+export function stateSentence(status: SubcriterionStatus | null): string {
+  switch (status) {
+    case "CONFIRMADO":
+      return "Confirmado";
+    case "NAO_CONFIRMADO":
+      return "Não confirmado";
+    case "NAO_INFORMADO":
+      return "Analisado, mas sem informação suficiente";
+    default:
+      return "Ainda não investigado";
+  }
+}
+
+export const COMPATIBILITY_CELL_LABELS: Record<CompatibilityResult, string> = {
+  ALTA_COMPATIBILIDADE: "Alta compatibilidade",
+  MEDIA_COMPATIBILIDADE: "Média compatibilidade",
+  LACUNA_DE_INFORMACAO: "Lacuna de informação",
+  NAO_RELEVANTE: "Não relevante",
+};
+
 export type ComparisonCell = {
-  criterion: CruzamentoCriterion;
+  subcriterionCode: string;
   label: string;
-  assessment: Assessment | null;
-  /** "25/25", "5/10", ou "não avaliável". */
-  pointsSentence: string;
-  evidence: string;
+  importance: ImportanceLevel;
+  /** `null` = ausência de registro. Nunca colapsado em NAO_INFORMADO. */
+  status: SubcriterionStatus | null;
+  result: CompatibilityResult;
+  /** "Ainda não investigado" / "Analisado, mas sem informação suficiente" / ... */
+  stateSentence: string;
 };
 
 export type ComparisonColumn = {
   professionalProfileId: string;
-  result: CruzamentoResult;
+  summary: CompatibilitySummary;
   cells: ComparisonCell[];
-  /** Uma frase de cobertura por cruzamento — cada um tem o próprio orçamento. */
-  technicalCoverageSentence: string;
-  patientCoverageSentence: string;
+  /**
+   * Contagens por estado, em texto. NÃO é score: são quantos itens caíram em
+   * cada estado, e não existe soma geral que possa ser lida como nota.
+   */
+  resumo: string;
 };
 
+/**
+ * Uma frase de contagem — nunca um total.
+ *
+ * "8 altas · 7 médias · 3 lacunas · 8 sem influência" diz o que foi
+ * encontrado. Um número único diria quem ganhou, e isso o Método não faz.
+ */
+export function summarySentence(summary: CompatibilitySummary): string {
+  const partes = [
+    `${summary.highCompatibility} alta${summary.highCompatibility === 1 ? "" : "s"}`,
+    `${summary.mediumCompatibility} média${summary.mediumCompatibility === 1 ? "" : "s"}`,
+    `${summary.informationGaps} lacuna${summary.informationGaps === 1 ? "" : "s"} de informação`,
+    `${summary.notRelevant} sem influência neste caso`,
+  ];
+  return partes.join(" · ");
+}
+
+/**
+ * As colunas da comparação, montadas sobre a leitura que o Motor já produziu.
+ *
+ * A matriz de compatibilidade NÃO é reproduzida aqui: se a Mesa recalculasse,
+ * existiriam duas verdades sobre o mesmo cruzamento.
+ */
 export function buildComparison(
-  eligibleIds: string[],
-  weights: CriterionWeight[],
-  evaluationsByProfessional: Map<string, CriterionEvaluation[]>,
+  eligibleIds: readonly string[],
+  readings: ReadonlyMap<string, CompatibilityReading>,
+  catalog: readonly Subcriterion[] = SUBCRITERION_CATALOG,
 ): ComparisonColumn[] {
-  const technicalWeights = weights.filter((w) => (TECHNICAL_CRITERIA as readonly string[]).includes(w.criterion));
-  const patientWeights = weights.filter((w) => (PATIENT_CRITERIA as readonly string[]).includes(w.criterion));
+  const porCodigo = new Map(catalog.map((entry) => [entry.code, entry]));
 
-  const columns = eligibleIds.map((professionalProfileId) => {
-    const result = cruzar({
-      professionalProfileId,
-      technicalWeights,
-      patientWeights,
-      evaluations: evaluationsByProfessional.get(professionalProfileId) ?? [],
-    });
+  // Sem ordenação automática: ordenar profissionais exigiria uma chave, e
+  // toda chave possível seria um ranking. As colunas seguem a ordem de
+  // entrada — sem posição, sem medalha, sem pré-marcação.
+  return eligibleIds.flatMap((professionalProfileId) => {
+    const reading = readings.get(professionalProfileId);
+    if (!reading) return [];
 
-    const cells: ComparisonCell[] = [...result.technical.criteria, ...result.patient.criteria].map((entry) => ({
-      criterion: entry.criterion,
-      label: CRITERION_LABELS[entry.criterion],
-      assessment: entry.assessment,
-      pointsSentence:
-        entry.alignment === null
-          ? "não avaliável"
-          : `${Math.round((entry.alignment / 100) * entry.weight)}/${entry.weight}`,
-      evidence: entry.evidence,
+    const cells: ComparisonCell[] = reading.rows.map((row) => ({
+      subcriterionCode: row.subcriterionCode,
+      label: porCodigo.get(row.subcriterionCode)?.name ?? row.subcriterionCode,
+      importance: row.importance,
+      status: row.status,
+      result: row.result,
+      stateSentence: stateSentence(row.status),
     }));
 
-    return {
-      professionalProfileId,
-      result,
-      cells,
-      technicalCoverageSentence: coverageSentence(result.technical),
-      patientCoverageSentence: coverageSentence(result.patient),
-    };
+    return [
+      {
+        professionalProfileId,
+        summary: reading.summary,
+        cells,
+        resumo: summarySentence(reading.summary),
+      },
+    ];
   });
-
-  // Sem ordenação automática: ela ordenava pelo total combinado, que o
-  // Modelo v1.0 aboliu. Escolher uma nova chave (técnica? assistencial?)
-  // seria uma decisão de domínio — exige ADR. As colunas seguem a ordem em
-  // que a Rede devolve; sem número de posição, sem medalha, sem pré-marcação.
-  return columns;
 }

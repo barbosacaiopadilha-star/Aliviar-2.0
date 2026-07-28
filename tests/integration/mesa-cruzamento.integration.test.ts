@@ -16,9 +16,7 @@ import { getOrCreateActiveStory, submitStory } from "@/modules/story/repository"
 import { declareAreaCompatibility } from "@/modules/curadoria/area-repository";
 import {
   declareCriterion,
-  loadCruzamentoWeights,
   loadMesaCruzamento,
-  saveCruzamentoBlockWeights,
 } from "@/modules/curadoria/mesa-cruzamento";
 import * as curadoria from "@/modules/curadoria/repository";
 
@@ -109,62 +107,22 @@ describe("Mesa do Cruzamento — banco e montagem (Supabase local)", () => {
     }
   }, 60_000);
 
-  it("antes de qualquer trabalho, a Mesa diz que o Perfil está validado e os pontos faltam", async () => {
+  it("antes de qualquer trabalho, a Mesa diz que o Perfil foi reconhecido", async () => {
     const mesa = await loadMesaCruzamento(curador.client, caseId, 0);
 
     expect(mesa.profileAcknowledged).toBe(true);
     expect(mesa.isCertification).toBe(true);
     expect(mesa.areaRequirement).toBe(CERTIFICATION_AREA_REQUIREMENT);
-    expect(mesa.budgets.technical.complete).toBe(false);
-    expect(mesa.nextStep).toContain("distribuir os pontos");
+    expect(mesa.mapaPendentes).toBe(0);
     // As quatro fixtures aparecem; nenhuma declarada ainda.
     expect(mesa.counts.found).toBe(4);
     expect(mesa.counts.awaiting).toBe(4);
     expect(mesa.comparison).toHaveLength(0);
   });
 
-  it("um cruzamento que não fecha em 100 não é persistido nem pela metade", async () => {
-    await expect(
-      saveCruzamentoBlockWeights(curador.client, caseId, "TECNICO", { FORMACAO: 30, EXPERIENCIA: 50 }, curador.userId),
-    ).rejects.toThrow(/Restam 20/);
-
-    const weights = await loadCruzamentoWeights(curador.client, caseId);
-    expect(Object.keys(weights)).toHaveLength(0);
-  });
-
-  it("critério do bloco errado é recusado antes do banco", async () => {
-    await expect(
-      saveCruzamentoBlockWeights(
-        curador.client,
-        caseId,
-        "TECNICO",
-        { FORMACAO: 50, ACESSO: 50 },
-        curador.userId,
-      ),
-    ).rejects.toThrow(/não pertence a este bloco/);
-  });
-
-  it("os dois cruzamentos fecham em 100 e persistem", async () => {
-    await saveCruzamentoBlockWeights(
-      curador.client,
-      caseId,
-      "TECNICO",
-      { FORMACAO: 30, EXPERIENCIA: 50, HISTORICO: 20 },
-      curador.userId,
-    );
-    await saveCruzamentoBlockWeights(
-      curador.client,
-      caseId,
-      "PRIORIDADES",
-      { ACESSO: 30, CONTINUIDADE_DO_CUIDADO: 50, MODELO_DE_ATENDIMENTO: 20 },
-      curador.userId,
-    );
-
-    const mesa = await loadMesaCruzamento(curador.client, caseId, 0);
-    expect(mesa.budgets.technical.complete).toBe(true);
-    expect(mesa.budgets.patient.complete).toBe(true);
-    expect(mesa.nextStep).toContain("declarar a compatibilidade");
-  });
+  // Os três testes de orçamento saíram — ADR-042. Não existe mais bloco que
+  // feche em 100, nem crítica de "critério do bloco errado": o Case classifica
+  // subcritérios do catálogo canônico, e nada precisa somar.
 
   it("as declarações de área reclassificam a Rede: três elegíveis, D eliminada", async () => {
     const declaracoes = {
@@ -246,22 +204,22 @@ describe("Mesa do Cruzamento — banco e montagem (Supabase local)", () => {
     const colunaA = mesa.comparison.find((c) => c.professionalProfileId === professionalIds["fixture-a"])!;
     const colunaB = mesa.comparison.find((c) => c.professionalProfileId === professionalIds["fixture-b"])!;
 
-    expect(colunaA.result.technical.coveredWeight).toBe(100);
-    expect(colunaA.result.patient.coveredWeight).toBe(100);
-    // Modelo de Atendimento (20 pts) insuficiente: só a cobertura ASSISTENCIAL da B cai.
-    expect(colunaB.result.technical.coveredWeight).toBe(100);
-    expect(colunaB.result.patient.coveredWeight).toBe(80);
-    expect(colunaB.patientCoverageSentence).toBe("Avaliação construída sobre 80 dos 100 pontos possíveis.");
+    // ADR-042 — a leitura vem do Motor. Nenhum profissional tem Mapa
+    // preenchido nesta fixture, então tudo cai em "ainda não investigado" —
+    // que é lacuna, nunca nota zero nem reprovação.
+    for (const coluna of [colunaA, colunaB]) {
+      expect(coluna.summary.highCompatibility).toBe(0);
+      expect(coluna.cells.every((cell) => cell.status === null)).toBe(true);
+      expect(coluna.cells.every((cell) => cell.stateSentence === "Ainda não investigado")).toBe(true);
+    }
 
-    // A lacuna não virou zero: o critério aparece como não avaliável.
-    const compat = colunaB.cells.find((cell) => cell.criterion === "MODELO_DE_ATENDIMENTO")!;
-    expect(compat.pointsSentence).toBe("não avaliável");
+    // Nenhum texto da Mesa fala em pontos.
+    expect(JSON.stringify(mesa.comparison)).not.toMatch(/100 pontos|pointsSentence/);
 
-    // A fixture-c segue sem declaração de critérios: cobertura zero, presente
-    // na comparação, aguardando o Curador — nunca reprovada.
+    // A fixture-c segue sem declaração de critérios: presente na comparação,
+    // aguardando o Curador — nunca reprovada.
     const colunaC = mesa.comparison.find((c) => c.professionalProfileId === professionalIds["fixture-c"])!;
-    expect(colunaC.result.technical.coveredWeight).toBe(0);
-    expect(colunaC.result.patient.coveredWeight).toBe(0);
+    expect(colunaC).toBeTruthy();
     expect(mesa.awaitingDeclaration[professionalIds["fixture-c"]!]).toHaveLength(6);
   });
 
