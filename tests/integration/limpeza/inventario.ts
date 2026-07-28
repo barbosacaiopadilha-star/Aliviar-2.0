@@ -18,34 +18,7 @@
  * ids conhecido.
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import path from "node:path";
-
 import type { SupabaseClient } from "@supabase/supabase-js";
-
-/**
- * Os Cases que a limpeza não conseguiu remover por garantia de domínio.
- *
- * Vive em arquivo porque quem descobre (o `afterAll` de cada arquivo) e quem
- * confere (o sentinela) rodam em processos diferentes. E precisa ser
- * registrado assim porque `service_role` não tem SELECT em
- * `case_responsibility_changes` — endurecimento deliberado: o log de
- * responsabilidade só é legível pelos caminhos da própria aplicação. O
- * sentinela, portanto, não pode perguntar ao banco quem está protegido; ele
- * confere contra o que a limpeza registrou ao esbarrar no gatilho.
- */
-export const INDESTRUTIVEIS_PATH = path.resolve(__dirname, "indestrutiveis.local.json");
-
-export function registrarIndestrutiveis(ids: string[]): void {
-  if (ids.length === 0) return;
-  const atuais = lerIndestrutiveis();
-  writeFileSync(INDESTRUTIVEIS_PATH, JSON.stringify([...new Set([...atuais, ...ids])]), "utf-8");
-}
-
-export function lerIndestrutiveis(): string[] {
-  if (!existsSync(INDESTRUTIVEIS_PATH)) return [];
-  return JSON.parse(readFileSync(INDESTRUTIVEIS_PATH, "utf-8")) as string[];
-}
 
 /** As seis contas que a suíte precisa encontrar prontas. Nunca são removidas. */
 export const CONTAS_PERMANENTES = [
@@ -59,6 +32,8 @@ export const CONTAS_PERMANENTES = [
 
 export type Inventario = {
   usuarios: string[];
+  /** Papéis concedidos, como "profile_id:role_id" — a chave de `user_roles` é composta. */
+  papeis: string[];
   perfis: string[];
   casos: string[];
   profissionais: string[];
@@ -108,15 +83,47 @@ async function idsDeUsuarios(admin: SupabaseClient): Promise<string[]> {
   return ids;
 }
 
+/**
+ * O administrador permanente de bootstrap — o executor do descarte.
+ *
+ * `service_role` é transporte: a função da ADR-038 exige um executor com
+ * papel `administrador` e verifica isso por conta própria. A limpeza usa o
+ * mesmo caminho que uma pessoa usaria, não um atalho técnico.
+ */
+async function idDoAdministrador(admin: SupabaseClient): Promise<string> {
+  const { data, error } = await admin.auth.admin.listUsers({ perPage: 1000 });
+  if (error) throw new Error(`limpeza: não foi possível localizar o administrador — ${error.message}`);
+  const conta = (data?.users ?? []).find(
+    (usuario) => usuario.email === "admin.teste@aliviar-conexao.local",
+  );
+  if (!conta) {
+    throw new Error("limpeza: conta de administrador de bootstrap não encontrada. Rode `npm run bootstrap:test-users`.");
+  }
+  return conta.id;
+}
+
 export async function snapshot(admin: SupabaseClient): Promise<Inventario> {
-  const [usuarios, perfis, casos, profissionais, historias] = await Promise.all([
+  const [usuarios, perfis, casos, profissionais, historias, papeis] = await Promise.all([
     idsDeUsuarios(admin),
     todosOsIds(admin, "profiles"),
     todosOsIds(admin, "cases"),
     todosOsIds(admin, "professional_profiles"),
     todosOsIds(admin, "patient_stories"),
+    paresDePapel(admin),
   ]);
-  return { usuarios, perfis, casos, profissionais, historias };
+  return { usuarios, perfis, casos, profissionais, historias, papeis };
+}
+
+/**
+ * Um papel concedido a uma conta PERMANENTE durante a suíte não some com
+ * nenhuma conta — foi assim que `Concierge Teste` ficou com `curador_medico`
+ * depois de um teste de concessão e revogação. Por isso o par entra no
+ * inventário.
+ */
+async function paresDePapel(admin: SupabaseClient): Promise<string[]> {
+  const { data, error } = await admin.from("user_roles").select("profile_id, role_id");
+  if (error) throw new Error(`user_roles: ${error.message}`);
+  return (data ?? []).map((linha) => `${linha.profile_id}:${linha.role_id}`);
 }
 
 async function contar(admin: SupabaseClient, tabela: string, filtro?: (q: never) => never) {
@@ -168,6 +175,7 @@ export async function residuo(admin: SupabaseClient, antes: Inventario): Promise
     casos: novo(agora.casos, antes.casos),
     profissionais: novo(agora.profissionais, antes.profissionais),
     historias: novo(agora.historias, antes.historias),
+    papeis: novo(agora.papeis, antes.papeis),
   };
 }
 
@@ -216,22 +224,32 @@ export async function limpar(admin: SupabaseClient, antes: Inventario): Promise<
 
   // 2. Cases — cascateiam por quase toda a cadeia da Curadoria.
   //
-  //    Exceção legítima: `case_responsibility_changes` é append-only por
-  //    gatilho, e o gatilho recusa também o DELETE que vem da cascata. Um
-  //    Case que trocou de responsável é, por construção, indestrutível — e
-  //    com ele ficam o paciente e a história. Isso NÃO é falha de limpeza:
-  //    é uma garantia de domínio cobrando seu preço, e está declarada no
-  //    retorno para o sentinela conferir em vez de tolerar em silêncio.
-  const indestrutiveis: string[] = [];
+  //    Case com troca de responsável não sai pelo DELETE comum: o gatilho
+  //    append-only recusa a cascata. Para esses — e só para esses — a limpeza
+  //    usa a porta da ADR-038, com motivo declarado e auditoria gravada, do
+  //    mesmo jeito que um administrador usaria em produção. Nenhum caminho
+  //    paralelo, nenhuma exceção de ambiente.
+  const administrador = await idDoAdministrador(admin);
+
   for (const id of criado.casos) {
     await admin.from("connection_records").delete().eq("case_id", id);
     await admin.from("relationship_records").delete().eq("case_id", id);
+
     const { error } = await admin.from("cases").delete().eq("id", id);
     if (!error) continue;
-    if (/append-only/i.test(error.message)) {
-      indestrutiveis.push(id);
+
+    if (/append-only|descarte administrativo autorizado/i.test(error.message)) {
+      const { error: erroDescarte } = await admin.rpc("discard_case_admin", {
+        _case_id: id,
+        _reason: "Descarte de Case sintético ao final da suíte de integração local.",
+        _executed_by: administrador,
+      });
+      if (erroDescarte) {
+        throw new Error(`limpeza: descarte do Case ${id} falhou — ${erroDescarte.message}`);
+      }
       continue;
     }
+
     throw new Error(`limpeza de cases: ${error.message}`);
   }
 
@@ -304,9 +322,21 @@ export async function limpar(admin: SupabaseClient, antes: Inventario): Promise<
     await admin.from("user_roles").delete().in("profile_id", lote);
 
     for (const [tabela, coluna] of DEPENDENTES_DE_PERFIL) {
-      await admin.from(tabela).delete().in(coluna, lote);
+      // O registro de descarte da ADR-038 é o rastro que sobrevive ao Case,
+      // de propósito. Ele aponta para o paciente como alvo — e sem esta
+      // ressalva a própria limpeza apagaria a prova do que apagou.
+      const consulta = admin.from(tabela).delete().in(coluna, lote);
+      await (tabela === "audit_logs" ? consulta.neq("action", "case_discarded") : consulta);
     }
   });
+
+  // Papéis concedidos durante a janela a contas que NÃO nasceram nela — o
+  // caso de um teste que concede e revoga e deixa um a mais. Sem isto, o
+  // papel sobrevive indefinidamente numa conta permanente.
+  for (const par of criado.papeis) {
+    const [profileId, roleId] = par.split(":");
+    await admin.from("user_roles").delete().eq("profile_id", profileId).eq("role_id", roleId);
+  }
 
   // Profissionais que um perfil da janela criou/atualizou/verificou, mas que
   // já existiam antes dela: soltar o vínculo em vez de apagar o profissional
@@ -327,22 +357,11 @@ export async function limpar(admin: SupabaseClient, antes: Inventario): Promise<
     if ((data?.users.length ?? 0) < 1000) break;
   }
 
-  // Pacientes presos a um Case indestrutível: apagá-los cascatearia para o
-  // Case, e a cascata esbarra no mesmo gatilho append-only.
-  const presos = new Set<string>();
-  if (indestrutiveis.length > 0) {
-    const { data } = await admin
-      .from("cases")
-      .select("patient_profile_id")
-      .in("id", indestrutiveis);
-    for (const linha of data ?? []) presos.add(linha.patient_profile_id as string);
-  }
-
   // Falha silenciosa aqui foi a origem do vazamento — a conta sobrevivia e
   // ninguém ficava sabendo. Agora ela é reportada, com o motivo.
   const naoRemovidos: string[] = [];
   for (const id of criado.usuarios) {
-    if (permanentes.has(id) || presos.has(id)) continue;
+    if (permanentes.has(id)) continue;
     const { error } = await admin.auth.admin.deleteUser(id);
     if (error) naoRemovidos.push(`${id}: ${error.message}`);
   }
@@ -355,13 +374,12 @@ export async function limpar(admin: SupabaseClient, antes: Inventario): Promise<
   // 7. Perfis sem conta (criados direto na tabela, sem passar pelo Auth).
   await emLotes(
     criado.perfis.filter(
-      (id) => !criado.usuarios.includes(id) && !permanentes.has(id) && !presos.has(id),
+      (id) => !criado.usuarios.includes(id) && !permanentes.has(id),
     ),
     async (lote) => {
       await admin.from("profiles").delete().in("id", lote);
     },
   );
 
-  registrarIndestrutiveis(indestrutiveis);
   return criado;
 }

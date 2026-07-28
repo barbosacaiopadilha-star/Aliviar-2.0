@@ -1,10 +1,10 @@
 # Retenção e Descarte de Cases com Histórico Imutável
 
 **Documento de análise e decisão — ADR-038.**
-Status: **Proposta**, aguardando aprovação do responsável pelo projeto.
-Data da análise: 2026-07-27.
+Status: **Aprovada e implementada** — 2026-07-27.
+Migration `20260727140000_descarte_administrativo_de_case`; certificação em `tests/integration/descarte-de-case.integration.test.ts`.
 
-Nenhuma alteração de banco foi feita. Este documento decide o quê e o porquê; o plano de implementação está separado, no fim.
+O §8 descreve o plano tal como foi aprovado; o que efetivamente mudou está resumido no §12, incluindo a diferença entre o desenho proposto e o implementado.
 
 ---
 
@@ -207,3 +207,49 @@ Hoje: 27 arquivos, 244 testes verdes, resíduo de **3 Cases + 3 contas + 3 hist�
 Depois: resíduo **zero**. O sentinela deixa de ter a classe de exceção e volta a exigir igualdade com a baseline em todas as entidades.
 
 Até a aprovação, o comportamento atual permanece e continua declarado — não é resíduo tolerado em silêncio.
+
+---
+
+## 12. O que foi implementado (2026-07-27)
+
+**Migration:** `20260727140000_descarte_administrativo_de_case` — aditiva. Não descarta Case nenhum, não altera linha nenhuma, não concede DELETE, não toca RLS. Efeito imediato em produção: **nenhum**, porque nada a chama.
+
+### Diferença entre o proposto e o implementado
+
+O §8 propunha destravar o gatilho por uma variável local à transação. Sozinha, isso seria "uma variável de sessão como única defesa". O implementado exige **duas condições, ambas obrigatórias**:
+
+**(a) Estrutural — o Case pai já não existe.** Verificado empiricamente antes de escrever a migration: num `DELETE` avulso da linha do log, o Case ainda está lá quando o `BEFORE DELETE` dispara; numa cascata vinda de `delete from cases`, o Case já saiu. A diferença entre "estão apagando o rastro" e "o Case inteiro deixou de existir" não depende de nada que um cliente possa afirmar sobre si mesmo.
+
+**(b) Autorização** — a transação carrega a marca do descarte para **aquele** `case_id`, posta por `discard_case_admin` com `is_local => true`.
+
+Sem (b), qualquer detentor de `DELETE` em `cases` apagaria um Case por fora da porta auditada. Sem (a), a defesa seria só a variável. Juntas: a única forma de remover o histórico é o Case inteiro sendo descartado pela função. Certificado por teste — `delete from cases` direto, com `service_role`, é recusado.
+
+### A função
+
+`curadoria.discard_case_admin(_case_id uuid, _reason text, _executed_by uuid default null)`, `SECURITY DEFINER`, `search_path` fixo. Exige `case_id`; exige motivo não vazio após `btrim`; resolve o executor como `coalesce(auth.uid(), _executed_by)` — **sessão autenticada tem precedência, ninguém se passa por outro**; recusa executor ausente; verifica papel `administrador` em `user_roles`; confirma que o Case existe; grava auditoria; apaga; devolve o resumo. Tudo em uma transação.
+
+`service_role` é **transporte**: certificado por teste que, sem executor identificado, a chamada é recusada mesmo com service role.
+
+### Auditoria
+
+Novo valor no ENUM `curadoria.audit_action`: `case_discarded` — auditoria de vocabulário controlado, não texto livre. O registro carrega `case_id`, status, `is_certification`, quantas trocas de responsável foram descartadas, o motivo e o instante. **Nenhum conteúdo clínico, narrativa ou documento** — coberto por teste que varre as chaves do metadado.
+
+`audit_logs` referencia apenas `profiles`, nunca `cases` — por isso o rastro sobrevive ao descarte.
+
+### Privilégios finais
+
+`revoke all` de `public`, `anon` e `authenticated`; `grant execute` só a `service_role`. Sem rota, Server Action, botão ou painel. Superfície de RPC fechada por ausência de EXECUTE — e, se um dia for aberta, a checagem de papel continua obrigatória no corpo.
+
+### Casos protegidos
+
+Nenhuma restrição nova foi inventada. A ADR não distingue Case com Relatório emitido, Connection ou Relationship ativa, nem Case real de fixture: a política aprovada é **autorização administrativa + motivo + auditoria**, e é exatamente isso que a função exige. Restrições adicionais, se vierem, precisam de decisão própria.
+
+### Certificação
+
+`tests/integration/descarte-de-case.integration.test.ts` — 14 cenários contra o banco real local: anônimo, paciente, Curador, service_role sem executor, motivo vazio, Case inexistente, descarte completo, auditoria antes e sobrevivente, metadado mínimo, `UPDATE` impossível para qualquer papel, `DELETE` avulso impossível, porta única, autorização que não vaza entre Cases, rollback integral e Case sem histórico.
+
+### Idempotência
+
+Baseline `users=6 profiles=6 roles=6 cases=0 prof=0 rede_pub=0 hist=0`; duas execuções consecutivas sem reset devolvem **exatamente** esses números. Cresce só `audit_logs` (6 → 240 → 474), com 16 `case_discarded` por execução.
+
+Uma correção veio junto: a limpeza estava apagando o próprio registro de descarte, porque ele aponta para o paciente como alvo. Agora `case_discarded` é preservado — a prova do que foi apagado não pode morrer com o que foi apagado.

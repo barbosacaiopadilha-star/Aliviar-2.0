@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { assertSupabaseLocal, lerArquivoEnv } from "../../../scripts/env-guard.mjs";
 
-import { contagens, INDESTRUTIVEIS_PATH, snapshot } from "./inventario";
+import { contagens, snapshot } from "./inventario";
 
 /**
  * A LINHA DE BASE DA EXECUÇÃO.
@@ -41,9 +41,6 @@ export async function setup() {
   };
 
   writeFileSync(BASELINE_PATH, JSON.stringify(baseline), "utf-8");
-  // Cada execução começa com a lista de indestrutíveis zerada — ela descreve
-  // esta rodada, não a memória de todas.
-  if (existsSync(INDESTRUTIVEIS_PATH)) unlinkSync(INDESTRUTIVEIS_PATH);
 }
 
 export async function teardown() {
@@ -61,6 +58,5 @@ export async function teardown() {
     }
   } finally {
     if (existsSync(BASELINE_PATH)) unlinkSync(BASELINE_PATH);
-    if (existsSync(INDESTRUTIVEIS_PATH)) unlinkSync(INDESTRUTIVEIS_PATH);
   }
 }
