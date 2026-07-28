@@ -3,6 +3,8 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { loadCasePriorityMap } from "@/modules/curadoria/mapa-prioridades-repository";
+import { isProfileAcknowledged } from "@/modules/curadoria/reconhecimento-do-perfil";
+import type { PriorityProfileStatus } from "@/modules/curadoria/types";
 
 import { buildPerfilView, type PerfilView } from "./experiencia";
 
@@ -28,5 +30,5 @@ export async function loadPatientPerfil(
   // A validação do Perfil PELA PESSOA continua (ADR-042): ela nunca foi etapa
   // do modelo antigo — é o consentimento dela. A Curadoria só abre depois que
   // ela reconhece o Perfil como seu.
-  return buildPerfilView(mapa.items, profile?.status === "VALIDATED");
+  return buildPerfilView(mapa.items, isProfileAcknowledged(profile?.status as PriorityProfileStatus));
 }

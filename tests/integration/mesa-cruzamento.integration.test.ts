@@ -112,7 +112,7 @@ describe("Mesa do Cruzamento — banco e montagem (Supabase local)", () => {
   it("antes de qualquer trabalho, a Mesa diz que o Perfil está validado e os pontos faltam", async () => {
     const mesa = await loadMesaCruzamento(curador.client, caseId, 0);
 
-    expect(mesa.profileValidated).toBe(true);
+    expect(mesa.profileAcknowledged).toBe(true);
     expect(mesa.isCertification).toBe(true);
     expect(mesa.areaRequirement).toBe(CERTIFICATION_AREA_REQUIREMENT);
     expect(mesa.budgets.technical.complete).toBe(false);

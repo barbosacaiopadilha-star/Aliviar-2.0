@@ -66,7 +66,7 @@ export type MesaEtapaState = {
 };
 
 export type MesaFacts = {
-  profileValidated: boolean;
+  profileAcknowledged: boolean;
   /** Subcritérios ativos ainda sem classificação no Mapa de Prioridades. */
   mapPending: number;
   professionalsFound: number;
@@ -174,12 +174,15 @@ export type ProximaDecisao = {
  */
 export function proximaDecisao(
   etapas: MesaEtapaState[],
-  profileValidated: boolean,
+  profileAcknowledged: boolean,
 ): ProximaDecisao {
-  if (!profileValidated) {
+  // ADR-042: o que falta é o RECONHECIMENTO da paciente — ela confirmar que
+  // o Perfil reflete o que foi compreendido na Consulta Inicial. Não é
+  // validação de critérios, e não é etapa da investigação do Curador.
+  if (!profileAcknowledged) {
     return {
       etapa: "PERFIL",
-      label: "O Perfil de Prioridades ainda precisa ser validado pela pessoa.",
+      label: "A paciente ainda não reconheceu este Perfil como seu.",
       blocked: true,
     };
   }

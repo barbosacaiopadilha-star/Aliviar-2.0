@@ -18,7 +18,7 @@ import {
 afterEach(cleanup);
 
 const FATOS: MesaFacts = {
-  profileValidated: true,
+  profileAcknowledged: true,
   mapPending: 0,
   professionalsFound: 4,
   awaitingAreaDeclaration: 0,
@@ -38,7 +38,7 @@ function conteudoFalso(): Record<MesaEtapaId, React.ReactNode> {
 
 function montar(facts: MesaFacts = FATOS, alerts: string[] = []) {
   const etapas = buildMesaEtapas(facts);
-  const decisao = proximaDecisao(etapas, facts.profileValidated);
+  const decisao = proximaDecisao(etapas, facts.profileAcknowledged);
   return render(
     <MesaShell
       patientName="Maria Andrade"

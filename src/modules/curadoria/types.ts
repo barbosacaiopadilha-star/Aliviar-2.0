@@ -133,12 +133,20 @@ export type PriorityFilter = {
 // Perfil de Prioridades
 // ---------------------------------------------------------------------------
 
+/**
+ * ARMAZENAMENTO LEGADO — ADR-042.
+ *
+ * `VALIDATED` continua na coluna por razão de dado histórico, e NÃO é mais
+ * autoridade semântica. O conceito do domínio é o reconhecimento do Perfil
+ * pela paciente: ver `reconhecimento-do-perfil.ts`, único lugar autorizado a
+ * traduzir estes valores.
+ */
 export const PRIORITY_PROFILE_STATUSES = ["DRAFT", "VALIDATED", "SUPERSEDED"] as const;
 export type PriorityProfileStatus = (typeof PRIORITY_PROFILE_STATUSES)[number];
 
 export const PRIORITY_PROFILE_STATUS_LABELS: Record<PriorityProfileStatus, string> = {
   DRAFT: "Em construção",
-  VALIDATED: "Validado pelo paciente",
+  VALIDATED: "Perfil reconhecido pela paciente",
   SUPERSEDED: "Substituído",
 };
 

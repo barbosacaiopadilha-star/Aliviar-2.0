@@ -414,7 +414,7 @@ describe("Linha do tempo dupla", () => {
 // ---------------------------------------------------------------------------
 
 const FATOS: MesaFacts = {
-  profileValidated: true,
+  profileAcknowledged: true,
   mapPending: 0,
   professionalsFound: 4,
   awaitingAreaDeclaration: 0,
@@ -428,7 +428,7 @@ const FATOS: MesaFacts = {
 
 function montarMesa() {
   const etapas = buildMesaEtapas(FATOS);
-  const decisao = proximaDecisao(etapas, FATOS.profileValidated);
+  const decisao = proximaDecisao(etapas, FATOS.profileAcknowledged);
   return render(
     <MesaShell
       patientName="Maria Andrade"

@@ -133,7 +133,7 @@ describe("Cabeçalho — os números e a vez", () => {
 
   it("a frase da vez segue a ordem do trabalho", () => {
     const counts = headerCounts(eligibilities, 0);
-    expect(nextStepSentence(counts, false, false)).toContain("validado pela pessoa");
+    expect(nextStepSentence(counts, false, false)).toContain("reconheceu este Perfil como seu");
     expect(nextStepSentence(counts, false, true)).toContain("distribuir os pontos");
     expect(nextStepSentence(counts, true, true)).toContain("declarar a compatibilidade");
     const semPendencias = headerCounts(eligibilities.filter((e) => e.state !== "AGUARDANDO_DECLARACAO"), 0);

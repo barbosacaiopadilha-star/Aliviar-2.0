@@ -112,7 +112,7 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
   );
 
   const etapas = buildMesaEtapas({
-    profileValidated: view.profileValidated,
+    profileAcknowledged: view.profileAcknowledged,
     mapPending: mapa.completion.pending,
     professionalsFound: view.counts.found,
     awaitingAreaDeclaration: view.counts.awaiting,
@@ -124,7 +124,7 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
     reportEmitted: Boolean(lifecycle?.emittedAt),
   });
 
-  const decisao = proximaDecisao(etapas, view.profileValidated);
+  const decisao = proximaDecisao(etapas, view.profileAcknowledged);
 
   // ------------------------------------------------------------------
   // A leitura da investigação — tudo derivado do que já está na Mesa.
@@ -278,7 +278,7 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
     );
 
   const conteudo: Record<MesaEtapaId, React.ReactNode> = {
-    PERFIL: view.profileValidated ? (
+    PERFIL: view.profileAcknowledged ? (
       <MapaPrioridadesPanel
         caseId={record.caseId}
         groups={groupPriorityMap(mapa.items, catalogo)}

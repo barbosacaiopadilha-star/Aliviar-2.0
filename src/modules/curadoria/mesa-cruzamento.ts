@@ -11,6 +11,8 @@ import {
   type CruzamentoCriterion,
 } from "./cruzamento";
 import { listAreaDeclarations, type AreaDeclaration } from "./area-repository";
+import { isProfileAcknowledged } from "./reconhecimento-do-perfil";
+import type { PriorityProfileStatus } from "./types";
 import {
   budgetOf,
   buildComparison,
@@ -165,7 +167,7 @@ export type MesaCruzamentoView = {
   caseId: string;
   isCertification: boolean;
   areaRequirement: string | null;
-  profileValidated: boolean;
+  profileAcknowledged: boolean;
   weights: Partial<Record<CruzamentoCriterion, number>>;
   budgets: { technical: BudgetView; patient: BudgetView };
   professionals: MesaProfessional[];
@@ -199,7 +201,8 @@ export async function loadMesaCruzamento(
     .eq("case_id", caseId)
     .maybeSingle();
 
-  const profileValidated = profile?.status === "VALIDATED";
+  // ADR-042: reconhecimento da paciente, não validação de critérios.
+  const profileAcknowledged = isProfileAcknowledged(profile?.status as PriorityProfileStatus);
 
   const { data: filterRows } = profile
     ? await supabase
@@ -338,12 +341,12 @@ export async function loadMesaCruzamento(
     caseId,
     isCertification,
     areaRequirement,
-    profileValidated,
+    profileAcknowledged,
     weights,
     budgets,
     professionals,
     counts,
-    nextStep: nextStepSentence(counts, budgetsComplete, profileValidated),
+    nextStep: nextStepSentence(counts, budgetsComplete, profileAcknowledged),
     comparison,
     awaitingDeclaration,
   };

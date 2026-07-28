@@ -207,8 +207,8 @@ export function headerCounts(eligibilities: ProfessionalEligibility[], selectedC
 }
 
 /** De quem é a vez, dito em uma frase. */
-export function nextStepSentence(counts: HeaderCounts, budgetsComplete: boolean, profileValidated: boolean): string {
-  if (!profileValidated) return "O Perfil de Prioridades ainda precisa ser validado pela pessoa.";
+export function nextStepSentence(counts: HeaderCounts, budgetsComplete: boolean, profileAcknowledged: boolean): string {
+  if (!profileAcknowledged) return "A paciente ainda não reconheceu este Perfil como seu.";
   if (!budgetsComplete) return "Sua vez: distribuir os pontos dos dois blocos.";
   if (counts.awaiting > 0) return "Sua vez: declarar a compatibilidade de área dos profissionais pendentes.";
   if (counts.selected < 3) return "Sua vez: comparar as opções e selecionar três.";

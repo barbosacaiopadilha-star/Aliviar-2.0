@@ -9,7 +9,7 @@ import {
 } from "@/modules/curadoria/mesa-etapas";
 
 const ZERADO: MesaFacts = {
-  profileValidated: true,
+  profileAcknowledged: true,
   mapPending: 4,
   professionalsFound: 0,
   awaitingAreaDeclaration: 0,
@@ -22,7 +22,7 @@ const ZERADO: MesaFacts = {
 };
 
 const COMPLETO: MesaFacts = {
-  profileValidated: true,
+  profileAcknowledged: true,
   mapPending: 0,
   professionalsFound: 4,
   awaitingAreaDeclaration: 0,
@@ -61,11 +61,11 @@ describe("As sete etapas da Mesa", () => {
 });
 
 describe("Uma decisão por vez", () => {
-  it("Perfil não validado é o bloqueio de verdade — nada mais importa antes disso", () => {
+  it("Perfil não reconhecido é o bloqueio de verdade — nada mais importa antes disso", () => {
     const decisao = proximaDecisao(buildMesaEtapas(ZERADO), false);
     expect(decisao.etapa).toBe("PERFIL");
     expect(decisao.blocked).toBe(true);
-    expect(decisao.label).toContain("validado pela pessoa");
+    expect(decisao.label).toContain("reconheceu este Perfil como seu");
   });
 
   it("do zero, a próxima decisão é classificar o Mapa de Prioridades", () => {
