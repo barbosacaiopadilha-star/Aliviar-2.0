@@ -656,3 +656,20 @@ Mas `reviewStatus: VALIDATED` é qualitativamente diferente das demais: é o ún
   7. **Nenhuma inferência automática de dado legado.** `education_kind = residencia` não marca "Residência médica" como confirmada; endereço não confirma "Localização". A semântica de cada subcritério precisa ser consolidada antes de qualquer automação — e um estado inferido errado é pior que um estado ausente.
 - **Consequência:** o preenchimento é explícito e custa tempo da operação: 26 subcritérios por profissional. É o preço de não inventar estado. Oportunidades de preenchimento assistido ficam registradas para uma decisão futura, com confirmação humana obrigatória.
 - **Revisitar quando:** a missão do cruzamento definir como `importância × estado` produz leitura — e, aí sim, se algum preenchimento assistido vale o risco.
+
+## ADR-041 — Motor de Compatibilidade: quatro resultados por subcritério, nenhum score
+
+- **Data:** 2026-07-28
+- **Status:** Aprovada pelo responsável do projeto (missão "Motor de Compatibilidade"). Motor implementado e certificado; nenhum consumidor ligado ainda — Mesa, Relatório e Dashboard do Paciente seguem intocados.
+- **Contexto:** as ADR-039 e ADR-040 criaram os dois lados (importância no Case, estado no profissional) apontando para o mesmo `method_subcriteria.id`. Faltava a função que os compara.
+- **Decisão:**
+  1. **Quatro resultados por subcritério:** `ALTA_COMPATIBILIDADE`, `MEDIA_COMPATIBILIDADE`, `LACUNA_DE_INFORMACAO`, `NAO_RELEVANTE`. **Nenhum score, nota, porcentagem, ranking ou soma.** O resumo conta ocorrências e nada mais.
+  2. **A comparação é por identidade de subcritério, nunca por nome.** O módulo puro não conhece rótulo algum.
+  3. **Ausência nunca elimina.** `NAO_CONFIRMADO` no topo da escala é MÉDIA, não incompatível — a falta de uma característica reduz aderência naquele subcritério e mais nada. O julgamento continua sendo do Curador (Fundamentos §13, P14).
+  4. **O Motor não ordena.** `crossCaseWithProfessionals` devolve na ordem de entrada. Ordenar por resultado produziria colocação, e colocação é decisão (Ontologia §3.13).
+  5. **O Motor não escreve.** Cruzar é leitura, com teste garantindo que nenhuma linha é criada ou alterada.
+- **As seis combinações derivadas:** a definição da missão fixou 9 das 15 células. As outras 6 foram preenchidas por três princípios, declarados no código e cobertos por teste — (1) `NAO_INFLUENCIA` devolve `NAO_RELEVANTE` nos três estados; (2) `NAO_CONFIRMADO` nunca passa de MÉDIA em nenhuma importância; (3) `NAO_INFORMADO` devolve LACUNA em toda importância que conta, inclusive `POUCO_IMPORTANTE` — deixar a importância baixa silenciar um "não sei" seria o Motor decidindo o que o Curador precisa saber. **Se alguma dessas seis contrariar a intenção, corrige-se na matriz, num lugar só.**
+- **Ausência de registro × `NAO_INFORMADO`:** as duas caem em `LACUNA_DE_INFORMACAO`, como a ADR-040 previu — mas seguem distinguíveis: cada linha carrega o `status` original (`null` = ninguém tratou) e o resumo expõe `gapsWithoutAnyRecord`. O Curador precisa saber se alguém olhou e não soube, ou se ninguém olhou ainda.
+- **Subcritério não declarado pelo Case:** fica **fora** do cruzamento e é contado à parte (`notDeclaredByCase`). Sem importância declarada não existe pergunta a fazer, e isso é um fato sobre o Case — não pode virar "compatibilidade" de espécie nenhuma.
+- **Consequência:** continuam existindo **duas representações de "quanto importa"** — o orçamento de 100 pontos (ADR-039 já registrou) e o Mapa. O Motor novo consome o Mapa; o motor antigo (`cruzamento.ts`) segue intocado e ainda é o que a Mesa usa. **A missão que ligar a Mesa ao Motor novo precisa decidir qual das duas é autoridade** — e isso exige ADR própria.
+- **Revisitar quando:** a Mesa passar a consumir esta leitura, ou quando a experiência real mostrar que quatro estados são poucos ou demais.
