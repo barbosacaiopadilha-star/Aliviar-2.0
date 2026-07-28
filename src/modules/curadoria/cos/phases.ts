@@ -53,10 +53,6 @@ const always: PhaseCriterion = {
   isMet: () => true,
 };
 
-function totalWeight(record: CuradoriaRecord): number {
-  return record.prioridades.weights.reduce((sum, weight) => sum + weight.weight, 0);
-}
-
 export const COS_PHASE_DEFINITIONS: Record<CosPhaseId, CosPhaseDefinition> = {
   // -------------------------------------------------------------------------
   ACOLHIMENTO: {
@@ -269,7 +265,7 @@ export const COS_PHASE_DEFINITIONS: Record<CosPhaseId, CosPhaseDefinition> = {
     order: 5,
     label: COS_PHASE_LABELS.PRIORIDADES,
     objective:
-      "Construir com o paciente a distribuição dos 100 pontos — o núcleo do Método. Cada peso nasce de uma fala e carrega a evidência dela.",
+      "Registrar, com o paciente, quanto cada subcritério do catálogo canônico importa neste Case — o núcleo do Método.",
     reasoningStep: "PRIORIZAR",
     entryCriteria: [
       {
@@ -280,23 +276,18 @@ export const COS_PHASE_DEFINITIONS: Record<CosPhaseId, CosPhaseDefinition> = {
     ],
     exitCriteria: [
       {
-        id: "soma-cem",
-        description: "Fechar a distribuição em exatamente 100 pontos.",
-        isMet: (record) => totalWeight(record) === 100,
-      },
-      {
-        id: "toda-evidencia",
-        description: "Registrar a Evidência de Curadoria de cada peso.",
-        isMet: (record) => record.prioridades.weights.every((weight) => Boolean(weight.evidence.trim())),
+        id: "mapa-completo",
+        description: "Classificar todos os subcritérios do Mapa de Prioridades.",
+        isMet: (record) => record.prioridades.mapaPendentes === 0,
       },
     ],
-    requiredInformation: ["Critérios priorizados", "Peso de cada critério", "Evidência de cada peso"],
+    requiredInformation: ["Importância de cada subcritério do catálogo canônico"],
     optionalInformation: ["Observações e preferências registradas nas palavras do paciente"],
     artifacts: ["Perfil de Prioridades (em construção)", "Evidência de Curadoria"],
     states: ["Rascunho", "Em construção", "Pronto para validar"],
     validations: [
-      "I-01 — a soma precisa fechar em exatamente 100.",
-      "I-02 — nenhum peso existe sem evidência.",
+      "I-01 — todo subcritério ativo do catálogo recebe um nível de importância.",
+      "I-02 — o nível é escolhido numa escala fechada; o Curador não cria critério.",
       "I-03 — nenhum aspecto é critério e restrição ao mesmo tempo.",
       "I-04 — critério que exige alvo declarado não fica sem alvo.",
       "I-05 — nenhum critério duplicado.",
@@ -342,11 +333,9 @@ export const COS_PHASE_DEFINITIONS: Record<CosPhaseId, CosPhaseDefinition> = {
     reasoningStep: "PRIORIZAR",
     entryCriteria: [
       {
-        id: "distribuicao-fechada",
-        description: "A distribuição fecha 100 pontos, com evidência em todos.",
-        isMet: (record) =>
-          totalWeight(record) === 100 &&
-          record.prioridades.weights.every((weight) => Boolean(weight.evidence.trim())),
+        id: "mapa-fechado",
+        description: "O Mapa de Prioridades está completo.",
+        isMet: (record) => record.prioridades.mapaPendentes === 0,
       },
     ],
     exitCriteria: [

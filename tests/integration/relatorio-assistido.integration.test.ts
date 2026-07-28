@@ -88,8 +88,6 @@ describe("Relatório assistido — geração, ciclo de vida e congelamento (Supa
 
     priorityProfileId = await curadoria.createPriorityProfile(curador.client, caseId, curador.userId);
     await curadoria.addFilter(curador.client, priorityProfileId, "FILTRO_OBRIGATORIO", "AREA_DE_ATUACAO", CERTIFICATION_AREA_REQUIREMENT, null);
-    await curadoria.saveWeight(curador.client, priorityProfileId, "EXPERIENCIA", 50, null, "Peso legado para validar o Perfil.");
-    await curadoria.saveWeight(curador.client, priorityProfileId, "CONTINUIDADE", 50, null, "Peso legado para validar o Perfil.");
     await completarMapaDePrioridades(curador.client, priorityProfileId);
     await curadoria.validatePriorityProfile(curador.client, priorityProfileId, "Confirmado.");
 

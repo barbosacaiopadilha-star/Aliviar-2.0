@@ -159,12 +159,6 @@ describe("Certificação do ciclo da Curadoria — fixtures isoladas (Supabase l
     // a certificação registra os dois: os pesos legados espelham a mesma
     // distribuição (25 experiência + 15 área + 10 abordagem = 50 técnico;
     // 15 localização + 25 continuidade + 10 disponibilidade = 50 pessoal).
-    await curadoria.saveWeight(curador.client, priorityProfileId, "EXPERIENCIA", 25, null, "Ela quer quem já viu muitos casos como o dela.");
-    await curadoria.saveWeight(curador.client, priorityProfileId, "AREA_DE_ATUACAO", 15, "Ortopedia de coluna", "A área que o caso exige.");
-    await curadoria.saveWeight(curador.client, priorityProfileId, "ABORDAGEM_INICIAL", 10, "ambos", "Ela aceita as duas formas de primeiro encontro.");
-    await curadoria.saveWeight(curador.client, priorityProfileId, "LOCALIZACAO", 15, "SP", "Onde ela mora.");
-    await curadoria.saveWeight(curador.client, priorityProfileId, "CONTINUIDADE", 25, null, "Ela quer a mesma pessoa do começo ao fim.");
-    await curadoria.saveWeight(curador.client, priorityProfileId, "DISPONIBILIDADE", 10, null, "Prefere não esperar muito.");
 
     await completarMapaDePrioridades(curador.client, priorityProfileId);
     await curadoria.validatePriorityProfile(curador.client, priorityProfileId, "Lido em voz alta e confirmado.");

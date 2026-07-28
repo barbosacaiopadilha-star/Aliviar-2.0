@@ -95,8 +95,6 @@ describe("Mesa do Cruzamento — banco e montagem (Supabase local)", () => {
     );
     await curadoria.addFilter(curador.client, priorityProfileId, "FILTRO_OBRIGATORIO", "UF", "SP", null);
     await curadoria.addFilter(curador.client, priorityProfileId, "FILTRO_OBRIGATORIO", "CUIDADO_CONTINUO", "true", null);
-    await curadoria.saveWeight(curador.client, priorityProfileId, "EXPERIENCIA", 50, null, "Peso legado para validar o Perfil.");
-    await curadoria.saveWeight(curador.client, priorityProfileId, "CONTINUIDADE", 50, null, "Peso legado para validar o Perfil.");
     await completarMapaDePrioridades(curador.client, priorityProfileId);
     await curadoria.validatePriorityProfile(curador.client, priorityProfileId, "Confirmado.");
   }, 120_000);

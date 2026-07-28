@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -56,9 +56,12 @@ describe("O caminho antigo não volta a aparecer", () => {
     expect(semComentarios(actions)).not.toContain("validatePriorityProfile");
   });
 
-  it("o PriorityBuilder deixou de ser autoridade do reconhecimento", () => {
-    const builder = ler("src", "components", "curadoria", "priority-builder.tsx");
-    expect(builder).not.toContain("validateProfileAction");
+  it("o PriorityBuilder deixou de existir — não sobrou tela que grave pesos", () => {
+    // Manter o Builder acessível "só visualmente" deixaria viva uma autoridade
+    // que já morreu, e uma tela que ainda gravaria em priority_weights.
+    expect(existsSync(join(process.cwd(), "src/components/curadoria/priority-builder.tsx"))).toBe(
+      false,
+    );
   });
 
   it("a paciente encontra a ação na tela dela", () => {

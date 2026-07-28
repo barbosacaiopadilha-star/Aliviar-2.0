@@ -143,8 +143,6 @@ describe("Curadoria completa — sem SQL, sem script, sem intervenção técnica
       null,
     );
 
-    await curadoria.saveWeight(cliente, priorityProfileId, "EXPERIENCIA", 60, null, "Ela disse que quer quem já viu muitos casos como o dela.");
-    await curadoria.saveWeight(cliente, priorityProfileId, "CONTINUIDADE", 40, null, "Ela quer a mesma pessoa do começo ao fim.");
 
     // ---------------------------------------------------------- 4 — Validar
     await completarMapaDePrioridades(cliente, priorityProfileId);

@@ -134,8 +134,6 @@ describe.skipIf(!process.env.SEED_MESA)("seed — validação de usabilidade da 
       await curadoria.addFilter(curadorAuth, priorityProfileId, "FILTRO_OBRIGATORIO", "AREA_DE_ATUACAO", CERTIFICATION_AREA_REQUIREMENT, "Reproduz o filtro do caso real.");
       await curadoria.addFilter(curadorAuth, priorityProfileId, "FILTRO_OBRIGATORIO", "UF", "SP", "Estado onde a pessoa reside.");
       await curadoria.addFilter(curadorAuth, priorityProfileId, "FILTRO_OBRIGATORIO", "CUIDADO_CONTINUO", "true", "Ela quer acompanhamento do começo ao fim.");
-      await curadoria.saveWeight(curadorAuth, priorityProfileId, "EXPERIENCIA", 50, null, "Peso legado para permitir a validação do Perfil.");
-      await curadoria.saveWeight(curadorAuth, priorityProfileId, "CONTINUIDADE", 50, null, "Peso legado para permitir a validação do Perfil.");
       await completarMapaDePrioridades(curadorAuth, priorityProfileId);
       await curadoria.validatePriorityProfile(curadorAuth, priorityProfileId, "Lido em voz alta e confirmado.");
     }

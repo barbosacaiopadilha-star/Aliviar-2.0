@@ -158,41 +158,9 @@ export async function savePatientHistory(
   if (error) throw new Error("Não foi possível salvar a história agora.");
 }
 
-export async function saveWeight(
-  supabase: SupabaseClient,
-  priorityProfileId: string,
-  criterion: PriorityCriterion,
-  weight: number,
-  targetValue: string | null,
-  evidence: string,
-): Promise<void> {
-  const { error } = await supabase.from("priority_weights").upsert(
-    {
-      priority_profile_id: priorityProfileId,
-      criterion,
-      weight,
-      target_value: targetValue,
-      evidence,
-    },
-    { onConflict: "priority_profile_id,criterion" },
-  );
-
-  if (error) throw new Error(error.message);
-}
-
-export async function removeWeight(
-  supabase: SupabaseClient,
-  priorityProfileId: string,
-  criterion: PriorityCriterion,
-): Promise<void> {
-  const { error } = await supabase
-    .from("priority_weights")
-    .delete()
-    .eq("priority_profile_id", priorityProfileId)
-    .eq("criterion", criterion);
-
-  if (error) throw new Error(error.message);
-}
+// `saveWeight` e `removeWeight` foram removidas — ADR-042. `priority_weights`
+// não recebe mais gravação por nenhuma via da aplicação. A leitura histórica
+// permanece (listWeights / loadCuradoriaRecord) e os dados seguem intactos.
 
 export async function addFilter(
   supabase: SupabaseClient,

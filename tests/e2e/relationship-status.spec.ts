@@ -226,8 +226,6 @@ async function seedActiveRelationship(): Promise<ActiveRelationshipFixture> {
     "true",
     "Ela quer alguém que acompanhe do começo ao fim.",
   );
-  await curadoria.saveWeight(cliente, priorityProfileId, "EXPERIENCIA", 60, null, "Quer quem já viu muitos casos.");
-  await curadoria.saveWeight(cliente, priorityProfileId, "CONTINUIDADE", 40, null, "Quer a mesma pessoa do começo ao fim.");
   await curadoria.validatePriorityProfile(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
   await curadoria.runCompatibility(cliente, priorityProfileId);
 

@@ -38,7 +38,7 @@ function baseRecord(
       limitations: [],
     },
     filtros: [],
-    prioridades: { weights: [], observations: [], preferencias: [], history: [] },
+    prioridades: { mapaPendentes: 26, weights: [], observations: [], preferencias: [], history: [] },
     priorityProfileId: null,
     validacao: null,
     curadoriaTecnica: {
@@ -115,6 +115,7 @@ const marina: CuradoriaRecord = baseRecord({
     },
   ],
   prioridades: {
+    mapaPendentes: 3,
     weights: [
       {
         criterion: "CONTINUIDADE",
@@ -194,6 +195,7 @@ const joaquim: CuradoriaRecord = baseRecord({
     },
   ],
   prioridades: {
+    mapaPendentes: 0,
     weights: [
       {
         criterion: "DISPONIBILIDADE",
@@ -454,6 +456,7 @@ const rosa: CuradoriaRecord = baseRecord({
     },
   ],
   prioridades: {
+    mapaPendentes: 0,
     weights: [
       {
         criterion: "EXPERIENCIA",

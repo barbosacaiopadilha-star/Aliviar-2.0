@@ -27,8 +27,9 @@ describe("Memória da Curadoria", () => {
     const validacao = memory.find((entry) => entry.event === "PERFIL_VALIDADO");
     expect(validacao?.actor).toBe("Joaquim Ribeiro");
 
-    const peso = memory.find((entry) => entry.event === "PESO_ATRIBUIDO");
-    expect(peso?.actor).toBe("Joaquim Ribeiro");
+    // ADR-042: a distribuição de 100 pontos saiu da linha do tempo. O ato
+    // do paciente que a memória registra é o reconhecimento do Perfil.
+    expect(memory.some((entry) => entry.event === "PESO_ATRIBUIDO")).toBe(false);
   });
 
   it("atribui ao Sistema apenas o que o Sistema fez", () => {
@@ -37,12 +38,11 @@ describe("Memória da Curadoria", () => {
     expect(systemEntries.every((entry) => entry.event === "COMPATIBILIDADE_CALCULADA")).toBe(true);
   });
 
-  it("registra a evidência junto de cada peso", () => {
+  it("não reencena a distribuição de 100 pontos — ADR-042", () => {
     const memory = buildMemory(joaquim);
-    const pesos = memory.filter((entry) => entry.event === "PESO_ATRIBUIDO");
-    expect(pesos.length).toBe(4);
-    for (const peso of pesos) {
-      expect(peso.description).toContain("Evidência:");
+    expect(memory.filter((entry) => entry.event === "PESO_ATRIBUIDO")).toHaveLength(0);
+    for (const entry of memory) {
+      expect(entry.description).not.toMatch(/d+ pontos/);
     }
   });
 
@@ -69,10 +69,10 @@ describe("teste de reconstrução (Engine §5.6)", () => {
 
   it("uma Curadoria avançada responde ao que já aconteceu", () => {
     const answers = runReconstructionTest(rosa);
-    const pesos = answers.find((entry) => entry.question.includes("pesos"));
+    const mapa = answers.find((entry) => entry.question.includes("subcritério"));
     const selecao = answers.find((entry) => entry.question.includes("escolheu as três"));
 
-    expect(pesos?.answered).toBe(true);
+    expect(mapa?.answered).toBe(true);
     expect(selecao?.answered).toBe(true);
     expect(selecao?.answer).toContain("Helena Vasconcelos");
   });

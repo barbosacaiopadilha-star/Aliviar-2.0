@@ -6,7 +6,6 @@ import type { Metadata } from "next";
 import { CaseAlert } from "@/components/curadoria/case-alert";
 import { JourneyNavigator } from "@/components/curadoria/journey-navigator";
 import { MandatoryFilters } from "@/components/curadoria/mandatory-filters";
-import { PriorityBuilder } from "@/components/curadoria/priority-builder";
 import { StartPriorityProfile } from "@/components/curadoria/start-priority-profile";
 import { StepMethodReference } from "@/components/curadoria/step-method-reference";
 import { LastUpdate, StepStatus } from "@/components/journey";
@@ -19,7 +18,6 @@ import { requireRole } from "@/modules/auth/guard";
 import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { buildCuratorJourney, journeyStepHref } from "@/modules/curadoria/cos/journey";
 import { PHASE_STATUS_LABELS } from "@/modules/curadoria/cos/conduction-ui";
-import type { PriorityCriterion } from "@/modules/curadoria/types";
 
 export const metadata: Metadata = {
   title: "Mapa de Prioridades",
@@ -47,13 +45,6 @@ export const metadata: Metadata = {
 // O sistema de pesos, computeCompatibility() e as regras do Método permanecem
 // exatamente como estavam: mudou onde o Curador trabalha, não o que vale.
 
-const FILTER_KIND_TO_CRITERION: Record<string, PriorityCriterion> = {
-  AREA_DE_ATUACAO: "AREA_DE_ATUACAO",
-  UF: "LOCALIZACAO",
-  CUIDADO_CONTINUO: "CONTINUIDADE",
-  DISPONIBILIDADE_IMEDIATA: "DISPONIBILIDADE",
-};
-
 export default async function CriteriosPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await requireRole("curador_medico");
@@ -73,10 +64,6 @@ export default async function CriteriosPage({ params }: { params: Promise<{ id: 
   );
 
   const validated = Boolean(record.validacao?.validatedAt);
-
-  const filterCriteria = record.filtros
-    .map((filtro) => FILTER_KIND_TO_CRITERION[filtro.kind])
-    .filter((criterion): criterion is PriorityCriterion => Boolean(criterion));
 
   const lastEvent = buildMemory(record)
     .filter((entry) => ["FILTROS", "PRIORIDADES", "VALIDACAO"].includes(entry.phase))
@@ -161,37 +148,28 @@ export default async function CriteriosPage({ params }: { params: Promise<{ id: 
             )}
           </Card>
 
-          {/* 2 — O QUE PESA. E, dentro dele, a liturgia da validação — o ato
-              do paciente acontece sobre a distribuição que ele valida. */}
-          <div id="prioridades" className="scroll-mt-6 space-y-6">
+          {/* 2 — QUANTO CADA COISA IMPORTA. A distribuição de 100 pontos saiu
+              daqui (ADR-042): o Curador não reparte orçamento, ele classifica
+              cada subcritério do catálogo canônico — e isso acontece na Mesa,
+              ao lado da comparação que a usa. Manter aqui uma tela que ainda
+              gravasse pesos seria deixar viva uma autoridade que já morreu. */}
+          <div id="prioridades" className="scroll-mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Prioridades</CardTitle>
+                <CardTitle>Mapa de Prioridades</CardTitle>
                 <CardDescription>
-                  Os 100 pontos que {record.patientFirstName} distribui entre o que influencia a
-                  ordem. Cada peso nasce de uma fala dela e carrega a evidência.
+                  Quanto cada subcritério do Método importa para {record.patientFirstName}. O Mapa é
+                  registrado na Mesa de Curadoria, junto da comparação que ele orienta.
                 </CardDescription>
               </CardHeader>
+              <Link
+                href={journeyStepHref(record.caseId, "COMPARAR")}
+                className="inline-flex min-h-11 items-center gap-2 rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors duration-fast ease-standard hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+              >
+                Abrir o Mapa de Prioridades na Mesa
+                <span aria-hidden="true">→</span>
+              </Link>
             </Card>
-
-            <div id="validacao" className="scroll-mt-6">
-              {record.priorityProfileId ? (
-                <PriorityBuilder
-                  patientFirstName={record.patientFirstName}
-                  priorityProfileId={record.priorityProfileId}
-                  initialWeights={record.prioridades.weights.map((weight) => ({
-                    criterion: weight.criterion,
-                    weight: weight.weight,
-                    // Sem isto o alvo gravado se perdia ao reabrir a tela, e o
-                    // Curador precisava escolher de novo a cada visita.
-                    targetValue: weight.targetValue,
-                    evidence: weight.evidence,
-                  }))}
-                  filterCriteria={filterCriteria}
-                  validated={validated}
-                />
-              ) : null}
-            </div>
           </div>
 
           {validated ? (

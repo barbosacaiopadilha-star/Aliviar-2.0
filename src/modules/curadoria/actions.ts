@@ -21,8 +21,6 @@ import {
   registerDevolutivaInputSchema,
   registerHistoriaInputSchema,
   removeFilterInputSchema,
-  removeWeightInputSchema,
-  saveAllWeightsInputSchema,
   saveReportInputSchema,
   saveSelectionInputSchema,
   startConsultationInputSchema,
@@ -186,70 +184,17 @@ export async function removeFilterAction(input: unknown): Promise<CuradoriaActio
 // Pesos
 // ---------------------------------------------------------------------------
 
-// `saveWeightAction` (peso a peso) foi removida na missão Curadoria Executável:
-// era capacidade duplicada de `saveAllWeightsAction`, que já grava o conjunto
-// chamando o mesmo `repository.saveWeight`. Duas portas para a mesma escrita
-// significam duas regras possíveis para o mesmo invariante. O repositório
-// continua intacto — só o segundo caminho de entrada deixou de existir.
-
-export async function saveAllWeightsAction(input: unknown): Promise<CuradoriaActionResult> {
-  try {
-    await requireCurator();
-  } catch {
-    return { success: false, error: "Não autorizado." };
-  }
-
-  const parsed = saveAllWeightsInputSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
-  }
-
-  const supabase = await createServerSupabaseClient();
-  const profile = await repository.getPriorityProfileById(supabase, parsed.data.priorityProfileId);
-  if (!profile) return { success: false, error: "Perfil de Prioridades não encontrado." };
-  if (profile.validatedAt) {
-    return { success: false, error: "Este Perfil já foi validado e não pode ser alterado." };
-  }
-
-  try {
-    for (const weight of parsed.data.weights) {
-      await repository.saveWeight(
-        supabase,
-        parsed.data.priorityProfileId,
-        weight.criterion,
-        weight.weight,
-        weight.targetValue ?? null,
-        weight.evidence,
-      );
-    }
-    revalidateCuradoria(profile.caseId);
-    return { success: true };
-  } catch (error) {
-    return fail(error, "Não foi possível salvar os pesos.");
-  }
-}
-
-export async function removeWeightAction(input: unknown): Promise<CuradoriaActionResult> {
-  try {
-    await requireCurator();
-  } catch {
-    return { success: false, error: "Não autorizado." };
-  }
-
-  const parsed = removeWeightInputSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: "Dados inválidos." };
-
-  const supabase = await createServerSupabaseClient();
-
-  try {
-    await repository.removeWeight(supabase, parsed.data.priorityProfileId, parsed.data.criterion);
-    const profile = await repository.getPriorityProfileById(supabase, parsed.data.priorityProfileId);
-    if (profile) revalidateCuradoria(profile.caseId);
-    return { success: true };
-  } catch (error) {
-    return fail(error, "Não foi possível remover o peso.");
-  }
-}
+// A ESCRITA DE PESOS SAIU DAQUI — ADR-042.
+//
+// `saveAllWeightsAction` e `removeWeightAction` gravavam a distribuição de
+// 100 pontos em `priority_weights`. Nenhuma fase do COS, nenhuma etapa da
+// Mesa, nenhum ato da paciente e nenhum painel dela dependem mais delas: o
+// Mapa de Prioridades é a autoridade.
+//
+// Foram removidas em vez de desativadas. A tabela e todo o histórico
+// permanecem intactos — o que deixou de existir é a porta de entrada, não o
+// que já foi escrito. Nenhuma sincronização com o Mapa foi criada: converter
+// pontos em níveis seria inventar declarações que a pessoa nunca fez.
 
 // O RECONHECIMENTO DO PERFIL SAIU DAQUI — ADR-042.
 //

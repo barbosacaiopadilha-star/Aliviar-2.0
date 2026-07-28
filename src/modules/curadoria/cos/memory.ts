@@ -10,7 +10,6 @@
  * registrado aparece como lacuna, nunca como suposição.
  */
 
-import { PRIORITY_CRITERION_LABELS } from "../types";
 import { COS_PHASE_LABELS, type CosPhaseId, type CuradoriaRecord } from "./types";
 
 /**
@@ -91,16 +90,8 @@ export function buildMemory(record: CuradoriaRecord): MemoryEntry[] {
     });
   }
 
-  for (const weight of record.prioridades.weights) {
-    entries.push({
-      at: weight.registeredAt,
-      phase: "PRIORIDADES",
-      event: "PESO_ATRIBUIDO",
-      description: `${PRIORITY_CRITERION_LABELS[weight.criterion]} recebeu ${weight.weight} pontos. Evidência: ${weight.evidence}`,
-      actor: record.patientName,
-    });
-  }
-
+  // ADR-042 — a linha do tempo não conta mais a distribuição de 100 pontos.
+  // Reencenar na memória um modelo sem autoridade seria dar-lhe sobrevida.
   if (record.validacao) {
     entries.push({
       at: record.validacao.validatedAt,
@@ -184,14 +175,12 @@ export function runReconstructionTest(record: CuradoriaRecord): ReconstructionAn
         : MISSING,
     },
     {
-      question: "Quais pesos foram atribuídos, e qual fala originou cada um?",
-      answered:
-        record.prioridades.weights.length > 0 &&
-        record.prioridades.weights.every((weight) => Boolean(weight.evidence.trim())),
+      question: "Quanto cada subcritério do Método importa neste Case?",
+      answered: record.prioridades.mapaPendentes === 0,
       answer:
-        record.prioridades.weights.length > 0
-          ? `${record.prioridades.weights.length} pesos, todos com evidência registrada.`
-          : MISSING,
+        record.prioridades.mapaPendentes === 0
+          ? "Mapa de Prioridades completo — todo subcritério ativo recebeu um nível."
+          : `Faltam ${record.prioridades.mapaPendentes} subcritério(s) no Mapa de Prioridades.`,
     },
     {
       question: "Quando e como o paciente validou?",

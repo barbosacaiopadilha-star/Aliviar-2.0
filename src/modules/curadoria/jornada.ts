@@ -75,7 +75,7 @@ export type Jornada = {
 };
 
 export function buildJornada(record: CuradoriaRecord): Jornada {
-  const { historia, prioridades, validacao, curadoriaTecnica, relatorio, devolutiva } = record;
+  const { historia, validacao, curadoriaTecnica, relatorio, devolutiva } = record;
   const curator = record.curatorName;
   const name = record.patientFirstName;
 
@@ -103,7 +103,7 @@ export function buildJornada(record: CuradoriaRecord): Jornada {
       label: JORNADA_STAGE_LABELS.PERFIL_DE_PRIORIDADES,
       status: perfilDone ? "CONCLUIDA" : consultaDone ? "AGUARDANDO_VOCE" : "A_CAMINHO",
       description: perfilDone
-        ? `${prioridades.weights.length} critérios, com os pesos que você mesmo definiu e validou.`
+        ? "Seu Perfil está completo, e você o reconheceu como seu."
         : consultaDone
           ? "Falta você reconhecer este Perfil como seu. Sem essa confirmação, nada avança."
           : "Vocês vão definir juntos o que mais importa para você nesta decisão.",

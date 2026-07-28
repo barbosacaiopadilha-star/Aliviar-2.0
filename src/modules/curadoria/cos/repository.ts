@@ -12,6 +12,7 @@ import type {
 } from "./types";
 import type { CompatibilityBand, MandatoryFilterKind, PriorityCriterion } from "../types";
 import { MANDATORY_FILTER_LABELS } from "../types";
+import { loadCasePriorityMap } from "../mapa-prioridades-repository";
 
 /**
  * Leitura da Memória da Curadoria a partir do banco (MISSÃO 209, Fase 3).
@@ -201,6 +202,12 @@ export async function loadCuradoriaRecord(
     };
   });
 
+  // ADR-042 — a completude do Mapa é o gate das fases PRIORIDADES e VALIDACAO.
+  // Vem pronta do repositório do Mapa: as fases não recalculam regra de
+  // domínio, e não existe segunda definição de "completo".
+  const mapa = await loadCasePriorityMap(supabase, caseId);
+  const mapaPendentes = mapa.completion.pending;
+
   const weights: PesoRecord[] = (weightRows.data ?? []).map((row) => ({
     criterion: row.criterion as PriorityCriterion,
     weight: row.weight as number,
@@ -276,6 +283,7 @@ export async function loadCuradoriaRecord(
     filtros,
 
     prioridades: {
+      mapaPendentes,
       weights,
       observations,
       preferencias,
