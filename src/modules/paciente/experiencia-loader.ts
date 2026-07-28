@@ -2,28 +2,31 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { CruzamentoCriterion } from "@/modules/curadoria/cruzamento";
+import { loadCasePriorityMap } from "@/modules/curadoria/mapa-prioridades-repository";
+
 import { buildPerfilView, type PerfilView } from "./experiencia";
 
 /**
- * Carrega o Perfil da pessoa para a experiência do paciente.
+ * O Perfil da pessoa, vindo do Mapa de Prioridades — ADR-042.
  *
- * Lê apenas dois fatos: os pesos do cruzamento deste Case (a RLS decide o que
- * este paciente alcança) e o estado de validação do Perfil de Prioridades. A
- * projeção em linguagem de pessoa é do módulo puro — aqui é só banco.
+ * Antes vinha de `cruzamento_weights`, o orçamento de 100 pontos. Aquele
+ * modelo deixou de ser autoridade: o Mapa é a representação oficial das
+ * prioridades do Case, e é dele que sai o que ela lê.
+ *
+ * Sem adaptador e sem derivar pontos: se o Mapa está vazio, o cartão diz que
+ * o Perfil ainda está sendo construído — que é a verdade.
  */
 export async function loadPatientPerfil(
   supabase: SupabaseClient,
   caseId: string,
 ): Promise<PerfilView> {
-  const [{ data: weightRows }, { data: profile }] = await Promise.all([
-    supabase.from("cruzamento_weights").select("criterion, weight").eq("case_id", caseId),
+  const [mapa, { data: profile }] = await Promise.all([
+    loadCasePriorityMap(supabase, caseId),
     supabase.from("priority_profiles").select("status").eq("case_id", caseId).maybeSingle(),
   ]);
 
-  const weights = Object.fromEntries(
-    (weightRows ?? []).map((row) => [row.criterion as CruzamentoCriterion, row.weight as number]),
-  ) as Partial<Record<CruzamentoCriterion, number>>;
-
-  return buildPerfilView(weights, profile?.status === "VALIDATED");
+  // A validação do Perfil PELA PESSOA continua (ADR-042): ela nunca foi etapa
+  // do modelo antigo — é o consentimento dela. A Curadoria só abre depois que
+  // ela reconhece o Perfil como seu.
+  return buildPerfilView(mapa.items, profile?.status === "VALIDATED");
 }

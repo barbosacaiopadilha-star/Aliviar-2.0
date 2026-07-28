@@ -673,3 +673,22 @@ Mas `reviewStatus: VALIDATED` é qualitativamente diferente das demais: é o ún
 - **Subcritério não declarado pelo Case:** fica **fora** do cruzamento e é contado à parte (`notDeclaredByCase`). Sem importância declarada não existe pergunta a fazer, e isso é um fato sobre o Case — não pode virar "compatibilidade" de espécie nenhuma.
 - **Consequência:** continuam existindo **duas representações de "quanto importa"** — o orçamento de 100 pontos (ADR-039 já registrou) e o Mapa. O Motor novo consome o Mapa; o motor antigo (`cruzamento.ts`) segue intocado e ainda é o que a Mesa usa. **A missão que ligar a Mesa ao Motor novo precisa decidir qual das duas é autoridade** — e isso exige ADR própria.
 - **Revisitar quando:** a Mesa passar a consumir esta leitura, ou quando a experiência real mostrar que quatro estados são poucos ou demais.
+
+## ADR-042 — Virada de autoridade: o Mapa de Prioridades substitui o orçamento de 100 pontos
+
+- **Data:** 2026-07-28
+- **Status:** Aprovada pelo responsável do projeto, por decisão explícita ("Escolho o caminho A… Vamos fazer uma única virada de autoridade… Não utilizar adaptadores temporários. Não manter duas fontes de verdade.").
+- **Contexto:** a auditoria da missão "Nova Mesa Premium" encontrou um conflito arquitetural, não um problema de implementação. Duas representações de "quanto importa" coexistiam desde a ADR-039: o orçamento de dois blocos de 100 pontos sobre os seis critérios, e o Mapa de Prioridades (cinco níveis sobre 26 subcritérios). O orçamento tinha **três consumidores**, e dois deles — o ProfileCard do Dashboard do Paciente e o Relatório Inteligente — estavam fora do escopo daquela missão. Aposentar o orçamento só na Mesa quebraria os outros dois; mantê-lo faria o Curador ver duas respostas para a mesma pergunta.
+- **Decisão — a autoridade oficial passa a ser:**
+
+  `Método → Catálogo Canônico → Mapa de Prioridades → Mapa do Profissional → Motor de Compatibilidade`
+
+  1. **O orçamento de 100 pontos deixa de ser fonte de verdade.** `cruzamento_weights` não recebe gravação nova por nenhuma superfície.
+  2. **Virada única.** Mesa, ProfileCard e Relatório Inteligente migram na mesma entrega. **Nenhum adaptador**, nenhuma derivação de pesos a partir do Mapa, nenhuma sincronização entre os dois modelos — convivência temporária vira permanente.
+  3. **O paciente deixa de ver pontuação.** O cartão muda de conceito: em vez de distribuição ("40 pts / 35 pts / 25 pts"), passa a responder **"O que mais importa para o seu caso"**, agrupado pelos cinco níveis, em linguagem dela. Ela precisa compreender **quais fatores foram considerados prioritários**, não como foram ponderados internamente.
+  4. **Dados históricos preservados.** `cruzamento_weights` e `priority_weights` continuam existindo e legíveis. Nenhuma conversão automática: os dois vocabulários não têm correspondência inequívoca (ADR-039), e Cases antigos ficam sem Mapa até alguém preenchê-lo.
+
+- **O que NÃO muda, e por quê — a validação do Perfil pela pessoa permanece.** A missão pedia remover "Validar Critérios". Removi o conceito de *validar critérios construídos*; **preservei o ato do paciente reconhecer o Perfil como seu** (`priority_profiles.status = 'VALIDATED'`). São coisas diferentes que dividiam o mesmo nome: a primeira é etapa de um modelo aposentado; a segunda é a garantia de que *"a Curadoria só abre depois que ela reconhece o Perfil como seu — sem o critério dela, qualquer análise seria a Aliviar decidindo com aparência de método"*. Apagar isso junto seria remover o consentimento dela por efeito colateral de uma refatoração. A completude do Mapa continua **calculada**, nunca declarada — não existe etapa manual de validação de critérios.
+
+- **Consequência:** deixa de existir qualquer duplicidade de autoridade. O preço é operacional: um Case só produz leitura depois que o Mapa é preenchido (26 subcritérios), e Cases anteriores à virada aparecem com Mapa vazio até serem retomados — o que é honesto, e melhor que herdar uma tradução inventada.
+- **Revisitar quando:** a operação real mostrar que 26 subcritérios são muitos para a conversa, ou que a escala de cinco níveis não distingue o que precisa distinguir.

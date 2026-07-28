@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildPerfilView,
-  importanceLabel,
   mensagemPrincipal,
   PATIENT_FORBIDDEN_TERMS,
   STAGE_MESSAGES,
@@ -10,72 +9,87 @@ import {
 } from "@/modules/paciente/experiencia";
 import { JORNADA_STAGES } from "@/modules/curadoria/jornada";
 
-const PESOS_COMPLETOS = {
-  FORMACAO: 30,
-  EXPERIENCIA: 50,
-  HISTORICO: 20,
-  ACESSO: 30,
-  CONTINUIDADE_DO_CUIDADO: 50,
-  MODELO_DE_ATENDIMENTO: 20,
-} as const;
+import { SUBCRITERION_CATALOG } from "@/modules/curadoria/mapa-prioridades";
 
-describe("Importância — palavra, nunca cálculo", () => {
-  it("o peso vira palavra e o número não atravessa", () => {
-    expect(importanceLabel(50)).toBe("Muito importante");
-    expect(importanceLabel(40)).toBe("Muito importante");
-    expect(importanceLabel(30)).toBe("Importante");
-    expect(importanceLabel(20)).toBe("Importante");
-    expect(importanceLabel(10)).toBe("Considerado");
-    expect(importanceLabel(0)).toBeNull();
+const NIVEIS = ["MUITO_IMPORTANTE", "IMPORTANTE", "RELEVANTE", "POUCO_IMPORTANTE", "NAO_INFLUENCIA"] as const;
+
+/** O Mapa inteiro classificado — o equivalente do "Perfil completo". */
+const MAPA_COMPLETO = SUBCRITERION_CATALOG.map((entry, i) => ({
+  subcriterionCode: entry.code,
+  importance: NIVEIS[i % 5]!,
+}));
+
+describe("O Perfil — o que importa, sem número (ADR-042)", () => {
+  it("nenhum mecanismo interno atravessa", () => {
+    const texto = JSON.stringify(buildPerfilView(MAPA_COMPLETO, true));
+    for (const proibido of ["20", "30", "40", "50", "pts", "pontos", "%"]) {
+      expect(texto).not.toContain(proibido);
+    }
   });
 
-  it("o Perfil projetado não contém nenhum peso numérico", () => {
-    const view = buildPerfilView(PESOS_COMPLETOS, true);
-    const texto = JSON.stringify([view.tecnicas, view.modeloDeCuidado, view.headline]);
-    for (const peso of ["20", "30", "50"]) {
-      expect(texto, `peso numérico vazou: ${peso}`).not.toContain(peso);
-    }
+  it("agrupa por nível, na ordem da escala, e só mostra nível com item", () => {
+    const view = buildPerfilView(
+      [
+        { subcriterionCode: "FORMACAO_RESIDENCIA", importance: "MUITO_IMPORTANTE" },
+        { subcriterionCode: "MODELO_COMUNICACAO", importance: "IMPORTANTE" },
+      ],
+      true,
+    );
+    expect(view.prioridades.map((n) => n.level)).toEqual(["MUITO_IMPORTANTE", "IMPORTANTE"]);
+    expect(view.prioridades[0]!.label).toBe("Muito importante");
+    expect(view.prioridades[0]!.itens).toEqual(["Residência médica"]);
+  });
+
+  it("não esconde o que ela declarou como sem influência", () => {
+    const view = buildPerfilView(
+      [{ subcriterionCode: "ACESSO_LOCALIZACAO", importance: "NAO_INFLUENCIA" }],
+      true,
+    );
+    expect(view.prioridades[0]!.label).toBe("Não influencia este caso");
+    expect(view.prioridades[0]!.itens).toEqual(["Localização"]);
   });
 });
 
 describe("Construção do Perfil", () => {
   it("vazio: 0%, com a frase de começo de conversa", () => {
-    const view = buildPerfilView({}, false);
-    expect(view.progress).toBe(0);
+    const view = buildPerfilView([], false);
+    expect(view.classificados).toBe(0);
+    expect(view.prioridades).toEqual([]);
     expect(view.headline).toContain("nasce da conversa");
-    expect(view.tecnicas.every((item) => item.importance === null)).toBe(true);
   });
 
   it("em construção: progresso parcial e a frase de construção conjunta", () => {
-    const view = buildPerfilView({ FORMACAO: 30, EXPERIENCIA: 50 }, false);
-    expect(view.progress).toBe(29); // 2 de 7 passos
+    const view = buildPerfilView(
+      [
+        { subcriterionCode: "FORMACAO_RESIDENCIA", importance: "MUITO_IMPORTANTE" },
+        { subcriterionCode: "EXPERIENCIA_TEMPO_DE_PRATICA", importance: "IMPORTANTE" },
+      ],
+      false,
+    );
+    expect(view.classificados).toBe(2);
+    expect(view.total).toBe(SUBCRITERION_CATALOG.length);
     expect(view.headline).toBe("Seu perfil está sendo construído junto com o Curador.");
   });
 
   it("completo sem validação não chega a 100 — falta o reconhecimento da pessoa", () => {
-    const view = buildPerfilView(PESOS_COMPLETOS, false);
-    expect(view.progress).toBe(86);
-    expect(view.validated).toBe(false);
+    const view = buildPerfilView(MAPA_COMPLETO, false);
+    expect(view.classificados).toBe(SUBCRITERION_CATALOG.length);
+    expect(view.validated, "falta o reconhecimento da pessoa").toBe(false);
   });
 
   it("validado fecha em 100 e a frase muda de dono", () => {
-    const view = buildPerfilView(PESOS_COMPLETOS, true);
-    expect(view.progress).toBe(100);
+    const view = buildPerfilView(MAPA_COMPLETO, true);
+    expect(view.validated).toBe(true);
     expect(view.headline).toContain("Este Perfil é seu");
   });
 
-  it("os dois grupos falam o vocabulário oficial", () => {
-    const view = buildPerfilView(PESOS_COMPLETOS, true);
-    expect(view.tecnicas.map((item) => item.label)).toEqual([
-      "Formação Profissional",
-      "Experiência Profissional",
-      "Histórico Profissional",
-    ]);
-    expect(view.modeloDeCuidado.map((item) => item.label)).toEqual([
-      "Acesso",
-      "Continuidade do Cuidado",
-      "Modelo de Atendimento",
-    ]);
+  it("os itens saem com o nome do catálogo canônico", () => {
+    const view = buildPerfilView(MAPA_COMPLETO, true);
+    const nomes = view.prioridades.flatMap((n) => n.itens);
+    expect(nomes).toHaveLength(SUBCRITERION_CATALOG.length);
+    for (const nome of nomes) {
+      expect(SUBCRITERION_CATALOG.some((e) => e.name === nome), nome).toBe(true);
+    }
   });
 });
 
@@ -118,7 +132,7 @@ describe("A fronteira de vocabulário", () => {
   });
 
   it("o Perfil inteiro passa pela própria fronteira", () => {
-    const view = buildPerfilView(PESOS_COMPLETOS, true);
+    const view = buildPerfilView(MAPA_COMPLETO, true);
     expect(violatesPatientVocabulary(JSON.stringify(view))).toBeNull();
   });
 

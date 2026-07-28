@@ -11,14 +11,12 @@ import { buildPerfilView, violatesPatientVocabulary } from "@/modules/paciente/e
 
 afterEach(cleanup);
 
-const PESOS = {
-  FORMACAO: 30,
-  EXPERIENCIA: 50,
-  HISTORICO: 20,
-  ACESSO: 30,
-  CONTINUIDADE_DO_CUIDADO: 50,
-  MODELO_DE_ATENDIMENTO: 20,
-} as const;
+/** O que ela declarou — ADR-042: níveis, nunca pontos. */
+const MAPA = [
+  { subcriterionCode: "FORMACAO_RESIDENCIA", importance: "MUITO_IMPORTANTE" as const },
+  { subcriterionCode: "EXPERIENCIA_CASOS_SEMELHANTES", importance: "MUITO_IMPORTANTE" as const },
+  { subcriterionCode: "MODELO_COMUNICACAO", importance: "IMPORTANTE" as const },
+];
 
 const CAMINHADA: WalkStage[] = [
   { id: "CONSULTA_INICIAL", label: "Consulta", status: "done" },
@@ -91,14 +89,16 @@ describe("JourneyWalk — caminhada, não lista de pendências", () => {
 
 describe("ProfileCard — resumo primeiro, detalhe sob demanda", () => {
   it("mostra três respostas e nada mais; o painel completo fica fechado", () => {
-    render(<ProfileCard perfil={buildPerfilView(PESOS, true)} />);
+    render(<ProfileCard perfil={buildPerfilView(MAPA, true)} />);
 
-    expect(screen.getByText("Prioridades técnicas")).toBeInTheDocument();
-    expect(screen.getAllByText("3 de 3 definidas").length).toBe(2);
+    // O cartão antecipa o que mais importa, em vez de contar critérios.
+    expect(screen.getByText("O que mais importa para o seu caso")).toBeInTheDocument();
+    expect(screen.getByText("Muito importante")).toBeInTheDocument();
+    expect(screen.getByText("Residência médica")).toBeInTheDocument();
     expect(screen.getByText("Reconhecido por você")).toBeInTheDocument();
 
-    // Progressive Disclosure: o painel detalhado não está na tela ainda.
-    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    // Progressive Disclosure: o retrato completo não está na tela ainda.
+    expect(screen.queryByText("Não influencia este caso")).toBeNull();
     expect(screen.getByRole("button", { name: /Conhecer meu Perfil/ })).toHaveAttribute(
       "aria-expanded",
       "false",
@@ -107,11 +107,11 @@ describe("ProfileCard — resumo primeiro, detalhe sob demanda", () => {
 
   it("abrir revela o Perfil completo no mesmo lugar, sem trocar de página", async () => {
     const user = userEvent.setup();
-    render(<ProfileCard perfil={buildPerfilView(PESOS, true)} />);
+    render(<ProfileCard perfil={buildPerfilView(MAPA, true)} />);
 
     await user.click(screen.getByRole("button", { name: /Conhecer meu Perfil/ }));
 
-    expect(screen.getByRole("progressbar", { name: "Construção do Perfil" })).toBeInTheDocument();
+    expect(screen.getAllByText("O que mais importa para o seu caso").length).toBe(2);
     expect(screen.getByRole("button", { name: /Recolher meu Perfil/ })).toHaveAttribute(
       "aria-expanded",
       "true",
@@ -120,8 +120,8 @@ describe("ProfileCard — resumo primeiro, detalhe sob demanda", () => {
   });
 
   it("Perfil em construção diz 'em conversa' em vez de zero", () => {
-    render(<ProfileCard perfil={buildPerfilView({}, false)} />);
-    expect(screen.getAllByText("Em conversa").length).toBe(2);
+    render(<ProfileCard perfil={buildPerfilView([], false)} />);
+    expect(screen.getAllByText("Em conversa").length).toBeGreaterThan(0);
     expect(screen.getByText("Ainda com você")).toBeInTheDocument();
   });
 });
@@ -169,7 +169,7 @@ describe("A experiência inteira respeita a fronteira de vocabulário", () => {
       <div>
         <AmbientHero firstName="João" stage="CURADORIA" eyebrow="Curadoria em andamento" />
         <JourneyWalk stages={CAMINHADA} currentDetail="Estamos comparando profissionais." />
-        <ProfileCard perfil={buildPerfilView(PESOS, true)} />
+        <ProfileCard perfil={buildPerfilView(MAPA, true)} />
         <CuradoriaCard message="Nossa equipe está comparando profissionais." />
       </div>,
     );

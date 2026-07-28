@@ -14,75 +14,81 @@
  */
 
 import {
-  CRITERION_LABELS,
-  PATIENT_CRITERIA,
-  TECHNICAL_CRITERIA,
-  type CruzamentoCriterion,
-} from "@/modules/curadoria/cruzamento";
+  IMPORTANCE_LABELS,
+  IMPORTANCE_LEVELS,
+  SUBCRITERION_CATALOG,
+  type ImportanceLevel,
+  type Subcriterion,
+} from "@/modules/curadoria/mapa-prioridades";
 import type { JornadaStageId } from "@/modules/curadoria/jornada";
 
 // ---------------------------------------------------------------------------
-// O Perfil, como importância — nunca como cálculo
+// O Perfil — o que importa, nas palavras dela (ADR-042)
 // ---------------------------------------------------------------------------
 
-/**
- * O peso vira palavra. Os cortes são relativos ao orçamento de 100 do
- * cruzamento: metade ou mais é "muito importante"; um quinto ou mais,
- * "importante"; o resto do que foi distribuído, "considerado". O número em si
- * nunca chega à tela do paciente.
- */
-export function importanceLabel(weight: number): "Muito importante" | "Importante" | "Considerado" | null {
-  if (weight >= 40) return "Muito importante";
-  if (weight >= 20) return "Importante";
-  if (weight > 0) return "Considerado";
-  return null;
-}
-
-export type PerfilItem = {
-  criterion: CruzamentoCriterion;
+export type PerfilNivel = {
+  level: ImportanceLevel;
+  /** O rótulo que a pessoa lê. */
   label: string;
-  importance: NonNullable<ReturnType<typeof importanceLabel>> | null;
+  /** Os subcritérios naquele nível, nas palavras do catálogo. */
+  itens: string[];
 };
 
 export type PerfilView = {
-  tecnicas: PerfilItem[];
-  modeloDeCuidado: PerfilItem[];
-  /** 0–100: quanto do Perfil já foi construído (critérios definidos + validação). */
-  progress: number;
+  /**
+   * O que importa, agrupado por nível — na ordem da escala, do que mais pesa
+   * ao que ela disse que não pesa. Só entram níveis que têm item.
+   */
+  prioridades: PerfilNivel[];
+  /** Quantos subcritérios ela já classificou, de quantos existem. */
+  classificados: number;
+  total: number;
   validated: boolean;
   /** A frase do topo da seção, no estado atual. */
   headline: string;
 };
 
 /**
- * O progresso é de construção, nunca de qualidade: seis critérios a definir
- * e uma validação a acontecer — sete passos de igual tamanho. 100% significa
- * "o Perfil é seu e você o reconheceu", nada além.
+ * O Perfil como ela o entende — ADR-042.
+ *
+ * Antes este cartão mostrava distribuição de pontos ("40 pts / 35 pts").
+ * Ponto é mecanismo interno: dizia como a Aliviar pondera, não o que ela
+ * escolheu. Agora responde a pergunta dela — "o que mais importa para o meu
+ * caso" — com os fatores agrupados pelo peso que ela mesma deu.
+ *
+ * Nenhum número de ponderação atravessa. Os níveis que ela declarou como
+ * pouco importantes ou sem influência aparecem também: esconder o que ela
+ * escolheu deixar de fora seria editar as palavras dela.
  */
 export function buildPerfilView(
-  weights: Partial<Record<CruzamentoCriterion, number>>,
+  itens: readonly { subcriterionCode: string; importance: ImportanceLevel }[],
   validated: boolean,
+  catalogo: readonly Subcriterion[] = SUBCRITERION_CATALOG,
 ): PerfilView {
-  const item = (criterion: CruzamentoCriterion): PerfilItem => ({
-    criterion,
-    label: CRITERION_LABELS[criterion],
-    importance: importanceLabel(weights[criterion] ?? 0),
-  });
+  const nomePorCodigo = new Map(catalogo.map((entry) => [entry.code, entry.name]));
+  const ativos = catalogo.filter((entry) => entry.active);
 
-  const defined = [...TECHNICAL_CRITERIA, ...PATIENT_CRITERIA].filter(
-    (criterion) => (weights[criterion] ?? 0) > 0,
-  ).length;
-  const steps = defined + (validated ? 1 : 0);
-  const progress = Math.round((steps / 7) * 100);
+  const declarados = itens.filter((item) => nomePorCodigo.has(item.subcriterionCode));
+
+  const prioridades: PerfilNivel[] = IMPORTANCE_LEVELS.map((level) => ({
+    level,
+    label: IMPORTANCE_LABELS[level],
+    itens: declarados
+      .filter((item) => item.importance === level)
+      .map((item) => nomePorCodigo.get(item.subcriterionCode)!)
+      .sort((a, b) => a.localeCompare(b, "pt-BR")),
+  })).filter((nivel) => nivel.itens.length > 0);
+
+  const classificados = declarados.length;
 
   return {
-    tecnicas: TECHNICAL_CRITERIA.map(item),
-    modeloDeCuidado: PATIENT_CRITERIA.map(item),
-    progress,
+    prioridades,
+    classificados,
+    total: ativos.length,
     validated,
     headline: validated
       ? "Este Perfil é seu — você o reconheceu, e é ele que guia a Curadoria."
-      : defined > 0
+      : classificados > 0
         ? "Seu perfil está sendo construído junto com o Curador."
         : "Seu Perfil nasce da conversa com o Curador — é por ele que a Curadoria começa.",
   };
