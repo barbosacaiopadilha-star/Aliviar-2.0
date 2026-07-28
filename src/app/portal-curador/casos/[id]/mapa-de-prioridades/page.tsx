@@ -22,15 +22,15 @@ import { PHASE_STATUS_LABELS } from "@/modules/curadoria/cos/conduction-ui";
 import type { PriorityCriterion } from "@/modules/curadoria/types";
 
 export const metadata: Metadata = {
-  title: "Definir Critérios",
+  title: "Mapa de Prioridades",
   robots: { index: false, follow: false },
 };
 
-// DEFINIR CRITÉRIOS — a fusão de Filtros e Perfil de Prioridades.
+// MAPA DE PRIORIDADES — a fusão de Filtros, Prioridades e o reconhecimento dela.
 //
 // Qual problema do Curador esta tela resolve?
-//   "O que essa pessoa me disse que elimina uma opção, e o que pesa na escolha
-//    dela — e ela reconhece isso como dela?"
+//   "O que essa pessoa me disse que elimina uma opção, e quanto cada subcritério
+//    importa para ela — e ela reconhece isso como dela?"
 //
 // Por que as duas fases viraram uma etapa: são UMA pergunta com dois lados.
 // Quando o paciente diz "precisa ser em São Paulo", o Curador decide na mesma
@@ -39,9 +39,10 @@ export const metadata: Metadata = {
 // separadas, o conflito só aparecia depois, como alerta; juntas, ele é evitável
 // porque os dois lados estão à vista.
 //
-// A validação continua sendo uma ETAPA à parte na jornada — o ato é do paciente
-// e torna o Perfil imutável — mas acontece aqui, sobre a distribuição que ela
-// valida. Uma tela cujo único conteúdo era um link para esta deixou de existir.
+// O reconhecimento dela NÃO é etapa da jornada (ADR-042): é estado do Perfil.
+// O ato continua sendo do paciente e continua tornando o Perfil imutável, mas
+// acontece aqui, sobre o que ela reconhece — e enquanto não acontece, a etapa
+// fica AGUARDANDO em vez de cobrar o Curador por algo que não é dele.
 //
 // O sistema de pesos, computeCompatibility() e as regras do Método permanecem
 // exatamente como estavam: mudou onde o Curador trabalha, não o que vale.
@@ -65,8 +66,7 @@ export default async function CriteriosPage({ params }: { params: Promise<{ id: 
 
   const state = conduct(record);
   const journey = buildCuratorJourney(record, state);
-  const step = journey.steps.find((entry) => entry.id === "CRITERIOS")!;
-  const validationStep = journey.steps.find((entry) => entry.id === "VALIDAR")!;
+  const step = journey.steps.find((entry) => entry.id === "PRIORIZAR")!;
 
   const inconsistencies = state.inconsistencies.filter((entry) =>
     ["FILTROS", "PRIORIDADES"].includes(entry.phase),
@@ -93,14 +93,14 @@ export default async function CriteriosPage({ params }: { params: Promise<{ id: 
           ← {record.patientName}
         </Link>
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h1 className="font-serif text-3xl text-ink">Definir Critérios</h1>
+          <h1 className="font-serif text-3xl text-ink">Mapa de Prioridades</h1>
           <Badge variant={step.status === "CONCLUIDA" ? "sage" : "default"}>
             {PHASE_STATUS_LABELS[step.status]}
           </Badge>
         </div>
         <p className="mt-1 max-w-reading text-sm leading-relaxed text-ink-muted">
-          Etapa {step.order} de {journey.totalCount} · o que elimina uma opção, e o que pesa na
-          escolha de {record.patientFirstName}.
+          Etapa {step.order} de {journey.totalCount} · o que elimina uma opção, e quanto cada
+          subcritério importa para {record.patientFirstName}.
         </p>
       </div>
 
@@ -194,22 +194,12 @@ export default async function CriteriosPage({ params }: { params: Promise<{ id: 
             </div>
           </div>
 
-          {/* A validação é etapa própria na jornada — dono diferente, e
-              irreversível. A tela diz isso onde o ato acontece. */}
-          <StepStatus
-            stepName={validationStep.label}
-            settled={validationStep.settled}
-            missing={validationStep.missing}
-            blockedReason={validationStep.blockedReason}
-            completionSentence={validationStep.completionSentence}
-          />
-
           {validated ? (
             <Card className="border-brand-sage/40">
               <CardHeader>
                 <CardTitle>Próxima etapa: Curadoria Técnica</CardTitle>
                 <CardDescription>
-                  Com o Perfil validado, a Mesa abre — o critério dela já existe.
+                  Com o Perfil reconhecido por ela, a Mesa abre — o que importa para ela já existe.
                 </CardDescription>
               </CardHeader>
               <Link

@@ -12,7 +12,7 @@ import { startConsultationAction } from "@/modules/curadoria/actions";
  * @metodo Fundamentos §10 — o Perfil de Prioridades é o primeiro patrimônio construído em conjunto
  * @metodo Experience §5 — UX3: o próximo passo é visível e nomeado pelo que faz
  *
- * Por que existe: sem um Perfil aberto, a etapa Definir Critérios não tem onde
+ * Por que existe: sem um Perfil aberto, a etapa Mapa de Prioridades não tem onde
  * gravar nem um requisito nem um peso — e a tela dizia "o Perfil precisa ser
  * criado antes desta etapa" sem oferecer como. Um aviso que não resolve o que
  * anuncia é um beco sem saída, e beco sem saída é a forma mais cara de carga

@@ -60,12 +60,12 @@ describe("StepStatus — as duas metades da etapa", () => {
   it("dois quadros na mesma tela se distinguem pelo nome da etapa", () => {
     render(
       <>
-        <StepStatus stepName="Definir Critérios" settled={[]} missing={["a"]} completionSentence="Sei os critérios." />
-        <StepStatus stepName="Validar Critérios" settled={[]} missing={["b"]} completionSentence="Ela reconheceu." />
+        <StepStatus stepName="Mapa de Prioridades" settled={[]} missing={["a"]} completionSentence="Sei o que importa para ela." />
+        <StepStatus stepName="Curadoria Técnica" settled={[]} missing={["b"]} completionSentence="Escolhi os três caminhos." />
       </>,
     );
-    expect(screen.getByText(/“Definir Critérios” está/)).toBeInTheDocument();
-    expect(screen.getByText(/“Validar Critérios” está/)).toBeInTheDocument();
+    expect(screen.getByText(/“Mapa de Prioridades” está/)).toBeInTheDocument();
+    expect(screen.getByText(/“Curadoria Técnica” está/)).toBeInTheDocument();
   });
 });
 

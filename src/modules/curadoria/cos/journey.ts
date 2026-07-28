@@ -1,7 +1,7 @@
 /**
- * JORNADA DO CURADOR — a projeção das nove fases em sete etapas de raciocínio.
+ * JORNADA DO CURADOR — a projeção das nove fases em seis etapas de raciocínio.
  *
- * @metodo Fundamentos §5.2 — as sete etapas do raciocínio são o pensamento; as nove fases são o trabalho
+ * @metodo Fundamentos §5.2 — as etapas do raciocínio são o pensamento; as nove fases são o trabalho
  * @metodo Guided Experience §1 — a plataforma se organiza pela jornada mental de quem a usa
  * @metodo Engine §2 — o Motor nunca avança um estado sozinho
  *
@@ -18,7 +18,7 @@
  * o estado que o Motor já produziu. Remover este arquivo devolveria a plataforma
  * às nove telas sem perder uma regra sequer.
  *
- * Por que 7 e não menos — o teste aplicado a cada fusão foi: *as duas fases
+ * Por que 6 e não nove — o teste aplicado a cada fusão foi: *as duas fases
  * exigem mudança de contexto, de responsabilidade, de decisão ou de objetivo?*
  *
  *   HISTORIA + CASO ....... fundidas. Mesma conversa, mesmo material, mesmo
@@ -28,10 +28,11 @@
  *                           elimina e o que pesa. A Invariante 24 (nada é filtro
  *                           E critério) só é pensável vendo os dois juntos —
  *                           separá-los criava o conflito que depois virava alerta.
- *   VALIDACAO ............. SEPARADA. Muda o dono (é ato do paciente, nunca do
- *                           Curador) e é irreversível (Perfil validado é imutável).
- *                           Fundir seria transformar um ato constitucional em
- *                           um passo de formulário.
+ *   VALIDACAO ............. fundida em PRIORIZAR desde a ADR-042. O ato continua
+ *                           sendo do paciente e continua irreversível — mas ele é
+ *                           ESTADO do Perfil, não etapa da investigação do Curador.
+ *                           Enquanto ela não reconhece, a etapa fica AGUARDANDO:
+ *                           diz de quem depende sem cobrar quem não deve.
  *   RELATORIO + DEVOLUTIVA  SEPARADAS. Dias diferentes, donos diferentes:
  *                           escrever o parecer é do Curador, a decisão é do
  *                           paciente. Fundir esconderia a espera humana.
@@ -51,8 +52,7 @@ import type {
 export const CURATOR_JOURNEY_STEPS = [
   "ACOLHER",
   "COMPREENDER",
-  "CRITERIOS",
-  "VALIDAR",
+  "PRIORIZAR",
   "COMPARAR",
   "RELATORIO",
   "FINALIZAR",
@@ -90,19 +90,13 @@ export const CURATOR_JOURNEY_DEFINITIONS: Record<CuratorJourneyStepId, StepDefin
     phases: ["HISTORIA", "CASO"],
     slug: "compreender",
   },
-  CRITERIOS: {
-    id: "CRITERIOS",
-    label: "Definir Critérios",
-    completionSentence: "Sei o que elimina uma opção e o que pesa na escolha dela.",
-    phases: ["FILTROS", "PRIORIDADES"],
-    slug: "criterios",
-  },
-  VALIDAR: {
-    id: "VALIDAR",
-    label: "Validar Critérios",
-    completionSentence: "Ela reconheceu este Perfil como dela.",
-    phases: ["VALIDACAO"],
-    slug: "validacao",
+  PRIORIZAR: {
+    id: "PRIORIZAR",
+    label: "Mapa de Prioridades",
+    completionSentence:
+      "Sei o que elimina uma opção e quanto cada subcritério importa para ela — e ela reconheceu este Perfil como seu.",
+    phases: ["FILTROS", "PRIORIDADES", "VALIDACAO"],
+    slug: "mapa-de-prioridades",
   },
   COMPARAR: {
     id: "COMPARAR",
@@ -140,9 +134,9 @@ const PHASE_TO_STEP: Record<CosPhaseId, CuratorJourneyStepId> = {
   ACOLHIMENTO: "ACOLHER",
   HISTORIA: "COMPREENDER",
   CASO: "COMPREENDER",
-  FILTROS: "CRITERIOS",
-  PRIORIDADES: "CRITERIOS",
-  VALIDACAO: "VALIDAR",
+  FILTROS: "PRIORIZAR",
+  PRIORIDADES: "PRIORIZAR",
+  VALIDACAO: "PRIORIZAR",
   CURADORIA_TECNICA: "COMPARAR",
   RELATORIO: "RELATORIO",
   DEVOLUTIVA: "FINALIZAR",
@@ -152,9 +146,22 @@ export function stepOfPhase(phase: CosPhaseId): CuratorJourneyStepId {
   return PHASE_TO_STEP[phase];
 }
 
+/**
+ * Slugs que a jornada já usou e que continuam existindo em links salvos,
+ * e-mails e abas abertas. Removê-los seco transformaria um endereço conhecido
+ * em 404 — o custo cairia sobre quem não fez nada de errado.
+ */
+const LEGACY_SLUGS: Record<string, CuratorJourneyStepId> = {
+  criterios: "PRIORIZAR",
+  validacao: "PRIORIZAR",
+};
+
 /** Resolve um slug de URL — novo ou herdado — para a etapa da jornada. */
 export function resolveJourneyStep(slug: string): CuratorJourneyStepId | null {
   const normalized = slug.trim().toLowerCase();
+
+  const legacy = LEGACY_SLUGS[normalized];
+  if (legacy) return legacy;
 
   for (const step of CURATOR_JOURNEY_ORDER) {
     if (CURATOR_JOURNEY_DEFINITIONS[step].slug === normalized) return step;
@@ -219,7 +226,7 @@ function composeStatus(phases: PhaseState[]): PhaseStatus {
 }
 
 /**
- * Constrói a jornada de sete etapas a partir do estado já produzido pelo Motor.
+ * Constrói a jornada de seis etapas a partir do estado já produzido pelo Motor.
  *
  * Recebe `state` pronto em vez de chamar `conduct()` internamente: assim fica
  * impossível esta camada produzir uma condução diferente da que o resto do
@@ -283,8 +290,7 @@ export function journeyStepHref(caseId: string, step: CuratorJourneyStepId): str
 export const JOURNEY_ACTION_LABELS: Record<CuratorJourneyStepId, string> = {
   ACOLHER: "Revisar o Acolhimento",
   COMPREENDER: "Registrar o que entendi",
-  CRITERIOS: "Definir os critérios",
-  VALIDAR: "Registrar a validação dela",
+  PRIORIZAR: "Abrir o Mapa de Prioridades",
   COMPARAR: "Abrir a Mesa de Curadoria",
   RELATORIO: "Escrever o Relatório",
   FINALIZAR: "Registrar a decisão dela",

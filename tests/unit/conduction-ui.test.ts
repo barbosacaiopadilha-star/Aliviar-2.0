@@ -20,8 +20,8 @@ describe("conduction-ui — rotas e rótulos", () => {
   it("leva cada fase à etapa da jornada onde ela se resolve", () => {
     expect(phaseHref("abc", "HISTORIA")).toBe("/coa/curadoria/casos/abc/compreender");
     expect(phaseHref("abc", "CASO")).toBe("/coa/curadoria/casos/abc/compreender");
-    expect(phaseHref("abc", "FILTROS")).toBe("/coa/curadoria/casos/abc/criterios");
-    expect(phaseHref("abc", "PRIORIDADES")).toBe("/coa/curadoria/casos/abc/criterios");
+    expect(phaseHref("abc", "FILTROS")).toBe("/coa/curadoria/casos/abc/mapa-de-prioridades");
+    expect(phaseHref("abc", "PRIORIDADES")).toBe("/coa/curadoria/casos/abc/mapa-de-prioridades");
     expect(phaseHref("abc", "CURADORIA_TECNICA")).toBe(
       "/coa/curadoria/casos/abc/curadoria_tecnica",
     );
@@ -41,7 +41,7 @@ describe("conduction-ui — rotas e rótulos", () => {
   it("descreve ação específica no botão principal", () => {
     const state = conduct(marina);
     const label = getPrimaryActionLabel(state);
-    expect(label).toBe("Definir os critérios");
+    expect(label).toBe("Abrir o Mapa de Prioridades");
     expect(label.toLowerCase()).not.toContain("continuar");
   });
 
@@ -98,7 +98,7 @@ describe("conduction-ui — action links de pendências", () => {
     const inconsistencies = items.filter((item) => item.kind === "inconsistency");
     expect(inconsistencies.length).toBeGreaterThan(0);
     for (const item of inconsistencies) {
-      expect(item.href).toContain("/criterios");
+      expect(item.href).toContain("/mapa-de-prioridades");
     }
   });
 

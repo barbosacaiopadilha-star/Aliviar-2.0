@@ -46,7 +46,7 @@ export const metadata: Metadata = {
 // fora do caminho de quem já sabe o que está fazendo.
 //
 // As nove fases do COS continuam intactas no domínio; esta rota fala em etapas
-// da jornada (7), que as projetam. Ver src/modules/curadoria/cos/journey.ts.
+// da jornada (6), que as projetam. Ver src/modules/curadoria/cos/journey.ts.
 
 export default async function EtapaPage({ params }: { params: Promise<{ id: string; etapa: string }> }) {
   const { id, etapa } = await params;
@@ -149,8 +149,8 @@ export default async function EtapaPage({ params }: { params: Promise<{ id: stri
                   phase="caso"
                   caseId={record.caseId}
                   initialText={record.caso.clinicalContext}
-                  nextPhaseHref={journeyStepHref(record.caseId, "CRITERIOS")}
-                  nextPhaseLabel="Definir os critérios"
+                  nextPhaseHref={journeyStepHref(record.caseId, "PRIORIZAR")}
+                  nextPhaseLabel="Abrir o Mapa de Prioridades"
                 />
               </div>
             </>

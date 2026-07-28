@@ -28,7 +28,7 @@ describe("a jornada projeta o Método sem perder nada dele", () => {
     // A simplificação é de experiência. Se este número mudar, alguém mexeu no
     // Método achando que estava mexendo em tela.
     expect(COS_PHASES).toHaveLength(9);
-    expect(CURATOR_JOURNEY_ORDER).toHaveLength(7);
+    expect(CURATOR_JOURNEY_ORDER).toHaveLength(6);
   });
 
   it("cada etapa mantém a ordem do Método — nenhuma fase é remontada fora de sequência", () => {
@@ -45,14 +45,29 @@ describe("as fusões só valem onde é o mesmo momento do raciocínio", () => {
     expect(stepOfPhase("CASO")).toBe("COMPREENDER");
   });
 
-  it("Filtros e Prioridades são a mesma etapa", () => {
-    expect(stepOfPhase("FILTROS")).toBe("CRITERIOS");
-    expect(stepOfPhase("PRIORIDADES")).toBe("CRITERIOS");
+  it("Filtros, Prioridades e o reconhecimento dela são a mesma etapa", () => {
+    // ADR-042: o reconhecimento é ESTADO do Perfil, não etapa da investigação.
+    // O ato continua sendo dela — o que mudou é que deixou de ser cobrado do
+    // Curador como se fosse um passo do trabalho dele.
+    expect(stepOfPhase("FILTROS")).toBe("PRIORIZAR");
+    expect(stepOfPhase("PRIORIDADES")).toBe("PRIORIZAR");
+    expect(stepOfPhase("VALIDACAO")).toBe("PRIORIZAR");
+    expect(CURATOR_JOURNEY_DEFINITIONS.PRIORIZAR.phases).toEqual([
+      "FILTROS",
+      "PRIORIDADES",
+      "VALIDACAO",
+    ]);
   });
 
-  it("Validação permanece separada — o dono do ato é outro", () => {
-    expect(stepOfPhase("VALIDACAO")).toBe("VALIDAR");
-    expect(CURATOR_JOURNEY_DEFINITIONS.VALIDAR.phases).toEqual(["VALIDACAO"]);
+  it("a jornada não fala mais a língua do modelo antigo", () => {
+    const vocabulario = JSON.stringify(CURATOR_JOURNEY_DEFINITIONS);
+    expect(vocabulario).not.toMatch(/CRITERIOS|VALIDAR|Definir Critérios|Validar Critérios/);
+  });
+
+  it("endereço antigo continua chegando ao lugar certo — nunca em 404", () => {
+    expect(resolveJourneyStep("criterios")).toBe("PRIORIZAR");
+    expect(resolveJourneyStep("validacao")).toBe("PRIORIZAR");
+    expect(resolveJourneyStep("mapa-de-prioridades")).toBe("PRIORIZAR");
   });
 
   it("Relatório e Devolutiva permanecem separados — dias e donos diferentes", () => {
@@ -123,14 +138,14 @@ describe("o estado da etapa deriva do estado das fases (P4)", () => {
     for (const record of records) {
       const journey = buildCuratorJourney(record, conduct(record));
       const primeiraAberta = journey.steps.find((step) => step.status !== "CONCLUIDA");
-      expect(journey.currentStep).toBe(primeiraAberta?.id ?? journey.steps[6].id);
+      expect(journey.currentStep).toBe(primeiraAberta?.id ?? journey.steps[journey.steps.length - 1]!.id);
     }
   });
 
   it("o progresso conta etapas fechadas, e nada mais", () => {
     for (const record of records) {
       const journey = buildCuratorJourney(record, conduct(record));
-      expect(journey.totalCount).toBe(7);
+      expect(journey.totalCount).toBe(6);
       expect(journey.completedCount).toBe(
         journey.steps.filter((step) => step.status === "CONCLUIDA").length,
       );
