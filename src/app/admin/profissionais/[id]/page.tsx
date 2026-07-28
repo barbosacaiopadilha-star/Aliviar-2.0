@@ -15,9 +15,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
+import { MapaProfissionalPanel } from "@/components/profiles/mapa-profissional-panel";
 import { ProfessionalDocumentsPanel } from "@/components/profiles/professional-documents-panel";
 import { ProfessionalProfileForm } from "@/components/profiles/professional-profile-form";
 import { listProfessionalDocuments } from "@/modules/profiles/professional-document-repository";
+import { loadProfessionalMap } from "@/modules/curadoria/mapa-profissional-repository";
 
 export const metadata: Metadata = {
   title: "Editar profissional",
@@ -41,6 +43,7 @@ export default async function EditProfessionalPage({ params }: EditProfessionalP
   }
 
   const documents = await listProfessionalDocuments(supabase, id);
+  const mapa = await loadProfessionalMap(supabase, id);
 
   const nextStatus = professional.status === "ativo" ? "inativo" : "ativo";
   const nextPublicationStatus =
@@ -104,6 +107,15 @@ export default async function EditProfessionalPage({ params }: EditProfessionalP
 
         <ProfessionalDocumentsPanel professionalProfileId={id} initialDocuments={documents} />
       </Card>
+
+      {/* O outro lado do Mapa de Prioridades do Case (ADR-039). Dado
+          operacional interno: existir aqui não publica ninguém e não altera o
+          estado editorial. */}
+      <MapaProfissionalPanel
+        professionalProfileId={id}
+        groups={mapa.groups}
+        completion={mapa.completion}
+      />
     </div>
   );
 }

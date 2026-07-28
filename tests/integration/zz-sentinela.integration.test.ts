@@ -134,6 +134,32 @@ describe("Sentinela — a suíte devolve o banco como encontrou", () => {
   });
 
   /**
+   * O catálogo do Método é vocabulário, não dado de teste: a limpeza nunca o
+   * toca, e nenhuma suíte pode deixá-lo alterado. Um subcritério que ficou
+   * fora de circulação porque um teste morreu no meio mudaria em silêncio a
+   * completude de todo mundo.
+   */
+  it("o catálogo canônico sobrevive intacto, e nenhum Mapa ficou para trás", async () => {
+    const { count: catalogo } = await admin
+      .from("method_subcriteria")
+      .select("*", { count: "exact", head: true });
+    const { count: ativos } = await admin
+      .from("method_subcriteria")
+      .select("*", { count: "exact", head: true })
+      .eq("active", true);
+
+    expect(catalogo, "o catálogo não é apagado no teardown").toBe(26);
+    expect(ativos, "nenhum subcritério ficou fora de circulação").toBe(26);
+
+    // Os Mapas saem por cascata de Case e de profissional. Se sobrou linha,
+    // sobrou dono.
+    for (const tabela of ["case_priority_map", "professional_subcriterion_map"]) {
+      const { count } = await admin.from(tabela).select("*", { count: "exact", head: true });
+      expect(count, `${tabela} deveria ter saído com o dono`).toBe(0);
+    }
+  });
+
+  /**
    * A auditoria cresce de propósito — e só ela.
    *
    * `audit_logs` tem RLS apenas com política de SELECT: DELETE é filtrado
