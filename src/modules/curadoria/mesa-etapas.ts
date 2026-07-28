@@ -26,7 +26,7 @@ export const MESA_ETAPAS = [
 export type MesaEtapaId = (typeof MESA_ETAPAS)[number];
 
 export const MESA_ETAPA_LABELS: Record<MesaEtapaId, string> = {
-  PERFIL: "Perfil",
+  PERFIL: "Mapa de Prioridades",
   REDE: "Rede elegível",
   AVALIACAO: "Avaliação técnica",
   COMPATIBILIDADE: "Compatibilidade",
@@ -37,7 +37,7 @@ export const MESA_ETAPA_LABELS: Record<MesaEtapaId, string> = {
 
 /** A pergunta que o Curador responde em cada etapa — o nome é o raciocínio. */
 export const MESA_ETAPA_QUESTIONS: Record<MesaEtapaId, string> = {
-  PERFIL: "Quanto pesa cada critério para esta pessoa?",
+  PERFIL: "Quanto cada subcritério importa para esta pessoa?",
   REDE: "Quem pode participar desta Curadoria?",
   AVALIACAO: "Quanto cada profissional responde tecnicamente a este caso?",
   COMPATIBILIDADE: "Quanto cada um responde ao que ela declarou?",
@@ -67,7 +67,8 @@ export type MesaEtapaState = {
 
 export type MesaFacts = {
   profileValidated: boolean;
-  budgetsComplete: boolean;
+  /** Subcritérios ativos ainda sem classificação no Mapa de Prioridades. */
+  mapPending: number;
   professionalsFound: number;
   awaitingAreaDeclaration: number;
   eligible: number;
@@ -93,9 +94,13 @@ export function buildMesaEtapas(facts: MesaFacts): MesaEtapaState[] {
   const avaliacaoPronta = temElegiveis && facts.criteriaAwaiting === 0;
 
   return [
-    facts.budgetsComplete
+    facts.mapPending === 0
       ? etapa("PERFIL", "PRONTA", null)
-      : etapa("PERFIL", "PENDENTE", "Distribuir os pontos dos dois cruzamentos."),
+      : etapa(
+          "PERFIL",
+          "PENDENTE",
+          `Classificar ${facts.mapPending} subcritério${facts.mapPending === 1 ? "" : "s"} do Mapa de Prioridades.`,
+        ),
 
     facts.professionalsFound === 0
       ? etapa("REDE", "AGUARDA", null, "Nenhum profissional publicado alcança este Case.")
@@ -123,8 +128,8 @@ export function buildMesaEtapas(facts: MesaFacts): MesaEtapaState[] {
         ? etapa("COMPATIBILIDADE", "PENDENTE", "Faltam avaliações para fechar a leitura.")
         : etapa("COMPATIBILIDADE", "PRONTA", null),
 
-    !facts.budgetsComplete
-      ? etapa("CRUZAMENTO", "AGUARDA", null, "Depende dos pontos distribuídos.")
+    facts.mapPending > 0
+      ? etapa("CRUZAMENTO", "AGUARDA", null, "Depende do Mapa de Prioridades completo.")
       : !avaliacaoPronta
         ? etapa("CRUZAMENTO", "AGUARDA", null, "Depende das avaliações por critério.")
         : etapa("CRUZAMENTO", "PRONTA", null),

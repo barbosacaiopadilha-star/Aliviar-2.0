@@ -19,7 +19,7 @@ afterEach(cleanup);
 
 const FATOS: MesaFacts = {
   profileValidated: true,
-  budgetsComplete: true,
+  mapPending: 0,
   professionalsFound: 4,
   awaitingAreaDeclaration: 0,
   eligible: 3,
@@ -104,7 +104,7 @@ describe("Painel B — as sete etapas, no mesmo ambiente", () => {
     montar();
 
     expect(screen.getByText("Trabalho de AVALIACAO")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /Perfil/ }));
+    await user.click(screen.getByRole("button", { name: /Mapa de Prioridades/ }));
 
     expect(screen.getByText("Trabalho de PERFIL")).toBeInTheDocument();
     expect(screen.queryByText("Trabalho de AVALIACAO")).not.toBeInTheDocument();
@@ -115,7 +115,7 @@ describe("Painel B — as sete etapas, no mesmo ambiente", () => {
 
   it("nenhuma etapa é bloqueada — o Curador entra onde quiser", async () => {
     const user = userEvent.setup();
-    montar({ ...FATOS, budgetsComplete: false, eligible: 0, professionalsFound: 0 });
+    montar({ ...FATOS, mapPending: 4, eligible: 0, professionalsFound: 0 });
 
     const nav = screen.getByRole("navigation", { name: "Etapas da Curadoria Técnica" });
     for (const botao of within(nav).getAllByRole("button")) {
@@ -129,7 +129,7 @@ describe("Painel B — as sete etapas, no mesmo ambiente", () => {
   it("o estado de cada etapa chega a leitor de tela, nunca só em marca visual", () => {
     montar();
     const nav = screen.getByRole("navigation", { name: "Etapas da Curadoria Técnica" });
-    expect(within(nav).getByRole("button", { name: /Perfil/ }).textContent).toContain("respondida");
+    expect(within(nav).getByRole("button", { name: /Mapa de Prioridades/ }).textContent).toContain("respondida");
     expect(within(nav).getByRole("button", { name: /Cruzamento/ }).textContent).toContain(
       "depende de outra etapa",
     );

@@ -10,7 +10,7 @@ import {
 
 const ZERADO: MesaFacts = {
   profileValidated: true,
-  budgetsComplete: false,
+  mapPending: 4,
   professionalsFound: 0,
   awaitingAreaDeclaration: 0,
   eligible: 0,
@@ -23,7 +23,7 @@ const ZERADO: MesaFacts = {
 
 const COMPLETO: MesaFacts = {
   profileValidated: true,
-  budgetsComplete: true,
+  mapPending: 0,
   professionalsFound: 4,
   awaitingAreaDeclaration: 0,
   eligible: 3,
@@ -68,36 +68,36 @@ describe("Uma decisão por vez", () => {
     expect(decisao.label).toContain("validado pela pessoa");
   });
 
-  it("do zero, a próxima decisão é distribuir os pontos", () => {
+  it("do zero, a próxima decisão é classificar o Mapa de Prioridades", () => {
     const decisao = proximaDecisao(buildMesaEtapas(ZERADO), true);
     expect(decisao.etapa).toBe("PERFIL");
-    expect(decisao.label).toContain("Distribuir os pontos");
+    expect(decisao.label).toContain("Mapa de Prioridades");
     expect(decisao.blocked).toBe(false);
   });
 
-  it("com pontos fechados, passa a ser declarar área de quem falta", () => {
-    const facts = { ...ZERADO, budgetsComplete: true, professionalsFound: 4, awaitingAreaDeclaration: 4 };
+  it("com o Mapa completo, passa a ser declarar área de quem falta", () => {
+    const facts = { ...ZERADO, mapPending: 0, professionalsFound: 4, awaitingAreaDeclaration: 4 };
     const decisao = proximaDecisao(buildMesaEtapas(facts), true);
     expect(decisao.etapa).toBe("REDE");
     expect(decisao.label).toBe("Declarar a área de 4 profissionais.");
   });
 
   it("com área declarada, passa a ser avaliar os critérios que faltam", () => {
-    const facts = { ...ZERADO, budgetsComplete: true, professionalsFound: 4, eligible: 3, criteriaAwaiting: 12 };
+    const facts = { ...ZERADO, mapPending: 0, professionalsFound: 4, eligible: 3, criteriaAwaiting: 12 };
     const decisao = proximaDecisao(buildMesaEtapas(facts), true);
     expect(decisao.etapa).toBe("AVALIACAO");
     expect(decisao.label).toContain("12 critério");
   });
 
   it("com tudo avaliado, passa a ser selecionar os três", () => {
-    const facts = { ...ZERADO, budgetsComplete: true, professionalsFound: 4, eligible: 3 };
+    const facts = { ...ZERADO, mapPending: 0, professionalsFound: 4, eligible: 3 };
     const decisao = proximaDecisao(buildMesaEtapas(facts), true);
     expect(decisao.etapa).toBe("CAMINHOS");
     expect(decisao.label).toContain("Selecionar 3 de 3");
   });
 
   it("com os três, passa a ser o Relatório — e cada passo dele é dito por nome", () => {
-    const base = { ...ZERADO, budgetsComplete: true, professionalsFound: 4, eligible: 3, selected: 3 };
+    const base = { ...ZERADO, mapPending: 0, professionalsFound: 4, eligible: 3, selected: 3 };
 
     expect(proximaDecisao(buildMesaEtapas(base), true).label).toContain("rascunho");
     expect(proximaDecisao(buildMesaEtapas({ ...base, reportExists: true }), true).label).toContain("aprovar");
@@ -113,8 +113,8 @@ describe("Uma decisão por vez", () => {
   });
 
   it("quando nada depende do Curador, a Mesa diz do que depende — nunca silêncio mudo", () => {
-    // Pontos fechados, mas a Rede não tem ninguém: não há decisão dele a tomar.
-    const facts = { ...ZERADO, budgetsComplete: true, professionalsFound: 0 };
+    // Mapa completo, mas a Rede não tem ninguém: não há decisão dele a tomar.
+    const facts = { ...ZERADO, mapPending: 0, professionalsFound: 0 };
     const decisao = proximaDecisao(buildMesaEtapas(facts), true);
     expect(decisao.blocked).toBe(true);
     expect(decisao.label).toContain("Nenhum profissional publicado");
@@ -123,7 +123,7 @@ describe("Uma decisão por vez", () => {
 
 describe("Menos de três elegíveis", () => {
   it("os caminhos aguardam, dizendo quantos há — sem cobrar o Curador", () => {
-    const facts = { ...ZERADO, budgetsComplete: true, professionalsFound: 2, eligible: 2 };
+    const facts = { ...ZERADO, mapPending: 0, professionalsFound: 2, eligible: 2 };
     const caminhos = etapaDe(facts, "CAMINHOS");
     expect(caminhos.status).toBe("AGUARDA");
     expect(caminhos.waitingOn).toContain("2 elegíveis");
@@ -131,7 +131,7 @@ describe("Menos de três elegíveis", () => {
   });
 
   it("um elegível não vira 'elegíveis' no plural", () => {
-    const facts = { ...ZERADO, budgetsComplete: true, professionalsFound: 1, eligible: 1 };
+    const facts = { ...ZERADO, mapPending: 0, professionalsFound: 1, eligible: 1 };
     expect(etapaDe(facts, "CAMINHOS").waitingOn).toContain("1 elegível");
   });
 });
@@ -146,7 +146,7 @@ describe("Progresso da investigação", () => {
   });
 
   it("o progresso conta o que está pronto, não o que foi visitado", () => {
-    const facts = { ...ZERADO, budgetsComplete: true, professionalsFound: 4, eligible: 3, criteriaAwaiting: 6 };
+    const facts = { ...ZERADO, mapPending: 0, professionalsFound: 4, eligible: 3, criteriaAwaiting: 6 };
     const { done } = mesaProgress(buildMesaEtapas(facts));
     // Perfil e Rede prontos; avaliação e compatibilidade pendentes.
     expect(done).toBe(2);

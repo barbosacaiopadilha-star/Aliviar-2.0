@@ -17,7 +17,7 @@ import { requireAnyRoleForAction } from "@/modules/auth/guard";
 
 import { declareAreaCompatibility } from "./area-repository";
 import { AREA_COMPATIBILITIES, ASSESSMENTS, PATIENT_CRITERIA, TECHNICAL_CRITERIA } from "./cruzamento";
-import { declareCriterion, saveCruzamentoBlockWeights } from "./mesa-cruzamento";
+import { declareCriterion } from "./mesa-cruzamento";
 import type { CuradoriaActionResult } from "./types";
 
 const CURATOR_ROLES = ["administrador", "curador_medico"] as const;
@@ -37,38 +37,23 @@ function revalidateMesa(caseId: string) {
 
 const ALL_CRITERIA = [...TECHNICAL_CRITERIA, ...PATIENT_CRITERIA] as const;
 
-const saveBlockWeightsSchema = z.object({
-  caseId: z.string().uuid(),
-  block: z.enum(["TECNICO", "PRIORIDADES"]),
-  weights: z.record(z.enum(ALL_CRITERIA), z.number().int().min(0).max(100)),
-});
-
-export async function saveCruzamentoWeightsAction(input: unknown): Promise<CuradoriaActionResult> {
-  let authState;
-  try {
-    authState = await requireAnyRoleForAction([...CURATOR_ROLES]);
-  } catch {
-    return { success: false, error: "Não autorizado." };
-  }
-
-  const parsed = saveBlockWeightsSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: "Dados inválidos." };
-
-  const supabase = await createServerSupabaseClient();
-
-  try {
-    await saveCruzamentoBlockWeights(
-      supabase,
-      parsed.data.caseId,
-      parsed.data.block,
-      parsed.data.weights,
-      authState.user.id,
-    );
-    revalidateMesa(parsed.data.caseId);
-    return { success: true };
-  } catch (error) {
-    return fail(error, "Não foi possível salvar os pesos.");
-  }
+/**
+ * APOSENTADA — ADR-042.
+ *
+ * O orçamento de 100 pontos deixou de ser a representação oficial das
+ * prioridades do Case. A autoridade é o Mapa de Prioridades, e quem grava é
+ * `savePriorityImportanceAction`.
+ *
+ * A função continua existindo, e recusando, em vez de sumir: sumir daria erro
+ * de rota a quem tivesse a tela antiga aberta, sem dizer o que aconteceu. O
+ * dado histórico em `cruzamento_weights` segue legível — só não cresce mais.
+ */
+export async function saveCruzamentoWeightsAction(): Promise<CuradoriaActionResult> {
+  return {
+    success: false,
+    error:
+      "As prioridades do Case agora vivem no Mapa de Prioridades, não em distribuição de pontos (ADR-042). Abra a etapa Mapa de Prioridades para registrar a importância de cada subcritério.",
+  };
 }
 
 // ---------------------------------------------------------------------------

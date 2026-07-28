@@ -5,7 +5,9 @@ import type { Metadata } from "next";
 
 import { CaseAlert } from "@/components/curadoria/case-alert";
 import { CompatibilityRunner } from "@/components/curadoria/compatibility-runner";
-import { BudgetPanel, EligibilityPanel } from "@/components/curadoria/cruzamento-mesa";
+import { EligibilityPanel } from "@/components/curadoria/cruzamento-mesa";
+import { MapaPrioridadesPanel } from "@/components/curadoria/mesa/mapa-prioridades-panel";
+import { PainelInvestigacao } from "@/components/curadoria/mesa/painel-investigacao";
 import { ComparacaoPremium } from "@/components/curadoria/mesa/comparacao-premium";
 import { HipoteseEmFoco } from "@/components/curadoria/mesa/hipotese-em-foco";
 import { MesaShell } from "@/components/curadoria/mesa/mesa-shell";
@@ -29,6 +31,12 @@ import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { buildCuratorJourney, journeyStepHref } from "@/modules/curadoria/cos/journey";
 import { CRITERION_LABELS } from "@/modules/curadoria/cruzamento";
 import { loadMesaCruzamento } from "@/modules/curadoria/mesa-cruzamento";
+import { groupPriorityMap } from "@/modules/curadoria/mapa-prioridades";
+import {
+  listSubcriterionCatalog,
+  loadCasePriorityMap,
+} from "@/modules/curadoria/mapa-prioridades-repository";
+import { crossCaseWithProfessional } from "@/modules/curadoria/motor-compatibilidade-repository";
 import {
   buildMesaEtapas,
   mesaProgress,
@@ -92,6 +100,12 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
 
   // Os fatos que decidem onde está a próxima decisão — derivados, nunca
   // digitados. O módulo puro faz o resto.
+  // ADR-042: a autoridade das prioridades é o Mapa, não o orçamento.
+  const [catalogo, mapa] = await Promise.all([
+    listSubcriterionCatalog(supabase),
+    loadCasePriorityMap(supabase, record.caseId),
+  ]);
+
   const criteriaAwaiting = Object.values(view.awaitingDeclaration).reduce(
     (total, faltando) => total + faltando.length,
     0,
@@ -99,7 +113,7 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
 
   const etapas = buildMesaEtapas({
     profileValidated: view.profileValidated,
-    budgetsComplete: view.budgets.technical.complete && view.budgets.patient.complete,
+    mapPending: mapa.completion.pending,
     professionalsFound: view.counts.found,
     awaitingAreaDeclaration: view.counts.awaiting,
     eligible: view.counts.eligible,
@@ -243,6 +257,13 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
 
   const semElegiveis = view.counts.eligible === 0;
 
+  // A leitura do Motor para o primeiro elegível — a interface não recalcula
+  // regra nenhuma (ADR-041).
+  const primeiroElegivel = view.comparison[0]?.professionalProfileId ?? null;
+  const investigacao = primeiroElegivel
+    ? await crossCaseWithProfessional(supabase, record.caseId, primeiroElegivel)
+    : null;
+
   const comparacao =
     colunas.length > 0 ? (
       <ComparacaoPremium colunas={colunas} />
@@ -258,7 +279,11 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
 
   const conteudo: Record<MesaEtapaId, React.ReactNode> = {
     PERFIL: view.profileValidated ? (
-      <BudgetPanel view={view} />
+      <MapaPrioridadesPanel
+        caseId={record.caseId}
+        groups={groupPriorityMap(mapa.items, catalogo)}
+        completion={mapa.completion}
+      />
     ) : (
       <MesaVazio
         titulo="O Perfil ainda não foi validado."
@@ -348,6 +373,22 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
         conteudo={conteudo}
         contexto={
           <>
+            <section className="mesa-aside__section">
+              <h2 className="mesa-aside__title">Investigação</h2>
+              <div className="mt-3">
+                {investigacao ? (
+                  <PainelInvestigacao
+                    leitura={investigacao}
+                    catalogo={catalogo}
+                    professionalName={nomeDe(investigacao.professionalProfileId)}
+                  />
+                ) : (
+                  <p className="text-sm text-ink-muted">
+                    A investigação abre quando houver ao menos um profissional elegível.
+                  </p>
+                )}
+              </div>
+            </section>
             <section className="mesa-aside__section">
               <h2 className="mesa-aside__title">Merece atenção</h2>
               <div className="mt-3">

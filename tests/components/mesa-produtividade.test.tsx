@@ -415,7 +415,7 @@ describe("Linha do tempo dupla", () => {
 
 const FATOS: MesaFacts = {
   profileValidated: true,
-  budgetsComplete: true,
+  mapPending: 0,
   professionalsFound: 4,
   awaitingAreaDeclaration: 0,
   eligible: 3,
