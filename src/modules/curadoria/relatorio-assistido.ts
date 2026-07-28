@@ -3,9 +3,9 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { listAreaDeclarations } from "./area-repository";
-import { applyAreaGate, cruzar, type CriterionWeight, type CruzamentoCriterion } from "./cruzamento";
-import { loadCriterionDeclarations, loadCruzamentoWeights } from "./mesa-cruzamento";
-import { PATIENT_CRITERIA, TECHNICAL_CRITERIA } from "./cruzamento";
+import { applyAreaGate } from "./cruzamento";
+import { loadCasePriorityMap } from "./mapa-prioridades-repository";
+import { loadProfessionalMap } from "./mapa-profissional-repository";
 import {
   generateReportDraft,
   GENERATOR_VERSION,
@@ -21,8 +21,11 @@ import { saveReport, type ReportOptionInput } from "./report-repository";
  *
  * O gerador (relatorio-inteligente.ts) não conhece banco. Este módulo monta a
  * entrada tipada a partir do que já está registrado — seleção, declarações de
- * área, avaliações de critério, pesos, divergências — e persiste o rascunho
- * no Relatório existente, marcado como assistido.
+ * área, Mapa de Prioridades do Case, Mapa de cada Profissional, divergências —
+ * e persiste o rascunho no Relatório existente, marcado como assistido.
+ *
+ * ADR-042: os pesos saíram. `loadCruzamentoWeights` não é mais chamado aqui,
+ * e nenhum ponto entra no gerador.
  *
  * O que ele nunca faz: sobrescrever trabalho humano em silêncio. Regenerar
  * sobre um Relatório já revisado exige ação explícita; sobre um aprovado ou
@@ -39,11 +42,15 @@ async function buildDraftInput(
   caseId: string,
   professionalProfileIds: string[],
 ): Promise<DraftInput> {
-  const [areaDeclarations, criterionDeclarations, weights] = await Promise.all([
+  const [areaDeclarations, priorityMap, professionalMaps] = await Promise.all([
     listAreaDeclarations(supabase, caseId),
-    loadCriterionDeclarations(supabase, caseId),
-    loadCruzamentoWeights(supabase, caseId),
+    loadCasePriorityMap(supabase, caseId),
+    Promise.all(professionalProfileIds.map((id) => loadProfessionalMap(supabase, id))),
   ]);
+
+  const mapaPorProfissional = new Map(
+    professionalProfileIds.map((id, indice) => [id, professionalMaps[indice]!]),
+  );
 
   const { data: filterRows } = await supabase
     .from("priority_profiles")
@@ -69,15 +76,7 @@ async function buildDraftInput(
     divergencesByProfessional.set(id, (divergencesByProfessional.get(id) ?? 0) + 1);
   }
 
-  const weightList: CriterionWeight[] = [...TECHNICAL_CRITERIA, ...PATIENT_CRITERIA].map((criterion) => ({
-    criterion,
-    weight: weights[criterion] ?? 0,
-  }));
-  const technicalWeights = weightList.filter((w) => (TECHNICAL_CRITERIA as readonly string[]).includes(w.criterion));
-  const patientWeights = weightList.filter((w) => (PATIENT_CRITERIA as readonly string[]).includes(w.criterion));
-
   const options: OptionDraftInput[] = professionalProfileIds.map((professionalProfileId) => {
-    const declared = criterionDeclarations.filter((d) => d.professionalProfileId === professionalProfileId);
     const area = areaDeclarations.find((d) => d.professionalProfileId === professionalProfileId) ?? null;
 
     // O gerador só trabalha sobre quem participa — a porta é a mesma da Mesa.
@@ -95,26 +94,17 @@ async function buildDraftInput(
       );
     }
 
-    const declarationAuthors: OptionDraftInput["declarationAuthors"] = {};
-    for (const declaration of declared) {
-      declarationAuthors[declaration.criterion as CruzamentoCriterion] = {
-        declaredBy: declaration.declaredBy,
-        declaredAt: declaration.declaredAt,
-      };
-    }
+    // O Mapa do Profissional entra como está: subcritério ausente da lista
+    // permanece ausente, e é o gerador que distingue "não investigado" de
+    // "investigado e sem informação". Preencher aqui apagaria a diferença.
+    const mapa = mapaPorProfissional.get(professionalProfileId);
 
     return {
       professionalProfileId,
-      result: cruzar({
-        professionalProfileId,
-        technicalWeights,
-        patientWeights,
-        evaluations: declared.map((d) => ({
-          criterion: d.criterion,
-          assessment: d.assessment,
-          evidence: d.evidence,
-        })),
-      }),
+      states: (mapa?.items ?? []).map((item) => ({
+        subcriterionCode: item.subcriterionCode,
+        status: item.status,
+      })),
       areaDeclaration: area
         ? {
             compatibility: area.compatibility,
@@ -123,12 +113,18 @@ async function buildDraftInput(
             declaredAt: area.declaredAt,
           }
         : null,
-      declarationAuthors,
       openCriticalDivergences: divergencesByProfessional.get(professionalProfileId) ?? 0,
     };
   });
 
-  return { areaRequirement, options };
+  return {
+    areaRequirement,
+    priorities: priorityMap.items.map((item) => ({
+      subcriterionCode: item.subcriterionCode,
+      importance: item.importance,
+    })),
+    options,
+  };
 }
 
 /**
@@ -186,7 +182,7 @@ export async function generateAndSaveAssistedDraft(
     return {
       professionalProfileId: selected.professionalProfileId,
       justification: generated.justificativa.text,
-      relationToWeights: `${generated.relacaoTecnica.text} ${generated.relacaoPrioridades.text}`.trim(),
+      relationToWeights: generated.relacaoPrioridades.text,
       attentionPoints: generated.pontosDeAtencao.items.map((item) => item.text),
       favorablePoints: generated.pontosFavoraveis.map((item) => item.text),
       suggestedQuestions: generated.perguntasSugeridas.map((item) => item.text),

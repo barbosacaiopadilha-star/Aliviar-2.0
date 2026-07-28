@@ -149,6 +149,37 @@ describe("Relatório assistido — geração, ciclo de vida e congelamento (Supa
       }
     }
 
+    // ADR-042 — o Relatório lê o Mapa do Profissional. Cada fixture recebe um
+    // padrão distinto para que os três dossiês possam divergir por FATO, e não
+    // por acaso de geração.
+    const { data: subcriterios } = await service
+      .from("method_subcriteria")
+      .select("id, code")
+      .eq("active", true)
+      .order("display_order");
+    const idPorCodigo = new Map((subcriterios ?? []).map((row) => [row.code, row.id]));
+    const codigos = (subcriterios ?? []).map((row) => row.code);
+
+    const mapasDoProfissional: Record<string, Record<number, string>> = {
+      // Confirma os três primeiros: um dossiê com âncoras reais.
+      "fixture-a": { 0: "CONFIRMADO", 1: "CONFIRMADO", 2: "CONFIRMADO" },
+      // Analisado e sem informação — diferente de nunca investigado.
+      "fixture-b": { 0: "CONFIRMADO", 1: "CONFIRMADO", 2: "NAO_INFORMADO" },
+      // Não confirmado: nunca vira "incompatível" no texto.
+      "fixture-c": { 0: "CONFIRMADO", 1: "NAO_CONFIRMADO", 2: "CONFIRMADO" },
+    };
+    for (const [key, porIndice] of Object.entries(mapasDoProfissional)) {
+      const linhas = Object.entries(porIndice).map(([indice, status]) => ({
+        professional_profile_id: professionalIds[key]!,
+        subcriterion_id: idPorCodigo.get(codigos[Number(indice)]!)!,
+        status,
+      }));
+      const { error } = await service.from("professional_subcriterion_map").upsert(linhas, {
+        onConflict: "professional_profile_id,subcriterion_id",
+      });
+      if (error) throw new Error(error.message);
+    }
+
     await curadoria.saveSelection(
       curador.client,
       caseId,
@@ -204,9 +235,23 @@ describe("Relatório assistido — geração, ciclo de vida e congelamento (Supa
     );
     expect(new Set(textos).size).toBe(3);
 
+    // O dossiê B tem um item ANALISADO e sem informação — a frase precisa
+    // dizer isso, e não "ainda não foi investigado".
     const b = (opcoes ?? []).find((o) => o.professional_profile_id === professionalIds["fixture-b"])!;
-    expect((b.attention_points as string[]).join(" ")).toContain("não pôde ser avaliada");
-    expect((b.suggested_questions as string[]).join(" ")).toContain("participação de um familiar");
+    expect((b.attention_points as string[]).join(" ")).toContain(
+      "não há informação suficiente disponível",
+    );
+    expect((b.suggested_questions as string[]).join(" ")).toContain("vale confirmar na conversa");
+
+    // O dossiê C tem um item não confirmado — que nunca vira "incompatível".
+    const c = (opcoes ?? []).find((o) => o.professional_profile_id === professionalIds["fixture-c"])!;
+    expect((c.attention_points as string[]).join(" ")).toContain(
+      "não foi confirmada para o profissional",
+    );
+    expect((c.attention_points as string[]).join(" ")).not.toMatch(/incompatível/i);
+
+    // E nenhum texto do Relatório fala em pontos.
+    expect(textos.join(" ")).not.toMatch(/pontos?|orçamento/i);
   });
 
   it("um rascunho assistido não pode ser emitido — o banco exige aprovação", async () => {

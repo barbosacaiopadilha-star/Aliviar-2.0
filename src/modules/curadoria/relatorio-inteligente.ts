@@ -2,31 +2,43 @@
  * RELATÓRIO INTELIGENTE — composição determinística e rastreável.
  *
  * O sistema não cria conclusões. Ele transforma conclusões já registradas —
- * declarações do Curador, avaliações de critério, evidências, coberturas,
- * divergências — em texto organizado. Cada frase carrega a própria origem, e
- * frase que não consegue dizer de onde veio não é gerada.
+ * o Mapa de Prioridades do Case, o Mapa do Profissional, as declarações do
+ * Curador — em texto organizado. Cada frase carrega a própria origem, e frase
+ * que não consegue dizer de onde veio não é gerada.
  *
  * Determinístico por construção: mesma entrada, mesma saída, ordem estável,
  * sem aleatoriedade, sem chamadas externas, sem IA generativa, sem inferência
  * semântica. O melhor resultado possível é um rascunho — quem aprova, assume
  * autoria e emite é o Curador (ADR-035; Modelo v1.0 §8.3).
  *
+ * O QUE MUDOU — ADR-042. O eixo do Relatório eram os seis critérios do
+ * Cruzamento, cada um com um peso, e a cobertura era dita em pontos ("35 de
+ * 50"). O peso ordenava as frases: falava-se primeiro do que tinha mais
+ * pontos. Agora o eixo são os subcritérios do catálogo canônico, a ordem vem
+ * do nível de importância que o Case declarou, e a completude é a do Mapa.
+ *
+ * Nenhum ponto sobrevive aqui — nem como número, nem como ordenação, nem como
+ * frase de cobertura.
+ *
  * Módulo puro: não conhece banco nem interface. A montagem da entrada tipada
  * vive em relatorio-assistido.ts (server-only).
  */
 
-import {
-  BLOCK_POINTS,
-  CRITERION_LABELS,
-  coverageSentence,
-  type Assessment,
-  type CruzamentoCriterion,
-  type CruzamentoResult,
-} from "./cruzamento";
 import type { AreaCompatibility } from "./cruzamento";
+import {
+  SUBCRITERION_CATALOG,
+  SUBCRITERION_GROUPS,
+  importanceOrdinal,
+  priorityMapCompletion,
+  type ImportanceLevel,
+  type PriorityMapCompletion,
+  type Subcriterion,
+} from "./mapa-prioridades";
+import type { SubcriterionStatus } from "./mapa-profissional";
+import { crossOne, type CompatibilityResult } from "./motor-compatibilidade";
 
 /** Versão do gerador — gravada em cada rascunho para auditoria. */
-export const GENERATOR_VERSION = "relatorio-inteligente/1.0.0";
+export const GENERATOR_VERSION = "relatorio-inteligente/2.0.0";
 
 // ---------------------------------------------------------------------------
 // Rastreabilidade
@@ -35,11 +47,19 @@ export const GENERATOR_VERSION = "relatorio-inteligente/1.0.0";
 export type ProvenanceRef = {
   sourceType:
     | "declaracao_de_area"
-    | "avaliacao_de_criterio"
-    | "cobertura"
+    | "mapa_de_prioridades"
+    | "mapa_do_profissional"
+    | "completude_do_mapa"
     | "divergencia"
     | "lacuna";
-  criterion?: CruzamentoCriterion;
+  /** O subcritério do catálogo canônico a que a frase se refere. */
+  subcriterion?: string;
+  /** O nível declarado pelo Case — a origem da ordem e do destaque. */
+  importance?: ImportanceLevel;
+  /** O estado factual declarado sobre o profissional. `null` = sem registro. */
+  status?: SubcriterionStatus | null;
+  /** O resultado do Motor (ADR-041) para este par. */
+  compatibility?: CompatibilityResult;
   /** Autor da declaração humana, quando houver. */
   author?: string | null;
   declaredAt?: string | null;
@@ -69,22 +89,43 @@ export type AreaDeclarationRef = {
   declaredAt: string;
 };
 
+/**
+ * O que se sabe sobre o profissional num subcritério.
+ *
+ * A AUSÊNCIA de um item nesta lista não é igual a `NAO_INFORMADO`: o primeiro
+ * é "ninguém olhou ainda", o segundo é "olharam e não havia". O Motor os
+ * classifica igual — e é justamente por isso que o texto precisa separá-los.
+ */
+export type ProfessionalStateRef = {
+  subcriterionCode: string;
+  status: SubcriterionStatus;
+  declaredBy?: string | null;
+  declaredAt?: string | null;
+};
+
 export type OptionDraftInput = {
   professionalProfileId: string;
-  /** Resultado do motor — Avaliação Técnica e Compatibilidade Assistencial. */
-  result: CruzamentoResult;
+  /** O Mapa do Profissional — ADR-040. */
+  states: ProfessionalStateRef[];
   /** A declaração de área que deixou esta opção participar. */
   areaDeclaration: AreaDeclarationRef | null;
-  /** Autoria das declarações de critério, por critério. */
-  declarationAuthors?: Partial<Record<CruzamentoCriterion, { declaredBy: string; declaredAt: string }>>;
   openCriticalDivergences: number;
+};
+
+export type PriorityRef = {
+  subcriterionCode: string;
+  importance: ImportanceLevel;
 };
 
 export type DraftInput = {
   /** A área que o Case exige — para a justificativa dizer contra o quê. */
   areaRequirement: string | null;
+  /** O Mapa de Prioridades do Case — ADR-039/042. A única fonte da ordem. */
+  priorities: PriorityRef[];
   /** Exatamente três, distintas, todas participantes. O gerador recusa o resto. */
   options: OptionDraftInput[];
+  /** Injetável só para teste; em produção é sempre o catálogo canônico. */
+  catalog?: readonly Subcriterion[];
 };
 
 // ---------------------------------------------------------------------------
@@ -94,7 +135,6 @@ export type DraftInput = {
 export type OptionDraft = {
   professionalProfileId: string;
   justificativa: DraftField;
-  relacaoTecnica: DraftField;
   relacaoPrioridades: DraftField;
   pontosDeAtencao: { items: TracedSentence[]; requiresCurator: boolean };
   pontosFavoraveis: TracedSentence[];
@@ -107,56 +147,147 @@ export type OptionDraft = {
 
 export type ReportDraft = {
   generatorVersion: string;
+  /** A completude REAL do Mapa. O Relatório nunca afirma o que ela nega. */
+  completude: PriorityMapCompletion;
+  /** Limitações factuais do rascunho — declaradas, nunca preenchidas. */
+  limitacoes: TracedSentence[];
   options: OptionDraft[];
 };
 
 // ---------------------------------------------------------------------------
-// Frases por critério — a matéria-prima de tudo
+// A leitura de um par (subcritério do Case × profissional)
 // ---------------------------------------------------------------------------
 
-const TECHNICAL_ORDER: readonly CruzamentoCriterion[] = ["FORMACAO", "EXPERIENCIA", "HISTORICO"];
-const PATIENT_ORDER: readonly CruzamentoCriterion[] = [
-  "ACESSO",
-  "CONTINUIDADE_DO_CUIDADO",
-  "MODELO_DE_ATENDIMENTO",
-];
+/**
+ * A origem factual, antes do Motor. Cinco casos, não quatro: `SEM_REGISTRO`
+ * existe porque "ainda não foi investigado" e "foi investigado e não havia"
+ * são coisas diferentes para quem vai conversar com o profissional.
+ */
+type FactualOrigin = SubcriterionStatus | "SEM_REGISTRO";
 
-type OutcomeRef = CruzamentoResult["technical"]["criteria"][number];
+type Reading = {
+  subcriterion: Subcriterion;
+  importance: ImportanceLevel;
+  origin: FactualOrigin;
+  compatibility: CompatibilityResult;
+};
 
-function outcomeOf(input: OptionDraftInput, criterion: CruzamentoCriterion): OutcomeRef {
-  const all = [...input.result.technical.criteria, ...input.result.patient.criteria];
-  return all.find((entry) => entry.criterion === criterion)!;
-}
-
-function provenanceOf(input: OptionDraftInput, outcome: OutcomeRef): ProvenanceRef {
-  const author = input.declarationAuthors?.[outcome.criterion];
-  return {
-    sourceType: outcome.alignment === null ? "lacuna" : "avaliacao_de_criterio",
-    criterion: outcome.criterion,
-    author: author?.declaredBy ?? null,
-    declaredAt: author?.declaredAt ?? null,
-  };
+function catalogOrder(a: Subcriterion, b: Subcriterion): number {
+  return a.group === b.group
+    ? a.displayOrder - b.displayOrder
+    : SUBCRITERION_GROUPS.indexOf(a.group) - SUBCRITERION_GROUPS.indexOf(b.group);
 }
 
 /**
- * Uma frase por avaliação, sempre na mesma forma. O adjetivo nunca aparece:
- * "atende plenamente" é o que o Curador declarou; "excelente" seria o que
- * ninguém declarou.
+ * A ORDEM DO RELATÓRIO — e não existe segunda.
+ *
+ * Primeiro o que o Case declarou como mais importante; no empate, a ordem
+ * canônica do catálogo. Nunca a ordem de gravação, que faria o mesmo Case
+ * gerar textos diferentes conforme o Curador tivesse clicado antes ou depois.
+ *
+ * `importanceOrdinal` vem do domínio: a tabela 5/4/3/2/0 não é recopiada aqui.
  */
-function sentenceFor(input: OptionDraftInput, outcome: OutcomeRef): TracedSentence {
-  const label = CRITERION_LABELS[outcome.criterion];
-  const provenance = [provenanceOf(input, outcome)];
+function readingsOf(
+  option: OptionDraftInput,
+  priorities: readonly PriorityRef[],
+  catalog: readonly Subcriterion[],
+): Reading[] {
+  const porCodigo = new Map(catalog.map((entry) => [entry.code, entry]));
+  const estados = new Map(option.states.map((entry) => [entry.subcriterionCode, entry.status]));
 
-  switch (outcome.assessment satisfies Assessment) {
-    case "ATENDE_PLENAMENTE":
-      return { text: `${label} atende plenamente ao que este caso exige. ${outcome.evidence}`, provenance };
-    case "ATENDE_PARCIALMENTE":
-      return { text: `${label} atende parcialmente ao que este caso exige. ${outcome.evidence}`, provenance };
-    case "NAO_ATENDE":
-      return { text: `${label} não atende ao que este caso exige. ${outcome.evidence}`, provenance };
-    case "INFORMACAO_INSUFICIENTE":
+  return priorities
+    .flatMap((priority) => {
+      const subcriterion = porCodigo.get(priority.subcriterionCode);
+      // Subcritério fora do catálogo ativo não vira frase: o Relatório fala do
+      // Método vigente, e um item retirado de circulação não volta por aqui.
+      if (!subcriterion || !subcriterion.active) return [];
+
+      const status = estados.get(priority.subcriterionCode);
+
+      return [
+        {
+          subcriterion,
+          importance: priority.importance,
+          origin: (status ?? "SEM_REGISTRO") as FactualOrigin,
+          // Sem registro entra no Motor como ausência de informação — a mesma
+          // classe de NAO_INFORMADO. O texto é que os separa.
+          compatibility: crossOne(priority.importance, status ?? "NAO_INFORMADO"),
+        },
+      ];
+    })
+    .sort(
+      (a, b) =>
+        importanceOrdinal(b.importance) - importanceOrdinal(a.importance) ||
+        catalogOrder(a.subcriterion, b.subcriterion),
+    );
+}
+
+function provenanceOf(reading: Reading, option: OptionDraftInput): ProvenanceRef {
+  const declarado = option.states.find(
+    (entry) => entry.subcriterionCode === reading.subcriterion.code,
+  );
+  return {
+    sourceType: reading.origin === "SEM_REGISTRO" ? "lacuna" : "mapa_do_profissional",
+    subcriterion: reading.subcriterion.code,
+    importance: reading.importance,
+    status: reading.origin === "SEM_REGISTRO" ? null : reading.origin,
+    compatibility: reading.compatibility,
+    author: declarado?.declaredBy ?? null,
+    declaredAt: declarado?.declaredAt ?? null,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Frases — uma por origem factual, nunca uma por resultado do Motor
+// ---------------------------------------------------------------------------
+
+const IMPORTANCE_PHRASE: Record<ImportanceLevel, string> = {
+  MUITO_IMPORTANTE: "foi considerado muito importante para este caso",
+  IMPORTANTE: "foi classificado como importante",
+  RELEVANTE: "foi classificado como relevante",
+  POUCO_IMPORTANTE: "foi classificado como pouco importante",
+  NAO_INFLUENCIA: "não influencia a decisão neste caso",
+};
+
+/**
+ * Uma frase por leitura. O adjetivo nunca aparece: "muito importante" é o que
+ * o Case declarou; "excelente profissional" seria o que ninguém declarou.
+ *
+ * A distinção entre as origens é o ponto: o Motor classifica `SEM_REGISTRO` e
+ * `NAO_INFORMADO` na mesma `LACUNA_DE_INFORMACAO`, mas quem vai à consulta
+ * precisa saber se a pergunta ainda não foi feita ou se já foi e não houve
+ * resposta.
+ */
+function sentenceFor(reading: Reading, option: OptionDraftInput): TracedSentence {
+  const nome = reading.subcriterion.name;
+  const provenance = [provenanceOf(reading, option)];
+
+  if (reading.compatibility === "NAO_RELEVANTE") {
+    return { text: `${nome}: este aspecto não influencia a decisão neste caso.`, provenance };
+  }
+
+  const prefixo = `${nome} ${IMPORTANCE_PHRASE[reading.importance]}.`;
+
+  switch (reading.origin) {
+    case "CONFIRMADO":
       return {
-        text: `${label} não pôde ser avaliada porque não havia informação suficiente. ${outcome.evidence}`,
+        text: `${prefixo} A característica está confirmada para o profissional.`,
+        provenance,
+      };
+    case "NAO_CONFIRMADO":
+      // Nunca "incompatível": não confirmar não é negar.
+      return {
+        text: `${prefixo} A característica não foi confirmada para o profissional.`,
+        provenance,
+      };
+    case "NAO_INFORMADO":
+      return {
+        text: `${prefixo} O item foi analisado, mas não há informação suficiente disponível.`,
+        provenance,
+      };
+    case "SEM_REGISTRO":
+      return {
+        text: `${prefixo} Este item ainda não foi investigado para o profissional.`,
         provenance,
       };
   }
@@ -171,15 +302,19 @@ function field(sentences: TracedSentence[], requiresCurator = false): DraftField
 }
 
 /**
- * Por que esta opção está no Relatório. Construída de duas âncoras reais: a
- * melhor aderência técnica declarada e a melhor aderência assistencial — pelo
- * peso, para falar primeiro do que mais importa a esta pessoa.
+ * Por que esta opção está no Relatório. Ancorada no que o Case declarou como
+ * mais importante E que está confirmado para o profissional — nunca num
+ * "melhor colocado", que exigiria um ranking que este gerador não produz.
  */
-function buildJustificativa(input: OptionDraftInput, areaRequirement: string | null): DraftField {
+function buildJustificativa(
+  option: OptionDraftInput,
+  readings: readonly Reading[],
+  areaRequirement: string | null,
+): DraftField {
   const sentences: TracedSentence[] = [];
 
-  if (input.areaDeclaration) {
-    const area = input.areaDeclaration;
+  if (option.areaDeclaration) {
+    const area = option.areaDeclaration;
     const base =
       area.compatibility === "PARCIALMENTE_COMPATIVEL"
         ? "A área de atuação foi declarada parcialmente compatível e confirmada pelo Curador"
@@ -196,50 +331,35 @@ function buildJustificativa(input: OptionDraftInput, areaRequirement: string | n
     });
   }
 
-  const bestOf = (order: readonly CruzamentoCriterion[]) => {
-    const outcomes = order
-      .map((criterion) => outcomeOf(input, criterion))
-      .filter((entry) => entry.assessment === "ATENDE_PLENAMENTE" || entry.assessment === "ATENDE_PARCIALMENTE")
-      .sort((a, b) => b.weight - a.weight || order.indexOf(a.criterion) - order.indexOf(b.criterion));
-    return outcomes[0] ?? null;
-  };
+  // As âncoras: os confirmados de maior importância, já na ordem do Mapa.
+  const ancoras = readings
+    .filter((r) => r.origin === "CONFIRMADO" && r.compatibility !== "NAO_RELEVANTE")
+    .slice(0, 2);
 
-  const tecnico = bestOf(TECHNICAL_ORDER);
-  const assistencial = bestOf(PATIENT_ORDER);
-
-  if (tecnico && assistencial) {
-    const grau = (o: OutcomeRef) => (o.assessment === "ATENDE_PLENAMENTE" ? "aderência" : "aderência parcial");
+  for (const ancora of ancoras) {
     sentences.push({
-      text: `Esta opção foi incluída por apresentar ${grau(tecnico)} ao caso em ${CRITERION_LABELS[tecnico.criterion]} e por responder, em ${CRITERION_LABELS[assistencial.criterion]}, ao que a pessoa declarou como prioridade.`,
-      provenance: [provenanceOf(input, tecnico), provenanceOf(input, assistencial)],
+      text: `${ancora.subcriterion.name} ${IMPORTANCE_PHRASE[ancora.importance]}, e está confirmado para este profissional.`,
+      provenance: [provenanceOf(ancora, option)],
     });
   }
 
-  // Sem nenhuma aderência declarada não há justificativa honesta possível — e
+  // Sem nenhuma confirmação não há justificativa honesta possível — e
   // inventá-la é exatamente o que este gerador existe para não fazer.
-  return field(sentences, tecnico === null || assistencial === null);
+  return field(sentences, ancoras.length === 0);
 }
 
-function buildRelacao(
-  input: OptionDraftInput,
-  order: readonly CruzamentoCriterion[],
-  block: CruzamentoResult["technical"],
-  opening: string,
-): DraftField {
-  const sentences: TracedSentence[] = order.map((criterion) => sentenceFor(input, outcomeOf(input, criterion)));
+/** A leitura completa, na ordem do Mapa. */
+function buildRelacao(option: OptionDraftInput, readings: readonly Reading[]): DraftField {
+  const sentences = readings.map((reading) => sentenceFor(reading, option));
 
   if (sentences.length > 0) {
-    sentences[0] = { ...sentences[0]!, text: `${opening} ${sentences[0]!.text}` };
+    sentences[0] = {
+      ...sentences[0]!,
+      text: `Em relação ao Mapa de Prioridades: ${sentences[0]!.text}`,
+    };
   }
 
-  if (block.coveredWeight < BLOCK_POINTS) {
-    sentences.push({
-      text: coverageSentence(block),
-      provenance: [{ sourceType: "cobertura" }],
-    });
-  }
-
-  return field(sentences);
+  return field(sentences, sentences.length === 0);
 }
 
 /**
@@ -248,38 +368,39 @@ function buildRelacao(
  * atenção identificado" é uma frase que este gerador se recusa a escrever,
  * porque opção só com virtudes é recomendação.
  */
-function buildAtencao(input: OptionDraftInput): { items: TracedSentence[]; requiresCurator: boolean } {
+function buildAtencao(
+  option: OptionDraftInput,
+  readings: readonly Reading[],
+): { items: TracedSentence[]; requiresCurator: boolean } {
   const items: TracedSentence[] = [];
 
-  for (const criterion of [...TECHNICAL_ORDER, ...PATIENT_ORDER]) {
-    const outcome = outcomeOf(input, criterion);
-    if (outcome.assessment === "ATENDE_PARCIALMENTE" || outcome.assessment === "NAO_ATENDE") {
-      items.push(sentenceFor(input, outcome));
-    }
-    if (outcome.assessment === "INFORMACAO_INSUFICIENTE") {
-      items.push({
-        text: `Parte de ${CRITERION_LABELS[outcome.criterion]} não pôde ser avaliada por falta de informação — a lacuna deve ser considerada na conversa.`,
-        provenance: [{ sourceType: "lacuna", criterion: outcome.criterion }],
-      });
-    }
+  for (const reading of readings) {
+    // O que não influencia não vira ponto de atenção: seria transformar uma
+    // escolha dela em pendência.
+    if (reading.compatibility === "NAO_RELEVANTE") continue;
+    if (reading.origin === "CONFIRMADO") continue;
+    items.push(sentenceFor(reading, option));
   }
 
-  if (input.areaDeclaration?.compatibility === "PARCIALMENTE_COMPATIVEL" && input.areaDeclaration.rationale) {
+  if (
+    option.areaDeclaration?.compatibility === "PARCIALMENTE_COMPATIVEL" &&
+    option.areaDeclaration.rationale
+  ) {
     items.push({
-      text: `Sobre a área de atuação: ${input.areaDeclaration.rationale}`,
+      text: `Sobre a área de atuação: ${option.areaDeclaration.rationale}`,
       provenance: [
         {
           sourceType: "declaracao_de_area",
-          author: input.areaDeclaration.declaredBy,
-          declaredAt: input.areaDeclaration.declaredAt,
+          author: option.areaDeclaration.declaredBy,
+          declaredAt: option.areaDeclaration.declaredAt,
         },
       ],
     });
   }
 
-  if (input.openCriticalDivergences > 0) {
+  if (option.openCriticalDivergences > 0) {
     items.push({
-      text: `Há ${input.openCriticalDivergences} divergência(s) em aberto entre fontes no cadastro deste profissional — as duas versões estão registradas e aguardam resolução.`,
+      text: `Há ${option.openCriticalDivergences} divergência(s) em aberto entre fontes no cadastro deste profissional — as duas versões estão registradas e aguardam resolução.`,
       provenance: [{ sourceType: "divergencia" }],
     });
   }
@@ -287,62 +408,89 @@ function buildAtencao(input: OptionDraftInput): { items: TracedSentence[]; requi
   return { items, requiresCurator: items.length === 0 };
 }
 
-/** Aderências plenas que a justificativa não citou — sem repeti-la inteira. */
-function buildFavoraveis(input: OptionDraftInput, justificativa: DraftField): TracedSentence[] {
-  const cited = new Set(
-    justificativa.sentences.flatMap((sentence) => sentence.provenance.map((ref) => ref.criterion)),
+/** Confirmações que a justificativa não citou — sem repeti-la inteira. */
+function buildFavoraveis(
+  option: OptionDraftInput,
+  readings: readonly Reading[],
+  justificativa: DraftField,
+): TracedSentence[] {
+  const citados = new Set(
+    justificativa.sentences.flatMap((sentence) =>
+      sentence.provenance.map((ref) => ref.subcriterion),
+    ),
   );
 
-  return [...TECHNICAL_ORDER, ...PATIENT_ORDER]
-    .map((criterion) => outcomeOf(input, criterion))
-    .filter((outcome) => outcome.assessment === "ATENDE_PLENAMENTE" && !cited.has(outcome.criterion))
-    .map((outcome) => sentenceFor(input, outcome));
+  return readings
+    .filter((r) => r.origin === "CONFIRMADO" && r.compatibility !== "NAO_RELEVANTE")
+    .filter((r) => !citados.has(r.subcriterion.code))
+    .map((reading) => sentenceFor(reading, option));
 }
 
 /**
- * Perguntas determinísticas, cada uma amarrada a uma lacuna ou ponto de
- * atenção real deste dossiê. Pergunta genérica não nasce aqui.
+ * Perguntas determinísticas, cada uma amarrada a uma lacuna real deste
+ * dossiê. Pergunta genérica não nasce aqui — e o que não influencia o caso
+ * nunca vira pergunta.
  */
-function buildPerguntas(input: OptionDraftInput): TracedSentence[] {
-  const perguntas: TracedSentence[] = [];
-  const ask = (criterion: CruzamentoCriterion, text: string, sourceType: ProvenanceRef["sourceType"]) =>
-    perguntas.push({ text, provenance: [{ sourceType, criterion }] });
-
-  const continuidade = outcomeOf(input, "CONTINUIDADE_DO_CUIDADO");
-  if (continuidade.assessment === "ATENDE_PARCIALMENTE" || continuidade.assessment === "INFORMACAO_INSUFICIENTE") {
-    ask(
-      "CONTINUIDADE_DO_CUIDADO",
-      "Como funciona o acompanhamento após a primeira consulta?",
-      continuidade.assessment === "INFORMACAO_INSUFICIENTE" ? "lacuna" : "avaliacao_de_criterio",
-    );
-  }
-
-  const modelo = outcomeOf(input, "MODELO_DE_ATENDIMENTO");
-  if (modelo.assessment === "INFORMACAO_INSUFICIENTE") {
-    ask("MODELO_DE_ATENDIMENTO", "Há possibilidade de participação de um familiar nas consultas e decisões?", "lacuna");
-  }
-
-  const acesso = outcomeOf(input, "ACESSO");
-  if (acesso.assessment === "ATENDE_PARCIALMENTE" || acesso.assessment === "INFORMACAO_INSUFICIENTE") {
-    ask(
-      "ACESSO",
-      "Quais etapas do acompanhamento precisam ocorrer presencialmente?",
-      acesso.assessment === "INFORMACAO_INSUFICIENTE" ? "lacuna" : "avaliacao_de_criterio",
-    );
-  }
-
-  return perguntas;
+function buildPerguntas(
+  option: OptionDraftInput,
+  readings: readonly Reading[],
+): TracedSentence[] {
+  return readings
+    .filter((r) => r.compatibility === "LACUNA_DE_INFORMACAO")
+    .map((reading) => ({
+      text:
+        reading.origin === "SEM_REGISTRO"
+          ? `Sobre ${reading.subcriterion.name.toLowerCase()}: este item ainda não foi investigado — vale levantar na conversa.`
+          : `Sobre ${reading.subcriterion.name.toLowerCase()}: não houve informação suficiente — vale confirmar na conversa.`,
+      provenance: [provenanceOf(reading, option)],
+    }));
 }
 
-function buildLacunas(input: OptionDraftInput): string[] {
-  const lacunas: string[] = [];
-  for (const criterion of [...TECHNICAL_ORDER, ...PATIENT_ORDER]) {
-    const outcome = outcomeOf(input, criterion);
-    if (outcome.assessment === "INFORMACAO_INSUFICIENTE") {
-      lacunas.push(CRITERION_LABELS[criterion]);
-    }
+function buildLacunas(readings: readonly Reading[]): string[] {
+  return readings
+    .filter((r) => r.compatibility === "LACUNA_DE_INFORMACAO")
+    .map((r) => r.subcriterion.name);
+}
+
+/**
+ * As limitações do rascunho — declaradas, nunca contornadas.
+ *
+ * Um Mapa parcial não impede gerar: é informação que precisa aparecer junto
+ * do texto. Simular completude seria a única saída desonesta.
+ */
+function buildLimitacoes(
+  completude: PriorityMapCompletion,
+  readings: readonly (readonly Reading[])[],
+): TracedSentence[] {
+  const limitacoes: TracedSentence[] = [];
+  const todas = readings.flat();
+
+  if (completude.status !== "COMPLETE") {
+    limitacoes.push({
+      text:
+        completude.status === "NOT_STARTED"
+          ? "O Mapa de Prioridades ainda não foi iniciado: este rascunho não representa o que importa para esta pessoa."
+          : `O Mapa de Prioridades está em construção — ${completude.completed} de ${completude.total} subcritérios classificados. As conclusões abaixo valem apenas sobre o que já foi classificado.`,
+      provenance: [{ sourceType: "completude_do_mapa" }],
+    });
   }
-  return lacunas;
+
+  const semRegistro = todas.filter((r) => r.origin === "SEM_REGISTRO").length;
+  if (semRegistro > 0) {
+    limitacoes.push({
+      text: `Há ${semRegistro} item(ns) ainda não investigado(s) no Mapa de um ou mais profissionais.`,
+      provenance: [{ sourceType: "lacuna" }],
+    });
+  }
+
+  if (todas.length > 0 && todas.every((r) => r.compatibility === "NAO_RELEVANTE")) {
+    limitacoes.push({
+      text: "Todos os subcritérios classificados foram declarados como não influentes neste caso — o Relatório não tem base declarada para diferenciar as opções.",
+      provenance: [{ sourceType: "mapa_de_prioridades" }],
+    });
+  }
+
+  return limitacoes;
 }
 
 // ---------------------------------------------------------------------------
@@ -360,26 +508,33 @@ export function generateReportDraft(input: DraftInput): ReportDraft {
     throw new Error("As três opções do Relatório precisam ser distintas.");
   }
 
-  const options = input.options.map((option) => {
-    const justificativa = buildJustificativa(option, input.areaRequirement);
+  const catalog = input.catalog ?? SUBCRITERION_CATALOG;
+  // A completude vem do domínio. O Relatório não tem uma segunda definição de
+  // "completo" — ter duas é como elas divergem.
+  const completude = priorityMapCompletion(input.priorities, catalog);
+
+  const porOpcao = input.options.map((option) => readingsOf(option, input.priorities, catalog));
+
+  const options = input.options.map((option, indice) => {
+    const readings = porOpcao[indice]!;
+    const justificativa = buildJustificativa(option, readings, input.areaRequirement);
 
     return {
       professionalProfileId: option.professionalProfileId,
       justificativa,
-      relacaoTecnica: buildRelacao(option, TECHNICAL_ORDER, option.result.technical, "Na Avaliação Técnica:"),
-      relacaoPrioridades: buildRelacao(
-        option,
-        PATIENT_ORDER,
-        option.result.patient,
-        "Em relação ao Perfil de Prioridades validado:",
-      ),
-      pontosDeAtencao: buildAtencao(option),
-      pontosFavoraveis: buildFavoraveis(option, justificativa),
-      perguntasSugeridas: buildPerguntas(option),
+      relacaoPrioridades: buildRelacao(option, readings),
+      pontosDeAtencao: buildAtencao(option, readings),
+      pontosFavoraveis: buildFavoraveis(option, readings, justificativa),
+      perguntasSugeridas: buildPerguntas(option, readings),
       observacoesDoCurador: "" as const,
-      lacunas: buildLacunas(option),
+      lacunas: buildLacunas(readings),
     };
   });
 
-  return { generatorVersion: GENERATOR_VERSION, options };
+  return {
+    generatorVersion: GENERATOR_VERSION,
+    completude,
+    limitacoes: buildLimitacoes(completude, porOpcao),
+    options,
+  };
 }

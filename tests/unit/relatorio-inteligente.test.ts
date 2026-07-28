@@ -1,281 +1,387 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
-import { cruzar, type CriterionEvaluation, type CriterionWeight } from "@/modules/curadoria/cruzamento";
+import { SUBCRITERION_CATALOG } from "@/modules/curadoria/mapa-prioridades";
 import {
   generateReportDraft,
   GENERATOR_VERSION,
   type DraftInput,
   type OptionDraftInput,
+  type PriorityRef,
 } from "@/modules/curadoria/relatorio-inteligente";
 
-const TECNICO: CriterionWeight[] = [
-  { criterion: "FORMACAO", weight: 30 },
-  { criterion: "EXPERIENCIA", weight: 50 },
-  { criterion: "HISTORICO", weight: 20 },
-];
-const PRIORIDADES: CriterionWeight[] = [
-  { criterion: "ACESSO", weight: 30 },
-  { criterion: "CONTINUIDADE_DO_CUIDADO", weight: 50 },
-  { criterion: "MODELO_DE_ATENDIMENTO", weight: 20 },
-];
+/**
+ * O gerador certificado — ADR-042.
+ *
+ * O que estes testes protegem não é formatação: é a recusa a inventar. Toda
+ * frase precisa dizer de onde veio, o mesmo dado precisa gerar o mesmo texto,
+ * e nenhuma lacuna pode virar conclusão.
+ */
 
-function evals(map: Record<string, CriterionEvaluation["assessment"]>): CriterionEvaluation[] {
-  return Object.entries(map).map(([criterion, assessment]) => ({
-    criterion: criterion as CriterionEvaluation["criterion"],
-    assessment,
-    evidence: `Evidência declarada para ${criterion}.`,
-  }));
-}
+const CODIGOS = SUBCRITERION_CATALOG.map((s) => s.code);
+const [PRIMEIRO, SEGUNDO, TERCEIRO] = CODIGOS;
 
-function option(id: string, assessments: Record<string, CriterionEvaluation["assessment"]>, overrides: Partial<OptionDraftInput> = {}): OptionDraftInput {
+function opcao(id: string, states: OptionDraftInput["states"] = []): OptionDraftInput {
   return {
     professionalProfileId: id,
-    result: cruzar({
-      professionalProfileId: id,
-      technicalWeights: TECNICO,
-      patientWeights: PRIORIDADES,
-      evaluations: evals(assessments),
-    }),
+    states,
     areaDeclaration: {
       compatibility: "COMPATIVEL",
       rationale: null,
-      declaredBy: "curador-1",
-      declaredAt: "2026-07-27T12:00:00.000Z",
+      declaredBy: "Dra. Curadora",
+      declaredAt: "2026-07-01T10:00:00Z",
     },
-    declarationAuthors: Object.fromEntries(
-      Object.keys(assessments).map((criterion) => [criterion, { declaredBy: "curador-1", declaredAt: "2026-07-27T12:00:00.000Z" }]),
-    ),
     openCriticalDivergences: 0,
-    ...overrides,
   };
 }
 
-// As três fixtures da certificação, na escala do Modelo v1.0.
-const FIXTURE_A = option("a", {
-  FORMACAO: "ATENDE_PLENAMENTE",
-  EXPERIENCIA: "ATENDE_PLENAMENTE",
-  HISTORICO: "ATENDE_PARCIALMENTE",
-  ACESSO: "ATENDE_PLENAMENTE",
-  CONTINUIDADE_DO_CUIDADO: "ATENDE_PLENAMENTE",
-  MODELO_DE_ATENDIMENTO: "ATENDE_PLENAMENTE",
-});
-const FIXTURE_B = option("b", {
-  FORMACAO: "ATENDE_PLENAMENTE",
-  EXPERIENCIA: "ATENDE_PLENAMENTE",
-  HISTORICO: "ATENDE_PLENAMENTE",
-  ACESSO: "ATENDE_PARCIALMENTE",
-  CONTINUIDADE_DO_CUIDADO: "ATENDE_PLENAMENTE",
-  MODELO_DE_ATENDIMENTO: "INFORMACAO_INSUFICIENTE",
-});
-const FIXTURE_C = option("c", {
-  FORMACAO: "ATENDE_PARCIALMENTE",
-  EXPERIENCIA: "ATENDE_PLENAMENTE",
-  HISTORICO: "ATENDE_PARCIALMENTE",
-  ACESSO: "ATENDE_PLENAMENTE",
-  CONTINUIDADE_DO_CUIDADO: "ATENDE_PLENAMENTE",
-  MODELO_DE_ATENDIMENTO: "ATENDE_PLENAMENTE",
-});
-
-const INPUT: DraftInput = { areaRequirement: "Ortopedia de coluna", options: [FIXTURE_A, FIXTURE_B, FIXTURE_C] };
-
-const VOCABULARIO_PROIBIDO = [
-  "melhor opção",
-  "mais recomendado",
-  "primeira opção",
-  "segunda opção",
-  "terceira opção",
-  "vencedor",
-  "ranking",
-  "nota final",
-  "percentual de sucesso",
-  "garantia",
-  "escolha ideal",
-  "médico perfeito",
-  "maior pontuação",
-];
-
-const VOCABULARIO_ANTIGO = ["Trajetória", "Forma de Cuidado", "Compatibilidade Pessoal"];
-
-function allText(draft: ReturnType<typeof generateReportDraft>): string {
-  return JSON.stringify(draft);
+function entrada(
+  priorities: PriorityRef[],
+  options: OptionDraftInput[] = [opcao("a"), opcao("b"), opcao("c")],
+): DraftInput {
+  return { areaRequirement: "Ortopedia de coluna", priorities, options };
 }
 
-describe("Determinismo e rastreabilidade", () => {
-  it("mesma entrada produz exatamente a mesma saída", () => {
-    const primeira = generateReportDraft(INPUT);
-    const segunda = generateReportDraft(INPUT);
-    expect(JSON.stringify(primeira)).toBe(JSON.stringify(segunda));
-    expect(primeira.generatorVersion).toBe(GENERATOR_VERSION);
+/** Mapa completo — todos os subcritérios ativos classificados. */
+const COMPLETO: PriorityRef[] = SUBCRITERION_CATALOG.filter((s) => s.active).map((s) => ({
+  subcriterionCode: s.code,
+  importance: "IMPORTANTE" as const,
+}));
+
+describe("Ordenação — pelo Mapa, nunca por peso", () => {
+  it("ordena pelo ordinal da importância, do mais para o menos importante", () => {
+    const draft = generateReportDraft(
+      entrada([
+        { subcriterionCode: PRIMEIRO!, importance: "POUCO_IMPORTANTE" },
+        { subcriterionCode: SEGUNDO!, importance: "MUITO_IMPORTANTE" },
+        { subcriterionCode: TERCEIRO!, importance: "RELEVANTE" },
+      ]),
+    );
+
+    const nomes = draft.options[0]!.relacaoPrioridades.sentences.map(
+      (s) => s.provenance[0]!.subcriterion,
+    );
+    expect(nomes).toEqual([SEGUNDO, TERCEIRO, PRIMEIRO]);
   });
 
-  it("cada frase gerada carrega ao menos uma origem", () => {
-    const draft = generateReportDraft(INPUT);
-    for (const opt of draft.options) {
-      const sentences = [
-        ...opt.justificativa.sentences,
-        ...opt.relacaoTecnica.sentences,
-        ...opt.relacaoPrioridades.sentences,
-        ...opt.pontosDeAtencao.items,
-        ...opt.pontosFavoraveis,
-        ...opt.perguntasSugeridas,
-      ];
-      expect(sentences.length).toBeGreaterThan(0);
-      for (const sentence of sentences) {
-        expect(sentence.provenance.length, `frase sem origem: "${sentence.text}"`).toBeGreaterThan(0);
-      }
-    }
+  it("no empate respeita a ordem canônica do catálogo, não a de gravação", () => {
+    // Gravados de trás para frente, mesmo nível: a saída precisa vir na ordem
+    // do catálogo — senão o mesmo Case gera textos diferentes por acaso.
+    const invertido = [...CODIGOS].reverse().map((code) => ({
+      subcriterionCode: code,
+      importance: "IMPORTANTE" as const,
+    }));
+    const draft = generateReportDraft(entrada(invertido));
+
+    const nomes = draft.options[0]!.relacaoPrioridades.sentences.map(
+      (s) => s.provenance[0]!.subcriterion,
+    );
+    expect(nomes).toEqual(CODIGOS);
   });
 
-  it("declaração humana carrega autor e data na proveniência", () => {
-    const draft = generateReportDraft(INPUT);
-    const avaliadas = draft.options[0]!.relacaoTecnica.sentences.flatMap((s) => s.provenance)
-      .filter((p) => p.sourceType === "avaliacao_de_criterio");
-    expect(avaliadas.length).toBeGreaterThan(0);
-    expect(avaliadas.every((p) => p.author === "curador-1")).toBe(true);
-  });
-
-  it("sem nenhuma aderência declarada, a justificativa fica pendente do Curador — nunca inventada", () => {
-    const semNada = option("x", {
-      FORMACAO: "INFORMACAO_INSUFICIENTE",
-      EXPERIENCIA: "INFORMACAO_INSUFICIENTE",
-      HISTORICO: "INFORMACAO_INSUFICIENTE",
-      ACESSO: "INFORMACAO_INSUFICIENTE",
-      CONTINUIDADE_DO_CUIDADO: "INFORMACAO_INSUFICIENTE",
-      MODELO_DE_ATENDIMENTO: "INFORMACAO_INSUFICIENTE",
-    });
-    const draft = generateReportDraft({ areaRequirement: null, options: [semNada, FIXTURE_B, FIXTURE_C] });
-    const opt = draft.options.find((o) => o.professionalProfileId === "x")!;
-    expect(opt.justificativa.requiresCurator).toBe(true);
-    expect(opt.justificativa.text).not.toContain("foi incluída por apresentar");
+  it("subcritério fora do catálogo não vira frase", () => {
+    const draft = generateReportDraft(
+      entrada([
+        { subcriterionCode: PRIMEIRO!, importance: "IMPORTANTE" },
+        { subcriterionCode: "CODIGO_QUE_NAO_EXISTE", importance: "MUITO_IMPORTANTE" },
+      ]),
+    );
+    expect(draft.options[0]!.relacaoPrioridades.sentences).toHaveLength(1);
   });
 });
 
-describe("Informação insuficiente e cobertura", () => {
-  it("informação insuficiente vira lacuna, nunca reprovação", () => {
-    const draft = generateReportDraft(INPUT);
-    const b = draft.options.find((o) => o.professionalProfileId === "b")!;
-
-    expect(b.lacunas).toContain("Modelo de Atendimento");
-    expect(b.relacaoPrioridades.text).toContain("não pôde ser avaliada porque não havia informação suficiente");
-    expect(b.relacaoPrioridades.text).not.toContain("Modelo de Atendimento não atende");
-  });
-
-  it("as coberturas técnica e assistencial ficam separadas — sem cobertura geral nem total", () => {
-    const draft = generateReportDraft(INPUT);
-    const b = draft.options.find((o) => o.professionalProfileId === "b")!;
-
-    // Só a assistencial da B tem lacuna: a frase de cobertura aparece na
-    // relação com as prioridades e não na técnica.
-    expect(b.relacaoPrioridades.text).toContain("Avaliação construída sobre 80 dos 100 pontos possíveis.");
-    expect(b.relacaoTecnica.text).not.toContain("construída sobre");
-    expect(allText(draft)).not.toContain('"total"');
-  });
-
-  it("cobertura nunca é apresentada como percentual de qualidade", () => {
-    const draft = generateReportDraft(INPUT);
-    expect(allText(draft)).not.toMatch(/compatibilidade foi de \d+%/i);
-    expect(allText(draft)).not.toMatch(/\d+%/);
-  });
-});
-
-describe("Campos obrigatórios", () => {
-  it("justificativa existe para cada opção e nasce dos dados", () => {
-    const draft = generateReportDraft(INPUT);
-    for (const opt of draft.options) {
-      expect(opt.justificativa.text).toContain("foi incluída");
-      expect(opt.justificativa.requiresCurator).toBe(false);
-    }
-  });
-
-  it("ponto de atenção é obrigatório — e 'nenhum identificado' jamais é escrito", () => {
-    const draft = generateReportDraft(INPUT);
-    for (const opt of draft.options) {
-      expect(opt.pontosDeAtencao.items.length).toBeGreaterThan(0);
-    }
-    expect(allText(draft)).not.toContain("Nenhum ponto de atenção");
-  });
-
-  it("quando os dados não produzem ponto de atenção, o campo exige o Curador em vez de inventar", () => {
-    const perfeita = option("p", {
-      FORMACAO: "ATENDE_PLENAMENTE",
-      EXPERIENCIA: "ATENDE_PLENAMENTE",
-      HISTORICO: "ATENDE_PLENAMENTE",
-      ACESSO: "ATENDE_PLENAMENTE",
-      CONTINUIDADE_DO_CUIDADO: "ATENDE_PLENAMENTE",
-      MODELO_DE_ATENDIMENTO: "ATENDE_PLENAMENTE",
-    });
-    const draft = generateReportDraft({ areaRequirement: null, options: [perfeita, FIXTURE_B, FIXTURE_C] });
-    const opt = draft.options.find((o) => o.professionalProfileId === "p")!;
-    expect(opt.pontosDeAtencao.items).toHaveLength(0);
-    expect(opt.pontosDeAtencao.requiresCurator).toBe(true);
-  });
-
-  it("a observação do Curador nasce vazia — o sistema nunca escreve por ele", () => {
-    const draft = generateReportDraft(INPUT);
-    expect(draft.options.every((opt) => opt.observacoesDoCurador === "")).toBe(true);
-  });
-
-  it("campos opcionais podem ficar vazios sem quebrar nada", () => {
-    const semPergunta = draft(FIXTURE_A);
-    expect(Array.isArray(semPergunta.perguntasSugeridas)).toBe(true);
-
-    function draft(o: OptionDraftInput) {
-      return generateReportDraft({ areaRequirement: null, options: [o, FIXTURE_B, FIXTURE_C] }).options[0]!;
-    }
-  });
-});
-
-describe("Perguntas sugeridas — sempre amarradas a uma lacuna real", () => {
-  it("informação insuficiente em Modelo de Atendimento gera a pergunta da participação familiar", () => {
-    const draft = generateReportDraft(INPUT);
-    const b = draft.options.find((o) => o.professionalProfileId === "b")!;
-    const textos = b.perguntasSugeridas.map((p) => p.text);
-    expect(textos).toContain("Há possibilidade de participação de um familiar nas consultas e decisões?");
-    expect(textos).toContain("Quais etapas do acompanhamento precisam ocorrer presencialmente?");
-  });
-
-  it("sem lacuna, a pergunta correspondente não nasce", () => {
-    const draft = generateReportDraft(INPUT);
-    const a = draft.options.find((o) => o.professionalProfileId === "a")!;
-    expect(a.perguntasSugeridas.map((p) => p.text)).not.toContain(
-      "Há possibilidade de participação de um familiar nas consultas e decisões?",
+describe("Completude — vem do Mapa", () => {
+  it("Mapa completo é declarado completo, e sem limitação de completude", () => {
+    const draft = generateReportDraft(entrada(COMPLETO));
+    expect(draft.completude.status).toBe("COMPLETE");
+    expect(draft.limitacoes.some((l) => l.provenance[0]!.sourceType === "completude_do_mapa")).toBe(
+      false,
     );
   });
-});
 
-describe("Vocabulário", () => {
-  it("nenhum termo proibido aparece em nenhum texto gerado", () => {
-    const texto = allText(generateReportDraft(INPUT)).toLowerCase();
-    for (const proibido of VOCABULARIO_PROIBIDO) {
-      expect(texto, `vocabulário proibido: ${proibido}`).not.toContain(proibido.toLowerCase());
-    }
+  it("Mapa parcial nunca aparece como completo", () => {
+    const draft = generateReportDraft(
+      entrada([{ subcriterionCode: PRIMEIRO!, importance: "IMPORTANTE" }]),
+    );
+    expect(draft.completude.status).toBe("IN_PROGRESS");
+    const limitacao = draft.limitacoes.find(
+      (l) => l.provenance[0]!.sourceType === "completude_do_mapa",
+    );
+    expect(limitacao?.text).toContain("em construção");
   });
 
-  it("os nomes oficiais falam; os antigos não voltam", () => {
-    const texto = allText(generateReportDraft(INPUT));
-    expect(texto).toContain("Histórico Profissional");
-    expect(texto).toContain("Continuidade do Cuidado");
-    expect(texto).toContain("Modelo de Atendimento");
-    for (const antigo of VOCABULARIO_ANTIGO) {
-      expect(texto, `vocabulário antigo: ${antigo}`).not.toContain(antigo);
-    }
-  });
-
-  it("as três fixtures produzem narrativas diferentes, nenhuma apresentada como vencedora", () => {
-    const draft = generateReportDraft(INPUT);
-    const textos = draft.options.map((opt) => opt.justificativa.text + opt.relacaoTecnica.text);
-    expect(new Set(textos).size).toBe(3);
+  it("Mapa vazio é declarado não iniciado", () => {
+    const draft = generateReportDraft(entrada([]));
+    expect(draft.completude.status).toBe("NOT_STARTED");
+    expect(draft.limitacoes[0]!.text).toContain("ainda não foi iniciado");
   });
 });
 
-describe("Seleção inválida", () => {
-  it("recusa duas, quatro e opção repetida", () => {
-    expect(() => generateReportDraft({ areaRequirement: null, options: [FIXTURE_A, FIXTURE_B] })).toThrow(/exatamente três/);
+describe("Motor de Compatibilidade — as quatro conclusões e as cinco origens", () => {
+  function frase(states: OptionDraftInput["states"], importance: PriorityRef["importance"]) {
+    const draft = generateReportDraft(
+      entrada(
+        [{ subcriterionCode: PRIMEIRO!, importance }],
+        [opcao("a", states), opcao("b"), opcao("c")],
+      ),
+    );
+    return draft.options[0]!.relacaoPrioridades.sentences[0]!;
+  }
+
+  it("alta compatibilidade: confirmado no que é muito importante", () => {
+    const s = frase([{ subcriterionCode: PRIMEIRO!, status: "CONFIRMADO" }], "MUITO_IMPORTANTE");
+    expect(s.provenance[0]!.compatibility).toBe("ALTA_COMPATIBILIDADE");
+    expect(s.text).toContain("muito importante para este caso");
+    expect(s.text).toContain("está confirmada para o profissional");
+  });
+
+  it("média compatibilidade: confirmado no que é relevante", () => {
+    const s = frase([{ subcriterionCode: PRIMEIRO!, status: "CONFIRMADO" }], "RELEVANTE");
+    expect(s.provenance[0]!.compatibility).toBe("MEDIA_COMPATIBILIDADE");
+    expect(s.text).toContain("classificado como relevante");
+  });
+
+  it("NAO_CONFIRMADO não vira confirmado, não vira alta, e não vira 'incompatível'", () => {
+    const s = frase([{ subcriterionCode: PRIMEIRO!, status: "NAO_CONFIRMADO" }], "MUITO_IMPORTANTE");
+    expect(s.provenance[0]!.compatibility).not.toBe("ALTA_COMPATIBILIDADE");
+    expect(s.text).toContain("não foi confirmada para o profissional");
+    expect(s.text).not.toMatch(/incompatível|inadequado|reprovado/i);
+  });
+
+  it("a lacuna distingue ausência de registro de NAO_INFORMADO", () => {
+    // Ambos viram LACUNA_DE_INFORMACAO no Motor. O texto precisa separá-los:
+    // "ninguém perguntou" e "perguntaram e não havia" pedem conversas
+    // diferentes.
+    const semRegistro = frase([], "MUITO_IMPORTANTE");
+    const naoInformado = frase(
+      [{ subcriterionCode: PRIMEIRO!, status: "NAO_INFORMADO" }],
+      "MUITO_IMPORTANTE",
+    );
+
+    expect(semRegistro.provenance[0]!.compatibility).toBe("LACUNA_DE_INFORMACAO");
+    expect(naoInformado.provenance[0]!.compatibility).toBe("LACUNA_DE_INFORMACAO");
+
+    expect(semRegistro.text).toContain("ainda não foi investigado");
+    expect(naoInformado.text).toContain("não há informação suficiente");
+    expect(semRegistro.text).not.toBe(naoInformado.text);
+
+    // E a proveniência também os separa.
+    expect(semRegistro.provenance[0]!.status).toBeNull();
+    expect(naoInformado.provenance[0]!.status).toBe("NAO_INFORMADO");
+  });
+
+  it("NAO_INFLUENCIA não vira ponto de atenção nem pergunta", () => {
+    const draft = generateReportDraft(
+      entrada([{ subcriterionCode: PRIMEIRO!, importance: "NAO_INFLUENCIA" }]),
+    );
+    const opcaoA = draft.options[0]!;
+    expect(opcaoA.relacaoPrioridades.sentences[0]!.text).toContain("não influencia a decisão");
+    expect(opcaoA.pontosDeAtencao.items).toHaveLength(0);
+    expect(opcaoA.perguntasSugeridas).toHaveLength(0);
+    expect(opcaoA.pontosFavoraveis).toHaveLength(0);
+  });
+
+  it("nenhum quinto estado é inventado", () => {
+    const draft = generateReportDraft(entrada(COMPLETO));
+    const resultados = new Set(
+      draft.options.flatMap((o) =>
+        o.relacaoPrioridades.sentences.flatMap((s) => s.provenance.map((p) => p.compatibility)),
+      ),
+    );
+    for (const r of resultados) {
+      expect([
+        "ALTA_COMPATIBILIDADE",
+        "MEDIA_COMPATIBILIDADE",
+        "LACUNA_DE_INFORMACAO",
+        "NAO_RELEVANTE",
+      ]).toContain(r);
+    }
+  });
+});
+
+describe("Linguagem — nenhum ponto sobrevive", () => {
+  const draft = generateReportDraft(
+    entrada(COMPLETO, [
+      opcao("a", [{ subcriterionCode: PRIMEIRO!, status: "CONFIRMADO" }]),
+      opcao("b", [{ subcriterionCode: SEGUNDO!, status: "NAO_CONFIRMADO" }]),
+      opcao("c"),
+    ]),
+  );
+
+  const todoTexto = [
+    ...draft.limitacoes.map((l) => l.text),
+    ...draft.options.flatMap((o) => [
+      o.justificativa.text,
+      o.relacaoPrioridades.text,
+      ...o.pontosDeAtencao.items.map((i) => i.text),
+      ...o.pontosFavoraveis.map((i) => i.text),
+      ...o.perguntasSugeridas.map((i) => i.text),
+    ]),
+  ].join(" ");
+
+  it("nenhum texto menciona pontos, orçamento ou distribuição", () => {
+    expect(todoTexto).not.toMatch(/\bpontos?\b|orçamento|distribuiç|\bpesos?\b/i);
+  });
+
+  it("nenhum score, ranking, porcentagem ou 'melhor profissional'", () => {
+    expect(todoTexto).not.toMatch(/%|score|ranking|nota \d|melhor profissional|1º|primeiro lugar/i);
+  });
+
+  it("usa a linguagem do Mapa", () => {
+    expect(todoTexto).toMatch(/foi considerado muito importante|foi classificado como/);
+  });
+});
+
+describe("Rastreabilidade e determinismo", () => {
+  const input = entrada(COMPLETO, [
+    opcao("a", [{ subcriterionCode: PRIMEIRO!, status: "CONFIRMADO" }]),
+    opcao("b", [{ subcriterionCode: SEGUNDO!, status: "NAO_INFORMADO" }]),
+    opcao("c"),
+  ]);
+
+  it("toda frase carrega origem estruturada", () => {
+    const draft = generateReportDraft(input);
+    const frases = draft.options.flatMap((o) => [
+      ...o.justificativa.sentences,
+      ...o.relacaoPrioridades.sentences,
+      ...o.pontosDeAtencao.items,
+      ...o.pontosFavoraveis,
+      ...o.perguntasSugeridas,
+    ]);
+    expect(frases.length).toBeGreaterThan(0);
+    for (const frase of frases) {
+      expect(frase.provenance.length, frase.text).toBeGreaterThan(0);
+    }
+  });
+
+  it("a origem amarra subcritério, importância, estado e resultado do Motor", () => {
+    const draft = generateReportDraft(input);
+    const ref = draft.options[0]!.relacaoPrioridades.sentences[0]!.provenance[0]!;
+    expect(ref.subcriterion).toBeTruthy();
+    expect(ref.importance).toBeTruthy();
+    expect(ref.compatibility).toBeTruthy();
+    expect(ref).toHaveProperty("status");
+  });
+
+  it("mesma entrada, mesma saída — byte a byte", () => {
+    expect(JSON.stringify(generateReportDraft(input))).toBe(
+      JSON.stringify(generateReportDraft(input)),
+    );
+  });
+
+  it("a versão do gerador é gravada e mudou com a virada", () => {
+    expect(generateReportDraft(input).generatorVersion).toBe(GENERATOR_VERSION);
+    expect(GENERATOR_VERSION).toContain("2.0.0");
+  });
+
+  it("nunca escreve pelo Curador", () => {
+    for (const opcaoGerada of generateReportDraft(input).options) {
+      expect(opcaoGerada.observacoesDoCurador).toBe("");
+    }
+  });
+
+  it("sem confirmação nenhuma, a justificativa fica pendente em vez de ser inventada", () => {
+    const draft = generateReportDraft(entrada(COMPLETO));
+    expect(draft.options[0]!.justificativa.requiresCurator).toBe(true);
+  });
+
+  it("sem ponto de atenção algum, o campo fica pendente — opção só com virtudes é recomendação", () => {
+    const tudoConfirmado = SUBCRITERION_CATALOG.filter((s) => s.active).map((s) => ({
+      subcriterionCode: s.code,
+      status: "CONFIRMADO" as const,
+    }));
+    const draft = generateReportDraft(
+      entrada(COMPLETO, [
+        opcao("a", tudoConfirmado),
+        opcao("b", tudoConfirmado),
+        opcao("c", tudoConfirmado),
+      ]),
+    );
+    expect(draft.options[0]!.pontosDeAtencao.requiresCurator).toBe(true);
+  });
+});
+
+describe("Dados parciais — declara a limitação, não a preenche", () => {
+  it("não quebra com Mapa do Case incompleto e Mapa do Profissional vazio", () => {
     expect(() =>
-      generateReportDraft({ areaRequirement: null, options: [FIXTURE_A, FIXTURE_B, FIXTURE_C, FIXTURE_A] }),
-    ).toThrow(/exatamente três/);
+      generateReportDraft(entrada([{ subcriterionCode: PRIMEIRO!, importance: "MUITO_IMPORTANTE" }])),
+    ).not.toThrow();
+  });
+
+  it("declara quantos itens ainda não foram investigados", () => {
+    const draft = generateReportDraft(
+      entrada([{ subcriterionCode: PRIMEIRO!, importance: "MUITO_IMPORTANTE" }]),
+    );
+    expect(draft.limitacoes.some((l) => l.text.includes("não investigado"))).toBe(true);
+  });
+
+  it("sem nenhum item Muito importante, ainda gera e continua determinístico", () => {
+    const input = entrada([{ subcriterionCode: PRIMEIRO!, importance: "POUCO_IMPORTANTE" }]);
+    expect(JSON.stringify(generateReportDraft(input))).toBe(
+      JSON.stringify(generateReportDraft(input)),
+    );
+  });
+
+  it("com tudo em Não influencia, declara que não há base para diferenciar", () => {
+    const nenhum = SUBCRITERION_CATALOG.filter((s) => s.active).map((s) => ({
+      subcriterionCode: s.code,
+      importance: "NAO_INFLUENCIA" as const,
+    }));
+    const draft = generateReportDraft(entrada(nenhum));
+    expect(draft.limitacoes.some((l) => l.text.includes("não influentes"))).toBe(true);
+  });
+
+  it("continua exigindo exatamente três opções distintas", () => {
+    expect(() => generateReportDraft(entrada(COMPLETO, [opcao("a"), opcao("b")]))).toThrow(
+      /exatamente três/,
+    );
     expect(() =>
-      generateReportDraft({ areaRequirement: null, options: [FIXTURE_A, FIXTURE_A, FIXTURE_B] }),
+      generateReportDraft(entrada(COMPLETO, [opcao("a"), opcao("a"), opcao("c")])),
     ).toThrow(/distintas/);
+  });
+});
+
+describe("O Relatório não lê mais os modelos antigos", () => {
+  const gerador = readFileSync(
+    join(process.cwd(), "src/modules/curadoria/relatorio-inteligente.ts"),
+    "utf8",
+  );
+  const montador = readFileSync(
+    join(process.cwd(), "src/modules/curadoria/relatorio-assistido.ts"),
+    "utf8",
+  );
+
+  function semComentarios(fonte: string): string {
+    return fonte
+      .split("\n")
+      .filter((linha) => {
+        const limpa = linha.trimStart();
+        return !limpa.startsWith("//") && !limpa.startsWith("*") && !limpa.startsWith("/*");
+      })
+      .join("\n");
+  }
+
+  it("o gerador não conhece BLOCK_POINTS, cobertura em pontos nem peso", () => {
+    expect(semComentarios(gerador)).not.toMatch(
+      /BLOCK_POINTS|coverageSentence|coveredWeight|\bweight\b/,
+    );
+  });
+
+  it("o montador não lê cruzamento_weights nem priority_weights", () => {
+    expect(semComentarios(montador)).not.toMatch(
+      /loadCruzamentoWeights|cruzamento_weights|priority_weights/,
+    );
+  });
+
+  it("o montador consome Mapa de Prioridades e Mapa do Profissional", () => {
+    expect(montador).toContain("loadCasePriorityMap");
+    expect(montador).toContain("loadProfessionalMap");
+  });
+
+  it("a tabela ordinal não foi recopiada no Relatório", () => {
+    expect(semComentarios(gerador)).toContain("importanceOrdinal");
+    expect(semComentarios(gerador)).not.toMatch(/MUITO_IMPORTANTE:\s*5/);
   });
 });
