@@ -93,8 +93,19 @@ export type PesoRecord = {
 };
 
 export type PrioridadesRecord = {
+  /**
+   * Subcritérios do catálogo ativo ainda sem classificação. Zero significa
+   * Mapa de Prioridades completo — e é o ÚNICO gate da fase (ADR-042).
+   *
+   * Vem de `priorityMapCompletion`, o contrato do domínio. As fases não
+   * recalculam completude: duplicar a regra é como ela volta a divergir.
+   */
+  mapaPendentes: number;
+  /** LEGADO — a distribuição de 100 pontos. Nenhuma fase depende dela. */
   weights: PesoRecord[];
   observations: string[];
+  /** As mesmas preferências, com id — para poderem ser retiradas pela tela. */
+  preferencias: { id: string; value: string }[];
   /** Histórico de alterações — o Curador consegue ver como a conversa evoluiu. */
   history: { at: string; description: string }[];
 };
@@ -138,6 +149,8 @@ export type CuradoriaTecnicaRecord = {
   selectedProfessionalIds: string[];
   selectedBy: string | null;
   selectedAt: string | null;
+  /** A seleção gravada — é o que a entrega ao paciente endereça. */
+  curatedSelectionId: string | null;
 };
 
 export type OpcaoRelatorio = {
@@ -156,6 +169,8 @@ export type RelatorioRecord = {
   options: OpcaoRelatorio[];
   compositionRationale: string | null;
   emittedAt: string | null;
+  /** Quando o paciente passou a ter acesso. Depois disso o documento não muda. */
+  deliveredAt: string | null;
 };
 
 export type DevolutivaRecord = {
@@ -187,6 +202,8 @@ export type CuradoriaRecord = {
   caso: CasoRecord;
   filtros: FiltroRecord[];
   prioridades: PrioridadesRecord;
+  /** ID do Perfil de Prioridades ativo — necessário para persistir validação. */
+  priorityProfileId: string | null;
   validacao: ValidacaoRecord | null;
   curadoriaTecnica: CuradoriaTecnicaRecord;
   relatorio: RelatorioRecord;

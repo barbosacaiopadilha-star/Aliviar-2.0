@@ -29,7 +29,7 @@ async function checkDevServer(baseUrl) {
 }
 
 async function main() {
-  const env = loadValidationEnv();
+  const env = loadValidationEnv({ modo: "diagnostico" });
   const report = {
     gerado_em: new Date().toISOString(),
     ambiente: "fechado",

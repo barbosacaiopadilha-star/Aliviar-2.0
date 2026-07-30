@@ -33,8 +33,8 @@ describe("PublicHeader consumindo o Motor de Compactação", () => {
   it("estado inicial (scrollY = 0, abaixo do limiar): expandido", () => {
     const { container } = render(<PublicHeader />);
     const header = container.querySelector("header");
-    expect(header?.className).not.toContain("shadow-md");
-    expect(header?.querySelector("div")?.className).toContain("min-h-16");
+    expect(header?.className).not.toContain("shadow-[0_1px_0_rgba(183,154,91,0.12)");
+    expect(header?.querySelector("div")?.className).toContain("min-h-[4.25rem]");
   });
 
   it("scroll real além do limiar compacta o header", () => {
@@ -42,8 +42,8 @@ describe("PublicHeader consumindo o Motor de Compactação", () => {
     scrollTo(50);
 
     const header = container.querySelector("header");
-    expect(header?.className).toContain("shadow-md");
-    expect(header?.querySelector("div")?.className).toContain("min-h-14");
+    expect(header?.className).toContain("shadow-[0_1px_0_rgba(183,154,91,0.12)");
+    expect(header?.querySelector("div")?.className).toContain("min-h-[3.25rem]");
   });
 
   it("scroll de volta ao topo reverte para expandido — sem histerese", () => {
@@ -52,8 +52,8 @@ describe("PublicHeader consumindo o Motor de Compactação", () => {
     scrollTo(0);
 
     const header = container.querySelector("header");
-    expect(header?.className).not.toContain("shadow-md");
-    expect(header?.querySelector("div")?.className).toContain("min-h-16");
+    expect(header?.className).not.toContain("shadow-[0_1px_0_rgba(183,154,91,0.12)");
+    expect(header?.querySelector("div")?.className).toContain("min-h-[4.25rem]");
   });
 
   it("desligamento simétrico: mount registra um listener de scroll, unmount o remove", () => {
@@ -73,5 +73,19 @@ describe("PublicHeader consumindo o Motor de Compactação", () => {
 
     addSpy.mockRestore();
     removeSpy.mockRestore();
+  });
+
+  it("mostra Entrar quando não há sessão", () => {
+    const { getByRole } = render(<PublicHeader />);
+    expect(getByRole("link", { name: "Entrar" })).toHaveAttribute("href", "/login");
+  });
+
+  it("substitui Entrar pelo portal autenticado quando há sessão", () => {
+    const { getByRole, queryByRole } = render(
+      <PublicHeader portalCta={{ label: "Minha Jornada", href: "/paciente" }} />,
+    );
+
+    expect(queryByRole("link", { name: "Entrar" })).toBeNull();
+    expect(getByRole("link", { name: "Minha Jornada" })).toHaveAttribute("href", "/paciente");
   });
 });

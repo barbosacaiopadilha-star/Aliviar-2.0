@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import type { Metadata } from "next";
@@ -8,6 +7,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import { getCase, listCaseEvents, listCaseNotes } from "@/modules/cases";
 import { listArtifactsForCase, listExecutionEventsForCase, listExecutionsForCase } from "@/modules/concierge";
+import { listActiveP002FieldCorrections } from "@/modules/ace/p002-field-corrections-repository";
 import { getPatientAccount, getPatientProfile, getProfessionalDisplayNames } from "@/modules/profiles";
 import { listStoryAttachments } from "@/modules/story/attachment-repository";
 import { getStoryById } from "@/modules/story/repository";
@@ -16,7 +16,6 @@ import { CASE_STATUS_LABELS } from "@/modules/cases/types";
 
 import { AceExecutionsHistory } from "@/components/ace/ace-executions-history";
 import { AceArtifactsList } from "@/components/cases/ace-artifacts-list";
-import { AceExecutionPanel } from "@/components/cases/ace-execution-panel";
 import { AceShortlistViewer } from "@/components/cases/ace-shortlist-viewer";
 import { CaseCuratorAssignment } from "@/components/cases/case-curator-assignment";
 import { CaseEventsTimeline } from "@/components/cases/case-events-timeline";
@@ -63,12 +62,12 @@ export default async function AdminCaseDetailPage({ params }: AdminCaseDetailPag
     .filter((member) => member.roles.includes("curador_medico"))
     .map((member) => ({ id: member.profileId, name: member.displayName }));
 
-  const [executions, executionEvents, artifacts] = await Promise.all([
+  const [executions, executionEvents, artifacts, p002Corrections] = await Promise.all([
     listExecutionsForCase(regularClient, id),
     listExecutionEventsForCase(regularClient, id),
     listArtifactsForCase(regularClient, id),
+    listActiveP002FieldCorrections(regularClient, id),
   ]);
-  const execution = executions[0] ?? null;
 
   const shortlistArtifact = artifacts.find((artifact) => artifact.artifactType === "Shortlist");
   const shortlist = shortlistArtifact ? (shortlistArtifact.payload as Shortlist) : null;
@@ -79,7 +78,6 @@ export default async function AdminCaseDetailPage({ params }: AdminCaseDetailPag
     : [];
   const namesByProviderId = await getProfessionalDisplayNames(regularClient, shortlistProviderIds);
 
-  const canRunAce = caseDetail.status === "READY_FOR_CURATION" || caseDetail.status === "IN_CURATION";
 
   return (
     <div className="space-y-6">
@@ -89,12 +87,6 @@ export default async function AdminCaseDetailPage({ params }: AdminCaseDetailPag
           <Badge variant={caseDetail.status === "DELIVERED" || caseDetail.status === "CLOSED" ? "sage" : "default"}>
             {CASE_STATUS_LABELS[caseDetail.status]}
           </Badge>
-          <Link
-            href={`/admin/casos/${caseDetail.id}/revisao`}
-            className="text-sm font-medium text-brand-primary hover:text-brand-primary-deep"
-          >
-            Human Review →
-          </Link>
         </div>
         <p className="text-sm text-ink-muted">
           Criado em {new Date(caseDetail.createdAt).toLocaleDateString("pt-BR")} — a história original nunca é
@@ -179,7 +171,6 @@ export default async function AdminCaseDetailPage({ params }: AdminCaseDetailPag
           <h2 className="font-sans text-lg font-semibold text-ink">Execução do ACE</h2>
           <p className="text-sm text-ink-muted">P001 a P008 apenas — nunca revisão humana (P009) ou entrega (P010).</p>
         </CardHeader>
-        <AceExecutionPanel caseId={caseDetail.id} initialExecution={execution} canRun={canRunAce} />
       </Card>
 
       <Card>
@@ -194,7 +185,7 @@ export default async function AdminCaseDetailPage({ params }: AdminCaseDetailPag
         <CardHeader>
           <h2 className="font-sans text-lg font-semibold text-ink">Artefatos (P001-P008)</h2>
         </CardHeader>
-        <AceArtifactsList artifacts={artifacts} />
+        <AceArtifactsList artifacts={artifacts} caseId={caseDetail.id} p002Corrections={p002Corrections} />
       </Card>
 
       {shortlist ? (

@@ -124,26 +124,35 @@ export async function listPatientAccounts(
     return [];
   }
 
+  // O nome vem EMBUTIDO na mesma consulta (join do PostgREST), nunca por um
+  // segundo `.in()` com todos os ids: com N pacientes, o `.in()` vira uma URL
+  // de N×37 bytes, e a partir de ~200 pacientes ela estoura o limite de 8 KB
+  // do gateway — a listagem passava a voltar vazia. Encontrado pela
+  // certificação, com 276 contas acumuladas no banco local.
   const { data: userRoleRows } = await regularClient
     .from("user_roles")
-    .select("profile_id")
+    // FK nomeada: user_roles aponta duas vezes para profiles (profile_id e
+    // granted_by) e o PostgREST recusa o embed ambíguo.
+    .select("profile_id, profiles!user_roles_profile_id_fkey(id, display_name)")
     .eq("role_id", roleRow.id);
 
-  const profileIds = (userRoleRows ?? []).map((row) => row.profile_id as string);
+  type EmbeddedProfile = { id: string; display_name: string | null };
+  const profileRows = (userRoleRows ?? [])
+    .map((row) => {
+      const embedded = row.profiles as EmbeddedProfile | EmbeddedProfile[] | null;
+      return Array.isArray(embedded) ? embedded[0] : embedded;
+    })
+    .filter((profile): profile is EmbeddedProfile => profile !== null && profile !== undefined);
 
-  if (profileIds.length === 0) {
+  if (profileRows.length === 0) {
     return [];
   }
 
-  const { data: profileRows } = await regularClient
-    .from("profiles")
-    .select("id, display_name")
-    .in("id", profileIds);
-
+  // Sem filtro de ids pelo mesmo motivo: toda linha de patient_profiles já é
+  // de paciente — filtrar por id só encurtaria o resultado e alongaria a URL.
   const { data: patientProfileRows } = await regularClient
     .from("patient_profiles")
-    .select("profile_id, status")
-    .in("profile_id", profileIds);
+    .select("profile_id, status");
 
   const statusByProfileId = new Map(
     (patientProfileRows ?? []).map((row) => [row.profile_id as string, row.status as ProfileStatus]),

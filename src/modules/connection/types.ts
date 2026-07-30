@@ -34,10 +34,22 @@ export const CONNECTION_EVENT_TYPES = [
 
 export type ConnectionEventType = (typeof CONNECTION_EVENT_TYPES)[number];
 
+/**
+ * Onde a Connection se prende à entrega que a originou.
+ *
+ * União porque as duas fontes ancoram em registros diferentes: o caminho
+ * canônico no Relatório do Método, o legado no registro histórico do motor
+ * antigo. Nunca as duas — o banco recusa pela constraint
+ * `connection_records_exactly_one_anchor`.
+ */
+export type ConnectionAnchor =
+  | { source: "METODO"; reportId: string }
+  | { source: "ACE_LEGADO"; finalDeliveryId: string };
+
 export type ConnectionRecord = {
   id: string;
   caseId: string;
-  finalCuradoriaDeliveryId: string;
+  anchor: ConnectionAnchor;
   patientProfileId: string;
   professionalProfileId: string;
   status: ConnectionStatus;

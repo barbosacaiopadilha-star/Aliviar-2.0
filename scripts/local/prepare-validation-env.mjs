@@ -32,7 +32,7 @@ async function ensureTestPatientMarker(admin) {
 }
 
 async function main() {
-  const env = loadValidationEnv();
+  const env = loadValidationEnv({ comando: "validation:prepare" });
   const steps = [];
   const started = Date.now();
 

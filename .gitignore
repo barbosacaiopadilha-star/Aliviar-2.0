@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!.env.test.example
 *.local.json
 *.local.sql
 **/.env.admin.local

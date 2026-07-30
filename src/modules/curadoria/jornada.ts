@@ -16,6 +16,7 @@
  */
 
 import type { CuradoriaRecord } from "./cos/types";
+import { resolveCurrentResponsible, type CoaCurrentResponsible } from "@/modules/coa/journey-responsibility";
 
 export const JORNADA_STAGES = [
   "CONSULTA_INICIAL",
@@ -64,6 +65,8 @@ export type JornadaStage = {
 export type Jornada = {
   patientFirstName: string;
   curatorName: string;
+  /** Responsável atual visível ao Assistido — um papel por vez. */
+  currentResponsible: CoaCurrentResponsible;
   stages: JornadaStage[];
   /** A etapa em que a jornada está agora — nunca a mais avançada com dado. */
   currentStage: JornadaStageId;
@@ -72,7 +75,7 @@ export type Jornada = {
 };
 
 export function buildJornada(record: CuradoriaRecord): Jornada {
-  const { historia, prioridades, validacao, curadoriaTecnica, relatorio, devolutiva } = record;
+  const { historia, validacao, curadoriaTecnica, relatorio, devolutiva } = record;
   const curator = record.curatorName;
   const name = record.patientFirstName;
 
@@ -100,7 +103,7 @@ export function buildJornada(record: CuradoriaRecord): Jornada {
       label: JORNADA_STAGE_LABELS.PERFIL_DE_PRIORIDADES,
       status: perfilDone ? "CONCLUIDA" : consultaDone ? "AGUARDANDO_VOCE" : "A_CAMINHO",
       description: perfilDone
-        ? `${prioridades.weights.length} critérios, com os pesos que você mesmo definiu e validou.`
+        ? "Seu Perfil está completo, e você o reconheceu como seu."
         : consultaDone
           ? "Falta você reconhecer este Perfil como seu. Sem essa confirmação, nada avança."
           : "Vocês vão definir juntos o que mais importa para você nesta decisão.",
@@ -190,16 +193,27 @@ export function buildJornada(record: CuradoriaRecord): Jornada {
           : "Depois da escolha, continuamos acompanhando sua jornada.",
       updatedAt: null,
       nextAction: null,
-      responsible: curator,
+      responsible:
+        escolhaDone && devolutiva.decision?.outcome === "CHOSEN"
+          ? "Equipe Aliviar"
+          : curator,
     },
   ];
 
   const current =
     stages.find((stage) => stage.status !== "CONCLUIDA")?.id ?? "ACOMPANHAMENTO";
 
+  const currentResponsible = resolveCurrentResponsible({
+    curadoriaRecord: record,
+    curatorName: curator,
+    attendantName: "Equipe Aliviar",
+    conciergeName: "Equipe Aliviar",
+  });
+
   return {
     patientFirstName: name,
     curatorName: curator,
+    currentResponsible,
     stages,
     currentStage: current,
     promisedReturn: record.promisedReturn,

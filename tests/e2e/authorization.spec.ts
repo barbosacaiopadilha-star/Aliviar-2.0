@@ -27,6 +27,11 @@ const ROLE_ROUTES = ["/admin", "/profissional", "/paciente"] as const;
 // estabilizar antes de prosseguir, evitando corrida entre o clique e a
 // navegação seguinte do teste.
 async function loginAs(page: Page, account: TestAccount) {
+  // Sempre parte de uma sessão limpa: /login redireciona quem já está
+  // autenticado, então trocar de papel dentro do mesmo teste nunca chegaria ao
+  // formulário. A sessão do browser vive em cookies (createBrowserClient do
+  // pacote @supabase/ssr) — é o cookie que precisa sair.
+  await page.context().clearCookies();
   await page.goto("/login");
   await page.getByLabel("E-mail").fill(account.email);
   await page.getByLabel("Senha").fill(account.password);
@@ -61,7 +66,10 @@ test.describe("autorização por papel (TASK-005A)", () => {
     await page.goto("/admin");
     await expect(page).toHaveURL("/admin");
     await expect(page.getByRole("heading", { name: /Olá,/ })).toBeVisible();
-    await expect(page.getByText("Papel atual: administrador")).toBeVisible();
+    // /admin deixou de usar o painel genérico ("Papel atual: …") quando passou
+    // a mostrar a visão executiva real. A prova de que é a home do
+    // Administrador, e não a de outro papel, é o próprio subtítulo da página.
+    await expect(page.getByText("Visão executiva da operação da Aliviar.")).toBeVisible();
 
     await page.goto("/profissional");
     await expect(page).toHaveURL("/acesso-negado");
@@ -93,7 +101,10 @@ test.describe("autorização por papel (TASK-005A)", () => {
 
     await page.goto("/paciente");
     await expect(page).toHaveURL("/paciente");
-    await expect(page.getByText("Papel atual: paciente")).toBeVisible();
+    // A Jornada deixou de usar o painel genérico ("Papel atual: …") quando
+    // ganhou o próprio shell. A prova de que a pessoa chegou à casa dela é a
+    // saudação pelo nome, que existe em qualquer estado da jornada.
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Olá,");
 
     await page.goto("/admin");
     await expect(page).toHaveURL("/acesso-negado");
@@ -110,7 +121,11 @@ test.describe("autorização por papel (TASK-005A)", () => {
 
     await page.goto("/admin");
     await expect(page).toHaveURL("/acesso-negado");
-    await expect(page.getByRole("heading", { name: "Acesso negado" })).toBeVisible();
+    // "Acesso negado" é o title da aba; o que a pessoa lê na tela é uma frase
+    // inteira, escrita para não soar como punição.
+    await expect(
+      page.getByRole("heading", { name: "Esta área não está disponível para você" }),
+    ).toBeVisible();
 
     await page.getByRole("link", { name: "Voltar para a minha área" }).click();
     await expect(page).toHaveURL("/paciente");
@@ -122,7 +137,7 @@ test.describe("autorização por papel (TASK-005A)", () => {
 
     const response = await page.goto("/esta-rota-nao-existe-de-verdade");
     expect(response?.status()).toBe(404);
-    await expect(page.getByRole("heading", { name: "Página não encontrada" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Não encontramos esta página" })).toBeVisible();
   });
 
   test("logout encerra a sessão e impede novo acesso às rotas protegidas", async ({ page }) => {
@@ -132,6 +147,9 @@ test.describe("autorização por papel (TASK-005A)", () => {
     await page.goto("/paciente");
     await expect(page).toHaveURL("/paciente");
 
+    // A plataforma passou a ter um único componente de usuário autenticado:
+    // "Sair" vive dentro do menu do usuário, não solto no cabeçalho.
+    await page.getByRole("button", { name: /^Menu do usuário/ }).click();
     await page.getByRole("button", { name: "Sair" }).click();
     await expect(page).toHaveURL("/login");
 

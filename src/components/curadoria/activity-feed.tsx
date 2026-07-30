@@ -17,7 +17,7 @@
 
 import Link from "next/link";
 
-import type { ActivityEvent } from "@/modules/curadoria/portal/mock-data";
+import type { ActivityEvent } from "@/modules/curadoria/portal/activity";
 
 /** Tradução do evento técnico para linguagem de pessoa (Engine §4.6). */
 const EVENT_LABELS: Record<string, string> = {
@@ -28,6 +28,9 @@ const EVENT_LABELS: Record<string, string> = {
   CONFLITO_DETECTADO: "Conflito detectado",
   ESCOLHA_REGISTRADA: "Escolha registrada",
   CURADORIA_INICIADA: "Curadoria iniciada",
+  STATUS_ALTERADO: "Status alterado",
+  CURADOR_DESIGNADO: "Curador designado",
+  RESPONSAVEL_ALTERADO: "Case mudou de responsável",
 };
 
 function formatMoment(iso: string): string {
@@ -52,7 +55,7 @@ export function ActivityFeed({ events }: { events: ActivityEvent[] }) {
               ·
             </span>
             <Link
-              href={`/portal-curador/casos/${event.caseId}`}
+              href={`/coa/curadoria/casos/${event.caseId}`}
               className="text-sm text-brand-primary underline-offset-4 hover:underline"
             >
               {event.patientFirstName}

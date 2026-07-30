@@ -203,7 +203,7 @@ async function syncAdminPassword(env) {
 }
 
 async function main() {
-  const env = loadValidationEnv();
+  const env = loadValidationEnv({ comando: "validation:e2e:b6" });
   const recorder = new StepRecorder();
   const problemas = [];
   const ts = Date.now();

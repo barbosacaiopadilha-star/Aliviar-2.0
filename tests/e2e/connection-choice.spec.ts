@@ -1,5 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+
+import { createCuradoriaClient } from "../integration/curadoria-client";
 import { expect, test, type Page } from "@playwright/test";
 
 // O Connection só existe depois de uma FinalCuradoria real entregue — os
@@ -11,11 +13,10 @@ import { expect, test, type Page } from "@playwright/test";
 // no beforeAll — Playwright roda em Node, os mesmos módulos server-only
 // funcionam aqui como funcionariam num script de seed.
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import * as curadoria from "@/modules/curadoria/repository";
+import * as reports from "@/modules/curadoria/report-repository";
+import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { changeCaseStatus, createCase } from "@/modules/cases/repository";
-import { deliverFinalCuradoria } from "@/modules/concierge/delivery-repository";
-import { FakeAceLanguageModel } from "@/modules/concierge/fake-language-model";
-import { submitHumanReview } from "@/modules/concierge/human-review-repository";
-import { runAceExecution } from "@/modules/concierge/orchestrator";
 import { createPatientAccount } from "@/modules/profiles/patient-account-repository";
 import { createProfessionalProfile } from "@/modules/profiles/professional-repository";
 import {
@@ -52,6 +53,14 @@ type DeliveredFixture = {
   patientPassword: string;
   patientProfileId: string;
   caseId: string;
+  /** Os profissionais criados por ESTA execução — âncora do cleanup. */
+  createdProfessionalIds: string[];
+  /** A seleção humana que o Relatório materializa. */
+  curatedSelectionId: string;
+  /** Âncora canônica da entrega — `connection_records.curadoria_report_id`. */
+  reportId: string;
+  /** Os três que a Curadoria de fato entregou, com o nome que aparece na tela. */
+  selectedProfessionals: Array<{ id: string; name: string }>;
   professionalDisplayNames: string[];
 };
 
@@ -95,7 +104,6 @@ async function seedDeliveredCase(): Promise<DeliveredFixture> {
   const adminClient = createAdminSupabaseClient();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-  const { createClient } = await import("@supabase/supabase-js");
 
   const adminEmail = unique("connection-e2e-admin") + "@aliviar-conexao.local";
   const adminAuth = await adminClient.auth.admin.createUser({
@@ -114,8 +122,16 @@ async function seedDeliveredCase(): Promise<DeliveredFixture> {
         .single()
     ).data!.id,
   });
+  // A Curadoria canônica exige um Curador responsável pelo Case. O mesmo
+  // usuário acumula os dois papéis para manter a fixture com uma identidade só.
+  await adminClient.from("user_roles").insert({
+    profile_id: adminUserId,
+    role_id: (
+      await adminClient.from("roles").select("id").eq("slug", "curador_medico").single()
+    ).data!.id,
+  });
 
-  const adminSessionClient = createClient(url, anonKey);
+  const adminSessionClient = createCuradoriaClient(url, anonKey);
   await adminSessionClient.auth.signInWithPassword({
     email: adminEmail,
     password: "senha-temporaria-123",
@@ -130,7 +146,7 @@ async function seedDeliveredCase(): Promise<DeliveredFixture> {
     adminUserId,
   );
 
-  const patientClient = createClient(url, anonKey);
+  const patientClient = createCuradoriaClient(url, anonKey);
   await patientClient.auth.signInWithPassword({
     email: patientEmail,
     password: patientAccount.password,
@@ -155,7 +171,7 @@ async function seedDeliveredCase(): Promise<DeliveredFixture> {
   const created = await createCase(
     adminSessionClient,
     draft.id,
-    undefined,
+    adminUserId,
     adminUserId,
   );
   await changeCaseStatus(
@@ -171,55 +187,153 @@ async function seedDeliveredCase(): Promise<DeliveredFixture> {
     adminUserId,
   );
 
-  const names = ["Ana E2E", "Bruno E2E", "Carla E2E"];
-  for (const name of names) {
-    await seedPresentableProfessional(adminClient, adminUserId, name);
+  // Nomes únicos por execução: o E2E localiza o profissional pelo nome
+  // acessível, e nomes fixos colidiam quando uma execução anterior deixava
+  // resíduo — três registros distintos chamados "Ana E2E" fazem o localizador
+  // resolver múltiplos rádios. Unicidade dá tolerância a interrupção; o
+  // cleanup abaixo dá a higiene normal. Um não substitui o outro.
+  const runId = unique("run");
+  const createdProfessionalIds: string[] = [];
+  for (const nome of ["Ana", "Bruno", "Carla"]) {
+    createdProfessionalIds.push(
+      await seedPresentableProfessional(
+        adminClient,
+        adminUserId,
+        `${nome} E2E ${runId}`,
+      ),
+    );
   }
 
-  const execution = await runAceExecution({
-    supabase: adminSessionClient,
-    caseId: created.id,
-    actorId: adminUserId,
-    languageModel: new FakeAceLanguageModel(),
-  });
-  if (execution.outcome !== "completed")
-    throw new Error("Fixture E2E: execução do ACE não completou.");
+  // ENTREGA CANÔNICA — o mesmo caminho que as telas percorrem: Acolhimento,
+  // contexto, critérios, validação, comparação, seleção humana, Relatório,
+  // emissão e entrega. Nenhum protocolo do ACE participa.
+  const cliente = adminSessionClient;
 
-  const review = await submitHumanReview(adminSessionClient, {
-    caseId: created.id,
-    reviewerId: adminUserId,
-    reviewAction: "APPROVE",
-    reviewRationale:
-      "Composição adequada às necessidades relatadas na história.",
-    evidenceReferences: ["Shortlist.compositionRationale"],
-    changes: [],
-    returnToProtocol: null,
+  await cliente.from("consultation_records").insert({
+    case_id: created.id,
+    curator_id: adminUserId,
+    context_reviewed: true,
+    documents_reviewed: true,
+    narrative: "Ela contou a história inteira, e eu devolvi organizada.",
+    understanding_confirmed_at: new Date().toISOString(),
   });
-  if (review.outcome !== "recorded")
-    throw new Error("Fixture E2E: Human Review não foi registrado.");
+  await cliente
+    .from("case_clinical_context")
+    .insert({ case_id: created.id, clinical_context: "Contexto clínico relatado por ela." });
 
-  const delivery = await deliverFinalCuradoria({
-    supabase: adminSessionClient,
-    caseId: created.id,
-    actorId: adminUserId,
-    languageModel: new FakeAceLanguageModel(),
-  });
-  if (delivery.outcome !== "delivered")
-    throw new Error("Fixture E2E: entrega da Curadoria falhou.");
+  const priorityProfileId = await curadoria.createPriorityProfile(
+    cliente,
+    created.id,
+    adminUserId,
+  );
+  await curadoria.addFilter(
+    cliente,
+    priorityProfileId,
+    "FILTRO_OBRIGATORIO",
+    "CUIDADO_CONTINUO",
+    "true",
+    "Ela quer alguém que acompanhe do começo ao fim.",
+  );
+  await curadoria.validatePriorityProfile(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
+  await curadoria.runCompatibility(cliente, priorityProfileId);
+
+  // Quem são os três é decidido pela comparação sobre a rede real — a fixture
+  // NÃO assume que os semeados serão os escolhidos. Os nomes exibidos na tela
+  // vêm daqui, do que foi de fato entregue.
+  const record = await loadCuradoriaRecord(cliente, created.id);
+  const tres = record!.curadoriaTecnica.analyses.slice(0, 3);
+  if (tres.length < 3) {
+    throw new Error("Fixture E2E: a rede local não tem três profissionais elegíveis.");
+  }
+
+  await curadoria.saveSelection(
+    cliente,
+    created.id,
+    priorityProfileId,
+    adminUserId,
+    "Os três cobrem experiência e continuidade de formas diferentes.",
+    tres.map((a) => ({
+      professionalProfileId: a.professionalId,
+      band: a.band,
+      rationale: "Entra porque atende o que ela pediu.",
+      tradeOff: "Agenda mais concorrida.",
+    })),
+  );
+  const selection = await curadoria.getSelection(cliente, priorityProfileId);
+
+  await reports.saveReport(
+    cliente,
+    created.id,
+    selection!.id,
+    "Os três cobrem experiência e continuidade de formas diferentes.",
+    tres.map((a) => ({
+      professionalProfileId: a.professionalId,
+      justification: "Responde ao critério que ela nomeou.",
+      relationToWeights: "Cobre experiência, que ela pesou mais.",
+      attentionPoints: ["Agenda mais concorrida."],
+      favorablePoints: [],
+      suggestedQuestions: ["Quantos casos como o meu você acompanha por ano?"],
+      curatorObservations: null,
+    })),
+  );
+  const report = await reports.getReportBySelection(cliente, selection!.id);
+  // Emitir exige aprovação prévia — o Curador assume a autoria da versão final.
+    await reports.approveReport(cliente, report!.id, adminUserId);
+    await reports.emitReport(cliente, report!.id);
+  await curadoria.deliverSelection(cliente, selection!.id);
+  await reports.markReportDelivered(cliente, report!.id);
 
   return {
     patientEmail,
     patientPassword: patientAccount.password,
     patientProfileId: patientAccount.profileId,
     caseId: created.id,
-    professionalDisplayNames: delivery.delivery.providerPresentations.map(
-      (p) => p.displayName,
-    ),
+    reportId: report!.id,
+    curatedSelectionId: selection!.id,
+    createdProfessionalIds,
+    selectedProfessionals: tres.map((a) => ({
+      id: a.professionalId,
+      name: a.professionalName,
+    })),
+    professionalDisplayNames: tres.map((a) => a.professionalName),
   };
 }
 
-async function cleanupFixture(fixture: DeliveredFixture) {
+async function cleanupFixture(fixture: DeliveredFixture | undefined) {
+  // A preparação pode ter falhado antes de produzir a fixture. Sem esta
+  // guarda, o cleanup lança um TypeError que aparece no relatório NO LUGAR do
+  // erro real — foi assim que "papel não encontrado" ficou escondido atrás de
+  // "Cannot read properties of undefined".
+  if (!fixture) return;
+
   const adminClient = createAdminSupabaseClient();
+
+  // Profissionais SEMPRE por último, e só depois que o Case tiver saído: a
+  // Curadoria canônica grava `curated_selection_options` e
+  // `curadoria_report_options` com FK para `professional_profiles`. Inverter a
+  // ordem faz o DELETE falhar por FK — silenciosamente, se o erro não for lido.
+  const removerProfissionais = async () => {
+    const ids = fixture.createdProfessionalIds ?? [];
+    if (ids.length === 0) return;
+
+    await adminClient
+      .from("professional_competency_areas")
+      .delete()
+      .in("professional_profile_id", ids);
+    const { error } = await adminClient.from("professional_profiles").delete().in("id", ids);
+    if (error) {
+      throw new Error(`Falha ao remover profissionais da fixture: ${error.message}`);
+    }
+  };
+
+  // Fixture parcial: o paciente pode nem ter sido criado. Os profissionais que
+  // já existem precisam sair mesmo assim, senão uma preparação interrompida
+  // deixa resíduo — e resíduo com nome colidente foi o que travou este spec.
+  if (!fixture.patientProfileId) {
+    await removerProfissionais();
+    return;
+  }
+
   await adminClient
     .from("cases")
     .delete()
@@ -237,6 +351,8 @@ async function cleanupFixture(fixture: DeliveredFixture) {
     .delete()
     .eq("profile_id", fixture.patientProfileId);
   await adminClient.auth.admin.deleteUser(fixture.patientProfileId);
+
+  await removerProfissionais();
 }
 
 test.describe("Connection — escolha do profissional (E2E autenticado)", () => {
@@ -270,7 +386,9 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
       page.getByRole("heading", { name: "Com quem você gostaria de seguir?" }),
     ).toBeVisible();
     for (const name of fixture.professionalDisplayNames) {
-      await expect(page.getByRole("radio", { name })).toBeVisible();
+      // Exatamente um: nomes únicos por execução são o que garante que o
+      // localizador semântico do paciente resolva um só profissional.
+      await expect(page.getByRole("radio", { name })).toHaveCount(1);
     }
     // Sem ranking — nenhum vocabulário de hierarquia em toda a página.
     const bodyBefore = (await page.textContent("body")) ?? "";
@@ -292,9 +410,37 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
     ).toBeVisible();
 
     await page.getByRole("button", { name: "Confirmar minha escolha" }).click();
-    await expect(
-      page.getByText(`Você escolheu seguir com ${first}.`),
-    ).toBeVisible();
+
+    // A PROVA É A CONNECTION, NÃO O TEXTO.
+    //
+    // `Você escolheu seguir com X.` aparece também no passo de revisão, ANTES
+    // da confirmação — usá-la sozinha deixava passar um clique que não
+    // persistia nada, e foi o que escondeu por várias execuções o fato de
+    // nenhuma Connection estar sendo criada.
+    await expect(async () => {
+      const admin = createAdminSupabaseClient();
+      const { data } = await admin
+        .from("connection_records")
+        .select("id, curadoria_report_id, professional_profile_id, status")
+        .eq("case_id", fixture.caseId);
+
+      expect(data, "a confirmação precisa persistir exatamente uma Connection").toHaveLength(1);
+      expect(data![0]!.curadoria_report_id).toBe(fixture.reportId);
+      expect(data![0]!.professional_profile_id).toBe(
+        fixture.selectedProfessionals[0]!.id,
+      );
+      expect(data![0]!.status).toBe("DECISAO_REGISTRADA");
+    }).toPass({ timeout: 10_000 });
+
+    // A escolha não pode ter gravado um segundo fato de domínio.
+    {
+      const admin = createAdminSupabaseClient();
+      const { data: decisions } = await admin
+        .from("patient_curadoria_decisions")
+        .select("id")
+        .eq("curated_selection_id", fixture.curatedSelectionId);
+      expect(decisions ?? [], "a escolha não grava decisão paralela").toHaveLength(0);
+    }
 
     await page.reload();
     await expect(
@@ -306,6 +452,25 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
     await page.getByRole("radio", { name: second }).check();
     await page.getByRole("button", { name: "Revisar e confirmar" }).click();
     await page.getByRole("button", { name: "Confirmar minha escolha" }).click();
+
+    // Esperar a correção PERSISTIR antes de recarregar.
+    //
+    // Sem isto o `reload` corria contra a Server Action: às vezes a página
+    // recarregava antes da escrita terminar, e o teste falhava de forma
+    // intermitente — passava numa execução e falhava na seguinte. A primeira
+    // escolha já esperava assim; a correção não esperava nada.
+    const idCorrigido = fixture.selectedProfessionals.find((p) => p.name === second)!.id;
+    await expect(async () => {
+      const admin = createAdminSupabaseClient();
+      const { data } = await admin
+        .from("connection_records")
+        .select("id, professional_profile_id, curadoria_report_id")
+        .eq("case_id", fixture.caseId);
+
+      expect(data, "a correção não pode criar uma segunda Connection").toHaveLength(1);
+      expect(data![0]!.professional_profile_id).toBe(idCorrigido);
+      expect(data![0]!.curadoria_report_id).toBe(fixture.reportId);
+    }).toPass({ timeout: 10_000 });
 
     await page.reload();
     await expect(
@@ -359,7 +524,19 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
       await expect(
         page.getByRole("heading", { name: "Primeiro atendimento confirmado" }),
       ).toBeVisible();
-      await expect(page.getByRole("button")).toHaveCount(0);
+      // Estado terminal: o painel não oferece mais NENHUMA ação sobre a
+      // escolha. A asserção é escopada às ações proibidas, não à contagem de
+      // botões da página inteira — o cabeçalho do paciente tem controles
+      // legítimos, e exigir zero botões testava o layout, não o produto.
+      for (const acao of [
+        "Confirmar minha escolha",
+        "Rever profissionais",
+        "Alterar minha escolha",
+        "Já iniciei o contato",
+        "O contato não avançou",
+      ]) {
+        await expect(page.getByRole("button", { name: acao })).toHaveCount(0);
+      }
     } finally {
       await cleanupFixture(f);
     }
@@ -395,7 +572,19 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
       await expect(
         page.getByRole("heading", { name: "Contato encerrado" }),
       ).toBeVisible();
-      await expect(page.getByRole("button")).toHaveCount(0);
+      // Estado terminal: o painel não oferece mais NENHUMA ação sobre a
+      // escolha. A asserção é escopada às ações proibidas, não à contagem de
+      // botões da página inteira — o cabeçalho do paciente tem controles
+      // legítimos, e exigir zero botões testava o layout, não o produto.
+      for (const acao of [
+        "Confirmar minha escolha",
+        "Rever profissionais",
+        "Alterar minha escolha",
+        "Já iniciei o contato",
+        "O contato não avançou",
+      ]) {
+        await expect(page.getByRole("button", { name: acao })).toHaveCount(0);
+      }
     } finally {
       await cleanupFixture(f);
     }
@@ -472,7 +661,19 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
       ).toBeVisible();
 
       // Estado terminal: nenhuma ação disponível na UI para tentar transicionar de novo.
-      await expect(page.getByRole("button")).toHaveCount(0);
+      // Estado terminal: o painel não oferece mais NENHUMA ação sobre a
+      // escolha. A asserção é escopada às ações proibidas, não à contagem de
+      // botões da página inteira — o cabeçalho do paciente tem controles
+      // legítimos, e exigir zero botões testava o layout, não o produto.
+      for (const acao of [
+        "Confirmar minha escolha",
+        "Rever profissionais",
+        "Alterar minha escolha",
+        "Já iniciei o contato",
+        "O contato não avançou",
+      ]) {
+        await expect(page.getByRole("button", { name: acao })).toHaveCount(0);
+      }
     } finally {
       await cleanupFixture(f);
     }
@@ -496,8 +697,31 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
           name: "Com quem você gostaria de seguir?",
         }),
       ).toBeVisible();
-      const bodyText = (await page.textContent("body")) ?? "";
-      expect(bodyText).not.toContain(fixture.professionalDisplayNames[0]);
+      // O isolamento se prova pelo Case e pela Connection, NUNCA pelo nome do
+      // profissional: o mesmo profissional pode legitimamente aparecer nas
+      // Curadorias de dois pacientes, e usar o nome como sinal de vazamento
+      // acusava o produto funcionando corretamente.
+      //
+      // Este paciente está no passo de escolha — logo não carrega nenhuma
+      // decisão, muito menos a do outro.
+      await expect(
+        page.getByText("Você escolheu seguir com", { exact: false }),
+      ).toHaveCount(0);
+
+      // E o Case do outro paciente permanece fora do alcance da sessão dele.
+      const outroClient = createCuradoriaClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string,
+      );
+      await outroClient.auth.signInWithPassword({
+        email: otherFixture.patientEmail,
+        password: otherFixture.patientPassword,
+      });
+      const { data: alheias } = await outroClient
+        .from("connection_records")
+        .select("id")
+        .eq("case_id", fixture.caseId);
+      expect(alheias ?? [], "a Connection alheia não pode ser alcançada").toHaveLength(0);
     } finally {
       await cleanupFixture(otherFixture);
     }

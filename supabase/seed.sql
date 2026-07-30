@@ -1,4 +1,5 @@
--- Seed mínimo de desenvolvimento (TASK-003).
+-- Seed mínimo de desenvolvimento (TASK-003; migrado para o schema curadoria
+-- na consolidação estrutural de 2026-07-24 — public era o schema da AliCIA).
 -- Só roda contra o Supabase local — nunca aplicado a um projeto hospedado
 -- (ADR-007 em docs/DECISIONS.md).
 --
@@ -22,9 +23,9 @@ declare
   v_role_paciente_id smallint;
   v_seed_password text := encode(extensions.gen_random_bytes(18), 'base64');
 begin
-  select id into v_role_admin_id from public.roles where slug = 'administrador';
-  select id into v_role_pro_id from public.roles where slug = 'profissional';
-  select id into v_role_paciente_id from public.roles where slug = 'paciente';
+  select id into v_role_admin_id from curadoria.roles where slug = 'administrador';
+  select id into v_role_pro_id from curadoria.roles where slug = 'profissional';
+  select id into v_role_paciente_id from curadoria.roles where slug = 'paciente';
 
   -- confirmation_token/recovery_token/email_change_token_new/email_change
   -- não têm default no schema do GoTrue (ficam NULL se omitidos). A própria
@@ -50,10 +51,10 @@ begin
       now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Paciente Teste"}',
       '', '', '', '');
 
-  -- Os inserts acima disparam public.handle_new_user() (trigger em
+  -- Os inserts acima disparam curadoria.handle_new_user() (trigger em
   -- auth.users), que já cria profiles + user_settings automaticamente.
   -- Falta só atribuir o papel de cada conta de teste.
-  insert into public.user_roles (profile_id, role_id) values
+  insert into curadoria.user_roles (profile_id, role_id) values
     (v_admin_id, v_role_admin_id),
     (v_pro_id, v_role_pro_id),
     (v_paciente_id, v_role_paciente_id);

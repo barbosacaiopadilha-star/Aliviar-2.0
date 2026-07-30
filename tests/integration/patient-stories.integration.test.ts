@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import { createCuradoriaClient } from "./curadoria-client";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
@@ -40,7 +41,7 @@ describe("Módulo Sua História — persistência permanente (ÉPICO 1/SPRINT 1,
 
   async function createSignedInPatient(displayName: string) {
     const administrador = accounts.find((a) => a.role === "administrador")!;
-    const adminAuthClient = createClient(url, anonKey);
+    const adminAuthClient = createCuradoriaClient(url, anonKey);
     await adminAuthClient.auth.signInWithPassword({
       email: administrador.email,
       password: administrador.password,
@@ -54,7 +55,7 @@ describe("Módulo Sua História — persistência permanente (ÉPICO 1/SPRINT 1,
     const created = await createPatientAccount(adminClient, adminAuthClient, { email, displayName }, adminUser!.id);
     await adminAuthClient.auth.signOut();
 
-    const patientClient = createClient(url, anonKey);
+    const patientClient = createCuradoriaClient(url, anonKey);
     await patientClient.auth.signInWithPassword({ email, password: created.password });
 
     return { client: patientClient, profileId: created.profileId };

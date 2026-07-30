@@ -6,6 +6,10 @@
 export type ProfileStatus = "ativo" | "inativo";
 export type PublicationStatus = "publicado" | "nao_publicado";
 
+// Situação do registro conforme consulta ao conselho profissional. `null`
+// significa que ninguém consultou — nunca "regular".
+export type RegistrationStatus = "regular" | "irregular" | "nao_localizado";
+
 export type ActionResult = { success: true } | { success: false; error: string };
 
 export type PatientProfile = {
@@ -38,10 +42,21 @@ export type ProfessionalProfile = {
   profileId: string | null;
   status: ProfileStatus;
   publicationStatus: PublicationStatus;
+  // Perfil de demonstração: existe para exercitar o fluxo, nunca para ser
+  // oferecido a um paciente. O banco impede que um deles seja publicado,
+  // entre numa seleção ou vire conexão.
+  isDemo: boolean;
+  // Perfil sintético de certificação: percorre os contratos reais, mas só
+  // dentro de um Case marcado como certificação. Nunca alcança paciente.
+  isTestFixture: boolean;
   displayName: string;
   professionalIdentifier: string;
   crm: string | null;
   crmUf: string | null;
+  registrationStatus: RegistrationStatus | null;
+  registrationSource: string | null;
+  registrationVerifiedAt: string | null;
+  registrationVerifiedBy: string | null;
   professionalSummary: string | null;
   institutionName: string | null;
   experienceLevel: string | null;

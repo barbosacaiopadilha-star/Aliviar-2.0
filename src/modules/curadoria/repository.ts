@@ -158,41 +158,9 @@ export async function savePatientHistory(
   if (error) throw new Error("Não foi possível salvar a história agora.");
 }
 
-export async function saveWeight(
-  supabase: SupabaseClient,
-  priorityProfileId: string,
-  criterion: PriorityCriterion,
-  weight: number,
-  targetValue: string | null,
-  evidence: string,
-): Promise<void> {
-  const { error } = await supabase.from("priority_weights").upsert(
-    {
-      priority_profile_id: priorityProfileId,
-      criterion,
-      weight,
-      target_value: targetValue,
-      evidence,
-    },
-    { onConflict: "priority_profile_id,criterion" },
-  );
-
-  if (error) throw new Error(error.message);
-}
-
-export async function removeWeight(
-  supabase: SupabaseClient,
-  priorityProfileId: string,
-  criterion: PriorityCriterion,
-): Promise<void> {
-  const { error } = await supabase
-    .from("priority_weights")
-    .delete()
-    .eq("priority_profile_id", priorityProfileId)
-    .eq("criterion", criterion);
-
-  if (error) throw new Error(error.message);
-}
+// `saveWeight` e `removeWeight` foram removidas — ADR-042. `priority_weights`
+// não recebe mais gravação por nenhuma via da aplicação. A leitura histórica
+// permanece (listWeights / loadCuradoriaRecord) e os dados seguem intactos.
 
 export async function addFilter(
   supabase: SupabaseClient,
@@ -234,17 +202,48 @@ export async function validatePriorityProfile(
 // Comparar — a base já aprovada da Aliviar, nunca uma busca externa
 // ---------------------------------------------------------------------------
 
-export async function listApprovedProviders(supabase: SupabaseClient): Promise<ProviderSnapshot[]> {
+/**
+ * A Rede operacional — quem o Curador pode comparar num Case real.
+ *
+ * Quatro exclusões, e todas são o mesmo princípio: o Curador não deve gastar
+ * julgamento sobre alguém que não poderia escolher.
+ *
+ * - inativo — saiu da Rede;
+ * - demonstração — nunca existiu;
+ * - não publicado — o cadastro ainda está em construção ou verificação;
+ * - divergência crítica em aberto — duas fontes discordam sobre um dado que
+ *   importa, e enquanto ninguém resolver não há o que oferecer. O perfil pode
+ *   ter sido publicado antes de a divergência aparecer; some daqui na hora,
+ *   sem esperar decisão de despublicar.
+ *
+ * E um emparelhamento: Case real vê só profissional real; Case de certificação
+ * vê só fixture. Nas duas direções, porque a regra num sentido só deixaria
+ * aberta exatamente a porta perigosa — um perfil sintético num Case real.
+ */
+export async function listApprovedProviders(
+  supabase: SupabaseClient,
+  options?: { certification?: boolean },
+): Promise<ProviderSnapshot[]> {
   const { data, error } = await supabase
     .from("professional_profiles")
     .select(
       "id, display_name, status, experience_level, intake_approach, offers_continuous_care, availability_window, crm_uf",
     )
-    .eq("status", "ativo");
+    .eq("status", "ativo")
+    .eq("is_demo", false)
+    .eq("is_test_fixture", options?.certification === true)
+    .eq("publication_status", "publicado");
 
   if (error) throw new Error("Não foi possível carregar os profissionais da Rede.");
 
-  const rows = data ?? [];
+  const { data: divergentes } = await supabase
+    .from("verification_divergences")
+    .select("professional_profile_id")
+    .eq("status", "aberta")
+    .eq("severity", "critica");
+
+  const bloqueados = new Set((divergentes ?? []).map((row) => row.professional_profile_id as string));
+  const rows = (data ?? []).filter((row) => !bloqueados.has(row.id as string));
   const ids = rows.map((row) => row.id as string);
 
   const { data: areas } = await supabase
@@ -293,7 +292,17 @@ export async function runCompatibility(
     throw new Error("A comparação só acontece depois que o paciente valida o Perfil de Prioridades.");
   }
 
-  const providers = await listApprovedProviders(supabase);
+  // O Case decide qual Rede é a dele. Nada aqui escolhe: o emparelhamento é
+  // lido do próprio Case.
+  const { data: caso } = await supabase
+    .from("cases")
+    .select("is_certification")
+    .eq("id", profile.caseId)
+    .maybeSingle();
+
+  const providers = await listApprovedProviders(supabase, {
+    certification: caso?.is_certification === true,
+  });
 
   const mandatory = profile.mandatoryFilters.map((filter) => ({
     kind: filter.kind as MandatoryFilterKind,
@@ -442,6 +451,29 @@ export type SelectionOptionInput = {
   tradeOff?: string;
 };
 
+/**
+ * Um gatilho no banco já recusa perfil de demonstração em
+ * `curated_selection_options`. Aqui a recusa vira frase antes de a escrita
+ * começar — o Curador precisa saber qual foi o problema, não receber um erro
+ * de constraint no meio de uma seleção pela metade.
+ */
+async function rejectDemoProviders(supabase: SupabaseClient, providerIds: string[]): Promise<void> {
+  if (providerIds.length === 0) return;
+
+  const { data } = await supabase
+    .from("professional_profiles")
+    .select("display_name")
+    .in("id", providerIds)
+    .eq("is_demo", true);
+
+  if ((data ?? []).length > 0) {
+    const nomes = (data ?? []).map((row) => row.display_name as string).join(", ");
+    throw new Error(
+      `Perfil de demonstração não pode ser oferecido a um paciente: ${nomes}. Estes perfis existem para exercitar o fluxo.`,
+    );
+  }
+}
+
 export async function saveSelection(
   supabase: SupabaseClient,
   caseId: string,
@@ -450,6 +482,8 @@ export async function saveSelection(
   compositionRationale: string,
   options: SelectionOptionInput[],
 ): Promise<string> {
+  await rejectDemoProviders(supabase, options.map((option) => option.professionalProfileId));
+
   const { data: existing } = await supabase
     .from("curated_selections")
     .select("id, status")

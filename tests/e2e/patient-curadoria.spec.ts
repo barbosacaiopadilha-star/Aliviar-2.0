@@ -33,7 +33,7 @@ test.describe("Última sprint do MVP — /paciente/curadoria (P010)", () => {
     await page.goto("/paciente/curadoria");
     // Ou mostra o estado vazio, ou (se outro teste já entregou uma
     // Curadoria para esta conta) mostra a própria Curadoria — nunca um erro.
-    const emptyState = page.getByText("Sua Curadoria ainda não está pronta.");
+    const emptyState = page.getByText("Ainda não há relatórios aqui.");
     const heading = page.getByRole("heading", { name: "Sua Curadoria" });
     await expect(emptyState.or(heading)).toBeVisible();
   });
@@ -81,7 +81,7 @@ test.describe("Última sprint do MVP — /paciente/curadoria mobile", () => {
     await loginAs(page, paciente);
     await page.goto("/paciente/curadoria");
 
-    const emptyState = page.getByText("Sua Curadoria ainda não está pronta.");
+    const emptyState = page.getByText("Ainda não há relatórios aqui.");
     const heading = page.getByRole("heading", { name: "Sua Curadoria" });
     await expect(emptyState.or(heading)).toBeVisible();
   });

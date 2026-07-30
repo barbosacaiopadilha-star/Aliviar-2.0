@@ -21,7 +21,8 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
-import { readFileSync } from "node:fs";
+
+import { resolverAlvoLocal } from "./env-guard.mjs";
 
 const MARCA = "[PERFIL DE DEMONSTRAÇÃO — profissional fictício, não existe]";
 
@@ -102,19 +103,21 @@ const REDE = [
   },
 ];
 
+// O alvo NUNCA vem de `.env.local` — este script apaga linhas
+// (`DELETE ... LIKE 'DEMO-%'`), e `.env.local` aponta para um projeto
+// hospedado. `resolverAlvoLocal` valida antes de qualquer chamada externa.
+let alvo;
+try {
+  alvo = resolverAlvoLocal("Seed da rede de demonstração");
+} catch (erro) {
+  console.error(erro.message);
+  process.exit(1);
+}
+
 function env(name) {
-  const fromProcess = process.env[name];
-  if (fromProcess) return fromProcess;
-
-  try {
-    const file = readFileSync(".env.local", "utf8");
-    const match = file.match(new RegExp(`^${name}=(.*)$`, "m"));
-    if (match) return match[1].trim();
-  } catch {
-    /* .env.local pode não existir */
-  }
-
-  throw new Error(`${name} não está definida.`);
+  const value = alvo[name] ?? process.env[name];
+  if (!value) throw new Error(`${name} não está definida.`);
+  return value;
 }
 
 const supabase = createClient(env("NEXT_PUBLIC_SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), {

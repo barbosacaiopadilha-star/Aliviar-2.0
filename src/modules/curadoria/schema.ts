@@ -67,6 +67,22 @@ export const validateProfileInputSchema = z.object({
     .max(2000),
 });
 
+export const saveAllWeightsInputSchema = z.object({
+  priorityProfileId: z.string().uuid(),
+  weights: z.array(
+    z.object({
+      criterion: z.enum(PRIORITY_CRITERIA),
+      weight: z.number().int().min(0).max(100),
+      targetValue: z.string().trim().min(1).max(120).nullable().optional(),
+      evidence: z
+        .string()
+        .trim()
+        .min(1, "Registre o momento da conversa que originou este peso.")
+        .max(2000),
+    }),
+  ),
+});
+
 export const computeCompatibilityInputSchema = z.object({
   priorityProfileId: z.string().uuid(),
 });
@@ -105,3 +121,85 @@ export const registerDecisionInputSchema = z
     message: "Escolha uma das opções ou registre que nenhuma delas serviu.",
     path: ["chosenOptionId"],
   });
+
+// Fase 1 — Acolhimento: as duas revisões que o Motor espera antes de liberar
+// a História (COS_PHASE_DEFINITIONS.ACOLHIMENTO.exitCriteria).
+export const registerAcolhimentoInputSchema = z.object({
+  caseId: z.string().uuid(),
+  contextReviewed: z.boolean(),
+  documentsReviewed: z.boolean(),
+});
+
+// Fase 2 — História: narrativa organizada + reconhecimento do paciente.
+export const registerHistoriaInputSchema = z
+  .object({
+    caseId: z.string().uuid(),
+    narrative: z.string().trim().max(8000).optional(),
+    confirmUnderstanding: z.boolean().optional(),
+  })
+  .refine((v) => Boolean(v.narrative?.trim()) || v.confirmUnderstanding, {
+    message: "Registre a história ou confirme o reconhecimento.",
+  });
+
+// Fase 3 — Caso: contexto clínico como fato relatado (a Aliviar nunca
+// diagnostica nem interpreta exame — comentário da própria tabela).
+export const registerCasoInputSchema = z.object({
+  caseId: z.string().uuid(),
+  clinicalContext: z.string().trim().min(1, "Descreva o contexto clínico relatado.").max(8000),
+});
+
+// ---------------------------------------------------------------------------
+// Fase 8 — Relatório: o documento que o paciente relê sozinho.
+//
+// Os critérios de saída da fase (COS_PHASE_DEFINITIONS.RELATORIO) exigem, das
+// três opções, justificativa + relação com os pesos + ao menos um ponto de
+// atenção, mais a justificativa da composição. O schema exige exatamente isso:
+// uma opção sem o que ela custa é recomendação disfarçada (Experience §2.5).
+// ---------------------------------------------------------------------------
+export const saveReportInputSchema = z.object({
+  priorityProfileId: z.string().uuid(),
+  compositionRationale: z
+    .string()
+    .trim()
+    .min(1, "Explique por que estas três, juntas, servem a este paciente.")
+    .max(4000),
+  options: z
+    .array(
+      z.object({
+        professionalProfileId: z.string().uuid(),
+        justification: z.string().trim().min(1, "Explique por que esta opção está aqui.").max(4000),
+        relationToWeights: z
+          .string()
+          .trim()
+          .min(1, "Relacione esta opção com os pesos que o paciente validou.")
+          .max(4000),
+        attentionPoints: z
+          .array(z.string().trim().min(1))
+          .min(1, "Toda opção precisa dizer o que custa."),
+        favorablePoints: z.array(z.string().trim().min(1)).default([]),
+        suggestedQuestions: z.array(z.string().trim().min(1)).default([]),
+        curatorObservations: z.string().trim().max(4000).nullable().optional(),
+      }),
+    )
+    .length(3, "A Curadoria apresenta sempre exatamente três opções."),
+});
+
+export const emitReportInputSchema = z.object({
+  priorityProfileId: z.string().uuid(),
+});
+
+export const generateAssistedDraftInputSchema = z.object({
+  priorityProfileId: z.string().uuid(),
+  /** Regenerar sobre texto já editado exige intenção explícita. */
+  force: z.boolean().optional(),
+});
+
+// Fase 9 — Devolutiva: o registro do encontro em que as opções foram
+// apresentadas. Não é a decisão do paciente — essa é ato dele, e a RLS de
+// patient_curadoria_decisions só aceita a própria pessoa.
+export const registerDevolutivaInputSchema = z.object({
+  priorityProfileId: z.string().uuid(),
+  patientQuestions: z.array(z.string().trim().min(1)).default([]),
+  observations: z.array(z.string().trim().min(1)).default([]),
+  nextSteps: z.array(z.string().trim().min(1)).default([]),
+});

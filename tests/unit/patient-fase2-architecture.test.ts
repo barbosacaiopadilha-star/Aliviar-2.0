@@ -261,16 +261,21 @@ describe("Parte 4 — ConnectionChoicePanel sem reload completo", () => {
     expect(source).toMatch(/router\.refresh\(\)/);
   });
 
-  it("os outros três usos de window.location.reload no repositório (fora do escopo desta fase) permanecem intocados", () => {
-    // Confirma que a correção foi cirúrgica — nenhuma "limpeza geral" além
-    // do item explicitamente pedido (ConnectionChoicePanel).
-    const untouched = [
+  it("as superfícies que exerciam autoridade do ACE não existem mais", () => {
+    // Este teste nasceu provando que uma correção de reload havia sido
+    // cirúrgica: os outros três usos de `window.location.reload` viviam nos
+    // painéis de execução, entrega e revisão do ACE, e deviam permanecer
+    // intocados. A ADR-035 descontinuou justamente esses três — o invariante
+    // deixou de ser "continuam iguais" e passou a ser "não existem".
+    const descontinuadas = [
       "components/cases/ace-execution-panel.tsx",
       "components/ace/final-curadoria-delivery-panel.tsx",
       "components/ace/human-review-form.tsx",
     ];
-    for (const file of untouched) {
-      expect(readSrc(file)).toMatch(/window\.location\.reload/);
+    for (const file of descontinuadas) {
+      expect(existsSync(path.resolve(SRC, file)), `${file} deveria ter sido descontinuada`).toBe(
+        false,
+      );
     }
   });
 

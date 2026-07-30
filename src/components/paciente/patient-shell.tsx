@@ -5,7 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
+import "@/app/patient-dashboard.css";
+
 import { LogoutButton } from "@/components/auth/logout-button";
+import { PatientAmbientLayer } from "@/components/paciente/dashboard/patient-ambient-layer";
 import { Drawer } from "@/components/ui/drawer";
 import { cn } from "@/components/ui/cn";
 
@@ -45,18 +48,22 @@ function NavLinks({
 
 type PatientShellProps = {
   children: ReactNode;
+  /**
+   * Menu de usuário unificado (AuthenticatedUserMenu), resolvido no layout server.
+   * Substitui o LogoutButton solto do desktop: a plataforma inteira tem UM
+   * componente de usuário autenticado, não um por módulo.
+   */
+  userMenu?: ReactNode;
 };
 
-// Ambiente exclusivo do paciente — não deriva nem reaproveita o AppShell
-// (compartilhado com admin/curador). Só identidade visual e navegação:
-// nenhuma leitura de história/Caso, nenhuma decisão de negócio acontece
-// aqui.
-export function PatientShell({ children }: PatientShellProps) {
+export function PatientShell({ children, userMenu }: PatientShellProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-canvas">
+    <div className="patient-dashboard min-h-screen">
+      <PatientAmbientLayer />
+
       <a
         href="#patient-main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-toast focus:rounded-md focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:text-ink focus:shadow-md focus:outline-none focus:ring-2 focus:ring-focus"
@@ -64,11 +71,11 @@ export function PatientShell({ children }: PatientShellProps) {
         Pular para o conteúdo
       </a>
 
-      <header className="border-b border-border bg-surface print:hidden">
+      <header className="border-b border-[var(--color-border)]/60 bg-[var(--patient-linen)]/75 backdrop-blur-md print:hidden">
         <div className="mx-auto flex min-h-[4.5rem] w-full max-w-content items-center justify-between gap-4 px-4 lg:px-8">
           <Link
             href="/paciente"
-            className="font-serif text-xl font-medium text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+            className="font-serif text-xl font-medium text-[var(--patient-forest)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
           >
             Aliviar
           </Link>
@@ -79,22 +86,20 @@ export function PatientShell({ children }: PatientShellProps) {
               className="flex items-center gap-1"
               linkClassName={(active) =>
                 cn(
-                  "flex min-h-11 items-center rounded-md px-3 text-sm font-medium transition-colors duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+                  "flex min-h-11 items-center rounded-full px-4 text-sm font-medium transition-all duration-300 ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2",
                   active
-                    ? "text-brand-primary"
-                    : "text-ink-muted hover:text-ink",
+                    ? "bg-[var(--patient-forest)] text-[var(--patient-linen)] shadow-md shadow-emerald-950/10"
+                    : "text-[var(--color-ink-muted)] hover:bg-white/60 hover:text-[var(--patient-ink)]",
                 )
               }
             />
           </nav>
 
-          <div className="hidden lg:block">
-            <LogoutButton className="w-auto" />
-          </div>
+          <div className="hidden lg:block">{userMenu ?? <LogoutButton className="w-auto" />}</div>
 
           <button
             type="button"
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-border bg-surface text-ink transition-colors hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface lg:hidden"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-[var(--color-border)] bg-white/80 text-[var(--patient-ink)] backdrop-blur-sm transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 lg:hidden"
             aria-label="Abrir menu"
             onClick={() => setMenuOpen(true)}
           >
@@ -103,12 +108,7 @@ export function PatientShell({ children }: PatientShellProps) {
         </div>
       </header>
 
-      <Drawer
-        open={menuOpen}
-        onClose={() => setMenuOpen(false)}
-        title="Menu"
-        side="right"
-      >
+      <Drawer open={menuOpen} onClose={() => setMenuOpen(false)} title="Menu" side="right">
         <nav aria-label="Navegação principal">
           <NavLinks
             pathname={pathname}
@@ -116,23 +116,20 @@ export function PatientShell({ children }: PatientShellProps) {
             className="space-y-1"
             linkClassName={(active) =>
               cn(
-                "flex min-h-11 items-center rounded-md px-3 text-sm font-medium transition-colors duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+                "flex min-h-11 items-center rounded-xl px-4 text-sm font-medium transition-colors duration-300 ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2",
                 active
-                  ? "bg-brand-primary text-surface"
-                  : "text-ink-muted hover:bg-canvas hover:text-ink",
+                  ? "bg-[var(--patient-forest)] text-[var(--patient-linen)]"
+                  : "text-[var(--color-ink-muted)] hover:bg-[var(--patient-linen)] hover:text-[var(--patient-ink)]",
               )
             }
           />
         </nav>
-        <div className="mt-6 border-t border-border pt-4">
+        <div className="mt-6 border-t border-[var(--color-border)] pt-4">
           <LogoutButton className="w-full" />
         </div>
       </Drawer>
 
-      <main
-        id="patient-main"
-        className="mx-auto w-full max-w-content px-4 py-10 lg:px-8 lg:py-14"
-      >
+      <main id="patient-main" className="mx-auto w-full max-w-content px-4 py-12 lg:px-8 lg:py-16">
         {children}
       </main>
     </div>

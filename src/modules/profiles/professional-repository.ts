@@ -2,17 +2,23 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { ProfessionalProfile, ProfileStatus, PublicationStatus } from "./types";
+import type { ProfessionalProfile, ProfileStatus, PublicationStatus, RegistrationStatus } from "./types";
 
 type ProfessionalProfileRow = {
   id: string;
   profile_id: string | null;
   status: ProfileStatus;
   publication_status: PublicationStatus;
+  is_demo: boolean;
+  is_test_fixture: boolean;
   display_name: string;
   professional_identifier: string;
   crm: string | null;
   crm_uf: string | null;
+  registration_status: RegistrationStatus | null;
+  registration_source: string | null;
+  registration_verified_at: string | null;
+  registration_verified_by: string | null;
   professional_summary: string | null;
   institution_name: string | null;
   experience_level: string | null;
@@ -26,7 +32,7 @@ type ProfessionalProfileRow = {
 };
 
 const SELECT_COLUMNS =
-  "id, profile_id, status, publication_status, display_name, professional_identifier, crm, crm_uf, professional_summary, institution_name, experience_level, intake_approach, offers_continuous_care, availability_window, created_by, updated_by, created_at, updated_at";
+  "id, profile_id, status, publication_status, is_demo, is_test_fixture, display_name, professional_identifier, crm, crm_uf, registration_status, registration_source, registration_verified_at, registration_verified_by, professional_summary, institution_name, experience_level, intake_approach, offers_continuous_care, availability_window, created_by, updated_by, created_at, updated_at";
 
 function mapRow(row: ProfessionalProfileRow): ProfessionalProfile {
   return {
@@ -34,10 +40,16 @@ function mapRow(row: ProfessionalProfileRow): ProfessionalProfile {
     profileId: row.profile_id,
     status: row.status,
     publicationStatus: row.publication_status,
+    isDemo: row.is_demo,
+    isTestFixture: row.is_test_fixture,
     displayName: row.display_name,
     professionalIdentifier: row.professional_identifier,
     crm: row.crm,
     crmUf: row.crm_uf,
+    registrationStatus: row.registration_status,
+    registrationSource: row.registration_source,
+    registrationVerifiedAt: row.registration_verified_at,
+    registrationVerifiedBy: row.registration_verified_by,
     professionalSummary: row.professional_summary,
     institutionName: row.institution_name,
     experienceLevel: row.experience_level ?? null,
@@ -188,12 +200,28 @@ export async function setProfessionalStatus(
   }
 }
 
+/**
+ * Publicar um perfil de demonstração é impossível — o banco tem um CHECK que
+ * recusa a combinação. Esta verificação existe para que a recusa chegue como
+ * frase em português a quem clicou, e não como erro de constraint. A garantia
+ * continua sendo a do banco; esta é a cortesia.
+ */
 export async function setProfessionalPublicationStatus(
   supabase: SupabaseClient,
   id: string,
   publicationStatus: PublicationStatus,
   updatedBy: string,
 ): Promise<void> {
+  if (publicationStatus === "publicado") {
+    const { data } = await supabase.from("professional_profiles").select("is_demo").eq("id", id).maybeSingle();
+
+    if (data?.is_demo) {
+      throw new Error(
+        "Este é um perfil de demonstração e não pode ser publicado. Ele existe para exercitar o fluxo, nunca para ser oferecido a um paciente.",
+      );
+    }
+  }
+
   const { error } = await supabase
     .from("professional_profiles")
     .update({ publication_status: publicationStatus, updated_by: updatedBy })

@@ -1,6 +1,5 @@
 import { requireRole } from "@/modules/auth/guard";
 import { AppShell } from "@/components/shell/app-shell";
-import { getDefaultNavItems } from "@/components/shell/nav-items";
 
 export default async function ProfissionalLayout({
   children,
@@ -13,7 +12,7 @@ export default async function ProfissionalLayout({
     <AppShell
       role="profissional"
       displayName={profile?.displayName ?? null}
-      navItems={getDefaultNavItems("profissional", "/profissional")}
+      basePath="/profissional"
     >
       {children}
     </AppShell>

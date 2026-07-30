@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { RESPONSIBLE_ROLES } from "./responsibility";
 import { CASE_STATUSES } from "./types";
 
 export const createCaseInputSchema = z.object({
@@ -23,6 +24,22 @@ export const changeCaseStatusInputSchema = z.object({
 });
 
 export type ChangeCaseStatusInput = z.infer<typeof changeCaseStatusInputSchema>;
+
+// Transferência de responsabilidade do Case entre os três níveis humanos.
+// O motivo é obrigatório aqui pelo mesmo motivo que é obrigatório no banco:
+// uma passagem de bastão sem motivo não é rastreável depois.
+export const transferCaseResponsibilityInputSchema = z.object({
+  caseId: z.string().uuid(),
+  newResponsibleId: z.string().uuid(),
+  newRole: z.enum(RESPONSIBLE_ROLES),
+  reason: z
+    .string()
+    .trim()
+    .min(1, "Explique por que o Case está mudando de responsável.")
+    .max(500, "Justificativa muito longa."),
+});
+
+export type TransferCaseResponsibilityInput = z.infer<typeof transferCaseResponsibilityInputSchema>;
 
 // Cada nota é um registro novo, append-only — nunca uma edição de nota
 // anterior (ajuste pós-Sprint 2).

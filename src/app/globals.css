@@ -4,17 +4,20 @@
 
 @layer base {
   :root {
-    --color-brand-primary: #123b67;
-    --color-brand-primary-deep: #0e2f52;
-    --color-brand-sage: #7f9e8c;
-    --color-brand-sage-light: #a8c0ae;
-    --color-brand-gold: #b08d57;
-    --color-bg-canvas: #f7f5f1;
+    --color-brand-primary: #556b5d;
+    --color-brand-primary-deep: #4a5f52;
+    --color-brand-primary-hover: #647b6d;
+    --color-brand-sage: #556b5d;
+    --color-brand-sage-light: #8a9e92;
+    --color-brand-gold: #b79a5b;
+    --color-brand-gold-hover: #c6aa68;
+    --color-bg-canvas: #faf8f4;
+    --color-bg-canvas-warm: #f3eee7;
     --color-bg-surface: #ffffff;
-    --color-ink: #1b2733;
-    --color-ink-muted: #5b6672;
-    --color-border: #e4e0d8;
-    --color-focus-ring: #123b67;
+    --color-ink: #2f3a3d;
+    --color-ink-muted: #66737a;
+    --color-border: rgba(183, 154, 91, 0.18);
+    --color-focus-ring: #556b5d;
     --color-success: #2f6b4f;
     --color-success-surface: #e7f0ea;
     --color-warning: #8a5a1f;
@@ -23,40 +26,40 @@
     --color-error-surface: #f6e7e7;
 
     --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
-    --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
+    --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
     --text-xs: 0.75rem;
     --text-xs--line-height: 1rem;
     --text-sm: 0.875rem;
     --text-sm--line-height: 1.25rem;
     --text-base: 1rem;
-    --text-base--line-height: 1.5rem;
+    --text-base--line-height: 1.625rem;
     --text-lg: 1.125rem;
-    --text-lg--line-height: 1.75rem;
+    --text-lg--line-height: 1.875rem;
     --text-xl: 1.25rem;
-    --text-xl--line-height: 1.75rem;
+    --text-xl--line-height: 1.875rem;
     --text-2xl: 1.5rem;
-    --text-2xl--line-height: 2rem;
+    --text-2xl--line-height: 2.125rem;
     --text-3xl: 1.875rem;
-    --text-3xl--line-height: 2.375rem;
+    --text-3xl--line-height: 2.5rem;
     --text-4xl: 2.25rem;
-    --text-4xl--line-height: 2.75rem;
+    --text-4xl--line-height: 2.875rem;
 
     --radius-sm: 6px;
     --radius-md: 10px;
     --radius-lg: 16px;
 
-    --shadow-sm: 0 1px 2px rgb(27 39 51 / 0.04), 0 1px 3px rgb(27 39 51 / 0.06);
-    --shadow-md: 0 4px 12px rgb(27 39 51 / 0.06);
-    --shadow-lg: 0 12px 32px rgb(27 39 51 / 0.08);
+    --shadow-sm: 0 1px 2px rgba(70, 55, 35, 0.04), 0 2px 8px rgba(70, 55, 35, 0.03);
+    --shadow-md: 0 4px 16px rgba(70, 55, 35, 0.05);
+    --shadow-lg: 0 12px 40px rgba(70, 55, 35, 0.06);
 
     --content-max-width: 72rem;
     --reading-max-width: 40rem;
 
-    --duration-fast: 150ms;
-    --duration-base: 200ms;
-    --duration-slow: 300ms;
-    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --duration-fast: 280ms;
+    --duration-base: 480ms;
+    --duration-slow: 640ms;
+    --ease-standard: cubic-bezier(0.25, 0.1, 0.25, 1);
 
     --z-dropdown: 20;
     --z-sticky-header: 30;
@@ -118,7 +121,7 @@
   /* Entrada suave, discreta, usada só acima da dobra (Hero) — respeita
      prefers-reduced-motion via o override global já definido acima. */
   .animate-fade-up {
-    animation: fade-up 700ms var(--ease-standard) both;
+    animation: fade-up 900ms var(--ease-standard) both;
   }
 
   /* Sublinhado editorial que revela da esquerda pra direita no hover/focus
@@ -153,7 +156,7 @@
       border-color var(--duration-base) var(--ease-standard);
   }
   .card-lift:hover {
-    transform: translateY(-4px);
+    transform: translateY(-3px);
     box-shadow: var(--shadow-lg);
   }
 
@@ -519,7 +522,7 @@
 @keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;

@@ -1,5 +1,32 @@
 # Variáveis de Ambiente
 
+## Isolamento dos ambientes (2026-07-27)
+
+`.env.local` deste repositório aponta **deliberadamente para um projeto hospedado** — é o que permite validação assistida contra dados reais. O problema não era esse: era todo script local lê-lo como fallback silencioso. A suíte de integração, que cria e apaga contas, Cases e profissionais, passou a autenticar contra o projeto remoto sem nenhum aviso.
+
+A regra agora: **nenhum comando local resolve o alvo por arquivo `.env`**. Quem resolve é `scripts/env-guard.mjs`, perguntando à CLI do Supabase, e a recusa acontece antes da primeira chamada de rede. A validação é pelo **identificador real do projeto** (`https://<ref>.supabase.co`), com lista explícita de projetos proibidos.
+
+| Comando | Ambiente | Como o alvo é resolvido |
+|---|---|---|
+| `npm run dev` | `.env.development.local` (local) → `.env.local` (hospedado) | Next.js. Em `next dev` o arquivo local vence; sem ele, cai no hospedado. |
+| `npm run dev:local` | **local, garantido** | Runner injeta a stack local no processo. |
+| `npm run build` / `start` | produção (Vercel) ou `.env.local` | Inalterado — é assim que tem de ser. |
+| `npm test` (unitários) | nenhum banco | — |
+| `npm run test:components` | nenhum banco | — |
+| `npm run test:integration` | **local, garantido** | Runner + `assertSupabaseLocal` no setup da suíte. |
+| `npm run test:e2e` | **local, garantido** | Runner + guarda própria do `playwright.config.ts`. |
+| `npm run bootstrap:test-users` | **local, garantido** | Runner + guarda no script. |
+| `npm run seed:rede-demo:local` | **local, garantido** | Guarda antes de criar o client (o script faz `DELETE`). |
+| `npm run seed:mesa:local` | **local, garantido** | Runner com `SEED_MESA=1`. |
+| `npm run supabase:reset` | **local, garantido** | `guard-db-reset.mjs` recusa `--linked`, `--project-ref` e `--db-url` remoto. |
+| `npm run supabase:env` | local | Gera `.env.development.local`/`.env.local` a partir da stack local. |
+| `npm run validation:*` | **projeto hospedado, por desenho** | Fluxo de validação assistida. `validation:diagnose` já verifica o ref esperado. Não é comando de rotina. |
+| `scripts/extract-remote-migrations.mjs` | **projeto hospedado, por desenho** | Só lê migrations. |
+
+Arquivos de exemplo: `.env.example` (aplicação) e `.env.test.example` (suíte de integração). Nenhum contém segredo.
+
+---
+
 Nomes documentados em `.env.example` (nunca valores). Preencha `.env.local` (ignorado pelo Git) para desenvolvimento — gerado automaticamente por `npm run supabase:env` a partir do Supabase local. Em produção, vivem apenas na configuração de ambiente da Vercel. Ver `docs/CREDENTIALS.md` para o inventário de credenciais (metadados, nunca valores) e `docs/AGENTS.md` para as regras de segurança.
 
 | Variável | Obrigatória | Onde é lida | Efeito |

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import type { Metadata } from "next";
@@ -7,13 +6,13 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import { CASE_STATUS_LABELS, getCase, listCaseEvents, listCaseNotes } from "@/modules/cases";
 import { listArtifactsForCase, listExecutionEventsForCase, listExecutionsForCase } from "@/modules/concierge";
+import { listActiveP002FieldCorrections } from "@/modules/ace/p002-field-corrections-repository";
 import { getPatientProfile, getProfessionalDisplayNames } from "@/modules/profiles";
 import { listStoryAttachments } from "@/modules/story/attachment-repository";
 import { getStoryById } from "@/modules/story/repository";
 
 import { AceExecutionsHistory } from "@/components/ace/ace-executions-history";
 import { AceArtifactsList } from "@/components/cases/ace-artifacts-list";
-import { AceExecutionPanel } from "@/components/cases/ace-execution-panel";
 import { AceShortlistViewer } from "@/components/cases/ace-shortlist-viewer";
 import { CaseEventsTimeline } from "@/components/cases/case-events-timeline";
 import { CaseNotesLog } from "@/components/cases/case-notes-log";
@@ -57,12 +56,12 @@ export default async function CuradorCaseDetailPage({ params }: CuradorCaseDetai
 
   const attachments = story ? await listStoryAttachments(supabase, story.id) : [];
 
-  const [executions, executionEvents, artifacts] = await Promise.all([
+  const [executions, executionEvents, artifacts, p002Corrections] = await Promise.all([
     listExecutionsForCase(supabase, id),
     listExecutionEventsForCase(supabase, id),
     listArtifactsForCase(supabase, id),
+    listActiveP002FieldCorrections(supabase, id),
   ]);
-  const execution = executions[0] ?? null;
 
   const shortlistArtifact = artifacts.find((artifact) => artifact.artifactType === "Shortlist");
   const shortlist = shortlistArtifact ? (shortlistArtifact.payload as Shortlist) : null;
@@ -73,7 +72,6 @@ export default async function CuradorCaseDetailPage({ params }: CuradorCaseDetai
     : [];
   const namesByProviderId = await getProfessionalDisplayNames(supabase, shortlistProviderIds);
 
-  const canRunAce = caseDetail.status === "READY_FOR_CURATION" || caseDetail.status === "IN_CURATION";
 
   return (
     <div className="space-y-6">
@@ -83,12 +81,6 @@ export default async function CuradorCaseDetailPage({ params }: CuradorCaseDetai
           <Badge variant={caseDetail.status === "DELIVERED" || caseDetail.status === "CLOSED" ? "sage" : "default"}>
             {CASE_STATUS_LABELS[caseDetail.status]}
           </Badge>
-          <Link
-            href={`/curador/casos/${caseDetail.id}/revisao`}
-            className="text-sm font-medium text-brand-primary hover:text-brand-primary-deep"
-          >
-            Human Review →
-          </Link>
         </div>
         <p className="text-sm text-ink-muted">
           Criado em {new Date(caseDetail.createdAt).toLocaleDateString("pt-BR")} — a história original nunca é
@@ -151,7 +143,6 @@ export default async function CuradorCaseDetailPage({ params }: CuradorCaseDetai
           <h2 className="font-sans text-lg font-semibold text-ink">Execução do ACE</h2>
           <p className="text-sm text-ink-muted">P001 a P008 apenas — nunca revisão humana (P009) ou entrega (P010).</p>
         </CardHeader>
-        <AceExecutionPanel caseId={caseDetail.id} initialExecution={execution} canRun={canRunAce} />
       </Card>
 
       <Card>
@@ -166,7 +157,7 @@ export default async function CuradorCaseDetailPage({ params }: CuradorCaseDetai
         <CardHeader>
           <h2 className="font-sans text-lg font-semibold text-ink">Artefatos (P001-P008)</h2>
         </CardHeader>
-        <AceArtifactsList artifacts={artifacts} />
+        <AceArtifactsList artifacts={artifacts} caseId={caseDetail.id} p002Corrections={p002Corrections} />
       </Card>
 
       {shortlist ? (

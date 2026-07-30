@@ -10,7 +10,9 @@ import type {
   OpcaoRelatorio,
   PesoRecord,
 } from "./types";
-import type { CompatibilityBand, PriorityCriterion } from "../types";
+import type { CompatibilityBand, MandatoryFilterKind, PriorityCriterion } from "../types";
+import { MANDATORY_FILTER_LABELS } from "../types";
+import { loadCasePriorityMap } from "../mapa-prioridades-repository";
 
 /**
  * Leitura da Memória da Curadoria a partir do banco (MISSÃO 209, Fase 3).
@@ -200,6 +202,12 @@ export async function loadCuradoriaRecord(
     };
   });
 
+  // ADR-042 — a completude do Mapa é o gate das fases PRIORIDADES e VALIDACAO.
+  // Vem pronta do repositório do Mapa: as fases não recalculam regra de
+  // domínio, e não existe segunda definição de "completo".
+  const mapa = await loadCasePriorityMap(supabase, caseId);
+  const mapaPendentes = mapa.completion.pending;
+
   const weights: PesoRecord[] = (weightRows.data ?? []).map((row) => ({
     criterion: row.criterion as PriorityCriterion,
     weight: row.weight as number,
@@ -213,14 +221,21 @@ export async function loadCuradoriaRecord(
     .map((row) => ({
       id: row.id as string,
       kind: row.kind as string,
-      label: row.kind as string,
+      // O rótulo é humano, nunca o enum. Achado do teste em produção: a tela
+      // exibia "CUIDADO_CONTINUO" — sigla interna em tela é proibida
+      // (Guided Experience §5). O `kind` cru fica no campo `kind`, para
+      // auditoria; a tela lê `label`.
+      label:
+        MANDATORY_FILTER_LABELS[row.kind as MandatoryFilterKind] ?? (row.kind as string),
       value: row.value as string,
       reason: (row.note as string | null) ?? "",
     }));
 
-  const observations = (filterRows.data ?? [])
+  const preferencias = (filterRows.data ?? [])
     .filter((row) => row.nature === "PREFERENCIA")
-    .map((row) => row.value as string);
+    .map((row) => ({ id: row.id as string, value: row.value as string }));
+
+  const observations = preferencias.map((entry) => entry.value);
 
   const reportOptions: OpcaoRelatorio[] = (reportOptionRows.data ?? []).map((row) => ({
     professionalId: row.professional_profile_id as string,
@@ -268,10 +283,14 @@ export async function loadCuradoriaRecord(
     filtros,
 
     prioridades: {
+      mapaPendentes,
       weights,
       observations,
+      preferencias,
       history: [],
     },
+
+    priorityProfileId: profileId,
 
     validacao: profile?.validated_at
       ? {
@@ -288,6 +307,8 @@ export async function loadCuradoriaRecord(
       // Ausência aqui é ausência, nunca uma lista fabricada.
       excluded: [] as ExclusaoRecord[],
       selectedProfessionalIds: (optionRows.data ?? []).map((row) => row.professional_profile_id as string),
+      // O id da seleção é o que a entrega precisa endereçar.
+      curatedSelectionId: selectionId,
       selectedBy: selectionRow.data ? curatorName : null,
       selectedAt: (selectionRow.data?.created_at as string | null) ?? null,
     },
@@ -296,6 +317,7 @@ export async function loadCuradoriaRecord(
       options: reportOptions,
       compositionRationale: (reportRow.data?.composition_rationale as string | null) ?? null,
       emittedAt: (reportRow.data?.emitted_at as string | null) ?? null,
+      deliveredAt: (reportRow.data?.delivered_at as string | null) ?? null,
     },
 
     devolutiva: {
@@ -315,12 +337,101 @@ export async function loadCuradoriaRecord(
   };
 }
 
-/** Casos visíveis para quem está chamando. A RLS já faz o recorte por papel. */
-export async function listCaseIds(supabase: SupabaseClient): Promise<string[]> {
-  const { data } = await supabase
-    .from("cases")
-    .select("id")
-    .order("updated_at", { ascending: false });
+/**
+ * Teto defensivo do Painel.
+ *
+ * `loadCuradoriaRecord` faz ~14 consultas por Caso — o custo de montar a
+ * Memória inteira. Carregar N Casos custa 14N, um N+1 clássico: com 100
+ * pacientes seriam 1.400 consultas por abertura do Painel.
+ *
+ * O teto não resolve o N+1; impede que ele degrade a experiência antes de a
+ * correção certa existir (um carregador em lote, que agruparia as mesmas
+ * consultas com `.in()` e custaria ~14 no total). Enquanto o volume real for
+ * de dezenas, este limite nunca é atingido — e quando for, a lista é truncada
+ * em vez de a página travar.
+ */
+export const PAINEL_MAX_CASOS = 60;
+
+/**
+ * Casos visíveis para quem está chamando.
+ *
+ * `ownedBy` existe porque "visível" deixou de ser sinônimo de "meu". Quando a
+ * RLS passou a mostrar ao Curador os Cases sem dono — para ele poder assumi-los
+ * — esta função, que sempre confiou na RLS como recorte, começou a devolver
+ * também o que não é dele. Consequência observada em produção: um Case
+ * disponível aparecia em "Suas Curadorias" E na fila de disponíveis ao mesmo
+ * tempo, e assumir não mudava nada visível, porque ele já estava na lista.
+ *
+ * A lição: ao ampliar uma policy, todo código que usava a RLS como filtro
+ * implícito muda de significado em silêncio. Quem quer "os meus" precisa dizer.
+ */
+export async function listCaseIds(
+  supabase: SupabaseClient,
+  ownedBy?: string,
+): Promise<string[]> {
+  let query = supabase.from("cases").select("id");
+
+  if (ownedBy) {
+    query = query.or(`responsible_id.eq.${ownedBy},assigned_curator_id.eq.${ownedBy}`);
+  }
+
+  const { data } = await query.order("updated_at", { ascending: false }).limit(PAINEL_MAX_CASOS);
 
   return (data ?? []).map((row) => row.id as string);
+}
+
+export type AvailableCase = {
+  caseId: string;
+  patientName: string;
+  openedAt: string;
+  /** Há quantos dias este Case espera alguém. */
+  waitingDays: number;
+};
+
+/**
+ * Curadorias que não são de ninguém.
+ *
+ * @metodo Fundamentos §5 — nenhum paciente espera sem que alguém saiba
+ * @metodo UX_PRINCIPLES P6 — a fila ordena pelo que falta fazer, nunca por produtividade
+ *
+ * Por que existe: um Case sem curador atribuído era invisível para todos os
+ * curadores — a RLS só mostrava o que já era seu. O trabalho ficava parado sem
+ * dono e sem ninguém para descobrir que estava parado.
+ *
+ * A ordem é por tempo de espera: quem espera há mais tempo aparece primeiro.
+ * Não é métrica de produtividade — é a pessoa que está há mais tempo sem
+ * resposta.
+ */
+export async function listAvailableCases(
+  supabase: SupabaseClient,
+  now: Date = new Date(),
+): Promise<AvailableCase[]> {
+  const { data } = await supabase
+    .from("cases")
+    .select("id, created_at, patient_profile_id")
+    .is("assigned_curator_id", null)
+    .is("responsible_id", null)
+    .order("created_at", { ascending: true })
+    .limit(PAINEL_MAX_CASOS);
+
+  const rows = data ?? [];
+  if (rows.length === 0) return [];
+
+  const names = await displayNames(
+    supabase,
+    rows.map((row) => row.patient_profile_id as string),
+  );
+
+  return rows.map((row) => {
+    const openedAt = row.created_at as string;
+    const dias = Math.floor((now.getTime() - new Date(openedAt).getTime()) / 86_400_000);
+    return {
+      caseId: row.id as string,
+      // Sem o nome, a fila obrigaria o Curador a abrir cada caso para saber de
+      // quem é. A RLS agora permite ao Curador ler o nome — e só o nome.
+      patientName: names.get(row.patient_profile_id as string) ?? "Paciente",
+      openedAt,
+      waitingDays: Math.max(0, dias),
+    };
+  });
 }

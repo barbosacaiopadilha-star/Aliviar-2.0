@@ -1,11 +1,20 @@
 import path from "path";
 import { defineConfig } from "vitest/config";
 
+import SentinelaPorUltimo from "./tests/integration/limpeza/sequenciador";
+
 export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/integration/**/*.test.ts"],
-    setupFiles: ["./tests/integration/setup-env.ts"],
+    // `setup-limpeza` roda para CADA arquivo e instala o par
+    // snapshot/limpeza sem exigir uma linha de edição em teste nenhum —
+    // inclusive nos que ainda não existem. Ver o arquivo para o raciocínio.
+    setupFiles: ["./tests/integration/setup-env.ts", "./tests/integration/setup-limpeza.ts"],
+    globalSetup: ["./tests/integration/limpeza/global.ts"],
+    sequence: {
+      sequencer: SentinelaPorUltimo,
+    },
     testTimeout: 20000,
     // Todos os arquivos desta suíte compartilham o mesmo Supabase local —
     // tabelas globais sem namespace por arquivo (ex.: professional_profiles).

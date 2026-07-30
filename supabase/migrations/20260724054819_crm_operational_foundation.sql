@@ -1,0 +1,1 @@
+insert into curadoria.roles (slug, name) values ('concierge', 'Concierge') on conflict (slug) do nothing;

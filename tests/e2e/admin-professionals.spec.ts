@@ -32,7 +32,9 @@ test.describe("gestão administrativa de profissionais (Sprint Produto 2)", () =
     await loginAs(page, account);
 
     await page.goto("/admin/profissionais");
-    await expect(page.getByRole("heading", { name: "Profissionais" })).toBeVisible();
+    // `exact` porque o estado vazio da lista tem um h2 que também contém
+    // "profissionais" — o alvo é o título da página, não o vizinho.
+    await expect(page.getByRole("heading", { name: "Profissionais", exact: true })).toBeVisible();
 
     await page.getByRole("link", { name: "Novo profissional" }).click();
     await expect(page).toHaveURL("/admin/profissionais/novo");

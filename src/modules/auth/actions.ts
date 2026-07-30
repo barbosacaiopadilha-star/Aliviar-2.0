@@ -52,7 +52,16 @@ export async function signInAction(
 
 export async function signOutAction(): Promise<never> {
   const supabase = await createServerSupabaseClient();
-  await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut();
+
+  // Sessão ausente ou já expirada NÃO é falha de logout: a pessoa queria
+  // estar deslogada e já está. Tratar isso como erro produzia um
+  // "?error=logout" assustador exatamente para quem clicou Sair duas vezes
+  // ou voltou de uma aba antiga. Só falha real de revogação vira erro.
+  if (error && !/session/i.test(error.message ?? "")) {
+    redirect("/login?error=logout");
+  }
+
   redirect("/login");
 }
 

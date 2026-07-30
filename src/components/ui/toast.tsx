@@ -7,13 +7,14 @@ import { cn } from "@/components/ui/cn";
 type ToastItem = {
   id: string;
   message: string;
-  variant?: "success" | "warning" | "error";
+  variant?: "success" | "warning" | "error" | "info";
 };
 
 const variantClasses: Record<NonNullable<ToastItem["variant"]>, string> = {
   success: "border-success/20 bg-success-surface text-success",
   warning: "border-warning/20 bg-warning-surface text-warning",
   error: "border-error/20 bg-error-surface text-error",
+  info: "border-border bg-surface text-ink",
 };
 
 let pushToast: ((toast: Omit<ToastItem, "id">) => void) | null = null;

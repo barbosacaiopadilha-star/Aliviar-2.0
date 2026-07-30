@@ -74,7 +74,7 @@ describe("Motor de Condução — o que já foi concluído", () => {
 describe("Motor de Condução — o que falta", () => {
   it("diz exatamente o que falta na fase atual", () => {
     const state = conduct(marina);
-    expect(state.missing.join(" ")).toContain("100 pontos");
+    expect(state.missing.join(" ")).toContain("Mapa de Prioridades");
   });
 
   it("bloqueia fases cujos critérios de entrada não foram atendidos", () => {

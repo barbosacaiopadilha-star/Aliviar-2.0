@@ -8,6 +8,8 @@ import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 
+import { assertValidacaoAutorizada, descreverAmbiente } from "./validation-guard.mjs";
+
 export const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 export const PROJECT_ROOT = join(SCRIPT_DIR, "..", "..");
 export const REPORT_PATH = join(PROJECT_ROOT, "scripts", "local", "validation-report.json");
@@ -69,7 +71,17 @@ export function loadEnvFile(filePath) {
   return values;
 }
 
-export function loadValidationEnv() {
+/**
+ * O ambiente das validações — com a guarda no caminho.
+ *
+ * Este é o único ponto por onde `validate-e2e-real` e
+ * `validate-e2e-curadoria-b6` descobrem para onde apontar, e por isso é aqui
+ * que a recusa mora: antes de qualquer client, antes de qualquer conta.
+ *
+ * `modo: "diagnostico"` apenas descreve o ambiente sem bloquear — é o que o
+ * `validation:diagnose` precisa fazer, e ele não cria nem apaga nada.
+ */
+export function loadValidationEnv({ modo = "execucao", comando = "Validação hospedada" } = {}) {
   const merged = {
     ...loadEnvFile(join(PROJECT_ROOT, ".env.local")),
     ...loadEnvFile(join(SCRIPT_DIR, ".env.admin.local")),
@@ -91,6 +103,15 @@ export function loadValidationEnv() {
   merged.SUPABASE_URL = merged.SUPABASE_URL ?? merged.NEXT_PUBLIC_SUPABASE_URL;
   merged.SUPABASE_ANON_KEY = merged.SUPABASE_ANON_KEY ?? merged.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   merged.VALIDATION_BASE_URL = merged.VALIDATION_BASE_URL ?? "http://127.0.0.1:3000";
+
+  // O ambiente é sempre dito em voz alta antes de qualquer coisa acontecer:
+  // uma validação que roda em silêncio é uma validação que ninguém sabe onde
+  // rodou.
+  console.log(`[ambiente] ${descreverAmbiente(merged.SUPABASE_URL)}`);
+
+  if (modo !== "diagnostico") {
+    assertValidacaoAutorizada(merged.SUPABASE_URL, comando);
+  }
 
   return merged;
 }

@@ -1,129 +1,135 @@
 import { Alert } from "@/components/ui/alert";
-import { Card, CardHeader } from "@/components/ui/card";
+import { PatientCard, PatientPageHeader } from "@/components/paciente/dashboard/patient-primitives";
 import type { FinalCuradoriaDeliveryRecord } from "@/modules/concierge/types";
+import type { ProviderPresentation } from "@/modules/ace/artifacts/final-curadoria";
 
 type FinalCuradoriaViewProps = {
   delivery: FinalCuradoriaDeliveryRecord;
 };
 
-// A experiência de entrega da Curadoria — a única tela desta sessão que
-// mostra artefatos do ACE ao paciente, porque este é o único artefato
-// desenhado para ele. Nunca mostra score, nota, ranking, percentual,
-// protocolo, artefato interno ou nome de modelo de IA — só o que a equipe
-// Aliviar já validou e traduziu para linguagem simples.
+function OptionCard({ presentation, index }: { presentation: ProviderPresentation; index: number }) {
+  const labels = ["Primeiro caminho", "Segundo caminho", "Terceiro caminho"];
+
+  return (
+    <PatientCard className="flex h-full flex-col">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-brand-sage)]">
+        {labels[index] ?? `Caminho ${index + 1}`}
+      </p>
+      <h3 className="mt-3 font-serif text-xl font-medium text-[var(--patient-ink)]">
+        {presentation.displayName}
+      </h3>
+      <p className="patient-body mt-3 text-[var(--patient-ink)]">{presentation.professionalSummary}</p>
+      <p className="patient-body mt-3 text-[var(--color-ink-muted)]">{presentation.whyIncluded}</p>
+
+      {presentation.strengthsForThisCase.length > 0 ? (
+        <div className="mt-5 border-t border-[var(--color-border)] pt-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-brand-sage)]">
+            O que oferece
+          </p>
+          <ul className="mt-2 space-y-1.5 text-sm text-[var(--patient-ink)]">
+            {presentation.strengthsForThisCase.map((item) => (
+              <li key={item} className="flex gap-2">
+                <span aria-hidden="true" className="text-[var(--color-brand-sage)]">
+                  ·
+                </span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {presentation.practicalConsiderations.length > 0 ? (
+        <div className="mt-5 border-t border-[var(--color-border)] pt-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-brand-sage)]">
+            Bom saber antes de conversar
+          </p>
+          <ul className="mt-2 space-y-1.5 text-sm text-[var(--color-ink-muted)]">
+            {presentation.practicalConsiderations.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {presentation.relevantLimitations.length > 0 ? (
+        <div className="mt-5 border-t border-[var(--color-border)] pt-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-brand-sage)]">
+            Vale considerar
+          </p>
+          <ul className="mt-2 space-y-1.5 text-sm text-[var(--color-ink-muted)]">
+            {presentation.relevantLimitations.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </PatientCard>
+  );
+}
+
 export function FinalCuradoriaView({ delivery }: FinalCuradoriaViewProps) {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-sans text-2xl font-semibold text-ink">
-          Sua Curadoria
-        </h1>
-        <p className="text-sm text-ink-muted">
-          Entregue em{" "}
-          {new Date(delivery.deliveredAt).toLocaleDateString("pt-BR")} pela
-          equipe Aliviar.
-        </p>
-      </div>
+    <div className="space-y-10">
+      <PatientPageHeader
+        eyebrow="Seu relatório"
+        title="Um documento para reler com calma."
+        description={`Entregue em ${new Date(delivery.deliveredAt).toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        })} pela equipe Aliviar.`}
+      />
 
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">
-            O que você nos trouxe
+      <PatientCard>
+        <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">O que você nos trouxe</h2>
+        <p className="patient-body mt-3 text-[var(--patient-ink)]">{delivery.decisionSummary}</p>
+      </PatientCard>
+
+      <PatientCard>
+        <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
+          Como construímos sua Curadoria
+        </h2>
+        <p className="patient-body mt-3 text-[var(--patient-ink)]">{delivery.methodExplanation}</p>
+        <p className="patient-body mt-3 text-[var(--color-ink-muted)]">{delivery.clientContextSummary}</p>
+      </PatientCard>
+
+      <section className="space-y-6">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-brand-sage)]">
+            As três opções
+          </p>
+          <h2 className="mt-2 font-serif text-2xl font-medium text-[var(--patient-ink)] lg:text-3xl">
+            {/* Correção de Método (reintegração): a palavra proibida não entra
+                no vocabulário do paciente nem para ser negada — não se nomeia
+                o que não deve existir (Ontologia §8; teste deste componente). */}
+            Três caminhos legítimos — sem ordem de preferência
           </h2>
-        </CardHeader>
-        <p className="text-sm text-ink">{delivery.decisionSummary}</p>
-      </Card>
+          <p className="patient-body mt-3 max-w-2xl text-[var(--color-ink-muted)]">
+            {delivery.comparisonSummary}
+          </p>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">
-            Como construímos sua Curadoria
-          </h2>
-        </CardHeader>
-        <p className="text-sm text-ink">{delivery.methodExplanation}</p>
-        <p className="mt-2 text-sm text-ink-muted">
-          {delivery.clientContextSummary}
-        </p>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">
-            Profissionais recomendados para você
-          </h2>
-          <p className="text-sm text-ink-muted">{delivery.comparisonSummary}</p>
-        </CardHeader>
-        <div className="space-y-4">
-          {delivery.providerPresentations.map((presentation) => (
-            <div
-              key={presentation.providerId}
-              className="rounded-md border border-border p-4"
-            >
-              <h3 className="font-sans text-base font-semibold text-ink">
-                {presentation.displayName}
-              </h3>
-              <p className="mt-1 text-sm text-ink">
-                {presentation.professionalSummary}
-              </p>
-              <p className="mt-2 text-sm text-ink-muted">
-                {presentation.whyIncluded}
-              </p>
-
-              {presentation.strengthsForThisCase.length > 0 ? (
-                <div className="mt-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-                    O que esta pessoa pode oferecer
-                  </p>
-                  <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink">
-                    {presentation.strengthsForThisCase.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-
-              {presentation.practicalConsiderations.length > 0 ? (
-                <div className="mt-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-                    Bom saber antes de conversar
-                  </p>
-                  <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">
-                    {presentation.practicalConsiderations.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-
-              {presentation.relevantLimitations.length > 0 ? (
-                <div className="mt-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-                    Vale considerar
-                  </p>
-                  <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">
-                    {presentation.relevantLimitations.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-            </div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          {delivery.providerPresentations.map((presentation, index) => (
+            <OptionCard key={presentation.providerId} presentation={presentation} index={index} />
           ))}
         </div>
-      </Card>
+      </section>
 
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">
-            Próximos passos
-          </h2>
-        </CardHeader>
-        <ul className="list-disc space-y-1 pl-5 text-sm text-ink">
+      <PatientCard>
+        <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">Próximos passos</h2>
+        <ul className="mt-4 space-y-2 text-[var(--patient-ink)]">
           {delivery.nextSteps.map((step) => (
-            <li key={step}>{step}</li>
+            <li key={step} className="patient-body flex gap-2">
+              <span aria-hidden="true" className="text-[var(--color-brand-sage)]">
+                ·
+              </span>
+              <span>{step}</span>
+            </li>
           ))}
         </ul>
-      </Card>
+      </PatientCard>
 
       <Alert variant="info">{delivery.disclaimer}</Alert>
     </div>

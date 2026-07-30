@@ -41,10 +41,15 @@ export function Dialog({ open, onClose, title, children, className }: DialogProp
 
   return (
     <div className="fixed inset-0 z-modal-overlay flex items-center justify-center p-4">
+      {/* Backdrop clicável, mas FORA da ordem de tabulação e invisível para
+          leitor de tela: com TAB chegava-se a um botão de tela cheia sem nome
+          visível, e o leitor anunciava dois "Fechar". Mouse/touch fecham por
+          aqui; teclado fecha por Escape ou pelo botão nomeado. */}
       <button
         type="button"
-        aria-label="Fechar"
-        className="absolute inset-0 bg-ink/30"
+        tabIndex={-1}
+        aria-hidden="true"
+        className="absolute inset-0 cursor-default bg-ink/30"
         onClick={onClose}
       />
       <div

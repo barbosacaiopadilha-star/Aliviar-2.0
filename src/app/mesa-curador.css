@@ -1,0 +1,660 @@
+/* ---------------------------------------------------------------------------
+   MESA DO CURADOR — ambiente de investigação.
+
+   O paciente percorre uma jornada; o Curador conduz uma investigação. A
+   diferença aparece aqui: a área do paciente respira em cartões macios e luz
+   quente; a Mesa é densa, objetiva e rápida. Mesma identidade — papel, verde
+   floresta, serifada nos títulos —, outra função.
+
+   O Curador trabalha horas seguidas: nada aqui pulsa, brilha ou se move sem
+   ele pedir. Poucas bordas, grandes áreas, muito espaço branco.
+--------------------------------------------------------------------------- */
+.mesa {
+  --mesa-line: rgb(26 46 38 / 0.10);
+  --mesa-line-strong: rgb(26 46 38 / 0.22);
+  --mesa-surface: rgb(255 255 255 / 0.72);
+  --mesa-motion: 140ms;
+  --mesa-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ------------------------------- PAINEL A+B: o topo fixo ----------------- */
+/* Cabeçalho e etapas grudam JUNTOS, num contêiner só.
+   Antes cada um tinha seu próprio `sticky` com `top` em número mágico
+   (0 e 5.25rem) calibrado para um cabeçalho de altura fixa. Bastava um alerta
+   entrar — e o cabeçalho passa a ter 110px — para a faixa de etapas colar
+   26px alto demais e deslizar por baixo dele. Um contêiner só não tem como
+   errar a conta. */
+.mesa-topo {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgb(249 248 246 / 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--mesa-line);
+}
+
+.mesa-header {
+  padding: 0.75rem 0 0.625rem;
+}
+
+.mesa-meta {
+  font-size: 0.75rem;
+  color: var(--color-ink-muted);
+  letter-spacing: 0.01em;
+}
+
+.mesa-alerta {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--color-ink);
+  border-left: 2px solid rgb(138 115 85 / 0.55);
+  padding-left: 0.625rem;
+}
+
+/* ------------------------------- PAINEL B: etapas ------------------------ */
+.mesa-steps {
+  padding: 0 0 0.375rem;
+}
+
+/* Quebra em duas linhas; nunca rola de lado.
+   Em 768px as sete etapas somavam 827px numa faixa de 705px, com a barra de
+   rolagem escondida: "Relatório" simplesmente não existia para quem olhava.
+   Uma navegação que esconde uma etapa faz o Curador acreditar que a
+   investigação tem seis passos. */
+.mesa-steps__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.125rem;
+}
+
+.mesa-step {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  min-height: 2.25rem;
+  padding: 0 0.75rem;
+  border-radius: 0.5rem;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  color: var(--color-ink-muted);
+  transition: background-color var(--mesa-motion) var(--mesa-ease), color var(--mesa-motion) var(--mesa-ease);
+}
+
+.mesa-step:hover {
+  background: rgb(26 46 38 / 0.045);
+  color: var(--color-ink);
+}
+
+.mesa-step:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+
+.mesa-step--ativa {
+  background: rgb(26 46 38 / 0.075);
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.mesa-step__marca {
+  font-size: 0.6875rem;
+  line-height: 1;
+}
+
+.mesa-step__marca--pronta {
+  color: var(--color-brand-sage);
+}
+
+.mesa-step__marca--pendente {
+  color: var(--color-brand-primary);
+}
+
+/* A marca "·" a 30% sumia no papel. A identidade do estado não é só cor — a
+   forma muda (✓ ● ·) e o leitor de tela recebe o rótulo —, mas uma marca
+   invisível não identifica nada para quem enxerga. */
+.mesa-step__marca--aguarda {
+  color: rgb(26 46 38 / 0.5);
+}
+
+/* Onde está a próxima decisão. Um ponto, não um badge: sinaliza sem gritar. */
+.mesa-step__destino {
+  width: 0.3125rem;
+  height: 0.3125rem;
+  border-radius: 9999px;
+  background: var(--color-brand-gold);
+}
+
+/* ------------------------------- PAINEL C: área de trabalho -------------- */
+.mesa-work {
+  min-width: 0;
+  padding-top: 1.75rem;
+}
+
+.mesa-work__title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--color-brand-sage);
+}
+
+.mesa-work__question {
+  margin-top: 0.375rem;
+  font-family: var(--font-serif, serif);
+  font-size: 1.25rem;
+  line-height: 1.35;
+  color: var(--color-ink);
+}
+
+/* Grandes áreas, poucas bordas: separação por espaço e por uma linha fina,
+   nunca por cartão dentro de cartão. */
+.mesa-bloco + .mesa-bloco {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--mesa-line);
+}
+
+/* ------------------------------- PAINEL D: contexto persistente ---------- */
+.mesa-aside {
+  min-width: 0;
+  font-size: 0.8125rem;
+}
+
+.mesa-aside__section + .mesa-aside__section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--mesa-line);
+}
+
+.mesa-aside__title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--color-brand-sage);
+}
+
+/* ------------------------------- evidências como chips ------------------- */
+.mesa-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  min-height: 1.75rem;
+  padding: 0 0.625rem;
+  border-radius: 9999px;
+  border: 1px solid var(--mesa-line);
+  background: var(--mesa-surface);
+  font-size: 0.75rem;
+  color: var(--color-ink);
+  transition: border-color var(--mesa-motion) var(--mesa-ease);
+}
+
+button.mesa-chip:hover {
+  border-color: var(--mesa-line-strong);
+}
+
+button.mesa-chip:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+
+.mesa-chip--ok {
+  border-color: rgb(90 125 106 / 0.4);
+}
+
+.mesa-chip--alerta {
+  border-color: rgb(138 115 85 / 0.5);
+  background: rgb(138 115 85 / 0.06);
+}
+
+.mesa-chip--ausente {
+  color: var(--color-ink-muted);
+  border-style: dashed;
+}
+
+/* ------------------------------- estados vazios -------------------------- */
+.mesa-vazio {
+  padding: 2.5rem 0;
+  max-width: 46ch;
+}
+
+/* ------------------------------- linha do tempo -------------------------- */
+/* Quebra em linhas; nunca rola de lado.
+   Era `flex` com `overflow-x: auto` e barra de rolagem escondida. Numa coluna
+   de 20rem as marcas não cabiam: "Escolha" e "Relatório" ficavam fora da tela,
+   sem nenhum sinal de que existiam — e ainda empurravam a página inteira para
+   1515px de largura, criando rolagem horizontal no documento. Uma linha do
+   tempo que esconde o fim da jornada mente sobre o tamanho dela. */
+.mesa-timeline {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(4.25rem, 1fr));
+  gap: 0.5rem 0.625rem;
+  min-width: 0;
+}
+
+.mesa-timeline__item {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.3125rem;
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  color: var(--color-ink-muted);
+  overflow-wrap: anywhere;
+}
+
+.mesa-timeline__bar {
+  height: 0.1875rem;
+  border-radius: 9999px;
+  background: rgb(26 46 38 / 0.10);
+}
+
+.mesa-timeline__item--done .mesa-timeline__bar {
+  background: rgb(90 125 106 / 0.55);
+}
+
+.mesa-timeline__item--current .mesa-timeline__bar {
+  background: var(--color-brand-primary);
+}
+
+.mesa-timeline__item--current {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+/* ------------------------------- responsividade -------------------------- */
+/* Desktop é o ambiente principal: trabalho e contexto lado a lado.
+   Tablet e celular empilham — no celular a Mesa é consulta, e a edição
+   complexa continua sendo trabalho de mesa, não de mão. */
+.mesa-layout {
+  display: grid;
+  gap: 2rem;
+}
+
+/* No celular o topo deixa de ser fixo.
+   Com o cabeçalho quebrando em quatro linhas e as etapas em três, ele ocupava
+   295px de uma tela de 844 — 35% da altura permanentemente gasta em contexto,
+   num ambiente que é de consulta. O contexto continua a um scroll de
+   distância; a tela de trabalho volta a existir. */
+@media (max-width: 767px) {
+  .mesa-topo {
+    position: static;
+  }
+
+  .mesa-step {
+    min-height: 2rem;
+    padding: 0 0.5rem;
+  }
+
+  /* Alvo de toque: no desktop "Resolver em…" é um link de 16px e funciona;
+     no dedo, não. */
+  .mesa-atencao__ir,
+  .mesa-filtros__limpar {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .mesa-layout {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    align-items: start;
+  }
+
+  /* O contexto acompanha a rolagem — mas com teto e rolagem própria.
+     Sem isso, um Case com várias pendências deixa o fim do painel
+     inalcançável: ele gruda no topo e o que passa da altura da tela nunca
+     aparece. `--mesa-topo` é a altura real do topo fixo, medida em runtime. */
+  .mesa-aside {
+    position: sticky;
+    top: calc(var(--mesa-topo, 9rem) + 1.25rem);
+    max-height: calc(100vh - var(--mesa-topo, 9rem) - 2.5rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+}
+
+/* ------------------------------- rótulo comum --------------------------- */
+.mesa-rotulo {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--color-brand-sage);
+}
+
+/* ------------------------------- linha de investigação ------------------- */
+/* O raciocínio, não o workflow: sem botão, sem seta clicável, sem promessa de
+   ordem obrigatória. */
+.mesa-raciocinio {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 0.75rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  /* Era rgb(26 46 38 / 0.35) — 2:1 sobre o papel. "CONFERÊNCIA" e
+     "CONCLUSÃO" ficavam praticamente ilegíveis, e são justamente as etapas
+     que o Curador ainda vai percorrer. */
+  color: var(--color-ink-muted);
+}
+
+.mesa-raciocinio__item + .mesa-raciocinio__item::before {
+  content: "→";
+  margin-right: 0.75rem;
+  color: rgb(26 46 38 / 0.35);
+}
+
+.mesa-raciocinio__item--percorrida {
+  color: var(--color-brand-sage);
+}
+
+.mesa-raciocinio__item--agora {
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+/* Separa o raciocínio do rótulo da etapa. Empilhadas, as duas faixas em caixa
+   alta liam como uma coisa só, e "REDE ELEGÍVEL" parecia o quarto passo do
+   raciocínio. */
+.mesa-raciocinio {
+  padding-bottom: 0.625rem;
+  border-bottom: 1px solid var(--mesa-line);
+  margin-bottom: 1rem;
+}
+
+/* ------------------------------- chips: estados completos ---------------- */
+.mesa-chip--aguardando {
+  border-style: dotted;
+}
+
+.mesa-chip--ativo {
+  border-color: var(--color-brand-primary);
+  background: rgb(26 46 38 / 0.07);
+  font-weight: 600;
+}
+
+.mesa-chip__contagem {
+  margin-left: 0.125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink-muted);
+}
+
+.mesa-chip__detalhe {
+  margin-top: 0.75rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--mesa-line-strong);
+}
+
+/* ------------------------------- filtros rápidos ------------------------- */
+.mesa-filtros__limpar {
+  min-height: 1.75rem;
+  padding: 0 0.375rem;
+  font-size: 0.75rem;
+  color: var(--color-ink-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.mesa-filtros__limpar:hover {
+  color: var(--color-ink);
+}
+
+/* ------------------------------- comparação ------------------------------ */
+.mesa-matriz {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.mesa-matriz__canto,
+.mesa-matriz__criterio {
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  text-align: left;
+  font-weight: 400;
+  color: var(--color-ink-muted);
+  white-space: nowrap;
+}
+
+.mesa-matriz__canto {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--color-brand-sage);
+}
+
+.mesa-matriz__coluna {
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-ink);
+  border-bottom: 1px solid var(--mesa-line-strong);
+}
+
+/* Coluna em foco pelo teclado: um fio, não um destaque — realçar demais
+   pareceria a Mesa apontando um preferido. */
+.mesa-matriz__coluna--foco {
+  box-shadow: inset 0 -2px 0 var(--color-brand-sage);
+}
+
+.mesa-matriz__celula,
+.mesa-matriz__rodape {
+  padding: 0.375rem 0.75rem;
+  vertical-align: top;
+  border-top: 1px solid var(--mesa-line);
+}
+
+/* Um fio entre colunas. Com três colunas de números parecidos, o olho perdia
+   de quem era a coluna no meio de uma linha. */
+.mesa-matriz__coluna + .mesa-matriz__coluna,
+.mesa-matriz__celula + .mesa-matriz__celula,
+.mesa-matriz__rodape + .mesa-matriz__rodape {
+  border-left: 1px solid var(--mesa-line);
+}
+
+.mesa-matriz__bloco {
+  padding: 1rem 0 0.3125rem;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-brand-sage);
+}
+
+.mesa-matriz__rodape {
+  font-size: 0.75rem;
+  color: var(--color-ink-muted);
+  line-height: 1.45;
+}
+
+.mesa-matriz__linha {
+  display: block;
+}
+
+.mesa-matriz__numero {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+/* Cada estado tem marca, forma e texto — nunca só cor. */
+.mesa-celula {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  min-height: 1.75rem;
+  padding: 0 0.375rem;
+  border-radius: 0.375rem;
+  border-left: 2px solid transparent;
+  text-align: left;
+  color: var(--color-ink);
+  transition: background-color var(--mesa-motion) var(--mesa-ease);
+}
+
+.mesa-celula:hover {
+  background: rgb(26 46 38 / 0.045);
+}
+
+.mesa-celula:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+
+.mesa-celula__marca {
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.mesa-celula__pontos {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink-muted);
+}
+
+.mesa-celula--pleno {
+  border-left-color: var(--color-brand-sage);
+}
+
+.mesa-celula--parcial {
+  border-left-color: rgb(90 125 106 / 0.4);
+}
+
+.mesa-celula--nao {
+  border-left-color: rgb(26 46 38 / 0.25);
+}
+
+.mesa-celula--insuficiente {
+  border-left-color: rgb(138 115 85 / 0.6);
+  border-left-style: dashed;
+}
+
+.mesa-celula--vazio {
+  border-left-style: dotted;
+  border-left-color: rgb(26 46 38 / 0.2);
+  color: var(--color-ink-muted);
+}
+
+.mesa-celula__evidencia {
+  margin-top: 0.375rem;
+  max-width: 34ch;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--color-ink-muted);
+}
+
+.mesa-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--mesa-line);
+  font-size: 0.6875rem;
+  color: var(--color-ink-muted);
+}
+
+/* ------------------------------- painel inteligente ---------------------- */
+.mesa-atencao {
+  display: grid;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.mesa-atencao__item {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.mesa-atencao__marca {
+  flex: none;
+  margin-top: 0.125rem;
+  font-size: 0.6875rem;
+  color: var(--color-brand-sage);
+}
+
+.mesa-atencao__ir {
+  margin-top: 0.25rem;
+  font-size: 0.6875rem;
+  color: var(--color-brand-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.mesa-atencao__ir:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+
+/* ------------------------------- hipóteses ------------------------------- */
+.mesa-hipotese {
+  font-size: 0.8125rem;
+}
+
+.mesa-hipotese__status {
+  margin-top: 0.5rem;
+  display: inline-block;
+  padding: 0.0625rem 0.5rem;
+  border: 1px dashed var(--mesa-line-strong);
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  color: var(--color-ink-muted);
+}
+
+.mesa-hipotese__status--conferida {
+  border-style: solid;
+  border-color: rgb(90 125 106 / 0.5);
+  color: var(--color-ink);
+}
+
+/* ------------------------------- atalhos --------------------------------- */
+.mesa-tecla {
+  display: inline-block;
+  min-width: 1.25rem;
+  padding: 0 0.25rem;
+  border: 1px solid var(--mesa-line-strong);
+  border-radius: 0.25rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.625rem;
+  text-align: center;
+  color: var(--color-ink);
+}
+
+.mesa-ajuda__dica {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.6875rem;
+  color: var(--color-ink-muted);
+}
+
+.mesa-ajuda__dica:hover {
+  color: var(--color-ink);
+}
+
+.mesa-ajuda {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--mesa-line);
+  border-radius: 0.5rem;
+  background: var(--mesa-surface);
+}
+
+/* ------------------------------- linha do tempo dupla -------------------- */
+.mesa-dupla__segunda {
+  margin-top: 0.875rem;
+  padding-top: 0.875rem;
+  border-top: 1px dashed var(--mesa-line);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mesa-step,
+  .mesa-chip,
+  .mesa-celula {
+    transition: none;
+  }
+}

@@ -51,11 +51,15 @@ export function Drawer({
       )}
       aria-hidden={!open}
     >
+      {/* Backdrop fora da ordem de tabulação e do leitor de tela — mesmo
+          contrato do Dialog: mouse/touch fecham aqui, teclado fecha por
+          Escape ou pelo botão nomeado. */}
       <button
         type="button"
-        aria-label="Fechar menu"
+        tabIndex={-1}
+        aria-hidden="true"
         className={cn(
-          "absolute inset-0 bg-ink/30 transition-opacity duration-base ease-standard",
+          "absolute inset-0 cursor-default bg-ink/30 transition-opacity duration-base ease-standard",
           open ? "opacity-100" : "opacity-0",
         )}
         onClick={onClose}

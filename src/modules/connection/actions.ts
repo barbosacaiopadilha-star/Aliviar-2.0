@@ -2,8 +2,10 @@
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRoleForAction } from "@/modules/auth/guard";
-import { getCase } from "@/modules/cases/repository";
-import { getFinalCuradoriaDeliveryForCase } from "@/modules/concierge";
+import {
+  eligibleProfessionalProfileIds,
+  findDeliveredCuradoria,
+} from "@/modules/curadoria/delivery-contract";
 import {
   createRelationship,
   reconstructRelationshipRecordFromRow,
@@ -71,25 +73,36 @@ function mapErrorToMessage(error: unknown): string {
 }
 
 // Resolve, a partir do Caso, tudo que uma action precisa para autorizar e
-// validar: o próprio Caso (dono), a FinalCuradoria entregue (prova de que
-// P009/P010 já ocorreram — nenhuma Curadoria não validada tem linha em
-// final_curadoria_deliveries) e os profissionais elegíveis daquela entrega
-// específica.
-async function loadAuthorizedContext(caseId: string, patientProfileId: string) {
+// validar: o próprio Caso (dono), a entrega reconhecida pelo contrato canônico
+// e os profissionais elegíveis daquela entrega específica.
+//
+// A prova de entrega deixou de ser "existe linha em final_curadoria_deliveries".
+// Passou a ser a pergunta do contrato — "existe uma Curadoria validamente
+// entregue para este Case?" —, que a Curadoria do Método responde e o ACE
+// legado só responde quando o Método não respondeu. Esta camada não sabe qual
+// das duas respondeu, e não deve saber.
+//
+// A AUTORIZAÇÃO VEM DA ENTREGA, NÃO DE `cases`.
+//
+// Antes, a primeira coisa aqui era `getCase(supabase, caseId)` — e ela recusava
+// TODA escolha do paciente. A RLS de `cases` autoriza administrador,
+// `responsible_id` e `assigned_curator_id`; o paciente não está nessa lista e
+// nunca esteve. Ele alcança sua Curadoria pelas tabelas da entrega, não pelo
+// Case. O resultado era "Caso não encontrado." para o dono legítimo do Caso.
+//
+// Funcionava enquanto a prova de entrega era `final_curadoria_deliveries`, que
+// o paciente lê. Ao trocar a fonte pelo contrato canônico, a checagem anterior
+// ficou sem cobertura — última consequência daquela migração.
+//
+// A autorização correta já está embutida no que resta: `findDeliveredCuradoria`
+// lê `curadoria_reports` sob a RLS do próprio paciente, e a policy daquela
+// tabela exige `is_patient_for_case(case_id)`. Alcançar a entrega É a prova de
+// ser o paciente do Caso — não uma verificação a menos, uma verificação feita
+// pelo banco em vez de pela aplicação. A RPC repete a checagem por dentro.
+async function loadAuthorizedContext(caseId: string) {
   const supabase = await createServerSupabaseClient();
 
-  const kase = await getCase(supabase, caseId);
-  if (!kase) {
-    return { outcome: "error" as const, error: "Caso não encontrado." };
-  }
-  if (kase.patientProfileId !== patientProfileId) {
-    return {
-      outcome: "error" as const,
-      error: "Você não tem permissão para este Caso.",
-    };
-  }
-
-  const delivery = await getFinalCuradoriaDeliveryForCase(supabase, caseId);
+  const delivery = await findDeliveredCuradoria(supabase, caseId);
   if (!delivery) {
     return {
       outcome: "error" as const,
@@ -98,9 +111,7 @@ async function loadAuthorizedContext(caseId: string, patientProfileId: string) {
   }
 
   const eligibility: EligibilityContext = {
-    eligibleProfessionalProfileIds: delivery.providerPresentations.map(
-      (presentation) => presentation.providerId,
-    ),
+    eligibleProfessionalProfileIds: [...eligibleProfessionalProfileIds(delivery)],
   };
 
   return { outcome: "ok" as const, supabase, delivery, eligibility };
@@ -124,10 +135,7 @@ export async function createConnectionAction(
     return { success: false, error: "Não autorizado." };
   }
 
-  const context = await loadAuthorizedContext(
-    parsed.data.caseId,
-    authState.user.id,
-  );
+  const context = await loadAuthorizedContext(parsed.data.caseId);
   if (context.outcome === "error") {
     return { success: false, error: context.error };
   }
@@ -148,7 +156,7 @@ export async function createConnectionAction(
     const result = createConnection(
       {
         caseId: parsed.data.caseId,
-        finalCuradoriaDeliveryId: context.delivery.id,
+        anchor: context.delivery.anchor,
         patientProfileId: authState.user.id,
         professionalProfileId: parsed.data.professionalProfileId,
         actorId: authState.user.id,
@@ -168,11 +176,8 @@ export async function createConnectionAction(
 // Comum às quatro actions restantes: carregar o Connection existente do
 // Caso (nunca aceitar um connectionId vindo do client — Etapa 6: nenhum ID
 // interno desnecessário é exposto) e devolver o repository já pronto.
-async function loadExistingConnection(
-  caseId: string,
-  patientProfileId: string,
-) {
-  const context = await loadAuthorizedContext(caseId, patientProfileId);
+async function loadExistingConnection(caseId: string) {
+  const context = await loadAuthorizedContext(caseId);
   if (context.outcome === "error") {
     return context;
   }
@@ -228,10 +233,7 @@ export async function correctChoiceAction(
     return { success: false, error: "Não autorizado." };
   }
 
-  const context = await loadExistingConnection(
-    parsed.data.caseId,
-    authState.user.id,
-  );
+  const context = await loadExistingConnection(parsed.data.caseId);
   if (context.outcome === "error") {
     return { success: false, error: context.error };
   }
@@ -275,10 +277,7 @@ export async function registerContactIntentAction(
     return { success: false, error: "Não autorizado." };
   }
 
-  const context = await loadExistingConnection(
-    parsed.data.caseId,
-    authState.user.id,
-  );
+  const context = await loadExistingConnection(parsed.data.caseId);
   if (context.outcome === "error") {
     return { success: false, error: context.error };
   }
@@ -317,10 +316,7 @@ export async function confirmFirstAppointmentAction(
     return { success: false, error: "Não autorizado." };
   }
 
-  const context = await loadExistingConnection(
-    parsed.data.caseId,
-    authState.user.id,
-  );
+  const context = await loadExistingConnection(parsed.data.caseId);
   if (context.outcome === "error") {
     return { success: false, error: context.error };
   }
@@ -387,10 +383,7 @@ export async function closeWithoutRelationshipAction(
     return { success: false, error: "Não autorizado." };
   }
 
-  const context = await loadExistingConnection(
-    parsed.data.caseId,
-    authState.user.id,
-  );
+  const context = await loadExistingConnection(parsed.data.caseId);
   if (context.outcome === "error") {
     return { success: false, error: context.error };
   }

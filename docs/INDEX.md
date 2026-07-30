@@ -17,6 +17,7 @@ Novo no projeto? Vá direto para **[ONBOARDING.md](ONBOARDING.md)**, que já tra
 
 | Documento                                                            | Propósito                                                                                                                                                                   |
 | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`curadoria/MODELO_CURADORIA_V1.md`](curadoria/MODELO_CURADORIA_V1.md) | **Canônico** — o modelo oficial do domínio da Curadoria: quatro camadas, dois cruzamentos independentes, vocabulário oficial e o estado da implementação. Toda ADR que alterar a Curadoria deve referenciá-lo. |
 | [`FUNDAMENTOS_DO_METODO_ALIVIAR.md`](FUNDAMENTOS_DO_METODO_ALIVIAR.md) | Documento institucional fundacional: o que a Aliviar é, Curadoria Compartilhada, Perfil de Prioridades, Compatibilidade, Decisão Compartilhada e os princípios da empresa — **Proposto**, não canônico. |
 | [`ONTOLOGIA_CURADORIA_COMPARTILHADA.md`](ONTOLOGIA_CURADORIA_COMPARTILHADA.md) | Modelo de conhecimento oficial da Curadoria: entidades, estados, regras, invariantes, glossário e diagrama — **Proposto**, não canônico. |
 | [`EXPERIENCE_BIBLE.md`](EXPERIENCE_BIBLE.md)                         | Como paciente e Curador devem se sentir em cada etapa: jornada emocional, princípios de UX, microinterações, tom de voz — **Proposto**, não canônico. |
@@ -54,7 +55,9 @@ Consolidação dos sete domínios oficiais (`docs/architecture/`) — mapa e inv
 
 | Documento                                              | Propósito                                                                                                           |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md)                   | Estado atual da arquitetura técnica — comece por aqui para "como o sistema é montado".                              |
+| [`BASELINE_CANONICAL_ARCHITECTURE.md`](BASELINE_CANONICAL_ARCHITECTURE.md) | **Referência oficial** do estado publicado em 2026-07-27: fluxo canônico, entrega, módulos, tabelas, funções, grants e limites conhecidos. Comece por aqui. |
+| [`BACKLOG_TECNICO.md`](BACKLOG_TECNICO.md)             | Dívida técnica aberta no encerramento da migração canônica, com a evidência de cada item.                           |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md)                   | Estado atual da arquitetura técnica — como o sistema é montado.                                                     |
 | [`CODEBASE_MAP.md`](CODEBASE_MAP.md)                   | Onde cada módulo/rota/componente vive em `src/`.                                                                    |
 | [`CONVENTIONS.md`](CONVENTIONS.md)                     | Padrões de código já em vigor — siga antes de inventar um novo.                                                     |
 | [`DATABASE.md`](DATABASE.md)                           | Catálogo de tabelas, migrations, o que é append-only.                                                               |
@@ -78,6 +81,7 @@ Consolidação dos sete domínios oficiais (`docs/architecture/`) — mapa e inv
 
 | Documento                          | Propósito                                                                     |
 | ---------------------------------- | ----------------------------------------------------------------------------- |
+| [`MANUAL_CURADOR.md`](MANUAL_CURADOR.md) | **Para o Curador Médico** — Manual Operacional v1.0, alinhado ao Modelo da Curadoria: papel, jornada, os dois cruzamentos, Relatório assistido, apresentação, situações especiais, auditoria e FAQ. Referência oficial de treinamento e operação. |
 | [`OPERATIONS.md`](OPERATIONS.md)   | Runbook de deploy/ativação de produção, passo a passo.                        |
 | [`DEBUGGING.md`](DEBUGGING.md)     | Por onde começar a diagnosticar os problemas mais prováveis.                  |
 | [`CREDENTIALS.md`](CREDENTIALS.md) | Inventário de credenciais — identificador/finalidade/ambiente, nunca valores. |
@@ -112,5 +116,6 @@ Dois vídeos distintos (ADR-017) — não confundir. O vídeo de lançamento vig
 
 | Documento                      | Propósito                                                                                                 |
 | ------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| [`RETENCAO_E_DESCARTE_DE_CASES.md`](RETENCAO_E_DESCARTE_DE_CASES.md) | Análise e decisão (ADR-038, **proposta**) sobre descartar um Case com histórico append-only: por que ele é indestrutível hoje, o que a imutabilidade pretendia garantir, e a porta administrativa auditada recomendada. |
 | [`DECISIONS.md`](DECISIONS.md) | Log de ADRs — consulte quando precisar entender **por que** algo é do jeito que é.                        |
 | [`tasks/`](tasks/)             | Tarefas historicamente delegadas ao Cursor (TASK-001 a TASK-005B) — arquivo histórico, não backlog ativo. |

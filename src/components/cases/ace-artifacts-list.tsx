@@ -5,7 +5,10 @@ import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Select } from "@/components/ui/select";
+import { DecisionCasePanel } from "@/components/ace/decision-case-panel";
 import { JsonViewer } from "@/components/ace/json-viewer";
+import { humanizeArtifactType, humanizeProtocolId } from "@/modules/ace/artifact-labels";
+import type { P002HumanFieldCorrection } from "@/modules/ace/protocols/p002-human-overrides";
 import { diffJson } from "@/lib/json-diff";
 import type { AceArtifact } from "@/modules/concierge/types";
 
@@ -20,6 +23,8 @@ import type { Shortlist } from "@/modules/ace/artifacts/shortlist";
 
 type AceArtifactsListProps = {
   artifacts: AceArtifact[];
+  caseId?: string;
+  p002Corrections?: P002HumanFieldCorrection[];
 };
 
 function describeArtifact(artifact: AceArtifact): string {
@@ -110,7 +115,7 @@ function VersionCompare({ versions }: { versions: AceArtifact[] }) {
   );
 }
 
-export function AceArtifactsList({ artifacts }: AceArtifactsListProps) {
+export function AceArtifactsList({ artifacts, caseId, p002Corrections = [] }: AceArtifactsListProps) {
   const [expandedType, setExpandedType] = useState<string | null>(null);
 
   if (artifacts.length === 0) {
@@ -147,8 +152,8 @@ export function AceArtifactsList({ artifacts }: AceArtifactsListProps) {
               className="flex w-full flex-wrap items-center gap-2 text-left"
               aria-expanded={isExpanded}
             >
-              <Badge variant="gold">{artifact.protocolId}</Badge>
-              <span className="text-sm font-medium text-ink">{artifact.artifactType}</span>
+              <Badge variant="gold">{humanizeProtocolId(artifact.protocolId)}</Badge>
+              <span className="text-sm font-medium text-ink">{humanizeArtifactType(artifact.artifactType)}</span>
               <Badge variant={artifact.validationStatus === "blocked" ? "default" : "sage"}>
                 {artifact.validationStatus === "blocked" ? "Bloqueado" : "Válido"}
               </Badge>
@@ -162,7 +167,22 @@ export function AceArtifactsList({ artifacts }: AceArtifactsListProps) {
 
             {isExpanded ? (
               <div className="mt-3 space-y-3">
-                <JsonViewer value={artifact.payload} />
+                {artifact.artifactType === "DecisionCase" ? (
+                  <DecisionCasePanel
+                    caseId={caseId ?? ""}
+                    decisionCase={artifact.payload as DecisionCase}
+                    decisionCaseArtifactId={artifact.id}
+                    narrative={
+                      (artifacts.find((entry) => entry.artifactType === "Narrative")?.payload as
+                        | Narrative
+                        | undefined) ?? null
+                    }
+                    initialCorrections={p002Corrections}
+                    canCorrect={Boolean(caseId)}
+                  />
+                ) : (
+                  <JsonViewer value={artifact.payload} />
+                )}
                 {versions.length > 1 ? <VersionCompare versions={versions} /> : null}
               </div>
             ) : null}

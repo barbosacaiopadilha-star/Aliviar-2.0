@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import { createCuradoriaClient } from "./curadoria-client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
@@ -43,7 +44,7 @@ describe("perfil do paciente — RLS e repositório (Supabase local)", () => {
     accounts = loadTestAccounts();
 
     const paciente = accounts.find((a) => a.role === "paciente")!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({ email: paciente.email, password: paciente.password });
     const {
       data: { user },
@@ -75,7 +76,7 @@ describe("perfil do paciente — RLS e repositório (Supabase local)", () => {
 
   it("perfil do paciente não existe até o primeiro salvamento (inicialização preguiçosa)", async () => {
     const paciente = accounts.find((a) => a.role === "paciente")!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({ email: paciente.email, password: paciente.password });
 
     const {
@@ -96,7 +97,7 @@ describe("perfil do paciente — RLS e repositório (Supabase local)", () => {
 
   it("paciente cria (upsert) e depois visualiza o próprio perfil", async () => {
     const paciente = accounts.find((a) => a.role === "paciente")!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({ email: paciente.email, password: paciente.password });
 
     const {
@@ -125,7 +126,7 @@ describe("perfil do paciente — RLS e repositório (Supabase local)", () => {
 
   it("paciente atualiza o próprio perfil", async () => {
     const paciente = accounts.find((a) => a.role === "paciente")!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({ email: paciente.email, password: paciente.password });
 
     const {
@@ -152,7 +153,7 @@ describe("perfil do paciente — RLS e repositório (Supabase local)", () => {
     const paciente = accounts.find((a) => a.role === "paciente")!;
     const administrador = accounts.find((a) => a.role === "administrador")!;
 
-    const adminClient = createClient(url, anonKey);
+    const adminClient = createCuradoriaClient(url, anonKey);
     await adminClient.auth.signInWithPassword({
       email: administrador.email,
       password: administrador.password,
@@ -162,7 +163,7 @@ describe("perfil do paciente — RLS e repositório (Supabase local)", () => {
     } = await adminClient.auth.getUser();
     await adminClient.auth.signOut();
 
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({ email: paciente.email, password: paciente.password });
 
     const { data, error } = await client
@@ -180,7 +181,7 @@ describe("perfil do paciente — RLS e repositório (Supabase local)", () => {
 
   it("uma conta sem o papel 'paciente' não consegue criar uma linha em patient_profiles para si mesma", async () => {
     const profissional = accounts.find((a) => a.role === "profissional")!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({
       email: profissional.email,
       password: profissional.password,

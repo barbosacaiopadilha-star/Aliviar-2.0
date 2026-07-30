@@ -16,6 +16,8 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 
+import { resolverAlvoLocal } from "./env-guard.mjs";
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, "..");
 
@@ -24,6 +26,12 @@ const TEST_ACCOUNTS = [
   { role: "profissional", email: "profissional.teste@aliviar-conexao.local", displayName: "Profissional Teste" },
   { role: "paciente", email: "paciente.teste@aliviar-conexao.local", displayName: "Paciente Teste" },
   { role: "curador_medico", email: "curador.teste@aliviar-conexao.local", displayName: "Curador Teste" },
+  // Acrescentados na captura do Briefing (ACE Missão 3): a RLS das tabelas de
+  // alinhamento precisa ser provada contra TODOS os papéis humanos, não só os
+  // quatro que já existiam. Atendente e Concierge alcançam Cases pelo
+  // can_access_case — por isso é justamente neles que a fronteira importa.
+  { role: "atendente", email: "atendente.teste@aliviar-conexao.local", displayName: "Atendente Teste" },
+  { role: "concierge", email: "concierge.teste@aliviar-conexao.local", displayName: "Concierge Teste" },
 ];
 
 function readLocalSupabaseEnv() {
@@ -56,9 +64,19 @@ function generatePassword() {
 }
 
 async function main() {
-  const env = readLocalSupabaseEnv();
-  const apiUrl = env.API_URL;
-  const serviceRoleKey = env.SERVICE_ROLE_KEY;
+  // O alvo é validado antes de qualquer chamada externa: este script cria e
+  // sobrescreve senhas de conta. Injeção explícita (`test-users:local`) tem
+  // precedência e também passa pela guarda; sem ela, pergunta-se à stack.
+  let apiUrl;
+  let serviceRoleKey;
+  try {
+    const alvo = resolverAlvoLocal("Bootstrap de contas de teste", { cwd: projectRoot });
+    apiUrl = alvo.NEXT_PUBLIC_SUPABASE_URL;
+    serviceRoleKey = alvo.SUPABASE_SERVICE_ROLE_KEY || readLocalSupabaseEnv().SERVICE_ROLE_KEY;
+  } catch (erro) {
+    console.error(erro.message);
+    process.exit(1);
+  }
 
   if (!apiUrl || !serviceRoleKey) {
     console.error(
@@ -69,6 +87,9 @@ async function main() {
 
   const admin = createClient(apiUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
+    // Consolidação estrutural 2026-07-24: o catálogo de papéis vive no schema
+    // `curadoria` (o `public` é da AliCIA). Mesmo DB_SCHEMA dos clients da app.
+    db: { schema: "curadoria" },
   });
 
   const { data: rolesData, error: rolesError } = await admin.from("roles").select("id, slug");
@@ -114,7 +135,7 @@ async function main() {
 
     const roleId = roleIdBySlug[account.role];
     if (!roleId) {
-      console.error(`Papel "${account.role}" não encontrado no catálogo public.roles.`);
+      console.error(`Papel "${account.role}" não encontrado no catálogo curadoria.roles.`);
       process.exit(1);
     }
 

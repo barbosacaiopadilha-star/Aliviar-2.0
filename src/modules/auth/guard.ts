@@ -35,6 +35,30 @@ export async function requireRole(roleSlug: string): Promise<AuthState> {
 }
 
 /**
+ * Variante de requireRole para páginas que MAIS DE UM papel pode ver.
+ *
+ * Nasceu na certificação RC-1: o Administrador tem acesso global por
+ * definição (Correção do Administrador §1 — "visualizar toda a operação"),
+ * a RLS e as operações de servidor já o aceitam, mas o guarda de navegação
+ * de `/atendimento` exigia estritamente `atendente` e o mandava para
+ * /acesso-negado. Guarda de navegação não pode ser mais rígido que o
+ * domínio que ele apresenta.
+ */
+export async function requireAnyRole(roleSlugs: string[]): Promise<AuthState> {
+  const state = await getAuthState();
+
+  if (!state) {
+    redirect("/login");
+  }
+
+  if (!roleSlugs.some((slug) => state.roles.includes(slug))) {
+    redirect("/acesso-negado");
+  }
+
+  return state;
+}
+
+/**
  * Checagem autoritativa de papel para uso dentro de Server Actions —
  * nunca redireciona (uma Server Action pode ser chamada fora de uma
  * navegação de página, então `redirect()` não é o comportamento certo

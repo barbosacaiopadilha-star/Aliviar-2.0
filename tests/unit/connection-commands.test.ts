@@ -37,7 +37,7 @@ function baseRecord(
   return {
     id: "connection-1",
     caseId: CASE_ID,
-    finalCuradoriaDeliveryId: DELIVERY_ID,
+    anchor: { source: "ACE_LEGADO" as const, finalDeliveryId: DELIVERY_ID },
     patientProfileId: PATIENT_ID,
     professionalProfileId: PROFESSIONAL_A,
     status: "DECISAO_REGISTRADA",
@@ -53,7 +53,7 @@ describe("createConnection", () => {
     const result = createConnection(
       {
         caseId: CASE_ID,
-        finalCuradoriaDeliveryId: DELIVERY_ID,
+        anchor: { source: "ACE_LEGADO" as const, finalDeliveryId: DELIVERY_ID },
         patientProfileId: PATIENT_ID,
         professionalProfileId: PROFESSIONAL_A,
         actorId: ACTOR_ID,
@@ -74,7 +74,7 @@ describe("createConnection", () => {
       createConnection(
         {
           caseId: CASE_ID,
-          finalCuradoriaDeliveryId: DELIVERY_ID,
+          anchor: { source: "ACE_LEGADO" as const, finalDeliveryId: DELIVERY_ID },
           patientProfileId: PATIENT_ID,
           professionalProfileId: PROFESSIONAL_OUTSIDER,
           actorId: ACTOR_ID,
@@ -89,7 +89,7 @@ describe("createConnection", () => {
       createConnection(
         {
           caseId: CASE_ID,
-          finalCuradoriaDeliveryId: DELIVERY_ID,
+          anchor: { source: "ACE_LEGADO" as const, finalDeliveryId: DELIVERY_ID },
           patientProfileId: PATIENT_ID,
           professionalProfileId: PROFESSIONAL_OUTSIDER,
           actorId: ACTOR_ID,

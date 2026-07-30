@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import { createCuradoriaClient } from "./curadoria-client";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
@@ -48,7 +49,7 @@ describe("Módulo de Caso (ÉPICO 1/SPRINT 2, Supabase local)", () => {
 
   async function loginAs(role: string) {
     const account = accounts.find((a) => a.role === role)!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({ email: account.email, password: account.password });
     const {
       data: { user },
@@ -62,7 +63,7 @@ describe("Módulo de Caso (ÉPICO 1/SPRINT 2, Supabase local)", () => {
     const email = uniqueEmail();
     const created = await createPatientAccount(adminClient, admin.client, { email, displayName: "Paciente Caso" }, admin.userId);
 
-    const patientClient = createClient(url, anonKey);
+    const patientClient = createCuradoriaClient(url, anonKey);
     await patientClient.auth.signInWithPassword({ email, password: created.password });
 
     const draft = await getOrCreateActiveStory(patientClient, created.profileId);
@@ -85,7 +86,7 @@ describe("Módulo de Caso (ÉPICO 1/SPRINT 2, Supabase local)", () => {
     const email = uniqueEmail();
     const created = await createPatientAccount(adminClient, admin.client, { email, displayName: "Paciente Rascunho" }, admin.userId);
 
-    const patientClient = createClient(url, anonKey);
+    const patientClient = createCuradoriaClient(url, anonKey);
     await patientClient.auth.signInWithPassword({ email, password: created.password });
     const draft = await getOrCreateActiveStory(patientClient, created.profileId);
 
@@ -118,21 +119,28 @@ describe("Módulo de Caso (ÉPICO 1/SPRINT 2, Supabase local)", () => {
     await expect(createCase(profissional.client, storyId, undefined, profissional.userId)).rejects.toThrow();
   });
 
-  it("curador médico visualiza apenas os casos atribuídos a ele", async () => {
+  it("curador médico vê os casos dele e os que não são de ninguém — nunca os de outro", async () => {
+    // Contrato ampliado deliberadamente (achado do teste em produção): um Case
+    // sem dono era invisível para todos os curadores e ficava parado sem que
+    // ninguém soubesse. Agora ele aparece, para poder ser assumido. O que
+    // continua proibido — e é o que de fato protege o paciente — é enxergar o
+    // Case que já é de OUTRA pessoa.
     const { storyId, adminClient } = await createSentStoryPatient();
     const admin = await loginAs("administrador");
     const curador = await loginAs("curador_medico");
 
     const created = await createCase(adminClient, storyId, curador.userId, admin.userId);
+    expect((await listCases(curador.client)).some((c) => c.id === created.id)).toBe(true);
 
-    const curadorCases = await listCases(curador.client);
-    expect(curadorCases.some((c) => c.id === created.id)).toBe(true);
+    // Sem dono: visível, porque é trabalho esperando alguém.
+    const { storyId: livreStoryId } = await createSentStoryPatient();
+    const casoLivre = await createCase(adminClient, livreStoryId, undefined, admin.userId);
+    expect((await listCases(curador.client)).some((c) => c.id === casoLivre.id)).toBe(true);
 
-    // Um segundo caso, sem atribuição a este curador, não deve aparecer.
-    const { storyId: otherStoryId } = await createSentStoryPatient();
-    const otherCase = await createCase(adminClient, otherStoryId, undefined, admin.userId);
-    const curadorCasesAfter = await listCases(curador.client);
-    expect(curadorCasesAfter.some((c) => c.id === otherCase.id)).toBe(false);
+    // Com dono que não é ele: invisível, como sempre foi.
+    const { storyId: alheioStoryId } = await createSentStoryPatient();
+    const casoAlheio = await createCase(adminClient, alheioStoryId, admin.userId, admin.userId);
+    expect((await listCases(curador.client)).some((c) => c.id === casoAlheio.id)).toBe(false);
   });
 
   it("reatribuição registra responsável anterior, novo responsável e justificativa", async () => {

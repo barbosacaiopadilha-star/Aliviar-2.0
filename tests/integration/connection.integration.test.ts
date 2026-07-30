@@ -1,17 +1,16 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { createClient } from "@supabase/supabase-js";
+import { createCuradoriaClient } from "./curadoria-client";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { changeCaseStatus, createCase } from "@/modules/cases/repository";
 import { SupabaseConnectionRepository } from "@/modules/connection/repository";
-import { deliverFinalCuradoria } from "@/modules/concierge/delivery-repository";
-import { FakeAceLanguageModel } from "@/modules/concierge/fake-language-model";
-import { submitHumanReview } from "@/modules/concierge/human-review-repository";
-import { runAceExecution } from "@/modules/concierge/orchestrator";
+import * as curadoria from "@/modules/curadoria/repository";
+import * as reports from "@/modules/curadoria/report-repository";
+import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { createPatientAccount } from "@/modules/profiles/patient-account-repository";
-import { createProfessionalProfile } from "@/modules/profiles/professional-repository";
+import { seedPublishedProfessional } from "./rede-fixture";
 import {
   getOrCreateActiveStory,
   saveStoryDraft,
@@ -36,6 +35,7 @@ import {
   registerContactIntent,
 } from "@/modules/connection/commands";
 import { ConnectionError } from "@/modules/connection/errors";
+import { completarMapaDePrioridades } from "./support-mapa";
 
 type TestAccount = { role: string; email: string; password: string };
 
@@ -70,18 +70,15 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
   afterEach(async () => {
     const adminClient = createAdminSupabaseClient();
 
-    if (createdProfessionalIds.length > 0) {
-      await adminClient
-        .from("professional_competency_areas")
-        .delete()
-        .in("professional_profile_id", createdProfessionalIds);
-      await adminClient
-        .from("professional_profiles")
-        .delete()
-        .in("id", createdProfessionalIds);
-      createdProfessionalIds = [];
-    }
-
+    // Pacientes e Cases PRIMEIRO, profissionais depois.
+    //
+    // A ordem importa desde a migração para o caminho canônico: a Curadoria do
+    // Método grava `curated_selection_options` e `curadoria_report_options` com
+    // FK para `professional_profiles`. Apagar o profissional antes do Case viola
+    // a FK, o erro não é verificado, e o profissional sobrevive à rodada — foi
+    // exatamente assim que a rede publicada cresceu ~70 perfis por execução.
+    // (No fixture antigo do ACE os profissionais viviam num JSON, sem FK, e a
+    // ordem invertida passava despercebida.)
     if (createdPatientProfileIds.length > 0) {
       // cases cascade para connection_records (on delete cascade, PR1) e
       // connection_records cascade para connection_events.
@@ -106,11 +103,27 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       }
       createdPatientProfileIds = [];
     }
+
+    if (createdProfessionalIds.length > 0) {
+      await adminClient
+        .from("professional_competency_areas")
+        .delete()
+        .in("professional_profile_id", createdProfessionalIds);
+      const { error } = await adminClient
+        .from("professional_profiles")
+        .delete()
+        .in("id", createdProfessionalIds);
+      // Falha silenciosa aqui foi a origem do vazamento. Agora ela aparece.
+      if (error) {
+        throw new Error(`teardown: profissionais não removidos — ${error.message}`);
+      }
+      createdProfessionalIds = [];
+    }
   });
 
   async function loginAs(role: string) {
     const account = accounts.find((a) => a.role === role)!;
-    const client = createClient(url, anonKey);
+    const client = createCuradoriaClient(url, anonKey);
     await client.auth.signInWithPassword({
       email: account.email,
       password: account.password,
@@ -125,40 +138,93 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     adminClient: ReturnType<typeof createAdminSupabaseClient>,
     adminUserId: string,
   ) {
-    const professional = await createProfessionalProfile(adminClient, {
-      displayName: `Profissional Connection ${unique("p")}`,
-      professionalIdentifier: unique("ident"),
-      crm: null,
-      crmUf: null,
-      professionalSummary:
-        "Profissional com experiência em acolhimento e escuta ativa.",
-      institutionName: null,
-      createdBy: adminUserId,
-    });
-
-    await adminClient
-      .from("professional_profiles")
-      .update({
-        experience_level: "experiente",
-        intake_approach: "ambos",
-        offers_continuous_care: true,
-        availability_window: "flexible",
-        practical_considerations: ["Atende também por telemedicina."],
-      })
-      .eq("id", professional.id);
-
-    await adminClient.from("professional_competency_areas").insert({
-      professional_profile_id: professional.id,
-      domain: "nao_determinado",
-      focus: "avaliacao",
-    });
-
-    createdProfessionalIds.push(professional.id);
-    return professional.id;
+    const id = await seedPublishedProfessional(adminClient, adminUserId, "Profissional Connection");
+    createdProfessionalIds.push(id);
+    return id;
   }
 
-  // Caso completo, entregue de verdade (P001->P010) — o único ponto de
-  // partida real e honesto para testar Connection, já que ele só nasce
+  // Caso entregue pela Curadoria do Método: a entrega canônica é o ponto de
+  // partida do Connection, que nasce ancorado no Relatório entregue — não
+  // mais em uma entrega do motor antigo (ADR-035).
+  /**
+   * A Curadoria do Método, do critério à entrega, pelas mesmas funções que as
+   * telas chamam. Devolve o Relatório entregue e os três profissionais que
+   * chegaram ao paciente — nenhum protocolo do ACE participa.
+   */
+  async function deliverCanonically(
+    curador: { client: ReturnType<typeof createCuradoriaClient>; userId: string },
+    caseId: string,
+  ) {
+    const cliente = curador.client;
+
+    await cliente.from("consultation_records").insert({
+      case_id: caseId,
+      curator_id: curador.userId,
+      context_reviewed: true,
+      documents_reviewed: true,
+      narrative: "Ela contou a história inteira, e eu devolvi organizada.",
+      understanding_confirmed_at: new Date().toISOString(),
+    });
+    await cliente
+      .from("case_clinical_context")
+      .insert({ case_id: caseId, clinical_context: "Contexto clínico relatado por ela." });
+
+    const priorityProfileId = await curadoria.createPriorityProfile(cliente, caseId, curador.userId);
+    await curadoria.addFilter(
+      cliente,
+      priorityProfileId,
+      "FILTRO_OBRIGATORIO",
+      "CUIDADO_CONTINUO",
+      "true",
+      "Ela quer alguém que acompanhe do começo ao fim.",
+    );
+    await completarMapaDePrioridades(cliente, priorityProfileId);
+    await curadoria.validatePriorityProfile(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
+    await curadoria.runCompatibility(cliente, priorityProfileId);
+
+    const record = await loadCuradoriaRecord(cliente, caseId);
+    const tres = record!.curadoriaTecnica.analyses.slice(0, 3);
+    expect(tres, "a rede local precisa ter três elegíveis para este cenário").toHaveLength(3);
+
+    await curadoria.saveSelection(
+      cliente,
+      caseId,
+      priorityProfileId,
+      curador.userId,
+      "Os três cobrem experiência e continuidade de formas diferentes.",
+      tres.map((a) => ({
+        professionalProfileId: a.professionalId,
+        band: a.band,
+        rationale: "Entra porque atende o que ela pediu.",
+        tradeOff: "Agenda mais concorrida.",
+      })),
+    );
+    const selection = await curadoria.getSelection(cliente, priorityProfileId);
+
+    await reports.saveReport(
+      cliente,
+      caseId,
+      selection!.id,
+      "Os três cobrem experiência e continuidade de formas diferentes.",
+      tres.map((a) => ({
+        professionalProfileId: a.professionalId,
+        justification: "Responde ao critério que ela nomeou.",
+        relationToWeights: "Cobre experiência, que ela pesou mais.",
+        attentionPoints: ["Agenda mais concorrida."],
+        favorablePoints: [],
+        suggestedQuestions: ["Quantos casos como o meu você acompanha por ano?"],
+        curatorObservations: null,
+      })),
+    );
+    const report = await reports.getReportBySelection(cliente, selection!.id);
+    // Emitir exige aprovação prévia — o Curador assume a autoria da versão final.
+    await reports.approveReport(cliente, report!.id, curador.userId);
+    await reports.emitReport(cliente, report!.id);
+    await curadoria.deliverSelection(cliente, selection!.id);
+    await reports.markReportDelivered(cliente, report!.id);
+
+    return { reportId: report!.id, professionalIds: tres.map((a) => a.professionalId) };
+  }
   // depois que uma FinalCuradoria existe.
   async function createDeliveredCase() {
     const admin = await loginAs("administrador");
@@ -172,7 +238,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     );
     createdPatientProfileIds.push(patientAccount.profileId);
 
-    const patientClient = createClient(url, anonKey);
+    const patientClient = createCuradoriaClient(url, anonKey);
     await patientClient.auth.signInWithPassword({
       email,
       password: patientAccount.password,
@@ -194,10 +260,11 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     );
     await submitStory(patientClient, draft.id, refreshed.revision);
 
+    const curador = await loginAs("curador_medico");
     const created = await createCase(
       admin.client,
       draft.id,
-      undefined,
+      curador.userId,
       admin.userId,
     );
     await changeCaseStatus(admin.client, created.id, "IN_REVIEW", admin.userId);
@@ -214,43 +281,91 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       await seedPresentableProfessional(adminClient, admin.userId),
     ];
 
-    const execution = await runAceExecution({
-      supabase: admin.client,
-      caseId: created.id,
-      actorId: admin.userId,
-      languageModel: new FakeAceLanguageModel(),
-    });
-    expect(execution.outcome).toBe("completed");
+    // A Curadoria do Método, percorrida pelas mesmas funções que as telas
+    // chamam: critérios → validação → comparação → seleção humana → Relatório
+    // → emissão → entrega. Nenhum protocolo do ACE participa.
+    const cliente = curador.client;
 
-    const review = await submitHumanReview(admin.client, {
-      caseId: created.id,
-      reviewerId: admin.userId,
-      reviewAction: "APPROVE",
-      reviewRationale:
-        "Composição adequada às necessidades relatadas na história.",
-      evidenceReferences: ["Shortlist.compositionRationale"],
-      changes: [],
-      returnToProtocol: null,
+    await cliente.from("consultation_records").insert({
+      case_id: created.id,
+      curator_id: curador.userId,
+      context_reviewed: true,
+      documents_reviewed: true,
+      narrative: "Ela contou a história inteira, e eu devolvi organizada.",
+      understanding_confirmed_at: new Date().toISOString(),
     });
-    expect(review.outcome).toBe("recorded");
+    await cliente
+      .from("case_clinical_context")
+      .insert({ case_id: created.id, clinical_context: "Contexto clínico relatado por ela." });
 
-    const delivery = await deliverFinalCuradoria({
-      supabase: admin.client,
-      caseId: created.id,
-      actorId: admin.userId,
-      languageModel: new FakeAceLanguageModel(),
-    });
-    expect(delivery.outcome).toBe("delivered");
-    const deliveryRecord =
-      delivery.outcome === "delivered" ? delivery.delivery : null;
+    const priorityProfileId = await curadoria.createPriorityProfile(
+      cliente,
+      created.id,
+      curador.userId,
+    );
+    await curadoria.addFilter(
+      cliente,
+      priorityProfileId,
+      "FILTRO_OBRIGATORIO",
+      "CUIDADO_CONTINUO",
+      "true",
+      "Ela quer alguém que acompanhe do começo ao fim.",
+    );
+    await completarMapaDePrioridades(cliente, priorityProfileId);
+    await curadoria.validatePriorityProfile(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
+    await curadoria.runCompatibility(cliente, priorityProfileId);
+
+    const record = await loadCuradoriaRecord(cliente, created.id);
+    const tres = record!.curadoriaTecnica.analyses.slice(0, 3);
+    expect(tres, "a rede local precisa ter três elegíveis para este cenário").toHaveLength(3);
+
+    await curadoria.saveSelection(
+      cliente,
+      created.id,
+      priorityProfileId,
+      curador.userId,
+      "Os três cobrem experiência e continuidade de formas diferentes.",
+      tres.map((a) => ({
+        professionalProfileId: a.professionalId,
+        band: a.band,
+        rationale: "Entra porque atende o que ela pediu.",
+        tradeOff: "Agenda mais concorrida.",
+      })),
+    );
+    const selection = await curadoria.getSelection(cliente, priorityProfileId);
+
+    await reports.saveReport(
+      cliente,
+      created.id,
+      selection!.id,
+      "Os três cobrem experiência e continuidade de formas diferentes.",
+      tres.map((a) => ({
+        professionalProfileId: a.professionalId,
+        justification: "Responde ao critério que ela nomeou.",
+        relationToWeights: "Cobre experiência, que ela pesou mais.",
+        attentionPoints: ["Agenda mais concorrida."],
+        favorablePoints: [],
+        suggestedQuestions: ["Quantos casos como o meu você acompanha por ano?"],
+        curatorObservations: null,
+      })),
+    );
+    const report = await reports.getReportBySelection(cliente, selection!.id);
+    // Emitir exige aprovação prévia — o Curador assume a autoria da versão final.
+    await reports.approveReport(cliente, report!.id, curador.userId);
+    await reports.emitReport(cliente, report!.id);
+    await curadoria.deliverSelection(cliente, selection!.id);
+    await reports.markReportDelivered(cliente, report!.id);
 
     return {
       admin,
       caseId: created.id,
       patientProfileId: patientAccount.profileId,
       patientClient,
-      professionalIds,
-      finalCuradoriaDeliveryId: deliveryRecord!.id,
+      // Os três efetivamente entregues — é entre eles que o paciente escolhe.
+      professionalIds: tres.map((a) => a.professionalId),
+      // Fora da entrega: serve aos testes que provam recusa de externo.
+      outsiderProfessionalId: professionalIds[0],
+      reportId: report!.id,
     };
   }
 
@@ -260,7 +375,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       patientProfileId,
       patientClient,
       professionalIds,
-      finalCuradoriaDeliveryId,
+      reportId,
     } = await createDeliveredCase();
     const repository = new SupabaseConnectionRepository(patientClient);
 
@@ -268,7 +383,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     const result = createConnection(
       {
         caseId,
-        finalCuradoriaDeliveryId,
+        anchor: { source: "METODO" as const, reportId },
         patientProfileId,
         professionalProfileId: professionalIds[0],
         actorId: patientProfileId,
@@ -296,7 +411,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       patientProfileId,
       patientClient,
       professionalIds,
-      finalCuradoriaDeliveryId,
+      reportId,
     } = await createDeliveredCase();
     const repository = new SupabaseConnectionRepository(patientClient);
     const now = new Date().toISOString();
@@ -304,7 +419,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     const first = createConnection(
       {
         caseId,
-        finalCuradoriaDeliveryId,
+        anchor: { source: "METODO" as const, reportId },
         patientProfileId,
         professionalProfileId: professionalIds[0],
         actorId: patientProfileId,
@@ -313,12 +428,12 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       },
       { eligibleProfessionalProfileIds: professionalIds },
     );
-    await repository.create(first.record, first.event);
+    const record = await repository.create(first.record, first.event);
 
     const second = createConnection(
       {
         caseId,
-        finalCuradoriaDeliveryId,
+        anchor: { source: "METODO" as const, reportId },
         patientProfileId,
         professionalProfileId: professionalIds[1],
         actorId: patientProfileId,
@@ -328,9 +443,11 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       { eligibleProfessionalProfileIds: professionalIds },
     );
 
-    await expect(
-      repository.create(second.record, second.event),
-    ).rejects.toThrow(ConnectionError);
+    // Contrato canônico: repetir a escolha devolve a Connection existente em
+    // vez de lançar. A unicidade continua garantida pelo índice por Case — o
+    // que mudou é que retry deixou de ser erro, e virou resposta idempotente.
+    const again = await repository.create(second.record, second.event);
+    expect(again.id).toBe(record.id);
   });
 
   it("concorrência real: duas tentativas simultâneas de criar Connection para o mesmo Caso — exatamente uma sucede", async () => {
@@ -339,7 +456,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       patientProfileId,
       patientClient,
       professionalIds,
-      finalCuradoriaDeliveryId,
+      reportId,
     } = await createDeliveredCase();
     const repository = new SupabaseConnectionRepository(patientClient);
     const now = new Date().toISOString();
@@ -348,7 +465,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       const result = createConnection(
         {
           caseId,
-          finalCuradoriaDeliveryId,
+          anchor: { source: "METODO" as const, reportId },
           patientProfileId,
           professionalProfileId: professionalIds[0],
           actorId: patientProfileId,
@@ -362,10 +479,11 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
 
     const outcomes = await Promise.allSettled([attempt(), attempt()]);
     const fulfilled = outcomes.filter((o) => o.status === "fulfilled");
-    const rejected = outcomes.filter((o) => o.status === "rejected");
-
-    expect(fulfilled).toHaveLength(1);
-    expect(rejected).toHaveLength(1);
+    // O invariante é uma única Connection para o Case. A corrida pode terminar
+    // com as duas chamadas bem-sucedidas (idempotência) ou com uma rejeitada
+    // pelo índice único, dependendo de quem chega primeiro — as duas formas são
+    // corretas. O que nunca pode acontecer é nascerem duas.
+    expect(fulfilled.length).toBeGreaterThanOrEqual(1);
 
     const adminClient = createAdminSupabaseClient();
     const { data } = await adminClient
@@ -381,7 +499,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       patientProfileId,
       patientClient,
       professionalIds,
-      finalCuradoriaDeliveryId,
+      reportId,
     } = await createDeliveredCase();
     const repository = new SupabaseConnectionRepository(patientClient);
     const now = new Date().toISOString();
@@ -389,7 +507,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     const created0 = createConnection(
       {
         caseId,
-        finalCuradoriaDeliveryId,
+        anchor: { source: "METODO" as const, reportId },
         patientProfileId,
         professionalProfileId: professionalIds[0],
         actorId: patientProfileId,
@@ -400,11 +518,17 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     );
     const record0 = await repository.create(created0.record, created0.event);
 
+    // Instantes distintos: `listEvents` ordena por `occurred_at`, e três eventos
+    // com o mesmo carimbo têm ordem indefinida — o desempate variava conforme a
+    // carga da suíte. Na vida real a pessoa age em momentos diferentes, e o
+    // teste passa a refletir isso sem afrouxar a asserção de sequência.
+    const depois = (ms: number) => new Date(Date.parse(now) + ms).toISOString();
+
     const contact = registerContactIntent(record0, {
       requestedByPatientProfileId: patientProfileId,
       actorId: patientProfileId,
-      occurredAt: now,
-      recordedAt: now,
+      occurredAt: depois(1000),
+      recordedAt: depois(1000),
     });
     const record1 = await repository.update(
       record0.status,
@@ -416,8 +540,8 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     const confirm = confirmFirstAppointment(record1, {
       requestedByPatientProfileId: patientProfileId,
       actorId: patientProfileId,
-      occurredAt: now,
-      recordedAt: now,
+      occurredAt: depois(2000),
+      recordedAt: depois(2000),
     });
     const record2 = await repository.update(
       record1.status,
@@ -460,7 +584,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       patientProfileId,
       patientClient,
       professionalIds,
-      finalCuradoriaDeliveryId,
+      reportId,
     } = await createDeliveredCase();
     const repository = new SupabaseConnectionRepository(patientClient);
     const now = new Date().toISOString();
@@ -468,7 +592,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     const created0 = createConnection(
       {
         caseId,
-        finalCuradoriaDeliveryId,
+        anchor: { source: "METODO" as const, reportId },
         patientProfileId,
         professionalProfileId: professionalIds[0],
         actorId: patientProfileId,
@@ -482,8 +606,10 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     const close = closeWithoutRelationship(record0, {
       requestedByPatientProfileId: patientProfileId,
       actorId: patientProfileId,
-      occurredAt: now,
-      recordedAt: now,
+      // Depois do evento de decisão — `events.at(-1)` só é o encerramento se os
+      // carimbos forem distintos.
+      occurredAt: new Date(Date.parse(now) + 1000).toISOString(),
+      recordedAt: new Date(Date.parse(now) + 1000).toISOString(),
       reason: "Prefiro tentar outro caminho.",
     });
     const record1 = await repository.update(
@@ -505,7 +631,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       patientProfileId,
       patientClient,
       professionalIds,
-      finalCuradoriaDeliveryId,
+      reportId,
     } = await createDeliveredCase();
     const repository = new SupabaseConnectionRepository(patientClient);
     const now = new Date().toISOString();
@@ -513,7 +639,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     const created0 = createConnection(
       {
         caseId,
-        finalCuradoriaDeliveryId,
+        anchor: { source: "METODO" as const, reportId },
         patientProfileId,
         professionalProfileId: professionalIds[0],
         actorId: patientProfileId,
@@ -575,7 +701,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       patientProfileId,
       patientClient,
       professionalIds,
-      finalCuradoriaDeliveryId,
+      reportId,
     } = await createDeliveredCase();
     const repository = new SupabaseConnectionRepository(patientClient);
     const now = new Date().toISOString();
@@ -583,7 +709,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     const created0 = createConnection(
       {
         caseId,
-        finalCuradoriaDeliveryId,
+        anchor: { source: "METODO" as const, reportId },
         patientProfileId,
         professionalProfileId: professionalIds[0],
         actorId: patientProfileId,
@@ -604,7 +730,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       admin.userId,
     );
     createdPatientProfileIds.push(otherAccount.profileId);
-    const otherClient = createClient(url, anonKey);
+    const otherClient = createCuradoriaClient(url, anonKey);
     await otherClient.auth.signInWithPassword({
       email: otherEmail,
       password: otherAccount.password,
@@ -644,7 +770,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       patientProfileId,
       patientClient,
       professionalIds,
-      finalCuradoriaDeliveryId,
+      reportId,
     } = await createDeliveredCase();
     const repository = new SupabaseConnectionRepository(patientClient);
     const now = new Date().toISOString();
@@ -652,7 +778,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     const created0 = createConnection(
       {
         caseId,
-        finalCuradoriaDeliveryId,
+        anchor: { source: "METODO" as const, reportId },
         patientProfileId,
         professionalProfileId: professionalIds[0],
         actorId: patientProfileId,
@@ -690,7 +816,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       admin.userId,
     );
     createdPatientProfileIds.push(patientAccount.profileId);
-    const patientClient = createClient(url, anonKey);
+    const patientClient = createCuradoriaClient(url, anonKey);
     await patientClient.auth.signInWithPassword({
       email,
       password: patientAccount.password,
@@ -726,51 +852,25 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       admin.userId,
     );
 
-    const professionalIds = [
-      await seedPresentableProfessional(adminClient, admin.userId),
-      await seedPresentableProfessional(adminClient, admin.userId),
-      await seedPresentableProfessional(adminClient, admin.userId),
-    ];
+    await seedPresentableProfessional(adminClient, admin.userId);
+    await seedPresentableProfessional(adminClient, admin.userId);
+    await seedPresentableProfessional(adminClient, admin.userId);
 
-    const execution = await runAceExecution({
-      supabase: admin.client,
-      caseId: created.id,
-      actorId: admin.userId,
-      languageModel: new FakeAceLanguageModel(),
-    });
-    expect(execution.outcome).toBe("completed");
-    const review = await submitHumanReview(admin.client, {
-      caseId: created.id,
-      reviewerId: admin.userId,
-      reviewAction: "APPROVE",
-      reviewRationale: "Composição adequada.",
-      evidenceReferences: ["Shortlist.compositionRationale"],
-      changes: [],
-      returnToProtocol: null,
-    });
-    expect(review.outcome).toBe("recorded");
-    const delivery = await deliverFinalCuradoria({
-      supabase: admin.client,
-      caseId: created.id,
-      actorId: admin.userId,
-      languageModel: new FakeAceLanguageModel(),
-    });
-    expect(delivery.outcome).toBe("delivered");
+    const entregues = await deliverCanonically(curador, created.id);
 
     const now = new Date().toISOString();
     const repository = new SupabaseConnectionRepository(patientClient);
     const result = createConnection(
       {
         caseId: created.id,
-        finalCuradoriaDeliveryId:
-          delivery.outcome === "delivered" ? delivery.delivery.id : "",
+        anchor: { source: "METODO" as const, reportId: entregues.reportId },
         patientProfileId: patientAccount.profileId,
-        professionalProfileId: professionalIds[0],
+        professionalProfileId: entregues.professionalIds[0],
         actorId: patientAccount.profileId,
         occurredAt: now,
         recordedAt: now,
       },
-      { eligibleProfessionalProfileIds: professionalIds },
+      { eligibleProfessionalProfileIds: entregues.professionalIds },
     );
     const record = await repository.create(result.record, result.event);
 
@@ -796,7 +896,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       patientProfileId,
       patientClient,
       professionalIds,
-      finalCuradoriaDeliveryId,
+      reportId,
     } = await createDeliveredCase();
     const repository = new SupabaseConnectionRepository(patientClient);
     const now = new Date().toISOString();
@@ -811,7 +911,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     const created0 = createConnection(
       {
         caseId,
-        finalCuradoriaDeliveryId,
+        anchor: { source: "METODO" as const, reportId },
         patientProfileId,
         professionalProfileId: professionalIds[0],
         actorId: patientProfileId,
@@ -836,8 +936,10 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       await import("@/modules/concierge/delivery-repository")
     ).getFinalCuradoriaDeliveryForCase(admin.client, caseId);
 
+    // O que este teste protege é que nenhuma ação de Connection mexe no Case
+    // nem na entrega — por isso a comparação é com o estado anterior, e não
+    // com um valor fixo. A entrega canônica não altera o status do Case.
     expect(after?.status).toBe(before?.status);
-    expect(after?.status).toBe("DELIVERED");
     expect(deliveryAfter).toEqual(deliveryBefore);
   });
 
@@ -857,7 +959,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       patientProfileId,
       patientClient,
       professionalIds,
-      finalCuradoriaDeliveryId,
+      reportId,
     } = await createDeliveredCase();
     const repository = new SupabaseConnectionRepository(patientClient);
     const now = new Date().toISOString();
@@ -865,7 +967,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     const created0 = createConnection(
       {
         caseId,
-        finalCuradoriaDeliveryId,
+        anchor: { source: "METODO" as const, reportId },
         patientProfileId,
         professionalProfileId: professionalIds[0],
         actorId: patientProfileId,
@@ -880,8 +982,10 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       const contact = registerContactIntent(record0, {
         requestedByPatientProfileId: patientProfileId,
         actorId: patientProfileId,
-        occurredAt: now,
-        recordedAt: now,
+        // Depois do evento de decisão: `listEvents` ordena por `occurred_at` e
+        // carimbos iguais têm ordem indefinida.
+        occurredAt: new Date(Date.parse(now) + 1000).toISOString(),
+        recordedAt: new Date(Date.parse(now) + 1000).toISOString(),
       });
       return repository.update(record0.status, contact.record, contact.event);
     };
@@ -918,7 +1022,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       caseId,
       patientProfileId: ownerProfileId,
       professionalIds,
-      finalCuradoriaDeliveryId,
+      reportId,
     } = await createDeliveredCase();
 
     // Segundo paciente, sem nenhuma relação com este Caso — usa o próprio
@@ -938,7 +1042,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       admin.userId,
     );
     createdPatientProfileIds.push(otherAccount.profileId);
-    const otherClient = createClient(url, anonKey);
+    const otherClient = createCuradoriaClient(url, anonKey);
     await otherClient.auth.signInWithPassword({
       email: otherEmail,
       password: otherAccount.password,
@@ -949,7 +1053,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     const spoofed = createConnection(
       {
         caseId,
-        finalCuradoriaDeliveryId,
+        anchor: { source: "METODO" as const, reportId },
         patientProfileId: ownerProfileId,
         professionalProfileId: professionalIds[0],
         actorId: ownerProfileId,
@@ -972,7 +1076,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       caseId,
       patientProfileId,
       patientClient,
-      finalCuradoriaDeliveryId,
+      reportId,
     } = await createDeliveredCase();
     const repository = new SupabaseConnectionRepository(patientClient);
     const now = new Date().toISOString();
@@ -992,7 +1096,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     const attempt = createConnection(
       {
         caseId,
-        finalCuradoriaDeliveryId,
+        anchor: { source: "METODO" as const, reportId },
         patientProfileId,
         professionalProfileId: outsiderId,
         actorId: patientProfileId,
@@ -1019,7 +1123,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
       patientProfileId,
       patientClient,
       professionalIds,
-      finalCuradoriaDeliveryId,
+      reportId,
     } = await createDeliveredCase();
     const repository = new SupabaseConnectionRepository(patientClient);
     const now = new Date().toISOString();
@@ -1027,7 +1131,7 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     const created0 = createConnection(
       {
         caseId,
-        finalCuradoriaDeliveryId,
+        anchor: { source: "METODO" as const, reportId },
         patientProfileId,
         professionalProfileId: professionalIds[0],
         actorId: patientProfileId,

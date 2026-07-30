@@ -19,9 +19,11 @@
  * ou desabilitar o encerramento sem dizer ao lado exatamente o que falta.
  */
 
-import { useMemo, useReducer } from "react";
+import { useMemo, useReducer, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 
 import { MesaComparison } from "@/components/curadoria/mesa-comparison";
+import { Button } from "@/components/ui/button";
 import { MesaDoctorCard } from "@/components/curadoria/mesa-doctor-card";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { cn } from "@/components/ui/cn";
@@ -33,6 +35,7 @@ import {
   type MesaLogEntry,
   type ParecerDraft,
 } from "@/modules/curadoria/mesa";
+import { saveReportAction, saveSelectionAction } from "@/modules/curadoria/actions";
 import type { AnaliseRecord, ExclusaoRecord } from "@/modules/curadoria/cos/types";
 
 type MesaWorkspaceProps = {
@@ -40,6 +43,26 @@ type MesaWorkspaceProps = {
   excluded: ExclusaoRecord[];
   curatorName: string;
   patientFirstName: string;
+  /** Onde a seleção e o parecer são gravados. */
+  priorityProfileId: string;
+  /**
+   * O trabalho já persistido, para a Mesa reabrir onde parou.
+   *
+   * Antes, todo o estado da Mesa vivia só no reducer: fechar a aba jogava fora
+   * três pareceres escritos. Trabalho perdido em silêncio é a pior falha
+   * possível numa tela onde se escreve por vinte minutos.
+   */
+  persisted?: {
+    selectedIds: string[];
+    pareceres: ParecerDraft[];
+    compositionRationale: string;
+    /** Já gravado no banco — a Mesa abre encerrada, mas reabrível. */
+    closed: boolean;
+  };
+  /** Depois de entregue ao paciente, a seleção não muda mais. */
+  locked?: boolean;
+  /** A etapa seguinte — o Relatório deste caso. */
+  reportHref: string;
 };
 
 /**
@@ -67,7 +90,9 @@ type MesaAction =
   | { type: "UPDATE_PARECER"; id: string; field: keyof Omit<ParecerDraft, "professionalId">; value: string }
   | { type: "SET_COMPOSITION"; value: string }
   | { type: "RECORD_JUSTIFICATION"; description: string; actor: string }
-  | { type: "CLOSE"; actor: string };
+  | { type: "MOVE_SELECTION"; id: string; direction: -1 | 1; name: string; actor: string }
+  | { type: "CLOSE"; actor: string }
+  | { type: "REOPEN" };
 
 const INITIAL_STATE: MesaState = {
   comparisonIds: [],
@@ -150,6 +175,36 @@ function mesaReducer(state: MesaState, action: MesaAction): MesaState {
         ),
       };
 
+    case "MOVE_SELECTION": {
+      // A ordem das três é ORDEM DE APRESENTAÇÃO, nunca colocação (Ontologia
+      // §3.13). Ela existe porque a conversa tem uma sequência que faz sentido
+      // — começar pelo caminho mais próximo do que ela pediu, por exemplo —
+      // e essa sequência é julgamento do Curador, não do score.
+      const from = state.selectedIds.indexOf(action.id);
+      const to = from + action.direction;
+      if (from < 0 || to < 0 || to >= state.selectedIds.length) return state;
+
+      const reordered = [...state.selectedIds];
+      [reordered[from], reordered[to]] = [reordered[to]!, reordered[from]!];
+
+      return {
+        ...state,
+        selectedIds: reordered,
+        log: append(
+          state.log,
+          logEntry(
+            "OPCAO_SELECIONADA",
+            `${action.name} passou a ser apresentada em ${to + 1}º na ordem da conversa.`,
+            action.actor,
+          ),
+        ),
+      };
+    }
+
+    case "REOPEN":
+      // Reabrir não apaga o que foi escrito — só devolve a edição.
+      return { ...state, closed: false };
+
     case "CLOSE":
       return {
         ...state,
@@ -171,9 +226,23 @@ export function MesaWorkspace({
   excluded,
   curatorName,
   patientFirstName,
+  priorityProfileId,
+  persisted,
+  locked = false,
+  reportHref,
 }: MesaWorkspaceProps) {
-  const [state, dispatch] = useReducer(mesaReducer, INITIAL_STATE);
+  const router = useRouter();
+  const [state, dispatch] = useReducer(mesaReducer, {
+    ...INITIAL_STATE,
+    selectedIds: persisted?.selectedIds ?? [],
+    pareceres: persisted?.pareceres ?? [],
+    compositionRationale: persisted?.compositionRationale ?? "",
+    closed: persisted?.closed ?? false,
+  });
   const { comparisonIds, selectedIds, pareceres, compositionRationale, log, closed } = state;
+
+  const [erro, setErro] = useState<string | null>(null);
+  const [salvando, startSaving] = useTransition();
 
   const namesById = useMemo(
     () => Object.fromEntries(analyses.map((entry) => [entry.professionalId, entry.professionalName])),
@@ -204,9 +273,81 @@ export function MesaWorkspace({
     dispatch({ type: "UPDATE_PARECER", id, field, value });
   }
 
+  /**
+   * Encerrar a Curadoria Técnica — o momento em que o trabalho sai da tela e
+   * vira registro.
+   *
+   * Dois artefatos nascem do mesmo ato, porque são a mesma decisão: a SELEÇÃO
+   * (quem são os três, com a banda e o que cada um custa) e o RASCUNHO DO
+   * RELATÓRIO (o parecer completo que o paciente vai reler). Separá-los em dois
+   * botões obrigaria o Curador a escrever a mesma coisa duas vezes.
+   *
+   * A ordem importa: sem seleção gravada não existe Relatório a que se prender.
+   * Se o segundo passo falhar, o primeiro permanece — e a tela diz exatamente
+   * isso, em vez de fingir que nada aconteceu.
+   */
   function closeMesa() {
-    if (missing.length > 0) return;
-    dispatch({ type: "CLOSE", actor: curatorName });
+    if (missing.length > 0 || salvando || locked) return;
+    setErro(null);
+
+    startSaving(async () => {
+      const bandOf = (id: string) =>
+        analyses.find((entry) => entry.professionalId === id)?.band ?? "MODERADA";
+
+      const ordered = selectedIds.map((id) => ({
+        id,
+        parecer: pareceres.find((draft) => draft.professionalId === id)!,
+      }));
+
+      const selectionResult = await saveSelectionAction({
+        priorityProfileId,
+        compositionRationale,
+        options: ordered.map(({ id, parecer }) => ({
+          professionalProfileId: id,
+          band: bandOf(id),
+          rationale: parecer.whyIncluded,
+          tradeOff: parecer.limitations,
+        })),
+      });
+
+      if (!selectionResult.success) {
+        setErro(selectionResult.error ?? "Não foi possível salvar a seleção.");
+        return;
+      }
+
+      const reportResult = await saveReportAction({
+        priorityProfileId,
+        compositionRationale,
+        options: ordered.map(({ id, parecer }) => ({
+          professionalProfileId: id,
+          justification: parecer.whyIncluded,
+          relationToWeights: parecer.prioritiesServed,
+          // O que a opção custa é obrigatório: opção só com virtudes é
+          // recomendação disfarçada (Experience §2.5).
+          attentionPoints: [parecer.limitations].filter((entry) => entry.trim()),
+          favorablePoints: [],
+          suggestedQuestions: [parecer.questions].filter((entry) => entry.trim()),
+          curatorObservations: parecer.observations.trim() || null,
+        })),
+      });
+
+      if (!reportResult.success) {
+        setErro(
+          `A seleção foi salva, mas o Relatório não: ${reportResult.error ?? "erro desconhecido"}. Corrija e encerre de novo — a seleção não será duplicada.`,
+        );
+        return;
+      }
+
+      dispatch({ type: "CLOSE", actor: curatorName });
+      router.refresh();
+    });
+  }
+
+  /** Reabrir para corrigir — enquanto não houver entrega ao paciente. */
+  function reopenMesa() {
+    if (locked) return;
+    setErro(null);
+    dispatch({ type: "REOPEN" });
   }
 
   const comparisonAnalyses = comparisonIds
@@ -306,6 +447,46 @@ export function MesaWorkspace({
                 </CardDescription>
               </CardHeader>
 
+              {/* Reordenar: a sequência da conversa é decisão sua. */}
+              {closed ? null : (
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={index === 0}
+                    onClick={() =>
+                      dispatch({
+                        type: "MOVE_SELECTION",
+                        id,
+                        direction: -1,
+                        name: namesById[id] ?? id,
+                        actor: curatorName,
+                      })
+                    }
+                  >
+                    Apresentar antes
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={index === selectedIds.length - 1}
+                    onClick={() =>
+                      dispatch({
+                        type: "MOVE_SELECTION",
+                        id,
+                        direction: 1,
+                        name: namesById[id] ?? id,
+                        actor: curatorName,
+                      })
+                    }
+                  >
+                    Apresentar depois
+                  </Button>
+                </div>
+              )}
+
               {PARECER_PROMPTS.map((prompt) => (
                 <div key={prompt.field} className="space-y-1.5">
                   <label
@@ -381,12 +562,34 @@ export function MesaWorkspace({
           </CardTitle>
           <CardDescription>
             {closed
-              ? `Três opções selecionadas por ${curatorName}, cada uma com parecer próprio. O Relatório é a próxima etapa.`
-              : "A seleção fica registrada com o seu nome — é sua, nunca do sistema."}
+              ? `Três opções gravadas por ${curatorName}, cada uma com parecer próprio. O rascunho do Relatório nasceu junto — revise e emita na etapa seguinte.`
+              : "A seleção fica registrada no caso, com o seu nome — é sua, nunca do sistema."}
           </CardDescription>
         </CardHeader>
 
-        {closed ? null : missing.length > 0 ? (
+        {closed ? (
+          <div className="space-y-3">
+            <p className="text-sm text-ink-muted">
+              {locked
+                ? "A Curadoria já foi entregue ao paciente — a seleção não muda mais."
+                : "Enquanto não for entregue ao paciente, você pode reabrir e corrigir."}
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <a
+                href={reportHref}
+                className="inline-flex min-h-11 items-center gap-2 rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors duration-fast ease-standard hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+              >
+                Revisar o Relatório
+                <span aria-hidden="true">→</span>
+              </a>
+              {locked ? null : (
+                <Button type="button" variant="ghost" onClick={reopenMesa}>
+                  Reabrir para corrigir
+                </Button>
+              )}
+            </div>
+          </div>
+        ) : missing.length > 0 ? (
           <div>
             <p className="text-sm text-ink">Para encerrar:</p>
             <ul className="mt-1.5 space-y-1">
@@ -398,15 +601,23 @@ export function MesaWorkspace({
             </ul>
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={closeMesa}
-            className="inline-flex min-h-11 items-center gap-2 rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors duration-fast ease-standard hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-          >
-            Encerrar e seguir para o Relatório
-            <span aria-hidden="true">→</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="button" onClick={closeMesa} disabled={salvando} isLoading={salvando}>
+              {salvando ? "Gravando a seleção e o parecer…" : "Encerrar e gerar o Relatório"}
+            </Button>
+            {salvando ? (
+              <span role="status" className="text-sm text-ink-muted">
+                Gravando no caso — não feche esta aba.
+              </span>
+            ) : null}
+          </div>
         )}
+
+        {erro ? (
+          <p role="alert" className="rounded-md border border-error bg-error-surface px-3 py-2 text-sm text-ink">
+            {erro}
+          </p>
+        ) : null}
       </Card>
 
       {/* DECISION MEMORY */}
