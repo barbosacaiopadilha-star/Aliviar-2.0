@@ -15,6 +15,12 @@
  * organiza a mesa e verifica o que falta, sem nunca sugerir quem entra nem o
  * que escrever.
  *
+ * M1 (ADR-042): os candidatos deixam de vir do motor antigo
+ * (`compatibility_analyses`) e passam a ser os elegíveis da própria Mesa, com
+ * a leitura do Motor de Compatibilidade por subcritério. A comparação desta
+ * área é a MESMA matriz das etapas de leitura — uma verdade só por par
+ * (Case, profissional).
+ *
  * O que nunca faz: pré-selecionar, ordenar por score, sugerir texto de parecer,
  * ou desabilitar o encerramento sem dizer ao lado exatamente o que falta.
  */
@@ -22,9 +28,9 @@
 import { useMemo, useReducer, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import { MesaComparison } from "@/components/curadoria/mesa-comparison";
+import { ComparacaoPremium } from "@/components/curadoria/mesa/comparacao-premium";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MesaDoctorCard } from "@/components/curadoria/mesa-doctor-card";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { cn } from "@/components/ui/cn";
 import {
@@ -36,11 +42,24 @@ import {
   type ParecerDraft,
 } from "@/modules/curadoria/mesa";
 import { saveReportAction, saveSelectionAction } from "@/modules/curadoria/actions";
-import type { AnaliseRecord, ExclusaoRecord } from "@/modules/curadoria/cos/types";
+import {
+  bandaDeCompatibilidade,
+  type SelecaoCandidato,
+  type SelecaoExcluido,
+} from "@/modules/curadoria/mesa-selecao";
+import type { CompatibilityBand } from "@/modules/curadoria/types";
 
 type MesaWorkspaceProps = {
-  analyses: AnaliseRecord[];
-  excluded: ExclusaoRecord[];
+  /** Os elegíveis da Mesa, com a leitura do Motor — na ordem da Rede. */
+  candidatos: SelecaoCandidato[];
+  /** Quem não participa, com o motivo da própria classificação da Mesa. */
+  excluidos: SelecaoExcluido[];
+  /**
+   * Bandas gravadas pelo motor antigo, por profissional — SOMENTE para o
+   * contrato de seleção, que ainda exige `band` (pendência declarada da M2).
+   * Nada disto é exibido nem influencia quem aparece.
+   */
+  legacyBands: Record<string, CompatibilityBand>;
   curatorName: string;
   patientFirstName: string;
   /** Onde a seleção e o parecer são gravados. */
@@ -179,7 +198,7 @@ function mesaReducer(state: MesaState, action: MesaAction): MesaState {
       // A ordem das três é ORDEM DE APRESENTAÇÃO, nunca colocação (Ontologia
       // §3.13). Ela existe porque a conversa tem uma sequência que faz sentido
       // — começar pelo caminho mais próximo do que ela pediu, por exemplo —
-      // e essa sequência é julgamento do Curador, não do score.
+      // e essa sequência é julgamento do Curador, não de resultado nenhum.
       const from = state.selectedIds.indexOf(action.id);
       const to = from + action.direction;
       if (from < 0 || to < 0 || to >= state.selectedIds.length) return state;
@@ -222,8 +241,9 @@ function mesaReducer(state: MesaState, action: MesaAction): MesaState {
 }
 
 export function MesaWorkspace({
-  analyses,
-  excluded,
+  candidatos,
+  excluidos,
+  legacyBands,
   curatorName,
   patientFirstName,
   priorityProfileId,
@@ -245,8 +265,8 @@ export function MesaWorkspace({
   const [salvando, startSaving] = useTransition();
 
   const namesById = useMemo(
-    () => Object.fromEntries(analyses.map((entry) => [entry.professionalId, entry.professionalName])),
-    [analyses],
+    () => Object.fromEntries(candidatos.map((entry) => [entry.professionalProfileId, entry.nome])),
+    [candidatos],
   );
 
   const missing = useMemo(
@@ -278,9 +298,9 @@ export function MesaWorkspace({
    * vira registro.
    *
    * Dois artefatos nascem do mesmo ato, porque são a mesma decisão: a SELEÇÃO
-   * (quem são os três, com a banda e o que cada um custa) e o RASCUNHO DO
-   * RELATÓRIO (o parecer completo que o paciente vai reler). Separá-los em dois
-   * botões obrigaria o Curador a escrever a mesma coisa duas vezes.
+   * (quem são os três e o que cada um custa) e o RASCUNHO DO RELATÓRIO (o
+   * parecer completo que o paciente vai reler). Separá-los em dois botões
+   * obrigaria o Curador a escrever a mesma coisa duas vezes.
    *
    * A ordem importa: sem seleção gravada não existe Relatório a que se prender.
    * Se o segundo passo falhar, o primeiro permanece — e a tela diz exatamente
@@ -291,9 +311,6 @@ export function MesaWorkspace({
     setErro(null);
 
     startSaving(async () => {
-      const bandOf = (id: string) =>
-        analyses.find((entry) => entry.professionalId === id)?.band ?? "MODERADA";
-
       const ordered = selectedIds.map((id) => ({
         id,
         parecer: pareceres.find((draft) => draft.professionalId === id)!,
@@ -304,7 +321,9 @@ export function MesaWorkspace({
         compositionRationale,
         options: ordered.map(({ id, parecer }) => ({
           professionalProfileId: id,
-          band: bandOf(id),
+          // Pendência da M2: o contrato ainda exige `band`. O valor preserva o
+          // que o Case já tinha gravado; nunca é calculado nem exibido aqui.
+          band: bandaDeCompatibilidade(id, legacyBands),
           rationale: parecer.whyIncluded,
           tradeOff: parecer.limitations,
         })),
@@ -350,51 +369,62 @@ export function MesaWorkspace({
     dispatch({ type: "REOPEN" });
   }
 
-  const comparisonAnalyses = comparisonIds
-    .map((id) => analyses.find((entry) => entry.professionalId === id))
-    .filter((entry): entry is AnaliseRecord => Boolean(entry));
+  // A comparação desta área é a MESMA matriz do Motor das etapas de leitura,
+  // recortada para quem o Curador adicionou — nunca uma segunda conta.
+  const colunasEmComparacao = comparisonIds
+    .map((id) => candidatos.find((entry) => entry.professionalProfileId === id))
+    .filter((entry): entry is SelecaoCandidato => Boolean(entry))
+    .map((entry) => ({
+      id: entry.professionalProfileId,
+      nome: entry.nome,
+      celulas: entry.celulas,
+      resumo: entry.resumo,
+    }));
 
   return (
     <div className="space-y-6">
-      {/* ÁREA 3 — MÉDICOS ELEGÍVEIS */}
+      {/* ÁREA 3 — PROFISSIONAIS ELEGÍVEIS */}
       <section aria-labelledby="elegiveis-heading" className="space-y-4">
         <div>
           <h2 id="elegiveis-heading" className="font-sans text-xl font-semibold text-ink">
             Profissionais elegíveis
           </h2>
           <p className="mt-1 text-sm text-ink-muted">
-            {analyses.length} da rede aprovada passaram por todas as restrições de {patientFirstName}
-            {excluded.length > 0 ? `; ${excluded.length} saíram, com o motivo registrado` : ""}. Na ordem
-            de compatibilidade — leitura, nunca classificação.
+            {candidatos.length} elegíve{candidatos.length === 1 ? "l" : "is"} pela área e pelos
+            filtros de {patientFirstName}
+            {excluidos.length > 0
+              ? `; ${excluidos.length} não participa${excluidos.length === 1 ? "" : "m"}, com o motivo registrado`
+              : ""}
+            . A ordem é a da Rede — leitura, nunca colocação.
           </p>
         </div>
 
         <div className="grid gap-4 xl:grid-cols-2">
-          {analyses.map((analysis) => (
-            <MesaDoctorCard
-              key={analysis.professionalId}
-              analysis={analysis}
-              inComparison={comparisonIds.includes(analysis.professionalId)}
-              selected={selectedIds.includes(analysis.professionalId)}
+          {candidatos.map((candidato) => (
+            <CandidatoCard
+              key={candidato.professionalProfileId}
+              candidato={candidato}
+              inComparison={comparisonIds.includes(candidato.professionalProfileId)}
+              selected={selectedIds.includes(candidato.professionalProfileId)}
               selectionFull={selectedIds.length >= 3}
               disabled={closed}
-              onToggleComparison={() => toggleComparison(analysis.professionalId)}
-              onToggleSelection={() => toggleSelection(analysis.professionalId)}
+              onToggleComparison={() => toggleComparison(candidato.professionalProfileId)}
+              onToggleSelection={() => toggleSelection(candidato.professionalProfileId)}
             />
           ))}
         </div>
 
-        {excluded.length > 0 ? (
+        {excluidos.length > 0 ? (
           <details className="rounded-md border border-border bg-surface p-4">
             <summary className="cursor-pointer text-sm font-medium text-ink">
-              Quem não entrou, e por quê ({excluded.length})
+              Quem não participa, e por quê ({excluidos.length})
             </summary>
             <ul className="mt-3 space-y-2">
-              {excluded.map((entry) => (
-                <li key={entry.professionalId} className="text-sm">
-                  <span className="text-ink">{entry.professionalName}</span>
+              {excluidos.map((entry) => (
+                <li key={entry.professionalProfileId} className="text-sm">
+                  <span className="text-ink">{entry.nome}</span>
                   <span aria-hidden="true"> — </span>
-                  <span className="text-ink-muted">{entry.failures.join(" ")}</span>
+                  <span className="text-ink-muted">{entry.motivo}</span>
                 </li>
               ))}
             </ul>
@@ -405,7 +435,7 @@ export function MesaWorkspace({
         ) : null}
       </section>
 
-      {/* ÁREA 4 — COMPARAÇÃO */}
+      {/* ÁREA 4 — COMPARAÇÃO (a matriz do Motor, recortada) */}
       <section aria-labelledby="comparacao-heading">
         <Card>
           <CardHeader>
@@ -417,7 +447,14 @@ export function MesaWorkspace({
               em que você adicionou.
             </CardDescription>
           </CardHeader>
-          <MesaComparison analyses={comparisonAnalyses} />
+          {colunasEmComparacao.length > 0 ? (
+            <ComparacaoPremium colunas={colunasEmComparacao} />
+          ) : (
+            <p className="max-w-reading text-sm leading-relaxed text-ink-muted">
+              Adicione profissionais à comparação com o botão “Comparar” — a leitura do Motor
+              aparece aqui, lado a lado.
+            </p>
+          )}
         </Card>
       </section>
 
@@ -641,5 +678,93 @@ export function MesaWorkspace({
         </Card>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * O cartão do candidato — quem é, o que a leitura do Motor contou, e os dois
+ * atos possíveis. Nenhuma banda, nenhum número que possa ser lido como nota:
+ * a evidência detalhada mora na Comparação, que é a mesma matriz do Motor.
+ */
+function CandidatoCard({
+  candidato,
+  inComparison,
+  selected,
+  selectionFull,
+  disabled,
+  onToggleComparison,
+  onToggleSelection,
+}: {
+  candidato: SelecaoCandidato;
+  inComparison: boolean;
+  selected: boolean;
+  selectionFull: boolean;
+  disabled: boolean;
+  onToggleComparison: () => void;
+  onToggleSelection: () => void;
+}) {
+  return (
+    <Card className={cn("space-y-4", selected && "border-brand-primary/50")}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="font-sans text-base font-semibold text-ink">{candidato.nome}</h3>
+          <p className="mt-0.5 text-xs text-ink-muted">
+            Aprovado pela Aliviar — critério próprio, anterior a este caso.
+          </p>
+        </div>
+        {selected ? <Badge variant="sage">Selecionado</Badge> : null}
+      </div>
+
+      <div className="rounded-md bg-canvas p-3">
+        <p className="text-xs uppercase tracking-wide text-ink-muted">
+          Leitura do Motor para este caso
+        </p>
+        <p className="mt-1 text-sm text-ink">{candidato.resumo}</p>
+        <p className="mt-1 text-xs text-ink-muted">
+          Contagens por estado — nunca uma nota. O detalhe, critério a critério, está na Comparação.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
+        <button
+          type="button"
+          onClick={onToggleComparison}
+          disabled={disabled}
+          className={cn(
+            "inline-flex min-h-10 items-center rounded-md border px-3 py-2 text-sm font-medium transition-colors duration-fast ease-standard",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+            "disabled:cursor-not-allowed disabled:opacity-60",
+            inComparison
+              ? "border-brand-primary/40 bg-canvas text-brand-primary-deep"
+              : "border-border bg-surface text-ink hover:border-brand-primary/40",
+          )}
+        >
+          {inComparison ? "Tirar da comparação" : "Comparar"}
+        </button>
+
+        <button
+          type="button"
+          onClick={onToggleSelection}
+          disabled={disabled || (!selected && selectionFull)}
+          className={cn(
+            "inline-flex min-h-10 items-center rounded-md px-3 py-2 text-sm font-medium transition-colors duration-fast ease-standard",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+            "disabled:cursor-not-allowed disabled:opacity-60",
+            selected
+              ? "border border-border bg-surface text-ink hover:bg-canvas"
+              : "bg-brand-primary text-surface hover:bg-brand-primary-deep",
+          )}
+        >
+          {selected ? "Remover da seleção" : "Selecionar"}
+        </button>
+
+        {!selected && selectionFull && !disabled ? (
+          // Nunca um botão cinza sem explicação (Experience §6).
+          <p className="text-xs text-ink-muted">
+            As três já estão selecionadas — remova uma para trocar.
+          </p>
+        ) : null}
+      </div>
+    </Card>
   );
 }

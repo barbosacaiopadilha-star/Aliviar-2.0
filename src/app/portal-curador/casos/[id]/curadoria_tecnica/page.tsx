@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { CaseAlert } from "@/components/curadoria/case-alert";
-import { CompatibilityRunner } from "@/components/curadoria/compatibility-runner";
 import { EligibilityPanel } from "@/components/curadoria/cruzamento-mesa";
 import { MapaPrioridadesPanel } from "@/components/curadoria/mesa/mapa-prioridades-panel";
 import { PainelInvestigacao } from "@/components/curadoria/mesa/painel-investigacao";
@@ -37,6 +36,7 @@ import {
   loadCasePriorityMap,
 } from "@/modules/curadoria/mapa-prioridades-repository";
 import { crossCaseWithProfessional } from "@/modules/curadoria/motor-compatibilidade-repository";
+import { candidatosDaSelecao, foraDaSelecao } from "@/modules/curadoria/mesa-selecao";
 import {
   buildMesaEtapas,
   mesaProgress,
@@ -85,7 +85,9 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
   const state = conduct(record);
   const journey = buildCuratorJourney(record, state);
   const phaseAlerts = state.alerts.filter((alert) => alert.phase === "CURADORIA_TECNICA");
-  const { analyses, excluded, computedAt } = record.curadoriaTecnica;
+  // M1 (ADR-042): as análises legadas não montam mais a seleção. Elas seguem
+  // lidas SOMENTE como doadoras da banda que o contrato ainda exige (M2).
+  const { analyses } = record.curadoriaTecnica;
 
   const view = await loadMesaCruzamento(
     supabase,
@@ -303,26 +305,39 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
 
     CAMINHOS: (
       <div className="mesa-bloco">
+        {/* M1 (ADR-042): a seleção nasce dos elegíveis da Mesa com a leitura
+            do Motor — mesma fonte das etapas de leitura, sem runner e sem
+            gate de recálculo. */}
         {record.priorityProfileId ? (
-          <CompatibilityRunner
-            priorityProfileId={record.priorityProfileId}
-            patientFirstName={record.patientFirstName}
-            hasRun={Boolean(computedAt)}
-            eligibleCount={analyses.length}
-          />
-        ) : null}
-
-        {computedAt && record.priorityProfileId ? (
-          <MesaWorkspace
-            analyses={analyses}
-            excluded={excluded}
-            curatorName={record.curatorName}
-            patientFirstName={record.patientFirstName}
-            priorityProfileId={record.priorityProfileId}
-            persisted={persisted}
-            locked={entregue}
-            reportHref={journeyStepHref(record.caseId, "RELATORIO")}
-          />
+          view.comparison.length > 0 ? (
+            <MesaWorkspace
+              candidatos={candidatosDaSelecao(view.comparison, nomeDe)}
+              excluidos={foraDaSelecao(view.professionals)}
+              legacyBands={Object.fromEntries(
+                analyses.map((analise) => [analise.professionalId, analise.band]),
+              )}
+              curatorName={record.curatorName}
+              patientFirstName={record.patientFirstName}
+              priorityProfileId={record.priorityProfileId}
+              persisted={persisted}
+              locked={entregue}
+              reportHref={journeyStepHref(record.caseId, "RELATORIO")}
+            />
+          ) : (
+            <MesaVazio
+              titulo="A seleção ainda não tem candidatos."
+              corpo={
+                view.mapaPendentes > 0
+                  ? `O Mapa de Prioridades ainda tem ${view.mapaPendentes} subcritério(s) sem classificação — a leitura de compatibilidade nasce dele.`
+                  : "Ainda não há profissional elegível — a seleção acontece sobre quem passou pela área e pelos filtros deste Case."
+              }
+              proximoPasso={
+                view.mapaPendentes > 0
+                  ? "Complete o Mapa na etapa Mapa de Prioridades."
+                  : "Declare a compatibilidade de área na etapa Rede elegível."
+              }
+            />
+          )
         ) : null}
       </div>
     ),
