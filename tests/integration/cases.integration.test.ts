@@ -185,12 +185,55 @@ describe("Módulo de Caso (ÉPICO 1/SPRINT 2, Supabase local)", () => {
     const overview = await getPatientCaseOverview(patientClient, profileId);
     expect(overview?.statusLabel).toBe("Nossa equipe está organizando as informações.");
 
-    // O paciente nunca consegue ler a tabela cases nem as notas diretamente.
-    const { data: directRead } = await patientClient.from("cases").select("id, status").eq("id", created.id);
-    expect(directRead ?? []).toHaveLength(0);
+    // NC-26: a policy `cases_select_paciente` (is_patient_for_case) foi criada
+    // deliberadamente para que o Dashboard dela alcance a própria linha. O que
+    // o Método protege não é a existência do Case — é o que está DENTRO dele:
+    // a nota interna e o vocabulário cru nunca chegam a ela.
+    const { data: proprioCase } = await patientClient
+      .from("cases")
+      .select("id, status")
+      .eq("id", created.id);
+    expect(proprioCase ?? []).toHaveLength(1);
+    expect(proprioCase![0]!.id).toBe(created.id);
 
+    // O enum bruto não chega à tela: o que ela lê é sempre o rótulo traduzido.
+    expect(overview?.statusLabel).not.toBe(proprioCase![0]!.status);
+    expect(overview?.statusLabel).not.toMatch(/IN_REVIEW|IN_CURATION|READY_FOR_CURATION/);
+
+    // As notas internas continuam invisíveis para ela.
     const { data: directNotes } = await patientClient.from("case_notes").select("id").eq("case_id", created.id);
     expect(directNotes ?? []).toHaveLength(0);
+  });
+
+  it("a paciente alcança o próprio Case e nunca o de outra pessoa", async () => {
+    const primeira = await createSentStoryPatient();
+    const segunda = await createSentStoryPatient();
+    const admin = await loginAs("administrador");
+
+    const caseDaPrimeira = await createCase(primeira.adminClient, primeira.storyId, undefined, admin.userId);
+    const caseDaSegunda = await createCase(segunda.adminClient, segunda.storyId, undefined, admin.userId);
+
+    // Cada uma enxerga exatamente uma linha: a sua.
+    const { data: vistoPelaPrimeira } = await primeira.patientClient.from("cases").select("id");
+    expect((vistoPelaPrimeira ?? []).map((linha) => linha.id)).toEqual([caseDaPrimeira.id]);
+
+    // E o Case da outra permanece fora de alcance, mesmo pedindo pelo id.
+    const { data: alheio } = await primeira.patientClient
+      .from("cases")
+      .select("id")
+      .eq("id", caseDaSegunda.id);
+    expect(alheio ?? []).toHaveLength(0);
+
+    // Anônimo continua sem alcançar nada.
+    const anonimo = createClient(url, anonKey, { db: { schema: "curadoria" } });
+    const { data: semSessao } = await anonimo.from("cases").select("id").eq("id", caseDaPrimeira.id);
+    expect(semSessao ?? []).toHaveLength(0);
+
+    // As tabelas técnicas seguem protegidas para quem é paciente.
+    for (const tabela of ["case_notes", "case_priority_map", "professional_subcriterion_map"]) {
+      const { data, error } = await primeira.patientClient.from(tabela).select("id").limit(1);
+      expect(error !== null || (data ?? []).length === 0, `${tabela} exposta à paciente`).toBe(true);
+    }
   });
 
   it("notas do caso são append-only: nunca é possível editar ou apagar uma nota anterior", async () => {

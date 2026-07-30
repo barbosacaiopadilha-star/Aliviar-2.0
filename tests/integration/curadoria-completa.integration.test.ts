@@ -10,7 +10,7 @@ import * as curadoria from "@/modules/curadoria/repository";
 import * as reports from "@/modules/curadoria/report-repository";
 import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { conduct } from "@/modules/curadoria/cos/conduction";
-import { buildCuratorJourney } from "@/modules/curadoria/cos/journey";
+import { buildCuratorJourney, CURATOR_JOURNEY_ORDER } from "@/modules/curadoria/cos/journey";
 import { loadPatientCuradoria } from "@/modules/curadoria/patient-curadoria";
 
 import { createCuradoriaClient } from "./curadoria-client";
@@ -249,13 +249,19 @@ describe("Curadoria completa — sem SQL, sem script, sem intervenção técnica
 
     expect(registroFinal!.devolutiva.decision?.outcome).toBe("CHOSEN");
     expect(registroFinal!.devolutiva.presentedAt).toBeTruthy();
+
+    // NC-25: a contagem vem da definição canônica da jornada, nunca de um
+    // literal. Era `6` desde antes de a jornada do Curador ser reorganizada em
+    // quatro etapas (ACOLHER · COMPARAR · RELATORIO · FINALIZAR) — e o teste
+    // ficou cobrando um número que o domínio deixou de ter. Amarrado à fonte,
+    // ele acompanha a próxima reorganização sozinho.
+    const emAberto = jornada.steps.filter((step) => step.status !== "CONCLUIDA");
     expect(
-      jornada.completedCount,
-      `etapas em aberto: ${jornada.steps
-        .filter((step) => step.status !== "CONCLUIDA")
-        .map((step) => `${step.label} (${step.missing.join("; ")})`)
-        .join(" · ")}`,
-    ).toBe(6);
+      emAberto.map((step) => `${step.label} (${step.missing.join("; ")})`),
+      "nenhuma etapa da jornada pode ficar em aberto depois da decisão",
+    ).toEqual([]);
+    expect(jornada.steps).toHaveLength(CURATOR_JOURNEY_ORDER.length);
+    expect(jornada.completedCount).toBe(CURATOR_JOURNEY_ORDER.length);
   }, 90_000);
 
   it("o Curador não consegue registrar a decisão em nome do paciente", async () => {
