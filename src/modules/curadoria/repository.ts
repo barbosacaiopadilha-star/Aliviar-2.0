@@ -2,6 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { listCriticalDivergenceBlocklist } from "./rede-policy";
 import type {
   CuratedSelection,
   DecisionOutcome,
@@ -230,13 +231,9 @@ export async function listApprovedProviders(
 
   if (error) throw new Error("Não foi possível carregar os profissionais da Rede.");
 
-  const { data: divergentes } = await supabase
-    .from("verification_divergences")
-    .select("professional_profile_id")
-    .eq("status", "aberta")
-    .eq("severity", "critica");
-
-  const bloqueados = new Set((divergentes ?? []).map((row) => row.professional_profile_id as string));
+  // A exclusão por divergência crítica mora em `rede-policy.ts` desde a
+  // correção da NC-22 — a Mesa pergunta na mesma fonte.
+  const bloqueados = await listCriticalDivergenceBlocklist(supabase);
 
   const rows = (data ?? []).filter((row) => !bloqueados.has(row.id as string));
   const ids = rows.map((row) => row.id as string);

@@ -17,6 +17,7 @@ import {
   type CompatibilityReading,
 } from "./motor-compatibilidade";
 import { isProfileAcknowledged } from "./reconhecimento-do-perfil";
+import { listCriticalDivergenceBlocklist } from "./rede-policy";
 import type { PriorityProfileStatus } from "./types";
 import {
   buildComparison,
@@ -178,15 +179,25 @@ export async function loadMesaCruzamento(
   );
 
   // A Rede que este Case enxerga — o emparelhamento decide qual.
-  const { data: providerRows } = await supabase
-    .from("professional_profiles")
-    .select("id, display_name")
-    .eq("status", "ativo")
-    .eq("is_demo", false)
-    .eq("is_test_fixture", isCertification)
-    .eq("publication_status", "publicado");
+  //
+  // NC-22: a exclusão por divergência crítica em aberto acontece AQUI, na
+  // construção da Rede, e não depois. É o menor ponto que alinha os três
+  // consumidores de uma vez — a Mesa, a seleção dos três caminhos e o COS
+  // leem esta mesma lista. Um profissional cujas fontes discordam não chega
+  // a ser classificado: não há o que declarar sobre quem a Rede não oferece.
+  const [{ data: providerRows }, bloqueados] = await Promise.all([
+    supabase
+      .from("professional_profiles")
+      .select("id, display_name")
+      .eq("status", "ativo")
+      .eq("is_demo", false)
+      .eq("is_test_fixture", isCertification)
+      .eq("publication_status", "publicado"),
+    listCriticalDivergenceBlocklist(supabase),
+  ]);
 
-  const providerIds = (providerRows ?? []).map((row) => row.id as string);
+  const providers = (providerRows ?? []).filter((row) => !bloqueados.has(row.id as string));
+  const providerIds = providers.map((row) => row.id as string);
 
   const [{ data: areas }, { data: careModels }] = await Promise.all([
     supabase
@@ -203,7 +214,7 @@ export async function loadMesaCruzamento(
   const careByProvider = new Map((careModels ?? []).map((row) => [row.professional_profile_id as string, row]));
   const declarationByProvider = new Map(areaDeclarations.map((d) => [d.professionalProfileId, d]));
 
-  const professionals: MesaProfessional[] = (providerRows ?? []).map((row) => {
+  const professionals: MesaProfessional[] = providers.map((row) => {
     const id = row.id as string;
     const area = areaByProvider.get(id);
     const care = careByProvider.get(id);
