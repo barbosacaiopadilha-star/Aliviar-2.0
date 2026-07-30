@@ -23,7 +23,7 @@ const FOOTER_LINKS = [
 
 export function PublicFooter() {
   return (
-    <footer className="bg-[var(--color-brand-primary)]">
+    <footer className="landing-footer bg-[var(--color-brand-primary)]">
       {/* Fase 6 (Origem Emocional) — a última voz da Landing ecoa a
           primeira ("nunca sozinho", acento dourado no H1 da Chegada) em
           vez de repetir "sem pressa" literalmente. Curta, não acionável,

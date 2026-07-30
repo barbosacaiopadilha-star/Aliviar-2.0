@@ -38,25 +38,25 @@ const OBSTACLES = [
 
 export function ProblemaSection() {
   return (
-    <SectionContainer className="bg-canvas">
+    <SectionContainer className="landing-section landing-bg-linen">
       <div className="mx-auto max-w-content px-4 lg:px-8">
-        <SectionReveal className="max-w-reading space-y-4">
+        <SectionReveal className="max-w-reading space-y-5">
           <SectionEyebrow>O problema</SectionEyebrow>
-          <h2 className="font-serif text-3xl font-semibold leading-snug text-ink lg:text-4xl">
+          <h2 className="landing-heading text-3xl lg:text-4xl">
             Escolher um médico virou um problema de navegação — não de medicina.
           </h2>
-          <p className="text-base leading-relaxed text-ink-muted">
+          <p className="landing-lead">
             Existem bons médicos. Existe informação de sobra. O que falta é alguém do seu lado na
             hora de decidir.
           </p>
         </SectionReveal>
 
-        <div className="mt-10 grid gap-6 sm:grid-cols-2">
+        <div className="mt-12 grid gap-8 sm:grid-cols-2">
           {OBSTACLES.map((obstacle, index) => (
             <SectionReveal
               key={obstacle.title}
               delayMs={index * 80}
-              className="rounded-md border border-border bg-surface p-6"
+              className="landing-panel p-7 lg:p-8"
             >
               <h3 className="font-sans text-base font-semibold text-ink">{obstacle.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-ink-muted">{obstacle.text}</p>
@@ -74,21 +74,21 @@ export function ProblemaSection() {
 
 export function MetodoSection() {
   return (
-    <SectionContainer className="bg-surface">
+    <SectionContainer className="landing-section landing-bg-parchment">
       <div className="mx-auto max-w-content px-4 lg:px-8">
-        <SectionReveal className="max-w-reading space-y-4">
+        <SectionReveal className="max-w-reading space-y-5">
           <SectionEyebrow>O Método Aliviar</SectionEyebrow>
-          <h2 className="font-serif text-3xl font-semibold leading-snug text-ink lg:text-4xl">
+          <h2 className="landing-heading text-3xl lg:text-4xl">
             Nós nunca perguntamos &ldquo;qual é o melhor médico?&rdquo;
           </h2>
-          <p className="text-base leading-relaxed text-ink-muted">
+          <p className="landing-lead">
             Perguntamos algo mais útil: entre os médicos que a Aliviar já aprovou por critério
             próprio, quais combinam com o que <em>você</em> definiu como importante? A diferença
             entre essas duas perguntas é o Método inteiro.
           </p>
         </SectionReveal>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-3">
+        <div className="mt-12 grid gap-8 lg:grid-cols-3">
           {(
             [
               {
@@ -108,10 +108,10 @@ export function MetodoSection() {
             <SectionReveal
               key={role.who}
               delayMs={index * 80}
-              className="rounded-md border-t-2 border-brand-gold/60 bg-canvas p-6"
+              className="landing-panel-soft border-t-2 border-brand-gold/40 p-7 lg:p-8"
             >
               <h3 className="font-serif text-xl font-semibold text-brand-primary-deep">{role.who}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-ink">{role.does}</p>
+              <p className="mt-3 text-sm leading-[1.7] text-ink">{role.does}</p>
             </SectionReveal>
           ))}
         </div>
@@ -153,29 +153,29 @@ const JOURNEY_STEPS = [
 
 export function ComoFuncionaSection() {
   return (
-    <SectionContainer className="bg-canvas">
+    <SectionContainer className="landing-section landing-bg-linen">
       <div className="mx-auto max-w-content px-4 lg:px-8">
-        <SectionReveal className="max-w-reading space-y-4">
+        <SectionReveal className="max-w-reading space-y-5">
           <SectionEyebrow>Como funciona</SectionEyebrow>
-          <h2 className="font-serif text-3xl font-semibold leading-snug text-ink lg:text-4xl">
+          <h2 className="landing-heading text-3xl lg:text-4xl">
             Um caminho claro, do primeiro contato à escolha.
           </h2>
         </SectionReveal>
 
-        <ol className="mt-10 space-y-0">
+        <ol className="mt-12 space-y-0">
           {JOURNEY_STEPS.map((step, index) => (
             <SectionReveal key={step.title} delayMs={index * 60}>
-              <li className="relative flex gap-5 border-l-2 border-brand-sage/40 pb-8 pl-6 last:border-transparent last:pb-0">
+              <li className="relative flex gap-6 border-l border-brand-sage/35 pb-10 pl-7 last:border-transparent last:pb-0">
                 <span
                   aria-hidden="true"
-                  className="absolute -left-[9px] top-1 size-4 rounded-full border-2 border-brand-sage bg-canvas"
+                  className="absolute -left-[5px] top-1 size-2.5 rounded-full border border-brand-sage/60 bg-canvas shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-bg-canvas)_80%,transparent)]"
                 />
                 <div className="max-w-reading">
                   <h3 className="font-sans text-base font-semibold text-ink">
                     <span className="mr-2 font-serif text-brand-primary-deep">{index + 1}.</span>
                     {step.title}
                   </h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{step.text}</p>
+                  <p className="mt-2 text-sm leading-[1.7] text-ink-muted">{step.text}</p>
                 </div>
               </li>
             </SectionReveal>
@@ -199,28 +199,28 @@ const DECISION_LINES = [
 
 export function ComoDecidimosSection() {
   return (
-    <SectionContainer className="bg-[linear-gradient(165deg,_var(--color-brand-primary-deep)_0%,_var(--color-brand-primary)_100%)]">
+    <SectionContainer className="landing-section landing-bg-grove">
       <div className="mx-auto max-w-content px-4 lg:px-8">
-        <SectionReveal className="max-w-reading space-y-4">
+        <SectionReveal className="max-w-reading space-y-5">
           <SectionEyebrow tone="dark">Como tomamos decisões</SectionEyebrow>
-          <h2 className="font-serif text-3xl font-semibold leading-snug text-surface lg:text-4xl">
+          <h2 className="font-serif text-3xl font-semibold leading-[1.12] tracking-[-0.02em] text-surface lg:text-4xl">
             Cada decisão tem um dono — e nenhuma é do software.
           </h2>
-          <p className="text-base leading-relaxed text-surface/85">
+          <p className="text-base leading-[1.75] text-surface/88">
             Essa divisão não é um detalhe: é a diferença entre receber uma recomendação e construir
             uma decisão.
           </p>
         </SectionReveal>
 
-        <ol className="mt-10 grid gap-4 sm:grid-cols-2">
+        <ol className="mt-12 grid gap-5 sm:grid-cols-2">
           {DECISION_LINES.map((line, index) => (
             <SectionReveal
               key={line.who}
               delayMs={index * 80}
-              className="rounded-md border border-surface/15 bg-surface/5 p-6"
+              className="landing-panel-grove p-7"
             >
               <h3 className="font-serif text-lg font-semibold text-brand-gold">{line.who}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-surface/85">{line.detail}</p>
+              <p className="mt-2 text-sm leading-[1.7] text-surface/88">{line.detail}</p>
             </SectionReveal>
           ))}
         </ol>

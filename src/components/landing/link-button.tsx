@@ -12,11 +12,11 @@ const baseClasses =
 
 const variantClasses: Record<NonNullable<LinkButtonProps["variant"]>, string> = {
   primary:
-    "border border-transparent bg-[var(--color-brand-primary)] text-white shadow-[0_2px_8px_rgba(70,55,35,0.08)] hover:bg-[var(--color-brand-primary-hover)] hover:shadow-[0_6px_20px_rgba(85,107,93,0.18)] focus-visible:ring-offset-[var(--color-bg-canvas)]",
+    "landing-btn landing-btn-primary border border-transparent bg-[var(--color-brand-primary)] text-white shadow-[0_2px_8px_rgba(70,55,35,0.08)] hover:bg-[var(--color-brand-primary-hover)] hover:shadow-[0_6px_20px_rgba(85,107,93,0.18)] focus-visible:ring-offset-[var(--color-bg-canvas)]",
   secondary:
-    "border border-[rgba(183,154,91,0.55)] bg-transparent text-[var(--color-ink)] hover:border-[var(--color-brand-gold)] hover:bg-[rgba(183,154,91,0.07)] hover:shadow-[0_4px_14px_rgba(183,154,91,0.12)] focus-visible:ring-offset-[var(--color-bg-surface)]",
+    "landing-btn landing-btn-secondary border border-[rgba(183,154,91,0.55)] bg-transparent text-[var(--color-ink)] hover:border-[var(--color-brand-gold)] hover:bg-[rgba(183,154,91,0.07)] hover:shadow-[0_4px_14px_rgba(183,154,91,0.12)] focus-visible:ring-offset-[var(--color-bg-surface)]",
   ghost:
-    "bg-transparent text-[var(--color-brand-primary)] hover:bg-[rgba(85,107,93,0.06)] focus-visible:ring-offset-[var(--color-bg-canvas)]",
+    "landing-btn landing-btn-ghost bg-transparent text-[var(--color-brand-primary)] hover:bg-[rgba(85,107,93,0.06)] focus-visible:ring-offset-[var(--color-bg-canvas)]",
 };
 
 export function LinkButton({ variant = "primary", className, ...props }: LinkButtonProps) {

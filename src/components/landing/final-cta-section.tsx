@@ -18,7 +18,7 @@ export function FinalCtaSection() {
     // afetada). Mais respiro reservado, não um novo viewport cheio de
     // vazio — o conteúdo (título maior + ações) ocupa naturalmente mais
     // desse espaço.
-    <SectionContainer className="relative overflow-hidden py-24 bg-[linear-gradient(160deg,_var(--color-bg-canvas)_0%,_color-mix(in_srgb,_var(--color-brand-sage)_75%,_var(--color-ink))_10%,_color-mix(in_srgb,_var(--color-brand-sage)_70%,_var(--color-ink))_55%,_var(--color-brand-primary-deep)_100%)] lg:py-32">
+    <SectionContainer className="landing-section landing-bg-grove relative overflow-hidden py-28 lg:py-36">
       {/* Presença Residual (Fase 2): fecha o abraço, mesma curva de
           WhyTrust — ponto de entrada realinhado para x=180 (antes 340),
           continuando exatamente onde o Fio da Biblioteca termina (mesmo
@@ -38,7 +38,7 @@ export function FinalCtaSection() {
             própria Chegada, a ocupar esse patamar tipográfico. Família,
             peso, alinhamento e texto preservados; nenhum acento dourado
             adicionado. */}
-        <h2 className="font-serif text-4xl font-semibold leading-snug text-surface lg:text-5xl">
+        <h2 className="font-serif text-4xl font-semibold leading-[1.1] tracking-[-0.02em] text-surface lg:text-5xl">
           Estamos aqui — sem pressa e sem urgência artificial.
         </h2>
         <FinalActions />

@@ -39,26 +39,26 @@ const EXAMPLE_WEIGHTS = [
 
 export function PrioridadesSection() {
   return (
-    <SectionContainer className="bg-surface">
+    <SectionContainer className="landing-section landing-bg-parchment">
       <div className="mx-auto max-w-content px-4 lg:px-8">
         <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
-          <SectionReveal className="max-w-reading space-y-4">
+          <SectionReveal className="max-w-reading space-y-5">
             <SectionEyebrow align="left">Perfil de Prioridades</SectionEyebrow>
-            <h2 className="font-serif text-3xl font-semibold leading-snug text-ink lg:text-4xl">
+            <h2 className="landing-heading text-3xl lg:text-4xl">
               Suas prioridades ganham forma — nas suas palavras.
             </h2>
-            <p className="text-base leading-relaxed text-ink-muted">
+            <p className="landing-lead">
               Junto com seu Curador, você distribui cem pontos entre o que importa para você. Cada
               peso nasce de algo que você disse — e fica registrado com a sua fala ao lado, para que
               você se reconheça nele.
             </p>
-            <p className="text-base leading-relaxed text-ink-muted">
+            <p className="landing-lead">
               Nada é presumido, nada vem preenchido, nada é herdado de &ldquo;casos parecidos&rdquo;.
               E nada avança sem você confirmar que aquele retrato é seu.
             </p>
           </SectionReveal>
 
-          <SectionReveal delayMs={100} className="rounded-lg border border-border bg-canvas p-6 lg:p-8">
+          <SectionReveal delayMs={100} className="landing-panel-soft p-7 lg:p-9">
             <p className="text-xs uppercase tracking-[0.14em] text-ink-muted">
               Um exemplo de como fica
             </p>
@@ -73,7 +73,7 @@ export function PrioridadesSection() {
                   </div>
                   <div
                     aria-hidden="true"
-                    className="mt-2 h-2 overflow-hidden rounded-full bg-border"
+                    className="mt-2 h-1.5 overflow-hidden rounded-full bg-border/60"
                   >
                     <div
                       className="h-full rounded-full bg-brand-sage"
@@ -99,11 +99,11 @@ export function PrioridadesSection() {
 
 export function CompartilhadaSection() {
   return (
-    <SectionContainer className="bg-canvas">
+    <SectionContainer className="landing-section landing-bg-linen">
       <div className="mx-auto max-w-content px-4 lg:px-8">
-        <SectionReveal className="max-w-reading space-y-4">
+        <SectionReveal className="max-w-reading space-y-5">
           <SectionEyebrow>Curadoria Compartilhada</SectionEyebrow>
-          <h2 className="font-serif text-3xl font-semibold leading-snug text-ink lg:text-4xl">
+          <h2 className="landing-heading text-3xl lg:text-4xl">
             Compartilhada porque ninguém decide sozinho — nem você, nem nós.
           </h2>
           <p className="text-base leading-relaxed text-ink-muted">
@@ -113,7 +113,7 @@ export function CompartilhadaSection() {
           </p>
         </SectionReveal>
 
-        <div className="mt-10 grid gap-6 sm:grid-cols-3">
+        <div className="mt-12 grid gap-8 sm:grid-cols-3">
           {(
             [
               {
@@ -133,10 +133,10 @@ export function CompartilhadaSection() {
             <SectionReveal
               key={item.title}
               delayMs={index * 80}
-              className="rounded-md border border-border bg-surface p-6"
+              className="landing-panel p-7"
             >
               <h3 className="font-sans text-base font-semibold text-ink">{item.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-ink-muted">{item.text}</p>
+              <p className="mt-3 text-sm leading-[1.7] text-ink-muted">{item.text}</p>
             </SectionReveal>
           ))}
         </div>
@@ -151,28 +151,28 @@ export function CompartilhadaSection() {
 
 export function RelatorioSection() {
   return (
-    <SectionContainer className="bg-surface">
+    <SectionContainer className="landing-section landing-bg-parchment">
       <div className="mx-auto max-w-content px-4 lg:px-8">
         <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
-          <SectionReveal className="max-w-reading space-y-4 lg:order-2">
+          <SectionReveal className="max-w-reading space-y-5 lg:order-2">
             <SectionEyebrow align="left">O Relatório</SectionEyebrow>
-            <h2 className="font-serif text-3xl font-semibold leading-snug text-ink lg:text-4xl">
+            <h2 className="landing-heading text-3xl lg:text-4xl">
               Um documento para reler com calma — e com quem você quiser.
             </h2>
-            <p className="text-base leading-relaxed text-ink-muted">
+            <p className="landing-lead">
               Seu Curador apresenta as três opções pessoalmente, explica as diferenças e responde
               suas dúvidas. Depois da conversa, o Relatório fica com você: suas prioridades, as três
               opções, o que cada uma oferece e o que cada uma custa — em linguagem simples, sem
               jargão.
             </p>
-            <p className="text-base leading-relaxed text-ink-muted">
+            <p className="landing-lead">
               É o tipo de documento que você pode mostrar para a família, levar para o médico
               escolhido, e entender sozinho seis meses depois.
             </p>
           </SectionReveal>
 
           <SectionReveal delayMs={100} className="lg:order-1">
-            <div className="space-y-3 rounded-lg border border-border bg-canvas p-6 lg:p-8">
+            <div className="landing-panel-soft space-y-3 p-7 lg:p-9">
               {(
                 [
                   "Suas prioridades, com as suas palavras",
@@ -181,7 +181,7 @@ export function RelatorioSection() {
                   "Perguntas sugeridas para a primeira consulta",
                 ] as const
               ).map((line) => (
-                <div key={line} className="flex items-baseline gap-3 rounded-md bg-surface p-4">
+                <div key={line} className="landing-panel-inset flex items-baseline gap-3 p-4">
                   <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-brand-gold" />
                   <p className="text-sm leading-relaxed text-ink">{line}</p>
                 </div>

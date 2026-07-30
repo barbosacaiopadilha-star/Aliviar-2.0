@@ -19,20 +19,20 @@ import { SectionReveal } from "@/components/ui/section-reveal";
 
 export function PortalPacienteSection() {
   return (
-    <SectionContainer className="bg-canvas">
+    <SectionContainer className="landing-section landing-bg-linen">
       <div className="mx-auto max-w-content px-4 lg:px-8">
         <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
-          <SectionReveal className="max-w-reading space-y-4">
+          <SectionReveal className="max-w-reading space-y-5">
             <SectionEyebrow align="left">Sua Jornada</SectionEyebrow>
-            <h2 className="font-serif text-3xl font-semibold leading-snug text-ink lg:text-4xl">
+            <h2 className="landing-heading text-3xl lg:text-4xl">
               Entre uma conversa e outra, você nunca fica no escuro.
             </h2>
-            <p className="text-base leading-relaxed text-ink-muted">
+            <p className="landing-lead">
               Sua Jornada é o espaço onde você acompanha a própria Curadoria: quem está cuidando do
               seu caso, em que ponto ele está e quando você terá notícia. Sempre com nome, sempre com
               data — nunca um &ldquo;processando&rdquo;.
             </p>
-            <p className="text-base leading-relaxed text-ink-muted">
+            <p className="landing-lead">
               É lá que ficam suas prioridades confirmadas, o Relatório depois da conversa, e a sua
               decisão registrada.
             </p>
@@ -49,24 +49,24 @@ export function PortalPacienteSection() {
           <SectionReveal delayMs={100}>
             {/* Ilustração do estado real que a Jornada mostra — declaradamente
                 um exemplo, com os três compromissos: quem, o quê, quando. */}
-            <div className="rounded-lg border border-border bg-surface p-6 lg:p-8">
+            <div className="landing-panel-soft p-7 lg:p-9">
               <p className="text-xs uppercase tracking-[0.14em] text-ink-muted">
                 O que você vê por lá
               </p>
-              <div className="mt-5 space-y-4">
-                <div className="rounded-md bg-canvas p-4">
+              <div className="mt-6 space-y-4">
+                <div className="landing-panel-inset p-4">
                   <p className="text-xs uppercase tracking-wide text-ink-muted">Quem</p>
                   <p className="mt-1 text-sm text-ink">
                     Sua Curadora está com o seu caso — pelo nome, do início ao fim.
                   </p>
                 </div>
-                <div className="rounded-md bg-canvas p-4">
+                <div className="landing-panel-inset p-4">
                   <p className="text-xs uppercase tracking-wide text-ink-muted">O quê</p>
                   <p className="mt-1 text-sm text-ink">
                     Em que ponto sua Curadoria está, em linguagem de gente.
                   </p>
                 </div>
-                <div className="rounded-md bg-canvas p-4">
+                <div className="landing-panel-inset p-4">
                   <p className="text-xs uppercase tracking-wide text-ink-muted">Quando</p>
                   <p className="mt-1 text-sm text-ink">
                     A data combinada para o seu retorno — e, se mudar, você fica sabendo antes.
@@ -87,14 +87,14 @@ export function PortalPacienteSection() {
 
 export function QuemSomosSection() {
   return (
-    <SectionContainer className="bg-surface">
+    <SectionContainer className="landing-section landing-bg-parchment">
       <div className="mx-auto max-w-content px-4 lg:px-8">
-        <SectionReveal className="max-w-reading space-y-4">
+        <SectionReveal className="max-w-reading space-y-5">
           <SectionEyebrow>Quem somos</SectionEyebrow>
-          <h2 className="font-serif text-3xl font-semibold leading-snug text-ink lg:text-4xl">
+          <h2 className="landing-heading text-3xl lg:text-4xl">
             Uma equipe de Curadores — e um compromisso que não se negocia.
           </h2>
-          <p className="text-base leading-relaxed text-ink-muted">
+          <p className="landing-lead">
             A Aliviar é formada por pessoas cujo trabalho é conduzir decisões de saúde com método,
             calma e critério. Os médicos que apresentamos passam por aprovação própria da Aliviar —
             anterior e independente de qualquer paciente. Nenhum médico paga para estar aqui, para
@@ -102,7 +102,7 @@ export function QuemSomosSection() {
           </p>
         </SectionReveal>
 
-        <SectionReveal delayMs={100} className="mt-10 rounded-lg border border-brand-gold/40 bg-canvas p-6 lg:p-8">
+        <SectionReveal delayMs={100} className="landing-panel-accent mt-12 p-7 lg:p-9">
           <h3 className="font-sans text-sm font-semibold uppercase tracking-[0.14em] text-brand-primary-deep">
             O que nós não fazemos
           </h3>
