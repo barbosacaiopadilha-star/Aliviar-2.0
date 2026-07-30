@@ -42,24 +42,13 @@ import {
   type ParecerDraft,
 } from "@/modules/curadoria/mesa";
 import { saveReportAction, saveSelectionAction } from "@/modules/curadoria/actions";
-import {
-  bandaDeCompatibilidade,
-  type SelecaoCandidato,
-  type SelecaoExcluido,
-} from "@/modules/curadoria/mesa-selecao";
-import type { CompatibilityBand } from "@/modules/curadoria/types";
+import type { SelecaoCandidato, SelecaoExcluido } from "@/modules/curadoria/mesa-selecao";
 
 type MesaWorkspaceProps = {
   /** Os elegíveis da Mesa, com a leitura do Motor — na ordem da Rede. */
   candidatos: SelecaoCandidato[];
   /** Quem não participa, com o motivo da própria classificação da Mesa. */
   excluidos: SelecaoExcluido[];
-  /**
-   * Bandas gravadas pelo motor antigo, por profissional — SOMENTE para o
-   * contrato de seleção, que ainda exige `band` (pendência declarada da M2).
-   * Nada disto é exibido nem influencia quem aparece.
-   */
-  legacyBands: Record<string, CompatibilityBand>;
   curatorName: string;
   patientFirstName: string;
   /** Onde a seleção e o parecer são gravados. */
@@ -243,7 +232,6 @@ function mesaReducer(state: MesaState, action: MesaAction): MesaState {
 export function MesaWorkspace({
   candidatos,
   excluidos,
-  legacyBands,
   curatorName,
   patientFirstName,
   priorityProfileId,
@@ -321,9 +309,6 @@ export function MesaWorkspace({
         compositionRationale,
         options: ordered.map(({ id, parecer }) => ({
           professionalProfileId: id,
-          // Pendência da M2: o contrato ainda exige `band`. O valor preserva o
-          // que o Case já tinha gravado; nunca é calculado nem exibido aqui.
-          band: bandaDeCompatibilidade(id, legacyBands),
           rationale: parecer.whyIncluded,
           tradeOff: parecer.limitations,
         })),

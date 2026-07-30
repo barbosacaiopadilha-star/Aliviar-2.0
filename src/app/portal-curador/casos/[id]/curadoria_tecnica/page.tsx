@@ -85,9 +85,6 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
   const state = conduct(record);
   const journey = buildCuratorJourney(record, state);
   const phaseAlerts = state.alerts.filter((alert) => alert.phase === "CURADORIA_TECNICA");
-  // M1 (ADR-042): as análises legadas não montam mais a seleção. Elas seguem
-  // lidas SOMENTE como doadoras da banda que o contrato ainda exige (M2).
-  const { analyses } = record.curadoriaTecnica;
 
   const view = await loadMesaCruzamento(
     supabase,
@@ -313,9 +310,6 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
             <MesaWorkspace
               candidatos={candidatosDaSelecao(view.comparison, nomeDe)}
               excluidos={foraDaSelecao(view.professionals)}
-              legacyBands={Object.fromEntries(
-                analyses.map((analise) => [analise.professionalId, analise.band]),
-              )}
               curatorName={record.curatorName}
               patientFirstName={record.patientFirstName}
               priorityProfileId={record.priorityProfileId}

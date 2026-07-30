@@ -1,18 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  bandaDeCompatibilidade,
-  candidatosDaSelecao,
-  foraDaSelecao,
-} from "@/modules/curadoria/mesa-selecao";
+import { candidatosDaSelecao, foraDaSelecao } from "@/modules/curadoria/mesa-selecao";
 import type { ComparisonColumn, ProfessionalEligibility } from "@/modules/curadoria/mesa-cruzamento-view";
 
 /**
  * M1 — a seleção nasce dos elegíveis da Mesa com a leitura do Motor.
  *
  * O que estes testes fixam: a fonte dos candidatos é a comparação (Motor),
- * a ordem é a de entrada, eliminado nunca vira candidato, e a banda legada
- * existe apenas como compatibilidade de contrato até a M2.
+ * a ordem é a de entrada e eliminado nunca vira candidato. (A banda legada,
+ * que a M1 ainda tolerava como compatibilidade de contrato, saiu na M2.)
  */
 
 function coluna(id: string, resumo = "1 alta · 0 médias · 0 lacunas · 0 sem influência"): ComparisonColumn {
@@ -107,15 +103,5 @@ describe("foraDaSelecao — quem não participa, com o motivo da Mesa", () => {
     for (const excluido of fora) {
       expect(idsCandidatos.has(excluido.professionalProfileId)).toBe(false);
     }
-  });
-});
-
-describe("bandaDeCompatibilidade — compatibilidade de contrato até a M2", () => {
-  it("preserva a banda que o Case antigo já tinha gravado", () => {
-    expect(bandaDeCompatibilidade("a", { a: "ALTA" })).toBe("ALTA");
-  });
-
-  it("Case novo, sem análise legada, recebe o fallback histórico MODERADA", () => {
-    expect(bandaDeCompatibilidade("novo", {})).toBe("MODERADA");
   });
 });

@@ -244,7 +244,6 @@ describe("Mesa do Cruzamento — banco e montagem (Supabase local)", () => {
       "Os três cobrem a área por caminhos diferentes.",
       (["fixture-a", "fixture-b", "fixture-c"] as const).map((key) => ({
         professionalProfileId: professionalIds[key]!,
-        band: "ALTA" as const,
         rationale: "Área compatível e filtros atendidos.",
       })),
     );

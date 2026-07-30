@@ -444,9 +444,10 @@ export async function listCompatibilityAnalyses(
 // Seleção — autoria humana obrigatória
 // ---------------------------------------------------------------------------
 
+// M2 (ADR-042): `band` saiu do contrato — a seleção nova grava apenas o que
+// tem autoridade vigente. A coluna permanece no banco como histórico.
 export type SelectionOptionInput = {
   professionalProfileId: string;
-  band: CompatibilityBand;
   rationale: string;
   tradeOff?: string;
 };
@@ -525,7 +526,6 @@ export async function saveSelection(
       curated_selection_id: selectionId,
       professional_profile_id: option.professionalProfileId,
       position: index + 1,
-      band: option.band,
       rationale: option.rationale,
       trade_off: option.tradeOff ?? null,
     })),
@@ -615,7 +615,9 @@ async function hydrateSelection(supabase: SupabaseClient, row: unknown): Promise
     professionalProfileId: option.professional_profile_id as string,
     professionalName: namesById.get(option.professional_profile_id as string) ?? "Sem nome",
     position: option.position as number,
-    band: option.band as CompatibilityBand,
+    // Leitura histórica: seleções antigas carregam a banda gravada à época;
+    // seleções novas vêm sem ela — e ausência é ausência, nunca "MODERADA".
+    band: (option.band as CompatibilityBand | null) ?? null,
     rationale: option.rationale as string,
     tradeOff: (option.trade_off as string | null) ?? null,
   }));

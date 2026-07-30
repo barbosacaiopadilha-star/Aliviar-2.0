@@ -14,7 +14,6 @@
  * Puro e determinístico: sem React, sem banco.
  */
 
-import type { CompatibilityBand } from "./types";
 import type { ComparisonColumn, ProfessionalEligibility } from "./mesa-cruzamento-view";
 
 export type SelecaoCandidato = {
@@ -68,19 +67,4 @@ export function foraDaSelecao(
       nome: profissional.displayName,
       motivo: profissional.eligibility.reason,
     }));
-}
-
-/**
- * COMPATIBILIDADE COM O CONTRATO LEGADO — pendência declarada da M2.
- *
- * `saveSelectionAction` ainda exige `band` por opção (schema intocado nesta
- * onda). O valor deixa de nascer de um cálculo: Cases que já tinham análise
- * legada preservam a banda gravada antes; Cases novos recebem o mesmo
- * `"MODERADA"` que sempre foi o fallback. A remoção do campo é a M2.
- */
-export function bandaDeCompatibilidade(
-  professionalProfileId: string,
-  legadas: Readonly<Record<string, CompatibilityBand>>,
-): CompatibilityBand {
-  return legadas[professionalProfileId] ?? "MODERADA";
 }

@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 import {
-  COMPATIBILITY_BANDS,
   DECISION_OUTCOMES,
   MANDATORY_FILTER_KINDS,
   PRIORITY_CRITERIA,
@@ -96,12 +95,16 @@ export const saveSelectionInputSchema = z.object({
     .max(4000),
   options: z
     .array(
-      z.object({
-        professionalProfileId: z.string().uuid(),
-        band: z.enum(COMPATIBILITY_BANDS),
-        rationale: z.string().trim().min(1, "Explique por que esta opção está aqui.").max(2000),
-        tradeOff: z.string().trim().max(2000).optional(),
-      }),
+      // M2 (ADR-042): a seleção carrega apenas o que tem autoridade vigente —
+      // quem, em que ordem, por quê e a que custo. `band` saiu do contrato e é
+      // recusada explicitamente (`strict`): banda é dado do motor aposentado.
+      z
+        .object({
+          professionalProfileId: z.string().uuid(),
+          rationale: z.string().trim().min(1, "Explique por que esta opção está aqui.").max(2000),
+          tradeOff: z.string().trim().max(2000).optional(),
+        })
+        .strict(),
     )
     .length(3, "A Curadoria apresenta sempre exatamente três opções."),
 });

@@ -186,7 +186,6 @@ describe("Relatório assistido — geração, ciclo de vida e congelamento (Supa
       "Os três cobrem a área exigida por caminhos diferentes.",
       (["fixture-a", "fixture-b", "fixture-c"] as const).map((key) => ({
         professionalProfileId: professionalIds[key]!,
-        band: "ALTA" as const,
         rationale: "Área compatível declarada.",
       })),
     );

@@ -42,6 +42,11 @@ describe("A etapa CAMINHOS não depende do pipeline legado", () => {
     expect(page).not.toContain("computedAt");
   });
 
+  it("a página não consulta as análises legadas para montar ou salvar a seleção (M2)", () => {
+    expect(page).not.toContain("legacyBands");
+    expect(page).not.toContain("record.curadoriaTecnica.analyses");
+  });
+
   it("a página monta a seleção a partir dos elegíveis da Mesa e da leitura do Motor", () => {
     expect(page).toContain("candidatosDaSelecao(view.comparison");
     expect(page).toContain("foraDaSelecao(view.professionals)");
@@ -79,9 +84,10 @@ describe("MesaWorkspace consome o Motor, não o motor antigo", () => {
     expect(workspace.includes(".sort(")).toBe(false);
   });
 
-  it("a banda só sobrevive como compatibilidade de contrato (M2), nunca calculada", () => {
-    expect(workspace).toContain("bandaDeCompatibilidade");
-    expect(workspace).not.toContain("bandFor");
+  it("a banda saiu do contrato operacional (M2) — nenhum vestígio na tela da escolha", () => {
+    for (const proibido of ["legacyBands", "bandaDeCompatibilidade", "MODERADA", "CompatibilityBand", "bandFor"]) {
+      expect(workspace.includes(proibido), proibido).toBe(false);
+    }
   });
 
   it("pareceres, composição, encerramento e reabertura permanecem", () => {

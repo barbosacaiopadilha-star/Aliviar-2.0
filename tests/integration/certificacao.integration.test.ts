@@ -475,7 +475,6 @@ describe("Certificação do ciclo da Curadoria — fixtures isoladas (Supabase l
         "Os três cobrem a área exigida por caminhos diferentes.",
         escolhidos.map((id) => ({
           professionalProfileId: id,
-          band: "ALTA" as const,
           rationale: "Entra porque a área declarada responde ao que o Case exige.",
           tradeOff: "Cada um resolve o acesso de um jeito.",
         })),

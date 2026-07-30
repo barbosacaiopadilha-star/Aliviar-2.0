@@ -249,7 +249,9 @@ export type SelectionOption = {
   professionalName: string;
   // Ordem de apresentação, nunca colocação.
   position: number;
-  band: CompatibilityBand;
+  // Histórico (M2, ADR-042): seleções novas não gravam banda. `null` é o
+  // normal daqui em diante; valor presente é registro do motor aposentado.
+  band: CompatibilityBand | null;
   rationale: string;
   tradeOff: string | null;
 };
