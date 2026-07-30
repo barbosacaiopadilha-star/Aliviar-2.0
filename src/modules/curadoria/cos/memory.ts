@@ -102,16 +102,9 @@ export function buildMemory(record: CuradoriaRecord): MemoryEntry[] {
     });
   }
 
-  if (record.curadoriaTecnica.computedAt) {
-    entries.push({
-      at: record.curadoriaTecnica.computedAt,
-      phase: "CURADORIA_TECNICA",
-      event: "COMPATIBILIDADE_CALCULADA",
-      description: `${record.curadoriaTecnica.analyses.length} profissionais analisados, ${record.curadoriaTecnica.excluded.length} eliminados pelos filtros.`,
-      actor: "Sistema",
-    });
-  }
-
+  // M3 (ADR-042): o "cálculo de compatibilidade" saiu da linha do tempo. A
+  // leitura do Motor é derivada sob demanda, não um evento datado — o que a
+  // Memória registra são os atos: seleção, emissão, entrega, decisão.
   if (record.curadoriaTecnica.selectedAt && record.curadoriaTecnica.selectedBy) {
     entries.push({
       at: record.curadoriaTecnica.selectedAt,
@@ -189,10 +182,11 @@ export function runReconstructionTest(record: CuradoriaRecord): ReconstructionAn
     },
     {
       question: "Quais médicos foram eliminados, por qual filtro?",
-      answered: Boolean(tecnica.computedAt),
-      answer: tecnica.computedAt
-        ? `${tecnica.excluded.length} eliminados, cada um com o motivo registrado.`
-        : MISSING,
+      answered: tecnica.elegibilidade.found > 0,
+      answer:
+        tecnica.elegibilidade.found > 0
+          ? `${tecnica.foraDaSelecao.length} fora da seleção hoje, cada um com o motivo da classificação da Mesa registrado.`
+          : MISSING,
     },
     {
       question: "Qual era o Perfil Médico de cada analisado naquele momento?",
@@ -203,11 +197,13 @@ export function runReconstructionTest(record: CuradoriaRecord): ReconstructionAn
         "Não preservado — o registro guarda o resultado da análise, não o estado do cadastro no momento do cálculo.",
     },
     {
-      question: "Qual score e qual cobertura cada um teve?",
-      answered: tecnica.analyses.length > 0,
+      // M3 (ADR-042): a pergunta do score morreu com o score. O que se
+      // reconstrói é a leitura do Motor — contagens por estado, sem nota.
+      question: "O que a leitura do Motor mostrou para cada elegível?",
+      answered: tecnica.leituras.length > 0,
       answer:
-        tecnica.analyses.length > 0
-          ? `${tecnica.analyses.length} análises com score e cobertura registrados.`
+        tecnica.leituras.length > 0
+          ? `${tecnica.leituras.length} leitura${tecnica.leituras.length === 1 ? "" : "s"} por contagem de estados — alta, média, lacuna e não relevante, sem nota.`
           : MISSING,
     },
     {

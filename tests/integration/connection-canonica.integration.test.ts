@@ -8,7 +8,6 @@ import { createPatientAccount } from "@/modules/profiles/patient-account-reposit
 import { getOrCreateActiveStory, submitStory } from "@/modules/story/repository";
 import * as curadoria from "@/modules/curadoria/repository";
 import * as reports from "@/modules/curadoria/report-repository";
-import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { loadPatientCuradoria } from "@/modules/curadoria/patient-curadoria";
 import { findDeliveredCuradoria } from "@/modules/curadoria/delivery-contract";
 import { createConnection } from "@/modules/connection/commands";
@@ -143,8 +142,15 @@ describe("Connection canônica — sem final_curadoria_deliveries", () => {
     await curadoria.validatePriorityProfile(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
     await curadoria.runCompatibility(cliente, priorityProfileId);
 
-    const record = await loadCuradoriaRecord(cliente, caseId);
-    const analyses = record!.curadoriaTecnica.analyses;
+    // M3: o record do COS não carrega mais as análises legadas — a fixture lê
+    // a tabela histórica diretamente, que é exatamente o cenário que ela monta.
+    const { data: analysesRows } = await cliente
+      .from("compatibility_analyses")
+      .select("professional_profile_id")
+      .eq("priority_profile_id", priorityProfileId);
+    const analyses = (analysesRows ?? []).map((row) => ({
+      professionalId: row.professional_profile_id as string,
+    }));
     if (analyses.length < 3) return null;
 
     const tres = analyses.slice(0, 3);
@@ -156,7 +162,6 @@ describe("Connection canônica — sem final_curadoria_deliveries", () => {
       "Os três cobrem experiência e continuidade de formas diferentes.",
       tres.map((a) => ({
         professionalProfileId: a.professionalId,
-        band: a.band,
         rationale: "Entra porque atende o que ela pediu.",
         tradeOff: "Agenda mais concorrida.",
       })),

@@ -15,7 +15,6 @@ import { expect, test, type Page } from "@playwright/test";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import * as curadoria from "@/modules/curadoria/repository";
 import * as reports from "@/modules/curadoria/report-repository";
-import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { changeCaseStatus, createCase } from "@/modules/cases/repository";
 import { createPatientAccount } from "@/modules/profiles/patient-account-repository";
 import { createProfessionalProfile } from "@/modules/profiles/professional-repository";
@@ -240,11 +239,25 @@ async function seedDeliveredCase(): Promise<DeliveredFixture> {
   // Quem são os três é decidido pela comparação sobre a rede real — a fixture
   // NÃO assume que os semeados serão os escolhidos. Os nomes exibidos na tela
   // vêm daqui, do que foi de fato entregue.
-  const record = await loadCuradoriaRecord(cliente, created.id);
-  const tres = record!.curadoriaTecnica.analyses.slice(0, 3);
+  // M3: o record do COS não carrega mais as análises legadas — a fixture lê a
+  // tabela histórica diretamente, que é exatamente o cenário que ela monta.
+  const { data: analysesRows } = await cliente
+    .from("compatibility_analyses")
+    .select("professional_profile_id")
+    .eq("priority_profile_id", priorityProfileId);
+  const tres = (analysesRows ?? [])
+    .slice(0, 3)
+    .map((row) => ({ professionalId: row.professional_profile_id as string }));
   if (tres.length < 3) {
     throw new Error("Fixture E2E: a rede local não tem três profissionais elegíveis.");
   }
+
+  // Nomes pela fonte canônica — as análises não carregam mais display name.
+  const { data: nomesRows } = await cliente
+    .from("professional_profiles")
+    .select("id, display_name")
+    .in("id", tres.map((a) => a.professionalId));
+  const nomeDe = new Map((nomesRows ?? []).map((row) => [row.id as string, row.display_name as string]));
 
   await curadoria.saveSelection(
     cliente,
@@ -254,7 +267,6 @@ async function seedDeliveredCase(): Promise<DeliveredFixture> {
     "Os três cobrem experiência e continuidade de formas diferentes.",
     tres.map((a) => ({
       professionalProfileId: a.professionalId,
-      band: a.band,
       rationale: "Entra porque atende o que ela pediu.",
       tradeOff: "Agenda mais concorrida.",
     })),
@@ -293,9 +305,9 @@ async function seedDeliveredCase(): Promise<DeliveredFixture> {
     createdProfessionalIds,
     selectedProfessionals: tres.map((a) => ({
       id: a.professionalId,
-      name: a.professionalName,
+      name: nomeDe.get(a.professionalId) ?? "Profissional",
     })),
-    professionalDisplayNames: tres.map((a) => a.professionalName),
+    professionalDisplayNames: tres.map((a) => nomeDe.get(a.professionalId) ?? "Profissional"),
   };
 }
 

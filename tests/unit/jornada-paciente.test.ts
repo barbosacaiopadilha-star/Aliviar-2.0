@@ -84,8 +84,8 @@ describe("o que nunca atravessa a fronteira do paciente", () => {
     const jornada = buildJornada(joaquim);
     const text = jornada.stages.map((stage) => stage.description).join(" ");
 
-    for (const analysis of joaquim.curadoriaTecnica.analyses) {
-      expect(text).not.toContain(analysis.professionalName);
+    for (const leitura of joaquim.curadoriaTecnica.leituras) {
+      expect(text).not.toContain(leitura.professionalName);
     }
   });
 

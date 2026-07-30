@@ -16,7 +16,6 @@ import {
 import { SupabaseConnectionRepository } from "@/modules/connection/repository";
 import * as curadoria from "@/modules/curadoria/repository";
 import * as reports from "@/modules/curadoria/report-repository";
-import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { createPatientAccount } from "@/modules/profiles/patient-account-repository";
 import { seedPublishedProfessional } from "./rede-fixture";
 import {
@@ -178,8 +177,15 @@ describe("Relationship Engine — MVP — PR3 (repository, actions — Supabase 
     await curadoria.validatePriorityProfile(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
     await curadoria.runCompatibility(cliente, priorityProfileId);
 
-    const record = await loadCuradoriaRecord(cliente, caseId);
-    const tres = record!.curadoriaTecnica.analyses.slice(0, 3);
+    // M3: o record do COS não carrega mais as análises legadas — a fixture lê
+    // a tabela histórica diretamente, que é exatamente o cenário que ela monta.
+    const { data: analysesRows } = await cliente
+      .from("compatibility_analyses")
+      .select("professional_profile_id")
+      .eq("priority_profile_id", priorityProfileId);
+    const tres = (analysesRows ?? [])
+      .slice(0, 3)
+      .map((row) => ({ professionalId: row.professional_profile_id as string }));
     expect(tres, "a rede local precisa ter três elegíveis para este cenário").toHaveLength(3);
 
     await curadoria.saveSelection(
@@ -190,7 +196,6 @@ describe("Relationship Engine — MVP — PR3 (repository, actions — Supabase 
       "Os três cobrem experiência e continuidade de formas diferentes.",
       tres.map((a) => ({
         professionalProfileId: a.professionalId,
-        band: a.band,
         rationale: "Entra porque atende o que ela pediu.",
         tradeOff: "Agenda mais concorrida.",
       })),

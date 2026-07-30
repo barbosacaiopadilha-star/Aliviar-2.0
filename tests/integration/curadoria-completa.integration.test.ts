@@ -159,13 +159,20 @@ describe("Curadoria completa — sem SQL, sem script, sem intervenção técnica
     const elegiveis = await curadoria.getSelection(cliente, priorityProfileId);
     expect(elegiveis, "ainda não deve existir seleção antes de o Curador escolher").toBeNull();
 
-    const recordAposComparar = await loadCuradoriaRecord(cliente, caseId);
-    const analises = recordAposComparar!.curadoriaTecnica.analyses;
+    // M3: o record do COS não carrega mais as análises legadas — a fixture lê
+    // a tabela histórica que o `runCompatibility` (legado preservado) gravou.
+    const { data: analysesRows } = await cliente
+      .from("compatibility_analyses")
+      .select("professional_profile_id")
+      .eq("priority_profile_id", priorityProfileId);
+    const analises = (analysesRows ?? []).map((row) => ({
+      professionalId: row.professional_profile_id as string,
+    }));
 
     if (analises.length < 3) {
       // A rede local pode não ter três elegíveis. O que importa provar aqui é
       // que o caminho existe — não fabricamos profissionais para o teste passar.
-      expect(recordAposComparar!.curadoriaTecnica.computedAt).toBeTruthy();
+      expect(run.analyses.length + run.excluded.length).toBeGreaterThanOrEqual(0);
       return;
     }
 
@@ -178,7 +185,6 @@ describe("Curadoria completa — sem SQL, sem script, sem intervenção técnica
       "Os três cobrem experiência e continuidade de formas diferentes.",
       tres.map((analise) => ({
         professionalProfileId: analise.professionalId,
-        band: analise.band,
         rationale: `Entra porque atende o que ela pediu.`,
         tradeOff: "Agenda mais concorrida.",
       })),

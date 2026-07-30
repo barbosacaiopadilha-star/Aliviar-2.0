@@ -16,7 +16,6 @@
  * Memória sempre produz a mesma condução.
  */
 
-import { CRITERIA_REQUIRING_TARGET, PRIORITY_CRITERION_LABELS, type PriorityCriterion } from "../types";
 import { COS_PHASE_DEFINITIONS, COS_PHASE_ORDER } from "./phases";
 import {
   COS_PHASE_LABELS,
@@ -29,17 +28,6 @@ import {
   type PhaseState,
   type PhaseStatus,
 } from "./types";
-
-/**
- * Um mesmo aspecto nunca é Critério e Restrição no mesmo Perfil
- * (Ontologia, Invariante 24). Este mapa é o que torna a regra verificável.
- */
-const CRITERION_TO_FILTER_KIND: Partial<Record<PriorityCriterion, string>> = {
-  AREA_DE_ATUACAO: "AREA_DE_ATUACAO",
-  LOCALIZACAO: "UF",
-  CONTINUIDADE: "CUIDADO_CONTINUO",
-  DISPONIBILIDADE: "DISPONIBILIDADE_IMEDIATA",
-};
 
 /** Fases cuja conclusão depende de um ato de outra pessoa, não do Curador. */
 const WAITS_ON_PATIENT: CosPhaseId[] = ["VALIDACAO", "DEVOLUTIVA"];
@@ -96,58 +84,10 @@ function evaluatePhase(phase: CosPhaseId, record: CuradoriaRecord): PhaseState {
 
 export function detectInconsistencies(record: CuradoriaRecord): ConductionInconsistency[] {
   const found: ConductionInconsistency[] = [];
-  const { weights } = record.prioridades;
 
-  // I-01 só é inconsistência depois da validação. Antes disso, "faltam 15
-  // pontos" é o trabalho em andamento, e já aparece como critério de saída da
-  // fase — repetir como inconsistência seria ruído, não copiloto.
-  const total = weights.reduce((sum, weight) => sum + weight.weight, 0);
-  if (record.validacao && total !== 100) {
-    found.push({
-      code: "I-01",
-      phase: "PRIORIDADES",
-      description: `A distribuição de um Perfil validado soma ${total} pontos — precisa fechar em exatamente 100.`,
-    });
-  }
-
-  for (const weight of weights) {
-    if (!weight.evidence.trim()) {
-      found.push({
-        code: "I-02",
-        phase: "PRIORIDADES",
-        description: `O peso de ${PRIORITY_CRITERION_LABELS[weight.criterion]} está sem evidência.`,
-      });
-    }
-
-    const filterKind = CRITERION_TO_FILTER_KIND[weight.criterion];
-    if (filterKind && record.filtros.some((filtro) => filtro.kind === filterKind)) {
-      found.push({
-        code: "I-03",
-        phase: "PRIORIDADES",
-        description: `${PRIORITY_CRITERION_LABELS[weight.criterion]} está como filtro obrigatório e como critério com peso ao mesmo tempo. Ou elimina, ou pesa.`,
-      });
-    }
-
-    if (CRITERIA_REQUIRING_TARGET.includes(weight.criterion) && !weight.targetValue) {
-      found.push({
-        code: "I-04",
-        phase: "PRIORIDADES",
-        description: `${PRIORITY_CRITERION_LABELS[weight.criterion]} precisa de um alvo declarado pelo paciente.`,
-      });
-    }
-  }
-
-  const seen = new Set<PriorityCriterion>();
-  for (const weight of weights) {
-    if (seen.has(weight.criterion)) {
-      found.push({
-        code: "I-05",
-        phase: "PRIORIDADES",
-        description: `O critério ${PRIORITY_CRITERION_LABELS[weight.criterion]} aparece mais de uma vez.`,
-      });
-    }
-    seen.add(weight.criterion);
-  }
+  // M3 (ADR-042): as inconsistências do modelo de pesos (I-01 a I-05)
+  // deixaram de existir junto com o modelo. Policiar a soma de 100 pontos num
+  // domínio que não soma seria manter o motor antigo vivo como fiscal.
 
   const selected = record.curadoriaTecnica.selectedProfessionalIds;
   if (selected.length > 0) {
@@ -167,14 +107,19 @@ export function detectInconsistencies(record: CuradoriaRecord): ConductionIncons
       });
     }
 
-    const analysedIds = new Set(record.curadoriaTecnica.analyses.map((entry) => entry.professionalId));
-    for (const id of selected) {
-      if (!analysedIds.has(id)) {
-        found.push({
-          code: "I-11",
-          phase: "CURADORIA_TECNICA",
-          description: "Uma opção selecionada não tem análise de compatibilidade que a fundamente.",
-        });
+    // M3: a fundamentação vigente é a elegibilidade da Mesa, não a análise do
+    // motor antigo. Só vale para Curadoria em curso — numa entrega já feita, a
+    // Rede pode ter mudado depois, e isso é história, não inconsistência.
+    if (!record.relatorio.deliveredAt) {
+      const elegiveis = new Set(record.curadoriaTecnica.leituras.map((entry) => entry.professionalId));
+      for (const id of selected) {
+        if (!elegiveis.has(id)) {
+          found.push({
+            code: "I-11",
+            phase: "CURADORIA_TECNICA",
+            description: "Uma opção selecionada não consta entre os elegíveis da Mesa deste Case.",
+          });
+        }
       }
     }
 
@@ -196,73 +141,68 @@ export function detectInconsistencies(record: CuradoriaRecord): ConductionIncons
 
 export function detectAlerts(record: CuradoriaRecord): ConductionAlert[] {
   const found: ConductionAlert[] = [];
-  const { analyses, computedAt } = record.curadoriaTecnica;
+  const { elegibilidade, leituras } = record.curadoriaTecnica;
 
-  if (!computedAt) {
-    return found;
-  }
+  // M3 (ADR-042): os alertas da Curadoria Técnica leem a MESMA fonte da Mesa
+  // — elegibilidade (área + filtros) e leitura do Motor. Antes do
+  // reconhecimento e do Mapa completo, o que existe é trabalho em andamento,
+  // não achado; e enquanto houver área por declarar, "poucos elegíveis" é
+  // tarefa do Curador, não alerta.
+  //
+  // C-01 (equivalência por pontos de score) e C-05 (bandas) deixaram de
+  // existir: os conceitos que eles mediam não existem no Método vigente, e
+  // nenhuma regra normativa os substitui. Nada foi inventado no lugar.
+  if (!record.validacao) return found;
+  if (record.prioridades.mapaPendentes > 0) return found;
+  if (elegibilidade.awaitingArea > 0) return found;
 
-  if (analyses.length === 0) {
+  if (elegibilidade.eligible === 0) {
     found.push({
       code: "E-01",
       phase: "CURADORIA_TECNICA",
-      title: "Nenhum profissional passou pelos filtros",
-      detail: `Os ${record.filtros.length} filtros obrigatórios eliminaram todo o universo. Nenhuma restrição é afrouxada sem conversar com ${record.patientFirstName}.`,
+      title: "Nenhum profissional elegível",
+      detail: `A área e os filtros deste Case não deixaram ninguém elegível: ${elegibilidade.eliminated} eliminado${elegibilidade.eliminated === 1 ? "" : "s"} e ${elegibilidade.pendingInfo} pendente${elegibilidade.pendingInfo === 1 ? "" : "s"} de verificação. Nenhuma restrição é afrouxada sem conversar com ${record.patientFirstName}.`,
       severity: "bloqueio",
     });
     return found;
   }
 
-  if (analyses.length < 3) {
+  if (elegibilidade.eligible < 3) {
     found.push({
       code: "E-02",
       phase: "CURADORIA_TECNICA",
       title: "Menos de três opções elegíveis",
-      detail: `${analyses.length} ${analyses.length === 1 ? "profissional atende" : "profissionais atendem"} a todas as restrições. A Curadoria apresenta sempre três — rever as restrições é uma conversa com ${record.patientFirstName}, nunca um ajuste do sistema.`,
+      detail: `${elegibilidade.eligible} ${elegibilidade.eligible === 1 ? "profissional elegível" : "profissionais elegíveis"} pela Mesa. A Curadoria apresenta sempre três — rever as restrições é uma conversa com ${record.patientFirstName}, nunca um ajuste do sistema.`,
       severity: "bloqueio",
     });
   }
 
-  // C-01 — empate. O Motor não desempata: mostra os equivalentes e para.
-  const ordered = [...analyses].sort((a, b) => b.internalScore - a.internalScore);
-  const thirdScore = ordered[2]?.internalScore;
-  if (thirdScore !== undefined) {
-    const equivalents = ordered.filter((entry) => Math.abs(entry.internalScore - thirdScore) < 3);
-    if (equivalents.length > 1 && ordered.length > 3) {
-      found.push({
-        code: "C-01",
-        phase: "CURADORIA_TECNICA",
-        title: `${equivalents.length} opções equivalentes`,
-        detail: `Ficaram a menos de 3 pontos de diferença sob os critérios de ${record.patientFirstName}. O Motor não desempata — a composição é sua.`,
-        severity: "atencao",
-      });
-    }
-  }
-
-  if (analyses.length > 0 && analyses.every((entry) => entry.band === "MODERADA")) {
-    found.push({
-      code: "C-05",
-      phase: "CURADORIA_TECNICA",
-      title: "Nenhuma opção acima de Moderada",
-      detail:
-        "A faixa não é relativizada para parecer melhor. Vale conversar com franqueza na devolutiva sobre o que o universo aprovado oferece hoje.",
-      severity: "atencao",
-    });
-  }
-
-  // ADR-042 — o alerta deixou de contar pontos e passou a contar o que falta
-  // descobrir. Ele organiza a investigação; nunca bloqueia a navegação.
-  const semDados = analyses.reduce(
-    (sum, entry) => sum + entry.criteria.filter((c) => c.alignment === null).length,
+  // C-06 — lacunas reais do Mapa do Profissional, na fonte real (ADR-040/041):
+  // item que ninguém tratou é diferente de item analisado sem informação, e
+  // subcritério não declarado pelo Case não é lacuna de profissional nenhum
+  // (com o Mapa completo, ele nem entra aqui). O alerta organiza a
+  // investigação; nunca bloqueia a navegação.
+  const semRegistro = leituras.reduce((sum, leitura) => sum + leitura.gapsWithoutAnyRecord, 0);
+  const semInformacao = leituras.reduce(
+    (sum, leitura) => sum + (leitura.informationGaps - leitura.gapsWithoutAnyRecord),
     0,
   );
-  if (semDados > 0) {
+
+  if (semRegistro + semInformacao > 0) {
+    const partes = [
+      semRegistro > 0
+        ? `${semRegistro} subcritério${semRegistro === 1 ? "" : "s"} ainda não avaliado${semRegistro === 1 ? "" : "s"} no Mapa do Profissional`
+        : null,
+      semInformacao > 0
+        ? `${semInformacao} analisado${semInformacao === 1 ? "" : "s"} sem informação suficiente`
+        : null,
+    ].filter((parte): parte is string => parte !== null);
+
     found.push({
       code: "C-06",
       phase: "CURADORIA_TECNICA",
-      title: "Lacunas de informação no cadastro",
-      detail:
-        "Existem lacunas de informação que precisam ser conferidas: o Mapa do Profissional está incompleto para itens que este caso considera relevantes. A análise é honesta, mas menos informativa.",
+      title: "Lacunas de informação no Mapa do Profissional",
+      detail: `Entre os itens que este Case declarou relevantes: ${partes.join(" e ")}. A leitura é honesta, mas menos informativa — completar é trabalho da operação, nunca penalidade do profissional.`,
       severity: "atencao",
     });
   }

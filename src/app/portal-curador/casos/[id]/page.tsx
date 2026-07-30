@@ -51,15 +51,15 @@ export default async function CasoWorkspacePage({ params }: { params: Promise<{ 
   // As opções vêm do Relatório já construído pela Curadoria: o Briefing
   // NUNCA seleciona nem reordena profissional — ele recebe quem já está em
   // avaliação e só descreve o encontro entre o que cada um declarou.
-  const nomesPorId = new Map(
-    record.curadoriaTecnica.analyses.map((analise) => [analise.professionalId, analise.professionalName] as const),
-  );
+  // M3: nomes pela fonte canônica do record (`professional_profiles`),
+  // nunca pelas análises do motor aposentado.
+  const nomesPorId = record.curadoriaTecnica.professionalNames;
   const professionalsInReview = record.relatorio.options
     .slice()
     .sort((a, b) => a.position - b.position)
     .map((option) => ({
       profileId: option.professionalId,
-      displayName: nomesPorId.get(option.professionalId) ?? "Profissional",
+      displayName: nomesPorId[option.professionalId] ?? "Profissional",
     }));
 
   const briefing = await loadBriefing(

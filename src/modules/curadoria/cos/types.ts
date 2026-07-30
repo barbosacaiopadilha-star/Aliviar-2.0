@@ -83,15 +83,6 @@ export type FiltroRecord = {
   reason: string;
 };
 
-export type PesoRecord = {
-  criterion: PriorityCriterion;
-  weight: number;
-  targetValue: string | null;
-  /** Evidência de Curadoria — obrigatória. Peso sem evidência não existe. */
-  evidence: string;
-  registeredAt: string;
-};
-
 export type PrioridadesRecord = {
   /**
    * Subcritérios do catálogo ativo ainda sem classificação. Zero significa
@@ -99,10 +90,12 @@ export type PrioridadesRecord = {
    *
    * Vem de `priorityMapCompletion`, o contrato do domínio. As fases não
    * recalculam completude: duplicar a regra é como ela volta a divergir.
+   *
+   * M3: a distribuição de 100 pontos (`priority_weights`) saiu da Memória.
+   * O dado histórico permanece no banco, legível pela leitura histórica do
+   * repositório da Curadoria — mas não orienta condução nenhuma.
    */
   mapaPendentes: number;
-  /** LEGADO — a distribuição de 100 pontos. Nenhuma fase depende dela. */
-  weights: PesoRecord[];
   observations: string[];
   /** As mesmas preferências, com id — para poderem ser retiradas pela tela. */
   preferencias: { id: string; value: string }[];
@@ -118,6 +111,13 @@ export type ValidacaoRecord = {
   correctionsMade: string[];
 };
 
+/**
+ * HISTÓRICO (M3, ADR-042) — o formato do motor aposentado.
+ *
+ * NÃO participa mais do `CuradoriaRecord` nem chega a `conduct()`. Únicos
+ * consumidores permitidos: os componentes órfãos preservados para a Onda 5
+ * (`mesa-doctor-card.tsx`, `mesa-comparison.tsx`) e leituras históricas.
+ */
 export type AnaliseRecord = {
   professionalId: string;
   professionalName: string;
@@ -135,16 +135,51 @@ export type AnaliseRecord = {
   curatorNote: string | null;
 };
 
-export type ExclusaoRecord = {
+/** A elegibilidade vigente — os mesmos números do cabeçalho da Mesa. */
+export type ElegibilidadeRecord = {
+  /** Profissionais que a Rede deste Case alcança. */
+  found: number;
+  /** Sem declaração de área — trabalho pendente do Curador, não veredito. */
+  awaitingArea: number;
+  eligible: number;
+  eliminated: number;
+  /** Pendentes de verificação — informação insuficiente nunca elimina. */
+  pendingInfo: number;
+};
+
+/**
+ * A leitura do Motor para um elegível — contagens por estado, e nada mais.
+ * Nenhum score, nota, porcentagem, soma ou colocação (ADR-041).
+ */
+export type LeituraMotorRecord = {
   professionalId: string;
   professionalName: string;
-  failures: string[];
+  totalSubcriteria: number;
+  highCompatibility: number;
+  mediumCompatibility: number;
+  informationGaps: number;
+  notRelevant: number;
+  /** Das lacunas, quantas são item que ninguém tratou (≠ NAO_INFORMADO). */
+  gapsWithoutAnyRecord: number;
+  /** Subcritérios que o Case não declarou — fato sobre o Case, não lacuna do profissional. */
+  notDeclaredByCase: number;
+};
+
+export type ForaDaCuradoriaRecord = {
+  professionalId: string;
+  professionalName: string;
+  /** O motivo da classificação da Mesa — o filtro ou a pendência, nunca uma nota. */
+  motivo: string;
 };
 
 export type CuradoriaTecnicaRecord = {
-  computedAt: string | null;
-  analyses: AnaliseRecord[];
-  excluded: ExclusaoRecord[];
+  /** Os números da Mesa — a MESMA fonte da etapa CAMINHOS (M3). */
+  elegibilidade: ElegibilidadeRecord;
+  /** Uma leitura do Motor por elegível, na ordem da Rede. */
+  leituras: LeituraMotorRecord[];
+  foraDaSelecao: ForaDaCuradoriaRecord[];
+  /** Nomes por fonte canônica (`professional_profiles`) — nunca via analyses. */
+  professionalNames: Record<string, string>;
   /** Exatamente três, escolhidos pelo Curador. Nunca pelo sistema. */
   selectedProfessionalIds: string[];
   selectedBy: string | null;

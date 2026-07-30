@@ -101,7 +101,11 @@ describe("Motor de Condução — próximo passo", () => {
   it("um alerta de bloqueio assume o próximo passo", () => {
     const semElegiveis: CuradoriaRecord = {
       ...joaquim,
-      curadoriaTecnica: { ...joaquim.curadoriaTecnica, analyses: [joaquim.curadoriaTecnica.analyses[0]!] },
+      curadoriaTecnica: {
+        ...joaquim.curadoriaTecnica,
+        elegibilidade: { ...joaquim.curadoriaTecnica.elegibilidade, eligible: 1 },
+        leituras: [joaquim.curadoriaTecnica.leituras[0]!],
+      },
     };
     const state = conduct(semElegiveis);
     expect(state.nextStep.label).toContain("Menos de três");
@@ -109,36 +113,39 @@ describe("Motor de Condução — próximo passo", () => {
 });
 
 describe("Motor de Condução — inconsistências", () => {
-  it("detecta o mesmo aspecto como filtro e como critério (I-03)", () => {
-    const found = detectInconsistencies(marina);
-    const i03 = found.filter((entry) => entry.code === "I-03");
-    expect(i03).toHaveLength(1);
-    expect(i03[0]?.description).toContain("Ou elimina, ou pesa");
+  // M3 (ADR-042): I-01 a I-05 policiavam o modelo de pesos e morreram com
+  // ele. As inconsistências vigentes falam de seleção e elegibilidade.
+  it("nenhuma inconsistência de pesos existe mais", () => {
+    for (const record of Object.values(MOCK_RECORDS)) {
+      for (const entry of detectInconsistencies(record)) {
+        expect(["I-09", "I-10", "I-11", "I-12"]).toContain(entry.code);
+      }
+    }
   });
 
-  it("não acusa I-01 enquanto o Perfil ainda está em construção", () => {
-    expect(detectInconsistencies(marina).some((entry) => entry.code === "I-01")).toBe(false);
-  });
-
-  it("acusa I-01 quando um Perfil validado não soma 100", () => {
-    const quebrado: CuradoriaRecord = {
+  it("detecta opção selecionada fora dos elegíveis da Mesa (I-11)", () => {
+    const foraDaMesa: CuradoriaRecord = {
       ...rosa,
-      prioridades: { ...rosa.prioridades, weights: rosa.prioridades.weights.slice(0, 2) },
-    };
-    expect(detectInconsistencies(quebrado).some((entry) => entry.code === "I-01")).toBe(true);
-  });
-
-  it("detecta peso sem evidência (I-02)", () => {
-    const semEvidencia: CuradoriaRecord = {
-      ...joaquim,
-      prioridades: {
-        ...joaquim.prioridades,
-        weights: joaquim.prioridades.weights.map((weight, index) =>
-          index === 0 ? { ...weight, evidence: "  " } : weight,
-        ),
+      curadoriaTecnica: {
+        ...rosa.curadoriaTecnica,
+        selectedProfessionalIds: ["prof-114", "prof-087", "prof-999"],
       },
     };
-    expect(detectInconsistencies(semEvidencia).some((entry) => entry.code === "I-02")).toBe(true);
+    const found = detectInconsistencies(foraDaMesa);
+    expect(found.some((entry) => entry.code === "I-11")).toBe(true);
+    expect(found.find((entry) => entry.code === "I-11")?.description).toContain("elegíveis da Mesa");
+  });
+
+  it("não acusa I-11 numa Curadoria já entregue — a Rede mudar depois é história", () => {
+    const entregue: CuradoriaRecord = {
+      ...rosa,
+      relatorio: { ...rosa.relatorio, deliveredAt: "2026-07-22T10:00:00-03:00" },
+      curadoriaTecnica: {
+        ...rosa.curadoriaTecnica,
+        selectedProfessionalIds: ["prof-114", "prof-087", "prof-999"],
+      },
+    };
+    expect(detectInconsistencies(entregue).some((entry) => entry.code === "I-11")).toBe(false);
   });
 
   it("detecta seleção sem autor humano (I-12)", () => {
@@ -161,51 +168,85 @@ describe("Motor de Condução — inconsistências", () => {
   });
 
   it("os casos limpos não acusam nada", () => {
+    expect(detectInconsistencies(marina)).toEqual([]);
     expect(detectInconsistencies(joaquim)).toEqual([]);
     expect(detectInconsistencies(rosa)).toEqual([]);
   });
 });
 
 describe("Motor de Condução — alertas", () => {
-  it("não emite alerta antes da comparação existir", () => {
+  it("não emite alerta antes do reconhecimento e do Mapa completo", () => {
     expect(detectAlerts(marina)).toEqual([]);
   });
 
-  it("detecta empate sem desempatar (C-01)", () => {
-    const alerts = detectAlerts(joaquim);
-    const c01 = alerts.find((alert) => alert.code === "C-01");
-    expect(c01).toBeDefined();
-    expect(c01?.detail).toContain("não desempata");
-  });
-
-  it("detecta menos de três elegíveis como bloqueio (E-02)", () => {
-    const poucos: CuradoriaRecord = {
-      ...joaquim,
-      curadoriaTecnica: { ...joaquim.curadoriaTecnica, analyses: joaquim.curadoriaTecnica.analyses.slice(0, 2) },
-    };
-    const alert = detectAlerts(poucos).find((entry) => entry.code === "E-02");
-    expect(alert?.severity).toBe("bloqueio");
-    expect(alert?.detail).toContain("nunca um ajuste do sistema");
-  });
-
-  it("detecta universo esvaziado pelos filtros (E-01)", () => {
-    const vazio: CuradoriaRecord = {
-      ...joaquim,
-      curadoriaTecnica: { ...joaquim.curadoriaTecnica, analyses: [] },
-    };
-    const alert = detectAlerts(vazio).find((entry) => entry.code === "E-01");
-    expect(alert?.severity).toBe("bloqueio");
-  });
-
-  it("detecta cobertura baixa do cadastro (C-06)", () => {
-    const semCadastro: CuradoriaRecord = {
+  it("não emite alerta enquanto houver área por declarar — é tarefa, não achado", () => {
+    const areaPendente: CuradoriaRecord = {
       ...joaquim,
       curadoriaTecnica: {
         ...joaquim.curadoriaTecnica,
-        analyses: joaquim.curadoriaTecnica.analyses.map((entry) => ({ ...entry, coveredWeight: 30 })),
+        elegibilidade: { ...joaquim.curadoriaTecnica.elegibilidade, awaitingArea: 2 },
       },
     };
-    expect(detectAlerts(semCadastro).some((entry) => entry.code === "C-06")).toBe(true);
+    expect(detectAlerts(areaPendente)).toEqual([]);
+  });
+
+  it("detecta menos de três elegíveis como bloqueio (E-02), contando o universo da Mesa", () => {
+    const poucos: CuradoriaRecord = {
+      ...joaquim,
+      curadoriaTecnica: {
+        ...joaquim.curadoriaTecnica,
+        elegibilidade: { ...joaquim.curadoriaTecnica.elegibilidade, eligible: 2 },
+        leituras: joaquim.curadoriaTecnica.leituras.slice(0, 2),
+      },
+    };
+    const alert = detectAlerts(poucos).find((entry) => entry.code === "E-02");
+    expect(alert?.severity).toBe("bloqueio");
+    expect(alert?.detail).toContain("2 profissionais elegíveis");
+    expect(alert?.detail).toContain("nunca um ajuste do sistema");
+  });
+
+  it("detecta universo sem nenhum elegível (E-01), com o desdobramento da Mesa", () => {
+    const vazio: CuradoriaRecord = {
+      ...joaquim,
+      curadoriaTecnica: {
+        ...joaquim.curadoriaTecnica,
+        elegibilidade: { found: 6, awaitingArea: 0, eligible: 0, eliminated: 4, pendingInfo: 2 },
+        leituras: [],
+      },
+    };
+    const alert = detectAlerts(vazio).find((entry) => entry.code === "E-01");
+    expect(alert?.severity).toBe("bloqueio");
+    expect(alert?.detail).toContain("4 eliminados");
+    expect(alert?.detail).toContain("2 pendentes");
+  });
+
+  it("três ou mais elegíveis não geram E-01 nem E-02", () => {
+    const alerts = detectAlerts(joaquim);
+    expect(alerts.some((entry) => entry.code === "E-01" || entry.code === "E-02")).toBe(false);
+  });
+
+  it("C-01 e C-05 não existem mais — nenhum alerta raciocina por pontos ou bandas", () => {
+    for (const record of Object.values(MOCK_RECORDS)) {
+      for (const alert of detectAlerts(record)) {
+        expect(alert.code).not.toBe("C-01");
+        expect(alert.code).not.toBe("C-05");
+        expect(`${alert.title} ${alert.detail}`.toLowerCase()).not.toMatch(/ponto|banda|moderada|score/);
+      }
+    }
+  });
+
+  it("C-06 lê o Mapa do Profissional e distingue não avaliado de analisado sem informação", () => {
+    // joaquim: 3 gaps sem registro (2 do Ismael + 1 do Rafael) e 3 analisados
+    // sem informação suficiente (1 Ismael + 1 Solange + 1 Rafael).
+    const alert = detectAlerts(joaquim).find((entry) => entry.code === "C-06");
+    expect(alert).toBeDefined();
+    expect(alert?.detail).toContain("3 subcritérios ainda não avaliados no Mapa do Profissional");
+    expect(alert?.detail).toContain("3 analisados sem informação suficiente");
+    expect(alert?.severity).toBe("atencao");
+  });
+
+  it("sem lacunas, C-06 não aparece", () => {
+    expect(detectAlerts(rosa).some((entry) => entry.code === "C-06")).toBe(false);
   });
 
   it("nenhum alerta sugere a resolução — o Motor nomeia e para", () => {

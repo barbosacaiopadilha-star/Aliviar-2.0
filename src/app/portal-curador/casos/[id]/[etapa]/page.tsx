@@ -184,12 +184,11 @@ export default async function EtapaPage({ params }: { params: Promise<{ id: stri
                 const option = record.relatorio.options.find(
                   (entry) => entry.professionalId === professionalId,
                 );
-                const analysis = record.curadoriaTecnica.analyses.find(
-                  (entry) => entry.professionalId === professionalId,
-                );
                 return {
                   professionalProfileId: professionalId,
-                  professionalName: analysis?.professionalName ?? "Profissional",
+                  // M3: nome pela fonte canônica, nunca pelas análises legadas.
+                  professionalName:
+                    record.curadoriaTecnica.professionalNames[professionalId] ?? "Profissional",
                   justification: option?.justification ?? "",
                   relationToWeights: option?.relationToWeights ?? "",
                   attentionPoints: option?.attentionPoints.join("\n") ?? "",
@@ -204,12 +203,7 @@ export default async function EtapaPage({ params }: { params: Promise<{ id: stri
               patientFirstName={record.patientFirstName}
               options={record.relatorio.options}
               professionalNames={
-                new Map(
-                  record.curadoriaTecnica.analyses.map((analise) => [
-                    analise.professionalId,
-                    analise.professionalName,
-                  ]),
-                )
+                new Map(Object.entries(record.curadoriaTecnica.professionalNames))
               }
               compositionRationale={record.relatorio.compositionRationale}
             />

@@ -413,9 +413,13 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
               </div>
             </section>
             <section className="mesa-aside__section">
-              <h2 className="mesa-aside__title">Perfil validado</h2>
+              <h2 className="mesa-aside__title">Prioridades do Case</h2>
               <div className="mt-3">
-                <MesaPriorityPanel record={record} />
+                <MesaPriorityPanel
+                  patientFirstName={record.patientFirstName}
+                  validatedAt={record.validacao?.validatedAt ?? null}
+                  groups={groupPriorityMap(mapa.items, catalogo)}
+                />
               </div>
             </section>
           </>

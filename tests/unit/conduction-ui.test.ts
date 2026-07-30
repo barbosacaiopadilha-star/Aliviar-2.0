@@ -51,7 +51,8 @@ describe("conduction-ui — rotas e rótulos", () => {
       ...joaquim,
       curadoriaTecnica: {
         ...joaquim.curadoriaTecnica,
-        analyses: [joaquim.curadoriaTecnica.analyses[0]!],
+        elegibilidade: { ...joaquim.curadoriaTecnica.elegibilidade, eligible: 1 },
+        leituras: [joaquim.curadoriaTecnica.leituras[0]!],
       },
     };
     const label = getPrimaryActionLabel(conduct(semElegiveis));
@@ -93,8 +94,18 @@ describe("conduction-ui — action links de pendências", () => {
   });
 
   it("inconsistências apontam para a fase correta", () => {
-    const state = conduct(marina);
-    const items = buildPendingActionItems(state, marina.caseId);
+    // M3: as inconsistências de pesos morreram com o modelo; a inconsistência
+    // vigente é da seleção — uma opção fora dos elegíveis da Mesa (I-11).
+    const rosa = MOCK_RECORDS["caso-2024"]!;
+    const foraDaMesa = {
+      ...rosa,
+      curadoriaTecnica: {
+        ...rosa.curadoriaTecnica,
+        selectedProfessionalIds: ["prof-114", "prof-087", "prof-999"],
+      },
+    };
+    const state = conduct(foraDaMesa);
+    const items = buildPendingActionItems(state, foraDaMesa.caseId);
     const inconsistencies = items.filter((item) => item.kind === "inconsistency");
     expect(inconsistencies.length).toBeGreaterThan(0);
     for (const item of inconsistencies) {

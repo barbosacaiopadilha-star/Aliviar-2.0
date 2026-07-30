@@ -5,6 +5,11 @@
  * sem banco. Todos obedecem aos invariantes da Ontologia — um mock que viola o
  * Método ensina o comportamento errado, e depois o código nasce para servir a
  * tela (verificado em `tests/unit/cos-conduction.test.ts`).
+ *
+ * M3 (ADR-042): as Memórias falam o vocabulário vigente — elegibilidade da
+ * Mesa, Mapa de Prioridades por níveis e leitura do Motor por contagens.
+ * Nenhum peso, score ou banda: reencenar o modelo aposentado nos mocks seria
+ * ensinar o comportamento errado a cada teste novo.
  */
 
 import type { CuradoriaRecord } from "./types";
@@ -38,17 +43,17 @@ function baseRecord(
       limitations: [],
     },
     filtros: [],
-    prioridades: { mapaPendentes: 26, weights: [], observations: [], preferencias: [], history: [] },
+    prioridades: { mapaPendentes: 26, observations: [], preferencias: [], history: [] },
     priorityProfileId: null,
     validacao: null,
     curadoriaTecnica: {
-      computedAt: null,
-      analyses: [],
-      excluded: [],
+      elegibilidade: { found: 0, awaitingArea: 0, eligible: 0, eliminated: 0, pendingInfo: 0 },
+      leituras: [],
+      foraDaSelecao: [],
+      professionalNames: {},
       selectedProfessionalIds: [],
       selectedBy: null,
       selectedAt: null,
-
       curatedSelectionId: null,
     },
     relatorio: { options: [], compositionRationale: null, emittedAt: null, deliveredAt: null },
@@ -64,7 +69,7 @@ function baseRecord(
 }
 
 // ---------------------------------------------------------------------------
-// caso-2041 — Marina: em PRIORIDADES, faltando 15 pontos
+// caso-2041 — Marina: em PRIORIDADES, com 3 subcritérios por classificar
 // ---------------------------------------------------------------------------
 
 const marina: CuradoriaRecord = baseRecord({
@@ -100,11 +105,6 @@ const marina: CuradoriaRecord = baseRecord({
       "Idoso com queda recente, sem diagnóstico fechado. Acompanhamento familiar presente e disponível.",
     limitations: ["Não dirige", "Depende da filha para ir às consultas"],
   },
-  // Caso de ensino deliberado: a mesma fala de Marina foi registrada como
-  // filtro obrigatório E como critério com peso (Continuidade, 40 pontos).
-  // O Motor detecta I-03 — ou o aspecto elimina, ou pesa, nunca os dois
-  // (Ontologia, Invariante 24). É o tipo de engano real que acontece quando a
-  // conversa flui, e o COS precisa saber apanhá-lo.
   filtros: [
     {
       id: "f1",
@@ -116,44 +116,21 @@ const marina: CuradoriaRecord = baseRecord({
   ],
   prioridades: {
     mapaPendentes: 3,
-    weights: [
-      {
-        criterion: "CONTINUIDADE",
-        weight: 40,
-        targetValue: null,
-        evidence: "\"Eu não quero que ele tenha que contar a história dele de novo toda vez.\"",
-        registeredAt: "2026-07-22T14:10:00-03:00",
-      },
-      {
-        criterion: "EXPERIENCIA",
-        weight: 30,
-        targetValue: null,
-        evidence: "\"Com a idade dele, eu queria alguém que já tivesse visto muito caso parecido.\"",
-        registeredAt: "2026-07-22T14:20:00-03:00",
-      },
-      {
-        criterion: "LOCALIZACAO",
-        weight: 15,
-        targetValue: "SP",
-        evidence: "\"Perto de casa ajuda muito, mas eu consigo me virar se for necessário.\"",
-        registeredAt: "2026-07-22T14:30:00-03:00",
-      },
-    ],
     observations: [
       "Prefere consultas pela manhã — o pai fica mais disposto.",
       "Marina participa das consultas; considera isso inegociável.",
     ],
     preferencias: [],
     history: [
-      { at: "2026-07-22T14:10:00-03:00", description: "Continuidade recebeu 40 pontos." },
-      { at: "2026-07-22T14:20:00-03:00", description: "Experiência recebeu 30 pontos." },
-      { at: "2026-07-22T14:30:00-03:00", description: "Localização recebeu 15 pontos." },
+      { at: "2026-07-22T14:10:00-03:00", description: "Retornos classificado como Muito importante." },
+      { at: "2026-07-22T14:20:00-03:00", description: "Casos semelhantes classificado como Importante." },
+      { at: "2026-07-22T14:30:00-03:00", description: "Localização classificada como Relevante." },
     ],
   },
 });
 
 // ---------------------------------------------------------------------------
-// caso-2038 — Joaquim: validado, comparação feita, aguardando seleção
+// caso-2038 — Joaquim: reconhecido, quatro elegíveis, aguardando seleção
 // ---------------------------------------------------------------------------
 
 const joaquim: CuradoriaRecord = baseRecord({
@@ -196,221 +173,92 @@ const joaquim: CuradoriaRecord = baseRecord({
   ],
   prioridades: {
     mapaPendentes: 0,
-    weights: [
-      {
-        criterion: "DISPONIBILIDADE",
-        weight: 35,
-        targetValue: null,
-        evidence: "\"Se demorar um mês pra marcar, eu desisto de novo. Eu me conheço.\"",
-        registeredAt: "2026-07-22T16:20:00-03:00",
-      },
-      {
-        criterion: "ABORDAGEM_INICIAL",
-        weight: 30,
-        targetValue: "avaliacao_inicial",
-        evidence: "\"Queria começar entendendo direito o que eu tenho, sem pressa de já tratar.\"",
-        registeredAt: "2026-07-22T16:30:00-03:00",
-      },
-      {
-        criterion: "EXPERIENCIA",
-        weight: 20,
-        targetValue: null,
-        evidence: "\"Experiência conta, mas não é o que mais pesa pra mim.\"",
-        registeredAt: "2026-07-22T16:40:00-03:00",
-      },
-      {
-        criterion: "AREA_DE_ATUACAO",
-        weight: 15,
-        targetValue: "saude_emocional_mental",
-        evidence: "\"Precisa ser alguém que trabalhe com isso mesmo, não alguém que atende de tudo.\"",
-        registeredAt: "2026-07-22T16:50:00-03:00",
-      },
-    ],
     observations: ["Prefere atendimento no fim do dia, depois das 18h."],
     preferencias: [],
     history: [
-      { at: "2026-07-22T16:55:00-03:00", description: "Experiência corrigida de 30 para 20 por Joaquim." },
+      {
+        at: "2026-07-22T16:55:00-03:00",
+        description: "Disponibilidade reclassificada de Importante para Muito importante por Joaquim.",
+      },
     ],
   },
   validacao: {
     validatedAt: "2026-07-22T17:05:00-03:00",
     validationNote:
-      "Li os quatro pesos em voz alta na ordem. Joaquim corrigiu experiência de 30 para 20 e disse: 'é isso, agora tá a minha cara'.",
-    correctionsMade: ["Experiência: de 30 para 20 pontos"],
+      "Li o Mapa em voz alta, nível a nível. Joaquim pediu para subir Disponibilidade e disse: 'é isso, agora tá a minha cara'.",
+    correctionsMade: ["Disponibilidade: de Importante para Muito importante"],
   },
   curadoriaTecnica: {
-    computedAt: "2026-07-23T09:15:00-03:00",
-    analyses: [
+    elegibilidade: { found: 6, awaitingArea: 0, eligible: 4, eliminated: 2, pendingInfo: 0 },
+    leituras: [
       {
         professionalId: "prof-114",
         professionalName: "Dra. Beatriz Fontenelle",
-        internalScore: 92.5,
-        band: "MUITO_ALTA",
-        coveredWeight: 100,
-        curatorNote: null,
-        criteria: [
-          {
-            criterion: "DISPONIBILIDADE",
-            weight: 35,
-            alignment: 100,
-            contribution: 35,
-            explanation: "Tem agenda aberta para começar logo.",
-          },
-          {
-            criterion: "ABORDAGEM_INICIAL",
-            weight: 30,
-            alignment: 100,
-            contribution: 30,
-            explanation: "O primeiro encontro acontece exatamente como o paciente prefere.",
-          },
-          {
-            criterion: "EXPERIENCIA",
-            weight: 20,
-            alignment: 70,
-            contribution: 14,
-            explanation: "Tem experiência consolidada.",
-          },
-          {
-            criterion: "AREA_DE_ATUACAO",
-            weight: 15,
-            alignment: 90,
-            contribution: 13.5,
-            explanation: "Trabalha exatamente com a área que o paciente priorizou.",
-          },
-        ],
+        totalSubcriteria: 26,
+        highCompatibility: 14,
+        mediumCompatibility: 9,
+        informationGaps: 0,
+        notRelevant: 3,
+        gapsWithoutAnyRecord: 0,
+        notDeclaredByCase: 0,
       },
       {
         professionalId: "prof-087",
         professionalName: "Dr. Ismael Cardoso",
-        internalScore: 78.2,
-        band: "ALTA",
-        coveredWeight: 85,
-        curatorNote: "Único com experiência longa em quadro parecido com o do Joaquim.",
-        criteria: [
-          {
-            criterion: "DISPONIBILIDADE",
-            weight: 35,
-            alignment: 60,
-            contribution: 21,
-            explanation: "Tem agenda limitada — o início pode demorar um pouco.",
-          },
-          {
-            criterion: "ABORDAGEM_INICIAL",
-            weight: 30,
-            alignment: 85,
-            contribution: 25.5,
-            explanation: "Se adapta à forma de primeiro encontro que o paciente preferir.",
-          },
-          {
-            criterion: "EXPERIENCIA",
-            weight: 20,
-            alignment: 100,
-            contribution: 20,
-            explanation: "Tem trajetória longa na área.",
-          },
-          {
-            criterion: "AREA_DE_ATUACAO",
-            weight: 15,
-            alignment: null,
-            contribution: 0,
-            explanation:
-              "A área de atuação não está registrada no cadastro deste profissional — nada foi presumido.",
-          },
-        ],
+        totalSubcriteria: 26,
+        highCompatibility: 10,
+        mediumCompatibility: 10,
+        informationGaps: 3,
+        notRelevant: 3,
+        gapsWithoutAnyRecord: 2,
+        notDeclaredByCase: 0,
       },
       {
         professionalId: "prof-203",
         professionalName: "Dra. Solange Vieira",
-        internalScore: 71,
-        band: "ALTA",
-        coveredWeight: 100,
-        curatorNote: null,
-        criteria: [
-          {
-            criterion: "DISPONIBILIDADE",
-            weight: 35,
-            alignment: 100,
-            contribution: 35,
-            explanation: "Tem agenda aberta para começar logo.",
-          },
-          {
-            criterion: "ABORDAGEM_INICIAL",
-            weight: 30,
-            alignment: 30,
-            contribution: 9,
-            explanation: "O primeiro encontro acontece de forma diferente da que o paciente prefere.",
-          },
-          {
-            criterion: "EXPERIENCIA",
-            weight: 20,
-            alignment: 70,
-            contribution: 14,
-            explanation: "Tem experiência consolidada.",
-          },
-          {
-            criterion: "AREA_DE_ATUACAO",
-            weight: 15,
-            alignment: 90,
-            contribution: 13,
-            explanation: "Trabalha exatamente com a área que o paciente priorizou.",
-          },
-        ],
+        totalSubcriteria: 26,
+        highCompatibility: 9,
+        mediumCompatibility: 13,
+        informationGaps: 1,
+        notRelevant: 3,
+        gapsWithoutAnyRecord: 0,
+        notDeclaredByCase: 0,
       },
       {
         professionalId: "prof-155",
         professionalName: "Dr. Rafael Toledo",
-        internalScore: 69.4,
-        band: "BOA",
-        coveredWeight: 100,
-        curatorNote: null,
-        criteria: [
-          {
-            criterion: "DISPONIBILIDADE",
-            weight: 35,
-            alignment: 60,
-            contribution: 21,
-            explanation: "Tem agenda limitada — o início pode demorar um pouco.",
-          },
-          {
-            criterion: "ABORDAGEM_INICIAL",
-            weight: 30,
-            alignment: 85,
-            contribution: 25.5,
-            explanation: "Se adapta à forma de primeiro encontro que o paciente preferir.",
-          },
-          {
-            criterion: "EXPERIENCIA",
-            weight: 20,
-            alignment: 40,
-            contribution: 8,
-            explanation: "Tem experiência geral, não concentrada nesta área.",
-          },
-          {
-            criterion: "AREA_DE_ATUACAO",
-            weight: 15,
-            alignment: 90,
-            contribution: 13.5,
-            explanation: "Trabalha exatamente com a área que o paciente priorizou.",
-          },
-        ],
+        totalSubcriteria: 26,
+        highCompatibility: 7,
+        mediumCompatibility: 14,
+        informationGaps: 2,
+        notRelevant: 3,
+        gapsWithoutAnyRecord: 1,
+        notDeclaredByCase: 0,
       },
     ],
-    excluded: [
+    foraDaSelecao: [
       {
         professionalId: "prof-301",
         professionalName: "Dr. Henrique Sá",
-        failures: ["Não atua em SP."],
+        motivo: "Não atende: Atendimento em SP.",
       },
       {
         professionalId: "prof-088",
         professionalName: "Dra. Lúcia Ferraz",
-        failures: ["Não atua em SP."],
+        motivo: "Não atende: Atendimento em SP.",
       },
     ],
+    professionalNames: {
+      "prof-114": "Dra. Beatriz Fontenelle",
+      "prof-087": "Dr. Ismael Cardoso",
+      "prof-203": "Dra. Solange Vieira",
+      "prof-155": "Dr. Rafael Toledo",
+      "prof-301": "Dr. Henrique Sá",
+      "prof-088": "Dra. Lúcia Ferraz",
+    },
     selectedProfessionalIds: [],
     selectedBy: null,
     selectedAt: null,
-
     curatedSelectionId: null,
   },
 });
@@ -457,29 +305,6 @@ const rosa: CuradoriaRecord = baseRecord({
   ],
   prioridades: {
     mapaPendentes: 0,
-    weights: [
-      {
-        criterion: "EXPERIENCIA",
-        weight: 45,
-        targetValue: null,
-        evidence: "\"Depois do que passei, eu quero alguém que já viu isso muitas vezes.\"",
-        registeredAt: "2026-07-08T10:00:00-03:00",
-      },
-      {
-        criterion: "CONTINUIDADE",
-        weight: 35,
-        targetValue: null,
-        evidence: "\"Não quero recomeçar do zero de novo com outra pessoa.\"",
-        registeredAt: "2026-07-08T10:10:00-03:00",
-      },
-      {
-        criterion: "DISPONIBILIDADE",
-        weight: 20,
-        targetValue: null,
-        evidence: "\"Posso esperar um pouco se for pra ser bem feito.\"",
-        registeredAt: "2026-07-08T10:20:00-03:00",
-      },
-    ],
     observations: [],
     preferencias: [],
     history: [],
@@ -487,45 +312,55 @@ const rosa: CuradoriaRecord = baseRecord({
   validacao: {
     validatedAt: "2026-07-08T10:35:00-03:00",
     validationNote:
-      "Rosa ouviu os três pesos e disse que não mudaria nada. Perguntei o que estava faltando; ela disse que estava completo.",
+      "Rosa ouviu o Mapa inteiro e disse que não mudaria nada. Perguntei o que estava faltando; ela disse que estava completo.",
     correctionsMade: [],
   },
   curadoriaTecnica: {
-    computedAt: "2026-07-14T11:00:00-03:00",
-    analyses: [
+    elegibilidade: { found: 3, awaitingArea: 0, eligible: 3, eliminated: 0, pendingInfo: 0 },
+    leituras: [
       {
         professionalId: "prof-114",
         professionalName: "Dra. Beatriz Fontenelle",
-        internalScore: 88,
-        band: "MUITO_ALTA",
-        coveredWeight: 100,
-        curatorNote: null,
-        criteria: [],
+        totalSubcriteria: 26,
+        highCompatibility: 15,
+        mediumCompatibility: 8,
+        informationGaps: 0,
+        notRelevant: 3,
+        gapsWithoutAnyRecord: 0,
+        notDeclaredByCase: 0,
       },
       {
         professionalId: "prof-087",
         professionalName: "Dr. Ismael Cardoso",
-        internalScore: 82,
-        band: "ALTA",
-        coveredWeight: 100,
-        curatorNote: null,
-        criteria: [],
+        totalSubcriteria: 26,
+        highCompatibility: 12,
+        mediumCompatibility: 11,
+        informationGaps: 0,
+        notRelevant: 3,
+        gapsWithoutAnyRecord: 0,
+        notDeclaredByCase: 0,
       },
       {
         professionalId: "prof-203",
         professionalName: "Dra. Solange Vieira",
-        internalScore: 74,
-        band: "ALTA",
-        coveredWeight: 100,
-        curatorNote: null,
-        criteria: [],
+        totalSubcriteria: 26,
+        highCompatibility: 10,
+        mediumCompatibility: 13,
+        informationGaps: 0,
+        notRelevant: 3,
+        gapsWithoutAnyRecord: 0,
+        notDeclaredByCase: 0,
       },
     ],
-    excluded: [],
+    foraDaSelecao: [],
+    professionalNames: {
+      "prof-114": "Dra. Beatriz Fontenelle",
+      "prof-087": "Dr. Ismael Cardoso",
+      "prof-203": "Dra. Solange Vieira",
+    },
     selectedProfessionalIds: ["prof-114", "prof-087", "prof-203"],
     selectedBy: "Helena Vasconcelos",
     selectedAt: "2026-07-16T14:00:00-03:00",
-
     curatedSelectionId: null,
   },
   relatorio: {
@@ -534,7 +369,8 @@ const rosa: CuradoriaRecord = baseRecord({
         professionalId: "prof-114",
         position: 1,
         justification: "Responde ao que Rosa colocou como mais importante: trajetória longa na área.",
-        relationToWeights: "Atende com força os 45 pontos de Experiência e os 35 de Continuidade.",
+        relationToWeights:
+          "Alta compatibilidade nos itens que Rosa declarou como muito importantes — experiência e continuidade.",
         favorablePoints: ["Trajetória longa", "Acompanha ao longo do tempo"],
         attentionPoints: ["Agenda mais concorrida — o início pode levar algumas semanas"],
         suggestedQuestions: ["Como funciona o acompanhamento entre as consultas?"],
@@ -544,7 +380,8 @@ const rosa: CuradoriaRecord = baseRecord({
         professionalId: "prof-087",
         position: 2,
         justification: "Equilibra experiência e disponibilidade de forma diferente da primeira opção.",
-        relationToWeights: "Atende bem Experiência; Continuidade é atendida de forma parcial.",
+        relationToWeights:
+          "Responde bem à experiência que Rosa priorizou; a continuidade aparece com aderência média.",
         favorablePoints: ["Começa mais rápido"],
         attentionPoints: ["Acompanhamento contínuo não é o formato principal dele"],
         suggestedQuestions: ["O acompanhamento seria com você mesmo ou com a equipe?"],
@@ -554,7 +391,7 @@ const rosa: CuradoriaRecord = baseRecord({
         professionalId: "prof-203",
         position: 3,
         justification: "A opção que começa mais rápido, mantendo boa aderência ao que Rosa priorizou.",
-        relationToWeights: "Atende os 20 pontos de Disponibilidade com folga.",
+        relationToWeights: "Responde com folga ao prazo para consulta que Rosa declarou relevante.",
         favorablePoints: ["Agenda aberta"],
         attentionPoints: ["Menos tempo de trajetória que as outras duas"],
         suggestedQuestions: ["Quantos casos parecidos você acompanha hoje?"],
@@ -564,7 +401,6 @@ const rosa: CuradoriaRecord = baseRecord({
     compositionRationale:
       "As três respondem à prioridade de experiência de formas diferentes: uma pela trajetória, outra pelo equilíbrio com o tempo de espera, a terceira pela rapidez de início. Rosa escolhe qual troca faz sentido para ela.",
     emittedAt: "2026-07-20T09:00:00-03:00",
-
     deliveredAt: null,
   },
   devolutiva: {

@@ -2,17 +2,10 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type {
-  AnaliseRecord,
-  CuradoriaRecord,
-  ExclusaoRecord,
-  FiltroRecord,
-  OpcaoRelatorio,
-  PesoRecord,
-} from "./types";
-import type { CompatibilityBand, MandatoryFilterKind, PriorityCriterion } from "../types";
+import type { CuradoriaRecord, FiltroRecord, OpcaoRelatorio } from "./types";
+import type { MandatoryFilterKind } from "../types";
 import { MANDATORY_FILTER_LABELS } from "../types";
-import { loadCasePriorityMap } from "../mapa-prioridades-repository";
+import { loadMesaCruzamento } from "../mesa-cruzamento";
 
 /**
  * Leitura da Memória da Curadoria a partir do banco (MISSÃO 209, Fase 3).
@@ -94,39 +87,30 @@ export async function loadCuradoriaRecord(
 
   const profileId = (profile?.id as string | undefined) ?? null;
 
-  // Só busca o que depende do Perfil quando ele existe — evita quatro
-  // consultas inúteis num Caso que ainda não chegou lá.
-  const [weightRows, filterRows, selectionRow, analysisRows] = profileId
+  // M3 (ADR-042): a Memória deixa de carregar `priority_weights`,
+  // `compatibility_analyses` e `compatibility_criterion_results`. O que a
+  // condução precisa saber da Curadoria Técnica vem das fontes vigentes —
+  // a mesma leitura que a Mesa monta (elegibilidade + Motor).
+  const [filterRows, selectionRow] = profileId
     ? await Promise.all([
-        supabase.from("priority_weights").select("*").eq("priority_profile_id", profileId),
         supabase.from("priority_profile_filters").select("*").eq("priority_profile_id", profileId),
         supabase
           .from("curated_selections")
           .select("*")
           .eq("priority_profile_id", profileId)
           .maybeSingle(),
-        supabase.from("compatibility_analyses").select("*").eq("priority_profile_id", profileId),
       ])
-    : [{ data: [] }, { data: [] }, { data: null }, { data: [] }];
+    : [{ data: [] }, { data: null }];
 
   const selectionId = (selectionRow.data?.id as string | undefined) ?? null;
 
-  const [optionRows, criterionRows, reportRow] = await Promise.all([
+  const [optionRows, reportRow] = await Promise.all([
     selectionId
       ? supabase
           .from("curated_selection_options")
           .select("*")
           .eq("curated_selection_id", selectionId)
           .order("position")
-      : Promise.resolve({ data: [] }),
-    (analysisRows.data ?? []).length > 0
-      ? supabase
-          .from("compatibility_criterion_results")
-          .select("*")
-          .in(
-            "compatibility_analysis_id",
-            (analysisRows.data ?? []).map((row) => row.id as string),
-          )
       : Promise.resolve({ data: [] }),
     selectionId
       ? supabase.from("curadoria_reports").select("*").eq("curated_selection_id", selectionId).maybeSingle()
@@ -151,70 +135,64 @@ export async function loadCuradoriaRecord(
       : Promise.resolve({ data: null }),
   ]);
 
-  // Nomes dos profissionais analisados/selecionados.
-  const professionalIds = [
-    ...(analysisRows.data ?? []).map((row) => row.professional_profile_id as string),
-    ...(optionRows.data ?? []).map((row) => row.professional_profile_id as string),
-  ];
-  const uniqueProfessionalIds = [...new Set(professionalIds)];
+  const selectedIds = (optionRows.data ?? []).map((row) => row.professional_profile_id as string);
 
-  const { data: professionalRows } = uniqueProfessionalIds.length
-    ? await supabase
-        .from("professional_profiles")
-        .select("id, display_name")
-        .in("id", uniqueProfessionalIds)
-    : { data: [] };
-
-  const professionalNames = new Map(
-    (professionalRows ?? []).map((row) => [row.id as string, row.display_name as string]),
-  );
-
-  const criteriaByAnalysis = new Map<string, AnaliseRecord["criteria"]>();
-  for (const row of criterionRows.data ?? []) {
-    const key = row.compatibility_analysis_id as string;
-    const list = criteriaByAnalysis.get(key) ?? [];
-    list.push({
-      criterion: row.criterion as PriorityCriterion,
-      weight: row.weight as number,
-      alignment: (row.alignment as number | null) ?? null,
-      contribution: Number(row.contribution),
-      explanation: row.explanation as string,
-    });
-    criteriaByAnalysis.set(key, list);
-  }
-
-  const analyses: AnaliseRecord[] = (analysisRows.data ?? []).map((row) => {
-    const criteria = (criteriaByAnalysis.get(row.id as string) ?? []).sort((a, b) => b.weight - a.weight);
-    return {
-      professionalId: row.professional_profile_id as string,
-      professionalName: professionalNames.get(row.professional_profile_id as string) ?? "Profissional",
-      internalScore: Number(row.internal_score),
-      band: row.band as CompatibilityBand,
-      // Cobertura é a soma dos pesos que puderam ser avaliados — derivada dos
-      // critérios, nunca de `criteria_without_data`, que conta dimensões e não
-      // pontos. É a medida honesta de confiança na análise (Engine §4.2).
-      coveredWeight: criteria.reduce(
-        (sum, entry) => (entry.alignment === null ? sum : sum + entry.weight),
-        0,
-      ),
-      criteria,
-      curatorNote: null,
-    };
-  });
+  // A MESMA leitura que a Mesa monta: elegibilidade (área + filtros) e a
+  // leitura do Motor por elegível. Uma fonte só — os números do COS nunca
+  // divergem do cabeçalho da Mesa por contarem universos diferentes.
+  const view = await loadMesaCruzamento(supabase, caseId, selectedIds.length);
 
   // ADR-042 — a completude do Mapa é o gate das fases PRIORIDADES e VALIDACAO.
-  // Vem pronta do repositório do Mapa: as fases não recalculam regra de
-  // domínio, e não existe segunda definição de "completo".
-  const mapa = await loadCasePriorityMap(supabase, caseId);
-  const mapaPendentes = mapa.completion.pending;
+  // Já vem calculada pela mesma leitura; nenhuma segunda definição de "completo".
+  const mapaPendentes = view.mapaPendentes;
 
-  const weights: PesoRecord[] = (weightRows.data ?? []).map((row) => ({
-    criterion: row.criterion as PriorityCriterion,
-    weight: row.weight as number,
-    targetValue: (row.target_value as string | null) ?? null,
-    evidence: row.evidence as string,
-    registeredAt: row.created_at as string,
+  const nomePorId = new Map(
+    view.professionals.map((profissional) => [
+      profissional.professionalProfileId,
+      profissional.displayName,
+    ]),
+  );
+
+  // Nome canônico para quem está na seleção ou no Relatório mas já não está
+  // na Rede deste Case (histórico legítimo) — sempre `professional_profiles`.
+  const idsForaDaRede = [
+    ...new Set(
+      [
+        ...selectedIds,
+        ...(reportOptionRows.data ?? []).map((row) => row.professional_profile_id as string),
+      ].filter((id) => !nomePorId.has(id)),
+    ),
+  ];
+
+  if (idsForaDaRede.length > 0) {
+    const { data: profissionaisRows } = await supabase
+      .from("professional_profiles")
+      .select("id, display_name")
+      .in("id", idsForaDaRede);
+    for (const row of profissionaisRows ?? []) {
+      nomePorId.set(row.id as string, row.display_name as string);
+    }
+  }
+
+  const leituras = view.comparison.map((coluna) => ({
+    professionalId: coluna.professionalProfileId,
+    professionalName: nomePorId.get(coluna.professionalProfileId) ?? "Profissional",
+    totalSubcriteria: coluna.summary.totalSubcriteria,
+    highCompatibility: coluna.summary.highCompatibility,
+    mediumCompatibility: coluna.summary.mediumCompatibility,
+    informationGaps: coluna.summary.informationGaps,
+    notRelevant: coluna.summary.notRelevant,
+    gapsWithoutAnyRecord: coluna.summary.gapsWithoutAnyRecord,
+    notDeclaredByCase: coluna.summary.notDeclaredByCase,
   }));
+
+  const foraDaSelecao = view.professionals
+    .filter((profissional) => profissional.eligibility.state !== "ELEGIVEL")
+    .map((profissional) => ({
+      professionalId: profissional.professionalProfileId,
+      professionalName: profissional.displayName,
+      motivo: profissional.eligibility.reason,
+    }));
 
   const filtros: FiltroRecord[] = (filterRows.data ?? [])
     .filter((row) => row.nature === "FILTRO_OBRIGATORIO")
@@ -284,7 +262,6 @@ export async function loadCuradoriaRecord(
 
     prioridades: {
       mapaPendentes,
-      weights,
       observations,
       preferencias,
       history: [],
@@ -301,12 +278,17 @@ export async function loadCuradoriaRecord(
       : null,
 
     curadoriaTecnica: {
-      computedAt: analyses.length > 0 ? ((analysisRows.data ?? [])[0]?.computed_at as string) : null,
-      analyses,
-      // Exclusões não são persistidas hoje — o Motor as recalcula ao comparar.
-      // Ausência aqui é ausência, nunca uma lista fabricada.
-      excluded: [] as ExclusaoRecord[],
-      selectedProfessionalIds: (optionRows.data ?? []).map((row) => row.professional_profile_id as string),
+      elegibilidade: {
+        found: view.counts.found,
+        awaitingArea: view.counts.awaiting,
+        eligible: view.counts.eligible,
+        eliminated: view.counts.eliminated,
+        pendingInfo: view.counts.pending,
+      },
+      leituras,
+      foraDaSelecao,
+      professionalNames: Object.fromEntries(nomePorId),
+      selectedProfessionalIds: selectedIds,
       // O id da seleção é o que a entrega precisa endereçar.
       curatedSelectionId: selectionId,
       selectedBy: selectionRow.data ? curatorName : null,

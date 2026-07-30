@@ -32,10 +32,10 @@ describe("Memória da Curadoria", () => {
     expect(memory.some((entry) => entry.event === "PESO_ATRIBUIDO")).toBe(false);
   });
 
-  it("atribui ao Sistema apenas o que o Sistema fez", () => {
-    const memory = buildMemory(joaquim);
-    const systemEntries = memory.filter((entry) => entry.actor === "Sistema");
-    expect(systemEntries.every((entry) => entry.event === "COMPATIBILIDADE_CALCULADA")).toBe(true);
+  it("nenhuma entrada é do Sistema — a leitura do Motor não é evento persistido (M3)", () => {
+    for (const record of Object.values(MOCK_RECORDS)) {
+      expect(buildMemory(record).filter((entry) => entry.actor === "Sistema")).toHaveLength(0);
+    }
   });
 
   it("não reencena a distribuição de 100 pontos — ADR-042", () => {

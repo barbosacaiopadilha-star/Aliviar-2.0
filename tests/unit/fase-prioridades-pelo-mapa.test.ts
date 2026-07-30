@@ -30,22 +30,15 @@ describe("Fase PRIORIDADES — o gate é o Mapa, nunca a soma", () => {
     expect(criterio("mapa-completo").isMet(com(base, { mapaPendentes: 26 }))).toBe(false);
   });
 
-  it("a soma dos pesos legados não interfere no resultado", () => {
-    const pesosQueSomam100 = [
-      { criterion: "EXPERIENCIA" as const, weight: 100, targetValue: null, evidence: "x", registeredAt: "2026-01-01T00:00:00Z" },
-    ];
-    // Mapa incompleto continua incompleto ainda que os 100 pontos fechem...
-    expect(
-      criterio("mapa-completo").isMet(com(base, { mapaPendentes: 4, weights: pesosQueSomam100 })),
-    ).toBe(false);
-    // ...e Mapa completo conclui mesmo sem peso nenhum.
-    expect(criterio("mapa-completo").isMet(com(base, { mapaPendentes: 0, weights: [] }))).toBe(true);
+  it("o registro nem carrega mais pesos — o gate é só o Mapa (M3)", () => {
+    expect("weights" in base.prioridades).toBe(false);
+    expect(criterio("mapa-completo").isMet(com(base, { mapaPendentes: 4 }))).toBe(false);
+    expect(criterio("mapa-completo").isMet(com(base, { mapaPendentes: 0 }))).toBe(true);
   });
 
-  it("ausência de priority_weights não trava conduct()", () => {
-    const semPesos = com(base, { weights: [] }) as CuradoriaRecord;
-    expect(() => conduct(semPesos)).not.toThrow();
-    expect(conduct(semPesos).completedPhases).toContain("PRIORIDADES");
+  it("conduct() opera sem nenhum dado de pesos", () => {
+    expect(() => conduct(base)).not.toThrow();
+    expect(conduct(base).completedPhases).toContain("PRIORIDADES");
   });
 
   it("nenhuma fase do COS menciona pontos, soma ou peso nos seus critérios", () => {

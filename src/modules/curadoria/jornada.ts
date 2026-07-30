@@ -125,8 +125,9 @@ export function buildJornada(record: CuradoriaRecord): Jornada {
           ? `${curator} está analisando os profissionais da rede aprovada com base no que vocês construíram.`
           : "Seu Perfil será aplicado aos profissionais que a Aliviar já aprovou.",
       // Nunca a data do cálculo — o que importa para quem lê é quando uma
-      // pessoa trabalhou, não quando uma máquina rodou.
-      updatedAt: curadoriaTecnica.selectedAt ?? curadoriaTecnica.computedAt,
+      // pessoa trabalhou, não quando uma máquina rodou (M3: a data do cálculo
+      // nem existe mais no registro).
+      updatedAt: curadoriaTecnica.selectedAt,
       nextAction: curadoriaDone ? null : perfilDone ? { label: "Em análise", owner: "EQUIPE" } : null,
       responsible: curator,
     },
