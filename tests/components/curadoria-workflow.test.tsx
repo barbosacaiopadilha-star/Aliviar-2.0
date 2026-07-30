@@ -33,7 +33,7 @@ const journey = buildCuratorJourney(marina, state);
 describe("ConductionPanel — workflow guiado", () => {
   it("usa rótulo de ação específico em vez de Continuar", () => {
     render(<ConductionPanel state={state} caseId={marina.caseId} journey={journey} />);
-    const primaryActions = screen.getAllByRole("link", { name: /^Abrir o Mapa de Prioridades/ });
+    const primaryActions = screen.getAllByRole("link", { name: /^Abrir a Mesa de Curadoria/ });
     expect(primaryActions.some((link) => link.className.includes("bg-brand-primary"))).toBe(true);
     expect(screen.queryByRole("link", { name: /^Continuar/i })).not.toBeInTheDocument();
   });
@@ -49,12 +49,12 @@ describe("ConductionPanel — workflow guiado", () => {
 
   it("conta etapas da jornada, nunca fases internas", () => {
     render(<ConductionPanel state={state} caseId={marina.caseId} journey={journey} />);
-    expect(screen.getByText(/de 6 etapas concluídas/)).toBeInTheDocument();
+    expect(screen.getByText(/de 4 etapas concluídas/)).toBeInTheDocument();
     expect(screen.queryByText(/de 9 fases/)).not.toBeInTheDocument();
   });
 });
 
-describe("JourneyNavigator — as seis etapas", () => {
+describe("JourneyNavigator — as quatro etapas", () => {
   it("etapas bloqueadas não são links e dizem de que dependem", () => {
     render(<JourneyNavigator journey={journey} caseId={marina.caseId} />);
     const blocked = journey.steps.find((step) => step.status === "BLOQUEADA");
@@ -66,13 +66,13 @@ describe("JourneyNavigator — as seis etapas", () => {
 
   it("etapas disponíveis levam ao slug da jornada", () => {
     render(<JourneyNavigator journey={journey} caseId={marina.caseId} />);
-    const link = screen.getByRole("link", { name: /Abrir Compreender o Caso/i });
-    expect(link).toHaveAttribute("href", `/coa/curadoria/casos/${marina.caseId}/compreender`);
+    const link = screen.getByRole("link", { name: /Abrir Acolhimento/i });
+    expect(link).toHaveAttribute("href", `/coa/curadoria/casos/${marina.caseId}/acolhimento`);
   });
 
   it("mostra progresso como fato, sem percentual nem previsão de tempo", () => {
     const { container } = render(<JourneyNavigator journey={journey} caseId={marina.caseId} />);
-    expect(screen.getByText(/de 6 etapas concluídas/)).toBeInTheDocument();
+    expect(screen.getByText(/de 4 etapas concluídas/)).toBeInTheDocument();
     const texto = container.textContent ?? "";
     expect(texto).not.toContain("%");
     expect(texto).not.toMatch(/minutos?|horas?/i);

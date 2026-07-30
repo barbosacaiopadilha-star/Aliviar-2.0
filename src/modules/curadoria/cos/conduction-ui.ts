@@ -3,7 +3,7 @@
  * itens clicáveis. Não altera regras de negócio; apenas traduz ConductionState
  * em navegação operacional para o Curador.
  *
- * Desde a Simplificação da Jornada, esta camada traduz para as SEIS etapas
+ * Desde a Simplificação da Jornada, esta camada traduz para as QUATRO etapas
  * (`journey.ts`). O Motor continua raciocinando em nove fases — a tradução
  * acontece só aqui, na fronteira com a tela.
  */
@@ -28,11 +28,11 @@ import type {
  */
 export const PHASE_ACTION_LABELS: Record<CosPhaseId, string> = {
   ACOLHIMENTO: JOURNEY_ACTION_LABELS.ACOLHER,
-  HISTORIA: JOURNEY_ACTION_LABELS.COMPREENDER,
-  CASO: JOURNEY_ACTION_LABELS.COMPREENDER,
-  FILTROS: JOURNEY_ACTION_LABELS.PRIORIZAR,
-  PRIORIDADES: JOURNEY_ACTION_LABELS.PRIORIZAR,
-  VALIDACAO: JOURNEY_ACTION_LABELS.PRIORIZAR,
+  HISTORIA: JOURNEY_ACTION_LABELS.ACOLHER,
+  CASO: JOURNEY_ACTION_LABELS.ACOLHER,
+  FILTROS: JOURNEY_ACTION_LABELS.COMPARAR,
+  PRIORIDADES: JOURNEY_ACTION_LABELS.COMPARAR,
+  VALIDACAO: JOURNEY_ACTION_LABELS.COMPARAR,
   CURADORIA_TECNICA: JOURNEY_ACTION_LABELS.COMPARAR,
   RELATORIO: JOURNEY_ACTION_LABELS.RELATORIO,
   DEVOLUTIVA: JOURNEY_ACTION_LABELS.FINALIZAR,

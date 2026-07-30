@@ -18,10 +18,10 @@ describe("conduction-ui — rotas e rótulos", () => {
   // Simplificação da Jornada: a rota de uma fase é a da ETAPA que a contém.
   // O Motor continua raciocinando em nove fases; a tela tem sete endereços.
   it("leva cada fase à etapa da jornada onde ela se resolve", () => {
-    expect(phaseHref("abc", "HISTORIA")).toBe("/coa/curadoria/casos/abc/compreender");
-    expect(phaseHref("abc", "CASO")).toBe("/coa/curadoria/casos/abc/compreender");
-    expect(phaseHref("abc", "FILTROS")).toBe("/coa/curadoria/casos/abc/mapa-de-prioridades");
-    expect(phaseHref("abc", "PRIORIDADES")).toBe("/coa/curadoria/casos/abc/mapa-de-prioridades");
+    expect(phaseHref("abc", "HISTORIA")).toBe("/coa/curadoria/casos/abc/acolhimento");
+    expect(phaseHref("abc", "CASO")).toBe("/coa/curadoria/casos/abc/acolhimento");
+    expect(phaseHref("abc", "FILTROS")).toBe("/coa/curadoria/casos/abc/curadoria_tecnica");
+    expect(phaseHref("abc", "PRIORIDADES")).toBe("/coa/curadoria/casos/abc/curadoria_tecnica");
     expect(phaseHref("abc", "CURADORIA_TECNICA")).toBe(
       "/coa/curadoria/casos/abc/curadoria_tecnica",
     );
@@ -41,7 +41,7 @@ describe("conduction-ui — rotas e rótulos", () => {
   it("descreve ação específica no botão principal", () => {
     const state = conduct(marina);
     const label = getPrimaryActionLabel(state);
-    expect(label).toBe("Abrir o Mapa de Prioridades");
+    expect(label).toBe("Abrir a Mesa de Curadoria");
     expect(label.toLowerCase()).not.toContain("continuar");
   });
 
@@ -56,7 +56,7 @@ describe("conduction-ui — rotas e rótulos", () => {
     };
     const label = getPrimaryActionLabel(conduct(semElegiveis));
     expect(label).toContain("Resolver em");
-    expect(label).toContain("Curadoria Técnica");
+    expect(label).toContain("Mesa de Curadoria");
   });
 });
 
@@ -98,7 +98,7 @@ describe("conduction-ui — action links de pendências", () => {
     const inconsistencies = items.filter((item) => item.kind === "inconsistency");
     expect(inconsistencies.length).toBeGreaterThan(0);
     for (const item of inconsistencies) {
-      expect(item.href).toContain("/mapa-de-prioridades");
+      expect(item.href).toContain("/curadoria_tecnica");
     }
   });
 

@@ -10,10 +10,6 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { mapZodFieldErrors } from "@/components/forms/map-zod-field-errors";
 import {
-  AVAILABILITY_WINDOW_LABELS,
-  COMPETENCY_DOMAIN_LABELS,
-  EXPERIENCE_LEVEL_LABELS,
-  INTAKE_APPROACH_LABELS,
   professionalProfileSchema,
 } from "@/modules/profiles/professional-schema";
 import type { ActionResult } from "@/modules/profiles/types";
@@ -45,11 +41,6 @@ export function ProfessionalProfileForm({
   initialCrmUf = "",
   initialProfessionalSummary = "",
   initialInstitutionName = "",
-  initialExperienceLevel = "",
-  initialIntakeApproach = "",
-  initialOffersContinuousCare = null,
-  initialAvailabilityWindow = "",
-  initialCompetencyDomains = [],
 }: ProfessionalProfileFormProps) {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [state, formAction, isPending] = useActionState<ActionResult | undefined, FormData>(
@@ -134,88 +125,12 @@ export function ProfessionalProfileForm({
         error={fieldErrors.institutionName}
       />
 
-      {/* Critérios que o Motor de Compatibilidade lê (MISSÃO 209, Fase 5).
-          Todos opcionais: um profissional pode ser aprovado antes de a equipe
-          ter levantado tudo sobre ele, e ausência vira lacuna declarada na
-          análise — nunca valor presumido. */}
-      <fieldset className="space-y-4 rounded-md border border-border p-4">
-        <legend className="px-1 text-sm font-medium text-ink">
-          Como este profissional atende
-        </legend>
-        <p className="text-xs leading-relaxed text-ink-muted">
-          Estes campos alimentam a comparação com as prioridades de cada paciente. O que ficar em
-          branco aparece como lacuna para o Curador — nunca é preenchido por suposição.
-        </p>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField label="Nível de experiência" htmlFor="experienceLevel">
-            <Select id="experienceLevel" name="experienceLevel" defaultValue={initialExperienceLevel}>
-              <option value="">Não informado</option>
-              {Object.entries(EXPERIENCE_LEVEL_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </Select>
-          </FormField>
-
-          <FormField label="Forma do primeiro encontro" htmlFor="intakeApproach">
-            <Select id="intakeApproach" name="intakeApproach" defaultValue={initialIntakeApproach}>
-              <option value="">Não informado</option>
-              {Object.entries(INTAKE_APPROACH_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </Select>
-          </FormField>
-
-          <FormField label="Disponibilidade" htmlFor="availabilityWindow">
-            <Select
-              id="availabilityWindow"
-              name="availabilityWindow"
-              defaultValue={initialAvailabilityWindow}
-            >
-              <option value="">Não informado</option>
-              {Object.entries(AVAILABILITY_WINDOW_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </Select>
-          </FormField>
-
-          <FormField label="Acompanhamento contínuo" htmlFor="offersContinuousCare">
-            <Select
-              id="offersContinuousCare"
-              name="offersContinuousCare"
-              defaultValue={
-                initialOffersContinuousCare === null ? "" : String(initialOffersContinuousCare)
-              }
-            >
-              <option value="">Não informado</option>
-              <option value="true">Acompanha ao longo do tempo</option>
-              <option value="false">Atende pontualmente</option>
-            </Select>
-          </FormField>
-        </div>
-
-        <fieldset className="space-y-2">
-          <legend className="text-sm font-medium text-ink">Áreas de atuação</legend>
-          {Object.entries(COMPETENCY_DOMAIN_LABELS).map(([value, label]) => (
-            <label key={value} className="flex min-h-11 items-center gap-2 text-sm text-ink">
-              <input
-                type="checkbox"
-                name="competencyDomains"
-                value={value}
-                defaultChecked={initialCompetencyDomains.includes(value)}
-                className="size-4 rounded-sm border-border text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
-              />
-              {label}
-            </label>
-          ))}
-        </fieldset>
-      </fieldset>
+      {/* A seção "Como este profissional atende" foi removida — ADR-042.
+          Ela alimentava o motor de compatibilidade legado, que deixou de
+          dirigir a Mesa. O que o Método pergunta sobre um profissional vive
+          agora no Mapa do Profissional, sobre o mesmo catálogo canônico que
+          o Case usa. Manter as duas seria pedir o mesmo dado duas vezes, em
+          vocabulários diferentes. */}
 
       <FormField label="Resumo profissional" htmlFor="professionalSummary" error={fieldErrors.professionalSummary}>
         <Textarea

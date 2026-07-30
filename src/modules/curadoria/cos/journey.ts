@@ -51,8 +51,6 @@ import type {
 
 export const CURATOR_JOURNEY_STEPS = [
   "ACOLHER",
-  "COMPREENDER",
-  "PRIORIZAR",
   "COMPARAR",
   "RELATORIO",
   "FINALIZAR",
@@ -79,30 +77,16 @@ export const CURATOR_JOURNEY_DEFINITIONS: Record<CuratorJourneyStepId, StepDefin
   ACOLHER: {
     id: "ACOLHER",
     label: "Acolhimento",
-    completionSentence: "Sei o que já se sabe sobre esta pessoa.",
-    phases: ["ACOLHIMENTO"],
+    completionSentence: "Entendi esta pessoa, e ela reconheceu a própria história.",
+    phases: ["ACOLHIMENTO", "HISTORIA", "CASO"],
     slug: "acolhimento",
   },
-  COMPREENDER: {
-    id: "COMPREENDER",
-    label: "Compreender o Caso",
-    completionSentence: "Entendi esta pessoa, e ela reconheceu a própria história.",
-    phases: ["HISTORIA", "CASO"],
-    slug: "compreender",
-  },
-  PRIORIZAR: {
-    id: "PRIORIZAR",
-    label: "Mapa de Prioridades",
-    completionSentence:
-      "Sei o que elimina uma opção e quanto cada subcritério importa para ela — e ela reconheceu este Perfil como seu.",
-    phases: ["FILTROS", "PRIORIDADES", "VALIDACAO"],
-    slug: "mapa-de-prioridades",
-  },
+
   COMPARAR: {
     id: "COMPARAR",
-    label: "Curadoria Técnica",
+    label: "Mesa de Curadoria",
     completionSentence: "Escolhi, como humano, os três caminhos legítimos.",
-    phases: ["CURADORIA_TECNICA"],
+    phases: ["FILTROS", "PRIORIDADES", "VALIDACAO", "CURADORIA_TECNICA"],
     slug: "curadoria_tecnica",
   },
   RELATORIO: {
@@ -132,11 +116,11 @@ export const CURATOR_JOURNEY_ORDER: CuratorJourneyStepId[] = [...CURATOR_JOURNEY
  */
 const PHASE_TO_STEP: Record<CosPhaseId, CuratorJourneyStepId> = {
   ACOLHIMENTO: "ACOLHER",
-  HISTORIA: "COMPREENDER",
-  CASO: "COMPREENDER",
-  FILTROS: "PRIORIZAR",
-  PRIORIDADES: "PRIORIZAR",
-  VALIDACAO: "PRIORIZAR",
+  HISTORIA: "ACOLHER",
+  CASO: "ACOLHER",
+  FILTROS: "COMPARAR",
+  PRIORIDADES: "COMPARAR",
+  VALIDACAO: "COMPARAR",
   CURADORIA_TECNICA: "COMPARAR",
   RELATORIO: "RELATORIO",
   DEVOLUTIVA: "FINALIZAR",
@@ -152,8 +136,13 @@ export function stepOfPhase(phase: CosPhaseId): CuratorJourneyStepId {
  * em 404 — o custo cairia sobre quem não fez nada de errado.
  */
 const LEGACY_SLUGS: Record<string, CuratorJourneyStepId> = {
-  criterios: "PRIORIZAR",
-  validacao: "PRIORIZAR",
+  criterios: "COMPARAR",
+  validacao: "COMPARAR",
+  // O Mapa deixou de ser etapa da navegação e passou a viver dentro da Mesa
+  // (é lá que paciente e Curador definem juntos o que importa). O endereço
+  // continua chegando — quem tem o link não encontra 404.
+  "mapa-de-prioridades": "COMPARAR",
+  compreender: "ACOLHER",
 };
 
 /** Resolve um slug de URL — novo ou herdado — para a etapa da jornada. */
@@ -288,9 +277,7 @@ export function journeyStepHref(caseId: string, step: CuratorJourneyStepId): str
  * (UX_PRINCIPLES P3).
  */
 export const JOURNEY_ACTION_LABELS: Record<CuratorJourneyStepId, string> = {
-  ACOLHER: "Revisar o Acolhimento",
-  COMPREENDER: "Registrar o que entendi",
-  PRIORIZAR: "Abrir o Mapa de Prioridades",
+  ACOLHER: "Registrar o que entendi",
   COMPARAR: "Abrir a Mesa de Curadoria",
   RELATORIO: "Escrever o Relatório",
   FINALIZAR: "Registrar a decisão dela",

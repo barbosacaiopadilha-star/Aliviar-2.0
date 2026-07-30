@@ -27,11 +27,17 @@ export function AcolhimentoWorkspace({
   caseId,
   contextReviewed,
   documentsReviewed,
+  hasContext = true,
+  hasDocuments = true,
   nextPhaseHref,
 }: {
   caseId: string;
   contextReviewed: boolean;
   documentsReviewed: boolean;
+  /** Há contexto prévio à vista nesta tela? */
+  hasContext?: boolean;
+  /** Há documento à vista nesta tela? */
+  hasDocuments?: boolean;
   nextPhaseHref: string;
 }) {
   const router = useRouter();
@@ -72,19 +78,35 @@ export function AcolhimentoWorkspace({
         </p>
       ) : null}
 
+      {/* Confirmar revisão do que não está à vista é pedir uma declaração
+          falsa. Sem conteúdo, a tela diz que não há — e não oferece o
+          controle. */}
       <div className="space-y-3">
-        <Checkbox
-          label="Revisei o que já se sabe sobre o paciente"
-          checked={context}
-          disabled={contextReviewed || pending}
-          onChange={(event) => setContext(event.target.checked)}
-        />
-        <Checkbox
-          label="Revisei os documentos disponíveis"
-          checked={documents}
-          disabled={documentsReviewed || pending}
-          onChange={(event) => setDocuments(event.target.checked)}
-        />
+        {hasContext ? (
+          <Checkbox
+            label="Revisei o que já se sabe sobre o paciente"
+            checked={context}
+            disabled={contextReviewed || pending}
+            onChange={(event) => setContext(event.target.checked)}
+          />
+        ) : (
+          <p className="max-w-reading text-sm leading-relaxed text-ink-muted">
+            Ainda não há registro prévio sobre esta pessoa para revisar.
+          </p>
+        )}
+
+        {hasDocuments ? (
+          <Checkbox
+            label="Revisei os documentos disponíveis"
+            checked={documents}
+            disabled={documentsReviewed || pending}
+            onChange={(event) => setDocuments(event.target.checked)}
+          />
+        ) : (
+          <p className="max-w-reading text-sm leading-relaxed text-ink-muted">
+            Nenhum documento foi enviado até aqui.
+          </p>
+        )}
       </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-border pt-4">

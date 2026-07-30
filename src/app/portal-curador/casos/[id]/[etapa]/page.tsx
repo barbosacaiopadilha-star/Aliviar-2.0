@@ -121,36 +121,40 @@ export default async function EtapaPage({ params }: { params: Promise<{ id: stri
             />
           ))}
 
+          {/* ACOLHIMENTO — o entendimento inteiro numa tela só.
+              "Compreender o Caso" era etapa própria, e isso fazia o Curador
+              ler o mesmo material duas vezes em rotas diferentes: uma para
+              registrar a história, outra para separar o que é fato clínico.
+              É uma leitura só. Agora o que já se sabe, os documentos, a
+              história e o contexto clínico vivem juntos, na ordem em que ele
+              pensa. */}
           {stepId === "ACOLHER" ? (
-            <AcolhimentoWorkspace
-              caseId={record.caseId}
-              contextReviewed={record.acolhimento.contextReviewed}
-              documentsReviewed={record.acolhimento.documentsReviewed}
-              nextPhaseHref={journeyStepHref(record.caseId, "COMPREENDER")}
-            />
-          ) : null}
-
-          {/* COMPREENDER — as duas metades do mesmo entendimento, na mesma
-              tela. Antes eram duas rotas: o Curador registrava a história,
-              navegava, e reencontrava o mesmo material para separar o que é
-              fato clínico. É uma leitura só, feita duas vezes. */}
-          {stepId === "COMPREENDER" ? (
             <>
-              <PhaseDeclarationWorkspace
-                phase="historia"
+              <AcolhimentoWorkspace
                 caseId={record.caseId}
-                initialText={record.historia.narrative}
-                understandingConfirmedAt={record.historia.understandingConfirmedAt}
-                nextPhaseHref="#registrar-o-caso"
-                nextPhaseLabel="Separar o que é fato clínico"
+                contextReviewed={record.acolhimento.contextReviewed}
+                documentsReviewed={record.acolhimento.documentsReviewed}
+                nextPhaseHref="#a-historia"
               />
+
+              <div id="a-historia" className="scroll-mt-6">
+                <PhaseDeclarationWorkspace
+                  phase="historia"
+                  caseId={record.caseId}
+                  initialText={record.historia.narrative}
+                  understandingConfirmedAt={record.historia.understandingConfirmedAt}
+                  nextPhaseHref="#registrar-o-caso"
+                  nextPhaseLabel="Separar o que é fato clínico"
+                />
+              </div>
+
               <div id="registrar-o-caso" className="scroll-mt-6">
                 <PhaseDeclarationWorkspace
                   phase="caso"
                   caseId={record.caseId}
                   initialText={record.caso.clinicalContext}
-                  nextPhaseHref={journeyStepHref(record.caseId, "PRIORIZAR")}
-                  nextPhaseLabel="Abrir o Mapa de Prioridades"
+                  nextPhaseHref={journeyStepHref(record.caseId, "COMPARAR")}
+                  nextPhaseLabel="Abrir a Mesa de Curadoria"
                 />
               </div>
             </>
