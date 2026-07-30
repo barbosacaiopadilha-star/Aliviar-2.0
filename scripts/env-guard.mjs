@@ -1,6 +1,20 @@
-#!/usr/bin/env node
 /**
  * GUARDA DE AMBIENTE — uma função central, antes de qualquer chamada externa.
+ *
+ * SEM SHEBANG, de propósito (NC-24). Este arquivo é BIBLIOTECA: só exporta,
+ * não executa nada ao ser importado, e nenhum comando o chama diretamente —
+ * quem roda pela linha de comando são os wrappers (`with-local-supabase.mjs`,
+ * `guard-db-reset.mjs`, `generate-local-env.mjs`, …), e esses mantêm o
+ * shebang deles.
+ *
+ * O `#!` daqui era herança de hábito e custava caro: o vite-node transforma o
+ * módulo e o executa em `vm.Script`, que rejeita `#!` com
+ * "SyntaxError: Invalid or unexpected token". Como este arquivo é importado
+ * pelo `setup-env`, pelo `globalSetup` da integração e pelo teste do próprio
+ * guarda, um caractere invisível derrubava a suíte de integração inteira.
+ *
+ * Regra que fica: módulo importável não tem shebang; wrapper de linha de
+ * comando tem. `tests/unit/env-guard.test.ts` pina isso.
  *
  * Por que existe: `.env.local` deste repositório aponta deliberadamente para
  * um projeto hospedado, e praticamente todo script local o lia como fallback.
