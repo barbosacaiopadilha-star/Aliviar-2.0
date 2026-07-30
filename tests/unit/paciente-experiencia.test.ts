@@ -55,7 +55,7 @@ describe("Construção do Perfil", () => {
     const view = buildPerfilView([], false);
     expect(view.classificados).toBe(0);
     expect(view.prioridades).toEqual([]);
-    expect(view.headline).toContain("nasce da conversa");
+    expect(view.headline).toContain("sendo consolidado");
   });
 
   it("em construção: progresso parcial e a frase de construção conjunta", () => {
@@ -68,7 +68,7 @@ describe("Construção do Perfil", () => {
     );
     expect(view.classificados).toBe(2);
     expect(view.total).toBe(SUBCRITERION_CATALOG.length);
-    expect(view.headline).toBe("Seu perfil está sendo construído junto com o Curador.");
+    expect(view.headline).toBe("Seu Perfil está sendo consolidado.");
   });
 
   it("completo sem validação não chega a 100 — falta o reconhecimento da pessoa", () => {

@@ -54,9 +54,9 @@ describe("PerfilPanel — o que mais importa, nas palavras dela", () => {
     expect(texto, "nenhum número na tela dela").not.toMatch(/\d/);
   });
 
-  it("mapa vazio: diz que nasce da conversa, sem simular retrato pronto", () => {
+  it("mapa vazio: diz que está em consolidação, sem simular retrato pronto", () => {
     render(<PerfilPanel perfil={buildPerfilView([], false)} />);
-    expect(screen.getByText(/definido na conversa com seu Curador/)).toBeInTheDocument();
+    expect(screen.getByText(/você verá aqui o que foi considerado mais importante/)).toBeInTheDocument();
   });
 
   it("com o Mapa completo, o ato é dela e está na tela dela — ADR-042", () => {

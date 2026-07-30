@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { cn } from "@/components/ui/cn";
 
 /**
@@ -15,6 +17,12 @@ export type WalkStage = {
   id: string;
   label: string;
   status: "done" | "current" | "ahead";
+  /**
+   * Para onde esta etapa leva. Ausente = etapa que ainda não tem superfície
+   * própria; ela continua legível, mas não vira link para lugar nenhum —
+   * navegar para uma tela que não existe é pior que não navegar.
+   */
+  href?: string;
 };
 
 const STATUS_LABEL: Record<WalkStage["status"], string> = {
@@ -47,8 +55,19 @@ export function JourneyWalk({
             className={cn("patient-walk__step", `patient-walk__step--${stage.status}`)}
           >
             <span className="patient-walk__dot" aria-hidden="true" />
-            <span className="patient-walk__label">{stage.label}</span>
-            <span className="sr-only">, {STATUS_LABEL[stage.status]}</span>
+            {/* A linha do tempo navega; o painel resume. Um não substitui o
+                outro. Etapa sem destino continua legível como texto. */}
+            {stage.href ? (
+              <Link href={stage.href} className="patient-walk__label patient-walk__link">
+                {stage.label}
+                <span className="sr-only">, {STATUS_LABEL[stage.status]}</span>
+              </Link>
+            ) : (
+              <>
+                <span className="patient-walk__label">{stage.label}</span>
+                <span className="sr-only">, {STATUS_LABEL[stage.status]}</span>
+              </>
+            )}
           </li>
         ))}
       </ol>

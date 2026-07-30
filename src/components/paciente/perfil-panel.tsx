@@ -27,9 +27,10 @@ export function PerfilPanel({ perfil, caseId }: { perfil: PerfilView; caseId?: s
       </CardHeader>
 
       {perfil.prioridades.length === 0 ? (
+        // Nunca um card vazio: o estado é dito por nome.
         <p className="max-w-reading text-sm leading-relaxed text-ink-muted">
-          Ainda não há nada aqui — o que importa para você é definido na conversa com seu Curador,
-          com as suas palavras. É por aí que a Curadoria começa.
+          Assim que esta etapa for concluída, você verá aqui o que foi considerado mais importante
+          para o seu caso. Isso nasce da conversa com seu Curador, com as suas palavras.
         </p>
       ) : (
         <div className="space-y-5">

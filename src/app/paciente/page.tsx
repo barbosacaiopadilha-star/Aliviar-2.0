@@ -13,6 +13,7 @@ import { currentHourInBrazil, greetingFor } from "@/modules/paciente/ambiente";
 import {
   mensagemPrincipal,
   STAGE_EYEBROWS,
+  WALK_HREFS,
   WALK_LABELS,
   walkStatusOf,
 } from "@/modules/paciente/experiencia";
@@ -90,6 +91,9 @@ export default async function PacienteHomePage() {
     id: stage.id,
     label: WALK_LABELS[stage.id],
     status: walkStatusOf(stage.status),
+    // A RLS continua sendo a autoridade: o link leva a uma superfície dela,
+    // e o que ela pode ver lá é decidido no servidor, não aqui.
+    href: WALK_HREFS[stage.id],
   }));
 
   const currentStage = jornada.stages.find((stage) => stage.id === jornada.currentStage);

@@ -89,8 +89,8 @@ export function buildPerfilView(
     headline: validated
       ? "Este Perfil é seu — você o reconheceu, e é ele que guia a Curadoria."
       : classificados > 0
-        ? "Seu perfil está sendo construído junto com o Curador."
-        : "Seu Perfil nasce da conversa com o Curador — é por ele que a Curadoria começa.",
+        ? "Seu Perfil está sendo consolidado."
+        : "Seu Perfil está sendo consolidado.",
   };
 }
 
@@ -141,6 +141,19 @@ export function walkStatusOf(
  * Prioridades", "Curadoria em andamento") que servem à leitura detalhada e
  * pesam demais numa trilha de sete marcas no celular.
  */
+/**
+ * Para onde cada etapa da linha do tempo leva.
+ *
+ * Só entram destinos que EXISTEM. Etapa sem superfície própria fica sem
+ * href e continua legível como texto — navegar para uma tela inexistente é
+ * pior que não navegar. E nenhuma delas reinicia fluxo: são todas leitura.
+ */
+export const WALK_HREFS: Partial<Record<JornadaStageId, string>> = {
+  PERFIL_DE_PRIORIDADES: "/paciente/perfil",
+  CURADORIA: "/paciente/curadoria",
+  DOSSIE: "/paciente/curadoria",
+};
+
 export const WALK_LABELS: Record<JornadaStageId, string> = {
   CONSULTA_INICIAL: "Consulta",
   PERFIL_DE_PRIORIDADES: "Perfil",
