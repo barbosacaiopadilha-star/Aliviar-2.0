@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+﻿import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -380,7 +380,7 @@ describe("Linha de investigação", () => {
     render(
       <LinhaInvestigacao
         etapas={linhaDeInvestigacao({
-          budgetsComplete: true,
+          mapaCompleto: true,
           eligible: 2,
           criteriaDeclared: 4,
           criteriaTotal: 12,
@@ -450,7 +450,7 @@ function montarMesa() {
       etapas={etapas}
       totalProfissionais={2}
       linha={linhaDeInvestigacao({
-        budgetsComplete: true,
+        mapaCompleto: true,
         eligible: 3,
         criteriaDeclared: 12,
         criteriaTotal: 18,
@@ -496,7 +496,8 @@ describe("Atalhos de teclado", () => {
     const user = userEvent.setup();
     montarMesa();
     await user.keyboard("c");
-    expect(screen.getByText("Trabalho de CRUZAMENTO")).toBeInTheDocument();
+    // M4: o atalho leva à etapa única de leitura do Motor.
+    expect(screen.getByText("Trabalho de COMPATIBILIDADE")).toBeInTheDocument();
     await user.keyboard("r");
     expect(screen.getByText("Trabalho de RELATORIO")).toBeInTheDocument();
   });

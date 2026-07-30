@@ -37,7 +37,7 @@ type Props = {
 function pendenciasDaOpcao(option: OpcaoRelatorio): string[] {
   const faltando: string[] = [];
   if (!option.justification.trim()) faltando.push("a justificativa");
-  if (!option.relationToWeights.trim()) faltando.push("a relação com os pesos");
+  if (!option.relationToWeights.trim()) faltando.push("a relação com as prioridades declaradas");
   if (option.attentionPoints.length === 0) faltando.push("os pontos de atenção");
   return faltando;
 }

@@ -12,8 +12,10 @@ import { startConsultationAction } from "@/modules/curadoria/actions";
  * @metodo Fundamentos §10 — o Perfil de Prioridades é o primeiro patrimônio construído em conjunto
  * @metodo Experience §5 — UX3: o próximo passo é visível e nomeado pelo que faz
  *
+ * M4: sem consumidor em rota alguma hoje — candidato a remoção física na M5.
+ *
  * Por que existe: sem um Perfil aberto, a etapa Mapa de Prioridades não tem onde
- * gravar nem um requisito nem um peso — e a tela dizia "o Perfil precisa ser
+ * gravar nem um requisito nem uma classificação — e a tela dizia "o Perfil precisa ser
  * criado antes desta etapa" sem oferecer como. Um aviso que não resolve o que
  * anuncia é um beco sem saída, e beco sem saída é a forma mais cara de carga
  * cognitiva: a pessoa procura em todo lugar antes de concluir que não existe.
@@ -40,7 +42,7 @@ export function StartPriorityProfile({ caseId, patientFirstName }: { caseId: str
     <div className="space-y-3">
       <p className="max-w-reading text-sm leading-relaxed text-ink-muted">
         O Perfil de Prioridades de {patientFirstName} ainda não foi aberto. Ele é o lugar onde ficam
-        os requisitos inegociáveis e os 100 pontos — e nasce com o seu nome como autor.
+        os requisitos inegociáveis e o Mapa de Prioridades — e nasce com o seu nome como autor.
       </p>
       <div className="flex flex-wrap items-center gap-3">
         <Button type="button" onClick={abrir} disabled={pending} isLoading={pending}>

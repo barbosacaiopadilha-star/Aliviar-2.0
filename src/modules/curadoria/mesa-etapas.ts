@@ -13,12 +13,17 @@
  * Puro e determinístico: sem React, sem banco.
  */
 
+/**
+ * M4 (ADR-042): COMPATIBILIDADE e CRUZAMENTO eram duas etapas com perguntas
+ * diferentes renderizando a MESMA leitura do Motor — uma prometia "os dois
+ * cruzamentos" que o Método vigente não tem. Ficou uma só, com o nome que a
+ * ADR-041 usa para a leitura: Compatibilidade.
+ */
 export const MESA_ETAPAS = [
   "PERFIL",
   "REDE",
   "AVALIACAO",
   "COMPATIBILIDADE",
-  "CRUZAMENTO",
   "CAMINHOS",
   "RELATORIO",
 ] as const;
@@ -30,7 +35,6 @@ export const MESA_ETAPA_LABELS: Record<MesaEtapaId, string> = {
   REDE: "Rede elegível",
   AVALIACAO: "Avaliação técnica",
   COMPATIBILIDADE: "Compatibilidade",
-  CRUZAMENTO: "Cruzamento",
   CAMINHOS: "Três caminhos",
   RELATORIO: "Relatório",
 };
@@ -40,8 +44,7 @@ export const MESA_ETAPA_QUESTIONS: Record<MesaEtapaId, string> = {
   PERFIL: "Quanto cada subcritério importa para esta pessoa?",
   REDE: "Quem pode participar desta Curadoria?",
   AVALIACAO: "Quanto cada profissional responde tecnicamente a este caso?",
-  COMPATIBILIDADE: "Quanto cada um responde ao que ela declarou?",
-  CRUZAMENTO: "O que os dois cruzamentos mostram, lado a lado?",
+  COMPATIBILIDADE: "Quanto cada profissional responde ao que esta pessoa declarou como importante?",
   CAMINHOS: "Quais três caminhos eu apresento?",
   RELATORIO: "O que ela vai reler sozinha?",
 };
@@ -91,7 +94,6 @@ function etapa(
 
 export function buildMesaEtapas(facts: MesaFacts): MesaEtapaState[] {
   const temElegiveis = facts.eligible > 0;
-  const avaliacaoPronta = temElegiveis && facts.criteriaAwaiting === 0;
 
   return [
     facts.mapPending === 0
@@ -122,17 +124,16 @@ export function buildMesaEtapas(facts: MesaFacts): MesaEtapaState[] {
           )
         : etapa("AVALIACAO", "PRONTA", null),
 
-    !temElegiveis
-      ? etapa("COMPATIBILIDADE", "AGUARDA", null, "Depende de haver ao menos um profissional elegível.")
-      : facts.criteriaAwaiting > 0
-        ? etapa("COMPATIBILIDADE", "PENDENTE", "Faltam avaliações para fechar a leitura.")
-        : etapa("COMPATIBILIDADE", "PRONTA", null),
-
+    // A leitura do Motor nasce do Mapa de Prioridades cruzado com o Mapa do
+    // Profissional, e só existe para quem participa — por isso as duas
+    // dependências aparecem aqui, na etapa única (M4).
     facts.mapPending > 0
-      ? etapa("CRUZAMENTO", "AGUARDA", null, "Depende do Mapa de Prioridades completo.")
-      : !avaliacaoPronta
-        ? etapa("CRUZAMENTO", "AGUARDA", null, "Depende das avaliações por critério.")
-        : etapa("CRUZAMENTO", "PRONTA", null),
+      ? etapa("COMPATIBILIDADE", "AGUARDA", null, "Depende do Mapa de Prioridades completo.")
+      : !temElegiveis
+        ? etapa("COMPATIBILIDADE", "AGUARDA", null, "Depende de haver ao menos um profissional elegível.")
+        : facts.criteriaAwaiting > 0
+          ? etapa("COMPATIBILIDADE", "PENDENTE", "Faltam avaliações para fechar a leitura.")
+          : etapa("COMPATIBILIDADE", "PRONTA", null),
 
     facts.selected === 3
       ? etapa("CAMINHOS", "PRONTA", null)

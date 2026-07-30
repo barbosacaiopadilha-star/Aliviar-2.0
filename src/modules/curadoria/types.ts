@@ -35,7 +35,7 @@ export const CURADORIA_STEP_LABELS: Record<CuradoriaStep, string> = {
 export const CURADORIA_STEP_DESCRIPTIONS: Record<CuradoriaStep, string> = {
   COMPREENDER: "Ouvir a história inteira, sem organizar nada ainda.",
   ESTRUTURAR: "Separar o que é necessidade, o que é limite e o que é receio.",
-  PRIORIZAR: "Distribuir 100 pontos com o paciente e registrar a evidência de cada peso.",
+  PRIORIZAR: "Registrar, com o paciente, quanto cada subcritério do Método importa neste caso.",
   COMPARAR: "Aplicar o Perfil validado aos profissionais já aprovados pela Aliviar.",
   JUSTIFICAR: "Escrever, em linguagem humana, por que cada análise resultou no que resultou.",
   APRESENTAR: "Escolher três caminhos legítimos e explicar o que diferencia cada um.",

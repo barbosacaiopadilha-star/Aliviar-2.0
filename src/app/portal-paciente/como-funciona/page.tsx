@@ -34,13 +34,13 @@ const PASSOS = [
   {
     titulo: "Suas prioridades",
     texto:
-      "Vocês distribuem cem pontos entre o que mais importa para você. Cada peso fica registrado com a frase que o originou — e nada avança sem a sua validação.",
+      "Cada aspecto do cuidado recebe o nível de importância que você deu a ele na conversa — do que é muito importante ao que não influencia o seu caso. Nada avança até você confirmar que esse retrato é o seu.",
     quem: "Você decide, seu Curador registra",
   },
   {
     titulo: "A análise",
     texto:
-      "Suas prioridades são aplicadas aos profissionais que a Aliviar já aprovou, por critério próprio e independente. Nenhum profissional paga para estar aqui.",
+      "Para cada profissional que a Aliviar já aprovou, a operação registra o que foi confirmado, o que não foi e o que ainda não se sabe. Comparando isso com as suas prioridades, o sistema mostra onde há mais aderência e onde falta informação — sem nota, sem classificação, sem lista do melhor.",
     quem: "Seu Curador, apoiado pela organização do sistema",
   },
   {

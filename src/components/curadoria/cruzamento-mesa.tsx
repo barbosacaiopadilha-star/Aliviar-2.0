@@ -1,29 +1,27 @@
 "use client";
 
 /**
- * MESA DO CRUZAMENTO — blocos 1 a 4 do Dashboard do Curador.
+ * ELEGIBILIDADE DA MESA — quem pode participar desta Curadoria.
  *
  * @metodo Fundamentos §13 — P14: o algoritmo nunca seleciona; a Mesa organiza, compara e explica
- * @metodo Engine §5.2 — o saldo de pontos é sempre visível e o sistema soma pelo Curador, nunca decide por ele
  * @metodo Ontologia §3.13 — a ordenação é de leitura, jamais colocação; nenhum vocabulário de pódio
  * @metodo Experience §6 — ausência de informação é dita como lacuna, nunca convertida em reprovação
  *
- * Por que existe: o Curador não deve precisar somar pontos, cruzar seis
- * critérios mentalmente nem abrir vários cadastros para comparar. Esta tela
- * faz o trabalho mecânico e devolve a ele só o que é dele — declarar área,
- * avaliar critérios e escolher três.
+ * Por que existe: o Curador não deve precisar abrir vários cadastros para
+ * saber quem participa. Esta tela mostra, lado a lado, o que o Case exige e o
+ * que cada cadastro declara — e devolve a ele só o que é dele: declarar a
+ * compatibilidade de área e avaliar os critérios.
  *
  * 1. Cabeçalho do Case — números que orientam, nunca métricas administrativas
- * 2. Orçamento de pontos — dois cruzamentos de 100, o Curador nunca soma
- * 3. Elegibilidade — declaração de área lado a lado, filtros com resultado dito
- * 4. Comparação — células que explicam; ordenação de leitura, jamais pódio
+ * 2. Elegibilidade — declaração de área lado a lado, filtros com resultado dito
+ * 3. Pendências — o que falta declarar, por profissional
  *
- * O bloco 5 (seleção dos três) continua no MesaWorkspace já certificado — a
- * regra de exatamente três, os pareceres e o caminho para o Relatório não
- * mudaram de casa.
+ * M4 (ADR-042): o bloco de orçamento de pontos que este cabeçalho descrevia
+ * não existe mais. A leitura de compatibilidade vem do Motor (etapa
+ * Compatibilidade) e a seleção dos três vive no MesaWorkspace.
  *
- * O que esta tela nunca faz: somar pelo Curador errado, decidir área,
- * pré-selecionar, chamar alguém de melhor.
+ * O que esta tela nunca faz: decidir área, pré-selecionar, chamar alguém de
+ * melhor.
  */
 
 import { useState, useTransition } from "react";

@@ -38,10 +38,40 @@ function etapaDe(facts: MesaFacts, id: (typeof MESA_ETAPAS)[number]) {
   return buildMesaEtapas(facts).find((entrada) => entrada.id === id)!;
 }
 
-describe("As sete etapas da Mesa", () => {
+describe("As seis etapas da Mesa", () => {
   it("existem todas, sempre, na ordem da investigação", () => {
     const etapas = buildMesaEtapas(ZERADO);
     expect(etapas.map((entrada) => entrada.id)).toEqual([...MESA_ETAPAS]);
+  });
+
+  it("M4: existe uma única etapa de leitura do Motor, e ela não é CRUZAMENTO", () => {
+    const ids = buildMesaEtapas(COMPLETO).map((entrada) => entrada.id);
+    expect(ids.filter((id) => id === "COMPATIBILIDADE")).toHaveLength(1);
+    expect(ids).not.toContain("CRUZAMENTO");
+    expect(MESA_ETAPAS).toHaveLength(6);
+  });
+
+  it("a etapa de compatibilidade pergunta pelo que a pessoa declarou como importante", () => {
+    const compatibilidade = etapaDe(COMPLETO, "COMPATIBILIDADE");
+    expect(compatibilidade.question).toBe(
+      "Quanto cada profissional responde ao que esta pessoa declarou como importante?",
+    );
+    expect(compatibilidade.label).toBe("Compatibilidade");
+  });
+
+  it("CAMINHOS permanece etapa separada, depois da leitura", () => {
+    const ids = buildMesaEtapas(COMPLETO).map((entrada) => entrada.id);
+    expect(ids.indexOf("CAMINHOS")).toBeGreaterThan(ids.indexOf("COMPATIBILIDADE"));
+    expect(ids.indexOf("RELATORIO")).toBeGreaterThan(ids.indexOf("CAMINHOS"));
+  });
+
+  it("nenhuma pergunta ou pendência fala de dois cruzamentos, pontos, nota ou score", () => {
+    for (const etapa of buildMesaEtapas(ZERADO).concat(buildMesaEtapas(COMPLETO))) {
+      const texto = `${etapa.label} ${etapa.question} ${etapa.pending ?? ""} ${etapa.waitingOn ?? ""}`;
+      expect(texto.toLowerCase(), etapa.id).not.toMatch(
+        /dois cruzamentos|pontos|orçamento|score|banda|nota\b/,
+      );
+    }
   });
 
   it("cada etapa carrega a pergunta que o Curador responde nela", () => {
@@ -138,11 +168,11 @@ describe("Menos de três elegíveis", () => {
 
 describe("Progresso da investigação", () => {
   it("do zero, nenhuma etapa respondeu", () => {
-    expect(mesaProgress(buildMesaEtapas(ZERADO))).toEqual({ done: 0, total: 7 });
+    expect(mesaProgress(buildMesaEtapas(ZERADO))).toEqual({ done: 0, total: 6 });
   });
 
-  it("completo, as sete responderam", () => {
-    expect(mesaProgress(buildMesaEtapas(COMPLETO))).toEqual({ done: 7, total: 7 });
+  it("completo, as seis responderam", () => {
+    expect(mesaProgress(buildMesaEtapas(COMPLETO))).toEqual({ done: 6, total: 6 });
   });
 
   it("o progresso conta o que está pronto, não o que foi visitado", () => {

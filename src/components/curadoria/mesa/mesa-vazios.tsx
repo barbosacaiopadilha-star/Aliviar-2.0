@@ -43,12 +43,14 @@ export function RedeVazia() {
   );
 }
 
-export function CruzamentoNaoIniciado({ motivo }: { motivo: string }) {
+export function CompatibilidadeNaoIniciada({ motivo }: { motivo: string }) {
   return (
     <MesaVazio
-      titulo="O cruzamento ainda não tem o que mostrar."
+      titulo="A compatibilidade ainda não tem o que mostrar."
       corpo={motivo}
-      proximoPasso="Assim que houver, os dois resultados aparecem aqui lado a lado."
+      // M4: antes prometia "os dois resultados" — dois cruzamentos que o
+      // Método vigente não tem. A leitura é uma só, por subcritério.
+      proximoPasso="Assim que houver, a leitura aparece aqui, subcritério a subcritério."
     />
   );
 }

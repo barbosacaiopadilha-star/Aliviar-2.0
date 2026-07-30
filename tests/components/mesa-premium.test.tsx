@@ -68,7 +68,8 @@ describe("Painel A — contexto que não sai da tela", () => {
   it("mostra paciente, área, Curador e progresso da investigação", () => {
     montar();
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Maria Andrade");
-    expect(screen.getByText(/Ortopedia de coluna · Dra. Ana · 2 de 7 etapas/)).toBeInTheDocument();
+    // M4: seis etapas — COMPATIBILIDADE e CRUZAMENTO viraram uma só.
+    expect(screen.getByText(/Ortopedia de coluna · Dra. Ana · 2 de 6 etapas/)).toBeInTheDocument();
   });
 
   it("diz qual é a próxima decisão, e ela é anunciada", () => {
@@ -130,7 +131,9 @@ describe("Painel B — as sete etapas, no mesmo ambiente", () => {
     montar();
     const nav = screen.getByRole("navigation", { name: "Etapas da Curadoria Técnica" });
     expect(within(nav).getByRole("button", { name: /Mapa de Prioridades/ }).textContent).toContain("respondida");
-    expect(within(nav).getByRole("button", { name: /Cruzamento/ }).textContent).toContain(
+    // M4: quem depende de outra etapa aqui é o Relatório — a antiga etapa
+    // Cruzamento deixou de existir (era a mesma leitura da Compatibilidade).
+    expect(within(nav).getByRole("button", { name: /Relatório/ }).textContent).toContain(
       "depende de outra etapa",
     );
   });

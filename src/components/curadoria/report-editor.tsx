@@ -70,7 +70,9 @@ const CAMPOS: {
   {
     field: "relationToWeights",
     title: "Relação com as prioridades dela",
-    guidance: "Como esta opção conversa com os pesos que ela mesma validou.",
+    // M4: o rótulo visível fala prioridades — a coluna `relation_to_weights`
+    // permanece como armazenamento histórico (renomeá-la é decisão futura).
+    guidance: "Como esta opção conversa com as prioridades que ela reconheceu como suas.",
     required: true,
   },
   {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+﻿import { describe, expect, it } from "vitest";
 
 import {
   MESA_ATALHOS,
@@ -36,7 +36,7 @@ function profissional(
 
 describe("Linha de investigação — o raciocínio, não o workflow", () => {
   const base = {
-    budgetsComplete: true,
+    mapaCompleto: true,
     eligible: 2,
     criteriaDeclared: 0,
     criteriaTotal: 12,

@@ -42,7 +42,8 @@ export type LinhaEtapaState = {
 };
 
 export type InvestigacaoFacts = {
-  budgetsComplete: boolean;
+  /** O Mapa de Prioridades do Case está completo (M4: era `budgetsComplete`). */
+  mapaCompleto: boolean;
   eligible: number;
   /** Critérios já declarados, somados entre os elegíveis. */
   criteriaDeclared: number;

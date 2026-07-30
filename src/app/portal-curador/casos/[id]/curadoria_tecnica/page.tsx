@@ -13,7 +13,7 @@ import { MesaShell } from "@/components/curadoria/mesa/mesa-shell";
 import { MesaTimelineDupla, type CaseTimelineMark } from "@/components/curadoria/mesa/mesa-timeline";
 import {
   AvaliacaoSemElegiveis,
-  CruzamentoNaoIniciado,
+  CompatibilidadeNaoIniciada,
   MesaVazio,
   RedeVazia,
   RelatorioNaoGerado,
@@ -152,7 +152,7 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
   const criteriaTotal = Object.keys(view.awaitingDeclaration).length * 6;
 
   const linha = linhaDeInvestigacao({
-    budgetsComplete: view.mapaPendentes === 0,
+    mapaCompleto: view.mapaPendentes === 0,
     eligible: view.counts.eligible,
     criteriaDeclared: criteriaTotal - criteriaAwaiting,
     criteriaTotal,
@@ -240,14 +240,14 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
 
   const rotuloDaInvestigacao: Partial<Record<MesaEtapaId, string>> = { CAMINHOS: "Seleção" };
 
+  // M4: nenhuma etapa precisa ser filtrada aqui — a duplicidade que exigia o
+  // filtro (CRUZAMENTO repetindo COMPATIBILIDADE) deixou de existir.
   const linhaInvestigacao = marcar(
-    etapas
-      .filter((etapa) => etapa.id !== "CRUZAMENTO")
-      .map((etapa) => ({
-        id: etapa.id,
-        label: rotuloDaInvestigacao[etapa.id] ?? etapa.label,
-        done: etapa.status === "PRONTA",
-      })),
+    etapas.map((etapa) => ({
+      id: etapa.id,
+      label: rotuloDaInvestigacao[etapa.id] ?? etapa.label,
+      done: etapa.status === "PRONTA",
+    })),
   );
 
   const semElegiveis = view.counts.eligible === 0;
@@ -263,7 +263,7 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
     colunas.length > 0 ? (
       <ComparacaoPremium colunas={colunas} />
     ) : (
-      <CruzamentoNaoIniciado
+      <CompatibilidadeNaoIniciada
         motivo={
           view.mapaPendentes > 0
             ? `O Mapa de Prioridades ainda tem ${view.mapaPendentes} subcritério(s) sem classificação.`
@@ -296,9 +296,9 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
 
     AVALIACAO: semElegiveis ? <AvaliacaoSemElegiveis /> : <EligibilityPanel view={view} />,
 
+    // M4: uma única etapa de leitura do Motor — COMPATIBILIDADE. A antiga
+    // CRUZAMENTO renderizava exatamente este mesmo nó.
     COMPATIBILIDADE: semElegiveis ? <AvaliacaoSemElegiveis /> : comparacao,
-
-    CRUZAMENTO: comparacao,
 
     CAMINHOS: (
       <div className="mesa-bloco">

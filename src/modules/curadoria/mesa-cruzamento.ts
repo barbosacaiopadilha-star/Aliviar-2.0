@@ -31,12 +31,13 @@ import {
 /**
  * MESA DO CRUZAMENTO — o lado do servidor.
  *
- * Carrega tudo o que a Mesa mostra e grava tudo o que o Curador declara. O
- * cálculo em si mora no domínio (`cruzamento.ts`, intocado) e na visão pura
- * (`mesa-cruzamento-view.ts`); aqui é só banco e montagem.
+ * Carrega tudo o que a Mesa mostra e grava tudo o que o Curador declara. A
+ * leitura de compatibilidade vem pronta do Motor (ADR-041) e a classificação
+ * de elegibilidade mora na visão pura (`mesa-cruzamento-view.ts`); aqui é só
+ * banco e montagem.
  *
- * O cliente pré-visualiza o saldo de pontos localmente, mas o que vale é o
- * que passa por aqui — o servidor continua sendo a autoridade.
+ * O servidor é a autoridade sobre tudo o que a Mesa apresenta — nenhuma tela
+ * recalcula regra de domínio.
  */
 
 // ---------------------------------------------------------------------------
@@ -260,7 +261,7 @@ export async function loadMesaCruzamento(
 
   const counts = headerCounts(professionals.map((p) => p.eligibility), selectedCount);
 
-  // A comparação só existe com orçamento fechado e elegíveis declarados.
+  // A comparação só existe com o Mapa completo e elegíveis declarados.
   const eligibleIds = professionals
     .filter((p) => p.eligibility.state === "ELEGIVEL")
     .map((p) => p.professionalProfileId);

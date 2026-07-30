@@ -113,7 +113,7 @@ export const MESA_ATALHOS: Atalho[] = [
 
 /** Para onde cada atalho de destino leva. */
 export const ATALHO_DESTINO: Partial<Record<MesaAcao, MesaEtapaId>> = {
-  IR_COMPARACAO: "CRUZAMENTO",
+  IR_COMPARACAO: "COMPATIBILIDADE",
   IR_RELATORIO: "RELATORIO",
 };
 

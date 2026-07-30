@@ -236,7 +236,7 @@ export const COS_PHASE_DEFINITIONS: Record<CosPhaseId, CosPhaseDefinition> = {
     validations: [
       "Todo filtro carrega o motivo, nas palavras do paciente.",
       "Nenhum filtro é inferido automaticamente — nunca.",
-      "Um aspecto declarado como filtro não pode receber peso (Invariante 24).",
+      "Um aspecto declarado como filtro não é também prioridade do Mapa (Invariante 24).",
     ],
     alerts: ["C-02 — restrições mutuamente exclusivas"],
     exceptions: ["E-01 — filtros eliminaram todos", "E-09 — restrições mutuamente exclusivas"],
@@ -244,7 +244,7 @@ export const COS_PHASE_DEFINITIONS: Record<CosPhaseId, CosPhaseDefinition> = {
       {
         source: "Ontologia",
         section: "§3.7",
-        rule: "Restrição elimina opções e nunca recebe peso.",
+        rule: "Restrição elimina opções; prioridade não elimina.",
       },
       {
         source: "Engine",
@@ -283,14 +283,16 @@ export const COS_PHASE_DEFINITIONS: Record<CosPhaseId, CosPhaseDefinition> = {
     ],
     requiredInformation: ["Importância de cada subcritério do catálogo canônico"],
     optionalInformation: ["Observações e preferências registradas nas palavras do paciente"],
-    artifacts: ["Perfil de Prioridades (em construção)", "Evidência de Curadoria"],
-    states: ["Rascunho", "Em construção", "Pronto para validar"],
+    artifacts: ["Mapa de Prioridades do Case"],
+    states: ["Rascunho", "Em construção", "Pronto para reconhecimento"],
+    // M4: sem códigos de inconsistência que não existem mais (I-01 a I-05
+    // morreram com o modelo de pesos, na M3). As regras vigentes ficam, em
+    // texto — nenhuma regra nova foi criada aqui.
     validations: [
-      "I-01 — todo subcritério ativo do catálogo recebe um nível de importância.",
-      "I-02 — o nível é escolhido numa escala fechada; o Curador não cria critério.",
-      "I-03 — nenhum aspecto é critério e restrição ao mesmo tempo.",
-      "I-04 — critério que exige alvo declarado não fica sem alvo.",
-      "I-05 — nenhum critério duplicado.",
+      "Todo subcritério ativo do catálogo recebe um nível de importância.",
+      "O nível vem de uma escala fechada; o Curador não cria, renomeia nem descreve subcritério.",
+      "Nenhum aspecto é prioridade e filtro eliminatório ao mesmo tempo.",
+      "A completude é calculada — não existe etapa manual de validação de critérios.",
     ],
     alerts: [],
     exceptions: [],
@@ -308,17 +310,12 @@ export const COS_PHASE_DEFINITIONS: Record<CosPhaseId, CosPhaseDefinition> = {
       {
         source: "Ontologia",
         section: "§3.6",
-        rule: "Peso é importância atribuída pelo paciente, nunca qualidade de médico.",
-      },
-      {
-        source: "Engine",
-        section: "§5.2",
-        rule: "O Motor de Pesos nunca sugere valor nem autoajusta um peso quando outro muda.",
+        rule: "Importância é atribuída pela pessoa, nunca qualidade de médico.",
       },
       {
         source: "Experience",
         section: "§6",
-        rule: "O total é sempre visível e o que falta é dito em linguagem natural.",
+        rule: "O que falta é dito em linguagem natural, sempre à vista.",
       },
     ],
   },
@@ -380,7 +377,7 @@ export const COS_PHASE_DEFINITIONS: Record<CosPhaseId, CosPhaseDefinition> = {
     order: 7,
     label: COS_PHASE_LABELS.CURADORIA_TECNICA,
     objective:
-      "Aplicar o Perfil validado à base de médicos previamente aprovados e escolher — como humano — exatamente três caminhos legítimos.",
+      "Ler o Mapa de Prioridades reconhecido contra o Mapa do Profissional de cada elegível, pelo Motor de Compatibilidade, e escolher — como humano — exatamente três caminhos legítimos.",
     reasoningStep: "COMPARAR",
     entryCriteria: [
       {
@@ -398,25 +395,28 @@ export const COS_PHASE_DEFINITIONS: Record<CosPhaseId, CosPhaseDefinition> = {
           Boolean(record.curadoriaTecnica.selectedBy),
       },
     ],
-    requiredInformation: ["Comparação calculada", "Três profissionais selecionados"],
-    optionalInformation: ["Observações do Curador sobre cada profissional analisado"],
-    artifacts: ["Mapa de Compatibilidade", "Registros de Exclusão", "Seleção das três opções"],
-    states: ["Aguardando comparação", "Comparado", "Selecionado"],
+    // M4 (ADR-039 a ADR-042): os metadados desta fase descreviam o modelo
+    // aposentado — "Comparação calculada", "Mapa de Compatibilidade",
+    // "Registros de Exclusão", bandas, cobertura percentual. Reescritos para
+    // os conceitos vigentes; nada aqui cria regra nova.
+    requiredInformation: [
+      "Mapa de Prioridades reconhecido pela paciente",
+      "Mapa do Profissional dos elegíveis",
+      "Três caminhos selecionados",
+    ],
+    optionalInformation: ["Observações do Curador sobre cada profissional elegível"],
+    artifacts: ["Leitura do Motor de Compatibilidade", "Seleção das três opções"],
+    states: ["Aguardando elegibilidade", "Leitura disponível", "Selecionado"],
     validations: [
       "I-09 — exatamente três, nunca outro número.",
       "I-10 — nenhum profissional repetido.",
-      "I-11 — toda opção tem análise que a fundamenta.",
+      "I-11 — toda opção consta entre os elegíveis da Mesa.",
       "I-12 — a seleção tem autor humano.",
     ],
-    alerts: [
-      "C-01 — mais de três equivalentes",
-      "C-05 — nenhuma opção acima de Moderada",
-      "C-06 — cobertura média baixa",
-    ],
+    alerts: ["C-06 — lacunas de informação no Mapa do Profissional"],
     exceptions: [
-      "E-01 — universo esvaziado pelos filtros",
+      "E-01 — nenhum profissional elegível",
       "E-02 — menos de três elegíveis",
-      "E-05 — cobertura média abaixo de 50%",
     ],
     traceability: [
       {
@@ -455,7 +455,8 @@ export const COS_PHASE_DEFINITIONS: Record<CosPhaseId, CosPhaseDefinition> = {
     exitCriteria: [
       {
         id: "tres-justificadas",
-        description: "Escrever justificativa, relação com os pesos e pontos de atenção das três opções.",
+        description:
+          "Escrever justificativa, relação com as prioridades declaradas e pontos de atenção das três opções.",
         isMet: (record) =>
           record.relatorio.options.length === 3 &&
           record.relatorio.options.every(
@@ -473,7 +474,7 @@ export const COS_PHASE_DEFINITIONS: Record<CosPhaseId, CosPhaseDefinition> = {
     ],
     requiredInformation: [
       "Justificativa de cada opção",
-      "Relação com os pesos",
+      "Relação com as prioridades declaradas",
       "Pontos de atenção",
       "Justificativa da composição",
     ],
