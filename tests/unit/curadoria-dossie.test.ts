@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { cruzar, type CriterionWeight } from "@/modules/curadoria/cruzamento";
 import {
   adaptToEvaluations,
   assessReadiness,
@@ -135,18 +134,6 @@ function declaration(overrides: Partial<PatientPriorityDeclaration> = {}): Patie
     ...overrides,
   };
 }
-
-const TECNICO: CriterionWeight[] = [
-  { criterion: "FORMACAO", weight: 40 },
-  { criterion: "EXPERIENCIA", weight: 40 },
-  { criterion: "HISTORICO", weight: 20 },
-];
-
-const PRIORIDADES: CriterionWeight[] = [
-  { criterion: "ACESSO", weight: 40 },
-  { criterion: "CONTINUIDADE_DO_CUIDADO", weight: 30 },
-  { criterion: "MODELO_DE_ATENDIMENTO", weight: 30 },
-];
 
 function assessmentOf(output: ReturnType<typeof adaptToEvaluations>, criterion: string) {
   return output.evaluations.find((evaluation) => evaluation.criterion === criterion)!;
@@ -391,52 +378,5 @@ describe("Nenhuma ausência vira zero — a regra que atravessa a camada inteira
     const output = adaptToEvaluations({ dossier: dossier({ careModel: null }), declaration: null });
     const ausentes = output.evaluations.filter((e) => e.assessment === "INFORMACAO_INSUFICIENTE");
     expect(ausentes.every((e) => e.evidence.includes("nada foi presumido"))).toBe(true);
-  });
-});
-
-describe("Adaptação → motor: o motor não sabe que existe banco", () => {
-  it("as avaliações produzidas alimentam o cruzamento sem tradução extra", () => {
-    const output = adaptToEvaluations({
-      dossier: dossier(),
-      declaration: declaration(),
-      technicalDeclarations: [
-        { criterion: "FORMACAO", assessment: "ATENDE_PLENAMENTE", evidence: "Formação aderente ao caso." },
-        { criterion: "EXPERIENCIA", assessment: "ATENDE_PLENAMENTE", evidence: "Volume alto de casos como este." },
-        { criterion: "HISTORICO", assessment: "ATENDE_PARCIALMENTE", evidence: "Trajetória sólida, pouco tempo no serviço atual." },
-      ],
-    });
-
-    const result = cruzar({
-      professionalProfileId: dossier().professionalProfileId,
-      technicalWeights: TECNICO,
-      patientWeights: PRIORIDADES,
-      evaluations: output.evaluations,
-    });
-
-    // Histórico (20 pts) a meio caminho: 40 + 40 + 10 = 90 de 100 técnicos.
-    expect(result.technical.score).toBe(90);
-    expect(result.patient.score).toBe(100);
-    // Dois resultados independentes — nenhum total combinado existe.
-    expect(result).not.toHaveProperty('total');
-    expect(result.technical.coveredWeight).toBe(100);
-    expect(result.patient.coveredWeight).toBe(100);
-  });
-
-  it("bloco técnico ainda não declarado derruba a cobertura, não a nota do que se sabe", () => {
-    const output = adaptToEvaluations({ dossier: dossier(), declaration: declaration() });
-
-    const result = cruzar({
-      professionalProfileId: "prof-1",
-      technicalWeights: TECNICO,
-      patientWeights: PRIORIDADES,
-      evaluations: output.evaluations,
-    });
-
-    expect(result.patient.score).toBe(100);
-    expect(result.technical.criteriaWithoutData).toBe(3);
-    // A cobertura é por cruzamento: o técnico não avaliado zera a própria,
-    // e a assistencial permanece cheia.
-    expect(result.technical.coveredWeight).toBe(0);
-    expect(result.patient.coveredWeight).toBe(100);
   });
 });

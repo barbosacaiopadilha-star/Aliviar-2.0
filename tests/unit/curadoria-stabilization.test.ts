@@ -7,7 +7,6 @@ import {
   resolveFieldStateWithOverrides,
 } from "@/modules/ace/protocols/p002-human-overrides";
 import { classifyP002FieldState } from "@/modules/ace/protocols/p002-completeness";
-import { computePriorityValidationReadiness } from "@/modules/curadoria/priority-validation-readiness";
 import {
   resolveAuthenticatedDisplayName,
 } from "@/modules/auth/display-identity";
@@ -73,21 +72,6 @@ describe("Estabilização — linguagem humana", () => {
     expect(humanizeArtifactType("DecisionCase")).toBe("Caso de decisão");
     expect(humanizeArtifactType("Narrative")).toBe("História organizada");
     expect(humanizeProtocolId("P002")).toBe("Estruturação do caso");
-  });
-});
-
-describe("Estabilização — validação idempotente", () => {
-  it("bloqueia revalidação de perfil já validado", () => {
-    const readiness = computePriorityValidationReadiness({
-      weights: [
-        { criterion: "DISPONIBILIDADE", weight: 50, evidence: "ok", targetValue: null },
-        { criterion: "CONTINUIDADE", weight: 50, evidence: "ok", targetValue: null },
-      ],
-      filterCriteria: [],
-      validated: true,
-    });
-    expect(readiness.canValidate).toBe(false);
-    expect(readiness.status).toBe("validado");
   });
 });
 

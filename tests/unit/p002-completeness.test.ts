@@ -16,7 +16,6 @@ import {
   mergeRegeneratedWithHumanOverrides,
   resolveFieldStateWithOverrides,
 } from "@/modules/ace/protocols/p002-human-overrides";
-import { computePriorityValidationReadiness } from "@/modules/curadoria/priority-validation-readiness";
 
 function narrative(text: string, historia = true) {
   return createNarrative({
@@ -189,43 +188,5 @@ describe("P002 — Motor de Completude (regressão A–I)", () => {
       ],
     });
     expect(result.missingInformation).toHaveLength(0);
-  });
-});
-
-describe("Prioridade — prontidão e idempotência (regressão J)", () => {
-  const baseWeights = [
-    { criterion: "DISPONIBILIDADE" as const, weight: 50, evidence: "Precisa de agenda rápida.", targetValue: null },
-    { criterion: "CONTINUIDADE" as const, weight: 50, evidence: "Quer acompanhamento contínuo.", targetValue: null },
-  ];
-
-  it("J: bloqueia validação quando perfil já validado", () => {
-    const readiness = computePriorityValidationReadiness({
-      weights: baseWeights,
-      filterCriteria: [],
-      validated: true,
-    });
-    expect(readiness.status).toBe("validado");
-    expect(readiness.canValidate).toBe(false);
-  });
-
-  it("J: pronto para validar quando 100 pontos e evidências completas", () => {
-    const readiness = computePriorityValidationReadiness({
-      weights: baseWeights,
-      filterCriteria: [],
-      validated: false,
-    });
-    expect(readiness.status).toBe("pronto_para_validar");
-    expect(readiness.canValidate).toBe(true);
-    expect(readiness.blockers).toHaveLength(0);
-  });
-
-  it("bloqueia quando faltam pontos ou evidência", () => {
-    const readiness = computePriorityValidationReadiness({
-      weights: [{ criterion: "AREA_DE_ATUACAO", weight: 80, evidence: "ok", targetValue: null }],
-      filterCriteria: [],
-      validated: false,
-    });
-    expect(readiness.canValidate).toBe(false);
-    expect(readiness.blockers.length).toBeGreaterThan(0);
   });
 });

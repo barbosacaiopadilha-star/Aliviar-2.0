@@ -78,7 +78,8 @@ describe("a Curadoria é executável de ponta a ponta pela interface", () => {
     "startConsultationAction",
     "addMandatoryFilterAction",
     "addPreferenceAction",
-    "computeCompatibilityAction",
+    // M5 (ADR-042): `computeCompatibilityAction` saiu do fluxo — a leitura de
+    // compatibilidade vem do Motor, sem ato de "comparar com a rede".
     "saveSelectionAction",
     "saveReportAction",
     "emitReportAction",

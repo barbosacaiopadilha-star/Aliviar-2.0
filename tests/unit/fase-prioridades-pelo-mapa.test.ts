@@ -102,10 +102,17 @@ describe("priority_weights não recebe mais gravação", () => {
     );
   });
 
-  it("a leitura histórica foi preservada", () => {
-    // Os dados continuam; o que morreu foi a porta de entrada.
+  it("M5: a tabela e os dados permanecem; o código não a lê mais", () => {
+    // A M2 tirou a escrita, a M3 tirou o consumo pelo COS e a M5 tirou a
+    // última leitura, que já não tinha consumidor. Migrations intactas.
     const repo = readFileSync(join(process.cwd(), "src/modules/curadoria/repository.ts"), "utf8");
-    expect(repo).toContain('.from("priority_weights")');
+    expect(repo).not.toContain('.from("priority_weights")');
+
+    const migrations = readdirSync(join(process.cwd(), "supabase/migrations"))
+      .map((nome) => readFileSync(join(process.cwd(), "supabase/migrations", nome), "utf8"))
+      .join("\n");
+    expect(migrations).toContain("create table curadoria.priority_weights");
+    expect(migrations).not.toMatch(/drop table[\s\S]{0,40}priority_weights/i);
   });
 
   it("nenhuma sincronização entre os dois modelos foi criada", () => {

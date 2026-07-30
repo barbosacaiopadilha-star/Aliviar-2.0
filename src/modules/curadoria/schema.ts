@@ -82,10 +82,6 @@ export const saveAllWeightsInputSchema = z.object({
   ),
 });
 
-export const computeCompatibilityInputSchema = z.object({
-  priorityProfileId: z.string().uuid(),
-});
-
 export const saveSelectionInputSchema = z.object({
   priorityProfileId: z.string().uuid(),
   compositionRationale: z

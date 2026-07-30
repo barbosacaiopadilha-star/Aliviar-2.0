@@ -1,14 +1,12 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { CompatibilityRunner } from "@/components/curadoria/compatibility-runner";
 import { DevolutivaWorkspace } from "@/components/curadoria/devolutiva-workspace";
 import { ReportEditor } from "@/components/curadoria/report-editor";
 import { CuradoriaDecisionPanel } from "@/components/patient/curadoria-decision-panel";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
-const computeCompatibilityAction = vi.fn(async () => ({ success: true as const }));
 const saveReportAction = vi.fn(async () => ({ success: true as const }));
 const emitReportAction = vi.fn(async () => ({ success: true as const }));
 const deliverSelectionAction = vi.fn(async () => ({ success: true as const }));
@@ -16,7 +14,6 @@ const registerDevolutivaAction = vi.fn(async () => ({ success: true as const }))
 const registerDecisionAction = vi.fn(async () => ({ success: true as const }));
 
 vi.mock("@/modules/curadoria/actions", () => ({
-  computeCompatibilityAction: (...args: unknown[]) => computeCompatibilityAction(...(args as [])),
   saveReportAction: (...args: unknown[]) => saveReportAction(...(args as [])),
   emitReportAction: (...args: unknown[]) => emitReportAction(...(args as [])),
   deliverSelectionAction: (...args: unknown[]) => deliverSelectionAction(...(args as [])),
@@ -40,57 +37,6 @@ function opcao(nome: string, id: string) {
     curatorObservations: "",
   };
 }
-
-describe("comparar com a rede — o chamador que faltava", () => {
-  it("oferece a ação quando a comparação nunca rodou", () => {
-    render(
-      <CompatibilityRunner
-        priorityProfileId={PROFILE}
-        patientFirstName="Ana"
-        hasRun={false}
-        eligibleCount={0}
-      />,
-    );
-    expect(
-      screen.getByRole("button", { name: /Comparar com a rede aprovada/ }),
-    ).toBeInTheDocument();
-  });
-
-  it("nunca roda sozinha — a ação é do Curador", () => {
-    render(
-      <CompatibilityRunner
-        priorityProfileId={PROFILE}
-        patientFirstName="Ana"
-        hasRun={false}
-        eligibleCount={0}
-      />,
-    );
-    expect(computeCompatibilityAction).not.toHaveBeenCalled();
-  });
-
-  it("já tendo rodado, oferece recalcular sem ameaçar o que foi selecionado", () => {
-    render(
-      <CompatibilityRunner
-        priorityProfileId={PROFILE}
-        patientFirstName="Ana"
-        hasRun
-        eligibleCount={7}
-      />,
-    );
-    expect(screen.getByRole("button", { name: /Recalcular comparação/ })).toBeInTheDocument();
-    expect(screen.getByText(/a seleção que você já fez não é apagada/)).toBeInTheDocument();
-  });
-
-  it("não mostra score nem vocabulário de ranking", () => {
-    const { container } = render(
-      <CompatibilityRunner priorityProfileId={PROFILE} patientFirstName="Ana" hasRun eligibleCount={7} />,
-    );
-    const texto = (container.textContent ?? "").toLowerCase();
-    for (const proibido of ["score", "ranking", "melhor", "vencedor", "%"]) {
-      expect(texto).not.toContain(proibido);
-    }
-  });
-});
 
 describe("Relatório — escrever, emitir e entregar são atos distintos", () => {
   const base = {

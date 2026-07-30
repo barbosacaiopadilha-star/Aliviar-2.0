@@ -153,26 +153,18 @@ describe("Curadoria completa — sem SQL, sem script, sem intervenção técnica
     );
 
     // --------------------------------------------- 5 — Comparar e selecionar
-    const run = await curadoria.runCompatibility(cliente, priorityProfileId);
-    expect(run, "a comparação precisa produzir resultado").toBeTruthy();
-
     const elegiveis = await curadoria.getSelection(cliente, priorityProfileId);
     expect(elegiveis, "ainda não deve existir seleção antes de o Curador escolher").toBeNull();
 
-    // M3: o record do COS não carrega mais as análises legadas — a fixture lê
-    // a tabela histórica que o `runCompatibility` (legado preservado) gravou.
-    const { data: analysesRows } = await cliente
-      .from("compatibility_analyses")
-      .select("professional_profile_id")
-      .eq("priority_profile_id", priorityProfileId);
-    const analises = (analysesRows ?? []).map((row) => ({
-      professionalId: row.professional_profile_id as string,
-    }));
+    // M5: o motor legado não existe mais. Os candidatos vêm da Rede
+    // operacional — o mesmo universo que a Mesa apresenta ao Curador.
+    const rede = await curadoria.listApprovedProviders(cliente);
+    const analises = rede.map((provider) => ({ professionalId: provider.professionalProfileId }));
 
     if (analises.length < 3) {
       // A rede local pode não ter três elegíveis. O que importa provar aqui é
       // que o caminho existe — não fabricamos profissionais para o teste passar.
-      expect(run.analyses.length + run.excluded.length).toBeGreaterThanOrEqual(0);
+      expect(analises.length).toBeGreaterThanOrEqual(0);
       return;
     }
 

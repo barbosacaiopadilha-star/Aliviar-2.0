@@ -11,7 +11,6 @@ import * as reportRepository from "./report-repository";
 import {
   addMandatoryFilterInputSchema,
   addPreferenceInputSchema,
-  computeCompatibilityInputSchema,
   deliverSelectionInputSchema,
   emitReportInputSchema,
   generateAssistedDraftInputSchema,
@@ -212,27 +211,13 @@ export async function removeFilterAction(input: unknown): Promise<CuradoriaActio
 // Comparar
 // ---------------------------------------------------------------------------
 
-export async function computeCompatibilityAction(input: unknown): Promise<CuradoriaActionResult> {
-  try {
-    await requireCurator();
-  } catch {
-    return { success: false, error: "Não autorizado." };
-  }
-
-  const parsed = computeCompatibilityInputSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: "Dados inválidos." };
-
-  const supabase = await createServerSupabaseClient();
-
-  try {
-    await repository.runCompatibility(supabase, parsed.data.priorityProfileId);
-    const profile = await repository.getPriorityProfileById(supabase, parsed.data.priorityProfileId);
-    if (profile) revalidateCuradoria(profile.caseId);
-    return { success: true };
-  } catch (error) {
-    return fail(error, "Não foi possível calcular a compatibilidade.");
-  }
-}
+// A ACTION DE COMPARAR SAIU DAQUI — M5 (ADR-042).
+//
+// `computeCompatibilityAction` disparava `runCompatibility`: lia
+// `priority_weights`, calculava score e banda e gravava `compatibility_analyses`.
+// A M1 desligou seu único ponto de entrada (a etapa CAMINHOS passou a consumir
+// o Motor) e aqui a action e o executor saem do código. Os dados que eles
+// produziram continuam no banco, legíveis.
 
 // ---------------------------------------------------------------------------
 // Seleção e entrega — autoria sempre humana

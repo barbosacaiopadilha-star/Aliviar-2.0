@@ -150,18 +150,6 @@ export const PRIORITY_PROFILE_STATUS_LABELS: Record<PriorityProfileStatus, strin
   SUPERSEDED: "Substituído",
 };
 
-// Cada peso carrega obrigatoriamente sua Evidência de Curadoria — o momento
-// da Consulta Inicial que o originou. Peso sem evidência não existe.
-export type PriorityWeight = {
-  id: string;
-  priorityProfileId: string;
-  criterion: PriorityCriterion;
-  weight: number;
-  targetValue: string | null;
-  evidence: string;
-  createdAt: string;
-};
-
 export type PriorityProfile = {
   id: string;
   caseId: string;
@@ -176,53 +164,23 @@ export type PriorityProfile = {
 };
 
 export type PriorityProfileDetail = PriorityProfile & {
-  weights: PriorityWeight[];
   mandatoryFilters: PriorityFilter[];
   preferences: PriorityFilter[];
-  totalWeight: number;
 };
 
 // ---------------------------------------------------------------------------
-// Compatibilidade — dois níveis
+// A Rede operacional
 // ---------------------------------------------------------------------------
 
-// Nível externo. É o único que pode chegar ao paciente.
-export const COMPATIBILITY_BANDS = ["MUITO_ALTA", "ALTA", "BOA", "MODERADA"] as const;
-export type CompatibilityBand = (typeof COMPATIBILITY_BANDS)[number];
-
-export const COMPATIBILITY_BAND_LABELS: Record<CompatibilityBand, string> = {
-  MUITO_ALTA: "Compatibilidade muito alta",
-  ALTA: "Compatibilidade alta",
-  BOA: "Compatibilidade boa",
-  MODERADA: "Compatibilidade moderada",
-};
-
-export type CriterionResult = {
-  criterion: PriorityCriterion;
-  weight: number;
-  // Null = o cadastro do profissional não tem esse dado. Nunca 0 disfarçado
-  // de "ruim" — ausência de informação é ausência, não nota baixa.
-  alignment: number | null;
-  contribution: number;
-  explanation: string;
-};
-
-export type CompatibilityAnalysis = {
-  id: string;
-  caseId: string;
-  priorityProfileId: string;
-  professionalProfileId: string;
-  professionalName: string;
-  // Nível interno (0-100). Ferramenta do Curador — nunca chega ao paciente.
-  internalScore: number;
-  band: CompatibilityBand;
-  criteriaWithoutData: number;
-  criteria: CriterionResult[];
-  computedAt: string;
-};
-
-// Dado real do cadastro do profissional, sem nada inferido. Null em qualquer
-// campo significa "não registrado" e é tratado como lacuna explícita.
+/**
+ * Dado real do cadastro do profissional, sem nada inferido. Null em qualquer
+ * campo significa "não registrado" e é tratado como lacuna explícita.
+ *
+ * M5: preservado — não é peça do motor aposentado. É o retrato do cadastro que
+ * `listApprovedProviders` devolve, e a política da Rede (publicado, sem
+ * divergência crítica, sem demonstração) é regra vigente do Método,
+ * certificada em `politica-de-fontes.integration.test.ts`.
+ */
 export type ProviderSnapshot = {
   professionalProfileId: string;
   displayName: string;
@@ -239,6 +197,19 @@ export type ProviderSnapshot = {
 // Seleção e decisão
 // ---------------------------------------------------------------------------
 
+/**
+ * HISTÓRICO (M5, ADR-042) — a banda do motor aposentado.
+ *
+ * Não existe mais escala de compatibilidade no Método vigente: a leitura é a
+ * do Motor, em quatro resultados por subcritério (ADR-041). Este tipo sobrevive
+ * por um motivo só — `curated_selection_options.band` guarda o valor gravado
+ * por seleções anteriores à virada, e a hidratação precisa saber lê-lo.
+ *
+ * Único consumidor permitido: `hydrateSelection`, em `repository.ts`. Nenhum
+ * fluxo vigente grava, deriva ou exibe este valor.
+ */
+export type HistoricalCompatibilityBand = "MUITO_ALTA" | "ALTA" | "BOA" | "MODERADA";
+
 export const SELECTION_STATUSES = ["DRAFT", "DELIVERED"] as const;
 export type SelectionStatus = (typeof SELECTION_STATUSES)[number];
 
@@ -249,9 +220,9 @@ export type SelectionOption = {
   professionalName: string;
   // Ordem de apresentação, nunca colocação.
   position: number;
-  // Histórico (M2, ADR-042): seleções novas não gravam banda. `null` é o
+  // Histórico (M2/M5, ADR-042): seleções novas não gravam banda. `null` é o
   // normal daqui em diante; valor presente é registro do motor aposentado.
-  band: CompatibilityBand | null;
+  band: HistoricalCompatibilityBand | null;
   rationale: string;
   tradeOff: string | null;
 };

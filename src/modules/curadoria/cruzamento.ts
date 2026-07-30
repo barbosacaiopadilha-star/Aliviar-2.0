@@ -1,26 +1,22 @@
 /**
- * MOTOR DE CRUZAMENTO — dois cruzamentos independentes.
+ * VOCABULÁRIO DO CRUZAMENTO — critérios, escala de avaliação e gate de área.
  *
  * Implementa o Modelo da Curadoria v1.0 (docs/curadoria/MODELO_CURADORIA_V1.md,
- * §7). Alterações conceituais exigem ADR que referencie aquele documento.
+ * §3 a §7). Alterações conceituais exigem ADR que referencie aquele documento.
  *
- * Dois cruzamentos, cada um com orçamento próprio de 100 pontos:
+ * M5 (ADR-042): este módulo já foi o motor dos dois cruzamentos de 100 pontos.
+ * A ADR-042 substituiu essa representação pelo Mapa de Prioridades cruzado com
+ * o Mapa do Profissional (`motor-compatibilidade.ts`), e o cálculo antigo ficou
+ * sem chamador — foi removido aqui. Permanecem os conceitos que o Método
+ * vigente continua exercendo:
  *
- *   Necessidade técnica do caso × Perfil Técnico do Profissional
- *     → Avaliação Técnica (0–100)
+ *   - a compatibilidade de ÁREA, filtro eliminatório declarado pelo Curador;
+ *   - os SEIS CRITÉRIOS, hoje os grupos do catálogo canônico de subcritérios;
+ *   - a escala de AVALIAÇÃO em quatro estados, com informação insuficiente
+ *     como estado próprio — nunca como zero.
  *
- *   Perfil Assistencial do Profissional × Perfil de Prioridades do Paciente
- *     → Compatibilidade Assistencial (0–100)
- *
- * Os dois resultados permanecem SEPARADOS. Nunca existe um número de 200 —
- * somá-los faria técnica comprar deficiência assistencial, e vice-versa. Um
- * profissional impecável que ela não consegue acessar não é uma opção; um
- * profissional conveniente que não dá conta do caso, muito menos. As duas
- * perguntas são respondidas lado a lado, nunca uma pela outra.
- *
- * O que este módulo NÃO faz: escolher. Ele organiza, compara e explica. A
- * seleção dos três caminhos é do Curador (ADR-035), e o resultado nunca é
- * apresentado como ranking.
+ * O que este módulo NÃO faz: escolher, pontuar, somar ou ordenar. A seleção dos
+ * três caminhos é do Curador (ADR-035).
  */
 
 // ---------------------------------------------------------------------------
@@ -123,11 +119,14 @@ export function applyAreaGate(assessment: AreaAssessment): AreaGateOutcome {
 }
 
 // ---------------------------------------------------------------------------
-// Os dois blocos
+// Os seis critérios do Modelo v1.0
 // ---------------------------------------------------------------------------
-
-/** Cada cruzamento tem orçamento próprio de 100 pontos (Modelo v1.0 §4 e §6). */
-export const BLOCK_POINTS = 100;
+//
+// M5 (ADR-042): o orçamento de 100 pontos por bloco, o cálculo dos dois
+// cruzamentos 0–100 e a frase de cobertura saíram daqui — ficaram sem chamador
+// nas ondas M1 a M4. O que permanece é o vocabulário do Método: os seis
+// critérios (hoje grupos do catálogo de subcritérios), a escala de quatro
+// estados da avaliação e o gate de área.
 
 export const TECHNICAL_CRITERIA = ["FORMACAO", "EXPERIENCIA", "HISTORICO"] as const;
 export type TechnicalCriterion = (typeof TECHNICAL_CRITERIA)[number];
@@ -150,8 +149,7 @@ export const CRITERION_LABELS: Record<CruzamentoCriterion, string> = {
 };
 
 /**
- * A pergunta que o Curador responde ao distribuir os pontos (Modelo v1.0
- * §4 e §6, palavra por palavra).
+ * A pergunta de cada critério (Modelo v1.0 §4 e §6, palavra por palavra).
  *
  * As três primeiras são sobre o caso ("responde a este caso?"); as três
  * últimas, sobre a pessoa ("quanto pesa para ela?"). A diferença gramatical
@@ -182,62 +180,6 @@ export function isTechnicalCriterion(criterion: CruzamentoCriterion): criterion 
 }
 
 // ---------------------------------------------------------------------------
-// Distribuição de pontos
-// ---------------------------------------------------------------------------
-
-export type CriterionWeight = { criterion: CruzamentoCriterion; weight: number };
-
-export type BlockBalance = {
-  total: number;
-  remaining: number;
-  valid: boolean;
-  errors: string[];
-};
-
-/**
- * Cada cruzamento fecha em 100, separadamente. O saldo é devolvido para a
- * tela mostrar quanto falta — o Curador nunca deve somar de cabeça.
- */
-export function balanceOfBlock(
-  weights: CriterionWeight[],
-  block: "TECNICO" | "PRIORIDADES",
-): BlockBalance {
-  const universe: readonly CruzamentoCriterion[] = block === "TECNICO" ? TECHNICAL_CRITERIA : PATIENT_CRITERIA;
-  const errors: string[] = [];
-  const seen = new Set<CruzamentoCriterion>();
-  let total = 0;
-
-  for (const entry of weights) {
-    if (!universe.includes(entry.criterion)) {
-      errors.push(`"${CRITERION_LABELS[entry.criterion]}" não pertence a este bloco.`);
-      continue;
-    }
-    if (seen.has(entry.criterion)) {
-      errors.push(`"${CRITERION_LABELS[entry.criterion]}" aparece mais de uma vez.`);
-      continue;
-    }
-    if (!Number.isInteger(entry.weight) || entry.weight < 0 || entry.weight > BLOCK_POINTS) {
-      errors.push(`O peso de "${CRITERION_LABELS[entry.criterion]}" precisa ser um número inteiro entre 0 e ${BLOCK_POINTS}.`);
-      continue;
-    }
-    seen.add(entry.criterion);
-    total += entry.weight;
-  }
-
-  for (const criterion of universe) {
-    if (!seen.has(criterion)) {
-      errors.push(`Falta distribuir "${CRITERION_LABELS[criterion]}".`);
-    }
-  }
-
-  if (errors.length === 0 && total !== BLOCK_POINTS) {
-    errors.push(`Este bloco precisa somar exatamente ${BLOCK_POINTS} pontos — hoje soma ${total}.`);
-  }
-
-  return { total, remaining: BLOCK_POINTS - total, valid: errors.length === 0, errors };
-}
-
-// ---------------------------------------------------------------------------
 // Avaliação por critério — quatro estados, nunca dois
 // ---------------------------------------------------------------------------
 
@@ -257,163 +199,9 @@ export const ASSESSMENT_LABELS: Record<Assessment, string> = {
   INFORMACAO_INSUFICIENTE: "Informação insuficiente",
 };
 
-/**
- * Escala fechada e documentada. Três valores e um vazio — não uma régua
- * contínua que dá a impressão de precisão que ninguém tem.
- *
- * `INFORMACAO_INSUFICIENTE` devolve `null`, e null nunca vira zero: um
- * cadastro incompleto não é um profissional ruim. O peso desse critério sai
- * do cálculo inteiro e reaparece como cobertura, para o Curador ver sobre
- * quanto a análise foi realmente construída.
- */
-export function alignmentOf(assessment: Assessment): number | null {
-  switch (assessment) {
-    case "ATENDE_PLENAMENTE":
-      return 100;
-    case "ATENDE_PARCIALMENTE":
-      return 50;
-    case "NAO_ATENDE":
-      return 0;
-    case "INFORMACAO_INSUFICIENTE":
-      return null;
-  }
-}
-
 export type CriterionEvaluation = {
   criterion: CruzamentoCriterion;
   assessment: Assessment;
   /** O que sustenta esta avaliação. Sem isso, o Relatório não tem o que dizer. */
   evidence: string;
 };
-
-export type CriterionOutcome = {
-  criterion: CruzamentoCriterion;
-  weight: number;
-  assessment: Assessment;
-  alignment: number | null;
-  contribution: number;
-  evidence: string;
-};
-
-export type BlockOutcome = {
-  /** 0 a 100. Normalizado sobre o que pôde ser avaliado. */
-  score: number;
-  /** Dos 100 pontos deste cruzamento, quantos tinham dado para avaliar. */
-  coveredWeight: number;
-  criteriaWithoutData: number;
-  criteria: CriterionOutcome[];
-};
-
-function round2(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
-function evaluateBlock(weights: CriterionWeight[], evaluations: CriterionEvaluation[]): BlockOutcome {
-  const byCriterion = new Map(evaluations.map((entry) => [entry.criterion, entry]));
-  const criteria: CriterionOutcome[] = [];
-  let weightedSum = 0;
-  let coveredWeight = 0;
-  let criteriaWithoutData = 0;
-
-  for (const { criterion, weight } of weights) {
-    const evaluation = byCriterion.get(criterion);
-    const assessment: Assessment = evaluation?.assessment ?? "INFORMACAO_INSUFICIENTE";
-    const evidence =
-      evaluation?.evidence ??
-      `O cadastro deste profissional não traz o que é preciso para avaliar ${CRITERION_LABELS[criterion].toLowerCase()} — nada foi presumido.`;
-    const alignment = alignmentOf(assessment);
-
-    if (alignment === null) {
-      criteriaWithoutData += 1;
-      criteria.push({ criterion, weight, assessment, alignment: null, contribution: 0, evidence });
-      continue;
-    }
-
-    const contribution = round2((weight * alignment) / 100);
-    weightedSum += contribution;
-    coveredWeight += weight;
-    criteria.push({ criterion, weight, assessment, alignment, contribution, evidence });
-  }
-
-  // Normaliza sobre o coberto, não sobre os 100 cheios: quem tem cadastro
-  // incompleto não é punido com nota baixa, é sinalizado com cobertura baixa.
-  // Punir seria transformar ausência de informação em julgamento.
-  const score = coveredWeight === 0 ? 0 : round2((weightedSum / coveredWeight) * BLOCK_POINTS);
-
-  return { score, coveredWeight, criteriaWithoutData, criteria };
-}
-
-// ---------------------------------------------------------------------------
-// O cruzamento
-// ---------------------------------------------------------------------------
-
-export type CruzamentoInput = {
-  professionalProfileId: string;
-  technicalWeights: CriterionWeight[];
-  patientWeights: CriterionWeight[];
-  evaluations: CriterionEvaluation[];
-};
-
-export type CruzamentoResult = {
-  professionalProfileId: string;
-  /** Avaliação Técnica — 0 a 100, com cobertura própria. */
-  technical: BlockOutcome;
-  /** Compatibilidade Assistencial — 0 a 100, com cobertura própria. */
-  patient: BlockOutcome;
-  /** Uma frase por critério, para o Relatório nunca depender de um número. */
-  narrative: string[];
-};
-
-/**
- * Os dois resultados saem lado a lado e assim permanecem. Não existe campo
- * de total combinado, e não deve voltar a existir: somá-los criaria o número
- * de 200 que o Modelo v1.0 §7 proíbe — técnica comprando deficiência
- * assistencial, e vice-versa.
- */
-export function cruzar(input: CruzamentoInput): CruzamentoResult {
-  const technical = evaluateBlock(input.technicalWeights, input.evaluations);
-  const patient = evaluateBlock(input.patientWeights, input.evaluations);
-
-  return {
-    professionalProfileId: input.professionalProfileId,
-    technical,
-    patient,
-    narrative: buildNarrative(technical, patient),
-  };
-}
-
-/**
- * O resultado precisa se explicar sozinho. Um número sem frase é um veredito
- * sem argumento — e o Relatório exige argumento, não veredito.
- *
- * A ordem é por peso: o que a pessoa (ou o caso) considerou mais importante
- * aparece primeiro, porque é sobre isso que ela vai querer conversar.
- */
-function buildNarrative(technical: BlockOutcome, patient: BlockOutcome): string[] {
-  return [...technical.criteria, ...patient.criteria]
-    .filter((outcome) => outcome.weight > 0)
-    .sort((a, b) => b.weight - a.weight)
-    .map(
-      (outcome) =>
-        `${CRITERION_LABELS[outcome.criterion]} (${outcome.weight} pts): ${ASSESSMENT_LABELS[outcome.assessment]}. ${outcome.evidence}`,
-    );
-}
-
-/**
- * "Avaliação construída sobre 80 dos 100 pontos possíveis."
- *
- * Por cruzamento — cada um tem a própria cobertura, porque cada um tem o
- * próprio orçamento. Existe para ser lida em voz alta na Mesa: cobertura
- * baixa com avaliação alta não é excelência, é incerteza, e o Curador
- * precisa saber a diferença antes de escolher.
- */
-export function coverageSentence(block: BlockOutcome): string {
-  return `Avaliação construída sobre ${block.coveredWeight} dos ${BLOCK_POINTS} pontos possíveis.`;
-}
-
-// A função `organizeForCurator` deste módulo foi removida no alinhamento ao
-// Modelo v1.0: ela ordenava pelo total combinado, que deixou de existir.
-// Definir uma nova chave de ordenação de leitura (técnica? assistencial?) é
-// uma decisão de domínio que exige ADR — até lá, a comparação apresenta os
-// profissionais na ordem em que a Rede os devolve. O motor legado tem a sua
-// própria versão em method.ts, intocada.

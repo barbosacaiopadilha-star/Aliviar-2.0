@@ -140,16 +140,17 @@ describe("Connection canônica — sem final_curadoria_deliveries", () => {
     );
     await completarMapaDePrioridades(cliente, priorityProfileId);
     await curadoria.validatePriorityProfile(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
-    await curadoria.runCompatibility(cliente, priorityProfileId);
 
-    // M3: o record do COS não carrega mais as análises legadas — a fixture lê
-    // a tabela histórica diretamente, que é exatamente o cenário que ela monta.
-    const { data: analysesRows } = await cliente
-      .from("compatibility_analyses")
-      .select("professional_profile_id")
-      .eq("priority_profile_id", priorityProfileId);
-    const analyses = (analysesRows ?? []).map((row) => ({
-      professionalId: row.professional_profile_id as string,
+    // M5: o motor legado nao existe mais. Os tres da fixture vem da Rede
+    // publicada — o mesmo universo que a Mesa apresenta ao Curador.
+    const { data: redeRows } = await cliente
+      .from("professional_profiles")
+      .select("id")
+      .eq("status", "ativo")
+      .eq("is_demo", false)
+      .eq("publication_status", "publicado");
+    const analyses = (redeRows ?? []).map((row) => ({
+      professionalId: row.id as string,
     }));
     if (analyses.length < 3) return null;
 

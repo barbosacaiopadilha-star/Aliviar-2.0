@@ -171,18 +171,10 @@ describe("Superfícies ativas da Mesa e do paciente", () => {
     });
   }
 
-  /** Componentes órfãos preservados para a M5 — sem montagem em rota alguma. */
-  const ORFAOS_M5 = [
-    "mesa-comparison.tsx",
-    "mesa-doctor-card.tsx",
-    "compatibility-runner.tsx",
-    "mesa-workspace-legacy.tsx",
-  ];
-
+  // M5: a allowlist de órfãos deixou de existir — os arquivos que ela excluía
+  // foram removidos do repositório. A varredura cobre o conjunto ativo inteiro.
   it("nenhuma superfície ativa da Mesa apresenta pontos, banda, score ou orçamento", () => {
-    const arquivos = fontes("src/components/curadoria").filter(
-      (arquivo) => !ORFAOS_M5.some((orfao) => arquivo.endsWith(orfao)),
-    );
+    const arquivos = fontes("src/components/curadoria");
 
     expect(arquivos.length).toBeGreaterThan(10);
 

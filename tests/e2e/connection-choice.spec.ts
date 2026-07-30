@@ -234,20 +234,21 @@ async function seedDeliveredCase(): Promise<DeliveredFixture> {
     "Ela quer alguém que acompanhe do começo ao fim.",
   );
   await curadoria.validatePriorityProfile(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
-  await curadoria.runCompatibility(cliente, priorityProfileId);
 
   // Quem são os três é decidido pela comparação sobre a rede real — a fixture
   // NÃO assume que os semeados serão os escolhidos. Os nomes exibidos na tela
   // vêm daqui, do que foi de fato entregue.
   // M3: o record do COS não carrega mais as análises legadas — a fixture lê a
   // tabela histórica diretamente, que é exatamente o cenário que ela monta.
-  const { data: analysesRows } = await cliente
-    .from("compatibility_analyses")
-    .select("professional_profile_id")
-    .eq("priority_profile_id", priorityProfileId);
-  const tres = (analysesRows ?? [])
+  const { data: redeRows } = await cliente
+      .from("professional_profiles")
+      .select("id")
+      .eq("status", "ativo")
+      .eq("is_demo", false)
+      .eq("publication_status", "publicado");
+  const tres = (redeRows ?? [])
     .slice(0, 3)
-    .map((row) => ({ professionalId: row.professional_profile_id as string }));
+    .map((row) => ({ professionalId: row.id as string }));
   if (tres.length < 3) {
     throw new Error("Fixture E2E: a rede local não tem três profissionais elegíveis.");
   }

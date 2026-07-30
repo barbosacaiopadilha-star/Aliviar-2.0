@@ -115,13 +115,14 @@ describe("O vocabulário do orçamento saiu do código operacional", () => {
     }
   });
 
+  // M5: `mesa-doctor-card.tsx` e `mesa-comparison.tsx` saíram do repositório —
+  // eram os últimos exibidores de banda e da "conta" de pesos.
   it("nenhuma superfície da Mesa fala em 100 pontos", () => {
     for (const relativo of [
       "src/modules/curadoria/mesa-cruzamento.ts",
       "src/modules/curadoria/mesa-cruzamento-view.ts",
       "src/components/curadoria/mesa/comparacao-premium.tsx",
-      "src/components/curadoria/mesa-doctor-card.tsx",
-      "src/components/curadoria/mesa-comparison.tsx",
+      "src/components/curadoria/mesa-workspace.tsx",
       "src/modules/curadoria/cos/conduction.ts",
     ]) {
       expect(ler(relativo), relativo).not.toMatch(/100 pontos|de 100\b/);
@@ -131,8 +132,8 @@ describe("O vocabulário do orçamento saiu do código operacional", () => {
   it("nenhuma superfície da Mesa exibe score ou nota", () => {
     for (const relativo of [
       "src/components/curadoria/mesa/comparacao-premium.tsx",
-      "src/components/curadoria/mesa-doctor-card.tsx",
-      "src/components/curadoria/mesa-comparison.tsx",
+      "src/components/curadoria/mesa-workspace.tsx",
+      "src/components/curadoria/cruzamento-mesa.tsx",
     ]) {
       expect(ler(relativo), relativo).not.toContain("internalScore");
     }
@@ -189,8 +190,11 @@ describe("Dados históricos e migrations preservados", () => {
     }
   });
 
-  it("a leitura histórica de priority_weights permanece possível", () => {
-    const repo = ler("src/modules/curadoria/repository.ts");
-    expect(repo).toContain('.from("priority_weights")');
+  it("M5: a tabela permanece, e nenhum código a lê — nem para histórico", () => {
+    // Os dados continuam no banco e as migrations não foram tocadas; o que
+    // deixou de existir é qualquer caminho de código até eles.
+    for (const { arquivo, texto } of CODIGO) {
+      expect(texto.includes('from("priority_weights")'), arquivo).toBe(false);
+    }
   });
 });

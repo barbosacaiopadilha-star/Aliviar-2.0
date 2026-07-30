@@ -10,7 +10,7 @@
  * atributo já definido na Ontologia.
  */
 
-import type { CompatibilityBand, CuradoriaStep, PriorityCriterion } from "../types";
+import type { CuradoriaStep } from "../types";
 
 // ---------------------------------------------------------------------------
 // As nove fases operacionais
@@ -111,29 +111,9 @@ export type ValidacaoRecord = {
   correctionsMade: string[];
 };
 
-/**
- * HISTÓRICO (M3, ADR-042) — o formato do motor aposentado.
- *
- * NÃO participa mais do `CuradoriaRecord` nem chega a `conduct()`. Únicos
- * consumidores permitidos: os componentes órfãos preservados para a Onda 5
- * (`mesa-doctor-card.tsx`, `mesa-comparison.tsx`) e leituras históricas.
- */
-export type AnaliseRecord = {
-  professionalId: string;
-  professionalName: string;
-  internalScore: number;
-  band: CompatibilityBand;
-  coveredWeight: number;
-  criteria: {
-    criterion: PriorityCriterion;
-    weight: number;
-    alignment: number | null;
-    contribution: number;
-    explanation: string;
-  }[];
-  /** Observação livre do Curador sobre este profissional neste caso. */
-  curatorNote: string | null;
-};
+// M5 (ADR-042): `AnaliseRecord` — o formato do motor aposentado, com score,
+// banda, cobertura e contribuição por peso — foi removido junto com seus dois
+// últimos consumidores (`mesa-doctor-card.tsx` e `mesa-comparison.tsx`).
 
 /** A elegibilidade vigente — os mesmos números do cabeçalho da Mesa. */
 export type ElegibilidadeRecord = {

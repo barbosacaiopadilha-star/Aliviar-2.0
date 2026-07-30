@@ -19,13 +19,7 @@ import { getOrCreateActiveStory, submitStory } from "@/modules/story/repository"
 import { applyAreaGateForCase, declareAreaCompatibility } from "@/modules/curadoria/area-repository";
 import * as curadoria from "@/modules/curadoria/repository";
 import * as reports from "@/modules/curadoria/report-repository";
-import {
-  balanceOfBlock,
-  coverageSentence,
-  cruzar,
-  type CriterionEvaluation,
-  type CriterionWeight,
-} from "@/modules/curadoria/cruzamento";
+import type { CriterionEvaluation } from "@/modules/curadoria/cruzamento";
 import { assessSource } from "@/modules/curadoria/fontes";
 
 import { createCuradoriaClient } from "./curadoria-client";
@@ -49,17 +43,6 @@ function loadTestAccounts(): TestAccount[] {
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 
-// Os pesos do Case sintético — dois cruzamentos de 100, como o Modelo v1.0 exige.
-const TECNICO: CriterionWeight[] = [
-  { criterion: "FORMACAO", weight: 30 },
-  { criterion: "EXPERIENCIA", weight: 50 },
-  { criterion: "HISTORICO", weight: 20 },
-];
-const PRIORIDADES: CriterionWeight[] = [
-  { criterion: "ACESSO", weight: 30 },
-  { criterion: "CONTINUIDADE_DO_CUIDADO", weight: 50 },
-  { criterion: "MODELO_DE_ATENDIMENTO", weight: 20 },
-];
 
 /** As avaliações que o Curador declara para cada fixture. */
 const AVALIACOES: Record<string, CriterionEvaluation[]> = {
@@ -315,19 +298,6 @@ describe("Certificação do ciclo da Curadoria — fixtures isoladas (Supabase l
     });
   });
 
-  // ----------------------------------------------------------------- pesos
-
-  describe("pesos do Case", () => {
-    it("cada cruzamento fecha em 100, separadamente — nenhuma soma cruzada existe", () => {
-      const tecnico = balanceOfBlock(TECNICO, "TECNICO");
-      const pessoal = balanceOfBlock(PRIORIDADES, "PRIORIDADES");
-
-      expect(tecnico.valid).toBe(true);
-      expect(pessoal.valid).toBe(true);
-      expect(tecnico.total).toBe(100);
-      expect(pessoal.total).toBe(100);
-    });
-  });
 
   // ------------------------------------------------------ declaração de área
 
@@ -393,73 +363,6 @@ describe("Certificação do ciclo da Curadoria — fixtures isoladas (Supabase l
     });
   });
 
-  // -------------------------------------------------------------- cruzamento
-
-  describe("cruzamento", () => {
-    function cruzarFixture(key: string) {
-      return cruzar({
-        professionalProfileId: professionalIds[key]!,
-        technicalWeights: TECNICO,
-        patientWeights: PRIORIDADES,
-        evaluations: AVALIACOES[key]!,
-      });
-    }
-
-    it("os três produzem resultados diferentes e compreensíveis, em dois eixos separados", () => {
-      const a = cruzarFixture("fixture-a");
-      const b = cruzarFixture("fixture-b");
-      const c = cruzarFixture("fixture-c");
-
-      // Cada fixture responde diferente em pelo menos um dos dois cruzamentos.
-      expect(a.technical.score).not.toBe(c.technical.score);
-      expect(a.patient.score).not.toBe(b.patient.score);
-      for (const r of [a, b, c]) {
-        expect(r.narrative).toHaveLength(6);
-        expect(r.technical.score).toBeGreaterThan(0);
-        expect(r.technical.score).toBeLessThanOrEqual(100);
-        expect(r.patient.score).toBeLessThanOrEqual(100);
-        // O número de 200 não existe (Modelo v1.0 §7).
-        expect(r).not.toHaveProperty("total");
-      }
-    });
-
-    it("a Fixture B tem cobertura assistencial abaixo de 100 sem receber zero no critério ausente", () => {
-      const b = cruzarFixture("fixture-b");
-
-      // Modelo de Atendimento vale 20 e não pôde ser avaliado: a cobertura do
-      // cruzamento ASSISTENCIAL cai; a técnica não é afetada.
-      expect(b.patient.coveredWeight).toBe(80);
-      expect(b.technical.coveredWeight).toBe(100);
-      expect(coverageSentence(b.patient)).toBe("Avaliação construída sobre 80 dos 100 pontos possíveis.");
-      expect(b.patient.criteriaWithoutData).toBe(1);
-
-      const criterio = b.patient.criteria.find((c) => c.criterion === "MODELO_DE_ATENDIMENTO")!;
-      expect(criterio.alignment).toBeNull();
-      expect(criterio.contribution).toBe(0);
-
-      // E o que importa: o cruzamento não foi punido. B pontua sobre os 80
-      // pontos que puderam ser olhados, não sobre os 100.
-      expect(b.patient.score).toBeGreaterThan(0);
-    });
-
-    it("os outros dois têm cobertura total nos dois cruzamentos", () => {
-      for (const key of ["fixture-a", "fixture-c"]) {
-        const r = cruzarFixture(key);
-        expect(r.technical.coveredWeight).toBe(100);
-        expect(r.patient.coveredWeight).toBe(100);
-      }
-    });
-
-    it("os resultados se apresentam sem eleger ninguém", () => {
-      const resultados = [cruzarFixture("fixture-a"), cruzarFixture("fixture-b"), cruzarFixture("fixture-c")];
-
-      expect(resultados).toHaveLength(3);
-      const texto = JSON.stringify(resultados).toLowerCase();
-      for (const proibido of ["melhor", "vencedor", "primeiro colocado", "recomendado", "ranking"]) {
-        expect(texto, `vocabulário de pódio: ${proibido}`).not.toContain(proibido);
-      }
-    });
-  });
 
   // ---------------------------------------------------------------- seleção
 

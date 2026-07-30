@@ -79,7 +79,9 @@ describe("Repositório da seleção", () => {
   });
 
   it("a hidratação lê a banda como histórico opcional — ausência é null, nunca 'MODERADA' inventada", () => {
-    expect(repo).toContain("(option.band as CompatibilityBand | null) ?? null");
+    // M5: o tipo passou a se chamar `HistoricalCompatibilityBand`, e a
+    // hidratação da seleção é seu único consumidor autorizado.
+    expect(repo).toContain("(option.band as HistoricalCompatibilityBand | null) ?? null");
     expect(repo).not.toMatch(/option\.band[^\n]*\?\?\s*"MODERADA"/);
   });
 });

@@ -2,16 +2,11 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { computeCompatibility, organizeForCurator, passesMandatoryFilters, type WeightInput } from "./method";
 import type {
-  CompatibilityAnalysis,
-  CompatibilityBand,
-  CriterionResult,
   CuratedSelection,
   DecisionOutcome,
-  MandatoryFilterKind,
+  HistoricalCompatibilityBand,
   PatientDecision,
-  PriorityCriterion,
   PriorityFilter,
   PriorityProfileDetail,
   PriorityProfileStatus,
@@ -74,13 +69,16 @@ export async function getPriorityProfileById(
   return hydrateProfile(supabase, data as ProfileRow);
 }
 
+/**
+ * M5 (ADR-042): a leitura de `priority_weights` saiu daqui.
+ *
+ * Ela existia para alimentar `runCompatibility` e a prontidão de validação —
+ * ambos removidos nesta onda. Sem consumidor, uma leitura "histórica" seria só
+ * uma porta aberta para o modelo aposentado voltar. A tabela e os dados
+ * permanecem intactos no banco; o que deixou de existir é o caminho de código.
+ */
 async function hydrateProfile(supabase: SupabaseClient, row: ProfileRow): Promise<PriorityProfileDetail> {
-  const [{ data: weightRows }, { data: filterRows }, curatorName] = await Promise.all([
-    supabase
-      .from("priority_weights")
-      .select("id, priority_profile_id, criterion, weight, target_value, evidence, created_at")
-      .eq("priority_profile_id", row.id)
-      .order("weight", { ascending: false }),
+  const [{ data: filterRows }, curatorName] = await Promise.all([
     supabase
       .from("priority_profile_filters")
       .select("id, priority_profile_id, nature, kind, value, note, created_at")
@@ -88,16 +86,6 @@ async function hydrateProfile(supabase: SupabaseClient, row: ProfileRow): Promis
       .order("created_at", { ascending: true }),
     displayName(supabase, row.curator_id),
   ]);
-
-  const weights = (weightRows ?? []).map((weight) => ({
-    id: weight.id as string,
-    priorityProfileId: weight.priority_profile_id as string,
-    criterion: weight.criterion as PriorityCriterion,
-    weight: weight.weight as number,
-    targetValue: (weight.target_value as string | null) ?? null,
-    evidence: weight.evidence as string,
-    createdAt: weight.created_at as string,
-  }));
 
   const filters: PriorityFilter[] = (filterRows ?? []).map((filter) => ({
     id: filter.id as string,
@@ -120,10 +108,8 @@ async function hydrateProfile(supabase: SupabaseClient, row: ProfileRow): Promis
     validationNote: row.validation_note,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    weights,
     mandatoryFilters: filters.filter((filter) => filter.nature === "FILTRO_OBRIGATORIO"),
     preferences: filters.filter((filter) => filter.nature === "PREFERENCIA"),
-    totalWeight: weights.reduce((sum, weight) => sum + weight.weight, 0),
   };
 }
 
@@ -198,8 +184,9 @@ export async function validatePriorityProfile(
   if (error) throw new Error(error.message);
 }
 
+
 // ---------------------------------------------------------------------------
-// Comparar — a base já aprovada da Aliviar, nunca uma busca externa
+// A Rede operacional — a base já aprovada da Aliviar, nunca uma busca externa
 // ---------------------------------------------------------------------------
 
 /**
@@ -219,6 +206,13 @@ export async function validatePriorityProfile(
  * E um emparelhamento: Case real vê só profissional real; Case de certificação
  * vê só fixture. Nas duas direções, porque a regra num sentido só deixaria
  * aberta exatamente a porta perigosa — um perfil sintético num Case real.
+ *
+ * M5 (ADR-042): preservada. Não é peça do motor aposentado — é a política da
+ * Rede, regra vigente do Método, certificada por
+ * `politica-de-fontes.integration.test.ts`. Seu único chamador de produção era
+ * `runCompatibility`; hoje ela existe como definição executável dessa política.
+ * A Mesa monta a própria consulta de Rede e NÃO aplica a exclusão por
+ * divergência crítica — lacuna herdada, registrada para decisão futura.
  */
 export async function listApprovedProviders(
   supabase: SupabaseClient,
@@ -243,6 +237,7 @@ export async function listApprovedProviders(
     .eq("severity", "critica");
 
   const bloqueados = new Set((divergentes ?? []).map((row) => row.professional_profile_id as string));
+
   const rows = (data ?? []).filter((row) => !bloqueados.has(row.id as string));
   const ids = rows.map((row) => row.id as string);
 
@@ -271,173 +266,6 @@ export async function listApprovedProviders(
     crmUf: (row.crm_uf as string | null) ?? null,
     competencyDomains: domainsByProvider.get(row.id as string) ?? [],
   }));
-}
-
-export type ExcludedProvider = { professionalProfileId: string; displayName: string; failures: string[] };
-
-export type CompatibilityRun = {
-  analyses: CompatibilityAnalysis[];
-  excluded: ExcludedProvider[];
-};
-
-// Aplica o Perfil validado a toda a base aprovada, persiste as análises e
-// devolve tudo organizado para leitura do Curador. Nunca corta em três.
-export async function runCompatibility(
-  supabase: SupabaseClient,
-  priorityProfileId: string,
-): Promise<CompatibilityRun> {
-  const profile = await getPriorityProfileById(supabase, priorityProfileId);
-  if (!profile) throw new Error("Perfil de Prioridades não encontrado.");
-  if (profile.status !== "VALIDATED") {
-    throw new Error("A comparação só acontece depois que o paciente valida o Perfil de Prioridades.");
-  }
-
-  // O Case decide qual Rede é a dele. Nada aqui escolhe: o emparelhamento é
-  // lido do próprio Case.
-  const { data: caso } = await supabase
-    .from("cases")
-    .select("is_certification")
-    .eq("id", profile.caseId)
-    .maybeSingle();
-
-  const providers = await listApprovedProviders(supabase, {
-    certification: caso?.is_certification === true,
-  });
-
-  const mandatory = profile.mandatoryFilters.map((filter) => ({
-    kind: filter.kind as MandatoryFilterKind,
-    value: filter.value,
-  }));
-
-  const weights: WeightInput[] = profile.weights.map((weight) => ({
-    criterion: weight.criterion,
-    weight: weight.weight,
-    targetValue: weight.targetValue,
-    evidence: weight.evidence,
-  }));
-
-  const excluded: ExcludedProvider[] = [];
-  const eligible: { provider: ProviderSnapshot; result: ReturnType<typeof computeCompatibility> }[] = [];
-
-  for (const provider of providers) {
-    const outcome = passesMandatoryFilters(provider, mandatory);
-    if (!outcome.passes) {
-      excluded.push({
-        professionalProfileId: provider.professionalProfileId,
-        displayName: provider.displayName,
-        failures: outcome.failures,
-      });
-      continue;
-    }
-    eligible.push({ provider, result: computeCompatibility(weights, provider) });
-  }
-
-  // Recalcular substitui a análise anterior — o Perfil é imutável depois de
-  // validado, então a análise sempre reflete o mesmo Perfil.
-  await supabase.from("compatibility_analyses").delete().eq("priority_profile_id", priorityProfileId);
-
-  const analyses: CompatibilityAnalysis[] = [];
-
-  for (const { provider, result } of eligible) {
-    const { data, error } = await supabase
-      .from("compatibility_analyses")
-      .insert({
-        case_id: profile.caseId,
-        priority_profile_id: priorityProfileId,
-        professional_profile_id: provider.professionalProfileId,
-        internal_score: result.internalScore,
-        band: result.band,
-        criteria_without_data: result.criteriaWithoutData,
-      })
-      .select("id, computed_at")
-      .single();
-
-    if (error || !data) throw new Error("Não foi possível registrar a análise de compatibilidade.");
-
-    const analysisId = data.id as string;
-
-    await supabase.from("compatibility_criterion_results").insert(
-      result.criteria.map((entry) => ({
-        compatibility_analysis_id: analysisId,
-        criterion: entry.criterion,
-        weight: entry.weight,
-        alignment: entry.alignment,
-        contribution: entry.contribution,
-        explanation: entry.explanation,
-      })),
-    );
-
-    analyses.push({
-      id: analysisId,
-      caseId: profile.caseId,
-      priorityProfileId,
-      professionalProfileId: provider.professionalProfileId,
-      professionalName: provider.displayName,
-      internalScore: result.internalScore,
-      band: result.band,
-      criteriaWithoutData: result.criteriaWithoutData,
-      criteria: result.criteria,
-      computedAt: data.computed_at as string,
-    });
-  }
-
-  return { analyses: organizeForCurator(analyses), excluded };
-}
-
-export async function listCompatibilityAnalyses(
-  supabase: SupabaseClient,
-  priorityProfileId: string,
-): Promise<CompatibilityAnalysis[]> {
-  const { data, error } = await supabase
-    .from("compatibility_analyses")
-    .select(
-      "id, case_id, priority_profile_id, professional_profile_id, internal_score, band, criteria_without_data, computed_at",
-    )
-    .eq("priority_profile_id", priorityProfileId);
-
-  if (error || !data || data.length === 0) return [];
-
-  const analysisIds = data.map((row) => row.id as string);
-  const providerIds = data.map((row) => row.professional_profile_id as string);
-
-  const [{ data: criteriaRows }, { data: providerRows }] = await Promise.all([
-    supabase
-      .from("compatibility_criterion_results")
-      .select("compatibility_analysis_id, criterion, weight, alignment, contribution, explanation")
-      .in("compatibility_analysis_id", analysisIds),
-    supabase.from("professional_profiles").select("id, display_name").in("id", providerIds),
-  ]);
-
-  const namesById = new Map((providerRows ?? []).map((row) => [row.id as string, row.display_name as string]));
-  const criteriaByAnalysis = new Map<string, CriterionResult[]>();
-
-  for (const row of criteriaRows ?? []) {
-    const key = row.compatibility_analysis_id as string;
-    const list = criteriaByAnalysis.get(key) ?? [];
-    list.push({
-      criterion: row.criterion as PriorityCriterion,
-      weight: row.weight as number,
-      alignment: (row.alignment as number | null) ?? null,
-      contribution: Number(row.contribution),
-      explanation: row.explanation as string,
-    });
-    criteriaByAnalysis.set(key, list);
-  }
-
-  const analyses: CompatibilityAnalysis[] = data.map((row) => ({
-    id: row.id as string,
-    caseId: row.case_id as string,
-    priorityProfileId: row.priority_profile_id as string,
-    professionalProfileId: row.professional_profile_id as string,
-    professionalName: namesById.get(row.professional_profile_id as string) ?? "Sem nome",
-    internalScore: Number(row.internal_score),
-    band: row.band as CompatibilityBand,
-    criteriaWithoutData: row.criteria_without_data as number,
-    criteria: (criteriaByAnalysis.get(row.id as string) ?? []).sort((a, b) => b.weight - a.weight),
-    computedAt: row.computed_at as string,
-  }));
-
-  return organizeForCurator(analyses);
 }
 
 // ---------------------------------------------------------------------------
@@ -617,7 +445,8 @@ async function hydrateSelection(supabase: SupabaseClient, row: unknown): Promise
     position: option.position as number,
     // Leitura histórica: seleções antigas carregam a banda gravada à época;
     // seleções novas vêm sem ela — e ausência é ausência, nunca "MODERADA".
-    band: (option.band as CompatibilityBand | null) ?? null,
+    // Este é o ÚNICO consumidor autorizado de `HistoricalCompatibilityBand`.
+    band: (option.band as HistoricalCompatibilityBand | null) ?? null,
     rationale: option.rationale as string,
     tradeOff: (option.trade_off as string | null) ?? null,
   }));
