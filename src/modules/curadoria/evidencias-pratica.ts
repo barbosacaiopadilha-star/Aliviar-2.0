@@ -506,6 +506,85 @@ export function evidenceReviewIsDue(
 }
 
 // ---------------------------------------------------------------------------
+// Validade — derivada da política do conceito, nunca gravada como verdade
+// ---------------------------------------------------------------------------
+
+export const EVIDENCE_VALIDITIES = [
+  "VALIDO",
+  "PROXIMO_DO_VENCIMENTO",
+  "VENCIDO",
+  "SEM_DATA",
+] as const;
+export type EvidenceValidity = (typeof EVIDENCE_VALIDITIES)[number];
+
+export const EVIDENCE_VALIDITY_LABELS: Record<EvidenceValidity, string> = {
+  VALIDO: "Verificação dentro da validade",
+  PROXIMO_DO_VENCIMENTO: "Verificação próxima do vencimento",
+  VENCIDO: "Verificação vencida",
+  SEM_DATA: "Sem data suficiente para avaliar",
+};
+
+/**
+ * Classifica a validade da VERIFICAÇÃO — não do fato. Evidência não
+ * verificada não tem validade a vencer: fica `SEM_DATA`, que é a verdade.
+ * "Próximo do vencimento" = últimos 20% da janela do conceito. Tudo derivado;
+ * nada disso é gravado (Etapa 8 — vencido calculável não vira coluna).
+ */
+export function classifyEvidenceValidity(
+  subcriterionCode: string,
+  status: string,
+  verifiedAtIso: string | null,
+  nowIso: string,
+): EvidenceValidity {
+  const conceito = PRACTICE_CONCEPTS_BY_CODE.get(subcriterionCode);
+  if (!conceito || status !== "verificado" || !verifiedAtIso) return "SEM_DATA";
+
+  const verificada = new Date(verifiedAtIso).getTime();
+  const vencimento = new Date(verifiedAtIso);
+  vencimento.setMonth(vencimento.getMonth() + conceito.reviewAfterMonths);
+
+  const agora = new Date(nowIso).getTime();
+  if (agora >= vencimento.getTime()) return "VENCIDO";
+
+  const janela = vencimento.getTime() - verificada;
+  return agora >= verificada + janela * 0.8 ? "PROXIMO_DO_VENCIMENTO" : "VALIDO";
+}
+
+/**
+ * A frase OPERACIONAL — descreve o estado da informação, jamais a qualidade
+ * do profissional (Etapa 11). Determinística, uma por estado, e a de
+ * "vencida" só existe porque a validade derivada o disse.
+ */
+export function operationalPhrase(evidence: {
+  subcriterionCode: string;
+  status: string;
+  verifiedAt: string | null;
+}, nowIso: string): string {
+  if (evidence.status === "divergente") {
+    return "A informação declarada diverge da fonte consultada. A análise permanece pendente.";
+  }
+  if (evidence.status === "desatualizado") {
+    return "Esta informação foi marcada como desatualizada pela operação e aguarda atualização.";
+  }
+  if (evidence.status === "nao_localizado") {
+    return "A informação não foi localizada na fonte consultada.";
+  }
+  if (evidence.status === "verificado") {
+    const validade = classifyEvidenceValidity(
+      evidence.subcriterionCode,
+      evidence.status,
+      evidence.verifiedAt,
+      nowIso,
+    );
+    if (validade === "VENCIDO") {
+      return "A última verificação desta informação está vencida e precisa ser atualizada.";
+    }
+    return `Informação verificada em ${evidence.verifiedAt!.slice(0, 10)}, com base em fonte registrada pela operação.`;
+  }
+  return "Informação declarada pelo profissional, ainda não verificada pela operação.";
+}
+
+// ---------------------------------------------------------------------------
 // Verbalização — repetir o que foi selecionado, nada além
 // ---------------------------------------------------------------------------
 
