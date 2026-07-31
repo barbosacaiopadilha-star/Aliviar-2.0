@@ -16,6 +16,11 @@ import {
   crossPriorityAndProfessional,
   type CompatibilityReading,
 } from "./motor-compatibilidade";
+import {
+  loadCurrentPracticeEvidence,
+  summarizePracticeEvidence,
+  type PracticeEvidenceSummary,
+} from "./evidencias-pratica-repository";
 import { isProfileAcknowledged } from "./reconhecimento-do-perfil";
 import { listCriticalDivergenceBlocklist } from "./rede-policy";
 import type { PriorityProfileStatus } from "./types";
@@ -135,6 +140,13 @@ export type MesaCruzamentoView = {
   comparison: ComparisonColumn[];
   /** Critérios ainda sem declaração, por profissional elegível. */
   awaitingDeclaration: Record<string, CruzamentoCriterion[]>;
+  /**
+   * Resumo da Base de Evidências de Prática por profissional da Rede —
+   * contagens de estado (verificado, declarado, divergente, desatualizado,
+   * revisão pendente), nunca juízo. É por aqui que o Curador enxerga o que
+   * está vencido ou divergente antes de concluir qualquer coisa.
+   */
+  evidencias: Record<string, PracticeEvidenceSummary>;
 };
 
 const ALL_CRITERIA: readonly CruzamentoCriterion[] = [...TECHNICAL_CRITERIA, ...PATIENT_CRITERIA];
@@ -320,6 +332,21 @@ export async function loadMesaCruzamento(
 
   const comparison = eligibleIds.length > 0 ? buildComparison(eligibleIds, readings, catalogo) : [];
 
+  // A Base de Evidências acompanha a Rede inteira — não só os elegíveis:
+  // evidência vencida ou divergente interessa ao Curador antes mesmo da
+  // declaração de área. Resumo por contagem; conclusão nenhuma.
+  const evidencePorProfissional = await loadCurrentPracticeEvidence(
+    supabase,
+    professionals.map((p) => p.professionalProfileId),
+  );
+  const agora = new Date().toISOString();
+  const evidencias = Object.fromEntries(
+    professionals.map((p) => [
+      p.professionalProfileId,
+      summarizePracticeEvidence(evidencePorProfissional.get(p.professionalProfileId) ?? [], agora),
+    ]),
+  );
+
   return {
     caseId,
     isCertification,
@@ -332,5 +359,6 @@ export async function loadMesaCruzamento(
     nextStep: nextStepSentence(counts, mapaCompleto, profileAcknowledged),
     comparison,
     awaitingDeclaration,
+    evidencias,
   };
 }
