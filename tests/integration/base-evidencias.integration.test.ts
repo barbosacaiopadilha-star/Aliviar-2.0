@@ -123,6 +123,7 @@ describe("Base de Evidências de Prática (Supabase local)", () => {
       verifiedBy: admin.userId,
       verificationSource: "Confirmação por telefone com a secretaria",
       verificationTier: "INSTITUCIONAL",
+      expectedVersion: 1,
     });
 
     expect(verificada.version).toBe(2);
@@ -225,7 +226,7 @@ describe("Base de Evidências de Prática (Supabase local)", () => {
   });
 
   it("divergência vai para a tabela de sempre, e o estado corrente vira divergente", async () => {
-    await registerEvidenceDivergence(admin.client, {
+    await registerEvidenceDivergence(admin.client, admin.client, {
       professionalProfileId: alvo,
       subcriterionCode: "CONTINUIDADE_CANAIS",
       declaredVersion: "Mensagem com a equipe e telefone comercial",

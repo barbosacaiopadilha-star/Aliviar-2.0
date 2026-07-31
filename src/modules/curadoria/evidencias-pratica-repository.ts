@@ -142,6 +142,12 @@ export async function verifyPracticeEvidence(
     verificationSource: string;
     /** Nível da fonte CONSULTADA na verificação — precisa sustentar o conceito. */
     verificationTier: SourceTier;
+    /**
+     * A versão que o verificador tinha diante dos olhos. Se o conteúdo mudou
+     * no meio do caminho, a verificação é recusada: verifica-se uma versão
+     * específica, nunca o conceito em abstrato (Etapa 5).
+     */
+    expectedVersion: number;
     verifiedAt?: string;
   },
 ): Promise<PracticeEvidenceRecord> {
@@ -152,6 +158,11 @@ export async function verifyPracticeEvidence(
   if (!row) {
     throw new Error(
       `Não há evidência de ${params.subcriterionCode} para verificar — verificação sem declaração não existe.`,
+    );
+  }
+  if (row.version !== params.expectedVersion) {
+    throw new Error(
+      `A informação mudou durante a verificação: você olhava a versão ${params.expectedVersion} e a corrente é ${row.version}. Confira o conteúdo novo antes de assinar.`,
     );
   }
 
@@ -182,14 +193,41 @@ export async function verifyPracticeEvidence(
   return fromRow(data as Record<string, unknown>);
 }
 
+/** Copia a versão corrente com um estado novo — o mecanismo único de flip. */
+async function appendStateVersion(
+  supabase: SupabaseClient,
+  row: PracticeEvidenceRecord,
+  status: "divergente" | "desatualizado",
+  observation?: string | null,
+): Promise<void> {
+  const { error } = await supabase.from("practice_evidence").insert({
+    professional_profile_id: row.professionalProfileId,
+    subcriterion_code: row.subcriterionCode,
+    catalog_version: row.catalogVersion,
+    version: row.version + 1,
+    options: row.options,
+    details: row.details,
+    condition_note: row.conditionNote,
+    observation: observation !== undefined ? observation : row.observation,
+    source_tier: row.sourceTier,
+    source: row.source,
+    collected_at: row.collectedAt,
+    collected_by: row.collectedBy,
+    status,
+  });
+  if (error) throw new Error(`Base de Evidências: ${error.message}`);
+}
+
 /**
  * Divergência: o que está declarado não bate com o que foi encontrado.
- * O estado vira `divergente` (versão nova) E a divergência é registrada em
- * `verification_divergences` — a MESMA tabela de sempre, com o código do
- * conceito como assunto. Nenhum vocabulário paralelo.
+ * A divergência entra em `verification_divergences` — a MESMA tabela de
+ * sempre, com o código do conceito como assunto — pelo cliente de QUEM ABRE
+ * (a RLS decide: curador e administrador abrem). O flip do estado da
+ * evidência para `divergente` passa pelo cliente com escrita na Base.
  */
 export async function registerEvidenceDivergence(
-  supabase: SupabaseClient,
+  divergenceClient: SupabaseClient,
+  evidenceClient: SupabaseClient,
   params: {
     professionalProfileId: string;
     subcriterionCode: string;
@@ -199,10 +237,10 @@ export async function registerEvidenceDivergence(
     openedBy: string;
   },
 ): Promise<void> {
-  const { row } = await currentVersion(supabase, params.professionalProfileId, params.subcriterionCode);
+  const { row } = await currentVersion(evidenceClient, params.professionalProfileId, params.subcriterionCode);
   if (!row) throw new Error(`Não há evidência de ${params.subcriterionCode} para divergir.`);
 
-  const { error: divergenceError } = await supabase.from("verification_divergences").insert({
+  const { error: divergenceError } = await divergenceClient.from("verification_divergences").insert({
     professional_profile_id: params.professionalProfileId,
     subject: params.subcriterionCode,
     declared_version: params.declaredVersion,
@@ -212,22 +250,207 @@ export async function registerEvidenceDivergence(
   });
   if (divergenceError) throw new Error(`Divergência: ${divergenceError.message}`);
 
-  const { error } = await supabase.from("practice_evidence").insert({
-    professional_profile_id: row.professionalProfileId,
-    subcriterion_code: row.subcriterionCode,
-    catalog_version: row.catalogVersion,
-    version: row.version + 1,
-    options: row.options,
-    details: row.details,
-    condition_note: row.conditionNote,
-    observation: row.observation,
-    source_tier: row.sourceTier,
-    source: row.source,
-    collected_at: row.collectedAt,
-    collected_by: row.collectedBy,
-    status: "divergente",
-  });
-  if (error) throw new Error(`Base de Evidências: ${error.message}`);
+  await appendStateVersion(evidenceClient, row, "divergente");
+}
+
+/**
+ * Desatualização: a operação declara que a informação corrente não vale mais
+ * (vencimento, prática que mudou, fonte que caiu). Versão nova, motivo curto
+ * como observação — o conteúdo antigo permanece legível no histórico.
+ */
+export async function markEvidenceOutdated(
+  supabase: SupabaseClient,
+  params: { professionalProfileId: string; subcriterionCode: string; reason: string },
+): Promise<void> {
+  const motivo = params.reason.trim();
+  if (motivo.length === 0 || motivo.length > 280) {
+    throw new Error("Desatualizar exige um motivo curto (1 a 280 caracteres).");
+  }
+  const { row } = await currentVersion(supabase, params.professionalProfileId, params.subcriterionCode);
+  if (!row) throw new Error(`Não há evidência de ${params.subcriterionCode} para desatualizar.`);
+  await appendStateVersion(supabase, row, "desatualizado", motivo);
+}
+
+/**
+ * Resolução de divergência — nos campos que a tabela vigente já tem
+ * (resolution/resolved_by/resolved_at/resolved_version, com CHECK de
+ * completude). A RLS decide quem resolve: administrador. Nunca edita a
+ * evidência em silêncio: se o fato mudou, o caminho é resposta nova.
+ */
+export async function resolveEvidenceDivergence(
+  supabase: SupabaseClient,
+  params: {
+    divergenceId: string;
+    resolution: string;
+    resolvedVersion: string;
+    resolvedBy: string;
+  },
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("verification_divergences")
+    .update({
+      status: "resolvida",
+      resolution: params.resolution,
+      resolved_version: params.resolvedVersion,
+      resolved_by: params.resolvedBy,
+      resolved_at: new Date().toISOString(),
+    })
+    .eq("id", params.divergenceId)
+    .eq("status", "aberta")
+    .select("id");
+
+  if (error) throw new Error(`Divergência: ${error.message}`);
+  if (!data || data.length === 0) {
+    throw new Error("Divergência não encontrada, já resolvida, ou sem permissão para resolver.");
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Histórico, divergências abertas e solicitações — leitura de governança
+// ---------------------------------------------------------------------------
+
+/** Todas as versões, da primeira à corrente. Somente leitura, por desenho. */
+export async function loadEvidenceHistory(
+  supabase: SupabaseClient,
+  professionalProfileId: string,
+  subcriterionCode: string,
+): Promise<PracticeEvidenceRecord[]> {
+  const { data, error } = await supabase
+    .from("practice_evidence")
+    .select(COLUNAS)
+    .eq("professional_profile_id", professionalProfileId)
+    .eq("subcriterion_code", subcriterionCode)
+    .order("version", { ascending: true });
+
+  if (error) throw new Error(`Histórico: ${error.message}`);
+  return (data ?? []).map((row) => fromRow(row as Record<string, unknown>));
+}
+
+export type EvidenceDivergenceRecord = {
+  id: string;
+  professionalProfileId: string;
+  subject: string;
+  declaredVersion: string;
+  foundVersion: string;
+  severity: string;
+  status: string;
+  resolution: string | null;
+  openedBy: string;
+  createdAt: string | null;
+};
+
+export async function loadEvidenceDivergences(
+  supabase: SupabaseClient,
+  professionalProfileIds: readonly string[],
+): Promise<EvidenceDivergenceRecord[]> {
+  if (professionalProfileIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from("verification_divergences")
+    .select("id, professional_profile_id, subject, declared_version, found_version, severity, status, resolution, opened_by, opened_at")
+    .in("professional_profile_id", professionalProfileIds as string[]);
+
+  if (error) throw new Error(`Divergências: ${error.message}`);
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    professionalProfileId: row.professional_profile_id as string,
+    subject: row.subject as string,
+    declaredVersion: row.declared_version as string,
+    foundVersion: row.found_version as string,
+    severity: row.severity as string,
+    status: row.status as string,
+    resolution: (row.resolution as string | null) ?? null,
+    openedBy: row.opened_by as string,
+    createdAt: (row.opened_at as string | null) ?? null,
+  }));
+}
+
+export type UpdateRequestRecord = {
+  id: string;
+  professionalProfileId: string;
+  subcriterionCodes: string[];
+  reason: string;
+  requestedBy: string;
+  requestedAt: string;
+  dueHint: string | null;
+  status: string;
+};
+
+export async function requestPracticeUpdate(
+  supabase: SupabaseClient,
+  params: {
+    professionalProfileId: string;
+    subcriterionCodes: string[];
+    reason: string;
+    requestedBy: string;
+    dueHint?: string | null;
+  },
+): Promise<UpdateRequestRecord> {
+  const { data, error } = await supabase
+    .from("practice_update_requests")
+    .insert({
+      professional_profile_id: params.professionalProfileId,
+      subcriterion_codes: params.subcriterionCodes,
+      reason: params.reason,
+      requested_by: params.requestedBy,
+      due_hint: params.dueHint ?? null,
+    })
+    .select("id, professional_profile_id, subcriterion_codes, reason, requested_by, requested_at, due_hint, status")
+    .single();
+
+  if (error) throw new Error(`Solicitação de atualização: ${error.message}`);
+  const row = data as Record<string, unknown>;
+  return {
+    id: row.id as string,
+    professionalProfileId: row.professional_profile_id as string,
+    subcriterionCodes: (row.subcriterion_codes as string[]) ?? [],
+    reason: row.reason as string,
+    requestedBy: row.requested_by as string,
+    requestedAt: row.requested_at as string,
+    dueHint: (row.due_hint as string | null) ?? null,
+    status: row.status as string,
+  };
+}
+
+export async function listOpenUpdateRequests(
+  supabase: SupabaseClient,
+  professionalProfileIds: readonly string[],
+): Promise<UpdateRequestRecord[]> {
+  if (professionalProfileIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from("practice_update_requests")
+    .select("id, professional_profile_id, subcriterion_codes, reason, requested_by, requested_at, due_hint, status")
+    .in("professional_profile_id", professionalProfileIds as string[])
+    .eq("status", "aberta")
+    .order("requested_at", { ascending: true });
+
+  if (error) throw new Error(`Solicitações: ${error.message}`);
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    professionalProfileId: row.professional_profile_id as string,
+    subcriterionCodes: (row.subcriterion_codes as string[]) ?? [],
+    reason: row.reason as string,
+    requestedBy: row.requested_by as string,
+    requestedAt: row.requested_at as string,
+    dueHint: (row.due_hint as string | null) ?? null,
+    status: row.status as string,
+  }));
+}
+
+export async function resolveUpdateRequest(
+  supabase: SupabaseClient,
+  params: { requestId: string; status: "atendida" | "cancelada"; resolvedBy: string },
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("practice_update_requests")
+    .update({ status: params.status, resolved_by: params.resolvedBy, resolved_at: new Date().toISOString() })
+    .eq("id", params.requestId)
+    .eq("status", "aberta")
+    .select("id");
+
+  if (error) throw new Error(`Solicitação: ${error.message}`);
+  if (!data || data.length === 0) {
+    throw new Error("Solicitação não encontrada, já fechada, ou sem permissão.");
+  }
 }
 
 /** A leitura corrente: a versão mais alta de cada (profissional, conceito). */
