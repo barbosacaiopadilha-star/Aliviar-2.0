@@ -28,6 +28,12 @@ import { ProtocoloPessoaPanel } from "@/components/curadoria/protocolo-pessoa-pa
 import { conduct } from "@/modules/curadoria/cos/conduction";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
+import { getAuthState } from "@/modules/auth/session";
+import {
+  listOpenUpdateRequests,
+  loadCurrentPracticeEvidence,
+  loadEvidenceDivergences,
+} from "@/modules/curadoria/evidencias-pratica-repository";
 import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { buildCuratorJourney, journeyStepHref } from "@/modules/curadoria/cos/journey";
 import { CRITERION_LABELS } from "@/modules/curadoria/cruzamento";
@@ -93,6 +99,24 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
     record.caseId,
     record.curadoriaTecnica.selectedProfessionalIds.length,
   );
+
+  // Governança da Base: leitura corrente completa, divergências e pendências —
+  // a RLS decide o alcance; o papel decide as ações disponíveis no painel.
+  const authState = await getAuthState();
+  const isAdmin = authState?.roles.includes("administrador") ?? false;
+  const redeIds = view.professionals.map((p) => p.professionalProfileId);
+  const [evidenceRows, evidenceDivergences, evidenceUpdateRequests] = await Promise.all([
+    loadCurrentPracticeEvidence(supabase, redeIds),
+    loadEvidenceDivergences(supabase, redeIds),
+    listOpenUpdateRequests(supabase, redeIds),
+  ]);
+  const evidencePanelCan = {
+    verify: isAdmin,
+    openDivergence: true, // curador e admin — policy divergences_curator_open
+    requestUpdate: true, // curador e admin — policy update_requests_insert_operacao
+    resolveDivergence: isAdmin,
+    markOutdated: isAdmin,
+  };
 
   const lifecycle = record.curadoriaTecnica.curatedSelectionId
     ? await getReportLifecycle(supabase, record.curadoriaTecnica.curatedSelectionId)
@@ -434,11 +458,16 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
               <h2 className="mesa-aside__title">Base de Evidências de Prática</h2>
               <div className="mt-3">
                 <MesaEvidenciasPanel
+                  caseId={record.caseId}
                   professionals={view.professionals.map((p) => ({
                     professionalProfileId: p.professionalProfileId,
                     displayName: p.displayName,
                   }))}
-                  evidencias={view.evidencias}
+                  rows={Object.fromEntries(evidenceRows)}
+                  divergences={evidenceDivergences}
+                  updateRequests={evidenceUpdateRequests}
+                  can={evidencePanelCan}
+                  nowIso={new Date().toISOString()}
                 />
               </div>
             </section>

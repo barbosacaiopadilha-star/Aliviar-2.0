@@ -41,6 +41,8 @@ import type { DraftResponse } from "@/modules/curadoria/protocolos-repository";
 type Props = {
   initialResponses: Record<string, DraftResponse>;
   lastSavedAt: string | null;
+  /** Pendências abertas pela operação — o que precisa de resposta nova. */
+  revisionRequests?: { conceptCodes: string[]; reason: string }[];
 };
 
 const PARTS = ["A", "B", "C", "D", "E"] as const;
@@ -49,7 +51,7 @@ function emptyResponse(): DraftResponse {
   return { options: [], details: {}, conditionNote: null, observation: null };
 }
 
-export function ProtocoloPraticaForm({ initialResponses, lastSavedAt }: Props) {
+export function ProtocoloPraticaForm({ initialResponses, lastSavedAt, revisionRequests = [] }: Props) {
   const [responses, setResponses] = useState<Record<string, DraftResponse>>(initialResponses);
   const [part, setPart] = useState<(typeof PARTS)[number]>("A");
   const [reviewing, setReviewing] = useState(false);
@@ -122,6 +124,25 @@ export function ProtocoloPraticaForm({ initialResponses, lastSavedAt }: Props) {
           à frente nem atrás de ninguém.
         </CardDescription>
       </CardHeader>
+
+      {revisionRequests.length > 0 ? (
+        <div className="rounded border border-dashed p-3 text-sm" role="note">
+          <p className="font-medium">A equipe da Aliviar pediu que você revise algumas respostas:</p>
+          <ul className="mt-1 list-disc pl-5">
+            {revisionRequests.map((request, index) => (
+              <li key={index}>
+                {request.conceptCodes
+                  .map((code) => PROFESSIONAL_PROTOCOL.find((q) => q.concept.code === code)?.concept.name ?? code)
+                  .join(", ")}{" "}
+                — {request.reason}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1 text-muted-foreground">
+            Responder de novo cria uma nova declaração — a anterior fica guardada no histórico.
+          </p>
+        </div>
+      ) : null}
 
       {message ? <p className="text-sm text-muted-foreground" role="status">{message}</p> : null}
 

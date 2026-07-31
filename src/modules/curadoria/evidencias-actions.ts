@@ -10,12 +10,14 @@ import { revalidateCaseSurfaces } from "@/modules/cases/revalidate";
 
 import { SOURCE_TIERS } from "./fontes";
 import {
+  loadEvidenceHistory,
   markEvidenceOutdated,
   registerEvidenceDivergence,
   requestPracticeUpdate,
   resolveEvidenceDivergence,
   resolveUpdateRequest,
   verifyPracticeEvidence,
+  type PracticeEvidenceRecord,
 } from "./evidencias-pratica-repository";
 
 /**
@@ -189,6 +191,32 @@ export async function requestPracticeUpdateAction(input: unknown) {
   if (parsed.data.caseId) revalidateCaseSurfaces(parsed.data.caseId);
   revalidatePath("/profissional");
   return { success: true as const };
+}
+
+const historySchema = z.object({
+  professionalProfileId: z.string().uuid(),
+  subcriterionCode: z.string().max(80),
+});
+
+/** Histórico é somente leitura — a RLS decide quem lê (curador e admin). */
+export async function loadEvidenceHistoryAction(
+  input: unknown,
+): Promise<{ success: true; history: PracticeEvidenceRecord[] } | { success: false; error: string }> {
+  await requireAnyRoleForAction(["curador_medico", "administrador"]);
+  const parsed = historySchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: "Consulta inválida." };
+
+  const supabase = await createServerSupabaseClient();
+  try {
+    const history = await loadEvidenceHistory(
+      supabase,
+      parsed.data.professionalProfileId,
+      parsed.data.subcriterionCode,
+    );
+    return { success: true, history };
+  } catch (erro) {
+    return { success: false, error: (erro as Error).message };
+  }
 }
 
 const resolveRequestSchema = z.object({
