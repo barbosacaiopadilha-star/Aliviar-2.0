@@ -94,9 +94,11 @@ export const INFORMATION_KINDS = [
   "ATENDIMENTO_ONLINE",
   "CUIDADO_CONTINUO",
   "DISPONIBILIDADE",
-  "IDIOMAS",
-  "ACESSIBILIDADE",
 ] as const;
+// IDIOMAS e ACESSIBILIDADE saíram daqui em 2026-07-31, por decisão de Método
+// do congelamento do Catálogo Canônico: não são conceitos da Curadoria nesta
+// fase. Mantê-los na matriz sugeriria o contrário — tipo de informação sem
+// conceito correspondente é referência órfã, e órfã vira uso acidental.
 export type InformationKind = (typeof INFORMATION_KINDS)[number];
 
 export type InformationPolicy = {
@@ -192,18 +194,6 @@ export const SOURCE_MATRIX: Record<InformationKind, InformationPolicy> = {
     minimumTier: "INSTITUCIONAL",
     volatility: "VOLATIL",
     note: "Muda toda semana. Verificação com validade curta.",
-  },
-  IDIOMAS: {
-    label: "Idiomas",
-    minimumTier: "INSTITUCIONAL",
-    volatility: "ESTAVEL",
-    note: "Profissional ou instituição.",
-  },
-  ACESSIBILIDADE: {
-    label: "Acessibilidade",
-    minimumTier: "INSTITUCIONAL",
-    volatility: "VOLATIL",
-    note: "Clínica ou verificação operacional. Rampa prometida e rampa existente não são a mesma coisa.",
   },
 };
 

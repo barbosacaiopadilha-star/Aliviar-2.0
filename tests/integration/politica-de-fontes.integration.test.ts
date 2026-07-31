@@ -317,9 +317,9 @@ describe("política de fontes — o que o banco recusa (Supabase local)", () => 
 
       await admin.from("verification_divergences").insert({
         professional_profile_id: prof,
-        subject: "IDIOMAS",
-        declared_version: "Português e inglês",
-        found_version: "Português",
+        subject: "DISPONIBILIDADE",
+        declared_version: "Terças e quintas à tarde",
+        found_version: "Somente terças à tarde",
         severity: "observacao",
         opened_by: algumPerfil,
       });

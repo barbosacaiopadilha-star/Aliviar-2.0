@@ -78,12 +78,12 @@ const MODELO: CareModel = {
   avgDaysToFirstAppointment: 7,
 };
 
+// `languages` e `accessibility` saíram do tipo em 2026-07-31 — idiomas e
+// acessibilidade ficaram fora do Catálogo Canônico congelado.
 const COMUNICACAO: Communication = {
   ...VERIFICADO,
   sharedDecision: true,
   familyCare: true,
-  languages: ["Português", "Inglês"],
-  accessibility: ["Libras"],
   resources: ["Material impresso"],
 };
 
@@ -126,8 +126,6 @@ function declaration(overrides: Partial<PatientPriorityDeclaration> = {}): Patie
     desiredFrequency: null,
     sharedDecision: true,
     familyParticipation: true,
-    language: "Português",
-    accessibilityNeeds: [],
     communicationNeeds: null,
     otherNeeds: null,
     declaredAt: "2026-07-27T10:00:00.000Z",
@@ -311,8 +309,8 @@ describe("Bloco de prioridades — comparar declarações não é inferir", () =
 
   it("campo em branco no cadastro é ausência, não negativa", () => {
     const output = adaptToEvaluations({
-      dossier: dossier({ communication: { ...COMUNICACAO, sharedDecision: null, familyCare: null, languages: [] } }),
-      declaration: declaration({ language: null }),
+      dossier: dossier({ communication: { ...COMUNICACAO, sharedDecision: null, familyCare: null } }),
+      declaration: declaration(),
     });
     expect(assessmentOf(output, "MODELO_DE_ATENDIMENTO").assessment).toBe("INFORMACAO_INSUFICIENTE");
   });
@@ -320,18 +318,14 @@ describe("Bloco de prioridades — comparar declarações não é inferir", () =
   it("o que ela não pediu não pesa contra ninguém", () => {
     const output = adaptToEvaluations({
       dossier: dossier({ communication: { ...COMUNICACAO, familyCare: false } }),
-      declaration: declaration({ familyParticipation: false, sharedDecision: null, language: null }),
+      declaration: declaration({ familyParticipation: false, sharedDecision: null }),
     });
     expect(assessmentOf(output, "MODELO_DE_ATENDIMENTO").assessment).toBe("ATENDE_PLENAMENTE");
   });
 
-  it("necessidade de acessibilidade atendida pela metade é parcial", () => {
-    const output = adaptToEvaluations({
-      dossier: dossier({ communication: { ...COMUNICACAO, accessibility: ["Libras"] } }),
-      declaration: declaration({ accessibilityNeeds: ["Libras", "Acesso para cadeirante"] }),
-    });
-    expect(assessmentOf(output, "MODELO_DE_ATENDIMENTO").assessment).toBe("ATENDE_PARCIALMENTE");
-  });
+  // O caso "necessidade de acessibilidade atendida pela metade é parcial" saiu
+  // em 2026-07-31: idiomas e acessibilidade ficaram fora do Catálogo Canônico
+  // congelado, e o dossiê deixou de comparar o que o Método não representa.
 
   it("paciente sem prioridades declaradas deixa o bloco inteiro insuficiente", () => {
     const output = adaptToEvaluations({ dossier: dossier(), declaration: null });

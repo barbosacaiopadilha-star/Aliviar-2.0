@@ -69,7 +69,7 @@ const AVALIACOES: Record<string, CriterionEvaluation[]> = {
     { criterion: "HISTORICO", assessment: "ATENDE_PARCIALMENTE", evidence: "Vínculos em clínica e centro de reabilitação, com menos histórico hospitalar." },
     { criterion: "ACESSO", assessment: "ATENDE_PLENAMENTE", evidence: "Atende em São Paulo em cerca de 7 dias." },
     { criterion: "CONTINUIDADE_DO_CUIDADO", assessment: "ATENDE_PLENAMENTE", evidence: "Acompanhamento contínuo com equipe multidisciplinar e reabilitação integrada." },
-    { criterion: "MODELO_DE_ATENDIMENTO", assessment: "ATENDE_PLENAMENTE", evidence: "Decisão compartilhada, família e acessibilidade declaradas." },
+    { criterion: "MODELO_DE_ATENDIMENTO", assessment: "ATENDE_PLENAMENTE", evidence: "Decisão compartilhada e participação da família declaradas." },
   ],
 };
 

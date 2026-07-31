@@ -172,7 +172,7 @@ export const CRITERION_SCOPE: Record<CruzamentoCriterion, readonly string[]> = {
   HISTORICO: ["instituições", "vínculos", "regularidade", "histórico verificável", "produção científica e docência quando relevantes", "divergências"],
   ACESSO: ["estado e cidade", "presencial ou online", "disponibilidade", "tempo médio para consulta", "deslocamento"],
   CONTINUIDADE_DO_CUIDADO: ["acompanhamento contínuo", "retornos", "pós-operatório", "coordenação do tratamento", "equipe multidisciplinar"],
-  MODELO_DE_ATENDIMENTO: ["decisão compartilhada", "participação familiar", "idiomas", "acessibilidade", "tempo da primeira consulta"],
+  MODELO_DE_ATENDIMENTO: ["decisão compartilhada", "participação familiar", "tempo da primeira consulta"],
 };
 
 export function isTechnicalCriterion(criterion: CruzamentoCriterion): criterion is TechnicalCriterion {

@@ -114,11 +114,12 @@ export type CareModel = {
   avgDaysToFirstAppointment: number | null;
 } & Provenance;
 
+// `languages` e `accessibility` saíram deste tipo em 2026-07-31: idiomas e
+// acessibilidade não são conceitos do Catálogo Canônico congelado, e campo de
+// domínio sem conceito correspondente é referência órfã.
 export type Communication = {
   sharedDecision: boolean | null;
   familyCare: boolean | null;
-  languages: string[];
-  accessibility: string[];
   resources: string[];
 } & Provenance;
 
@@ -173,8 +174,6 @@ export type PatientPriorityDeclaration = {
   desiredFrequency: string | null;
   sharedDecision: boolean | null;
   familyParticipation: boolean | null;
-  language: string | null;
-  accessibilityNeeds: string[];
   communicationNeeds: string | null;
   otherNeeds: string | null;
   declaredAt: string | null;
@@ -239,7 +238,10 @@ export function assessReadiness(dossier: ProfessionalDossier, now?: string): Rea
     { label: "Experiência", verified: isVerified(dossier.experience, at("EXPERIENCIA_EM_TIPO_DE_CASO")) },
     { label: "Trajetória", verified: dossier.career.some((entry) => isVerified(entry, at("VINCULO_INSTITUCIONAL"))) },
     { label: "Modelo de atendimento", verified: isVerified(dossier.careModel, at("CUIDADO_CONTINUO")) },
-    { label: "Comunicação", verified: isVerified(dossier.communication, at("IDIOMAS")) },
+    // A verificação de comunicação vencia pela política de IDIOMAS; com a
+    // saída do conceito (2026-07-31), passa a vencer pela mesma política do
+    // modelo de atendimento — a fonte é a mesma entrevista.
+    { label: "Comunicação", verified: isVerified(dossier.communication, at("CUIDADO_CONTINUO")) },
   ];
 
   const verifiedBlocks = blocks.filter((block) => block.verified).length;
@@ -403,33 +405,9 @@ function deriveCompatibilidadePessoal(
     );
   }
 
-  if (patient.language) {
-    const fala = communication.languages.length === 0
-      ? null
-      : communication.languages.some((lang) => lang.toLowerCase() === patient.language!.toLowerCase());
-    checks.push(
-      fala === null
-        ? UNKNOWN("Os idiomas deste profissional não estão registrados")
-        : fala
-          ? { assessment: "ATENDE_PLENAMENTE", evidence: `Atende em ${patient.language}.` }
-          : { assessment: "NAO_ATENDE", evidence: `Não atende em ${patient.language}.` },
-    );
-  }
-
-  if (patient.accessibilityNeeds.length > 0) {
-    const atendidas = patient.accessibilityNeeds.filter((need) =>
-      communication.accessibility.some((offered) => offered.toLowerCase() === need.toLowerCase()),
-    );
-    checks.push(
-      communication.accessibility.length === 0
-        ? UNKNOWN("Os recursos de acessibilidade deste profissional não estão registrados")
-        : atendidas.length === patient.accessibilityNeeds.length
-          ? { assessment: "ATENDE_PLENAMENTE", evidence: "Oferece os recursos de acessibilidade que ela precisa." }
-          : atendidas.length === 0
-            ? { assessment: "NAO_ATENDE", evidence: "Não oferece os recursos de acessibilidade que ela precisa." }
-            : { assessment: "ATENDE_PARCIALMENTE", evidence: "Oferece parte dos recursos de acessibilidade que ela precisa." },
-    );
-  }
+  // Os cruzamentos de idioma e de recursos de acessibilidade saíram daqui em
+  // 2026-07-31: os dois conceitos ficaram fora do Catálogo Canônico congelado,
+  // e este módulo não compara o que o Método não representa.
 
   if (checks.length === 0) return UNKNOWN("Ela não declarou necessidades de compatibilidade pessoal");
 
@@ -521,8 +499,6 @@ export type PerfilAssistencial = {
   modeloDeAtendimento: {
     sharedDecision: boolean | null;
     familyCare: boolean | null;
-    languages: string[];
-    accessibility: string[];
     resources: string[];
   };
 };
@@ -548,8 +524,6 @@ export function assistencialProfile(dossier: ProfessionalDossier): PerfilAssiste
     modeloDeAtendimento: {
       sharedDecision: communication?.sharedDecision ?? null,
       familyCare: communication?.familyCare ?? null,
-      languages: communication?.languages ?? [],
-      accessibility: communication?.accessibility ?? [],
       resources: communication?.resources ?? [],
     },
   };
