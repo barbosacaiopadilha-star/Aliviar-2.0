@@ -4,13 +4,21 @@ import type { PracticeEvidenceSummary } from "@/modules/curadoria/evidencias-pra
 /**
  * BASE DE EVIDÊNCIAS NA MESA — o estado da INFORMAÇÃO, nunca a correspondência.
  *
- * @metodo GRAMATICA §6 — estado da informação e correspondência não se
- *         confundem: aqui só existe confiança do dado ("verificada",
- *         "declarada", "vencida"), jamais "atende"/"não atende", que é
- *         declaração humana em outro lugar da Mesa.
+ * @metodo Fundamentos §13 — o Curador decide; o sistema informa a confiança
+ * @metodo Ontologia §3.13 — contagem não é colocação: nada aqui ordena
+ * @metodo Experience §5 — a tela informa, nunca conclui
  *
- * Por isso os rótulos falam de informação e os tons são neutros — nenhum
- * verde/vermelho de veredito. Contagem, não juízo.
+ * Governado por docs/curadoria/protocolos/GRAMATICA_DAS_PERGUNTAS.md §6:
+ * estado da informação e correspondência não se confundem.
+ *
+ * Por que existe: o Curador precisa enxergar, por profissional, quanta
+ * informação de prática existe e quanto dela é confiável — verificada,
+ * apenas declarada, vencida, divergente — ANTES de concluir qualquer coisa.
+ * Sem este painel, evidência vencida ou divergente só apareceria fuçando a
+ * Base; aqui ela aparece onde a decisão acontece.
+ *
+ * O que este painel NUNCA diz: "atende"/"não atende" — correspondência é
+ * declaração humana e vive em outra camada da Mesa. Contagem, não juízo.
  */
 
 type Props = {

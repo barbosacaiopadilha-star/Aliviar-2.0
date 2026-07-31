@@ -23,12 +23,18 @@ import {
 /**
  * PROTOCOLO DA PESSOA — a conversa, instrumentada.
  *
- * @metodo PROTOCOLO_PESSOA.md — direto / tradução / declaração clínica
- * @metodo GRAMATICA_DAS_PERGUNTAS.md §4 — grau declarado, nunca inferido
+ * @metodo Fundamentos §13 — quem reconhece a própria necessidade é a pessoa
+ * @metodo Ontologia §3.13 — leitura proposta não é decisão: o ato é dela
+ * @metodo Experience §5 — conversa instrumentada, nunca formulário frio
  *
- * O Curador registra DURANTE a conversa: pergunta direta como está; tradução
- * como proposta ("pelo que você me contou, entendi que…") que a pessoa
- * reconhece, corrige ou recusa — e o ato dela fica separado da leitura dele.
+ * Governado por docs/curadoria/protocolos/PROTOCOLO_PESSOA.md (P1..P16) e
+ * pela GRAMATICA_DAS_PERGUNTAS.md §4 — grau declarado, nunca inferido.
+ *
+ * Por que existe: o Curador precisa registrar, DURANTE a conversa, o que a
+ * pessoa disse na forma em que disse — pergunta direta como está; tradução
+ * como proposta que ela reconhece, corrige ou recusa, com o ato dela
+ * separado da leitura dele. Sem este painel, a necessidade viraria anotação
+ * livre, incomparável e sem reconhecimento.
  *
  * O que este painel NUNCA faz: gerar necessidade de texto livre, inferir
  * grau, ou concluir compatibilidade. Registro, não julgamento.

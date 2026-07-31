@@ -6,6 +6,7 @@ import { z } from "zod";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRoleForAction } from "@/modules/auth/guard";
+import { revalidateCaseSurfaces } from "@/modules/cases/revalidate";
 
 import {
   acknowledgePersonNeed,
@@ -95,7 +96,10 @@ export async function registerPersonNeedAction(input: unknown) {
     return { success: false as const, error: (erro as Error).message };
   }
 
-  revalidatePath(`/portal-curador/casos/${parsed.data.caseId}/curadoria_tecnica`);
+  // Uma porta só de revalidação — foi a lista por action que criou o defeito
+  // do dado certo atrás de tela velha, e revalidateCaseSurfaces existe para
+  // que ele não volte.
+  revalidateCaseSurfaces(parsed.data.caseId);
   return { success: true as const };
 }
 
@@ -118,7 +122,7 @@ export async function acknowledgePersonNeedAction(input: unknown) {
     return { success: false as const, error: (erro as Error).message };
   }
 
-  revalidatePath(`/portal-curador/casos/${parsed.data.caseId}/curadoria_tecnica`);
+  revalidateCaseSurfaces(parsed.data.caseId);
   return { success: true as const };
 }
 
