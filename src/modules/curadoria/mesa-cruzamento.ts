@@ -21,6 +21,7 @@ import {
   summarizePracticeEvidence,
   type PracticeEvidenceSummary,
 } from "./evidencias-pratica-repository";
+import { loadCaseNeeds, type CaseNeedRecord } from "./protocolos-repository";
 import { isProfileAcknowledged } from "./reconhecimento-do-perfil";
 import { listCriticalDivergenceBlocklist } from "./rede-policy";
 import type { PriorityProfileStatus } from "./types";
@@ -147,6 +148,12 @@ export type MesaCruzamentoView = {
    * está vencido ou divergente antes de concluir qualquer coisa.
    */
   evidencias: Record<string, PracticeEvidenceSummary>;
+  /**
+   * As necessidades do Protocolo da Pessoa — POR CASE, com origem, leitura
+   * proposta e reconhecimento. Não são o Mapa de Prioridades e não alimentam
+   * o Motor: são o que a pessoa disse, na forma em que disse.
+   */
+  necessidades: CaseNeedRecord[];
 };
 
 const ALL_CRITERIA: readonly CruzamentoCriterion[] = [...TECHNICAL_CRITERIA, ...PATIENT_CRITERIA];
@@ -335,10 +342,13 @@ export async function loadMesaCruzamento(
   // A Base de Evidências acompanha a Rede inteira — não só os elegíveis:
   // evidência vencida ou divergente interessa ao Curador antes mesmo da
   // declaração de área. Resumo por contagem; conclusão nenhuma.
-  const evidencePorProfissional = await loadCurrentPracticeEvidence(
-    supabase,
-    professionals.map((p) => p.professionalProfileId),
-  );
+  const [evidencePorProfissional, necessidades] = await Promise.all([
+    loadCurrentPracticeEvidence(
+      supabase,
+      professionals.map((p) => p.professionalProfileId),
+    ),
+    loadCaseNeeds(supabase, caseId),
+  ]);
   const agora = new Date().toISOString();
   const evidencias = Object.fromEntries(
     professionals.map((p) => [
@@ -360,5 +370,6 @@ export async function loadMesaCruzamento(
     comparison,
     awaitingDeclaration,
     evidencias,
+    necessidades,
   };
 }

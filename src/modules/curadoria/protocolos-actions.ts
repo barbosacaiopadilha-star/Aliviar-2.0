@@ -8,7 +8,9 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRoleForAction } from "@/modules/auth/guard";
 
 import {
+  acknowledgePersonNeed,
   loadProtocolDraft,
+  registerPersonNeed,
   saveProtocolDraft,
   submitProfessionalProtocol,
   type DraftResponse,
@@ -63,6 +65,60 @@ export async function saveOwnProtocolDraftAction(input: unknown) {
   });
 
   revalidatePath("/profissional");
+  return { success: true as const };
+}
+
+// ---------------------------------------------------------------------------
+// Protocolo da Pessoa — actions do Curador, dentro da conversa
+// ---------------------------------------------------------------------------
+
+const personNeedSchema = z.object({
+  caseId: z.string().uuid(),
+  subcriterionCode: z.string().max(80),
+  options: z.array(z.string().max(120)).max(20),
+  degree: z.enum(["ESSENCIAL", "IMPORTANTE", "DESEJAVEL", "SEM_PREFERENCIA"]),
+  flexibility: z.string().max(280).nullable(),
+  guidedText: z.string().max(500).nullable(),
+  origin: z.enum(["DIRETO", "TRADUCAO", "DECLARACAO_CLINICA"]),
+  proposedReading: z.string().max(500).nullable(),
+});
+
+export async function registerPersonNeedAction(input: unknown) {
+  const state = await requireAnyRoleForAction(["curador_medico", "administrador"]);
+  const parsed = personNeedSchema.safeParse(input);
+  if (!parsed.success) return { success: false as const, error: "Resposta em formato inválido." };
+
+  const supabase = await createServerSupabaseClient();
+  try {
+    await registerPersonNeed(supabase, { ...parsed.data, declaredBy: state.user.id });
+  } catch (erro) {
+    return { success: false as const, error: (erro as Error).message };
+  }
+
+  revalidatePath(`/portal-curador/casos/${parsed.data.caseId}/curadoria_tecnica`);
+  return { success: true as const };
+}
+
+const acknowledgeSchema = z.object({
+  caseId: z.string().uuid(),
+  subcriterionCode: z.string().max(80),
+  acknowledgment: z.enum(["RECONHECIDA", "CORRIGIDA", "RECUSADA"]),
+  correction: z.string().max(500).nullable(),
+});
+
+export async function acknowledgePersonNeedAction(input: unknown) {
+  await requireAnyRoleForAction(["curador_medico", "administrador"]);
+  const parsed = acknowledgeSchema.safeParse(input);
+  if (!parsed.success) return { success: false as const, error: "Formato inválido." };
+
+  const supabase = await createServerSupabaseClient();
+  try {
+    await acknowledgePersonNeed(supabase, parsed.data);
+  } catch (erro) {
+    return { success: false as const, error: (erro as Error).message };
+  }
+
+  revalidatePath(`/portal-curador/casos/${parsed.data.caseId}/curadoria_tecnica`);
   return { success: true as const };
 }
 

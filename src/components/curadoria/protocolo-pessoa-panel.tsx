@@ -1,0 +1,303 @@
+"use client";
+
+import { useState, useTransition } from "react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Radio } from "@/components/ui/radio";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  NEED_DEGREES,
+  NEED_DEGREE_LABELS,
+  PERSON_PROTOCOL,
+  type NeedDegree,
+  type PersonQuestion,
+} from "@/modules/curadoria/protocolos";
+import type { CaseNeedRecord } from "@/modules/curadoria/protocolos-repository";
+import {
+  acknowledgePersonNeedAction,
+  registerPersonNeedAction,
+} from "@/modules/curadoria/protocolos-actions";
+
+/**
+ * PROTOCOLO DA PESSOA — a conversa, instrumentada.
+ *
+ * @metodo PROTOCOLO_PESSOA.md — direto / tradução / declaração clínica
+ * @metodo GRAMATICA_DAS_PERGUNTAS.md §4 — grau declarado, nunca inferido
+ *
+ * O Curador registra DURANTE a conversa: pergunta direta como está; tradução
+ * como proposta ("pelo que você me contou, entendi que…") que a pessoa
+ * reconhece, corrige ou recusa — e o ato dela fica separado da leitura dele.
+ *
+ * O que este painel NUNCA faz: gerar necessidade de texto livre, inferir
+ * grau, ou concluir compatibilidade. Registro, não julgamento.
+ */
+
+type Props = { caseId: string; needs: CaseNeedRecord[] };
+
+const ACK_LABELS: Record<CaseNeedRecord["acknowledgment"], string> = {
+  PENDENTE: "Aguardando o reconhecimento dela",
+  RECONHECIDA: "Reconhecida por ela",
+  CORRIGIDA: "Corrigida por ela",
+  RECUSADA: "Recusada por ela",
+};
+
+export function ProtocoloPessoaPanel({ caseId, needs }: Props) {
+  const byCode = new Map(needs.map((need) => [need.subcriterionCode, need]));
+  const [openCode, setOpenCode] = useState<string | null>(null);
+
+  const respondidas = PERSON_PROTOCOL.filter(
+    (p) => p.mode !== "DECLARACAO_CLINICA" && byCode.has(p.subcriterionCode),
+  ).length;
+  const totalPerguntas = PERSON_PROTOCOL.filter((p) => p.mode !== "DECLARACAO_CLINICA").length;
+
+  return (
+    <div className="space-y-3">
+      <Badge variant="sage">{`${respondidas} de ${totalPerguntas} conversas registradas`}</Badge>
+
+      <ul className="space-y-2">
+        {PERSON_PROTOCOL.map((question) => {
+          const need = byCode.get(question.subcriterionCode) ?? null;
+          return (
+            <li key={question.id} className="rounded border p-2 text-sm">
+              <NeedRow
+                caseId={caseId}
+                question={question}
+                need={need}
+                open={openCode === question.subcriterionCode}
+                onToggle={() =>
+                  setOpenCode(openCode === question.subcriterionCode ? null : question.subcriterionCode)
+                }
+              />
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function NeedRow({
+  caseId,
+  question,
+  need,
+  open,
+  onToggle,
+}: {
+  caseId: string;
+  question: PersonQuestion;
+  need: CaseNeedRecord | null;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="font-medium">{question.id} · {question.question}</span>
+        {need ? (
+          <Badge variant={need.acknowledgment === "PENDENTE" ? "default" : "sage"}>
+            {ACK_LABELS[need.acknowledgment]}
+          </Badge>
+        ) : question.mode === "DECLARACAO_CLINICA" ? (
+          <Badge variant="default">Declaração clínica do Curador</Badge>
+        ) : (
+          <Badge variant="default">Sem registro</Badge>
+        )}
+      </div>
+
+      {need ? (
+        <p className="text-muted-foreground">
+          {need.options.map((option) => question.options[option] ?? option).join(" · ") ||
+            need.guidedText ||
+            "(declaração clínica)"}
+          {" — "}
+          {NEED_DEGREE_LABELS[need.degree].split(" — ")[0]}
+          {need.flexibility ? ` · flexibilidade: ${need.flexibility}` : ""}
+          {need.origin === "TRADUCAO" && need.proposedReading ? (
+            <span className="block italic">Leitura proposta: {need.proposedReading}</span>
+          ) : null}
+          {need.correction ? <span className="block">Correção dela: {need.correction}</span> : null}
+        </p>
+      ) : null}
+
+      {question.mode !== "DECLARACAO_CLINICA" ? (
+        <Button type="button" variant="ghost" size="sm" onClick={onToggle}>
+          {open ? "Fechar" : need ? "Atualizar registro" : "Registrar conversa"}
+        </Button>
+      ) : null}
+
+      {open ? <NeedForm caseId={caseId} question={question} existing={need} onDone={onToggle} /> : null}
+      {need?.origin === "TRADUCAO" && need.acknowledgment === "PENDENTE" ? (
+        <AcknowledgeForm caseId={caseId} subcriterionCode={need.subcriterionCode} />
+      ) : null}
+    </div>
+  );
+}
+
+function NeedForm({
+  caseId,
+  question,
+  existing,
+  onDone,
+}: {
+  caseId: string;
+  question: PersonQuestion;
+  existing: CaseNeedRecord | null;
+  onDone: () => void;
+}) {
+  const [options, setOptions] = useState<string[]>(existing?.options ?? []);
+  const [degree, setDegree] = useState<NeedDegree>(existing?.degree ?? "IMPORTANTE");
+  const [flexibility, setFlexibility] = useState(existing?.flexibility ?? "");
+  const [guidedText, setGuidedText] = useState(existing?.guidedText ?? "");
+  const [proposedReading, setProposedReading] = useState(existing?.proposedReading ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  function toggle(code: string) {
+    setOptions((current) =>
+      question.multi
+        ? current.includes(code)
+          ? current.filter((o) => o !== code)
+          : [...current, code]
+        : [code],
+    );
+  }
+
+  function submit() {
+    startTransition(async () => {
+      const result = await registerPersonNeedAction({
+        caseId,
+        subcriterionCode: question.subcriterionCode,
+        options,
+        degree,
+        flexibility: flexibility.trim() === "" ? null : flexibility,
+        guidedText: guidedText.trim() === "" ? null : guidedText,
+        origin: question.mode,
+        proposedReading:
+          question.mode === "TRADUCAO" && proposedReading.trim() !== "" ? proposedReading : null,
+      });
+      if (result.success) onDone();
+      else setError(result.error);
+    });
+  }
+
+  return (
+    <div className="space-y-3 rounded border p-3">
+      {question.mode === "TRADUCAO" ? (
+        <Textarea
+          aria-label="Leitura proposta"
+          value={proposedReading}
+          onChange={(event) => setProposedReading(event.target.value)}
+          placeholder="Pelo que você me contou, entendi que… É isso?"
+        />
+      ) : null}
+
+      {Object.entries(question.options).map(([code, label]) =>
+        question.multi ? (
+          <Checkbox
+            key={code}
+            id={`${question.id}__${code}`}
+            checked={options.includes(code)}
+            onChange={() => toggle(code)}
+            label={label}
+          />
+        ) : (
+          <Radio
+            key={code}
+            id={`${question.id}__${code}`}
+            name={`${question.id}__opcao`}
+            checked={options.includes(code)}
+            onChange={() => toggle(code)}
+            label={label}
+          />
+        ),
+      )}
+
+      {question.allowsGuidedText ? (
+        <Textarea
+          aria-label="O que precisa ser respeitado (palavras dela)"
+          value={guidedText}
+          onChange={(event) => setGuidedText(event.target.value)}
+          placeholder="Nas palavras dela — o que não aceita, o que precisa ser respeitado."
+        />
+      ) : null}
+
+      <fieldset className="space-y-1">
+        <legend className="text-xs font-medium">Quanto isso pesa, segundo ela</legend>
+        {NEED_DEGREES.map((value) => (
+          <Radio
+            key={value}
+            id={`${question.id}__grau__${value}`}
+            name={`${question.id}__grau`}
+            checked={degree === value}
+            onChange={() => setDegree(value)}
+            label={NEED_DEGREE_LABELS[value]}
+          />
+        ))}
+      </fieldset>
+
+      {question.flexibilityQuestion ? (
+        <Textarea
+          aria-label={question.flexibilityQuestion}
+          value={flexibility}
+          onChange={(event) => setFlexibility(event.target.value)}
+          placeholder={question.flexibilityQuestion}
+        />
+      ) : null}
+
+      {error ? <p className="text-sm text-red-700" role="alert">{error}</p> : null}
+      <Button type="button" size="sm" onClick={submit} disabled={pending}>
+        Registrar
+      </Button>
+    </div>
+  );
+}
+
+function AcknowledgeForm({ caseId, subcriterionCode }: { caseId: string; subcriterionCode: string }) {
+  const [correction, setCorrection] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  function act(acknowledgment: "RECONHECIDA" | "CORRIGIDA" | "RECUSADA") {
+    startTransition(async () => {
+      const result = await acknowledgePersonNeedAction({
+        caseId,
+        subcriterionCode,
+        acknowledgment,
+        correction: acknowledgment === "CORRIGIDA" ? correction : null,
+      });
+      if (!result.success) setError(result.error);
+    });
+  }
+
+  return (
+    <div className="space-y-2 rounded border border-dashed p-2">
+      <p className="text-xs font-medium">O que ela disse sobre esta leitura?</p>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" size="sm" onClick={() => act("RECONHECIDA")} disabled={pending}>
+          Reconheceu
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          onClick={() => act("CORRIGIDA")}
+          disabled={pending || correction.trim() === ""}
+        >
+          Corrigiu
+        </Button>
+        <Button type="button" size="sm" variant="ghost" onClick={() => act("RECUSADA")} disabled={pending}>
+          Recusou
+        </Button>
+      </div>
+      <Textarea
+        aria-label="Correção dela"
+        value={correction}
+        onChange={(event) => setCorrection(event.target.value)}
+        placeholder="Se corrigiu: o que ela disse, nas palavras dela."
+      />
+      {error ? <p className="text-sm text-red-700" role="alert">{error}</p> : null}
+    </div>
+  );
+}

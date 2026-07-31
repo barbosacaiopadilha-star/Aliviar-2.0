@@ -21,8 +21,10 @@ import {
 import { PainelAtencao } from "@/components/curadoria/mesa/painel-atencao";
 import { RedeFiltravel } from "@/components/curadoria/mesa/rede-filtravel";
 import { MesaContextPanel } from "@/components/curadoria/mesa-context-panel";
+import { MesaEvidenciasPanel } from "@/components/curadoria/mesa-evidencias-panel";
 import { MesaPriorityPanel } from "@/components/curadoria/mesa-priority-panel";
 import { MesaWorkspace } from "@/components/curadoria/mesa-workspace";
+import { ProtocoloPessoaPanel } from "@/components/curadoria/protocolo-pessoa-panel";
 import { conduct } from "@/modules/curadoria/cos/conduction";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
@@ -419,6 +421,24 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
                   patientFirstName={record.patientFirstName}
                   validatedAt={record.validacao?.validatedAt ?? null}
                   groups={groupPriorityMap(mapa.items, catalogo)}
+                />
+              </div>
+            </section>
+            <section className="mesa-aside__section">
+              <h2 className="mesa-aside__title">Protocolo da Pessoa</h2>
+              <div className="mt-3">
+                <ProtocoloPessoaPanel caseId={record.caseId} needs={view.necessidades} />
+              </div>
+            </section>
+            <section className="mesa-aside__section">
+              <h2 className="mesa-aside__title">Base de Evidências de Prática</h2>
+              <div className="mt-3">
+                <MesaEvidenciasPanel
+                  professionals={view.professionals.map((p) => ({
+                    professionalProfileId: p.professionalProfileId,
+                    displayName: p.displayName,
+                  }))}
+                  evidencias={view.evidencias}
                 />
               </div>
             </section>
