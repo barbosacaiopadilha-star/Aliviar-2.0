@@ -6,6 +6,7 @@ import {
   PRACTICE_CATALOG_VERSION,
   evidenceReviewIsDue,
   validatePracticeEvidence,
+  verificationTierRejection,
   type PracticeEvidenceInput,
 } from "./evidencias-pratica";
 import type { SourceTier } from "./fontes";
@@ -139,9 +140,14 @@ export async function verifyPracticeEvidence(
     subcriterionCode: string;
     verifiedBy: string;
     verificationSource: string;
+    /** Nível da fonte CONSULTADA na verificação — precisa sustentar o conceito. */
+    verificationTier: SourceTier;
     verifiedAt?: string;
   },
 ): Promise<PracticeEvidenceRecord> {
+  const recusa = verificationTierRejection(params.subcriterionCode, params.verificationTier);
+  if (recusa) throw new Error(recusa);
+
   const { row } = await currentVersion(supabase, params.professionalProfileId, params.subcriterionCode);
   if (!row) {
     throw new Error(

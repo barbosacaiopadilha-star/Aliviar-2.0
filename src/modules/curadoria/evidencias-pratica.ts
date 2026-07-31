@@ -441,12 +441,14 @@ export function validatePracticeEvidence(input: PracticeEvidenceInput): string[]
     }
   }
 
+  // Na COLETA, só a fonte inadequada é recusada: uma autodeclaração entra
+  // como declarada, e é exatamente isso que ela é. A fonte mínima do conceito
+  // é exigida na VERIFICAÇÃO — "encontrar uma informação não é o mesmo que
+  // verificá-la" (Política de Fontes).
   if (!SOURCE_TIERS.includes(input.sourceTier)) {
     erros.push(`Fonte de nível desconhecido: ${input.sourceTier}.`);
-  } else if (TIER_RANK[input.sourceTier] < TIER_RANK[conceito.minimumTier]) {
-    erros.push(
-      `${conceito.code}: fonte ${input.sourceTier} não sustenta esta informação — mínimo ${conceito.minimumTier}.`,
-    );
+  } else if (input.sourceTier === "INADEQUADA") {
+    erros.push(`${conceito.code}: fonte inadequada não entra nem como declaração.`);
   }
 
   if (input.source.trim() === "") erros.push("Fonte da coleta é obrigatória.");
@@ -469,6 +471,22 @@ export const EVIDENCE_STATUS_LABELS: Record<string, string> = {
   nao_localizado: "Não localizado",
   desatualizado: "Desatualizado",
 };
+
+/**
+ * A fonte da VERIFICAÇÃO precisa sustentar o conceito — é aqui que o mínimo
+ * da Política de Fontes vale. Devolve a recusa, ou null quando sustenta.
+ */
+export function verificationTierRejection(
+  subcriterionCode: string,
+  tier: SourceTier,
+): string | null {
+  const conceito = PRACTICE_CONCEPTS_BY_CODE.get(subcriterionCode);
+  if (!conceito) return `Conceito desconhecido: ${subcriterionCode}.`;
+  if (TIER_RANK[tier] < TIER_RANK[conceito.minimumTier]) {
+    return `${conceito.code}: fonte ${tier} não sustenta verificação — mínimo ${conceito.minimumTier}.`;
+  }
+  return null;
+}
 
 /**
  * "Revisão pendente" não é estado gravado — é derivação: evidência verificada

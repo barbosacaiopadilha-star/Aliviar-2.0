@@ -9,6 +9,7 @@ import {
   isPracticeConceptCode,
   validatePracticeEvidence,
   verbalizePracticeEvidence,
+  verificationTierRejection,
   type PracticeEvidenceInput,
 } from "@/modules/curadoria/evidencias-pratica";
 
@@ -167,11 +168,25 @@ describe("Validação — a porta recusa o que o contrato recusa", () => {
     ).toEqual([]);
   });
 
-  it("fonte abaixo do mínimo do conceito é recusada — encontrar não é verificar", () => {
-    const erros = validatePracticeEvidence(
-      entrada({ subcriterionCode: "FORMACAO_GRADUACAO", options: [], details: { instituicao: "USP" }, sourceTier: "PUBLICA_SECUNDARIA" }),
+  it("na coleta, só fonte INADEQUADA é recusada — declaração entra como declaração", () => {
+    // Autodeclaração de graduação (fonte institucional): entra como declarada.
+    expect(
+      validatePracticeEvidence(
+        entrada({ subcriterionCode: "FORMACAO_GRADUACAO", options: [], details: { instituicao: "USP" }, sourceTier: "PUBLICA_SECUNDARIA" }),
+      ),
+    ).toEqual([]);
+
+    expect(
+      validatePracticeEvidence(entrada({ sourceTier: "INADEQUADA" })),
+    ).toEqual(expect.arrayContaining([expect.stringContaining("inadequada")]));
+  });
+
+  it("na verificação, a fonte mínima do conceito vale — encontrar não é verificar", () => {
+    expect(verificationTierRejection("FORMACAO_GRADUACAO", "PUBLICA_SECUNDARIA")).toContain(
+      "OFICIAL_PRIMARIA",
     );
-    expect(erros).toEqual(expect.arrayContaining([expect.stringContaining("OFICIAL_PRIMARIA")]));
+    expect(verificationTierRejection("FORMACAO_GRADUACAO", "OFICIAL_PRIMARIA")).toBeNull();
+    expect(verificationTierRejection("CONTINUIDADE_CANAIS", "INSTITUCIONAL")).toBeNull();
   });
 });
 

@@ -122,6 +122,7 @@ describe("Base de Evidências de Prática (Supabase local)", () => {
       subcriterionCode: "CONTINUIDADE_CANAIS",
       verifiedBy: admin.userId,
       verificationSource: "Confirmação por telefone com a secretaria",
+      verificationTier: "INSTITUCIONAL",
     });
 
     expect(verificada.version).toBe(2);

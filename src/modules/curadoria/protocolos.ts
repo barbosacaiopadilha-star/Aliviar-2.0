@@ -304,6 +304,82 @@ export function professionalQuestionsOfPart(part: ProfessionalQuestion["part"]):
   return PROFESSIONAL_PROTOCOL.filter((q) => q.part === part);
 }
 
+// ---------------------------------------------------------------------------
+// Validação do lado da pessoa — a porta única do Perfil do Case
+// ---------------------------------------------------------------------------
+
+export type PersonNeedInput = {
+  subcriterionCode: string;
+  options: string[];
+  degree: NeedDegree;
+  flexibility: string | null;
+  guidedText: string | null;
+  origin: PersonMode;
+  proposedReading: string | null;
+};
+
+/** Devolve as recusas — vazia significa aceita. */
+export function validatePersonNeed(input: PersonNeedInput): string[] {
+  const erros: string[] = [];
+  const pergunta = PERSON_QUESTIONS_BY_CODE.get(input.subcriterionCode);
+
+  if (!pergunta) {
+    return [`"${input.subcriterionCode}" não tem lado da pessoa no protocolo — os conceitos técnicos não têm pergunta, por definição do Método.`];
+  }
+
+  if (input.origin !== pergunta.mode && pergunta.mode === "DECLARACAO_CLINICA") {
+    erros.push(`${pergunta.id}: ${input.subcriterionCode} é declaração clínica do Curador — não recebe resposta direta nem tradução.`);
+  }
+  if (pergunta.mode !== "DECLARACAO_CLINICA" && input.origin === "DECLARACAO_CLINICA") {
+    erros.push(`${pergunta.id}: este conceito tem pergunta à pessoa — declaração clínica não o substitui.`);
+  }
+
+  if (pergunta.mode === "DECLARACAO_CLINICA") {
+    // Projeção clínica: sem opções da pessoa; o grau é a própria declaração.
+    if (input.options.length > 0) {
+      erros.push(`${pergunta.id}: declaração clínica não seleciona opções da pessoa.`);
+    }
+  } else {
+    if (input.options.length === 0 && !pergunta.allowsGuidedText) {
+      erros.push(`${pergunta.id}: nenhuma opção selecionada — silêncio não é dado.`);
+    }
+    for (const opcao of input.options) {
+      if (!(opcao in pergunta.options)) {
+        erros.push(`${pergunta.id}: "${opcao}" não é opção canônica desta pergunta.`);
+      }
+    }
+    if (!pergunta.multi && input.options.length > 1) {
+      erros.push(`${pergunta.id}: escolha única — ${input.options.length} opções recebidas.`);
+    }
+  }
+
+  if (input.guidedText && !pergunta.allowsGuidedText) {
+    erros.push(`${pergunta.id}: texto guiado só existe em P14 — nos demais, a resposta é estruturada.`);
+  }
+  if (input.guidedText && input.guidedText.trim().length > 500) {
+    erros.push(`${pergunta.id}: texto guiado passa de 500 caracteres.`);
+  }
+
+  if (input.origin === "TRADUCAO" && (!input.proposedReading || input.proposedReading.trim() === "")) {
+    erros.push(`${pergunta.id}: tradução exige a leitura proposta — "pelo que você me contou, entendi que…".`);
+  }
+  if (input.origin === "DIRETO" && input.proposedReading) {
+    erros.push(`${pergunta.id}: resposta direta não carrega leitura proposta — a fala é dela.`);
+  }
+
+  if (!NEED_DEGREES.includes(input.degree)) {
+    erros.push(`Grau desconhecido: ${input.degree}.`);
+  }
+  if (input.flexibility && input.flexibility.trim().length > 280) {
+    erros.push(`${pergunta.id}: flexibilidade passa de 280 caracteres.`);
+  }
+  if (input.flexibility && !pergunta.flexibilityQuestion && pergunta.mode !== "DECLARACAO_CLINICA") {
+    erros.push(`${pergunta.id}: este conceito não tem pergunta de flexibilidade no protocolo.`);
+  }
+
+  return erros;
+}
+
 /**
  * Progresso é contagem — "N de 28" — nunca percentual de qualidade.
  * Quem conta é quem exibe; aqui só existe o que foi respondido.
