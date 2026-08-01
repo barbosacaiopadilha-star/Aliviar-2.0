@@ -926,3 +926,237 @@ Referentes a [`CONTRATO_OPERACIONAL_DA_DECISAO.md`](experiencia/CONTRATO_OPERACI
 
 - **Consequência:** a Aliviar assume carga operacional que hoje não tem — alguém precisa ser notificado, atribuído, e efetivamente contatar ou acompanhar. **É o preço de não deixar a paciente sozinha depois de decidir**, e nenhuma promessa nova pode ser feita a ela antes que essa capacidade exista. Até lá, as frases bloqueadas em §20 do Contrato permanecem bloqueadas: **decidir a direção não autoriza prometê-la.**
 - **Revisitar quando:** Q-C1, Q-C4 e Q-C8 estiverem decididas — momento em que a reconciliação documental pode ocorrer e a modelagem de domínio pode começar; ou se a operação real mostrar que a intermediação não é sustentável na escala da Aliviar, o que exigiria nova ADR e não silêncio.
+
+## ADR-044 — Tentativa, trabalho e notificação são três coisas distintas na continuidade pós-decisão
+
+- **Data:** 2026-08-01
+- **Status:** Aprovada pelo responsável do projeto (missão "ADR-044 — Tentativas de aproximação, trabalho operacional e notificação interna"). **Decisão de modelagem; nada implementado.** Nenhuma migration, RLS, tela ou código nesta ADR.
+- **Decorre de:** [ADR-043](#adr-043--a-aliviar-intermedeia-a-transição-entre-a-decisão-da-paciente-e-o-primeiro-contato) (direção do serviço) · [`DECISOES_TECNICAS_CONTINUIDADE_POS_DECISAO.md`](architecture/DECISOES_TECNICAS_CONTINUIDADE_POS_DECISAO.md) §16, que previu esta ADR como precondição do Incremento 2.
+- **Não altera:** ADR-027 (Connection), ADR-028 (Relationship), ADR-029 (Temporary Access). **Não toca** Motor, critérios, pesos, filtros nem seleção dos três.
+
+> ### A decisão, em uma frase
+> **O fato cria trabalho; o trabalho pode gerar notificação; a notificação nunca cria o fato nem a responsabilidade.**
+
+### 1. Contexto
+
+**Fatos verificados no código e nas migrations:**
+
+| # | Fato | Onde |
+|---|---|---|
+| F1 | `connection_records` registra a decisão e, desde o Incremento 1, o **modo de contato** (`contact_mode`, nullable, sem default, sem backfill) | migration `20260801180000` |
+| F2 | O Case tem **responsável atual auditável** — `cases.responsible_id/_role`, mudado só por `transfer_case_responsibility()`, com motivo obrigatório e histórico em `case_responsibility_changes`, cuja exclusão a ADR-038 proíbe fora do descarte autorizado | migrations `202607241925*`, `20260724193459` |
+| F3 | A caixa do Concierge é **projeção**, não entidade — leitura sobre Cases e Connections, autorizada por `can_access_case` | `src/modules/connection/continuity-worklist.ts` |
+| F4 | **`approach_attempts` não existe** | busca no repositório |
+| F5 | **`team_notifications` não existe** | idem |
+| F6 | `patient_notifications` existe e é **paciente-facing por construção**: `profile_id` é a paciente destinatária, `select_own_or_admin`, `insert` restrito a `administrador`, e um *trigger* protege o conteúdo | `20260723164543` |
+| F7 | **Não há canal interno formalizado, horário operacional, SLA, escalonamento nem detecção automática de inércia** | Fase 9C.1, §1 e §6 |
+| F8 | **Temporary Access está aprovado e não implementado** — nem módulo nem migration | ADR-029; busca no repositório |
+| F9 | **A aproximação intermediada não existe**: nenhum evento de contato feito pela Aliviar; `CONTATO_INICIADO` é declaração da própria paciente | `connection/commands.ts` |
+| F10 | O Incremento 1 provou, contra banco real, que o Concierge responsável lê a Connection e **não** lê a formulação do trade-off | `tests/integration/connection-contact-mode.integration.test.ts` |
+
+**Proposta, não fato:** que silêncio não seja tratado como sucesso. É regra estabelecida na Fase 9C.1 (D-C4) e **ainda não tem mecanismo** — nada hoje distingue um Case que avançou de um que parou.
+
+### 2. Problema
+
+O que temos representa bem **uma decisão**. Não representa **um trabalho em andamento**.
+
+| O que precisa ser representado | Por que não cabe hoje |
+|---|---|
+| múltiplas tentativas de aproximação | `connection_records` é **um por Case** (índice único); uma segunda tentativa sobrescreveria a primeira |
+| tentativa falhada · nova tentativa | sem cardinalidade N, registrar a segunda **apaga a evidência da primeira** |
+| profissional indisponível | não é estado do vínculo — é desfecho **de uma tentativa** |
+| ausência de resposta | **não é fato**: é ausência dele, e distingui-la de indisponibilidade exige regra temporal que não existe |
+| ação pendente · atribuída · executada | três momentos distintos, hoje todos invisíveis |
+| quem precisa **agir** × quem precisa **saber** | o Case tem um responsável; não tem lista de quem foi avisado |
+| leitura de uma notificação | não existe notificação a ler |
+| responsabilidade pelo Case | **existe e funciona** — e é justamente o que não se pode confundir com o resto |
+
+**Por que empilhar tudo em `connection_records.status` seria incorreto** — três razões, todas estruturais:
+
+**Cardinalidade errada.** Status é um valor por linha, e há **uma linha por Case**. Tentativas são N. Um status não guarda duas.
+
+**Naturezas diferentes no mesmo campo.** `DECISAO_REGISTRADA` é um fato **da paciente**; "despachamos uma tentativa" é um fato **nosso**; "ele não respondeu" é ausência de fato **de terceiro**. Fundi-los faz o campo responder a três perguntas e a nenhuma com precisão.
+
+**Perda de evidência.** Transição sobrescreve; tentativa precisa de histórico. Registrar a terceira tentativa não pode apagar que houve duas antes — é exatamente o que a ADR-043 exige provar quando a paciente perguntar o que foi feito.
+
+### 3. Alternativas consideradas
+
+| | **A** expandir `connection_records` | **B** só `connection_events` | **C** só `approach_attempts` | **D** `approach_attempts` + `team_notifications` | **E** D + tarefa persistida | **F** reusar `patient_notifications` |
+|---|---|---|---|---|---|---|
+| **Fonte de verdade** | confusa: 3 naturezas num campo | dispersa: estado corrente vira consulta | clara p/ tentativa; trabalho derivado | **clara nas três** | clara, com um a mais | **inválida**: destinatário é paciente |
+| **Auditabilidade** | perde histórico | ótima | boa | **boa** | boa | irrelevante |
+| **Idempotência** | difícil | difícil (evento é sempre novo) | por tentativa aberta | **por tentativa e por notificação** | idem | — |
+| **Segurança / RLS** | herda a do vínculo | herda | por Case | **por Case, em ambas** | mais superfície | **risco real de vazamento** |
+| **Risco de vazamento** | baixo | baixo | baixo | baixo | médio | **alto** — uma policy mal escrita mostra à paciente texto interno |
+| **Detecção de inércia** | impossível | cara (varrer eventos) | parcial | **possível** (tentativa aberta + notificação não lida) | possível | — |
+| **Complexidade** | baixa agora, alta depois | média | baixa | **média** | **alta** | baixa |
+| **Compatibilidade** | quebra a máquina de estados | aditiva | aditiva | **aditiva** | aditiva | aditiva |
+| **Rollback** | difícil (enum vivo) | fácil | fácil | **fácil** (tabelas novas, sem consumidor legado) | fácil | fácil |
+| **Impacto transversal** | alto — *trigger*, espelho, UI, 14 suítes | médio | baixo | **baixo** | médio | baixo |
+
+**Escolhida: D.** **C** é insuficiente — sem notificação, a lacuna B-3 da Fase 9C.1 (nenhuma falha é detectada por mecanismo) permanece, e o trabalho continua dependendo de alguém lembrar de olhar. **E** foi rejeitada pela Fase 10A (NT-4) e nada mudou: nenhuma ação concorrente existe ainda, e uma entidade de tarefa criaria um segundo dono do Case.
+
+### 4. Decisão — `approach_attempts` é agregado próprio
+
+**Relação:** pertence a **Connection**, referenciando `connection_records`. **Cardinalidade 1:N** — é a razão de existir.
+
+**Conteúdo conceitual:** a Connection · o profissional · o **modo** sob o qual nasceu · o **ator** que a criou e despachou (o Concierge responsável) · momentos de criação, despacho e resposta · o desfecho · a origem da resposta (o profissional, ou o Concierge relatando).
+
+**Estados — apenas o verificável:**
+
+| Estado | Adotado? | Razão |
+|---|---|---|
+| **`CRIADA`** | ✅ | alguém a criou; é ato |
+| *pronta para envio* | ⛔ | **intenção, não fato** |
+| **`DESPACHADA`** | ✅ | nós enviamos; é ato nosso, datável |
+| *recebimento verificável* | ⛔ **como estado** | inverificável na maioria dos canais. Vira **atributo opcional**, preenchido só quando houver evidência |
+| *aguardando resposta* | ⛔ | **derivável** de `DESPACHADA` sem resposta |
+| **`RESPONDIDA`** | ✅ | com desfecho `PODE_RECEBER_CONTATO` \| `INDISPONIVEL` |
+| *disponível / indisponível* | ⛔ **como estados** | são **desfecho** da resposta, não estados da tentativa |
+| *sem resposta* | ⛔ | é **ausência**; exigiria regra temporal que não existe (§15) |
+| **`CANCELADA`** | ✅ | alguém cancelou; é ato |
+| *encerrada* | ⛔ | duplicaria `RESPONDIDA`/`CANCELADA` |
+
+**Ciclo:** `CRIADA → DESPACHADA → RESPONDIDA | CANCELADA`; `CANCELADA` também a partir de `CRIADA`.
+
+**Nova tentativa é linha nova.** Nunca reabertura da anterior — o histórico das tentativas é a evidência do que foi feito.
+
+**Auditoria:** append-only, no padrão do projeto. Nenhuma transição apaga registro anterior.
+
+**Indisponibilidade** é desfecho de tentativa. **Não altera `professional_profile_id`** e **não seleciona substituto**.
+
+**Ausência de resposta ≠ indisponibilidade.** A primeira é silêncio de terceiro; a segunda é fato declarado com origem. Confundi-las produziria a pior falha possível: declarar alguém indisponível porque não respondeu.
+
+### 5. Decisão — o trabalho operacional permanece **projeção**
+
+**Nenhuma tabela de tarefa é criada.** Ratifica NT-4 da Fase 10A.
+
+**Responsável:** sempre `cases.responsible_id/_role`. **Fonte única, e não ganha concorrente.**
+
+**Ação pendente é derivada de fatos:** decisão registrada sem transferência · Case sob minha responsabilidade sem modo definido · **tentativa aberta sem resposta** · notificação não lida. São consultas, não registros.
+
+**Deixa de estar pendente** quando o fato correspondente existe — não quando alguém marca como feito. **Não há caixa de "concluir".**
+
+**Reatribuição** é a transferência auditada; o acesso acompanha automaticamente, porque `can_access_case` lê o responsável corrente (provado no Incremento 1).
+
+**Dois donos concorrentes são impossíveis por construção:** nenhum artefato desta ADR grava responsabilidade. `approach_attempts.actor_id` diz **quem executou uma ação**, nunca **de quem é o Case**.
+
+**Inércia detectável:** a estrutura de §4 e §6 dá os marcos temporais; **a regra que os interpreta é decisão de operação** (§15).
+
+### 6. Decisão — `team_notifications` é mecanismo de atenção e evidência
+
+**O que a notificação é:** um chamado de atenção sobre trabalho que já existe, e o registro de que houve chamado.
+
+**O que a notificação não é, e nenhuma implementação pode fazê-la ser:**
+
+- **não é fonte de verdade do fato** — o fato vive em `connection_records`, `approach_attempts` ou `cases`;
+- **não cria responsabilidade** — apagar toda a tabela **não muda quem responde pelo Case**;
+- **não substitui atribuição** — atribuir é transferir, com motivo e auditoria;
+- **não prova execução** — lida ≠ feita;
+- **não desaparece com a obrigação** — o trabalho sobrevive à notificação, e o inverso não é verdade.
+
+**Conceitos definidos:** destinatário (o responsável atual; **na ausência de responsável individual, o papel**, numa caixa coletiva) · evento de origem (o fato que a motivou, sempre referenciado) · **deduplicação** por (fato, destinatário) — um mesmo fato não gera duas · leitura (quem e quando) · arquivamento (some da caixa, permanece no registro) · falha (o despacho falhou; **não é o mesmo que não lida**) · **vínculo com Case e Connection**, para a RLS ancorar no mesmo `can_access_case`.
+
+**Expiração, retenção e escalonamento ficam pendentes** — os três pressupõem regra temporal (§15).
+
+> **Assunção não é estado da notificação.** É a transferência de responsabilidade, que já existe e é auditada. Duplicá-la aqui criaria a segunda fonte que esta ADR existe para impedir.
+
+### 7. O canal permanece pendente — e isso não enfraquece a decisão
+
+**A distinção que sustenta esta ADR:** *notificação interna existe como conceito sem depender de e-mail, WhatsApp ou push.* Uma notificação **persistida na plataforma**, visível na caixa de quem responde, já é notificação — e já resolve a maior parte da lacuna B-3.
+
+Cinco momentos, deliberadamente separados:
+
+| Momento | Depende de canal? |
+|---|---|
+| **persistida na plataforma** | **não** — implementável agora |
+| **entregue por canal** | **sim** — pendente |
+| **lida** | não, se a leitura for na plataforma |
+| **assumida** | não — é a transferência |
+| **executada** | não — é o fato |
+
+**O que fica pendente de operação:** canal interno · horário · SLA · escalonamento · retenção · despacho externo.
+**A ausência de canal bloqueia apenas o despacho externo.** Não bloqueia o conceito, a estrutura, a caixa nem a leitura.
+
+### 8. Fontes de verdade
+
+| Fato | Fonte | Tipo |
+|---|---|---|
+| decisão da paciente | `connection_records` (+ `patient_curadoria_decisions`) | tabela |
+| modo de contato | `connection_records.contact_mode` | tabela |
+| responsável pelo Case | `cases.responsible_id/_role` | **tabela — única** |
+| histórico de responsabilidade | `case_responsibility_changes` | tabela |
+| **tentativa de aproximação** | **`approach_attempts`** | tabela **(nova)** |
+| histórico da tentativa | as próprias linhas + `connection_events` | tabela |
+| **trabalho pendente** | — | **PROJEÇÃO** |
+| **notificação e leitura** | **`team_notifications`** | tabela **(nova)** |
+| quem executou uma ação | `approach_attempts.actor_id` / ator do evento | tabela |
+| primeiro atendimento | `connection_records.status` terminal | tabela |
+| Relationship | `relationship_records` | tabela |
+
+**Nenhum fato tem duas fontes concorrentes.** O único derivado está marcado como projeção e não é persistido.
+
+### 9. Invariantes
+
+**I-1.** Responsabilidade não depende de notificação. **I-2.** Notificação não cria responsabilidade. **I-3.** Leitura não equivale a execução. **I-4.** Tentativa não altera a escolha da paciente. **I-5.** Indisponibilidade não seleciona outro profissional. **I-6.** Múltiplas tentativas preservam histórico; nova tentativa é linha nova. **I-7.** Silêncio não é sucesso. **I-8.** Ausência de resposta não é indisponibilidade. **I-9.** `patient_notifications` **nunca** é reutilizada para a equipe. **I-10.** Concierge sem vínculo com o Case não acessa a tentativa. **I-11.** O Case tem exatamente um responsável atual. **I-12.** Nenhuma ação operacional apaga fatos anteriores.
+
+### 10. Segurança e RLS — conceitual
+
+**Ancoragem única:** ambas as tabelas novas autorizam por **`curadoria.can_access_case`**, o helper canônico — o mesmo do Incremento 1. **Nenhum predicado novo, nenhum acesso por papel sem vínculo.**
+
+A paciente vê o que lhe diz respeito · o Concierge **responsável** vê as tentativas do seu Case · **outro Concierge não vê** · o Curador mantém exatamente o que `can_access_case` autoriza · o administrador audita · **o profissional não acessa sem mecanismo autorizado** (§11).
+
+**A formulação do trade-off não integra `approach_attempts` por padrão, e a recomendação é que nunca integre.**
+
+### 11. Relação com Temporary Access (ADR-029)
+
+Aprovada e **não implementada**. **`approach_attempts` pode existir antes dela** — registrar que tentamos não exige dar acesso a ninguém. O acesso do profissional à plataforma **depende** dela. A aproximação pode inicialmente ocorrer **fora da plataforma**, se operação e jurídico autorizarem. **Os dados transmitidos permanecem pendentes**, e nenhuma formulação íntima entra por padrão.
+
+### 12. Relação com Connection e Relationship
+
+`approach_attempts` **pertence a Connection** · Relationship continua nascendo em `PRIMEIRO_ATENDIMENTO_REALIZADO`, inalterado · **uma tentativa pode terminar sem Relationship** · **primeiro contato ≠ primeiro atendimento** · indisponibilidade encerra **a tentativa**, não necessariamente a Connection · nova tentativa **não cria nova decisão** · **Troca de Profissional continua sendo a capacidade prevista na ADR-028**, e esta ADR não a antecipa.
+
+### 13. Consequências
+
+Novo agregado `approach_attempts` · nova estrutura `team_notifications` · projeção de trabalho ampliada · novas policies ancoradas em `can_access_case` · novos eventos de tentativa · observabilidade de tentativa aberta e notificação não lida · migrations futuras aditivas · serviço de Connection ganha comandos de tentativa · **a área do Concierge ganha a tentativa dentro da seção de continuidade já criada** — sem se misturar à fila de CRM · **a área da paciente não muda neste incremento**, e nenhuma promessa nova lhe é feita · dependências de operação (§15), de privacidade (dados ao profissional) e jurídicas (consentimento para contato).
+
+### 14. Alternativas rejeitadas
+
+**Expandir `connection_records` indefinidamente** — cardinalidade errada e perda de evidência (§2).
+**Usar `patient_notifications` para a equipe** — a estrutura é paciente-facing por construção, e o custo do erro é mostrar a uma paciente texto escrito para a equipe.
+**Tratar notificação como tarefa** — some quando lida; trabalho não some quando alguém olha.
+**Tratar tarefa como responsabilidade** — criaria dois donos do Case.
+**Workflow genérico** — plataforma sem necessidade atual (NT-4).
+**Inferir "sem resposta" por tempo** — sem SLA, seria inventar prazo, que a Fase 9C.1 proibiu.
+**Fundir tentativa e Relationship** — tentativa é da Connection; Relationship nasce de outro marco.
+
+### 15. Decisões pendentes
+
+| # | Pendência | Autoridade | Bloqueia |
+|---|---|---|---|
+| P1 | canal interno de despacho | Operação | **despacho externo** |
+| P2 | horário operacional | Direção + Operação | despacho externo · escalonamento |
+| P3 | SLA | Operação | escalonamento · qualquer frase com "quando" |
+| P4 | escalonamento | Operação | detecção completa de inércia |
+| P5 | retenção de notificações | Privacidade | migration da retenção |
+| P6 | destinatário individual × papel | Operação | **migration** de `team_notifications` |
+| P7 | dados enviados ao profissional | Privacidade + Jurídico | **contato real** |
+| P8 | consentimento para contato | Jurídico | **contato real · produção** |
+| P9 | Temporary Access | Engenharia (ADR-029) | acesso do profissional |
+| P10 | ausência de resposta | Operação | encerramento automático de tentativa |
+| P11 | critérios de encerramento | Operação | interface de encerramento |
+| P12 | pausa por segurança | **Clínica** | mecanismo de bloqueio |
+| P13 | urgência | **Clínica** | qualquer orientação à paciente |
+
+**Bloqueiam migration:** P6. **Interface:** P11. **Despacho externo:** P1–P4. **Contato real:** P7, P8, P9. **Produção/publicação:** P8 — e, independentemente, a reconciliação do ledger.
+
+### 16. Incremento 2 — escopo
+
+**Inclui:** criar `approach_attempts` · registrar tentativa (criar, despachar, responder, cancelar) pelo Concierge responsável · expor a tentativa na seção de continuidade **já existente** · ampliar a projeção de trabalho pendente com "tentativa aberta sem resposta" · criar `team_notifications` **como estrutura interna, sem despacho externo**, com leitura na plataforma · policies ancoradas em `can_access_case` · testes com negativos.
+
+**Fica de fora, explicitamente:** despacho por canal externo · Temporary Access · **contato real com profissional** · dados transmitidos · SLA, prazo, escalonamento e expiração · pausa por segurança · urgência · troca de profissional · qualquer alteração na área da paciente · **qualquer promessa nova a ela**.
+
+**Condição para começar:** **P6 decidida** (destinatário individual ou papel) — é o único item que bloqueia a migration.
+
+- **Consequência:** a continuidade passa a ter três estruturas com papéis distintos, e a distinção precisa sobreviver a toda evolução futura: **o fato cria trabalho; o trabalho pode gerar notificação; a notificação nunca cria o fato nem a responsabilidade.** O preço é mais superfície para manter e proteger — e o ganho é que, pela primeira vez, será possível saber que alguém parou de olhar.
+- **Revisitar quando:** P6 for decidida (libera o Incremento 2); ou quando existir canal interno e horário, que transformam a notificação persistida em notificação entregue e permitem escalonamento; ou se a operação real mostrar que tentativa e notificação podem viver na mesma estrutura sem perder a distinção — o que esta ADR considera improvável, e exigiria nova ADR, não silêncio.
