@@ -15,7 +15,7 @@ import { conduct } from "@/modules/curadoria/cos/conduction";
 import { buildMemory, runReconstructionTest } from "@/modules/curadoria/cos/memory";
 import { buildCuratorJourney } from "@/modules/curadoria/cos/journey";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { requireRole } from "@/modules/auth/guard";
+import { requireAnyRole } from "@/modules/auth/guard";
 import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 
 export const metadata: Metadata = {
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
 
 export default async function CasoWorkspacePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const authState = await requireRole("curador_medico");
+  const authState = await requireAnyRole(["curador_medico", "administrador"]);
   const supabase = await createServerSupabaseClient();
   const record = await loadCuradoriaRecord(supabase, id);
 

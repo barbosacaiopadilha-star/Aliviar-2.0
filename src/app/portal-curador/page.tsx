@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AvailableCases } from "@/components/curadoria/available-cases";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { requireRole } from "@/modules/auth/guard";
+import { requireAnyRole } from "@/modules/auth/guard";
 import { conduct } from "@/modules/curadoria/cos/conduction";
 import { getPrimaryActionLabel, phaseHref } from "@/modules/curadoria/cos/conduction-ui";
 import { listAvailableCases, listCaseIds, loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
@@ -20,7 +20,7 @@ import { resolveGreetingFirstName } from "@/modules/auth/display-identity";
 // produtividade aparece aqui, por decisão de método (Experience §3).
 
 export default async function PainelInicialPage() {
-  const auth = await requireRole("curador_medico");
+  const auth = await requireAnyRole(["curador_medico", "administrador"]);
   const supabase = await createServerSupabaseClient();
 
   // A fila de disponíveis é lida junto: um Case sem dono não aparecia para

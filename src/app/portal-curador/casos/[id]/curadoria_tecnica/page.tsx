@@ -27,7 +27,7 @@ import { MesaWorkspace } from "@/components/curadoria/mesa-workspace";
 import { ProtocoloPessoaPanel } from "@/components/curadoria/protocolo-pessoa-panel";
 import { conduct } from "@/modules/curadoria/cos/conduction";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { requireRole } from "@/modules/auth/guard";
+import { requireAnyRole } from "@/modules/auth/guard";
 import { getAuthState } from "@/modules/auth/session";
 import {
   listOpenUpdateRequests,
@@ -82,7 +82,7 @@ export const metadata: Metadata = {
  */
 export default async function MesaCuradoriaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await requireRole("curador_medico");
+  await requireAnyRole(["curador_medico", "administrador"]);
   const supabase = await createServerSupabaseClient();
   const record = await loadCuradoriaRecord(supabase, id);
 

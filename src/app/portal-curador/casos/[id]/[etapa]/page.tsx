@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { conduct } from "@/modules/curadoria/cos/conduction";
 import { buildMemory } from "@/modules/curadoria/cos/memory";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { requireRole } from "@/modules/auth/guard";
+import { requireAnyRole } from "@/modules/auth/guard";
 import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { getReportLifecycle } from "@/modules/curadoria/relatorio-assistido";
 import {
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
 
 export default async function EtapaPage({ params }: { params: Promise<{ id: string; etapa: string }> }) {
   const { id, etapa } = await params;
-  await requireRole("curador_medico");
+  await requireAnyRole(["curador_medico", "administrador"]);
 
   const stepId = resolveJourneyStep(etapa);
   if (!stepId) {
