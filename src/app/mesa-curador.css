@@ -135,8 +135,7 @@
 .mesa-work__title {
   font-size: 0.6875rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.02em;
   color: var(--color-brand-sage);
 }
 
@@ -171,8 +170,7 @@
 .mesa-aside__title {
   font-size: 0.6875rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.02em;
   color: var(--color-brand-sage);
 }
 
@@ -322,8 +320,7 @@ button.mesa-chip:focus-visible {
 .mesa-rotulo {
   font-size: 0.6875rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.02em;
   color: var(--color-brand-sage);
 }
 
@@ -336,7 +333,6 @@ button.mesa-chip:focus-visible {
   gap: 0.375rem 0.75rem;
   font-size: 0.6875rem;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
   /* Era rgb(26 46 38 / 0.35) — 2:1 sobre o papel. "CONFERÊNCIA" e
      "CONCLUSÃO" ficavam praticamente ilegíveis, e são justamente as etapas
      que o Curador ainda vai percorrer. */
@@ -422,8 +418,7 @@ button.mesa-chip:focus-visible {
 
 .mesa-matriz__canto {
   font-size: 0.6875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.02em;
   color: var(--color-brand-sage);
 }
 
@@ -461,8 +456,7 @@ button.mesa-chip:focus-visible {
   text-align: left;
   font-size: 0.6875rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.02em;
   color: var(--color-brand-sage);
 }
 

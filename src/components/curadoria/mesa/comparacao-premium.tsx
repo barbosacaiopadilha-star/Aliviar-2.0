@@ -53,11 +53,23 @@ export type ComparacaoColuna = {
   resumo: string;
 };
 
+/**
+ * O resultado do Motor vira textura de borda — nunca cor de veredito.
+ *
+ * [CORRIGIDO — Onda 4] `LACUNA_DE_INFORMACAO` e `NAO_RELEVANTE` apontavam
+ * para `mesa-celula--sem-dado` e `--neutro`, que **não existem** no
+ * `mesa-curador.css`: as duas células saíam sem tratamento algum, visualmente
+ * indistinguíveis de uma célula qualquer. As classes corretas já estavam
+ * definidas e mortas no CSS desde então — `--insuficiente` (tracejada, para
+ * informação que faltou) e `--nao` (fio neutro, para o que não se aplica a
+ * este caso). Nenhum significado novo foi criado: a correção só liga a
+ * emissão à definição que já existia.
+ */
 const CLASSE_RESULTADO: Record<CompatibilityResult, string> = {
   ALTA_COMPATIBILIDADE: "mesa-celula--pleno",
   MEDIA_COMPATIBILIDADE: "mesa-celula--parcial",
-  LACUNA_DE_INFORMACAO: "mesa-celula--sem-dado",
-  NAO_RELEVANTE: "mesa-celula--neutro",
+  LACUNA_DE_INFORMACAO: "mesa-celula--insuficiente",
+  NAO_RELEVANTE: "mesa-celula--nao",
 };
 
 export function ComparacaoPremium({ colunas }: { colunas: ComparacaoColuna[] }) {

@@ -314,7 +314,7 @@ function DetalheNivel3({
         ) : null}
       </dl>
 
-      {message ? <p className="text-xs text-red-700" role="alert">{message}</p> : null}
+      {message ? <p className="text-xs text-error" role="alert">{message}</p> : null}
 
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="ghost" size="sm" onClick={verHistorico} disabled={pending}>
