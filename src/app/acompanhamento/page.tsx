@@ -6,6 +6,7 @@ import { CASE_STATUS_LABELS, type CaseStatus } from "@/modules/cases/types";
 
 import { PortalShellContainer } from "@/components/curadoria/portal-shell-container";
 import { EmptyJourneyState, JourneyHeader } from "@/components/journey";
+import { responsibilityLabel } from "@/modules/connection/continuity-labels";
 
 export const metadata: Metadata = {
   title: "Acompanhamento",
@@ -45,11 +46,15 @@ export default async function AcompanhamentoPage() {
       nav={[{ href: "/acompanhamento", label: "Meus acompanhamentos" }]}
     >
       <div className="space-y-6">
+        {/* Sem "o mais frio primeiro": a ordem é a de chegada, e apresentá-la
+            como fila de urgência seria inventar uma régua que não existe. */}
         <JourneyHeader
           moment="Meus acompanhamentos"
           context="Cases que já passaram pela Curadoria e seguem com você até o encerramento."
           nothingPendingLabel={
-            cases.length === 0 ? undefined : `${cases.length} em acompanhamento — o mais frio primeiro.`
+            cases.length === 0
+              ? undefined
+              : `${cases.length} ${cases.length === 1 ? "caso" : "casos"}, do mais recente ao mais antigo.`
           }
         />
 
@@ -67,13 +72,17 @@ export default async function AcompanhamentoPage() {
                 className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-surface p-4"
               >
                 <span className="min-w-0">
-                  <span className="block font-mono text-xs text-ink-muted">{c.id}</span>
                   <span className="text-sm text-ink">
-                    {CASE_STATUS_LABELS[c.status as CaseStatus] ?? c.status}
+                    Case {c.id.slice(0, 8)}
+                    <span className="ml-2 text-ink-muted">
+                      {CASE_STATUS_LABELS[c.status as CaseStatus] ?? c.status}
+                    </span>
                   </span>
                 </span>
+                {/* Quem responde vem de `cases.responsible_role`, a fonte
+                    única — nunca inferido de notificação ou tentativa. */}
                 <span className="text-xs text-ink-muted">
-                  {c.responsible_role === "concierge" ? "Sob sua responsabilidade" : "Visível por vínculo anterior"}
+                  {responsibilityLabel(c.responsible_role)}
                 </span>
               </li>
             ))}

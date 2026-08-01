@@ -134,7 +134,9 @@ function getConciergeNavGroups(role: string): NavGroup[] {
   const groups: NavGroup[] = [
     {
       label: "COA · Concierge",
-      items: [{ label: "Fila de Acompanhamentos", href: "/coa/concierge", icon: "dashboard" }],
+      // "Fila" é vocabulário de atendimento em massa: o Concierge acompanha
+      // casos com nome, não despacha uma fila.
+      items: [{ label: "Continuidade", href: "/coa/concierge", icon: "dashboard" }],
     },
     {
       label: "Operação",
