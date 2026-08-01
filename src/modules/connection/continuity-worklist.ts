@@ -33,6 +33,27 @@ export type ContinuityWorkItem = {
   decidedAt: string;
   /** Fato observável, não julgamento: ela ainda não declarou como começar. */
   awaitingContactMode: boolean;
+
+  // --- Incremento 2: tentativas e notificações -----------------------------
+  // Todos derivados de fatos. Nenhum usa tempo para inferir atraso, nenhum
+  // trata ausência de resposta como desfecho, e nenhum trata leitura como
+  // execução.
+  /** Tentativa criada e ainda não despachada — trabalho nosso, parado. */
+  attemptCreatedNotDispatched: boolean;
+  /** Despachada sem resposta registrada. NÃO é "sem resposta": é ausência de fato. */
+  attemptDispatchedWithoutResponse: boolean;
+  /** Última resposta disse indisponível — exige conversa, nunca substituição automática. */
+  unavailabilityNeedsAction: boolean;
+  /** Modo intermediado sem nenhuma tentativa aberta: ninguém está procurando ninguém. */
+  intermediatedWithoutOpenAttempt: boolean;
+  /** Quantas notificações continuam sem ninguém ter visto. */
+  unreadNotifications: number;
+  /**
+   * Alguém já viu, e o trabalho continua. Existe para tornar visível a regra
+   * da ADR-044: ler não executa.
+   */
+  readButStillPending: boolean;
+  totalAttempts: number;
 };
 
 const TERMINAL_STATUSES: readonly string[] = [
@@ -53,16 +74,85 @@ export async function loadContinuityWorklist(
 
   if (error || !data) return [];
 
+  const connectionIds = data.map((row) => row.id as string);
+  const caseIds = data.map((row) => row.case_id as string);
+
+  // Duas consultas em lote, não N+1. A RLS já recortou o que é visível — se a
+  // policy não deixar ver, não vem, e a projeção não precisa filtrar de novo.
+  const [attemptsResult, notificationsResult] = await Promise.all([
+    connectionIds.length
+      ? supabase
+          .from("approach_attempts")
+          .select("connection_id, status, response_kind")
+          .in("connection_id", connectionIds)
+      : Promise.resolve({ data: [] as Record<string, unknown>[] }),
+    caseIds.length
+      ? supabase
+          .from("team_notifications")
+          .select("case_id, read_at, archived_at")
+          .in("case_id", caseIds)
+      : Promise.resolve({ data: [] as Record<string, unknown>[] }),
+  ]);
+
+  const attemptsByConnection = new Map<string, { status: string; responseKind: string | null }[]>();
+  for (const row of attemptsResult.data ?? []) {
+    const key = row.connection_id as string;
+    const list = attemptsByConnection.get(key) ?? [];
+    list.push({
+      status: row.status as string,
+      responseKind: (row.response_kind as string | null) ?? null,
+    });
+    attemptsByConnection.set(key, list);
+  }
+
+  const notificationsByCase = new Map<string, { unread: number; anyRead: boolean }>();
+  for (const row of notificationsResult.data ?? []) {
+    const key = row.case_id as string;
+    const acc = notificationsByCase.get(key) ?? { unread: 0, anyRead: false };
+    if (row.archived_at === null) {
+      if (row.read_at === null) acc.unread += 1;
+      else acc.anyRead = true;
+    }
+    notificationsByCase.set(key, acc);
+  }
+
   return data.map((row) => {
     const contactMode = isContactMode(row.contact_mode) ? row.contact_mode : null;
+    const connectionId = row.id as string;
+    const caseId = row.case_id as string;
+    const attempts = attemptsByConnection.get(connectionId) ?? [];
+    const notifications = notificationsByCase.get(caseId) ?? { unread: 0, anyRead: false };
+
+    const attemptCreatedNotDispatched = attempts.some((a) => a.status === "CRIADA");
+    const attemptDispatchedWithoutResponse = attempts.some((a) => a.status === "DESPACHADA");
+    const unavailabilityNeedsAction = attempts.some(
+      (a) => a.status === "RESPONDIDA" && a.responseKind === "INDISPONIVEL",
+    );
+    const hasOpenAttempt = attemptCreatedNotDispatched || attemptDispatchedWithoutResponse;
+
+    const pending =
+      contactMode === null ||
+      attemptCreatedNotDispatched ||
+      attemptDispatchedWithoutResponse ||
+      unavailabilityNeedsAction;
+
     return {
-      caseId: row.case_id as string,
-      connectionId: row.id as string,
+      caseId,
+      connectionId,
       status: row.status as ConnectionStatus,
       contactMode,
       professionalProfileId: row.professional_profile_id as string,
       decidedAt: row.decided_at as string,
       awaitingContactMode: contactMode === null,
+      attemptCreatedNotDispatched,
+      attemptDispatchedWithoutResponse,
+      unavailabilityNeedsAction,
+      intermediatedWithoutOpenAttempt:
+        contactMode === "APROXIMACAO_INTERMEDIADA" && !hasOpenAttempt,
+      unreadNotifications: notifications.unread,
+      // Ler não executa: se alguém viu e o trabalho continua, isso aparece.
+      readButStillPending: notifications.anyRead && pending,
+      totalAttempts: attempts.length,
     };
   });
 }

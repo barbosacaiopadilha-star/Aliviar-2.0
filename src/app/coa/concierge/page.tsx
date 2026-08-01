@@ -3,7 +3,10 @@ import Link from "next/link";
 import { DashboardLayout, DashboardList, DashboardSection, KpiCard } from "@/components/ads";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRole } from "@/modules/auth/guard";
-import { loadContinuityWorklist } from "@/modules/connection/continuity-worklist";
+import {
+  loadContinuityWorklist,
+  type ContinuityWorkItem,
+} from "@/modules/connection/continuity-worklist";
 import type { ConnectionStatus, ContactMode } from "@/modules/connection/types";
 import { PIPELINE_STAGE_LABELS } from "@/modules/crm/pipeline";
 import { getConciergeDashboardData } from "@/modules/crm/repository";
@@ -27,6 +30,32 @@ const CONTACT_MODE_LABELS: Record<ContactMode, string> = {
   CONTATO_DIRETO_ACOMPANHADO: "ela prefere entrar em contato diretamente",
   APROXIMACAO_INTERMEDIADA: "ela pediu que a Aliviar faça a aproximação",
 };
+
+/**
+ * O que está pendente, dito como fato observável.
+ *
+ * Nenhum item usa tempo, nenhum chama ausência de resposta de desfecho, e
+ * "alguém já viu" aparece justamente para tornar visível que ler não executa.
+ */
+function pendingLabels(item: ContinuityWorkItem): string[] {
+  const labels: string[] = [];
+  if (item.awaitingContactMode) labels.push("ela ainda não disse como quer começar");
+  if (item.intermediatedWithoutOpenAttempt)
+    labels.push("ela pediu a aproximação e não há tentativa aberta");
+  if (item.attemptCreatedNotDispatched) labels.push("tentativa criada, ainda não despachada");
+  if (item.attemptDispatchedWithoutResponse)
+    labels.push("tentativa despachada, sem resposta registrada");
+  if (item.unavailabilityNeedsAction)
+    labels.push("o profissional respondeu que não está disponível");
+  if (item.unreadNotifications > 0)
+    labels.push(
+      item.unreadNotifications === 1
+        ? "1 aviso ainda não visto"
+        : `${item.unreadNotifications} avisos ainda não vistos`,
+    );
+  if (item.readButStillPending) labels.push("já visto, e o trabalho continua");
+  return labels;
+}
 
 export default async function CoaConciergeDashboardPage() {
   const state = await requireAnyRole(["administrador", "concierge"]);
@@ -107,6 +136,30 @@ export default async function CoaConciergeDashboardPage() {
                     ? "modo de contato ainda não registrado"
                     : CONTACT_MODE_LABELS[item.contactMode]}
                 </span>
+
+                {/*
+                  Trabalho pendente derivado de fatos. Nenhuma marca temporal,
+                  nenhum "atrasado", nenhum status inferido — não existe regra
+                  operacional aprovada que os defina.
+                */}
+                {pendingLabels(item).length > 0 ? (
+                  <ul className="mt-1 ml-1 space-y-0.5">
+                    {pendingLabels(item).map((label) => (
+                      <li key={label} className="text-sm text-ink">
+                        · {label}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+
+                {item.totalAttempts > 0 ? (
+                  <p className="mt-1 ml-1 text-sm text-ink-muted">
+                    · {item.totalAttempts}{" "}
+                    {item.totalAttempts === 1
+                      ? "tentativa registrada"
+                      : "tentativas registradas"}
+                  </p>
+                ) : null}
               </li>
             ))}
           </ul>
