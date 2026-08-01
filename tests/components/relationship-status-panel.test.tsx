@@ -84,7 +84,7 @@ describe("RelationshipStatusPanel — ATIVO", () => {
       />,
     );
 
-    expect(screen.getByText(/está registrado como ativo/)).toBeInTheDocument();
+    expect(screen.getByText(/está ativo/)).toBeInTheDocument();
     expect(screen.getByText(/Ana Profissional/)).toBeInTheDocument();
 
     await user.click(
@@ -131,7 +131,7 @@ describe("RelationshipStatusPanel — ATIVO", () => {
     );
     await user.click(screen.getByRole("button", { name: "Voltar" }));
 
-    expect(screen.getByText(/está registrado como ativo/)).toBeInTheDocument();
+    expect(screen.getByText(/está ativo/)).toBeInTheDocument();
     expect(closeActionMock).not.toHaveBeenCalled();
   });
 
@@ -210,7 +210,7 @@ describe("RelationshipStatusPanel — estado terminal ENCERRADO", () => {
       />,
     );
 
-    expect(screen.getByText(/registrado como encerrado/)).toBeInTheDocument();
+    expect(screen.getByText(/está encerrado, como você registrou/)).toBeInTheDocument();
     expect(screen.queryAllByRole("button")).toHaveLength(0);
     const text = document.body.textContent!.toLowerCase();
     for (const forbidden of [

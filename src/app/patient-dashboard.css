@@ -146,11 +146,12 @@
   line-height: 1.7;
 }
 
+/* Papel, não vidro: o cartão dela é superfície fosca e opaca, como a carta
+   (Sistema Visual §3 — blur de fundo e gradiente são materiais proibidos).
+   Antes esta regra contradizia o comentário da .patient-carta logo abaixo. */
 .patient-dashboard .patient-card {
   border-radius: var(--p-radius-md);
-  background: rgb(255 255 255 / 0.9);
-  backdrop-filter: blur(var(--p-blur));
-  -webkit-backdrop-filter: blur(var(--p-blur));
+  background: rgb(253 253 252 / 0.97);
   box-shadow: var(--p-elev-1);
   transition:
     box-shadow var(--p-motion-interaction) var(--p-ease),
@@ -162,32 +163,17 @@
 }
 
 .patient-dashboard .patient-card--note {
-  background: linear-gradient(145deg, rgb(255 255 255 / 0.95) 0%, rgb(250 249 246 / 0.88) 100%);
+  background: rgb(250 249 246 / 0.95);
   border-left: 3px solid rgb(90 125 106 / 0.35);
 }
 
 .patient-dashboard .patient-card--forest {
-  background: linear-gradient(
-    145deg,
-    rgb(26 46 38 / 0.97) 0%,
-    rgb(20 36 30 / 0.98) 100%
-  );
+  background: rgb(24 42 34 / 0.97);
   color: var(--patient-linen);
 }
 
-.patient-dashboard .patient-progress-track {
-  height: 0.375rem;
-  border-radius: 9999px;
-  background: rgb(26 46 38 / 0.06);
-  overflow: hidden;
-}
-
-.patient-dashboard .patient-progress-fill {
-  height: 100%;
-  border-radius: 9999px;
-  background: linear-gradient(90deg, #5a7d6a 0%, #1a2e26 100%);
-  transition: width var(--p-motion-transition) var(--p-ease);
-}
+/* .patient-progress-track/-fill removidos: CSS morto (zero usos em TSX) e
+   barra de progresso é elemento banido nas superfícies dela (R16/F2 §12). */
 
 .patient-dashboard .patient-journey-line {
   background: linear-gradient(
@@ -470,7 +456,6 @@
   }
 
   .patient-dashboard .patient-card,
-  .patient-dashboard .patient-progress-fill,
   .patient-dashboard .patient-walk__dot,
   .patient-dashboard .patient-carta {
     transition: none;

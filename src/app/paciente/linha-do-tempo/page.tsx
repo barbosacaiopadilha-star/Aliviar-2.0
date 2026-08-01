@@ -1,6 +1,3 @@
-import { CalendarCheck, FileText, Sparkles, UserCheck } from "lucide-react";
-import type { ComponentType } from "react";
-
 import type { Metadata } from "next";
 
 import { PatientCard, PatientPageHeader } from "@/components/paciente/dashboard/patient-primitives";
@@ -15,13 +12,14 @@ export const metadata: Metadata = {
 
 type TimelineEvent = {
   key: string;
-  icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
   label: string;
   date: string;
 };
 
+// Só a data: hora-a-hora é precisão de log, não de memória (Onda 1 §7 —
+// timestamps excessivos leem como rastreador).
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString("pt-BR", { dateStyle: "long", timeStyle: "short" });
+  return new Date(iso).toLocaleDateString("pt-BR", { dateStyle: "long" });
 }
 
 export default async function PatientTimelinePage() {
@@ -37,11 +35,12 @@ export default async function PatientTimelinePage() {
 
   const events: TimelineEvent[] = [];
 
+  // Momentos, não registros: cada frase descreve um fato com quem o fez —
+  // ela, ou a Aliviar — nunca um evento de sistema.
   if (profileRow?.created_at) {
     events.push({
       key: "conta-criada",
-      icon: UserCheck,
-      label: "Sua conta na Aliviar foi criada",
+      label: "Você chegou à Aliviar",
       date: profileRow.created_at as string,
     });
   }
@@ -49,8 +48,7 @@ export default async function PatientTimelinePage() {
   if (patientProfile) {
     events.push({
       key: "perfil-preenchido",
-      icon: CalendarCheck,
-      label: "Você preencheu seus dados de perfil",
+      label: "Você completou seus dados de contato",
       date: patientProfile.createdAt,
     });
   }
@@ -58,8 +56,7 @@ export default async function PatientTimelinePage() {
   for (const document of documents) {
     events.push({
       key: `documento-${document.id}`,
-      icon: FileText,
-      label: `Você enviou o documento "${document.fileName}"`,
+      label: `Você guardou aqui o documento "${document.fileName}"`,
       date: document.createdAt,
     });
   }
@@ -67,7 +64,6 @@ export default async function PatientTimelinePage() {
   for (const notification of notifications) {
     events.push({
       key: `notificacao-${notification.id}`,
-      icon: Sparkles,
       label: notification.title,
       date: notification.createdAt,
     });
@@ -82,28 +78,27 @@ export default async function PatientTimelinePage() {
         description="Tudo que já aconteceu na sua jornada com a Aliviar, até aqui."
       />
 
+      {/* A memória da continuidade: o fato em serifa (aconteceu com gente),
+          a data na margem em sem-serifa (função da casa). Nenhum ícone como
+          estado, nenhum medalhão — palavra antes de símbolo (F2 §8). */}
       <PatientCard>
-        <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">Sua jornada</h2>
+        <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
+          O que já aconteceu
+        </h2>
 
         {events.length === 0 ? (
-          <p className="patient-body mt-6 text-[var(--color-ink-muted)]">
-            Ainda não há registros aqui. Conforme sua jornada avançar, cada momento importante
+          <p className="mt-6 max-w-prose text-sm leading-relaxed text-[var(--color-ink-muted)]">
+            Ainda não há momentos guardados aqui. Conforme sua jornada avançar, cada um deles
             aparecerá neste espaço.
           </p>
         ) : (
-          <ul className="mt-6 space-y-5">
+          <ul className="mt-6 space-y-6">
             {events.map((event) => (
-              <li key={event.key} className="flex items-start gap-4">
-                <span
-                  aria-hidden="true"
-                  className="mt-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--patient-linen)] text-[var(--patient-forest)] shadow-sm"
-                >
-                  <event.icon className="size-4" aria-hidden={true} />
-                </span>
-                <div>
-                  <p className="text-[var(--patient-ink)]">{event.label}</p>
-                  <p className="mt-1 text-sm text-[var(--color-ink-muted)]">{formatDate(event.date)}</p>
-                </div>
+              <li key={event.key} className="max-w-prose">
+                <p className="text-xs text-[var(--color-ink-muted)]">{formatDate(event.date)}</p>
+                <p className="mt-1 font-serif text-base leading-relaxed text-[var(--patient-ink)]">
+                  {event.label}
+                </p>
               </li>
             ))}
           </ul>

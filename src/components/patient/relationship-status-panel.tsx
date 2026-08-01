@@ -80,15 +80,17 @@ export function RelationshipStatusPanel({
   ) : null;
 
   // Estado terminal — zero CTAs, nenhuma avaliação, nenhuma reabertura,
-  // nenhuma nova Curadoria.
+  // nenhuma nova Curadoria. A frase é fato + autoria dela, nunca jargão de
+  // registro ("registrado como encerrado" é ficha de sistema).
   if (relationship.status === "ENCERRADO") {
     return (
       <PatientCard>
         <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
-            Acompanhamento encerrado
-          </h2>
-        <p className="text-sm text-ink">
-          Este acompanhamento foi registrado como encerrado.
+          Acompanhamento encerrado
+        </h2>
+        <p className="text-sm leading-relaxed text-[var(--patient-ink)]">
+          Este acompanhamento está encerrado, como você registrou. Tudo o que aconteceu antes
+          continua aqui, no mesmo lugar.
         </p>
       </PatientCard>
     );
@@ -174,14 +176,16 @@ export function RelationshipStatusPanel({
     );
   }
 
-  // ATIVO
+  // ATIVO — continuidade, nunca conclusão: o presente tem um nome, e a casa
+  // segue aberta atrás dela.
   return (
     <PatientCard>
       <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
         Seu acompanhamento
       </h2>
-      <p className="patient-body text-[var(--patient-ink)]">
-        Seu acompanhamento com {displayName} está registrado como ativo.
+      <p className="text-sm leading-relaxed text-[var(--patient-ink)]">
+        Seu acompanhamento com {displayName} está ativo. Sua história, o Relatório e a sua
+        escolha continuam aqui, para reler quando quiser.
       </p>
       {errorBanner}
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">

@@ -78,14 +78,47 @@ export default async function PatientCuradoriaPage() {
   // depois — a casa simplesmente continua, sem celebração. O formato legado
   // (FinalCuradoriaView) recua para o fim como documento histórico quando a
   // Curadoria do Método existe; sozinho, segue sendo o conteúdo principal.
-  return (
-    <div className="pb-16">
-      {curadoria ? <CaminhosPanel curadoria={curadoria} /> : null}
+  // Depois do primeiro atendimento, o presente tem um nome só: a varanda
+  // abre a página e a Mesa recua — permanece visitável logo abaixo (nada
+  // fecha atrás dela, L5), mas as alternativas saem de cena (A_DECISAO §8).
+  const varandaPrimeiro = Boolean(relationship);
+
+  const blocoAcompanhamento =
+    caseId && options.length > 0 ? (
+      <>
+        <Limiar nome={connection ? "Seu acompanhamento" : "A decisão"} />
+        {/* Um foco perceptivo por vez: quando o Relationship existe, ele é
+            o fato principal e abre a varanda; o restante vira memória e
+            gesto possível abaixo — nunca painéis com a mesma força. */}
+        <div className="max-w-[44rem] space-y-8">
+          {relationship ? (
+            <RelationshipStatusPanel
+              caseId={caseId}
+              relationship={relationship}
+              providerPresentations={options}
+            />
+          ) : null}
+          <ConnectionChoicePanel
+            caseId={caseId}
+            providerPresentations={options}
+            connection={connection}
+          />
+          {connection ? (
+            <ContactModePanel caseId={caseId} connection={connection} />
+          ) : null}
+        </div>
+      </>
+    ) : null;
+
+  const blocoMesa = curadoria ? (
+    <>
+      {varandaPrimeiro ? <Limiar nome="A Mesa — para reler quando quiser" /> : null}
+      <CaminhosPanel curadoria={curadoria} />
 
       {/* O PDF pertence à Mesa: material de consulta — para reler com a
           família ou levar à consulta —, nunca ação principal. Link de texto
           discreto, sem competir com os três caminhos (Etapa Mesa §10). */}
-      {curadoria && delivery ? (
+      {delivery ? (
         <p className="mt-10">
           <Link
             href="/paciente/curadoria/imprimir"
@@ -95,31 +128,16 @@ export default async function PatientCuradoriaPage() {
           </Link>
         </p>
       ) : null}
+    </>
+  ) : null;
+
+  return (
+    <div className="pb-16">
+      {varandaPrimeiro ? blocoAcompanhamento : blocoMesa}
 
       {!curadoria && delivery ? <FinalCuradoriaView delivery={delivery} /> : null}
 
-      {caseId && options.length > 0 ? (
-        <>
-          <Limiar nome={connection ? "Seu acompanhamento" : "A decisão"} />
-          <div className="max-w-[44rem] space-y-8">
-            <ConnectionChoicePanel
-              caseId={caseId}
-              providerPresentations={options}
-              connection={connection}
-            />
-            {connection ? (
-              <ContactModePanel caseId={caseId} connection={connection} />
-            ) : null}
-            {relationship ? (
-              <RelationshipStatusPanel
-                caseId={caseId}
-                relationship={relationship}
-                providerPresentations={options}
-              />
-            ) : null}
-          </div>
-        </>
-      ) : null}
+      {varandaPrimeiro ? blocoMesa : blocoAcompanhamento}
 
       {curadoria && delivery ? (
         <>

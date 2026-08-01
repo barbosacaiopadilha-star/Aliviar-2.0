@@ -86,13 +86,15 @@ export function ContactModePanel({ caseId, connection }: ContactModePanelProps) 
           : "Você pode mudar isso enquanto ainda não tiver falado com a pessoa que escolheu."}
       </p>
 
-      <div className="mt-4 flex flex-col gap-3">
+      {/* Estrofes separadas por fio, nunca caixas-dentro-de-caixa: ela está
+          declarando como quer seguir, não escolhendo entre dois produtos. */}
+      <div className="mt-4 flex flex-col">
         {OPTIONS.map((option) => {
           const selected = connection.contactMode === option.value;
           return (
             <div
               key={option.value}
-              className="rounded-xl border border-[var(--color-border)] p-4"
+              className="border-t border-[var(--color-border)] py-4 first:border-t-0 first:pt-1"
             >
               <p className="text-sm font-medium text-[var(--patient-ink)]">
                 {option.label}
