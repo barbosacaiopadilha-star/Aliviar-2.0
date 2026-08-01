@@ -1116,6 +1116,23 @@ Aprovada e **não implementada**. **`approach_attempts` pode existir antes dela*
 
 `approach_attempts` **pertence a Connection** · Relationship continua nascendo em `PRIMEIRO_ATENDIMENTO_REALIZADO`, inalterado · **uma tentativa pode terminar sem Relationship** · **primeiro contato ≠ primeiro atendimento** · indisponibilidade encerra **a tentativa**, não necessariamente a Connection · nova tentativa **não cria nova decisão** · **Troca de Profissional continua sendo a capacidade prevista na ADR-028**, e esta ADR não a antecipa.
 
+### 12-A. Correção factual após o Incremento 2 — autoridade de escrita em `connection_events`
+
+*Acrescentado em 2026-08-01, depois da implementação. **Corrige um fato que esta ADR não previu; não altera nenhuma decisão.***
+
+**O que a implementação revelou:** `connection_events` tinha **uma única porta de escrita** — `connection_events_insert_own_patient`. Só a paciente inseria eventos. Esta ADR modelou os fatos da tentativa como eventos sem verificar quem poderia gravá-los.
+
+**Por que a porta única não era acidente:** os cinco tipos existentes são **declarações da paciente sobre a própria vida**, e ninguém as faz por ela.
+
+**A correção, do tamanho exato do problema:** uma segunda policy de inserção, restrita **por enumeração fechada** aos tipos operacionais da tentativa — `TENTATIVA_CRIADA`, `TENTATIVA_DESPACHADA`, `PROFISSIONAL_DISPONIVEL`, `PROFISSIONAL_INDISPONIVEL`, `TENTATIVA_CANCELADA` — exigindo ainda `actor_id = auth.uid()` e vínculo com o Case por `can_access_case`.
+
+**Permanecem exclusivos da paciente, e nenhuma cláusula da nova policy os alcança:**
+`DECISAO_REGISTRADA` · `CORRECAO_ESCOLHA` · `CONTATO_INICIADO` · `PRIMEIRO_ATENDIMENTO_REALIZADO` · `ENCERRADO_SEM_RELACIONAMENTO`.
+
+> **A enumeração é fechada.** Acrescentar qualquer tipo gravável pela equipe **exige revisão explícita**, e **uma policy genérica de inserção por acesso ao Case é proibida** — ela permitiria à equipe declarar, em nome da paciente, que ela iniciou o contato ou que foi atendida.
+
+**Invariante que isto acrescenta:** **I-13.** Os eventos autorais da paciente têm um único escritor: ela. A equipe escreve apenas os fatos que são dela — os que a Aliviar executou.
+
 ### 13. Consequências
 
 Novo agregado `approach_attempts` · nova estrutura `team_notifications` · projeção de trabalho ampliada · novas policies ancoradas em `can_access_case` · novos eventos de tentativa · observabilidade de tentativa aberta e notificação não lida · migrations futuras aditivas · serviço de Connection ganha comandos de tentativa · **a área do Concierge ganha a tentativa dentro da seção de continuidade já criada** — sem se misturar à fila de CRM · **a área da paciente não muda neste incremento**, e nenhuma promessa nova lhe é feita · dependências de operação (§15), de privacidade (dados ao profissional) e jurídicas (consentimento para contato).
