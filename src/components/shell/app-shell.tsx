@@ -75,7 +75,7 @@ function ShellNav({
       {groups.map((group) => (
         <div key={group.label}>
           {!collapsed ? (
-            <p className="mb-2 px-3 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-ink-muted">
+            <p className="mb-2 px-3 text-[0.75rem] font-semibold tracking-[0.01em] text-ink-muted">
               {group.label}
             </p>
           ) : null}
@@ -111,7 +111,7 @@ function ShellNav({
   );
 }
 
-function AppShellContent({ role, displayName, basePath, systemLabel = "Sistema Operacional", children }: AppShellProps) {
+function AppShellContent({ role, displayName, basePath, systemLabel = "Curadoria Médica", children }: AppShellProps) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -169,7 +169,7 @@ function AppShellContent({ role, displayName, basePath, systemLabel = "Sistema O
               {collapsed ? "A" : "Aliviar"}
             </p>
             {!collapsed ? (
-              <p className="mt-1 text-[0.6rem] font-medium uppercase tracking-[0.14em] text-brand-primary">
+              <p className="mt-1 text-[0.7rem] font-medium tracking-[0.02em] text-brand-primary">
                 {systemLabel}
               </p>
             ) : null}

@@ -61,7 +61,7 @@ function StatCard({
   value: Metric;
   suffix?: string;
   href?: string;
-  /** Números que precisam doer quando crescem. */
+  /** Números que pedem ação quando existem — ênfase por peso, nunca por alarme. */
   emphasis?: boolean;
 }) {
   const unavailable = value === null;
@@ -72,7 +72,7 @@ function StatCard({
       <p className="text-sm text-ink-muted">{label}</p>
       <p
         className={`mt-1 font-serif text-3xl font-semibold ${
-          unavailable ? "text-ink-muted" : alerta ? "text-error" : "text-brand-primary-deep"
+          unavailable ? "text-ink-muted" : alerta ? "text-brand-gold" : "text-brand-primary-deep"
         }`}
       >
         {formatMetric(value, suffix)}
@@ -254,7 +254,7 @@ export default async function AdminDashboardPage({
             {porPapel.map((papel) => (
               <li key={papel.slug} className="flex items-center justify-between gap-3 text-sm">
                 <span className="text-ink-muted">{papel.label}</span>
-                <span className={`tabular-nums ${papel.count === 0 ? "text-error" : "text-ink"}`}>{papel.count}</span>
+                <span className={`tabular-nums ${papel.count === 0 ? "text-brand-gold" : "text-ink"}`}>{papel.count}</span>
               </li>
             ))}
           </ul>
