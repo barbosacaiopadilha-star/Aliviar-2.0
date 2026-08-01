@@ -77,22 +77,24 @@ export async function crossCaseWithProfessionals(
   const prioridades = mapaDoCase.items.filter((item) => ativos.includes(item.subcriterionCode));
   assertSameCatalog(prioridades.map((p) => p.subcriterionCode), ativos, "Mapa de Prioridades do Case");
 
-  const leituras: ProfessionalCompatibility[] = [];
+  // Os Mapas vão em lote — são leituras independentes entre si. A ORDEM DE
+  // SAÍDA continua sendo a de entrada (`map`, não `push` condicional): o
+  // Motor não ordena por resultado, e isso não muda por carregar em paralelo.
+  const mapas = await Promise.all(
+    professionalProfileIds.map((id) => loadProfessionalMap(supabase, id)),
+  );
 
-  for (const professionalProfileId of professionalProfileIds) {
-    const mapa = await loadProfessionalMap(supabase, professionalProfileId);
-    const estados = mapa.items.filter((item) => ativos.includes(item.subcriterionCode));
+  return professionalProfileIds.map((professionalProfileId, index) => {
+    const estados = mapas[index]!.items.filter((item) => ativos.includes(item.subcriterionCode));
     assertSameCatalog(estados.map((e) => e.subcriterionCode), ativos, "Mapa do Profissional");
 
-    leituras.push({
+    return {
       professionalProfileId,
       ...crossPriorityAndProfessional({
         casePriorities: prioridades,
         professionalStates: estados,
         activeSubcriterionCodes: ativos,
       }),
-    });
-  }
-
-  return leituras;
+    };
+  });
 }

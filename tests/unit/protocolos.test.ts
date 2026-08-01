@@ -87,7 +87,10 @@ describe("Protocolo da Pessoa — P1..P16", () => {
   });
 
   it("modos e vocabulários fechados: grau tem 4 valores, reconhecimento tem 4 estados", () => {
-    expect(NEED_DEGREES).toEqual(["ESSENCIAL", "IMPORTANTE", "DESEJAVEL", "SEM_PREFERENCIA"]);
+    // PESA_MUITO, e não IMPORTANTE: `IMPORTANTE` é nível de importância do
+    // Case, e o mesmo literal nas duas escalas fazia a matriz do Motor aceitar
+    // um grau da pessoa como importância. Ver importancia-vs-grau.test.ts.
+    expect(NEED_DEGREES).toEqual(["ESSENCIAL", "PESA_MUITO", "DESEJAVEL", "SEM_PREFERENCIA"]);
     expect(ACKNOWLEDGMENT_STATES).toEqual(["PENDENTE", "RECONHECIDA", "CORRIGIDA", "RECUSADA"]);
     const diretas = PERSON_PROTOCOL.filter((p) => p.mode === "DIRETO").map((p) => p.id);
     expect(diretas).toEqual(["P1", "P3", "P11", "P13", "P15", "P16"]);

@@ -482,40 +482,7 @@ export async function loadCurrentPracticeEvidence(
   return porProfissional;
 }
 
-/**
- * O resumo que a Mesa exibe por profissional — contagens, nunca juízo.
- * "Revisão pendente" é derivado aqui: verificado cuja verificação venceu.
- */
-export type PracticeEvidenceSummary = {
-  registrados: number;
-  verificados: number;
-  declarados: number;
-  divergentes: number;
-  desatualizados: number;
-  revisaoPendente: number;
-};
-
-export function summarizePracticeEvidence(
-  rows: readonly PracticeEvidenceRecord[],
-  nowIso: string,
-): PracticeEvidenceSummary {
-  const resumo: PracticeEvidenceSummary = {
-    registrados: rows.length,
-    verificados: 0,
-    declarados: 0,
-    divergentes: 0,
-    desatualizados: 0,
-    revisaoPendente: 0,
-  };
-  for (const row of rows) {
-    if (row.status === "verificado") {
-      resumo.verificados += 1;
-      if (evidenceReviewIsDue(row.subcriterionCode, row.verifiedAt ?? row.collectedAt, nowIso)) {
-        resumo.revisaoPendente += 1;
-      }
-    } else if (row.status === "nao_verificado") resumo.declarados += 1;
-    else if (row.status === "divergente") resumo.divergentes += 1;
-    else if (row.status === "desatualizado") resumo.desatualizados += 1;
-  }
-  return resumo;
-}
+// O resumo por profissional é derivado onde é exibido (o painel da Mesa),
+// a partir da leitura corrente e de `classifyEvidenceValidity`. Não existe
+// sumarizador aqui: um resumo neste módulo só teria consumidor de teste, e
+// código que só os testes usam é código morto com álibi.

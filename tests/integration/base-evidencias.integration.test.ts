@@ -15,7 +15,6 @@ import {
   loadCurrentPracticeEvidence,
   registerEvidenceDivergence,
   registerPracticeEvidence,
-  summarizePracticeEvidence,
   verifyPracticeEvidence,
 } from "@/modules/curadoria/evidencias-pratica-repository";
 
@@ -248,16 +247,11 @@ describe("Base de Evidências de Prática (Supabase local)", () => {
     expect(canal.status).toBe("divergente");
   });
 
-  it("o resumo conta estados sem concluir nada — e a leitura corrente é uma por conceito", async () => {
+  it("a leitura corrente devolve uma linha por conceito, na versão mais alta", async () => {
     const corrente = await loadCurrentPracticeEvidence(curador.client, [alvo]);
     const rows = corrente.get(alvo)!;
     const codigos = rows.map((r) => r.subcriterionCode);
     expect(new Set(codigos).size).toBe(codigos.length);
-
-    const resumo = summarizePracticeEvidence(rows, new Date().toISOString());
-    expect(resumo.registrados).toBe(rows.length);
-    expect(resumo.divergentes).toBe(1);
-    // Nenhum campo do resumo é nota, ranking ou percentual — só contagem.
-    expect(Object.values(resumo).every((valor) => Number.isInteger(valor))).toBe(true);
+    expect(rows.filter((r) => r.status === "divergente")).toHaveLength(1);
   });
 });

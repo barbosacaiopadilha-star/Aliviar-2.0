@@ -8,6 +8,11 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRoleForAction } from "@/modules/auth/guard";
 import { revalidateCaseSurfaces } from "@/modules/cases/revalidate";
 
+import { resolveOwnProfessionalProfile } from "./escrita-operacional";
+// A escala vem do domínio — repetir os literais aqui foi como o valor antigo
+// sobreviveu à renomeação e o typecheck teve de encontrá-lo.
+import { NEED_DEGREES } from "./protocolos";
+
 import {
   acknowledgePersonNeed,
   loadProtocolDraft,
@@ -41,14 +46,7 @@ const saveDraftSchema = z.object({
 
 async function resolveOwnProfessionalProfileId(userId: string): Promise<string> {
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase
-    .from("professional_profiles")
-    .select("id")
-    .eq("profile_id", userId)
-    .maybeSingle();
-
-  if (error || !data) throw new Error("Perfil profissional não encontrado para esta conta.");
-  return data.id as string;
+  return resolveOwnProfessionalProfile(supabase, userId);
 }
 
 export async function saveOwnProtocolDraftAction(input: unknown) {
@@ -77,7 +75,7 @@ const personNeedSchema = z.object({
   caseId: z.string().uuid(),
   subcriterionCode: z.string().max(80),
   options: z.array(z.string().max(120)).max(20),
-  degree: z.enum(["ESSENCIAL", "IMPORTANTE", "DESEJAVEL", "SEM_PREFERENCIA"]),
+  degree: z.enum(NEED_DEGREES),
   flexibility: z.string().max(280).nullable(),
   guidedText: z.string().max(500).nullable(),
   origin: z.enum(["DIRETO", "TRADUCAO", "DECLARACAO_CLINICA"]),

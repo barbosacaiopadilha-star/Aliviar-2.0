@@ -36,7 +36,7 @@ function need(overrides: Partial<CaseNeedRecord> = {}): CaseNeedRecord {
     caseId: "case-1",
     subcriterionCode: "CONTINUIDADE_RETORNOS",
     options: ["RETORNO_JA_MARCADO_AO_SAIR"],
-    degree: "IMPORTANTE",
+    degree: "PESA_MUITO",
     flexibility: null,
     guidedText: null,
     origin: "TRADUCAO",

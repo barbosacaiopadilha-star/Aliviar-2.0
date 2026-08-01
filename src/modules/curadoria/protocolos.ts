@@ -25,13 +25,23 @@ import { PRACTICE_CATALOG, PRACTICE_CONCEPTS_BY_CODE, type PracticeConcept } fro
 export const PERSON_MODES = ["DIRETO", "TRADUCAO", "DECLARACAO_CLINICA"] as const;
 export type PersonMode = (typeof PERSON_MODES)[number];
 
-/** Grau declarado pela pessoa (ou traduzido). Nunca inferido. */
-export const NEED_DEGREES = ["ESSENCIAL", "IMPORTANTE", "DESEJAVEL", "SEM_PREFERENCIA"] as const;
+/**
+ * Grau declarado pela pessoa (ou traduzido). Nunca inferido.
+ *
+ * NENHUM valor daqui pode coincidir com `ImportanceLevel`: são conceitos
+ * diferentes — grau é o quanto a PESSOA disse que aquilo pesa para ela;
+ * importância é o quanto o CASE declara que o subcritério pesa, e só ela
+ * entra no Motor. `PESA_MUITO` se chama assim, e não "IMPORTANTE", porque
+ * `IMPORTANTE` é um nível de importância: com o mesmo texto nas duas escalas,
+ * a matriz do Motor aceitava um grau como se fosse importância. A guarda
+ * `importancia-vs-grau.test.ts` impede que a colisão volte.
+ */
+export const NEED_DEGREES = ["ESSENCIAL", "PESA_MUITO", "DESEJAVEL", "SEM_PREFERENCIA"] as const;
 export type NeedDegree = (typeof NEED_DEGREES)[number];
 
 export const NEED_DEGREE_LABELS: Record<NeedDegree, string> = {
   ESSENCIAL: "Essencial — sem isso o cuidado não acontece",
-  IMPORTANTE: "Importante — pesa muito, não impede",
+  PESA_MUITO: "Importante — pesa muito, não impede",
   DESEJAVEL: "Desejável — bem-vindo",
   SEM_PREFERENCIA: "Não tenho preferência",
 };

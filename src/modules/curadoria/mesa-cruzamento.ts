@@ -16,11 +16,6 @@ import {
   crossPriorityAndProfessional,
   type CompatibilityReading,
 } from "./motor-compatibilidade";
-import {
-  loadCurrentPracticeEvidence,
-  summarizePracticeEvidence,
-  type PracticeEvidenceSummary,
-} from "./evidencias-pratica-repository";
 import { loadCaseNeeds, type CaseNeedRecord } from "./protocolos-repository";
 import { isProfileAcknowledged } from "./reconhecimento-do-perfil";
 import { listCriticalDivergenceBlocklist } from "./rede-policy";
@@ -147,11 +142,15 @@ export type MesaCruzamentoView = {
    * revisão pendente), nunca juízo. É por aqui que o Curador enxerga o que
    * está vencido ou divergente antes de concluir qualquer coisa.
    */
-  evidencias: Record<string, PracticeEvidenceSummary>;
   /**
    * As necessidades do Protocolo da Pessoa — POR CASE, com origem, leitura
    * proposta e reconhecimento. Não são o Mapa de Prioridades e não alimentam
    * o Motor: são o que a pessoa disse, na forma em que disse.
+   *
+   * A leitura da Base de Evidências NÃO vive aqui: quem a carrega é a página
+   * da Mesa, uma vez só, porque precisa das linhas completas (versão, fonte,
+   * proveniência) para a superfície de verificação. Um resumo aqui seria uma
+   * segunda ida ao banco pelos mesmos dados.
    */
   necessidades: CaseNeedRecord[];
 };
@@ -321,41 +320,29 @@ export async function loadMesaCruzamento(
     importance: item.importance,
   }));
 
+  // Os Mapas dos elegíveis vão em lote: um `await` por profissional dentro do
+  // laço serializava N idas ao banco que não dependem umas das outras. Mesma
+  // leitura, mesmo resultado, mesma ordem — só sem a fila.
+  const mapas = await Promise.all(eligibleIds.map((id) => loadProfessionalMap(supabase, id)));
+
   const readings = new Map<string, CompatibilityReading>();
-  for (const id of eligibleIds) {
-    const mapa = await loadProfessionalMap(supabase, id);
+  eligibleIds.forEach((id, index) => {
     readings.set(
       id,
       crossPriorityAndProfessional({
         casePriorities,
-        professionalStates: mapa.items.map((item) => ({
+        professionalStates: mapas[index]!.items.map((item) => ({
           subcriterionCode: item.subcriterionCode,
           status: item.status,
         })),
         activeSubcriterionCodes,
       }),
     );
-  }
+  });
 
   const comparison = eligibleIds.length > 0 ? buildComparison(eligibleIds, readings, catalogo) : [];
 
-  // A Base de Evidências acompanha a Rede inteira — não só os elegíveis:
-  // evidência vencida ou divergente interessa ao Curador antes mesmo da
-  // declaração de área. Resumo por contagem; conclusão nenhuma.
-  const [evidencePorProfissional, necessidades] = await Promise.all([
-    loadCurrentPracticeEvidence(
-      supabase,
-      professionals.map((p) => p.professionalProfileId),
-    ),
-    loadCaseNeeds(supabase, caseId),
-  ]);
-  const agora = new Date().toISOString();
-  const evidencias = Object.fromEntries(
-    professionals.map((p) => [
-      p.professionalProfileId,
-      summarizePracticeEvidence(evidencePorProfissional.get(p.professionalProfileId) ?? [], agora),
-    ]),
-  );
+  const necessidades = await loadCaseNeeds(supabase, caseId);
 
   return {
     caseId,
@@ -369,7 +356,6 @@ export async function loadMesaCruzamento(
     nextStep: nextStepSentence(counts, mapaCompleto, profileAcknowledged),
     comparison,
     awaitingDeclaration,
-    evidencias,
     necessidades,
   };
 }

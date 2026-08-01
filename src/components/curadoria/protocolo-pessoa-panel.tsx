@@ -153,7 +153,7 @@ function NeedForm({
   onDone: () => void;
 }) {
   const [options, setOptions] = useState<string[]>(existing?.options ?? []);
-  const [degree, setDegree] = useState<NeedDegree>(existing?.degree ?? "IMPORTANTE");
+  const [degree, setDegree] = useState<NeedDegree>(existing?.degree ?? "PESA_MUITO");
   const [flexibility, setFlexibility] = useState(existing?.flexibility ?? "");
   const [guidedText, setGuidedText] = useState(existing?.guidedText ?? "");
   const [proposedReading, setProposedReading] = useState(existing?.proposedReading ?? "");

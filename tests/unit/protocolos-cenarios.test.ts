@@ -130,7 +130,7 @@ describe("Cenários dos Protocolos", () => {
       validatePersonNeed({
         subcriterionCode: "MODELO_COMUNICACAO",
         options: ["ALGO_ESCRITO_PARA_LEVAR"],
-        degree: "IMPORTANTE",
+        degree: "PESA_MUITO",
         flexibility: null,
         guidedText: null,
         origin: "TRADUCAO",

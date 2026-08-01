@@ -8,6 +8,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRoleForAction } from "@/modules/auth/guard";
 import { revalidateCaseSurfaces } from "@/modules/cases/revalidate";
 
+import { assertProfessionalReachableBySession } from "./escrita-operacional";
 import { SOURCE_TIERS } from "./fontes";
 import {
   loadEvidenceHistory,
@@ -112,6 +113,9 @@ export async function openEvidenceDivergenceAction(input: unknown) {
   const supabase = await createServerSupabaseClient();
   const service = createAdminSupabaseClient();
   try {
+    // Verificação positiva antes do privilégio: se a sessão de quem abre não
+    // alcança este profissional, o service role não escreve sobre ele.
+    await assertProfessionalReachableBySession(supabase, parsed.data.professionalProfileId);
     await registerEvidenceDivergence(supabase, service, {
       ...parsed.data,
       openedBy: state.user.id,
