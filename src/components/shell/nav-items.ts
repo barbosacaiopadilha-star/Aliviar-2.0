@@ -104,7 +104,7 @@ function getAtendimentoNavGroups(role: string): NavGroup[] {
   const groups: NavGroup[] = [
     {
       label: "COA · Atendimento",
-      items: [{ label: "Fila de Leads", href: "/coa/atendimento", icon: "dashboard" }],
+      items: [{ label: "Quem chegou", href: "/coa/atendimento", icon: "dashboard" }],
     },
     {
       label: "Operação",

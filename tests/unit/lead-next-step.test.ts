@@ -9,8 +9,8 @@ const COM_CASE = { qualifiedAt: "2026-07-02", patientProfileId: "p1", caseId: "c
 
 describe("próximo passo do lead", () => {
   it("percorre a jornada na ordem certa", () => {
-    expect(nextStepForLead(NOVO).action).toBe("Qualificar lead");
-    expect(nextStepForLead(QUALIFICADO).action).toBe("Converter em paciente");
+    expect(nextStepForLead(NOVO).action).toBe("Registrar o acolhimento");
+    expect(nextStepForLead(QUALIFICADO).action).toBe("Criar o acesso");
     expect(nextStepForLead(CONVERTIDO).action).toBe("Abrir atendimento");
     expect(nextStepForLead(COM_CASE).action).toBe("Encaminhar ao Curador");
   });

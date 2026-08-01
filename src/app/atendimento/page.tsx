@@ -7,7 +7,7 @@ import { listLeadsForAtendente } from "@/modules/crm/lead-repository";
 
 import { EmptyJourneyState, JourneyHeader } from "@/components/journey";
 
-export const metadata = { title: "Meus leads" };
+export const metadata = { title: "Quem chegou" };
 
 /**
  * Fila do Atendente — a home da jornada do Nível 1.
@@ -39,13 +39,13 @@ export default async function AtendimentoPage() {
   return (
     <div className="space-y-6">
       <JourneyHeader
-        moment="Meus leads"
+        moment="Quem chegou"
         context={
           leads.length === 0
             ? undefined
             : aguardando === 0
-              ? "Todos os contatos já viraram paciente."
-              : `${aguardando} ${aguardando === 1 ? "contato aguarda" : "contatos aguardam"} sua próxima ação — o primeiro da lista é o mais urgente.`
+              ? "Todas as pessoas que chegaram já têm acesso à Aliviar."
+              : `${aguardando} ${aguardando === 1 ? "pessoa aguarda" : "pessoas aguardam"} um gesto seu. A ordem é a do que falta fazer.`
         }
         nothingPendingLabel={
           leads.length > 0 && aguardando === 0
@@ -56,9 +56,9 @@ export default async function AtendimentoPage() {
 
       {leads.length === 0 ? (
         <EmptyJourneyState
-          title="Nenhum contato na fila"
+          title="Ninguém aguardando agora"
           becauseOf="Ninguém entrou em contato ainda."
-          whatWillHappen="Quando alguém escrever pelo site, WhatsApp ou indicação, o contato aparece aqui para você acolher e qualificar."
+          whatWillHappen="Quando alguém escrever pelo site, WhatsApp ou indicação, a pessoa aparece aqui para você acolher."
         />
       ) : (
         <ul className="space-y-2">

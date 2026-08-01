@@ -37,7 +37,7 @@ export default async function LeadPage({ params }: { params: Promise<{ leadId: s
         href="/atendimento"
         className="inline-flex min-h-11 items-center text-sm text-ink-muted underline-offset-4 hover:underline"
       >
-        ← Meus leads
+        ← Quem chegou
       </Link>
 
       <h1 className="font-sans text-2xl font-semibold text-ink">{lead.fullName}</h1>

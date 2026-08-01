@@ -32,7 +32,7 @@ export default async function AtendimentoLayout({ children }: Readonly<{ childre
     <PortalShellContainer
       homeHref="/atendimento"
       subtitle="Atendimento"
-      nav={[{ href: "/atendimento", label: "Meus leads" }]}
+      nav={[{ href: "/atendimento", label: "Quem chegou" }]}
     >
       {children}
     </PortalShellContainer>

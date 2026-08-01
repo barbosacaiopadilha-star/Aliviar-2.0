@@ -25,11 +25,17 @@ export type LeadStep = {
   order: number;
 };
 
+/**
+ * Os rótulos falam de uma pessoa chegando, não de um lead avançando num
+ * funil: "converter" é vocabulário de venda, e quem chega aqui está pedindo
+ * ajuda. Cada texto diz o que o gesto faz de fato — nada é suavizado a ponto
+ * de esconder a consequência.
+ */
 const STEPS: Record<LeadStepKey, LeadStep> = {
-  qualificar: { key: "qualificar", status: "Novo", action: "Qualificar lead", order: 0 },
-  converter: { key: "converter", status: "Qualificado", action: "Converter em paciente", order: 0 },
-  abrir: { key: "abrir", status: "Convertido em paciente", action: "Abrir atendimento", order: 1 },
-  encaminhar: { key: "encaminhar", status: "Case aberto", action: "Encaminhar ao Curador", order: 2 },
+  qualificar: { key: "qualificar", status: "Acabou de chegar", action: "Registrar o acolhimento", order: 0 },
+  converter: { key: "converter", status: "Acolhido", action: "Criar o acesso", order: 0 },
+  abrir: { key: "abrir", status: "Já tem acesso", action: "Abrir atendimento", order: 1 },
+  encaminhar: { key: "encaminhar", status: "Atendimento aberto", action: "Encaminhar ao Curador", order: 2 },
   concluido: { key: "concluido", status: "Com o Curador", action: "Acompanhar", order: 3 },
 };
 
@@ -47,11 +53,11 @@ export function nextStepForLead(lead: {
 }
 
 /**
- * Ordena a fila pelo que falta fazer, não pela data.
+ * Ordena pelo que falta fazer, não pela data.
  *
- * Um lead que espera qualificação há três dias importa mais que um convertido
- * hoje. Ordenar por data faria o Atendente ler a lista inteira para achar o
- * trabalho — que é justamente o que uma fila deveria evitar.
+ * Quem ainda não foi acolhido vem antes de quem já está com o Curador — não
+ * porque seja "mais urgente" (não existe régua de urgência aqui), mas porque
+ * é ali que o trabalho ainda depende do Atendente.
  */
 export function sortLeadQueue<T extends { qualifiedAt: string | null; patientProfileId: string | null; caseId?: string | null; createdAt: string }>(
   leads: readonly T[],

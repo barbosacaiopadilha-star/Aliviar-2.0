@@ -31,23 +31,26 @@ export default async function CoaAtendimentoDashboardPage() {
   return (
     <DashboardLayout
       title="Atendimento"
-      description="Fila de Leads — transformar contato em Assistido e encaminhar à Curadoria."
+      // O acolhimento das pessoas acontece em /atendimento; esta tela é o
+      // módulo de CRM que a sustenta. Dizer isso evita que as duas sejam
+      // lidas como a mesma fila (mesma fronteira aplicada ao Concierge).
+      description="Os números do módulo de CRM. Quem chegou e o que falta fazer por cada pessoa fica em Quem chegou."
       breadcrumbs={[{ label: "COA" }, { label: "Atendimento" }]}
       primaryAction={
         <Link
-          href="/admin/crm/contatos/novo"
+          href="/atendimento"
           className="inline-flex min-h-11 items-center justify-center rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
         >
-          Cadastrar Lead
+          Quem chegou
         </Link>
       }
       kpis={
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <KpiCard label="Leads novos" value={dashboard.metrics.newContactsCount} href="/admin/crm/contatos" />
+          <KpiCard label="Chegaram agora" value={dashboard.metrics.newContactsCount} href="/admin/crm/contatos" />
           <KpiCard label="Em contato" value={dashboard.metrics.inServiceCount} href="/admin/crm/funil" />
-          <KpiCard label="Aguardando resposta" value={awaitingResponse.length} href="/admin/crm/contatos" />
-          <KpiCard label="Convertidos" value={converted.length} href="/admin/crm/funil" />
-          <KpiCard label="Contratações" value={dashboard.metrics.contractedCount} href="/admin/crm/funil" />
+          <KpiCard label="Sem retorno registrado" value={awaitingResponse.length} href="/admin/crm/contatos" />
+          <KpiCard label="Com acesso criado" value={converted.length} href="/admin/crm/funil" />
+          <KpiCard label="Em acompanhamento" value={dashboard.metrics.contractedCount} href="/admin/crm/funil" />
           <KpiCard
             label="Consultas agendadas"
             value={dashboard.metrics.scheduledConsultationsCount}
@@ -58,10 +61,10 @@ export default async function CoaAtendimentoDashboardPage() {
     >
       <div className="grid gap-6 lg:grid-cols-2">
         <DashboardSection
-          title="Leads novos"
+          title="Chegaram agora"
           href="/admin/crm/contatos"
           isEmpty={dashboard.newContacts.length === 0}
-          emptyTitle="Nenhum lead novo."
+          emptyTitle="Ninguém novo chegou."
         >
           <DashboardList
             items={dashboard.newContacts.map((c) => ({
@@ -74,10 +77,10 @@ export default async function CoaAtendimentoDashboardPage() {
         </DashboardSection>
 
         <DashboardSection
-          title="Minha fila"
+          title="Comigo agora"
           href="/admin/crm/contatos"
           isEmpty={dashboard.myQueue.length === 0}
-          emptyTitle="Sua fila está vazia."
+          emptyTitle="Ninguém aguardando você."
         >
           <DashboardList
             items={dashboard.myQueue.map((c) => ({

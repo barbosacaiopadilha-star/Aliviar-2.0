@@ -175,10 +175,10 @@ export function LeadWorkspace({
             <button
               type="button"
               disabled={bloqueado}
-              onClick={() => executar(() => qualifyLeadAction({ leadId: lead.id }), "Lead qualificado.")}
+              onClick={() => executar(() => qualifyLeadAction({ leadId: lead.id }), "Acolhimento registrado.")}
               className={botao}
             >
-              {pending ? "Qualificando…" : "Qualificar lead"}
+              {pending ? "Registrando…" : "Registrar o acolhimento"}
             </button>
           </>
         ) : null}
@@ -242,7 +242,7 @@ export function LeadWorkspace({
               }
               className={botao}
             >
-              {pending ? "Convertendo…" : "Converter em paciente"}
+              {pending ? "Criando…" : "Criar o acesso"}
             </button>
 
             {duplicates.length > 0 && !duplicatasConfirmadas ? (
