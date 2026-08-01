@@ -24,6 +24,16 @@
 
 **A descoberta que simplificou tudo:** `curadoria.can_access_case(uuid)` já existe, é `security definer`, já autoriza `cases` e carrega no comentário a regra do projeto — *"Autorização do Case pela responsabilidade ATUAL. Quem já entregou o Case não continua enxergando."* **O primeiro incremento não precisa inventar autorização: precisa aplicar a que já existe a duas tabelas.**
 
+## 0.1 · Correções após a verificação prévia da Fase 10B
+
+*Três premissas deste documento estavam erradas e foram corrigidas antes da implementação. **Nenhuma decisão material de NT-1 a NT-4 foi alterada** — as três são correções factuais.*
+
+| # | Premissa errada | Correção | Onde |
+|---|---|---|---|
+| **D-1** | supunha `case_id` em `connection_events`, tornando o contrato de RLS inexecutável como escrito | a tabela tem apenas `connection_id`; a policy usa o **join canônico já vigente nela**, com **semântica de autorização idêntica**. **Nenhuma coluna é acrescentada** | §6, §18 |
+| **D-2** | supunha uma lista de Cases na área do Concierge; a área é construída sobre **CRM** e não tem lista de Cases nem de Connections | a caixa de continuidade é **seção nova**, distinta da fila de CRM, sem misturar as duas fontes de trabalho. NT-4 permanece: **nenhuma entidade de tarefa** | §18 |
+| **D-3** | não registrava o estado do ledger | migration **local apenas**; produção intocada; a divergência remota passa de 4 para 5 migrations; **reconciliação continua precondição de publicação** | §18 |
+
 ---
 
 # 1 · Recuperação de NT-1 a NT-4
@@ -192,6 +202,25 @@
 **Fundamento — o helper já existe e já codifica a regra certa.** É `security definer`, `stable`, já autoriza `cases`, e seu comentário fixa a política do projeto: *"Autorização do Case pela responsabilidade **ATUAL**. Quem já entregou o Case não continua enxergando: o histórico em `case_responsibility_changes` registra a passagem, não devolve acesso."* Seu predicado admite **administrador**, **responsável atual** e **curador designado** (vínculo histórico).
 
 **Aplicá-lo a `connection_records` e `connection_events` entrega, de uma vez:** acesso do Concierge responsável · preservação do administrador · preservação do Curador designado — coerente com A_DECISAO §7, que o mantém alcançável para dúvidas sobre o caso · **reatribuição tratada automaticamente**, porque o predicado lê o responsável corrente · **e nenhum acesso por papel isolado**.
+
+**Como cada tabela o aplica — corrigido após a verificação prévia da Fase 10B (D-1).** As duas tabelas **não** recebem o mesmo predicado, porque **`connection_events` não possui `case_id`**: sua única âncora é `connection_id`.
+
+```sql
+-- connection_records — aplicação direta
+curadoria.can_access_case(case_id)
+
+-- connection_events — join pelo padrão canônico já vigente nesta tabela
+exists (
+  select 1
+  from curadoria.connection_records cr
+  where cr.id = connection_events.connection_id
+    and curadoria.can_access_case(cr.case_id)
+)
+```
+
+**Isto preserva exatamente a mesma semântica de autorização e não cria decisão nova.** O padrão de join já é o usado pela policy vigente `connection_events_select_own_patient`; a única mudança é o predicado interno.
+
+> **`connection_events` NÃO recebe `case_id`.** Acrescentar a coluna apenas para simplificar a escrita da policy duplicaria um fato que já é derivável por chave estrangeira — criando segunda fonte de verdade para "de que Case é este evento", contra a §14.
 
 | Condição | Decisão |
 |---|---|
@@ -442,9 +471,15 @@ Fixa a semântica de `CONTATO_INICIADO` como declaração da paciente (substitui
 **Triggers:** **nenhum criado ou alterado.** `assert_connection_valid_transition` e `assert_connection_professional_in_delivery` ficam intactos.
 **Compatibilidade:** aditiva. Nenhuma linha existente muda.
 
+> **Ledger — corrigido após a verificação prévia da Fase 10B (D-3).** A migration deste incremento **pode ser criada e testada apenas no ambiente local autorizado**. **Nenhuma aplicação em produção está autorizada; nenhum push ou publicação está autorizado.**
+> Produção está hoje **4 migrations atrás** do repositório, além da deriva de nome (`20260730100000` no repositório × `20260731190334` em produção). **A nova migration aumentará temporariamente essa divergência para 5** — o que é esperado e aceito enquanto o trabalho for local.
+> **A reconciliação prevista em [`PLANO_RECONCILIACAO_LEDGER.md`](../curadoria/PLANO_RECONCILIACAO_LEDGER.md) permanece precondição obrigatória de qualquer publicação.** Nenhum reparo remoto de ledger é feito por esta fase.
+
 ## RLS
 
-**Lê:** acrescentar às policies de `connection_records` e `connection_events` o predicado `curadoria.can_access_case(case_id)` — **em adição**, nunca em substituição às policies da paciente.
+**Lê:** acrescentar policies **em adição**, nunca em substituição às da paciente.
+· `connection_records` → `curadoria.can_access_case(case_id)`, direto.
+· `connection_events` → `exists (select 1 from curadoria.connection_records cr where cr.id = connection_events.connection_id and curadoria.can_access_case(cr.case_id))`, porque **esta tabela não tem `case_id`** (§6). **Nenhuma coluna é acrescentada a ela.**
 **Insere:** **inalterado** (paciente).
 **Atualiza:** **inalterado** (paciente).
 **`patient_curadoria_decisions`:** **inalterada** — é o que mantém a formulação do trade-off invisível ao Concierge.
@@ -461,7 +496,11 @@ Fixa a semântica de `CONTATO_INICIADO` como declaração da paciente (substitui
 
 ## Concierge
 
-**Como encontra o caso:** pela caixa de trabalho derivada.
+**Como encontra o caso:** pela caixa de trabalho derivada, **numa seção nova** do painel do Concierge.
+
+> **Corrigido após a verificação prévia da Fase 10B (D-2).** A área do Concierge **existe**, mas é construída sobre o **CRM** (`crm_contacts`, `crm_tasks`, `crm_appointments`, via `getConciergeDashboardData`): **hoje ela não tem nenhuma lista de Cases ou de Connections.** A redação anterior sugeria estender uma lista que não existe.
+> **Consequência para o incremento:** a caixa de continuidade é **seção nova**, **visual e semanticamente distinta** da fila de CRM, com nome próprio. **A fila de CRM e a caixa de continuidade não são a mesma fonte de trabalho** e não podem ser somadas, misturadas num mesmo contador ou apresentadas como uma lista única — o operador precisa saber de qual origem veio cada item.
+> **E continua valendo NT-4:** nenhuma entidade de tarefa é criada neste incremento; a caixa é projeção.
 **O que enxerga:** o Connection do seu Case — profissional escolhido, estado, modo, histórico de eventos.
 **O que ainda não pode fazer:** registrar tentativa · registrar indisponibilidade · alterar escolha ou status · ler a formulação do trade-off · **e nenhuma superfície pode dizer à paciente que ele está acompanhando** enquanto não houver evidência de assunção.
 
