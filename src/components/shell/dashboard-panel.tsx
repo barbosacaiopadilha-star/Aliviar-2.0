@@ -1,25 +1,25 @@
-import { EmptyState } from "@/components/ui/empty-state";
-import { Card, CardHeader } from "@/components/ui/card";
-
-type DashboardPanelProps = {
+/**
+ * A saudação de quem trabalha nos fundos da casa.
+ *
+ * [CORRIGIDO — Onda 6] Este painel renderizava um `EmptyState` fixo —
+ * "Ainda não há informações para exibir" — **acima de conteúdo real**: em
+ * `/profissional` ele aparecia junto do Protocolo, das evidências e das
+ * declarações da própria pessoa. Um vazio que mente sobre o que existe é
+ * pior que nenhum vazio, e cada seção abaixo já sabe dizer quando está
+ * vazia. O painel voltou a ser só o que sempre foi: quem chegou e em que
+ * papel.
+ */
+export function DashboardPanel({
+  displayName,
+  roleLabel,
+}: {
   displayName: string;
   roleLabel: string;
-};
-
-export function DashboardPanel({ displayName, roleLabel }: DashboardPanelProps) {
+}) {
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <h1 className="font-sans text-2xl font-semibold text-ink">Olá, {displayName}</h1>
-          <p className="text-sm text-ink-muted">Papel atual: {roleLabel}</p>
-        </CardHeader>
-      </Card>
-
-      <EmptyState
-        title="Ainda não há informações para exibir."
-        description="Quando houver dados disponíveis para o seu perfil, eles aparecerão aqui com clareza e cuidado."
-      />
-    </div>
+    <header>
+      <h1 className="font-serif text-2xl font-normal text-ink">Olá, {displayName}</h1>
+      <p className="mt-1 text-sm text-ink-muted">Você está na Aliviar como {roleLabel}.</p>
+    </header>
   );
 }
