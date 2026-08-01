@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 
 import { PatientEmptyState } from "@/components/paciente/dashboard/patient-primitives";
 import { ConnectionChoicePanel } from "@/components/patient/connection-choice-panel";
+import { ContactModePanel } from "@/components/patient/contact-mode-panel";
 import { FinalCuradoriaView } from "@/components/patient/final-curadoria-view";
 import { RelationshipStatusPanel } from "@/components/patient/relationship-status-panel";
 import { CaminhosPanel } from "@/components/paciente/caminhos/caminhos-panel";
@@ -83,6 +84,9 @@ export default async function PatientCuradoriaPage() {
             providerPresentations={options}
             connection={connection}
           />
+          {connection ? (
+            <ContactModePanel caseId={caseId} connection={connection} />
+          ) : null}
           {relationship ? (
             <RelationshipStatusPanel
               caseId={caseId}

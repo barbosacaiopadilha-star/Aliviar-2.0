@@ -24,12 +24,34 @@ export type ConnectionStatus = (typeof CONNECTION_STATUSES)[number];
 export const RELATIONSHIP_BIRTH_STATUS: ConnectionStatus =
   "PRIMEIRO_ATENDIMENTO_REALIZADO";
 
+/**
+ * Como a paciente quer começar (Incremento 1 da Continuidade Pós-Decisão).
+ *
+ * `null` é ausência de escolha — registro legado ou modo ainda não definido.
+ * Nunca é convertido para um dos dois valores por padrão: inferir o modo
+ * afirmaria uma escolha que ninguém fez.
+ *
+ * Não é status e não altera status. Um Connection em DECISAO_REGISTRADA com
+ * ou sem modo está exatamente no mesmo estado.
+ */
+export const CONTACT_MODES = [
+  "CONTATO_DIRETO_ACOMPANHADO",
+  "APROXIMACAO_INTERMEDIADA",
+] as const;
+
+export type ContactMode = (typeof CONTACT_MODES)[number];
+
+export function isContactMode(value: unknown): value is ContactMode {
+  return typeof value === "string" && (CONTACT_MODES as readonly string[]).includes(value);
+}
+
 export const CONNECTION_EVENT_TYPES = [
   "DECISAO_REGISTRADA",
   "CORRECAO_ESCOLHA",
   "CONTATO_INICIADO",
   "PRIMEIRO_ATENDIMENTO_REALIZADO",
   "ENCERRADO_SEM_RELACIONAMENTO",
+  "MODO_CONTATO_DEFINIDO",
 ] as const;
 
 export type ConnectionEventType = (typeof CONNECTION_EVENT_TYPES)[number];
@@ -53,6 +75,8 @@ export type ConnectionRecord = {
   patientProfileId: string;
   professionalProfileId: string;
   status: ConnectionStatus;
+  /** Declarado pela paciente. `null` = legado ou ainda não definido. */
+  contactMode: ContactMode | null;
   decidedAt: string;
   createdAt: string;
   updatedAt: string;

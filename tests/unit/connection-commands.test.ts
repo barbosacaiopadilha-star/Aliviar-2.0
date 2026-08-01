@@ -41,6 +41,7 @@ function baseRecord(
     patientProfileId: PATIENT_ID,
     professionalProfileId: PROFESSIONAL_A,
     status: "DECISAO_REGISTRADA",
+    contactMode: null,
     decidedAt: T0,
     createdAt: T0,
     updatedAt: T0,

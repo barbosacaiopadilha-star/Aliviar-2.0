@@ -85,6 +85,7 @@ function buildConnection(
     patientProfileId: "patient-1",
     professionalProfileId: PROVIDER_A,
     status: "DECISAO_REGISTRADA",
+    contactMode: null,
     decidedAt: "2026-07-15T10:00:00.000Z",
     createdAt: "2026-07-15T10:00:00.000Z",
     updatedAt: "2026-07-15T10:00:00.000Z",

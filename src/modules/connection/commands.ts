@@ -16,6 +16,7 @@ import type {
   ConnectionAnchor,
   ConnectionRecord,
   ConnectionRecordDraft,
+  ContactMode,
   CreateConnectionResult,
   UpdateConnectionResult,
 } from "./types";
@@ -96,6 +97,9 @@ export function createConnection(
   const record: ConnectionRecordDraft = {
     caseId: input.caseId,
     anchor: input.anchor,
+    // Uma Connection nasce sem modo. Escolher como começar é um ato
+    // posterior e separado — e é dela.
+    contactMode: null,
     patientProfileId: input.patientProfileId,
     professionalProfileId: input.professionalProfileId,
     status: "DECISAO_REGISTRADA",
@@ -238,6 +242,62 @@ export function closeWithoutRelationship(
       eventType: "ENCERRADO_SEM_RELACIONAMENTO",
       actorId: input.actorId,
       payload: input.reason ? { reason: input.reason } : {},
+      occurredAt: input.occurredAt,
+      recordedAt: input.recordedAt,
+    },
+  };
+}
+
+export type DefineContactModeInput = {
+  requestedByPatientProfileId: string;
+  contactMode: ContactMode;
+  actorId: string;
+  occurredAt: string;
+  recordedAt: string;
+};
+
+/**
+ * DefineContactMode — a paciente declara como quer começar (Incremento 1 da
+ * Continuidade Pós-Decisão).
+ *
+ * Três propriedades que o tornam diferente dos outros comandos:
+ *
+ * 1. **Não é transição.** O status permanece exatamente o mesmo. Escolher
+ *    como começar não move a decisão para lugar nenhum.
+ * 2. **É exclusivo da paciente.** Curador, Concierge e administrador não
+ *    definem em nome dela — `assertOwner` vale aqui como nos demais.
+ * 3. **Só enquanto nenhum efeito foi produzido.** Depois de contato
+ *    declarado ou de um terminal, o modo é história e não se reescreve.
+ *
+ * Idempotência é do chamador: repetir o mesmo modo não deve produzir evento
+ * novo, e por isso este comando devolve `null` nesse caso — histórico só
+ * nasce quando houve mudança real.
+ */
+export function defineContactMode(
+  record: ConnectionRecord,
+  input: DefineContactModeInput,
+): UpdateConnectionResult | null {
+  assertOwner(record, input.requestedByPatientProfileId);
+
+  if (record.status !== "DECISAO_REGISTRADA") {
+    throw new ConnectionError({
+      code: "CONTACT_MODE_NOT_ALLOWED",
+      message:
+        "O modo de contato só pode ser definido enquanto o Connection estiver em DECISAO_REGISTRADA.",
+    });
+  }
+
+  if (record.contactMode === input.contactMode) return null;
+
+  return {
+    record: { ...record, contactMode: input.contactMode },
+    event: {
+      eventType: "MODO_CONTATO_DEFINIDO",
+      actorId: input.actorId,
+      payload: {
+        previousMode: record.contactMode,
+        contactMode: input.contactMode,
+      },
       occurredAt: input.occurredAt,
       recordedAt: input.recordedAt,
     },

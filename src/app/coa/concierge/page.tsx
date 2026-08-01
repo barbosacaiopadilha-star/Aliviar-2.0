@@ -3,6 +3,8 @@ import Link from "next/link";
 import { DashboardLayout, DashboardList, DashboardSection, KpiCard } from "@/components/ads";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRole } from "@/modules/auth/guard";
+import { loadContinuityWorklist } from "@/modules/connection/continuity-worklist";
+import type { ConnectionStatus, ContactMode } from "@/modules/connection/types";
 import { PIPELINE_STAGE_LABELS } from "@/modules/crm/pipeline";
 import { getConciergeDashboardData } from "@/modules/crm/repository";
 
@@ -12,10 +14,28 @@ function formatDateTime(iso: string): string {
   );
 }
 
+// Rótulos descritivos do fato registrado — nunca julgamento sobre a paciente
+// nem sobre o andamento.
+const CONNECTION_STATUS_LABELS: Record<ConnectionStatus, string> = {
+  DECISAO_REGISTRADA: "decisão registrada",
+  CONTATO_INICIADO: "a paciente declarou ter iniciado o contato",
+  PRIMEIRO_ATENDIMENTO_REALIZADO: "primeiro atendimento registrado",
+  ENCERRADO_SEM_RELACIONAMENTO: "encerrado sem relacionamento",
+};
+
+const CONTACT_MODE_LABELS: Record<ContactMode, string> = {
+  CONTATO_DIRETO_ACOMPANHADO: "ela prefere entrar em contato diretamente",
+  APROXIMACAO_INTERMEDIADA: "ela pediu que a Aliviar faça a aproximação",
+};
+
 export default async function CoaConciergeDashboardPage() {
   const state = await requireAnyRole(["administrador", "concierge"]);
   const supabase = await createServerSupabaseClient();
   const dashboard = await getConciergeDashboardData(supabase, state.user.id);
+  // A RLS é a autoridade: can_access_case decide o que aparece aqui. Esta
+  // página não filtra por papel nem por id — se a policy não deixar ver, não
+  // vem.
+  const continuity = await loadContinuityWorklist(supabase);
 
   return (
     <DashboardLayout
@@ -44,6 +64,55 @@ export default async function CoaConciergeDashboardPage() {
         </div>
       }
     >
+      {/*
+        Continuidade Pós-Decisão — seção deliberadamente SEPARADA das três
+        seções de CRM abaixo.
+
+        As duas não são a mesma fonte de trabalho: a fila de CRM vem de
+        crm_contacts/crm_tasks/crm_appointments; esta vem de connection_records,
+        pela responsabilidade atual do Case. Somá-las num contador único ou
+        apresentá-las como lista contínua faria o operador perder de onde veio
+        cada item — e são regimes de autorização diferentes.
+
+        É projeção de leitura (NT-4): nenhuma entidade de tarefa foi criada.
+        Não há prioridade, "atrasado" ou qualquer marca temporal, porque não
+        existe regra operacional aprovada que os defina.
+      */}
+      <section className="mb-8 rounded-xl border border-[var(--color-border)] p-5">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
+          Continuidade pós-decisão
+        </h2>
+        <p className="mt-1 text-sm text-ink">
+          Casos sob sua responsabilidade em que a paciente já decidiu. Origem
+          distinta da fila de CRM abaixo.
+        </p>
+
+        {continuity.length === 0 ? (
+          <p className="mt-4 text-sm text-ink-muted">
+            Nenhum caso sob sua responsabilidade com decisão registrada.
+          </p>
+        ) : (
+          <ul className="mt-4 divide-y divide-[var(--color-border)]">
+            {continuity.map((item) => (
+              <li key={item.connectionId} className="py-3 text-sm">
+                <span className="font-medium text-ink">
+                  Case {item.caseId.slice(0, 8)}
+                </span>
+                <span className="ml-2 text-ink-muted">
+                  {CONNECTION_STATUS_LABELS[item.status]}
+                </span>
+                <span className="ml-2 text-ink-muted">
+                  ·{" "}
+                  {item.contactMode === null
+                    ? "modo de contato ainda não registrado"
+                    : CONTACT_MODE_LABELS[item.contactMode]}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <DashboardSection
           title="Pacientes ativos"

@@ -9,16 +9,18 @@ import type { ConnectionRepository } from "./ports/connection-repository";
 import {
   CONNECTION_EVENT_TYPES,
   CONNECTION_STATUSES,
+  isContactMode,
   type ConnectionEvent,
   type ConnectionEventDraft,
   type ConnectionEventType,
   type ConnectionRecord,
   type ConnectionRecordDraft,
   type ConnectionStatus,
+  type ContactMode,
 } from "./types";
 
 const RECORD_COLUMNS =
-  "id, case_id, curadoria_report_id, final_curadoria_delivery_id, patient_profile_id, professional_profile_id, status, decided_at, created_at, updated_at";
+  "id, case_id, curadoria_report_id, final_curadoria_delivery_id, patient_profile_id, professional_profile_id, status, contact_mode, decided_at, created_at, updated_at";
 const EVENT_COLUMNS =
   "id, connection_id, event_type, actor_id, payload, occurred_at, recorded_at";
 
@@ -30,6 +32,7 @@ type ConnectionRecordRow = {
   patient_profile_id: string;
   professional_profile_id: string;
   status: string;
+  contact_mode: string | null;
   decided_at: string;
   created_at: string;
   updated_at: string;
@@ -82,6 +85,10 @@ function mapRecordRow(row: ConnectionRecordRow): ConnectionRecord {
     patientProfileId: row.patient_profile_id,
     professionalProfileId: row.professional_profile_id,
     status: row.status,
+    // `null` nunca vira um dos dois modos: ausência de escolha permanece
+    // ausência. Valor desconhecido persistido também não é adivinhado — a
+    // leitura degrada para "não definido", nunca para um padrão.
+    contactMode: isContactMode(row.contact_mode) ? row.contact_mode : null,
     decidedAt: row.decided_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -237,6 +244,50 @@ export class SupabaseConnectionRepository implements ConnectionRepository {
       throw new Error(
         "Não foi possível registrar esta alteração de Connection.",
       );
+    }
+
+    return mapRecordRow(data as ConnectionRecordRow);
+  }
+
+  /**
+   * Modo de contato + evento na mesma transação (RPC
+   * `set_connection_contact_mode`). Não é `update()` porque não é transição:
+   * o status permanece exatamente o mesmo, e reaproveitar
+   * `apply_connection_transition` obrigaria a fingir uma.
+   */
+  async setContactMode(
+    connectionId: string,
+    expectedMode: ContactMode | null,
+    newMode: ContactMode,
+    event: ConnectionEventDraft,
+  ): Promise<ConnectionRecord> {
+    const { data, error } = await this.supabase.rpc(
+      "set_connection_contact_mode",
+      {
+        p_connection_id: connectionId,
+        p_expected_mode: expectedMode,
+        p_new_mode: newMode,
+        p_actor_id: event.actorId,
+        p_occurred_at: event.occurredAt,
+        p_recorded_at: event.recordedAt,
+      },
+    );
+
+    if (error) {
+      if (error.code === "55000") {
+        throw new ConnectionError({
+          code: "CONCURRENT_CONFLICT",
+          message: "Este Connection foi alterado por outra ação simultânea.",
+        });
+      }
+      if (error.code === "23514") {
+        throw new ConnectionError({
+          code: "CONTACT_MODE_NOT_ALLOWED",
+          message:
+            "O modo de contato não pode mais ser definido para este Connection.",
+        });
+      }
+      throw new Error("Não foi possível registrar o modo de contato.");
     }
 
     return mapRecordRow(data as ConnectionRecordRow);

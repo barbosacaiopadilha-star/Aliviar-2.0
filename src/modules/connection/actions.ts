@@ -17,6 +17,7 @@ import {
   confirmFirstAppointment,
   correctChoice,
   createConnection,
+  defineContactMode,
   registerContactIntent,
   type EligibilityContext,
 } from "./commands";
@@ -27,11 +28,13 @@ import {
   confirmFirstAppointmentInputSchema,
   correctChoiceInputSchema,
   createConnectionInputSchema,
+  defineContactModeInputSchema,
   registerContactIntentInputSchema,
   type CloseWithoutRelationshipFormInput,
   type ConfirmFirstAppointmentFormInput,
   type CorrectChoiceFormInput,
   type CreateConnectionFormInput,
+  type DefineContactModeFormInput,
   type RegisterContactIntentFormInput,
 } from "./schema";
 import type { ConnectionActionResult, ConnectionRecord } from "./types";
@@ -293,6 +296,64 @@ export async function registerContactIntentAction(
     });
 
     return await persistTransition(context.repository, context.record, result);
+  } catch (error) {
+    return { success: false, error: mapErrorToMessage(error) };
+  }
+}
+
+/**
+ * A paciente declara como quer começar. Único ator autorizado: ela.
+ *
+ * Não é transição — o status não muda —, por isso não passa por
+ * `persistTransition`. Idempotente: repetir o mesmo modo devolve sucesso sem
+ * gravar evento novo, porque histórico só nasce de mudança real.
+ */
+export async function defineContactModeAction(
+  input: DefineContactModeFormInput,
+): Promise<ConnectionActionResult> {
+  const parsed = defineContactModeInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Dados inválidos.",
+    };
+  }
+
+  let authState;
+  try {
+    authState = await requireRoleForAction("paciente");
+  } catch {
+    return { success: false, error: "Não autorizado." };
+  }
+
+  const context = await loadExistingConnection(parsed.data.caseId);
+  if (context.outcome === "error") {
+    return { success: false, error: context.error };
+  }
+
+  const now = new Date().toISOString();
+  const previousMode = context.record.contactMode;
+
+  try {
+    const result = defineContactMode(context.record, {
+      requestedByPatientProfileId: authState.user.id,
+      contactMode: parsed.data.contactMode,
+      actorId: authState.user.id,
+      occurredAt: now,
+      recordedAt: now,
+    });
+
+    // Mesmo modo: nada a persistir, e isso é sucesso.
+    if (result === null) return { success: true };
+
+    await context.repository.setContactMode(
+      context.record.id,
+      previousMode,
+      parsed.data.contactMode,
+      result.event,
+    );
+
+    return { success: true };
   } catch (error) {
     return { success: false, error: mapErrorToMessage(error) };
   }

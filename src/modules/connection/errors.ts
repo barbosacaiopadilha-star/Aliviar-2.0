@@ -14,7 +14,12 @@ export type ConnectionErrorCode =
   // É um conceito de concorrência de persistência, não uma regra de negócio
   // nova — necessário para a Etapa 7 (diferenciar "conflito concorrente" de
   // "estado inválido") do PR3.
-  | "CONCURRENT_CONFLICT";
+  | "CONCURRENT_CONFLICT"
+  // Incremento 1 da Continuidade Pós-Decisão: o modo de contato é declarado
+  // pela paciente enquanto nenhum efeito foi produzido. Depois de contato
+  // declarado ou de um terminal, o modo é história — e isso não é
+  // INVALID_TRANSITION, porque definir o modo nunca foi uma transição.
+  | "CONTACT_MODE_NOT_ALLOWED";
 
 export class ConnectionError extends Error {
   readonly code: ConnectionErrorCode;

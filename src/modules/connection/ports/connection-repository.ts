@@ -12,6 +12,7 @@ import type {
   ConnectionRecord,
   ConnectionRecordDraft,
   ConnectionStatus,
+  ContactMode,
 } from "../types";
 
 export interface ConnectionRepository {
@@ -32,6 +33,16 @@ export interface ConnectionRepository {
   update(
     previousStatus: ConnectionStatus,
     record: ConnectionRecord,
+    event: ConnectionEventDraft,
+  ): Promise<ConnectionRecord>;
+  // Incremento 1 da Continuidade Pós-Decisão. Separado de `update` porque
+  // definir o modo NÃO é transição: o status não muda. `expectedMode` é a
+  // pré-condição de concorrência otimista, no mesmo espírito de
+  // `previousStatus`.
+  setContactMode(
+    connectionId: string,
+    expectedMode: ContactMode | null,
+    newMode: ContactMode,
     event: ConnectionEventDraft,
   ): Promise<ConnectionRecord>;
 }

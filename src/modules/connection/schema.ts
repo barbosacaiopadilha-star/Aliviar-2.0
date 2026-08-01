@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { CONTACT_MODES } from "./types";
+
 // Validação antecipada e amigável do lado da Server Action — a autoridade
 // final continua sendo o domínio puro (commands.ts) e o banco (PR1/PR3),
 // nunca este schema.
@@ -20,6 +22,16 @@ export const correctChoiceInputSchema = z.object({
   newProfessionalProfileId: professionalProfileIdSchema,
 });
 export type CorrectChoiceFormInput = z.infer<typeof correctChoiceInputSchema>;
+
+// Nenhum default: o schema recusa a ausência de escolha. A paciente declara
+// ou não declara — a plataforma não escolhe por ela.
+export const defineContactModeInputSchema = z.object({
+  caseId: caseIdSchema,
+  contactMode: z.enum(CONTACT_MODES),
+});
+export type DefineContactModeFormInput = z.infer<
+  typeof defineContactModeInputSchema
+>;
 
 export const registerContactIntentInputSchema = z.object({
   caseId: caseIdSchema,
