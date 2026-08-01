@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { CartaCaminho } from "@/components/paciente/caminhos/carta-caminho";
 import { ComparacaoCaminhos } from "@/components/paciente/caminhos/comparacao-caminhos";
 import { ComparacaoNaoIniciada } from "@/components/paciente/experiencia/estados-vazios";
-import { PatientCard } from "@/components/paciente/dashboard/patient-primitives";
+import { Limiar } from "@/components/paciente/experiencia/limiar";
 import type { PatientCuradoria } from "@/modules/curadoria/patient-curadoria";
 
 /**
@@ -62,19 +62,25 @@ export function CaminhosPanel({ curadoria }: { curadoria: PatientCuradoria }) {
   const todasConhecidas = curadoria.options.every((option) => conhecidas.includes(option.id));
 
   return (
-    <section className="space-y-6">
-      <PatientCard>
-        <h2 className="patient-section-title">Seus três caminhos</h2>
-        <p className="patient-body mt-2 max-w-prose text-sm text-[var(--color-ink-muted)]">
+    <section>
+      {/* O eco da Sala Particular: prosa com ar, nenhuma moldura de painel.
+          O que uma pessoa escreveu é serifa (R3); nada aqui é clicável. */}
+      <div className="max-w-[40rem] space-y-4">
+        <h2 className="font-serif text-2xl font-normal text-[var(--patient-ink)]">
+          Seus três caminhos
+        </h2>
+        <p className="max-w-prose text-sm leading-relaxed text-[var(--color-ink-muted)]">
           Preparados para o seu caso. Os três são legítimos — a ordem é de apresentação, não de
           preferência.
         </p>
         {curadoria.compositionRationale ? (
-          <p className="patient-body max-w-prose text-sm leading-relaxed text-[var(--patient-ink)]">
+          <p className="max-w-prose font-serif text-base leading-[1.65] text-[var(--patient-ink)]">
             {curadoria.compositionRationale}
           </p>
         ) : null}
-      </PatientCard>
+      </div>
+
+      <Limiar nome="A Mesa" />
 
       <div className="patient-cartas">
         {curadoria.options.map((option) => (
@@ -91,21 +97,26 @@ export function CaminhosPanel({ curadoria }: { curadoria: PatientCuradoria }) {
         ))}
       </div>
 
-      {selecionadas.length >= 2 ? (
-        <ComparacaoCaminhos options={selecionadas} />
-      ) : (
-        <ComparacaoNaoIniciada />
-      )}
+      <div className="mt-8">
+        {selecionadas.length >= 2 ? (
+          <ComparacaoCaminhos options={selecionadas} />
+        ) : (
+          <ComparacaoNaoIniciada />
+        )}
+      </div>
 
-      {/* A preparação para a escolha só aparece depois que ela conheceu os
-          três: convidar a decidir antes disso seria apressar. */}
+      {/* A porta da Decisão só aparece depois que ela conheceu os três —
+          convidar antes seria apressar. E o convite não declara suficiência:
+          quem percebe que já viu o bastante é ela (A Mesa §7; Linguagem §6).
+          Depois dele, o maior vazio da página: o espaço abaixo de uma escolha
+          fica vazio, porque preencher ali é empurrar. */}
       {todasConhecidas && !curadoria.decision ? (
-        <PatientCard variant="note">
-          <p className="patient-body max-w-prose leading-relaxed text-[var(--patient-ink)]">
-            Agora você possui as informações necessárias para decidir qual caminho faz mais sentido
-            para você. Não há pressa, e nenhum deles está pré-escolhido.
+        <div className="mt-16 max-w-prose lg:mt-24">
+          <p className="font-serif text-base leading-[1.65] text-[var(--patient-ink)]">
+            Não há pressa, e nenhum deles está pré-escolhido. Quando você quiser, a escolha está
+            logo adiante — e voltar aqui continua possível a qualquer momento.
           </p>
-        </PatientCard>
+        </div>
       ) : null}
     </section>
   );

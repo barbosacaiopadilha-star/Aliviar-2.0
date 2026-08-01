@@ -35,9 +35,11 @@ export function ComparacaoCaminhos({ options }: { options: PatientCuradoriaOptio
         Uma dimensão de cada vez, para você olhar com calma o que muda entre eles.
       </p>
 
-      {/* Seletor de dimensão: `tablist` porque é exatamente isso — um painel
-          por dimensão, navegável por teclado. */}
-      <div role="tablist" aria-label="Dimensões" className="mt-5 flex flex-wrap gap-2">
+      {/* Seletor de dimensão: semanticamente continua `tablist` (um painel
+          por dimensão, navegável por teclado), mas sem a aparência de abas —
+          tab como elemento visual é banido (Sistema Visual §12). A dimensão
+          ativa se marca por um fio sob a palavra, nunca por preenchimento. */}
+      <div role="tablist" aria-label="Dimensões" className="mt-5 flex flex-wrap gap-x-6 gap-y-2">
         {PATIENT_DIMENSIONS.map((entrada, index) => (
           <button
             key={entrada.criterion}
@@ -49,8 +51,8 @@ export function ComparacaoCaminhos({ options }: { options: PatientCuradoriaOptio
             onClick={() => setDimensaoAtiva(index)}
             className={
               index === dimensaoAtiva
-                ? "inline-flex min-h-11 items-center rounded-full bg-[var(--patient-forest)] px-4 text-sm font-medium text-[var(--patient-linen)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
-                : "inline-flex min-h-11 items-center rounded-full border border-[var(--color-border)] bg-white/70 px-4 text-sm text-[var(--color-ink-muted)] transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+                ? "inline-flex min-h-11 items-center border-b-2 border-[var(--patient-forest)] text-sm font-medium text-[var(--patient-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+                : "inline-flex min-h-11 items-center border-b-2 border-transparent text-sm text-[var(--color-ink-muted)] transition-colors hover:text-[var(--patient-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
             }
           >
             {entrada.label}

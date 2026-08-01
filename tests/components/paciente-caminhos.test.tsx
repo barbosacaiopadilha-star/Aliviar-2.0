@@ -193,7 +193,9 @@ describe("CartaCaminho — abertura no lugar, com memória", () => {
     const user = userEvent.setup();
     render(<CaminhosPanel curadoria={CURADORIA} />);
 
-    const frase = /Agora você possui as informações necessárias/;
+    // A porta da Decisão nunca declara suficiência ("agora você já tem o que
+    // precisa") — quem percebe que viu o bastante é ela (Linguagem §6/§10.3).
+    const frase = /nenhum deles está pré-escolhido/;
     expect(screen.queryByText(frase)).not.toBeInTheDocument();
 
     // Uma carta por vez, cada uma pelo próprio nome: a lista de botões se
@@ -203,7 +205,7 @@ describe("CartaCaminho — abertura no lugar, com memória", () => {
       await user.click(within(carta).getByRole("button", { name: "Conhecer este caminho" }));
     }
     expect(screen.getByText(frase)).toBeInTheDocument();
-    expect(screen.getByText(/nenhum deles está pré-escolhido/)).toBeInTheDocument();
+    expect(screen.queryByText(/informações necessárias/)).not.toBeInTheDocument();
   });
 });
 

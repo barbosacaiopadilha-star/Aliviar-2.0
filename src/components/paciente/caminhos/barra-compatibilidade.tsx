@@ -1,22 +1,32 @@
 import {
-  COMPATIBILITY_FILL,
   COMPATIBILITY_LABELS,
   type PatientDimension,
 } from "@/modules/paciente/experiencia";
 import { cn } from "@/components/ui/cn";
 
 /**
- * Barra de compatibilidade — representação visual, jamais medida.
+ * Correspondência dita em frase, com textura de linha — jamais medida.
  *
- * Dez traços em degraus fixos por estado, nunca uma barra contínua: contínuo
- * convidaria a comparar comprimento como quem compara nota, e aqui não
- * existe nota. Nenhum percentual, nenhum número — o estado vem por extenso ao
- * lado, e é ele que informa.
+ * A forma anterior (dez traços em degraus) ainda era quantidade aos olhos:
+ * dez marcas contáveis com preenchimentos diferentes são magnitude, e
+ * magnitude é nota. A gramática aprovada (Sistema Visual §11.3, Travessia
+ * §9.3) codifica correspondência por NATUREZA, nunca por quantidade: o estado
+ * vem por extenso, e sob a frase uma linha fina de textura própria —
+ * contínua, tracejada ou pontilhada. Ninguém intui que tracejado "vale menos"
+ * que contínuo, e ninguém totaliza tracejados.
  *
- * "Ainda precisamos confirmar" não preenche nada e recebe tratamento próprio:
- * vazio por falta de informação nunca deve parecer vazio por demérito. A
- * distinção é dita em texto, não só em cor (a cor é reforço).
+ * "Ainda precisamos confirmar" é linha pontilhada — presente, com outra
+ * textura: vazio por falta de informação nunca parece vazio por demérito.
+ * "Não atende" é dito apenas pela frase, sem linha e sem cor de alerta:
+ * fato, não defeito.
  */
+const TEXTURA: Record<PatientDimension["level"], string> = {
+  PLENO: "border-solid",
+  PARCIAL: "border-dashed",
+  A_CONFIRMAR: "border-dotted",
+  NAO_ATENDE: "",
+};
+
 export function BarraCompatibilidade({
   dimension,
   compact = false,
@@ -25,41 +35,24 @@ export function BarraCompatibilidade({
   /** Na comparação lado a lado, o rótulo já vem do cabeçalho da dimensão. */
   compact?: boolean;
 }) {
-  const preenchidos = COMPATIBILITY_FILL[dimension.level];
-  const aConfirmar = dimension.level === "A_CONFIRMAR";
+  const textura = TEXTURA[dimension.level];
 
   return (
-    <div className={cn("flex flex-col gap-1.5", compact ? "" : "sm:flex-row sm:items-center sm:gap-4")}>
+    <div className={cn("flex flex-col gap-1", compact ? "" : "sm:flex-row sm:items-baseline sm:gap-4")}>
       {compact ? null : (
         <span className="w-40 shrink-0 text-sm text-[var(--patient-ink)]">{dimension.label}</span>
       )}
 
-      <div className="flex items-center gap-3">
-        <span className="flex gap-[3px]" aria-hidden="true">
-          {Array.from({ length: 10 }, (_, index) => (
-            <span
-              key={index}
-              className={cn(
-                "h-2.5 w-1.5 rounded-[2px] transition-colors duration-500 ease-standard",
-                index < preenchidos ? "bg-[var(--patient-forest)]" : "bg-[rgb(26_46_38_/_0.10)]",
-                aConfirmar && "bg-[rgb(138_115_85_/_0.22)]",
-              )}
-            />
-          ))}
-        </span>
-
-        {/* O estado por extenso: quem não distingue a cor nem conta traços
-            recebe a informação inteira. */}
-        <span
-          className={cn(
-            "text-xs leading-tight",
-            aConfirmar ? "text-[var(--color-brand-gold)]" : "text-[var(--color-ink-muted)]",
-          )}
-        >
+      <span className="inline-flex flex-col self-start" aria-hidden="true">
+        <span className="text-sm leading-relaxed text-[var(--patient-ink)]">
           {COMPATIBILITY_LABELS[dimension.level]}
         </span>
-      </div>
+        {textura ? (
+          <span className={cn("mt-1 w-full border-b border-[rgb(47_58_61_/_0.4)]", textura)} />
+        ) : null}
+      </span>
 
+      {/* A informação inteira, para quem ouve em vez de ver. */}
       <span className="sr-only">
         {dimension.label}: {COMPATIBILITY_LABELS[dimension.level]}.
       </span>

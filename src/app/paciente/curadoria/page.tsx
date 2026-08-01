@@ -8,6 +8,7 @@ import { ContactModePanel } from "@/components/patient/contact-mode-panel";
 import { FinalCuradoriaView } from "@/components/patient/final-curadoria-view";
 import { RelationshipStatusPanel } from "@/components/patient/relationship-status-panel";
 import { CaminhosPanel } from "@/components/paciente/caminhos/caminhos-panel";
+import { Limiar } from "@/components/paciente/experiencia/limiar";
 import { loadPatientCuradoria } from "@/modules/curadoria/patient-curadoria";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
@@ -71,41 +72,57 @@ export default async function PatientCuradoriaPage() {
       }))
     : (delivery?.providerPresentations ?? []);
 
+  // A página é uma travessia, não uma pilha (TRAVESSIA_DA_PACIENTE.md):
+  // o eco da Sala e a Mesa vivem dentro de CaminhosPanel; a porta seguinte
+  // se chama "A decisão" enquanto ela não decidiu, e "Seu acompanhamento"
+  // depois — a casa simplesmente continua, sem celebração. O formato legado
+  // (FinalCuradoriaView) recua para o fim como documento histórico quando a
+  // Curadoria do Método existe; sozinho, segue sendo o conteúdo principal.
   return (
-    <div className="space-y-8">
+    <div className="pb-16">
       {curadoria ? <CaminhosPanel curadoria={curadoria} /> : null}
 
-      {delivery ? <FinalCuradoriaView delivery={delivery} /> : null}
+      {!curadoria && delivery ? <FinalCuradoriaView delivery={delivery} /> : null}
 
       {caseId && options.length > 0 ? (
         <>
-          <ConnectionChoicePanel
-            caseId={caseId}
-            providerPresentations={options}
-            connection={connection}
-          />
-          {connection ? (
-            <ContactModePanel caseId={caseId} connection={connection} />
-          ) : null}
-          {relationship ? (
-            <RelationshipStatusPanel
+          <Limiar nome={connection ? "Seu acompanhamento" : "A decisão"} />
+          <div className="max-w-[44rem] space-y-8">
+            <ConnectionChoicePanel
               caseId={caseId}
-              relationship={relationship}
               providerPresentations={options}
+              connection={connection}
             />
-          ) : null}
+            {connection ? (
+              <ContactModePanel caseId={caseId} connection={connection} />
+            ) : null}
+            {relationship ? (
+              <RelationshipStatusPanel
+                caseId={caseId}
+                relationship={relationship}
+                providerPresentations={options}
+              />
+            ) : null}
+          </div>
+        </>
+      ) : null}
+
+      {curadoria && delivery ? (
+        <>
+          <Limiar nome="Seu relatório anterior" />
+          <FinalCuradoriaView delivery={delivery} />
         </>
       ) : null}
 
       {delivery ? (
-        <>
+        <div className="mt-16">
           <Link
             href="/paciente/curadoria/imprimir"
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-white px-5 py-2.5 text-sm font-medium text-[var(--patient-ink)] shadow-sm transition-all hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
           >
             Baixar em PDF
           </Link>
-        </>
+        </div>
       ) : null}
     </div>
   );

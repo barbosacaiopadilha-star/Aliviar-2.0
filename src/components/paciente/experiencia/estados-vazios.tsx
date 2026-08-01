@@ -59,13 +59,15 @@ export function CaminhosAindaNaoProntos() {
 
 /** Na tela de comparação, antes de a pessoa escolher o que comparar. */
 export function ComparacaoNaoIniciada() {
+  // Uma frase com ar, sem moldura de cartão: estado vazio é frase curta com
+  // muito espaço, nunca um painel pedindo preenchimento (Sistema Visual §10).
   return (
-    <PatientCard>
+    <div className="max-w-prose">
       <h2 className="patient-section-title">Comparar caminhos</h2>
-      <p className="p-read-deep mt-3">
+      <p className="mt-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">
         Marque dois ou três caminhos acima e eles aparecem aqui lado a lado, uma dimensão de cada
         vez. Comparar é opcional — muita gente prefere ler um por um.
       </p>
-    </PatientCard>
+    </div>
   );
 }

@@ -15,10 +15,10 @@ import type { PatientCuradoriaOption } from "@/modules/curadoria/patient-curador
  * continua pertencendo à mesma página. Modal seria uma janela sobre outra
  * coisa; aqui a pessoa não sai de onde está.
  *
- * A ordem interna obedece ao Progressive Disclosure: resumo → compatibilidade
- * → o que encontramos → o que merece atenção → perguntas → narrativa
- * completa. Nada do que a Curadoria descobriu fica escondido; tudo espera a
- * vez.
+ * A ordem interna obedece ao Progressive Disclosure: resumo → como responde
+ * ao Perfil → o que encontramos → o que merece atenção → perguntas →
+ * leitura completa. Nada do que a Curadoria descobriu fica escondido; tudo
+ * espera a vez.
  *
  * O que ela nunca faz: numerar, ordenar por preferência, marcar uma como
  * destaque, ou tratar "ainda precisamos confirmar" como defeito.
@@ -66,8 +66,8 @@ export function CartaCaminho({
           </h3>
 
           {/* Nunca inventado: é a frase que o Curador escreveu no Relatório
-              sobre por que este caminho está aqui. */}
-          <p className="patient-body mt-2 max-w-prose text-sm leading-relaxed text-[var(--color-ink-muted)]">
+              sobre por que este caminho está aqui — voz humana, serifa (R3). */}
+          <p className="mt-2 max-w-prose font-serif text-sm leading-relaxed text-[var(--patient-ink)]">
             {option.justification}
           </p>
 
@@ -122,12 +122,18 @@ export function CartaCaminho({
                 </div>
               </section>
 
+              {/* O que o Curador encontrou, em frases com ar — nunca em
+                  chips: nada repetido, contável ou empilhável representa
+                  qualidade (R5), e frases não se somam num relance. */}
               {option.favorablePoints.length > 0 ? (
                 <section aria-label="O que encontramos">
                   <h4 className="patient-section-title">O que encontramos</h4>
-                  <ul className="mt-3 flex flex-wrap gap-2">
+                  <ul className="mt-3 space-y-2">
                     {option.favorablePoints.map((ponto) => (
-                      <li key={ponto} className="patient-chip patient-chip--favoravel">
+                      <li
+                        key={ponto}
+                        className="max-w-prose font-serif text-sm leading-relaxed text-[var(--patient-ink)]"
+                      >
                         {ponto}
                       </li>
                     ))}
@@ -144,7 +150,7 @@ export function CartaCaminho({
                     {option.attentionPoints.map((ponto) => (
                       <li
                         key={ponto}
-                        className="patient-body max-w-prose text-sm leading-relaxed text-[var(--patient-ink)]"
+                        className="max-w-prose font-serif text-sm leading-relaxed text-[var(--patient-ink)]"
                       >
                         {ponto}
                       </li>
@@ -156,9 +162,12 @@ export function CartaCaminho({
               {option.suggestedQuestions.length > 0 ? (
                 <section aria-label="Perguntas para a próxima conversa">
                   <h4 className="patient-section-title">Perguntas que podem ajudar na próxima conversa</h4>
-                  <ul className="mt-3 flex flex-wrap gap-2">
+                  <ul className="mt-3 space-y-2">
                     {option.suggestedQuestions.map((pergunta) => (
-                      <li key={pergunta} className="patient-chip patient-chip--pergunta">
+                      <li
+                        key={pergunta}
+                        className="max-w-prose font-serif text-sm leading-relaxed text-[var(--patient-ink)]"
+                      >
                         {pergunta}
                       </li>
                     ))}
@@ -169,7 +178,7 @@ export function CartaCaminho({
               {option.relationToWeights ? (
                 <section aria-label="A leitura completa">
                   <h4 className="patient-section-title">A leitura completa</h4>
-                  <p className="patient-body mt-3 max-w-prose text-sm leading-relaxed text-[var(--color-ink-muted)]">
+                  <p className="mt-3 max-w-prose font-serif text-sm leading-[1.65] text-[var(--patient-ink)]">
                     {option.relationToWeights}
                   </p>
                 </section>

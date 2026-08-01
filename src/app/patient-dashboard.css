@@ -366,9 +366,9 @@
   flex: 0 0 88%;
   scroll-snap-align: center;
   border-radius: var(--p-radius-lg);
-  background: rgb(255 255 255 / 0.92);
-  backdrop-filter: blur(var(--p-blur));
-  -webkit-backdrop-filter: blur(var(--p-blur));
+  /* Papel, não vidro: superfície fosca e opaca — blur de fundo é material
+     proibido (Sistema Visual §3). */
+  background: rgb(253 253 252 / 0.97);
   padding: 1.5rem;
   box-shadow: var(--p-elev-1);
   /* A carta é um objeto: borda de luz no topo, sombra embaixo. Sem a borda,
@@ -424,32 +424,6 @@
   background: rgb(255 255 255 / 0.97);
   border-color: rgb(90 125 106 / 0.2);
   box-shadow: var(--p-elev-3);
-}
-
-.patient-dashboard .patient-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  border-radius: 9999px;
-  padding: 0.375rem 0.875rem;
-  font-size: 0.8125rem;
-  line-height: 1.4;
-}
-
-.patient-dashboard .patient-chip--favoravel {
-  background: rgb(90 125 106 / 0.12);
-  color: #33513f;
-}
-
-.patient-dashboard .patient-chip--favoravel::before {
-  content: "✓";
-  font-size: 0.75rem;
-}
-
-.patient-dashboard .patient-chip--pergunta {
-  background: rgb(255 255 255 / 0.8);
-  border: 1px solid var(--color-border);
-  color: var(--color-ink-muted);
 }
 
 /* Atenção nunca escondida, nunca diminuída: mesmo peso do que oferece, com
