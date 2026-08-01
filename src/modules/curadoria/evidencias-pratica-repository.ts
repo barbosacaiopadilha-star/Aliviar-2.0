@@ -436,6 +436,95 @@ export async function listOpenUpdateRequests(
   }));
 }
 
+// ---------------------------------------------------------------------------
+// A leitura do PRÓPRIO profissional — transparência com recorte
+// ---------------------------------------------------------------------------
+
+/**
+ * O que o profissional vê de uma divergência sobre si.
+ *
+ * A policy `divergences_professional_select_own` entrega a linha inteira; a
+ * PROJEÇÃO aqui é mais estreita de propósito. Ficam de fora: `resolution`
+ * (o parecer da operação), `opened_by` e `resolved_by` (identidade de quem
+ * analisou) e as fontes consultadas. Ele precisa saber o que esclarecer —
+ * não quem falou o quê internamente. Governança é da operação.
+ */
+export type OwnDivergenceView = {
+  subcriterionCode: string;
+  /** O que a operação encontrou e precisa ser esclarecido. */
+  foundVersion: string;
+  /** O que ele havia declarado, para reconhecer do que se trata. */
+  declaredVersion: string;
+  status: string;
+  severity: string;
+  openedAt: string | null;
+};
+
+export async function loadOwnEvidenceDivergences(
+  supabase: SupabaseClient,
+  professionalProfileId: string,
+): Promise<OwnDivergenceView[]> {
+  const { data, error } = await supabase
+    .from("verification_divergences")
+    .select("subject, declared_version, found_version, status, severity, created_at")
+    .eq("professional_profile_id", professionalProfileId)
+    .eq("status", "aberta")
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(`Divergências: ${error.message}`);
+  return (data ?? []).map((row) => ({
+    subcriterionCode: row.subject as string,
+    foundVersion: row.found_version as string,
+    declaredVersion: row.declared_version as string,
+    status: row.status as string,
+    severity: row.severity as string,
+    openedAt: (row.created_at as string | null) ?? null,
+  }));
+}
+
+/**
+ * O histórico completo das próprias respostas, cronológico e determinístico.
+ *
+ * Projeção sem `verified_by` (identidade de quem verificou) e sem
+ * `verification_source` (a fonte que a operação consultou — informação
+ * protegida da apuração). Ele vê QUE foi verificado e QUANDO; por quem e
+ * contra o quê é governança.
+ */
+export type OwnEvidenceVersion = {
+  subcriterionCode: string;
+  version: number;
+  options: string[];
+  details: Record<string, unknown>;
+  conditionNote: string | null;
+  status: string;
+  collectedAt: string;
+  verifiedAt: string | null;
+};
+
+export async function loadOwnPracticeEvidence(
+  supabase: SupabaseClient,
+  professionalProfileId: string,
+): Promise<OwnEvidenceVersion[]> {
+  const { data, error } = await supabase
+    .from("practice_evidence")
+    .select("subcriterion_code, version, options, details, condition_note, status, collected_at, verified_at")
+    .eq("professional_profile_id", professionalProfileId)
+    .order("subcriterion_code")
+    .order("version", { ascending: true });
+
+  if (error) throw new Error(`Minhas evidências: ${error.message}`);
+  return (data ?? []).map((row) => ({
+    subcriterionCode: row.subcriterion_code as string,
+    version: row.version as number,
+    options: (row.options as string[]) ?? [],
+    details: (row.details as Record<string, unknown>) ?? {},
+    conditionNote: (row.condition_note as string | null) ?? null,
+    status: row.status as string,
+    collectedAt: row.collected_at as string,
+    verifiedAt: (row.verified_at as string | null) ?? null,
+  }));
+}
+
 export async function resolveUpdateRequest(
   supabase: SupabaseClient,
   params: { requestId: string; status: "atendida" | "cancelada"; resolvedBy: string },
