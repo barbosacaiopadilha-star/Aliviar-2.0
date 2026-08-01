@@ -346,7 +346,7 @@ export async function loadEvidenceDivergences(
   if (professionalProfileIds.length === 0) return [];
   const { data, error } = await supabase
     .from("verification_divergences")
-    .select("id, professional_profile_id, subject, declared_version, found_version, severity, status, resolution, opened_by, opened_at")
+    .select("id, professional_profile_id, subject, declared_version, found_version, severity, status, resolution, opened_by, created_at")
     .in("professional_profile_id", professionalProfileIds as string[]);
 
   if (error) throw new Error(`Divergências: ${error.message}`);
@@ -360,7 +360,7 @@ export async function loadEvidenceDivergences(
     status: row.status as string,
     resolution: (row.resolution as string | null) ?? null,
     openedBy: row.opened_by as string,
-    createdAt: (row.opened_at as string | null) ?? null,
+    createdAt: (row.created_at as string | null) ?? null,
   }));
 }
 
