@@ -45,7 +45,7 @@ export function PortalShell({
       {isPatient ? <PatientAmbientLayer /> : null}
       <header
         className={cn(
-          "border-b backdrop-blur-md",
+          "border-b",
           isPatient
             ? "relative z-10 border-[var(--color-border)]/60 bg-[var(--patient-linen)]/75"
             : "border-border bg-surface",

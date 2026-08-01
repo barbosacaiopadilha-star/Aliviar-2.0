@@ -29,8 +29,6 @@
   top: 0;
   z-index: 20;
   background: rgb(249 248 246 / 0.94);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--mesa-line);
 }
 
@@ -257,6 +255,12 @@ button.mesa-chip:focus-visible {
   background: var(--color-brand-primary);
 }
 
+/* O que ainda não foi percorrido: fio neutro, sem ênfase. Explícito para
+   que os três estados da linha se leiam no próprio CSS. */
+.mesa-timeline__item--ahead .mesa-timeline__bar {
+  background: rgb(26 46 38 / 0.10);
+}
+
 .mesa-timeline__item--current {
   color: var(--color-ink);
   font-weight: 600;
@@ -352,6 +356,11 @@ button.mesa-chip:focus-visible {
 .mesa-raciocinio__item--agora {
   color: var(--color-ink);
   font-weight: 700;
+}
+
+/* As etapas que ainda virão herdam o tom da lista — dito, não implícito. */
+.mesa-raciocinio__item--adiante {
+  color: var(--color-ink-muted);
 }
 
 /* Separa o raciocínio do rótulo da etapa. Empilhadas, as duas faixas em caixa

@@ -71,7 +71,7 @@ export function PatientShell({ children, userMenu }: PatientShellProps) {
         Pular para o conteúdo
       </a>
 
-      <header className="border-b border-[var(--color-border)]/60 bg-[var(--patient-linen)]/75 backdrop-blur-md print:hidden">
+      <header className="border-b border-[var(--color-border)]/60 bg-[var(--patient-linen)] print:hidden">
         <div className="mx-auto flex min-h-[4.5rem] w-full max-w-content items-center justify-between gap-4 px-4 lg:px-8">
           <Link
             href="/paciente"
@@ -99,7 +99,7 @@ export function PatientShell({ children, userMenu }: PatientShellProps) {
 
           <button
             type="button"
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-[var(--color-border)] bg-white/80 text-[var(--patient-ink)] backdrop-blur-sm transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 lg:hidden"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-[var(--color-border)] bg-white text-[var(--patient-ink)] transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 lg:hidden"
             aria-label="Abrir menu"
             onClick={() => setMenuOpen(true)}
           >

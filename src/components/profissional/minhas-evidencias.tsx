@@ -104,7 +104,7 @@ export function MinhasEvidencias({ versions, divergences }: Props) {
                 </Badge>
               </div>
 
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-ink-muted">
                 Resposta declarada em {corrente.collectedAt.slice(0, 10)}
                 {corrente.verifiedAt
                   ? ` · informação verificada em ${corrente.verifiedAt.slice(0, 10)}`
@@ -118,10 +118,10 @@ export function MinhasEvidencias({ versions, divergences }: Props) {
                     A operação identificou uma diferença entre sua declaração e uma informação
                     consultada. Revise esta resposta para mantê-la atualizada.
                   </p>
-                  <p className="mt-1 text-muted-foreground">
+                  <p className="mt-1 text-ink-muted">
                     Analisada nesta resposta: {divergencia.declaredVersion}
                   </p>
-                  <p className="text-muted-foreground">
+                  <p className="text-ink-muted">
                     A esclarecer: {divergencia.foundVersion}
                   </p>
                 </div>
@@ -179,7 +179,7 @@ function Detalhe({ code, historico }: { code: string; historico: OwnEvidenceVers
               Versão {versao.version} · declarada em {versao.collectedAt.slice(0, 10)} ·{" "}
               {STATUS_TEXTO[versao.status] ?? versao.status}
               {versao.verifiedAt ? ` · verificada em ${versao.verifiedAt.slice(0, 10)}` : ""}
-              <span className="block text-muted-foreground">{respostaDe(versao)}</span>
+              <span className="block text-ink-muted">{respostaDe(versao)}</span>
             </li>
           ))}
         </ol>

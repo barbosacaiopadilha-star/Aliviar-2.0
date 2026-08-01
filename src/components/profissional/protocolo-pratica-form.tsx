@@ -138,13 +138,13 @@ export function ProtocoloPraticaForm({ initialResponses, lastSavedAt, revisionRe
               </li>
             ))}
           </ul>
-          <p className="mt-1 text-muted-foreground">
+          <p className="mt-1 text-ink-muted">
             Responder de novo cria uma nova declaração — a anterior fica guardada no histórico.
           </p>
         </div>
       ) : null}
 
-      {message ? <p className="text-sm text-muted-foreground" role="status">{message}</p> : null}
+      {message ? <p className="text-sm text-ink-muted" role="status">{message}</p> : null}
 
       {reviewing ? (
         <ReviewPanel
@@ -313,7 +313,7 @@ function ReviewPanel({
           );
         })}
       </ul>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-ink-muted">
         Ao submeter, estas {answered.length} respostas entram como declaração sua, com sua autoria e
         a data de hoje — ainda não verificadas. A equipe pode entrar em contato para confirmar.
       </p>

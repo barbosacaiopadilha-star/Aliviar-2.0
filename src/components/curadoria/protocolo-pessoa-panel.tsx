@@ -113,7 +113,7 @@ function NeedRow({
       </div>
 
       {need ? (
-        <p className="text-muted-foreground">
+        <p className="text-ink-muted">
           {need.options.map((option) => question.options[option] ?? option).join(" · ") ||
             need.guidedText ||
             "(declaração clínica)"}

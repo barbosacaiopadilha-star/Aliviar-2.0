@@ -193,7 +193,7 @@ function AppShellContent({ role, displayName, basePath, systemLabel = "Curadoria
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-sticky-header border-b border-border bg-surface/95 backdrop-blur print:hidden">
+          <header className="sticky top-0 z-sticky-header border-b border-border bg-surface print:hidden">
             <div className="flex min-h-[4.5rem] items-center gap-3 px-4 py-3 lg:px-8">
               <IconButton label="Abrir menu" className="lg:hidden" onClick={() => setDrawerOpen(true)}>
                 <Menu className="size-5" />

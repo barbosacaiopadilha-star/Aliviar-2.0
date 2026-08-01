@@ -85,7 +85,7 @@ export function MesaEvidenciasPanel({
   const [openProfessional, setOpenProfessional] = useState<string | null>(null);
 
   if (professionals.length === 0) {
-    return <p className="text-sm text-muted-foreground">Sem profissionais na Rede deste Case.</p>;
+    return <p className="text-sm text-ink-muted">Sem profissionais na Rede deste Case.</p>;
   }
 
   return (
@@ -163,9 +163,9 @@ function ResumoNivel1({
         {pendencias > 0 ? <Badge variant="default">{`${pendencias} atualizações solicitadas`}</Badge> : null}
       </div>
       {ultima ? (
-        <p className="text-xs text-muted-foreground">Última atualização em {ultima.slice(0, 10)}.</p>
+        <p className="text-xs text-ink-muted">Última atualização em {ultima.slice(0, 10)}.</p>
       ) : (
-        <p className="text-xs text-muted-foreground">Nenhuma evidência de prática registrada ainda.</p>
+        <p className="text-xs text-ink-muted">Nenhuma evidência de prática registrada ainda.</p>
       )}
     </div>
   );
@@ -222,7 +222,7 @@ function ListaNivel2({
             </div>
 
             {registro ? (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-ink-muted">
                 v{registro.version} · fonte da declaração: {registro.source} · coletada em{" "}
                 {registro.collectedAt.slice(0, 10)}
               </p>
@@ -295,9 +295,9 @@ function DetalheNivel3({
     <div className="space-y-3 rounded border border-dashed p-2">
       {pergunta ? <p className="text-xs italic">{pergunta.id} · {pergunta.question}</p> : null}
       {frase ? <p>{frase.text}</p> : null}
-      <p className="text-xs text-muted-foreground">{operationalPhrase(registro, nowIso)}</p>
+      <p className="text-xs text-ink-muted">{operationalPhrase(registro, nowIso)}</p>
 
-      <dl className="text-xs text-muted-foreground space-y-0.5">
+      <dl className="text-xs text-ink-muted space-y-0.5">
         <div>Declarada por {registro.collectedBy.slice(0, 8)}… em {registro.collectedAt.slice(0, 10)}</div>
         {registro.conditionNote ? <div>Condição: {registro.conditionNote}</div> : null}
         {registro.observation ? <div>Observação: {registro.observation}</div> : null}
@@ -401,7 +401,7 @@ function VerifyForm({
   return (
     <fieldset className="space-y-2 rounded border p-2">
       <legend className="text-xs font-medium">Verificar esta versão (v{registro.version})</legend>
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-ink-muted">
         Você está verificando esta versão específica da informação. Uma atualização futura do
         conteúdo exigirá nova verificação.
       </p>
