@@ -60,8 +60,8 @@ export const STAGE_AMBIENCES: Record<JornadaStageId, StageAmbience> = {
   CURADORIA: {
     scene: "/scenes/cena-6-detalhe.jpg",
     tone: "TRABALHO",
-    sensation: "Equipe trabalhando",
-    message: "Nossa equipe está analisando cuidadosamente o seu caso.",
+    sensation: "Curador trabalhando",
+    message: "Seu Curador está analisando cuidadosamente o seu caso.",
     sceneDescription: "Uma mesa de trabalho sob luz focada, com documentos abertos.",
   },
   DOSSIE: {

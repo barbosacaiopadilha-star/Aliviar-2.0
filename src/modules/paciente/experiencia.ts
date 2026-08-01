@@ -108,11 +108,13 @@ export const STAGE_MESSAGES: Record<JornadaStageId, string> = {
   PERFIL_DE_PRIORIDADES:
     "Seu Perfil está sendo construído junto com o Curador. A Curadoria só começa quando você o reconhecer como seu.",
   CURADORIA:
-    "Nossa equipe está comparando profissionais que respondam às prioridades que você definiu.",
+    "Seu Curador está comparando profissionais que respondam às prioridades que você definiu.",
   DOSSIE: "Sua Curadoria está pronta. Agora você conhecerá os três caminhos selecionados.",
   REUNIAO: "Vamos conversar sobre os três caminhos — a apresentação é sempre uma conversa, nunca um anexo.",
+  // Nunca declarar suficiência ("agora você possui as informações
+  // necessárias") — quem percebe que viu o bastante é ela (Linguagem §6/§10.3).
   ESCOLHA:
-    "Agora você possui as informações necessárias para decidir qual caminho faz mais sentido para você. A escolha é sua, no seu tempo.",
+    "Os três caminhos estão com você. A escolha é sua, no seu tempo — e nenhum vem pré-escolhido.",
   ACOMPANHAMENTO: "O Concierge assumiu o acompanhamento do seu caso.",
 };
 

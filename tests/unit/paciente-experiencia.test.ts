@@ -102,10 +102,12 @@ describe("Mensagem principal — uma por etapa, sempre sobre a história", () =>
 
   it("as frases-chave da experiência estão nas etapas certas", () => {
     expect(mensagemPrincipal("CURADORIA")).toBe(
-      "Nossa equipe está comparando profissionais que respondam às prioridades que você definiu.",
+      "Seu Curador está comparando profissionais que respondam às prioridades que você definiu.",
     );
     expect(mensagemPrincipal("DOSSIE")).toContain("Sua Curadoria está pronta");
-    expect(mensagemPrincipal("ESCOLHA")).toContain("decidir qual caminho faz mais sentido para você");
+    // A mensagem da escolha nunca declara suficiência (Linguagem §10.3) —
+    // fixa-se a autoria dela e a ausência de pressa, não um veredito nosso.
+    expect(mensagemPrincipal("ESCOLHA")).toContain("A escolha é sua, no seu tempo");
     expect(mensagemPrincipal("ACOMPANHAMENTO")).toBe("O Concierge assumiu o acompanhamento do seu caso.");
   });
 

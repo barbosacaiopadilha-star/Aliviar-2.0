@@ -310,21 +310,12 @@
   color: var(--color-brand-sage);
 }
 
-/* A etapa atual tem um pulso lento e contido: sinal de que algo acontece
-   agora, nunca um alerta piscando. */
+/* A etapa atual se marca por presença, não por movimento: nada na casa se
+   move sozinho (Sistema Visual §9 — nenhuma animação que se repita sem
+   interação). A marca é mais alta e mais escura; o corpo a encontra parada. */
 .patient-dashboard .patient-walk__step--current .patient-walk__dot {
   background: var(--patient-forest);
-  animation: patient-pulse 3.2s var(--p-ease) infinite;
-}
-
-@keyframes patient-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.55;
-  }
+  height: 0.375rem;
 }
 
 .patient-dashboard .patient-walk__label {
@@ -453,25 +444,12 @@
    O carregamento tem o desenho do conteúdo que vai chegar: quando ele chega,
    nada salta de lugar. Pulso longo e suave; sem flash.
 --------------------------------------------------------------------------- */
+/* A espera tem forma e rótulo, nunca pulso: skeleton que cintila é ansiedade
+   fabricada (Sistema Visual §9/R16 — a espera é dita em palavras; o
+   aria-label de cada bloco é quem fala). */
 .patient-dashboard .p-skeleton {
   border-radius: var(--p-radius-sm);
-  background: linear-gradient(
-    100deg,
-    rgb(26 46 38 / 0.05) 30%,
-    rgb(26 46 38 / 0.09) 50%,
-    rgb(26 46 38 / 0.05) 70%
-  );
-  background-size: 220% 100%;
-  animation: patient-shimmer 1.9s var(--p-ease) infinite;
-}
-
-@keyframes patient-shimmer {
-  from {
-    background-position: 140% 0;
-  }
-  to {
-    background-position: -40% 0;
-  }
+  background: rgb(26 46 38 / 0.07);
 }
 
 @media (prefers-reduced-motion: reduce) {

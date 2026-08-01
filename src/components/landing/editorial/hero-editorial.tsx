@@ -37,15 +37,19 @@ export function HeroEditorial({ videoSrc, videoPoster }: HeroEditorialProps = {}
             <br />
             Você não precisa tomá-la sozinho.
           </h1>
+          {/* Sem "o médico certo para você": prometer o certo é prometer
+              resultado, e a Fachada nunca promete mais do que o interior
+              entrega (L14; Linguagem §6 — família de "ideal"). A decisão é
+              dela; a companhia é nossa. */}
           <p className="landing-body mx-auto mt-8 max-w-2xl text-lg text-[var(--color-ink-muted)]">
-            Com você em cada etapa — da sua história até a escolha do médico certo para você.
+            Com você em cada etapa — da sua história até uma decisão que é sua.
           </p>
           <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <LinkButton href="/sua-historia" variant="primary" className="w-full sm:w-auto">
               Contar minha história
             </LinkButton>
             <LinkButton href="/login" variant="secondary" className="w-full sm:w-auto">
-              Acessar minha Jornada
+              Entrar na minha Jornada
             </LinkButton>
           </div>
         </div>

@@ -117,10 +117,22 @@ export default async function PacienteHomePage() {
         greeting={saudacao}
       />
 
-      <JourneyWalk stages={walkStages} currentDetail={currentStage?.description} />
+      <JourneyWalk
+        stages={walkStages}
+        currentDetail={currentStage?.description}
+        curatorName={jornada.curatorName}
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {perfil && record ? <ProfileCard perfil={perfil} caseId={record.caseId} /> : null}
+        {perfil && record ? (
+          <ProfileCard
+            perfil={perfil}
+            caseId={record.caseId}
+            observations={record.prioridades.observations}
+            validatedAt={record.validacao?.validatedAt ?? null}
+            curatorName={jornada.curatorName}
+          />
+        ) : null}
 
         <CuradoriaCard
           message={mensagemPrincipal(jornada.currentStage)}

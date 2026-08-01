@@ -33,7 +33,7 @@ describe("AmbientHero — responde visualmente antes de textualmente", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Olá, João.");
     expect(screen.getByText("Curadoria em andamento")).toBeInTheDocument();
     expect(
-      screen.getByText("Nossa equipe está analisando cuidadosamente o seu caso."),
+      screen.getByText("Seu Curador está analisando cuidadosamente o seu caso."),
     ).toBeInTheDocument();
   });
 

@@ -36,7 +36,7 @@ describe("Storytelling Ambiental — identidade por etapa", () => {
       "Estamos entendendo o que é importante para você.",
     );
     expect(ambienceFor("CURADORIA").message).toBe(
-      "Nossa equipe está analisando cuidadosamente o seu caso.",
+      "Seu Curador está analisando cuidadosamente o seu caso.",
     );
     expect(ambienceFor("DOSSIE").message).toBe("Conseguimos organizar tudo para você.");
     expect(ambienceFor("ESCOLHA").message).toBe("Agora vamos conhecer os caminhos encontrados.");
@@ -66,7 +66,7 @@ describe("Storytelling Ambiental — identidade por etapa", () => {
   it("a saudação tem uma ideia só: quem chegou e onde a jornada está", () => {
     const greeting = heroGreeting("João", "CURADORIA");
     expect(greeting.title).toBe("Olá, João.");
-    expect(greeting.subtitle).toBe("Nossa equipe está analisando cuidadosamente o seu caso.");
+    expect(greeting.subtitle).toBe("Seu Curador está analisando cuidadosamente o seu caso.");
   });
 });
 

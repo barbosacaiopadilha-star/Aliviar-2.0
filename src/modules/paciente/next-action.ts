@@ -93,7 +93,7 @@ export function derivePatientPending(input: {
   if (homeState.kind === "submitted_without_case" || !jornada) {
     return {
       kind: "nothing",
-      message: "Nada depende de você agora. Sua história já está com a nossa equipe.",
+      message: "Nada depende de você agora. Sua história já está com a Aliviar.",
       whatHappensNext: "Um Curador vai ler e procurar você para uma conversa.",
     };
   }

@@ -37,7 +37,7 @@ export function AguardandoAtualizacao({ ultimaAtualizacao }: { ultimaAtualizacao
   return (
     <Vazio
       titulo="Ainda não há novidades por aqui."
-      corpo="Nossa equipe segue trabalhando no seu caso. Quando houver algo novo para você ver, aparece nesta tela — e você não precisa ficar conferindo."
+      corpo="A Aliviar segue trabalhando no seu caso. Quando houver algo novo para você ver, aparece nesta tela — e você não precisa ficar conferindo."
       rodape={ultimaAtualizacao ? `Última atualização: ${ultimaAtualizacao}.` : undefined}
     />
   );
