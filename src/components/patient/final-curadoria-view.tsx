@@ -7,15 +7,13 @@ type FinalCuradoriaViewProps = {
   delivery: FinalCuradoriaDeliveryRecord;
 };
 
-function OptionCard({ presentation, index }: { presentation: ProviderPresentation; index: number }) {
-  const labels = ["Primeiro caminho", "Segundo caminho", "Terceiro caminho"];
-
+function OptionCard({ presentation }: { presentation: ProviderPresentation }) {
+  // Sem ordinal: "Primeiro/Segundo/Terceiro caminho" lê como colocação, e
+  // posição nunca significa preferência (A_MESA N2; Etapa Mesa §4). O nome
+  // abre o cartão — os três com o mesmo peso.
   return (
     <PatientCard className="flex h-full flex-col">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-brand-sage)]">
-        {labels[index] ?? `Caminho ${index + 1}`}
-      </p>
-      <h3 className="mt-3 font-serif text-xl font-medium text-[var(--patient-ink)]">
+      <h3 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
         {presentation.displayName}
       </h3>
       <p className="patient-body mt-3 text-[var(--patient-ink)]">{presentation.professionalSummary}</p>
@@ -78,7 +76,7 @@ export function FinalCuradoriaView({ delivery }: FinalCuradoriaViewProps) {
           day: "2-digit",
           month: "long",
           year: "numeric",
-        })} pela equipe Aliviar.`}
+        })} pela Aliviar.`}
       />
 
       <PatientCard>
@@ -111,8 +109,8 @@ export function FinalCuradoriaView({ delivery }: FinalCuradoriaViewProps) {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          {delivery.providerPresentations.map((presentation, index) => (
-            <OptionCard key={presentation.providerId} presentation={presentation} index={index} />
+          {delivery.providerPresentations.map((presentation) => (
+            <OptionCard key={presentation.providerId} presentation={presentation} />
           ))}
         </div>
       </section>

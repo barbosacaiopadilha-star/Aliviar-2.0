@@ -126,8 +126,8 @@ export function CartaCaminho({
                   chips: nada repetido, contável ou empilhável representa
                   qualidade (R5), e frases não se somam num relance. */}
               {option.favorablePoints.length > 0 ? (
-                <section aria-label="O que encontramos">
-                  <h4 className="patient-section-title">O que encontramos</h4>
+                <section aria-label="O que você encontra neste caminho">
+                  <h4 className="patient-section-title">O que você encontra neste caminho</h4>
                   <ul className="mt-3 space-y-2">
                     {option.favorablePoints.map((ponto) => (
                       <li
@@ -141,11 +141,13 @@ export function CartaCaminho({
                 </section>
               ) : null}
 
-              {/* Mesmo destaque do que oferece: assimetria de entusiasmo é
-                  indução. Nunca recolhido, nunca diminuído. */}
+              {/* A outra metade da frase de prontidão: o custo, com o MESMO
+                  tratamento do ganho — sem marca lateral, sem cor, sem a
+                  palavra "atenção" (A_MESA §5 a proíbe: severidade visual é
+                  hierarquia). Assimetria de entusiasmo é indução. */}
               {option.attentionPoints.length > 0 ? (
-                <section aria-label="O que merece atenção" className="patient-atencao">
-                  <h4 className="patient-section-title">O que merece atenção</h4>
+                <section aria-label="Do que você abre mão neste caminho">
+                  <h4 className="patient-section-title">Do que você abre mão neste caminho</h4>
                   <ul className="mt-3 space-y-2">
                     {option.attentionPoints.map((ponto) => (
                       <li

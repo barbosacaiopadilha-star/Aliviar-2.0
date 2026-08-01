@@ -12,11 +12,9 @@ import { cn } from "@/components/ui/cn";
  * carta seja reconhecível entre visitas. Cor derivada do nome, dentro da
  * paleta — nunca aleatória.
  */
-const TRATAMENTOS = [
-  "from-[#1a2e26] to-[#2f4a3c]",
-  "from-[#2c4033] to-[#4a6553]",
-  "from-[#1f3329] to-[#3d5647]",
-] as const;
+// Superfície fosca e chapada: nenhuma superfície tem gradiente (Sistema
+// Visual §3, regra de ouro) — a variação entre nomes fica no valor do verde.
+const TRATAMENTOS = ["bg-[#1a2e26]", "bg-[#2c4033]", "bg-[#1f3329]"] as const;
 
 function iniciais(nome: string): string {
   const partes = nome
@@ -47,7 +45,7 @@ export function Retrato({
     <div
       aria-hidden="true"
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br font-serif font-medium text-[var(--patient-linen)] shadow-lg shadow-emerald-950/15",
+        "flex shrink-0 items-center justify-center rounded-2xl font-serif font-medium text-[var(--patient-linen)] shadow-sm",
         tratamentoDe(nome),
         tamanho === "grande" ? "size-20 text-2xl lg:size-24 lg:text-3xl" : "size-12 text-base",
         className,

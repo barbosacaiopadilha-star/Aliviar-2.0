@@ -94,7 +94,7 @@ describe("BarraCompatibilidade — representação, jamais medida", () => {
         dimension={{ criterion: "ACESSO", label: "Acesso", level: "PARCIAL" }}
       />,
     );
-    expect(screen.getAllByText("Atende parcialmente").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Encontra em parte").length).toBeGreaterThan(0);
   });
 
   it("'ainda precisamos confirmar' é lacuna nossa, nunca demérito", () => {
@@ -103,9 +103,9 @@ describe("BarraCompatibilidade — representação, jamais medida", () => {
         dimension={{ criterion: "MODELO_DE_ATENDIMENTO", label: "Modelo", level: "A_CONFIRMAR" }}
       />,
     );
-    expect(screen.getAllByText("Ainda precisamos confirmar").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Ainda não foi possível confirmar").length).toBeGreaterThan(0);
     // A frase para leitor de tela nomeia a dimensão e o estado.
-    expect(screen.getByText(/Modelo: Ainda precisamos confirmar/)).toBeInTheDocument();
+    expect(screen.getByText(/Modelo: Ainda não foi possível confirmar/)).toBeInTheDocument();
   });
 
   it("nenhum número, percentual ou nota aparece", () => {
@@ -132,8 +132,8 @@ describe("CartaCaminho — abertura no lugar, com memória", () => {
     await user.click(screen.getAllByRole("button", { name: "Conhecer este caminho" })[0]!);
 
     expect(screen.getByText("Como responde ao seu Perfil")).toBeInTheDocument();
-    expect(screen.getByText("O que encontramos")).toBeInTheDocument();
-    expect(screen.getByText("O que merece atenção")).toBeInTheDocument();
+    expect(screen.getByText("O que você encontra neste caminho")).toBeInTheDocument();
+    expect(screen.getByText("Do que você abre mão neste caminho")).toBeInTheDocument();
     expect(
       screen.getByText("Perguntas que podem ajudar na próxima conversa"),
     ).toBeInTheDocument();
@@ -246,7 +246,46 @@ describe("Comparação — uma dimensão por vez", () => {
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
 
     await user.click(marcar[1]!);
-    expect(screen.getByRole("tablist", { name: "Dimensões" })).toBeInTheDocument();
+    expect(screen.getByRole("tablist", { name: "Aspectos" })).toBeInTheDocument();
+  });
+});
+
+describe("A Mesa — terreno comum, conversa consigo e saídas", () => {
+  it("abre pelo Terreno Comum, antes de qualquer carta (O1)", () => {
+    const { container } = render(<CaminhosPanel curadoria={CURADORIA} />);
+    const html = container.innerHTML;
+
+    const comum = html.indexOf("nenhum entrou por atalho");
+    const primeiraCarta = html.indexOf("Conhecer este caminho");
+    expect(comum).toBeGreaterThan(-1);
+    expect(primeiraCarta).toBeGreaterThan(-1);
+    expect(comum, "o comum vem antes das colunas").toBeLessThan(primeiraCarta);
+    // Enquadramento, nunca selo coletivo: não se infere qualidade.
+    expect(container.textContent).not.toMatch(/excelente|os melhores/i);
+  });
+
+  it("a conversa consigo é lugar, não ferramenta: nada coleta, nada exige", async () => {
+    const user = userEvent.setup();
+    render(<CaminhosPanel curadoria={CURADORIA} />);
+
+    for (const nome of ["Dra. Helena Monteiro", "Dr. Rafael Nogueira", "Dra. Marina Azevedo"]) {
+      const carta = screen.getByRole("article", { name: nome });
+      await user.click(within(carta).getByRole("button", { name: "Conhecer este caminho" }));
+    }
+
+    expect(screen.getByText(/do que você não abre mão/i)).toBeInTheDocument();
+    // Nenhum formulário de reflexão: sem campo de texto, sem checklist novo
+    // (as únicas caixas são as de "Comparar", que já existiam).
+    expect(screen.queryByRole("textbox")).toBeNull();
+    expect(screen.getAllByRole("checkbox")).toHaveLength(3);
+  });
+
+  it("nenhuma barra, medidor ou progressbar em toda a Mesa (N6)", async () => {
+    const user = userEvent.setup();
+    render(<CaminhosPanel curadoria={CURADORIA} />);
+    await user.click(screen.getAllByRole("button", { name: "Conhecer este caminho" })[0]!);
+    expect(screen.queryByRole("progressbar")).toBeNull();
+    expect(screen.queryByRole("meter")).toBeNull();
   });
 });
 

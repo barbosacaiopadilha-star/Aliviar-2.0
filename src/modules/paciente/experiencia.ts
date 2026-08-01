@@ -178,11 +178,16 @@ export const WALK_LABELS: Record<JornadaStageId, string> = {
 export const COMPATIBILITY_LEVELS = ["PLENO", "PARCIAL", "A_CONFIRMAR", "NAO_ATENDE"] as const;
 export type CompatibilityLevel = (typeof COMPATIBILITY_LEVELS)[number];
 
+// A língua do encontro, nunca a da prova: "atende/não atende" sobre cinco
+// aspectos fixos convida ao ✓/✗ mental entre cartas — a soma que fabrica um
+// vencedor. "Encontra/não encontra" descreve onde a prática dele toca o que
+// ELA procura; a ausência usa a formulação obrigatória (Linguagem §6-A) e a
+// lacuna nunca soa a demérito.
 export const COMPATIBILITY_LABELS: Record<CompatibilityLevel, string> = {
-  PLENO: "Atende plenamente",
-  PARCIAL: "Atende parcialmente",
-  A_CONFIRMAR: "Ainda precisamos confirmar",
-  NAO_ATENDE: "Não atende",
+  PLENO: "Encontra o que você procura",
+  PARCIAL: "Encontra em parte",
+  A_CONFIRMAR: "Ainda não foi possível confirmar",
+  NAO_ATENDE: "Não encontra este ponto",
 };
 
 /**

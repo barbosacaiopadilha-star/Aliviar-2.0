@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { CartaCaminho } from "@/components/paciente/caminhos/carta-caminho";
 import { ComparacaoCaminhos } from "@/components/paciente/caminhos/comparacao-caminhos";
 import { ComparacaoNaoIniciada } from "@/components/paciente/experiencia/estados-vazios";
+import { FaixaDoComum } from "@/components/paciente/caminhos/faixa-do-comum";
 import { Limiar } from "@/components/paciente/experiencia/limiar";
 import type { PatientCuradoria } from "@/modules/curadoria/patient-curadoria";
 
@@ -82,7 +83,12 @@ export function CaminhosPanel({ curadoria }: { curadoria: PatientCuradoria }) {
 
       <Limiar nome="A Mesa" />
 
-      <div className="patient-cartas">
+      {/* O Terreno Comum abre a Mesa, sempre — antes de existir qualquer
+          coluna, existe uma superfície inteira (O1). É ordem de apresentação,
+          nunca de liberação: nada abaixo fica trancado. */}
+      <FaixaDoComum curatorName={curadoria.curatorName} />
+
+      <div className="patient-cartas mt-8">
         {curadoria.options.map((option) => (
           <CartaCaminho
             key={option.id}
@@ -105,13 +111,30 @@ export function CaminhosPanel({ curadoria }: { curadoria: PatientCuradoria }) {
         )}
       </div>
 
+      {/* A Conversa Consigo (A_MESA §3.4): um lugar, não uma ferramenta.
+          Perguntas breves que nada exigem, espaço, releitura. Nada aqui
+          coleta, armazena ou dispara coisa alguma. (A saída "nenhum dos
+          três" pertence ao domínio e está registrada como candidata à v1.1 —
+          nenhuma superfície nova nesta fase.) */}
+      {todasConhecidas && !curadoria.decision ? (
+        <div className="mt-16 max-w-prose space-y-4 lg:mt-24">
+          <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">
+            Daqui em diante o trabalho é seu, e ninguém o apressa. Se ajudar a pesar: do que você
+            não abre mão? Com qual deles você se imaginou conversando?
+          </p>
+          <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">
+            Reler qualquer carta, quantas vezes precisar, faz parte — comparar de novo também.
+          </p>
+        </div>
+      ) : null}
+
       {/* A porta da Decisão só aparece depois que ela conheceu os três —
           convidar antes seria apressar. E o convite não declara suficiência:
           quem percebe que já viu o bastante é ela (A Mesa §7; Linguagem §6).
           Depois dele, o maior vazio da página: o espaço abaixo de uma escolha
           fica vazio, porque preencher ali é empurrar. */}
       {todasConhecidas && !curadoria.decision ? (
-        <div className="mt-16 max-w-prose lg:mt-24">
+        <div className="mt-10 max-w-prose">
           <p className="font-serif text-base leading-[1.65] text-[var(--patient-ink)]">
             Não há pressa, e nenhum deles está pré-escolhido. Quando você quiser, a escolha está
             logo adiante — e voltar aqui continua possível a qualquer momento.

@@ -15,10 +15,11 @@ import { cn } from "@/components/ui/cn";
  * contínua, tracejada ou pontilhada. Ninguém intui que tracejado "vale menos"
  * que contínuo, e ninguém totaliza tracejados.
  *
- * "Ainda precisamos confirmar" é linha pontilhada — presente, com outra
- * textura: vazio por falta de informação nunca parece vazio por demérito.
- * "Não atende" é dito apenas pela frase, sem linha e sem cor de alerta:
- * fato, não defeito.
+ * "Ainda não foi possível confirmar" é linha pontilhada — presente, com
+ * outra textura: vazio por falta de informação nunca parece vazio por
+ * demérito. "Não encontra este ponto" é dito apenas pela frase, sem linha e
+ * sem cor de alerta: fato, não defeito — é disto que a frase de prontidão
+ * ("escolho este, mesmo abrindo mão daquilo") se alimenta.
  */
 const TEXTURA: Record<PatientDimension["level"], string> = {
   PLENO: "border-solid",

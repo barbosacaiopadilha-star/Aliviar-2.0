@@ -32,14 +32,15 @@ export function ComparacaoCaminhos({ options }: { options: PatientCuradoriaOptio
         Comparar caminhos
       </h2>
       <p className="patient-body mt-2 max-w-prose text-sm text-[var(--color-ink-muted)]">
-        Uma dimensão de cada vez, para você olhar com calma o que muda entre eles.
+        Um aspecto de cada vez, para você olhar com calma o que muda entre eles — nisto que
+        importa para você.
       </p>
 
       {/* Seletor de dimensão: semanticamente continua `tablist` (um painel
           por dimensão, navegável por teclado), mas sem a aparência de abas —
           tab como elemento visual é banido (Sistema Visual §12). A dimensão
           ativa se marca por um fio sob a palavra, nunca por preenchimento. */}
-      <div role="tablist" aria-label="Dimensões" className="mt-5 flex flex-wrap gap-x-6 gap-y-2">
+      <div role="tablist" aria-label="Aspectos" className="mt-5 flex flex-wrap gap-x-6 gap-y-2">
         {PATIENT_DIMENSIONS.map((entrada, index) => (
           <button
             key={entrada.criterion}

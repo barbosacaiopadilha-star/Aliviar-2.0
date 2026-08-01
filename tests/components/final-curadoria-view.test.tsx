@@ -81,6 +81,16 @@ describe("FinalCuradoriaView", () => {
     expect(screen.getByText("Agenda com espera de duas semanas.")).toBeInTheDocument();
   });
 
+  it("nenhum ordinal ou marca de colocação aparece junto aos caminhos (A_MESA N2)", () => {
+    // "Primeiro caminho" lê como colocação, e posição nunca significa
+    // preferência — mesmo no formato legado, recuado como documento histórico.
+    const { container } = render(<FinalCuradoriaView delivery={buildDelivery()} />);
+    const texto = (container.textContent ?? "").toLowerCase();
+    for (const proibido of ["primeiro caminho", "segundo caminho", "terceiro caminho", "opção 1", "1ª", "2ª", "3ª"]) {
+      expect(texto, `ordinal vazou: ${proibido}`).not.toContain(proibido);
+    }
+  });
+
   it("nunca exibe vocabulário de score, ranking ou protocolo", () => {
     const { container } = render(<FinalCuradoriaView delivery={buildDelivery()} />);
     const text = container.textContent!.toLowerCase();

@@ -82,6 +82,20 @@ export default async function PatientCuradoriaPage() {
     <div className="pb-16">
       {curadoria ? <CaminhosPanel curadoria={curadoria} /> : null}
 
+      {/* O PDF pertence à Mesa: material de consulta — para reler com a
+          família ou levar à consulta —, nunca ação principal. Link de texto
+          discreto, sem competir com os três caminhos (Etapa Mesa §10). */}
+      {curadoria && delivery ? (
+        <p className="mt-10">
+          <Link
+            href="/paciente/curadoria/imprimir"
+            className="text-sm font-medium text-[var(--patient-forest)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+          >
+            Levar em PDF — para reler com a família ou na consulta
+          </Link>
+        </p>
+      ) : null}
+
       {!curadoria && delivery ? <FinalCuradoriaView delivery={delivery} /> : null}
 
       {caseId && options.length > 0 ? (
@@ -114,7 +128,10 @@ export default async function PatientCuradoriaPage() {
         </>
       ) : null}
 
-      {delivery ? (
+      {/* Entrega apenas no formato legado: o documento é o conteúdo
+          principal, e o PDF o acompanha. O rótulo "Baixar em PDF" permanece
+          aqui — é o que o e2e e a paciente desse formato conhecem. */}
+      {!curadoria && delivery ? (
         <div className="mt-16">
           <Link
             href="/paciente/curadoria/imprimir"
