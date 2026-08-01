@@ -692,3 +692,237 @@ Mas `reviewStatus: VALIDATED` é qualitativamente diferente das demais: é o ún
 
 - **Consequência:** deixa de existir qualquer duplicidade de autoridade. O preço é operacional: um Case só produz leitura depois que o Mapa é preenchido (26 subcritérios), e Cases anteriores à virada aparecem com Mapa vazio até serem retomados — o que é honesto, e melhor que herdar uma tradução inventada.
 - **Revisitar quando:** a operação real mostrar que 26 subcritérios são muitos para a conversa, ou que a escala de cinco níveis não distingue o que precisa distinguir.
+
+## ADR-043 — A Aliviar intermedeia a transição entre a decisão da paciente e o primeiro contato
+
+- **Data:** 2026-08-01
+- **Status:** Aprovada pelo responsável do projeto (missão "Fase 9C — Decisão de domínio sobre a intermediação"). **Decisão de direção do serviço; nada implementado.** Nenhuma migration, RLS, tela ou código nesta ADR.
+- **Resolve:** a divergência **D1** registrada em [`docs/experiencia/CONTRATO_OPERACIONAL_DA_DECISAO.md`](experiencia/CONTRATO_OPERACIONAL_DA_DECISAO.md) §0.2, e a derivada **D2** (§10 do mesmo documento).
+- **Relação com ADRs vigentes:** **não altera** ADR-027 (Connection `Implementado`), ADR-028 (Relationship) nem ADR-029 (Temporary Access). **Amplia o escopo do Domínio 4** dentro da fronteira que a ADR-029 já reconhece como sua: *"depois do `DELIVERED`, entre a escolha do paciente (Connection) e o vínculo longitudinal (Relationship)."*
+
+### 1. Contexto — o que foi verificado no código
+
+**Fatos observados** (não interpretações), com referência precisa:
+
+| # | Fato | Onde |
+|---|---|---|
+| F1 | `CONTATO_INICIADO` é **declaração da paciente**, e o próprio código o afirma: *"sempre uma declaração do paciente, nunca verificada externamente"*. A superfície diz *"Você registrou que iniciou o contato com [nome]"* | `src/modules/connection/commands.ts` (`registerContactIntent`); `src/components/patient/connection-progress-panel.tsx` |
+| F2 | **Só a paciente produz** qualquer evento pós-decisão: `assertOwner` no domínio e RLS no banco. Curador e administrador têm **somente leitura** | `commands.ts`; policies `connection_records_*`, `connection_events_insert_own_patient` em `supabase/migrations/20260723164933_curadoria_stage5_connection_relationship.sql` |
+| F3 | **Nenhuma notificação existe.** `registerPatientDecision` insere a linha e chama `revalidatePath` das rotas da paciente; não há e-mail, webhook ou fila. O Curador tem **visibilidade por RLS, não aviso** | `src/modules/curadoria/repository.ts` (`registerPatientDecision`); `src/modules/curadoria/actions.ts` |
+| F4 | **Não existe evento de contato realizado pela equipe.** Os tipos são `DECISAO_REGISTRADA`, `CORRECAO_ESCOLHA`, `CONTATO_INICIADO`, `PRIMEIRO_ATENDIMENTO_REALIZADO`, `ENCERRADO_SEM_RELACIONAMENTO` | `connection_events_type_check`, migration citada; `src/modules/connection/types.ts` |
+| F5 | **Não existe verificação de disponibilidade, reserva, horário ou agenda** — nenhuma tabela, coluna ou evento em 61 migrations. `PRIMEIRO_ATENDIMENTO_REALIZADO` é registro *a posteriori*, também declarado por ela | busca em `supabase/migrations/` |
+| F6 | **A correção da escolha só é permitida enquanto `status = DECISAO_REGISTRADA`**, garantido por *trigger* — e nunca sobrescreve a escolha anterior: gera `CORRECAO_ESCOLHA` em sequência temporal | `assert_connection_valid_transition`; `commands.ts` (`correctChoice`) |
+| F7 | O profissional escolhido **precisa pertencer à entrega** — *trigger* impede escolher fora dos três | `assert_connection_professional_in_delivery` |
+| F8 | **O profissional não tem hoje nenhum caminho de acesso** a qualquer contexto da Curadoria que o apresenta | constatado na ADR-029 |
+
+**Interpretação** (não é fato): os documentos de experiência das Fases 7–9 descrevem continuidade e mediação que esses fatos não sustentam. [`A_DECISAO.md`](experiencia/A_DECISAO.md) §5.2 afirma que a paciente sabe *"que o Curador foi avisado e o que ele fará em seguida"* (contra F3); §10 promete que, na indisponibilidade, a Aliviar *"avisa imediatamente"* e põe *"deixá-la descobrir"* entre o que **nunca** se faz (contra F4 e F5); [`A_SALA_DA_DECISAO.md`](experiencia/A_SALA_DA_DECISAO.md) §8 modela `profissional_contatado` sob autoridade de *"pessoa da Aliviar"* (contra F1).
+
+**O modelo implementado é auto-serviço:** a paciente decide, contata, e informa que contatou. **É um modelo legítimo e tecnicamente íntegro** — e não é o modelo escolhido para a Aliviar.
+
+### 2. Decisão
+
+> **A Aliviar é responsável pela continuidade operacional entre a confirmação da decisão e o início da relação da paciente com o profissional escolhido.**
+
+A responsabilidade inclui: (1) registrar a decisão; (2) produzir **notificação verificável** ao papel responsável; (3) atribuir responsabilidade operacional ao **Concierge**; (4) registrar **quem iniciará o contato**; (5) realizar ou acompanhar a aproximação; (6) tornar o **estado real** dessa transição visível à paciente; (7) tratar **indisponibilidade como evento do processo**, não como descoberta dela; (8) devolver à Curadoria o que exigir nova avaliação.
+
+**A decisão não implica** — e nenhuma superfície poderá afirmar: reserva de horário · consulta marcada · disponibilidade garantida · transmissão da formulação do trade-off · contratação · atendimento clínico · substituição automática por outro profissional · **qualquer redução da autonomia da paciente**.
+
+**Fundamento.** Não é preferência de produto: é um princípio já escrito sendo violado pela operação. A_DECISAO §10 proíbe *"deixá-la descobrir"* a indisponibilidade — e é exatamente o que o sistema faz hoje (F4, F5). E o Concierge, papel mais presente nas Fases 7–9, **não tem hoje nenhuma autoridade operacional** (F2).
+
+### 3. Dois modos de início do contato
+
+**Ambos preservam a autoria da paciente. Nenhum é selecionado silenciosamente pelo sistema; nenhum é padrão pré-marcado.**
+
+**Modo A — Aproximação intermediada.** Ela autoriza a Aliviar a iniciar ou coordenar a aproximação. A Aliviar contata, registra o despacho, recebe a resposta e lhe informa o estado real.
+
+**Modo B — Contato direto acompanhado.** Ela prefere contatar por conta própria — **e a Aliviar não desaparece**: registra a escolha do modo, diz com clareza o que depende dela, permanece alcançável, acompanha o resultado, **recebe eventual indisponibilidade** e **nunca trata ausência de retorno como encerramento silencioso**. É o modelo atual **acrescido de acompanhamento real** — o que hoje não existe.
+
+**O modo integra o ato de confirmação ou exige manifestação separada?** **Questão em aberto, deliberadamente** (§15, Q-C1). O argumento de experiência favorece integrar — `SD-P3` de A_SALA fixa "uma decisão, um ato", e uma segunda confirmação faria a paciente desconfiar de si. O argumento de consentimento pode exigir separar, porque no Modo A ela autoriza contato com terceiro em seu nome, e consentimento presumido por conveniência de fluxo é frágil. **Nenhuma conclusão jurídica é emitida aqui.** Enquanto não decidido, o modo é manifestação **explícita** dela, integrada ou não ao ato.
+
+### 4. Fronteiras de responsabilidade
+
+| Marco | Papel responsável a partir dele |
+|---|---|
+| Antes da confirmação | **Curador do caso** — entender, buscar, verificar, apresentar |
+| `decisao_registrada` | **começa a responsabilidade operacional da Aliviar** |
+| `concierge_atribuido` | **Concierge nominal** — é o evento que atribui responsabilidade; até ele existir, **o Curador do caso permanece responsável**, sem lacuna |
+| Aproximação (A ou B) | **Concierge** conduz (A) ou acompanha (B) |
+| Resposta do profissional | **o profissional** passa a participar — antes disso ele não é parte |
+| Questão sobre o caso, os três ou a informação | **volta ao Curador**, sempre |
+| Nova avaliação do Perfil | **Curador** — reabertura da Curadoria |
+| `aproximacao_concluida` | termina a Sala da Decisão; **começa o futuro Espaço de Acompanhamento** |
+
+**Sob responsabilidade da paciente, sempre:** decidir · corrigir enquanto for direto · escolher o modo · decidir se e quando começa · declarar piora clínica.
+
+**Proibido:** a expressão *"a equipe acompanha"*. Todo estado nomeia um papel, e o Concierge é uma pessoa com nome.
+
+### 5. O significado de "comunicada"
+
+> **O termo "decisão comunicada" é abolido como evento único.** Designava coisas diferentes em documentos diferentes, e essa ambiguidade produziu D1.
+
+Passam a existir eventos distintos e não fundíveis: `decisao_registrada` · `curador_notificado` · `concierge_atribuido` · `modo_de_contato_escolhido` · `contato_solicitado` · `contato_despachado` · `contato_recebido` *(quando verificável)* · `disponibilidade_respondida` · `aproximacao_concluida`.
+
+**O evento que fecha a correção direta pela paciente é `contato_despachado` no Modo A, e a declaração dela no Modo B** — ver §6.
+
+**Uma comunicação recebida não é desfazível.** O que existe depois dela é **explicação a uma pessoa**, que é trabalho humano — nunca funcionalidade.
+
+### 6. Reversibilidade
+
+A regra atual (F6) permanece **correta em espírito e insuficiente em alcance**: acerta ao ancorar a irreversibilidade num fato do mundo, e erra ao supor que só a paciente produz esse fato.
+
+**Regra que a implementação futura deverá realizar:**
+
+| Situação | Correção direta pela paciente | Alteração mediada |
+|---|---|---|
+| Antes de qualquer contato (A ou B) | **sim**, sozinha, sem justificar, entre os três | desnecessária |
+| **Modo A**, depois de `contato_despachado` | **não** | **sim** — via Concierge |
+| **Modo B**, depois de ela declarar contato | **não** | **sim** — via Concierge |
+
+**Quem executa a alteração mediada:** o **Concierge**, a pedido dela — **e a decisão continua sendo dela**; o Concierge executa o que ela decidiu e trata a explicação ao profissional preterido. **Isto exige autoridade de escrita que hoje não existe** (F2) e cruza com a capacidade *"Troca de Profissional"* já pendente na **ADR-028**.
+
+**Histórico sem culpa:** `CORRECAO_ESCOLHA` nunca sobrescreve (F6) e **não é falha**. Nenhuma superfície pode contar correções, exibi-las como hesitação ou rotular a paciente.
+
+**Formulação que substitui a promessa absoluta.** A frase *"a decisão é reversível"* fica **proibida sem condição**. Verdade condicionada e verificável: ***"enquanto não tivermos falado com [nome], você pode trocar aqui mesmo. Depois disso, é só me dizer que eu cuido disso com você."*** — a segunda metade só se torna emitível quando o Concierge existir operacionalmente (§15, Q-C4).
+
+### 7. Disponibilidade
+
+**Esta ADR não afirma que existe agenda integrada. Não existe** (F5), e nada aqui a cria.
+
+Sete graus, distintos e não fundíveis: **disponibilidade conhecida na Curadoria** (declaração datada do profissional, na Base de Evidências — **existe hoje**) · **ainda não confirmada** (o estado normal) · **consulta de disponibilidade** (perguntar) · **resposta do profissional** · **disponibilidade para receber contato** · **disponibilidade para horário específico** · **reserva** · **consulta marcada**.
+
+**Obrigação que esta ADR cria:** **verificar, acompanhar e comunicar honestamente o estado real** — nada além. Permanecem proibidas, sem exceção e independentemente de qualquer decisão futura: *"seu profissional está garantido"* · *"sua consulta está reservada"* · *"está tudo certo"* · *"ele está te esperando"*.
+
+**E permanece obrigatório dizer a data:** *"ele declarou, em [data], que atende de manhã"* — a Política de Fontes trata acesso/agenda como volátil, com revisão de três meses.
+
+### 8. Indisponibilidade
+
+A indisponibilidade posterior: **não invalida a compreensão da paciente** · **não transforma sua escolha em erro** — a falha é de atualidade da informação, e é da Aliviar · **não promove automaticamente outra opção** · **não cria "segunda colocada"** (não há colocação: os três são caminhos legítimos sem ordem, ADR-041) · **exige avaliação sobre preservar as alternativas** · **pode exigir retorno à Mesa ou à Curadoria** · **é comunicada por uma pessoa com autoridade definida — o Concierge** — e nunca descoberta por ela sozinha.
+
+**Decisão adicional necessária** para o fluxo completo: o que caracteriza indisponibilidade **definitiva** *versus* temporária, e quanto se espera antes de tratar como definitiva (§15, Q-C6).
+
+### 9. Notificação da decisão
+
+**Requisito de domínio:** uma decisão registrada **produz um evento verificável destinado ao papel responsável**. Visibilidade por RLS não é notificação (F3).
+
+Cinco estados distintos, e a frase permitida em cada um:
+
+| Estado | Frase permitida |
+|---|---|
+| **evento criado** | *"sua decisão está registrada"* |
+| **notificação despachada** | *"avisamos [nome] às [hora]"* |
+| **notificação recebida** | *"chegou a [nome]"* — só se houver acuse técnico |
+| **notificação lida** | *"[nome] já viu"* |
+| **responsabilidade assumida** | *"[nome] está cuidando disso"* |
+
+> **A interface não pode dizer "o Curador foi avisado" apenas porque um registro foi criado.** É o erro que F3 revelou, e esta ADR o proíbe explicitamente.
+
+### 10. Autoridades e permissões — proposta conceitual
+
+**Nenhuma política RLS é definida ou alterada nesta fase.** Mudanças que a implementação futura precisará avaliar:
+
+| Capacidade | Hoje | Proposta conceitual |
+|---|---|---|
+| paciente confirmar | ✅ ela | inalterado |
+| paciente corrigir diretamente | ✅ ela, até `DECISAO_REGISTRADA` | **janela redefinida** por §6 |
+| paciente escolher o modo | ⛔ inexistente | **ela, sempre — nunca o sistema** |
+| Curador consultar | ✅ leitura | inalterado |
+| **Concierge assumir** | ⛔ **sem papel algum** | **nova autoridade** — atribuição e leitura do caso |
+| **Concierge registrar aproximação** | ⛔ | **nova autoridade de escrita** — a mais sensível desta ADR |
+| **profissional responder disponibilidade** | ⛔ (F8) | **nova** — e a **ADR-029 (Temporary Access)** já é o mecanismo autorizado para dar-lhe contexto limitado, revogável e no tempo. **Nenhum mecanismo novo deve ser inventado para isso.** |
+| operação corrigir falhas | via service role | **precisa de trilha auditável**, não privilégio silencioso |
+| Curador reabrir a Curadoria | ✅ | inalterado |
+| administrador auditar | ✅ leitura | **auditar sem decidir pela paciente** — nunca escrita em nome dela |
+
+**Invariante que nenhuma implementação pode violar:** **ninguém decide, corrige ou confirma em nome da paciente.** O Concierge executa o que ela pediu; não escolhe por ela.
+
+### 11. Privacidade e consentimento — questões para validação especializada
+
+**Nenhuma conclusão jurídica é emitida.** Exigem validação: autorização para a Aliviar contatar o profissional · dados que acompanham o contato · **exposição da identidade da paciente** (é possível consultar disponibilidade sem identificá-la, e essa alternativa merece exame prioritário) · acesso do Concierge à decisão · **acesso à formulação do trade-off** · registro do modo escolhido · retenção do histórico *(cruza com o append-only já implementado)* · **revogação da autorização**.
+
+> **Princípio provisório adotado:** **o profissional recebe apenas o contexto necessário para responder ou iniciar a aproximação.**
+> **Esta ADR não determina que a formulação do trade-off será transmitida — e registra a recomendação de que nunca seja.** É reflexão privada sobre uma escolha entre pessoas, e uma delas é ele; transmiti-la seria mostrar-lhe o que ela abriu mão ao escolhê-lo.
+> **Divergência D3 permanece aberta:** a nota é hoje legível pelo Curador e pelo administrador (`patient_decisions_select_own_or_team`), enquanto A_SALA §3 afirma "ela, e só ela". Ou o documento passa a dizer a verdade, ou o acesso é restringido — **e o que não pode acontecer é ela não saber.**
+
+### 12. Consequências para o domínio
+
+*Conceituais. **Nada implementado nesta ADR.***
+
+| Consequência | Por que é necessária | Promessa que sustenta | O que ainda bloqueia |
+|---|---|---|---|
+| Evento de **notificação verificável** | visibilidade ≠ aviso (F3) | *"avisamos [nome]"* | canal e prazo (Q-C4) |
+| **Atribuição de responsabilidade** (`concierge_atribuido`) | o Concierge não tem papel (F2) | *"[nome] está cuidando disso"* | escala e cobertura (Q-C4) |
+| **Escolha do modo de contato** | os dois modos precisam existir sem padrão silencioso | *"você decide como quer começar"* | consentimento (Q-C1) |
+| **Aproximação intermediada** (`contato_solicitado`/`despachado`) | não existe contato pela equipe (F4) | *"falamos com ele"* | prazo, canal, dados (Q-C2, Q-C3) |
+| **Acompanhamento do contato direto** | hoje o Modo B é abandono com registro | *"me diga como foi; se ele não responder, eu entro"* | Q-C4 |
+| **Resposta de disponibilidade** | não existe (F5) | *"ele pode receber você"* | acesso do profissional (ADR-029), Q-C3 |
+| **Indisponibilidade como evento** | hoje ela descobre sozinha (D2) | *"ele não está disponível — a falha é nossa"* | Q-C6 |
+| **Solicitação e alteração mediada** | correção impossível após contato (F6) | *"é só me dizer que eu cuido disso"* | Q-C5; cruza com ADR-028 (*Troca de Profissional*) |
+| **Retorno à Curadoria** | existe como desfecho, não como fluxo | *"vamos entender melhor"* | Q-C6 |
+| **Transição para acompanhamento** | `aproximacao_concluida` não existe | *"a partir daqui é outro cuidado"* | desenho do Espaço de Acompanhamento |
+
+### 13. Impacto sobre o domínio congelado
+
+Verificado contra [`docs/curadoria/CONGELAMENTO_ARQUITETURAL.md`](curadoria/CONGELAMENTO_ARQUITETURAL.md) §2 e §4:
+
+**Esta decisão altera conceitos congelados?** **Não.** Nenhum dos oito itens congelados é tocado. O ciclo pós-decisão (`connection_records`) **não consta da lista de congelados** — é governado pela ADR-027, e esta ADR o amplia sem contradizê-la.
+
+**Exige nova ADR?** **É esta.** A regra do *trigger* de correção (F6) é regra implementada, e alterá-la exige decisão registrada — o que esta ADR faz, sem executá-la.
+
+**Substitui alguma regra anterior?** **Não substitui; amplia.** A ADR-027 declarou Connection "pontual — decisão do paciente e primeiro contato". Esta ADR mantém o escopo pontual e acrescenta **quem participa dele**.
+
+**Amplia o serviço sem alterar o Motor?** **Sim, e integralmente.**
+
+> **Declaração explícita: não são alterados por esta decisão — critérios · pesos · filtros · lógica de compatibilidade · ordenação interna · seleção dos três.** O Motor (ADR-041), o Catálogo Canônico 1.0.0, a escala de cinco níveis (ADR-039), os três estados do Mapa do Profissional (ADR-040), a Base append-only e a separação Base × Case **permanecem intocados**. Esta ADR trata exclusivamente do que acontece **depois** que a leitura foi produzida e a paciente decidiu.
+
+**Migrations e contratos futuramente afetados** (nenhum agora): `connection_records` e `connection_events` (novos estados/eventos, novos atores); RLS de `connection_*` (autoridade do Concierge); notificação (não existe); `patient_curadoria_decisions` (registro do modo); Temporary Access (ADR-029) para o acesso do profissional.
+
+**O que permanece intocado:** todo o congelado de §2, a jornada até a entrega, o Protocolo da Pessoa e o do Profissional, o Relatório, a Mesa e a Sala **como projetos de experiência** — esta ADR muda o que a Sala pode prometer, não o que ela é.
+
+### 14. Alternativa rejeitada — manter o autosserviço e corrigir os documentos
+
+**Consistia em:** aceitar o modelo implementado como definitivo e reescrever as Fases 7–9 para prometer apenas o que ele sustenta.
+
+**Rejeitada porque:** contradiz a continuidade que a experiência promete · não sustenta o papel do Concierge após a decisão · **deixa a paciente descobrir sozinha uma indisponibilidade**, que A_DECISAO §10 proíbe expressamente · impede a Aliviar de conhecer o estado real da transição · reduziria o futuro Espaço de Acompanhamento a acompanhamento declarado pela própria paciente · exigiria remover ou enfraquecer partes centrais das Fases 7–9.
+
+> **O autosserviço não é tecnicamente inválido.** É um modelo possível, íntegro e coerente consigo mesmo — com a virtude real de deixar a paciente controlar seu próprio ponto de não-retorno. **Não é o modelo escolhido para a Aliviar**, porque a Aliviar promete não deixá-la sozinha depois de decidir.
+
+### 15. Questões ainda abertas
+
+| # | Questão | Bloqueia |
+|---|---|---|
+| **Q-C1** | o modo integra o ato de confirmação ou exige manifestação separada? *(consentimento)* | modelagem · implementação |
+| **Q-C2** | quem realiza a primeira aproximação em cada modo | implementação |
+| **Q-C3** | dados transmitidos ao profissional; identificar ou não a paciente na consulta | modelagem · implementação |
+| **Q-C4** | **prazo operacional, canais, regras fora do horário, contingência** | **reconciliação documental** · implementação |
+| **Q-C5** | autoridade para alteração mediada *(cruza com ADR-028)* | modelagem · implementação |
+| **Q-C6** | processo diante de indisponibilidade; definitiva × temporária | implementação · Espaço de Acompanhamento |
+| **Q-C7** | evento exato que fecha a correção direta em cada modo | modelagem |
+| **Q-C8** | momento em que o Concierge assume | reconciliação documental · implementação |
+| **Q-C9** | **política de urgência** *(clínica — independente das demais)* | **reconciliação documental** |
+| **Q-C10** | consentimentos necessários *(jurídico/privacidade)* | implementação |
+| **Q-C11** | eventual integração futura de agenda | Espaço de Acompanhamento |
+
+**Bloqueiam a reconciliação documental:** Q-C4, Q-C8, Q-C9. **A modelagem de domínio:** Q-C1, Q-C3, Q-C5, Q-C7. **A implementação:** todas, exceto Q-C11. **O Espaço de Acompanhamento:** Q-C6, Q-C11.
+
+**Q-C9 não deve esperar a ordem de dependência das demais — é a única cujo risco é a segurança de uma pessoa.**
+
+### 16. Patches documentais
+
+Referentes a [`CONTRATO_OPERACIONAL_DA_DECISAO.md`](experiencia/CONTRATO_OPERACIONAL_DA_DECISAO.md) §17. **Nenhum é aplicado aqui; a reconciliação é fase separada.**
+
+| Patch | Situação |
+|---|---|
+| **P-1** *(remover "o Curador foi avisado")* | **AUTORIZADO** — §9 |
+| **P-2** *(condicionar a reversibilidade)* | **REESCREVER** — a condição agora é a de §6, não a do *trigger* atual |
+| **P-3** *(Concierge alcançável × assume)* | **AUTORIZADO** — §4 |
+| **P-4** *(indisponibilidade não cumprível)* | **OBSOLETO** — a decisão torna a promessa cumprível; §8 |
+| **P-5** *(ancorar "a alternativa sai de cena")* | **REESCREVER** — ancorar em `aproximacao_concluida` |
+| **P-6** *(A_MESA pode ser precisa)* | **REESCREVER** — pela regra de §6 |
+| **P-7** *(quem lê a formulação)* | **BLOQUEADO** — Q-C10 / D3 |
+| **P-8** *(falta `ENCERRADO_SEM_RELACIONAMENTO`)* | **AUTORIZADO** — independe desta decisão |
+| **P-9** *(§8 da Sala descreve serviço inexistente)* | **AUTORIZADO como direção** — o serviço passa a ser o desta ADR; a redação depende de Q-C4 |
+| **P-10** *(Q1..Q4 já decididas)* | **REESCREVER** — substituídas pelas Q-C desta ADR |
+| **P-11** *("uma pessoa, com nome")* | **REESCREVER** — passa a ser verdade no Modo A; depende de Q-C8 |
+
+- **Consequência:** a Aliviar assume carga operacional que hoje não tem — alguém precisa ser notificado, atribuído, e efetivamente contatar ou acompanhar. **É o preço de não deixar a paciente sozinha depois de decidir**, e nenhuma promessa nova pode ser feita a ela antes que essa capacidade exista. Até lá, as frases bloqueadas em §20 do Contrato permanecem bloqueadas: **decidir a direção não autoriza prometê-la.**
+- **Revisitar quando:** Q-C1, Q-C4 e Q-C8 estiverem decididas — momento em que a reconciliação documental pode ocorrer e a modelagem de domínio pode começar; ou se a operação real mostrar que a intermediação não é sustentável na escala da Aliviar, o que exigiria nova ADR e não silêncio.
