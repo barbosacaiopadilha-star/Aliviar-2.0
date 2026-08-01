@@ -180,3 +180,65 @@ Ordem sustentada pela evidência: a Continuidade é hoje o trecho mais desalinha
 ---
 
 > **A casa existe. O que falta não é construir — é terminar de mudar a percepção dos cômodos que já funcionam, e ensinar os fundos a falar como a instituição que a fachada promete.**
+
+---
+
+# Auditoria pós-consolidação
+
+> **Data:** 2026-08-01, ao fim da Onda 6. **A auditoria histórica acima permanece intacta** — este bloco é o depois, não a reescrita do antes.
+> **Ondas executadas:** Travessia · Recepção · Mesa · Continuidade · Sala da Decisão · Concierge · Curador · Atendente · Administração · Consolidação.
+
+## Nova contagem
+
+Das 56 telas do inventário, **6 estão mortas por redirect** (`/portal-paciente` ×3, `/curador` ×3) e não contam como superfície viva. Das **50 vivas**:
+
+| | Antes (auditoria original) | Depois |
+|---|---|---|
+| 🟢 Verde | 7 | **16** |
+| 🟡 Amarela | 39 | **34** |
+| 🔴 Vermelha | 10 | **0** |
+
+**Nenhuma superfície viva permanece vermelha.** As quatro que eram (`/coa/atendimento`, `/coa/concierge`, `/profissional`, `/acesso-negado`) foram tratadas; as outras seis eram as mortas por redirect, que seguem mortas e registradas.
+
+**Verdes (16):** capa e 5 passos do contar · `/paciente` · `/paciente/curadoria` · `/paciente/linha-do-tempo` · `/atendimento` e a ficha · `/acompanhamento` · `/coa/concierge` · `/coa/atendimento` · `/acesso-negado` · `/profissional`.
+
+**Amarelas (34), por dois motivos distintos e ambos declarados:**
+
+- **Ainda não receberam onda própria (11):** a Fachada `/` (vídeo em autoplay e gradientes decorativos na folha editorial, "A equipe analisa"), `/login` · `/recuperar-senha` · `/nova-senha` (seguem cartão de sistema, não a porta com a luz de dentro), `informacoes` e `revisao` do wizard ("nossa equipe" ×4 no momento mais sensível), `/paciente/curadoria/imprimir`, `/paciente/documentos` ("da nossa equipe"), `/paciente/perfil` (única tela da área sem cabeçalho), o hub `/coa`, e a Mesa do Curador em `/coa/curadoria/casos/[id]/curadoria_tecnica` (bug e caixa-alta corrigidos; a densidade de badges numéricos permanece).
+- **Densidade operacional aceita (23):** as 20 telas de `/admin` e `/admin/crm`, mais as 3 restantes do portal do Curador. Pertencem à instituição pela paleta, pela moldura e pelo vocabulário; a tabela e o número seguem sendo a melhor forma para quem opera. **Amarelo aqui não é dívida — é a fronteira entre os fundos e a planta dela**, que os documentos congelados mandam preservar.
+
+## Resíduos eliminados nesta onda
+
+| Resíduo | Onde estava | Estado |
+|---|---|---|
+| Blur de fundo nos cinco shells | `patient-shell`, `app-shell`, `portal-shell`, `public-header`, `mesa-curador.css` | **corrigido** — papel fosco e opaco |
+| `Badge` em caixa alta por padrão | `ui/badge.tsx:19` | **corrigido** — toda badge da plataforma deixou de gritar |
+| Caixa alta na Mesa do Curador | 6 seletores de `mesa-curador.css` | **corrigido** (Onda 4) |
+| `text-muted-foreground` (token shadcn) | 4 componentes, 15 ocorrências | **consolidado** em `text-ink-muted` |
+| "SISTEMA OPERACIONAL" | `app-shell.tsx` | **corrigido** → "Curadoria Médica" |
+| Vermelho julgando dado | `admin/page.tsx` ×2 | **corrigido** → dourado de atenção |
+| Estado vazio mentiroso sobre conteúdo real | `dashboard-panel.tsx` → `/profissional` | **corrigido** — o vazio saiu; cada seção diz a própria ausência |
+| `mesa-celula--sem-dado` / `--neutro` inexistentes | `comparacao-premium.tsx` | **corrigido** (Onda 4) — ligadas a `--insuficiente` e `--nao`, que já existiam |
+| `mesa-timeline__item--ahead` / `mesa-raciocinio__item--adiante` sem regra | `mesa-curador.css` | **definidos** com o tratamento neutro que já tinham implícito |
+| `legacy-surface-notice.tsx` | zero referências em `src/` e `tests/` | **removido** com prova |
+| `.patient-progress-track/-fill` | CSS morto | **removido** (Onda 1) |
+
+## Mantidos por compatibilidade, com o motivo
+
+- **`ui/tabs.tsx`** — nenhum import de produto, mas tem teste de componente. Elemento banido pela F2 §12 e não renderizado em lugar nenhum: **inofensivo onde está**, e removê-lo exigiria editar uma suíte que cobre vários primitivos.
+- **`PatientNotificationsList`** — órfão no produto, com suíte dedicada. Dar-lhe superfície é decisão de produto pendente; apagar componente e teste por "parecer legado" é exatamente o que o critério de remoção proíbe.
+- **`CuradoriaDecisionPanel`** — é o mecanismo de "nenhum dos três", **candidato declarado à v1.1**.
+- **`CoaTransferPanel`** — tem um importador; permanece.
+- **Quatro contêineres estruturais da Mesa** (`mesa-comparacao`, `mesa-filtros`, `mesa-dupla`, `mesa-step__label`) — emitidos sem regra, mas sem significado visual. Ficam como marcação semântica, **nomeados na lista de permitidos do teste de integridade** em vez de removidos em silêncio.
+
+## Fora do escopo — exige decisão de produto ou domínio
+
+As quatro primitivas de mensagem (`toast`, `alert`, `form-message`, `status-banner`) continuam oferecendo o semáforo completo. A gramática dos quatro papéis — fato, confirmação, impedimento, orientação — está escrita na Linguagem, mas **unificá-las estruturalmente é refatoração ampla de componentes**, não mudança de percepção: fica registrada como a próxima dívida técnica de apresentação. No mesmo grupo: a fusão das rotas `/coa/*` com as superfícies de trabalho, a renomeação das pastas `paciente/`×`patient/`, a remoção física das seis rotas mortas, e a restruturação de `/profissional` em identidade · verificação · mapa · publicação.
+
+## Guardas que impedem a volta
+
+Os resíduos desta onda não voltam por decisão local razoável: **9 testes de fonte** verificam que nenhum shell usa blur, que `Badge` não vem em caixa alta, que a Mesa não usa caixa alta, que `text-muted-foreground` não reaparece, que nenhuma superfície viva se chama "Sistema Operacional", que todo modificador de estado da Mesa tem definição no CSS, e que a saudação dos fundos não afirma vazio sobre conteúdo real. Somam-se aos guardas das ondas anteriores (vocabulário da paciente, ausência de ranking, quatro verdades antes do ato, "ler não é fazer", gramática do Concierge).
+
+## Conclusão
+
+> **A Aliviar inteira parece uma única casa.** A planta dela — da Fachada à varanda — atravessa-se sem trocar de mundo, e os fundos falam como a mesma instituição sem perder a densidade de quem trabalha. O que resta amarelo é de duas naturezas honestas: cômodos que ainda não tiveram a sua onda, e a densidade operacional que os documentos mandam preservar. **Nada que reste é vermelho, e nada que reste é invisível** — está tudo nomeado acima, com endereço.
