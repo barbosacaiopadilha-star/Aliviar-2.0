@@ -109,34 +109,65 @@ export function ConnectionChoicePanel({
     });
   }
 
-  // Etapa de revisão — nada foi persistido ainda.
+  // A Sala da Decisão — nada foi persistido ainda.
+  //
+  // As quatro verdades da A_SALA_DA_DECISAO §5.1 vêm ANTES do gesto (SD-O1),
+  // ditas uma vez, como informação e nunca como advertência. Cada uma só
+  // afirma o que tem autoridade verificável (§17.4): o alcance real do ato
+  // hoje é registrar a escolha e torná-la legível a quem cuida do caso
+  // (Contrato Operacional 9B) — a Aliviar ainda não procura o profissional,
+  // e dizer que procuraria seria prometer capacidade inexistente.
+  //
+  // O gesto é único, inequívoco e nomeado (SD-O2/SD-P3): a etapa anterior
+  // declarou SOBRE QUEM se decide; esta declara QUE se decidiu. Não é
+  // segunda confirmação — é o ato, precedido de vazio.
   if (step === "reviewing" && selectedPresentation) {
+    const nome = selectedPresentation.displayName;
     return (
       <PatientCard>
-        <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">Confirme sua escolha</h2>
-        <p className="patient-body mt-3 text-[var(--patient-ink)]">
-          Você escolheu seguir com {selectedPresentation.displayName}.
+        <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
+          O que acontece ao seguir com {nome}
+        </h2>
+        <p className="mt-3 max-w-prose text-sm leading-relaxed text-[var(--patient-ink)]">
+          Você escolheu seguir com {nome}.
         </p>
-        <p className="patient-body mt-2 text-[var(--color-ink-muted)]">
-          Essa escolha será registrada, e você ainda poderá corrigi-la enquanto
-          não iniciar o contato.
-        </p>
+
+        <div className="mt-5 max-w-prose space-y-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+          <p>
+            Sua escolha fica registrada e passa a ser visível para quem cuida do seu caso na
+            Aliviar. Não há consulta marcada, não há horário, e {nome} ainda não foi procurado.
+          </p>
+          <p>
+            Seu caso continua sob responsabilidade da Aliviar — ele nunca fica sem alguém
+            respondendo por ele.
+          </p>
+          <p>
+            Enquanto você não tiver falado com {nome}, pode trocar aqui mesmo, sem precisar
+            explicar nada.
+          </p>
+          <p>Os outros dois caminhos continuam na Mesa, do jeito que você os deixou.</p>
+        </div>
+
         {error ? (
-          <FormMessage variant="error" className="mt-3">
+          <FormMessage variant="error" className="mt-4">
             {error}
           </FormMessage>
         ) : null}
-        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+
+        {/* O ato fica fora do caminho de leitura, com vazio à volta — nunca
+            sob o dedo de quem está apenas percorrendo (SD-O2). */}
+        <div className="mt-10 flex flex-col gap-2 sm:flex-row sm:items-center">
           <Button type="button" isLoading={isPending} onClick={handleConfirm}>
-            Confirmar minha escolha
+            Seguir com {nome}
           </Button>
           <Button
             type="button"
-            variant="secondary"
+            variant="ghost"
+            className="w-auto"
             disabled={isPending}
             onClick={() => setStep("choosing")}
           >
-            Rever profissionais
+            Voltar aos caminhos
           </Button>
         </div>
       </PatientCard>
@@ -175,13 +206,18 @@ export function ConnectionChoicePanel({
           {error}
         </FormMessage>
       ) : null}
+      {/* O limiar (§4.2): a manifestação é dirigida a alguém — nunca
+          "continuar", que é genérico e transformaria a Mesa em funil.
+          Atravessar não confirma; a porta não é compromisso. */}
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <Button
           type="button"
           disabled={!selectedId}
           onClick={() => setStep("reviewing")}
         >
-          Revisar e confirmar
+          {selectedPresentation
+            ? `Quero seguir com ${selectedPresentation.displayName}`
+            : "Quero seguir com um dos três"}
         </Button>
         {connection ? (
           <Button

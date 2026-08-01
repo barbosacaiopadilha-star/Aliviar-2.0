@@ -417,12 +417,12 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
     const [first, second] = fixture.professionalDisplayNames;
 
     await page.getByRole("radio", { name: first }).check();
-    await page.getByRole("button", { name: "Revisar e confirmar" }).click();
+    await page.getByRole("button", { name: `Quero seguir com ${first}` }).click();
     await expect(
       page.getByText(`Você escolheu seguir com ${first}.`),
     ).toBeVisible();
 
-    await page.getByRole("button", { name: "Confirmar minha escolha" }).click();
+    await page.getByRole("button", { name: `Seguir com ${first}` }).click();
 
     // A PROVA É A CONNECTION, NÃO O TEXTO.
     //
@@ -463,8 +463,8 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
     // Correção antes do contato.
     await page.getByRole("button", { name: "Alterar minha escolha" }).click();
     await page.getByRole("radio", { name: second }).check();
-    await page.getByRole("button", { name: "Revisar e confirmar" }).click();
-    await page.getByRole("button", { name: "Confirmar minha escolha" }).click();
+    await page.getByRole("button", { name: `Quero seguir com ${second}` }).click();
+    await page.getByRole("button", { name: `Seguir com ${second}` }).click();
 
     // Esperar a correção PERSISTIR antes de recarregar.
     //
@@ -501,9 +501,9 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
 
       const [name] = f.professionalDisplayNames;
       await page.getByRole("radio", { name }).check();
-      await page.getByRole("button", { name: "Revisar e confirmar" }).click();
+      await page.getByRole("button", { name: `Quero seguir com ${name}` }).click();
       await page
-        .getByRole("button", { name: "Confirmar minha escolha" })
+        .getByRole("button", { name: `Seguir com ${name}` })
         .click();
 
       await expect(
@@ -542,8 +542,8 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
       // botões da página inteira — o cabeçalho do paciente tem controles
       // legítimos, e exigir zero botões testava o layout, não o produto.
       for (const acao of [
-        "Confirmar minha escolha",
-        "Rever profissionais",
+        `Seguir com ${name}`,
+        "Voltar aos caminhos",
         "Alterar minha escolha",
         "Já iniciei o contato",
         "O contato não avançou",
@@ -565,9 +565,9 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
 
       const [name] = f.professionalDisplayNames;
       await page.getByRole("radio", { name }).check();
-      await page.getByRole("button", { name: "Revisar e confirmar" }).click();
+      await page.getByRole("button", { name: `Quero seguir com ${name}` }).click();
       await page
-        .getByRole("button", { name: "Confirmar minha escolha" })
+        .getByRole("button", { name: `Seguir com ${name}` })
         .click();
 
       await page.getByRole("button", { name: "O contato não avançou" }).click();
@@ -590,8 +590,8 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
       // botões da página inteira — o cabeçalho do paciente tem controles
       // legítimos, e exigir zero botões testava o layout, não o produto.
       for (const acao of [
-        "Confirmar minha escolha",
-        "Rever profissionais",
+        `Seguir com ${name}`,
+        "Voltar aos caminhos",
         "Alterar minha escolha",
         "Já iniciei o contato",
         "O contato não avançou",
@@ -613,9 +613,9 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
 
       const [name] = f.professionalDisplayNames;
       await page.getByRole("radio", { name }).check();
-      await page.getByRole("button", { name: "Revisar e confirmar" }).click();
+      await page.getByRole("button", { name: `Quero seguir com ${name}` }).click();
       await page
-        .getByRole("button", { name: "Confirmar minha escolha" })
+        .getByRole("button", { name: `Seguir com ${name}` })
         .click();
       await page.getByRole("button", { name: "Já iniciei o contato" }).click();
 
@@ -653,9 +653,9 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
 
       const [name] = f.professionalDisplayNames;
       await page.getByRole("radio", { name }).check();
-      await page.getByRole("button", { name: "Revisar e confirmar" }).click();
+      await page.getByRole("button", { name: `Quero seguir com ${name}` }).click();
       await page
-        .getByRole("button", { name: "Confirmar minha escolha" })
+        .getByRole("button", { name: `Seguir com ${name}` })
         .click();
       await page.getByRole("button", { name: "Já iniciei o contato" }).click();
 
@@ -679,8 +679,8 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
       // botões da página inteira — o cabeçalho do paciente tem controles
       // legítimos, e exigir zero botões testava o layout, não o produto.
       for (const acao of [
-        "Confirmar minha escolha",
-        "Rever profissionais",
+        `Seguir com ${name}`,
+        "Voltar aos caminhos",
         "Alterar minha escolha",
         "Já iniciei o contato",
         "O contato não avançou",

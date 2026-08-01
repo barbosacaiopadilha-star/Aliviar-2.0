@@ -124,7 +124,7 @@ describe("ConnectionChoicePanel — sem Connection", () => {
     }
   });
 
-  it("mantém 'Revisar e confirmar' desabilitado sem seleção", () => {
+  it("mantém o gesto do limiar desabilitado sem seleção", () => {
     render(
       <ConnectionChoicePanel
         caseId={CASE_ID}
@@ -133,7 +133,7 @@ describe("ConnectionChoicePanel — sem Connection", () => {
       />,
     );
     expect(
-      screen.getByRole("button", { name: "Revisar e confirmar" }),
+      screen.getByRole("button", { name: "Quero seguir com um dos três" }),
     ).toBeDisabled();
   });
 
@@ -176,7 +176,7 @@ describe("ConnectionChoicePanel — sem Connection", () => {
 
     await user.click(screen.getByRole("radio", { name: "Carla Profissional" }));
     await user.click(
-      screen.getByRole("button", { name: "Revisar e confirmar" }),
+      screen.getByRole("button", { name: "Quero seguir com Carla Profissional" }),
     );
 
     expect(
@@ -185,7 +185,7 @@ describe("ConnectionChoicePanel — sem Connection", () => {
     expect(createConnectionActionMock).not.toHaveBeenCalled();
 
     await user.click(
-      screen.getByRole("button", { name: "Confirmar minha escolha" }),
+      screen.getByRole("button", { name: "Seguir com Carla Profissional" }),
     );
     expect(createConnectionActionMock).toHaveBeenCalledWith({
       caseId: CASE_ID,
@@ -193,7 +193,7 @@ describe("ConnectionChoicePanel — sem Connection", () => {
     });
   });
 
-  it("'Rever profissionais' volta à seleção sem persistir", async () => {
+  it("'Voltar aos caminhos' volta à seleção sem persistir", async () => {
     const user = userEvent.setup();
     render(
       <ConnectionChoicePanel
@@ -205,10 +205,10 @@ describe("ConnectionChoicePanel — sem Connection", () => {
 
     await user.click(screen.getByRole("radio", { name: "Ana Profissional" }));
     await user.click(
-      screen.getByRole("button", { name: "Revisar e confirmar" }),
+      screen.getByRole("button", { name: "Quero seguir com Ana Profissional" }),
     );
     await user.click(
-      screen.getByRole("button", { name: "Rever profissionais" }),
+      screen.getByRole("button", { name: "Voltar aos caminhos" }),
     );
 
     expect(screen.getAllByRole("radio")).toHaveLength(3);
@@ -249,10 +249,10 @@ describe("ConnectionChoicePanel — Connection em DECISAO_REGISTRADA", () => {
     );
     await user.click(screen.getByRole("radio", { name: "Bruno Profissional" }));
     await user.click(
-      screen.getByRole("button", { name: "Revisar e confirmar" }),
+      screen.getByRole("button", { name: "Quero seguir com Bruno Profissional" }),
     );
     await user.click(
-      screen.getByRole("button", { name: "Confirmar minha escolha" }),
+      screen.getByRole("button", { name: "Seguir com Bruno Profissional" }),
     );
 
     expect(correctChoiceActionMock).toHaveBeenCalledWith({
@@ -322,10 +322,10 @@ describe("ConnectionChoicePanel — erros", () => {
 
     await user.click(screen.getByRole("radio", { name: "Ana Profissional" }));
     await user.click(
-      screen.getByRole("button", { name: "Revisar e confirmar" }),
+      screen.getByRole("button", { name: "Quero seguir com Ana Profissional" }),
     );
     await user.click(
-      screen.getByRole("button", { name: "Confirmar minha escolha" }),
+      screen.getByRole("button", { name: "Seguir com Ana Profissional" }),
     );
 
     const alert = await screen.findByRole("alert");
@@ -345,7 +345,7 @@ describe("ConnectionChoicePanel — erros", () => {
 
     createConnectionActionMock.mockResolvedValueOnce({ success: true });
     await user.click(
-      screen.getByRole("button", { name: "Confirmar minha escolha" }),
+      screen.getByRole("button", { name: "Seguir com Ana Profissional" }),
     );
     expect(createConnectionActionMock).toHaveBeenCalledTimes(2);
   });

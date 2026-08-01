@@ -229,8 +229,12 @@ export function ConnectionProgressPanel({
       </p>
       {onRequestEdit ? (
         <>
+          {/* A janela dita pelo marco, nunca por relógio nem como promessa
+              geral — é a única formulação de reversibilidade autorizada
+              (A_SALA_DA_DECISAO §6.4; garantida por trigger). */}
           <p className="mt-2 text-sm text-ink-muted">
-            Você ainda pode alterar essa escolha antes de iniciar o contato.
+            Enquanto você não tiver falado com {displayName}, pode trocar aqui mesmo, sem
+            precisar explicar nada.
           </p>
           <Button
             type="button"
