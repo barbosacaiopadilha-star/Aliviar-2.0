@@ -24,7 +24,7 @@ A Aliviar não pode garantir resultado. Nenhuma plataforma pode, e quem promete 
 
 **Cinco.** Ninguém adquire um profissional. Alguém **começa** com uma pessoa.
 
-**Seis.** Quando a vida real se impõe, esta arquitetura contemplativa sai do caminho e dá lugar a um telefone tocando.
+**Seis.** Quando a vida real se impõe, esta arquitetura contemplativa sai do caminho e dá lugar a uma pessoa.
 
 ---
 
@@ -104,7 +104,10 @@ Sempre que a pergunta, por baixo da formulação, **for sobre ela**: *"e se eu m
 
 Esta última merece atenção: **parece uma pergunta ao Curador e não é.** É um pedido para que alguém assuma o peso. Respondê-la com uma recomendação seria decidir por ela; respondê-la com mais dados seria não escutar.
 
-O que o Concierge oferece: que não existe resposta certa; que os três podem cuidar bem; que a decisão é reversível; que ela não estará sozinha depois. **É consolo, e consolo é uma forma legítima de cuidado — só não é informação.**
+O que o Concierge oferece: que não existe resposta certa; que os três podem cuidar bem; **que, enquanto ela não tiver falado com o profissional, dá para trocar**; que ela não estará sozinha depois. **É consolo, e consolo é uma forma legítima de cuidado — só não é informação.**
+
+> **`VIGENTE` · limitação de promessa (P-2).** A redação anterior mandava dizer *"que a decisão é reversível"* — promessa absoluta, sem condição, dita no momento de maior fragilidade. **A verdade condicionada e verificável é outra:** enquanto o registro permanece em `DECISAO_REGISTRADA`, ela troca sozinha entre os três; assim que declara ter iniciado o contato, a correção direta é bloqueada por *trigger*. **É ela quem fecha a própria janela**, e nenhum ato nosso a encurta.
+> **`DEPENDENTE DE IMPLEMENTAÇÃO`:** a continuação *"depois disso, é só me dizer que eu cuido disso com você"* **não está autorizada**. Alteração mediada é direção aprovada (ADR-043 §6) e depende da capacidade *Troca de Profissional* prevista na ADR-028 e do acesso do Concierge à decisão, que hoje não existe.
 
 ## 3.4 Como impedir que a plataforma trate insegurança como falta de informação
 
@@ -187,13 +190,18 @@ Duas coisas ao mesmo tempo:
 
 ## 5.2 Como a plataforma acompanha
 
-**A escolha aterrissa numa pessoa, não num banco de dados.** Imediatamente ela sabe que **o Curador foi avisado** e o que ele fará em seguida. Silêncio depois de decidir é o terreno onde a dúvida cresce.
+**A escolha aterrissa numa pessoa, não num banco de dados.** Imediatamente ela sabe **que a decisão está registrada e visível para o Curador do seu caso, com nome** — e que o Case continua sob responsabilidade da Aliviar. Silêncio depois de decidir é o terreno onde a dúvida cresce.
+
+> **`VIGENTE` · correção factual (P-1).** A redação anterior dizia que *"o Curador foi avisado e o que ele fará em seguida"*. **Nenhuma notificação de equipe é produzida:** o registro da decisão persiste a linha e revalida as rotas da paciente; uma pessoa só saberá ao consultar o sistema. Visibilidade por política de acesso **não é aviso**, e prever a ação de alguém é prometer o que não se controla.
+> **`DIREÇÃO APROVADA, NÃO IMPLEMENTADA` (ADR-043 §9):** a Aliviar deverá produzir notificação verificável ao papel responsável, com estados distintos para despachada, recebida, lida e assumida.
 
 **Nada de confirmação.** Sem resumo do pedido, sem "você escolheu X", sem recibo, sem número de protocolo. Tudo isso é gramática de compra.
 
 **Nada de celebração.** Ela não conquistou nada — tomou uma decisão difícil sobre a própria saúde. Isso pede sobriedade.
 
-**A alternativa sai de cena.** Os outros dois deixam a superfície principal no mesmo instante; permanecem no histórico, porque negá-los seria reescrever a jornada dela. **Continuar exibindo o que não foi escolhido é fabricar arrependimento.**
+**A alternativa sai de cena — mas não no instante da confirmação.** Os outros dois deixam a superfície principal quando a relação efetivamente começa, no **primeiro atendimento**; até lá permanecem alcançáveis, porque até lá a escolha ainda pode ser corrigida (§8). Depois disso permanecem no histórico, porque negá-los seria reescrever a jornada dela. **Continuar exibindo o que não foi escolhido é fabricar arrependimento; retirá-lo cedo demais é tirar dela uma saída que ainda existe.**
+
+> **`VIGENTE` · correção factual (P-5, aplicado na extensão autorizada).** A redação anterior dizia *"no mesmo instante"*, sem dizer de quê — e confirmação, registro e início da relação são momentos diferentes. O marco usado aqui é `PRIMEIRO_ATENDIMENTO_REALIZADO`, **o único evento de fronteira que existe hoje no domínio**. Um marco de "aproximação concluída" ainda não foi decidido e não é presumido.
 
 ## 5.3 Como se evita sensação de compra ou de pedido confirmado
 
@@ -265,7 +273,14 @@ O arrependimento tem uma forma característica: *"eu nem sei por que escolhi iss
 
 # 8 · O CONCIERGE
 
-**Quando entra.** No instante da decisão — não antes. Durante a Curadoria esteve no corredor; agora entra no cômodo, apresentado pelo Curador.
+**Quando entra.** Duas coisas diferentes, que a redação anterior tratava como uma.
+
+**Alcançável** — desde a Mesa, pela porta *"quero conversar"*, sempre que ela o procurar. Estar disponível não é ser responsável.
+
+**Responsável pelo Case** — **na transferência de responsabilidade**, ato deliberado com motivo escrito e auditoria, apresentado nominalmente pelo Curador. Até que ela aconteça, **o responsável pelo Case continua sendo o Curador** — não por convenção, mas porque a responsabilidade é um registro do Case, e ele ainda aponta para o Curador.
+
+> **`VIGENTE` · correção factual (P-3).** A redação anterior dizia *"no instante da decisão — não antes"*, o que colidia com a obrigação **O5** (a porta do Concierge existe na Mesa, que é anterior à decisão). **Presença, resposta e assunção são três eventos distintos.**
+> **`DEPENDENTE DE IMPLEMENTAÇÃO`:** o mecanismo de transferência existe e é auditado, **mas o Concierge não tem hoje acesso de leitura ao registro da decisão** — pode ser o responsável e não enxergar o que responde. Enquanto isso não for resolvido, **nenhuma superfície pode dizer que ele está acompanhando.**
 
 **Quando permanece em silêncio.** Enquanto ela lê a carta. Enquanto está na Sala Particular. **Dentro da Sala da Decisão.** E — o mais difícil — **enquanto ela demora**. Silêncio durante a demora não é negligência: é a forma de dizer que não há pressa.
 
@@ -309,10 +324,12 @@ A informação envelhece: disponibilidade, prazo, convênio e custo são voláte
 |---|---|---|
 | **Nenhum convenceu** | pergunta o que faltou; volta ao Encontro ou assume a lacuna da rede | dizer "escolha assim mesmo"; oferecer mais três de imediato |
 | **Mudou de prioridade** | trata como conversa nova. Nova carta, mesmo Curador | pedir que "atualize o cadastro" |
-| **Profissional indisponível** | avisa **imediatamente**, assume como falha nossa, e o Curador retoma antes de ela pedir | deixá-la descobrir; tratar como imprevisto dela |
+| **Profissional indisponível** † | avisa **imediatamente**, assume como falha nossa, e o Curador retoma antes de ela pedir | deixá-la descobrir; tratar como imprevisto dela |
 | **Curadoria recomeça** | Case novo, **com o anterior preservado** e o Curador já sabendo o que se sabia | fazer recomeçar do zero |
 | **Ela desistiu** | despede-se bem, guarda tudo, deixa a porta aberta | retenção, "tem certeza?", pesquisa de saída |
 | **Piorou clinicamente** | ver abaixo | insistir no processo |
+
+> **† `DIREÇÃO APROVADA, NÃO IMPLEMENTADA`.** A linha da indisponibilidade descreve o que a ADR-043 estabeleceu como destino obrigatório — e **não o que a operação faz hoje**. Hoje **ninguém descobre a indisponibilidade**: não há consulta de disponibilidade e não há contato da Aliviar com o profissional, de modo que quem a encontra é a própria paciente, ao procurar. **Isto é registrado como divergência aberta, não corrigido por redação:** a promessa permanece no documento porque foi decidida, e permanece marcada porque ainda não é cumprível. **Nenhuma superfície pode afirmá-la à paciente enquanto a capacidade não existir.**
 
 ## 10.1 Quando a realidade clínica exige rapidez
 
@@ -326,11 +343,15 @@ Tudo o que foi construído em sete fases pressupõe uma verdade: **não há pres
 
 **A arquitetura sai da frente.** Nada de percurso, nada de cômodos, nada de esperar que ela navegue até algum lugar.
 
-**O contato humano vem primeiro, e vem rápido.** O caminho mais curto até uma pessoa da Aliviar, imediatamente visível, sem atravessar nada. **Telefone, não formulário.**
+**O contato humano vem primeiro.** O caminho mais curto até uma pessoa da Aliviar, imediatamente visível, sem atravessar nada — **uma pessoa, não um formulário.**
+
+> **`BLOQUEADO` · `DEPENDENTE DE VALIDAÇÃO CLÍNICA`.** A redação anterior dizia *"Telefone, não formulário"* e *"vem rápido"*. **Não existe canal de voz confirmado**, e **não existe horário de operação formalizado** — prometer rapidez sem cobertura verificável é criar a aparência de atendimento emergencial que esta própria seção proíbe. O único canal humano existente é iniciado pela paciente, sem monitoramento contínuo comprovável, e **por isso não pode ser apresentado como canal de urgência.** Qual canal atende urgência, com que cobertura e com que texto, depende da responsabilidade técnica clínica.
 
 **O processo espera.** Não se pede reconhecimento de carta, nem completude de prioridade, nem comparação. Tudo fica guardado e será retomado quando fizer sentido.
 
-**E a Aliviar diz o que não é.** Se for emergência, a resposta honesta é encaminhar ao serviço de urgência. **A Curadoria não atende urgência, e fingir que atende seria perigoso.** Saber dizer *"isto não é conosco — procure agora este outro lugar"* é parte de cuidar.
+**E a Aliviar diz o que não é.** ***"A Curadoria não atende urgência"*** — declaração institucional de escopo, que pode ser dita hoje. **Fingir que atende seria perigoso.**
+
+> **`BLOQUEADO` · `DEPENDENTE DE VALIDAÇÃO CLÍNICA`.** O encaminhamento é a consequência necessária dessa frase, e o princípio permanece válido: *saber dizer "isto não é conosco — procure agora este outro lugar" é parte de cuidar.* **Mas qual serviço, sob que critério e com que texto é matéria clínica**, e este documento tem proibição de criar regra clínica. Enquanto não houver validação, a Aliviar **diz o que não é e encurta o caminho até uma pessoa — e não emite orientação de encaminhamento.**
 
 > **A regra permanente que isto estabelece: nenhuma decisão de experiência pode se sobrepor à segurança de quem está sendo cuidado. Quando as duas colidirem, a experiência cede — sempre, e sem discussão.**
 
@@ -395,6 +416,30 @@ Não é revestimento. Cada exigência daqui corresponde a uma garantia já conge
 **A arquitetura da experiência não precisa disfarçar nada** — e essa é a herança do congelamento. Onde outra plataforma precisaria de design para suavizar um algoritmo que ordena, aqui o design apenas **torna perceptível o que já é verdade**: não há nada a esconder, e isso se sente.
 
 E há uma reciprocidade que vale registrar: **este documento também protege o Método.** Um Motor que não ordena seria inútil se a interface ordenasse por ele. As proibições da §11 são o que garante que a promessa técnica chegue inteira até a pessoa.
+
+---
+
+# 13 · Estado de implementação deste documento
+
+*Acrescentado na reconciliação (Fase 9D). **Nada aqui é decisão nova** — é a separação entre o que já é verdade, o que foi decidido como destino e o que continua bloqueado.*
+
+## O que é `VIGENTE` — garantido hoje
+
+A decisão é registrada e fica visível ao Curador do caso · **o Case nunca fica sem responsável**, porque a responsabilidade é um registro com dono e histórico auditado · a paciente **troca sozinha** entre os três enquanto não tiver declarado contato · **"nenhum dos três"** é desfecho de primeira classe, também no domínio · nada expira, nada muda de estado por ausência dela · **a Aliviar pode dizer que não atende urgência**.
+
+## O que é `DIREÇÃO APROVADA, NÃO IMPLEMENTADA` (ADR-043)
+
+Notificação verificável ao papel responsável · atribuição operacional ao Concierge, com acesso ao que ele responde · **a Aliviar iniciar ou coordenar o contato com o profissional** · consulta e resposta de disponibilidade · **indisponibilidade como evento do processo, comunicada por uma pessoa antes que ela descubra** · alteração mediada depois de fechada a janela direta.
+
+**Nenhuma dessas pode ser afirmada à paciente.** Decidir a direção não autoriza prometê-la.
+
+## O que permanece `BLOQUEADO`
+
+Qualquer instrução sobre **o que fazer em urgência** — canal, número, destino, sinais, prazo — `DEPENDENTE DE VALIDAÇÃO CLÍNICA` · **qualquer prazo de resposta**, porque não há horário de operação nem detecção de caso parado · **quem lê a frase dela**, `DEPENDENTE DE VALIDAÇÃO JURÍDICA/PRIVACIDADE`.
+
+## O que a reconciliação **não** tocou
+
+Dúvida × insegurança e as duas portas · o critério de prontidão · "nenhum dos três" · a regra de que a plataforma nunca classifica estado emocional · **e a regra permanente de que nenhuma decisão de experiência se sobrepõe à segurança de quem está sendo cuidado** — que sai desta fase mais forte, não mais fraca: foi em nome dela que as promessas de rapidez e de encaminhamento foram bloqueadas.
 
 ---
 
