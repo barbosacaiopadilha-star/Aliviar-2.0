@@ -19,6 +19,8 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import { uploadPatientDocument } from "@/modules/profiles/patient-document-repository";
+import { attachDocumentToStory } from "@/modules/story/attachment-repository";
 
 import { createCuradoriaClient } from "./curadoria-client";
 
@@ -143,5 +145,151 @@ describe("anexar documento à própria história", () => {
     expect(definicao, "a policy voltou a consultar a tabela de anexos direto").not.toContain(
       "patient_story_attachments",
     );
+  });
+
+  // ---------------------------------------------------------------------------
+  // Bloco B/E8 (gate B16) — a saga documento+vínculo: retry reutiliza, duplo
+  // clique não duplica, falha compensa (com guarda) e o resíduo nunca fica
+  // invisível.
+  // ---------------------------------------------------------------------------
+
+  it("retry/duplo clique do vínculo reutiliza o existente — nunca duplica nem vira erro", async () => {
+    // O anexo storyId+documentId já existe (teste anterior). Repetir pelo
+    // repositório real é o duplo clique/retry do produto.
+    await attachDocumentToStory(paciente, storyId, documentId);
+    await attachDocumentToStory(paciente, storyId, documentId);
+
+    const { count } = await admin
+      .from("patient_story_attachments")
+      .select("*", { count: "exact", head: true })
+      .eq("story_id", storyId)
+      .eq("document_id", documentId);
+    expect(count, "o vínculo continua único").toBe(1);
+  });
+
+  it("vínculo recusado compensa o documento recém-criado — banco E storage, sem resíduo", async () => {
+    // O caminho completo da saga: arquivo REAL no storage + linha no banco.
+    const enviado = await uploadPatientDocument(
+      paciente,
+      profileId,
+      new File(["conteudo do exame"], "exame-compensavel.txt", { type: "text/plain" }),
+    );
+
+    // O vínculo falha (história inexistente) — a recusa chega inteira...
+    await expect(attachDocumentToStory(paciente, randomUUID(), enviado.id)).rejects.toThrow();
+
+    // ...e o documento foi compensado: nem linha no banco, nem arquivo no
+    // storage — nunca uma divergência silenciosa.
+    const { data: linha } = await admin
+      .from("patient_documents")
+      .select("id")
+      .eq("id", enviado.id)
+      .maybeSingle();
+    expect(linha, "a linha do documento foi removida pela compensação").toBeNull();
+
+    const { data: arquivos } = await admin.storage.from("patient-documents").list(profileId);
+    const sobrouNoStorage = (arquivos ?? []).some(
+      (arquivo) => `${profileId}/${arquivo.name}` === enviado.filePath,
+    );
+    expect(sobrouNoStorage, "o arquivo foi removido do storage pela compensação").toBe(false);
+
+    // Compensação concluída = nenhum evento de resíduo (o rastro é para
+    // quando a compensação FALHA).
+    const { count: rastros } = await admin
+      .from("audit_logs")
+      .select("*", { count: "exact", head: true })
+      .eq("action", "patient_document_orphaned")
+      .contains("metadata", { document_id: enviado.id });
+    expect(rastros).toBe(0);
+  });
+
+  it("a compensação tem guarda: documento já vinculado a uma história nunca é removido", async () => {
+    // documentId está vinculado a storyId. Tentar anexá-lo a uma história
+    // inexistente falha — mas a compensação NÃO pode destruir um documento
+    // que pertence legitimamente a outra história.
+    await expect(attachDocumentToStory(paciente, randomUUID(), documentId)).rejects.toThrow();
+
+    const { data: linha } = await admin
+      .from("patient_documents")
+      .select("id")
+      .eq("id", documentId)
+      .maybeSingle();
+    expect(linha, "o documento vinculado sobreviveu à falha do novo vínculo").not.toBeNull();
+
+    const { count } = await admin
+      .from("patient_story_attachments")
+      .select("*", { count: "exact", head: true })
+      .eq("story_id", storyId)
+      .eq("document_id", documentId);
+    expect(count, "o vínculo original permanece intacto").toBe(1);
+  });
+
+  it("o rastro do resíduo é gravável pelo dono, recusado para terceiros, vínculo existente e documento inexistente", async () => {
+    // Um documento SEM vínculo — o único estado que caracteriza resíduo.
+    const { data: docSolto, error: docSoltoError } = await admin
+      .from("patient_documents")
+      .insert({
+        profile_id: profileId,
+        uploaded_by: profileId,
+        file_path: `${profileId}/residuo-${randomUUID().slice(0, 8)}.txt`,
+        file_name: "residuo-prova.txt",
+      })
+      .select("id")
+      .single();
+    expect(docSoltoError, `fixture do documento solto: ${docSoltoError?.message}`).toBeNull();
+    const docSoltoId = docSolto!.id as string;
+
+    // O mecanismo do evento observável (falha da compensação): a RPC grava em
+    // audit_logs — com sessão real, só sobre o próprio documento.
+    const { error } = await paciente.rpc("register_patient_document_residue", {
+      _document_id: docSoltoId,
+      _reason: "Prova de integração do rastro observável (Bloco B/E8).",
+    });
+    expect(error, `o dono registra o rastro: ${error?.message}`).toBeNull();
+
+    const { count: rastros } = await admin
+      .from("audit_logs")
+      .select("*", { count: "exact", head: true })
+      .eq("action", "patient_document_orphaned")
+      .contains("metadata", { document_id: docSoltoId });
+    expect(rastros, "o evento ficou no ledger").toBe(1);
+
+    // Documento vinculado a uma história NÃO é resíduo: o servidor valida o
+    // estado e recusa o registro inventado.
+    const { error: vinculadoError } = await paciente.rpc("register_patient_document_residue", {
+      _document_id: documentId,
+      _reason: "Não é resíduo — está vinculado.",
+    });
+    expect(vinculadoError, "documento vinculado não é registrável como resíduo").not.toBeNull();
+
+    // Documento inexistente: recusa explícita de domínio, nunca registro
+    // inventado.
+    const { error: inexistenteError } = await paciente.rpc("register_patient_document_residue", {
+      _document_id: randomUUID(),
+      _reason: "Não deve registrar nada.",
+    });
+    expect(inexistenteError).not.toBeNull();
+
+    // Terceiro (autenticado, sem papel de administrador, não dono): recusado.
+    const outra = createCuradoriaClient(url, anonKey);
+    const sufixo = randomUUID().slice(0, 8);
+    const { data: criado } = await admin.auth.admin.createUser({
+      email: `anexo-terceira-${sufixo}@aliviar-conexao.local`,
+      password: `Senha-${sufixo}-Ok!`,
+      email_confirm: true,
+    });
+    await outra.auth.signInWithPassword({
+      email: `anexo-terceira-${sufixo}@aliviar-conexao.local`,
+      password: `Senha-${sufixo}-Ok!`,
+    });
+
+    const { error: terceiraError } = await outra.rpc("register_patient_document_residue", {
+      _document_id: documentId,
+      _reason: "Tentativa de terceiro.",
+    });
+    expect(terceiraError, "terceiro não registra rastro sobre documento alheio").not.toBeNull();
+
+    await outra.auth.signOut();
+    await admin.auth.admin.deleteUser(criado!.user!.id);
   });
 });

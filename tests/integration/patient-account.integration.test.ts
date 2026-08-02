@@ -91,8 +91,90 @@ describe("criação e gestão administrativa de conta de paciente (Supabase loca
     });
     expect(slugs).toContain("paciente");
 
+    // Bloco B/E6: a criação administrativa passa pela saga de provisionamento
+    // — a operação fica registrada e a conta nasce visível ao CRM (ficha de
+    // origem própria), nunca uma conta invisível fora de qualquer fluxo.
+    const { data: operacao } = await adminClient
+      .from("patient_provisioning")
+      .select("status, origin_contact_id, operation_key")
+      .eq("profile_id", result.profileId)
+      .single();
+    expect(operacao?.status, "a operação de provisionamento foi registrada").toBe("REGISTERED");
+    expect(operacao?.operation_key).toBe(`patient-account:${result.profileId}`);
+    expect(operacao?.origin_contact_id, "a conta sem lead nasce com ficha CRM própria").not.toBeNull();
+
+    const { count: fichas } = await adminClient
+      .from("crm_contacts")
+      .select("*", { count: "exact", head: true })
+      .eq("patient_profile_id", result.profileId);
+    expect(fichas, "nenhuma conta de paciente nasce invisível ao CRM").toBeGreaterThan(0);
+
     await patientClient.auth.signOut();
     await adminAuthClient.auth.signOut();
+  });
+
+  it("falha entre o Auth e o registro transacional compensa a conta — nada sobra sem papel (Bloco B/E6)", async () => {
+    // A MESMA sequência do caminho admin (createPatientAccountAction →
+    // createPatientAccount), mas com uma sessão que o banco RECUSA no núcleo
+    // transacional: `register_provisioned_patient` só aceita Atendente ou
+    // Administrador. A conta nasce no Auth, o registro falha — e a
+    // compensação (deleteUser) precisa desfazer a conta: nunca sobra auth
+    // órfão, sem papel e sem registro.
+    const profissional = accounts.find((a) => a.role === "profissional")!;
+    const sessaoRecusada = createCuradoriaClient(url, anonKey);
+    await sessaoRecusada.auth.signInWithPassword({
+      email: profissional.email,
+      password: profissional.password,
+    });
+    const {
+      data: { user },
+    } = await sessaoRecusada.auth.getUser();
+
+    const adminClient = createAdminSupabaseClient();
+    const email = uniqueEmail();
+
+    // Contagens antes: a recusa não pode deixar NENHUM efeito parcial.
+    const { count: operacoesAntes } = await adminClient
+      .from("patient_provisioning")
+      .select("*", { count: "exact", head: true });
+    const { count: fichasAntes } = await adminClient
+      .from("crm_contacts")
+      .select("*", { count: "exact", head: true });
+
+    // As credenciais NUNCA chegam a existir para quem chamou: a função lança
+    // com o erro real do banco em vez de devolver senha de uma conta que não
+    // se concretizou.
+    await expect(
+      createPatientAccount(
+        adminClient,
+        sessaoRecusada,
+        { email, displayName: "Paciente Que Não Deve Nascer" },
+        user!.id,
+      ),
+    ).rejects.toThrow(/provisionam|autoriza|Atendente|Administrador/i);
+
+    // A conta foi compensada no Auth: não existe usuário com este e-mail.
+    const { data: usersData } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
+    const sobra = (usersData?.users ?? []).find((candidate) => candidate.email === email);
+    expect(
+      sobra,
+      `a conta ${email} deveria ter sido compensada (deleteUser) após a recusa do registro`,
+    ).toBeUndefined();
+
+    // E nenhum efeito parcial de negócio: a transação recusada não registrou
+    // operação de provisionamento nem criou ficha CRM.
+    const { count: operacoesDepois } = await adminClient
+      .from("patient_provisioning")
+      .select("*", { count: "exact", head: true });
+    const { count: fichasDepois } = await adminClient
+      .from("crm_contacts")
+      .select("*", { count: "exact", head: true });
+    expect(operacoesDepois, "nenhuma operação de provisionamento sobrou da recusa").toBe(
+      operacoesAntes,
+    );
+    expect(fichasDepois, "nenhuma ficha CRM sobrou da recusa").toBe(fichasAntes);
+
+    await sessaoRecusada.auth.signOut();
   });
 
   it("uma conta sem o papel administrador não consegue conceder o papel paciente (defesa em profundidade da RLS)", async () => {

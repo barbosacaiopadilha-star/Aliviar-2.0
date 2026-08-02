@@ -5,6 +5,11 @@ import { createCuradoriaClient } from "./curadoria-client";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import {
+  listCompetencyDomains,
+  replaceCompetencyDomains,
+  updateProfessionalProfile,
+} from "@/modules/profiles/professional-repository";
 
 type TestAccount = { role: string; email: string; password: string };
 
@@ -246,6 +251,152 @@ describe("perfil profissional — RLS e fundação administrativa (Supabase loca
     expect(data).toEqual([]);
 
     await client.auth.signOut();
+  });
+
+  // -------------------------------------------------------------------------
+  // Bloco B/E7 (gate B15) — semântica de patch das áreas de competência:
+  // campo ausente = "não alterar"; lista vazia só remove com comando
+  // explícito; substituição declarada converge sem estado parcial.
+  // -------------------------------------------------------------------------
+
+  async function criarProfissionalComAreas(
+    client: ReturnType<typeof createCuradoriaClient>,
+    adminUserId: string,
+    dominios: string[],
+  ): Promise<string> {
+    const { data: created, error } = await client
+      .from("professional_profiles")
+      .insert({
+        display_name: "Profissional Competências E7",
+        professional_identifier: uniqueIdentifier(),
+        created_by: adminUserId,
+      })
+      .select("id")
+      .single();
+    expect(error, `fixture do profissional: ${error?.message}`).toBeNull();
+    const id = created!.id as string;
+    createdProfessionalProfileIds.push(id);
+
+    if (dominios.length > 0) {
+      const { error: areasError } = await client.from("professional_competency_areas").insert(
+        dominios.map((domain) => ({ professional_profile_id: id, domain, focus: "avaliacao" })),
+      );
+      expect(areasError, `fixture das áreas: ${areasError?.message}`).toBeNull();
+    }
+    return id;
+  }
+
+  it("editar dados básicos preserva as áreas de competência (Bloco B/E7, gate B15)", async () => {
+    const administrador = accounts.find((a) => a.role === "administrador")!;
+    const client = createCuradoriaClient(url, anonKey);
+    await client.auth.signInWithPassword({
+      email: administrador.email,
+      password: administrador.password,
+    });
+    const {
+      data: { user },
+    } = await client.auth.getUser();
+
+    const dominios = ["saude_fisica", "saude_emocional_mental", "nao_determinado"];
+    const id = await criarProfissionalComAreas(client, user!.id, dominios);
+
+    // O caminho real da action de edição: update dos dados básicos e NENHUMA
+    // substituição de coleções que o formulário não enviou (o form real não
+    // tem campos de competência — parseia para []).
+    await updateProfessionalProfile(client, id, {
+      displayName: "Profissional Competências E7 — editado",
+      professionalIdentifier: uniqueIdentifier(),
+      crm: null,
+      crmUf: null,
+      professionalSummary: "Resumo editado sem tocar nas competências.",
+      institutionName: null,
+      updatedBy: user!.id,
+    });
+
+    // Defesa em profundidade: mesmo que alguém chame o replace com a lista
+    // vazia do parse, ausência de declaração NÃO apaga nada.
+    await replaceCompetencyDomains(client, id, []);
+
+    const depois = await listCompetencyDomains(client, id);
+    expect(depois.sort(), "editar dados básicos preserva as competências").toEqual(
+      [...dominios].sort(),
+    );
+
+    await client.auth.signOut();
+  });
+
+  it("substituição declarada converge (retry idempotente) e esvaziar exige comando explícito", async () => {
+    const administrador = accounts.find((a) => a.role === "administrador")!;
+    const client = createCuradoriaClient(url, anonKey);
+    await client.auth.signInWithPassword({
+      email: administrador.email,
+      password: administrador.password,
+    });
+    const {
+      data: { user },
+    } = await client.auth.getUser();
+
+    const id = await criarProfissionalComAreas(client, user!.id, [
+      "saude_fisica",
+      "saude_emocional_mental",
+      "nao_determinado",
+    ]);
+
+    // Substituição declarada: o conjunto final é exatamente o declarado.
+    await replaceCompetencyDomains(client, id, ["saude_fisica"]);
+    expect(await listCompetencyDomains(client, id)).toEqual(["saude_fisica"]);
+
+    // Retry da MESMA substituição: mesmo resultado, sem duplicar, sem apagar.
+    await replaceCompetencyDomains(client, id, ["saude_fisica"]);
+    const { count } = await createAdminSupabaseClient()
+      .from("professional_competency_areas")
+      .select("*", { count: "exact", head: true })
+      .eq("professional_profile_id", id);
+    expect(count, "retry não duplica nem apaga").toBe(1);
+
+    // Esvaziar SÓ com o comando explícito — nunca por lista vazia implícita.
+    await replaceCompetencyDomains(client, id, [], { esvaziamentoExplicito: true });
+    expect(await listCompetencyDomains(client, id)).toEqual([]);
+
+    await client.auth.signOut();
+  });
+
+  it("sessão sem papel de administrador não substitui competências e não deixa estado parcial", async () => {
+    const administrador = accounts.find((a) => a.role === "administrador")!;
+    const adminSessao = createCuradoriaClient(url, anonKey);
+    await adminSessao.auth.signInWithPassword({
+      email: administrador.email,
+      password: administrador.password,
+    });
+    const {
+      data: { user },
+    } = await adminSessao.auth.getUser();
+
+    const dominios = ["saude_fisica", "saude_emocional_mental"];
+    const id = await criarProfissionalComAreas(adminSessao, user!.id, dominios);
+    await adminSessao.auth.signOut();
+
+    const paciente = accounts.find((a) => a.role === "paciente")!;
+    const sessaoPaciente = createCuradoriaClient(url, anonKey);
+    await sessaoPaciente.auth.signInWithPassword({
+      email: paciente.email,
+      password: paciente.password,
+    });
+
+    // A RLS recusa o passo aditivo — e o subtrativo nunca roda (ordem com
+    // guarda): nada é apagado, nada é acrescentado.
+    await expect(
+      replaceCompetencyDomains(sessaoPaciente, id, ["nao_determinado"]),
+    ).rejects.toThrow();
+
+    const adminClient = createAdminSupabaseClient();
+    const { data: areas } = await adminClient
+      .from("professional_competency_areas")
+      .select("domain")
+      .eq("professional_profile_id", id);
+    expect((areas ?? []).map((row) => row.domain).sort()).toEqual([...dominios].sort());
+
+    await sessaoPaciente.auth.signOut();
   });
 
   it("administrador não consegue atribuir created_by a outra pessoa (defesa em profundidade da RLS)", async () => {
