@@ -33,6 +33,15 @@ describe("professionalProfileSchema — campos ausentes do formulário", () => {
       expect(parsed.data.intakeApproach).toBeUndefined();
       expect(parsed.data.availabilityWindow).toBeUndefined();
       expect(parsed.data.offersContinuousCare).toBeUndefined();
+      // G1/ETAPA-2: oráculo anterior certificava o defeito FS-03 (payload sem
+      // campos de competência parseado como lista vazia — a jusante, a action
+      // chamava replaceCompetencyDomains([]) e apagava os domínios a cada
+      // salvamento; 158/162 publicados a zero). Novo oráculo exige o
+      // comportamento da ADR-048 (competências protegidas contra substituição
+      // vazia: ausência é lacuna declarada — domínios PRESERVADOS, nunca
+      // autorização de apagamento). DEVE FALHAR até o Bloco D (form/action;
+      // guarda de banco no Bloco C).
+      expect(parsed.data.competencyDomains).toBeUndefined();
     }
   });
 

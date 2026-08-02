@@ -69,9 +69,13 @@ describe("Parte 2 — fonte única de navegação do paciente", () => {
   });
 
   it("toda rota da configuração canônica corresponde a uma página real", () => {
+    // G1/suíte-estável: mapa atualizado para as rotas da release certificada
+    // (o item de nav aponta para /sua-historia/continuar desde a ETAPA 8 da
+    // reconstrução; este teste estava vermelho na tag por oráculo defasado).
     const routeToFile: Record<string, string> = {
       "/paciente": "app/paciente/page.tsx",
       "/sua-historia": "app/(public)/sua-historia/page.tsx",
+      "/sua-historia/continuar": "app/(public)/sua-historia/(wizard)/continuar/page.tsx",
       "/paciente/documentos": "app/paciente/documentos/page.tsx",
       "/paciente/curadoria": "app/paciente/curadoria/page.tsx",
       "/paciente/linha-do-tempo": "app/paciente/linha-do-tempo/page.tsx",
@@ -216,8 +220,10 @@ describe("Parte 3 — wizard desacoplado da Landing", () => {
 
   it("as seis etapas do wizard continuam com a mesma ordem e destinos (backHref/nextHref)", () => {
     const expected: Record<string, { back?: string; next?: string }> = {
+      // G1/suíte-estável: a release certificada mudou o back do primeiro passo
+      // para /paciente (a paciente logada volta ao painel, não à landing).
       "app/(public)/sua-historia/(wizard)/para-quem/page.tsx": {
-        back: "/sua-historia",
+        back: "/paciente",
         next: "/sua-historia/motivo",
       },
       "app/(public)/sua-historia/(wizard)/motivo/page.tsx": {

@@ -39,6 +39,10 @@ function unique(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+// G1/ETAPA-2 (FS-04): o parecer da fixture carrega conteúdo real — o vazio
+// silencioso era o defeito, nunca o payload "normal".
+const PONTOS_FAVORAVEIS_DO_PARECER = ["Acompanha casos como o dela ao longo do tempo."];
+
 async function loginAs(page: Page, email: string, password: string) {
   await page.goto("/login");
   await page.getByLabel("E-mail").fill(email);
@@ -284,12 +288,26 @@ async function seedDeliveredCase(): Promise<DeliveredFixture> {
       justification: "Responde ao critério que ela nomeou.",
       relationToWeights: "Cobre experiência, que ela pesou mais.",
       attentionPoints: ["Agenda mais concorrida."],
-      favorablePoints: [],
+      // G1/ETAPA-2: oráculo anterior certificava o defeito FS-04 (favorablePoints: []
+      // replicado como payload normal — consertar o apagamento não quebraria teste
+      // algum); novo oráculo exige o comportamento da ADR-064 (conteúdo do parecer
+      // sobrevive ao round-trip, sem perda silenciosa); correção do defeito no Bloco D.
+      favorablePoints: PONTOS_FAVORAVEIS_DO_PARECER,
       suggestedQuestions: ["Quantos casos como o meu você acompanha por ano?"],
       curatorObservations: null,
     })),
   );
   const report = await reports.getReportBySelection(cliente, selection!.id);
+  // G1/ETAPA-2 (FS-04/ADR-064): prova de round-trip na leitura de volta que o
+  // teste já fazia — o conteúdo salvo precisa existir intacto no banco.
+  const { data: opcoesRoundTrip } = await cliente
+    .from("curadoria_report_options")
+    .select("favorable_points")
+    .eq("report_id", report!.id);
+  expect(opcoesRoundTrip).toHaveLength(3);
+  for (const opcao of opcoesRoundTrip ?? []) {
+    expect(opcao.favorable_points).toEqual(PONTOS_FAVORAVEIS_DO_PARECER);
+  }
   // Emitir exige aprovação prévia — o Curador assume a autoria da versão final.
     await reports.approveReport(cliente, report!.id, adminUserId);
     await reports.emitReport(cliente, report!.id);

@@ -2,6 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { AutosaveIndicator } from "@/components/story/autosave-indicator";
 import { StoryDraftProvider, useStoryDraft } from "@/modules/story/use-story-draft";
 import type { PatientStory } from "@/modules/story/types";
 
@@ -263,7 +264,7 @@ describe("StoryDraftProvider (autosave, concorrência, submissão)", () => {
     expect(submitStoryActionMock).toHaveBeenCalledWith(expect.objectContaining({ expectedRevision: 7 }));
   });
 
-  it("10. erro de persistência não trava a fila — a próxima gravação roda normalmente", async () => {
+  it("10. erro de persistência não trava a fila — e fica VISÍVEL, nunca vira sucesso silencioso", async () => {
     saveStoryDraftActionMock
       .mockResolvedValueOnce({ outcome: "error", error: "Não foi possível salvar agora." })
       .mockResolvedValueOnce({
@@ -275,12 +276,20 @@ describe("StoryDraftProvider (autosave, concorrência, submissão)", () => {
     render(
       <StoryDraftProvider story={BASE_STORY}>
         <Harness />
+        <AutosaveIndicator />
       </StoryDraftProvider>,
     );
 
     await user.type(screen.getByLabelText("motivo"), "a");
     await vi.advanceTimersByTimeAsync(700);
     expect(saveStoryDraftActionMock).toHaveBeenCalledTimes(1);
+
+    // G1/ETAPA-2: oráculo anterior certificava o defeito FS-02 (action recusada
+    // terminando em silêncio — o indicador exibia "✓ Sua resposta foi salva."
+    // com a gravação recusada); novo oráculo exige o comportamento da ADR-064
+    // §4 (confirmação de sucesso exige persistência confirmada — o erro real
+    // deve ficar visível); DEVE FALHAR até o Bloco D.
+    expect(screen.queryByText("Sua resposta foi salva.")).not.toBeInTheDocument();
 
     await user.type(screen.getByLabelText("motivo"), "b");
     await vi.advanceTimersByTimeAsync(700);

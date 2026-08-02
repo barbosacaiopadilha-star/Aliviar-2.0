@@ -470,7 +470,11 @@ describe("Certificação do ciclo da Curadoria — fixtures isoladas (Supabase l
             justification: "A área declarada responde ao que o Case exige.",
             relationToWeights: "Experiência e forma de cuidado concentram 50 dos 100 pontos deste Case.",
             attentionPoints: [atencao[chave]!],
-            favorablePoints: [],
+            // G1/ETAPA-2: oráculo anterior certificava o defeito FS-04 (favorablePoints: []
+            // replicado como payload normal — consertar o apagamento não quebraria teste
+            // algum); novo oráculo exige o comportamento da ADR-064 (conteúdo do parecer
+            // sobrevive ao round-trip, sem perda silenciosa); correção do defeito no Bloco D.
+            favorablePoints: ["Acompanha casos como o dela ao longo do tempo."],
             suggestedQuestions: ["Como funciona o acompanhamento depois da primeira consulta?"],
             curatorObservations: null,
           };
@@ -482,7 +486,7 @@ describe("Certificação do ciclo da Curadoria — fixtures isoladas (Supabase l
 
       const { data: opcoes } = await service
         .from("curadoria_report_options")
-        .select("professional_profile_id, justification, relation_to_weights, attention_points")
+        .select("professional_profile_id, justification, relation_to_weights, attention_points, favorable_points")
         .eq("report_id", relatorio!.id);
 
       expect(opcoes).toHaveLength(3);
@@ -490,6 +494,9 @@ describe("Certificação do ciclo da Curadoria — fixtures isoladas (Supabase l
         expect((opcao.attention_points as string[]).length).toBeGreaterThanOrEqual(1);
         expect(opcao.justification).toBeTruthy();
         expect(opcao.relation_to_weights).toBeTruthy();
+        // G1/ETAPA-2 (FS-04/ADR-064): o conteúdo do parecer sobrevive ao
+        // round-trip — o vazio silencioso era o defeito, nunca o esperado.
+        expect(opcao.favorable_points).toEqual(["Acompanha casos como o dela ao longo do tempo."]);
       }
     });
 

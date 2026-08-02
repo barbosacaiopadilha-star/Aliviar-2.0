@@ -8,13 +8,19 @@ import { buildPerfilView, violatesPatientVocabulary } from "@/modules/paciente/e
 afterEach(cleanup);
 
 /** O que ela declarou — ADR-042: níveis, nunca pontos. */
+// G1/suíte-estável: fixture atualizado para os códigos do Catálogo 1.0.0
+// (ADR-046). Três códigos do catálogo anterior foram renomeados
+// (EXPERIENCIA_CASOS_SEMELHANTES→EXPERIENCIA_NO_TIPO_DE_CASO,
+// ACESSO_LOCALIZACAO→ACESSO_LOCAL_DE_ATENDIMENTO,
+// HISTORICO_PRODUCAO_ACADEMICA→HISTORICO_ATIVIDADE_ACADEMICA); com códigos
+// mortos, buildPerfilView filtrava os níveis e o teste estava vermelho na tag.
 const MAPA = [
   { subcriterionCode: "FORMACAO_RESIDENCIA", importance: "MUITO_IMPORTANTE" as const },
-  { subcriterionCode: "EXPERIENCIA_CASOS_SEMELHANTES", importance: "MUITO_IMPORTANTE" as const },
+  { subcriterionCode: "EXPERIENCIA_NO_TIPO_DE_CASO", importance: "MUITO_IMPORTANTE" as const },
   { subcriterionCode: "CONTINUIDADE_RETORNOS", importance: "IMPORTANTE" as const },
   { subcriterionCode: "MODELO_COMUNICACAO", importance: "IMPORTANTE" as const },
-  { subcriterionCode: "ACESSO_LOCALIZACAO", importance: "RELEVANTE" as const },
-  { subcriterionCode: "HISTORICO_PRODUCAO_ACADEMICA", importance: "NAO_INFLUENCIA" as const },
+  { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", importance: "RELEVANTE" as const },
+  { subcriterionCode: "HISTORICO_ATIVIDADE_ACADEMICA", importance: "NAO_INFLUENCIA" as const },
 ];
 
 /** Mapa completo: os 26 do catálogo ativo classificados. É o único gate do ato. */
@@ -33,14 +39,14 @@ describe("PerfilPanel — o que mais importa, nas palavras dela", () => {
     expect(screen.getByText("Relevante")).toBeInTheDocument();
 
     expect(screen.getByText("Residência médica")).toBeInTheDocument();
-    expect(screen.getByText("Casos semelhantes")).toBeInTheDocument();
-    expect(screen.getByText("Comunicação")).toBeInTheDocument();
+    expect(screen.getByText("Experiência no tipo de caso")).toBeInTheDocument();
+    expect(screen.getByText("Como explica")).toBeInTheDocument();
   });
 
   it("não esconde o que ela deixou de fora", () => {
     render(<PerfilPanel perfil={buildPerfilView(MAPA, true)} />);
     expect(screen.getByText("Não influencia este caso")).toBeInTheDocument();
-    expect(screen.getByText("Produção acadêmica")).toBeInTheDocument();
+    expect(screen.getByText("Atividade acadêmica")).toBeInTheDocument();
   });
 
   it("nenhum ponto, porcentagem ou barra de progresso sobrou", () => {

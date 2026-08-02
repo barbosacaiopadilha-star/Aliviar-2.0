@@ -6,7 +6,10 @@ import { PatientHomeState } from "@/components/paciente/patient-home-state";
 afterEach(cleanup);
 
 describe("PatientHomeState", () => {
-  it("no_story: mostra convite para começar e link para /sua-historia", () => {
+  // G1/suíte-estável: a release certificada aponta o CTA para
+  // /sua-historia/continuar (retomada unificada); oráculo estava
+  // defasado e vermelho na tag.
+  it("no_story: mostra convite para começar e link para /sua-historia/continuar", () => {
     render(<PatientHomeState state={{ kind: "no_story" }} />);
 
     expect(
@@ -14,7 +17,7 @@ describe("PatientHomeState", () => {
     ).toBeVisible();
     expect(screen.getByRole("link", { name: "Contar minha história" })).toHaveAttribute(
       "href",
-      "/sua-historia",
+      "/sua-historia/continuar",
     );
   });
 

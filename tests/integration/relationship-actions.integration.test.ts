@@ -213,12 +213,26 @@ describe("Relationship Engine — MVP — PR3 (repository, actions — Supabase 
         justification: "Responde ao critério que ela nomeou.",
         relationToWeights: "Cobre experiência, que ela pesou mais.",
         attentionPoints: ["Agenda mais concorrida."],
-        favorablePoints: [],
+        // G1/ETAPA-2: oráculo anterior certificava o defeito FS-04 (favorablePoints: []
+        // replicado como payload normal — consertar o apagamento não quebraria teste
+        // algum); novo oráculo exige o comportamento da ADR-064 (conteúdo do parecer
+        // sobrevive ao round-trip, sem perda silenciosa); correção do defeito no Bloco D.
+        favorablePoints: ["Acompanha casos como o dela ao longo do tempo."],
         suggestedQuestions: ["Quantos casos como o meu você acompanha por ano?"],
         curatorObservations: null,
       })),
     );
     const report = await reports.getReportBySelection(cliente, selection!.id);
+    // G1/ETAPA-2 (FS-04/ADR-064): prova de round-trip na leitura de volta que o
+    // teste já fazia — o conteúdo salvo precisa existir intacto no banco.
+    const { data: opcoesRoundTrip } = await cliente
+      .from("curadoria_report_options")
+      .select("favorable_points")
+      .eq("report_id", report!.id);
+    expect(opcoesRoundTrip).toHaveLength(3);
+    for (const opcao of opcoesRoundTrip ?? []) {
+      expect(opcao.favorable_points).toEqual(["Acompanha casos como o dela ao longo do tempo."]);
+    }
     // Emitir exige aprovação prévia — o Curador assume a autoria da versão final.
     await reports.approveReport(cliente, report!.id, curador.userId);
     await reports.emitReport(cliente, report!.id);

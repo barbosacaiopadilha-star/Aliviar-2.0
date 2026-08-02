@@ -74,9 +74,17 @@ test.describe("Persistência de 'Sua História' (autosave, retomada — ÉPICO 1
     const paciente = loadTestAccounts().find((a) => a.role === "paciente")!;
     await loginAs(page, paciente);
 
-    // A história ativa já foi enviada no teste anterior; uma nova história
-    // em rascunho deve ter sido criada para esta visita.
+    // G1/ETAPA-2: oráculo anterior certificava o defeito IM-04/FS-02 (asserção
+    // tautológica — aceitava o heading de rascunho OU o de enviada, passando
+    // nos dois mundos; AUDITORIA_06 §6); novo oráculo exige o comportamento
+    // das ADR-048 (história enviada permanece enviada) e ADR-051 (nenhum
+    // rascunho nasce por navegação): revisitar a revisão após o envio mostra
+    // SOMENTE o estado enviado, sem botão de envio; DEVE FALHAR até os
+    // Blocos C (guarda de status no banco) e D (ato explícito de nova
+    // história). Edição sem execução — validação pendente no smoke do G1/G2.
     await page.goto("/sua-historia/revisao");
-    await expect(page.getByRole("heading", { name: /Esta é a sua história\.|Recebemos sua história/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Recebemos sua história" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Esta é a sua história." })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Enviar minha história" })).toHaveCount(0);
   });
 });
