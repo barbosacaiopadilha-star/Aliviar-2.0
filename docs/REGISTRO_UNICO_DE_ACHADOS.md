@@ -198,3 +198,18 @@ Evidências e cenários conforme fases de origem (F2 §3; F5 §12–14; F6 §§4
 ---
 
 *Nenhum achado foi minimizado; reclassificações da escala original estão justificadas em linha (IM-01/02/04, OPS-01→P1; PRIV-01→P0; DOC-01→P2) e em `AUDITORIA_GERAL_CONSOLIDADA.md §5. Este registro substitui, para fins de planejamento, as listas por gravidade das nove auditorias — que permanecem como fonte de evidência.*
+
+---
+
+## Encerramentos registrados (documento vivo — atualizado por bloco)
+
+| ID | Encerrado em | Bloco | Commit | Evidência do critério |
+| --- | --- | --- | --- | --- |
+| CAT-02 | 2026-08-02 | A | `01910211` | ADR-046 registra a aprovação formal do Catálogo 1.0.0 (critério: "ADR de aprovação (ou reversão) registrada") |
+| DOC-02 | 2026-08-02 | A | `01910211` | ADR-062 define a regra de marcação (índice no topo); índice inaugural cobre as supersessões e correções de estado 017/021/026/029/039/041/043/044 |
+| DOC-04 | 2026-08-02 | A | `01910211` | ADR-063 registra pós-fato: papéis atendente/concierge, ampliação do Curador, renomeações de critérios, reabertura pós-021, notas ADR-003/005/009/011 |
+| DOC-05 | 2026-08-02 | A | `01910211` | Decisões só-na-memória registradas (ADR-046: Catálogo/sessão de 02/08; ADR-063 §4: reabertura); "Prompt 9" permanece lacuna declarada permanente (F8 §21) |
+| PAP-03 | 2026-08-02 | A | `01910211` | ADR-063 §2 regulariza a ampliação de acesso do Curador como vigente |
+| IM-07 | 2026-08-02 | A | `01910211` | ADR-063 §6 emenda ONT-30 (correção em `DECISAO_REGISTRADA` é desenho vigente); texto do doc da Ontologia será alinhado no Bloco K |
+
+Nota de reescopo aprovada na sessão (2026-08-02): **PAP-02** (Profissional) reclassificado de "bloqueia produção" para **P1 aceito por escrito — fora desta remediação** (ADR-052, gatilho de revisão registrado); **ORF-03** (`MandatoryFilters`) muda de critério: não será removido nem publicado — código mantido "aguardando decisão arquitetural", pendência sai das telas no Bloco F (ADR-053 §7).
