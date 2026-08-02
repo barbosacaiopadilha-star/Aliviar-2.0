@@ -5,10 +5,7 @@ import { revalidatePath } from "next/cache";
 import { falhaParaUsuario, registrarErro } from "@/lib/observability/erros";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRoleForAction } from "@/modules/auth/guard";
-import {
-  deletePatientDocument,
-  uploadPatientDocument,
-} from "@/modules/profiles/patient-document-repository";
+import { uploadPatientDocument } from "@/modules/profiles/patient-document-repository";
 
 import { attachDocumentToStory, detachDocumentFromStory, listStoryAttachments, type StoryAttachment } from "./attachment-repository";
 import type { StoryActionResult } from "./types";
@@ -51,39 +48,22 @@ export async function uploadAndAttachStoryDocumentAction(
 
   const supabase = await createServerSupabaseClient();
 
-  // Compensação explícita (Release de Reconstrução, ETAPA 9).
-  //
-  // São três escritas em sistemas diferentes — storage, `patient_documents` e
-  // `patient_story_attachments` — e não há transação que as cubra. Antes,
-  // quando o vínculo falhava (foi o caso da recursão de policy 42P17), o
-  // documento ficava criado e órfão: existia no banco, não aparecia em lugar
-  // nenhum, e ninguém sabia que estava lá. Se o vínculo falhar, o que foi
-  // criado aqui é desfeito.
-  let documentId: string | null = null;
+  // Saga documento+vínculo (Bloco B/E8, gate B16). Cada passo do repositório
+  // já se compensa: `uploadPatientDocument` desfaz o storage se a linha do
+  // banco falhar, e `attachDocumentToStory` desfaz o documento recém-criado
+  // (linha E storage) se o vínculo for recusado — com rastro em `audit_logs`
+  // quando a própria compensação falha. O sucesso só existe DEPOIS de
+  // documento e vínculo confirmados; o retry reutiliza o vínculo existente e
+  // o duplo clique não duplica (PK story+document).
   try {
     const document = await uploadPatientDocument(supabase, authState.user.id, file);
-    documentId = document.id;
     await attachDocumentToStory(supabase, storyId, document.id);
   } catch (erro) {
-    if (documentId) {
-      try {
-        await deletePatientDocument(supabase, documentId, authState.user.id);
-      } catch (erroDaCompensacao) {
-        // A compensação falhou: aí existe mesmo um órfão, e isso precisa ser
-        // dito no log — silenciar seria perder a única pista de que ele existe.
-        registrarErro("story.anexarDocumento.compensacao", erroDaCompensacao, {
-          storyId,
-          documentId,
-          observacao: "documento criado sem vínculo e não removido",
-        });
-      }
-    }
-
     return {
       success: false,
       error: falhaParaUsuario("story.anexarDocumento", erro, {
         mensagem: "Não foi possível anexar o documento.",
-        contexto: { storyId, arquivo: file.name, documentoRevertido: Boolean(documentId) },
+        contexto: { storyId, arquivo: file.name },
       }),
     };
   }

@@ -2,7 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { erroDeBanco } from "@/lib/observability/erros";
+import { erroDeBanco, registrarErro } from "@/lib/observability/erros";
 
 import type { PatientDocument } from "./types";
 
@@ -76,7 +76,16 @@ export async function uploadPatientDocument(
     .single();
 
   if (error || !data) {
-    await supabase.storage.from(BUCKET).remove([filePath]);
+    // Compensação do storage: o arquivo sem linha no banco seria invisível.
+    // Se a própria remoção falhar, o resíduo é logado com referência —
+    // storage e banco nunca divergem em silêncio (Bloco B/E8).
+    const { error: storageError } = await supabase.storage.from(BUCKET).remove([filePath]);
+    if (storageError) {
+      registrarErro("profiles.uploadPatientDocument.compensacaoStorage", storageError, {
+        profileId,
+        filePath,
+      });
+    }
     throw erroDeBanco("Não foi possível registrar o documento.", error);
   }
 
@@ -108,5 +117,14 @@ export async function deletePatientDocument(
     throw erroDeBanco("Não foi possível remover o documento.", deleteError);
   }
 
-  await supabase.storage.from(BUCKET).remove([row.file_path as string]);
+  // A linha do banco (a fonte de visibilidade) já saiu; um arquivo que
+  // sobrar no storage é resíduo — se a remoção falhar, fica logado com
+  // referência, nunca uma divergência silenciosa (Bloco B/E8).
+  const { error: storageError } = await supabase.storage.from(BUCKET).remove([row.file_path as string]);
+  if (storageError) {
+    registrarErro("profiles.deletePatientDocument.storage", storageError, {
+      documentId,
+      filePath: row.file_path,
+    });
+  }
 }
