@@ -72,18 +72,37 @@ export default defineConfig({
   reporter: "list",
   use: {
     baseURL: "http://127.0.0.1:3001",
-    trace: "on-first-retry",
+    // G1/ETAPA-6: evidência preservada em falha (antes: trace só on-first-retry
+    // com retries:0 = nunca; screenshot/video off — o buraco dos 10 minutos).
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
+    // G1/ETAPA-6: uma ação travada não pode mais consumir os 600s do teste
+    // inteiro (era o modo de falha das certificações: 10min por rótulo errado).
+    actionTimeout: 15_000,
+    navigationTimeout: 30_000,
   },
   projects: [
     {
+      // G1/ETAPA-6: o porteiro de ambiente (buildId do bundle × disco ×
+      // servidor) existia e NUNCA executava — `.setup.ts` não casa o
+      // testMatch default e nenhum project o declarava (achado TST-03).
+      // Agora é dependência real: nenhum spec roda sem ele passar.
+      name: "porteiro-ambiente",
+      testMatch: /ambiente-integro\.setup\.ts/,
+    },
+    {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      dependencies: ["porteiro-ambiente"],
     },
   ],
   webServer: {
     command: "npx next start -p 3001",
     url: "http://127.0.0.1:3001",
-    reuseExistingServer: !process.env.CI,
+    // G1/ETAPA-6: reaproveitar um servidor já de pé podia herdar um processo
+    // apontado para produção ou um build obsoleto (achados P1-05/TST-03).
+    // O custo é subir servidor a cada execução; a cadeia test:e2e builda antes.
+    reuseExistingServer: false,
     timeout: 120_000,
     // ETAPA 2 (erros rastreáveis): o log estruturado do servidor — onde vivem
     // as referências ERR-XXXX — precisa aparecer na saída do runner, senão a
