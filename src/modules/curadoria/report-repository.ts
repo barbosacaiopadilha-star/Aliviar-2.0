@@ -151,12 +151,21 @@ export async function emitReport(supabase: SupabaseClient, reportId: string): Pr
   if (error) throw new Error(error.message);
 }
 
-/** Marca o Relatório como entregue, junto da entrega da seleção. */
+/**
+ * Marca o Relatório como entregue, junto da entrega da seleção.
+ *
+ * BLOCO B: a via de PRODUÇÃO da entrega é a RPC `deliver_curadoria`
+ * (deliverSelectionAction) — esta função permanece apenas para cenários de
+ * teste que montam a cadeia passo a passo. Ela exige Relatório já emitido
+ * (constraint `report_delivery_requires_emission`) e NUNCA toca `emitted_at`:
+ * a versão anterior sobrescrevia o carimbo de emissão com o instante da
+ * entrega, destruindo o registro real de quando o Curador emitiu (IM-03).
+ */
 export async function markReportDelivered(supabase: SupabaseClient, reportId: string): Promise<void> {
   const now = new Date().toISOString();
   const { error } = await supabase
     .from("curadoria_reports")
-    .update({ delivered_at: now, emitted_at: now, updated_at: now })
+    .update({ delivered_at: now, updated_at: now })
     .eq("id", reportId)
     .is("delivered_at", null);
   if (error) throw new Error(error.message);

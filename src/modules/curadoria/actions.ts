@@ -260,6 +260,17 @@ export async function saveSelectionAction(input: unknown): Promise<CuradoriaActi
   }
 }
 
+/**
+ * Entrega a Curadoria — adaptador fino da RPC transacional
+ * `curadoria.deliver_curadoria` (ADR-048/Bloco B).
+ *
+ * A sequência antiga (deliverSelection + getReportBySelection +
+ * markReportDelivered) podia parar no meio: seleção entregue, Relatório não —
+ * a paciente com três nomes e nenhuma explicação; e um erro real na leitura
+ * do Relatório era engolido como sucesso. Agora o banco executa seleção,
+ * Relatório, case_event e auditoria num único ato: ou tudo, ou nada — e o
+ * erro de domínio chega inteiro ao Curador. Revalidação SÓ após sucesso real.
+ */
 export async function deliverSelectionAction(input: unknown): Promise<CuradoriaActionResult> {
   try {
     await requireCurator();
@@ -272,28 +283,17 @@ export async function deliverSelectionAction(input: unknown): Promise<CuradoriaA
 
   const supabase = await createServerSupabaseClient();
 
-  try {
-    await repository.deliverSelection(supabase, parsed.data.curatedSelectionId);
+  const { error } = await supabase.rpc("deliver_curadoria", {
+    _curated_selection_id: parsed.data.curatedSelectionId,
+  });
 
-    // Entregar a seleção sem entregar o documento deixaria o paciente com
-    // acesso a três nomes e a nenhuma explicação — as policies do Relatório
-    // liberam a leitura dele justamente por `delivered_at`.
-    const report = await reportRepository.getReportBySelection(
-      supabase,
-      parsed.data.curatedSelectionId,
-    );
-    if (report) {
-      await reportRepository.markReportDelivered(supabase, report.id);
-    }
+  if (error) return { success: false, error: error.message };
 
-    revalidatePath("/paciente");
-    revalidatePath("/paciente/curadoria");
-    revalidatePath("/curador/casos");
-    revalidatePath("/coa/curadoria", "layout");
-    return { success: true };
-  } catch (error) {
-    return fail(error, "Não foi possível entregar a Curadoria.");
-  }
+  revalidatePath("/paciente");
+  revalidatePath("/paciente/curadoria");
+  revalidatePath("/curador/casos");
+  revalidatePath("/coa/curadoria", "layout");
+  return { success: true };
 }
 
 // ---------------------------------------------------------------------------

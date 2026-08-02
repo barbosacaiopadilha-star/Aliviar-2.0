@@ -362,6 +362,13 @@ export async function saveSelection(
   return selectionId;
 }
 
+/**
+ * BLOCO B: a via de PRODUÇÃO da entrega é a RPC transacional
+ * `deliver_curadoria` (deliverSelectionAction) — esta função permanece apenas
+ * para cenários de teste que montam a cadeia passo a passo. O banco recusa a
+ * transição para DELIVERED sem Relatório emitido
+ * (`enforce_delivery_requires_emitted_report`), em qualquer via.
+ */
 export async function deliverSelection(supabase: SupabaseClient, curatedSelectionId: string): Promise<void> {
   const { error } = await supabase
     .from("curated_selections")
