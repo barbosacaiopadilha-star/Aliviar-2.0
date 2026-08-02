@@ -3,12 +3,14 @@
 import { revalidatePath } from "next/cache";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
-import { registrarErro } from "@/lib/observability/erros";
+import { falhaParaUsuario, registrarErro } from "@/lib/observability/erros";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRoleForAction } from "@/modules/auth/guard";
 import {
   createPatientAccount,
+  getProvisioningOperation,
   resetPatientPassword,
+  type ProvisioningOperation,
 } from "@/modules/profiles/patient-account-repository";
 
 import { convertLeadInputSchema, openCaseInputSchema, qualifyLeadInputSchema } from "./schema";
@@ -117,14 +119,29 @@ export async function convertLeadToPatientAction(input: unknown): Promise<Conver
     // Retomada: uma tentativa anterior pode ter criado a conta e parado antes
     // do vínculo. A operação registrada devolve a MESMA conta — nunca uma
     // segunda pessoa, nunca o beco do e-mail duplicado.
-    const { data: pendente } = await db
-      .from("patient_provisioning")
-      .select("profile_id, status")
-      .eq("operation_key", operationKey)
-      .maybeSingle();
+    //
+    // A leitura tem o erro TRATADO (Bloco B.6/B2, gate B18): falha de
+    // consulta NUNCA vira "não há operação pendente" — era esse silêncio que
+    // derrubava o fluxo no createUser e reabria o beco do e-mail duplicado.
+    // Falha aqui = falha rastreável, ZERO efeitos (nenhuma conta criada).
+    let pendente: ProvisioningOperation | null;
+    try {
+      // `supabase` já aponta para o schema curadoria (DB_SCHEMA) — mesmo
+      // alvo do `db`, no tipo que o repositório espera.
+      pendente = await getProvisioningOperation(supabase, operationKey);
+    } catch (erro) {
+      return {
+        success: false,
+        error: falhaParaUsuario("crm.convertLead.retomada.leitura", erro, {
+          mensagem:
+            "Não foi possível verificar tentativas anteriores desta conversão. Nada foi criado — tente novamente.",
+          contexto: { leadId },
+        }),
+      };
+    }
 
-    if (pendente?.status === "REGISTERED" && pendente.profile_id) {
-      patientProfileId = pendente.profile_id as string;
+    if (pendente?.status === "REGISTERED" && pendente.profileId) {
+      patientProfileId = pendente.profileId;
       provisionedAccount = true;
       try {
         const password = await resetPatientPassword(createAdminSupabaseClient(), patientProfileId);
