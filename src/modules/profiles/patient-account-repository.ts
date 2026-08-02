@@ -1,5 +1,5 @@
 import "server-only";
-import { erroDeBanco } from "@/lib/observability/erros";
+import { erroDeBanco, registrarErro } from "@/lib/observability/erros";
 
 import { randomBytes } from "node:crypto";
 
@@ -24,6 +24,18 @@ export type PatientAccountSummary = {
 export type CreatePatientAccountFields = {
   email: string;
   displayName: string;
+  /**
+   * Lead de origem, quando a conta nasce dentro de uma conversão de lead.
+   * Sem ele, o banco cria a ficha CRM de origem da própria conta — nenhuma
+   * conta de paciente nasce invisível ao CRM (Bloco B/AT-02).
+   */
+  originLeadId?: string;
+  /**
+   * Chave idempotente da operação de provisionamento. Derivada quando
+   * ausente: `convert-lead:<lead>` na conversão, `patient-account:<conta>`
+   * na criação direta.
+   */
+  operationKey?: string;
 };
 
 export type CreatePatientAccountResult = {
@@ -32,8 +44,14 @@ export type CreatePatientAccountResult = {
   password: string;
 };
 
-// Cria a conta (auth.users, via Admin API), concede o papel "paciente" e
-// retorna a senha gerada — a única vez que ela existe fora do provedor de
+// Cria a conta (auth.users, via Admin API) e registra o provisionamento no
+// banco pela RPC transacional `register_provisioned_patient` (Bloco B/AT-05):
+// papel "paciente", registro retomável da operação e — sem lead de origem —
+// a ficha CRM de nascimento da conta, tudo num único ato. Se o registro
+// falha, a conta recém-criada é COMPENSADA (deleteUser) antes de propagar o
+// erro real: nunca sobra auth órfão sem papel e sem rastro.
+//
+// A senha retornada é a única vez que ela existe fora do provedor de
 // autenticação. `handle_new_user` (TASK-003) já cria profiles/user_settings
 // automaticamente a partir do INSERT em auth.users; não duplicado aqui.
 export async function createPatientAccount(
@@ -42,6 +60,7 @@ export async function createPatientAccount(
   input: CreatePatientAccountFields,
   grantedBy: string,
 ): Promise<CreatePatientAccountResult> {
+  void grantedBy; // o ator real vem de auth.uid() na RPC — nunca do cliente.
   const password = generateSecurePassword();
 
   const { data, error } = await adminClient.auth.admin.createUser({
@@ -56,23 +75,28 @@ export async function createPatientAccount(
   }
 
   const profileId = data.user.id;
+  const operationKey =
+    input.operationKey ??
+    (input.originLeadId ? `convert-lead:${input.originLeadId}` : `patient-account:${profileId}`);
 
-  const { data: roleRow, error: roleLookupError } = await regularClient
-    .from("roles")
-    .select("id")
-    .eq("slug", "paciente")
-    .single();
+  const { error: provisioningError } = await regularClient.rpc("register_provisioned_patient", {
+    _profile_id: profileId,
+    _operation_key: operationKey,
+    _origin_lead_id: input.originLeadId ?? null,
+  });
 
-  if (roleLookupError || !roleRow) {
-    throw new Error("Papel 'paciente' não encontrado no catálogo.");
-  }
-
-  const { error: roleError } = await regularClient
-    .from("user_roles")
-    .insert({ profile_id: profileId, role_id: roleRow.id, granted_by: grantedBy });
-
-  if (roleError) {
-    throw erroDeBanco("Não foi possível conceder o papel de paciente.", roleError);
+  if (provisioningError) {
+    // Compensação: a conta não pode sobreviver sem papel e sem registro. Se a
+    // própria compensação falhar, o resíduo é logado com referência — nunca
+    // silencioso (AT-05).
+    const { error: compensationError } = await adminClient.auth.admin.deleteUser(profileId);
+    if (compensationError) {
+      registrarErro("profiles.createPatientAccount.compensacao", compensationError, {
+        profileId,
+        operationKey,
+      });
+    }
+    throw erroDeBanco(provisioningError.message, provisioningError, { operationKey });
   }
 
   return { profileId, email: input.email, password };

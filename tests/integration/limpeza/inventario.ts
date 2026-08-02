@@ -280,6 +280,11 @@ export async function limpar(admin: SupabaseClient, antes: Inventario): Promise<
     ["crm_contacts", "patient_profile_id"],
     ["crm_contacts", "converted_by"],
     ["crm_contacts", "qualified_by"],
+    // Bloco B: registro da saga de provisionamento de conta. As FKs são SET
+    // NULL (não bloqueiam o deleteUser), mas o registro de uma conta da
+    // janela sai junto com ela — resíduo zero, mesma política do restante.
+    ["patient_provisioning", "profile_id"],
+    ["patient_provisioning", "created_by"],
     ["crm_audit_log", "actor_id"],
     ["connection_events", "actor_id"],
     ["relationship_events", "actor_id"],
