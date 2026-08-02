@@ -8,6 +8,10 @@ import { getReportBySelection } from "@/modules/curadoria/report-repository";
 import { listCriticalDivergenceBlocklist } from "@/modules/curadoria/rede-policy";
 import { saveReportInputSchema } from "@/modules/curadoria/schema";
 import { loadContinuityWorklist } from "@/modules/connection/continuity-worklist";
+// Namespace de propósito (Bloco B.6): o gate B18 nasce VERMELHO antes da
+// função de decisão existir — um import nomeado de export inexistente
+// derrubaria o arquivo inteiro (e os gates D17–D21 com ele).
+import * as patientAccounts from "@/modules/profiles/patient-account-repository";
 
 /**
  * =============================================================================
@@ -113,5 +117,51 @@ describe("GATE-D21 [Bloco D] round-trip dos pareceres não perde conteúdo", () 
       "ausência do campo precisa continuar ausência (undefined = 'não mexi'); " +
         "o default([]) atual converte 'não enviei' em 'apague tudo'",
     ).toBeUndefined();
+  });
+});
+
+/**
+ * Client falso que resolve VAZIO sem erro — a ausência legítima, no mesmo
+ * formato do PostgREST (`maybeSingle` sem linha: data null, error null).
+ */
+function clienteQueNaoEncontra(): SupabaseClient {
+  const resultado = { data: null, error: null, count: null };
+  const cadeia: unknown = new Proxy(function () {}, {
+    get(_alvo, prop) {
+      if (prop === "then") {
+        return (resolve: (valor: unknown) => void) => resolve(resultado);
+      }
+      return () => cadeia;
+    },
+    apply() {
+      return cadeia;
+    },
+  });
+  return { from: () => cadeia } as unknown as SupabaseClient;
+}
+
+describe("GATE-B18 [Bloco B.6] falha de leitura do provisionamento não vira ausência", () => {
+  // conversion-actions.ts descartava o `error` do SELECT em
+  // `patient_provisioning` (validação B.5, item B2): uma falha de leitura
+  // fazia a retomada concluir "não há operação pendente" e cair no
+  // createUser — reabrindo em silêncio o beco do e-mail duplicado (AT-02),
+  // a classe exata de defeito que o Bloco B fechou.
+  it("leitura de patient_provisioning com erro deve LANÇAR — nunca 'não há operação pendente'", async () => {
+    const client = clienteQueFalha("connection reset by peer");
+
+    await expect(
+      patientAccounts.getProvisioningOperation(client, "convert-lead:qualquer"),
+      "erro de consulta na retomada precisa FALHAR e propagar; " +
+        "tratá-lo como ausência dispara um createUser indevido (e-mail duplicado)",
+    ).rejects.toThrow();
+  });
+
+  it("sem erro e sem linha é ausência LEGÍTIMA: null, e o fluxo segue normal", async () => {
+    const client = clienteQueNaoEncontra();
+
+    await expect(
+      patientAccounts.getProvisioningOperation(client, "convert-lead:qualquer"),
+      "ausência verdadeira (sem error, sem linha) devolve null — o fluxo de criação segue",
+    ).resolves.toBeNull();
   });
 });

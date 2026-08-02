@@ -3,6 +3,10 @@ import { randomUUID } from "node:crypto";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { createPatientAccount } from "@/modules/profiles/patient-account-repository";
+// Namespace de propósito (Bloco B.6): os gates B17/B19 nascem VERMELHOS antes
+// da correção existir — um import nomeado de export inexistente derrubaria o
+// arquivo inteiro (e com ele os gates B11–B16), poluindo a reprodução.
+import * as patientAccounts from "@/modules/profiles/patient-account-repository";
 import { replaceCompetencyDomains } from "@/modules/profiles/professional-repository";
 import { attachDocumentToStory } from "@/modules/story/attachment-repository";
 import { CARENCIA_EM_SEGUNDOS, listarCandidatosAOrfao } from "@/modules/story/documentos-orfaos";
@@ -13,6 +17,7 @@ import {
   novaPaciente,
   perfilDePrioridades,
   profissionaisSinteticos,
+  relatorioDaSelecao,
   selecaoComOpcoes,
   serviceClient,
   type Sessao,
@@ -341,5 +346,259 @@ describe("GATE-B16 [Bloco B] falha do vínculo não deixa documento órfão invi
         `compensação ou registro auditável existe — a operação documento+vínculo ` +
         `precisa ser atômica ou compensada com rastro (Bloco B)`,
     ).toBeNull();
+  });
+});
+
+describe("GATE-B17 [Bloco B.6] par de entrega bidirecional", () => {
+  // O gate B12 fechou UMA direção: seleção não vira DELIVERED sem Relatório
+  // emitido. A direção INVERSA seguiu aberta (validação B.5, item B1):
+  // `markReportDelivered`/PostgREST direto ainda gravam `delivered_at` no
+  // Relatório com a seleção parada em DRAFT — o par de telas inconsistente
+  // renasce pela outra ponta, e o Bloco C congelaria esse estado torto.
+  it("Relatório NÃO é entregável com a seleção fora de DELIVERED — tentativa PostgREST direta recusada sem alterar nenhuma metade", async () => {
+    const { caseId } = await casoComCurador(service, curador.userId, "gate-b17");
+    const profileId = await perfilDePrioridades(service, caseId, curador.userId);
+    const selectionId = await selecaoComOpcoes(
+      service,
+      caseId,
+      profileId,
+      curador.userId,
+      profissionais,
+      { entregue: false },
+    );
+    const reportId = await relatorioDaSelecao(
+      service,
+      caseId,
+      selectionId,
+      curador.userId,
+      profissionais,
+      { emitido: true, entregue: false },
+    );
+
+    // ATAQUE: entregar o Relatório pela outra ponta — o MESMO update que
+    // `markReportDelivered` executa, com sessão real do Curador designado.
+    const { error } = await curador.client
+      .from("curadoria_reports")
+      .update({ delivered_at: new Date().toISOString() })
+      .eq("id", reportId)
+      .is("delivered_at", null);
+
+    const { data: reportDepois } = await service
+      .from("curadoria_reports")
+      .select("delivered_at")
+      .eq("id", reportId)
+      .single();
+    const { data: selecaoDepois } = await service
+      .from("curated_selections")
+      .select("status, delivered_at")
+      .eq("id", selectionId)
+      .single();
+
+    expect(
+      error,
+      `o banco deve RECUSAR Relatório entregue com a seleção em ${selecaoDepois!.status} ` +
+        `(delivered_at do Relatório após o ataque: ${reportDepois!.delivered_at})`,
+    ).not.toBeNull();
+    expect(
+      reportDepois!.delivered_at,
+      "falha em qualquer metade não altera nenhuma: o Relatório segue não entregue",
+    ).toBeNull();
+    expect(
+      selecaoDepois!.status,
+      "falha em qualquer metade não altera nenhuma: a seleção segue DRAFT",
+    ).toBe("DRAFT");
+    expect(selecaoDepois!.delivered_at, "a seleção segue sem carimbo de entrega").toBeNull();
+  });
+
+  it("o caminho oficial (deliver_curadoria) atravessa a trava e entrega as DUAS metades no mesmo ato", async () => {
+    // A trava nova não pode quebrar a via de produção: dentro da RPC a
+    // seleção é entregue ANTES do Relatório, na MESMA transação (M150), e a
+    // checagem do par deve enxergar isso.
+    const { caseId } = await casoComCurador(service, curador.userId, "gate-b17-oficial");
+    const profileId = await perfilDePrioridades(service, caseId, curador.userId);
+    const selectionId = await selecaoComOpcoes(
+      service,
+      caseId,
+      profileId,
+      curador.userId,
+      profissionais,
+      { entregue: false },
+    );
+    const reportId = await relatorioDaSelecao(
+      service,
+      caseId,
+      selectionId,
+      curador.userId,
+      profissionais,
+      { emitido: true, entregue: false },
+    );
+
+    const { error } = await curador.client.rpc("deliver_curadoria", {
+      _curated_selection_id: selectionId,
+    });
+    expect(error, `a entrega oficial deve passar pela trava: ${error?.message}`).toBeNull();
+
+    const { data: selecao } = await service
+      .from("curated_selections")
+      .select("status, delivered_at")
+      .eq("id", selectionId)
+      .single();
+    const { data: relatorio } = await service
+      .from("curadoria_reports")
+      .select("delivered_at")
+      .eq("id", reportId)
+      .single();
+
+    expect(selecao!.status, "a seleção sai entregue").toBe("DELIVERED");
+    expect(selecao!.delivered_at, "a seleção sai carimbada").not.toBeNull();
+    expect(
+      relatorio!.delivered_at,
+      "o Relatório sai entregue JUNTO — nunca meia entrega",
+    ).not.toBeNull();
+    expect(
+      new Date(relatorio!.delivered_at as string).toISOString(),
+      "as duas metades carregam o MESMO carimbo",
+    ).toBe(new Date(selecao!.delivered_at as string).toISOString());
+  });
+});
+
+describe("GATE-B19 [Bloco B.6] idempotência administrativa real", () => {
+  // A chave `patient-account:<profileId>` derivava do id gerado NA PRÓPRIA
+  // tentativa — não deduplicava nada (validação B.5, item B3). O cenário
+  // real do defeito: a 1ª execução conclui (conta criada, papel concedido,
+  // operação registrada) mas a resposta se perde; o retry do administrador
+  // criava... nada — batia no e-mail duplicado com erro genérico, sem
+  // caminho de recuperação. Idempotência REAL: chave estável fornecida pelo
+  // CHAMADOR + retry que RECUPERA o resultado da 1ª execução.
+  it("retry com a MESMA chave após falha pós-criação recupera o resultado — nunca segunda conta, nunca senha inventada", async () => {
+    const operationKey = randomUUID();
+    const email = `gate-b19-${randomUUID().slice(0, 8)}@aliviar-conexao.local`;
+
+    // 1ª execução: conclui por inteiro — e a resposta se perde no caminho
+    // (falha intermediária DEPOIS do createUser, o cenário do B.5).
+    const primeira = await patientAccounts.provisionPatientAccount(
+      service,
+      admin.client,
+      { email, displayName: "Paciente Gate B19", operationKey },
+      admin.userId,
+    );
+    expect(primeira.outcome, "1ª execução cria a conta").toBe("created");
+
+    // Retry do administrador: o MESMO formulário reenviado, a MESMA chave.
+    const retry = await patientAccounts.provisionPatientAccount(
+      service,
+      admin.client,
+      { email, displayName: "Paciente Gate B19", operationKey },
+      admin.userId,
+    );
+
+    expect(
+      retry.outcome,
+      "retry com a mesma chave RECUPERA a operação concluída — nunca cria de novo",
+    ).toBe("already_provisioned");
+    expect(retry.profileId, "o retry devolve a MESMA conta da 1ª execução").toBe(
+      primeira.profileId,
+    );
+    expect(
+      "password" in retry,
+      "credenciais só existem na execução que concluiu — retry nunca inventa senha nova",
+    ).toBe(false);
+
+    // Exatamente UMA conta, com papel e operação registrada — zero órfão.
+    const { data: usuarios } = await service.auth.admin.listUsers({ perPage: 1000 });
+    const contas = (usuarios?.users ?? []).filter((usuario) => usuario.email === email);
+    expect(contas, "mesma chave repetida => exatamente 1 conta no Auth").toHaveLength(1);
+
+    const { data: operacao } = await service
+      .from("patient_provisioning")
+      .select("profile_id, status")
+      .eq("operation_key", operationKey)
+      .single();
+    expect(operacao!.status, "a operação segue REGISTERED (concluída, não convertida)").toBe(
+      "REGISTERED",
+    );
+    expect(operacao!.profile_id, "a operação aponta para a conta real").toBe(primeira.profileId);
+  });
+
+  it("a MESMA chave em PARALELO produz exatamente 1 criação e zero órfão", async () => {
+    const operationKey = randomUUID();
+    const email = `gate-b19-par-${randomUUID().slice(0, 8)}@aliviar-conexao.local`;
+
+    // O duplo clique real: duas execuções simultâneas da mesma solicitação.
+    const resultados = await Promise.allSettled([
+      patientAccounts.provisionPatientAccount(
+        service,
+        admin.client,
+        { email, displayName: "Paciente Gate B19 Paralelo", operationKey },
+        admin.userId,
+      ),
+      patientAccounts.provisionPatientAccount(
+        service,
+        admin.client,
+        { email, displayName: "Paciente Gate B19 Paralelo", operationKey },
+        admin.userId,
+      ),
+    ]);
+
+    const criadas = resultados.filter(
+      (resultado) => resultado.status === "fulfilled" && resultado.value.outcome === "created",
+    );
+    expect(
+      criadas,
+      `exatamente UMA execução cria a conta (resultados: ${resultados
+        .map((r) => (r.status === "fulfilled" ? r.value.outcome : `erro: ${String(r.reason)}`))
+        .join(" | ")})`,
+    ).toHaveLength(1);
+
+    const { data: usuarios } = await service.auth.admin.listUsers({ perPage: 1000 });
+    const contas = (usuarios?.users ?? []).filter((usuario) => usuario.email === email);
+    expect(contas, "paralelo => exatamente 1 conta no Auth").toHaveLength(1);
+    const profileId = contas[0]!.id;
+
+    // Zero órfão: a conta que sobreviveu tem papel de paciente E operação.
+    const { data: papel } = await service.from("roles").select("id").eq("slug", "paciente").single();
+    const { count: papeis } = await service
+      .from("user_roles")
+      .select("*", { count: "exact", head: true })
+      .eq("profile_id", profileId)
+      .eq("role_id", papel!.id);
+    expect(papeis, "a conta sobrevivente tem o papel de paciente").toBe(1);
+
+    const { data: operacao } = await service
+      .from("patient_provisioning")
+      .select("profile_id, status")
+      .eq("operation_key", operationKey)
+      .single();
+    expect(operacao!.profile_id, "a operação registra a conta sobrevivente").toBe(profileId);
+    expect(operacao!.status).toBe("REGISTERED");
+  });
+
+  it("chave DIFERENTE com o mesmo e-mail é recusa clara de domínio — nunca segunda conta, nunca erro genérico", async () => {
+    const email = `gate-b19-dup-${randomUUID().slice(0, 8)}@aliviar-conexao.local`;
+
+    const primeira = await patientAccounts.provisionPatientAccount(
+      service,
+      admin.client,
+      { email, displayName: "Paciente Gate B19 Duplicado", operationKey: randomUUID() },
+      admin.userId,
+    );
+    expect(primeira.outcome).toBe("created");
+
+    // OUTRA solicitação (chave nova) com o MESMO e-mail: conflito de domínio,
+    // dito com todas as letras — nunca "Não foi possível criar a conta".
+    await expect(
+      patientAccounts.provisionPatientAccount(
+        service,
+        admin.client,
+        { email, displayName: "Paciente Gate B19 Duplicado", operationKey: randomUUID() },
+        admin.userId,
+      ),
+      "payload conflitante (mesmo e-mail, chave nova) exige recusa de DOMÍNIO nomeando o e-mail",
+    ).rejects.toThrow(/e-mail/i);
+
+    const { data: usuarios } = await service.auth.admin.listUsers({ perPage: 1000 });
+    const contas = (usuarios?.users ?? []).filter((usuario) => usuario.email === email);
+    expect(contas, "a recusa não cria nem remove nada: segue 1 conta").toHaveLength(1);
+    expect(contas[0]!.id, "a conta original permanece intacta").toBe(primeira.profileId);
   });
 });
