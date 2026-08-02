@@ -8,7 +8,12 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRoleForAction } from "@/modules/auth/guard";
 
 import { adminPatientProfileSchema, createPatientAccountSchema } from "./patient-account-schema";
-import { createPatientAccount, resetPatientPassword, setPatientAccountAccess } from "./patient-account-repository";
+import {
+  ContaComEsteEmailJaExisteError,
+  provisionPatientAccount,
+  resetPatientPassword,
+  setPatientAccountAccess,
+} from "./patient-account-repository";
 import { createPatientNotification } from "./patient-notification-repository";
 import type { ActionResult } from "./types";
 
@@ -33,6 +38,7 @@ export async function createPatientAccountAction(
   const parsed = createPatientAccountSchema.safeParse({
     email: formData.get("email"),
     displayName: formData.get("displayName"),
+    operationKey: formData.get("operationKey"),
   });
 
   if (!parsed.success) {
@@ -43,12 +49,31 @@ export async function createPatientAccountAction(
   const regularClient = await createServerSupabaseClient();
 
   try {
-    const result = await createPatientAccount(
+    // Idempotência REAL do caminho admin (Bloco B.6/B3, gate B19): a chave
+    // estável nasce no formulário e um reenvio recupera a operação já
+    // concluída em vez de esbarrar no e-mail duplicado.
+    const result = await provisionPatientAccount(
       adminClient,
       regularClient,
-      { email: parsed.data.email, displayName: parsed.data.displayName },
+      {
+        email: parsed.data.email,
+        displayName: parsed.data.displayName,
+        operationKey: parsed.data.operationKey,
+      },
       authState.user.id,
     );
+
+    if (result.outcome === "already_provisioned") {
+      // Comportamento de domínio explícito: a conta desta solicitação já
+      // existe; credenciais só foram reveladas pela execução que concluiu —
+      // nenhuma senha nova é inventada aqui.
+      return {
+        success: false,
+        error:
+          "Esta solicitação já criou a conta do paciente — nenhuma conta nova foi criada. " +
+          "Para obter novas credenciais, use a redefinição de senha na lista de pacientes.",
+      };
+    }
 
     revalidatePath("/admin/pacientes");
     return {
@@ -58,6 +83,14 @@ export async function createPatientAccountAction(
       password: result.password,
     };
   } catch (erro) {
+    if (erro instanceof ContaComEsteEmailJaExisteError) {
+      // Conflito de domínio (outra solicitação, mesmo e-mail): a recusa
+      // chega com todas as letras, rastreável.
+      return {
+        success: false,
+        error: falhaParaUsuario("profiles.patient-account-actions", erro, { mensagem: erro.message }),
+      };
+    }
     return { success: false, error: falhaParaUsuario("profiles.patient-account-actions", erro, { mensagem: "Não foi possível criar o paciente agora. Tente novamente." }) };
   }
 }

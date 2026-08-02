@@ -17,6 +17,12 @@ import { CredentialsReveal } from "./credentials-reveal";
 
 export function CreatePatientForm() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  // Chave estável da SOLICITAÇÃO (Bloco B.6/B3): nasce uma única vez, no
+  // render do formulário, e acompanha cada reenvio — um retry após falha
+  // repete a MESMA chave e o servidor recupera a operação em vez de criar
+  // (ou esbarrar em) uma segunda conta. Um formulário novo = solicitação
+  // nova = chave nova.
+  const [operationKey] = useState(() => crypto.randomUUID());
   const [state, formAction, isPending] = useActionState<
     CreatePatientAccountActionResult | undefined,
     FormData
@@ -28,6 +34,7 @@ export function CreatePatientForm() {
     const parsed = createPatientAccountSchema.safeParse({
       email: formData.get("email"),
       displayName: formData.get("displayName"),
+      operationKey: formData.get("operationKey"),
     });
 
     if (!parsed.success) {
@@ -57,6 +64,8 @@ export function CreatePatientForm() {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-5">
+      <input type="hidden" name="operationKey" value={operationKey} />
+
       <Input
         name="displayName"
         type="text"

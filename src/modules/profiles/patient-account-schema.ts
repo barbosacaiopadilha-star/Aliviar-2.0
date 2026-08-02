@@ -7,6 +7,12 @@ import { z } from "zod";
 export const createPatientAccountSchema = z.object({
   email: z.string().trim().email("E-mail inválido."),
   displayName: z.string().trim().min(2, "Informe o nome do paciente.").max(160, "Nome muito longo."),
+  // Chave estável da SOLICITAÇÃO (Bloco B.6/B3): uuid gerado no render do
+  // formulário e reenviado intacto em cada retry — é ela que torna a criação
+  // idempotente de verdade (nunca derivada do id da conta, que só nasce
+  // durante a tentativa; nunca o e-mail sozinho, que é editável e
+  // reutilizável).
+  operationKey: z.string().uuid("Solicitação inválida. Recarregue a página e tente novamente."),
 });
 
 export type CreatePatientAccountInput = z.infer<typeof createPatientAccountSchema>;
