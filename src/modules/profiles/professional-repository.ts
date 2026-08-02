@@ -233,35 +233,85 @@ export async function setProfessionalPublicationStatus(
   }
 }
 
+export type ReplaceCompetencyDomainsOptions = {
+  /**
+   * Apagar TODAS as áreas exige uma declaração explícita de esvaziamento.
+   * Sem ela, lista vazia significa "nada foi declarado" — e ausência de
+   * declaração nunca é autorização de apagamento (Bloco B/E7, gate B15):
+   * um formulário sem os campos de competência parseia para `[]`, e a
+   * versão antiga desta função apagava as áreas a cada salvamento.
+   */
+  esvaziamentoExplicito?: boolean;
+};
+
 /**
  * Áreas de competência vivem em tabela própria porque um profissional pode ter
- * mais de uma. Substituição total: o cadastro declara o conjunto atual, e o
- * que não foi declarado deixa de valer — nunca acumula silenciosamente.
+ * mais de uma. Semântica de patch (Bloco B/E7):
+ *
+ * - lista NÃO vazia = substituição do conjunto: o que foi declarado passa a
+ *   valer, o que não foi declarado deixa de valer — nunca acumula
+ *   silenciosamente;
+ * - lista vazia = ausência de declaração: NADA é alterado, a menos que o
+ *   chamador declare `esvaziamentoExplicito` (comando explícito de remoção).
+ *
+ * A substituição é uma reordenação com guarda — o aditivo primeiro, o
+ * subtrativo por último: uma falha no meio deixa no máximo um SUPERconjunto
+ * temporário (o retry converge), nunca um profissional sem área nenhuma.
  */
 export async function replaceCompetencyDomains(
   supabase: SupabaseClient,
   professionalProfileId: string,
   domains: string[],
+  options: ReplaceCompetencyDomainsOptions = {},
 ): Promise<void> {
-  await supabase
-    .from("professional_competency_areas")
-    .delete()
-    .eq("professional_profile_id", professionalProfileId);
+  const declarados = [...new Set(domains)];
 
-  if (domains.length === 0) return;
+  if (declarados.length === 0) {
+    if (!options.esvaziamentoExplicito) return;
 
-  // `focus` é exigido pelo schema legado do ACE. "avaliacao" é o valor neutro
-  // — o Método novo compara por domínio, não por foco, então nada aqui é
-  // inventado sobre o profissional.
-  const { error } = await supabase.from("professional_competency_areas").insert(
-    domains.map((domain) => ({
+    const { error } = await supabase
+      .from("professional_competency_areas")
+      .delete()
+      .eq("professional_profile_id", professionalProfileId);
+    if (error) throw erroDeBanco("Não foi possível remover as áreas de atuação.", error);
+    return;
+  }
+
+  // 1) Aditivo: garante as áreas declaradas. `focus` é exigido pelo schema
+  //    legado do ACE; "avaliacao" é o valor neutro — o Método novo compara
+  //    por domínio, não por foco, então nada aqui é inventado sobre o
+  //    profissional. Upsert pela PK (profile, domain, focus): repetir não
+  //    duplica nem toca carimbos das linhas que já existem.
+  const { error: insertError } = await supabase.from("professional_competency_areas").upsert(
+    declarados.map((domain) => ({
       professional_profile_id: professionalProfileId,
       domain,
       focus: "avaliacao",
     })),
+    { onConflict: "professional_profile_id,domain,focus", ignoreDuplicates: true },
   );
+  if (insertError) throw erroDeBanco("Não foi possível salvar as áreas de atuação.", insertError);
 
-  if (error) throw erroDeBanco("Não foi possível salvar as áreas de atuação.", error);
+  // 2) Subtrativo: só depois de o conjunto declarado existir. Os domínios são
+  //    valores do CHECK da tabela (nunca texto livre) — seguros no filtro.
+  const { error: deleteError } = await supabase
+    .from("professional_competency_areas")
+    .delete()
+    .eq("professional_profile_id", professionalProfileId)
+    .not("domain", "in", `(${declarados.join(",")})`);
+  if (deleteError) throw erroDeBanco("Não foi possível atualizar as áreas de atuação.", deleteError);
+
+  // 3) Focos legados de domínios mantidos (dados antigos do ACE) também saem:
+  //    o conjunto final é exatamente o declarado, com o foco neutro.
+  const { error: focoLegadoError } = await supabase
+    .from("professional_competency_areas")
+    .delete()
+    .eq("professional_profile_id", professionalProfileId)
+    .in("domain", declarados)
+    .neq("focus", "avaliacao");
+  if (focoLegadoError) {
+    throw erroDeBanco("Não foi possível atualizar as áreas de atuação.", focoLegadoError);
+  }
 }
 
 // ---------------------------------------------------------------------------

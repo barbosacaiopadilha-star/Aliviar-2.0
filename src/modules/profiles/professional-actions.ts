@@ -223,7 +223,12 @@ export async function createProfessionalProfileAction(
     // Áreas de competência vivem em tabela própria — gravadas depois do perfil
     // existir, porque referenciam o id dele. Dentro do try: uma falha aqui era
     // exceção NÃO tratada, e a criação parecia simplesmente "não avançar".
-    await replaceCompetencyDomains(supabase, created.id, parsed.data.competencyDomains);
+    // SÓ quando o formulário declarou domínios: o form real não tem campos de
+    // competência (removidos pela ADR-042) e parseia para `[]` — ausência de
+    // declaração nunca é um comando de escrita (Bloco B/E7).
+    if (parsed.data.competencyDomains.length > 0) {
+      await replaceCompetencyDomains(supabase, created.id, parsed.data.competencyDomains);
+    }
   } catch (erro) {
     return {
       success: false,
@@ -272,7 +277,15 @@ export async function updateProfessionalProfileAction(
       updatedBy: authState.user.id,
     });
 
-    await replaceCompetencyDomains(supabase, id, parsed.data.competencyDomains);
+    // Semântica de patch (Bloco B/E7, gate B15): campo ausente = "não
+    // alterar". O form real de edição não tem campos de competência — o
+    // parse devolve `[]` — e editar dados básicos NUNCA pode apagar as áreas
+    // já cadastradas. A substituição só roda quando o formulário declarou
+    // domínios; remover tudo exigiria uma ação explícita de esvaziamento
+    // (`esvaziamentoExplicito`), que nenhuma superfície oferece hoje.
+    if (parsed.data.competencyDomains.length > 0) {
+      await replaceCompetencyDomains(supabase, id, parsed.data.competencyDomains);
+    }
   } catch (erro) {
     return {
       success: false,
