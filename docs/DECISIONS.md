@@ -2,6 +2,22 @@
 
 Log de decisões arquiteturais e de produto, formato ADR simplificado. Todas as decisões abaixo são **reversíveis até a aprovação de um scaffold técnico** — podem ser revisitadas sem processo formal enquanto não houver código de aplicação implementado.
 
+## Índice de supersessões e emendas (instituído pela ADR-062; manter atualizado a cada supersessão)
+
+O log é append-only: nenhum verbete é reescrito. Este índice é o mapa que os verbetes antigos não podem carregar. Quem lê uma ADR listada aqui deve ler também a ADR que a supersede ou emenda.
+
+| ADR afetada | Afetada por | Natureza |
+| --- | --- | --- |
+| ADR-004 (MVP busca/conexão direta) | ADR-021 | superseded integral |
+| ADR-017 (paleta + vídeo 10min) | ADR-026 (vídeo) · ADR-033 (parcial) · ADR-045 (executa a paleta) | superseded parcial |
+| ADR-021 (congelamento V1.0) | ADR-035 (parcial) · ADR-063 (reabertura regularizada pós-fato) | superseded parcial |
+| ADR-026 (Vídeo Companheiro) | ADR-033 | superseded parcial |
+| ADR-029 (Temporary Access — "Proposta") | ADR-044 (conteúdo aprovado) · ADR-063 (estado regularizado) | emenda de status |
+| ADR-039 (Mapa 26/6) | ADR-046 (Catálogo 1.0.0: 28 conceitos, 7 grupos, 5 eixos) | superseded parcial |
+| ADR-041 ("nenhum consumidor ligado") · ADR-043 ("incrementos futuros") · ADR-044 ("nada implementado") | ADR-063 | emenda de status (afirmações superadas pela implementação) |
+| ADR-003 · ADR-005 · ADR-009 · ADR-011 (divergências de fato) | ADR-063 | nota de status |
+| Ontologia §6 ONT-30 (escolha imutável) | ADR-063 §6 | emenda (correção em `DECISAO_REGISTRADA` é desenho vigente) |
+
 ---
 
 ## ADR-001 — Separação entre `aliviar-conexao` e `aliviar-app`
@@ -1203,3 +1219,240 @@ Novo agregado `approach_attempts` · nova estrutura `team_notifications` · proj
 - **Consequência:** a plataforma passa a ter uma origem única de cor, elevação, raio, tipografia e movimento, com a narrativa cromática legível num bloco só — e a deriva que motivou esta ADR fica impedida por teste de fonte (`tests/unit/paleta-unica.test.ts`), não por disciplina. O preço é que qualquer cômodo novo precisa declarar sua atmosfera de forma explícita e visível em revisão, em vez de escolher cores livremente. Era exatamente essa liberdade que produziu três identidades.
 
 - **Revisitar quando:** surgir arquivo-fonte oficial da marca com hexadecimais divergentes (prevalece sem nova ADR, só atualização dos degraus âncora); ou quando houver motivo independente para tocar a camada semântica, ocasião em que a divergência da R18 pode ser resolvida; ou se a operação real mostrar que a atmosfera por ambiente confunde em vez de orientar — o que exigiria nova ADR, não silêncio.
+
+---
+
+## ADR-046 — Aprovação formal do Catálogo Canônico 1.0.0
+
+- **Data:** 2026-08-02
+- **Status:** Aprovada pelo responsável (sessão de decisões do Bloco A do `MASTER_REMEDIATION_PLAN`, decisão D-01: "Aprovo todas as recomendações").
+- **Contexto:** o Catálogo Canônico 1.0.0 (28 conceitos ativos, 7 grupos, 5 eixos, 166 opções) foi implementado pelas migrations `20260802100000/110000` sob a ordem explícita do responsável na sessão de trabalho de 2026-08-02 — mas o cabeçalho de `CATALOGO_CANONICO_PROPOSTA.md` dizia "proposta não aprovada; não implementar antes de decisão registrada em ADR", e a "decisão de Método de 2026-07-31" citada 8× pelos protocolos nunca tinha registro no log. A Auditoria Geral classificou a lacuna como crítica (achado CAT-02/H-C2).
+- **Decisão:** o Catálogo Canônico **1.0.0 está formalmente aprovado** como fonte de autoridade do Método, com o conteúdo exato das migrations `20260802100000/110000` e dos documentos `CATALOGO_CANONICO_PROPOSTA.md`/`CATALOGO_CANONICO_OPERACAO.md` (congelamento de 2026-07-31). Esta ADR é o registro que a ADR-039 exigia para a evolução 26/6 → 28/7+eixos, e supersede a ADR-039 nesse ponto (registrado no índice). Os cabeçalhos "não aprovada" dos documentos do Catálogo serão atualizados no Bloco K citando esta ADR.
+- **Consequência:** a cadeia de autoridade citada pela ADR-042 (Método → Catálogo → Mapa → …) passa a ter o elo registrado; o dossiê de migração remota pode ser reescrito sobre uma decisão rastreável (Bloco J).
+- **Revisitar quando:** qualquer mudança de conteúdo do Catálogo — que, por esta ADR, volta a exigir migration **e** ADR, sem exceções.
+
+---
+
+## ADR-047 — Fonte única do Catálogo: o banco é autoritativo
+
+- **Data:** 2026-08-02
+- **Status:** Aprovada pelo responsável (Bloco A, decisão D-05).
+- **Contexto:** a Auditoria encontrou quatro fontes da verdade para o Catálogo (tabela `method_subcriteria` + 3 arrays TypeScript), já divergentes em 36 códigos de opção e 16 pontos (D1–D16 da Fase 1); as 166 opções do banco têm zero leituras em código; `practice_evidence.subcriterion_code` não tem FK; o catálogo não tem imutabilidade nem autoria — "a norma é menos protegida que o dado que ela normatiza" (achado CAT-01).
+- **Decisão:** **fica estabelecido que o banco é a única fonte do Catálogo.** O Bloco E deverá implementar: FK de `practice_evidence.subcriterion_code` para o catálogo; validação de `options[]` contra `method_subcriterion_options`; imutabilidade e autoria do catálogo por trigger; o TypeScript passará a ler do banco ou será verificado por teste de paridade que falhe em qualquer divergência (incluindo códigos de opção, ordem e eixos). As divergências D1–D16 serão resolvidas a favor do banco/doc aprovados pela ADR-046.
+- **Consequência:** com a execução do Bloco E, encerra-se o estado "dois donos divergentes graváveis em silêncio"; mudanças de Catálogo passarão a ter um único lugar de escrita, protegido e auditado.
+- **Revisitar quando:** o custo do teste de paridade se mostrar impraticável — a alternativa registrada (e rejeitada) foi o TS como fonte com o banco rebaixado a depósito.
+
+---
+
+## ADR-048 — Política de guarda: toda imutabilidade prometida ao usuário mora no banco
+
+- **Data:** 2026-08-02
+- **Status:** Aprovada pelo responsável (Bloco A, decisão D-06).
+- **Contexto:** as cinco imutabilidades que definem a confiança do produto (história enviada, Perfil reconhecido, Mapa reconhecido, seleção entregue, relatório emitido/entregue) existiam como comportamento de interface, não como objetos de banco — reversíveis em silêncio por qualquer credencial legítima via PostgREST (Fases 3–4; família IM do Registro). O repositório já contém o gabarito (domínio Connection/Relationship, onde "final" é final por trigger).
+- **Decisão:** **fica estabelecida a regra permanente — nenhuma superfície pode prometer permanência que o banco não garanta.** O Bloco C deverá aplicar trigger/constraint aos oito furos da matriz da Fase 3 (§5, itens 2, 3, 5, 6, 8, 9, 11, 14): status da história enviada; `priority_profiles` VALIDATED; `case_priority_map` pós-reconhecimento; seleção DELIVERED (incluindo INSERT já-entregue); carimbos `emitted_at`/`delivered_at` na lista congelada; entrega exige relatório emitido; idempotência da entrega; competências protegidas contra substituição vazia. Cada trigger deverá nascer com par de testes (recusa e permissão).
+- **Consequência:** com a execução do Bloco C, o congelamento deixará de ser loteria por objeto e a Política de Promessas (ADR-064) terá base material.
+- **Revisitar quando:** um trigger provar-se operacionalmente incorreto — a correção é calibrar o trigger, nunca voltar a guarda para a interface.
+
+---
+
+## ADR-049 — Supersessão do Perfil de Prioridades (ciclo SUPERSEDED)
+
+- **Data:** 2026-08-02
+- **Status:** Aprovada pelo responsável (Bloco A, decisão D-07).
+- **Contexto:** o estado `SUPERSEDED` existe no enum e nada o escreve; o índice `one_active_per_case` bloqueia o caminho certo (criar novo Perfil) e não bloqueia o errado (reverter o reconhecido sem rastro) — a Invariante 28 era inexequível ou contraditória (achado IM-05/C5).
+- **Decisão:** **fica estabelecido o ciclo de supersessão, a ser implementado no Bloco C**: corrigir um Perfil reconhecido significará criar novo Perfil ativo que marca o anterior como `SUPERSEDED`, numa operação atômica com autor, motivo e realimentação do reconhecimento (o novo Perfil exigirá novo reconhecimento da paciente). Reverter um Perfil reconhecido passará a ser proibido pelo banco (ADR-048, Bloco C).
+- **Consequência:** após o Bloco C, a correção de erro real voltará a ser possível sem violar a imutabilidade, com o histórico completo legível.
+- **Revisitar quando:** a operação real mostrar necessidade de supersessão parcial (por subcritério) — hoje explicitamente fora.
+
+---
+
+## ADR-050 — Retratação pós-entrega por errata versionada
+
+- **Data:** 2026-08-02
+- **Status:** Aprovada pelo responsável (Bloco A, decisão D-16).
+- **Contexto:** um Relatório entregue com erro factual não tinha nenhum caminho de correção: reemissão bloqueada, sem errata, sem versionamento — e a alternativa manual apagaria o histórico (achado OPS-04; agravado por IM-03).
+- **Decisão:** o documento entregue **permanece imutável para sempre**. A correção passa a vigorar como **errata**: novo relatório versionado, vinculado ao anterior, com motivo registrado e autor, entregue pelo mesmo fluxo de duas etapas; a paciente verá a versão vigente com acesso à anterior e à explicação. Deverá ser implementada no Bloco C (modelo de dados), com a superfície mínima correspondente.
+- **Consequência:** erro entregue passará a ter resposta legítima sem reescrever o passado; a promessa "depois disso o documento não muda mais" permanecerá verdadeira (o documento não muda — ganhará sucessor declarado).
+- **Revisitar quando:** o primeiro uso real da errata mostrar atrito no texto à paciente.
+
+---
+
+## ADR-051 — Iniciar nova história é ato explícito da paciente
+
+- **Data:** 2026-08-02
+- **Status:** Aprovada pelo responsável (Bloco A, decisão D-21).
+- **Contexto:** STORY-GET-WRITE-001/STORY-NOVA-001 registravam que a criação de rascunho podia acontecer por efeito de rota (GET que grava), fechada provisoriamente pelo índice único; "começar de novo" nunca foi um ato nomeado.
+- **Decisão:** criar rascunho de história é sempre consequência de **um ato explícito da paciente** ("Iniciar nova história" ou o envio do primeiro passo) — nunca de navegação. A regra de uma-história-em-rascunho por paciente (migration `20260802120000`) permanece.
+- **Consequência:** resolve, no plano da decisão, as duas dívidas do backlog; o ajuste de código, se necessário, será executado nos Blocos D/K.
+- **Revisitar quando:** surgir caso de uso real de múltiplos rascunhos simultâneos.
+
+---
+
+## ADR-052 — Papel do Profissional: fora desta remediação
+
+- **Data:** 2026-08-02
+- **Status:** Aprovada pelo responsável (Bloco A, decisão D-03, com ajuste explícito: "fora desta remediação, não 'fora da v1'").
+- **Contexto:** o Profissional não tem canal nenhum no produto (não sabe que foi selecionado; nenhuma tabela de notificação a ele; `profile_id` NULL em 100% dos perfis). A Fase 8 corrigiu a premissa: não há promessa explícita descumprida — há ausência declarada de canal (`OPERATIONAL_ROLES_MODEL.md:242-243`); o contato real é intermediado pelo Concierge humano.
+- **Decisão:** o desenho do papel do Profissional (vínculo de contas, notificações, canal) **fica fora do escopo desta remediação** — sem juízo sobre a v1 do produto, que decidirá em ciclo próprio com o rito de ideia nova. O achado PAP-02 fica **aceito por escrito** como P1 postergado, com gatilho de revisão: antes do primeiro profissional real operar o próprio portal.
+- **Consequência:** a release de remediação não criará superfícies novas para o papel; o vazio do portal deverá ganhar apenas texto honesto (Bloco K).
+- **Revisitar quando:** o gatilho acima disparar, ou a decisão de produto da v1 for aberta.
+
+---
+
+## ADR-053 — Destino das superfícies órfãs (decisão item a item)
+
+- **Data:** 2026-08-02
+- **Status:** Aprovada pelo responsável (Bloco A, decisão D-04, com ajuste explícito sobre `MandatoryFilters`).
+- **Contexto:** a Fase 2 inventariou 14 Server Actions órfãs e componentes nunca renderizados — capacidade pronta no banco sem superfície, decidida até aqui por omissão (causa raiz CR-7).
+- **Decisão, item a item:**
+  1. **Aproximação intermediada (C6): publicar superfície** no Bloco F — é promessa feita à paciente na tela de escolha; o banco (RPCs, carimbos, CHECKs) está pronto.
+  2. **Notificações internas (`read`/`archive`): publicar** no Bloco F — a worklist do Concierge depende delas.
+  3. **Pedidos de atualização (`resolveUpdateRequest`): publicar superfície simples** no Bloco F — pedidos hoje nunca fecham.
+  4. **Painel de divergências do Admin: publicar mínimo** no Bloco F — a porta de publicação aponta para ele.
+  5. **Concessão de papéis (`atendente`/`concierge`) na Equipe + permissões COA/CRM do Atendente: publicar** no Bloco F — destrava a segunda pessoa da operação (OPS-01).
+  6. **Avaliação técnica 6×4 (`declareCriterionAction`): a pendência perpétua e a leitura vazia da paciente deverão ser removidas nesta release (Bloco F)** — a avaliação por critério não é exigida pelo fluxo certificado; fica registrada como candidata a ciclo futuro. O domínio e os testes permanecem.
+  7. **`MandatoryFilters`: NÃO remover.** Permanece no código, não renderizado, marcado **"aguardando decisão arquitetural"** — a relação entre filtros obrigatórios e a Porta de área pós-ADR-042 precisa de desenho próprio antes de publicar ou apagar. A pendência deverá sair das telas (Bloco F); a decisão entra no registro de dívidas com dono.
+  8. **6 seções da Landing v2 (ADR-033): fora desta release** — decisão de Landing, com prazo a definir no ciclo de produto.
+  9. **Deprecadas (`saveCruzamentoWeightsAction`, `setProfessionalPublicationStatusAction` duplicada): deverão ser removidas** no Bloco K.
+- **Consequência:** cada órfã tem destino registrado; nenhuma decisão por omissão sobrevive.
+- **Revisitar quando:** item 7 — na decisão arquitetural dedicada; item 8 — no ciclo da Landing.
+
+---
+
+## ADR-054 — Política de documentos clínicos
+
+- **Data:** 2026-08-02
+- **Status:** Aprovada pelo responsável (Bloco A, decisão D-08).
+- **Contexto:** upload sem validação em nenhuma camada (buckets NULL/NULL; actions checando só `size===0`; teto acidental de 1MB do framework); "excluir" não elimina (cascata nunca alcança o storage; `remove()` sem verificação; lixeira sem confirmação); a paciente pode deletar documento anexado a Case em curadoria ativa (F2-RLS) — achados PRIV-04 e FUN-02, ambos P0/P1.
+- **Decisão:**
+  1. **Aceite de upload:** MIME allowlist (PDF, JPG, PNG, WEBP) e teto de **20 MB**, que deverão ser aplicados nas três camadas (bucket, action com mensagem própria, config do framework).
+  2. **Leitura pela equipe:** fica estabelecido o download/visualização de documento pela equipe do Case (com registro de download — ADR-055).
+  3. **Exclusão responsável:** deverá exigir confirmação explícita + tombstone/trilha de auditoria + remoção do objeto no storage **verificada** (falha na remoção será erro, não silêncio); o descarte de Case passará a tratar os objetos do bucket.
+  4. **Documento anexado a Case ativo deixará de ser deletável pela paciente** (fechamento do F2 no Bloco H); a exclusão nesse estado será ato da equipe, auditado.
+- **Consequência:** o laudo passará a ter o mesmo regime de cuidado que o texto da história; pedidos de eliminação tornar-se-ão atendíveis de fato. A implementação será executada no Bloco H.
+- **Revisitar quando:** o primeiro tipo de arquivo legítimo fora da allowlist aparecer na operação real.
+
+---
+
+## ADR-055 — Responsável por LGPD e retenção mínima da v1
+
+- **Data:** 2026-08-02
+- **Status:** Aprovada pelo responsável (Bloco A, decisão D-09).
+- **Contexto:** a ADR-038 deixou retenção/anonimização explicitamente para "ADR própria com quem responde por LGPD na Aliviar" — que nunca existiu; nenhuma entidade tem prazo; não há log de leitura de dado clínico (achados PRIV-03, AU-03).
+- **Decisão:**
+  1. **O Fundador é nomeado responsável por LGPD, interino**, até designação formal de outra pessoa.
+  2. **Retenção v1:** dados pessoais e clínicos retidos enquanto a relação de cuidado estiver ativa; eliminação sob pedido do titular por procedimento operacional (que inclui storage — ADR-054); logs de auditoria retidos indefinidamente (são a prova dos atos).
+  3. **Log de leitura, escopo mínimo v1:** registrar **download de documento clínico** (quem, qual, quando). Log de leitura ampla (histórias, telas) fica **postergado com risco aceito** e gatilho: primeiro incidente de acesso questionado, ou entrada de um segundo operador com acesso amplo.
+- **Consequência:** a lacuna declarada pela ADR-038 fica fechada no nível de decisão; a implementação será executada nos Blocos H e I.
+- **Revisitar quando:** houver parecer jurídico formal, ou o gatilho do item 3 disparar.
+
+---
+
+## ADR-056 — Suboperadores: Anthropic documentada, analytics fora das rotas autenticadas
+
+- **Data:** 2026-08-02
+- **Status:** Aprovada pelo responsável (Bloco A, decisão D-10).
+- **Contexto:** o texto clínico da paciente sai para a API da Anthropic (rascunho assistido/ACE) sem que nenhum documento a trate como suboperadora; `@vercel/analytics` roda em todas as rotas — inclusive `/paciente/*` — sem consentimento, e a URL visitada é indício de condição de saúde (achado PRIV-02).
+- **Decisão:** (1) **Anthropic permanece** como suboperadora e **deverá ser documentada** na política de privacidade (Bloco H), com a mitigação existente mantida (prompt nunca logado); (2) **o analytics deverá ser removido das rotas autenticadas (Bloco H)** — permanecerá apenas na landing pública, preservando a métrica de aquisição sem tocar dado de quem já é paciente.
+- **Consequência:** os três processadores reais (Supabase, Vercel, Anthropic) ficarão declarados com a publicação da política (Bloco H); o rastreamento de navegação clínica deixará de existir.
+- **Revisitar quando:** a política de privacidade for publicada (o texto final pode exigir ajustes), ou o assistido for descontinuado.
+
+---
+
+## ADR-057 — Dados de teste em produção
+
+- **Data:** 2026-08-02
+- **Status:** Aprovada pelo responsável (Bloco A, decisão D-20).
+- **Contexto:** o playbook RC1 registra 3 contas de paciente em produção, ao menos 2 de teste, com decisão pendente — e o critério NO GO ("algum DEMO publicado") não as detecta; localmente, 158 perfis sintéticos de E2E não participam do esquema de marcação (achados DAD-01/DAD-02).
+- **Decisão:** (1) as contas de teste em produção serão **removidas na janela do Bloco J**, antes da abertura, pelo procedimento auditado; (2) "nenhuma conta/perfil de teste sem marcação" entrará como **item do NO GO** do smoke canônico; (3) a categoria de marcação para resíduo de execução automatizada local será definida e aplicada no Bloco G2.
+- **Consequência:** produção abrirá sem dado sintético não declarado; o critério de gate passará a detectar o que existir.
+- **Revisitar quando:** o G2 definir a mecânica de marcação (a decisão de remover não muda).
+
+---
+
+## ADR-058 — Operar sem staging na v1: aceite formal com mitigações
+
+- **Data:** 2026-08-02
+- **Status:** Aprovada pelo responsável (Bloco A, decisão D-12).
+- **Contexto:** não existe staging — produção é o primeiro ambiente remoto real; toda validação remota é validação com pacientes (achado OPS-03). Criar staging agora adicionaria custo e um segundo ambiente a governar no meio da remediação.
+- **Decisão:** a v1 **opera sem staging, por aceite formal e registrado**, com as mitigações obrigatórias: smoke canônico com separação estrita entre itens seguros (leitura) e itens que criam dado (com limpeza escrita); alertas mínimos do Bloco I ativos antes da abertura; janela do Bloco J com a ordem segura e rollback escrito. **Revisão obrigatória após o primeiro mês de operação real** — com dados do Observatório, não especulação.
+- **Consequência:** o risco deixa de existir por omissão e passa a existir por decisão datada com prazo de revisão.
+- **Revisitar quando:** a revisão de 1 mês, ou o primeiro incidente cuja causa raiz seja a ausência de staging — o que vier primeiro.
+
+---
+
+## ADR-059 — Backup mínimo e alvos de recuperação
+
+- **Data:** 2026-08-02
+- **Status:** Aprovada pelo responsável (Bloco A, decisão D-13).
+- **Contexto:** a documentação se contradiz sobre a existência de backup; o único ponto de recuperação nomeado é um dump parcial em pasta local; auth e storage (os laudos) estão fora de tudo; RTO/RPO inexistem; nenhuma restauração foi testada (achado REC-01, P0).
+- **Decisão:** (1) deverá ser confirmado no painel backup gerenciado — **plano com backup diário (ou PITR)** — ou, se recusado por custo, instituída **rotina de dump verificado** cobrindo `curadoria` + `auth` + storage, com checksum e cópia fora da máquina de desenvolvimento; (2) ficam estabelecidos os alvos da v1: **RPO ≤ 24h, RTO ≤ 4h**; (3) **uma restauração completa deverá ser testada** (em projeto descartável) antes da janela do Bloco J, com tempos medidos e registrados.
+- **Consequência:** os critérios 3–4 do checklist Go/No-Go operacional tornam-se satisfazíveis; a execução será feita no Bloco I.
+- **Revisitar quando:** o volume real do primeiro trimestre indicar alvos diferentes.
+
+---
+
+## ADR-060 — Segregação de funções
+
+- **Data:** 2026-08-02
+- **Status:** Aprovada pelo responsável (Bloco A, decisão D-14).
+- **Contexto:** uma única conta acumula Administrador e Curador Médico — a segregação que o próprio Método exige ("quem avalia não atesta") é inexequível; todas as credenciais têm um único detentor (achado OPS-01).
+- **Decisão:** (1) **segunda conta** (Curador, separada da conta Admin) deverá ser criada na janela de rotação de credenciais, com papéis concedidos pela superfície da Equipe (que o Bloco F deverá destravar); (2) passa a vigorar a regra: mutações manuais em produção só em **janela registrada** (dossiê ou incidente); (3) **segundo detentor de credenciais** deverá ser designado quando houver pessoa de confiança — até lá, o risco permanece aceito e datado.
+- **Consequência:** o bus factor cairá de 1 para o mínimo estrutural possível hoje; a exigência do Método voltará a ser exequível.
+- **Revisitar quando:** entrar a segunda pessoa da operação.
+
+---
+
+## ADR-061 — Incident Commander interino
+
+- **Data:** 2026-08-02
+- **Status:** Aprovada pelo responsável (Bloco A, decisão D-15).
+- **Contexto:** o Command Center define o papel de Incident Commander com escala P0–P3 e nunca o nomeou; o único incidente real da história não recebeu classificação; não há procedimento de ausência (achado OBS-03).
+- **Decisão:** **o Fundador é o Incident Commander interino**, formalmente e desde já. O Bloco I deverá escrever o procedimento mínimo: classificação obrigatória P0–P3 de todo incidente, registro em `docs/INCIDENT_*.md` no padrão existente, procedimento de credencial comprometida, e o protocolo de ausência ("se eu não responder em X horas, Y").
+- **Consequência:** o papel deixa de ser organograma sem ocupante desde já; o critério 7 do checklist operacional poderá ser satisfeito após o Bloco I.
+- **Revisitar quando:** houver segunda pessoa apta a assumir plantão.
+
+---
+
+## ADR-062 — Governança de supersessão de ADRs: índice no topo do log
+
+- **Data:** 2026-08-02
+- **Status:** Aprovada pelo responsável (Bloco A, decisão D-18).
+- **Contexto:** a supersessão era unidirecional e invisível — zero das ADRs supersedidas carregava marca; quem lia a ADR-017, 021 ou 026 de cima a baixo obtinha uma imagem falsa do vigente (achado DOC-02). O vazio era normativo: nenhuma regra existia.
+- **Decisão:** o log permanece **append-only puro** (nenhum verbete é reescrito). A visibilidade vem do **Índice de supersessões e emendas no topo do arquivo**, atualizado no mesmo commit de toda ADR que supersede ou emende outra. O índice inaugural cobre as supersessões e correções de estado conhecidas até esta data.
+- **Consequência:** ler o log de cima a baixo volta a produzir a imagem correta; o custo é uma linha de índice por supersessão.
+- **Revisitar quando:** o índice crescer a ponto de justificar geração automática.
+
+---
+
+## ADR-063 — Regularizações pós-fato do histórico de decisões
+
+- **Data:** 2026-08-02
+- **Status:** Aprovada pelo responsável (Bloco A, regularizações de DOC-04/PAP-03/IM-07).
+- **Contexto:** a Fase 8 encontrou decisões materiais executadas sem ADR e verbetes com afirmações superadas. Este verbete regulariza o passado **sem reescrevê-lo** — cada item abaixo registra a decisão que faltou, com a data real do ato.
+- **Decisão (registros pós-fato):**
+  1. **Papéis `concierge` (2026-07-24) e `atendente` (2026-07-24)** existem por decisão do Fundador registrada nas migrations `20260724054819` e `20260724191858`; ficam formalizados como parte do catálogo de papéis da ADR-006.
+  2. **Ampliação do acesso do Curador (migration `20260725230458`)** — fila de Cases sem dono + nome de qualquer paciente com Case — fica **regularizada como vigente**, com a justificativa da própria migration; a restrição literal da ADR-019 está superada nesse ponto (índice atualizado).
+  3. **Renomeação dos critérios (2026-07-27, migration `20260727100000`)** — `TRAJETORIA→HISTORICO`, `FORMA_DE_CUIDADO→CONTINUIDADE_DO_CUIDADO`, `COMPATIBILIDADE_PESSOAL→MODELO_DE_ATENDIMENTO` — registrada pós-fato como decisão de Método executada com UPDATE de dados.
+  4. **Reabertura do produto pós-ADR-021**: o congelamento da V1.0 foi progressivamente reaberto por descongelamentos escopados a partir de 2026-07-23; fica registrado pós-fato que a ADR-021 vale como marco histórico, não como estado vigente — encerrando a pendência que a própria ADR-029 apontava.
+  5. **Notas de status**: ADR-003 (existe produção hospedada — superada pela realidade desde o go-live), ADR-005 (react-hook-form nunca adotado; Server Actions + Zod é o padrão vigente), ADR-009 (três shells/três endereços coexistem — dívida registrada NAV-03, decisão de renomeação no Bloco K), ADR-011 (o vocabulário `clinical_context` existe na camada de Curadoria com a delimitação do comentário da tabela — aceito).
+  6. **Correções de estado** (via índice, verbetes intactos): ADR-029 está **aprovada** (pela ADR-044) e o registro de reabertura que ela exigia é o item 4 acima; ADR-041 ("nenhum consumidor ligado"), ADR-043 ("incrementos futuros") e ADR-044 ("nada implementado") descrevem estados **anteriores à Release de Reconstrução** — o motor tem consumidor certificado e o Incremento 2 está implementado. **Emenda à Ontologia §6 (ONT-30):** a correção da escolha da paciente enquanto `DECISAO_REGISTRADA` é desenho vigente e deliberado; a imutabilidade começa na transição seguinte.
+- **Consequência:** o log volta a cobrir o conjunto real de decisões; nenhuma divergência de governança da Fase 8 permanece sem registro ou sem dono.
+- **Revisitar quando:** item 5/ADR-009 — na decisão de rotas do Bloco K.
+
+---
+
+## ADR-064 — Política de Promessas ao Usuário
+
+- **Data:** 2026-08-02
+- **Status:** Aprovada pelo responsável (Bloco A, decisão D-22 — criada por ajuste explícito do responsável na sessão).
+- **Contexto:** a Auditoria encontrou, em série, textos afirmando o que o sistema não garante: "registrado e permanente" sobre checkbox reeditável; "cada movimento fica registrado com autor" sobre estado volátil; "a seleção é sempre de uma pessoa, com nome" com `curatorName: null` hardcoded; pendência apontando para painel inexistente; confirmação de salvamento sobre escrita recusada (achados UX-03, FS-02, AU-02). O padrão é estrutural: a promessa nasce no texto e a garantia nunca nasce no sistema.
+- **Decisão:** **regra permanente de produto** — nenhuma superfície afirma permanência, autoria, registro ou entrega que o sistema não garanta materialmente naquele momento:
+  1. Promessa de **imutabilidade** exige guarda de banco (par com ADR-048).
+  2. Promessa de **autoria/registro** exige coluna preenchida e legível (par com a auditoria mínima do Bloco C).
+  3. Promessa de **capacidade** ("resolver no painel X") exige a superfície existir.
+  4. Confirmações de **sucesso** exigem persistência confirmada — nunca otimismo de cliente.
+  5. Todo bloco de correção que criar ou remover uma garantia **deverá revisar os textos correspondentes no mesmo commit**; a varredura inicial completa será executada no Bloco K.
+  6. A guarda de regressão deverá ser textual e testável onde possível (ampliação dos meta-testes de vocabulário aos textos de promessa).
+- **Consequência:** o contrato entre texto e sistema passa a vigorar como regra desde já; sua verificação mecânica será instituída nos Blocos C/K, dando à classe "promessa sem lastro" critério objetivo de aceitação.
+- **Revisitar quando:** nunca — é princípio permanente; ajustes são de mecanismo, não de regra.
