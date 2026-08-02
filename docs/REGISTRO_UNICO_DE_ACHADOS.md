@@ -212,4 +212,8 @@ Evidências e cenários conforme fases de origem (F2 §3; F5 §12–14; F6 §§4
 | PAP-03 | 2026-08-02 | A | `01910211` | ADR-063 §2 regulariza a ampliação de acesso do Curador como vigente |
 | IM-07 | 2026-08-02 | A | `01910211` | ADR-063 §6 emenda ONT-30 (correção em `DECISAO_REGISTRADA` é desenho vigente); texto do doc da Ontologia será alinhado no Bloco K |
 
+### Cobertura criada pelo Bloco G1 (2026-08-02 — reproduz, NÃO encerra)
+
+Suíte `tests/remediacao/` (26 gates; 25 vermelhos + pino C8) + travas desarmadas: **IM-01..05** (gates C1–C7/C10), **IM-03** (C5/C6), **AU-01** (C9×3), **AT-01** (B11/B12/D18), **AT-02** (B14), **AT-03** (B13 — nuance nova: duplo submit hoje quebra com 23505 ininteligível em vez de duplicar; raiz `active_case_id=null` confirmada), **AT-06/PRIV-04-parcial** (B16), **FS-01** (D17), **FS-02** (D22 + trava desarmada em components), **FS-03** (B15 + trava desarmada em unit), **FS-04** (D21×3 + 9 payloads corrigidos), **FS-05/FS-06** (D18/D19), **FUN-01** (D20), **TST-03-parcial** (porteiro conectado, timeouts, trace, reuse off), **TST-04** (workflow criado; não executado — push proibido). Detalhe: `docs/BLOCO_G1_REDE_DE_SEGURANCA.md`. Herança vermelha da tag registrada: 5 arquivos de integração do catálogo pré-virada → critério de aceite do **Bloco E** (CAT-01).
+
 Nota de reescopo aprovada na sessão (2026-08-02): **PAP-02** (Profissional) reclassificado de "bloqueia produção" para **P1 aceito por escrito — fora desta remediação** (ADR-052, gatilho de revisão registrado); **ORF-03** (`MandatoryFilters`) muda de critério: não será removido nem publicado — código mantido "aguardando decisão arquitetural", pendência sai das telas no Bloco F (ADR-053 §7).
