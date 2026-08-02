@@ -212,6 +212,17 @@ Evidências e cenários conforme fases de origem (F2 §3; F5 §12–14; F6 §§4
 | PAP-03 | 2026-08-02 | A | `01910211` | ADR-063 §2 regulariza a ampliação de acesso do Curador como vigente |
 | IM-07 | 2026-08-02 | A | `01910211` | ADR-063 §6 emenda ONT-30 (correção em `DECISAO_REGISTRADA` é desenho vigente); texto do doc da Ontologia será alinhado no Bloco K |
 
+### Encerramentos do Bloco B (2026-08-02)
+
+| ID | Bloco | Evidência do critério |
+| --- | --- | --- |
+| **AT-01** | B | RPC `deliver_curadoria` transacional e idempotente (migration `20260802150000`); gates B11/B12 verdes; falso-sucesso do caminho da entrega eliminado; provas de concorrência/repetição/falha sem estado parcial |
+| **AT-02** | B | Saga `patient_provisioning` + compensação (migration `152000`); gate B14 verde; zero Auth órfão; beco do e-mail duplicado eliminado; boas-vindas só pós-commit |
+| **AT-03** | B | `open_case_from_lead` grava o id real (migration `151000`); gate B13 verde por idempotência explícita (mesmo Case; erro de domínio) |
+| **AT-05** | B | Caminho admin usa a mesma saga; provas E6 (falha ⇒ compensada; contagens idênticas; credenciais só no sucesso) |
+
+**Abertos com tratamento parcial registrado (NÃO encerrados):** AT-04 (`saveSelection` segue 3 statements — mitigado: banco recusa entrega com ≠3), AT-06 (4 das 5 operações promovidas; falta seleção), FS-03 (repository preserva por patch — B15 verde; schema `.default([])`/form ficam no D, teste intencional segue vermelho), FS-05 (`report-repository.ts:169` corrigido no caminho da entrega; `case_events` de `cases/repository` restam), IM-03 (entrega não regrava mais `emitted_at`; lista congelada do banco fica no C — gate C5 segue vermelho), PRIV-04-parcial (compensação de storage verificada + evento de resíduo; cascata/confirmação/tombstone ficam no C/H). Detalhe: `docs/BLOCO_B_ATOMICIDADE.md`.
+
 ### Cobertura criada pelo Bloco G1 (2026-08-02 — reproduz, NÃO encerra)
 
 Suíte `tests/remediacao/` (26 gates; 25 vermelhos + pino C8) + travas desarmadas: **IM-01..05** (gates C1–C7/C10), **IM-03** (C5/C6), **AU-01** (C9×3), **AT-01** (B11/B12/D18), **AT-02** (B14), **AT-03** (B13 — nuance nova: duplo submit hoje quebra com 23505 ininteligível em vez de duplicar; raiz `active_case_id=null` confirmada), **AT-06/PRIV-04-parcial** (B16), **FS-01** (D17), **FS-02** (D22 + trava desarmada em components), **FS-03** (B15 + trava desarmada em unit), **FS-04** (D21×3 + 9 payloads corrigidos), **FS-05/FS-06** (D18/D19), **FUN-01** (D20), **TST-03-parcial** (porteiro conectado, timeouts, trace, reuse off), **TST-04** (workflow criado; não executado — push proibido). Detalhe: `docs/BLOCO_G1_REDE_DE_SEGURANCA.md`. Herança vermelha da tag registrada: 5 arquivos de integração do catálogo pré-virada → critério de aceite do **Bloco E** (CAT-01).
