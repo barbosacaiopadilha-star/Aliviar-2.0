@@ -1,4 +1,5 @@
 import "server-only";
+import { erroDeBanco } from "@/lib/observability/erros";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -87,7 +88,7 @@ export async function listProfessionalProfiles(
     .order("display_name", { ascending: true });
 
   if (error) {
-    throw new Error("Não foi possível carregar os profissionais.");
+    throw erroDeBanco("Não foi possível carregar os profissionais.", error);
   }
 
   return (data as ProfessionalProfileRow[]).map(mapRow);
@@ -104,7 +105,7 @@ export async function getProfessionalProfile(
     .maybeSingle();
 
   if (error) {
-    throw new Error("Não foi possível carregar o profissional.");
+    throw erroDeBanco("Não foi possível carregar o profissional.", error);
   }
 
   return data ? mapRow(data as ProfessionalProfileRow) : null;
@@ -147,7 +148,7 @@ export async function createProfessionalProfile(
     .single();
 
   if (error) {
-    throw new Error("Não foi possível criar o profissional.");
+    throw erroDeBanco("Não foi possível criar o profissional.", error);
   }
 
   return mapRow(data as ProfessionalProfileRow);
@@ -178,7 +179,7 @@ export async function updateProfessionalProfile(
     .single();
 
   if (error) {
-    throw new Error("Não foi possível atualizar o profissional.");
+    throw erroDeBanco("Não foi possível atualizar o profissional.", error);
   }
 
   return mapRow(data as ProfessionalProfileRow);
@@ -196,7 +197,7 @@ export async function setProfessionalStatus(
     .eq("id", id);
 
   if (error) {
-    throw new Error("Não foi possível atualizar o status do profissional.");
+    throw erroDeBanco("Não foi possível atualizar o status do profissional.", error);
   }
 }
 
@@ -228,7 +229,7 @@ export async function setProfessionalPublicationStatus(
     .eq("id", id);
 
   if (error) {
-    throw new Error("Não foi possível atualizar a publicação do profissional.");
+    throw erroDeBanco("Não foi possível atualizar a publicação do profissional.", error);
   }
 }
 
@@ -260,7 +261,107 @@ export async function replaceCompetencyDomains(
     })),
   );
 
-  if (error) throw new Error("Não foi possível salvar as áreas de atuação.");
+  if (error) throw erroDeBanco("Não foi possível salvar as áreas de atuação.", error);
+}
+
+// ---------------------------------------------------------------------------
+// Porta de publicação — o que faltava para ela ser satisfazível pela interface
+// (Release de Reconstrução, ETAPA 6). O banco exige registro verificado e
+// área de atuação verificada desde a política de fontes; nenhuma superfície
+// escrevia esses dados. Estas funções fecham essa lacuna.
+// ---------------------------------------------------------------------------
+
+export type PracticeAreaRow = {
+  rawText: string;
+  tags: string[];
+  source: string | null;
+  verificationStatus: "nao_verificado" | "em_verificacao" | "verificado" | "divergente";
+};
+
+export async function getPracticeArea(
+  supabase: SupabaseClient,
+  professionalProfileId: string,
+): Promise<PracticeAreaRow | null> {
+  const { data, error } = await supabase
+    .from("professional_practice_areas")
+    .select("raw_text, tags, source, verification_status")
+    .eq("professional_profile_id", professionalProfileId)
+    .maybeSingle();
+
+  if (error) throw erroDeBanco("Não foi possível carregar a área de atuação.", error);
+  if (!data) return null;
+
+  return {
+    rawText: data.raw_text as string,
+    tags: (data.tags as string[]) ?? [],
+    source: (data.source as string | null) ?? null,
+    verificationStatus: data.verification_status as PracticeAreaRow["verificationStatus"],
+  };
+}
+
+/**
+ * Grava a Área de Atuação (uma por profissional — UNIQUE no banco).
+ * Verificar exige proveniência: fonte, data e autor (CHECK
+ * `verificado_exige_proveniencia`); o texto original é sempre mantido.
+ */
+export async function upsertPracticeArea(
+  supabase: SupabaseClient,
+  professionalProfileId: string,
+  input: { rawText: string; tags: string[]; source: string | null; verify: boolean; adminId: string },
+): Promise<void> {
+  const { error } = await supabase.from("professional_practice_areas").upsert(
+    {
+      professional_profile_id: professionalProfileId,
+      raw_text: input.rawText,
+      tags: input.tags,
+      source: input.source,
+      verification_status: input.verify ? "verificado" : "nao_verificado",
+      verified_at: input.verify ? new Date().toISOString() : null,
+      verified_by: input.verify ? input.adminId : null,
+    },
+    { onConflict: "professional_profile_id" },
+  );
+
+  if (error) throw erroDeBanco("Não foi possível salvar a área de atuação.", error);
+}
+
+/**
+ * Registra o resultado da verificação do registro no conselho. O CHECK do
+ * banco exige fonte, data e autor sempre que um status é declarado — nunca
+ * status sem proveniência.
+ */
+export async function setRegistrationVerification(
+  supabase: SupabaseClient,
+  professionalProfileId: string,
+  input: { status: RegistrationStatus; source: string; adminId: string },
+): Promise<void> {
+  const { error } = await supabase
+    .from("professional_profiles")
+    .update({
+      registration_status: input.status,
+      registration_source: input.source,
+      registration_verified_at: new Date().toISOString(),
+      registration_verified_by: input.adminId,
+      updated_by: input.adminId,
+    })
+    .eq("id", professionalProfileId);
+
+  if (error) throw erroDeBanco("Não foi possível registrar a verificação do registro.", error);
+}
+
+export async function countOpenCriticalDivergences(
+  supabase: SupabaseClient,
+  professionalProfileId: string,
+): Promise<number> {
+  const { count, error } = await supabase
+    .from("verification_divergences")
+    .select("id", { count: "exact", head: true })
+    .eq("professional_profile_id", professionalProfileId)
+    .eq("status", "aberta")
+    .eq("severity", "critica");
+
+  if (error) throw erroDeBanco("Não foi possível consultar divergências do cadastro.", error);
+  return count ?? 0;
 }
 
 export async function listCompetencyDomains(

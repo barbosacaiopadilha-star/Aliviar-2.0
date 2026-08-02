@@ -19,7 +19,7 @@ export default function MotivoPage() {
       nextHref="/sua-historia/historia"
       footerSlot={<AutosaveIndicator />}
     >
-      <FormField label="Sua resposta" htmlFor="motivo" hint="Você pode deixar em branco se preferir.">
+      <FormField label="Sua resposta" hideLabel htmlFor="motivo" hint="Você pode deixar em branco se preferir.">
         <Textarea
           id="motivo"
           name="motivo"

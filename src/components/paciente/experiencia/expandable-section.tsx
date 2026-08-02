@@ -40,7 +40,7 @@ export function ExpandableSection({
         aria-expanded={open}
         aria-controls={regionId}
         onClick={() => setOpen((current) => !current)}
-        className="group inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/70 px-5 text-sm font-medium text-[var(--patient-forest)] transition-colors duration-300 ease-standard hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+        className="group inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/70 px-5 text-sm font-medium text-[var(--patient-acento)] transition-colors duration-300 ease-standard hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
       >
         {open ? (expandedLabel ?? label) : label}
         <ChevronDown

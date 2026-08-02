@@ -15,13 +15,14 @@ export default function InformacoesPage() {
       step={5}
       totalSteps={7}
       title="Há algo importante que devêssemos saber?"
-      description="Qualquer contexto que ajude nossa equipe a entender melhor o seu momento."
+      description="Qualquer contexto que ajude seu Curador a entender melhor o seu momento."
       backHref="/sua-historia/historia"
       nextHref="/sua-historia/preferencias"
       footerSlot={<AutosaveIndicator />}
     >
       <FormField
         label="Sua resposta"
+        hideLabel
         htmlFor="informacoes"
         hint="Você pode deixar em branco se preferir."
       >

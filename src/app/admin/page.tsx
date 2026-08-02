@@ -66,13 +66,32 @@ function StatCard({
 }) {
   const unavailable = value === null;
   const alerta = emphasis && typeof value === "number" && value > 0;
+  /**
+   * Zero é ausência, e ausência não merece o peso de um número.
+   *
+   * A Visão geral abria com doze indicadores no mesmo corpo escuro e no mesmo
+   * peso — e, numa operação em repouso, isso são doze zeros gigantes. O olho
+   * percorria doze vezes o nada antes de encontrar qualquer coisa que
+   * exigisse ação: hierarquia exatamente invertida para uma tela cuja função
+   * é dizer onde agir agora.
+   *
+   * O zero continua inteiro e legível — a operação precisa saber que é zero,
+   * e esconder ausência é como se fabrica um dado que ninguém confere. Ele só
+   * recua de peso, para que o primeiro ponto de atenção volte a ser o que tem
+   * algo a dizer.
+   */
+  const zerado = value === 0;
 
   const content = (
     <Card padding="lg" className="h-full">
       <p className="text-sm text-ink-muted">{label}</p>
       <p
-        className={`mt-1 font-serif text-3xl font-semibold ${
-          unavailable ? "text-ink-muted" : alerta ? "text-brand-gold" : "text-brand-primary-deep"
+        className={`mt-1 font-serif ${
+          unavailable || zerado
+            ? "text-2xl font-normal text-ink-muted"
+            : alerta
+              ? "text-3xl font-semibold text-brand-gold"
+              : "text-3xl font-semibold text-brand-primary-deep"
         }`}
       >
         {formatMetric(value, suffix)}

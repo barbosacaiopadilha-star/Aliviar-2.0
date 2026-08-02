@@ -43,6 +43,7 @@ export function ProfessionalProfileForm({
   initialInstitutionName = "",
 }: ProfessionalProfileFormProps) {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState<string | null>(null);
   const [state, formAction, isPending] = useActionState<ActionResult | undefined, FormData>(
     action,
     undefined,
@@ -66,10 +67,30 @@ export function ProfessionalProfileForm({
     });
 
     if (!parsed.success) {
-      setFieldErrors(mapZodFieldErrors(parsed.error));
+      const erros = mapZodFieldErrors(parsed.error);
+      setFieldErrors(erros);
+      // Nenhum erro pode ser invisível: se a validação recusar um campo que a
+      // tela não renderiza (foi assim que a criação "morreu sem mensagem" —
+      // ADR-042 removeu campos do JSX e o schema continuou exigindo-os), a
+      // recusa aparece como mensagem geral em vez de sumir.
+      const camposRenderizados = new Set([
+        "displayName",
+        "professionalIdentifier",
+        "crm",
+        "crmUf",
+        "professionalSummary",
+        "institutionName",
+      ]);
+      const invisiveis = Object.keys(erros).filter((campo) => !camposRenderizados.has(campo));
+      setFormError(
+        invisiveis.length > 0
+          ? `A validação recusou dados fora do formulário (${invisiveis.join(", ")}). Isto é um defeito — reporte à equipe.`
+          : null,
+      );
       return;
     }
 
+    setFormError(null);
     setFieldErrors({});
     startTransition(() => {
       formAction(formData);
@@ -141,6 +162,7 @@ export function ProfessionalProfileForm({
         />
       </FormField>
 
+      {formError ? <FormMessage variant="error">{formError}</FormMessage> : null}
       {state && !state.success ? <FormMessage variant="error">{state.error}</FormMessage> : null}
       {state?.success ? <FormMessage variant="success">Salvo com sucesso.</FormMessage> : null}
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { FileText, Trash2 } from "lucide-react";
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -10,9 +10,11 @@ import type { ActionResult } from "@/modules/profiles/types";
 
 type DocumentItem = { id: string; fileName: string; fileSize: number | null };
 
+type UploadResult<T> = ActionResult | { success: true; document: T };
+
 type DocumentsPanelProps<T extends DocumentItem> = {
   initialDocuments: T[];
-  uploadAction: (prevState: ActionResult | undefined, formData: FormData) => Promise<ActionResult>;
+  uploadAction: (prevState: UploadResult<T> | undefined, formData: FormData) => Promise<UploadResult<T>>;
   onDelete: (documentId: string) => Promise<ActionResult>;
   emptyTitle: string;
   emptyDescription: string;
@@ -38,10 +40,19 @@ export function DocumentsPanel<T extends DocumentItem>({
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
-  const [uploadState, formAction, isUploading] = useActionState<ActionResult | undefined, FormData>(
+  const [uploadState, formAction, isUploading] = useActionState<UploadResult<T> | undefined, FormData>(
     uploadAction,
     undefined,
   );
+
+  // ETAPA 9: a lista atualiza sozinha quando o upload dá certo — sem exigir
+  // recarregar a página. Duplicação acidental fica impedida pelo id.
+  useEffect(() => {
+    if (uploadState?.success && "document" in uploadState && uploadState.document) {
+      const doc = uploadState.document;
+      setDocuments((current) => (current.some((d) => d.id === doc.id) ? current : [doc, ...current]));
+    }
+  }, [uploadState]);
 
   function handleDelete(documentId: string) {
     setRemovingId(documentId);
@@ -71,6 +82,9 @@ export function DocumentsPanel<T extends DocumentItem>({
 
       {uploadState && !uploadState.success ? (
         <FormMessage variant="error">{uploadState.error}</FormMessage>
+      ) : null}
+      {uploadState?.success ? (
+        <FormMessage variant="success">Documento enviado. Ele já aparece na lista abaixo.</FormMessage>
       ) : null}
 
       {documents.length === 0 ? (

@@ -80,7 +80,7 @@ export function PrioridadesSection() {
                       style={{ width: `${entry.weight}%` }}
                     />
                   </div>
-                  <p className="mt-2 border-l-2 border-brand-gold/50 pl-2 text-xs italic leading-relaxed text-ink-muted">
+                  <p className="mt-2 border-l-2 border-[color-mix(in_srgb,var(--color-brand-gold)_50%,transparent)] pl-2 text-xs italic leading-relaxed text-ink-muted">
                     {entry.quote}
                   </p>
                 </li>

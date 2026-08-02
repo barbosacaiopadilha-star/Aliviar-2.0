@@ -53,7 +53,7 @@ export function MesaPriorityPanel({
   }
 
   return (
-    <Card className="space-y-5 border-brand-gold/40">
+    <Card className="space-y-5 border-[color-mix(in_srgb,var(--color-brand-gold)_40%,transparent)]">
       <CardHeader>
         <CardTitle>O que importa para {patientFirstName}</CardTitle>
         <CardDescription>

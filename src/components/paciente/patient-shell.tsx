@@ -36,6 +36,12 @@ function NavLinks({
               onClick={onNavigate}
               aria-current={active ? "page" : undefined}
               className={linkClassName(active)}
+              // Sem prefetch: "Minha história" resolve a história ativa no
+              // servidor, e o prefetch do Next executaria essa resolução sem
+              // clique nenhum — foi assim que uma paciente terminou com duas
+              // histórias vazias. Navegação autenticada e curta não ganha nada
+              // com prefetch; a corretude ganha tudo.
+              prefetch={false}
             >
               {item.label}
             </Link>
@@ -71,11 +77,11 @@ export function PatientShell({ children, userMenu }: PatientShellProps) {
         Pular para o conteúdo
       </a>
 
-      <header className="border-b border-[var(--color-border)]/60 bg-[var(--patient-linen)] print:hidden">
+      <header className="border-b border-[color-mix(in_srgb,var(--color-border)_60%,transparent)] bg-[var(--patient-linen)] print:hidden">
         <div className="mx-auto flex min-h-[4.5rem] w-full max-w-content items-center justify-between gap-4 px-4 lg:px-8">
           <Link
             href="/paciente"
-            className="font-serif text-xl font-medium text-[var(--patient-forest)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+            className="font-serif text-xl font-medium text-[var(--patient-acento)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
           >
             Aliviar
           </Link>
@@ -88,7 +94,7 @@ export function PatientShell({ children, userMenu }: PatientShellProps) {
                 cn(
                   "flex min-h-11 items-center rounded-full px-4 text-sm font-medium transition-all duration-300 ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2",
                   active
-                    ? "bg-[var(--patient-forest)] text-[var(--patient-linen)] shadow-md shadow-emerald-950/10"
+                    ? "bg-accent-soft text-accent"
                     : "text-[var(--color-ink-muted)] hover:bg-white/60 hover:text-[var(--patient-ink)]",
                 )
               }
@@ -118,7 +124,7 @@ export function PatientShell({ children, userMenu }: PatientShellProps) {
               cn(
                 "flex min-h-11 items-center rounded-xl px-4 text-sm font-medium transition-colors duration-300 ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2",
                 active
-                  ? "bg-[var(--patient-forest)] text-[var(--patient-linen)]"
+                  ? "bg-accent-soft text-accent"
                   : "text-[var(--color-ink-muted)] hover:bg-[var(--patient-linen)] hover:text-[var(--patient-ink)]",
               )
             }

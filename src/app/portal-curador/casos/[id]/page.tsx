@@ -123,7 +123,7 @@ export default async function CasoWorkspacePage({ params }: { params: Promise<{ 
                 {record.historia.narrative}
               </p>
               {record.historia.motivation ? (
-                <p className="mt-3 max-w-reading border-l-2 border-brand-gold/50 pl-3 text-sm italic leading-relaxed text-ink-muted">
+                <p className="mt-3 max-w-reading border-l-2 border-[color-mix(in_srgb,var(--color-brand-gold)_50%,transparent)] pl-3 text-sm italic leading-relaxed text-ink-muted">
                   {record.historia.motivation}
                 </p>
               ) : null}

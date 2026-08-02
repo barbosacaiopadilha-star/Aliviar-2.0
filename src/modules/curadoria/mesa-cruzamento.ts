@@ -1,4 +1,5 @@
 import "server-only";
+import { erroDeBanco } from "@/lib/observability/erros";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -203,7 +204,7 @@ export async function loadMesaCruzamento(
   // consumidores de uma vez — a Mesa, a seleção dos três caminhos e o COS
   // leem esta mesma lista. Um profissional cujas fontes discordam não chega
   // a ser classificado: não há o que declarar sobre quem a Rede não oferece.
-  const [{ data: providerRows }, bloqueados] = await Promise.all([
+  const [{ data: providerRows, error: providerError }, bloqueados] = await Promise.all([
     supabase
       .from("professional_profiles")
       .select("id, display_name")
@@ -214,10 +215,14 @@ export async function loadMesaCruzamento(
     listCriticalDivergenceBlocklist(supabase),
   ]);
 
+  // Exceção NUNCA vira Rede vazia (ETAPA 7): uma falha de consulta é dita,
+  // com referência — rede vazia de verdade é outra coisa, e tem explicação própria.
+  if (providerError) throw erroDeBanco("Não foi possível carregar a Rede deste Case.", providerError);
+
   const providers = (providerRows ?? []).filter((row) => !bloqueados.has(row.id as string));
   const providerIds = providers.map((row) => row.id as string);
 
-  const [{ data: areas }, { data: careModels }] = await Promise.all([
+  const [{ data: areas, error: areasError }, { data: careModels, error: careError }] = await Promise.all([
     supabase
       .from("professional_practice_areas")
       .select("professional_profile_id, raw_text, tags, source, verification_status, verified_at")
@@ -227,6 +232,9 @@ export async function loadMesaCruzamento(
       .select("professional_profile_id, states, cities, offers_continuous_care")
       .in("professional_profile_id", providerIds.length > 0 ? providerIds : ["00000000-0000-0000-0000-000000000000"]),
   ]);
+
+  if (areasError) throw erroDeBanco("Não foi possível carregar as áreas de atuação da Rede.", areasError);
+  if (careError) throw erroDeBanco("Não foi possível carregar o modelo de atendimento da Rede.", careError);
 
   const areaByProvider = new Map((areas ?? []).map((row) => [row.professional_profile_id as string, row]));
   const careByProvider = new Map((careModels ?? []).map((row) => [row.professional_profile_id as string, row]));

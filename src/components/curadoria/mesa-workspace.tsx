@@ -541,7 +541,7 @@ export function MesaWorkspace({
                       "focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-surface",
                       "transition-colors duration-fast ease-standard disabled:cursor-not-allowed disabled:opacity-70",
                       prompt.required && !parecer[prompt.field].trim()
-                        ? "border-brand-gold/50"
+                        ? "border-[color-mix(in_srgb,var(--color-brand-gold)_50%,transparent)]"
                         : "border-border",
                     )}
                   />
@@ -569,7 +569,7 @@ export function MesaWorkspace({
                 "w-full rounded-sm border bg-surface px-3 py-2 text-sm leading-relaxed text-ink",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-surface",
                 "transition-colors duration-fast ease-standard disabled:cursor-not-allowed disabled:opacity-70",
-                compositionRationale.trim() ? "border-border" : "border-brand-gold/50",
+                compositionRationale.trim() ? "border-border" : "border-[color-mix(in_srgb,var(--color-brand-gold)_50%,transparent)]",
               )}
             />
           </Card>
@@ -577,7 +577,7 @@ export function MesaWorkspace({
       </section>
 
       {/* ENCERRAMENTO — Barreira 4 */}
-      <Card className={cn("space-y-4", missing.length === 0 && !closed && "border-brand-sage/50")}>
+      <Card className={cn("space-y-4", missing.length === 0 && !closed && "border-[color-mix(in_srgb,var(--color-brand-sage)_50%,transparent)]")}>
         <CardHeader>
           <CardTitle>
             {closed ? "Curadoria Técnica encerrada" : "Encerrar a Curadoria Técnica"}
@@ -689,7 +689,7 @@ function CandidatoCard({
   onToggleSelection: () => void;
 }) {
   return (
-    <Card className={cn("space-y-4", selected && "border-brand-primary/50")}>
+    <Card className={cn("space-y-4", selected && "border-[color-mix(in_srgb,var(--color-brand-primary)_50%,transparent)]")}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="font-sans text-base font-semibold text-ink">{candidato.nome}</h3>
@@ -720,8 +720,8 @@ function CandidatoCard({
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
             "disabled:cursor-not-allowed disabled:opacity-60",
             inComparison
-              ? "border-brand-primary/40 bg-canvas text-brand-primary-deep"
-              : "border-border bg-surface text-ink hover:border-brand-primary/40",
+              ? "border-[color-mix(in_srgb,var(--color-brand-primary)_40%,transparent)] bg-canvas text-brand-primary-deep"
+              : "border-border bg-surface text-ink hover:border-[color-mix(in_srgb,var(--color-brand-primary)_40%,transparent)]",
           )}
         >
           {inComparison ? "Tirar da comparação" : "Comparar"}

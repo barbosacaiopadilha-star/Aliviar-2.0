@@ -45,7 +45,7 @@ export function PatientStatusWidget({ jornada, currentStage }: PatientStatusWidg
         <CuratorAvatar name={responsible.name} className="size-14 text-base" />
         <div className="min-w-0 flex-1">
           <p className="text-sm text-[var(--color-ink-muted)]">Quem está cuidando de mim</p>
-          <p className="font-serif text-xl font-medium text-[var(--patient-forest)]">
+          <p className="font-serif text-xl font-medium text-[var(--patient-acento)]">
             {responsible.name}
           </p>
           <p className="mt-1 text-xs text-[var(--color-ink-muted)]">{responsible.roleLabel}</p>

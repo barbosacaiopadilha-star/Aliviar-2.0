@@ -23,7 +23,7 @@ const TODOS = SUBCRITERION_CATALOG.map((entry) => ({
 }));
 
 describe("Catálogo — o Método define o que se avalia", () => {
-  it("os grupos são exatamente os seis critérios do Modelo v1.0 — sem vocabulário paralelo", () => {
+  it("os grupos são os seis critérios do Modelo v1.0 mais VIABILIDADE (Catálogo 1.0.0, fora da matriz do Motor)", () => {
     expect([...SUBCRITERION_GROUPS]).toEqual([
       "FORMACAO",
       "EXPERIENCIA",
@@ -31,9 +31,37 @@ describe("Catálogo — o Método define o que se avalia", () => {
       "ACESSO",
       "CONTINUIDADE_DO_CUIDADO",
       "MODELO_DE_ATENDIMENTO",
+      "VIABILIDADE",
     ]);
     // O rótulo vem do mesmo lugar que a Mesa já usa.
     expect(CRITERION_LABELS.HISTORICO).toBe("Histórico Profissional");
+  });
+
+  it("o catálogo 1.0.0 tem exatamente os 28 conceitos aprovados", () => {
+    expect(SUBCRITERION_CATALOG.filter((entry) => entry.active)).toHaveLength(28);
+    const codigos = SUBCRITERION_CATALOG.map((entry) => entry.code);
+    for (const novo of [
+      "CONTINUIDADE_CANAIS",
+      "PRATICA_LIMITES_DE_ATUACAO",
+      "EXPERIENCIA_NO_TIPO_DE_CASO",
+      "HISTORICO_ATIVIDADE_ACADEMICA",
+      "HISTORICO_AREAS_DE_ATUACAO",
+      "ACESSO_LOCAL_DE_ATENDIMENTO",
+      "VIABILIDADE_COBERTURA_E_CONVENIO",
+      "VIABILIDADE_CUSTO_E_PAGAMENTO",
+    ]) {
+      expect(codigos, novo).toContain(novo);
+    }
+    for (const aposentado of [
+      "HISTORICO_REGULARIDADE",
+      "EXPERIENCIA_CASOS_SEMELHANTES",
+      "EXPERIENCIA_CONDICAO_OU_PROCEDIMENTO",
+      "HISTORICO_PRODUCAO_ACADEMICA",
+      "HISTORICO_ENSINO_E_PESQUISA",
+      "ACESSO_LOCALIZACAO",
+    ]) {
+      expect(codigos, aposentado).not.toContain(aposentado);
+    }
   });
 
   it("todo subcritério pertence a um grupo válido", () => {
@@ -139,15 +167,15 @@ describe("Completude — calculada, nunca declarada", () => {
 
 describe("Leitura agrupada", () => {
   it("devolve os seis grupos, com o que falta como nulo — nunca como zero", () => {
-    const grupos = groupPriorityMap([{ subcriterionCode: "ACESSO_LOCALIZACAO", importance: "MUITO_IMPORTANTE" }]);
+    const grupos = groupPriorityMap([{ subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", importance: "MUITO_IMPORTANTE" }]);
 
     expect(grupos.map((g) => g.group)).toEqual([...SUBCRITERION_GROUPS]);
 
     const acesso = grupos.find((g) => g.group === "ACESSO")!;
-    const localizacao = acesso.entries.find((e) => e.subcriterion.code === "ACESSO_LOCALIZACAO")!;
+    const localizacao = acesso.entries.find((e) => e.subcriterion.code === "ACESSO_LOCAL_DE_ATENDIMENTO")!;
     expect(localizacao.importance).toBe("MUITO_IMPORTANTE");
 
-    const outro = acesso.entries.find((e) => e.subcriterion.code !== "ACESSO_LOCALIZACAO")!;
+    const outro = acesso.entries.find((e) => e.subcriterion.code !== "ACESSO_LOCAL_DE_ATENDIMENTO")!;
     expect(outro.importance, "não classificado é null, não 0").toBeNull();
   });
 });
@@ -175,20 +203,20 @@ describe("O que o domínio recusa antes do banco", () => {
 
   it("recusa o mesmo subcritério duas vezes na mesma gravação", () => {
     const rejeicoes = validatePriorityMapWrite([
-      { subcriterionCode: "ACESSO_LOCALIZACAO", importance: "IMPORTANTE" },
-      { subcriterionCode: "ACESSO_LOCALIZACAO", importance: "RELEVANTE" },
+      { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", importance: "IMPORTANTE" },
+      { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", importance: "RELEVANTE" },
     ]);
-    expect(rejeicoes).toContainEqual({ reason: "SUBCRITERIO_REPETIDO", code: "ACESSO_LOCALIZACAO" });
+    expect(rejeicoes).toContainEqual({ reason: "SUBCRITERIO_REPETIDO", code: "ACESSO_LOCAL_DE_ATENDIMENTO" });
   });
 
   it("recusa subcritério fora de circulação", () => {
     const catalogo: Subcriterion[] = SUBCRITERION_CATALOG.map((entry) =>
-      entry.code === "ACESSO_LOCALIZACAO" ? { ...entry, active: false } : entry,
+      entry.code === "ACESSO_LOCAL_DE_ATENDIMENTO" ? { ...entry, active: false } : entry,
     );
     const rejeicoes = validatePriorityMapWrite(
-      [{ subcriterionCode: "ACESSO_LOCALIZACAO", importance: "IMPORTANTE" }],
+      [{ subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", importance: "IMPORTANTE" }],
       catalogo,
     );
-    expect(rejeicoes).toContainEqual({ reason: "SUBCRITERIO_INATIVO", code: "ACESSO_LOCALIZACAO" });
+    expect(rejeicoes).toContainEqual({ reason: "SUBCRITERIO_INATIVO", code: "ACESSO_LOCAL_DE_ATENDIMENTO" });
   });
 });

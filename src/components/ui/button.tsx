@@ -10,14 +10,18 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   fullWidth?: boolean;
 };
 
+// A ação primária usa o acento do AMBIENTE, não uma cor fixa: no cômodo da
+// paciente ela é azul, no da Curadoria é verde — e este arquivo não sabe
+// disso. É o mecanismo da R20 (Continuidade Visual da Jornada): a atmosfera
+// muda, o componente não. Secundário e fantasma seguem o mesmo acento;
+// `danger` permanece institucional, porque impedimento não é atmosfera.
 const variantClasses: Record<NonNullable<ButtonProps["variant"]>, string> = {
-  primary:
-    "bg-brand-primary text-surface hover:bg-brand-primary-deep active:bg-brand-primary-deep",
+  primary: "bg-accent text-surface hover:bg-accent-deep active:bg-accent-deep",
   secondary:
-    "border border-border bg-surface text-ink hover:bg-canvas active:bg-canvas",
-  ghost: "bg-transparent text-brand-primary hover:bg-canvas active:bg-canvas",
+    "border border-border-strong bg-surface text-ink hover:bg-recessed active:bg-recessed",
+  ghost: "bg-transparent text-accent hover:bg-accent-soft active:bg-accent-soft",
   danger:
-    "border border-error/30 bg-error-surface text-error hover:bg-error/10 active:bg-error/15",
+    "border border-[color-mix(in_srgb,var(--color-error)_30%,transparent)] bg-error-surface text-error hover:bg-[color-mix(in_srgb,var(--color-error)_10%,transparent)] active:bg-[color-mix(in_srgb,var(--color-error)_15%,transparent)]",
 };
 
 const sizeClasses: Record<NonNullable<ButtonProps["size"]>, string> = {

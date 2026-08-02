@@ -83,7 +83,7 @@ export default async function MinhasPrioridadesPage() {
                 {nomes.map((nome) => (
                   <li
                     key={nome}
-                    className="patient-body border-l-2 border-[var(--color-brand-sage)]/30 pl-4"
+                    className="patient-body border-l-2 border-[color-mix(in_srgb,var(--color-brand-sage)_30%,transparent)] pl-4"
                   >
                     {nome}
                   </li>
@@ -111,7 +111,7 @@ export default async function MinhasPrioridadesPage() {
           </p>
           <ul className="mt-4 space-y-3 text-[var(--color-ink-muted)]">
             {observations.map((observation) => (
-              <li key={observation} className="patient-body border-l-2 border-[var(--color-brand-sage)]/30 pl-4">
+              <li key={observation} className="patient-body border-l-2 border-[color-mix(in_srgb,var(--color-brand-sage)_30%,transparent)] pl-4">
                 {observation}
               </li>
             ))}

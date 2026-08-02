@@ -31,6 +31,12 @@ function prepararAmbiente() {
 }
 
 export async function setup() {
+  // Exclusão mútua com o E2E: o teardown desta suíte restaura a baseline e
+  // apagaria os dados de um fluxo em voo. A trava transforma "não rodar as
+  // duas juntas" de lembrete em garantia.
+  const { adquirirTrava } = await import("../../execucao-exclusiva");
+  adquirirTrava("integracao");
+
   prepararAmbiente();
   const { createAdminSupabaseClient } = await import("@/lib/supabase/admin");
   const admin = createAdminSupabaseClient();
@@ -47,6 +53,15 @@ export async function teardown() {
   // Rede de segurança: se um arquivo morreu antes do `afterAll` da limpeza,
   // o que ele criou some aqui. Não substitui a limpeza por arquivo — o
   // sentinela roda ANTES disto e é ele quem denuncia a falha.
+  //
+  // Exceção única — a mesma de `setup-limpeza.ts`: o seed da sessão manual
+  // (`SEED_MESA=1`) existe para DEIXAR dados vivos. Limpar aqui desfaria o
+  // propósito do seed depois de ele passar verde.
+  if (process.env.SEED_MESA) {
+    console.log("[limpeza global] SEED_MESA ativo — o seed existe para deixar dados vivos; nada é removido.");
+    if (existsSync(BASELINE_PATH)) unlinkSync(BASELINE_PATH);
+    return;
+  }
   try {
     prepararAmbiente();
     const { createAdminSupabaseClient } = await import("@/lib/supabase/admin");
@@ -58,5 +73,7 @@ export async function teardown() {
     }
   } finally {
     if (existsSync(BASELINE_PATH)) unlinkSync(BASELINE_PATH);
+    const { devolverTrava } = await import("../../execucao-exclusiva");
+    devolverTrava("integracao");
   }
 }

@@ -30,6 +30,33 @@ Implementados como variáveis CSS em `:root` (`src/app/globals.css`) e espelhado
 
 ### 2.1 Cores
 
+**Atualização (ADR-045, 2026-08-01) — reconvergência cromática.** Entre a ADR-017 e agosto de 2026 a implementação derivou: `--color-brand-primary` passou a ser um verde (`#556b5d`) em três folhas de estilo concorrentes, e **o azul institucional desapareceu inteiramente de `src/`**. A ADR-045 reconverge o código a esta seção — não é rebranding, é correção de deriva. Os hexadecimais abaixo permanecem os da ADR-017; o que muda é a estrutura em volta deles.
+
+#### 2.1.1 Camada interna — escalas (`--scale-*`)
+
+Infraestrutura do Design System, declarada uma única vez em `:root`. **Nenhum componente de produto as consome** — essa fronteira é verificada por teste de fonte (`tests/unit/paleta-unica.test.ts`). As âncoras em negrito são as canônicas da ADR-017; os degraus `sage-700`/`sage-900` são os aprendizados incorporados do período de deriva.
+
+| Degrau | Índigo | Sage | Neutro (quente) |
+|---|---|---|---|
+| 50 | `#EEF2F7` | `#F1F5F2` | `#FAF8F4` (papel) |
+| 100 | `#DDE5EF` | `#E2EAE4` | `#F4F1EB` |
+| 200 | `#BCCCDE` | `#C6D6CA` | `#E9E5DC` (linho) |
+| 300 | `#93AECB` | **`#A8C0AE`** | `#D8D3C8` |
+| 400 | `#648BB2` | `#8CA795` | `#B5AFA3` |
+| 500 | `#3C6A96` | **`#7F9E8C`** | `#8D8779` |
+| 600 | `#21527D` | `#67826F` | `#6E6F6B` (tinta suave) |
+| 700 | **`#123B67`** | **`#556B5D`** | `#55585A` |
+| 800 | **`#0E2F52`** | `#3D5147` | `#3A4045` |
+| 900 | `#0A2340` | **`#1A2E26`** | `#232B31` (tinta) |
+
+Acentos sem escala, por decisão (uma escala convidaria uso sistemático): `--scale-argila` `#955530` (condição humana — **nunca "erro"**), `--scale-argila-superficie` `#F7EEE7`, `--scale-dourado` `#B08D57` (fio e selo — **nunca preenchimento nem borda padrão**).
+
+#### 2.1.2 Atmosfera do ambiente
+
+Quatro tokens — `--color-bg-ambient`, `--color-ambient-accent`, `--color-ambient-accent-soft`, `--color-ambient-accent-deep` — são os únicos que cada ambiente redefine no seu escopo (`.landing-editorial`, `.patient-dashboard`, `.ambiente-curadoria`, `.ambiente-decisao`, `.ambiente-concierge`; a Administração herda o padrão de `:root`). Todos declarados num bloco só em `globals.css`. É o que permite ao mesmo `<Button>` ser azul na casa da paciente e verde na Curadoria sem uma linha de código por cômodo — R20 em `docs/experiencia/SISTEMA_VISUAL.md`.
+
+#### 2.1.3 Camada semântica — o que o produto consome
+
 | Token | Valor de referência | Uso | Contraste validado |
 |---|---|---|---|
 | `--color-brand-primary` | `#123B67` | Ações primárias, links, elementos de marca | Branco sobre este tom: **11,4:1** (AAA) |
@@ -46,6 +73,23 @@ Implementados como variáveis CSS em `:root` (`src/app/globals.css`) e espelhado
 | `--color-success` / `--color-success-surface` | `#2F6B4F` / `#E7F0EA` | Texto/ícone de sucesso / fundo de alerta de sucesso | Texto sobre surface: a validar em implementação, alvo ≥ 4,5:1 |
 | `--color-warning` / `--color-warning-surface` | `#8A5A1F` / `#F5EBDD` | Texto/ícone de aviso / fundo de alerta de aviso | idem |
 | `--color-error` / `--color-error-surface` | `#8B2E2E` / `#F6E7E7` | Texto/ícone de erro / fundo de alerta de erro | idem |
+
+**Reconciliação de valores (ADR-045).** Os tokens acima mantêm nome e papel; os que a implementação já havia refinado passam a apontar para os degraus canônicos da escala: `--color-bg-canvas` = `neutro-50` `#FAF8F4` (era `#F7F5F1`), `--color-ink` = `neutro-900` `#232B31`, `--color-ink-muted` = `neutro-600` `#6E6F6B`, `--color-border` = `neutro-200` `#E9E5DC`. **A borda padrão deixa de ser dourada** — o `rgba(183,154,91,.18)` que vigorava fazia do dourado o contraponto cromático de todo o produto, contra a regra "dourado nunca protagonista" de `docs/BRAND_GUIDELINES.md`.
+
+**Tokens semânticos acrescentados (ADR-045)**, todos na convenção vigente:
+
+| Token | Valor | Papel |
+|---|---|---|
+| `--color-bg-recessed` | `neutro-100` | superfície diferenciada (antes cada arquivo improvisava a sua) |
+| `--color-border-strong` | `neutro-300` | fio estrutural |
+| `--color-brand-sage-deep` | `sage-700` | **o verde legível** (5,43:1) — o sálvia de marca nunca carrega texto |
+| `--color-brand-primary-darkest` | `indigo-900` | superfície institucional escura |
+| `--color-attention` / `-surface` | argila | condição humana a conversar — **nunca "erro"** |
+| `--color-bg-ambient`, `--color-ambient-accent`, `-soft`, `-deep` | por ambiente | atmosfera (§2.1.2) |
+
+**O que deliberadamente não foi criado:** nenhum token ou escala `success`/`danger`/`error` novo. A ausência é a proteção, e é verificada por teste de fonte.
+
+**Contraste validado (ADR-045)**, fórmula WCAG de luminância relativa: tinta/papel **13,55:1** · tinta suave/papel **4,77:1** · `indigo-700`/papel **10,72:1** · papel/`indigo-700` **11,37:1** · `sage-700`/papel **5,43:1** · papel/`sage-700` **5,76:1** · argila/papel **4,90:1** · argila/superfície de argila **5,07:1** · tinta/`indigo-200` **8,78:1** · tinta/`sage-300` **7,40:1**. Reprovações intencionais, decorativas e proibidas como texto: `sage-500` sobre papel (**2,76:1**) e dourado sobre papel (**2,91:1**).
 
 **Pendência explícita**: os tons de sucesso/aviso/erro acima são ponto de partida, não finais — a TASK-005B deve rodar um checador de contraste real (ex.: `axe`, WebAIM) contra os pares texto/fundo antes de finalizar. Os hexadecimais de marca (`#123B67`, `#0E2F52`, `#7F9E8C`, `#A8C0AE`, `#B08D57`, `#F7F5F1`) são os fornecidos pelo usuário e confirmados contra a logo oficial recebida (ADR-017) — meus cálculos de contraste (fórmula WCAG de luminância relativa) confirmam que são utilizáveis nos papéis acima. Amostragem de cor foi visual (imagem de referência), não pixel-exata de arquivo-fonte; se um arquivo de produção da marca surgir com hex divergente, ele prevalece.
 

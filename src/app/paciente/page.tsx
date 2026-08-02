@@ -24,6 +24,7 @@ import { getPatientCaseOverview } from "@/modules/cases";
 import { buildJornada } from "@/modules/curadoria/jornada";
 import { listCaseIds, loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { listStoriesForProfile } from "@/modules/story/repository";
+import { listPatientDocuments } from "@/modules/profiles/patient-document-repository";
 import { derivePatientHomeState } from "@/modules/paciente/home-state";
 
 export const metadata: Metadata = {
@@ -32,7 +33,9 @@ export const metadata: Metadata = {
 };
 
 const SECONDARY_LINKS = [
-  { label: "Minha história", href: "/sua-historia" },
+  // ETAPA 9: abre a história EXISTENTE, no passo em que parou — nunca a
+  // recepção do wizard, que recomeçava a conversa do zero.
+  { label: "Minha história", href: "/sua-historia/continuar" },
   { label: "Documentos", href: "/paciente/documentos" },
   { label: "Minha Curadoria", href: "/paciente/curadoria" },
   { label: "Conta", href: "/paciente/perfil" },
@@ -54,10 +57,11 @@ export default async function PacienteHomePage() {
   const authState = await requireRole("paciente");
   const supabase = await createServerSupabaseClient();
 
-  const [stories, caseOverview, caseIds] = await Promise.all([
+  const [stories, caseOverview, caseIds, documentos] = await Promise.all([
     listStoriesForProfile(supabase, authState.user.id),
     getPatientCaseOverview(supabase, authState.user.id),
     listCaseIds(supabase),
+    listPatientDocuments(supabase, authState.user.id),
   ]);
 
   const record = caseIds.length > 0 ? await loadCuradoriaRecord(supabase, caseIds[0]) : null;
@@ -81,6 +85,13 @@ export default async function PacienteHomePage() {
       <div className="mx-auto max-w-3xl space-y-8">
         <PatientWelcome name={displayName} subtitle={`${saudacao}. Estamos por aqui.`} />
         <PatientHomeState state={state} />
+        {/* O resumo do que já é dela vale desde o primeiro dia — antes de
+            existir Case, ele diz com honestidade o que ainda não existe. */}
+        <MeuResumo
+          historia={stories[0]?.data.historia ?? null}
+          documentos={documentos.length}
+          relatorioEmitido={false}
+        />
         <CuradoriaNaoIniciada />
         <QuickLinks />
       </div>
@@ -123,6 +134,12 @@ export default async function PacienteHomePage() {
         curatorName={jornada.curatorName}
       />
 
+      <MeuResumo
+        historia={stories[0]?.data.historia ?? null}
+        documentos={documentos.length}
+        relatorioEmitido={Boolean(record?.relatorio.emittedAt)}
+      />
+
       <div className="grid gap-6 lg:grid-cols-2">
         {perfil && record ? (
           <ProfileCard
@@ -150,6 +167,76 @@ export default async function PacienteHomePage() {
   );
 }
 
+/**
+ * O resumo do que já é da pessoa (ETAPA 9): a história dela, os documentos
+ * dela, e o estado do Relatório — sempre dados reais, nunca texto fictício.
+ * O que não existe ainda simplesmente não aparece como se existisse.
+ */
+function MeuResumo({
+  historia,
+  documentos,
+  relatorioEmitido,
+}: {
+  historia: string | null;
+  documentos: number;
+  relatorioEmitido: boolean;
+}) {
+  const resumoDaHistoria = historia?.trim()
+    ? historia.trim().length > 220
+      ? `${historia.trim().slice(0, 220)}…`
+      : historia.trim()
+    : null;
+
+  return (
+    <section
+      aria-label="Resumo"
+      className="grid gap-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:grid-cols-3"
+    >
+      <div className="sm:col-span-2">
+        <p className="text-sm font-semibold text-ink">Sua história</p>
+        {resumoDaHistoria ? (
+          <p className="mt-1 text-sm leading-relaxed text-ink-muted">{resumoDaHistoria}</p>
+        ) : (
+          <p className="mt-1 text-sm text-ink-muted">
+            Você ainda não contou sua história.{" "}
+            <Link href="/sua-historia/continuar" className="underline underline-offset-4">
+              Começar agora
+            </Link>
+          </p>
+        )}
+      </div>
+      <div className="space-y-3">
+        <div>
+          <p className="text-sm font-semibold text-ink">Documentos</p>
+          <p className="mt-1 text-sm text-ink-muted">
+            {documentos === 0
+              ? "Nenhum documento enviado."
+              : `${documentos} documento(s) enviado(s).`}{" "}
+            <Link href="/paciente/documentos" className="underline underline-offset-4">
+              Ver
+            </Link>
+          </p>
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-ink">Relatório</p>
+          <p className="mt-1 text-sm text-ink-muted">
+            {relatorioEmitido ? (
+              <>
+                Pronto para você.{" "}
+                <Link href="/paciente/curadoria" className="underline underline-offset-4">
+                  Abrir
+                </Link>
+              </>
+            ) : (
+              "Em preparação pela sua Curadoria."
+            )}
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function QuickLinks() {
   return (
     <nav aria-label="Acessos rápidos" className="border-t border-[var(--color-border)] pt-6">
@@ -158,7 +245,7 @@ function QuickLinks() {
           <li key={link.href}>
             <Link
               href={link.href}
-              className="text-sm font-medium text-[var(--patient-forest)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+              className="text-sm font-medium text-[var(--patient-acento)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
             >
               {link.label}
             </Link>

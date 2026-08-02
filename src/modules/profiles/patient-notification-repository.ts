@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { erroDeBanco } from "@/lib/observability/erros";
+
 import type { PatientNotification } from "./types";
 
 type PatientNotificationRow = {
@@ -35,7 +37,7 @@ export async function listPatientNotifications(
     .order("created_at", { ascending: false });
 
   if (error) {
-    throw new Error("Não foi possível carregar as notificações.");
+    throw erroDeBanco("Não foi possível carregar as notificações.", error);
   }
 
   return (data as PatientNotificationRow[]).map(mapRow);
@@ -51,7 +53,7 @@ export async function markPatientNotificationRead(
     .eq("id", notificationId);
 
   if (error) {
-    throw new Error("Não foi possível atualizar a notificação.");
+    throw erroDeBanco("Não foi possível atualizar a notificação.", error);
   }
 }
 
@@ -71,6 +73,6 @@ export async function createPatientNotification(
   });
 
   if (error) {
-    throw new Error("Não foi possível registrar a notificação.");
+    throw erroDeBanco("Não foi possível registrar a notificação.", error);
   }
 }

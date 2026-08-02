@@ -1,4 +1,5 @@
 import "server-only";
+import { erroDeBanco } from "@/lib/observability/erros";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -34,6 +35,35 @@ function mapRow(row: PatientStoryRow): PatientStory {
 // se não houver nenhuma — nunca cria uma segunda história em rascunho
 // enquanto uma já existir (preparação para múltiplas histórias futuras:
 // uma nova só nasce depois que a anterior for "enviada").
+/**
+ * A história que "Minha história" deve abrir: o rascunho em andamento se
+ * houver, senão a última enviada.
+ *
+ * Existe porque `getOrCreateActiveStory` procura apenas rascunho — e, depois
+ * que a pessoa envia, ela deixa de ter rascunho. Navegar de volta criava uma
+ * história NOVA e em branco, e a que ela acabara de contar sumia da vista.
+ * Uma segunda história é um ato deliberado, nunca efeito colateral de clicar
+ * num link do menu.
+ */
+export async function getLatestStory(
+  supabase: SupabaseClient,
+  profileId: string,
+): Promise<PatientStory | null> {
+  const { data, error } = await supabase
+    .from("patient_stories")
+    .select(SELECT_COLUMNS)
+    .eq("profile_id", profileId)
+    // Rascunho primeiro ('rascunho' > 'enviada' na ordem do texto); entre
+    // iguais, a mais recente.
+    .order("status", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw erroDeBanco("Não foi possível carregar sua história.", error);
+  return data ? mapRow(data as PatientStoryRow) : null;
+}
+
 export async function getOrCreateActiveStory(
   supabase: SupabaseClient,
   profileId: string,
@@ -48,7 +78,7 @@ export async function getOrCreateActiveStory(
     .maybeSingle();
 
   if (fetchError) {
-    throw new Error("Não foi possível carregar sua história.");
+    throw erroDeBanco("Não foi possível carregar sua história.", fetchError);
   }
 
   if (existing) {
@@ -61,8 +91,23 @@ export async function getOrCreateActiveStory(
     .select(SELECT_COLUMNS)
     .single();
 
+  // Corrida perdida (23505 no índice `um_rascunho_por_paciente`): outra
+  // requisição criou o rascunho entre a nossa leitura e a nossa escrita. Isso
+  // não é erro para quem está do outro lado da tela — é a mesma história que
+  // ela pediu. Relê e devolve, em vez de anunciar uma falha inexistente.
+  if (createError && (createError as { code?: string }).code === "23505") {
+    const { data: concorrente } = await supabase
+      .from("patient_stories")
+      .select(SELECT_COLUMNS)
+      .eq("profile_id", profileId)
+      .eq("status", "rascunho")
+      .maybeSingle();
+
+    if (concorrente) return mapRow(concorrente as PatientStoryRow);
+  }
+
   if (createError || !created) {
-    throw new Error("Não foi possível iniciar sua história.");
+    throw erroDeBanco("Não foi possível iniciar sua história.", createError);
   }
 
   return mapRow(created as PatientStoryRow);
@@ -96,7 +141,7 @@ export async function listStoriesForProfile(
     .order("created_at", { ascending: false });
 
   if (error) {
-    throw new Error("Não foi possível carregar as histórias.");
+    throw erroDeBanco("Não foi possível carregar as histórias.", error);
   }
 
   return (data as PatientStoryRow[]).map(mapRow);
@@ -177,7 +222,7 @@ export async function submitStory(
     .maybeSingle();
 
   if (error) {
-    throw new Error("Não foi possível concluir sua história agora.");
+    throw erroDeBanco("Não foi possível concluir sua história agora.", error);
   }
 
   if (!updated) {
@@ -207,7 +252,7 @@ export async function listStoryVersions(
     .order("revision", { ascending: false });
 
   if (error) {
-    throw new Error("Não foi possível carregar o histórico de versões.");
+    throw erroDeBanco("Não foi possível carregar o histórico de versões.", error);
   }
 
   return (

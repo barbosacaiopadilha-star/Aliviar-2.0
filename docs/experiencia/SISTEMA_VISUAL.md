@@ -3,6 +3,8 @@
 > **Status:** linguagem visual. Não é interface, não é componente, não é tela, não é código.
 > **Herda:** [ARQUITETURA_DA_EXPERIENCIA.md](./ARQUITETURA_DA_EXPERIENCIA.md) (Fase 1, aprovada) sobre a arquitetura operacional congelada.
 > **Data:** 2026-08-01
+>
+> **Revisão de 2026-08-01 — reconvergência cromática (ADR-045).** O índigo institucional da ADR-017 voltou ao papel de cor de marca, que a implementação havia perdido por deriva. Alterações nesta revisão: §5.2 (índigo promovido, sage recebe "evolução"), §5.2.1 (atmosfera por ambiente, 40/30/30), §5.3 (precisão sobre escala interna × escala na superfície; par azul/verde), §12 (emenda: badge numérico e barra seguem banidos nas superfícies dela, legítimos nos fundos), §13.2 (divergência da R18 registrada), R16' emendada, R19 e R20 novas. **Nada foi revogado.** A proposta que originou esta revisão está em [PROPOSTA_IDENTIDADE_VISUAL_2_0.md](./PROPOSTA_IDENTIDADE_VISUAL_2_0.md).
 
 ---
 
@@ -109,11 +111,30 @@ Preto puro sobre branco puro é a assinatura visual do documento burocrático. A
 
 | Nome | Descrição | Significado | Onde aparece |
 |---|---|---|---|
-| **Sage** | verde acinzentado dessaturado *(já vigente no produto)* | continuidade, cuidado, permanência | marcas de identidade, faixa do comum, ações primárias |
+| **Índigo** | azul profundo, fosco, dessaturado | confiança, orientação, comunicação — e o que foi verificado e assinado | cor institucional: marca, ações primárias, navegação, foco, proveniência e autoria |
+| **Sage** | verde acinzentado dessaturado | cuidado, **evolução**, continuidade | faixa do comum, marcadores do que já avançou, superfícies de acompanhamento, ambiente da Curadoria |
 | **Argila** | terracota dessaturada, quente | atenção humana, algo a conversar | condições e pendências que pedem conversa — nunca erro |
-| **Índigo esmaecido** | azul-acinzentado profundo, fosco | o que foi verificado e assinado | proveniência, autoria, assinatura do Curador |
 
 **Todas as três são dessaturadas.** Cor saturada em interface de saúde produz dois efeitos indesejados: alarme e infantilização.
+
+**Sobre a promoção do índigo.** Até a reconvergência de 2026-08-01, este documento tratava o índigo como cor marginal (só proveniência) porque era assim que o *código* se comportava — a implementação havia perdido o azul institucional da ADR-017 e colapsado a identidade em verde e dourado. O índigo volta ao papel que a marca sempre lhe deu. Isso **não altera** o significado do sage nem cria uma cor nova: redistribui os dois eixos que sempre existiram.
+
+**As duas famílias e os dois eixos.** O azul responde *"o que a Aliviar está comunicando aqui?"*. O verde responde *"o que já avançou no tempo?"*. Como as perguntas são diferentes, as respostas nunca são alternativas uma da outra — ver **R19**.
+
+### 5.2.1 A atmosfera de cada ambiente
+
+A cor participa da narrativa da jornada. Cada ambiente tem uma atmosfera própria e **compartilha toda a demais linguagem visual** (R20).
+
+| Ambiente | Atmosfera | Por quê |
+|---|---|---|
+| **Fachada** | azul e verde em equilíbrio | é a instituição inteira se apresentando; nenhuma família manda |
+| **Casa da paciente** | azul predominante; verde marca evolução | é o cômodo em que a Aliviar orienta e comunica |
+| **Curadoria** | verde predominante | é onde o cuidado é efetivamente trabalhado |
+| **Sala da Decisão** | equilíbrio; atmosfera volta ao papel neutro | nada deve inclinar a decisão — o cômodo com mais vazio é o mais silencioso em cor |
+| **Concierge** | azul predominante; verde é continuidade | acompanhar é comunicar |
+| **Administração** | neutros com azul | quem opera precisa de estrutura, não de clima |
+
+Como alvo da experiência **completa** — nunca de uma tela isolada, e nunca uma métrica de pixels: **~40% neutros · ~30% azul · ~30% verde**. Um ambiente desvia da média por projeto; é a soma da jornada que fecha a proporção.
 
 ## 5.3 As proibições cromáticas — a parte mais importante
 
@@ -121,7 +142,11 @@ Preto puro sobre branco puro é a assinatura visual do documento burocrático. A
 
 **Não existe cor de erro** nas superfícies dela. O que em outro produto seria erro, aqui é ou uma condição (argila) ou uma informação ausente (tinta suave). Vermelho só existe em superfícies internas de operação, jamais nas dela.
 
-**Não existe escala cromática.** Nenhuma sequência de tons claro→escuro representando mais→menos. Escala de cor é escala de valor, e valor vira nota.
+**Não existe escala cromática *com significado*.** Nenhuma sequência de tons claro→escuro representando mais→menos. Escala de cor é escala de valor, e valor vira nota.
+
+> **Precisão adicionada em 2026-08-01.** O Design System mantém escalas de 10 degraus (índigo, sage, neutro) como **infraestrutura interna** — elas existem para consistência e evolução, e nenhum componente de produto as consome diretamente. O que esta proibição veda é a escala **na superfície**: nada que a pessoa veja pode usar sequência de tons para dizer "mais" ou "menos". As duas coisas não se tocam, e a separação é verificada por teste de fonte (`tests/unit/paleta-unica.test.ts`).
+
+**Não existe par azul/verde semântico.** As duas famílias de identidade nunca são alternativas do mesmo campo — ver **R19**. Sem essa regra, a reconvergência cromática de 2026 teria reintroduzido pela porta dos fundos exatamente o semáforo que a proibição fundadora existe para impedir.
 
 **Não existe cor por profissional.** Os três nunca recebem cores identificadoras. Cor distingue, e distinguir por cor cria hierarquia inventada — o azul parece mais confiável, o laranja mais alternativo. Os três são papel e tinta, sempre.
 
@@ -324,6 +349,10 @@ Cada elemento significa uma coisa, sempre a mesma. **Nada existe por beleza.**
 
 **Cinco elementos banidos:** *badge numérico* (contagem vira placar), *barra de progresso* (a espera é dita em palavras), *acordeão de FAQ* (esconder o que importa é confessar que não importa), *tab* (paralelismo sugere equivalência de decisões que não são equivalentes), *tooltip com informação essencial* (o essencial nunca fica escondido atrás de hover).
 
+> **Emenda de 2026-08-01 — o banimento é das superfícies dela, não da plataforma.**
+> *Badge numérico* e *barra de progresso* permanecem proibidos nas superfícies da pessoa atendida, pelos motivos originais. Nos **fundos operacionais** (Administração, Curadoria, Atendimento, Concierge) são legítimos: a auditoria pós-consolidação já aceita a densidade operacional dessas 23 telas como fronteira deliberada, não como dívida. O que não muda é que **o Design System é um só** — mesmos tokens, mesma tipografia, mesma elevação, mesmos princípios de interação. Muda a expressão, nunca a identidade.
+> A barra de progresso tem ainda a distinção da **R16'**: progresso de *jornada* não é espera de *sistema*.
+
 ---
 
 # 13 · Sistema de coerência
@@ -335,6 +364,12 @@ Ninguém vai destruir este sistema de propósito. Ele será erodido por **decis�
 ## 13.2 Os três níveis de proteção
 
 **Nível 1 — Nomes que resistem ao uso errado.** Tokens nomeados por material e por ambiente, nunca por função. `papel`, `tinta`, `sage`, `argila` — não `bg-primary`, `text-default`, `success`, `danger`. **Um token chamado `success` será usado como sucesso**, e sucesso puxa erro, e erro puxa vermelho. Não existindo o nome, não existe o gesto.
+
+> **Divergência arquitetural registrada (2026-08-01).** A implementação **não** cumpre a R18 na letra: a camada semântica pública do código nomeia por papel (`--color-brand-primary`, `--color-ink`, `--color-border`), convenção anterior a este documento e usada em ~505 lugares. Renomeá-la seria refatoração ampla sem nenhum ganho perceptivo, e a diretriz de arquitetura vigente é não criar convenção nova.
+>
+> O que a R18 **de fato protege** — impedir que exista um vocabulário de semáforo — é honrado pela **ausência declarada**: o sistema não oferece, e um teste de fonte impede que passe a oferecer, qualquer escala ou família `success`/`danger`/`error`. Os três tokens operacionais herdados permanecem sem escala e restritos aos fundos. A condição humana tem nome próprio (`attention`/argila) justamente para que ninguém precise alcançar `warning` numa superfície da pessoa atendida.
+>
+> Esta divergência está registrada em vez de oculta, por decisão explícita. Revisitar quando houver motivo independente para tocar a camada semântica.
 
 **Nível 2 — Ausências que se notam.** O sistema não oferece: cor de erro nas superfícies dela, escala cromática, ícone de estado, barra de progresso, badge numérico. Quem precisar de um deles vai ter que **criar**, e criar é visível em revisão. A proteção mais forte de um design system não é o que ele padroniza — é o que ele **não fornece**.
 
@@ -377,9 +412,11 @@ A sétima é a mais útil no dia a dia — e a que mais dói.
 **R13.** Nenhuma pessoa atendida é fotografada. Nenhum banco de imagens.
 **R14.** Palavra antes de símbolo. Ícone nunca é estado.
 **R15.** Nada existe por beleza. Todo elemento tem significado fixo.
-**R16.** Espera é dita em palavras. Nunca barra, nunca spinner.
+**R16'.** A **espera do sistema** é dita em palavras — nunca barra, nunca spinner. O **progresso da jornada** (onde ela está no caminho) pode ter forma visual contínua e sem número. *(Emenda de 2026-08-01: a distinção descreve o que a Recepção já fazia — "progresso sem número", classificado 🟢 na auditoria —, não autoriza nada novo.)*
 **R17.** O essencial nunca fica atrás de hover, tab ou acordeão.
 **R18.** Tokens nomeados por material e ambiente. Nunca por função.
+**R19.** Azul e verde nunca são alternativas do mesmo campo. O azul diz o que a Aliviar comunica; o verde diz o que avançou no tempo. Eixos diferentes, nunca dois valores do mesmo eixo.
+**R20 — Continuidade Visual da Jornada.** A pessoa percebe a mudança de contexto pela **atmosfera cromática**, nunca por uma ruptura de identidade. Todo ambiente é imediatamente reconhecível como Aliviar: mesma linguagem visual, mesmos componentes, mesmos princípios de interação, mesma identidade de marca. A mudança transmite continuidade da jornada, jamais sensação de troca de produto.
 
 ---
 

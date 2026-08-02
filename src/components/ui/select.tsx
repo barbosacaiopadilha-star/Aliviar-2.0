@@ -10,7 +10,7 @@ export function Select({ className, error, children, ...props }: SelectProps) {
   return (
     <select
       className={cn(
-        "block min-h-11 w-full rounded-sm border bg-surface px-3 py-2.5 text-sm text-ink shadow-sm transition-colors duration-fast ease-standard focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/20 disabled:cursor-not-allowed disabled:opacity-60",
+        "block min-h-11 w-full rounded-sm border bg-surface px-3 py-2.5 text-sm text-ink transition-colors duration-fast ease-standard focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-focus-ring)_20%,transparent)] disabled:cursor-not-allowed disabled:opacity-60",
         error ? "border-error" : "border-border",
         className,
       )}

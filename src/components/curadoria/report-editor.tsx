@@ -296,7 +296,7 @@ export function ReportEditor({
                   "focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-surface",
                   "transition-colors duration-fast ease-standard disabled:cursor-not-allowed disabled:opacity-70",
                   campo.required && !option[campo.field].trim()
-                    ? "border-brand-gold/50"
+                    ? "border-[color-mix(in_srgb,var(--color-brand-gold)_50%,transparent)]"
                     : "border-border",
                 )}
               />
@@ -323,13 +323,13 @@ export function ReportEditor({
             "w-full rounded-sm border bg-surface px-3 py-2 text-sm leading-relaxed text-ink",
             "focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-surface",
             "transition-colors duration-fast ease-standard disabled:cursor-not-allowed disabled:opacity-70",
-            composition.trim() ? "border-border" : "border-brand-gold/50",
+            composition.trim() ? "border-border" : "border-[color-mix(in_srgb,var(--color-brand-gold)_50%,transparent)]",
           )}
         />
       </Card>
 
       {/* SALVAR · EMITIR · ENTREGAR — três atos distintos, nunca um só botão. */}
-      <Card className={cn("space-y-4", faltando.length === 0 && !entregue && "border-brand-sage/50")}>
+      <Card className={cn("space-y-4", faltando.length === 0 && !entregue && "border-[color-mix(in_srgb,var(--color-brand-sage)_50%,transparent)]")}>
         <CardHeader>
           <CardTitle>
             {entregue

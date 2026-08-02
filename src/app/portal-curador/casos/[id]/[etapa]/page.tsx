@@ -18,6 +18,7 @@ import { conduct } from "@/modules/curadoria/cos/conduction";
 import { buildMemory } from "@/modules/curadoria/cos/memory";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRole } from "@/modules/auth/guard";
+import { getSourceStoryText } from "@/modules/cases/repository";
 import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { getReportLifecycle } from "@/modules/curadoria/relatorio-assistido";
 import {
@@ -74,6 +75,9 @@ export default async function EtapaPage({ params }: { params: Promise<{ id: stri
 
   const state = conduct(record);
   const journey = buildCuratorJourney(record, state);
+  // A história enviada pela paciente — só é buscada onde é lida (Acolher).
+  const historiaDaPaciente =
+    stepId === "ACOLHER" ? await getSourceStoryText(supabase, record.caseId) : null;
   const step = journey.steps.find((entry) => entry.id === stepId)!;
   const stepPhases = definition.phases;
 
@@ -137,11 +141,35 @@ export default async function EtapaPage({ params }: { params: Promise<{ id: stri
                 nextPhaseHref="#a-historia"
               />
 
-              <div id="a-historia" className="scroll-mt-6">
+              {/* ETAPA 8: a história que a paciente JÁ contou chega sozinha,
+                  como referência de leitura — o Curador nunca a redigita nem
+                  cria uma nova. O registro abaixo nasce pré-preenchido com as
+                  palavras dela quando ainda não há registro. */}
+              <div id="a-historia" className="scroll-mt-6 space-y-6">
+                {historiaDaPaciente?.historia ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>A história, nas palavras de {record.patientFirstName}</CardTitle>
+                      <CardDescription>
+                        Enviada por ela no próprio ritmo — leitura de referência, nunca um campo seu.
+                      </CardDescription>
+                    </CardHeader>
+                    {historiaDaPaciente.motivo ? (
+                      <p className="max-w-reading text-sm text-ink-muted">
+                        <span className="font-medium text-ink">Motivo da busca:</span>{" "}
+                        {historiaDaPaciente.motivo}
+                      </p>
+                    ) : null}
+                    <p className="mt-3 max-w-reading whitespace-pre-wrap text-sm leading-relaxed text-ink">
+                      {historiaDaPaciente.historia}
+                    </p>
+                  </Card>
+                ) : null}
+
                 <PhaseDeclarationWorkspace
                   phase="historia"
                   caseId={record.caseId}
-                  initialText={record.historia.narrative}
+                  initialText={record.historia.narrative || (historiaDaPaciente?.historia ?? "")}
                   understandingConfirmedAt={record.historia.understandingConfirmedAt}
                   nextPhaseHref="#registrar-o-caso"
                   nextPhaseLabel="Separar o que é fato clínico"
@@ -257,7 +285,7 @@ export default async function EtapaPage({ params }: { params: Promise<{ id: stri
           {/* Toda etapa termina entregando o Curador na próxima — ele nunca
               volta ao painel para descobrir o que fazer. */}
           {step.status === "CONCLUIDA" && nextStep ? (
-            <Card className="border-brand-sage/40">
+            <Card className="border-[color-mix(in_srgb,var(--color-brand-sage)_40%,transparent)]">
               <CardHeader>
                 <CardTitle>Próxima etapa: {nextStep.label}</CardTitle>
                 <CardDescription>{nextStep.completionSentence}</CardDescription>

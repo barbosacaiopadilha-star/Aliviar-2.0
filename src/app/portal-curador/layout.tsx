@@ -26,7 +26,12 @@ export default async function PortalCuradorLayout({ children }: Readonly<{ child
   await requireAnyRole(["curador_medico", "administrador"]);
 
   return (
-    <PortalShellContainer homeHref="/coa/curadoria" subtitle="Curadoria · COA" nav={NAV}>
+    <PortalShellContainer
+      homeHref="/coa/curadoria"
+      subtitle="Curadoria · COA"
+      nav={NAV}
+      variant="curadoria"
+    >
       {children}
     </PortalShellContainer>
   );

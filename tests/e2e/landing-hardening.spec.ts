@@ -51,13 +51,14 @@ test("CTA principal navega de fato para /sua-historia", async ({ page }) => {
   await expect(page).toHaveURL(/\/sua-historia/);
 });
 
-// A Biblioteca em formato de livro (FaqBookSection, navegação por setas)
-// deixou de ser montada na Landing: o redesenho editorial a substituiu por um
-// acordeão em "Dúvidas frequentes" (faq-compact.tsx). O componente antigo não
-// foi restaurado para satisfazer o teste — o que se preserva é a propriedade,
-// não a implementação: as dúvidas continuam alcançáveis e operáveis só pelo
-// teclado, num navegador real.
-test("Dúvidas frequentes abrem e fecham só pelo teclado num navegador real", async ({
+// Terceira encarnação desta superfície, e a propriedade evoluiu com o
+// cânone: o FaqBookSection (livro com setas) virou acordeão, e o acordeão
+// era um dos cinco elementos banidos pelo Sistema Visual §12 ("esconder o
+// que importa é confessar que não importa") — escondia justamente "Quanto
+// custa?". O redesenho 2.2 abriu tudo: a propriedade protegida agora é que
+// TODAS as dúvidas e TODAS as respostas estão visíveis sem nenhuma
+// interação, e nenhum mecanismo de esconder voltou.
+test("Dúvidas frequentes estão todas abertas — nada atrás de clique", async ({
   page,
 }) => {
   await page.goto("/");
@@ -65,22 +66,20 @@ test("Dúvidas frequentes abrem e fecham só pelo teclado num navegador real", a
   const duvidas = page.locator("#duvidas");
   await duvidas.scrollIntoViewIfNeeded();
 
-  const perguntas = duvidas.getByRole("button");
-  await expect(perguntas).toHaveCount(4);
+  // Nenhum acordeão: zero botões, zero aria-expanded.
+  await expect(duvidas.getByRole("button")).toHaveCount(0);
+  await expect(duvidas.locator("[aria-expanded]")).toHaveCount(0);
 
-  // A primeira já nasce aberta; a segunda é a que prova a interação.
-  const segunda = perguntas.nth(1);
-  await expect(segunda).toHaveAttribute("aria-expanded", "false");
-
-  await segunda.focus();
-  await expect(segunda).toBeFocused();
-  await segunda.press("Enter");
-
-  await expect(segunda).toHaveAttribute("aria-expanded", "true");
+  // As quatro perguntas e as quatro respostas, visíveis sem interação —
+  // incluindo a mais sensível.
+  await expect(duvidas.getByText("Quanto custa?", { exact: false })).toBeVisible();
   await expect(
     duvidas.getByText("O cuidado clínico é do médico", { exact: false }),
   ).toBeVisible();
-
-  await segunda.press("Enter");
-  await expect(segunda).toHaveAttribute("aria-expanded", "false");
+  await expect(
+    duvidas.getByText("Transparência total", { exact: false }),
+  ).toBeVisible();
+  await expect(
+    duvidas.getByText("seu Curador organiza", { exact: false }),
+  ).toBeVisible();
 });

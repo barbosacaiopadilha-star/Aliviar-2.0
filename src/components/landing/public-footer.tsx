@@ -53,13 +53,13 @@ export function PublicFooter() {
               className="h-20 w-20 lg:h-24 lg:w-24"
             />
           </Link>
-          <p className="max-w-reading text-sm text-[var(--landing-linen)]/70">
+          <p className="max-w-reading text-sm text-on-dark-muted">
             Curadoria médica independente — com você em cada etapa da decisão.
           </p>
         </div>
 
         <div>
-          <span className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--landing-linen)]/60">
+          <span className="text-xs font-medium uppercase tracking-[0.14em] text-on-dark-faint">
             Navegação
           </span>
           <ul className="mt-3 space-y-1">
@@ -74,7 +74,7 @@ export function PublicFooter() {
                     bloco de navegação com a mesma altura total de antes. */}
                 <Link
                   href={link.href}
-                  className="link-underline inline-block py-1 text-sm text-[var(--landing-linen)]/85 transition-colors duration-base ease-standard hover:text-[var(--landing-linen)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-brand-primary)]"
+                  className="link-underline inline-block py-1 text-sm text-on-dark-muted transition-colors duration-base ease-standard hover:text-[var(--landing-linen)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-brand-primary)]"
                 >
                   {link.label}
                 </Link>
@@ -84,8 +84,8 @@ export function PublicFooter() {
         </div>
       </SectionReveal>
 
-      <div className="border-t border-[var(--landing-linen)]/10">
-        <p className="mx-auto max-w-content px-4 py-4 text-xs text-[var(--landing-linen)]/60 lg:px-8">
+      <div className="border-t border-on-dark-line">
+        <p className="mx-auto max-w-content px-4 py-4 text-xs text-on-dark-faint lg:px-8">
           © {new Date().getFullYear()} Aliviar. Todos os direitos reservados.
         </p>
       </div>

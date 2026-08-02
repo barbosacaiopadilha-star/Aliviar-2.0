@@ -42,11 +42,11 @@ describe("O Perfil — o que importa, sem número (ADR-042)", () => {
 
   it("não esconde o que ela declarou como sem influência", () => {
     const view = buildPerfilView(
-      [{ subcriterionCode: "ACESSO_LOCALIZACAO", importance: "NAO_INFLUENCIA" }],
+      [{ subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", importance: "NAO_INFLUENCIA" }],
       true,
     );
     expect(view.prioridades[0]!.label).toBe("Não influencia este caso");
-    expect(view.prioridades[0]!.itens).toEqual(["Localização"]);
+    expect(view.prioridades[0]!.itens).toEqual(["Local de atendimento"]);
   });
 });
 

@@ -50,7 +50,7 @@ export function ConductionPanel({
   const primaryHref = phaseHref(caseId, state.nextStep.phase);
 
   return (
-    <Card className="space-y-6 border-brand-gold/40">
+    <Card className="space-y-6 border-[color-mix(in_srgb,var(--color-brand-gold)_40%,transparent)]">
       <CardHeader>
         <CardTitle>Onde você está</CardTitle>
         <CardDescription>
@@ -91,7 +91,7 @@ export function ConductionPanel({
       {actionableItems.length > 0 ? (
         <div>
           <h3 className="text-xs uppercase tracking-wide text-ink-muted">O que falta</h3>
-          <ul className="mt-1 divide-y divide-border/60 sm:space-y-0" role="list">
+          <ul className="mt-1 divide-y divide-[color-mix(in_srgb,var(--color-border)_60%,transparent)] sm:space-y-0" role="list">
             {actionableItems.map((item) => (
               <li key={item.id}>
                 <ActionLink
@@ -117,7 +117,7 @@ export function ConductionPanel({
       {passiveItems.length > 0 ? (
         <div>
           <h3 className="text-xs uppercase tracking-wide text-ink-muted">Pendências</h3>
-          <ul className="mt-1 divide-y divide-border/60 sm:space-y-0" role="list">
+          <ul className="mt-1 divide-y divide-[color-mix(in_srgb,var(--color-border)_60%,transparent)] sm:space-y-0" role="list">
             {passiveItems.map((item) => (
               <li key={item.id}>
                 <StaticPendingItem

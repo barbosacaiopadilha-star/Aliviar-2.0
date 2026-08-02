@@ -12,10 +12,10 @@ type StatusBannerProps = {
 };
 
 const variantStyles: Record<StatusBannerVariant, string> = {
-  success: "border-success/20 bg-success-surface text-success",
-  error: "border-error/20 bg-error-surface text-error",
+  success: "border-[color-mix(in_srgb,var(--color-success)_20%,transparent)] bg-success-surface text-success",
+  error: "border-[color-mix(in_srgb,var(--color-error)_20%,transparent)] bg-error-surface text-error",
   info: "border-border bg-canvas text-ink-muted",
-  warning: "border-warning/20 bg-warning-surface text-warning",
+  warning: "border-[color-mix(in_srgb,var(--color-warning)_20%,transparent)] bg-warning-surface text-warning",
 };
 
 const icons: Record<StatusBannerVariant, typeof Info> = {

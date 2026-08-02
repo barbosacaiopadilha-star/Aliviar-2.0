@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { erroDeBanco } from "@/lib/observability/erros";
+
 import {
   isApproachAttemptStatus,
   isApproachResponseKind,
@@ -209,7 +211,7 @@ export class SupabaseApproachRepository {
       .update({ read_at: at, read_by: actorId })
       .eq("id", notificationId)
       .is("read_at", null);
-    if (error) throw new Error("Não foi possível marcar a notificação como lida.");
+    if (error) throw erroDeBanco("Não foi possível marcar a notificação como lida.", error);
   }
 
   /** Arquivar tira da caixa. O trabalho pendente continua sendo derivado dos fatos. */
@@ -219,6 +221,6 @@ export class SupabaseApproachRepository {
       .update({ archived_at: at, archived_by: actorId })
       .eq("id", notificationId)
       .is("archived_at", null);
-    if (error) throw new Error("Não foi possível arquivar a notificação.");
+    if (error) throw erroDeBanco("Não foi possível arquivar a notificação.", error);
   }
 }

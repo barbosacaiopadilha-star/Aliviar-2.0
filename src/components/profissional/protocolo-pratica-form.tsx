@@ -38,11 +38,25 @@ import type { DraftResponse } from "@/modules/curadoria/protocolos-repository";
  * letras.
  */
 
+type SaveResult = { success: true } | { success: false; error: string };
+type SubmitResult =
+  | { success: true; registered: number }
+  | { success: false; error: string; rejected?: { subcriterionCode: string; errors: string[] }[] };
+
 type Props = {
   initialResponses: Record<string, DraftResponse>;
   lastSavedAt: string | null;
   /** Pendências abertas pela operação — o que precisa de resposta nova. */
   revisionRequests?: { conceptCodes: string[]; reason: string }[];
+  /**
+   * Ações injetáveis (ETAPA 5): o mesmo formulário serve o profissional (ações
+   * "own", padrão) e o cadastro administrativo (ações por profissionalProfileId).
+   * Uma única renderização do Catálogo 1.0.0 — nunca duas listas.
+   */
+  saveAction?: (input: { responses: Record<string, DraftResponse> }) => Promise<SaveResult>;
+  submitAction?: () => Promise<SubmitResult>;
+  /** Muda só a moldura de texto: autodeclaração vs registro pela equipe. */
+  mode?: "profissional" | "admin";
 };
 
 const PARTS = ["A", "B", "C", "D", "E"] as const;
@@ -51,7 +65,14 @@ function emptyResponse(): DraftResponse {
   return { options: [], details: {}, conditionNote: null, observation: null };
 }
 
-export function ProtocoloPraticaForm({ initialResponses, lastSavedAt, revisionRequests = [] }: Props) {
+export function ProtocoloPraticaForm({
+  initialResponses,
+  lastSavedAt,
+  revisionRequests = [],
+  saveAction = saveOwnProtocolDraftAction,
+  submitAction = submitOwnProtocolAction,
+  mode = "profissional",
+}: Props) {
   const [responses, setResponses] = useState<Record<string, DraftResponse>>(initialResponses);
   const [part, setPart] = useState<(typeof PARTS)[number]>("A");
   const [reviewing, setReviewing] = useState(false);
@@ -91,18 +112,20 @@ export function ProtocoloPraticaForm({ initialResponses, lastSavedAt, revisionRe
       const cleaned = Object.fromEntries(
         Object.entries(responses).filter(([, response]) => hasContent(response)),
       );
-      const result = await saveOwnProtocolDraftAction({ responses: cleaned });
+      const result = await saveAction({ responses: cleaned });
       setMessage(result.success ? "Rascunho salvo. Você pode retomar quando quiser." : result.error);
     });
   }
 
   function submit() {
     startTransition(async () => {
-      const result = await submitOwnProtocolAction();
+      const result = await submitAction();
       if (result.success) {
         setReviewing(false);
         setMessage(
-          `${result.registered} respostas registradas como autodeclaração — ainda não verificadas. A equipe da Aliviar pode entrar em contato para confirmar informações.`,
+          mode === "admin"
+            ? `${result.registered} respostas registradas pela equipe — ainda não verificadas.`
+            : `${result.registered} respostas registradas como autodeclaração — ainda não verificadas. A equipe da Aliviar pode entrar em contato para confirmar informações.`,
         );
       } else {
         setMessage(result.error);
@@ -152,6 +175,7 @@ export function ProtocoloPraticaForm({ initialResponses, lastSavedAt, revisionRe
           onBack={() => setReviewing(false)}
           onSubmit={submit}
           pending={pending}
+          mode={mode}
         />
       ) : (
         <>
@@ -286,11 +310,13 @@ function ReviewPanel({
   onBack,
   onSubmit,
   pending,
+  mode,
 }: {
   responses: Record<string, DraftResponse>;
   onBack: () => void;
   onSubmit: () => void;
   pending: boolean;
+  mode: "profissional" | "admin";
 }) {
   const answered = PROFESSIONAL_PROTOCOL.filter((question) => {
     const response = responses[question.concept.code];
@@ -319,7 +345,7 @@ function ReviewPanel({
       </p>
       <div className="flex gap-2">
         <Button type="button" onClick={onSubmit} disabled={pending || answered.length === 0}>
-          Submeter como autodeclaração
+          {mode === "admin" ? "Registrar pelo cadastro" : "Submeter como autodeclaração"}
         </Button>
         <Button type="button" variant="secondary" onClick={onBack} disabled={pending}>
           Voltar e ajustar

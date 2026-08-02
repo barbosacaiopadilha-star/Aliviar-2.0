@@ -42,7 +42,7 @@ export function ScrollActionLink({ description, scrollTargetId, className }: Scr
       className={cn(
         "group flex min-h-11 w-full items-start gap-3 rounded-md px-2 py-2.5 text-left",
         "transition-colors duration-fast ease-standard",
-        "hover:bg-brand-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+        "hover:bg-[color-mix(in_srgb,var(--color-brand-primary)_5%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
         className,
       )}
       aria-label={`Ir para: ${description}`}

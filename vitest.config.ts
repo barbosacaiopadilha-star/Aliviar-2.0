@@ -9,6 +9,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Mesmo stub das configs de integração/componentes: "server-only"
+      // resolve para erro fora do runtime do Next.js.
+      "server-only": path.resolve(__dirname, "./tests/integration/stubs/server-only-stub.js"),
     },
   },
 });

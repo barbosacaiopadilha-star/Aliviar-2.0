@@ -4,20 +4,140 @@
 
 @layer base {
   :root {
-    --color-brand-primary: #556b5d;
-    --color-brand-primary-deep: #4a5f52;
-    --color-brand-primary-hover: #647b6d;
-    --color-brand-sage: #556b5d;
-    --color-brand-sage-light: #8a9e92;
-    --color-brand-gold: #b79a5b;
-    --color-brand-gold-hover: #c6aa68;
-    --color-bg-canvas: #faf8f4;
-    --color-bg-canvas-warm: #f3eee7;
+    /* ======================================================================
+       CAMADA INTERNA — escalas cromáticas (`--scale-*`)
+       ======================================================================
+       Infraestrutura do Design System. NENHUM componente de produto lê estes
+       tokens diretamente: eles existem para consistência, theming e evolução.
+       O produto consome só a camada semântica (`--color-*`) declarada abaixo.
+
+       As âncoras não foram inventadas. `indigo-700/800` e `sage-300/500` são
+       os hexadecimais canônicos da marca, confirmados contra a logo oficial
+       (ADR-017). `sage-700/900` e os neutros quentes são os aprendizados reais
+       do período em que a implementação derivou para o verde — entram na
+       paleta em vez de serem descartados.
+       ---------------------------------------------------------------------- */
+
+    /* Índigo — confiança, orientação, comunicação. Fosco e dessaturado:
+       nunca ciano, nunca turquesa (DESIGN_SYSTEM §0 rejeita explicitamente
+       o tratamento da referência pública). */
+    --scale-indigo-50: #eef2f7;
+    --scale-indigo-100: #dde5ef;
+    --scale-indigo-200: #bcccde;
+    --scale-indigo-300: #93aecb;
+    --scale-indigo-400: #648bb2;
+    --scale-indigo-500: #3c6a96;
+    --scale-indigo-600: #21527d;
+    --scale-indigo-700: #123b67; /* ADR-017 — azul institucional */
+    --scale-indigo-800: #0e2f52; /* ADR-017 — profundo */
+    --scale-indigo-900: #0a2340;
+
+    /* Sage — cuidado, evolução, continuidade. O 500 é o sálvia da marca
+       (decorativo: 2,76:1, nunca texto); o 700 é o degrau em que o verde
+       passa a ser legível (5,43:1 sobre papel). */
+    --scale-sage-50: #f1f5f2;
+    --scale-sage-100: #e2eae4;
+    --scale-sage-200: #c6d6ca;
+    --scale-sage-300: #a8c0ae; /* ADR-017 — sage-light */
+    --scale-sage-400: #8ca795;
+    --scale-sage-500: #7f9e8c; /* ADR-017 — sálvia de marca */
+    --scale-sage-600: #67826f;
+    --scale-sage-700: #556b5d; /* aprendizado: o verde legível */
+    --scale-sage-800: #3d5147;
+    --scale-sage-900: #1a2e26; /* aprendizado: o verde-floresta */
+
+    /* Neutro — quente em toda a rampa. Um cinza frio leria como sistema;
+       a base da casa é papel, não tela. */
+    --scale-neutro-50: #faf8f4;
+    --scale-neutro-100: #f4f1eb;
+    --scale-neutro-200: #e9e5dc;
+    --scale-neutro-300: #d8d3c8;
+    --scale-neutro-400: #b5afa3;
+    --scale-neutro-500: #8d8779;
+    --scale-neutro-600: #6e6f6b;
+    --scale-neutro-700: #55585a;
+    --scale-neutro-800: #3a4045;
+    --scale-neutro-900: #232b31;
+
+    /* Acentos pontuais — deliberadamente SEM escala de 10 degraus. Uma escala
+       convidaria uso sistemático, que é o que a F2 §5.3 proíbe. */
+    --scale-argila: #955530; /* atenção humana — nunca "erro" */
+    --scale-argila-superficie: #f7eee7;
+    --scale-dourado: #b08d57; /* fio e selo — nunca preenchimento */
+    --scale-dourado-claro: #c6aa68;
+
+    /* ======================================================================
+       CAMADA SEMÂNTICA — o que o produto consome
+       ======================================================================
+       Nomes e papéis preservados exatamente como já eram: os ~505 usos
+       existentes de `bg-brand-primary`, `text-ink-muted` e afins continuam
+       válidos por construção. Só o VALOR por trás deles muda.
+       ---------------------------------------------------------------------- */
+
+    --color-brand-primary: var(--scale-indigo-700);
+    --color-brand-primary-deep: var(--scale-indigo-800);
+    --color-brand-primary-hover: var(--scale-indigo-600);
+    --color-brand-sage: var(--scale-sage-500);
+    --color-brand-sage-light: var(--scale-sage-300);
+    --color-brand-sage-deep: var(--scale-sage-700);
+    --color-brand-primary-darkest: var(--scale-indigo-900);
+    --color-brand-gold: var(--scale-dourado);
+    --color-brand-gold-hover: var(--scale-dourado-claro);
+
+    /* Retrato tipográfico — as três superfícies foscas do retrato sem foto.
+       Valores preservados exatamente como estavam: esta consolidação só tira
+       o hexadecimal de dentro do componente, sem mudar um pixel. Ver a
+       ressalva registrada sobre a F2 §5.3 ("não existe cor por
+       profissional") — decisão de método, não de paleta. */
+    --color-retrato-1: var(--scale-sage-900);
+    --color-retrato-2: #2c4033;
+    --color-retrato-3: #1f3329;
+
+    --color-bg-canvas: var(--scale-neutro-50);
+    --color-bg-canvas-warm: var(--scale-neutro-100);
     --color-bg-surface: #ffffff;
-    --color-ink: #2f3a3d;
-    --color-ink-muted: #66737a;
-    --color-border: rgba(183, 154, 91, 0.18);
-    --color-focus-ring: #556b5d;
+    /* Superfície diferenciada: antes cada arquivo improvisava a sua. */
+    --color-bg-recessed: var(--scale-neutro-100);
+
+    --color-ink: var(--scale-neutro-900);
+    --color-ink-muted: var(--scale-neutro-600);
+
+    /* O dourado sai da borda padrão de todo o produto e volta a ser acento
+       pontual, como `docs/BRAND_GUIDELINES.md` sempre mandou. */
+    --color-border: var(--scale-neutro-200);
+    --color-border-strong: var(--scale-neutro-300);
+    --color-focus-ring: var(--scale-indigo-700);
+
+    /* Condição humana — algo a conversar, jamais uma falha dela. O par
+       existe justamente para que ninguém precise alcançar `warning`
+       numa superfície da pessoa atendida. */
+    --color-attention: var(--scale-argila);
+    --color-attention-surface: var(--scale-argila-superficie);
+
+    /* Texto sobre superfície escura — o vocabulário que faltava.
+       A plataforma tem salas escuras (o rodapé institucional, a sala verde da
+       fachada, o cartão de ênfase da paciente) e não tinha nenhum token para
+       o que se escreve nelas. Cada componente resolvia sozinho, com
+       `text-[var(--landing-linen)]/70` — que o Tailwind não consegue compilar
+       (opacidade sobre `var()` arbitrário), então a declaração era descartada
+       em silêncio e o texto caía para o preto padrão do navegador. Preto
+       sobre navy é ~1,5:1: invisível.
+
+       Os degraus já vêm com a transparência embutida via `color-mix`, para
+       que ninguém precise do modificador que quebra.
+
+       Foram calibrados contra a MAIS CLARA das superfícies escuras da
+       plataforma, não contra a mais escura: 82% e 70% garantem AA mesmo sobre
+       a sala verde da fachada (6,04:1 e 4,91:1), e sobram com folga sobre o
+       navy (7,75:1 e 6,09:1). Calibrar pelo caso fácil é como um texto
+       secundário some. */
+    --color-on-dark: var(--scale-neutro-50);
+    --color-on-dark-muted: color-mix(in srgb, var(--scale-neutro-50) 82%, transparent);
+    --color-on-dark-faint: color-mix(in srgb, var(--scale-neutro-50) 70%, transparent);
+    --color-on-dark-line: color-mix(in srgb, var(--scale-neutro-50) 16%, transparent);
+
+    /* Estado operacional — mantidos como estavam, sem escala e sem ampliação
+       (F2 §13.2, Nível 2: a proteção é a ausência). Restritos aos fundos. */
     --color-success: #2f6b4f;
     --color-success-surface: #e7f0ea;
     --color-warning: #8a5a1f;
@@ -25,30 +145,56 @@
     --color-error: #8b2e2e;
     --color-error-surface: #f6e7e7;
 
+    /* ======================================================================
+       ATMOSFERA DO AMBIENTE — a narrativa cromática da jornada
+       ======================================================================
+       Estes três tokens são os ÚNICOS que cada ambiente redefine no seu
+       escopo. Tudo o mais herda daqui. É por isso que Paciente (azul) e
+       Curadoria (verde) usam exatamente os mesmos componentes, sem uma
+       linha de código por cômodo — R20, Continuidade Visual da Jornada.
+
+       O padrão de `:root` é o institucional (Administração): neutros com
+       azul. Quem não declarar atmosfera herda a da instituição.
+       ---------------------------------------------------------------------- */
+    --color-bg-ambient: var(--scale-neutro-100);
+    --color-ambient-accent: var(--scale-indigo-700);
+    --color-ambient-accent-soft: var(--scale-indigo-50);
+    --color-ambient-accent-deep: var(--scale-indigo-800);
+
     --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
     --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
+    /* Escala tipográfica em progressão suave e crescente (1,125 → 1,20).
+       Saltos irregulares criam drama; a Aliviar não tem drama (F2 §6.2).
+       Entrelinha 1,65 no corpo de leitura e ~1,5 no funcional — o respiro
+       é parte da legibilidade, não decoração. */
     --text-xs: 0.75rem;
-    --text-xs--line-height: 1rem;
+    --text-xs--line-height: 1.125rem;
     --text-sm: 0.875rem;
-    --text-sm--line-height: 1.25rem;
+    --text-sm--line-height: 1.3125rem;
     --text-base: 1rem;
-    --text-base--line-height: 1.625rem;
+    --text-base--line-height: 1.65rem;
     --text-lg: 1.125rem;
-    --text-lg--line-height: 1.875rem;
-    --text-xl: 1.25rem;
-    --text-xl--line-height: 1.875rem;
-    --text-2xl: 1.5rem;
-    --text-2xl--line-height: 2.125rem;
+    --text-lg--line-height: 1.85rem;
+    --text-xl: 1.3125rem;
+    --text-xl--line-height: 1.75rem;
+    --text-2xl: 1.5625rem;
+    --text-2xl--line-height: 2rem;
     --text-3xl: 1.875rem;
-    --text-3xl--line-height: 2.5rem;
+    --text-3xl--line-height: 2.375rem;
     --text-4xl: 2.25rem;
-    --text-4xl--line-height: 2.875rem;
+    --text-4xl--line-height: 2.75rem;
 
-    --radius-sm: 6px;
-    --radius-md: 10px;
+    /* Raios — um degrau único para toda a plataforma. Antes: 6/10/16 aqui e
+       12/16/20 na casa da paciente, o que fazia o mesmo cartão ter dois
+       formatos dependendo do cômodo. */
+    --radius-sm: 8px;
+    --radius-md: 12px;
     --radius-lg: 16px;
+    --radius-pill: 9999px;
 
+    /* Sombras — elevação suave, luz de janela, nunca estúdio. Três degraus:
+       mais que três deixa de ser hierarquia e vira ruído. */
     --shadow-sm: 0 1px 2px rgba(70, 55, 35, 0.04), 0 2px 8px rgba(70, 55, 35, 0.03);
     --shadow-md: 0 4px 16px rgba(70, 55, 35, 0.05);
     --shadow-lg: 0 12px 40px rgba(70, 55, 35, 0.06);
@@ -56,9 +202,15 @@
     --content-max-width: 72rem;
     --reading-max-width: 40rem;
 
-    --duration-fast: 280ms;
-    --duration-base: 480ms;
-    --duration-slow: 640ms;
+    /* Movimento — orçamento único. A travessia de ambiente é o dobro da
+       revelação por decisão de método: atravessar uma porta demora mais que
+       andar pela sala, e é essa diferença que faz o ambiente ser percebido
+       como ambiente (F2 §9). */
+    --duration-instant: 120ms;
+    --duration-fast: 240ms;
+    --duration-base: 360ms;
+    --duration-slow: 480ms;
+    --duration-travessia: var(--duration-slow);
     --ease-standard: cubic-bezier(0.25, 0.1, 0.25, 1);
 
     --z-dropdown: 20;
@@ -69,12 +221,97 @@
     --z-toast: 60;
   }
 
+  /* ========================================================================
+     A NARRATIVA CROMÁTICA DA JORNADA (R20)
+     ========================================================================
+     Os seis ambientes da Aliviar, num lugar só, para que a narrativa seja
+     legível de uma vez em vez de estar espalhada por quatro arquivos.
+
+     Cada ambiente redefine no máximo quatro tokens. Nada mais. É por isso que
+     o mesmo `<Button>` é azul na casa da paciente e verde na Curadoria sem
+     uma única linha de código por cômodo — e é por isso que nenhum cômodo
+     consegue derivar para uma identidade própria, que foi exatamente o que
+     aconteceu antes desta consolidação.
+
+     Os fundos azulados/esverdeados são sempre MISTURADOS com o papel quente:
+     azul puro leria como tela, e a Aliviar é uma casa.
+
+     O eixo do azul é o que a Aliviar comunica; o do verde é o que avançou no
+     tempo (R19). Os dois nunca respondem à mesma pergunta, então nunca viram
+     semáforo — mesmo aparecendo lado a lado.
+     ---------------------------------------------------------------------- */
+
+  /* Fachada — azul e verde em equilíbrio: é onde a instituição se apresenta
+     inteira, e nenhuma das duas famílias manda. */
+  .landing-editorial {
+    --color-bg-ambient: var(--scale-neutro-50);
+    --color-ambient-accent: var(--scale-indigo-700);
+    --color-ambient-accent-soft: var(--scale-indigo-50);
+    --color-ambient-accent-deep: var(--scale-indigo-800);
+  }
+
+  /* A casa da paciente — azul: é o cômodo em que a Aliviar orienta e
+     comunica. O verde aparece aqui só como evolução (`--patient-evolucao`). */
+  .patient-dashboard {
+    --color-bg-ambient: color-mix(in srgb, var(--scale-indigo-50) 65%, var(--scale-neutro-50));
+    --color-ambient-accent: var(--scale-indigo-700);
+    --color-ambient-accent-soft: var(--scale-indigo-50);
+    --color-ambient-accent-deep: var(--scale-indigo-800);
+  }
+
+  /* A Curadoria — verde: é onde o cuidado é efetivamente trabalhado. O
+     ambiente inteiro do Curador, não só a Mesa. */
+  .ambiente-curadoria {
+    --color-bg-ambient: color-mix(in srgb, var(--scale-sage-50) 70%, var(--scale-neutro-50));
+    --color-ambient-accent: var(--scale-sage-700);
+    --color-ambient-accent-soft: var(--scale-sage-50);
+    --color-ambient-accent-deep: var(--scale-sage-800);
+  }
+
+  /* A Sala da Decisão — equilíbrio exato. Aqui a atmosfera volta ao papel
+     neutro de propósito: nada deve inclinar a decisão, nem para a orientação
+     da Aliviar, nem para o caminho já percorrido. O ambiente com mais de 70%
+     de vazio (R10) é também o mais silencioso em cor. */
+  .ambiente-decisao {
+    --color-bg-ambient: var(--scale-neutro-50);
+    --color-ambient-accent: var(--scale-indigo-700);
+    --color-ambient-accent-soft: var(--scale-indigo-50);
+    --color-ambient-accent-deep: var(--scale-indigo-800);
+  }
+
+  /* A varanda do Concierge — azul: acompanhar é comunicar. O verde entra
+     como continuidade do cuidado, nunca como atmosfera. */
+  .ambiente-concierge {
+    --color-bg-ambient: color-mix(in srgb, var(--scale-indigo-50) 55%, var(--scale-neutro-50));
+    --color-ambient-accent: var(--scale-indigo-700);
+    --color-ambient-accent-soft: var(--scale-indigo-50);
+    --color-ambient-accent-deep: var(--scale-indigo-800);
+  }
+
+  /* A Administração herda o padrão de `:root` — neutros com azul. É a
+     instituição em estado puro, e é de propósito que ela não tenha atmosfera
+     própria: quem opera precisa de estrutura, não de clima. */
+
   html {
     @apply scroll-smooth;
   }
 
   body {
     @apply min-h-screen bg-canvas font-sans text-base text-ink antialiased;
+  }
+
+  /* Ícones — um tratamento só, em uma regra só.
+     `lucide-react` desenha com traço 2 por padrão, e o peso do ícone acabava
+     sendo o que cada componente lembrasse de pedir. O Sistema Visual pede
+     traço linear de ~1.5px ótico, sem preenchimento, sem cor própria.
+
+     Uma regra de CSS resolve isso para os 285 componentes de uma vez: a
+     folha de estilo vence o atributo de apresentação do SVG, então nenhum
+     arquivo precisa ser editado — e nenhum futuro `<Icon />` nasce com o
+     peso errado. Herdar `currentColor` é o padrão da biblioteca e é o que
+     mantém o ícone sem cor própria. */
+  .lucide {
+    stroke-width: 1.5;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -181,17 +418,22 @@
      morno e discreto da PortalExperience, estendido às telas de entrada
      (Login, Sua História) para que a passagem do filme para o produto não
      seja um corte seco. Puramente decorativo, atrás do conteúdo, nunca
-     interativo — gold no alto, sage embaixo, sobre o marfim do canvas. */
+     interativo.
+
+     A luz passa a carregar as duas famílias da identidade em vez do dourado:
+     o acento do ambiente no alto, o verde de continuidade embaixo, sobre o
+     marfim do canvas. Como o alto herda `--color-ambient-accent`, a mesma
+     luz acompanha o cômodo sem nenhuma regra a mais (R20). */
   .ambient-warmth {
     background:
       radial-gradient(
         55% 45% at 50% 22%,
-        color-mix(in srgb, var(--color-brand-gold) 12%, transparent) 0%,
+        color-mix(in srgb, var(--color-ambient-accent) 10%, transparent) 0%,
         transparent 70%
       ),
       radial-gradient(
         50% 50% at 82% 88%,
-        color-mix(in srgb, var(--color-brand-sage) 10%, transparent) 0%,
+        color-mix(in srgb, var(--color-brand-sage) 12%, transparent) 0%,
         transparent 72%
       );
   }

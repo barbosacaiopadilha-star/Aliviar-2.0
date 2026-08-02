@@ -20,7 +20,7 @@ export function Checkbox({ id, label, className, ...props }: CheckboxProps) {
       <input
         id={checkboxId}
         type="checkbox"
-        className="size-4 rounded-sm border-border text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+        className="size-4 rounded-sm border-border text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         {...props}
       />
       <span>{label}</span>

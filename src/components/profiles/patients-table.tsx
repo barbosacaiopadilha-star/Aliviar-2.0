@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback } from "react";
 
 import { usePaginatedFilter } from "@/components/admin/use-paginated-filter";
@@ -77,12 +76,19 @@ export function PatientsTable({ patients }: PatientsTableProps) {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Link
+                    {/* Âncora de documento, não <Link> — NAV-COMMIT-001
+                        (docs/BACKLOG_TECNICO.md): a navegação client-side
+                        daqui falhava de forma intermitente com o flight
+                        COMPLETO entregue (7,4 KB em ~170ms, instrumentado em
+                        2026-08-02) e o router sem commitar — URL parada 15s.
+                        Persistiu com prefetch desligado. O GET de documento
+                        fecha em ~300ms, sempre. */}
+                    <a
                       href={`/admin/pacientes/${patient.profileId}`}
                       className="font-medium text-brand-primary hover:text-brand-primary-deep"
                     >
                       Gerenciar
-                    </Link>
+                    </a>
                   </TableCell>
                 </TableRow>
               ))}

@@ -23,6 +23,7 @@ export default function HistoriaPage() {
     >
       <FormField
         label="Sua resposta"
+        hideLabel
         htmlFor="historia"
         hint="Fique à vontade para escrever quanto quiser."
       >

@@ -1,5 +1,6 @@
 "use server";
 
+import { falhaParaUsuario } from "@/lib/observability/erros";
 import { revalidatePath } from "next/cache";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -19,8 +20,8 @@ export async function markPatientNotificationReadAction(notificationId: string):
 
   try {
     await markPatientNotificationRead(supabase, notificationId);
-  } catch {
-    return { success: false, error: "Não foi possível atualizar a notificação agora." };
+  } catch (erro) {
+    return { success: false, error: falhaParaUsuario("profiles.patient-notification-actions", erro, { mensagem: "Não foi possível atualizar a notificação agora." }) };
   }
 
   revalidatePath("/paciente");

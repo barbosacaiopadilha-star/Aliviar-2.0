@@ -37,7 +37,7 @@ export function EvidenceCard({
   return (
     <blockquote
       className={cn(
-        "border-l-2 border-brand-gold/60 pl-3 text-sm italic leading-relaxed text-ink-muted",
+        "border-l-2 border-[color-mix(in_srgb,var(--color-brand-gold)_60%,transparent)] pl-3 text-sm italic leading-relaxed text-ink-muted",
         className,
       )}
     >

@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { erroDeBanco } from "@/lib/observability/erros";
+
 import { isValidCaseTransition } from "./state-machine";
 import type {
   CaseDetail,
@@ -79,7 +81,7 @@ export async function listCases(supabase: SupabaseClient): Promise<CaseSummary[]
     .order("updated_at", { ascending: false });
 
   if (error) {
-    throw new Error("Não foi possível carregar os casos.");
+    throw erroDeBanco("Não foi possível carregar os casos.", error);
   }
 
   const rows = data as CaseRow[];
@@ -120,7 +122,7 @@ export async function getCase(supabase: SupabaseClient, caseId: string): Promise
   const { data, error } = await supabase.from("cases").select(CASE_COLUMNS).eq("id", caseId).maybeSingle();
 
   if (error) {
-    throw new Error("Não foi possível carregar o caso.");
+    throw erroDeBanco("Não foi possível carregar o caso.", error);
   }
 
   if (!data) return null;
@@ -132,6 +134,33 @@ export async function getCase(supabase: SupabaseClient, caseId: string): Promise
   );
 
   return mapDetail(row, names);
+}
+
+/**
+ * A história que originou o Caso, nas palavras do paciente (ETAPA 8).
+ * Leitura de referência para o Acolhimento — o Curador nunca redigita a
+ * história; ele a lê e consolida apenas o Caso Clínico.
+ */
+export async function getSourceStoryText(
+  supabase: SupabaseClient,
+  caseId: string,
+): Promise<{ historia: string | null; motivo: string | null } | null> {
+  const { data: caso } = await supabase
+    .from("cases")
+    .select("source_story_id")
+    .eq("id", caseId)
+    .maybeSingle();
+  if (!caso?.source_story_id) return null;
+
+  const { data: story } = await supabase
+    .from("patient_stories")
+    .select("data")
+    .eq("id", caso.source_story_id as string)
+    .maybeSingle();
+  if (!story) return null;
+
+  const dados = (story.data ?? {}) as { historia?: string; motivo?: string };
+  return { historia: dados.historia ?? null, motivo: dados.motivo ?? null };
 }
 
 export async function createCase(
@@ -177,7 +206,7 @@ export async function createCase(
     .single();
 
   if (error || !created) {
-    throw new Error("Não foi possível criar o caso agora.");
+    throw erroDeBanco("Não foi possível criar o caso agora.", error);
   }
 
   const row = created as CaseRow;
@@ -223,7 +252,7 @@ export async function reassignCurator(
   const { error } = await supabase.from("cases").update({ assigned_curator_id: newCuratorId }).eq("id", caseId);
 
   if (error) {
-    throw new Error("Não foi possível reatribuir o caso agora.");
+    throw erroDeBanco("Não foi possível reatribuir o caso agora.", error);
   }
 
   await supabase.from("case_events").insert({
@@ -261,7 +290,7 @@ export async function changeCaseStatus(
   const { error } = await supabase.from("cases").update({ status: nextStatus }).eq("id", caseId);
 
   if (error) {
-    throw new Error("Não foi possível mudar o status agora.");
+    throw erroDeBanco("Não foi possível mudar o status agora.", error);
   }
 
   await supabase.from("case_events").insert({
@@ -289,7 +318,7 @@ export async function addCaseNote(
     .single();
 
   if (error || !data) {
-    throw new Error("Não foi possível salvar a nota agora.");
+    throw erroDeBanco("Não foi possível salvar a nota agora.", error);
   }
 
   const names = await namesByProfileIds(supabase, [authorId]);
@@ -320,7 +349,7 @@ export async function listCaseNotes(supabase: SupabaseClient, caseId: string): P
     .order("created_at", { ascending: false });
 
   if (error) {
-    throw new Error("Não foi possível carregar as notas do caso.");
+    throw erroDeBanco("Não foi possível carregar as notas do caso.", error);
   }
 
   const rows = data as CaseNoteRow[];
@@ -355,7 +384,7 @@ export async function listCaseEvents(supabase: SupabaseClient, caseId: string): 
     .order("created_at", { ascending: false });
 
   if (error) {
-    throw new Error("Não foi possível carregar o histórico do caso.");
+    throw erroDeBanco("Não foi possível carregar o histórico do caso.", error);
   }
 
   const rows = data as CaseEventRow[];

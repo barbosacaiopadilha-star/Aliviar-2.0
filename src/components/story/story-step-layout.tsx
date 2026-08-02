@@ -23,6 +23,13 @@ type StoryStepLayoutProps = {
   /** Conteúdo leve abaixo da pergunta (ex.: indicador de autosave) — nunca
    *  parte da navegação em si. */
   footerSlot?: ReactNode;
+  /**
+   * Marca a ação como um momento-porta da jornada (entrar, entregar) e
+   * aplica a soleira dourada — o mesmo gesto da Landing, nunca um novo.
+   * Só a capa e a revisão a usam; "Continuar" entre perguntas é passo,
+   * não porta (validação 2.4, mudança H).
+   */
+  nextIsPorta?: boolean;
 };
 
 export function StoryStepLayout({
@@ -37,6 +44,7 @@ export function StoryStepLayout({
   nextDisabled = false,
   actionSlot,
   footerSlot,
+  nextIsPorta = false,
 }: StoryStepLayoutProps) {
   const router = useRouter();
   const hasFooter = Boolean(backHref || nextHref || actionSlot);
@@ -60,7 +68,7 @@ export function StoryStepLayout({
                   mark === step
                     ? "w-8 bg-brand-gold"
                     : mark < step
-                      ? "w-3 bg-brand-gold/40"
+                      ? "w-3 bg-[color-mix(in_srgb,var(--color-brand-gold)_40%,transparent)]"
                       : "w-3 bg-border",
                 )}
               />
@@ -79,7 +87,10 @@ export function StoryStepLayout({
           ) : null}
         </SectionReveal>
 
-        <div className="mt-10">{children}</div>
+        {/* A pergunta é fala; o campo é resposta. Entre os dois, ar — sem o
+            respiro, pergunta + rótulo + campo agrupam como bloco de
+            formulário (validação 2.4, mudança F). */}
+        <div className="mt-12 lg:mt-14">{children}</div>
 
         {footerSlot ? <div className="mt-6">{footerSlot}</div> : null}
 
@@ -102,7 +113,7 @@ export function StoryStepLayout({
                   type="button"
                   onClick={() => router.push(nextHref)}
                   disabled={nextDisabled}
-                  className="sm:w-auto"
+                  className={cn("sm:w-auto", nextIsPorta && "landing-porta")}
                 >
                   {nextLabel}
                 </Button>

@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { erroDeBanco } from "@/lib/observability/erros";
+
 import {
   DEFAULT_COMMUNICATION_PREFERENCES,
   type CommunicationPreferences,
@@ -43,7 +45,7 @@ export async function getPatientProfile(
     .maybeSingle();
 
   if (error) {
-    throw new Error("Não foi possível carregar o perfil do paciente.");
+    throw erroDeBanco("Não foi possível carregar o perfil do paciente.", error);
   }
 
   return data ? mapRow(data as PatientProfileRow) : null;
@@ -78,7 +80,7 @@ export async function upsertPatientProfile(
     .single();
 
   if (error) {
-    throw new Error("Não foi possível salvar o perfil do paciente.");
+    throw erroDeBanco("Não foi possível salvar o perfil do paciente.", error);
   }
 
   return mapRow(data as PatientProfileRow);
@@ -119,6 +121,6 @@ export async function updateCommunicationPreferences(
     .eq("profile_id", profileId);
 
   if (error) {
-    throw new Error("Não foi possível salvar as preferências de comunicação.");
+    throw erroDeBanco("Não foi possível salvar as preferências de comunicação.", error);
   }
 }

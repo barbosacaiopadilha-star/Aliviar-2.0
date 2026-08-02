@@ -25,7 +25,14 @@ type PortalShellProps = {
   subtitle: string;
   nav?: PortalNavItem[];
   userMenu?: React.ReactNode;
-  variant?: "default" | "patient";
+  /**
+   * Qual cômodo da casa este portal está mostrando. A variante NÃO muda
+   * comportamento, layout nem navegação — troca só a atmosfera cromática
+   * (R20): `curadoria` é verde, porque é onde o cuidado é trabalhado;
+   * `concierge` é azul, porque acompanhar é comunicar. `default` herda a
+   * atmosfera da instituição (neutros com azul).
+   */
+  variant?: "default" | "patient" | "curadoria" | "concierge";
   children: React.ReactNode;
 };
 
@@ -39,15 +46,24 @@ export function PortalShell({
 }: PortalShellProps) {
   const pathname = usePathname();
   const isPatient = variant === "patient";
+  // Uma classe, nenhuma lógica de cor: quem decide o que é verde e o que é
+  // azul é `globals.css`, num bloco só. Este componente não conhece cor
+  // nenhuma — é o que impede um cômodo de derivar para identidade própria.
+  const ambienteClass =
+    variant === "curadoria"
+      ? "ambiente-curadoria bg-ambient"
+      : variant === "concierge"
+        ? "ambiente-concierge bg-ambient"
+        : "bg-canvas";
 
   return (
-    <div className={cn("min-h-screen", isPatient ? "patient-dashboard" : "bg-canvas")}>
+    <div className={cn("min-h-screen", isPatient ? "patient-dashboard" : ambienteClass)}>
       {isPatient ? <PatientAmbientLayer /> : null}
       <header
         className={cn(
           "border-b",
           isPatient
-            ? "relative z-10 border-[var(--color-border)]/60 bg-[var(--patient-linen)]/75"
+            ? "relative z-10 border-[color-mix(in_srgb,var(--color-border)_60%,transparent)] bg-[color-mix(in_srgb,var(--patient-linen)_75%,transparent)]"
             : "border-border bg-surface",
         )}
       >
@@ -59,7 +75,7 @@ export function PortalShell({
             <p
               className={cn(
                 "font-serif text-lg leading-none",
-                isPatient ? "text-[var(--patient-forest)]" : "text-brand-primary",
+                isPatient ? "text-[var(--patient-acento)]" : "text-brand-primary",
               )}
             >
               Aliviar
@@ -83,7 +99,7 @@ export function PortalShell({
                       className={cn(
                         "inline-flex min-h-11 items-center rounded-full px-4 text-sm transition-colors duration-300 ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-inset",
                         active
-                          ? "bg-[var(--patient-forest)] font-medium text-[var(--patient-linen)]"
+                          ? "bg-accent-soft font-medium text-accent"
                           : "text-[var(--color-ink-muted)] hover:text-[var(--patient-ink)]",
                       )}
                     >

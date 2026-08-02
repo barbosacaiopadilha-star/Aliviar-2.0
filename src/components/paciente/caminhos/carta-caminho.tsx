@@ -85,7 +85,7 @@ export function CartaCaminho({
           onClick={aberta ? onFechar : onAbrir}
           aria-expanded={aberta}
           aria-controls={`carta-${option.id}-detalhe`}
-          className="inline-flex min-h-11 items-center rounded-full bg-[var(--patient-forest)] px-5 text-sm font-medium text-[var(--patient-linen)] shadow-md shadow-emerald-950/10 transition-all duration-300 ease-standard hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+          className="inline-flex min-h-11 items-center rounded-full bg-[var(--patient-acento)] px-5 text-sm font-medium text-[var(--patient-linen)] shadow-md transition-all duration-300 ease-standard hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
         >
           {aberta ? "Recolher" : "Conhecer este caminho"}
         </button>
@@ -95,7 +95,7 @@ export function CartaCaminho({
             type="checkbox"
             checked={selecionadaParaComparar}
             onChange={onAlternarComparacao}
-            className="size-4 accent-[var(--patient-forest)]"
+            className="size-4 accent-[var(--patient-acento)]"
           />
           Comparar
         </label>

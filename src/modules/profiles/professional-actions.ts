@@ -3,11 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { falhaParaUsuario } from "@/lib/observability/erros";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRoleForAction } from "@/modules/auth/guard";
 
-import { professionalProfileSchema } from "./professional-schema";
+import { professionalProfileSchema, professionalRegistrationStatusSchema } from "./professional-schema";
 import {
+  setRegistrationVerification,
+  upsertPracticeArea,
   createProfessionalProfile,
   replaceCompetencyDomains,
   setProfessionalPublicationStatus,
@@ -15,6 +18,154 @@ import {
   updateProfessionalProfile,
 } from "./professional-repository";
 import type { ActionResult, ProfileStatus, PublicationStatus } from "./types";
+
+// ---------------------------------------------------------------------------
+// Porta de publicação (ETAPA 6): as três actions que a tornam satisfazível —
+// verificação do registro, área de atuação e a publicação com resultado
+// legível (nunca mais error boundary genérico para uma condição de negócio).
+// ---------------------------------------------------------------------------
+
+export async function verifyRegistrationAction(
+  id: string,
+  _prevState: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  let authState;
+  try {
+    authState = await requireRoleForAction("administrador");
+  } catch {
+    return { success: false, error: "Não autorizado." };
+  }
+
+  const status = professionalRegistrationStatusSchema.safeParse(formData.get("registrationStatus"));
+  const source = String(formData.get("registrationSource") ?? "").trim();
+  if (!status.success) {
+    return { success: false, error: "Escolha a situação do registro: regular, irregular ou não localizado." };
+  }
+  if (!source) {
+    return { success: false, error: "Informe a fonte da verificação — status sem proveniência não é registrável." };
+  }
+
+  const supabase = await createServerSupabaseClient();
+  try {
+    await setRegistrationVerification(supabase, id, {
+      status: status.data,
+      source,
+      adminId: authState.user.id,
+    });
+  } catch (erro) {
+    return {
+      success: false,
+      error: falhaParaUsuario("profiles.verificarRegistro", erro, {
+        mensagem: "Não foi possível registrar a verificação do registro.",
+        contexto: { profissionalId: id },
+      }),
+    };
+  }
+
+  revalidatePath(`/admin/profissionais/${id}`);
+  return { success: true };
+}
+
+export async function savePracticeAreaAction(
+  id: string,
+  _prevState: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  let authState;
+  try {
+    authState = await requireRoleForAction("administrador");
+  } catch {
+    return { success: false, error: "Não autorizado." };
+  }
+
+  const rawText = String(formData.get("practiceAreaText") ?? "").trim();
+  const tags = String(formData.get("practiceAreaTags") ?? "")
+    .split(",")
+    .map((tag) => tag.trim().toLowerCase().replace(/\s+/g, "_"))
+    .filter(Boolean);
+  const source = String(formData.get("practiceAreaSource") ?? "").trim() || null;
+  const verify = formData.get("practiceAreaVerify") === "on";
+
+  if (!rawText) {
+    return { success: false, error: "Descreva a área de atuação — o texto original é sempre preservado." };
+  }
+  if (verify && !source) {
+    return {
+      success: false,
+      error: "Verificar exige a fonte (site institucional, entrevista, documento) — verificação sem proveniência não existe.",
+    };
+  }
+
+  const supabase = await createServerSupabaseClient();
+  try {
+    await upsertPracticeArea(supabase, id, {
+      rawText,
+      tags,
+      source,
+      verify,
+      adminId: authState.user.id,
+    });
+  } catch (erro) {
+    return {
+      success: false,
+      error: falhaParaUsuario("profiles.areaDeAtuacao", erro, {
+        mensagem: "Não foi possível salvar a área de atuação.",
+        contexto: { profissionalId: id },
+      }),
+    };
+  }
+
+  revalidatePath(`/admin/profissionais/${id}`);
+  return { success: true };
+}
+
+/**
+ * Publicação com resultado legível: quando a porta do banco recusa, a frase
+ * da recusa (que o trigger já escreve em português) chega à tela com
+ * referência — nunca um error boundary genérico.
+ */
+export async function publishProfessionalAction(
+  id: string,
+  publicationStatus: PublicationStatus,
+  _prevState: ActionResult | undefined,
+  _formData: FormData,
+): Promise<ActionResult> {
+  let authState;
+  try {
+    authState = await requireRoleForAction("administrador");
+  } catch {
+    return { success: false, error: "Não autorizado." };
+  }
+
+  const supabase = await createServerSupabaseClient();
+  try {
+    await setProfessionalPublicationStatus(supabase, id, publicationStatus, authState.user.id);
+  } catch (erro) {
+    // A frase do trigger do banco é a explicação certa (ex.: "Publicacao
+    // exige area de atuacao verificada.") — preserva-se; a referência liga ao log.
+    const causa = erro instanceof Error && erro.cause ? erro.cause : erro;
+    const fraseDoBanco =
+      typeof causa === "object" && causa !== null && "message" in causa
+        ? String((causa as { message: unknown }).message)
+        : null;
+    const mensagem =
+      fraseDoBanco && /publica|demonstra|divergencia/i.test(fraseDoBanco)
+        ? fraseDoBanco
+        : "Não foi possível atualizar a publicação do profissional.";
+    return {
+      success: false,
+      error: falhaParaUsuario("profiles.publicarProfissional", erro, {
+        mensagem,
+        contexto: { profissionalId: id, publicationStatus },
+      }),
+    };
+  }
+
+  revalidatePath(`/admin/profissionais/${id}`);
+  revalidatePath("/admin/profissionais");
+  return { success: true };
+}
 
 function parseProfessionalForm(formData: FormData) {
   return professionalProfileSchema.safeParse({
@@ -68,13 +219,20 @@ export async function createProfessionalProfileAction(
       competencyDomains: parsed.data.competencyDomains,
       createdBy: authState.user.id,
     });
-  } catch {
-    return { success: false, error: "Não foi possível criar o profissional agora. Tente novamente." };
-  }
 
-  // Áreas de competência vivem em tabela própria — gravadas depois do perfil
-  // existir, porque referenciam o id dele.
-  await replaceCompetencyDomains(supabase, created.id, parsed.data.competencyDomains);
+    // Áreas de competência vivem em tabela própria — gravadas depois do perfil
+    // existir, porque referenciam o id dele. Dentro do try: uma falha aqui era
+    // exceção NÃO tratada, e a criação parecia simplesmente "não avançar".
+    await replaceCompetencyDomains(supabase, created.id, parsed.data.competencyDomains);
+  } catch (erro) {
+    return {
+      success: false,
+      error: falhaParaUsuario("profiles.criarProfissional", erro, {
+        mensagem: "Não foi possível criar o profissional.",
+        contexto: { identificador: parsed.data.professionalIdentifier },
+      }),
+    };
+  }
 
   revalidatePath("/admin/profissionais");
   redirect(`/admin/profissionais/${created.id}`);
@@ -113,11 +271,17 @@ export async function updateProfessionalProfileAction(
       competencyDomains: parsed.data.competencyDomains,
       updatedBy: authState.user.id,
     });
-  } catch {
-    return { success: false, error: "Não foi possível atualizar o profissional agora. Tente novamente." };
-  }
 
-  await replaceCompetencyDomains(supabase, id, parsed.data.competencyDomains);
+    await replaceCompetencyDomains(supabase, id, parsed.data.competencyDomains);
+  } catch (erro) {
+    return {
+      success: false,
+      error: falhaParaUsuario("profiles.atualizarProfissional", erro, {
+        mensagem: "Não foi possível atualizar o profissional.",
+        contexto: { profissionalId: id },
+      }),
+    };
+  }
 
   revalidatePath(`/admin/profissionais/${id}`);
   revalidatePath("/admin/profissionais");
@@ -135,7 +299,18 @@ export async function setProfessionalStatusAction(
 ): Promise<void> {
   const authState = await requireRoleForAction("administrador");
   const supabase = await createServerSupabaseClient();
-  await setProfessionalStatus(supabase, id, status, authState.user.id);
+  try {
+    await setProfessionalStatus(supabase, id, status, authState.user.id);
+  } catch (erro) {
+    // Propaga para o error.tsx do segmento, mas nunca sem deixar rastro.
+    throw new Error(
+      falhaParaUsuario("profiles.statusProfissional", erro, {
+        mensagem: "Não foi possível atualizar o status do profissional.",
+        contexto: { profissionalId: id, status },
+      }),
+      { cause: erro },
+    );
+  }
   revalidatePath(`/admin/profissionais/${id}`);
   revalidatePath("/admin/profissionais");
 }
@@ -148,7 +323,17 @@ export async function setProfessionalPublicationStatusAction(
 ): Promise<void> {
   const authState = await requireRoleForAction("administrador");
   const supabase = await createServerSupabaseClient();
-  await setProfessionalPublicationStatus(supabase, id, publicationStatus, authState.user.id);
+  try {
+    await setProfessionalPublicationStatus(supabase, id, publicationStatus, authState.user.id);
+  } catch (erro) {
+    throw new Error(
+      falhaParaUsuario("profiles.publicacaoProfissional", erro, {
+        mensagem: "Não foi possível atualizar a publicação do profissional.",
+        contexto: { profissionalId: id, publicationStatus },
+      }),
+      { cause: erro },
+    );
+  }
   revalidatePath(`/admin/profissionais/${id}`);
   revalidatePath("/admin/profissionais");
 }

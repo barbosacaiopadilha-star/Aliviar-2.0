@@ -16,8 +16,12 @@ const paddingClasses = {
 export function Card({ children, className, padding = "md", ...props }: CardProps) {
   return (
     <div
+      // Sem sombra em repouso: profundidade significa exclusivamente
+      // transitoriedade (R9). O cartão se separa do fundo por VALOR — papel
+      // sobre superfície recuada — e não por elevação. Só o que é passageiro
+      // (menu, gaveta, diálogo) se eleva.
       className={cn(
-        "rounded-md border border-border bg-surface shadow-sm",
+        "rounded-md border border-border bg-surface",
         paddingClasses[padding],
         className,
       )}

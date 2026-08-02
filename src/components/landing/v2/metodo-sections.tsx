@@ -108,7 +108,7 @@ export function MetodoSection() {
             <SectionReveal
               key={role.who}
               delayMs={index * 80}
-              className="rounded-md border-t-2 border-brand-gold/60 bg-canvas p-6"
+              className="rounded-md border-t-2 border-[color-mix(in_srgb,var(--color-brand-gold)_60%,transparent)] bg-canvas p-6"
             >
               <h3 className="font-serif text-xl font-semibold text-brand-primary-deep">{role.who}</h3>
               <p className="mt-2 text-sm leading-relaxed text-ink">{role.does}</p>
@@ -165,7 +165,7 @@ export function ComoFuncionaSection() {
         <ol className="mt-10 space-y-0">
           {JOURNEY_STEPS.map((step, index) => (
             <SectionReveal key={step.title} delayMs={index * 60}>
-              <li className="relative flex gap-5 border-l-2 border-brand-sage/40 pb-8 pl-6 last:border-transparent last:pb-0">
+              <li className="relative flex gap-5 border-l-2 border-[color-mix(in_srgb,var(--color-brand-sage)_40%,transparent)] pb-8 pl-6 last:border-transparent last:pb-0">
                 <span
                   aria-hidden="true"
                   className="absolute -left-[9px] top-1 size-4 rounded-full border-2 border-brand-sage bg-canvas"
@@ -206,7 +206,7 @@ export function ComoDecidimosSection() {
           <h2 className="font-serif text-3xl font-semibold leading-snug text-surface lg:text-4xl">
             Cada decisão tem um dono — e nenhuma é do software.
           </h2>
-          <p className="text-base leading-relaxed text-surface/85">
+          <p className="text-base leading-relaxed text-[color-mix(in_srgb,var(--color-bg-surface)_85%,transparent)]">
             Essa divisão não é um detalhe: é a diferença entre receber uma recomendação e construir
             uma decisão.
           </p>
@@ -217,10 +217,10 @@ export function ComoDecidimosSection() {
             <SectionReveal
               key={line.who}
               delayMs={index * 80}
-              className="rounded-md border border-surface/15 bg-surface/5 p-6"
+              className="rounded-md border border-[color-mix(in_srgb,var(--color-bg-surface)_15%,transparent)] bg-[color-mix(in_srgb,var(--color-bg-surface)_5%,transparent)] p-6"
             >
               <h3 className="font-serif text-lg font-semibold text-brand-gold">{line.who}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-surface/85">{line.detail}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-[color-mix(in_srgb,var(--color-bg-surface)_85%,transparent)]">{line.detail}</p>
             </SectionReveal>
           ))}
         </ol>

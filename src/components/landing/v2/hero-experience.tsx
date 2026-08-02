@@ -184,7 +184,7 @@ export function HeroExperience({ videoSrc, videoPoster }: HeroExperienceProps) {
         <div className="mx-auto flex min-h-[70vh] w-full max-w-content flex-col items-center justify-center gap-8 px-4 py-16 text-center lg:px-8">
           <HeroTitle />
           {videoSrc ? (
-            <div className="w-full max-w-3xl overflow-hidden rounded-xl border border-surface/25 shadow-lg">
+            <div className="w-full max-w-3xl overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--color-bg-surface)_25%,transparent)] shadow-lg">
               <video
                 src={videoSrc}
                 poster={videoPoster}
@@ -233,7 +233,7 @@ export function HeroExperience({ videoSrc, videoPoster }: HeroExperienceProps) {
         className="absolute left-1/2 w-1/2 max-w-[500px] -translate-x-1/2 -translate-y-1/2 lg:w-1/5 lg:max-w-[320px]"
         style={{ top: "75%" }}
       >
-        <div className="relative overflow-hidden rounded-xl border border-surface/25 shadow-lg">
+        <div className="relative overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--color-bg-surface)_25%,transparent)] shadow-lg">
           <video
             ref={videoRef}
             src={videoSrc}
@@ -252,14 +252,14 @@ export function HeroExperience({ videoSrc, videoPoster }: HeroExperienceProps) {
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[linear-gradient(150deg,_var(--color-brand-primary)_0%,_var(--color-brand-primary-deep)_100%)]"
           >
-            <p className="font-serif text-2xl text-surface/90">Aliviar</p>
+            <p className="font-serif text-2xl text-[color-mix(in_srgb,var(--color-bg-surface)_90%,transparent)]">Aliviar</p>
           </div>
 
           <button
             type="button"
             onClick={toggleSound}
             className={cn(
-              "absolute bottom-3 right-3 inline-flex min-h-9 items-center gap-2 rounded-md bg-ink/60 px-3 py-1.5 text-xs font-medium text-surface backdrop-blur transition-opacity duration-base ease-standard",
+              "absolute bottom-3 right-3 inline-flex min-h-9 items-center gap-2 rounded-md bg-[color-mix(in_srgb,var(--color-ink)_60%,transparent)] px-3 py-1.5 text-xs font-medium text-surface backdrop-blur transition-opacity duration-base ease-standard",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-ink",
               videoVisible ? "opacity-100" : "pointer-events-none opacity-0",
             )}
@@ -274,7 +274,7 @@ export function HeroExperience({ videoSrc, videoPoster }: HeroExperienceProps) {
         ref={subtitleRef}
         className="absolute left-1/2 top-[85%] w-full max-w-reading -translate-x-1/2 px-4 text-center opacity-0"
       >
-        <p className="text-base leading-relaxed text-surface/90 lg:text-lg">
+        <p className="text-base leading-relaxed text-[color-mix(in_srgb,var(--color-bg-surface)_90%,transparent)] lg:text-lg">
           Com você em cada etapa — da sua história até a escolha do médico certo para você.
         </p>
       </div>
@@ -305,7 +305,7 @@ function HeroActions() {
       <LinkButton
         href="/login"
         variant="secondary"
-        className="w-full border-surface/40 bg-transparent text-surface hover:border-brand-gold sm:w-auto"
+        className="w-full border-[color-mix(in_srgb,var(--color-bg-surface)_40%,transparent)] bg-transparent text-surface hover:border-brand-gold sm:w-auto"
       >
         Acessar minha Jornada
       </LinkButton>

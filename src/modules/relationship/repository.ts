@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { erroDeBanco } from "@/lib/observability/erros";
+
 import { RelationshipError } from "./errors";
 import type { RelationshipRepository } from "./ports/relationship-repository";
 import {
@@ -129,7 +131,7 @@ export class SupabaseRelationshipRepository implements RelationshipRepository {
       .eq("id", relationshipId)
       .maybeSingle();
 
-    if (error) throw new Error("Não foi possível consultar o Relationship.");
+    if (error) throw erroDeBanco("Não foi possível consultar o Relationship.", error);
     return data ? mapRecordRow(data as RelationshipRecordRow) : null;
   }
 
@@ -141,7 +143,7 @@ export class SupabaseRelationshipRepository implements RelationshipRepository {
       .maybeSingle();
 
     if (error)
-      throw new Error("Não foi possível consultar o Relationship deste Caso.");
+      throw erroDeBanco("Não foi possível consultar o Relationship deste Caso.", error);
     return data ? mapRecordRow(data as RelationshipRecordRow) : null;
   }
 
@@ -195,7 +197,7 @@ export class SupabaseRelationshipRepository implements RelationshipRepository {
             "O Connection referenciado não é válido para originar um Relationship.",
         });
       }
-      throw new Error("Não foi possível registrar o Relationship.");
+      throw erroDeBanco("Não foi possível registrar o Relationship.", error);
     }
 
     return mapRecordRow(data as RelationshipRecordRow);
@@ -280,7 +282,7 @@ export class SupabaseRelationshipRepository implements RelationshipRepository {
           message: "Não foi possível registrar esta reabertura.",
         });
       }
-      throw new Error("Não foi possível registrar a reabertura observada.");
+      throw erroDeBanco("Não foi possível registrar a reabertura observada.", error);
     }
 
     return mapEventRow(data as RelationshipEventRow);

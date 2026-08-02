@@ -1,7 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRoleForAction } from "@/modules/auth/guard";
 import { DECISION_MESSAGES } from "@/modules/curadoria/reconhecimento-do-perfil";
@@ -67,8 +65,22 @@ export async function reconhecerPerfilAction(input: {
   // Idempotência: reconhecer duas vezes não é falha. A tela diz que já estava
   // feito em vez de acusar erro por algo que ela fez certo.
   if (data === "RECONHECIDO" || data === "JA_RECONHECIDO") {
-    revalidatePath("/portal-paciente");
-    revalidatePath("/portal-paciente/prioridades");
+    // NENHUM revalidatePath aqui — de propósito, e com prova (2026-08-02):
+    //
+    // 1. Revalidar /portal-paciente era no-op (Decisão A: virou redirect).
+    // 2. Revalidar /paciente (a página de origem) deixava o stream da
+    //    resposta do POST aberto para sempre — "Registrando…" eterno com o
+    //    RPC já persistido no banco.
+    // 3. Revalidar SÓ as outras rotas (/paciente/perfil) travou IGUAL:
+    //    qualquer revalidatePath dentro da action faz o Next embutir a
+    //    re-renderização da página CORRENTE na resposta do POST, e é essa
+    //    renderização embutida que nunca fecha (banco VALIDATED às
+    //    06:29:18, botão preso 20s+; o GET da mesma árvore fecha em ~300ms).
+    //
+    // E revalidar não compra nada: todas as rotas do paciente são dinâmicas
+    // (nenhuma no prerender-manifest) — cada GET já renderiza fresco. A
+    // página corrente é atualizada pelo router.refresh() do cliente, que
+    // roda DEPOIS de a action retornar.
     return { success: true, jaEstava: data === "JA_RECONHECIDO" };
   }
 

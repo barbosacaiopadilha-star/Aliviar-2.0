@@ -119,12 +119,12 @@ export function CrmFunnelBoard({ contacts }: CrmFunnelBoardProps) {
               </div>
               <div className="space-y-3">
                 {cards.length === 0 ? (
-                  <Card padding="sm" className="bg-canvas/60">
+                  <Card padding="sm" className="bg-[color-mix(in_srgb,var(--color-bg-canvas)_60%,transparent)]">
                     <p className="text-xs text-ink-muted">Nenhum contato nesta etapa.</p>
                   </Card>
                 ) : (
                   cards.map((contact) => (
-                    <Card key={contact.id} padding="sm" className={isOverdue(contact.nextActionAt) ? "border-error/40" : ""}>
+                    <Card key={contact.id} padding="sm" className={isOverdue(contact.nextActionAt) ? "border-[color-mix(in_srgb,var(--color-error)_40%,transparent)]" : ""}>
                       <div className="space-y-2">
                         <div className="flex items-start justify-between gap-2">
                           <Link href={`/admin/crm/contatos/${contact.id}`} className="font-medium text-ink hover:text-brand-primary">

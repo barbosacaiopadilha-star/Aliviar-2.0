@@ -1,6 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
-import { getOrCreateActiveStory } from "@/modules/story/repository";
+import { getLatestStory, getOrCreateActiveStory } from "@/modules/story/repository";
 import { StoryDraftProvider } from "@/modules/story/use-story-draft";
 
 import { StoryConflictBanner } from "@/components/story/story-conflict-banner";
@@ -17,7 +17,11 @@ export default async function SuaHistoriaWizardLayout({
 }) {
   const authState = await requireRole("paciente");
   const supabase = await createServerSupabaseClient();
-  const story = await getOrCreateActiveStory(supabase, authState.user.id);
+  // A história já contada tem precedência — inclusive a enviada. Criar só
+  // acontece para quem ainda não tem nenhuma (ETAPA 9; ver STORY-GET-WRITE-001).
+  const story =
+    (await getLatestStory(supabase, authState.user.id)) ??
+    (await getOrCreateActiveStory(supabase, authState.user.id));
 
   return (
     <StoryDraftProvider story={story}>

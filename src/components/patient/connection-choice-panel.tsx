@@ -124,7 +124,12 @@ export function ConnectionChoicePanel({
   if (step === "reviewing" && selectedPresentation) {
     const nome = selectedPresentation.displayName;
     return (
-      <PatientCard>
+      // `ambiente-decisao`: a única coisa que esta classe faz é devolver a
+      // atmosfera ao papel neutro (R20). Aqui azul e verde ficam em
+      // equilíbrio de propósito — nada deve inclinar a decisão, nem a
+      // orientação da Aliviar, nem o caminho já percorrido. O cômodo com
+      // mais vazio é também o mais silencioso em cor.
+      <PatientCard className="ambiente-decisao">
         <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
           O que acontece ao seguir com {nome}
         </h2>

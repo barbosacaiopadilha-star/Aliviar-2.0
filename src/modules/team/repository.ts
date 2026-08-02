@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { erroDeBanco } from "@/lib/observability/erros";
+
 import type { AuditAction, AuditLogEntry, ManageableRoleSlug, TeamMember } from "./types";
 
 // Lista todas as pessoas (profiles) com seus papéis atuais + e-mail. A UI
@@ -66,7 +68,7 @@ export async function grantRole(
     .insert({ profile_id: profileId, role_id: roleRow.id, granted_by: grantedBy });
 
   if (error) {
-    throw new Error("Não foi possível conceder o papel.");
+    throw erroDeBanco("Não foi possível conceder o papel.", error);
   }
 }
 
@@ -92,7 +94,7 @@ export async function revokeRole(
     .eq("role_id", roleRow.id);
 
   if (error) {
-    throw new Error("Não foi possível revogar o papel.");
+    throw erroDeBanco("Não foi possível revogar o papel.", error);
   }
 }
 

@@ -56,10 +56,10 @@ describe("Observação", () => {
 
   it("é recusada acima do limite, com o item nomeado", () => {
     const [rejeicao] = validateProfessionalMapWrite([
-      { subcriterionCode: "ACESSO_LOCALIZACAO", status: "CONFIRMADO", note: "x".repeat(NOTE_MAX_LENGTH + 1) },
+      { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", status: "CONFIRMADO", note: "x".repeat(NOTE_MAX_LENGTH + 1) },
     ]);
-    expect(rejeicao).toMatchObject({ reason: "OBSERVACAO_LONGA", code: "ACESSO_LOCALIZACAO" });
-    expect(describeRejection(rejeicao!)).toContain("Localização");
+    expect(rejeicao).toMatchObject({ reason: "OBSERVACAO_LONGA", code: "ACESSO_LOCAL_DE_ATENDIMENTO" });
+    expect(describeRejection(rejeicao!)).toContain("Local de atendimento");
   });
 
   it("não é obrigatória para estado nenhum", () => {
@@ -96,14 +96,14 @@ describe("Completude — tratados, não atendidos", () => {
 
   it("ausência de registro não vira NAO_INFORMADO", () => {
     const grupos = groupProfessionalMap([
-      { subcriterionCode: "ACESSO_LOCALIZACAO", status: "NAO_INFORMADO", note: null },
+      { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", status: "NAO_INFORMADO", note: null },
     ]);
     const acesso = grupos.find((g) => g.group === "ACESSO")!;
 
-    const analisado = acesso.entries.find((e) => e.subcriterion.code === "ACESSO_LOCALIZACAO")!;
+    const analisado = acesso.entries.find((e) => e.subcriterion.code === "ACESSO_LOCAL_DE_ATENDIMENTO")!;
     expect(analisado.status, "analisado, sem informação").toBe("NAO_INFORMADO");
 
-    const naoTratado = acesso.entries.find((e) => e.subcriterion.code !== "ACESSO_LOCALIZACAO")!;
+    const naoTratado = acesso.entries.find((e) => e.subcriterion.code !== "ACESSO_LOCAL_DE_ATENDIMENTO")!;
     expect(naoTratado.status, "ninguém tratou ainda").toBeNull();
   });
 
@@ -134,13 +134,13 @@ describe("Catálogo compartilhado — sem taxonomia paralela", () => {
 describe("O que o domínio recusa", () => {
   it("aceita os três estados válidos", () => {
     for (const status of SUBCRITERION_STATUSES) {
-      expect(validateProfessionalMapWrite([{ subcriterionCode: "HISTORICO_REGULARIDADE", status }])).toEqual([]);
+      expect(validateProfessionalMapWrite([{ subcriterionCode: "HISTORICO_TRAJETORIA_INSTITUCIONAL", status }])).toEqual([]);
     }
   });
 
   it("recusa estado inválido, e explica o que escolher", () => {
     const [rejeicao] = validateProfessionalMapWrite([
-      { subcriterionCode: "HISTORICO_REGULARIDADE", status: "EXCELENTE" },
+      { subcriterionCode: "HISTORICO_TRAJETORIA_INSTITUCIONAL", status: "EXCELENTE" },
     ]);
     expect(rejeicao).toEqual({ reason: "ESTADO_INVALIDO", value: "EXCELENTE" });
     expect(describeRejection(rejeicao!)).toContain("Confirmado");

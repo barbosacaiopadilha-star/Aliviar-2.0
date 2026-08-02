@@ -24,7 +24,7 @@ type ActionLinkProps = {
 const actionLinkClasses = cn(
   "group flex min-h-11 w-full items-start gap-3 rounded-md px-2 py-2.5 text-left",
   "transition-colors duration-fast ease-standard",
-  "hover:bg-brand-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+  "hover:bg-[color-mix(in_srgb,var(--color-brand-primary)_5%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
 );
 
 const textClasses = cn(
@@ -74,7 +74,7 @@ export function StaticPendingItem({ description, ownerLabel, className }: Static
       )}
       aria-label={ownerLabel ? `${description} — ${ownerLabel}` : description}
     >
-      <span className="mt-1.5 size-2 shrink-0 rounded-full border border-ink-muted/40" aria-hidden="true" />
+      <span className="mt-1.5 size-2 shrink-0 rounded-full border border-[color-mix(in_srgb,var(--color-ink-muted)_40%,transparent)]" aria-hidden="true" />
       <span className="min-w-0 flex-1">
         <span className="text-sm text-ink-muted">{description}</span>
         {ownerLabel ? (

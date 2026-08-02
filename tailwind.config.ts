@@ -15,16 +15,49 @@ const config: Config = {
           "primary-deep": "var(--color-brand-primary-deep)",
           sage: "var(--color-brand-sage)",
           "sage-light": "var(--color-brand-sage-light)",
+          "sage-deep": "var(--color-brand-sage-deep)",
+          "primary-darkest": "var(--color-brand-primary-darkest)",
           gold: "var(--color-brand-gold)",
+        },
+        retrato: {
+          1: "var(--color-retrato-1)",
+          2: "var(--color-retrato-2)",
+          3: "var(--color-retrato-3)",
         },
         canvas: "var(--color-bg-canvas)",
         surface: "var(--color-bg-surface)",
+        recessed: "var(--color-bg-recessed)",
+        // Atmosfera do ambiente: o mesmo utilitário muda de cor conforme o
+        // cômodo, sem que o componente saiba em qual cômodo está (R20).
+        ambient: "var(--color-bg-ambient)",
+        accent: {
+          DEFAULT: "var(--color-ambient-accent)",
+          soft: "var(--color-ambient-accent-soft)",
+          deep: "var(--color-ambient-accent-deep)",
+        },
         ink: {
           DEFAULT: "var(--color-ink)",
           muted: "var(--color-ink-muted)",
         },
-        border: "var(--color-border)",
+        border: {
+          DEFAULT: "var(--color-border)",
+          strong: "var(--color-border-strong)",
+        },
         focus: "var(--color-focus-ring)",
+        // Condição a conversar — nunca uma falha dela. Existe para que
+        // ninguém precise alcançar `warning` numa superfície da paciente.
+        attention: {
+          DEFAULT: "var(--color-attention)",
+          surface: "var(--color-attention-surface)",
+        },
+        // Superfícies escuras: os degraus já trazem a transparência, porque
+        // o modificador `/opacidade` sobre `var()` não compila.
+        "on-dark": {
+          DEFAULT: "var(--color-on-dark)",
+          muted: "var(--color-on-dark-muted)",
+          faint: "var(--color-on-dark-faint)",
+          line: "var(--color-on-dark-line)",
+        },
         success: {
           DEFAULT: "var(--color-success)",
           surface: "var(--color-success-surface)",
@@ -56,6 +89,7 @@ const config: Config = {
         sm: "var(--radius-sm)",
         md: "var(--radius-md)",
         lg: "var(--radius-lg)",
+        pill: "var(--radius-pill)",
       },
       boxShadow: {
         sm: "var(--shadow-sm)",
@@ -67,9 +101,11 @@ const config: Config = {
         reading: "var(--reading-max-width)",
       },
       transitionDuration: {
+        instant: "var(--duration-instant)",
         fast: "var(--duration-fast)",
         base: "var(--duration-base)",
         slow: "var(--duration-slow)",
+        travessia: "var(--duration-travessia)",
       },
       transitionTimingFunction: {
         standard: "var(--ease-standard)",

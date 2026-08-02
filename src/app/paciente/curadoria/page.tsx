@@ -122,7 +122,7 @@ export default async function PatientCuradoriaPage() {
         <p className="mt-10">
           <Link
             href="/paciente/curadoria/imprimir"
-            className="text-sm font-medium text-[var(--patient-forest)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+            className="text-sm font-medium text-[var(--patient-acento)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
           >
             Levar em PDF — para reler com a família ou na consulta
           </Link>

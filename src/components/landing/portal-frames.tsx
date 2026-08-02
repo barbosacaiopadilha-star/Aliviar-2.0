@@ -193,7 +193,7 @@ export const FRAMES: Frame[] = [
       <div className="flex flex-col gap-4 text-left">
         {BENEFITS.map((benefit) => (
           <div key={benefit.title} className="flex items-start gap-3">
-            <benefit.icon className="mt-1 size-4 shrink-0 text-brand-sage" aria-hidden={true} />
+            <benefit.icon className="mt-1 size-4 shrink-0 text-brand-sage-deep" aria-hidden={true} />
             <div>
               <p className="font-serif text-base font-semibold text-ink">{benefit.title}</p>
               <p className="text-sm text-ink-muted">{benefit.description}</p>

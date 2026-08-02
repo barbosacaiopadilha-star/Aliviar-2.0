@@ -8,13 +8,28 @@ type LandingSectionProps = HTMLAttributes<HTMLElement> & {
   children: ReactNode;
   variant?: "linen" | "warm" | "white" | "forest";
   atmosphere?: AliviarSceneKey | null;
+  /**
+   * A batida da seção no ritmo da página (CRITICA_LANDING_2_2 §3): antes
+   * todas as seções tinham o MESMO respiro (8,5–12rem), e respiro uniforme
+   * é um metrônomo — o olho desliza em vez de ser conduzido. `ampla` é a
+   * contemplação, `media` a leitura, `densa` a explicação, `respiro` a
+   * pausa deliberada entre atos.
+   */
+  spacing?: "ampla" | "media" | "densa" | "respiro";
 };
 
 const variantClasses = {
   linen: "bg-[var(--landing-linen)] text-[var(--landing-ink)]",
   warm: "bg-[var(--landing-linen-warm)] text-[var(--landing-ink)]",
-  white: "bg-[var(--color-bg-surface)]/90 text-[var(--landing-ink)]",
+  white: "bg-[color-mix(in_srgb,var(--color-bg-surface)_90%,transparent)] text-[var(--landing-ink)]",
   forest: "landing-forest-band",
+};
+
+const spacingClasses = {
+  ampla: "",
+  media: "landing-section--media",
+  densa: "landing-section--densa",
+  respiro: "landing-section--respiro",
 };
 
 export function LandingSection({
@@ -22,10 +37,14 @@ export function LandingSection({
   className,
   variant = "linen",
   atmosphere = null,
+  spacing = "ampla",
   ...props
 }: LandingSectionProps) {
   return (
-    <section className={cn("landing-section", variantClasses[variant], className)} {...props}>
+    <section
+      className={cn("landing-section", variantClasses[variant], spacingClasses[spacing], className)}
+      {...props}
+    >
       {atmosphere ? (
         <ImmersiveBackdrop
           scene={atmosphere}
@@ -40,7 +59,7 @@ export function LandingSection({
 
 export function LandingEyebrow({ children, dark = false }: { children: string; dark?: boolean }) {
   return (
-    <span className={cn("landing-eyebrow", dark && "text-[var(--landing-linen)]/75")}>
+    <span className={cn("landing-eyebrow", dark && "text-on-dark-muted")}>
       {children}
     </span>
   );

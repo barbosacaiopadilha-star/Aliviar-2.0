@@ -7,9 +7,9 @@ type FormMessageProps = {
 };
 
 const variantClasses: Record<FormMessageProps["variant"], string> = {
-  error: "border-error/20 bg-error-surface text-error",
-  success: "border-success/20 bg-success-surface text-success",
-  warning: "border-warning/20 bg-warning-surface text-warning",
+  error: "border-[color-mix(in_srgb,var(--color-error)_20%,transparent)] bg-error-surface text-error",
+  success: "border-[color-mix(in_srgb,var(--color-success)_20%,transparent)] bg-success-surface text-success",
+  warning: "border-[color-mix(in_srgb,var(--color-warning)_20%,transparent)] bg-warning-surface text-warning",
 };
 
 export function FormMessage({ variant, children, className }: FormMessageProps) {

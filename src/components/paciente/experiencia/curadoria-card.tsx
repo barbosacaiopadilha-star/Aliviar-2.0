@@ -37,7 +37,7 @@ export function CuradoriaCard({
       {action ? (
         <Link
           href={action.href}
-          className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--patient-forest)] px-6 text-sm font-medium text-[var(--patient-linen)] shadow-md shadow-emerald-950/10 transition-all duration-300 ease-standard hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+          className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--patient-acento)] px-6 text-sm font-medium text-[var(--patient-linen)] shadow-md transition-all duration-300 ease-standard hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
         >
           {action.label}
         </Link>

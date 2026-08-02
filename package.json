@@ -14,7 +14,7 @@
     "test:integration": "npm run supabase:ledger:check && node scripts/with-local-supabase.mjs vitest run --config vitest.integration.config.ts",
     "test:components": "vitest run --config vitest.components.config.ts",
     "test:golden": "vitest run --config vitest.golden.config.ts",
-    "test:e2e": "npm run supabase:ledger:check && node scripts/with-local-supabase.mjs playwright test",
+    "test:e2e": "npm run supabase:ledger:check && npm run verify:backend:local && node scripts/with-local-supabase.mjs playwright test",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
@@ -29,10 +29,13 @@
     "validation:e2e:b6": "node scripts/local/validate-e2e-curadoria-b6.mjs",
     "dev:local": "node scripts/with-local-supabase.mjs next dev",
     "test:integration:local": "npm run supabase:ledger:check && node scripts/with-local-supabase.mjs vitest run --config vitest.integration.config.ts",
-    "test:e2e:local": "npm run supabase:ledger:check && node scripts/with-local-supabase.mjs playwright test",
+    "test:e2e:local": "npm run supabase:ledger:check && npm run verify:backend:local && node scripts/with-local-supabase.mjs playwright test",
     "bootstrap:test-users:local": "npm run supabase:ledger:check && node scripts/with-local-supabase.mjs node scripts/bootstrap-local-test-users.mjs",
     "seed:rede-demo:local": "npm run supabase:ledger:check && node scripts/with-local-supabase.mjs node scripts/seed-rede-demonstracao.mjs",
-    "seed:mesa:local": "npm run supabase:ledger:check && node scripts/with-local-supabase.mjs --env SEED_MESA=1 vitest run --config vitest.integration.config.ts tests/integration/seed-validacao-mesa.integration.test.ts"
+    "seed:mesa:local": "npm run supabase:ledger:check && node scripts/with-local-supabase.mjs --env SEED_MESA=1 vitest run --config vitest.integration.config.ts tests/integration/seed-validacao-mesa.integration.test.ts && node scripts/with-local-supabase.mjs node scripts/verificar-seed-mesa.mjs",
+    "build:local": "node scripts/stop-stale-server.mjs && node scripts/clean-next-output.mjs && node scripts/new-build-id.mjs && node scripts/with-local-supabase.mjs npx next build && node scripts/verify-build-id.mjs && npm run verify:backend:local",
+    "verify:backend:local": "node scripts/with-local-supabase.mjs node scripts/verify-bundle-backend.mjs",
+    "verify:backend": "node scripts/verify-bundle-backend.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.111.0",

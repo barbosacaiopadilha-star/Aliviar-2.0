@@ -1,5 +1,6 @@
 "use server";
 
+import { falhaParaUsuario } from "@/lib/observability/erros";
 import { revalidatePath } from "next/cache";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -11,7 +12,7 @@ import type { ActionResult } from "./types";
 export async function uploadPatientDocumentAction(
   _prevState: ActionResult | undefined,
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<ActionResult | { success: true; document: import("./types").PatientDocument }> {
   let authState;
   try {
     authState = await requireRoleForAction("paciente");
@@ -26,14 +27,16 @@ export async function uploadPatientDocumentAction(
 
   const supabase = await createServerSupabaseClient();
 
+  let created;
   try {
-    await uploadPatientDocument(supabase, authState.user.id, file);
-  } catch {
-    return { success: false, error: "Não foi possível enviar o documento agora. Tente novamente." };
+    created = await uploadPatientDocument(supabase, authState.user.id, file);
+  } catch (erro) {
+    return { success: false, error: falhaParaUsuario("profiles.patient-document-actions", erro, { mensagem: "Não foi possível enviar o documento agora. Tente novamente." }) };
   }
 
   revalidatePath("/paciente/documentos");
-  return { success: true };
+  // ETAPA 9: a lista atualiza sozinha — o documento criado volta para a UI.
+  return { success: true, document: created };
 }
 
 export async function deletePatientDocumentAction(documentId: string): Promise<ActionResult> {
@@ -48,8 +51,8 @@ export async function deletePatientDocumentAction(documentId: string): Promise<A
 
   try {
     await deletePatientDocument(supabase, documentId, authState.user.id);
-  } catch {
-    return { success: false, error: "Não foi possível remover o documento agora." };
+  } catch (erro) {
+    return { success: false, error: falhaParaUsuario("profiles.patient-document-actions", erro, { mensagem: "Não foi possível remover o documento agora." }) };
   }
 
   revalidatePath("/paciente/documentos");

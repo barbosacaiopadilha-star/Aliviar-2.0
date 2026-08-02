@@ -25,7 +25,7 @@ export function CredentialsReveal({ email, password }: CredentialsRevealProps) {
   }
 
   return (
-    <Card className="border-brand-sage/40 bg-brand-sage-light/10">
+    <Card className="border-[color-mix(in_srgb,var(--color-brand-sage)_40%,transparent)] bg-[color-mix(in_srgb,var(--color-brand-sage-light)_10%,transparent)]">
       <CardHeader>
         <h2 className="font-sans text-lg font-semibold text-ink">Credenciais de acesso</h2>
         <p className="text-sm text-ink-muted">

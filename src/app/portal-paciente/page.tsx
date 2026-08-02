@@ -56,7 +56,7 @@ export default async function MinhaJornadaPage() {
           </p>
           <Link
             href="/portal-paciente/prioridades"
-            className="mt-6 inline-flex min-h-11 items-center text-sm font-medium text-[var(--patient-forest)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+            className="mt-6 inline-flex min-h-11 items-center text-sm font-medium text-[var(--patient-acento)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
           >
             Ver meu Perfil de Prioridades →
           </Link>

@@ -20,6 +20,7 @@ import {
   saveProtocolDraft,
   submitProfessionalProtocol,
   type DraftResponse,
+  TEAM_REGISTRATION_SOURCE,
 } from "./protocolos-repository";
 
 /**
@@ -122,6 +123,63 @@ export async function acknowledgePersonNeedAction(input: unknown) {
 
   revalidateCaseSurfaces(parsed.data.caseId);
   return { success: true as const };
+}
+
+// ---------------------------------------------------------------------------
+// Cadastro administrativo do Protocolo (Release de Reconstrução, ETAPA 5).
+// O cadastro é feito apenas pela equipe Aliviar (não há autocadastro), então
+// o administrador precisa poder registrar o Catálogo 1.0.0 por um
+// profissional. A proveniência conta a verdade: coletado pela equipe, não
+// autodeclarado.
+// ---------------------------------------------------------------------------
+
+export async function saveProtocolDraftForProfessionalAction(
+  professionalProfileId: string,
+  input: unknown,
+) {
+  const state = await requireAnyRoleForAction(["administrador"]);
+  const parsed = saveDraftSchema.safeParse(input);
+  if (!parsed.success) return { success: false as const, error: "Resposta em formato inválido." };
+
+  const supabase = await createServerSupabaseClient();
+  await saveProtocolDraft(supabase, {
+    professionalProfileId,
+    responses: parsed.data.responses as Record<string, DraftResponse>,
+    updatedBy: state.user.id,
+  });
+
+  revalidatePath(`/admin/profissionais/${professionalProfileId}`);
+  return { success: true as const };
+}
+
+export async function submitProtocolForProfessionalAction(professionalProfileId: string) {
+  const state = await requireAnyRoleForAction(["administrador"]);
+
+  const supabase = await createServerSupabaseClient();
+  const draft = await loadProtocolDraft(supabase, professionalProfileId);
+
+  if (Object.keys(draft.responses).length === 0) {
+    return { success: false as const, error: "Não há respostas para registrar." };
+  }
+
+  const service = createAdminSupabaseClient();
+  const resultado = await submitProfessionalProtocol(service, {
+    professionalProfileId,
+    responses: draft.responses,
+    collectedBy: state.user.id,
+    source: TEAM_REGISTRATION_SOURCE,
+  });
+
+  if (resultado.rejected.length > 0) {
+    return {
+      success: false as const,
+      error: "Algumas respostas não passaram na validação do Catálogo.",
+      rejected: resultado.rejected,
+    };
+  }
+
+  revalidatePath(`/admin/profissionais/${professionalProfileId}`);
+  return { success: true as const, registered: resultado.registered.length };
 }
 
 export async function submitOwnProtocolAction() {

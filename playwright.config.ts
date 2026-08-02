@@ -60,6 +60,11 @@ assertLocalSupabase();
 
 export default defineConfig({
   testDir: "./tests/e2e",
+  // Exclusão mútua com a suíte de integração (cuja limpeza restaura a
+  // baseline e apagaria um fluxo E2E em voo). A trava é adquirida aqui e
+  // devolvida no teardown — inclusive quando a execução quebra no meio.
+  globalSetup: "./tests/e2e/global-setup.ts",
+  globalTeardown: "./tests/e2e/global-teardown.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -80,6 +85,11 @@ export default defineConfig({
     url: "http://127.0.0.1:3001",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    // ETAPA 2 (erros rastreáveis): o log estruturado do servidor — onde vivem
+    // as referências ERR-XXXX — precisa aparecer na saída do runner, senão a
+    // causa real de uma falha de E2E continua invisível.
+    stdout: "pipe",
+    stderr: "pipe",
     // Herda o ambiente e sobrescreve explicitamente o alvo do Supabase, para
     // que o servidor nunca caia no `.env.local` de produção.
     env: {

@@ -24,6 +24,7 @@ import { MesaContextPanel } from "@/components/curadoria/mesa-context-panel";
 import { MesaEvidenciasPanel } from "@/components/curadoria/mesa-evidencias-panel";
 import { MesaPriorityPanel } from "@/components/curadoria/mesa-priority-panel";
 import { MesaWorkspace } from "@/components/curadoria/mesa-workspace";
+import { StartPriorityProfile } from "@/components/curadoria/start-priority-profile";
 import { ProtocoloPessoaPanel } from "@/components/curadoria/protocolo-pessoa-panel";
 import { conduct } from "@/modules/curadoria/cos/conduction";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -299,18 +300,30 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
     );
 
   const conteudo: Record<MesaEtapaId, React.ReactNode> = {
-    PERFIL: view.profileAcknowledged ? (
-      <MapaPrioridadesPanel
-        caseId={record.caseId}
-        groups={groupPriorityMap(mapa.items, catalogo)}
-        completion={mapa.completion}
-      />
+    // ETAPA 8 (Release de Reconstrução): a Mesa parava aqui num beco sem
+    // saída — sem Perfil aberto não havia como abrir (o componente existia,
+    // órfão), e o Mapa ficava atrás do reconhecimento que depende do próprio
+    // Mapa. A ordem do Método é: abrir o Perfil → preencher o Mapa na
+    // conversa → ela reconhecer no portal dela → a Curadoria Técnica abrir.
+    PERFIL: !record.priorityProfileId ? (
+      <div className="mesa-bloco">
+        <StartPriorityProfile caseId={record.caseId} patientFirstName={record.patientFirstName} />
+      </div>
     ) : (
-      <MesaVazio
-        titulo="O Perfil ainda não foi validado."
-        corpo={`A Curadoria Técnica só abre depois que ${record.patientFirstName} reconhece o Perfil como seu. Sem o critério dela, qualquer análise seria a Aliviar decidindo com aparência de método.`}
-        proximoPasso="A validação acontece na conversa, e é registrada por você na etapa Validar."
-      />
+      <div className="space-y-4">
+        {!view.profileAcknowledged ? (
+          <p className="max-w-reading text-sm leading-relaxed text-ink-muted">
+            O Mapa se preenche na conversa com {record.patientFirstName}. Quando estiver completo,
+            ela o reconhece no portal dela — e só então a Curadoria Técnica abre. Sem o critério
+            dela, qualquer análise seria a Aliviar decidindo com aparência de método.
+          </p>
+        ) : null}
+        <MapaPrioridadesPanel
+          caseId={record.caseId}
+          groups={groupPriorityMap(mapa.items, catalogo)}
+          completion={mapa.completion}
+        />
+      </div>
     ),
 
     REDE:

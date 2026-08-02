@@ -19,9 +19,9 @@ const statusLabels: Record<JornadaStageStatus, string> = {
 };
 
 const markerClasses: Record<JornadaStageStatus, string> = {
-  CONCLUIDA: "bg-[var(--color-brand-sage)] ring-4 ring-[var(--color-brand-sage)]/20",
-  EM_ANDAMENTO: "bg-[var(--patient-forest)] ring-4 ring-[var(--patient-forest)]/15 shadow-md shadow-emerald-950/10",
-  AGUARDANDO_VOCE: "bg-[var(--color-brand-gold)] ring-4 ring-[var(--color-brand-gold)]/20",
+  CONCLUIDA: "bg-[var(--color-brand-sage)] ring-4 ring-[color-mix(in_srgb,var(--color-brand-sage)_20%,transparent)]",
+  EM_ANDAMENTO: "bg-[var(--patient-acento)] ring-4 ring-[color-mix(in_srgb,var(--patient-acento)_15%,transparent)] shadow-md",
+  AGUARDANDO_VOCE: "bg-[var(--color-brand-gold)] ring-4 ring-[color-mix(in_srgb,var(--color-brand-gold)_20%,transparent)]",
   A_CAMINHO: "bg-white ring-2 ring-[var(--color-border)]",
 };
 
@@ -68,7 +68,7 @@ function StageRow({ stage, isLast }: { stage: JornadaStage; isLast: boolean }) {
         {stage.nextAction ? (
           <p className="mt-3 text-sm">
             {stage.nextAction.owner === "VOCE" ? (
-              <span className="font-medium text-[var(--patient-forest)]">{stage.nextAction.label}</span>
+              <span className="font-medium text-[var(--patient-acento)]">{stage.nextAction.label}</span>
             ) : (
               <span className="text-[var(--color-ink-muted)]">{stage.nextAction.label}</span>
             )}

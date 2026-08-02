@@ -1,6 +1,6 @@
 import "@/app/landing-editorial.css";
 
-import { PublicFooter } from "@/components/landing/public-footer";
+import { PublicFooterGate } from "@/components/landing/public-footer-gate";
 import { PublicHeaderContainer } from "@/components/landing/public-header-container";
 
 export default function PublicLayout({
@@ -23,7 +23,7 @@ export default function PublicLayout({
         {children}
       </main>
 
-      <PublicFooter />
+      <PublicFooterGate />
     </div>
   );
 }

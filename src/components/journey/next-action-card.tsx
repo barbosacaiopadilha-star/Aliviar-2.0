@@ -44,7 +44,7 @@ type NextActionCardProps =
 export function NextActionCard(props: NextActionCardProps) {
   if (props.action) {
     return (
-      <Card className="border-brand-gold/40">
+      <Card className="border-[color-mix(in_srgb,var(--color-brand-gold)_40%,transparent)]">
         <CardHeader>
           <CardTitle>{props.title}</CardTitle>
           {props.why ? <CardDescription>{props.why}</CardDescription> : null}

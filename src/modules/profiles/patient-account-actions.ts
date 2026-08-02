@@ -1,5 +1,6 @@
 "use server";
 
+import { falhaParaUsuario } from "@/lib/observability/erros";
 import { revalidatePath } from "next/cache";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
@@ -56,8 +57,8 @@ export async function createPatientAccountAction(
       email: result.email,
       password: result.password,
     };
-  } catch {
-    return { success: false, error: "Não foi possível criar o paciente agora. Tente novamente." };
+  } catch (erro) {
+    return { success: false, error: falhaParaUsuario("profiles.patient-account-actions", erro, { mensagem: "Não foi possível criar o paciente agora. Tente novamente." }) };
   }
 }
 
@@ -79,8 +80,8 @@ export async function resetPatientPasswordAction(
   try {
     const password = await resetPatientPassword(adminClient, profileId);
     return { success: true, password };
-  } catch {
-    return { success: false, error: "Não foi possível redefinir a senha agora." };
+  } catch (erro) {
+    return { success: false, error: falhaParaUsuario("profiles.patient-account-actions", erro, { mensagem: "Não foi possível redefinir a senha agora." }) };
   }
 }
 
@@ -161,8 +162,8 @@ export async function updatePatientProfileByAdminAction(
       "Seus dados foram atualizados",
       "A equipe Aliviar atualizou algumas informações do seu cadastro.",
     );
-  } catch {
-    return { success: false, error: "Não foi possível salvar os dados agora. Tente novamente." };
+  } catch (erro) {
+    return { success: false, error: falhaParaUsuario("profiles.patient-account-actions", erro, { mensagem: "Não foi possível salvar os dados agora. Tente novamente." }) };
   }
 
   revalidatePath(`/admin/pacientes/${profileId}`);

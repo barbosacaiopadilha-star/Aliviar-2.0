@@ -22,7 +22,7 @@ type PortalShellContainerProps = {
   homeHref: string;
   subtitle: string;
   nav?: PortalNavItem[];
-  variant?: "default" | "patient";
+  variant?: "default" | "patient" | "curadoria" | "concierge";
   children: React.ReactNode;
 };
 

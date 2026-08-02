@@ -23,6 +23,30 @@ afterEach(cleanup);
 
 const CSS = readFileSync(path.resolve(process.cwd(), "src/app/patient-dashboard.css"), "utf8");
 
+/**
+ * Desde a consolidação da identidade visual, a casa da paciente não declara
+ * mais durações próprias: `--p-motion-*` são apelidos do orçamento de
+ * movimento da fundação. Este resolvedor segue o apelido até o valor real em
+ * `globals.css`, para que a guarda continue medindo o que sempre mediu — e
+ * passe a medir a plataforma inteira, não um arquivo só.
+ */
+const GLOBALS = readFileSync(path.resolve(process.cwd(), "src/app/globals.css"), "utf8");
+
+function resolveDuracaoMs(token: string): number | null {
+  const declaracao = CSS.match(new RegExp(`${token}:\\s*([^;]+);`));
+  if (!declaracao) return null;
+  const bruto = declaracao[1]!.trim();
+
+  const direto = bruto.match(/^(\d+)ms$/);
+  if (direto) return Number(direto[1]);
+
+  const referencia = bruto.match(/^var\((--[\w-]+)\)$/);
+  if (!referencia) return null;
+
+  const naFundacao = GLOBALS.match(new RegExp(`${referencia[1]}:\\s*(\\d+)ms`));
+  return naFundacao ? Number(naFundacao[1]) : null;
+}
+
 describe("Hero vivo — saudação e contexto", () => {
   it("usa a saudação do horário quando ela existe", () => {
     render(
@@ -98,9 +122,9 @@ describe("Skeletons — a forma do que vem", () => {
 
 describe("Motion budget — calma, nunca espetáculo", () => {
   it("interação responde em até 250ms", () => {
-    const interacao = CSS.match(/--p-motion-interaction:\s*(\d+)ms/);
-    expect(interacao, "token de interação ausente").toBeTruthy();
-    expect(Number(interacao![1])).toBeLessThanOrEqual(250);
+    const interacao = resolveDuracaoMs("--p-motion-interaction");
+    expect(interacao, "token de interação ausente ou não resolvível").not.toBeNull();
+    expect(interacao!).toBeLessThanOrEqual(250);
   });
 
   it("nada elástico: sem bounce, sem overshoot", () => {

@@ -411,7 +411,7 @@ export function PortalExperience({
                   )}
                 >
                   {frameDef.content && (
-                    <div className="mx-auto inline-flex flex-col items-center gap-3 rounded-3xl bg-surface/65 px-6 py-5 backdrop-blur-md">
+                    <div className="mx-auto inline-flex flex-col items-center gap-3 rounded-3xl bg-[color-mix(in_srgb,var(--color-bg-surface)_65%,transparent)] px-6 py-5 backdrop-blur-md">
                       {frameDef.content}
                     </div>
                   )}

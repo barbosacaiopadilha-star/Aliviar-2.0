@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
 import {
   ACKNOWLEDGE_ACTION_LABEL,
@@ -32,7 +32,7 @@ export function ReconhecerPerfil({
 }) {
   const [confirmando, setConfirmando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [pendente, iniciar] = useTransition();
+  const [pendente, setPendente] = useState(false);
 
   const decisao = decideAcknowledgement(validated ? "VALIDATED" : "DRAFT", pendentes);
 
@@ -48,15 +48,26 @@ export function ReconhecerPerfil({
     );
   }
 
-  const confirmar = () => {
+  const confirmar = async () => {
     setErro(null);
-    iniciar(async () => {
-      const resultado = await reconhecerPerfilAction({ caseId });
-      if (!resultado.success) {
-        setErro(resultado.error);
-        setConfirmando(false);
-      }
-    });
+    setPendente(true);
+    const resultado = await reconhecerPerfilAction({ caseId });
+    if (!resultado.success) {
+      setPendente(false);
+      setErro(resultado.error);
+      setConfirmando(false);
+      return;
+    }
+    // Navegação de documento completa, DEPOIS de a action retornar — não
+    // router.refresh(). Diagnóstico instrumentado (2026-08-02, três
+    // variantes): a action resolvia, o flight RSC de /paciente chegava
+    // completo (28 KB em ~300ms, estado novo dentro, zero erros, todos os
+    // chunks no disco) e o router do Next 15.5.20 nunca commitava a árvore —
+    // "Registrando…" eterno. O GET de documento da mesma rota fecha em
+    // ~280ms e mostra o ato dela. Dívida registrada: RECONHECE-REFRESH-001
+    // (docs/BACKLOG_TECNICO.md). `pendente` fica true de propósito até a
+    // navegação trocar o documento.
+    window.location.reload();
   };
 
   return (
@@ -82,7 +93,7 @@ export function ReconhecerPerfil({
               type="button"
               onClick={() => setConfirmando(false)}
               disabled={pendente}
-              className="inline-flex min-h-11 items-center rounded-md border border-ink-muted/30 px-4 py-2.5 text-sm text-ink transition-colors duration-fast ease-standard hover:bg-ink/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+              className="inline-flex min-h-11 items-center rounded-md border border-[color-mix(in_srgb,var(--color-ink-muted)_30%,transparent)] px-4 py-2.5 text-sm text-ink transition-colors duration-fast ease-standard hover:bg-[color-mix(in_srgb,var(--color-ink)_5%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
             >
               Ainda não
             </button>

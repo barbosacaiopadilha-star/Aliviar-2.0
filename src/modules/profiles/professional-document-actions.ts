@@ -1,5 +1,6 @@
 "use server";
 
+import { falhaParaUsuario } from "@/lib/observability/erros";
 import { revalidatePath } from "next/cache";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -29,8 +30,8 @@ export async function uploadProfessionalDocumentAction(
 
   try {
     await uploadProfessionalDocument(supabase, professionalProfileId, file, authState.user.id);
-  } catch {
-    return { success: false, error: "Não foi possível enviar o documento agora. Tente novamente." };
+  } catch (erro) {
+    return { success: false, error: falhaParaUsuario("profiles.professional-document-actions", erro, { mensagem: "Não foi possível enviar o documento agora. Tente novamente." }) };
   }
 
   revalidatePath(`/admin/profissionais/${professionalProfileId}`);
@@ -51,8 +52,8 @@ export async function deleteProfessionalDocumentAction(
 
   try {
     await deleteProfessionalDocument(supabase, documentId);
-  } catch {
-    return { success: false, error: "Não foi possível remover o documento agora." };
+  } catch (erro) {
+    return { success: false, error: falhaParaUsuario("profiles.professional-document-actions", erro, { mensagem: "Não foi possível remover o documento agora." }) };
   }
 
   revalidatePath(`/admin/profissionais/${professionalProfileId}`);

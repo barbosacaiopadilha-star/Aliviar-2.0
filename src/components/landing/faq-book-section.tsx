@@ -181,7 +181,7 @@ export function FaqBookSection() {
                 {card.duvidaTitle[0]} {card.duvidaTitle[1]}
               </p>
               <p className="mt-2 text-sm text-ink-muted">{card.duvidaText}</p>
-              <span className="mt-4 block text-xs font-medium uppercase tracking-[0.14em] text-brand-primary-deep/70">
+              <span className="mt-4 block text-xs font-medium uppercase tracking-[0.14em] text-[color-mix(in_srgb,var(--color-brand-primary-deep)_70%,transparent)]">
                 Solução
               </span>
               <p className="mt-2 font-serif text-lg italic text-brand-primary-deep">
@@ -313,7 +313,7 @@ export function FaqBookSection() {
                   >
                     <span
                       aria-hidden="true"
-                      className="absolute inset-y-0 left-0 w-2 rounded-l-sm bg-gradient-to-r from-ink/15 to-transparent"
+                      className="absolute inset-y-0 left-0 w-2 rounded-l-sm bg-gradient-to-r from-[color-mix(in_srgb,var(--color-ink)_15%,transparent)] to-transparent"
                     />
                     <span className="text-xs font-medium uppercase tracking-[0.16em] text-ink-muted">
                       Dúvida
@@ -336,9 +336,9 @@ export function FaqBookSection() {
                   >
                     <span
                       aria-hidden="true"
-                      className="absolute inset-y-0 left-0 w-2 rounded-l-sm bg-gradient-to-r from-ink/15 to-transparent"
+                      className="absolute inset-y-0 left-0 w-2 rounded-l-sm bg-gradient-to-r from-[color-mix(in_srgb,var(--color-ink)_15%,transparent)] to-transparent"
                     />
-                    <span className="text-xs font-medium uppercase tracking-[0.16em] text-brand-primary-deep/70">
+                    <span className="text-xs font-medium uppercase tracking-[0.16em] text-[color-mix(in_srgb,var(--color-brand-primary-deep)_70%,transparent)]">
                       Solução
                     </span>
                     <p className="mt-3 font-serif text-2xl italic leading-tight text-brand-primary-deep">
@@ -346,7 +346,7 @@ export function FaqBookSection() {
                       <br />
                       {card.solucaoTitle[1]}
                     </p>
-                    <p className="mt-3 text-sm text-brand-primary-deep/80">
+                    <p className="mt-3 text-sm text-[color-mix(in_srgb,var(--color-brand-primary-deep)_80%,transparent)]">
                       {card.solucaoText}
                     </p>
                   </div>

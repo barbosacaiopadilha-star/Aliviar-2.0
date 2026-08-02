@@ -93,7 +93,7 @@ function ShellNav({
                     className={cn(
                       "flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
                       active
-                        ? "bg-brand-primary text-surface"
+                        ? "border-l-2 border-accent bg-accent-soft text-accent"
                         : "text-ink-muted hover:bg-canvas hover:text-ink",
                       collapsed && "justify-center px-0",
                     )}

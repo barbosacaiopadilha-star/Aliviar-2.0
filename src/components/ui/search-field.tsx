@@ -26,7 +26,7 @@ export function SearchField({
         id={id}
         type="search"
         placeholder={label}
-        className="block min-h-11 w-full rounded-sm border border-border bg-surface py-2.5 pl-10 pr-3 text-sm text-ink shadow-sm transition-colors duration-fast ease-standard placeholder:text-ink-muted focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/20"
+        className="block min-h-11 w-full rounded-sm border border-border bg-surface py-2.5 pl-10 pr-3 text-sm text-ink transition-colors duration-fast ease-standard placeholder:text-ink-muted focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-focus-ring)_20%,transparent)]"
         {...props}
       />
     </div>

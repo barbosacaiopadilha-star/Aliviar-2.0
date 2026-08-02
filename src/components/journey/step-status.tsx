@@ -76,7 +76,7 @@ export function StepStatus({
             <ul className="mt-2 space-y-1.5">
               {settled.map((item) => (
                 <li key={item} className="flex items-baseline gap-2 text-sm text-ink">
-                  <span aria-hidden="true" className="text-brand-sage">
+                  <span aria-hidden="true" className="text-brand-sage-deep">
                     ✓
                   </span>
                   <span>{item}</span>

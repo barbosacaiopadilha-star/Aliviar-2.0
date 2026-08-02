@@ -23,7 +23,7 @@ export default function RevisaoPage() {
             Recebemos sua história
           </h1>
           <div className="mx-auto mt-6 max-w-reading space-y-4 text-base leading-relaxed text-ink-muted">
-            <p>Agora ela será analisada com cuidado por nossa equipe médica.</p>
+            <p>Agora ela será lida com cuidado pelo seu Curador.</p>
             <p>
               Nenhuma recomendação é feita automaticamente — cada história passa
               por revisão humana antes de qualquer orientação.
@@ -60,7 +60,7 @@ export default function RevisaoPage() {
       actionSlot={
         <Button
           type="button"
-          className="sm:w-auto"
+          className="landing-porta sm:w-auto"
           isLoading={isSubmitting}
           onClick={handleSubmit}
         >
@@ -77,7 +77,7 @@ export default function RevisaoPage() {
       ) : null}
 
       <p className="mt-8 text-sm text-ink-muted">
-        Nossa equipe de curadoria analisa cada história com atenção antes de
+        Seu Curador lê cada história com atenção antes de
         qualquer indicação — nunca por algoritmo automático.
       </p>
     </StoryStepLayout>

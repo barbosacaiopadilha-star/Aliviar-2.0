@@ -53,8 +53,74 @@ test.describe("gestão administrativa de profissionais (Sprint Produto 2)", () =
     await page.getByRole("button", { name: "Salvar alterações" }).click();
     await expect(page.getByText("Salvo com sucesso.")).toBeVisible();
 
+    // A porta de publicação (política de fontes): o painel diz o que falta —
+    // e cada condição é cumprida pela interface, nunca por SQL manual.
+    await expect(page.getByText(/Pendências para publicação/)).toBeVisible();
+    await expect(page.getByText("O CRM não foi informado.")).toBeVisible();
+    await expect(page.getByText("O registro no conselho ainda não foi verificado.")).toBeVisible();
+    await expect(page.getByText("A Área de Atuação não foi definida.")).toBeVisible();
+
+    // 1. CRM + UF no cadastro.
+    await page.getByLabel("CRM (quando aplicável)").fill("123456");
+    await page.getByLabel("UF do CRM").selectOption("SP");
+    await page.getByRole("button", { name: "Salvar alterações" }).click();
+    await expect(page.getByText("Salvo com sucesso.")).toBeVisible();
+
+    // 2. Verificação do registro, com fonte.
+    await page.getByLabel("Situação verificada").selectOption("regular");
+    await page.getByLabel("Fonte da verificação").fill("Portal do CFM, consulta E2E");
+    await page.getByRole("button", { name: "Registrar verificação" }).click();
+    await expect(page.getByText("Verificação registrada.")).toBeVisible();
+
+    // 3. Área de Atuação verificada, com fonte.
+    await page.getByLabel("Descrição (texto original, sempre preservado)").fill("Ortopedia — coluna e dor crônica");
+    await page.getByLabel("Tags normalizadas (separadas por vírgula)").fill("ortopedia, coluna, dor crônica");
+    await page.getByLabel("Fonte", { exact: true }).fill("Site institucional (E2E)");
+    await page.getByLabel("Marcar como verificada (exige fonte)").check();
+    await page.getByRole("button", { name: "Salvar área de atuação" }).click();
+    await expect(page.getByText("Área de atuação salva.")).toBeVisible();
+
+    // Sem pendências, a porta abre.
+    await expect(page.getByText(/Pendências para publicação/)).toHaveCount(0);
     await page.getByRole("button", { name: "Publicar" }).click();
     await expect(page.getByText("Publicado", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Despublicar" })).toBeVisible();
+
+    // Catálogo 1.0.0 no cadastro (ETAPA 5): os cinco eixos, preenchimento,
+    // rascunho, retomada e registro — uma única fonte, nenhuma lista paralela.
+    for (const eixo of [
+      "Acesso ao cuidado",
+      "Continuidade do cuidado",
+      "Modelo de atendimento",
+      "Prática e trajetória",
+      "Viabilidade de acesso",
+    ]) {
+      await expect(page.getByRole("button", { name: eixo })).toBeVisible();
+    }
+
+    // Múltipla escolha + escolha única + condicional (condição obrigatória).
+    await page.getByLabel("Atendimento presencial").check();
+    await page.getByLabel("Primeira remota, sob condição").check();
+    await page.getByLabel("Condição — Modalidade de atendimento").fill("Após avaliação do caso pela equipe");
+    await page.getByLabel("Até 7 dias", { exact: true }).check();
+
+    await page.getByRole("button", { name: "Salvar rascunho" }).click();
+    await expect(page.getByText("Rascunho salvo. Você pode retomar quando quiser.")).toBeVisible();
+
+    // Retomada: sair e voltar restaura condição e respostas.
+    await page.reload();
+    await expect(page.getByText(/Rascunho retomado/)).toBeVisible();
+    await expect(page.getByLabel("Atendimento presencial")).toBeChecked();
+    await expect(page.getByLabel("Primeira remota, sob condição")).toBeChecked();
+    await expect(page.getByLabel("Condição — Modalidade de atendimento")).toHaveValue(
+      "Após avaliação do caso pela equipe",
+    );
+    await expect(page.getByLabel("Até 7 dias", { exact: true })).toBeChecked();
+
+    // Registro na Base de Evidências, com proveniência da equipe.
+    await page.getByRole("button", { name: "Revisar e submeter" }).click();
+    await page.getByRole("button", { name: "Registrar pelo cadastro" }).click();
+    await expect(page.getByText(/respostas registradas pela equipe/)).toBeVisible();
 
     await page.getByRole("button", { name: "Desativar" }).click();
     await expect(page.getByText("Inativo", { exact: true })).toBeVisible();

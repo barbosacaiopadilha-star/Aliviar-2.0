@@ -52,7 +52,7 @@ export function ComparacaoCaminhos({ options }: { options: PatientCuradoriaOptio
             onClick={() => setDimensaoAtiva(index)}
             className={
               index === dimensaoAtiva
-                ? "inline-flex min-h-11 items-center border-b-2 border-[var(--patient-forest)] text-sm font-medium text-[var(--patient-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+                ? "inline-flex min-h-11 items-center border-b-2 border-[var(--patient-acento)] text-sm font-medium text-[var(--patient-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
                 : "inline-flex min-h-11 items-center border-b-2 border-transparent text-sm text-[var(--color-ink-muted)] transition-colors hover:text-[var(--patient-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
             }
           >

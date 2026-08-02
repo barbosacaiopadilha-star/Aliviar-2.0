@@ -1,4 +1,5 @@
 import "server-only";
+import { erroDeBanco } from "@/lib/observability/erros";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -142,7 +143,7 @@ export async function savePatientHistory(
     .update({ patient_history: patientHistory })
     .eq("id", priorityProfileId);
 
-  if (error) throw new Error("Não foi possível salvar a história agora.");
+  if (error) throw erroDeBanco("Não foi possível salvar a história agora.", error);
 }
 
 // `saveWeight` e `removeWeight` foram removidas — ADR-042. `priority_weights`
@@ -229,7 +230,7 @@ export async function listApprovedProviders(
     .eq("is_test_fixture", options?.certification === true)
     .eq("publication_status", "publicado");
 
-  if (error) throw new Error("Não foi possível carregar os profissionais da Rede.");
+  if (error) throw erroDeBanco("Não foi possível carregar os profissionais da Rede.", error);
 
   // A exclusão por divergência crítica mora em `rede-policy.ts` desde a
   // correção da NC-22 — a Mesa pergunta na mesma fonte.
@@ -342,7 +343,7 @@ export async function saveSelection(
       .select("id")
       .single();
 
-    if (error || !data) throw new Error("Não foi possível salvar a seleção agora.");
+    if (error || !data) throw erroDeBanco("Não foi possível salvar a seleção agora.", error);
     selectionId = data.id as string;
   }
 
@@ -487,7 +488,7 @@ export async function registerPatientDecision(
       const existing = await getPatientDecision(supabase, curatedSelectionId);
       if (existing) return;
     }
-    throw new Error("Não foi possível registrar sua decisão agora.");
+    throw erroDeBanco("Não foi possível registrar sua decisão agora.", error);
   }
 }
 

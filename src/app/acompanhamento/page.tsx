@@ -44,6 +44,7 @@ export default async function AcompanhamentoPage() {
       homeHref="/acompanhamento"
       subtitle="Acompanhamento"
       nav={[{ href: "/acompanhamento", label: "Meus acompanhamentos" }]}
+      variant="concierge"
     >
       <div className="space-y-6">
         {/* Sem "o mais frio primeiro": a ordem é a de chegada, e apresentá-la

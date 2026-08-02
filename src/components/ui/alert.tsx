@@ -4,17 +4,23 @@ import type { ReactNode } from "react";
 import { cn } from "@/components/ui/cn";
 
 type AlertProps = {
-  variant: "success" | "warning" | "error" | "info";
+  variant: "success" | "warning" | "error" | "info" | "attention";
   title?: string;
   children: ReactNode;
   className?: string;
 };
 
+// `attention` (argila) é a variante das superfícies da pessoa atendida: uma
+// condição a conversar, nunca uma falha dela. As três operacionais existiam
+// antes desta mudança e continuam restritas aos fundos — sua unificação sob
+// a gramática de quatro papéis já está registrada como dívida técnica
+// separada na auditoria, e não é reaberta aqui.
 const variantClasses: Record<AlertProps["variant"], string> = {
-  success: "border-success/20 bg-success-surface text-success",
-  warning: "border-warning/20 bg-warning-surface text-warning",
-  error: "border-error/20 bg-error-surface text-error",
-  info: "border-border bg-canvas text-ink",
+  success: "border-[color-mix(in_srgb,var(--color-success)_20%,transparent)] bg-success-surface text-success",
+  warning: "border-[color-mix(in_srgb,var(--color-warning)_20%,transparent)] bg-warning-surface text-warning",
+  error: "border-[color-mix(in_srgb,var(--color-error)_20%,transparent)] bg-error-surface text-error",
+  info: "border-border bg-recessed text-ink",
+  attention: "border-[color-mix(in_srgb,var(--color-attention)_20%,transparent)] bg-attention-surface text-attention",
 };
 
 const icons = {
@@ -22,6 +28,7 @@ const icons = {
   warning: AlertCircle,
   error: AlertCircle,
   info: Info,
+  attention: Info,
 };
 
 export function Alert({ variant, title, children, className }: AlertProps) {

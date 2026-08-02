@@ -35,19 +35,19 @@ const statusIcons: Record<PhaseStatus, typeof CheckCircle2> = {
 };
 
 const statusIconClasses: Record<PhaseStatus, string> = {
-  CONCLUIDA: "text-brand-sage",
+  CONCLUIDA: "text-brand-sage-deep",
   EM_ANDAMENTO: "text-brand-primary",
   DISPONIVEL: "text-brand-gold",
   AGUARDANDO: "text-ink-muted",
-  BLOQUEADA: "text-ink-muted/50",
+  BLOQUEADA: "text-[color-mix(in_srgb,var(--color-ink-muted)_50%,transparent)]",
 };
 
 const statusRowClasses: Record<PhaseStatus, string> = {
-  CONCLUIDA: "border-brand-sage/40 bg-brand-sage-light/15",
-  EM_ANDAMENTO: "border-brand-primary/50 bg-brand-primary/5 ring-1 ring-brand-primary/20",
-  DISPONIVEL: "border-brand-gold/40 bg-surface hover:border-brand-primary/50",
-  AGUARDANDO: "border-border bg-canvas hover:border-brand-primary/30",
-  BLOQUEADA: "border-border/60 bg-canvas/80 opacity-75",
+  CONCLUIDA: "border-[color-mix(in_srgb,var(--color-brand-sage)_40%,transparent)] bg-[color-mix(in_srgb,var(--color-brand-sage-light)_15%,transparent)]",
+  EM_ANDAMENTO: "border-[color-mix(in_srgb,var(--color-brand-primary)_50%,transparent)] bg-[color-mix(in_srgb,var(--color-brand-primary)_5%,transparent)] ring-1 ring-[color-mix(in_srgb,var(--color-brand-primary)_20%,transparent)]",
+  DISPONIVEL: "border-[color-mix(in_srgb,var(--color-brand-gold)_40%,transparent)] bg-surface hover:border-[color-mix(in_srgb,var(--color-brand-primary)_50%,transparent)]",
+  AGUARDANDO: "border-border bg-canvas hover:border-[color-mix(in_srgb,var(--color-brand-primary)_30%,transparent)]",
+  BLOQUEADA: "border-[color-mix(in_srgb,var(--color-border)_60%,transparent)] bg-[color-mix(in_srgb,var(--color-bg-canvas)_80%,transparent)] opacity-75",
 };
 
 type StepView = CuratorJourney["steps"][number];

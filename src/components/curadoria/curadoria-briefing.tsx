@@ -51,7 +51,7 @@ function SuggestionCard({ suggestion }: { suggestion: BriefingSuggestion }) {
       ? "border-warning bg-warning-surface"
       : suggestion.kind === "LACUNA"
         ? "border-border bg-canvas"
-        : "border-brand-gold/40 bg-surface";
+        : "border-[color-mix(in_srgb,var(--color-brand-gold)_40%,transparent)] bg-surface";
 
   const rotulo =
     suggestion.kind === "ATENCAO" ? "Ponto de atenção" : suggestion.kind === "LACUNA" ? "Falta saber" : "Ponto de alinhamento";

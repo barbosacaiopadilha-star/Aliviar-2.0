@@ -31,7 +31,7 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
     <header
       className={cn(
         "sticky top-0 z-sticky-header border-b border-[var(--color-border)] bg-[var(--color-bg-canvas)] transition-[box-shadow,background-color] duration-[480ms] ease-[cubic-bezier(0.25,0.1,0.25,1)]",
-        scrolled && "bg-[var(--color-bg-canvas)]/92 shadow-[0_1px_0_rgba(183,154,91,0.12),0_4px_20px_rgba(70,55,35,0.04)]",
+        scrolled && "bg-[color-mix(in_srgb,var(--color-bg-canvas)_92%,transparent)] shadow-[0_1px_0_rgba(183,154,91,0.12),0_4px_20px_rgba(70,55,35,0.04)]",
       )}
     >
       <div

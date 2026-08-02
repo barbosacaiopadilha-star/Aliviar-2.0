@@ -16,7 +16,7 @@ export function PatientCard({
       className={cn(
         "patient-card p-6 lg:p-8",
         variant === "note" && "patient-card--note",
-        variant === "forest" && "bg-[var(--patient-forest)] text-[var(--patient-linen)] shadow-emerald-950/10",
+        variant === "forest" && "bg-[var(--patient-acento)] text-[var(--patient-linen)]",
         className,
       )}
       {...props}
@@ -103,7 +103,7 @@ export function CuratorAvatar({ name, className }: { name: string; className?: s
     <div
       aria-hidden="true"
       className={cn(
-        "flex size-12 shrink-0 items-center justify-center rounded-full bg-[var(--patient-forest)] font-serif text-sm font-semibold text-[var(--patient-linen)] shadow-md shadow-emerald-950/10",
+        "flex size-12 shrink-0 items-center justify-center rounded-full bg-[var(--patient-acento)] font-serif text-sm font-semibold text-[var(--patient-linen)] shadow-md",
         className,
       )}
     >

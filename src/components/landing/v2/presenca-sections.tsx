@@ -102,7 +102,7 @@ export function QuemSomosSection() {
           </p>
         </SectionReveal>
 
-        <SectionReveal delayMs={100} className="mt-10 rounded-lg border border-brand-gold/40 bg-canvas p-6 lg:p-8">
+        <SectionReveal delayMs={100} className="mt-10 rounded-lg border border-[color-mix(in_srgb,var(--color-brand-gold)_40%,transparent)] bg-canvas p-6 lg:p-8">
           <h3 className="font-sans text-sm font-semibold uppercase tracking-[0.14em] text-brand-primary-deep">
             O que nós não fazemos
           </h3>

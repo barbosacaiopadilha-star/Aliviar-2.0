@@ -29,8 +29,8 @@ type CaseAlertProps = {
 const severityClasses: Record<CaseAlertSeverity, string> = {
   // Atenção usa dourado — acento pontual de distinção, nunca preenchimento
   // grande (Brand: uso do dourado).
-  atencao: "border-brand-gold/50 bg-canvas",
-  bloqueio: "border-warning/40 bg-warning-surface",
+  atencao: "border-[color-mix(in_srgb,var(--color-brand-gold)_50%,transparent)] bg-canvas",
+  bloqueio: "border-[color-mix(in_srgb,var(--color-warning)_40%,transparent)] bg-warning-surface",
 };
 
 const severityLabels: Record<CaseAlertSeverity, string> = {

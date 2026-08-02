@@ -1,4 +1,5 @@
 import "server-only";
+import { erroDeBanco } from "@/lib/observability/erros";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -135,7 +136,7 @@ export async function updateExecution(
   const { error } = await supabase.from("ace_executions").update(update).eq("id", executionId);
 
   if (error) {
-    throw new Error("Não foi possível atualizar a execução.");
+    throw erroDeBanco("Não foi possível atualizar a execução.", error);
   }
 }
 
@@ -234,7 +235,7 @@ export async function persistArtifact(supabase: SupabaseClient, input: PersistAr
     .single();
 
   if (error || !data) {
-    throw new Error("Não foi possível persistir o artefato do ACE.");
+    throw erroDeBanco("Não foi possível persistir o artefato do ACE.", error);
   }
 
   return mapArtifact(data as ArtifactRow);
@@ -259,7 +260,7 @@ export async function listArtifactsForCase(supabase: SupabaseClient, caseId: str
     .order("created_at", { ascending: true });
 
   if (error) {
-    throw new Error("Não foi possível carregar os artefatos do caso.");
+    throw erroDeBanco("Não foi possível carregar os artefatos do caso.", error);
   }
 
   return (data as ArtifactRow[]).map(mapArtifact);
@@ -331,7 +332,7 @@ export async function listExecutionEvents(supabase: SupabaseClient, executionId:
     .order("created_at", { ascending: true });
 
   if (error) {
-    throw new Error("Não foi possível carregar o log da execução.");
+    throw erroDeBanco("Não foi possível carregar o log da execução.", error);
   }
 
   return (data as EventRow[]).map(mapEvent);
@@ -348,7 +349,7 @@ export async function listExecutionEventsForCase(supabase: SupabaseClient, caseI
     .order("created_at", { ascending: true });
 
   if (error) {
-    throw new Error("Não foi possível carregar o log do caso.");
+    throw erroDeBanco("Não foi possível carregar o log do caso.", error);
   }
 
   return (data as EventRow[]).map(mapEvent);
@@ -364,7 +365,7 @@ export async function listExecutionsForCase(supabase: SupabaseClient, caseId: st
     .order("created_at", { ascending: false });
 
   if (error) {
-    throw new Error("Não foi possível carregar o histórico de execuções do caso.");
+    throw erroDeBanco("Não foi possível carregar o histórico de execuções do caso.", error);
   }
 
   return Promise.all((data as ExecutionRow[]).map((row) => mapExecution(supabase, row)));
@@ -382,7 +383,7 @@ export async function listAllExecutionsOverview(supabase: SupabaseClient): Promi
     .order("created_at", { ascending: false });
 
   if (error) {
-    throw new Error("Não foi possível carregar as execuções do ACE.");
+    throw erroDeBanco("Não foi possível carregar as execuções do ACE.", error);
   }
 
   const rows = data as ExecutionRow[];

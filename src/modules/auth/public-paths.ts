@@ -13,6 +13,10 @@ const PUBLIC_PATHS = new Set([
   "/nova-senha",
   "/robots.txt",
   "/sitemap.xml",
+  // Identidade do build (ETAPA 1): ambiente, host do backend, commit e data.
+  // Nenhum segredo — é a primeira pergunta do diagnóstico, e precisa ser
+  // respondível antes de qualquer sessão existir.
+  "/api/build-info",
   "/sua-historia",
 ]);
 

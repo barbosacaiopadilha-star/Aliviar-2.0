@@ -261,7 +261,12 @@ export const PATIENT_FORBIDDEN_TERMS = [
   "nota",
   "pontuação",
   "pontos possíveis",
-  "cobertura",
+  // "cobertura" saiu da lista no Catálogo 1.0.0: "Cobertura e convênio" é
+  // conceito legítimo que a própria paciente declara. O que continua banido é
+  // a COBERTURA-MECANISMO do modelo de pesos — cercada pelos termos abaixo.
+  "cobertura percentual",
+  "cobertura de pontos",
+  "cobertura do mapa",
   "primeiro lugar",
   "melhor opção",
   "mais recomendado",

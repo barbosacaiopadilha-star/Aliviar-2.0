@@ -1,67 +1,66 @@
 /* Dashboard do paciente — diário de bordo / escritório de curadoria (escopado) */
 .patient-dashboard {
-  --color-bg-canvas: #f4f5f2;
-  --color-bg-surface: #ffffff;
-  --color-ink: #2c3531;
-  --color-ink-muted: #5a6661;
-  --color-border: #e4e6e0;
-  --color-brand-primary: #1a2e26;
-  --color-brand-primary-deep: #14241e;
-  --color-brand-sage: #5a7d6a;
-  --color-brand-sage-light: #a8bfb0;
-  --color-brand-gold: #8a7355;
-  --color-focus-ring: #1a2e26;
-  --patient-linen: #f9f8f6;
-  --patient-mist: #f4f5f2;
-  --patient-warm: #f5efe6;
-  --patient-forest: #1a2e26;
-  --patient-ink: #2c3531;
+  /* Este arquivo NÃO declara mais paleta nenhuma. A atmosfera desta casa
+     (azul) vive junto das outras cinco em `globals.css`, para que a narrativa
+     cromática da jornada seja legível num lugar só. Aqui ficam apenas os
+     apelidos que dezenas de regras abaixo consomem.
+
+     Até esta consolidação, este bloco redeclarava dez cores, três sombras,
+     quatro raios e cinco durações próprias — era uma das três paletas
+     concorrentes apontadas na auditoria.
+
+     O VERDE DESTA CASA NÃO É ATMOSFERA — é o que avançou no tempo.
+     Azul e verde nunca respondem à mesma pergunta (R19): o azul diz o que a
+     Aliviar comunica, o verde diz o que a jornada percorreu. Por isso não há
+     como os dois virarem um semáforo. */
+  --patient-evolucao: var(--scale-sage-700);
+  --patient-evolucao-soft: var(--scale-sage-100);
+
+  /* Aliases da casa — nomes preservados, valores agora vindos da fundação.
+     `--patient-acento` chamava-se `--patient-forest`: o nome deixou de ser verdade
+     quando a atmosfera desta casa passou a ser azul, e um token que mente
+     sobre a própria cor é dívida garantida. */
+  --patient-linen: var(--color-bg-surface);
+  --patient-mist: var(--color-bg-ambient);
+  --patient-warm: var(--color-bg-canvas-warm);
+  --patient-acento: var(--color-ambient-accent);
+  --patient-ink: var(--color-ink);
 
   /* -------------------------------------------------------------------------
-     TOKENS DA EXPERIÊNCIA — uma linguagem só.
-     Antes, cada componente escolhia a própria sombra, o próprio raio e a
-     própria duração: a interface soava como três pessoas falando ao mesmo
-     tempo. Daqui em diante tudo vem daqui.
+     TOKENS DA EXPERIÊNCIA — uma linguagem só, agora a da plataforma inteira.
+
+     Estes nomes eram, até esta consolidação, uma segunda linguagem: elevação,
+     raio, ritmo e movimento próprios, divergentes dos da fundação. O mesmo
+     cartão tinha 1rem de raio aqui e 10px lá fora. Agora são apelidos —
+     mantidos porque dezenas de regras deste arquivo os usam, mas sem nenhum
+     valor próprio para divergir.
   ------------------------------------------------------------------------- */
 
-  /* Elevação em três degraus. Mais que três vira ruído: a pessoa deixa de
-     perceber hierarquia e passa a perceber sombra. */
-  --p-elev-1:
-    0 1px 2px rgb(26 46 38 / 0.03),
-    0 8px 28px rgb(26 46 38 / 0.05);
-  --p-elev-2:
-    0 2px 6px rgb(26 46 38 / 0.05),
-    0 18px 44px rgb(26 46 38 / 0.08);
-  --p-elev-3:
-    0 4px 10px rgb(26 46 38 / 0.06),
-    0 28px 64px rgb(26 46 38 / 0.12);
+  --p-elev-1: var(--shadow-sm);
+  --p-elev-2: var(--shadow-md);
+  --p-elev-3: var(--shadow-lg);
 
-  --p-radius-sm: 0.75rem;
-  --p-radius-md: 1rem;
-  --p-radius-lg: 1.25rem;
-  --p-radius-pill: 9999px;
+  --p-radius-sm: var(--radius-sm);
+  --p-radius-md: var(--radius-md);
+  --p-radius-lg: var(--radius-lg);
+  --p-radius-pill: var(--radius-pill);
 
-  --p-blur: 14px;
-
-  /* Ritmo vertical: uma escala só, para o espaçamento ter cadência em vez de
-     números avulsos. */
+  /* Ritmo vertical: espaçamento não é cor nem elevação, e a cadência desta
+     casa foi projetada com a escala Tailwind em volta. Permanece. */
   --p-space-xs: 0.5rem;
   --p-space-sm: 0.75rem;
   --p-space-md: 1.25rem;
   --p-space-lg: 2rem;
   --p-space-xl: 3rem;
 
-  /* MOTION BUDGET.
-     Interação responde em até 250ms — acima disso a pessoa sente a interface
-     em vez da jornada. Ambiente (respiração da cena) é lento de propósito:
-     lento o bastante para não ser percebido como movimento.
-     Nada elástico: sem overshoot, sem bounce. Calma, nunca espetáculo. */
-  --p-motion-instant: 120ms;
-  --p-motion-interaction: 220ms;
-  --p-motion-transition: 380ms;
+  /* MOTION — o orçamento passa a ser o da fundação. A respiração de ambiente
+     é a única duração própria: não é interação, é atmosfera. */
+  --p-motion-instant: var(--duration-instant);
+  --p-motion-interaction: var(--duration-fast);
+  --p-motion-transition: var(--duration-base);
   --p-motion-ambient: 14s;
-  --p-ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --p-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --p-ease: var(--ease-standard);
+  --p-ease-out: var(--ease-standard);
 
   position: relative;
   background-color: var(--patient-mist);
@@ -120,9 +119,9 @@
   inset: 0;
   background: linear-gradient(
     160deg,
-    rgb(245 239 230 / 0.94) 0%,
-    rgb(249 248 246 / 0.9) 40%,
-    rgb(244 245 242 / 0.96) 100%
+    color-mix(in srgb, var(--color-bg-canvas-warm) 94%, transparent) 0%,
+    color-mix(in srgb, var(--color-bg-canvas) 90%, transparent) 40%,
+    color-mix(in srgb, var(--color-bg-ambient) 96%, transparent) 100%
   );
 }
 
@@ -132,7 +131,11 @@
   right: -5%;
   width: 55%;
   height: 45%;
-  background: radial-gradient(ellipse, rgb(154 123 79 / 0.08) 0%, transparent 70%);
+  background: radial-gradient(
+    ellipse,
+    color-mix(in srgb, var(--color-ambient-accent) 10%, transparent) 0%,
+    transparent 70%
+  );
 }
 
 .patient-dashboard > header,
@@ -151,7 +154,7 @@
    Antes esta regra contradizia o comentário da .patient-carta logo abaixo. */
 .patient-dashboard .patient-card {
   border-radius: var(--p-radius-md);
-  background: rgb(253 253 252 / 0.97);
+  background: color-mix(in srgb, var(--color-bg-surface) 97%, transparent);
   box-shadow: var(--p-elev-1);
   transition:
     box-shadow var(--p-motion-interaction) var(--p-ease),
@@ -163,12 +166,12 @@
 }
 
 .patient-dashboard .patient-card--note {
-  background: rgb(250 249 246 / 0.95);
-  border-left: 3px solid rgb(90 125 106 / 0.35);
+  background: color-mix(in srgb, var(--color-bg-canvas) 95%, transparent);
+  border-left: 3px solid color-mix(in srgb, var(--patient-evolucao) 45%, transparent);
 }
 
 .patient-dashboard .patient-card--forest {
-  background: rgb(24 42 34 / 0.97);
+  background: var(--color-ambient-accent-deep);
   color: var(--patient-linen);
 }
 
@@ -178,9 +181,9 @@
 .patient-dashboard .patient-journey-line {
   background: linear-gradient(
     180deg,
-    rgb(90 125 106 / 0.5) 0%,
-    rgb(26 46 38 / 0.25) 50%,
-    rgb(26 46 38 / 0.08) 100%
+    color-mix(in srgb, var(--patient-evolucao) 55%, transparent) 0%,
+    color-mix(in srgb, var(--patient-evolucao) 25%, transparent) 50%,
+    color-mix(in srgb, var(--patient-evolucao) 8%, transparent) 100%
   );
 }
 
@@ -236,9 +239,9 @@
   z-index: -1;
   background: linear-gradient(
     105deg,
-    rgb(249 248 246 / 0.96) 0%,
-    rgb(249 248 246 / 0.88) 45%,
-    rgb(245 239 230 / 0.62) 100%
+    color-mix(in srgb, var(--color-bg-canvas) 96%, transparent) 0%,
+    color-mix(in srgb, var(--color-bg-canvas) 88%, transparent) 45%,
+    color-mix(in srgb, var(--color-bg-canvas-warm) 62%, transparent) 100%
   );
 }
 
@@ -251,7 +254,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: var(--color-brand-sage);
+  color: var(--patient-evolucao);
 }
 
 /* ---------------------------------------------------------------------------
@@ -283,24 +286,24 @@
   display: block;
   height: 0.25rem;
   border-radius: 9999px;
-  background: rgb(26 46 38 / 0.12);
+  background: var(--color-border-strong);
   transition: background-color var(--p-motion-transition) var(--p-ease);
 }
 
 .patient-dashboard .patient-walk__step--done .patient-walk__dot {
-  background: rgb(90 125 106 / 0.55);
+  background: var(--patient-evolucao);
 }
 
 /* O caminho já percorrido permanece iluminado — não apaga atrás da pessoa. */
 .patient-dashboard .patient-walk__step--done .patient-walk__label {
-  color: var(--color-brand-sage);
+  color: var(--patient-evolucao);
 }
 
 /* A etapa atual se marca por presença, não por movimento: nada na casa se
    move sozinho (Sistema Visual §9 — nenhuma animação que se repita sem
    interação). A marca é mais alta e mais escura; o corpo a encontra parada. */
 .patient-dashboard .patient-walk__step--current .patient-walk__dot {
-  background: var(--patient-forest);
+  background: var(--patient-acento);
   height: 0.375rem;
 }
 
@@ -345,12 +348,12 @@
   border-radius: var(--p-radius-lg);
   /* Papel, não vidro: superfície fosca e opaca — blur de fundo é material
      proibido (Sistema Visual §3). */
-  background: rgb(253 253 252 / 0.97);
+  background: color-mix(in srgb, var(--color-bg-surface) 97%, transparent);
   padding: 1.5rem;
   box-shadow: var(--p-elev-1);
   /* A carta é um objeto: borda de luz no topo, sombra embaixo. Sem a borda,
      o branco sobre branco some e ela vira container. */
-  border: 1px solid rgb(255 255 255 / 0.6);
+  border: 1px solid color-mix(in srgb, var(--color-bg-surface) 60%, transparent);
   transition:
     box-shadow var(--p-motion-interaction) var(--p-ease),
     transform var(--p-motion-interaction) var(--p-ease),
@@ -359,21 +362,21 @@
 
 .patient-dashboard .patient-carta:hover {
   transform: translateY(-2px);
-  border-color: rgb(90 125 106 / 0.28);
+  border-color: color-mix(in srgb, var(--patient-evolucao) 32%, transparent);
   box-shadow: var(--p-elev-2);
 }
 
 /* Foco visível no objeto inteiro quando o teclado entra nele — não só no
    botão. Quem navega por Tab precisa saber em qual carta está. */
 .patient-dashboard .patient-carta:focus-within {
-  border-color: rgb(26 46 38 / 0.45);
+  border-color: color-mix(in srgb, var(--color-ambient-accent) 45%, transparent);
   box-shadow: var(--p-elev-2);
 }
 
 /* Já conhecida: presença mais serena, nunca apagada — ela continua sendo uma
    das três opções legítimas. */
 .patient-dashboard .patient-carta--conhecida {
-  background: rgb(255 255 255 / 0.72);
+  background: color-mix(in srgb, var(--color-bg-surface) 72%, transparent);
 }
 
 @media (min-width: 1024px) {
@@ -398,15 +401,15 @@
 }
 
 .patient-dashboard .patient-carta--aberta {
-  background: rgb(255 255 255 / 0.97);
-  border-color: rgb(90 125 106 / 0.2);
+  background: color-mix(in srgb, var(--color-bg-surface) 97%, transparent);
+  border-color: color-mix(in srgb, var(--color-ambient-accent) 25%, transparent);
   box-shadow: var(--p-elev-3);
 }
 
 /* Atenção nunca escondida, nunca diminuída: mesmo peso do que oferece, com
    uma marca lateral que a torna encontrável sem alarme. */
 .patient-dashboard .patient-atencao {
-  border-left: 3px solid rgb(138 115 85 / 0.45);
+  border-left: 3px solid color-mix(in srgb, var(--color-attention) 45%, transparent);
   padding-left: 1rem;
 }
 
@@ -435,7 +438,7 @@
    aria-label de cada bloco é quem fala). */
 .patient-dashboard .p-skeleton {
   border-radius: var(--p-radius-sm);
-  background: rgb(26 46 38 / 0.07);
+  background: color-mix(in srgb, var(--color-ink) 7%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -452,7 +455,7 @@
   }
 
   .patient-dashboard .p-skeleton {
-    background: rgb(26 46 38 / 0.07);
+    background: color-mix(in srgb, var(--color-ink) 7%, transparent);
   }
 
   .patient-dashboard .patient-card,

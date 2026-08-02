@@ -11,7 +11,7 @@ type JsonViewerProps = {
 export function JsonViewer({ value, maxHeightClassName = "max-h-96" }: JsonViewerProps) {
   return (
     <pre
-      className={`overflow-auto rounded-md border border-border bg-canvas/60 p-3 text-xs leading-relaxed text-ink ${maxHeightClassName}`}
+      className={`overflow-auto rounded-md border border-border bg-[color-mix(in_srgb,var(--color-bg-canvas)_60%,transparent)] p-3 text-xs leading-relaxed text-ink ${maxHeightClassName}`}
     >
       <code>{JSON.stringify(value, null, 2)}</code>
     </pre>

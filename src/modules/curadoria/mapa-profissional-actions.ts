@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { falhaParaUsuario } from "@/lib/observability/erros";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRoleForAction } from "@/modules/auth/guard";
@@ -26,8 +27,8 @@ export async function saveProfessionalSubcriterionAction(input: {
 }): Promise<{ success: true } | { success: false; error: string }> {
   try {
     await requireRoleForAction("administrador");
-  } catch {
-    return { success: false, error: "Só quem edita profissionais pode registrar o Mapa." };
+  } catch (erro) {
+    return { success: false, error: falhaParaUsuario("curadoria.mapa-profissional-actions", erro, { mensagem: "Só quem edita profissionais pode registrar o Mapa." }) };
   }
 
   if (!input.professionalProfileId || !input.subcriterionCode) {

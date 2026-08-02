@@ -19,7 +19,7 @@ export function PatientHomeState({ state }: PatientHomeStateProps) {
             Quando você se sentir pronto, pode nos contar o que está vivendo. Não precisa organizar tudo
             antes de começar.
           </p>
-          <LinkButton href="/sua-historia">Contar minha história</LinkButton>
+          <LinkButton href="/sua-historia/continuar">Contar minha história</LinkButton>
         </PatientCard>
       );
 

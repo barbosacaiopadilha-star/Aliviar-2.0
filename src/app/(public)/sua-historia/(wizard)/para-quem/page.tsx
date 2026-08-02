@@ -13,7 +13,11 @@ export default function ParaQuemPage() {
       step={2}
       totalSteps={7}
       title="Para quem é esta busca?"
-      backHref="/sua-historia"
+      // ETAPA 9: todo o wizard exige sessão de paciente (o layout usa
+      // requireRole), e /sua-historia devolve quem já tem história ao passo
+      // atual — apontar para lá deixava o primeiro passo sem saída. Voltar,
+      // aqui, é voltar para o painel dela.
+      backHref="/paciente"
       nextHref="/sua-historia/motivo"
       nextDisabled={!data.paraQuem}
       footerSlot={<AutosaveIndicator />}

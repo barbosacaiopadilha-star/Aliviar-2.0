@@ -20,7 +20,7 @@ export function Radio({ id, label, className, ...props }: RadioProps) {
       <input
         id={radioId}
         type="radio"
-        className="size-4 border-border text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+        className="size-4 border-border text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         {...props}
       />
       <span>{label}</span>

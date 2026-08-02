@@ -222,7 +222,7 @@ export function DecisionCaseViewer({
       >
         <ul className="space-y-2">
           {decisionCase.missingInformation.map((entry, index) => (
-            <li key={`${entry.relatedField}-${index}`} className="rounded-md border border-brand-gold/30 p-3 text-sm">
+            <li key={`${entry.relatedField}-${index}`} className="rounded-md border border-[color-mix(in_srgb,var(--color-brand-gold)_30%,transparent)] p-3 text-sm">
               <p className="text-ink">{entry.description}</p>
               <p className="mt-1 text-xs text-ink-muted">Campo: {entry.relatedField}</p>
             </li>

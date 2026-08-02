@@ -20,7 +20,9 @@ export type PatientNavItem = {
 // inventado.
 export const PATIENT_NAV_ITEMS: PatientNavItem[] = [
   { label: "Início", href: "/paciente" },
-  { label: "Minha história", href: "/sua-historia" },
+  // ETAPA 9: retoma a história existente no passo em que ela parou. Apontar
+  // para a recepção do wizard recomeçava a conversa do zero.
+  { label: "Minha história", href: "/sua-historia/continuar" },
   { label: "Documentos", href: "/paciente/documentos" },
   { label: "Minha Curadoria", href: "/paciente/curadoria" },
   { label: "Linha do tempo", href: "/paciente/linha-do-tempo" },

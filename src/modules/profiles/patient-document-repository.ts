@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { erroDeBanco } from "@/lib/observability/erros";
+
 import type { PatientDocument } from "./types";
 
 const BUCKET = "patient-documents";
@@ -39,7 +41,7 @@ export async function listPatientDocuments(
     .order("created_at", { ascending: false });
 
   if (error) {
-    throw new Error("Não foi possível carregar os documentos.");
+    throw erroDeBanco("Não foi possível carregar os documentos.", error);
   }
 
   return (data as PatientDocumentRow[]).map(mapRow);
@@ -57,7 +59,7 @@ export async function uploadPatientDocument(
     .upload(filePath, file, { contentType: file.type || undefined });
 
   if (uploadError) {
-    throw new Error("Não foi possível enviar o arquivo.");
+    throw erroDeBanco("Não foi possível enviar o arquivo.", uploadError);
   }
 
   const { data, error } = await supabase
@@ -75,7 +77,7 @@ export async function uploadPatientDocument(
 
   if (error || !data) {
     await supabase.storage.from(BUCKET).remove([filePath]);
-    throw new Error("Não foi possível registrar o documento.");
+    throw erroDeBanco("Não foi possível registrar o documento.", error);
   }
 
   return mapRow(data as PatientDocumentRow);
@@ -103,7 +105,7 @@ export async function deletePatientDocument(
   const { error: deleteError } = await supabase.from("patient_documents").delete().eq("id", documentId);
 
   if (deleteError) {
-    throw new Error("Não foi possível remover o documento.");
+    throw erroDeBanco("Não foi possível remover o documento.", deleteError);
   }
 
   await supabase.storage.from(BUCKET).remove([row.file_path as string]);

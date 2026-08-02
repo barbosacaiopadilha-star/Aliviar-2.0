@@ -59,7 +59,7 @@ export function Drawer({
         tabIndex={-1}
         aria-hidden="true"
         className={cn(
-          "absolute inset-0 cursor-default bg-ink/30 transition-opacity duration-base ease-standard",
+          "absolute inset-0 cursor-default bg-[color-mix(in_srgb,var(--color-ink)_30%,transparent)] transition-opacity duration-base ease-standard",
           open ? "opacity-100" : "opacity-0",
         )}
         onClick={onClose}

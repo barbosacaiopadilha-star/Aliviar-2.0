@@ -1,6 +1,13 @@
 import { z } from "zod";
 
+// CAUSA RAIZ da "criação sem avanço" (Release de Reconstrução, ETAPA 6):
+// quando a ADR-042 removeu os campos do motor legado do formulário,
+// `formData.get()` desses campos passou a devolver `null` — e `null` NÃO é
+// `undefined` para o Zod: `.optional()` o rejeita. O parse falhava no cliente,
+// os erros caíam em campos que não existem na tela, e o submit morria sem
+// mensagem. Ausência é lacuna declarada (Invariante 34) — nunca erro.
 function emptyToUndefined(value: unknown): unknown {
+  if (value === null || value === undefined) return undefined;
   return typeof value === "string" && value.trim() === "" ? undefined : value;
 }
 
@@ -93,4 +100,5 @@ export const COMPETENCY_DOMAIN_LABELS = {
 export type ProfessionalProfileInput = z.infer<typeof professionalProfileSchema>;
 
 export const professionalStatusSchema = z.enum(["ativo", "inativo"]);
+export const professionalRegistrationStatusSchema = z.enum(["regular", "irregular", "nao_localizado"]);
 export const professionalPublicationStatusSchema = z.enum(["publicado", "nao_publicado"]);

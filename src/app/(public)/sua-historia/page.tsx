@@ -1,14 +1,32 @@
-import { StoryStepLayout } from "@/components/story/story-step-layout";
+import { redirect } from "next/navigation";
 
-export default function BoasVindasPage() {
+import { StoryStepLayout } from "@/components/story/story-step-layout";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getAuthState } from "@/modules/auth/session";
+import { listStoriesForProfile } from "@/modules/story/repository";
+
+export default async function BoasVindasPage() {
+  // ETAPA 9: quem já é paciente e já tem história não recomeça — retoma.
+  // A recepção é para o primeiro contato; voltar a ela reiniciava a conversa.
+  const authState = await getAuthState();
+  const ehPaciente = authState?.roles.includes("paciente") ?? false;
+  if (ehPaciente) {
+    const supabase = await createServerSupabaseClient();
+    const stories = await listStoriesForProfile(supabase, authState!.user.id);
+    if (stories.length > 0) {
+      redirect("/sua-historia/continuar");
+    }
+  }
+
   return (
     <StoryStepLayout
       step={1}
       totalSteps={7}
       title="Sua história merece ser contada com calma."
-      backHref="/"
+      backHref={ehPaciente ? "/paciente" : "/"}
       nextHref="/sua-historia/continuar"
       nextLabel="Começar"
+      nextIsPorta
     >
       <div className="space-y-4 text-base leading-relaxed text-ink-muted">
         <p>Não existem respostas certas — você escreve no seu ritmo, com suas próprias palavras.</p>

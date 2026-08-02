@@ -1,5 +1,6 @@
 "use server";
 
+import { falhaParaUsuario } from "@/lib/observability/erros";
 import { revalidatePath } from "next/cache";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -44,8 +45,8 @@ export async function updatePatientProfileAction(
       preferredChannel: parsed.data.preferredChannel,
       acceptsReminders: parsed.data.acceptsReminders,
     });
-  } catch {
-    return { success: false, error: "Não foi possível salvar seu perfil agora. Tente novamente." };
+  } catch (erro) {
+    return { success: false, error: falhaParaUsuario("profiles.patient-actions", erro, { mensagem: "Não foi possível salvar seu perfil agora. Tente novamente." }) };
   }
 
   revalidatePath("/paciente/perfil");

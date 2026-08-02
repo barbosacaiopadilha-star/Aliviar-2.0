@@ -7,50 +7,58 @@
    ========================================================================== */
 
 .landing-editorial {
-  /* —— Paleta canônica —— */
-  --color-bg-canvas: #faf8f4;
-  --color-bg-canvas-warm: #f3eee7;
-  --color-bg-stone: #edeae3;
-  --color-bg-surface: #ffffff;
-  --color-ink: #2f3a3d;
-  --color-ink-muted: #66737a;
-  --color-brand-primary: #556b5d;
-  --color-brand-primary-deep: #4a5f52;
-  --color-brand-primary-hover: #647b6d;
-  --color-brand-sage: #556b5d;
-  --color-brand-sage-light: #8a9e92;
-  --color-brand-gold: #b79a5b;
-  --color-brand-gold-hover: #c6aa68;
-  --color-border: rgba(183, 154, 91, 0.16);
-  --color-focus-ring: #556b5d;
+  /* —— A fachada não declara mais paleta ——
+     Este bloco redeclarava dezesseis cores — entre elas um
+     `--color-brand-primary: #556b5d` que apagava o azul institucional da
+     ADR-017 na primeira tela que qualquer pessoa vê da Aliviar. Era uma das
+     três paletas concorrentes da auditoria, e a mais custosa: a fachada
+     prometia uma identidade que o produto lá dentro não tinha.
 
-  /* Aliases semânticos da landing */
+     Agora tudo vem da fundação. A atmosfera da fachada (azul e verde em
+     equilíbrio) vive em `globals.css` junto das outras cinco.
+
+     A pedra é o único degrau de superfície próprio — a fachada tem um
+     material a mais que o resto da casa. */
+  --color-bg-stone: var(--scale-neutro-200);
+
+  /* Aliases semânticos da landing.
+     `--landing-forest` continua verde de propósito: é a metade verde do
+     equilíbrio da fachada — a sala escura por onde se passa —, enquanto as
+     ações e a marca falam azul. As duas famílias se dividem a fachada, que é
+     exatamente o que a narrativa cromática pede aqui. */
   --landing-linen: var(--color-bg-canvas);
   --landing-linen-warm: var(--color-bg-canvas-warm);
-  --landing-forest: var(--color-brand-primary);
+  /* A sala verde desce um degrau (era sage-700 → sage-800).
+     Duas razões, e as duas apontam para o mesmo lado. A de acessibilidade:
+     sobre o verde antigo o texto secundário ficava em 4,28:1 e o terciário em
+     3,60:1 — reprovação de AA na única sala escura da fachada. A de direção de
+     arte: um verde médio lê como superfície colorida; um verde profundo lê
+     como sala. A profundidade vem do valor, nunca da sombra. */
+  --landing-forest: var(--scale-sage-800);
+  --landing-forest-deep: var(--scale-sage-900);
   --landing-ink: var(--color-ink);
 
   /* —— Materiais — papel algodão (grão quase imperceptível) —— */
   --texture-paper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)' opacity='0.035'/%3E%3C/svg%3E");
 
-  /* Sombras quentes — luz natural, nunca estúdio */
-  --shadow-sm: 0 1px 2px rgba(70, 55, 35, 0.04), 0 2px 8px rgba(70, 55, 35, 0.03);
-  --shadow-md: 0 4px 16px rgba(70, 55, 35, 0.05);
-  --shadow-lg: 0 12px 40px rgba(70, 55, 35, 0.06);
-  --shadow-card: 0 1px 2px rgba(70, 55, 35, 0.03), 0 8px 32px rgba(70, 55, 35, 0.05);
-  --shadow-card-hover: 0 4px 12px rgba(70, 55, 35, 0.05), 0 16px 48px rgba(70, 55, 35, 0.07);
+  /* Sombras — as três da fundação, sem redeclarar. As duas de cartão eram
+     um quarto e um quinto degraus de elevação que só existiam aqui; passam a
+     ser apelidos dos degraus canônicos (mais que três degraus deixa de ser
+     hierarquia e vira ruído). */
+  --shadow-card: var(--shadow-sm);
+  --shadow-card-hover: var(--shadow-md);
 
-  /* Motion — deslocamento de uma pessoa caminhando */
-  --duration-fast: 280ms;
-  --duration-base: 520ms;
-  --duration-slow: 760ms;
+  /* Motion — o orçamento é o da fundação. A caminhada permanece: é a única
+     duração própria da fachada, e não é interação — é o deslocamento de uma
+     pessoa atravessando o edifício. */
   --duration-walk: 1100ms;
-  --ease-natural: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-natural: var(--ease-standard);
   --ease-walk: cubic-bezier(0.22, 0.08, 0.14, 1);
 
-  /* Radius — arredondamento suave, nunca pílula de SaaS */
-  --radius-button: 0.875rem;
-  --radius-card: 1.25rem;
+  /* Radius — apelidos dos degraus da fundação. Antes a fachada arredondava
+     botões e cartões com valores que não existiam em nenhum outro cômodo. */
+  --radius-button: var(--radius-md);
+  --radius-card: var(--radius-lg);
 
   background-color: var(--landing-linen);
   background-image: var(--texture-paper);
@@ -75,6 +83,75 @@
   }
 }
 
+/* —— As batidas do ritmo (CRITICA_LANDING_2_2 §3/§6) ——
+   A seção padrão (ampla) é a contemplação; estas três variantes criam a
+   frase musical que a página não tinha: aberto — médio — vazio — denso —
+   corte — médio. Ritmo por composição, não por cor. */
+.landing-editorial .landing-section--media {
+  padding-top: 6rem;
+  padding-bottom: 6rem;
+}
+
+.landing-editorial .landing-section--densa {
+  padding-top: 4.5rem;
+  padding-bottom: 4.5rem;
+}
+
+/* O respiro: quase nada dentro, muito ar em volta — o único grande vazio
+   deliberado da página. Por ser único, significa (F2 §10: nem todo espaço
+   vazio é silêncio; silêncio é intenção). */
+.landing-editorial .landing-section--respiro {
+  padding-top: 9rem;
+  padding-bottom: 9rem;
+}
+
+@media (min-width: 1024px) {
+  .landing-editorial .landing-section--media {
+    padding-top: 8rem;
+    padding-bottom: 8rem;
+  }
+
+  .landing-editorial .landing-section--densa {
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+  }
+
+  .landing-editorial .landing-section--respiro {
+    padding-top: 12rem;
+    padding-bottom: 12rem;
+  }
+}
+
+/* —— A soleira — o gesto da marca na porta de entrada ——
+   O fio dourado que já é o acabamento dos eyebrows, revelando-se sob a
+   porta única do Hero, da esquerda para a direita, no tempo de travessia.
+   A porta que se abre devagar: discreta, nunca pisca, nunca salta. */
+.landing-editorial .landing-porta {
+  position: relative;
+}
+
+.landing-editorial .landing-porta::after {
+  content: "";
+  position: absolute;
+  left: 1.25rem;
+  right: 1.25rem;
+  bottom: -0.5rem;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-brand-gold) 65%, transparent),
+    color-mix(in srgb, var(--color-brand-gold) 25%, transparent)
+  );
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--duration-travessia) var(--ease-standard);
+}
+
+.landing-editorial .landing-porta:hover::after,
+.landing-editorial .landing-porta:focus-visible::after {
+  transform: scaleX(1);
+}
+
 /* —— Limiar — a passagem de luz entre dois ambientes ——
    Substitui qualquer divisor gráfico: o visitante não vê uma linha,
    sente uma abertura por onde a luz do próximo espaço entra. */
@@ -89,8 +166,8 @@
   background:
     radial-gradient(
       ellipse 42% 100% at 50% 50%,
-      rgba(255, 253, 248, 0.75) 0%,
-      rgba(255, 253, 248, 0.28) 45%,
+      color-mix(in srgb, var(--color-bg-surface) 75%, transparent) 0%,
+      color-mix(in srgb, var(--color-bg-surface) 28%, transparent) 45%,
       transparent 75%
     );
   pointer-events: none;
@@ -167,11 +244,11 @@
   content: "";
   width: 1.75rem;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(183, 154, 91, 0.55));
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-brand-gold) 55%, transparent));
 }
 
 .landing-editorial .landing-eyebrow::after {
-  background: linear-gradient(90deg, rgba(183, 154, 91, 0.55), transparent);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-brand-gold) 55%, transparent), transparent);
 }
 
 /* ==========================================================================
@@ -184,7 +261,7 @@
   border: 1px solid var(--color-border);
   background:
     var(--texture-paper),
-    linear-gradient(165deg, rgb(255 255 255 / 0.97) 0%, rgb(253 251 246 / 0.92) 100%);
+    linear-gradient(165deg, color-mix(in srgb, var(--color-bg-surface) 97%, transparent) 0%, color-mix(in srgb, var(--color-bg-canvas) 92%, transparent) 100%);
   box-shadow: var(--shadow-card);
   transition:
     box-shadow var(--duration-base) var(--ease-natural),
@@ -197,14 +274,14 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(ellipse at 20% 0%, rgb(255 255 255 / 0.6) 0%, transparent 55%);
+  background: radial-gradient(ellipse at 20% 0%, color-mix(in srgb, var(--color-bg-surface) 60%, transparent) 0%, transparent 55%);
   pointer-events: none;
 }
 
 .landing-editorial .landing-card:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-card-hover);
-  border-color: rgba(183, 154, 91, 0.28);
+  border-color: color-mix(in srgb, var(--color-brand-gold) 28%, transparent);
 }
 
 /* —— Faixa institucional — a sala verde —— */
@@ -220,8 +297,8 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 60% at 20% 0%, rgb(255 255 255 / 0.07) 0%, transparent 60%),
-    linear-gradient(160deg, rgb(85 107 93 / 0.98) 0%, rgb(74 95 82 / 1) 100%);
+    radial-gradient(ellipse 80% 60% at 20% 0%, color-mix(in srgb, var(--color-bg-surface) 7%, transparent) 0%, transparent 60%),
+    linear-gradient(160deg, color-mix(in srgb, var(--landing-forest) 98%, transparent) 0%, var(--landing-forest-deep) 100%);
   pointer-events: none;
 }
 
@@ -241,10 +318,12 @@
   overflow: hidden;
   background: var(--color-bg-stone);
   padding: 0.5rem;
+  /* Era a sombra mais pesada da plataforma (0 32px 80px a 12%) — um quarto
+     degrau de elevação que só existia aqui. Volta ao degrau canônico: a
+     profundidade vem de valor e textura, nunca de sombra dramática. */
   box-shadow:
-    0 32px 80px rgba(70, 55, 35, 0.12),
-    0 8px 24px rgba(70, 55, 35, 0.05),
-    inset 0 1px 0 rgb(255 255 255 / 0.7);
+    var(--shadow-lg),
+    inset 0 1px 0 color-mix(in srgb, var(--color-bg-surface) 70%, transparent);
 }
 
 .landing-editorial .landing-video-cinema > video {
@@ -256,7 +335,7 @@
   position: absolute;
   inset: 0.5rem;
   border-radius: 1.125rem;
-  box-shadow: inset 0 0 90px rgba(47, 58, 61, 0.1);
+  box-shadow: inset 0 0 90px color-mix(in srgb, var(--color-ink) 10%, transparent);
   pointer-events: none;
   z-index: 1;
 }
@@ -266,7 +345,7 @@
   position: absolute;
   inset: 0.5rem;
   border-radius: 1.125rem;
-  border: 1px solid rgba(183, 154, 91, 0.35);
+  border: 1px solid color-mix(in srgb, var(--color-brand-gold) 35%, transparent);
   pointer-events: none;
   z-index: 2;
 }
@@ -297,10 +376,10 @@
   border: 1px solid var(--color-border);
   background:
     var(--texture-paper),
-    linear-gradient(180deg, rgb(255 255 255 / 0.98) 0%, rgb(250 248 244 / 0.95) 100%);
+    linear-gradient(180deg, color-mix(in srgb, var(--color-bg-surface) 98%, transparent) 0%, color-mix(in srgb, var(--color-bg-canvas) 95%, transparent) 100%);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.9),
-    inset 0 -3px 12px rgba(70, 55, 35, 0.03),
+    inset 0 1px 0 color-mix(in srgb, var(--color-bg-surface) 90%, transparent),
+    inset 0 -3px 12px color-mix(in srgb, var(--color-ink) 4%, transparent),
     var(--shadow-lg);
   padding: 2.75rem 2.25rem;
 }
@@ -323,7 +402,7 @@
   background: linear-gradient(
     180deg,
     var(--color-brand-gold) 0%,
-    rgba(183, 154, 91, 0.35) 100%
+    color-mix(in srgb, var(--color-brand-gold) 35%, transparent) 100%
   );
   opacity: 0.7;
 }
@@ -365,8 +444,8 @@
 
 .landing-editorial .landing-faq-trigger[aria-expanded="true"] .landing-faq-icon {
   transform: rotate(45deg);
-  background-color: rgba(183, 154, 91, 0.08);
-  border-color: rgba(183, 154, 91, 0.35);
+  background-color: color-mix(in srgb, var(--color-brand-gold) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-brand-gold) 35%, transparent);
 }
 
 /* Virar de página — a resposta se assenta como papel */
@@ -442,8 +521,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  border: 1px solid rgba(183, 154, 91, 0.3);
-  background: rgb(255 255 255 / 0.85);
+  border: 1px solid color-mix(in srgb, var(--color-brand-gold) 30%, transparent);
+  background: color-mix(in srgb, var(--color-bg-surface) 85%, transparent);
   font-family: var(--font-serif);
   font-size: 0.9375rem;
   font-weight: 500;

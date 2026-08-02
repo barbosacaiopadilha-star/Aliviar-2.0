@@ -87,6 +87,8 @@ export async function saveProtocolDraft(
 // Submissão — rascunho vira evidência declarada, nunca verificada
 // ---------------------------------------------------------------------------
 
+export const TEAM_REGISTRATION_SOURCE =
+  "Registrado pela equipe Aliviar no cadastro administrativo";
 export const SELF_DECLARATION_SOURCE = "Autodeclaração pelo Protocolo da Prática Profissional";
 export const SELF_DECLARATION_TIER: SourceTier = "INSTITUCIONAL";
 
@@ -108,6 +110,10 @@ export async function submitProfessionalProtocol(
     responses: Record<string, DraftResponse>;
     collectedBy: string;
     collectedAt?: string;
+    // Proveniência da coleta: por padrão, autodeclaração do próprio
+    // profissional; o cadastro administrativo declara a própria origem.
+    sourceTier?: SourceTier;
+    source?: string;
   },
 ): Promise<ProtocolSubmission> {
   const codigos = Object.keys(params.responses);
@@ -124,8 +130,8 @@ export async function submitProfessionalProtocol(
       details: resposta.details,
       conditionNote: resposta.conditionNote,
       observation: resposta.observation,
-      sourceTier: SELF_DECLARATION_TIER,
-      source: SELF_DECLARATION_SOURCE,
+      sourceTier: params.sourceTier ?? SELF_DECLARATION_TIER,
+      source: params.source ?? SELF_DECLARATION_SOURCE,
     });
     if (erros.length > 0) rejected.push({ subcriterionCode: codigo, errors: erros });
   }
@@ -142,8 +148,8 @@ export async function submitProfessionalProtocol(
         details: resposta.details,
         conditionNote: resposta.conditionNote,
         observation: resposta.observation,
-        sourceTier: SELF_DECLARATION_TIER,
-        source: SELF_DECLARATION_SOURCE,
+        sourceTier: params.sourceTier ?? SELF_DECLARATION_TIER,
+        source: params.source ?? SELF_DECLARATION_SOURCE,
         collectedBy: params.collectedBy,
         collectedAt: params.collectedAt,
       }),

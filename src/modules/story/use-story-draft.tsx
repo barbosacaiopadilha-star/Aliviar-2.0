@@ -243,7 +243,15 @@ export function StoryDraftProvider({ story, children }: StoryDraftProviderProps)
       return { success: false, error: flushResult.error };
     }
 
-    const snapshot = currentRef.current;
+    // A revisão vem do RESULTADO do flush, não de `currentRef`.
+    //
+    // `enqueueSave` grava e chama `setCurrent`, mas `currentRef` só alcança o
+    // valor novo no `useEffect` seguinte — que ainda não rodou aqui. Lendo o
+    // ref, o submit partia com a revisão ANTERIOR à gravação que ele mesmo
+    // acabara de forçar, o banco não encontrava a linha (`revision` não bate)
+    // e a pessoa recebia "Sua história foi atualizada em outro lugar" logo
+    // depois de clicar em Enviar — sem ninguém ter tocado em nada.
+    const snapshot = "story" in flushResult ? flushResult.story : currentRef.current;
     const result = await submitStoryAction({ storyId: snapshot.id, expectedRevision: snapshot.revision });
 
     if (result.success) {

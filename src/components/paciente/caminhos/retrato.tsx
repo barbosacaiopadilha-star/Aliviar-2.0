@@ -14,7 +14,7 @@ import { cn } from "@/components/ui/cn";
  */
 // Superfície fosca e chapada: nenhuma superfície tem gradiente (Sistema
 // Visual §3, regra de ouro) — a variação entre nomes fica no valor do verde.
-const TRATAMENTOS = ["bg-[#1a2e26]", "bg-[#2c4033]", "bg-[#1f3329]"] as const;
+const TRATAMENTOS = ["bg-retrato-1", "bg-retrato-2", "bg-retrato-3"] as const;
 
 function iniciais(nome: string): string {
   const partes = nome

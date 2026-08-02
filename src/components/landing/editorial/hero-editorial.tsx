@@ -1,29 +1,24 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 
+import { HeroVideo } from "@/components/landing/editorial/hero-video";
 import { LinkButton } from "@/components/landing/link-button";
 import { ImmersiveBackdrop } from "@/components/shared/immersive-backdrop";
+import { ALIVIAR_SCENES } from "@/lib/aliviar-environments";
 
 const VIDEO_SRC = "/videos/video-institucional-aliviar.webm";
-const VIDEO_POSTER = "/images/video-institucional-poster.webp";
 
-function resolveVideo(): { src?: string; poster?: string } {
+function resolveVideo(): { src?: string } {
   const videoPath = path.join(process.cwd(), "public", VIDEO_SRC);
-  if (!existsSync(videoPath)) return {};
-  const posterPath = path.join(process.cwd(), "public", VIDEO_POSTER);
-  return {
-    src: VIDEO_SRC,
-    poster: existsSync(posterPath) ? VIDEO_POSTER : undefined,
-  };
+  return existsSync(videoPath) ? { src: VIDEO_SRC } : {};
 }
 
 type HeroEditorialProps = {
   videoSrc?: string;
-  videoPoster?: string;
 };
 
-export function HeroEditorial({ videoSrc, videoPoster }: HeroEditorialProps = {}) {
-  const video = videoSrc !== undefined ? { src: videoSrc, poster: videoPoster } : resolveVideo();
+export function HeroEditorial({ videoSrc }: HeroEditorialProps = {}) {
+  const video = videoSrc !== undefined ? { src: videoSrc } : resolveVideo();
 
   return (
     <section className="landing-hero-immersive">
@@ -44,31 +39,25 @@ export function HeroEditorial({ videoSrc, videoPoster }: HeroEditorialProps = {}
           <p className="landing-body mx-auto mt-8 max-w-2xl text-lg text-[var(--color-ink-muted)]">
             Com você em cada etapa — da sua história até uma decisão que é sua.
           </p>
-          <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <LinkButton href="/sua-historia" variant="primary" className="w-full sm:w-auto">
+          {/* UMA porta (CRITICA_LANDING_2_2 §5): o primeiro gesto de quem
+              chegou com medo não pode ser descartar uma opção que não era
+              para ela. Quem já mora aqui entra pelo "Entrar" do cabeçalho —
+              reconhecimento mora na moldura, não no palco. A `landing-porta`
+              é o gesto da marca: a soleira dourada que se revela devagar. */}
+          <div className="mt-12 flex justify-center">
+            <LinkButton
+              href="/sua-historia"
+              variant="primary"
+              className="landing-porta w-full sm:w-auto"
+            >
               Contar minha história
-            </LinkButton>
-            <LinkButton href="/login" variant="secondary" className="w-full sm:w-auto">
-              Entrar na minha Jornada
             </LinkButton>
           </div>
         </div>
 
         {video.src ? (
           <div className="landing-approach mx-auto mt-20 max-w-4xl" style={{ animationDelay: "160ms" }}>
-            <div className="landing-video-cinema">
-              <video
-                src={video.src}
-                poster={video.poster}
-                muted
-                loop
-                playsInline
-                autoPlay
-                preload="metadata"
-                aria-label="Vídeo institucional da Aliviar — ambiente de acolhimento"
-                className="aspect-video w-full object-cover"
-              />
-            </div>
+            <HeroVideo src={video.src} posterScene={ALIVIAR_SCENES.landingHero} />
           </div>
         ) : null}
       </div>

@@ -87,7 +87,7 @@ describe("A matriz — as quinze combinações", () => {
 describe("Cruzamento de um profissional", () => {
   const prioridades = [
     { subcriterionCode: "FORMACAO_RESIDENCIA", importance: "MUITO_IMPORTANTE" as const },
-    { subcriterionCode: "EXPERIENCIA_CASOS_SEMELHANTES", importance: "RELEVANTE" as const },
+    { subcriterionCode: "EXPERIENCIA_NO_TIPO_DE_CASO", importance: "RELEVANTE" as const },
     { subcriterionCode: "CONTINUIDADE_POS_PROCEDIMENTO", importance: "IMPORTANTE" as const },
     { subcriterionCode: "MODELO_COMUNICACAO", importance: "IMPORTANTE" as const },
   ];
@@ -97,7 +97,7 @@ describe("Cruzamento de um profissional", () => {
       casePriorities: prioridades,
       professionalStates: [
         { subcriterionCode: "FORMACAO_RESIDENCIA", status: "CONFIRMADO" },
-        { subcriterionCode: "EXPERIENCIA_CASOS_SEMELHANTES", status: "CONFIRMADO" },
+        { subcriterionCode: "EXPERIENCIA_NO_TIPO_DE_CASO", status: "CONFIRMADO" },
         { subcriterionCode: "CONTINUIDADE_POS_PROCEDIMENTO", status: "NAO_INFORMADO" },
         { subcriterionCode: "MODELO_COMUNICACAO", status: "CONFIRMADO" },
       ],

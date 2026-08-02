@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { erroDeBanco } from "@/lib/observability/erros";
+
 export type StoryAttachment = {
   documentId: string;
   fileName: string;
@@ -36,7 +38,7 @@ export async function listStoryAttachments(
     .order("created_at", { ascending: false });
 
   if (error) {
-    throw new Error("Não foi possível carregar os anexos.");
+    throw erroDeBanco("Não foi possível carregar os anexos.", error);
   }
 
   return (data as AttachmentRow[]).map((row) => {
@@ -60,7 +62,7 @@ export async function attachDocumentToStory(
     .insert({ story_id: storyId, document_id: documentId });
 
   if (error) {
-    throw new Error("Não foi possível anexar o documento.");
+    throw erroDeBanco("Não foi possível anexar o documento.", error);
   }
 }
 
@@ -76,6 +78,6 @@ export async function detachDocumentFromStory(
     .eq("document_id", documentId);
 
   if (error) {
-    throw new Error("Não foi possível remover o anexo.");
+    throw erroDeBanco("Não foi possível remover o anexo.", error);
   }
 }

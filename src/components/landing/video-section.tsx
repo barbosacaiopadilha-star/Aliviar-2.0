@@ -74,7 +74,7 @@ function VideoFrame({
     return (
       <div
         className={cn(
-          "relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-[inherit] bg-[radial-gradient(120%_140%_at_50%_0%,_var(--color-brand-primary)_0%,_var(--color-brand-primary-deep)_55%,_#0a2544_100%)] text-center",
+          "relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-[inherit] bg-[radial-gradient(120%_140%_at_50%_0%,_var(--color-brand-primary)_0%,_var(--color-brand-primary-deep)_55%,_var(--color-brand-primary-darkest)_100%)] text-center",
           compact ? "px-2" : "flex-col gap-4 px-6",
         )}
       >
@@ -85,7 +85,7 @@ function VideoFrame({
         <span
           aria-hidden="true"
           className={cn(
-            "relative inline-flex items-center justify-center rounded-full border border-surface/25 bg-surface/10 backdrop-blur-sm",
+            "relative inline-flex items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--color-bg-surface)_25%,transparent)] bg-[color-mix(in_srgb,var(--color-bg-surface)_10%,transparent)] backdrop-blur-sm",
             compact ? "size-8" : "size-16",
           )}
         >
@@ -137,11 +137,11 @@ function VideoFrame({
             startPlayback();
           }}
           aria-label="Reproduzir vídeo"
-          className="absolute inset-0 flex items-center justify-center bg-brand-primary-deep/40 transition-colors duration-fast ease-standard hover:bg-brand-primary-deep/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+          className="absolute inset-0 flex items-center justify-center bg-[color-mix(in_srgb,var(--color-brand-primary-deep)_40%,transparent)] transition-colors duration-fast ease-standard hover:bg-[color-mix(in_srgb,var(--color-brand-primary-deep)_55%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
         >
           <span
             aria-hidden="true"
-            className="inline-flex size-16 items-center justify-center rounded-full border border-surface/25 bg-surface/10 backdrop-blur-sm"
+            className="inline-flex size-16 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--color-bg-surface)_25%,transparent)] bg-[color-mix(in_srgb,var(--color-bg-surface)_10%,transparent)] backdrop-blur-sm"
           >
             <Play className="size-6 translate-x-0.5 text-surface" aria-hidden="true" />
           </span>
@@ -156,7 +156,7 @@ function VideoFrame({
           video.muted = !video.muted;
           setMuted(video.muted);
         }}
-        className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-ink/60 px-3 py-1.5 text-xs font-medium text-surface backdrop-blur-sm transition-colors duration-fast ease-standard hover:bg-ink/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+        className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--color-ink)_60%,transparent)] px-3 py-1.5 text-xs font-medium text-surface backdrop-blur-sm transition-colors duration-fast ease-standard hover:bg-[color-mix(in_srgb,var(--color-ink)_80%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
       >
         {muted ? (
           <Volume2 className="size-3.5" aria-hidden="true" />
@@ -212,7 +212,7 @@ function VideoModal({
       <button
         type="button"
         aria-label="Fechar vídeo"
-        className="animate-fade-in absolute inset-0 bg-ink/80 backdrop-blur-sm"
+        className="animate-fade-in absolute inset-0 bg-[color-mix(in_srgb,var(--color-ink)_80%,transparent)] backdrop-blur-sm"
         onClick={onClose}
       />
       <div
@@ -226,11 +226,11 @@ function VideoModal({
           type="button"
           onClick={onClose}
           aria-label="Fechar vídeo"
-          className="absolute -top-12 right-0 inline-flex size-10 items-center justify-center rounded-full border border-surface/25 bg-surface/10 text-surface backdrop-blur-sm transition-colors duration-fast ease-standard hover:bg-surface/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+          className="absolute -top-12 right-0 inline-flex size-10 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--color-bg-surface)_25%,transparent)] bg-[color-mix(in_srgb,var(--color-bg-surface)_10%,transparent)] text-surface backdrop-blur-sm transition-colors duration-fast ease-standard hover:bg-[color-mix(in_srgb,var(--color-bg-surface)_20%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
         >
           <X className="size-5" aria-hidden="true" />
         </button>
-        <div className="overflow-hidden rounded-2xl shadow-2xl ring-1 ring-surface/15">
+        <div className="overflow-hidden rounded-2xl shadow-2xl ring-1 ring-[color-mix(in_srgb,var(--color-bg-surface)_15%,transparent)]">
           <VideoFrame src={src} poster={poster} />
         </div>
       </div>
@@ -255,12 +255,12 @@ export function VideoSection({ src, poster }: VideoSectionProps) {
             }
           }}
           aria-label="Abrir vídeo institucional em tela cheia"
-          className="group relative w-full cursor-pointer overflow-hidden rounded-2xl shadow-xl ring-1 ring-surface/15 transition-transform duration-base ease-standard hover:-translate-y-1 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+          className="group relative w-full cursor-pointer overflow-hidden rounded-2xl shadow-xl ring-1 ring-[color-mix(in_srgb,var(--color-bg-surface)_15%,transparent)] transition-transform duration-base ease-standard hover:-translate-y-1 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
         >
           <VideoFrame src={src} poster={poster} />
           <span
             aria-hidden="true"
-            className="absolute right-3 top-3 inline-flex size-8 items-center justify-center rounded-full bg-ink/50 text-surface opacity-0 backdrop-blur-sm transition-opacity duration-base ease-standard group-hover:opacity-100"
+            className="absolute right-3 top-3 inline-flex size-8 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--color-ink)_50%,transparent)] text-surface opacity-0 backdrop-blur-sm transition-opacity duration-base ease-standard group-hover:opacity-100"
           >
             <Maximize2 className="size-4" aria-hidden="true" />
           </span>

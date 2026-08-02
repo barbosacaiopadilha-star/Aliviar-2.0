@@ -1,4 +1,5 @@
 import "server-only";
+import { erroDeBanco } from "@/lib/observability/erros";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -86,7 +87,7 @@ export async function saveP002FieldCorrection(
     .single();
 
   if (error || !data) {
-    throw new Error("Não foi possível registrar a correção.");
+    throw erroDeBanco("Não foi possível registrar a correção.", error);
   }
 
   return mapRow(data as CorrectionRow);

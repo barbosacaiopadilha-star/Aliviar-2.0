@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { erroDeBanco } from "@/lib/observability/erros";
 
 import { normalizeLeadSource, normalizeLeadStage, type Lead } from "./lead";
 
@@ -65,7 +66,7 @@ export async function listLeadsForAtendente(client: SupabaseClient): Promise<Lea
     .order("created_at", { ascending: false })
     .limit(100);
 
-  if (error) throw new Error("Não foi possível carregar os leads.");
+  if (error) throw erroDeBanco("Não foi possível carregar os leads.", error);
   const leads = ((data ?? []) as Row[]).map(toLead);
   return attachCases(client, leads);
 }
@@ -78,7 +79,7 @@ export async function getLead(client: SupabaseClient, leadId: string): Promise<L
     .eq("id", leadId)
     .maybeSingle();
 
-  if (error) throw new Error("Não foi possível carregar o lead.");
+  if (error) throw erroDeBanco("Não foi possível carregar o lead.", error);
   if (!data) return null;
   const [lead] = await attachCases(client, [toLead(data as Row)]);
   return lead;

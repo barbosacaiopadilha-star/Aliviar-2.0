@@ -23,6 +23,7 @@ type StoryAttachmentsProps = {
 export function StoryAttachments({ storyId }: StoryAttachmentsProps) {
   const [attachments, setAttachments] = useState<StoryAttachment[]>([]);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
@@ -36,7 +37,10 @@ export function StoryAttachments({ storyId }: StoryAttachmentsProps) {
 
   useEffect(() => {
     if (uploadState?.success) {
+      // ETAPA 9: a lista atualiza sozinha E a pessoa ouve que deu certo —
+      // ação importante nunca acontece sem retorno.
       listStoryAttachmentsAction(storyId).then(setAttachments);
+      setFileName(null);
     }
   }, [uploadState, storyId]);
 
@@ -58,20 +62,37 @@ export function StoryAttachments({ storyId }: StoryAttachmentsProps) {
         Se tiver um exame, laudo ou outro documento que ajude a entender seu momento, pode enviar aqui.
       </p>
 
+      {/* O controle nativo dizia "Choose File / No file chosen" — voz do
+          sistema operacional, em inglês, na etapa mais sensível da conversa
+          (validação 2.4, mudança E). O input continua sendo o input (mesmo
+          name, mesmo form, mesma action); só deixa de aparecer: quem fala é
+          um rótulo da casa, e o nome do arquivo escolhido é dito em pt-BR. */}
       <form action={formAction} className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <input
-          type="file"
-          name="file"
-          required
-          aria-label="Selecionar documento"
-          className="block w-full text-sm text-ink file:mr-3 file:rounded-md file:border-0 file:bg-brand-primary file:px-4 file:py-2 file:text-sm file:font-medium file:text-surface hover:file:bg-brand-primary-deep"
-        />
+        <label className="flex min-w-0 flex-1 cursor-pointer flex-wrap items-center gap-3">
+          <input
+            type="file"
+            name="file"
+            required
+            aria-label="Selecionar documento"
+            onChange={(event) => setFileName(event.target.files?.[0]?.name ?? null)}
+            className="sr-only"
+          />
+          <span className="inline-flex min-h-11 items-center rounded-md border border-border-strong bg-surface px-4 text-sm font-medium text-ink transition-colors duration-fast ease-standard hover:bg-recessed">
+            Escolher arquivo
+          </span>
+          <span className="min-w-0 truncate text-sm text-ink-muted">
+            {fileName ?? "Nenhum arquivo escolhido ainda."}
+          </span>
+        </label>
         <Button type="submit" variant="secondary" isLoading={isUploading} className="w-full sm:w-auto">
           Anexar
         </Button>
       </form>
 
       {uploadState && !uploadState.success ? <FormMessage variant="error">{uploadState.error}</FormMessage> : null}
+      {uploadState?.success ? (
+        <FormMessage variant="success">Documento anexado. Ele já aparece na lista abaixo.</FormMessage>
+      ) : null}
 
       {attachments.length > 0 ? (
         <ul className="divide-y divide-border">

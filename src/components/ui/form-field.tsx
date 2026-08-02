@@ -9,6 +9,14 @@ type FormFieldProps = {
   hint?: string;
   children: ReactNode;
   className?: string;
+  /**
+   * Esconde o rótulo visualmente, mantendo-o para leitores de tela.
+   * Existe para as telas de conversa (Recepção): quando a pergunta em serifa
+   * já é a pergunta, um rótulo "Sua resposta" acima do campo é a única
+   * palavra de formulário na tela — o campo abaixo de uma pergunta é
+   * evidentemente onde se responde (validação 2.4, mudança F).
+   */
+  hideLabel?: boolean;
 };
 
 export function FormField({
@@ -18,10 +26,14 @@ export function FormField({
   hint,
   children,
   className,
+  hideLabel = false,
 }: FormFieldProps) {
   return (
     <div className={cn("space-y-1.5", className)}>
-      <label htmlFor={htmlFor} className="block text-sm font-medium text-ink">
+      <label
+        htmlFor={htmlFor}
+        className={cn("block text-sm font-medium text-ink", hideLabel && "sr-only")}
+      >
         {label}
       </label>
       {children}

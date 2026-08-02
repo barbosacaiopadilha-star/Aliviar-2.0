@@ -49,7 +49,7 @@ export function Dialog({ open, onClose, title, children, className }: DialogProp
         type="button"
         tabIndex={-1}
         aria-hidden="true"
-        className="absolute inset-0 cursor-default bg-ink/30"
+        className="absolute inset-0 cursor-default bg-[color-mix(in_srgb,var(--color-ink)_30%,transparent)]"
         onClick={onClose}
       />
       <div

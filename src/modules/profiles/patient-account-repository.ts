@@ -1,4 +1,5 @@
 import "server-only";
+import { erroDeBanco } from "@/lib/observability/erros";
 
 import { randomBytes } from "node:crypto";
 
@@ -51,7 +52,7 @@ export async function createPatientAccount(
   });
 
   if (error || !data.user) {
-    throw new Error("Não foi possível criar a conta do paciente.");
+    throw erroDeBanco("Não foi possível criar a conta do paciente.", error);
   }
 
   const profileId = data.user.id;
@@ -71,7 +72,7 @@ export async function createPatientAccount(
     .insert({ profile_id: profileId, role_id: roleRow.id, granted_by: grantedBy });
 
   if (roleError) {
-    throw new Error("Não foi possível conceder o papel de paciente.");
+    throw erroDeBanco("Não foi possível conceder o papel de paciente.", roleError);
   }
 
   return { profileId, email: input.email, password };
@@ -89,7 +90,7 @@ export async function resetPatientPassword(
   const { error } = await adminClient.auth.admin.updateUserById(profileId, { password });
 
   if (error) {
-    throw new Error("Não foi possível redefinir a senha.");
+    throw erroDeBanco("Não foi possível redefinir a senha.", error);
   }
 
   return password;
@@ -110,7 +111,7 @@ export async function setPatientAccountAccess(
   });
 
   if (error) {
-    throw new Error("Não foi possível atualizar o acesso do paciente.");
+    throw erroDeBanco("Não foi possível atualizar o acesso do paciente.", error);
   }
 }
 

@@ -1,4 +1,5 @@
 import "server-only";
+import { erroDeBanco } from "@/lib/observability/erros";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -76,7 +77,7 @@ export async function listHumanReviewResultsForCase(
     .order("created_at", { ascending: false });
 
   if (error) {
-    throw new Error("Não foi possível carregar o histórico de revisão humana.");
+    throw erroDeBanco("Não foi possível carregar o histórico de revisão humana.", error);
   }
 
   return Promise.all((data as HumanReviewResultRow[]).map((row) => mapRow(supabase, row)));

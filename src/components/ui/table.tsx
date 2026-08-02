@@ -18,7 +18,7 @@ export function Table({ children, className }: TableProps) {
 }
 
 export function TableHead({ children }: { children: ReactNode }) {
-  return <thead className="border-b border-border bg-canvas">{children}</thead>;
+  return <thead className="border-b border-border bg-recessed">{children}</thead>;
 }
 
 export function TableBody({ children }: { children: ReactNode }) {

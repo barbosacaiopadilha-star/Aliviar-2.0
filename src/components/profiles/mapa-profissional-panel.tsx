@@ -114,7 +114,7 @@ export function MapaProfissionalPanel({
       <div className="mt-6 space-y-8">
         {groups.map((grupo) => (
           <section key={grupo.group} aria-label={grupo.label}>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-brand-sage">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-brand-sage-deep">
               {grupo.label}
             </h3>
 
@@ -131,7 +131,7 @@ export function MapaProfissionalPanel({
                       {salvando === code ? (
                         <span className="text-xs text-ink-muted">Salvando…</span>
                       ) : salvo === code ? (
-                        <span className="text-xs text-brand-sage">Salvo</span>
+                        <span className="text-xs text-brand-sage-deep">Salvo</span>
                       ) : estado.status === null ? (
                         <Badge variant="default">Ainda não avaliado</Badge>
                       ) : null}

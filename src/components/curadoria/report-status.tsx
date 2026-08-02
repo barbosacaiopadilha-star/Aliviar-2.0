@@ -53,7 +53,7 @@ export function ReportStatus({
   const ordenadas = [...options].sort((a, b) => a.position - b.position);
 
   return (
-    <Card className="border-brand-gold/40">
+    <Card className="border-[color-mix(in_srgb,var(--color-brand-gold)_40%,transparent)]">
       <CardHeader>
         <CardTitle>O documento que {patientFirstName} vai reler sozinha</CardTitle>
         <CardDescription>

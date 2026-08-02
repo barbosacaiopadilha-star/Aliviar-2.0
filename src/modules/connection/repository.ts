@@ -1,4 +1,5 @@
 import "server-only";
+import { erroDeBanco } from "@/lib/observability/erros";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -125,7 +126,7 @@ export class SupabaseConnectionRepository implements ConnectionRepository {
       .eq("id", connectionId)
       .maybeSingle();
 
-    if (error) throw new Error("Não foi possível consultar o Connection.");
+    if (error) throw erroDeBanco("Não foi possível consultar o Connection.", error);
     return data ? mapRecordRow(data as ConnectionRecordRow) : null;
   }
 
@@ -137,7 +138,7 @@ export class SupabaseConnectionRepository implements ConnectionRepository {
       .maybeSingle();
 
     if (error)
-      throw new Error("Não foi possível consultar o Connection deste Caso.");
+      throw erroDeBanco("Não foi possível consultar o Connection deste Caso.", error);
     return data ? mapRecordRow(data as ConnectionRecordRow) : null;
   }
 
@@ -205,7 +206,7 @@ export class SupabaseConnectionRepository implements ConnectionRepository {
           message: "Este Caso já possui um Connection registrado.",
         });
       }
-      throw new Error("Não foi possível registrar a decisão de Connection.");
+      throw erroDeBanco("Não foi possível registrar a decisão de Connection.", error);
     }
 
     return mapRecordRow(data as ConnectionRecordRow);
@@ -287,7 +288,7 @@ export class SupabaseConnectionRepository implements ConnectionRepository {
             "O modo de contato não pode mais ser definido para este Connection.",
         });
       }
-      throw new Error("Não foi possível registrar o modo de contato.");
+      throw erroDeBanco("Não foi possível registrar o modo de contato.", error);
     }
 
     return mapRecordRow(data as ConnectionRecordRow);
@@ -333,7 +334,7 @@ export class SupabaseConnectionRepository implements ConnectionRepository {
           message: "Este Connection foi alterado por outra ação simultânea.",
         });
       }
-      throw new Error("Não foi possível confirmar o primeiro atendimento.");
+      throw erroDeBanco("Não foi possível confirmar o primeiro atendimento.", error);
     }
 
     const [row] = data as Array<{
