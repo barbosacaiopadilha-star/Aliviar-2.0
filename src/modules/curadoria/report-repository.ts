@@ -160,6 +160,15 @@ export async function emitReport(supabase: SupabaseClient, reportId: string): Pr
  * (constraint `report_delivery_requires_emission`) e NUNCA toca `emitted_at`:
  * a versão anterior sobrescrevia o carimbo de emissão com o instante da
  * entrega, destruindo o registro real de quando o Curador emitiu (IM-03).
+ *
+ * BLOCO B.6 (B1, gate B17): a guarda é do BANCO, não desta função — o
+ * trigger `enforce_report_delivery_requires_delivered_selection` (migration
+ * 20260802154000) recusa gravar `delivered_at` com a seleção fora de
+ * DELIVERED. Nem esta função, nem um caller novo de produção, nem PostgREST
+ * direto alcançam mais o par invertido (Relatório entregue com seleção não
+ * entregue). Por isso ela foi MANTIDA em vez de removida: os testes que a
+ * usam entregam a seleção antes (o caminho honesto) e continuam passando; o
+ * caminho desonesto agora falha aqui com o erro de domínio do trigger.
  */
 export async function markReportDelivered(supabase: SupabaseClient, reportId: string): Promise<void> {
   const now = new Date().toISOString();
