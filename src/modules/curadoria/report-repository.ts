@@ -251,10 +251,16 @@ export async function markReportDelivered(supabase: SupabaseClient, reportId: st
 export async function getReportBySelection(
   supabase: SupabaseClient,
   curatedSelectionId: string,
-): Promise<{ id: string; emittedAt: string | null; deliveredAt: string | null } | null> {
+): Promise<{
+  id: string;
+  emittedAt: string | null;
+  deliveredAt: string | null;
+  /** B-2: a prosa de abertura que a paciente lê — a guarda de emissão a exige do Curador. */
+  compositionRationale: string | null;
+} | null> {
   const { data, error } = await supabase
     .from("curadoria_reports")
-    .select("id, emitted_at, delivered_at")
+    .select("id, emitted_at, delivered_at, composition_rationale")
     .eq("curated_selection_id", curatedSelectionId)
     .maybeSingle();
 
@@ -269,6 +275,7 @@ export async function getReportBySelection(
     id: data.id as string,
     emittedAt: (data.emitted_at as string | null) ?? null,
     deliveredAt: (data.delivered_at as string | null) ?? null,
+    compositionRationale: (data.composition_rationale as string | null) ?? null,
   };
 }
 

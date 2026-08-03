@@ -21,7 +21,7 @@ import {
 } from "@/modules/connection/commands";
 import { SupabaseConnectionRepository } from "@/modules/connection/repository";
 import { createPatientAccount } from "@/modules/profiles/patient-account-repository";
-import { createProfessionalProfile } from "@/modules/profiles/professional-repository";
+import { seedPublishedProfessional } from "../integration/rede-fixture";
 import {
   getOrCreateActiveStory,
   saveStoryDraft,
@@ -80,33 +80,13 @@ async function seedPresentableProfessional(
   adminUserId: string,
   displayName: string,
 ) {
-  const professional = await createProfessionalProfile(adminClient, {
-    displayName,
-    professionalIdentifier: unique("ident"),
-    crm: null,
-    crmUf: null,
-    professionalSummary:
-      "Profissional com experiência em acolhimento e escuta ativa.",
-    institutionName: null,
-    createdBy: adminUserId,
-  });
-
-  await adminClient
-    .from("professional_profiles")
-    .update({
-      experience_level: "experiente",
-      intake_approach: "ambos",
-      offers_continuous_care: true,
-      availability_window: "flexible",
-    })
-    .eq("id", professional.id);
-  await adminClient.from("professional_competency_areas").insert({
-    professional_profile_id: professional.id,
-    domain: "nao_determinado",
-    focus: "avaliacao",
-  });
-
-  return professional.id;
+  // B-2: a versão anterior criava o profissional SEM publicá-lo e a fixture
+  // só passava porque a rede compartilhada carregava resíduo publicado de
+  // outras execuções — com o banco recém-restaurado, zero elegíveis. A
+  // fixture canônica percorre o caminho real de publicação (registro
+  // consultado + área verificada + gatilho do banco), tornando o spec
+  // autossuficiente.
+  return seedPublishedProfessional(adminClient, adminUserId, displayName);
 }
 
 // Constrói a Curadoria entregue, cria o Connection já confirmado
@@ -235,17 +215,11 @@ async function seedActiveRelationship(): Promise<ActiveRelationshipFixture> {
   await preencherMapaEBlocoRelacional(cliente, created.id, adminUserId);
   await curadoria.validatePriorityProfile(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
 
-  // M3: o record do COS não carrega mais as análises legadas — a fixture lê a
-  // tabela histórica diretamente, que é exatamente o cenário que ela monta.
-  const { data: redeRows } = await cliente
-      .from("professional_profiles")
-      .select("id")
-      .eq("status", "ativo")
-      .eq("is_demo", false)
-      .eq("publication_status", "publicado");
-  const tres = (redeRows ?? [])
-    .slice(0, 3)
-    .map((row) => ({ professionalId: row.id as string }));
+  // B-2: os três são os que ESTA execução semeou e publicou. A versão
+  // anterior tomava 3 publicados quaisquer da rede compartilhada — com
+  // specs concorrentes, a seleção referenciava profissionais de OUTRO spec
+  // e o cleanup de lá quebrava com FK em curated_selection_options.
+  const tres = createdProfessionalIds.map((id) => ({ professionalId: id }));
   if (tres.length < 3) {
     throw new Error("Fixture E2E: a rede local não tem três profissionais elegíveis.");
   }
@@ -419,7 +393,7 @@ test.describe("Relationship — status do acompanhamento (E2E autenticado)", () 
       await loginAs(page, fixture.patientEmail, fixture.patientPassword);
       await page.goto("/paciente/curadoria");
 
-      await expect(page.getByText(/está registrado como ativo/)).toBeVisible();
+      await expect(page.getByText(/Seu acompanhamento com .+ está ativo/)).toBeVisible();
       // .first(): o nome do profissional aparece em mais de um lugar da
       // página (heading do painel + resumo da Curadoria) — a asserção
       // verifica presença, não unicidade, então strict mode do Playwright
@@ -435,12 +409,12 @@ test.describe("Relationship — status do acompanhamento (E2E autenticado)", () 
       await page
         .getByRole("button", { name: "Confirmar encerramento" })
         .click();
-      await expect(page.getByText(/registrado como encerrado/)).toBeVisible({
+      await expect(page.getByText(/está encerrado, como você registrou/)).toBeVisible({
         timeout: 30000,
       });
 
       await page.reload();
-      await expect(page.getByText(/registrado como encerrado/)).toBeVisible();
+      await expect(page.getByText(/está encerrado, como você registrou/)).toBeVisible();
       await expect(
         page.getByRole("button", { name: "Pausar acompanhamento" }),
       ).toHaveCount(0);
@@ -478,10 +452,10 @@ test.describe("Relationship — status do acompanhamento (E2E autenticado)", () 
         .click();
       await expect(page.getByText(/não avalia/)).toBeVisible();
       await page.getByRole("button", { name: "Confirmar interrupção" }).click();
-      await expect(page.getByText(/registrado como encerrado/)).toBeVisible();
+      await expect(page.getByText(/está encerrado, como você registrou/)).toBeVisible();
 
       await page.reload();
-      await expect(page.getByText(/registrado como encerrado/)).toBeVisible();
+      await expect(page.getByText(/está encerrado, como você registrou/)).toBeVisible();
       // Estado terminal: nenhuma ação sobre o acompanhamento. Escopado às CTAs
       // proibidas — o cabeçalho do paciente tem controles legítimos, e exigir
       // zero botões na página testava layout, não produto.
@@ -518,7 +492,7 @@ test.describe("Relationship — status do acompanhamento (E2E autenticado)", () 
 
       await loginAs(page, fixture.patientEmail, fixture.patientPassword);
       await page.goto("/paciente/curadoria");
-      await expect(page.getByText(/está registrado como ativo/)).toBeVisible();
+      await expect(page.getByText(/Seu acompanhamento com .+ está ativo/)).toBeVisible();
 
       // Um segundo paciente, sem Caso próprio, nunca vê o Relationship
       // deste — getLatestFinalCuradoriaDeliveryForPatient é sempre
@@ -560,7 +534,7 @@ test.describe("Relationship — status do acompanhamento (E2E autenticado)", () 
       const page2 = await context2.newPage();
       await loginAs(page2, outsiderEmail, outsiderAccount.password);
       await page2.goto("/paciente/curadoria");
-      await expect(page2.getByText(/está registrado como ativo/)).toHaveCount(
+      await expect(page2.getByText(/Seu acompanhamento com .+ está ativo/)).toHaveCount(
         0,
       );
       await expect(

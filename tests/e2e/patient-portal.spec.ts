@@ -80,7 +80,11 @@ test.describe("Portal do Paciente", () => {
     await loginAs(page, paciente);
 
     await page.goto("/paciente/linha-do-tempo");
-    await expect(page.getByText("Sua conta na Aliviar foi criada")).toBeVisible();
+    // B-2: oráculo alinhado à copy vigente — a linha do tempo narra momentos
+    // dela ("Você chegou à Aliviar"), nunca eventos de sistema ("conta
+    // criada"). O invariante verificado continua sendo o mesmo: a criação da
+    // conta aparece na linha do tempo.
+    await expect(page.getByText("Você chegou à Aliviar")).toBeVisible();
   });
 
   test("administrador e profissional não acessam /paciente", async ({ page }) => {

@@ -17,7 +17,20 @@ const PUBLIC_PATHS = new Set([
   // Nenhum segredo — é a primeira pergunta do diagnóstico, e precisa ser
   // respondível antes de qualquer sessão existir.
   "/api/build-info",
+  // OBS-01: saúde precisa ser legível por monitor externo, que não tem
+  // sessão. Ao contrário de build-info, este endpoint TOCA as dependências —
+  // 503 quando o banco cai, e é isso que um monitor precisa ver.
+  "/api/health",
   "/sua-historia",
+  // GOVERNANÇA (Bloco H): documento publicado é público por natureza — quem
+  // vai aceitar precisa poder LER antes de ter sessão, e um permalink de
+  // prova tem de abrir para qualquer um que o receba (inclusive um juiz).
+  // O prefixo /legal/ é tratado à parte no middleware por ser dinâmico.
+  "/privacidade",
+  "/termos",
+  "/termos/profissional",
+  "/consentimentos",
+  "/cookies",
   // FUN-01 (gate D20): o formulário público do site posta aqui SEM sessão.
   // Fora deste conjunto, o middleware devolvia 302 → /login e o lead morria
   // em silêncio — o integrador lia o redirect como sucesso e o dado nunca
@@ -32,7 +45,11 @@ const PUBLIC_PATHS = new Set([
 // `paciente` na Jornada), reforçado em cada rota por requireRole() e, no
 // banco, pela RLS. Enquanto liam mocks, ficar abertos não expunha nada; a
 // partir do momento em que leem dado real, ficariam expondo tudo.
-const PUBLIC_PREFIXES = ["/auth/callback"];
+// `/legal/<slug>/v/<versao>` é o permalink de PROVA de uma versão publicada:
+// precisa abrir para quem o receber — inclusive fora da plataforma, inclusive
+// anos depois. É prefixo porque slug e versão são dinâmicos.
+// `/consentimentos/<slug>` idem: cada consentimento tem endereço próprio.
+const PUBLIC_PREFIXES = ["/auth/callback", "/legal/", "/consentimentos/"];
 
 export function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.has(pathname)) {

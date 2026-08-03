@@ -647,6 +647,27 @@ export async function emitReportAction(input: unknown): Promise<CuradoriaActionR
       return { success: false, error: "Escreva o Relatório antes de emiti-lo." };
     }
 
+    // B-2 (RELEASE BLOCKERS / ADR-064): a composição é a única prosa de
+    // abertura que a paciente lê — a voz do Curador enquadrando os três
+    // caminhos. O rascunho assistido a preenche com texto de TRABALHO INTERNO
+    // ("Revisão do Curador pendente"), e regenerar sobrescreve o que ele
+    // escreveu na Mesa. Emitir isso entregaria a ela um bilhete de bastidor no
+    // lugar da carta. A emissão recusa — e pede a frase dele.
+    const { composicaoPendenteDoCurador } = await import("./relatorio-inteligente");
+    const composicao = composicaoPendenteDoCurador(report.compositionRationale);
+    if (composicao) {
+      return {
+        success: false,
+        error:
+          composicao === "DO_SISTEMA"
+            ? "O Relatório não pode ser emitido: a abertura ainda é o texto do rascunho assistido — " +
+              "ela fala com você (“Revisão do Curador pendente”), não com a paciente. " +
+              "Escreva no campo “Por que estas três, juntas” a sua frase sobre como compôs os três caminhos."
+            : "O Relatório não pode ser emitido: falta a abertura — a sua frase sobre por que " +
+              "estas três, juntas, servem a esta pessoa. É a primeira coisa que ela lê.",
+      };
+    }
+
     // B-1 (RELEASE BLOCKERS / ADR-064): um Relatório emitido é definitivo —
     // ele não pode carregar a frase-sentinela do juízo relacional pendente.
     // A emissão falha NOMEANDO o que ainda depende do Curador.

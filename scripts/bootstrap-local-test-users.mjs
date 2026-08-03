@@ -99,11 +99,23 @@ async function main() {
   }
   const roleIdBySlug = Object.fromEntries(rolesData.map((r) => [r.slug, r.id]));
 
-  const { data: listData, error: listError } = await admin.auth.admin.listUsers({ perPage: 200 });
-  if (listError) {
-    console.error("Falha ao listar usuários existentes:", listError.message);
-    process.exit(1);
+  // B-2: a busca era uma página só (perPage: 200). As seis contas permanentes
+  // são as mais ANTIGAS do banco — quando o acúmulo de contas de fixture passa
+  // de 200, elas caem fora da página, o script tenta CRIAR o que já existe e
+  // morre com "already been registered". O inventário de credenciais promete
+  // que este script é reexecutável a qualquer momento; paginar até o fim é o
+  // que cumpre essa promessa.
+  const usuariosExistentes = [];
+  for (let page = 1; ; page += 1) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) {
+      console.error("Falha ao listar usuários existentes:", error.message);
+      process.exit(1);
+    }
+    usuariosExistentes.push(...data.users);
+    if (data.users.length < 200) break;
   }
+  const listData = { users: usuariosExistentes };
 
   const results = [];
 

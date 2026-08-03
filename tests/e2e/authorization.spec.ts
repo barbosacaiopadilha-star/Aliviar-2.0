@@ -86,7 +86,11 @@ test.describe("autorização por papel (TASK-005A)", () => {
 
     await page.goto("/profissional");
     await expect(page).toHaveURL("/profissional");
-    await expect(page.getByText("Papel atual: profissional")).toBeVisible();
+    // B-2: oráculo alinhado à copy vigente — o painel diz o papel na
+    // linguagem da pessoa ("Você está na Aliviar como…"), não em ficha de
+    // sistema ("Papel atual:"). O que se verifica é o mesmo: a home do papel
+    // se identifica como tal.
+    await expect(page.getByText("Você está na Aliviar como profissional.")).toBeVisible();
 
     await page.goto("/admin");
     await expect(page).toHaveURL("/acesso-negado");
@@ -124,7 +128,7 @@ test.describe("autorização por papel (TASK-005A)", () => {
     // "Acesso negado" é o title da aba; o que a pessoa lê na tela é uma frase
     // inteira, escrita para não soar como punição.
     await expect(
-      page.getByRole("heading", { name: "Esta área não está disponível para você" }),
+      page.getByRole("heading", { name: "Esta parte da casa não é sua." }),
     ).toBeVisible();
 
     await page.getByRole("link", { name: "Voltar para a minha área" }).click();

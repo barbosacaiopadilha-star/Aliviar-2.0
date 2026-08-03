@@ -182,7 +182,11 @@ test.describe("Portal Administrativo — Casos (ÉPICO 1/SPRINT 2)", () => {
     await loginAs(page, admin);
 
     await page.goto("/admin/casos");
-    await expect(page.getByRole("heading", { name: "Casos" })).toBeVisible();
+    // `exact`: com a lista vazia a página também renderiza o h2 "Ainda não há
+    // casos iniciados.", que casa por substring com "Casos" e derruba o
+    // strict mode. O oráculo passava só porque havia Case de outro spec —
+    // num banco recém-reconstruído, caía.
+    await expect(page.getByRole("heading", { name: "Casos", exact: true })).toBeVisible();
 
     await page.getByLabel("Buscar por paciente").fill("pessoa-que-nao-existe-e2e");
     await expect(page.getByText("Nenhum caso encontrado.")).toBeVisible();

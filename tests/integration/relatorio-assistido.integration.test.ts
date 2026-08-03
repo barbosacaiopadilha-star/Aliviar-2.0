@@ -20,7 +20,11 @@ import {
   generateAndSaveAssistedDraft,
   getReportLifecycle,
 } from "@/modules/curadoria/relatorio-assistido";
-import { GENERATOR_VERSION } from "@/modules/curadoria/relatorio-inteligente";
+import {
+  composicaoPendenteDoCurador,
+  FRASE_COMPOSICAO_RASCUNHO,
+  GENERATOR_VERSION,
+} from "@/modules/curadoria/relatorio-inteligente";
 import * as curadoria from "@/modules/curadoria/repository";
 import * as reports from "@/modules/curadoria/report-repository";
 
@@ -249,6 +253,22 @@ describe("Relatório assistido — geração, ciclo de vida e congelamento (Supa
 
     // E nenhum texto do Relatório fala em pontos.
     expect(textos.join(" ")).not.toMatch(/pontos?|orçamento/i);
+  });
+
+  it("B-2 — o que o gerador grava na abertura é exatamente o que a guarda de emissão recusa", async () => {
+    // Acoplamento gerador↔guarda à prova de deriva (ADR-064): a abertura do
+    // Relatório sai do gerador como texto de trabalho interno, e a mesma
+    // constante que a escreveu é a que a emissão procura. Se um dos dois lados
+    // mudar sozinho, este teste cai antes de a paciente ler o bastidor.
+    const { data: relatorio } = await service
+      .from("curadoria_reports")
+      .select("composition_rationale")
+      .eq("id", reportId)
+      .single();
+    expect(relatorio!.composition_rationale).toBe(FRASE_COMPOSICAO_RASCUNHO);
+    expect(composicaoPendenteDoCurador(relatorio!.composition_rationale as string)).toBe(
+      "DO_SISTEMA",
+    );
   });
 
   it("um rascunho assistido não pode ser emitido — o banco exige aprovação", async () => {

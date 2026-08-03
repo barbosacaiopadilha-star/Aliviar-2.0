@@ -74,7 +74,10 @@ export function lerLedgerAplicado({ cwd = process.cwd(), executar } = {}) {
   const rodar =
     executar ??
     (() =>
-      spawnSync("npx supabase migration list --local", {
+      // `--output-format json` é explícito de propósito: sem ele, a CLI decide
+      // o formato por detecção de ambiente (sob agente de IA sai JSON; em CI e
+      // terminal humano sai tabela) — e o parser abaixo só entende JSON.
+      spawnSync("npx supabase migration list --local --output-format json", {
         cwd,
         encoding: "utf-8",
         shell: true,

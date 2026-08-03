@@ -8,6 +8,7 @@ import { loadCasePriorityMap } from "./mapa-prioridades-repository";
 import { loadProfessionalMap } from "./mapa-profissional-repository";
 import { crossCaseRelationalForProfessionals } from "./motor-relacional-repository";
 import {
+  FRASE_COMPOSICAO_RASCUNHO,
   generateReportDraft,
   GENERATOR_VERSION,
   type DraftInput,
@@ -200,11 +201,15 @@ export async function generateAndSaveAssistedDraft(
     };
   });
 
+  // B-2 (ADR-064): a composição do rascunho é texto de trabalho interno,
+  // dirigido ao Curador. Escrita a partir da MESMA constante que a guarda de
+  // emissão procura — a deriva entre gerador e guarda é impossível por
+  // construção, e o documento definitivo nunca a carrega até a paciente.
   const reportId = await saveReport(
     supabase,
     input.caseId,
     selection.id,
-    "Rascunho assistido — três caminhos legítimos, construídos sobre o que foi declarado e verificado. Revisão do Curador pendente.",
+    FRASE_COMPOSICAO_RASCUNHO,
     optionInputs,
   );
 
