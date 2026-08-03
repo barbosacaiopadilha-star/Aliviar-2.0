@@ -97,7 +97,10 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npx next start -p 3001",
+    // Release Gate 4: o wrapper sobe o MESMO `next start -p 3001`, repassa o
+    // stdout intacto e o espelha em `.e2e-server.log` — é esse arquivo que o
+    // gate de erros estruturados do globalTeardown analisa ao final.
+    command: "node scripts/e2e-server-com-log.mjs",
     url: "http://127.0.0.1:3001",
     // G1/ETAPA-6: reaproveitar um servidor já de pé podia herdar um processo
     // apontado para produção ou um build obsoleto (achados P1-05/TST-03).

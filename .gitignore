@@ -82,3 +82,6 @@ scripts/local/.validation-env.json
 scripts/local/validation-report.json
 scripts/local/.env.admin.local
 scripts/local/.tmp-password-update.sql
+
+# Espelho do stdout do servidor E2E — analisado pelo gate de erros estruturados
+.e2e-server.log
