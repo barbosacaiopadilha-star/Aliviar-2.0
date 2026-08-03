@@ -253,6 +253,15 @@ Evidências e cenários conforme fases de origem (F2 §3; F5 §12–14; F6 §§4
 
 **Parciais mantidos abertos:** FS-06 (feito: worklist/safe()/setEncaminhado; resta `maybeSingle` ×8 — Bloco E/K), FS-07 (feito: Curadoria tipada; resta `includes("sucesso")` fora do escopo — K), UX-06 (feito: erro visível na Mesa; resta loading.tsx/autosave — F/K), OBS-02 (feito: actions com ERR-; resta global-error/runbook — I), SEG-05 (feito: segredo obrigatório+timing+docs da var; resta rate-limit — I/H).
 
+### Encerramentos do Bloco E (2026-08-03 — `docs/BLOCO_E_FONTE_UNICA_CATALOGO.md`)
+
+| ID | Evidência do critério |
+| --- | --- |
+| **CAT-01** | Fonte única decidida (ADR-047) e amarrada: catálogo gerado do banco + 15 gates de paridade (incl. 10b nascido do teste de mutação) + FK/validação de opções/imutabilidade-com-autoria por trigger (migration `165000`); D1–D16 corrigidas; 36 códigos divergentes eliminados; opções do banco deixaram de ser ornamentais (condicionais lidas) |
+| **CAT-03** | Enum fantasma eliminado pela raiz: runtime deriva do gerado; paridade executável falha nomeando conceito/campo/esperado/encontrado; mutação provada mordendo |
+
+**Notas:** os 5 arquivos-herança do G1 reincorporados ao CI (exclusão removida; paridade no job estável); 3 paradas de ambiguidade de Método registradas (listas P3–P7/P10/P12, P9, `requires_detail` da paciente) aguardando decisão humana; flake `connection-canonica` (corrida sob suíte completa, verde isolado, fora do escopo E) → dívida de isolamento G2; FS-06-restante (`maybeSingle`) permanece → K.
+
 ### Cobertura criada pelo Bloco G1 (2026-08-02 — reproduz, NÃO encerra)
 
 Suíte `tests/remediacao/` (26 gates; 25 vermelhos + pino C8) + travas desarmadas: **IM-01..05** (gates C1–C7/C10), **IM-03** (C5/C6), **AU-01** (C9×3), **AT-01** (B11/B12/D18), **AT-02** (B14), **AT-03** (B13 — nuance nova: duplo submit hoje quebra com 23505 ininteligível em vez de duplicar; raiz `active_case_id=null` confirmada), **AT-06/PRIV-04-parcial** (B16), **FS-01** (D17), **FS-02** (D22 + trava desarmada em components), **FS-03** (B15 + trava desarmada em unit), **FS-04** (D21×3 + 9 payloads corrigidos), **FS-05/FS-06** (D18/D19), **FUN-01** (D20), **TST-03-parcial** (porteiro conectado, timeouts, trace, reuse off), **TST-04** (workflow criado; não executado — push proibido). Detalhe: `docs/BLOCO_G1_REDE_DE_SEGURANCA.md`. Herança vermelha da tag registrada: 5 arquivos de integração do catálogo pré-virada → critério de aceite do **Bloco E** (CAT-01).
