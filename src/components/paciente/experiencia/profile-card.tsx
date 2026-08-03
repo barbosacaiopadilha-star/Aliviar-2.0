@@ -20,6 +20,7 @@ export function ProfileCard({
   observations,
   validatedAt,
   curatorName,
+  comoQuerSerCuidada,
 }: {
   perfil: PerfilView;
   caseId?: string;
@@ -27,6 +28,8 @@ export function ProfileCard({
   observations?: string[];
   validatedAt?: string | null;
   curatorName?: string | null;
+  /** ADR-065 — repassado ao retrato inteiro do Perfil. */
+  comoQuerSerCuidada?: import("@/modules/paciente/experiencia-loader").ComoQuerSerCuidadaItem[];
 }) {
   const maisImportante = perfil.prioridades[0];
 
@@ -79,6 +82,7 @@ export function ProfileCard({
           observations={observations}
           validatedAt={validatedAt}
           curatorName={curatorName}
+          comoQuerSerCuidada={comoQuerSerCuidada}
         />
       </ExpandableSection>
     </PatientCard>

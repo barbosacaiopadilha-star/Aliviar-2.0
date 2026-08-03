@@ -17,7 +17,7 @@ import {
   WALK_LABELS,
   walkStatusOf,
 } from "@/modules/paciente/experiencia";
-import { loadPatientPerfil } from "@/modules/paciente/experiencia-loader";
+import { loadComoQuerSerCuidada, loadPatientPerfil } from "@/modules/paciente/experiencia-loader";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import { getPatientCaseOverview } from "@/modules/cases";
@@ -67,6 +67,8 @@ export default async function PacienteHomePage() {
   const record = caseIds.length > 0 ? await loadCuradoriaRecord(supabase, caseIds[0]) : null;
   const jornada = record ? buildJornada(record) : null;
   const perfil = record ? await loadPatientPerfil(supabase, record.caseId) : null;
+  // ADR-065 — o bloco relacional do Perfil: as respostas dela, nada inferido.
+  const comoQuerSerCuidada = record ? await loadComoQuerSerCuidada(supabase, record.caseId) : [];
 
   const state = derivePatientHomeState({
     storyStatuses: stories.map((story) => story.status),
@@ -148,6 +150,7 @@ export default async function PacienteHomePage() {
             observations={record.prioridades.observations}
             validatedAt={record.validacao?.validatedAt ?? null}
             curatorName={jornada.curatorName}
+            comoQuerSerCuidada={comoQuerSerCuidada}
           />
         ) : null}
 

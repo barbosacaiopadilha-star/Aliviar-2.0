@@ -1,6 +1,7 @@
 import { ReconhecerPerfil } from "@/components/paciente/reconhecer-perfil";
 import { PatientCard } from "@/components/paciente/dashboard/patient-primitives";
 import type { PerfilView } from "@/modules/paciente/experiencia";
+import type { ComoQuerSerCuidadaItem } from "@/modules/paciente/experiencia-loader";
 
 /**
  * O que mais importa para o seu caso — ADR-042, agora como eco.
@@ -27,6 +28,7 @@ export function PerfilPanel({
   observations = [],
   validatedAt,
   curatorName,
+  comoQuerSerCuidada,
 }: {
   perfil: PerfilView;
   caseId?: string;
@@ -35,6 +37,8 @@ export function PerfilPanel({
   /** Quando ela reconheceu o Perfil; ausente enquanto o ato é dela. */
   validatedAt?: string | null;
   curatorName?: string | null;
+  /** ADR-065 — o bloco relacional: as respostas dela, na linguagem dela. */
+  comoQuerSerCuidada?: ComoQuerSerCuidadaItem[];
 }) {
   return (
     <PatientCard>
@@ -69,6 +73,31 @@ export function PerfilPanel({
           ))}
         </div>
       )}
+
+      {/* ADR-065 — o bloco relacional do Perfil: o que ELA respondeu sobre a
+          forma de ser cuidada, com o peso que ela deu. Eco, nunca cruzamento:
+          nenhum resultado, nenhuma célula, nenhum profissional aqui. */}
+      {(comoQuerSerCuidada?.length ?? 0) > 0 ? (
+        <div className="mt-6 border-t border-[var(--color-border)] pt-5">
+          <h3 className="text-xs uppercase tracking-wide text-ink-muted">
+            Como você quer ser cuidada
+          </h3>
+          <ul className="mt-2 space-y-3">
+            {comoQuerSerCuidada!.map((item) => (
+              <li key={item.code} className="text-sm leading-relaxed text-ink">
+                <span className="block text-xs text-ink-muted">
+                  {item.conceptName} — {item.degreeLabel}
+                </span>
+                {item.texto ? (
+                  <span className="mt-0.5 block max-w-prose font-serif">{item.texto}</span>
+                ) : item.escolhas.length > 0 ? (
+                  <span className="mt-0.5 block max-w-prose">{item.escolhas.join("; ")}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {observations.length > 0 ? (
         <div className="mt-6 border-t border-[var(--color-border)] pt-5">

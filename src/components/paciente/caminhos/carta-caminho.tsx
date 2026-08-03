@@ -122,6 +122,29 @@ export function CartaCaminho({
                 </div>
               </section>
 
+              {/* ADR-065 — a leitura relacional, já validada pelo Curador na
+                  emissão. Cada frase carrega o que ELA pediu e o que o
+                  profissional DECLARA — nunca uma conclusão de qualidade, e
+                  nenhuma carta se compara às outras. `null` = Relatório sem a
+                  seção (anterior à ADR); ausência é ausência. */}
+              {option.relationalReading ? (
+                <section aria-label="Como esse caminho conversa com a forma como você quer ser cuidada">
+                  <h4 className="patient-section-title">
+                    Como esse caminho conversa com a forma como você quer ser cuidada
+                  </h4>
+                  <ul className="mt-3 space-y-2">
+                    {option.relationalReading.split("\n").filter((linha) => linha.trim()).map((frase) => (
+                      <li
+                        key={frase}
+                        className="max-w-prose font-serif text-sm leading-relaxed text-[var(--patient-ink)]"
+                      >
+                        {frase}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+
               {/* O que o Curador encontrou, em frases com ar — nunca em
                   chips: nada repetido, contável ou empilhável representa
                   qualidade (R5), e frases não se somam num relance. */}
