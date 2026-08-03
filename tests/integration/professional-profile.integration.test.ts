@@ -355,7 +355,13 @@ describe("perfil profissional — RLS e fundação administrativa (Supabase loca
     expect(count, "retry não duplica nem apaga").toBe(1);
 
     // Esvaziar SÓ com o comando explícito — nunca por lista vazia implícita.
-    await replaceCompetencyDomains(client, id, [], { esvaziamentoExplicito: true });
+    // Bloco C (Etapa 8): o comando agora carrega motivo e vira ato auditado
+    // (RPC remove_professional_competencies) — ampliação do contrato, não
+    // afrouxamento: o cenário continua provando que só o explícito esvazia.
+    await replaceCompetencyDomains(client, id, [], {
+      esvaziamentoExplicito: true,
+      motivoDoEsvaziamento: "Descadastro combinado com o profissional.",
+    });
     expect(await listCompetencyDomains(client, id)).toEqual([]);
 
     await client.auth.signOut();

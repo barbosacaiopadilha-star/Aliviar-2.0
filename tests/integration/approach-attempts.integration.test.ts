@@ -221,6 +221,9 @@ describe("Continuidade Pós-Decisão — Incremento 2 (tentativas e notificaçõ
       .select("id")
       .single();
 
+    // Bloco C (gate C7): seleção não nasce entregue. A fixture percorre o
+    // caminho real — DRAFT com três opções, Relatório emitido, e só então a
+    // transição para DELIVERED (o mesmo UPDATE que deliver_curadoria executa).
     const { data: selection } = await admin
       .from("curated_selections")
       .insert({
@@ -228,11 +231,18 @@ describe("Continuidade Pós-Decisão — Incremento 2 (tentativas e notificaçõ
         priority_profile_id: profile!.id,
         selected_by: curador.userId,
         composition_rationale: "Fixture.",
-        status: "DELIVERED",
-        delivered_at: agora,
       })
       .select("id")
       .single();
+
+    await admin.from("curated_selection_options").insert(
+      professionalIds.map((id, index) => ({
+        curated_selection_id: selection!.id,
+        professional_profile_id: id,
+        position: index + 1,
+        rationale: "Entra porque atende o que ela pediu.",
+      })),
+    );
 
     const { data: report } = await admin
       .from("curadoria_reports")
@@ -255,6 +265,10 @@ describe("Continuidade Pós-Decisão — Incremento 2 (tentativas e notificaçõ
       .update({ approved_at: agora, approved_by: curador.userId })
       .eq("id", report!.id);
     await admin.from("curadoria_reports").update({ emitted_at: agora }).eq("id", report!.id);
+    await admin
+      .from("curated_selections")
+      .update({ status: "DELIVERED", delivered_at: agora })
+      .eq("id", selection!.id);
     await admin.from("curadoria_reports").update({ delivered_at: agora }).eq("id", report!.id);
 
     const patientClient = createCuradoriaClient(url, anonKey);

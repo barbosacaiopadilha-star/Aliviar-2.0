@@ -259,6 +259,10 @@ describe("Continuidade Pós-Decisão — Incremento 1 (contact_mode, RLS e RPC)"
       .single();
     if (profileError) throw new Error(`fixture: Perfil — ${profileError.message}`);
 
+    // Bloco C (gate C7): seleção não nasce entregue. Ela nasce DRAFT, ganha
+    // as opções e o Relatório emitido, e a entrega acontece como TRANSIÇÃO
+    // (o mesmo UPDATE que deliver_curadoria executa) — logo abaixo, depois
+    // da emissão.
     const { data: selection, error: selError } = await admin
       .from("curated_selections")
       .insert({
@@ -266,8 +270,6 @@ describe("Continuidade Pós-Decisão — Incremento 1 (contact_mode, RLS e RPC)"
         priority_profile_id: profile!.id,
         selected_by: curador.userId,
         composition_rationale: "Fixture da continuidade.",
-        status: "DELIVERED",
-        delivered_at: agora,
       })
       .select("id")
       .single();
@@ -322,6 +324,15 @@ describe("Continuidade Pós-Decisão — Incremento 1 (contact_mode, RLS e RPC)"
       .update({ emitted_at: agora })
       .eq("id", report!.id);
     if (emitError) throw new Error(`fixture: emissão do Relatório — ${emitError.message}`);
+
+    // A entrega como transição: primeiro a seleção (gate B12 exige o
+    // Relatório emitido acima), depois o Relatório (gate B17 exige a seleção
+    // já DELIVERED) — a mesma ordem de deliver_curadoria.
+    const { error: selDeliverError } = await admin
+      .from("curated_selections")
+      .update({ status: "DELIVERED", delivered_at: agora })
+      .eq("id", selection!.id);
+    if (selDeliverError) throw new Error(`fixture: entrega da seleção — ${selDeliverError.message}`);
 
     const { error: deliverError } = await admin
       .from("curadoria_reports")

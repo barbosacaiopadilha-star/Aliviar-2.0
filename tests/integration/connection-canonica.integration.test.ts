@@ -94,7 +94,10 @@ describe("Connection canônica — sem final_curadoria_deliveries", () => {
    * Devolve `null` quando a rede local não tem três elegíveis: preferimos não
    * certificar a fabricar profissionais só para o teste passar.
    */
-  async function deliveredCanonicalCase() {
+  // `entregar: false` para o cenário "emitido, não entregue": desde o Bloco C
+  // (20260802160000) o fato da entrega não é apagável — o estado pré-entrega
+  // é CONSTRUÍDO (cadeia parada antes de deliverSelection), nunca revertido.
+  async function deliveredCanonicalCase({ entregar = true }: { entregar?: boolean } = {}) {
     const admin = await loginAs("administrador");
     const curador = await loginAs("curador_medico");
     const service = createAdminSupabaseClient();
@@ -202,8 +205,10 @@ describe("Connection canônica — sem final_curadoria_deliveries", () => {
     // Emitir exige aprovação prévia — o Curador assume a autoria da versão final.
     await reports.approveReport(cliente, report!.id, curador.userId);
     await reports.emitReport(cliente, report!.id);
-    await curadoria.deliverSelection(cliente, selection!.id);
-    await reports.markReportDelivered(cliente, report!.id);
+    if (entregar) {
+      await curadoria.deliverSelection(cliente, selection!.id);
+      await reports.markReportDelivered(cliente, report!.id);
+    }
 
     return {
       service,
@@ -688,15 +693,11 @@ describe("Connection canônica — sem final_curadoria_deliveries", () => {
   });
 
   it("um Relatório ainda não entregue não habilita escolha nenhuma", async () => {
-    const scenario = await deliveredCanonicalCase();
+    // "Emitido, não entregue" é CONSTRUÍDO, nunca revertido: o Bloco C
+    // (20260802160000) tornou o carimbo de entrega definitivo — apagar
+    // delivered_at via service era exatamente o ato que deixou de existir.
+    const scenario = await deliveredCanonicalCase({ entregar: false });
     if (!scenario) return;
-
-    // Volta o Relatório para "emitido, não entregue" — o estado exato em que
-    // o documento existe e o jusante ainda não deve existir.
-    await scenario.service
-      .from("curadoria_reports")
-      .update({ delivered_at: null })
-      .eq("id", scenario.reportId);
 
     expect(await findDeliveredCuradoria(scenario.patientClient, scenario.caseId)).toBeNull();
 

@@ -193,6 +193,16 @@ export async function perfilDePrioridades(
   return data!.id as string;
 }
 
+/**
+ * Bloco C (gate C7): seleção NÃO nasce entregue — o banco recusa o INSERT
+ * já-DELIVERED para qualquer sessão. A fixture percorre o caminho REAL da
+ * entrega: nasce DRAFT com as três opções, ganha Relatório emitido (exigência
+ * do gate B12 na transição) e só então transiciona para DELIVERED — o mesmo
+ * UPDATE que `deliver_curadoria` executa. Quando `entregue: true`, o
+ * Relatório emitido criado aqui é REUTILIZADO por `relatorioDaSelecao`
+ * (idempotente por seleção), então os gates que pedem o Relatório depois
+ * continuam recebendo o mesmo documento.
+ */
 export async function selecaoComOpcoes(
   service: SupabaseClient,
   caseId: string,
@@ -201,7 +211,6 @@ export async function selecaoComOpcoes(
   professionalIds: string[],
   { entregue = true }: { entregue?: boolean } = {},
 ): Promise<string> {
-  const deliveredAt = entregue ? new Date().toISOString() : null;
   const { data, error } = await service
     .from("curated_selections")
     .insert({
@@ -209,8 +218,8 @@ export async function selecaoComOpcoes(
       priority_profile_id: priorityProfileId,
       selected_by: curadorId,
       composition_rationale: "Composição sintética do gate.",
-      status: entregue ? "DELIVERED" : "DRAFT",
-      delivered_at: deliveredAt,
+      status: "DRAFT",
+      delivered_at: null,
     })
     .select("id")
     .single();
@@ -227,9 +236,30 @@ export async function selecaoComOpcoes(
   );
   if (optError) throw new Error(`fixture selection_options: ${optError.message}`);
 
+  if (entregue) {
+    // A transição para DELIVERED exige Relatório emitido (gate B12).
+    await relatorioDaSelecao(service, caseId, selectionId, curadorId, professionalIds, {
+      emitido: true,
+      entregue: false,
+    });
+
+    const { error: deliverError } = await service
+      .from("curated_selections")
+      .update({ status: "DELIVERED", delivered_at: new Date().toISOString() })
+      .eq("id", selectionId);
+    if (deliverError) throw new Error(`fixture entrega da seleção: ${deliverError.message}`);
+  }
+
   return selectionId;
 }
 
+/**
+ * Idempotente por seleção (Bloco C): se a cadeia entregue de
+ * `selecaoComOpcoes` já criou o Relatório emitido desta seleção, ele é
+ * REUTILIZADO (o conteúdo é o mesmo formato sintético) e só os carimbos
+ * pedidos que ainda faltam são aplicados — um Relatório emitido é documento
+ * congelado, e as opções não entram duas vezes.
+ */
 export async function relatorioDaSelecao(
   service: SupabaseClient,
   caseId: string,
@@ -240,34 +270,51 @@ export async function relatorioDaSelecao(
 ): Promise<string> {
   const agora = new Date().toISOString();
 
-  const { data, error } = await service
+  const { data: existente, error: lookupError } = await service
     .from("curadoria_reports")
-    .insert({
-      case_id: caseId,
-      curated_selection_id: curatedSelectionId,
-      composition_rationale: "Composição sintética do gate.",
-      approved_at: agora,
-      approved_by: curadorId,
-    })
-    .select("id")
-    .single();
-  if (error) throw new Error(`fixture report: ${error.message}`);
-  const reportId = data!.id as string;
+    .select("id, emitted_at, delivered_at")
+    .eq("curated_selection_id", curatedSelectionId)
+    .maybeSingle();
+  if (lookupError) throw new Error(`fixture report (lookup): ${lookupError.message}`);
 
-  const { error: optError } = await service.from("curadoria_report_options").insert(
-    professionalIds.map((professionalProfileId, index) => ({
-      report_id: reportId,
-      professional_profile_id: professionalProfileId,
-      position: index + 1,
-      justification: `Justificativa sintética ${index + 1}.`,
-      relation_to_weights: `Relação sintética ${index + 1}.`,
-      attention_points: [`Ponto de atenção sintético ${index + 1}.`],
-      favorable_points: [`Ponto favorável sintético ${index + 1}.`],
-    })),
-  );
-  if (optError) throw new Error(`fixture report_options: ${optError.message}`);
+  let reportId: string;
+  let jaEmitido = false;
+  let jaEntregue = false;
 
-  if (emitido) {
+  if (existente) {
+    reportId = existente.id as string;
+    jaEmitido = existente.emitted_at != null;
+    jaEntregue = existente.delivered_at != null;
+  } else {
+    const { data, error } = await service
+      .from("curadoria_reports")
+      .insert({
+        case_id: caseId,
+        curated_selection_id: curatedSelectionId,
+        composition_rationale: "Composição sintética do gate.",
+        approved_at: agora,
+        approved_by: curadorId,
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(`fixture report: ${error.message}`);
+    reportId = data!.id as string;
+
+    const { error: optError } = await service.from("curadoria_report_options").insert(
+      professionalIds.map((professionalProfileId, index) => ({
+        report_id: reportId,
+        professional_profile_id: professionalProfileId,
+        position: index + 1,
+        justification: `Justificativa sintética ${index + 1}.`,
+        relation_to_weights: `Relação sintética ${index + 1}.`,
+        attention_points: [`Ponto de atenção sintético ${index + 1}.`],
+        favorable_points: [`Ponto favorável sintético ${index + 1}.`],
+      })),
+    );
+    if (optError) throw new Error(`fixture report_options: ${optError.message}`);
+  }
+
+  if (emitido && !jaEmitido) {
     const { error: emitError } = await service
       .from("curadoria_reports")
       .update({ emitted_at: agora })
@@ -275,7 +322,7 @@ export async function relatorioDaSelecao(
     if (emitError) throw new Error(`fixture emissão: ${emitError.message}`);
   }
 
-  if (entregue) {
+  if (entregue && !jaEntregue) {
     const { error: deliverError } = await service
       .from("curadoria_reports")
       .update({ delivered_at: new Date().toISOString() })
