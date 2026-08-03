@@ -1,9 +1,15 @@
-# MODELO DA CURADORIA — v1.0
+# MODELO DA CURADORIA — v2.0
 
 > **Documento canônico do domínio da Curadoria Aliviar.**
 > Consolidado em 2026-07-27 a partir das decisões tomadas durante a evolução
 > do modelo (reforma do cruzamento, cadastro enriquecido, política de fontes,
 > saneamento da rede, certificação do ciclo e Dashboard do Curador).
+>
+> **v2.0 (2026-08-03, ADR-065):** institui a **Compatibilidade Relacional**
+> como quarta leitura da Curadoria (§7.5), com documento normativo próprio em
+> [`DOMINIO_COMPATIBILIDADE_RELACIONAL.md`](DOMINIO_COMPATIBILIDADE_RELACIONAL.md);
+> regulariza o §11 com a virada da ADR-042 (Mapa de Prioridades no lugar dos
+> orçamentos de 100 pontos), quitando a dívida de versão das ADR-039/040/041/042.
 >
 > A partir deste documento: novos desenvolvimentos seguem este modelo;
 > alterações conceituais exigem ADR específica que o referencie; conceito que
@@ -162,9 +168,10 @@ ela.
 
 ## 7. Motor de Cruzamento
 
-O sistema executa **dois cruzamentos independentes**. Os dois resultados
-permanecem separados. **Nunca existe um número de 200 pontos** — somá-los
-faria técnica comprar deficiência assistencial, e vice-versa.
+O sistema executa **três cruzamentos independentes** (o terceiro instituído
+pela ADR-065). Os resultados permanecem separados. **Nunca existe um número
+combinado** — somá-los faria uma leitura comprar deficiência de outra. Nenhum
+cruzamento compensa, elimina ou ordena.
 
 ### 7.1 Cruzamento Técnico
 
@@ -189,6 +196,22 @@ Perfil Assistencial do Profissional  ×  Perfil de Prioridades do Paciente
 Comparação entre o que a pessoa declarou querer e o que o profissional
 declarou oferecer — leitura de duas declarações, não inferência. Cada
 resultado volta com a frase que explica a comparação.
+
+### 7.2-R Cruzamento Relacional (ADR-065)
+
+```
+Perfil Relacional da Pessoa  ×  Condutas declaradas do Profissional
+                     ↓
+      Compatibilidade Relacional (leitura qualitativa, sem número)
+```
+
+Quarta leitura da Curadoria, sobre o eixo `MODELO_DE_ATENDIMENTO` (seis
+conceitos). Grau da pessoa × estado derivado da Base de Evidências, matriz
+4×3 fechada, os mesmos quatro resultados do Motor de Compatibilidade;
+conceitos de juízo humano nunca produzem célula — emitem
+`AGUARDA_JUIZO_DO_CURADOR`. Definição normativa completa, célula a célula:
+[`DOMINIO_COMPATIBILIDADE_RELACIONAL.md`](DOMINIO_COMPATIBILIDADE_RELACIONAL.md).
+Esta leitura **informa** — não pontua, não ranqueia, não elimina, não se soma.
 
 ### 7.3 A escala de avaliação — quatro estados
 
@@ -220,6 +243,8 @@ num caso não se sabe; no outro, sabe-se que não.
 
 - **Avaliação Técnica** (0–100);
 - **Compatibilidade Assistencial** (0–100);
+- **Compatibilidade Relacional** — leitura qualitativa por conceito, com as
+  sinalizações de juízo humano pendente (ADR-065; nunca um número);
 - **Cobertura** de cada cruzamento;
 - **Evidências** que justificam cada critério;
 - **Pontos de atenção** — obrigatórios para o Relatório.
@@ -274,6 +299,7 @@ código novo, documento novo ou tela nova:
 | "Subcritérios" | **Evidências** |
 | "Pontuação" | **Avaliação** |
 | "Ranking" | **Ordenação interna de leitura** |
+| "Compatibilidade Pessoal" | **Compatibilidade Relacional** (ADR-063 §3 e ADR-065) |
 
 ---
 
@@ -288,8 +314,10 @@ impede reinterpretação silenciosa. Após a missão de alinhamento:
 | Critérios do paciente | Acesso · Continuidade do Cuidado · Modelo de Atendimento | **alinhado** — identificadores `ACESSO` / `CONTINUIDADE_DO_CUIDADO` / `MODELO_DE_ATENDIMENTO` no código e no banco (migration `20260727100000`) | missão de alinhamento |
 | Terceiro critério técnico | **Histórico Profissional** ("transmite segurança?") | **alinhado** — identificador `HISTORICO`, pergunta do §4 palavra por palavra | missão de alinhamento |
 | Perfil Assistencial | camada nomeada, três eixos | **alinhado** — `PerfilAssistencial` + `assistencialProfile()` em `dossie.ts` agrupam os fatos nos três eixos, sem pontuação | missão de alinhamento |
-| Rascunho do Relatório a partir de evidências | previsto (§8.3) | **pendente** — funcionalidade futura, missão própria | — |
-| Ordenação interna de leitura | permitida (§8.2) | **sem chave definida** — a ordenação pelo total combinado foi removida junto com ele; escolher a nova chave (técnica? assistencial?) é decisão de domínio e exige ADR. Até lá, a comparação apresenta na ordem da Rede | — |
+| Rascunho do Relatório a partir de evidências | previsto (§8.3) | **superado no essencial** — o Relatório Assistido gera rascunho determinístico a partir das evidências (`relatorio-inteligente.ts`, migration `20260727110000`); a tabela anterior antecedia essa entrega | Relatório Assistido (2026-07-27+) |
+| Ordenação interna de leitura | permitida (§8.2) | **sem chave definida** — a ordenação pelo total combinado foi removida junto com ele; escolher a nova chave é decisão de domínio e exige ADR (reafirmado pela ADR-065: a leitura relacional não é chave de ordenação nesta versão). Até lá, a comparação apresenta na ordem da Rede | — |
+| Orçamentos de 100 pontos (linha "Orçamentos" acima) | v1.0 previa dois orçamentos de 100 | **superado pela ADR-042** — o Mapa de Prioridades (escala fechada de importância) substituiu os orçamentos; o paciente não vê pontuação. A linha original permanece como registro histórico | ADR-039/040/041/042 (2026-07-28) |
+| Compatibilidade Relacional (§7.2-R) | quarta leitura, seis conceitos | **pendente — implementação autorizada** pela ADR-065, na ordem: migration Catálogo 1.1.0 → motor relacional → Mesa → Relatório → Dashboard | ADR-065 (2026-08-03) |
 
 Nenhuma pendência autoriza mudança de código sem missão específica que
 referencie este documento e ajuste esta tabela.
