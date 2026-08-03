@@ -273,7 +273,7 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
     await expect(page.getByText(/Há dois anos convivo com dores na coluna/).first()).toBeVisible();
   });
 
-  test("7. curador abre o Perfil e preenche o Mapa de Prioridades (28 conceitos)", async ({ page }) => {
+  test("7. curador abre o Perfil e preenche o Mapa de Prioridades (29 conceitos)", async ({ page }) => {
     const curador = loadTestAccounts().find((a) => a.role === "curador_medico")!;
     await loginAs(page, curador.email, curador.password);
 
@@ -284,12 +284,31 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
     await page.getByRole("button", { name: "Abrir o Perfil de Prioridades" }).click();
     await expect(page.getByText("Mapa de Prioridades").first()).toBeVisible();
 
-    // Classifica os 28 — escala fechada, um clique por conceito.
+    // Classifica os 29 — escala fechada, um clique por conceito (Catálogo 1.1.0, ADR-065).
     const relevantes = page.getByRole("radio", { name: "Relevante", exact: true });
-    await expect(relevantes).toHaveCount(28, { timeout: 20_000 });
-    for (let i = 0; i < 28; i += 1) {
+    await expect(relevantes).toHaveCount(29, { timeout: 20_000 });
+    for (let i = 0; i < 29; i += 1) {
       await relevantes.nth(i).check({ force: true });
       // Cada gravação é uma action — espera o "Salvando…" daquele item sumir.
+      await expect(page.getByText("Salvando…")).toHaveCount(0, { timeout: 15_000 });
+    }
+
+    // ADR-065: o reconhecimento agora exige também o bloco relacional — toda
+    // conversa do Protocolo da Pessoa registrada. O Curador registra pelo
+    // MESMO caminho do produto (painel do Protocolo), com "Não tenho
+    // preferência" — resposta legítima; o gate cobra registro, não conteúdo.
+    for (;;) {
+      const registrar = page.getByRole("button", { name: "Registrar conversa" });
+      if ((await registrar.count()) === 0) break;
+      await registrar.first().click();
+      const semPreferencia = page.getByRole("radio", { name: /Não tenho preferência/ });
+      await semPreferencia.first().check({ force: true });
+      // P14 (texto guiado) exige as palavras dela quando o campo existir.
+      const palavras = page.getByLabel("O que precisa ser respeitado (palavras dela)");
+      if ((await palavras.count()) > 0) {
+        await palavras.fill("Nada a registrar — ela disse que não há restrições.");
+      }
+      await page.getByRole("button", { name: "Registrar", exact: true }).click();
       await expect(page.getByText("Salvando…")).toHaveCount(0, { timeout: 15_000 });
     }
   });

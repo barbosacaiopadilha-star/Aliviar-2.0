@@ -44,12 +44,18 @@ jobs:
           version: latest
       - name: Supabase local efêmero (aplica as migrations do ledger)
         run: supabase start
+      # B-2: as suítes de integração/remediação/E2E autenticam com as contas
+      # permanentes — sem o bootstrap, o runner não tem test-users.local.json.
+      - name: Contas de teste permanentes
+        run: npm run bootstrap:test-users
       - name: Typecheck
         run: npm run typecheck
       - name: Lint (via injetor — next.config.ts exige o alvo do Supabase)
         run: node scripts/with-local-supabase.mjs npx next lint
       - name: Unitários + meta-testes arquiteturais
-        run: node scripts/with-local-supabase.mjs vitest run
+        # B-2: `vitest` a seco não existe no PATH do runner (exit 127) — npx,
+        # como todos os demais passos.
+        run: node scripts/with-local-supabase.mjs npx vitest run
       - name: Componentes
         run: npm run test:components
       - name: Verificação das migrations (ledger)
@@ -94,5 +100,9 @@ jobs:
         with:
           version: latest
       - run: supabase start
+      # B-2: mesma dependência do job estável — a suíte autentica com as
+      # contas permanentes.
+      - name: Contas de teste permanentes
+        run: npm run bootstrap:test-users
       - name: Suíte de remediação (tests/remediacao)
         run: npm run test:remediacao

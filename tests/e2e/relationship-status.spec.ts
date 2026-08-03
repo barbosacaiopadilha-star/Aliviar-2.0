@@ -12,6 +12,7 @@ import { expect, test, type Page } from "@playwright/test";
 // no beforeAll.
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import * as curadoria from "@/modules/curadoria/repository";
+import { preencherMapaEBlocoRelacional } from "./apoio-mapa";
 import * as reports from "@/modules/curadoria/report-repository";
 import { changeCaseStatus, createCase } from "@/modules/cases/repository";
 import {
@@ -229,6 +230,9 @@ async function seedActiveRelationship(): Promise<ActiveRelationshipFixture> {
     "true",
     "Ela quer alguém que acompanhe do começo ao fim.",
   );
+  // B-2 (ADR-065): o banco só valida Perfil com Mapa completo, e o
+  // reconhecimento exige o bloco relacional — estado legítimo via factory.
+  await preencherMapaEBlocoRelacional(cliente, created.id, adminUserId);
   await curadoria.validatePriorityProfile(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
 
   // M3: o record do COS não carrega mais as análises legadas — a fixture lê a
