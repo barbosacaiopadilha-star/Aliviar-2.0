@@ -240,8 +240,15 @@ export type ReplaceCompetencyDomainsOptions = {
    * declaração nunca é autorização de apagamento (Bloco B/E7, gate B15):
    * um formulário sem os campos de competência parseia para `[]`, e a
    * versão antiga desta função apagava as áreas a cada salvamento.
+   *
+   * BLOCO C (Etapa 8): o esvaziamento deixou de ser um flag cosmético — ele
+   * delega para a RPC `remove_professional_competencies`, que exige autor
+   * (administrador ou bastidor), MOTIVO e grava a trilha
+   * `competencies_removed_explicit` com a lista removida.
    */
   esvaziamentoExplicito?: boolean;
+  /** Motivo do esvaziamento — obrigatório quando `esvaziamentoExplicito`. */
+  motivoDoEsvaziamento?: string;
 };
 
 /**
@@ -269,10 +276,20 @@ export async function replaceCompetencyDomains(
   if (declarados.length === 0) {
     if (!options.esvaziamentoExplicito) return;
 
-    const { error } = await supabase
-      .from("professional_competency_areas")
-      .delete()
-      .eq("professional_profile_id", professionalProfileId);
+    // O ato explícito vai pela RPC (Bloco C/Etapa 8): autoria verificada no
+    // banco, motivo obrigatório, trilha competencies_removed_explicit e a
+    // defesa contra esvaziamento silencioso liberada só dentro do ato.
+    const motivo = options.motivoDoEsvaziamento?.trim();
+    if (!motivo) {
+      throw new Error(
+        "Esvaziar as áreas de atuação exige o motivo — a remoção explícita é um ato auditado.",
+      );
+    }
+
+    const { error } = await supabase.rpc("remove_professional_competencies", {
+      _professional_profile_id: professionalProfileId,
+      _reason: motivo,
+    });
     if (error) throw erroDeBanco("Não foi possível remover as áreas de atuação.", error);
     return;
   }

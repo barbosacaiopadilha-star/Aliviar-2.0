@@ -144,7 +144,8 @@ export async function convertLeadToPatientAction(input: unknown): Promise<Conver
       patientProfileId = pendente.profileId;
       provisionedAccount = true;
       try {
-        const password = await resetPatientPassword(createAdminSupabaseClient(), patientProfileId);
+        // A sessão de quem converte assina a trilha password_reset (C9a).
+        const password = await resetPatientPassword(createAdminSupabaseClient(), patientProfileId, supabase);
         credentials = { email, password };
       } catch (erro) {
         registrarErro("crm.convertLead.retomada", erro, { leadId, patientProfileId });

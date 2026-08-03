@@ -15,6 +15,7 @@ import { applyAreaGate, type AreaAssessment, type AreaCompatibility, type AreaGa
  */
 
 export type AreaDeclaration = {
+  id: string;
   caseId: string;
   professionalProfileId: string;
   compatibility: AreaCompatibility;
@@ -27,6 +28,7 @@ export type AreaDeclaration = {
 };
 
 type Row = {
+  id: string;
   case_id: string;
   professional_profile_id: string;
   compatibility: AreaCompatibility;
@@ -40,6 +42,7 @@ type Row = {
 
 function mapRow(row: Row): AreaDeclaration {
   return {
+    id: row.id,
     caseId: row.case_id,
     professionalProfileId: row.professional_profile_id,
     compatibility: row.compatibility,
@@ -53,7 +56,7 @@ function mapRow(row: Row): AreaDeclaration {
 }
 
 const COLUMNS =
-  "case_id, professional_profile_id, compatibility, confirmed_by_curator, rationale, area_text_reviewed, case_requirement_reviewed, declared_by, declared_at";
+  "id, case_id, professional_profile_id, compatibility, confirmed_by_curator, rationale, area_text_reviewed, case_requirement_reviewed, declared_by, declared_at";
 
 export type DeclareAreaInput = {
   caseId: string;
@@ -66,32 +69,63 @@ export type DeclareAreaInput = {
   declaredBy: string;
 };
 
+/**
+ * Bloco C (Etapa 9, ADR-048): a declaração deixou de ser um upsert cego —
+ * a tabela agora é versionada (uma VIGENTE por par + histórico preservado,
+ * migration 20260802163000). Aqui vive só a via NORMAL: a primeira
+ * declaração do par nasce; a vigente ainda COMPLETÁVEL (informação
+ * insuficiente, confirmação de parcial) é editada em lugar. Reescrever um
+ * juízo já declarado é recusado pelo BANCO com a frase de domínio — e a
+ * correção legítima é a redeclaração oficial (`redeclare_area_compatibility`),
+ * que arquiva a vigente e preserva o histórico.
+ */
 export async function declareAreaCompatibility(
   supabase: SupabaseClient,
   input: DeclareAreaInput,
 ): Promise<AreaDeclaration> {
-  const { data, error } = await supabase
+  const { data: vigente, error: lookupError } = await supabase
     .from("area_compatibility_declarations")
-    .upsert(
-      {
-        case_id: input.caseId,
-        professional_profile_id: input.professionalProfileId,
-        compatibility: input.compatibility,
-        confirmed_by_curator: input.confirmedByCurator ?? false,
-        rationale: input.rationale ?? null,
-        area_text_reviewed: input.areaTextReviewed ?? null,
-        case_requirement_reviewed: input.caseRequirementReviewed ?? null,
-        declared_by: input.declaredBy,
-      },
-      { onConflict: "case_id,professional_profile_id" },
-    )
-    .select(COLUMNS)
-    .single();
+    .select("id")
+    .eq("case_id", input.caseId)
+    .eq("professional_profile_id", input.professionalProfileId)
+    .is("superseded_at", null)
+    .maybeSingle();
+  if (lookupError) throw new Error(lookupError.message);
+
+  const payload = {
+    compatibility: input.compatibility,
+    confirmed_by_curator: input.confirmedByCurator ?? false,
+    rationale: input.rationale ?? null,
+    area_text_reviewed: input.areaTextReviewed ?? null,
+    case_requirement_reviewed: input.caseRequirementReviewed ?? null,
+    declared_by: input.declaredBy,
+  };
+
+  const { data, error } = vigente
+    ? await supabase
+        .from("area_compatibility_declarations")
+        .update(payload)
+        .eq("id", vigente.id as string)
+        .select(COLUMNS)
+        .single()
+    : await supabase
+        .from("area_compatibility_declarations")
+        .insert({
+          case_id: input.caseId,
+          professional_profile_id: input.professionalProfileId,
+          ...payload,
+        })
+        .select(COLUMNS)
+        .single();
 
   if (error) throw new Error(error.message);
   return mapRow(data as Row);
 }
 
+/**
+ * A Rede/cruzamento lê SÓ a declaração vigente de cada par — o histórico
+ * superado existe para auditoria, nunca para decidir participação.
+ */
 export async function listAreaDeclarations(
   supabase: SupabaseClient,
   caseId: string,
@@ -99,7 +133,8 @@ export async function listAreaDeclarations(
   const { data, error } = await supabase
     .from("area_compatibility_declarations")
     .select(COLUMNS)
-    .eq("case_id", caseId);
+    .eq("case_id", caseId)
+    .is("superseded_at", null);
 
   if (error) throw new Error(error.message);
   return (data as Row[]).map(mapRow);

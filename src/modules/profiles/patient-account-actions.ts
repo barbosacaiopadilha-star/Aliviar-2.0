@@ -109,9 +109,12 @@ export async function resetPatientPasswordAction(
   }
 
   const adminClient = createAdminSupabaseClient();
+  // A sessão do administrador assina a trilha password_reset (C9a) — o
+  // adminClient (service) é só o transporte do ato na Admin API.
+  const actorClient = await createServerSupabaseClient();
 
   try {
-    const password = await resetPatientPassword(adminClient, profileId);
+    const password = await resetPatientPassword(adminClient, profileId, actorClient);
     return { success: true, password };
   } catch (erro) {
     return { success: false, error: falhaParaUsuario("profiles.patient-account-actions", erro, { mensagem: "Não foi possível redefinir a senha agora." }) };

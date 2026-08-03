@@ -264,9 +264,17 @@ export async function provisionPatientAccount(
 // Gera uma nova senha e a define via Admin API — nunca reaproveita ou
 // consulta a senha anterior (não é possível: o Supabase Auth nunca
 // armazena senha em texto puro, apenas hash).
+//
+// BLOCO C (C9a, ADR-055): o ato acontece na Admin API, FORA do banco — nenhum
+// trigger o enxerga. A trilha nasce aqui, pela RPC `log_admin_action`, logo
+// após o ato. `actorClient` é a sessão de quem mandou (auth.uid() = autor da
+// trilha); sem ele, a chamada vai pelo adminClient (service_role — a RPC
+// aceita, com autor nulo de bastidor). A metadata carrega só identificador —
+// a senha nunca sai desta função por nenhum canal além do retorno.
 export async function resetPatientPassword(
   adminClient: SupabaseClient,
   profileId: string,
+  actorClient?: SupabaseClient,
 ): Promise<string> {
   const password = generateSecurePassword();
 
@@ -274,6 +282,23 @@ export async function resetPatientPassword(
 
   if (error) {
     throw erroDeBanco("Não foi possível redefinir a senha.", error);
+  }
+
+  const { error: trilhaError } = await (actorClient ?? adminClient).rpc("log_admin_action", {
+    _action: "password_reset",
+    _target_profile_id: profileId,
+    _metadata: { profile_id: profileId },
+  });
+
+  if (trilhaError) {
+    // A senha JÁ mudou; um reset sem rastro não pode passar como sucesso.
+    // O erro derruba a operação com a verdade inteira — o remédio é resetar
+    // de novo (gera outra senha) quando a trilha voltar a gravar.
+    throw erroDeBanco(
+      "A senha foi redefinida, mas o registro de auditoria falhou. Redefina novamente para obter uma senha com rastro.",
+      trilhaError,
+      { profileId },
+    );
   }
 
   return password;
