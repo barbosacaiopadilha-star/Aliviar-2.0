@@ -10,6 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Radio } from "@/components/ui/radio";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  CONDITION_REQUIREMENTS,
+  DETAIL_REQUIREMENTS,
+  type ConceptConditionalRule,
+  type PracticeConcept,
+} from "@/modules/curadoria/evidencias-pratica";
+import {
   PROFESSIONAL_PROTOCOL,
   PROTOCOL_PARTS,
   professionalQuestionsOfPart,
@@ -65,6 +71,61 @@ function emptyResponse(): DraftResponse {
   return { options: [], details: {}, conditionNote: null, observation: null };
 }
 
+// ---------------------------------------------------------------------------
+// Condicionais do banco — a MESMA leitura que o domínio executa na validação.
+// ---------------------------------------------------------------------------
+
+/** Campos de escolha única por decisão do catálogo aprovado (uma faixa de custo). */
+const CAMPOS_DE_ESCOLHA_UNICA = new Set(["faixa"]);
+
+function selecionadosDoCampo(response: DraftResponse, field: string): string[] {
+  if (field === "principal") return response.options;
+  const bruto = response.details[field];
+  if (typeof bruto === "string") return [bruto];
+  if (Array.isArray(bruto)) return bruto.filter((v): v is string => typeof v === "string");
+  return [];
+}
+
+function regraVale(response: DraftResponse, rule: ConceptConditionalRule): boolean {
+  const selecionados = selecionadosDoCampo(response, rule.when.field);
+  if (rule.when.value !== undefined) return selecionados.includes(rule.when.value);
+  if (rule.when.value_not !== undefined) return selecionados.some((v) => v !== rule.when.value_not);
+  return false;
+}
+
+/** Um campo complementar está visível para a resposta atual? */
+function campoVisivel(concept: PracticeConcept, response: DraftResponse, field: string): boolean {
+  for (const regra of concept.conditionalRules) {
+    if (regra.show === field && !regraVale(response, regra)) return false;
+    if (regra.hide === field && regraVale(response, regra)) return false;
+  }
+  return true;
+}
+
+/** Remove de details os campos cuja condição de exibição deixou de valer. */
+function pruneOrphanFields(
+  concept: PracticeConcept,
+  response: DraftResponse,
+): Record<string, unknown> {
+  const details = { ...response.details };
+  for (const campo of concept.fields) {
+    if (details[campo.field] !== undefined && !campoVisivel(concept, response, campo.field)) {
+      delete details[campo.field];
+    }
+  }
+  return details;
+}
+
+/** As opções selecionadas que exigem detalhe próprio (operadoras, parcelas). */
+function detalhesExigidos(concept: PracticeConcept, response: DraftResponse) {
+  const exigencias = DETAIL_REQUIREMENTS.get(concept.code) ?? [];
+  return exigencias.filter((exigencia) =>
+    [response.options, ...concept.fields.map((c) => selecionadosDoCampo(response, c.field))].some(
+      (selecionados) => selecionados.includes(exigencia.value),
+    ),
+  );
+}
+
 export function ProtocoloPraticaForm({
   initialResponses,
   lastSavedAt,
@@ -103,7 +164,46 @@ export function ProtocoloPraticaForm({
           ? previous.options.filter((o) => o !== optionCode)
           : [...previous.options, optionCode]
         : [optionCode];
-      return { ...previous, options };
+      // Regra da resposta-mãe (condicionais do banco): campo mostrado por
+      // condição não sobrevive à mudança da resposta que o sustentava.
+      const next: DraftResponse = { ...previous, options };
+      return { ...next, details: pruneOrphanFields(question.concept, next) };
+    });
+  }
+
+  function toggleFieldValue(
+    question: ProfessionalQuestion,
+    field: string,
+    value: string,
+    single: boolean,
+  ) {
+    update(question.concept.code, (previous) => {
+      const atual = previous.details[field];
+      let proximo: string | string[] | undefined;
+      if (single) {
+        proximo = atual === value ? undefined : value;
+      } else {
+        const lista = Array.isArray(atual) ? (atual as string[]) : [];
+        proximo = lista.includes(value) ? lista.filter((v) => v !== value) : [...lista, value];
+        if (proximo.length === 0) proximo = undefined;
+      }
+      const details = { ...previous.details };
+      if (proximo === undefined) delete details[field];
+      else details[field] = proximo;
+      const next: DraftResponse = { ...previous, details };
+      return { ...next, details: pruneOrphanFields(question.concept, next) };
+    });
+  }
+
+  function setDetailValue(question: ProfessionalQuestion, key: string, value: unknown) {
+    update(question.concept.code, (previous) => {
+      const details = { ...previous.details };
+      if (value === undefined || value === "" || (Array.isArray(value) && value.length === 0)) {
+        delete details[key];
+      } else {
+        details[key] = value;
+      }
+      return { ...previous, details };
     });
   }
 
@@ -200,6 +300,10 @@ export function ProtocoloPraticaForm({
                 question={question}
                 response={responses[question.concept.code] ?? emptyResponse()}
                 onToggle={(option) => toggleOption(question, option)}
+                onFieldToggle={(field, value, single) =>
+                  toggleFieldValue(question, field, value, single)
+                }
+                onDetail={(key, value) => setDetailValue(question, key, value)}
                 onCondition={(text) =>
                   update(question.concept.code, (previous) => ({
                     ...previous,
@@ -209,7 +313,12 @@ export function ProtocoloPraticaForm({
                 onFact={(text) =>
                   update(question.concept.code, (previous) => ({
                     ...previous,
-                    details: text.trim() === "" ? {} : { registro: text },
+                    details:
+                      text.trim() === ""
+                        ? Object.fromEntries(
+                            Object.entries(previous.details).filter(([chave]) => chave !== "registro"),
+                          )
+                        : { ...previous.details, registro: text },
                   }))
                 }
               />
@@ -235,23 +344,49 @@ export function ProtocoloPraticaForm({
   );
 }
 
+/** Rótulo humano de um campo complementar do banco (fallback: o próprio nome). */
+const FIELD_LABELS: Record<string, string> = {
+  frequencia_habitual: "Frequência habitual, quando programado",
+  prazo_de_resposta: "Prazo habitual de resposta",
+  duracao_habitual: "Duração habitual do acompanhamento",
+  tipo_de_local: "Tipo de local",
+  encaminhamento: "Quando encaminha",
+  faixa: "Faixa de custo da primeira consulta",
+  formas: "Formas de pagamento",
+  custos_adicionais: "Custos adicionais conhecidos",
+};
+
 function QuestionBlock({
   question,
   response,
   onToggle,
+  onFieldToggle,
+  onDetail,
   onCondition,
   onFact,
 }: {
   question: ProfessionalQuestion;
   response: DraftResponse;
   onToggle: (option: string) => void;
+  onFieldToggle: (field: string, value: string, single: boolean) => void;
+  onDetail: (key: string, value: unknown) => void;
   onCondition: (text: string) => void;
   onFact: (text: string) => void;
 }) {
   const concept = question.concept;
-  const needsCondition = response.options.some((option) =>
-    concept.requireCondition.includes(option),
+
+  // Condição estruturada obrigatória: qualquer valor selecionado (principal
+  // ou campo complementar) marcado como condicao_estruturada no banco.
+  const valoresComCondicao = CONDITION_REQUIREMENTS.get(concept.code) ?? new Set<string>();
+  const needsCondition = [
+    response.options,
+    ...concept.fields.map((campo) => selecionadosDoCampo(response, campo.field)),
+  ].some((selecionados) => selecionados.some((valor) => valoresComCondicao.has(valor)));
+
+  const camposVisiveis = concept.fields.filter((campo) =>
+    campoVisivel(concept, response, campo.field),
   );
+  const exigencias = detalhesExigidos(concept, response);
 
   return (
     <fieldset className="space-y-3 rounded-lg border p-4">
@@ -282,13 +417,92 @@ function QuestionBlock({
             ),
           )}
         </div>
-      ) : (
+      ) : concept.fields.length === 0 ? (
         <Textarea
           aria-label={`Registro estruturado — ${concept.name}`}
           value={(response.details["registro"] as string) ?? ""}
           onChange={(event) => onFact(event.target.value)}
           placeholder="Registre os dados como constam nos documentos (instituição, ano…)"
         />
+      ) : null}
+
+      {/* Campos complementares fechados — estrutura por campos do catálogo
+          aprovado (o custo achatado num único options[] morreu aqui). */}
+      {camposVisiveis.map((campo) => {
+        const single = CAMPOS_DE_ESCOLHA_UNICA.has(campo.field);
+        const selecionados = selecionadosDoCampo(response, campo.field);
+        return (
+          <div key={campo.field} className="space-y-2 rounded border border-dashed p-3">
+            <p className="text-xs font-medium text-ink-muted">
+              {FIELD_LABELS[campo.field] ?? campo.field}
+            </p>
+            {Object.entries(campo.options).map(([code, label]) =>
+              single ? (
+                <Radio
+                  key={code}
+                  id={`${concept.code}__${campo.field}__${code}`}
+                  name={`${concept.code}__${campo.field}`}
+                  checked={selecionados.includes(code)}
+                  onChange={() => onFieldToggle(campo.field, code, true)}
+                  label={label}
+                />
+              ) : (
+                <Checkbox
+                  key={code}
+                  id={`${concept.code}__${campo.field}__${code}`}
+                  checked={selecionados.includes(code)}
+                  onChange={() => onFieldToggle(campo.field, code, false)}
+                  label={label}
+                />
+              ),
+            )}
+          </div>
+        );
+      })}
+
+      {/* Registro livre complementar dos fatos estruturados com campos fechados. */}
+      {concept.kind === "FATO_ESTRUTURADO" && concept.fields.length > 0 ? (
+        <Textarea
+          aria-label={`Registro estruturado — ${concept.name}`}
+          value={(response.details["registro"] as string) ?? ""}
+          onChange={(event) => onFact(event.target.value)}
+          placeholder="Registre os dados como constam nos documentos (endereços, situações, listas…)"
+        />
+      ) : null}
+
+      {/* Detalhes exigidos por opção (requires_detail do banco). */}
+      {exigencias.map((exigencia) =>
+        exigencia.detailKind === "lista_operadoras" ? (
+          <Input
+            key={exigencia.value}
+            id={`${concept.code}__operadoras`}
+            label="Operadoras aceitas (separe por vírgula) — obrigatório"
+            value={
+              Array.isArray(response.details["operadoras"])
+                ? (response.details["operadoras"] as string[]).join(", ")
+                : ""
+            }
+            onChange={(event) =>
+              onDetail(
+                "operadoras",
+                event.target.value
+                  .split(",")
+                  .map((parte) => parte.trim())
+                  .filter((parte) => parte.length > 0),
+              )
+            }
+            placeholder="Ex.: Operadora A, Operadora B"
+          />
+        ) : exigencia.detailKind === "numero_parcelas" ? (
+          <Input
+            key={exigencia.value}
+            id={`${concept.code}__numero_parcelas`}
+            label="Número de parcelas — obrigatório"
+            value={(response.details["numero_parcelas"] as string) ?? ""}
+            onChange={(event) => onDetail("numero_parcelas", event.target.value)}
+            placeholder="Ex.: 3"
+          />
+        ) : null,
       )}
 
       {needsCondition ? (

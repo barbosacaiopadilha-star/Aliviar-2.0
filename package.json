@@ -17,6 +17,7 @@
     "test:golden": "vitest run --config vitest.golden.config.ts",
     "test:e2e": "npm run build:local && npm run supabase:ledger:check && node scripts/with-local-supabase.mjs playwright test",
     "test:remediacao": "node scripts/with-local-supabase.mjs vitest run --config vitest.remediacao.config.ts",
+    "catalogo:gerar": "node scripts/with-local-supabase.mjs node scripts/gerar-catalogo-ts.mjs",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",

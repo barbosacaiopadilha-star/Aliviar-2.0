@@ -6,16 +6,51 @@
  * @metodo MAPA_DOS_PROTOCOLOS.md / MATRIZ_DE_COBERTURA.md — cobertura 28×5
  * @metodo GRAMATICA_DAS_PERGUNTAS.md — formas, escapes, graus, flexibilidade
  *
- * As opções canônicas do lado do profissional NÃO vivem aqui: vivem em
- * `evidencias-pratica.ts` (o Catálogo 1.0.0 executável) e são importadas —
- * duplicar a lista seria criar o segundo vocabulário que a ADR-039 matou.
- * Este módulo acrescenta o que é do protocolo: o texto da pergunta na língua
- * de quem responde, o público, o modo de aplicação e o lado da pessoa.
+ * FONTE ÚNICA (BLOCO E / FRENTE 1): as perguntas e opções canônicas vêm do
+ * catálogo GERADO do banco (`catalogo-gerado.ts` ← ADR-046/ADR-047) através
+ * de `evidencias-pratica.ts` — nenhuma lista paralela. O texto da pergunta ao
+ * profissional é `professional_question`; o da pessoa, `patient_question`; as
+ * opções do lado da pessoa, `method_subcriterion_options` com
+ * side='paciente'.
+ *
+ * PENDÊNCIA DE DOMÍNIO REGISTRADA (ambiguidade doc×migration — decisão fica
+ * com o Método, não com este código): para 7 conceitos de TRADUÇÃO (P3–P7,
+ * P10, P12) o Catálogo aprovado promete "múltipla escolha + grau" do lado da
+ * pessoa, mas NEM o doc NEM a migration materializam a lista de opções. As
+ * listas provisórias abaixo (marcadas OPCOES_PROVISORIAS_*) preservam o
+ * comportamento existente até a decisão; o gate de paridade compara com o
+ * banco apenas onde o banco materializa opções.
  *
  * Puro e determinístico: sem React, sem banco.
  */
 
-import { PRACTICE_CATALOG, PRACTICE_CONCEPTS_BY_CODE, type PracticeConcept } from "./evidencias-pratica";
+import { CATALOGO_GERADO, type CatalogoConceito } from "./catalogo-gerado";
+import {
+  PRACTICE_CATALOG,
+  PRACTICE_CONCEPTS_BY_CODE,
+  type EvidenceAxis,
+  type PracticeConcept,
+} from "./evidencias-pratica";
+
+const CONCEITOS_GERADOS: ReadonlyMap<string, CatalogoConceito> = new Map(
+  CATALOGO_GERADO.filter((entry) => entry.active).map((entry) => [entry.code, entry]),
+);
+
+/** As opções do lado da pessoa, como o banco as materializa (código → rótulo). */
+function opcoesDaPessoa(code: string): Record<string, string> {
+  const conceito = CONCEITOS_GERADOS.get(code);
+  const record: Record<string, string> = {};
+  for (const campo of conceito?.paciente ?? []) {
+    for (const opcao of campo.options) {
+      if (opcao.active) record[opcao.value] = opcao.label;
+    }
+  }
+  return record;
+}
+
+function perguntaDaPessoa(code: string, fallback: string): string {
+  return CONCEITOS_GERADOS.get(code)?.patientQuestion ?? fallback;
+}
 
 // ---------------------------------------------------------------------------
 // Formas do lado da pessoa
@@ -55,7 +90,7 @@ export type PersonQuestion = {
   id: string;
   subcriterionCode: string;
   mode: PersonMode;
-  /** A pergunta como o Curador a faz — língua da vida, nunca jargão. */
+  /** A pergunta como o Curador a faz — patient_question do banco. */
   question: string;
   /** Opções canônicas do lado da pessoa (código → rótulo). */
   options: Readonly<Record<string, string>>;
@@ -70,82 +105,121 @@ const SEM_PREFERENCIA = { NAO_TENHO_PREFERENCIA: "Não tenho preferência" } as 
 const NAO_SEI = { NAO_SEI_INFORMAR: "Não sei informar" } as const;
 
 // ---------------------------------------------------------------------------
+// Listas provisórias — PENDÊNCIA DE DOMÍNIO registrada no cabeçalho.
+// O banco não materializa o lado da pessoa destes conceitos; o doc o promete
+// sem listar. Nada aqui é identidade nova de catálogo: são as listas que já
+// operavam, aguardando a decisão de Método que as leve (ou não) ao banco.
+// ---------------------------------------------------------------------------
+
+const OPCOES_PROVISORIAS_DISPONIBILIDADE = {
+  MANHA_DIAS_UTEIS: "Manhã em dias úteis",
+  TARDE_DIAS_UTEIS: "Tarde em dias úteis",
+  NOITE_APOS_18H: "Noite, após as 18h",
+  SABADO: "Sábado",
+  DOMINGO_OU_FERIADO: "Domingo ou feriado",
+} as const;
+
+const OPCOES_PROVISORIAS_PRAZO = {
+  ATE_7_DIAS: "Em até 7 dias",
+  ATE_15_DIAS: "Em até 15 dias",
+  ATE_30_DIAS: "Em até 30 dias",
+  SEM_URGENCIA_DECLARADA: "Sem urgência declarada",
+} as const;
+
+const OPCOES_PROVISORIAS_RETORNOS = {
+  RETORNO_JA_MARCADO_AO_SAIR: "Sair com o retorno já marcado",
+  RETORNO_CONFORME_EU_EVOLUIR: "Retorno conforme eu evoluir",
+  PREFIRO_PROCURAR_QUANDO_PRECISAR: "Prefiro procurar quando precisar",
+  QUERO_ORIENTACAO_ESCRITA_APOS_CONSULTA: "Quero orientação escrita após a consulta",
+  ...SEM_PREFERENCIA,
+} as const;
+
+const OPCOES_PROVISORIAS_CANAIS = {
+  PODER_MANDAR_MENSAGEM: "Poder mandar mensagem",
+  TELEFONE_PARA_LIGAR: "Um telefone para ligar",
+  CONTATO_PARA_URGENCIA_FORA_DO_HORARIO: "Contato para urgência fora do horário",
+  BASTA_REAGENDAR: "Basta poder reagendar",
+  ...SEM_PREFERENCIA,
+} as const;
+
+const OPCOES_PROVISORIAS_COORDENACAO = { SIM: "Sim", NAO: "Não", ...NAO_SEI } as const;
+
+const OPCOES_PROVISORIAS_COMUNICACAO = {
+  EXPLICACAO_SEM_TERMOS_TECNICOS: "Explicação sem termos técnicos",
+  QUE_CONFIRMEM_SE_ENTENDI: "Que confirmem se eu entendi",
+  ALGO_ESCRITO_PARA_LEVAR: "Algo escrito para levar",
+  DESENHO_OU_IMAGEM: "Desenho ou imagem",
+  TEMPO_PARA_PERGUNTAR: "Tempo para perguntar",
+  PODER_GRAVAR_A_CONVERSA: "Poder gravar a conversa",
+  ...SEM_PREFERENCIA,
+} as const;
+
+const OPCOES_PROVISORIAS_ALTERNATIVAS = {
+  TODAS_AS_OPCOES_DISPONIVEIS: "Todas as opções disponíveis",
+  OPCAO_DE_NAO_FAZER_NADA: "A opção de não fazer nada",
+  RISCOS_DE_CADA_CAMINHO: "Os riscos de cada caminho",
+  CUSTOS_DE_CADA_CAMINHO: "Os custos de cada caminho",
+  ...SEM_PREFERENCIA,
+} as const;
+
+// ---------------------------------------------------------------------------
 // PROTOCOLO DA PESSOA — P1..P16 (P8 e P9 são declarações do Curador)
 // ---------------------------------------------------------------------------
 
 export const PERSON_PROTOCOL: readonly PersonQuestion[] = [
   {
     id: "P1", subcriterionCode: "ACESSO_MODALIDADE", mode: "DIRETO",
-    question: "Como você consegue ser atendida?",
-    options: {
-      PRECISO_REMOTO: "Preciso de atendimento remoto",
-      PREFIRO_REMOTO: "Prefiro remoto",
-      PRECISO_PRESENCIAL: "Preciso de atendimento presencial",
-      PREFIRO_PRESENCIAL: "Prefiro presencial",
-      TANTO_FAZ: "Tanto faz",
-      ...NAO_SEI,
-    },
+    question: perguntaDaPessoa("ACESSO_MODALIDADE", "Como você consegue ser atendida?"),
+    options: opcoesDaPessoa("ACESSO_MODALIDADE"),
     multi: false,
     flexibilityQuestion: "Se não houver o formato que você precisa, o outro serve para você eventualmente?",
     allowsGuidedText: false,
   },
   {
     id: "P2", subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", mode: "TRADUCAO",
-    question: "De onde você sairia para uma consulta — e até onde dá para ir?",
-    options: {
-      ATE_30_MIN: "Até 30 minutos", ATE_1H: "Até 1 hora", ATE_2H: "Até 2 horas",
-      QUALQUER_DISTANCIA: "Qualquer distância", NAO_POSSO_ME_DESLOCAR: "Não posso me deslocar",
-    },
+    question: perguntaDaPessoa("ACESSO_LOCAL_DE_ATENDIMENTO", "De onde você pode se deslocar, e até onde?"),
+    options: opcoesDaPessoa("ACESSO_LOCAL_DE_ATENDIMENTO"),
     multi: false, flexibilityQuestion: null, allowsGuidedText: false,
   },
   {
     id: "P3", subcriterionCode: "ACESSO_DISPONIBILIDADE", mode: "DIRETO",
-    question: "Quando você consegue ser atendida?",
-    options: {
-      MANHA_DIAS_UTEIS: "Manhã em dias úteis", TARDE_DIAS_UTEIS: "Tarde em dias úteis",
-      NOITE_APOS_18H: "Noite, após as 18h", SABADO: "Sábado", DOMINGO_OU_FERIADO: "Domingo ou feriado",
-    },
+    question: perguntaDaPessoa("ACESSO_DISPONIBILIDADE", "Quando você consegue ser atendida?"),
+    options: OPCOES_PROVISORIAS_DISPONIBILIDADE,
     multi: true,
     flexibilityQuestion: "Você conseguiria faltar ao trabalho ou compromisso para uma consulta?",
     allowsGuidedText: false,
   },
   {
     id: "P4", subcriterionCode: "ACESSO_PRAZO_PARA_CONSULTA", mode: "TRADUCAO",
-    question: "Em quanto tempo você sente que precisa ser atendida?",
-    options: {
-      ATE_7_DIAS: "Em até 7 dias", ATE_15_DIAS: "Em até 15 dias",
-      ATE_30_DIAS: "Em até 30 dias", SEM_URGENCIA_DECLARADA: "Sem urgência declarada",
-    },
+    question: perguntaDaPessoa("ACESSO_PRAZO_PARA_CONSULTA", "Em quanto tempo você precisa ser atendida?"),
+    options: OPCOES_PROVISORIAS_PRAZO,
     multi: false, flexibilityQuestion: null, allowsGuidedText: false,
   },
   {
     id: "P5", subcriterionCode: "CONTINUIDADE_RETORNOS", mode: "TRADUCAO",
-    question: "Depois da primeira consulta, como você gostaria que o acompanhamento continuasse?",
-    options: {
-      RETORNO_JA_MARCADO_AO_SAIR: "Sair com o retorno já marcado",
-      RETORNO_CONFORME_EU_EVOLUIR: "Retorno conforme eu evoluir",
-      PREFIRO_PROCURAR_QUANDO_PRECISAR: "Prefiro procurar quando precisar",
-      QUERO_ORIENTACAO_ESCRITA_APOS_CONSULTA: "Quero orientação escrita após a consulta",
-      ...SEM_PREFERENCIA,
-    },
+    question: perguntaDaPessoa(
+      "CONTINUIDADE_RETORNOS",
+      "Como você gostaria que fosse o acompanhamento depois da primeira consulta?",
+    ),
+    options: OPCOES_PROVISORIAS_RETORNOS,
     multi: true, flexibilityQuestion: null, allowsGuidedText: false,
   },
   {
     id: "P6", subcriterionCode: "CONTINUIDADE_CANAIS", mode: "TRADUCAO",
-    question: "Se algo mudar entre uma consulta e outra — você piorar, surgir uma dúvida — o que você precisa que exista?",
-    options: {
-      PODER_MANDAR_MENSAGEM: "Poder mandar mensagem",
-      TELEFONE_PARA_LIGAR: "Um telefone para ligar",
-      CONTATO_PARA_URGENCIA_FORA_DO_HORARIO: "Contato para urgência fora do horário",
-      BASTA_REAGENDAR: "Basta poder reagendar",
-      ...SEM_PREFERENCIA,
-    },
+    question: perguntaDaPessoa(
+      "CONTINUIDADE_CANAIS",
+      "Você precisa conseguir falar com alguém entre as consultas?",
+    ),
+    options: OPCOES_PROVISORIAS_CANAIS,
     multi: true, flexibilityQuestion: null, allowsGuidedText: false,
   },
   {
     id: "P7", subcriterionCode: "CONTINUIDADE_COORDENACAO", mode: "TRADUCAO",
-    question: "Você já é acompanhada por outros profissionais que precisariam conversar entre si sobre você?",
-    options: { SIM: "Sim", NAO: "Não", ...NAO_SEI },
+    question: perguntaDaPessoa(
+      "CONTINUIDADE_COORDENACAO",
+      "Você já é acompanhada por outros profissionais que precisariam conversar entre si?",
+    ),
+    options: OPCOES_PROVISORIAS_COORDENACAO,
     multi: false, flexibilityQuestion: null, allowsGuidedText: false,
   },
   {
@@ -160,82 +234,53 @@ export const PERSON_PROTOCOL: readonly PersonQuestion[] = [
   },
   {
     id: "P10", subcriterionCode: "MODELO_COMUNICACAO", mode: "TRADUCAO",
-    question: "O que te ajudaria a entender melhor o que for explicado?",
-    options: {
-      EXPLICACAO_SEM_TERMOS_TECNICOS: "Explicação sem termos técnicos",
-      QUE_CONFIRMEM_SE_ENTENDI: "Que confirmem se eu entendi",
-      ALGO_ESCRITO_PARA_LEVAR: "Algo escrito para levar",
-      DESENHO_OU_IMAGEM: "Desenho ou imagem",
-      TEMPO_PARA_PERGUNTAR: "Tempo para perguntar",
-      PODER_GRAVAR_A_CONVERSA: "Poder gravar a conversa",
-      ...SEM_PREFERENCIA,
-    },
+    question: perguntaDaPessoa("MODELO_COMUNICACAO", "O que te ajudaria a entender melhor o que for explicado?"),
+    options: OPCOES_PROVISORIAS_COMUNICACAO,
     multi: true, flexibilityQuestion: null, allowsGuidedText: false,
   },
   {
     id: "P11", subcriterionCode: "MODELO_DECISAO_COMPARTILHADA", mode: "DIRETO",
-    question: "Quando houver mais de um caminho possível, como você gostaria de participar da decisão?",
-    options: {
-      QUERO_DECIDIR_COM_ORIENTACAO: "Quero decidir, com orientação",
-      QUERO_QUE_RECOMENDE_E_EU_CONFIRMO: "Quero que o médico recomende e eu confirmo",
-      PREFIRO_QUE_O_MEDICO_DECIDA: "Prefiro que o médico decida",
-      NAO_SEI_AINDA: "Não sei ainda",
-    },
+    question: perguntaDaPessoa(
+      "MODELO_DECISAO_COMPARTILHADA",
+      "Quando houver mais de um caminho possível, como você gostaria de participar da decisão?",
+    ),
+    options: opcoesDaPessoa("MODELO_DECISAO_COMPARTILHADA"),
     multi: false, flexibilityQuestion: null, allowsGuidedText: false,
   },
   {
     id: "P12", subcriterionCode: "MODELO_ALTERNATIVAS", mode: "TRADUCAO",
-    question: "Antes de aceitar um tratamento, o que você precisa saber?",
-    options: {
-      TODAS_AS_OPCOES_DISPONIVEIS: "Todas as opções disponíveis",
-      OPCAO_DE_NAO_FAZER_NADA: "A opção de não fazer nada",
-      RISCOS_DE_CADA_CAMINHO: "Os riscos de cada caminho",
-      CUSTOS_DE_CADA_CAMINHO: "Os custos de cada caminho",
-      ...SEM_PREFERENCIA,
-    },
+    question: perguntaDaPessoa("MODELO_ALTERNATIVAS", "O que você precisa saber antes de aceitar um tratamento?"),
+    options: OPCOES_PROVISORIAS_ALTERNATIVAS,
     multi: true, flexibilityQuestion: null, allowsGuidedText: false,
   },
   {
     id: "P13", subcriterionCode: "MODELO_PARTICIPACAO_FAMILIAR", mode: "DIRETO",
-    question: "Você quer que alguém participe das conversas com você?",
-    options: {
-      QUERO_ACOMPANHANTE_SEMPRE: "Quero acompanhante sempre",
-      EM_ALGUMAS_CONVERSAS: "Em algumas conversas",
-      PREFIRO_SOZINHA: "Prefiro sozinha",
-      ...SEM_PREFERENCIA,
-    },
+    question: perguntaDaPessoa("MODELO_PARTICIPACAO_FAMILIAR", "Você quer que alguém participe das conversas?"),
+    options: opcoesDaPessoa("MODELO_PARTICIPACAO_FAMILIAR"),
     multi: false, flexibilityQuestion: null, allowsGuidedText: false,
   },
   {
     id: "P14", subcriterionCode: "MODELO_PREFERENCIAS_E_RESTRICOES", mode: "TRADUCAO",
-    question: "Existe algo que você não aceita, ou que precisa ser respeitado no seu cuidado?",
+    question: perguntaDaPessoa(
+      "MODELO_PREFERENCIAS_E_RESTRICOES",
+      "Existe algo que você não aceita, ou que precisa ser respeitado no seu cuidado?",
+    ),
     options: {}, multi: false, flexibilityQuestion: null,
     allowsGuidedText: true, // o ÚNICO texto guiado do protocolo da pessoa
   },
   {
     id: "P15", subcriterionCode: "VIABILIDADE_COBERTURA_E_CONVENIO", mode: "DIRETO",
-    question: "Como você pretende usar sua cobertura de saúde?",
-    options: {
-      PRECISO_USAR_ESTE_CONVENIO: "Preciso usar este convênio",
-      POSSO_USAR_REEMBOLSO: "Posso usar reembolso",
-      ACEITO_ATENDIMENTO_PARTICULAR: "Aceito atendimento particular",
-      PRECISO_CONFIRMAR_MINHA_COBERTURA: "Preciso confirmar minha cobertura",
-      SEM_RESTRICAO_DECLARADA: "Sem restrição declarada",
-      NAO_SE_APLICA: "Não se aplica",
-    },
+    question: perguntaDaPessoa("VIABILIDADE_COBERTURA_E_CONVENIO", "Como você pretende usar sua cobertura?"),
+    options: opcoesDaPessoa("VIABILIDADE_COBERTURA_E_CONVENIO"),
     multi: true, flexibilityQuestion: null, allowsGuidedText: false,
   },
   {
     id: "P16", subcriterionCode: "VIABILIDADE_CUSTO_E_PAGAMENTO", mode: "DIRETO",
-    question: "O que precisa ser verdade para você conseguir pagar pelo atendimento?",
-    options: {
-      TENHO_LIMITE: "Tenho um limite de valor",
-      PRECISO_SABER_O_VALOR_ANTES: "Preciso saber o valor antes de escolher",
-      PRECISO_DE_PARCELAMENTO: "Preciso de parcelamento",
-      NAO_DECLAREI_RESTRICAO: "Não declaro restrição",
-      PREFIRO_NAO_INFORMAR: "Prefiro não informar",
-      NAO_SE_APLICA: "Não se aplica",
-    },
+    question: perguntaDaPessoa(
+      "VIABILIDADE_CUSTO_E_PAGAMENTO",
+      "O que precisa ser verdade para você conseguir pagar?",
+    ),
+    options: opcoesDaPessoa("VIABILIDADE_CUSTO_E_PAGAMENTO"),
     multi: true, flexibilityQuestion: null, allowsGuidedText: false,
   },
 ] as const;
@@ -249,56 +294,38 @@ export const PERSON_QUESTIONS_BY_CODE: ReadonlyMap<string, PersonQuestion> = new
 // ---------------------------------------------------------------------------
 
 export type ProfessionalQuestion = {
-  /** Identificador estável (Q1..Q28, na ordem da Matriz de Cobertura). */
+  /** Identificador estável (Q1..Q28, na ordem canônica do banco). */
   id: string;
   /** O contrato do conceito vem do Catálogo — opções, multi, condição, tier. */
   concept: PracticeConcept;
-  /** A pergunta situacional — comportamento, nunca opinião. */
+  /** A pergunta situacional — professional_question do banco. */
   question: string;
-  /** Parte do protocolo (A–E), para navegação por blocos. */
+  /** Parte do protocolo (A–E), derivada do eixo, para navegação por blocos. */
   part: "A" | "B" | "C" | "D" | "E";
 };
 
-const PROFESSIONAL_QUESTION_TEXTS: Record<string, { question: string; part: ProfessionalQuestion["part"] }> = {
-  ACESSO_MODALIDADE: { question: "Em quais formatos você atende hoje?", part: "A" },
-  ACESSO_LOCAL_DE_ATENDIMENTO: { question: "Em quais endereços você atende presencialmente?", part: "A" },
-  ACESSO_DISPONIBILIDADE: { question: "Em quais janelas você atende habitualmente?", part: "A" },
-  ACESSO_PRAZO_PARA_CONSULTA: { question: "Hoje, qual o prazo habitual para uma primeira consulta?", part: "A" },
-  CONTINUIDADE_RETORNOS: { question: "Depois da primeira consulta, quais destas condutas você costuma adotar?", part: "B" },
-  CONTINUIDADE_CANAIS: { question: "Entre uma consulta e outra, como a pessoa consegue falar com você ou com sua equipe?", part: "B" },
-  CONTINUIDADE_POS_PROCEDIMENTO: { question: "Quando você realiza um procedimento, o que acontece depois — e por quanto tempo?", part: "B" },
-  CONTINUIDADE_EQUIPE_DE_APOIO: { question: "Quem mais acompanha, junto com você, as pessoas que você atende?", part: "B" },
-  CONTINUIDADE_COORDENACAO: { question: "Quando a pessoa já é acompanhada por outros profissionais, o que você costuma fazer?", part: "B" },
-  MODELO_COMUNICACAO: { question: "Quando uma pessoa demonstra dificuldade para compreender uma explicação, quais práticas você normalmente utiliza?", part: "C" },
-  MODELO_DECISAO_COMPARTILHADA: { question: "Quando existem duas ou mais opções clinicamente adequadas, quais ações você costuma realizar antes da decisão?", part: "C" },
-  MODELO_ALTERNATIVAS: { question: "Ao propor uma conduta, o que você costuma apresentar junto?", part: "C" },
-  MODELO_PARTICIPACAO_FAMILIAR: { question: "Como você conduz a presença de acompanhantes?", part: "C" },
-  MODELO_PREFERENCIAS_E_RESTRICOES: { question: "Quando a pessoa recusa uma conduta, ou tem uma restrição pessoal, religiosa ou cultural, o que você costuma fazer?", part: "C" },
-  FORMACAO_GRADUACAO: { question: "Em qual instituição e ano você se graduou em medicina?", part: "D" },
-  FORMACAO_RESIDENCIA: { question: "Quais residências você concluiu (instituição, especialidade, ano)?", part: "D" },
-  FORMACAO_ESPECIALIZACAO: { question: "Quais títulos de especialista você possui (entidade, área, ano)?", part: "D" },
-  FORMACAO_FELLOWSHIP: { question: "Quais fellowships você realizou (instituição, subárea, ano, país)?", part: "D" },
-  FORMACAO_COMPLEMENTAR: { question: "Quais outras formações relevantes você possui (tipo, instituição, ano)?", part: "D" },
-  EXPERIENCIA_TEMPO_DE_PRATICA: { question: "Há quanto tempo você atua nesta especialidade?", part: "D" },
-  EXPERIENCIA_NO_TIPO_DE_CASO: { question: "Com quais condições e procedimentos você tem prática regular hoje?", part: "D" },
-  EXPERIENCIA_VOLUME_DE_ATUACAO: { question: "Com que frequência você atende este tipo de caso?", part: "D" },
-  PRATICA_LIMITES_DE_ATUACAO: { question: "Quais situações você não atende — e, nesses casos, o que você faz?", part: "D" },
-  HISTORICO_TRAJETORIA_INSTITUCIONAL: { question: "Quais são seus vínculos institucionais, atuais e anteriores?", part: "D" },
-  HISTORICO_ATIVIDADE_ACADEMICA: { question: "Qual é a sua atividade acadêmica hoje?", part: "D" },
-  HISTORICO_AREAS_DE_ATUACAO: { question: "Quais são suas áreas de atuação hoje, como você as declara?", part: "D" },
-  VIABILIDADE_COBERTURA_E_CONVENIO: { question: "Por quais formas de cobertura você atende hoje?", part: "E" },
-  VIABILIDADE_CUSTO_E_PAGAMENTO: { question: "Qual o custo da primeira consulta e como pode ser pago?", part: "E" },
+const AXIS_PART: Record<EvidenceAxis, ProfessionalQuestion["part"]> = {
+  ACESSO_AO_CUIDADO: "A",
+  CONTINUIDADE_DO_CUIDADO: "B",
+  MODELO_DE_ATENDIMENTO: "C",
+  PRATICA_E_TRAJETORIA: "D",
+  VIABILIDADE_DE_ACESSO: "E",
 };
 
 export const PROFESSIONAL_PROTOCOL: readonly ProfessionalQuestion[] = PRACTICE_CATALOG.map(
   (concept, index) => {
-    const texto = PROFESSIONAL_QUESTION_TEXTS[concept.code];
-    if (!texto) {
+    const doBanco = CONCEITOS_GERADOS.get(concept.code);
+    if (!doBanco?.professionalQuestion) {
       // Guarda de construção: conceito sem pergunta é catálogo e protocolo
       // divergindo — erro de código, nunca de dado.
       throw new Error(`Conceito sem pergunta no Protocolo do Profissional: ${concept.code}`);
     }
-    return { id: `Q${index + 1}`, concept, question: texto.question, part: texto.part };
+    return {
+      id: `Q${index + 1}`,
+      concept,
+      question: doBanco.professionalQuestion,
+      part: AXIS_PART[concept.axis],
+    };
   },
 );
 

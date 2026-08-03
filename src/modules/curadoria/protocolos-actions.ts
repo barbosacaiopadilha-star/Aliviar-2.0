@@ -11,7 +11,8 @@ import { revalidateCaseSurfaces } from "@/modules/cases/revalidate";
 import { resolveOwnProfessionalProfile } from "./escrita-operacional";
 // A escala vem do domínio — repetir os literais aqui foi como o valor antigo
 // sobreviveu à renomeação e o typecheck teve de encontrá-lo.
-import { NEED_DEGREES } from "./protocolos";
+import { PRACTICE_CONCEPTS_BY_CODE } from "./evidencias-pratica";
+import { NEED_DEGREES, PERSON_QUESTIONS_BY_CODE } from "./protocolos";
 
 import {
   acknowledgePersonNeed,
@@ -41,9 +42,34 @@ const draftResponseSchema = z.object({
   observation: z.string().max(280).nullable(),
 });
 
-const saveDraftSchema = z.object({
-  responses: z.record(z.string().max(80), draftResponseSchema),
-});
+// O schema recusa desconhecido ANTES do domínio: conceito e opção são os do
+// catálogo GERADO do banco (fonte única) — nunca rótulo, nunca cópia antiga.
+const saveDraftSchema = z
+  .object({
+    responses: z.record(z.string().max(80), draftResponseSchema),
+  })
+  .superRefine((data, ctx) => {
+    for (const [codigo, resposta] of Object.entries(data.responses)) {
+      const conceito = PRACTICE_CONCEPTS_BY_CODE.get(codigo);
+      if (!conceito) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["responses", codigo],
+          message: `"${codigo}" não é conceito do Catálogo Canônico vigente.`,
+        });
+        continue;
+      }
+      for (const opcao of resposta.options) {
+        if (!(opcao in conceito.options)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["responses", codigo, "options"],
+            message: `"${opcao}" não é opção canônica de ${codigo}.`,
+          });
+        }
+      }
+    }
+  });
 
 async function resolveOwnProfessionalProfileId(userId: string): Promise<string> {
   const supabase = await createServerSupabaseClient();
@@ -72,16 +98,37 @@ export async function saveOwnProtocolDraftAction(input: unknown) {
 // Protocolo da Pessoa — actions do Curador, dentro da conversa
 // ---------------------------------------------------------------------------
 
-const personNeedSchema = z.object({
-  caseId: z.string().uuid(),
-  subcriterionCode: z.string().max(80),
-  options: z.array(z.string().max(120)).max(20),
-  degree: z.enum(NEED_DEGREES),
-  flexibility: z.string().max(280).nullable(),
-  guidedText: z.string().max(500).nullable(),
-  origin: z.enum(["DIRETO", "TRADUCAO", "DECLARACAO_CLINICA"]),
-  proposedReading: z.string().max(500).nullable(),
-});
+const personNeedSchema = z
+  .object({
+    caseId: z.string().uuid(),
+    subcriterionCode: z.string().max(80),
+    options: z.array(z.string().max(120)).max(20),
+    degree: z.enum(NEED_DEGREES),
+    flexibility: z.string().max(280).nullable(),
+    guidedText: z.string().max(500).nullable(),
+    origin: z.enum(["DIRETO", "TRADUCAO", "DECLARACAO_CLINICA"]),
+    proposedReading: z.string().max(500).nullable(),
+  })
+  .superRefine((data, ctx) => {
+    const pergunta = PERSON_QUESTIONS_BY_CODE.get(data.subcriterionCode);
+    if (!pergunta) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["subcriterionCode"],
+        message: `"${data.subcriterionCode}" não tem lado da pessoa no protocolo.`,
+      });
+      return;
+    }
+    for (const opcao of data.options) {
+      if (!(opcao in pergunta.options)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["options"],
+          message: `"${opcao}" não é opção canônica de ${pergunta.id} (${data.subcriterionCode}).`,
+        });
+      }
+    }
+  });
 
 export async function registerPersonNeedAction(input: unknown) {
   const state = await requireAnyRoleForAction(["curador_medico", "administrador"]);
