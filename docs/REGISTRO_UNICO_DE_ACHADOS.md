@@ -239,6 +239,20 @@ Evidências e cenários conforme fases de origem (F2 §3; F5 §12–14; F6 §§4
 
 **Parciais/notas:** FS-05 → resta `case_events` de `cases/repository` (D); AT-04/AT-06 → mitigados pelos triggers (estado torto irrecusável pelo banco); R4-herdado (RPCs antigas do CRM em papel-puro) → F/K; OPS-04 → fundação da errata pronta (superfície no F).
 
+### Encerramentos do Bloco D (2026-08-02 — D1 aprovada pelo responsável; D2/D3 concluídas; `docs/BLOCO_D_FALSO_SUCESSO.md`)
+
+| ID | Evidência do critério |
+| --- | --- |
+| **FS-01** | Fail-closed da blocklist (gate D17 verde); Rede inflada impossível; falha visível na Mesa com ERR- |
+| **FS-02** | Autosave honesto + sessão expirada de 1ª classe por tipo (gates D22 + teste-10 + caso novo verdes) |
+| **FS-03** | Repository patch (B15) + guarda de banco (C) + schema ausente⇒undefined com adapters (D2); oráculo G1 verde intocado |
+| **FS-04** | Round-trip íntegro: schema sem `.default([])` + preservação por leitura prévia (D21a) + editor com arrays tipados e inversa definida (D21b×2); travas desarmadas no G1 seguem verdes |
+| **FS-05** | As 4 posições de erro-descartado tratadas (B: report-repo/competências; D1: case_events + leituras de Acolhimento/História/Caso com causa preservada) |
+| **FUN-01** | Rota pública com segredo obrigatório em todo ambiente + timingSafeEqual + ingestão com rastro + teste de integração (gate D20 verde). **Pendência operacional: smoke remoto na janela do Bloco J** |
+| **UX-02** | Sessão expirada com frase própria e reentrada; fim do "Este Perfil não é seu." e do "Registrando…" eterno |
+
+**Parciais mantidos abertos:** FS-06 (feito: worklist/safe()/setEncaminhado; resta `maybeSingle` ×8 — Bloco E/K), FS-07 (feito: Curadoria tipada; resta `includes("sucesso")` fora do escopo — K), UX-06 (feito: erro visível na Mesa; resta loading.tsx/autosave — F/K), OBS-02 (feito: actions com ERR-; resta global-error/runbook — I), SEG-05 (feito: segredo obrigatório+timing+docs da var; resta rate-limit — I/H).
+
 ### Cobertura criada pelo Bloco G1 (2026-08-02 — reproduz, NÃO encerra)
 
 Suíte `tests/remediacao/` (26 gates; 25 vermelhos + pino C8) + travas desarmadas: **IM-01..05** (gates C1–C7/C10), **IM-03** (C5/C6), **AU-01** (C9×3), **AT-01** (B11/B12/D18), **AT-02** (B14), **AT-03** (B13 — nuance nova: duplo submit hoje quebra com 23505 ininteligível em vez de duplicar; raiz `active_case_id=null` confirmada), **AT-06/PRIV-04-parcial** (B16), **FS-01** (D17), **FS-02** (D22 + trava desarmada em components), **FS-03** (B15 + trava desarmada em unit), **FS-04** (D21×3 + 9 payloads corrigidos), **FS-05/FS-06** (D18/D19), **FUN-01** (D20), **TST-03-parcial** (porteiro conectado, timeouts, trace, reuse off), **TST-04** (workflow criado; não executado — push proibido). Detalhe: `docs/BLOCO_G1_REDE_DE_SEGURANCA.md`. Herança vermelha da tag registrada: 5 arquivos de integração do catálogo pré-virada → critério de aceite do **Bloco E** (CAT-01).

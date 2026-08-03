@@ -6,6 +6,8 @@
 
 **Resultado vigente: 26 testes — 25 VERMELHOS pelo motivo certo · 1 VERDE deliberado (C8) · 0 skip/todo · exit≠0.**
 
+> **ATUALIZAÇÃO (2026-08-02, fechamento do Bloco D):** a suíte cresceu para **53 testes e está INTEGRALMENTE VERDE (53/0)** — todos os gates de B (B11–B19), C (C1–C10, C9×3 + 19 novos) e D (D17–D22) fechados pelos Blocos B/B.6/C/D sem relaxamento de oráculo (verificação independente do orquestrador em cada bloco). As travas desarmadas (FS-02/FS-03) também estão verdes. A rede de segurança cumpriu seu papel: cada defeito foi reproduzido antes e provado corrigido depois.
+
 | Gate | Invariante/defeito (Registro) | Camada | Falha hoje (motivo) | Libera |
 |---|---|---|---|---|
 | C1 | história enviada→rascunho (IM-04) | banco | update ACEITO pela policy da própria paciente | C |
