@@ -530,6 +530,36 @@ function buildLimitacoes(
 export const FRASE_SENTINELA_JUIZO = "esta leitura aguarda a conversa com o Curador";
 
 /**
+ * A composição que o rascunho assistido escreve — B-2 (RELEASE BLOCKERS).
+ *
+ * Mesma física da frase-sentinela do juízo relacional, aplicada à única prosa
+ * de abertura que a paciente lê: é texto de TRABALHO INTERNO, dirigido ao
+ * Curador ("Revisão do Curador pendente"), e por isso jamais pode chegar ao
+ * documento definitivo. UMA fonte só: o gerador a escreve
+ * (`relatorio-assistido.ts`), a guarda de emissão a procura (ADR-064).
+ */
+export const FRASE_COMPOSICAO_RASCUNHO =
+  "Rascunho assistido — três caminhos legítimos, construídos sobre o que foi declarado e verificado. Revisão do Curador pendente.";
+
+/**
+ * B-2: a composição ainda não é do Curador — porque está vazia ou porque
+ * continua sendo a frase de trabalho do gerador. Pura e determinística: a
+ * action de emissão a consulta antes de emitir.
+ *
+ * Vazio conta como pendente por fail-closed: `curadoria_reports
+ * .composition_rationale` é NULLABLE no banco, e um documento definitivo sem a
+ * frase de abertura do Curador é a mesma promessa vazia, sem texto nenhum.
+ */
+export function composicaoPendenteDoCurador(
+  compositionRationale: string | null,
+): "AUSENTE" | "DO_SISTEMA" | null {
+  const texto = (compositionRationale ?? "").trim();
+  if (texto === "") return "AUSENTE";
+  if (texto === FRASE_COMPOSICAO_RASCUNHO) return "DO_SISTEMA";
+  return null;
+}
+
+/**
  * B-1: as pendências de juízo relacional de um conjunto de opções — cada
  * linha-sentinela ainda presente no texto, com o conceito nomeado.
  * Pura e determinística: a action de emissão a consulta antes de emitir.

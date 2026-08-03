@@ -494,7 +494,7 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
     await expect(page.getByRole("heading", { name: "Curadoria Técnica encerrada" })).toBeVisible();
   });
 
-  test("11. Relatório: B-1 recusa juízo pendente; resolvido, emite e entrega", async ({ page }) => {
+  test("11. Relatório: recusa bastidor (B-1 e B-2); resolvido, emite e entrega", async ({ page }) => {
     const curador = loadTestAccounts().find((a) => a.role === "curador_medico")!;
     await loginAs(page, curador.email, curador.password);
     const caseId = caseUrl.match(/casos\/([0-9a-f-]+)/)![1];
@@ -514,14 +514,30 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
     // O reload lê o que o servidor de fato gravou.
     await page.reload();
 
-    // B-1 (ADR-064/065): o rascunho assistido carrega a frase-sentinela dos
-    // conceitos de juízo humano (P11/P14/P17) — e a emissão é RECUSADA
-    // enquanto ela existir, nomeando o que ainda depende do Curador.
+    // B-2 (ADR-064): regenerar substituiu a abertura que o Curador escreveu na
+    // Mesa pelo texto de trabalho do gerador — o caminho exato pelo qual o
+    // bastidor chegava à paciente. A emissão RECUSA primeiro por isso.
+    const composicao = page.getByLabel("Justificativa da composição");
+    await expect(composicao).toHaveValue(/Revisão do Curador pendente/);
+    await page.getByRole("button", { name: "Emitir o Relatório" }).click();
+    await expect(page.getByText(/a abertura ainda é o texto do rascunho assistido/)).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByText("Relatório emitido — pronto para entregar")).toBeHidden();
+
+    // A frase do Curador no lugar do bastidor.
+    await composicao.fill(
+      "Três caminhos de coluna com abordagens distintas: cirúrgica, conservadora e reabilitadora — a troca entre eles é legível para você.",
+    );
+
+    // B-1 (ADR-064/065): resolvida a abertura, a emissão passa a recusar pelo
+    // que ainda falta — a frase-sentinela dos conceitos de juízo humano
+    // (P11/P14/P17), nomeando o que depende do Curador.
     const relacional = page.getByLabel("Como conversa com a forma como ela quer ser cuidada");
     await expect(relacional).toHaveCount(3);
     await expect(relacional.first()).toHaveValue(/aguarda a conversa com o Curador/);
     await page.getByRole("button", { name: "Emitir o Relatório" }).click();
-    await expect(page.getByText(/O Relatório não pode ser emitido/)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/ainda aguarda a sua avaliação/)).toBeVisible({ timeout: 20_000 });
 
     // Substituir cada linha-sentinela pela leitura do Curador É a validação
     // (report-editor, ADR-065) — feita nas três opções, pela interface.
@@ -569,6 +585,11 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
     // Fronteira de vocabulário: nunca score, ranking ou soma de pontos.
     const corpo = await page.locator("main").innerText();
     expect(corpo).not.toMatch(/200 pontos|ranking|score/i);
+    // B-1/B-2 (ADR-064): e nenhum texto de bastidor — o documento definitivo
+    // não fala com o Curador nem promete conversa que não virá.
+    expect(corpo).not.toMatch(
+      /Rascunho assistido|Revisão do Curador pendente|aguarda a conversa com o Curador/i,
+    );
     // E nenhum profissional fora dos três selecionados.
     expect(corpo).not.toContain(`Dr. Cardio D ${stamp}`);
     expect(corpo).not.toContain(`Dra. Derma E ${stamp}`);
