@@ -78,6 +78,13 @@ export default async function EtapaPage({ params }: { params: Promise<{ id: stri
   // A história enviada pela paciente — só é buscada onde é lida (Acolher).
   const historiaDaPaciente =
     stepId === "ACOLHER" ? await getSourceStoryText(supabase, record.caseId) : null;
+  // O ciclo de vida do Relatório — só é buscado onde é lido (Relatório). Serve
+  // a DUAS props do editor: `assistedGeneratedAt` (o cabeçalho diz de onde o
+  // texto veio) e a `key` de remontagem (a tela acompanha a regeneração).
+  const reportLifecycle =
+    stepId === "RELATORIO" && record.curadoriaTecnica.curatedSelectionId
+      ? await getReportLifecycle(supabase, record.curadoriaTecnica.curatedSelectionId)
+      : null;
   const step = journey.steps.find((entry) => entry.id === stepId)!;
   const stepPhases = definition.phases;
 
@@ -197,15 +204,21 @@ export default async function EtapaPage({ params }: { params: Promise<{ id: stri
               leva à Mesa; com seleção, abre o editor. */}
           {stepId === "RELATORIO" && record.priorityProfileId && record.curadoriaTecnica.curatedSelectionId ? (
             <ReportEditor
+              /* A identidade do editor é a geração do rascunho assistido: o
+                 componente copia as props para estado local no primeiro render
+                 (useState), e sem esta key o router.refresh() pós-regeneração
+                 entregava props novas a um estado que as ignorava — o Curador
+                 via o texto antigo até recarregar a página. `assisted_generated_at`
+                 é escrito num único lugar (generateAndSaveAssistedDraft), então
+                 a remontagem acontece exatamente na regeneração — nunca ao
+                 salvar, emitir ou entregar, que preservam as edições em tela. */
+              key={reportLifecycle?.assistedGeneratedAt ?? "relatorio-nascido-na-mesa"}
               priorityProfileId={record.priorityProfileId}
               curatedSelectionId={record.curadoriaTecnica.curatedSelectionId}
               patientFirstName={record.patientFirstName}
               emittedAt={record.relatorio.emittedAt}
               deliveredAt={record.relatorio.deliveredAt}
-              assistedGeneratedAt={
-                (await getReportLifecycle(supabase, record.curadoriaTecnica.curatedSelectionId))
-                  ?.assistedGeneratedAt ?? null
-              }
+              assistedGeneratedAt={reportLifecycle?.assistedGeneratedAt ?? null}
               nextStepHref={journeyStepHref(record.caseId, "FINALIZAR")}
               initialComposition={record.relatorio.compositionRationale ?? ""}
               initialOptions={record.curadoriaTecnica.selectedProfessionalIds.map((professionalId) => {

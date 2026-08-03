@@ -508,11 +508,14 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
     await page
       .getByRole("button", { name: "Regenerar mesmo assim, descartando minhas edições" })
       .click();
-    await expect(page.getByText(/Rascunho assistido gerado/)).toBeVisible({ timeout: 20_000 });
-    // ACHADO (não corrigido nesta Sprint): o editor guarda initialOptions em
-    // useState sem key — o refresh pós-geração não atualiza as textareas.
-    // O reload lê o que o servidor de fato gravou.
-    await page.reload();
+    // RELEASE GATE 2: o editor remonta pela key (assisted_generated_at) e a
+    // tela passa a exibir o rascunho recém-gerado SEM reload — a asserção
+    // seguinte, lida direto da textarea, é a prova viva da sincronização.
+    // (O aviso transitório morre na remontagem — o estado permanente fica no
+    // cabeçalho "Rascunho assistido:", que é o que se afirma aqui.)
+    await expect(page.getByText(/Rascunho assistido: o texto abaixo foi montado/)).toBeVisible({
+      timeout: 20_000,
+    });
 
     // B-2 (ADR-064): regenerar substituiu a abertura que o Curador escreveu na
     // Mesa pelo texto de trabalho do gerador — o caminho exato pelo qual o
