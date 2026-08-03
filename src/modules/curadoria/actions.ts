@@ -596,6 +596,8 @@ export async function saveReportAction(input: unknown): Promise<CuradoriaActionR
         professionalProfileId: option.professionalProfileId,
         justification: option.justification,
         relationToWeights: option.relationToWeights,
+        // ADR-065: `undefined` atravessa intacto — o repositório preserva.
+        relationalReading: option.relationalReading,
         attentionPoints: option.attentionPoints,
         favorablePoints: option.favorablePoints,
         suggestedQuestions: option.suggestedQuestions,

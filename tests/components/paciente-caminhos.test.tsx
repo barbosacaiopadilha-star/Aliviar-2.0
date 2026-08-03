@@ -44,6 +44,7 @@ function opcao(id: string, nome: string, overrides: Partial<PatientCuradoriaOpti
     professionalName: nome,
     justification: `Este caminho entrou porque responde ao seu caso — ${nome}.`,
     relationToWeights: "Em relação ao seu Perfil: Continuidade do Cuidado atende plenamente.",
+    relationalReading: null,
     favorablePoints: ["Formação específica para o seu caso."],
     attentionPoints: ["Ainda não conseguimos confirmar como ocorre o acompanhamento."],
     suggestedQuestions: ["Como funciona o acompanhamento após a primeira consulta?"],

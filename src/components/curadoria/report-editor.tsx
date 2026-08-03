@@ -40,6 +40,11 @@ export type ReportOptionDraft = {
   professionalName: string;
   justification: string;
   relationToWeights: string;
+  /**
+   * ADR-065 — a seção relacional. O Curador a lê, ajusta e VALIDA aqui: as
+   * frases dos conceitos humanos só chegam ao paciente por esta revisão.
+   */
+  relationalReading: string;
   attentionPoints: string[];
   /**
    * Escrito pelo rascunho assistido, exibido ao paciente — o editor NÃO tem
@@ -67,7 +72,7 @@ type Props = {
 };
 
 /** Campos editados como texto corrido — string no domínio, string na tela. */
-type CampoTexto = "justification" | "relationToWeights" | "curatorObservations";
+type CampoTexto = "justification" | "relationToWeights" | "relationalReading" | "curatorObservations";
 /** Coleções — array no domínio; na tela, um item por linha (relatorio-itens). */
 type CampoLista = "attentionPoints" | "suggestedQuestions";
 
@@ -90,6 +95,17 @@ const CAMPOS: (
     // permanece como armazenamento histórico (renomeá-la é decisão futura).
     guidance: "Como esta opção conversa com as prioridades que ela reconheceu como suas.",
     required: true,
+  },
+  {
+    kind: "texto",
+    field: "relationalReading",
+    title: "Como conversa com a forma como ela quer ser cuidada",
+    // ADR-065: o rascunho traz as frases rastreadas do motor relacional; os
+    // conceitos de juízo humano chegam como "aguarda a conversa com o
+    // Curador" — substituir essas linhas pela sua leitura É a validação.
+    guidance:
+      "A leitura relacional deste caminho. As linhas que aguardam sua leitura são suas: escreva o que você viu ao pôr as duas declarações lado a lado.",
+    required: false,
   },
   {
     kind: "lista",
@@ -201,6 +217,8 @@ export function ReportEditor({
         professionalProfileId: option.professionalProfileId,
         justification: option.justification,
         relationToWeights: option.relationToWeights,
+        // ADR-065: o editor sempre envia o valor da tela — vazio limpa.
+        relationalReading: option.relationalReading.trim() || null,
         attentionPoints: listaEfetiva(option, "attentionPoints"),
         // Sem campo na tela: transporta intacto. Nunca `[]` de fallback —
         // apagar pontos favoráveis não é um ato que este editor ofereça.

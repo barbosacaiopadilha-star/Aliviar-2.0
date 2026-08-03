@@ -81,6 +81,7 @@ function opcaoComoAPaginaMonta(): ReportOptionDraft {
     professionalName: "Dra. Fixture A",
     justification: "Responde ao critério de continuidade que a paciente validou.",
     relationToWeights: "Conversa com o peso que ela deu ao acompanhamento contínuo.",
+    relationalReading: "",
     attentionPoints: ARMAZENADO.attentionPoints,
     favorablePoints: ARMAZENADO.favorablePoints,
     suggestedQuestions: ["O que perguntar na primeira consulta?"],

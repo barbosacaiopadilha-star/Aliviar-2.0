@@ -282,7 +282,7 @@ describe("Rastreabilidade e determinismo", () => {
 
   it("a versão do gerador é gravada e mudou com a virada", () => {
     expect(generateReportDraft(input).generatorVersion).toBe(GENERATOR_VERSION);
-    expect(GENERATOR_VERSION).toContain("2.0.0");
+    expect(GENERATOR_VERSION).toContain("2.1.0");
   });
 
   it("nunca escreve pelo Curador", () => {

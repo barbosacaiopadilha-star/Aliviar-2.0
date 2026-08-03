@@ -31,6 +31,12 @@ export type ReportOptionInput = {
   justification: string;
   /** Como ela conversa com os pesos que o paciente validou. */
   relationToWeights: string;
+  /**
+   * ADR-065 — a seção relacional ("como conversa com a forma como você quer
+   * ser cuidada"). Mesma semântica do Gate D21a: `undefined` é "não mexi" e
+   * preserva o gravado; `null`/`""` explícito limpa.
+   */
+  relationalReading?: string | null;
   /** O que esta opção custa. Nunca vazio: opção só com virtudes é recomendação. */
   attentionPoints: string[];
   /**
@@ -76,14 +82,18 @@ export async function saveReport(
   // conhecido, promover a RPC está fora deste escopo; só a semântica muda).
   // `[]` explícito continua significando "remover". Sem anterior, `undefined`
   // resolve para [] — não há nada a preservar.
-  const precisaPreservar = options.some((option) => option.favorablePoints === undefined);
+  const precisaPreservar = options.some(
+    (option) => option.favorablePoints === undefined || option.relationalReading === undefined,
+  );
   const anterioresPorProfissional = new Map<string, string[]>();
   const anterioresPorPosicao = new Map<number, string[]>();
+  const relacionalPorProfissional = new Map<string, string | null>();
+  const relacionalPorPosicao = new Map<number, string | null>();
 
   if (reportId && precisaPreservar) {
     const { data: anteriores, error: erroLeitura } = await supabase
       .from("curadoria_report_options")
-      .select("professional_profile_id, position, favorable_points")
+      .select("professional_profile_id, position, favorable_points, relational_reading")
       .eq("report_id", reportId);
     // Fail-closed (contrato do Bloco D): falha de leitura FALHA — tratá-la
     // como "não havia nada gravado" apagaria em silêncio o que existe.
@@ -96,6 +106,9 @@ export async function saveReport(
       const favoraveis = (linha.favorable_points as string[] | null) ?? [];
       anterioresPorProfissional.set(linha.professional_profile_id as string, favoraveis);
       anterioresPorPosicao.set(linha.position as number, favoraveis);
+      const relacional = (linha.relational_reading as string | null) ?? null;
+      relacionalPorProfissional.set(linha.professional_profile_id as string, relacional);
+      relacionalPorPosicao.set(linha.position as number, relacional);
     }
   }
 
@@ -136,6 +149,14 @@ export async function saveReport(
         anterioresPorProfissional.get(option.professionalProfileId) ??
         anterioresPorPosicao.get(index + 1) ??
         [],
+      // ADR-065: mesma semântica — `undefined` preserva a seção relacional
+      // já gravada da MESMA opção; `null` explícito limpa.
+      relational_reading:
+        option.relationalReading !== undefined
+          ? option.relationalReading
+          : relacionalPorProfissional.get(option.professionalProfileId) ??
+            relacionalPorPosicao.get(index + 1) ??
+            null,
       attention_points: option.attentionPoints,
       suggested_questions: option.suggestedQuestions,
       curator_observations: option.curatorObservations,

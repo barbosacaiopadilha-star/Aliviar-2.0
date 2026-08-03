@@ -31,6 +31,12 @@ export type PatientCuradoriaOption = {
   professionalName: string;
   justification: string;
   relationToWeights: string;
+  /**
+   * ADR-065 — "Como esse caminho conversa com a forma como você quer ser
+   * cuidada". Literal do Relatório (já validado pelo Curador); `null` =
+   * Relatório sem a seção.
+   */
+  relationalReading: string | null;
   /** "O que encontramos" — literal do Relatório, nunca reescrito aqui. */
   favorablePoints: string[];
   attentionPoints: string[];
@@ -91,7 +97,7 @@ export async function loadPatientCuradoria(
     supabase
       .from("curadoria_report_options")
       .select(
-        "id, professional_profile_id, position, justification, relation_to_weights, favorable_points, attention_points, suggested_questions",
+        "id, professional_profile_id, position, justification, relation_to_weights, relational_reading, favorable_points, attention_points, suggested_questions",
       )
       .eq("report_id", report.id as string)
       .order("position"),
@@ -165,6 +171,7 @@ export async function loadPatientCuradoria(
       professionalName: nameById.get(professionalProfileId) ?? "Profissional",
       justification: (row.justification as string) ?? "",
       relationToWeights: (row.relation_to_weights as string) ?? "",
+      relationalReading: (row.relational_reading as string | null) ?? null,
       favorablePoints: (row.favorable_points as string[]) ?? [],
       attentionPoints: (row.attention_points as string[]) ?? [],
       dimensions: dimensionsFor(professionalProfileId),

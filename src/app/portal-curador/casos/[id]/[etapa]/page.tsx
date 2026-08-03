@@ -219,6 +219,7 @@ export default async function EtapaPage({ params }: { params: Promise<{ id: stri
                     record.curadoriaTecnica.professionalNames[professionalId] ?? "Profissional",
                   justification: option?.justification ?? "",
                   relationToWeights: option?.relationToWeights ?? "",
+                  relationalReading: option?.relationalReading ?? "",
                   // FRENTE D3: as coleções entram no editor como ARRAY — o que
                   // está gravado como dois itens chega como dois itens. O `?? []`
                   // cobre só a opção AINDA SEM linha no Relatório (nada gravado);

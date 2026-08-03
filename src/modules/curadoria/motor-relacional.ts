@@ -48,6 +48,38 @@ export function isRelationalConceptCode(code: string): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// Rótulos — uma fonte só, para painel e Relatório verbalizarem igual
+// ---------------------------------------------------------------------------
+
+function rotulosDoLado(lado: "profissional" | "paciente"): ReadonlyMap<string, ReadonlyMap<string, string>> {
+  return new Map(
+    RELATIONAL_CONCEPTS.map((concept) => [
+      concept.code,
+      new Map(
+        (lado === "profissional" ? concept.profissional : concept.paciente)
+          .filter((campo) => campo.field === "principal")
+          .flatMap((campo) =>
+            campo.options.filter((o) => o.active).map((o) => [o.value, o.label] as const),
+          ),
+      ),
+    ]),
+  );
+}
+
+const CONDUTA_LABELS = rotulosDoLado("profissional");
+const OPCAO_PESSOA_LABELS = rotulosDoLado("paciente");
+
+/** Rótulo canônico de uma conduta declarada do profissional. */
+export function relationalConductLabel(code: string, value: string): string {
+  return CONDUTA_LABELS.get(code)?.get(value) ?? value;
+}
+
+/** Rótulo canônico de uma opção da pessoa. */
+export function relationalPersonOptionLabel(code: string, value: string): string {
+  return OPCAO_PESSOA_LABELS.get(code)?.get(value) ?? value;
+}
+
+// ---------------------------------------------------------------------------
 // Estados e sinalizações
 // ---------------------------------------------------------------------------
 

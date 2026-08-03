@@ -32,6 +32,8 @@ function opcao(nome: string, id: string) {
     professionalName: nome,
     justification: "Responde ao critério dela.",
     relationToWeights: "Cobre experiência.",
+    // ADR-065: a seção relacional viaja como texto; vazio = sem seção.
+    relationalReading: "",
     // FRENTE D3: as coleções chegam ao editor como ARRAY, como estão gravadas.
     attentionPoints: ["Agenda concorrida."],
     favorablePoints: [],

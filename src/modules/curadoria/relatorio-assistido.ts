@@ -6,6 +6,7 @@ import { listAreaDeclarations } from "./area-repository";
 import { applyAreaGate } from "./cruzamento";
 import { loadCasePriorityMap } from "./mapa-prioridades-repository";
 import { loadProfessionalMap } from "./mapa-profissional-repository";
+import { crossCaseRelationalForProfessionals } from "./motor-relacional-repository";
 import {
   generateReportDraft,
   GENERATOR_VERSION,
@@ -42,11 +43,18 @@ async function buildDraftInput(
   caseId: string,
   professionalProfileIds: string[],
 ): Promise<DraftInput> {
-  const [areaDeclarations, priorityMap, professionalMaps] = await Promise.all([
+  const [areaDeclarations, priorityMap, professionalMaps, relacional] = await Promise.all([
     listAreaDeclarations(supabase, caseId),
     loadCasePriorityMap(supabase, caseId),
     Promise.all(professionalProfileIds.map((id) => loadProfessionalMap(supabase, id))),
+    // ADR-065: a leitura relacional entra no rascunho pela mesma porta das
+    // demais fontes — cruzada pelo motor, nunca recalculada aqui.
+    crossCaseRelationalForProfessionals(supabase, caseId, professionalProfileIds),
   ]);
+
+  const relacionalPorProfissional = new Map(
+    relacional.byProfessional.map((leitura) => [leitura.professionalProfileId, leitura.readings]),
+  );
 
   const mapaPorProfissional = new Map(
     professionalProfileIds.map((id, indice) => [id, professionalMaps[indice]!]),
@@ -114,6 +122,7 @@ async function buildDraftInput(
           }
         : null,
       openCriticalDivergences: divergencesByProfessional.get(professionalProfileId) ?? 0,
+      relationalReadings: relacionalPorProfissional.get(professionalProfileId) ?? [],
     };
   });
 
@@ -183,6 +192,7 @@ export async function generateAndSaveAssistedDraft(
       professionalProfileId: selected.professionalProfileId,
       justification: generated.justificativa.text,
       relationToWeights: generated.relacaoPrioridades.text,
+      relationalReading: generated.leituraRelacional.text,
       attentionPoints: generated.pontosDeAtencao.items.map((item) => item.text),
       favorablePoints: generated.pontosFavoraveis.map((item) => item.text),
       suggestedQuestions: generated.perguntasSugeridas.map((item) => item.text),

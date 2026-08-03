@@ -220,6 +220,7 @@ export async function loadCuradoriaRecord(
     position: row.position as number,
     justification: row.justification as string,
     relationToWeights: row.relation_to_weights as string,
+    relationalReading: (row.relational_reading as string | null) ?? null,
     favorablePoints: (row.favorable_points as string[]) ?? [],
     attentionPoints: (row.attention_points as string[]) ?? [],
     suggestedQuestions: (row.suggested_questions as string[]) ?? [],

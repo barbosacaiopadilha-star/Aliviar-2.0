@@ -374,7 +374,8 @@ const rosa: CuradoriaRecord = baseRecord({
         favorablePoints: ["Trajetória longa", "Acompanha ao longo do tempo"],
         attentionPoints: ["Agenda mais concorrida — o início pode levar algumas semanas"],
         suggestedQuestions: ["Como funciona o acompanhamento entre as consultas?"],
-        curatorObservations: null,
+        relationalReading: null,
+      curatorObservations: null,
       },
       {
         professionalId: "prof-087",
@@ -385,7 +386,8 @@ const rosa: CuradoriaRecord = baseRecord({
         favorablePoints: ["Começa mais rápido"],
         attentionPoints: ["Acompanhamento contínuo não é o formato principal dele"],
         suggestedQuestions: ["O acompanhamento seria com você mesmo ou com a equipe?"],
-        curatorObservations: null,
+        relationalReading: null,
+      curatorObservations: null,
       },
       {
         professionalId: "prof-203",
@@ -395,7 +397,8 @@ const rosa: CuradoriaRecord = baseRecord({
         favorablePoints: ["Agenda aberta"],
         attentionPoints: ["Menos tempo de trajetória que as outras duas"],
         suggestedQuestions: ["Quantos casos parecidos você acompanha hoje?"],
-        curatorObservations: null,
+        relationalReading: null,
+      curatorObservations: null,
       },
     ],
     compositionRationale:

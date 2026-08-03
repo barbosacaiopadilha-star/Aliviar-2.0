@@ -36,9 +36,16 @@ import {
 } from "./mapa-prioridades";
 import type { SubcriterionStatus } from "./mapa-profissional";
 import { crossOne, type CompatibilityResult } from "./motor-compatibilidade";
+import {
+  relationalConductLabel,
+  relationalPersonOptionLabel,
+  type RelationalReading,
+} from "./motor-relacional";
+import type { NeedDegree } from "./protocolos";
 
 /** Versão do gerador — gravada em cada rascunho para auditoria. */
-export const GENERATOR_VERSION = "relatorio-inteligente/2.0.0";
+// 2.1.0: seção da leitura relacional (ADR-065) — nova origem de conclusão.
+export const GENERATOR_VERSION = "relatorio-inteligente/2.1.0";
 
 // ---------------------------------------------------------------------------
 // Rastreabilidade
@@ -51,7 +58,10 @@ export type ProvenanceRef = {
     | "mapa_do_profissional"
     | "completude_do_mapa"
     | "divergencia"
-    | "lacuna";
+    | "lacuna"
+    // ADR-065: frase da leitura relacional — o par (opção da pessoa ×
+    // conduta declarada) que a sustenta vai nos campos abaixo.
+    | "leitura_relacional";
   /** O subcritério do catálogo canônico a que a frase se refere. */
   subcriterion?: string;
   /** O nível declarado pelo Case — a origem da ordem e do destaque. */
@@ -110,6 +120,12 @@ export type OptionDraftInput = {
   /** A declaração de área que deixou esta opção participar. */
   areaDeclaration: AreaDeclarationRef | null;
   openCriticalDivergences: number;
+  /**
+   * ADR-065: a leitura relacional deste par (Case × profissional), já
+   * cruzada pelo motor relacional. Ausente = Case sem bloco relacional
+   * respondido (Relatórios antigos continuam gerando sem a seção).
+   */
+  relationalReadings?: readonly RelationalReading[];
 };
 
 export type PriorityRef = {
@@ -136,6 +152,12 @@ export type OptionDraft = {
   professionalProfileId: string;
   justificativa: DraftField;
   relacaoPrioridades: DraftField;
+  /**
+   * ADR-065 — "Como esse caminho conversa com a forma como você quer ser
+   * cuidada". Frases de célula são verbalização pura; conceitos humanos
+   * entram como estado declarado e exigem o Curador (`requiresCurator`).
+   */
+  leituraRelacional: DraftField;
   pontosDeAtencao: { items: TracedSentence[]; requiresCurator: boolean };
   pontosFavoraveis: TracedSentence[];
   perguntasSugeridas: TracedSentence[];
@@ -494,6 +516,122 @@ function buildLimitacoes(
 }
 
 // ---------------------------------------------------------------------------
+// A leitura relacional — ADR-065 (documento normativo, Parte 6)
+// ---------------------------------------------------------------------------
+
+/** Como cada grau abre a frase — a linguagem dela, nunca a da matriz. */
+const DEGREE_PREFIX: Record<NeedDegree, string> = {
+  ESSENCIAL: "Para você é essencial",
+  PESA_MUITO: "Pesa muito para você",
+  DESEJAVEL: "Você disse que seria bem-vindo",
+  SEM_PREFERENCIA: "", // células SEM_PREFERENCIA são NAO_RELEVANTE — sem frase
+};
+
+const DEGREE_RANK: Record<NeedDegree, number> = {
+  ESSENCIAL: 0,
+  PESA_MUITO: 1,
+  DESEJAVEL: 2,
+  SEM_PREFERENCIA: 3,
+};
+
+function minusculaInicial(texto: string): string {
+  return texto.length > 0 ? texto[0]!.toLowerCase() + texto.slice(1) : texto;
+}
+
+/**
+ * As frases da seção relacional. Toda frase de célula é VERBALIZAÇÃO de um
+ * par (opção da pessoa × conduta declarada) — nunca inferência, nunca
+ * adjetivo. Conceito humano entra como estado declarado: a frase dele só
+ * chega ao paciente depois da leitura do Curador (`requiresCurator`).
+ *
+ * Ordem: grau da pessoa (desc), empate pela ordem do Catálogo — a mesma
+ * regra de ordenação de leitura do restante do Relatório.
+ */
+function buildLeituraRelacional(readings: readonly RelationalReading[]): DraftField {
+  const ordenadas = [...readings].sort((a, b) => DEGREE_RANK[a.degree] - DEGREE_RANK[b.degree]);
+  const sentences: TracedSentence[] = [];
+  let requiresCurator = false;
+
+  for (const reading of ordenadas) {
+    if (reading.kind === "JUIZO_HUMANO") {
+      requiresCurator = true;
+      sentences.push({
+        text: `Sobre ${minusculaInicial(reading.conceptName)}: esta leitura aguarda a conversa com o Curador.`,
+        provenance: [
+          {
+            sourceType: "leitura_relacional",
+            subcriterion: reading.code,
+            status: reading.hasEvidence ? "CONFIRMADO" : null,
+          },
+        ],
+      });
+      continue;
+    }
+
+    if (reading.result === "NAO_RELEVANTE") continue;
+    const prefixo = DEGREE_PREFIX[reading.degree];
+
+    for (const match of reading.matches) {
+      const pedido = minusculaInicial(match.personLabel);
+      const provenance: ProvenanceRef[] = [
+        {
+          sourceType: "leitura_relacional",
+          subcriterion: reading.code,
+          status: reading.state,
+          compatibility: reading.result,
+        },
+      ];
+
+      if (reading.state === "NAO_INFORMADO") {
+        sentences.push({
+          text: `${prefixo} ${pedido}. Ainda não há registro sobre como este profissional conduz esse ponto.`,
+          provenance,
+        });
+      } else if (match.satisfied) {
+        const condutas = match.matchedConducts
+          .map((conduta) => minusculaInicial(relationalConductLabel(reading.code, conduta)))
+          .join("; ");
+        sentences.push({
+          text: `${prefixo} ${pedido}. Este profissional declara que ${condutas}.`,
+          provenance,
+        });
+      } else {
+        sentences.push({
+          text: `${prefixo} ${pedido}. Essa conduta não está entre as declaradas por este profissional.`,
+          provenance,
+        });
+      }
+    }
+  }
+
+  return {
+    sentences,
+    text: sentences.map((sentence) => sentence.text).join("\n"),
+    requiresCurator,
+  };
+}
+
+/** Lacunas relacionais entram nos pontos de atenção (ADR-065 §11.3). */
+function relationalAttentionItems(readings: readonly RelationalReading[]): TracedSentence[] {
+  return readings
+    .filter(
+      (reading): reading is Extract<RelationalReading, { kind: "CELULA" }> =>
+        reading.kind === "CELULA" && reading.result === "LACUNA_DE_INFORMACAO",
+    )
+    .map((reading) => ({
+      text: `Sobre ${minusculaInicial(reading.conceptName)}: ainda não há registro — vale levantar na conversa.`,
+      provenance: [
+        {
+          sourceType: "leitura_relacional" as const,
+          subcriterion: reading.code,
+          status: reading.state,
+          compatibility: reading.result,
+        },
+      ],
+    }));
+}
+
+// ---------------------------------------------------------------------------
 // O gerador
 // ---------------------------------------------------------------------------
 
@@ -518,12 +656,24 @@ export function generateReportDraft(input: DraftInput): ReportDraft {
   const options = input.options.map((option, indice) => {
     const readings = porOpcao[indice]!;
     const justificativa = buildJustificativa(option, readings, input.areaRequirement);
+    const relacionais = option.relationalReadings ?? [];
+
+    // ADR-065 §11.3: as lacunas relacionais entram nos pontos de atenção ao
+    // lado das assistenciais — a atenção do Curador não distingue a leitura
+    // de origem, só a pendência.
+    const atencao = buildAtencao(option, readings);
+    const atencaoRelacional = relationalAttentionItems(relacionais);
+    const pontosDeAtencao = {
+      items: [...atencao.items, ...atencaoRelacional],
+      requiresCurator: atencao.items.length + atencaoRelacional.length === 0,
+    };
 
     return {
       professionalProfileId: option.professionalProfileId,
       justificativa,
       relacaoPrioridades: buildRelacao(option, readings),
-      pontosDeAtencao: buildAtencao(option, readings),
+      leituraRelacional: buildLeituraRelacional(relacionais),
+      pontosDeAtencao,
       pontosFavoraveis: buildFavoraveis(option, readings, justificativa),
       perguntasSugeridas: buildPerguntas(option, readings),
       observacoesDoCurador: "" as const,

@@ -59,6 +59,7 @@ function opcaoCarregada(extra: Partial<ReportOptionDraft> = {}): ReportOptionDra
     professionalName: "Dra. Fixture A",
     justification: "Responde ao critério de continuidade que a paciente validou.",
     relationToWeights: "Conversa com as prioridades que ela reconheceu como suas.",
+    relationalReading: "",
     attentionPoints: GRAVADO.attentionPoints,
     favorablePoints: GRAVADO.favorablePoints,
     suggestedQuestions: GRAVADO.suggestedQuestions,

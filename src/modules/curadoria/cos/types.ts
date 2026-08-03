@@ -174,6 +174,8 @@ export type OpcaoRelatorio = {
   justification: string;
   /** Como esta opção conversa com os pesos que o paciente definiu. */
   relationToWeights: string;
+  /** ADR-065 — a seção relacional. `null` = Relatório anterior à ADR ou não escrita. */
+  relationalReading: string | null;
   favorablePoints: string[];
   attentionPoints: string[];
   suggestedQuestions: string[];

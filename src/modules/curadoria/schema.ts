@@ -182,6 +182,9 @@ export const saveReportInputSchema = z.object({
         // salvar de rascunho apagava os pontos favoráveis do rascunho
         // assistido. A ação explícita de esvaziar fica com o editor (D3).
         favorablePoints: z.array(z.string().trim().min(1)).optional(),
+        // ADR-065: mesma semântica do Gate D21a — ausência é "não mexi"
+        // (preserva a seção relacional gravada); string vazia/null limpa.
+        relationalReading: z.string().trim().max(8000).nullable().optional(),
         suggestedQuestions: z.array(z.string().trim().min(1)).default([]),
         curatorObservations: z.string().trim().max(4000).nullable().optional(),
       }),
