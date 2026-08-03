@@ -223,6 +223,22 @@ Evidências e cenários conforme fases de origem (F2 §3; F5 §12–14; F6 §§4
 
 **Abertos com tratamento parcial registrado (NÃO encerrados):** AT-04 (`saveSelection` segue 3 statements — mitigado: banco recusa entrega com ≠3), AT-06 (4 das 5 operações promovidas; falta seleção), FS-03 (repository preserva por patch — B15 verde; schema `.default([])`/form ficam no D, teste intencional segue vermelho), FS-05 (`report-repository.ts:169` corrigido no caminho da entrega; `case_events` de `cases/repository` restam), IM-03 (entrega não regrava mais `emitted_at`; lista congelada do banco fica no C — gate C5 segue vermelho), PRIV-04-parcial (compensação de storage verificada + evento de resíduo; cascata/confirmação/tombstone ficam no C/H). Detalhe: `docs/BLOCO_B_ATOMICIDADE.md`.
 
+### Encerramentos do Bloco C (2026-08-02)
+
+| ID | Evidência do critério (gates verdes; `docs/BLOCO_C_IMUTABILIDADE_AUDITORIA.md`) |
+| --- | --- |
+| **IM-01** | Trigger de seleção DELIVERED (migration `158000`); gates C4/C7 verdes; RPC oficial preservada |
+| **IM-02** | Triggers de Perfil VALIDATED + Mapa congelado (`156000`/`157000`); C2/C3 verdes; sucessor DRAFT reabre edição |
+| **IM-03** | Carimbos na lista congelada e monotônicos (`160000`); C5/C6 verdes; entrega sem regravação (B+C completos) |
+| **IM-04** | História enviada terminal e congelada (`155000`); C1 verde; versões preservadas |
+| **IM-05** | Ciclo SUPERSEDED implementado (RPC `supersede_priority_profile`, `156000`); C10 verde incl. concorrência e vínculo |
+| **IM-06** | Política de guarda aplicada aos 8 furos da matriz F3 (triggers C + B12/B17); nenhuma imutabilidade só na UI |
+| **IM-08** | Declaração de área versionada com histórico e única vigente (`163000`); upsert cego eliminado |
+| **AU-01** | Tríade com trilha: `password_reset` (RPC, falha da trilha = falha do ato), despublicação (trigger, autor+motivo), delete de documento (tombstone md5); C9a/b/c verdes |
+| **AU-02** | Autoria dos atos: `profile_recognized` (`159000`), `report_emitted` (trigger `160000`), entrega já auditada no B; sem conteúdo clínico (gate assertivo) |
+
+**Parciais/notas:** FS-05 → resta `case_events` de `cases/repository` (D); AT-04/AT-06 → mitigados pelos triggers (estado torto irrecusável pelo banco); R4-herdado (RPCs antigas do CRM em papel-puro) → F/K; OPS-04 → fundação da errata pronta (superfície no F).
+
 ### Cobertura criada pelo Bloco G1 (2026-08-02 — reproduz, NÃO encerra)
 
 Suíte `tests/remediacao/` (26 gates; 25 vermelhos + pino C8) + travas desarmadas: **IM-01..05** (gates C1–C7/C10), **IM-03** (C5/C6), **AU-01** (C9×3), **AT-01** (B11/B12/D18), **AT-02** (B14), **AT-03** (B13 — nuance nova: duplo submit hoje quebra com 23505 ininteligível em vez de duplicar; raiz `active_case_id=null` confirmada), **AT-06/PRIV-04-parcial** (B16), **FS-01** (D17), **FS-02** (D22 + trava desarmada em components), **FS-03** (B15 + trava desarmada em unit), **FS-04** (D21×3 + 9 payloads corrigidos), **FS-05/FS-06** (D18/D19), **FUN-01** (D20), **TST-03-parcial** (porteiro conectado, timeouts, trace, reuse off), **TST-04** (workflow criado; não executado — push proibido). Detalhe: `docs/BLOCO_G1_REDE_DE_SEGURANCA.md`. Herança vermelha da tag registrada: 5 arquivos de integração do catálogo pré-virada → critério de aceite do **Bloco E** (CAT-01).
