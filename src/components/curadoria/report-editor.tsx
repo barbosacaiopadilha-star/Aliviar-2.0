@@ -12,6 +12,7 @@ import {
   generateAssistedDraftAction,
   saveReportAction,
 } from "@/modules/curadoria/actions";
+import { itensParaTextarea, textareaParaItens } from "@/modules/curadoria/relatorio-itens";
 
 /**
  * O Relatório — escrever, revisar, emitir e entregar, num ambiente só.
@@ -31,13 +32,23 @@ import {
  * — depois de entregue, o documento é o que o paciente tem nas mãos.
  */
 
+// FRENTE D3: as coleções chegam e saem como ARRAY — a página nunca as cola
+// numa string. O que foi gravado como dois itens continua sendo dois itens
+// depois de qualquer salvar; a textarea é só a superfície de edição.
 export type ReportOptionDraft = {
   professionalProfileId: string;
   professionalName: string;
   justification: string;
   relationToWeights: string;
-  attentionPoints: string;
-  suggestedQuestions: string;
+  attentionPoints: string[];
+  /**
+   * Escrito pelo rascunho assistido, exibido ao paciente — o editor NÃO tem
+   * campo para ele: transporta intacto o que carregou, item a item. Esvaziar
+   * pontos favoráveis não é ato deste editor (só regenerar o rascunho
+   * assistido os reescreve) — por isso o valor carregado nunca vira `[]` aqui.
+   */
+  favorablePoints: string[];
+  suggestedQuestions: string[];
   curatorObservations: string;
 };
 
@@ -55,19 +66,24 @@ type Props = {
   nextStepHref: string;
 };
 
-const CAMPOS: {
-  field: keyof Omit<ReportOptionDraft, "professionalProfileId" | "professionalName">;
-  title: string;
-  guidance: string;
-  required: boolean;
-}[] = [
+/** Campos editados como texto corrido — string no domínio, string na tela. */
+type CampoTexto = "justification" | "relationToWeights" | "curatorObservations";
+/** Coleções — array no domínio; na tela, um item por linha (relatorio-itens). */
+type CampoLista = "attentionPoints" | "suggestedQuestions";
+
+const CAMPOS: (
+  | { kind: "texto"; field: CampoTexto; title: string; guidance: string; required: boolean }
+  | { kind: "lista"; field: CampoLista; title: string; guidance: string; required: boolean }
+)[] = [
   {
+    kind: "texto",
     field: "justification",
     title: "Por que esta opção está aqui",
     guidance: "Nomeie o critério dela que esta opção responde. Precisa poder ser lido em voz alta.",
     required: true,
   },
   {
+    kind: "texto",
     field: "relationToWeights",
     title: "Relação com as prioridades dela",
     // M4: o rótulo visível fala prioridades — a coluna `relation_to_weights`
@@ -76,18 +92,22 @@ const CAMPOS: {
     required: true,
   },
   {
+    kind: "lista",
     field: "attentionPoints",
     title: "O que esta opção custa",
-    guidance: "Obrigatório. Opção só com virtudes não é opção — é recomendação disfarçada.",
+    guidance:
+      "Obrigatório. Opção só com virtudes não é opção — é recomendação disfarçada. Um ponto por linha.",
     required: true,
   },
   {
+    kind: "lista",
     field: "suggestedQuestions",
     title: "Perguntas para a primeira consulta",
-    guidance: "O que vale ela perguntar nesse encontro.",
+    guidance: "O que vale ela perguntar nesse encontro. Uma pergunta por linha.",
     required: false,
   },
   {
+    kind: "texto",
     field: "curatorObservations",
     title: "Suas observações",
     guidance: "O que mais você quer que fique registrado, com sua autoria.",
@@ -108,6 +128,17 @@ export function ReportEditor({
 }: Props) {
   const router = useRouter();
   const [options, setOptions] = useState(initialOptions);
+  /**
+   * Texto em edição das coleções, por `${field}-${professionalProfileId}`.
+   *
+   * A chave só existe depois que o Curador TOCA o campo. Enquanto não existe,
+   * a tela exibe `itensParaTextarea(array)` e o salvar reenvia o ARRAY
+   * CARREGADO byte a byte — item legado com quebra de linha interna atravessa
+   * intacto (a exibição nunca contamina o dado). Depois do primeiro toque,
+   * vale o que o Curador vê: cada linha não vazia é um item; esvaziar o campo
+   * e salvar é o ato deliberado de limpar (`[]` explícito).
+   */
+  const [listasEmEdicao, setListasEmEdicao] = useState<Record<string, string>>({});
   const [composition, setComposition] = useState(initialComposition);
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -117,8 +148,30 @@ export function ReportEditor({
   const entregue = Boolean(deliveredAt);
   const emitido = Boolean(emittedAt);
 
+  const chaveDaLista = (id: string, field: CampoLista) => `${field}-${id}`;
+
+  /** O array que será enviado: o carregado (campo intocado) ou o que se vê. */
+  function listaEfetiva(option: ReportOptionDraft, field: CampoLista): string[] {
+    const texto = listasEmEdicao[chaveDaLista(option.professionalProfileId, field)];
+    return texto === undefined ? option[field] : textareaParaItens(texto);
+  }
+
+  /** O que a textarea exibe: o texto em edição ou o array, um item por linha. */
+  function textoDaLista(option: ReportOptionDraft, field: CampoLista): string {
+    return (
+      listasEmEdicao[chaveDaLista(option.professionalProfileId, field)] ??
+      itensParaTextarea(option[field])
+    );
+  }
+
+  function campoVazio(option: ReportOptionDraft, campo: (typeof CAMPOS)[number]): boolean {
+    return campo.kind === "lista"
+      ? listaEfetiva(option, campo.field).length === 0
+      : !option[campo.field].trim();
+  }
+
   const faltando = options.flatMap((option) =>
-    CAMPOS.filter((campo) => campo.required && !option[campo.field].trim()).map(
+    CAMPOS.filter((campo) => campo.required && campoVazio(option, campo)).map(
       (campo) => `${option.professionalName}: falta “${campo.title.toLowerCase()}”.`,
     ),
   );
@@ -126,11 +179,7 @@ export function ReportEditor({
     faltando.push("Falta explicar por que estas três, juntas, servem a esta pessoa.");
   }
 
-  function atualizar(
-    id: string,
-    field: keyof Omit<ReportOptionDraft, "professionalProfileId" | "professionalName">,
-    value: string,
-  ) {
+  function atualizarTexto(id: string, field: CampoTexto, value: string) {
     setOptions((atual) =>
       atual.map((option) =>
         option.professionalProfileId === id ? { ...option, [field]: value } : option,
@@ -138,17 +187,25 @@ export function ReportEditor({
     );
   }
 
+  function atualizarLista(id: string, field: CampoLista, value: string) {
+    setListasEmEdicao((atual) => ({ ...atual, [chaveDaLista(id, field)]: value }));
+  }
+
   function payload() {
     return {
       priorityProfileId,
       compositionRationale: composition,
+      // FRENTE D3: coleções viajam como ARRAY até a action — a mesma forma em
+      // que estão gravadas. Salvar sem editar devolve exatamente o que veio.
       options: options.map((option) => ({
         professionalProfileId: option.professionalProfileId,
         justification: option.justification,
         relationToWeights: option.relationToWeights,
-        attentionPoints: [option.attentionPoints].filter((entry) => entry.trim()),
-        favorablePoints: [],
-        suggestedQuestions: [option.suggestedQuestions].filter((entry) => entry.trim()),
+        attentionPoints: listaEfetiva(option, "attentionPoints"),
+        // Sem campo na tela: transporta intacto. Nunca `[]` de fallback —
+        // apagar pontos favoráveis não é um ato que este editor ofereça.
+        favorablePoints: option.favorablePoints,
+        suggestedQuestions: listaEfetiva(option, "suggestedQuestions"),
         curatorObservations: option.curatorObservations.trim() || null,
       })),
     };
@@ -285,17 +342,23 @@ export function ReportEditor({
               <p className="text-xs leading-relaxed text-ink-muted">{campo.guidance}</p>
               <textarea
                 id={`${campo.field}-${option.professionalProfileId}`}
-                value={option[campo.field]}
+                value={
+                  campo.kind === "lista"
+                    ? textoDaLista(option, campo.field)
+                    : option[campo.field]
+                }
                 disabled={entregue || pending}
                 rows={3}
                 onChange={(event) =>
-                  atualizar(option.professionalProfileId, campo.field, event.target.value)
+                  campo.kind === "lista"
+                    ? atualizarLista(option.professionalProfileId, campo.field, event.target.value)
+                    : atualizarTexto(option.professionalProfileId, campo.field, event.target.value)
                 }
                 className={cn(
                   "w-full rounded-sm border bg-surface px-3 py-2 text-sm leading-relaxed text-ink",
                   "focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-surface",
                   "transition-colors duration-fast ease-standard disabled:cursor-not-allowed disabled:opacity-70",
-                  campo.required && !option[campo.field].trim()
+                  campo.required && campoVazio(option, campo)
                     ? "border-[color-mix(in_srgb,var(--color-brand-gold)_50%,transparent)]"
                     : "border-border",
                 )}

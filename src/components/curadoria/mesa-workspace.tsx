@@ -42,6 +42,7 @@ import {
   type ParecerDraft,
 } from "@/modules/curadoria/mesa";
 import { saveReportAction, saveSelectionAction } from "@/modules/curadoria/actions";
+import { textareaParaItens } from "@/modules/curadoria/relatorio-itens";
 import type { SelecaoCandidato, SelecaoExcluido } from "@/modules/curadoria/mesa-selecao";
 
 type MesaWorkspaceProps = {
@@ -328,9 +329,15 @@ export function MesaWorkspace({
           relationToWeights: parecer.prioritiesServed,
           // O que a opção custa é obrigatório: opção só com virtudes é
           // recomendação disfarçada (Experience §2.5).
-          attentionPoints: [parecer.limitations].filter((entry) => entry.trim()),
-          favorablePoints: [],
-          suggestedQuestions: [parecer.questions].filter((entry) => entry.trim()),
+          // FRENTE D3: a inversa da exibição (um item por linha) — o
+          // `[parecer.limitations]` anterior reenviava dois itens gravados
+          // como UM item colado, para sempre.
+          attentionPoints: textareaParaItens(parecer.limitations),
+          // A Mesa não edita pontos favoráveis: campo AUSENTE é "não mexi",
+          // e a gravação preserva o que o rascunho assistido escreveu
+          // (contrato D21a). O `favorablePoints: []` anterior os apagava a
+          // cada encerramento.
+          suggestedQuestions: textareaParaItens(parecer.questions),
           curatorObservations: parecer.observations.trim() || null,
         })),
       });

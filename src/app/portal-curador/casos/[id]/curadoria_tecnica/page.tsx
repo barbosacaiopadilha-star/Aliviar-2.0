@@ -59,6 +59,7 @@ import {
   linhaDeInvestigacao,
   type InvestigacaoProfissional,
 } from "@/modules/curadoria/mesa-investigacao";
+import { itensParaTextarea } from "@/modules/curadoria/relatorio-itens";
 import { getReportLifecycle } from "@/modules/curadoria/relatorio-assistido";
 
 export const metadata: Metadata = {
@@ -254,8 +255,12 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
               professionalId,
               whyIncluded: option?.justification ?? "",
               prioritiesServed: option?.relationToWeights ?? "",
-              limitations: option?.attentionPoints.join(" ") ?? "",
-              questions: option?.suggestedQuestions.join(" ") ?? "",
+              // FRENTE D3: o parecer da Mesa edita as coleções em textarea —
+              // um item por linha, a MESMA serialização (com inversa definida)
+              // do editor do Relatório. O `join(" ")` anterior fundia itens
+              // por espaço, sem volta, já na exibição.
+              limitations: itensParaTextarea(option?.attentionPoints ?? []),
+              questions: itensParaTextarea(option?.suggestedQuestions ?? []),
               observations: option?.curatorObservations ?? "",
             };
           }),

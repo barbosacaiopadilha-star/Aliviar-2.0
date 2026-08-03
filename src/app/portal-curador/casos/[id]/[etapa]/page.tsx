@@ -219,8 +219,13 @@ export default async function EtapaPage({ params }: { params: Promise<{ id: stri
                     record.curadoriaTecnica.professionalNames[professionalId] ?? "Profissional",
                   justification: option?.justification ?? "",
                   relationToWeights: option?.relationToWeights ?? "",
-                  attentionPoints: option?.attentionPoints.join("\n") ?? "",
-                  suggestedQuestions: option?.suggestedQuestions.join("\n") ?? "",
+                  // FRENTE D3: as coleções entram no editor como ARRAY — o que
+                  // está gravado como dois itens chega como dois itens. O `?? []`
+                  // cobre só a opção AINDA SEM linha no Relatório (nada gravado);
+                  // valor existente nunca vira fallback.
+                  attentionPoints: option?.attentionPoints ?? [],
+                  favorablePoints: option?.favorablePoints ?? [],
+                  suggestedQuestions: option?.suggestedQuestions ?? [],
                   curatorObservations: option?.curatorObservations ?? "",
                 };
               })}
