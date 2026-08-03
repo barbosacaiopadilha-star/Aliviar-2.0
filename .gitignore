@@ -64,6 +64,14 @@ desktop.ini
 .claude/*
 !.claude/launch.json
 
+# Identidade de build local — gerada por scripts/new-build-id.mjs a cada
+# construção; versioná-la congelaria o id de uma máquina (Auditoria F9/GOV-04)
+.build-id
+
+# Travas de exclusão mútua entre suítes (tests/execucao-exclusiva.ts:23) —
+# locais por definição, uma por máquina
+.*-run.lock
+
 # Arquivos temporários
 *.tmp
 *.temp
