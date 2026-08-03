@@ -17,6 +17,10 @@ const PUBLIC_PATHS = new Set([
   // Nenhum segredo — é a primeira pergunta do diagnóstico, e precisa ser
   // respondível antes de qualquer sessão existir.
   "/api/build-info",
+  // OBS-01: saúde precisa ser legível por monitor externo, que não tem
+  // sessão. Ao contrário de build-info, este endpoint TOCA as dependências —
+  // 503 quando o banco cai, e é isso que um monitor precisa ver.
+  "/api/health",
   "/sua-historia",
   // GOVERNANÇA (Bloco H): documento publicado é público por natureza — quem
   // vai aceitar precisa poder LER antes de ter sessão, e um permalink de

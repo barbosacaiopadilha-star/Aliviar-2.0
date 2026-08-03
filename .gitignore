@@ -85,3 +85,6 @@ scripts/local/.tmp-password-update.sql
 
 # Espelho do stdout do servidor E2E — analisado pelo gate de erros estruturados
 .e2e-server.log
+
+# Backups locais de verificação de restore (Bloco I) — nunca versionados
+.backups/
