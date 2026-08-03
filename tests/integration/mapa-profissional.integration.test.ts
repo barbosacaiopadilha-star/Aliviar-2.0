@@ -211,7 +211,7 @@ describe("Mapa do Profissional (Supabase local)", () => {
 
     // …e a completude, que não cobra o legado como pendência.
     const mapa = await loadProfessionalMap(service, id);
-    expect(mapa.completion.total, "só os 28 vigentes contam").toBe(28);
+    expect(mapa.completion.total, "só os 29 vigentes contam").toBe(29);
     expect(mapa.completion.pendingCodes).not.toContain(alvo.code);
 
     // O registro aposentado permanece legível — e indeletável: sair de
@@ -225,14 +225,14 @@ describe("Mapa do Profissional (Supabase local)", () => {
     );
   });
 
-  it("o catálogo vigente tem 28 ativos e 34 registros ao todo, sem duplicação", async () => {
+  it("o catálogo vigente tem 29 ativos e 35 registros ao todo, sem duplicação", async () => {
     // 28 ativos do Catálogo 1.0.0 + 6 aposentados do 0.9.0 (histórico
     // legível). Os ativos são exatamente os que o domínio publica.
     const catalogo = await listSubcriterionCatalog(service, { includeInactive: true });
-    expect(catalogo).toHaveLength(34);
+    expect(catalogo).toHaveLength(35);
 
     const ativos = catalogo.filter((e) => e.active);
-    expect(ativos).toHaveLength(28);
+    expect(ativos).toHaveLength(29);
     expect(ativos.map((e) => e.code).sort()).toEqual(
       SUBCRITERION_CATALOG.map((e) => e.code).sort(),
     );

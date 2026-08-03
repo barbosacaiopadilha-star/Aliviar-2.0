@@ -80,7 +80,7 @@ describe("Mapa de Prioridades do Case (Supabase local)", () => {
 
     // Catálogo 1.0.0 vigente (ADR-046/047): 28 conceitos ativos. O número é
     // explícito de propósito — este teste é guarda de universo, não espelho.
-    expect(doBanco).toHaveLength(28);
+    expect(doBanco).toHaveLength(29);
     expect(doBanco.length).toBe(SUBCRITERION_CATALOG.length);
     expect(doBanco.map((e) => e.code).sort()).toEqual(
       SUBCRITERION_CATALOG.map((e) => e.code).sort(),
@@ -149,7 +149,7 @@ describe("Mapa de Prioridades do Case (Supabase local)", () => {
     expect(parcial.completion.status).toBe("IN_PROGRESS");
     expect(parcial.completion.completed).toBe(2);
     // 28 ativos no Catálogo 1.0.0 — a completude conta o vigente, nunca o legado.
-    expect(parcial.completion.total).toBe(28);
+    expect(parcial.completion.total).toBe(29);
     expect(parcial.items).toContainEqual({
       subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO",
       importance: "MUITO_IMPORTANTE",
@@ -275,7 +275,7 @@ describe("Mapa de Prioridades do Case (Supabase local)", () => {
     ]);
 
     const mapa = await loadCasePriorityMap(service, caseId);
-    expect(mapa.completion.total, "a completude conta só os 28 vigentes").toBe(28);
+    expect(mapa.completion.total, "a completude conta só os 29 vigentes").toBe(29);
     for (const codigo of aposentados) {
       expect(mapa.completion.pendingCodes, codigo).not.toContain(codigo);
     }

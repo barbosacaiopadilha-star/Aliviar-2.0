@@ -454,7 +454,7 @@ describe("Protocolos Oficiais (Supabase local)", () => {
     ]) {
       expect(ativos, `${aposentado} saiu de circulação na virada`).not.toContain(aposentado);
     }
-    expect(ativos).toHaveLength(28);
+    expect(ativos).toHaveLength(29);
   });
 
   it("case_needs não é entrada do Motor: o cruzamento continua lendo só o Mapa de Prioridades", async () => {

@@ -138,7 +138,7 @@ describe("Motor de Compatibilidade (Supabase local)", () => {
     expect(leitura.rows).toHaveLength(0);
     expect(leitura.summary.totalSubcriteria).toBe(0);
     // O universo do Motor é o Catálogo 1.0.0: 28 vigentes.
-    expect(leitura.summary.notDeclaredByCase).toBe(28);
+    expect(leitura.summary.notDeclaredByCase).toBe(29);
   });
 
   it("subcritério fora de circulação não entra no cruzamento — o Motor fala só o vocabulário vigente", async () => {
@@ -174,8 +174,8 @@ describe("Motor de Compatibilidade (Supabase local)", () => {
     expect(leitura.rows).toHaveLength(1);
     expect(leitura.rows[0]!.subcriterionCode).toBe("MODELO_COMUNICACAO");
     expect(leitura.summary.totalSubcriteria).toBe(1);
-    // 28 vigentes − 1 declarado: os aposentados não aparecem nem como falta.
-    expect(leitura.summary.notDeclaredByCase).toBe(27);
+    // 29 vigentes − 1 declarado: os aposentados não aparecem nem como falta.
+    expect(leitura.summary.notDeclaredByCase).toBe(28);
   });
 
   it("vários profissionais saem na ordem de entrada — o Motor não ordena por resultado", async () => {

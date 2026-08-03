@@ -95,7 +95,7 @@ describe("Base de Evidências de Prática (Supabase local)", () => {
 
     expect(registro.version).toBe(1);
     expect(registro.status).toBe("nao_verificado");
-    expect(registro.catalogVersion).toBe("1.0.0");
+    expect(registro.catalogVersion).toBe("1.1.0");
     expect(registro.collectedBy).toBe(admin.userId);
   });
 
@@ -161,7 +161,7 @@ describe("Base de Evidências de Prática (Supabase local)", () => {
     const { error } = await service.from("practice_evidence").insert({
       professional_profile_id: alvo,
       subcriterion_code: "CONTINUIDADE_CANAIS",
-      catalog_version: "1.0.0",
+      catalog_version: "1.1.0",
       version: 9,
       options: ["APENAS_REAGENDAMENTO"],
       source_tier: "INSTITUCIONAL",
@@ -177,7 +177,7 @@ describe("Base de Evidências de Prática (Supabase local)", () => {
     const { error } = await service.from("practice_evidence").insert({
       professional_profile_id: alvo,
       subcriterion_code: "ACESSO_MODALIDADE",
-      catalog_version: "1.0.0",
+      catalog_version: "1.1.0",
       version: 1,
       options: ["PRESENCIAL"],
       source_tier: "INSTITUCIONAL",
