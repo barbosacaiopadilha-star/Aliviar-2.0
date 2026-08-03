@@ -54,20 +54,18 @@ jobs:
         run: npm run test:components
       - name: Verificação das migrations (ledger)
         run: npm run supabase:ledger:check
-      - name: Integração (baseline verde — exclui a herança do Catálogo, ver nota)
-        # HERANÇA VERMELHA DA TAG (não causada pelo G1): 5 arquivos asseram o
-        # catálogo pré-virada (26 ativos/códigos aposentados) e estão vermelhos
-        # desde o congelamento reconstrucao-v1.2.0. Pertencem ao Bloco E
-        # (CAT-01/ADR-047 — o teste de paridade os substitui); o Bloco E DEVE
-        # remover esta exclusão como parte do seu critério de aceite.
+      - name: Integração (suíte completa — herança reincorporada no Bloco E)
         run: >
           node scripts/with-local-supabase.mjs npx vitest run
           --config vitest.integration.config.ts
-          --exclude "**/mapa-prioridades.integration.test.ts"
-          --exclude "**/mapa-profissional.integration.test.ts"
-          --exclude "**/motor-compatibilidade.integration.test.ts"
-          --exclude "**/protocolos.integration.test.ts"
-          --exclude "**/zz-sentinela.integration.test.ts"
+      - name: Paridade do Catálogo (fonte única — ADR-046/047)
+        # O gate de paridade roda TAMBÉM no job estável, por mandato do Bloco
+        # E: a paridade banco × catálogo gerado é pré-condição de qualquer
+        # verde, não um gate de remediação pendente.
+        run: >
+          node scripts/with-local-supabase.mjs npx vitest run
+          --config vitest.remediacao.config.ts
+          tests/remediacao/paridade-catalogo.integration.test.ts
       - name: Build local íntegro (sem stop-stale — não há servidor prévio em CI)
         run: |
           node scripts/clean-next-output.mjs
