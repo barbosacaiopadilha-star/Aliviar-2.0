@@ -58,6 +58,34 @@ async function preencherMapaCompleto(caseId: string): Promise<void> {
   if (mapError) throw new Error(`mapa completo: ${mapError.message}`);
 }
 
+/**
+ * ADR-065: o reconhecimento passou a exigir também o bloco relacional — todo
+ * conceito do eixo MODELO_DE_ATENDIMENTO com resposta registrada da pessoa.
+ * SEM_PREFERENCIA explícito é resposta legítima (o gate cobra registro, não
+ * conteúdo) — é o mínimo honesto para uma fixture de imutabilidade.
+ */
+async function preencherBlocoRelacional(caseId: string, curadorId: string): Promise<void> {
+  const { data: conceitos, error } = await service
+    .from("method_subcriteria")
+    .select("code")
+    .eq("active", true)
+    .eq("axis", "MODELO_DE_ATENDIMENTO");
+  if (error) throw new Error(`catálogo relacional: ${error.message}`);
+  const { error: needsError } = await service.from("case_needs").upsert(
+    (conceitos ?? []).map((conceito) => ({
+      case_id: caseId,
+      subcriterion_code: conceito.code as string,
+      options: [],
+      degree: "SEM_PREFERENCIA",
+      origin: "DIRETO",
+      acknowledgment: "PENDENTE",
+      declared_by: curadorId,
+    })),
+    { onConflict: "case_id,subcriterion_code" },
+  );
+  if (needsError) throw new Error(`bloco relacional: ${needsError.message}`);
+}
+
 describe("GATE-F1-SUP [Bloco C/Frente 1] supersessão: contrato completo da ADR-049", () => {
   it("o Mapa congelado DESCONGELA sob o sucessor DRAFT — e o vínculo/auditoria da supersessão existem", async () => {
     const { caseId } = await casoComCurador(service, curador.userId, "f1-sup-mapa");
@@ -253,6 +281,8 @@ describe("GATE-F1-REC [Bloco C/Frente 1] o reconhecimento tem autora nomeada", (
       validado: false,
     });
     await preencherMapaCompleto(caseId);
+    // ADR-065: o gate do reconhecimento cobre também o bloco relacional.
+    await preencherBlocoRelacional(caseId, curador.userId);
 
     const { data: resultado, error } = await paciente.client.rpc("acknowledge_priority_profile", {
       _case_id: caseId,
