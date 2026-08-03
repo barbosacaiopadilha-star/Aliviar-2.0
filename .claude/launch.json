@@ -7,6 +7,12 @@
       "runtimeArgs": ["run", "dev:local"],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "prod-local",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["scripts/with-local-supabase.mjs", "npx", "next", "start", "-p", "3001"],
+      "port": 3001
     }
   ]
 }
