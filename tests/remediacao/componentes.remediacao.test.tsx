@@ -69,9 +69,11 @@ const ARMAZENADO = {
 };
 
 /**
- * A MESMA deserialização que a página faz hoje ao montar o editor
- * (src/app/portal-curador/casos/[id]/[etapa]/page.tsx, linha ~222):
- * `option.attentionPoints.join("\n")` — e favorablePoints nem é mapeado.
+ * A MESMA deserialização que a página faz ao montar o editor
+ * (src/app/portal-curador/casos/[id]/[etapa]/page.tsx). FRENTE D3: as
+ * coleções atravessam como ARRAY — nada de `join`; favorablePoints é
+ * carregado e transportado. Este espelho acompanha a página; o oráculo
+ * (ARMAZENADO e os expects abaixo) permanece o mesmo.
  */
 function opcaoComoAPaginaMonta(): ReportOptionDraft {
   return {
@@ -79,8 +81,9 @@ function opcaoComoAPaginaMonta(): ReportOptionDraft {
     professionalName: "Dra. Fixture A",
     justification: "Responde ao critério de continuidade que a paciente validou.",
     relationToWeights: "Conversa com o peso que ela deu ao acompanhamento contínuo.",
-    attentionPoints: ARMAZENADO.attentionPoints.join("\n"),
-    suggestedQuestions: "O que perguntar na primeira consulta?",
+    attentionPoints: ARMAZENADO.attentionPoints,
+    favorablePoints: ARMAZENADO.favorablePoints,
+    suggestedQuestions: ["O que perguntar na primeira consulta?"],
     curatorObservations: "",
   };
 }

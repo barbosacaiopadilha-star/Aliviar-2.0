@@ -32,8 +32,10 @@ function opcao(nome: string, id: string) {
     professionalName: nome,
     justification: "Responde ao critério dela.",
     relationToWeights: "Cobre experiência.",
-    attentionPoints: "Agenda concorrida.",
-    suggestedQuestions: "",
+    // FRENTE D3: as coleções chegam ao editor como ARRAY, como estão gravadas.
+    attentionPoints: ["Agenda concorrida."],
+    favorablePoints: [],
+    suggestedQuestions: [] as string[],
     curatorObservations: "",
   };
 }
@@ -68,7 +70,7 @@ describe("Relatório — escrever, emitir e entregar são atos distintos", () =>
         emittedAt={null}
         deliveredAt={null}
         initialOptions={[
-          { ...opcao("Dra. A", "a"), attentionPoints: "" },
+          { ...opcao("Dra. A", "a"), attentionPoints: [] },
           opcao("Dr. B", "b"),
           opcao("Dra. C", "c"),
         ]}
