@@ -184,7 +184,9 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
     await page.getByRole("button", { name: "Enviar minha história" }).click();
     // O envio precisa ser CONFIRMADO — sem isto, uma falha silenciosa deixaria
     // a história em rascunho e o teste seguiria adiante achando que enviou.
-    await expect(page.getByText("Recebemos sua história")).toBeVisible({ timeout: 30_000 });
+    // getByRole, não getByText: o route announcer do Next (aria-live) ecoa o
+    // título após navegação SPA e o texto solto resolve DOIS elementos.
+    await expect(page.getByRole("heading", { name: "Recebemos sua história" })).toBeVisible({ timeout: 30_000 });
 
     // Depois de enviar, o dashboard mostra o resumo REAL da história.
     await page.goto("/paciente");
@@ -198,7 +200,7 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
     await page.waitForURL(/\/sua-historia\//);
     await expect(page).not.toHaveURL(/\/sua-historia$/);
     await expect(
-      page.getByText("Recebemos sua história"),
+      page.getByRole("heading", { name: "Recebemos sua história" }),
       "voltar a Minha história depois de enviar começou uma história nova em branco",
     ).toBeVisible();
   });
@@ -295,22 +297,70 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
 
     // ADR-065: o reconhecimento agora exige também o bloco relacional — toda
     // conversa do Protocolo da Pessoa registrada. O Curador registra pelo
-    // MESMO caminho do produto (painel do Protocolo), com "Não tenho
-    // preferência" — resposta legítima; o gate cobra registro, não conteúdo.
-    for (;;) {
+    // MESMO caminho do produto (painel do Protocolo). O domínio recusa
+    // registro sem opção ("silêncio não é dado") e tradução sem leitura
+    // proposta — por isso cada conversa seleciona uma opção canônica (a
+    // neutra, quando a pergunta a oferece) e declara o grau "Não tenho
+    // preferência", que a matriz relacional lê como NAO_RELEVANTE.
+    const badgeDeProgresso = page.getByText(/\d+ de 15 conversas registradas/);
+    for (let volta = 0; volta < 16; volta += 1) {
       const registrar = page.getByRole("button", { name: "Registrar conversa" });
       if ((await registrar.count()) === 0) break;
+      const registradas = Number.parseInt(await badgeDeProgresso.innerText(), 10);
       await registrar.first().click();
-      const semPreferencia = page.getByRole("radio", { name: /Não tenho preferência/ });
-      await semPreferencia.first().check({ force: true });
+
+      // O painel aberto é o único lugar da página com "Fechar".
+      const painel = page
+        .locator("li")
+        .filter({ has: page.getByRole("button", { name: "Fechar" }) })
+        .last();
+
+      // Tradução exige a leitura proposta — sem ela o domínio recusa.
+      const leitura = painel.getByLabel("Leitura proposta");
+      if ((await leitura.count()) > 0) {
+        await leitura.fill(
+          "Pelo que você me contou, entendi que este ponto não tem uma exigência específica. É isso?",
+        );
+      }
+
+      // Uma opção canônica da pergunta. As opções vêm ANTES do fieldset do
+      // grau no formulário; o grau nunca substitui a opção.
+      const caixas = painel.getByRole("checkbox");
+      const radios = painel.getByRole("radio");
+      const grau = painel.getByRole("group", { name: "Quanto isso pesa, segundo ela" });
+      if ((await caixas.count()) > 0) {
+        const neutra = painel.getByRole("checkbox", { name: /Não tenho preferência|Não sei informar/ });
+        await ((await neutra.count()) > 0 ? neutra.first() : caixas.first()).check({ force: true });
+      } else if ((await radios.count()) > (await grau.getByRole("radio").count())) {
+        const neutra = painel.getByRole("radio", { name: /^(Tanto faz|Não sei informar)$/ });
+        await ((await neutra.count()) > 0 ? neutra.first() : radios.first()).check({ force: true });
+      }
+
       // P14 (texto guiado) exige as palavras dela quando o campo existir.
-      const palavras = page.getByLabel("O que precisa ser respeitado (palavras dela)");
+      const palavras = painel.getByLabel("O que precisa ser respeitado (palavras dela)");
       if ((await palavras.count()) > 0) {
         await palavras.fill("Nada a registrar — ela disse que não há restrições.");
       }
-      await page.getByRole("button", { name: "Registrar", exact: true }).click();
-      await expect(page.getByText("Salvando…")).toHaveCount(0, { timeout: 15_000 });
+
+      // O grau declarado por ela — dentro do fieldset do grau, nunca
+      // confundido com a opção homônima de algumas perguntas.
+      await grau.getByRole("radio", { name: "Não tenho preferência" }).check({ force: true });
+
+      await painel.getByRole("button", { name: "Registrar", exact: true }).click();
+      // Persistência OBSERVADA: o painel só fecha quando a action confirma.
+      // Uma recusa do domínio o deixa aberto com o erro — e falha AQUI, em
+      // segundos, com a mensagem no snapshot, nunca no timeout do teste.
+      await expect(page.getByRole("button", { name: "Fechar" })).toHaveCount(0, { timeout: 20_000 });
+      // E o refresh do servidor precisa TER CHEGADO antes da próxima volta —
+      // sem isto, a lista obsoleta ainda oferece "Registrar conversa" para a
+      // pergunta recém-registrada e o laço gasta voltas re-registrando-a.
+      await expect(
+        page.getByText(`${registradas + 1} de 15 conversas registradas`),
+      ).toBeVisible({ timeout: 20_000 });
     }
+
+    // O oráculo do gate relacional: todas as conversas registradas.
+    await expect(page.getByText("15 de 15 conversas registradas")).toBeVisible({ timeout: 15_000 });
   });
 
   test("8. paciente reconhece o Perfil como seu", async ({ page }) => {
@@ -420,7 +470,15 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
       await prioridades.nth(i).fill("Experiência no tipo de caso e continuidade do cuidado, declaradas como relevantes.");
       await limitacoes.nth(i).fill("Agenda e custo ainda não confirmados com a clínica — verificar antes da consulta.");
     }
-    await page.locator("textarea").last().fill(
+    // A justificativa da composição mora no cartão "Por que estas três,
+    // juntas" — o textarea não tem rótulo próprio, e `.last()` da página
+    // apontava para outro campo (a seção de perguntas vem depois dele).
+    const cartaoComposicao = page
+      .locator("div")
+      .filter({ has: page.getByRole("heading", { name: "Por que estas três, juntas" }) })
+      .filter({ has: page.locator("textarea") })
+      .last();
+    await cartaoComposicao.locator("textarea").first().fill(
       "Três caminhos de coluna com abordagens distintas: cirúrgica, conservadora e reabilitadora — a troca entre eles é legível para a paciente.",
     );
 
@@ -436,13 +494,55 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
     await expect(page.getByRole("heading", { name: "Curadoria Técnica encerrada" })).toBeVisible();
   });
 
-  test("11. Relatório: salvar, emitir e entregar", async ({ page }) => {
+  test("11. Relatório: B-1 recusa juízo pendente; resolvido, emite e entrega", async ({ page }) => {
     const curador = loadTestAccounts().find((a) => a.role === "curador_medico")!;
     await loginAs(page, curador.email, curador.password);
     const caseId = caseUrl.match(/casos\/([0-9a-f-]+)/)![1];
     await page.goto(`/coa/curadoria/casos/${caseId}/relatorio`);
 
+    // O Relatório nasceu na Mesa (dos pareceres) e por isso está marcado como
+    // revisado; a seção relacional só nasce no RASCUNHO ASSISTIDO, cuja
+    // regeneração sobre texto humano exige o ato explícito — nunca silenciosa.
+    await page.getByRole("button", { name: "Gerar rascunho assistido" }).click();
+    await expect(page.getByText(/Regenerar substituiria o texto/)).toBeVisible({ timeout: 20_000 });
+    await page
+      .getByRole("button", { name: "Regenerar mesmo assim, descartando minhas edições" })
+      .click();
+    await expect(page.getByText(/Rascunho assistido gerado/)).toBeVisible({ timeout: 20_000 });
+    // ACHADO (não corrigido nesta Sprint): o editor guarda initialOptions em
+    // useState sem key — o refresh pós-geração não atualiza as textareas.
+    // O reload lê o que o servidor de fato gravou.
+    await page.reload();
+
+    // B-1 (ADR-064/065): o rascunho assistido carrega a frase-sentinela dos
+    // conceitos de juízo humano (P11/P14/P17) — e a emissão é RECUSADA
+    // enquanto ela existir, nomeando o que ainda depende do Curador.
+    const relacional = page.getByLabel("Como conversa com a forma como ela quer ser cuidada");
+    await expect(relacional).toHaveCount(3);
+    await expect(relacional.first()).toHaveValue(/aguarda a conversa com o Curador/);
+    await page.getByRole("button", { name: "Emitir o Relatório" }).click();
+    await expect(page.getByText(/O Relatório não pode ser emitido/)).toBeVisible({ timeout: 20_000 });
+
+    // Substituir cada linha-sentinela pela leitura do Curador É a validação
+    // (report-editor, ADR-065) — feita nas três opções, pela interface.
+    for (let i = 0; i < 3; i += 1) {
+      const campo = relacional.nth(i);
+      const texto = await campo.inputValue();
+      const proprio = texto
+        .split("\n")
+        .map((linha) => {
+          const pendente = linha.match(/^Sobre (.+): esta leitura aguarda a conversa com o Curador\.\s*$/);
+          return pendente
+            ? `Sobre ${pendente[1]}: conversamos — sem preferência declarada, e nada na prática declarada conflita com o que ela pediu.`
+            : linha;
+        })
+        .join("\n");
+      await campo.fill(proprio);
+    }
+
     await page.getByRole("button", { name: "Salvar rascunho" }).click();
+    await expect(page.getByText(/Relatório salvo/)).toBeVisible({ timeout: 20_000 });
+
     await page.getByRole("button", { name: "Emitir o Relatório" }).click();
     await expect(page.getByText("Relatório emitido — pronto para entregar")).toBeVisible({ timeout: 20_000 });
     // Entrega em DUAS etapas: o primeiro clique abre a confirmação ("Depois

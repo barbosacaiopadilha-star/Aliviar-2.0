@@ -18,7 +18,7 @@ import { preencherMapaEBlocoRelacional } from "./apoio-mapa";
 import * as reports from "@/modules/curadoria/report-repository";
 import { changeCaseStatus, createCase } from "@/modules/cases/repository";
 import { createPatientAccount } from "@/modules/profiles/patient-account-repository";
-import { createProfessionalProfile } from "@/modules/profiles/professional-repository";
+import { seedPublishedProfessional } from "../integration/rede-fixture";
 import {
   getOrCreateActiveStory,
   saveStoryDraft,
@@ -73,35 +73,13 @@ async function seedPresentableProfessional(
   adminUserId: string,
   displayName: string,
 ) {
-  const professional = await createProfessionalProfile(adminClient, {
-    displayName,
-    professionalIdentifier: unique("ident"),
-    crm: null,
-    crmUf: null,
-    professionalSummary:
-      "Profissional com experiência em acolhimento e escuta ativa.",
-    institutionName: null,
-    createdBy: adminUserId,
-  });
-
-  await adminClient
-    .from("professional_profiles")
-    .update({
-      experience_level: "experiente",
-      intake_approach: "ambos",
-      offers_continuous_care: true,
-      availability_window: "flexible",
-    })
-    .eq("id", professional.id);
-  await adminClient
-    .from("professional_competency_areas")
-    .insert({
-      professional_profile_id: professional.id,
-      domain: "nao_determinado",
-      focus: "avaliacao",
-    });
-
-  return professional.id;
+  // B-2: a versão anterior criava o profissional SEM publicá-lo e a fixture
+  // só passava porque a rede compartilhada carregava resíduo publicado de
+  // outras execuções — com o banco recém-restaurado, zero elegíveis. A
+  // fixture canônica percorre o caminho real de publicação (registro
+  // consultado + área verificada + gatilho do banco), tornando o spec
+  // autossuficiente.
+  return seedPublishedProfessional(adminClient, adminUserId, displayName);
 }
 
 async function seedDeliveredCase(): Promise<DeliveredFixture> {
@@ -243,20 +221,11 @@ async function seedDeliveredCase(): Promise<DeliveredFixture> {
   await preencherMapaEBlocoRelacional(cliente, created.id, adminUserId);
   await curadoria.validatePriorityProfile(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
 
-  // Quem são os três é decidido pela comparação sobre a rede real — a fixture
-  // NÃO assume que os semeados serão os escolhidos. Os nomes exibidos na tela
-  // vêm daqui, do que foi de fato entregue.
-  // M3: o record do COS não carrega mais as análises legadas — a fixture lê a
-  // tabela histórica diretamente, que é exatamente o cenário que ela monta.
-  const { data: redeRows } = await cliente
-      .from("professional_profiles")
-      .select("id")
-      .eq("status", "ativo")
-      .eq("is_demo", false)
-      .eq("publication_status", "publicado");
-  const tres = (redeRows ?? [])
-    .slice(0, 3)
-    .map((row) => ({ professionalId: row.id as string }));
+  // B-2: os três são os que ESTA execução semeou e publicou. A versão
+  // anterior tomava 3 publicados quaisquer da rede compartilhada — com
+  // specs concorrentes, a seleção referenciava profissionais de OUTRO spec
+  // e o cleanup de lá quebrava com FK em curated_selection_options.
+  const tres = createdProfessionalIds.map((id) => ({ professionalId: id }));
   if (tres.length < 3) {
     throw new Error("Fixture E2E: a rede local não tem três profissionais elegíveis.");
   }
