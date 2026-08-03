@@ -19,6 +19,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { AutosaveIndicator } from "@/components/story/autosave-indicator";
 import { ReportEditor, type ReportOptionDraft } from "@/components/curadoria/report-editor";
 import { StoryDraftProvider, useStoryDraft } from "@/modules/story/use-story-draft";
 import type { PatientStory } from "@/modules/story/types";
@@ -231,5 +232,62 @@ describe("GATE-D22 [Bloco D] autosave recusado não pode exibir estado de 'salvo
         `distinguível do estado após o SUCESSO (${JSON.stringify(aposSucesso)}); ` +
         `hoje são idênticos — falso "salvo"`,
     ).not.toEqual(aposSucesso);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// AMPLIAÇÃO Bloco D (FRENTE D1) — sessão expirada como estado de 1ª classe.
+// Diferente dos gates acima, este teste certifica o comportamento JÁ
+// implementado pela remediação: nasce junto com ela, verde.
+// ---------------------------------------------------------------------------
+
+describe("Bloco D [FRENTE D1] sessão expirada no autosave é estado de 1ª classe", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    usePathnameMock.mockReturnValue("/sua-historia/motivo");
+  });
+
+  it("outcome discriminado 'unauthenticated' vira frase própria com reentrada — e o texto fica guardado neste dispositivo", async () => {
+    saveStoryDraftActionMock.mockReset();
+    // O desfecho é um TIPO, nunca uma substring de mensagem: é assim que o
+    // Provider distingue sessão expirada de qualquer outra recusa.
+    saveStoryDraftActionMock.mockResolvedValue({ outcome: "unauthenticated" });
+    window.localStorage.clear();
+
+    let estado: EstadoObservavel = {};
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(
+      <StoryDraftProvider story={BASE_STORY}>
+        <HarnessDeEstado onEstado={(atual) => (estado = atual)} />
+        <AutosaveIndicator />
+      </StoryDraftProvider>,
+    );
+
+    await user.type(screen.getByLabelText("motivo"), "a");
+    await vi.advanceTimersByTimeAsync(700); // dispara e conclui o autosave
+    expect(saveStoryDraftActionMock).toHaveBeenCalled();
+
+    // O Provider expõe sessão expirada como estado observável próprio.
+    expect(
+      estado.sessionExpired,
+      "o Provider precisa expor `sessionExpired` quando a action devolve o outcome discriminado",
+    ).toBe(true);
+
+    // O indicador NUNCA diz "salvo" com a gravação recusada (ADR-064 §4)...
+    expect(screen.queryByText("Sua resposta foi salva.")).not.toBeInTheDocument();
+
+    // ...e diz a verdade específica, com o caminho de reentrada preservando o retorno.
+    expect(
+      screen.getByText(/Sua sessão expirou\. Entre novamente para continuar/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Entrar novamente" }).getAttribute("href"),
+    ).toBe(`/login?next=${encodeURIComponent("/sua-historia/motivo")}`);
+
+    // A promessa da frase é literal: o texto está guardado neste dispositivo,
+    // pendente, pronto para a recuperação depois da reentrada.
+    const cache = window.localStorage.getItem(`aliviar:sua-historia:cache:${BASE_STORY.id}`);
+    expect(cache, "o cache local não pode ser descartado na sessão expirada").not.toBeNull();
+    expect(JSON.parse(cache!)).toMatchObject({ pending: true, data: { motivo: "a" } });
   });
 });
