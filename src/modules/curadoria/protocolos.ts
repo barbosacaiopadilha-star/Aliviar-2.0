@@ -2,8 +2,9 @@
  * PROTOCOLOS OFICIAIS — o contrato executável das perguntas.
  *
  * @metodo PROTOCOLO_PESSOA.md — 14 perguntas + 2 declarações clínicas
- * @metodo PROTOCOLO_PRATICA_PROFISSIONAL.md — Q1..Q28
- * @metodo MAPA_DOS_PROTOCOLOS.md / MATRIZ_DE_COBERTURA.md — cobertura 28×5
+ *         (+ P17 pela ADR-065 — leitura relacional, Catálogo 1.1.0)
+ * @metodo PROTOCOLO_PRATICA_PROFISSIONAL.md — Q1..Q28 (+ Q29 pela ADR-065)
+ * @metodo MAPA_DOS_PROTOCOLOS.md / MATRIZ_DE_COBERTURA.md — cobertura por eixo
  * @metodo GRAMATICA_DAS_PERGUNTAS.md — formas, escapes, graus, flexibilidade
  *
  * FONTE ÚNICA (BLOCO E / FRENTE 1): as perguntas e opções canônicas vêm do
@@ -14,12 +15,14 @@
  * side='paciente'.
  *
  * PENDÊNCIA DE DOMÍNIO REGISTRADA (ambiguidade doc×migration — decisão fica
- * com o Método, não com este código): para 7 conceitos de TRADUÇÃO (P3–P7,
- * P10, P12) o Catálogo aprovado promete "múltipla escolha + grau" do lado da
- * pessoa, mas NEM o doc NEM a migration materializam a lista de opções. As
- * listas provisórias abaixo (marcadas OPCOES_PROVISORIAS_*) preservam o
- * comportamento existente até a decisão; o gate de paridade compara com o
- * banco apenas onde o banco materializa opções.
+ * com o Método, não com este código): para 5 conceitos de TRADUÇÃO (P3–P7)
+ * o Catálogo aprovado promete "múltipla escolha + grau" do lado da pessoa,
+ * mas NEM o doc NEM a migration materializam a lista de opções. As listas
+ * provisórias abaixo (marcadas OPCOES_PROVISORIAS_*) preservam o
+ * comportamento existente até a decisão (escopo do Bloco F); o gate de
+ * paridade compara com o banco apenas onde o banco materializa opções.
+ * P10 e P12 foram materializados no banco pela migration 20260803100000
+ * (ADR-065) e agora leem da fonte única, como P11/P13.
  *
  * Puro e determinístico: sem React, sem banco.
  */
@@ -144,26 +147,9 @@ const OPCOES_PROVISORIAS_CANAIS = {
 
 const OPCOES_PROVISORIAS_COORDENACAO = { SIM: "Sim", NAO: "Não", ...NAO_SEI } as const;
 
-const OPCOES_PROVISORIAS_COMUNICACAO = {
-  EXPLICACAO_SEM_TERMOS_TECNICOS: "Explicação sem termos técnicos",
-  QUE_CONFIRMEM_SE_ENTENDI: "Que confirmem se eu entendi",
-  ALGO_ESCRITO_PARA_LEVAR: "Algo escrito para levar",
-  DESENHO_OU_IMAGEM: "Desenho ou imagem",
-  TEMPO_PARA_PERGUNTAR: "Tempo para perguntar",
-  PODER_GRAVAR_A_CONVERSA: "Poder gravar a conversa",
-  ...SEM_PREFERENCIA,
-} as const;
-
-const OPCOES_PROVISORIAS_ALTERNATIVAS = {
-  TODAS_AS_OPCOES_DISPONIVEIS: "Todas as opções disponíveis",
-  OPCAO_DE_NAO_FAZER_NADA: "A opção de não fazer nada",
-  RISCOS_DE_CADA_CAMINHO: "Os riscos de cada caminho",
-  CUSTOS_DE_CADA_CAMINHO: "Os custos de cada caminho",
-  ...SEM_PREFERENCIA,
-} as const;
-
 // ---------------------------------------------------------------------------
-// PROTOCOLO DA PESSOA — P1..P16 (P8 e P9 são declarações do Curador)
+// PROTOCOLO DA PESSOA — P1..P17 (P8 e P9 são declarações do Curador;
+// P17 instituído pela ADR-065)
 // ---------------------------------------------------------------------------
 
 export const PERSON_PROTOCOL: readonly PersonQuestion[] = [
@@ -235,7 +221,7 @@ export const PERSON_PROTOCOL: readonly PersonQuestion[] = [
   {
     id: "P10", subcriterionCode: "MODELO_COMUNICACAO", mode: "TRADUCAO",
     question: perguntaDaPessoa("MODELO_COMUNICACAO", "O que te ajudaria a entender melhor o que for explicado?"),
-    options: OPCOES_PROVISORIAS_COMUNICACAO,
+    options: opcoesDaPessoa("MODELO_COMUNICACAO"),
     multi: true, flexibilityQuestion: null, allowsGuidedText: false,
   },
   {
@@ -250,7 +236,7 @@ export const PERSON_PROTOCOL: readonly PersonQuestion[] = [
   {
     id: "P12", subcriterionCode: "MODELO_ALTERNATIVAS", mode: "TRADUCAO",
     question: perguntaDaPessoa("MODELO_ALTERNATIVAS", "O que você precisa saber antes de aceitar um tratamento?"),
-    options: OPCOES_PROVISORIAS_ALTERNATIVAS,
+    options: opcoesDaPessoa("MODELO_ALTERNATIVAS"),
     multi: true, flexibilityQuestion: null, allowsGuidedText: false,
   },
   {
@@ -281,6 +267,17 @@ export const PERSON_PROTOCOL: readonly PersonQuestion[] = [
       "O que precisa ser verdade para você conseguir pagar?",
     ),
     options: opcoesDaPessoa("VIABILIDADE_CUSTO_E_PAGAMENTO"),
+    multi: true, flexibilityQuestion: null, allowsGuidedText: false,
+  },
+  {
+    // ADR-065 — leitura relacional (Catálogo 1.1.0): o único conceito novo do
+    // domínio. Cruzamento humano obrigatório; a resposta nunca entra em motor.
+    id: "P17", subcriterionCode: "MODELO_CONDUCAO_DE_NOTICIAS_DIFICEIS", mode: "DIRETO",
+    question: perguntaDaPessoa(
+      "MODELO_CONDUCAO_DE_NOTICIAS_DIFICEIS",
+      "Se houver uma notícia difícil, como você prefere recebê-la?",
+    ),
+    options: opcoesDaPessoa("MODELO_CONDUCAO_DE_NOTICIAS_DIFICEIS"),
     multi: true, flexibilityQuestion: null, allowsGuidedText: false,
   },
 ] as const;

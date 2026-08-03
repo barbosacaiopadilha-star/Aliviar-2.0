@@ -145,7 +145,7 @@ describe("Coerência entre os dois catálogos", () => {
     }
   });
 
-  it("os 8 conceitos só do catálogo 1.0.0 continuam FORA do banco — o universo do Motor não muda por acidente", () => {
+  it("os 9 conceitos só do catálogo vigente continuam FORA do seed de 2026-07-28 — o universo do Motor não muda por acidente", () => {
     const soNoCatalogo = PRACTICE_CATALOG.filter((c) => !banco.has(c.code)).map((c) => c.code);
     expect(soNoCatalogo.sort()).toEqual([
       "ACESSO_LOCAL_DE_ATENDIMENTO",
@@ -153,6 +153,8 @@ describe("Coerência entre os dois catálogos", () => {
       "EXPERIENCIA_NO_TIPO_DE_CASO",
       "HISTORICO_AREAS_DE_ATUACAO",
       "HISTORICO_ATIVIDADE_ACADEMICA",
+      // ADR-065 / migration 20260803100000 — o 29º conceito (leitura relacional)
+      "MODELO_CONDUCAO_DE_NOTICIAS_DIFICEIS",
       "PRATICA_LIMITES_DE_ATUACAO",
       "VIABILIDADE_COBERTURA_E_CONVENIO",
       "VIABILIDADE_CUSTO_E_PAGAMENTO",
@@ -172,10 +174,10 @@ describe("Coerência entre os dois catálogos", () => {
   });
 
   it("nenhuma fonte ganhou conceito sem a outra saber: as duas contagens são as esperadas", () => {
-    expect(PRACTICE_CATALOG).toHaveLength(28);
+    expect(PRACTICE_CATALOG).toHaveLength(29);
     expect(banco.size).toBe(26);
     const compartilhados = PRACTICE_CATALOG.filter((c) => banco.has(c.code)).length;
-    expect(compartilhados + 8).toBe(28);
+    expect(compartilhados + 9).toBe(29);
     expect(compartilhados + 6).toBe(26);
   });
 });

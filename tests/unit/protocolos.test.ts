@@ -21,21 +21,21 @@ import { PRACTICE_CATALOG, PRACTICE_CONCEPTS_BY_CODE } from "@/modules/curadoria
  * forma da Gramática (situação no lugar de opinião; texto guiado só em P14).
  */
 
-describe("Protocolo do Profissional — Q1..Q28", () => {
-  it("são exatamente 28 perguntas, uma por conceito do Catálogo, na ordem dele", () => {
-    expect(PROFESSIONAL_PROTOCOL).toHaveLength(28);
+describe("Protocolo do Profissional — Q1..Q29 (ADR-065)", () => {
+  it("são exatamente 29 perguntas, uma por conceito do Catálogo, na ordem dele", () => {
+    expect(PROFESSIONAL_PROTOCOL).toHaveLength(29);
     expect(PROFESSIONAL_PROTOCOL.map((q) => q.concept.code)).toEqual(
       PRACTICE_CATALOG.map((c) => c.code),
     );
     expect(PROFESSIONAL_PROTOCOL.map((q) => q.id)).toEqual(
-      Array.from({ length: 28 }, (_, i) => `Q${i + 1}`),
+      Array.from({ length: 29 }, (_, i) => `Q${i + 1}`),
     );
   });
 
   it("as cinco partes cobrem os cinco eixos, com a distribuição congelada", () => {
     expect(professionalQuestionsOfPart("A")).toHaveLength(4);
     expect(professionalQuestionsOfPart("B")).toHaveLength(5);
-    expect(professionalQuestionsOfPart("C")).toHaveLength(5);
+    expect(professionalQuestionsOfPart("C")).toHaveLength(6);
     expect(professionalQuestionsOfPart("D")).toHaveLength(12);
     expect(professionalQuestionsOfPart("E")).toHaveLength(2);
     expect(Object.keys(PROTOCOL_PARTS)).toHaveLength(5);
@@ -57,13 +57,13 @@ describe("Protocolo do Profissional — Q1..Q28", () => {
 
 describe("Protocolo da Pessoa — P1..P16", () => {
   it("são 16 entradas: 14 perguntas + 2 declarações clínicas", () => {
-    expect(PERSON_PROTOCOL).toHaveLength(16);
+    expect(PERSON_PROTOCOL).toHaveLength(17);
     const clinicas = PERSON_PROTOCOL.filter((p) => p.mode === "DECLARACAO_CLINICA");
     expect(clinicas.map((p) => p.subcriterionCode).sort()).toEqual([
       "CONTINUIDADE_EQUIPE_DE_APOIO",
       "CONTINUIDADE_POS_PROCEDIMENTO",
     ]);
-    expect(PERSON_PROTOCOL.filter((p) => p.mode !== "DECLARACAO_CLINICA")).toHaveLength(14);
+    expect(PERSON_PROTOCOL.filter((p) => p.mode !== "DECLARACAO_CLINICA")).toHaveLength(15);
   });
 
   it("nenhuma pergunta órfã: todo conceito referenciado existe no Catálogo", () => {
@@ -93,7 +93,7 @@ describe("Protocolo da Pessoa — P1..P16", () => {
     expect(NEED_DEGREES).toEqual(["ESSENCIAL", "PESA_MUITO", "DESEJAVEL", "SEM_PREFERENCIA"]);
     expect(ACKNOWLEDGMENT_STATES).toEqual(["PENDENTE", "RECONHECIDA", "CORRIGIDA", "RECUSADA"]);
     const diretas = PERSON_PROTOCOL.filter((p) => p.mode === "DIRETO").map((p) => p.id);
-    expect(diretas).toEqual(["P1", "P3", "P11", "P13", "P15", "P16"]);
+    expect(diretas).toEqual(["P1", "P3", "P11", "P13", "P15", "P16", "P17"]);
   });
 
   it("as perguntas falam a língua da vida — sem código de conceito no texto", () => {
@@ -105,10 +105,10 @@ describe("Protocolo da Pessoa — P1..P16", () => {
 });
 
 describe("Progresso — contagem, nunca percentual", () => {
-  it("conta respondidas de 28, ignorando código desconhecido", () => {
-    expect(protocolProgress([])).toEqual({ answered: 0, total: 28 });
+  it("conta respondidas de 29, ignorando código desconhecido", () => {
+    expect(protocolProgress([])).toEqual({ answered: 0, total: 29 });
     expect(
       protocolProgress(["ACESSO_MODALIDADE", "CONTINUIDADE_CANAIS", "CONCEITO_FANTASMA", "ACESSO_MODALIDADE"]),
-    ).toEqual({ answered: 2, total: 28 });
+    ).toEqual({ answered: 2, total: 29 });
   });
 });

@@ -1,6 +1,6 @@
 // GATES DE PARIDADE DO CATÁLOGO CANÔNICO — BLOCO E / FRENTE 1 (Etapa 11).
 //
-// O que se prova aqui: o Catálogo 1.0.0 tem UMA fonte da verdade (o banco —
+// O que se prova aqui: o Catálogo vigente (1.1.0, ADR-065) tem UMA fonte da verdade (o banco —
 // ADR-046 aprova o conteúdo, ADR-047 o torna autoritativo) e todas as cópias
 // executáveis (arquivo gerado + módulos de domínio) são espelho exato dela.
 // A auditoria encontrou quatro fontes divergentes (AUDITORIA_01 §3.1 D1–D16;
@@ -12,15 +12,15 @@
 // encontrado e fonte.
 //
 // Os 12 gates do mandato:
-//   1. os 28 códigos ativos
-//   2. os 5 eixos (nome vigente + distribuição 4/5/5/12/2)
+//   1. os 29 códigos ativos
+//   2. os 5 eixos (nome vigente + distribuição 4/5/6/12/2)
 //   3. a ordem canônica
 //   4. os 7 grupos e a filiação
 //   5. os tipos de resposta (response_type ↔ kind/multi)
-//   6. as 166 opções
+//   6. as 186 opções
 //   7. os códigos das opções, por conceito/lado/campo
 //   8. as condicionais (uma representação, lida do banco)
-//   9. a versão (vigência única; gravação nova = 1.0.0; defaults unificados)
+//   9. a versão (vigência única; gravação nova = 1.1.0; defaults unificados)
 //  10. zero cópia divergente (hash do gerado = hash recomputado do banco vivo)
 //  11. custo impossível recusado (duas faixas → recusa no domínio E no banco)
 //  12. schema × banco aceitando/rejeitando OS MESMOS valores
@@ -97,6 +97,7 @@ type LinhaOpcao = {
   display_order: number;
   active: boolean;
   catalog_version: string;
+  satisfied_by: string[] | null;
 };
 
 describe("GATE-E1-CAT [Bloco E/Frente 1] paridade do Catálogo Canônico", () => {
@@ -135,7 +136,7 @@ describe("GATE-E1-CAT [Bloco E/Frente 1] paridade do Catálogo Canônico", () =>
     const { data: linhasOpcao, error: erroOpcoes } = await service
       .from("method_subcriterion_options")
       .select(
-        "subcriterion_code, side, field, value, label, requires_detail, detail_kind, display_order, active, catalog_version",
+        "subcriterion_code, side, field, value, label, requires_detail, detail_kind, display_order, active, catalog_version, satisfied_by",
       );
     if (erroOpcoes) throw new Error(`method_subcriterion_options: ${erroOpcoes.message}`);
     opcoes = linhasOpcao as LinhaOpcao[];
@@ -152,9 +153,9 @@ describe("GATE-E1-CAT [Bloco E/Frente 1] paridade do Catálogo Canônico", () =>
   }, 120_000);
 
   // -------------------------------------------------------------------------
-  // 1. Os 28 códigos ativos — banco = gerado = módulos
+  // 1. Os 29 códigos ativos — banco = gerado = módulos
   // -------------------------------------------------------------------------
-  it("gate 1 — os 28 códigos ativos são idênticos no banco, no gerado e nos dois módulos", () => {
+  it("gate 1 — os 29 códigos ativos são idênticos no banco, no gerado e nos dois módulos", () => {
     const doBanco = ativosDoBanco.map((c) => c.code).sort();
     const doGerado = CATALOGO_GERADO.filter((c) => c.active)
       .map((c) => c.code)
@@ -164,16 +165,16 @@ describe("GATE-E1-CAT [Bloco E/Frente 1] paridade do Catálogo Canônico", () =>
       .map((c) => c.code)
       .sort();
 
-    expect(doBanco, "fonte: banco method_subcriteria (active)").toHaveLength(28);
+    expect(doBanco, "fonte: banco method_subcriteria (active)").toHaveLength(29);
     expect(doGerado, "gerado × banco — regenere com scripts/gerar-catalogo-ts.mjs").toEqual(doBanco);
     expect(daBase, "evidencias-pratica.PRACTICE_CATALOG × banco").toEqual(doBanco);
     expect(doMapa, "mapa-prioridades.SUBCRITERION_CATALOG (ativos) × banco").toEqual(doBanco);
   });
 
   // -------------------------------------------------------------------------
-  // 2. Os 5 eixos — nome vigente e distribuição 4/5/5/12/2
+  // 2. Os 5 eixos — nome vigente e distribuição 4/5/6/12/2
   // -------------------------------------------------------------------------
-  it("gate 2 — eixos vigentes (ACESSO_AO_CUIDADO, nunca ACESSO) com distribuição 4/5/5/12/2", () => {
+  it("gate 2 — eixos vigentes (ACESSO_AO_CUIDADO, nunca ACESSO) com distribuição 4/5/6/12/2", () => {
     expect([...EVIDENCE_AXES], "evidencias-pratica.EVIDENCE_AXES × eixos canônicos").toEqual([
       ...CATALOGO_EIXOS,
     ]);
@@ -185,7 +186,7 @@ describe("GATE-E1-CAT [Bloco E/Frente 1] paridade do Catálogo Canônico", () =>
     expect(distribuicao, "fonte: banco — distribuição por eixo").toEqual({
       ACESSO_AO_CUIDADO: 4,
       CONTINUIDADE_DO_CUIDADO: 5,
-      MODELO_DE_ATENDIMENTO: 5,
+      MODELO_DE_ATENDIMENTO: 6,
       PRATICA_E_TRAJETORIA: 12,
       VIABILIDADE_DE_ACESSO: 2,
     });
@@ -268,10 +269,10 @@ describe("GATE-E1-CAT [Bloco E/Frente 1] paridade do Catálogo Canônico", () =>
   });
 
   // -------------------------------------------------------------------------
-  // 6. As 166 opções
+  // 6. As 186 opções
   // -------------------------------------------------------------------------
-  it("gate 6 — o banco tem 166 opções e o gerado as carrega todas", () => {
-    expect(opcoes, "fonte: banco method_subcriterion_options").toHaveLength(166);
+  it("gate 6 — o banco tem 186 opções e o gerado as carrega todas", () => {
+    expect(opcoes, "fonte: banco method_subcriterion_options").toHaveLength(186);
     const totalNoGerado = CATALOGO_GERADO.reduce(
       (soma, conceito) =>
         soma +
@@ -281,7 +282,7 @@ describe("GATE-E1-CAT [Bloco E/Frente 1] paridade do Catálogo Canônico", () =>
         ),
       0,
     );
-    expect(totalNoGerado, "gerado × banco — total de opções").toBe(166);
+    expect(totalNoGerado, "gerado × banco — total de opções").toBe(186);
   });
 
   // -------------------------------------------------------------------------
@@ -378,19 +379,19 @@ describe("GATE-E1-CAT [Bloco E/Frente 1] paridade do Catálogo Canônico", () =>
   });
 
   // -------------------------------------------------------------------------
-  // 9. Versão — vigência única; gravação nova = 1.0.0; defaults unificados
+  // 9. Versão — vigência única; gravação nova = 1.1.0; defaults unificados
   // -------------------------------------------------------------------------
-  it("gate 9 — vigência única 1.0.0; nenhum módulo inventa versão; defaults unificados", async () => {
+  it("gate 9 — vigência única 1.1.0; nenhum módulo inventa versão; defaults unificados", async () => {
     for (const conceito of ativosDoBanco) {
       expect(
         conceito.catalogVersion,
-        `${conceito.code} · catalog_version — esperado 1.0.0, encontrado ${conceito.catalogVersion}`,
-      ).toBe("1.0.0");
+        `${conceito.code} · catalog_version — esperado 1.1.0, encontrado ${conceito.catalogVersion}`,
+      ).toBe("1.1.0");
     }
-    expect(CATALOGO_VERSAO, "gerado × banco — versão vigente").toBe("1.0.0");
+    expect(CATALOGO_VERSAO, "gerado × banco — versão vigente").toBe("1.1.0");
     expect(PRACTICE_CATALOG_VERSION, "evidencias-pratica × gerado — versão").toBe(CATALOGO_VERSAO);
 
-    // Gravação nova SEM catalog_version explícito nasce 1.0.0 (default do banco).
+    // Gravação nova SEM catalog_version explícito nasce 1.1.0 (default do banco, migration 20260803100000).
     const { data: gravada, error } = await service
       .from("practice_evidence")
       .insert({
@@ -407,7 +408,7 @@ describe("GATE-E1-CAT [Bloco E/Frente 1] paridade do Catálogo Canônico", () =>
       .select("catalog_version")
       .single();
     expect(error, `gravação vigente recusada: ${error?.message}`).toBeNull();
-    expect(gravada!.catalog_version, "default de catalog_version na gravação nova").toBe("1.0.0");
+    expect(gravada!.catalog_version, "default de catalog_version na gravação nova").toBe("1.1.0");
 
     // Defaults unificados no schema: a migration de paridade fixa o default de
     // method_subcriteria em 1.0.0 (o ledger local garante que foi aplicada).
@@ -611,5 +612,95 @@ describe("GATE-E1-CAT [Bloco E/Frente 1] paridade do Catálogo Canônico", () =>
       deleteOpcao,
       "method_subcriterion_options aceitou DELETE — sair de circulação é active=false, nunca apagar",
     ).not.toBeNull();
+  });
+
+  // -------------------------------------------------------------------------
+  // Gate ADR-065 — satisfied_by: a correspondência da leitura relacional
+  // mora na fonte única, completa e íntegra
+  // -------------------------------------------------------------------------
+  it("gate ADR-065 — satisfied_by cobre os conceitos automáticos do eixo relacional e o banco recusa órfão", async () => {
+    const AUTOMATICOS_RELACIONAIS = [
+      "MODELO_COMUNICACAO",
+      "MODELO_ALTERNATIVAS",
+      "MODELO_PARTICIPACAO_FAMILIAR",
+    ];
+    const HUMANOS_RELACIONAIS = [
+      "MODELO_DECISAO_COMPARTILHADA",
+      "MODELO_PREFERENCIAS_E_RESTRICOES",
+      "MODELO_CONDUCAO_DE_NOTICIAS_DIFICEIS",
+    ];
+
+    for (const code of AUTOMATICOS_RELACIONAIS) {
+      const daPessoa = opcoes.filter(
+        (o) => o.subcriterion_code === code && o.side === "paciente" && o.field === "principal" && o.active,
+      );
+      expect(daPessoa.length, `${code} sem opções vigentes do lado da pessoa`).toBeGreaterThan(0);
+
+      const condutas = new Set(
+        opcoes
+          .filter(
+            (o) =>
+              o.subcriterion_code === code && o.side === "profissional" && o.field === "principal" && o.active,
+          )
+          .map((o) => o.value),
+      );
+
+      for (const opcao of daPessoa) {
+        // NAO_TENHO_PREFERENCIA é a única opção da pessoa fora do mecanismo.
+        if (opcao.value === "NAO_TENHO_PREFERENCIA") {
+          expect(opcao.satisfied_by, `${code}/${opcao.value} — fora do cruzamento, satisfied_by deve ser NULL`).toBeNull();
+          continue;
+        }
+        expect(
+          opcao.satisfied_by,
+          `${code}/${opcao.value} · satisfied_by ausente — conceito automático sem correspondência declarada`,
+        ).not.toBeNull();
+        expect(opcao.satisfied_by!.length, `${code}/${opcao.value} · satisfied_by vazio`).toBeGreaterThan(0);
+        for (const alvo of opcao.satisfied_by!) {
+          if (alvo === "*") continue;
+          expect(
+            condutas.has(alvo),
+            `${code}/${opcao.value} · satisfied_by aponta "${alvo}", que não é conduta vigente do profissional`,
+          ).toBe(true);
+        }
+      }
+    }
+
+    // Conceitos humanos jamais carregam correspondência automática.
+    for (const code of HUMANOS_RELACIONAIS) {
+      const comCorrespondencia = opcoes.filter(
+        (o) => o.subcriterion_code === code && o.satisfied_by !== null,
+      );
+      expect(
+        comCorrespondencia.map((o) => o.value),
+        `${code} é cruzamento humano — nenhuma opção pode ter satisfied_by`,
+      ).toEqual([]);
+    }
+
+    // O banco recusa satisfied_by órfão mesmo pela service key.
+    const { error: orfao } = await service.from("method_subcriterion_options").insert({
+      subcriterion_code: "MODELO_COMUNICACAO",
+      side: "paciente",
+      field: "principal",
+      value: "OPCAO_DE_TESTE_ORFA",
+      label: "Opção de teste órfã",
+      display_order: 99,
+      active: true,
+      satisfied_by: ["CONDUTA_QUE_NAO_EXISTE"],
+    });
+    expect(
+      orfao,
+      "o banco aceitou satisfied_by apontando conduta inexistente — a guarda satisfied_by_check não está ativa",
+    ).not.toBeNull();
+
+    // O default novo está na migration da virada (a antiga permanece histórica).
+    const novaMigration = readFileSync(
+      path.resolve(process.cwd(), "supabase/migrations/20260803100000_catalogo_1_1_0_leitura_relacional.sql"),
+      "utf8",
+    );
+    expect(
+      novaMigration.includes("set default '1.1.0'"),
+      "migration 20260803100000 sem a virada do default de catalog_version",
+    ).toBe(true);
   });
 });

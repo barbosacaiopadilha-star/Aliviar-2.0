@@ -2,9 +2,9 @@
  * CATÁLOGO CANÔNICO — ARQUIVO GERADO. NÃO EDITE À MÃO (DO-NOT-EDIT).
  *
  * Fonte: curadoria.method_subcriteria + curadoria.method_subcriterion_options
- * do Supabase LOCAL (o mesmo estado que as migrations congeladas
- * 20260802100000/110000 produzem — ADR-046 aprova o conteúdo, ADR-047 torna o
- * banco autoritativo).
+ * do Supabase LOCAL (o estado que as migrations congeladas 20260802100000/
+ * 110000 + 20260803100000 produzem — ADR-046 aprova o conteúdo, ADR-047 torna
+ * o banco autoritativo, ADR-065 institui a leitura relacional/Catálogo 1.1.0).
  *
  * Para regenerar:
  *   node scripts/with-local-supabase.mjs node scripts/gerar-catalogo-ts.mjs
@@ -29,6 +29,13 @@ export type CatalogoOpcao = {
   displayOrder: number;
   active: boolean;
   catalogVersion: string;
+  /**
+   * ADR-065 (leitura relacional): values do lado profissional que satisfazem
+   * esta opção da pessoa, ou ["*"] = qualquer declaração vigente do conceito.
+   * null = fora do mecanismo (lado profissional, conceito humano, ou opção
+   * fora do cruzamento). Comparação por identidade, nunca por rótulo.
+   */
+  satisfiedBy: readonly string[] | null;
 };
 
 export type CatalogoCampo = {
@@ -63,16 +70,16 @@ export type CatalogoConceito = {
 export const CATALOGO_EIXOS = ["ACESSO_AO_CUIDADO","CONTINUIDADE_DO_CUIDADO","MODELO_DE_ATENDIMENTO","PRATICA_E_TRAJETORIA","VIABILIDADE_DE_ACESSO"] as const;
 
 /** Versão vigente única de todos os conceitos ativos. */
-export const CATALOGO_VERSAO = "1.0.0";
+export const CATALOGO_VERSAO = "1.1.0";
 
 /** SHA-256 da carga (conceitos+opções, ordem canônica) — paridade executável. */
-export const CATALOGO_GERADO_HASH = "84894704a003e960e17f48b9e481fc3ccb4ca6f6de54b98cc4949207669657c3";
+export const CATALOGO_GERADO_HASH = "b1554f95b634b92786b0cf7eb0c56e424af0b12e25bdb69957bb0c4d71f26cfc";
 
 /** Total de opções no banco na geração (ativas e inativas). */
-export const CATALOGO_TOTAL_OPCOES = 166;
+export const CATALOGO_TOTAL_OPCOES = 186;
 
 /**
- * Todos os conceitos: os 28 ativos na ordem canônica, depois o legado 0.9.0
+ * Todos os conceitos: os 29 ativos na ordem canônica, depois o legado 0.9.0
  * inativo (legível para histórico; nunca recebe gravação nova).
  */
 export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
@@ -84,7 +91,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Presencial, remoto ou os dois.",
     "displayOrder": 2,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Em quais formatos você atende hoje?",
     "patientQuestion": "Como você consegue ser atendida?",
     "responseType": "multipla_escolha",
@@ -119,7 +126,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "REMOTO",
@@ -128,7 +136,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "PRIMEIRA_PRESENCIAL_RETORNOS_REMOTOS",
@@ -137,7 +146,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "PRIMEIRA_REMOTA_CONDICIONADA",
@@ -146,7 +156,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": "condicao_estruturada",
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "HIBRIDO_CONFORME_O_CASO",
@@ -155,7 +166,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": "condicao_estruturada",
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -171,7 +183,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "PREFIRO_REMOTO",
@@ -180,7 +193,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "PRECISO_PRESENCIAL",
@@ -189,7 +203,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "PREFIRO_PRESENCIAL",
@@ -198,7 +213,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "TANTO_FAZ",
@@ -207,7 +223,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "NAO_SEI_INFORMAR",
@@ -216,7 +233,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 6,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -230,7 +248,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Horários e janelas em que consegue atender.",
     "displayOrder": 3,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Em quais janelas você atende habitualmente?",
     "patientQuestion": "Quando você consegue ser atendida?",
     "responseType": "multipla_escolha",
@@ -250,7 +268,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "TARDE_DIAS_UTEIS",
@@ -259,7 +278,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "NOITE_APOS_18H",
@@ -268,7 +288,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "SABADO",
@@ -277,7 +298,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "DOMINGO_OU_FERIADO",
@@ -286,7 +308,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "SOB_AGENDAMENTO_ESPECIFICO",
@@ -295,7 +318,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 6,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -310,7 +334,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Quanto tempo até conseguir ser atendido.",
     "displayOrder": 4,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Qual o prazo habitual para a primeira consulta?",
     "patientQuestion": "Em quanto tempo você precisa ser atendida?",
     "responseType": "escolha_unica",
@@ -338,7 +362,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "DE_8_A_15_DIAS",
@@ -347,7 +372,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "DE_16_A_30_DIAS",
@@ -356,7 +382,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "DE_31_A_60_DIAS",
@@ -365,7 +392,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "MAIS_DE_60_DIAS",
@@ -374,7 +402,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "VARIA_CONFORME_O_CASO",
@@ -383,7 +412,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": "condicao_estruturada",
             "displayOrder": 6,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -398,7 +428,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Onde o profissional atende presencialmente. Substitui ACESSO_LOCALIZACAO: o juízo de deslocamento passa ao lado da paciente.",
     "displayOrder": 5,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Em quais endereços você atende presencialmente?",
     "patientQuestion": "De onde você pode se deslocar, e até onde?",
     "responseType": "estruturado",
@@ -418,7 +448,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "HOSPITAL",
@@ -427,7 +458,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "CLINICA",
@@ -436,7 +468,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "AMBULATORIO",
@@ -445,7 +478,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -461,7 +495,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ATE_1H",
@@ -470,7 +505,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ATE_2H",
@@ -479,7 +515,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "QUALQUER_DISTANCIA",
@@ -488,7 +525,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "NAO_POSSO_ME_DESLOCAR",
@@ -497,7 +535,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -511,7 +550,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Como e com que frequência acontecem os retornos.",
     "displayOrder": 1,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Após a primeira consulta, quais dessas condutas você costuma adotar?",
     "patientQuestion": "Como você gostaria que fosse o acompanhamento depois da primeira consulta?",
     "responseType": "multipla_escolha",
@@ -546,7 +585,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "DE_1_A_3_MESES",
@@ -555,7 +595,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "DE_3_A_6_MESES",
@@ -564,7 +605,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ACIMA_DE_6_MESES",
@@ -573,7 +615,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "DEPENDE_DA_EVOLUCAO",
@@ -582,7 +625,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": "condicao_estruturada",
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       },
@@ -596,7 +640,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "RETORNO_CONFORME_EVOLUCAO",
@@ -605,7 +650,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "RETORNO_APENAS_SE_SOLICITADO",
@@ -614,7 +660,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ENVIA_ORIENTACAO_ESCRITA",
@@ -623,7 +670,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "REAVALIA_EXAMES_ENTRE_CONSULTAS",
@@ -632,7 +680,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -647,7 +696,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "O que acontece depois do procedimento, e por quanto tempo.",
     "displayOrder": 2,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Após um procedimento que você realiza, quais condutas são habituais?",
     "patientQuestion": null,
     "responseType": "multipla_escolha",
@@ -675,7 +724,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ATE_90_DIAS",
@@ -684,7 +734,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ATE_6_MESES",
@@ -693,7 +744,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ACIMA_DE_6_MESES",
@@ -702,7 +754,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "CONFORME_O_PROCEDIMENTO",
@@ -711,7 +764,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       },
@@ -725,7 +779,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ACOMPANHA_COM_EQUIPE",
@@ -734,7 +789,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ACOMPANHA_ATE_ALTA_E_ENCAMINHA",
@@ -743,7 +799,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ENCAMINHA_PARA_OUTRO_PROFISSIONAL",
@@ -752,7 +809,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "NAO_REALIZA_PROCEDIMENTOS",
@@ -761,7 +819,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -776,7 +835,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Existência de equipe que acompanha junto com o profissional.",
     "displayOrder": 3,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Quem mais acompanha as pessoas que você atende?",
     "patientQuestion": "Você precisa de acompanhamento de mais de um tipo de profissional?",
     "responseType": "multipla_escolha",
@@ -796,7 +855,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "SECRETARIA_CLINICA",
@@ -805,7 +865,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "NUTRICAO",
@@ -814,7 +875,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "PSICOLOGIA",
@@ -823,7 +885,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "FISIOTERAPIA",
@@ -832,7 +895,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "SERVICO_SOCIAL",
@@ -841,7 +905,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 6,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "OUTRO_PROFISSIONAL_DA_EQUIPE",
@@ -850,7 +915,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 7,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ATUA_SEM_EQUIPE_FIXA",
@@ -859,7 +925,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 8,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -874,7 +941,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Como conversa com os outros profissionais que cuidam da pessoa.",
     "displayOrder": 4,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Quando a pessoa já é acompanhada por outros profissionais, o que você costuma fazer?",
     "patientQuestion": "Você já é acompanhada por outros profissionais que precisariam conversar entre si?",
     "responseType": "multipla_escolha",
@@ -894,7 +961,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ENVIA_RELATORIO_ESCRITO",
@@ -903,7 +971,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "PARTICIPA_DE_DISCUSSAO_DE_CASO",
@@ -912,7 +981,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ORIENTA_A_PESSOA_A_LEVAR_INFORMACAO",
@@ -921,7 +991,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ATUA_DE_FORMA_INDEPENDENTE",
@@ -930,7 +1001,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -945,7 +1017,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Por onde e em que condições a pessoa pode falar com o profissional ou a equipe entre consultas. NAO_HA_CANAL é fato declarado, não defeito.",
     "displayOrder": 5,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Entre uma consulta e outra, como a pessoa consegue contato?",
     "patientQuestion": "Você precisa conseguir falar com alguém entre as consultas?",
     "responseType": "multipla_escolha",
@@ -973,7 +1045,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ATE_48H",
@@ -982,7 +1055,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ATE_5_DIAS_UTEIS",
@@ -991,7 +1065,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "SEM_PRAZO_DEFINIDO",
@@ -1000,7 +1075,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       },
@@ -1014,7 +1090,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "MENSAGEM_COM_A_EQUIPE_OU_SECRETARIA",
@@ -1023,7 +1100,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "TELEFONE_EM_HORARIO_COMERCIAL",
@@ -1032,7 +1110,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "PORTAL_OU_APLICATIVO",
@@ -1041,7 +1120,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "CONTATO_DE_URGENCIA_FORA_DO_HORARIO",
@@ -1050,7 +1130,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "APENAS_REAGENDAMENTO",
@@ -1059,7 +1140,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 6,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "NAO_HA_CANAL_ENTRE_CONSULTAS",
@@ -1068,7 +1150,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 7,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -1083,7 +1166,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Condutas observáveis de explicação, adaptação da linguagem e verificação de entendimento.",
     "displayOrder": 1,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Ao explicar um diagnóstico ou tratamento, quais dessas ações você costuma realizar?",
     "patientQuestion": "O que te ajudaria a entender melhor o que for explicado?",
     "responseType": "multipla_escolha",
@@ -1103,7 +1186,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "VERIFICA_SE_A_PESSOA_COMPREENDEU",
@@ -1112,7 +1196,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "REEXPLICA_DE_OUTRA_FORMA_QUANDO_NECESSARIO",
@@ -1121,7 +1206,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "USA_APOIO_VISUAL_OU_DESENHO",
@@ -1130,7 +1216,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ENVIA_RESUMO_ESCRITO",
@@ -1139,7 +1226,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "RESERVA_TEMPO_PARA_PERGUNTAS",
@@ -1148,7 +1236,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 6,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "AUTORIZA_GRAVACAO_DA_CONSULTA",
@@ -1157,12 +1246,92 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 7,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
     ],
-    "paciente": []
+    "paciente": [
+      {
+        "field": "principal",
+        "options": [
+          {
+            "value": "EXPLICACAO_SEM_TERMOS_TECNICOS",
+            "label": "Explicação sem termos técnicos",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 1,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": [
+              "ADAPTA_A_LINGUAGEM_AO_INTERLOCUTOR",
+              "REEXPLICA_DE_OUTRA_FORMA_QUANDO_NECESSARIO"
+            ]
+          },
+          {
+            "value": "QUE_CONFIRMEM_SE_ENTENDI",
+            "label": "Que confirmem se eu entendi",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 2,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": [
+              "VERIFICA_SE_A_PESSOA_COMPREENDEU"
+            ]
+          },
+          {
+            "value": "ALGO_ESCRITO_PARA_LEVAR",
+            "label": "Algo escrito para levar",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 3,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": [
+              "ENVIA_RESUMO_ESCRITO"
+            ]
+          },
+          {
+            "value": "DESENHO_OU_IMAGEM",
+            "label": "Desenho ou imagem",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 4,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": [
+              "USA_APOIO_VISUAL_OU_DESENHO"
+            ]
+          },
+          {
+            "value": "TEMPO_PARA_PERGUNTAR",
+            "label": "Tempo para perguntar",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 5,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": [
+              "RESERVA_TEMPO_PARA_PERGUNTAS"
+            ]
+          },
+          {
+            "value": "PODER_GRAVAR_A_CONVERSA",
+            "label": "Poder gravar a conversa",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 6,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": [
+              "AUTORIZA_GRAVACAO_DA_CONSULTA"
+            ]
+          }
+        ]
+      }
+    ]
   },
   {
     "code": "MODELO_DECISAO_COMPARTILHADA",
@@ -1172,7 +1341,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Condutas observáveis diante de mais de uma alternativa adequada.",
     "displayOrder": 2,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Quando existem duas ou mais opções clinicamente adequadas, quais ações você costuma realizar antes da decisão?",
     "patientQuestion": "Quando houver mais de um caminho possível, como você gostaria de participar da decisão?",
     "responseType": "multipla_escolha",
@@ -1192,7 +1361,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "EXPLICA_RISCOS_E_BENEFICIOS_DE_CADA_UMA",
@@ -1201,7 +1371,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "PERGUNTA_O_QUE_IMPORTA_PARA_A_PESSOA",
@@ -1210,7 +1381,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "OFERECE_TEMPO_PARA_DECIDIR",
@@ -1219,7 +1391,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "SUGERE_SEGUNDA_OPINIAO_QUANDO_PERTINENTE",
@@ -1228,7 +1401,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "RECOMENDA_UMA_OPCAO_E_EXPLICA_O_PORQUE",
@@ -1237,7 +1411,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 6,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "DECIDE_E_COMUNICA_A_CONDUTA",
@@ -1246,7 +1421,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 7,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -1262,7 +1438,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "QUERO_QUE_O_MEDICO_RECOMENDE_E_EU_CONFIRMO",
@@ -1271,7 +1448,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "PREFIRO_QUE_O_MEDICO_DECIDA",
@@ -1280,7 +1458,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "NAO_SEI_AINDA",
@@ -1289,7 +1468,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -1303,7 +1483,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Abertura e condições para a presença de acompanhantes. Abertura à família não significa inclusão obrigatória.",
     "displayOrder": 3,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Como você conduz a presença de acompanhantes?",
     "patientQuestion": "Você quer que alguém participe das conversas?",
     "responseType": "multipla_escolha",
@@ -1323,7 +1503,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ACOMPANHANTE_MEDIANTE_AUTORIZACAO_DA_PESSOA",
@@ -1332,7 +1513,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "PARTE_DA_CONSULTA_A_SOS",
@@ -1341,7 +1523,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "CONTATO_COM_FAMILIA_ENTRE_CONSULTAS_SE_AUTORIZADO",
@@ -1350,7 +1533,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ATENDIMENTO_APENAS_INDIVIDUAL",
@@ -1359,7 +1543,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -1375,7 +1560,11 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": [
+              "ACOMPANHANTE_BEM_VINDO_SEMPRE",
+              "ACOMPANHANTE_MEDIANTE_AUTORIZACAO_DA_PESSOA"
+            ]
           },
           {
             "value": "EM_ALGUMAS_CONVERSAS",
@@ -1384,7 +1573,12 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": [
+              "ACOMPANHANTE_BEM_VINDO_SEMPRE",
+              "ACOMPANHANTE_MEDIANTE_AUTORIZACAO_DA_PESSOA",
+              "PARTE_DA_CONSULTA_A_SOS"
+            ]
           },
           {
             "value": "PREFIRO_SOZINHA",
@@ -1393,7 +1587,10 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": [
+              "*"
+            ]
           },
           {
             "value": "NAO_TENHO_PREFERENCIA",
@@ -1402,7 +1599,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -1416,7 +1614,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Se apresenta os caminhos possíveis, inclusive o de não intervir.",
     "displayOrder": 4,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Ao propor uma conduta, quais dessas você costuma apresentar?",
     "patientQuestion": "O que você precisa saber antes de aceitar um tratamento?",
     "responseType": "multipla_escolha",
@@ -1436,7 +1634,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "OPCAO_DE_ACOMPANHAR_SEM_INTERVIR",
@@ -1445,7 +1644,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "RISCOS_DE_CADA_CAMINHO",
@@ -1454,7 +1654,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "O_QUE_ACONTECE_SE_NADA_FOR_FEITO",
@@ -1463,7 +1664,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "LIMITES_DO_QUE_SE_SABE_HOJE",
@@ -1472,7 +1674,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "CUSTO_E_COBERTURA_DE_CADA_OPCAO",
@@ -1481,12 +1684,68 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 6,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
     ],
-    "paciente": []
+    "paciente": [
+      {
+        "field": "principal",
+        "options": [
+          {
+            "value": "TODAS_AS_OPCOES_DISPONIVEIS",
+            "label": "Todas as opções disponíveis",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 1,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": [
+              "OPCOES_DE_TRATAMENTO_DISPONIVEIS"
+            ]
+          },
+          {
+            "value": "OPCAO_DE_NAO_FAZER_NADA",
+            "label": "A opção de não fazer nada",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 2,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": [
+              "OPCAO_DE_ACOMPANHAR_SEM_INTERVIR",
+              "O_QUE_ACONTECE_SE_NADA_FOR_FEITO"
+            ]
+          },
+          {
+            "value": "RISCOS_DE_CADA_CAMINHO",
+            "label": "Os riscos de cada caminho",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 3,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": [
+              "RISCOS_DE_CADA_CAMINHO"
+            ]
+          },
+          {
+            "value": "CUSTOS_DE_CADA_CAMINHO",
+            "label": "Os custos de cada caminho",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 4,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": [
+              "CUSTO_E_COBERTURA_DE_CADA_OPCAO"
+            ]
+          }
+        ]
+      }
+    ]
   },
   {
     "code": "MODELO_PREFERENCIAS_E_RESTRICOES",
@@ -1496,7 +1755,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Como o profissional lida com recusas explícitas e restrições pessoais, religiosas ou culturais. Texto livre da paciente nunca entra no Motor.",
     "displayOrder": 5,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Quando a pessoa recusa uma conduta ou tem restrição pessoal, religiosa ou cultural, o que você costuma fazer?",
     "patientQuestion": "Existe algo que você não aceita, ou que precisa ser respeitado no seu cuidado?",
     "responseType": "multipla_escolha",
@@ -1516,7 +1775,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "BUSCA_ALTERNATIVA_COMPATIVEL",
@@ -1525,7 +1785,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "EXPLICA_CONSEQUENCIAS_E_MANTEM_O_ACOMPANHAMENTO",
@@ -1534,7 +1795,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ENCAMINHA_QUANDO_NAO_PODE_ATENDER_A_RESTRICAO",
@@ -1543,7 +1805,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "NAO_ACOMPANHA_QUEM_RECUSA_A_CONDUTA_INDICADA",
@@ -1552,12 +1815,145 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
     ],
     "paciente": []
+  },
+  {
+    "code": "MODELO_CONDUCAO_DE_NOTICIAS_DIFICEIS",
+    "group": "MODELO_DE_ATENDIMENTO",
+    "axis": "MODELO_DE_ATENDIMENTO",
+    "name": "Condução de notícias difíceis",
+    "description": "Condutas na comunicação de notícia grave: ritmo, preparo, companhia e continuidade imediata. Fronteira estreita (ADR-065): cobre somente a conduta na comunicação de notícia grave — explicação rotineira permanece em MODELO_COMUNICACAO; presença rotineira de acompanhante permanece em MODELO_PARTICIPACAO_FAMILIAR; este conceito não deve ser alargado para absorvê-las.",
+    "displayOrder": 6,
+    "active": true,
+    "catalogVersion": "1.1.0",
+    "professionalQuestion": "Ao comunicar um diagnóstico grave ou uma notícia difícil, quais dessas condutas você costuma adotar?",
+    "patientQuestion": "Se houver uma notícia difícil, como você prefere recebê-la?",
+    "responseType": "multipla_escolha",
+    "cruzamento": "humano",
+    "required": false,
+    "conditionalRules": [],
+    "evidenceSource": "entrevista",
+    "reviewMonths": 12,
+    "profissional": [
+      {
+        "field": "principal",
+        "options": [
+          {
+            "value": "RESERVA_TEMPO_DEDICADO_PARA_A_CONVERSA",
+            "label": "Reserva tempo dedicado para a conversa",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 1,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "PERGUNTA_O_QUANTO_A_PESSOA_QUER_SABER",
+            "label": "Pergunta o quanto a pessoa quer saber",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 2,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "COMUNICA_JUNTO_COM_OS_PROXIMOS_PASSOS",
+            "label": "Comunica junto com os próximos passos",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 3,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "OFERECE_PRESENCA_DE_ACOMPANHANTE",
+            "label": "Oferece a presença de um acompanhante",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 4,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "PROGRAMA_RECONTATO_PROXIMO_APOS_A_NOTICIA",
+            "label": "Programa recontato próximo após a notícia",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 5,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          }
+        ]
+      }
+    ],
+    "paciente": [
+      {
+        "field": "principal",
+        "options": [
+          {
+            "value": "DIRETA_E_COMPLETA",
+            "label": "De forma direta e completa",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 1,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "NO_MEU_RITMO_CONFORME_EU_PERGUNTAR",
+            "label": "No meu ritmo, conforme eu perguntar",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 2,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "COM_ALGUEM_QUE_EU_ESCOLHER_JUNTO",
+            "label": "Com alguém que eu escolher junto",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 3,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "JUNTO_COM_O_QUE_PODE_SER_FEITO",
+            "label": "Junto com o que pode ser feito a respeito",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 4,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "NAO_SEI_AINDA",
+            "label": "Não sei ainda",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 5,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          }
+        ]
+      }
+    ]
   },
   {
     "code": "FORMACAO_GRADUACAO",
@@ -1567,7 +1963,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Onde e quando se formou em medicina.",
     "displayOrder": 1,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Instituição e ano de graduação",
     "patientQuestion": null,
     "responseType": "estruturado",
@@ -1587,7 +1983,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Residência concluída na especialidade em questão.",
     "displayOrder": 2,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Residências concluídas",
     "patientQuestion": null,
     "responseType": "estruturado",
@@ -1607,7 +2003,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Título de especialista ou especialização formal na área.",
     "displayOrder": 3,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Títulos de especialista",
     "patientQuestion": null,
     "responseType": "estruturado",
@@ -1627,7 +2023,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Formação avançada em subárea, no país ou fora.",
     "displayOrder": 4,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Fellowships realizados",
     "patientQuestion": null,
     "responseType": "estruturado",
@@ -1647,7 +2043,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Pós-graduação e cursos relevantes.",
     "displayOrder": 5,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Outras formações relevantes",
     "patientQuestion": null,
     "responseType": "estruturado",
@@ -1667,7 +2063,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Há quanto tempo atua na especialidade.",
     "displayOrder": 1,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Há quanto tempo atua na especialidade?",
     "patientQuestion": null,
     "responseType": "escolha_unica",
@@ -1687,7 +2083,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "3_A_5",
@@ -1696,7 +2093,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "6_A_10",
@@ -1705,7 +2103,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "11_A_20",
@@ -1714,7 +2113,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "MAIS_DE_20",
@@ -1723,7 +2123,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -1738,7 +2139,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Com que frequência atende esse tipo de caso.",
     "displayOrder": 4,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Com que frequência atende esse tipo de caso?",
     "patientQuestion": null,
     "responseType": "escolha_unica",
@@ -1758,7 +2159,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "MENSALMENTE",
@@ -1767,7 +2169,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ALGUMAS_VEZES_AO_ANO",
@@ -1776,7 +2179,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "RARAMENTE",
@@ -1785,7 +2189,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -1800,7 +2205,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Experiência na condição/procedimento e em casos semelhantes. Fusão de EXPERIENCIA_CASOS_SEMELHANTES e EXPERIENCIA_CONDICAO_OU_PROCEDIMENTO.",
     "displayOrder": 5,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Com quais condições e procedimentos você tem prática regular?",
     "patientQuestion": null,
     "responseType": "estruturado",
@@ -1820,7 +2225,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "O que o profissional NÃO atende e quando encaminha. Protege a paciente: sem ele, a incompatibilidade só aparece na consulta — depois da espera, do deslocamento e do custo. É a Área de Atuação em negativo, e alimenta o filtro eliminatório da Curadoria.",
     "displayOrder": 6,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Quais situações você não atende e encaminha?",
     "patientQuestion": null,
     "responseType": "estruturado",
@@ -1840,7 +2245,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ENCAMINHA_SEM_INDICACAO",
@@ -1849,7 +2255,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -1864,7 +2271,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Serviços e instituições em que atuou.",
     "displayOrder": 2,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Vínculos institucionais atuais e anteriores",
     "patientQuestion": null,
     "responseType": "estruturado",
@@ -1884,7 +2291,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Produção científica, ensino e formação de outros. Fusão de HISTORICO_PRODUCAO_ACADEMICA e HISTORICO_ENSINO_E_PESQUISA.",
     "displayOrder": 5,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Atividade acadêmica",
     "patientQuestion": null,
     "responseType": "multipla_escolha",
@@ -1904,7 +2311,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "PUBLICOU_NO_PASSADO",
@@ -1913,7 +2321,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "LECIONA",
@@ -1922,7 +2331,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ORIENTA_RESIDENTES",
@@ -1931,7 +2341,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "SEM_ATIVIDADE_ACADEMICA",
@@ -1940,7 +2351,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -1955,7 +2367,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Áreas em que atua hoje. Formalização: já existia como professional_practice_areas; passa a ser conceito do catálogo.",
     "displayOrder": 6,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Áreas em que atua hoje",
     "patientQuestion": null,
     "responseType": "estruturado",
@@ -1975,7 +2387,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "Por quais formas de cobertura o profissional atende, e o que a pessoa precisa usar. Fora da matriz do Motor: sinaliza barreira objetiva, nunca elimina nem ranqueia.",
     "displayOrder": 1,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Por quais formas de cobertura você atende hoje?",
     "patientQuestion": "Como você pretende usar sua cobertura?",
     "responseType": "multipla_escolha",
@@ -2010,7 +2422,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "CONVENIOS_SELECIONADOS",
@@ -2019,7 +2432,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": "lista_operadoras",
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "EMITE_DOCUMENTACAO_PARA_REEMBOLSO",
@@ -2028,7 +2442,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "NAO_EMITE_DOCUMENTACAO_PARA_REEMBOLSO",
@@ -2037,7 +2452,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "SUJEITO_A_CONFIRMACAO_ADMINISTRATIVA",
@@ -2046,7 +2462,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": "condicao_estruturada",
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "NAO_INFORMADO",
@@ -2055,7 +2472,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 6,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -2071,7 +2489,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": "operadora",
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "POSSO_USAR_REEMBOLSO",
@@ -2080,7 +2499,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ACEITO_ATENDIMENTO_PARTICULAR",
@@ -2089,7 +2509,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "PRECISO_CONFIRMAR_MINHA_COBERTURA",
@@ -2098,7 +2519,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "SEM_RESTRICAO_DECLARADA",
@@ -2107,7 +2529,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "NAO_SE_APLICA",
@@ -2116,7 +2539,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 6,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -2130,7 +2554,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "description": "O custo declarado do atendimento e as formas de pagá-lo. Fora da matriz do Motor: proibido comparar faixas entre profissionais ou ordenar por preço (ADR-041 item 4).",
     "displayOrder": 2,
     "active": true,
-    "catalogVersion": "1.0.0",
+    "catalogVersion": "1.1.0",
     "professionalQuestion": "Qual o custo da primeira consulta e como pode ser pago?",
     "patientQuestion": "O que precisa ser verdade para você conseguir pagar?",
     "responseType": "estruturado",
@@ -2165,7 +2589,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "RETORNO_COBRADO_A_PARTE",
@@ -2174,7 +2599,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "TAXA_DE_PROCEDIMENTO",
@@ -2183,7 +2609,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "SEM_CUSTOS_ADICIONAIS_CONHECIDOS",
@@ -2192,7 +2619,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "NAO_INFORMADO",
@@ -2201,7 +2629,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       },
@@ -2215,7 +2644,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "DE_301_A_600",
@@ -2224,7 +2654,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "DE_601_A_1000",
@@ -2233,7 +2664,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "DE_1001_A_2000",
@@ -2242,7 +2674,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ACIMA_DE_2000",
@@ -2251,7 +2684,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "SUJEITO_A_CONFIRMACAO",
@@ -2260,7 +2694,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": "condicao_estruturada",
             "displayOrder": 6,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "NAO_INFORMADO",
@@ -2269,7 +2704,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 7,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       },
@@ -2283,7 +2719,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "CARTAO_A_VISTA",
@@ -2292,7 +2729,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "CARTAO_PARCELADO",
@@ -2301,7 +2739,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": "numero_parcelas",
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "TRANSFERENCIA",
@@ -2310,7 +2749,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "BOLETO",
@@ -2319,7 +2759,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }
@@ -2335,7 +2776,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": "faixa",
             "displayOrder": 1,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "PRECISO_SABER_O_VALOR_ANTES_DE_ESCOLHER",
@@ -2344,7 +2786,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 2,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "ACEITO_ATE_ESTA_FAIXA",
@@ -2353,7 +2796,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": "faixa",
             "displayOrder": 3,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "PRECISO_DE_PARCELAMENTO",
@@ -2362,7 +2806,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 4,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "NAO_DECLAREI_RESTRICAO",
@@ -2371,7 +2816,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 5,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "PREFIRO_NAO_INFORMAR",
@@ -2380,7 +2826,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 6,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           },
           {
             "value": "NAO_SE_APLICA",
@@ -2389,7 +2836,8 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
             "detailKind": null,
             "displayOrder": 7,
             "active": true,
-            "catalogVersion": "1.0.0"
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
           }
         ]
       }

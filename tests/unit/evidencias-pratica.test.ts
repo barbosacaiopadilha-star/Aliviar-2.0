@@ -34,10 +34,10 @@ function entrada(overrides: Partial<PracticeEvidenceInput> = {}): PracticeEviden
   };
 }
 
-describe("Catálogo 1.0.0 — o congelamento é verificável", () => {
-  it("tem exatamente 28 conceitos, na distribuição congelada 4/5/5/12/2", () => {
-    expect(PRACTICE_CATALOG_VERSION).toBe("1.0.0");
-    expect(PRACTICE_CATALOG).toHaveLength(28);
+describe("Catálogo 1.1.0 (ADR-065) — o congelamento é verificável", () => {
+  it("tem exatamente 29 conceitos, na distribuição congelada 4/5/6/12/2", () => {
+    expect(PRACTICE_CATALOG_VERSION).toBe("1.1.0");
+    expect(PRACTICE_CATALOG).toHaveLength(29);
 
     const porEixo = new Map<string, number>();
     for (const conceito of PRACTICE_CATALOG) {
@@ -45,21 +45,23 @@ describe("Catálogo 1.0.0 — o congelamento é verificável", () => {
     }
     expect(porEixo.get("ACESSO_AO_CUIDADO")).toBe(4);
     expect(porEixo.get("CONTINUIDADE_DO_CUIDADO")).toBe(5);
-    expect(porEixo.get("MODELO_DE_ATENDIMENTO")).toBe(5);
+    expect(porEixo.get("MODELO_DE_ATENDIMENTO")).toBe(6);
     expect(porEixo.get("PRATICA_E_TRAJETORIA")).toBe(12);
     expect(porEixo.get("VIABILIDADE_DE_ACESSO")).toBe(2);
   });
 
   it("códigos são únicos e o índice cobre todos", () => {
-    expect(PRACTICE_CONCEPTS_BY_CODE.size).toBe(28);
+    expect(PRACTICE_CONCEPTS_BY_CODE.size).toBe(29);
     expect(isPracticeConceptCode("ACESSO_MODALIDADE")).toBe(true);
     expect(isPracticeConceptCode("ACESSO_IDIOMAS")).toBe(false); // fora por decisão de Método
     expect(isPracticeConceptCode("HISTORICO_REGULARIDADE")).toBe(false); // removido — duplicava registration_status
   });
 
-  it("viabilidade NUNCA participa do Motor — e são exatamente 3 os conceitos fora dele", () => {
+  it("viabilidade NUNCA participa do Motor — e são exatamente 4 os conceitos fora dele", () => {
     const fora = PRACTICE_CATALOG.filter((c) => c.motor === "NUNCA").map((c) => c.code);
     expect(fora.sort()).toEqual([
+      // ADR-065: cruzamento humano obrigatório — nunca em motor algum
+      "MODELO_CONDUCAO_DE_NOTICIAS_DIFICEIS",
       "MODELO_PREFERENCIAS_E_RESTRICOES",
       "VIABILIDADE_COBERTURA_E_CONVENIO",
       "VIABILIDADE_CUSTO_E_PAGAMENTO",
@@ -104,7 +106,7 @@ describe("Validação — a porta recusa o que o contrato recusa", () => {
   it("código fora do catálogo é recusado nomeando a versão", () => {
     const erros = validatePracticeEvidence(entrada({ subcriterionCode: "ACESSO_IDIOMAS" }));
     expect(erros).toHaveLength(1);
-    expect(erros[0]).toContain("1.0.0");
+    expect(erros[0]).toContain("1.1.0");
   });
 
   it("opção desconhecida e escolha única com duas seleções são recusadas", () => {

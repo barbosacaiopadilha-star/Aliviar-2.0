@@ -78,8 +78,8 @@ describe("ADR-042 — o Mapa de Prioridades é a única fonte de 'quanto importa
     }
   });
 
-  it("o catálogo vigente tem 28 conceitos e nenhum código aposentado", () => {
-    expect(SUBCRITERION_CATALOG.filter((entry) => entry.active)).toHaveLength(28);
+  it("o catálogo vigente tem 29 conceitos (1.1.0, ADR-065) e nenhum código aposentado", () => {
+    expect(SUBCRITERION_CATALOG.filter((entry) => entry.active)).toHaveLength(29);
     const codigos = new Set(SUBCRITERION_CATALOG.map((entry) => entry.code));
     for (const aposentado of [
       "HISTORICO_REGULARIDADE",

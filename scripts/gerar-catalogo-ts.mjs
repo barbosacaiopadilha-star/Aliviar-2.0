@@ -136,6 +136,9 @@ export function montarCarga(conceitos, opcoes) {
       displayOrder: opcao.display_order,
       active: opcao.active,
       catalogVersion: opcao.catalog_version,
+      // ADR-065: correspondência da leitura relacional — só no lado da
+      // pessoa de conceitos automáticos; null em todo o resto.
+      satisfiedBy: opcao.satisfied_by ?? null,
     });
   }
 
@@ -176,15 +179,17 @@ async function main() {
   const { data: opcoes, error: erroOpcoes } = await client
     .from("method_subcriterion_options")
     .select(
-      "subcriterion_code, side, field, value, label, requires_detail, detail_kind, display_order, active, catalog_version",
+      "subcriterion_code, side, field, value, label, requires_detail, detail_kind, display_order, active, catalog_version, satisfied_by",
     );
   if (erroOpcoes) throw new Error(`method_subcriterion_options: ${erroOpcoes.message}`);
 
   // Provas de fechamento ANTES de emitir — gerar de um banco inconsistente
   // produziria um "canônico" errado com carimbo de autoridade.
+  // 29 = os 28 do Catálogo 1.0.0 (ADR-046) + MODELO_CONDUCAO_DE_NOTICIAS_DIFICEIS
+  // (ADR-065, migration 20260803100000).
   const ativos = conceitos.filter((c) => c.active);
-  if (ativos.length !== 28) {
-    throw new Error(`Catálogo inconsistente: ${ativos.length} conceitos ativos (esperado 28).`);
+  if (ativos.length !== 29) {
+    throw new Error(`Catálogo inconsistente: ${ativos.length} conceitos ativos (esperado 29).`);
   }
   const versoes = new Set(ativos.map((c) => c.catalog_version));
   if (versoes.size !== 1) {
@@ -206,9 +211,9 @@ async function main() {
  * CATÁLOGO CANÔNICO — ARQUIVO GERADO. NÃO EDITE À MÃO (DO-NOT-EDIT).
  *
  * Fonte: curadoria.method_subcriteria + curadoria.method_subcriterion_options
- * do Supabase LOCAL (o mesmo estado que as migrations congeladas
- * 20260802100000/110000 produzem — ADR-046 aprova o conteúdo, ADR-047 torna o
- * banco autoritativo).
+ * do Supabase LOCAL (o estado que as migrations congeladas 20260802100000/
+ * 110000 + 20260803100000 produzem — ADR-046 aprova o conteúdo, ADR-047 torna
+ * o banco autoritativo, ADR-065 institui a leitura relacional/Catálogo 1.1.0).
  *
  * Para regenerar:
  *   node scripts/with-local-supabase.mjs node scripts/gerar-catalogo-ts.mjs
@@ -233,6 +238,13 @@ export type CatalogoOpcao = {
   displayOrder: number;
   active: boolean;
   catalogVersion: string;
+  /**
+   * ADR-065 (leitura relacional): values do lado profissional que satisfazem
+   * esta opção da pessoa, ou ["*"] = qualquer declaração vigente do conceito.
+   * null = fora do mecanismo (lado profissional, conceito humano, ou opção
+   * fora do cruzamento). Comparação por identidade, nunca por rótulo.
+   */
+  satisfiedBy: readonly string[] | null;
 };
 
 export type CatalogoCampo = {
@@ -276,7 +288,7 @@ export const CATALOGO_GERADO_HASH = ${JSON.stringify(hash)};
 export const CATALOGO_TOTAL_OPCOES = ${totalOpcoes};
 
 /**
- * Todos os conceitos: os 28 ativos na ordem canônica, depois o legado 0.9.0
+ * Todos os conceitos: os 29 ativos na ordem canônica, depois o legado 0.9.0
  * inativo (legível para histórico; nunca recebe gravação nova).
  */
 export const CATALOGO_GERADO: readonly CatalogoConceito[] = ${JSON.stringify(carga, null, 2)};

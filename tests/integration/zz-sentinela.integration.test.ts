@@ -148,10 +148,10 @@ describe("Sentinela — a suíte devolve o banco como encontrou", () => {
       .select("*", { count: "exact", head: true })
       .eq("active", true);
 
-    // Catálogo 1.0.0 (ADR-046/047): 28 vigentes + 6 aposentados do 0.9.0,
-    // que permanecem legíveis como histórico — 34 registros ao todo.
-    expect(catalogo, "o catálogo não é apagado no teardown").toBe(34);
-    expect(ativos, "nenhum subcritério entrou ou saiu de circulação").toBe(28);
+    // Catálogo 1.1.0 (ADR-046/047/065): 29 vigentes + 6 aposentados do 0.9.0,
+    // que permanecem legíveis como histórico — 35 registros ao todo.
+    expect(catalogo, "o catálogo não é apagado no teardown").toBe(35);
+    expect(ativos, "nenhum subcritério entrou ou saiu de circulação").toBe(29);
 
     // Os Mapas saem por cascata de Case e de profissional. Se sobrou linha
     // NOVA, sobrou dono. O oráculo é relativo à baseline — a stack local

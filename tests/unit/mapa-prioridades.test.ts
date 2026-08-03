@@ -37,10 +37,11 @@ describe("Catálogo — o Método define o que se avalia", () => {
     expect(CRITERION_LABELS.HISTORICO).toBe("Histórico Profissional");
   });
 
-  it("o catálogo 1.0.0 tem exatamente os 28 conceitos aprovados", () => {
-    expect(SUBCRITERION_CATALOG.filter((entry) => entry.active)).toHaveLength(28);
+  it("o catálogo vigente (1.1.0, ADR-065) tem exatamente os 29 conceitos aprovados", () => {
+    expect(SUBCRITERION_CATALOG.filter((entry) => entry.active)).toHaveLength(29);
     const codigos = SUBCRITERION_CATALOG.map((entry) => entry.code);
     for (const novo of [
+      "MODELO_CONDUCAO_DE_NOTICIAS_DIFICEIS",
       "CONTINUIDADE_CANAIS",
       "PRATICA_LIMITES_DE_ATUACAO",
       "EXPERIENCIA_NO_TIPO_DE_CASO",
