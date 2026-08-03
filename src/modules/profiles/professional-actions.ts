@@ -224,9 +224,11 @@ export async function createProfessionalProfileAction(
     // existir, porque referenciam o id dele. Dentro do try: uma falha aqui era
     // exceção NÃO tratada, e a criação parecia simplesmente "não avançar".
     // SÓ quando o formulário declarou domínios: o form real não tem campos de
-    // competência (removidos pela ADR-042) e parseia para `[]` — ausência de
-    // declaração nunca é um comando de escrita (Bloco B/E7).
-    if (parsed.data.competencyDomains.length > 0) {
+    // competência (removidos pela ADR-042) e o parse devolve `undefined`
+    // (FS-03/ADR-048) — ausência de declaração nunca é um comando de escrita
+    // (Bloco B/E7). Criar sem competências é legítimo: perfil nasce sem
+    // domínios, sem erro.
+    if (parsed.data.competencyDomains?.length) {
       await replaceCompetencyDomains(supabase, created.id, parsed.data.competencyDomains);
     }
   } catch (erro) {
@@ -279,11 +281,12 @@ export async function updateProfessionalProfileAction(
 
     // Semântica de patch (Bloco B/E7, gate B15): campo ausente = "não
     // alterar". O form real de edição não tem campos de competência — o
-    // parse devolve `[]` — e editar dados básicos NUNCA pode apagar as áreas
-    // já cadastradas. A substituição só roda quando o formulário declarou
-    // domínios; remover tudo exigiria uma ação explícita de esvaziamento
-    // (`esvaziamentoExplicito`), que nenhuma superfície oferece hoje.
-    if (parsed.data.competencyDomains.length > 0) {
+    // parse devolve `undefined` (FS-03/ADR-048) — e editar dados básicos
+    // NUNCA pode apagar as áreas já cadastradas. A substituição só roda
+    // quando o formulário declarou domínios; remover tudo exigiria uma ação
+    // explícita de esvaziamento (`esvaziamentoExplicito`), que nenhuma
+    // superfície oferece hoje.
+    if (parsed.data.competencyDomains?.length) {
       await replaceCompetencyDomains(supabase, id, parsed.data.competencyDomains);
     }
   } catch (erro) {

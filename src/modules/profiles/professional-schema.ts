@@ -65,9 +65,21 @@ export const professionalProfileSchema = z.object({
     emptyToUndefined,
     z.enum(["flexible", "limited", "unavailable_soon"]).optional(),
   ),
+  // FS-03 / ADR-048 (FRENTE D2): campo AUSENTE parseia para `undefined`,
+  // nunca para `[]`. O formulário real não tem campos de competência
+  // (removidos pela ADR-042) — `formData.getAll()` de campo inexistente
+  // devolve `[]`, e o parse anterior transformava isso numa lista vazia que,
+  // a jusante, virava `replaceCompetencyDomains([])`: cada salvamento
+  // apagava os domínios já levantados (158/162 publicados a zero). Ausência
+  // é lacuna declarada (Invariante 34) — domínios PRESERVADOS; apagar
+  // exigiria ato explícito, que nenhuma superfície oferece hoje.
   competencyDomains: z.preprocess(
-    (value) => (Array.isArray(value) ? value : value === undefined || value === "" ? [] : [value]),
-    z.array(z.enum(["saude_emocional_mental", "saude_fisica", "nao_determinado"])).default([]),
+    (value) => {
+      if (Array.isArray(value)) return value.length === 0 ? undefined : value;
+      if (value === undefined || value === null || value === "") return undefined;
+      return [value];
+    },
+    z.array(z.enum(["saude_emocional_mental", "saude_fisica", "nao_determinado"])).optional(),
   ),
 });
 

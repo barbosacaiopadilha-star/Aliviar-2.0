@@ -33,7 +33,11 @@ export type ReportOptionInput = {
   relationToWeights: string;
   /** O que esta opção custa. Nunca vazio: opção só com virtudes é recomendação. */
   attentionPoints: string[];
-  favorablePoints: string[];
+  /**
+   * Gate D21a: `undefined` é "não mexi" — a gravação preserva o que já está
+   * gravado para a opção; `[]` explícito é "remover". Ver saveReport.
+   */
+  favorablePoints: string[] | undefined;
   suggestedQuestions: string[];
   curatorObservations: string | null;
 };
@@ -66,6 +70,35 @@ export async function saveReport(
 
   let reportId = existing?.id as string | undefined;
 
+  // Gate D21a (Bloco D): opção com favorablePoints `undefined` significa
+  // "não mexi" — o valor JÁ GRAVADO daquela opção é preservado. A leitura
+  // acontece ANTES do delete+insert (o fluxo continua multi-statement — AT-04
+  // conhecido, promover a RPC está fora deste escopo; só a semântica muda).
+  // `[]` explícito continua significando "remover". Sem anterior, `undefined`
+  // resolve para [] — não há nada a preservar.
+  const precisaPreservar = options.some((option) => option.favorablePoints === undefined);
+  const anterioresPorProfissional = new Map<string, string[]>();
+  const anterioresPorPosicao = new Map<number, string[]>();
+
+  if (reportId && precisaPreservar) {
+    const { data: anteriores, error: erroLeitura } = await supabase
+      .from("curadoria_report_options")
+      .select("professional_profile_id, position, favorable_points")
+      .eq("report_id", reportId);
+    // Fail-closed (contrato do Bloco D): falha de leitura FALHA — tratá-la
+    // como "não havia nada gravado" apagaria em silêncio o que existe.
+    if (erroLeitura) {
+      throw erroDeBanco("Não foi possível ler as opções já gravadas do Relatório.", erroLeitura, {
+        reportId,
+      });
+    }
+    for (const linha of anteriores ?? []) {
+      const favoraveis = (linha.favorable_points as string[] | null) ?? [];
+      anterioresPorProfissional.set(linha.professional_profile_id as string, favoraveis);
+      anterioresPorPosicao.set(linha.position as number, favoraveis);
+    }
+  }
+
   if (reportId) {
     const { error } = await supabase
       .from("curadoria_reports")
@@ -96,7 +129,13 @@ export async function saveReport(
       position: index + 1,
       justification: option.justification,
       relation_to_weights: option.relationToWeights,
-      favorable_points: option.favorablePoints,
+      // undefined = "não mexi": preserva o anterior da MESMA opção (por
+      // profissional; posição como reserva se o profissional trocou de vaga).
+      favorable_points:
+        option.favorablePoints ??
+        anterioresPorProfissional.get(option.professionalProfileId) ??
+        anterioresPorPosicao.get(index + 1) ??
+        [],
       attention_points: option.attentionPoints,
       suggested_questions: option.suggestedQuestions,
       curator_observations: option.curatorObservations,

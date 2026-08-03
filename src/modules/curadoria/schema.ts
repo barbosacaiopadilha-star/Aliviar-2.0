@@ -175,7 +175,13 @@ export const saveReportInputSchema = z.object({
         attentionPoints: z
           .array(z.string().trim().min(1))
           .min(1, "Toda opção precisa dizer o que custa."),
-        favorablePoints: z.array(z.string().trim().min(1)).default([]),
+        // Gate D21a (Bloco D): SEM `.default([])`. Ausência do campo é
+        // "não mexi" (undefined) e a gravação PRESERVA o que já existe para
+        // aquela opção; `[]` explícito continua significando "remover". O
+        // default anterior convertia "não enviei" em "apague tudo" — um
+        // salvar de rascunho apagava os pontos favoráveis do rascunho
+        // assistido. A ação explícita de esvaziar fica com o editor (D3).
+        favorablePoints: z.array(z.string().trim().min(1)).optional(),
         suggestedQuestions: z.array(z.string().trim().min(1)).default([]),
         curatorObservations: z.string().trim().max(4000).nullable().optional(),
       }),
