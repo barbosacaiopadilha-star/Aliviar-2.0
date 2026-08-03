@@ -181,6 +181,19 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
   // A leitura da investigação — tudo derivado do que já está na Mesa.
   // ------------------------------------------------------------------
 
+  // ADR-065 — a quarta leitura, para os mesmos elegíveis da comparação.
+  // Computada ANTES da investigação, que soma as lacunas relacionais à
+  // contagem de atenção. A interface não recalcula regra nenhuma: o motor
+  // relacional entrega células e sinalizações prontas, na ordem do Catálogo.
+  const idsElegiveis = view.comparison.map((coluna) => coluna.professionalProfileId);
+  const relacional =
+    idsElegiveis.length > 0
+      ? await crossCaseRelationalForProfessionals(supabase, record.caseId, idsElegiveis)
+      : { byProfessional: [], relationalNeedsCount: 0 };
+  const relacionalPorId = new Map(
+    relacional.byProfessional.map((leitura) => [leitura.professionalProfileId, leitura]),
+  );
+
   const colunaPorId = new Map(view.comparison.map((coluna) => [coluna.professionalProfileId, coluna]));
 
   const profissionais: InvestigacaoProfissional[] = view.professionals.map((profissional) => {
@@ -319,18 +332,6 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
   const investigacao = primeiroElegivel
     ? await crossCaseWithProfessional(supabase, record.caseId, primeiroElegivel)
     : null;
-
-  // ADR-065 — a quarta leitura, para os mesmos elegíveis da comparação.
-  // A interface não recalcula regra nenhuma: o motor relacional entrega
-  // células e sinalizações prontas, na ordem do Catálogo.
-  const idsElegiveis = view.comparison.map((coluna) => coluna.professionalProfileId);
-  const relacional =
-    idsElegiveis.length > 0
-      ? await crossCaseRelationalForProfessionals(supabase, record.caseId, idsElegiveis)
-      : { byProfessional: [], relationalNeedsCount: 0 };
-  const relacionalPorId = new Map(
-    relacional.byProfessional.map((leitura) => [leitura.professionalProfileId, leitura]),
-  );
 
   const comparacao =
     colunas.length > 0 ? (
