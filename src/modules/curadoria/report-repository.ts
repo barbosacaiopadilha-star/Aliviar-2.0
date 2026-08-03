@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { erroDeBanco } from "@/lib/observability/erros";
+
 /**
  * RELATÓRIO E DEVOLUTIVA — a persistência que faltava.
  *
@@ -180,15 +182,27 @@ export async function markReportDelivered(supabase: SupabaseClient, reportId: st
   if (error) throw new Error(error.message);
 }
 
+/**
+ * Bloco D (gate D18): falha de consulta PROPAGA — `null` é resposta de
+ * negócio ("não há Relatório para esta seleção"), nunca de infraestrutura.
+ * Antes o `error` era descartado e o chamador seguia por um caminho de
+ * negócio errado ("escreva o Relatório antes...") com o banco fora do ar.
+ */
 export async function getReportBySelection(
   supabase: SupabaseClient,
   curatedSelectionId: string,
 ): Promise<{ id: string; emittedAt: string | null; deliveredAt: string | null } | null> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("curadoria_reports")
     .select("id, emitted_at, delivered_at")
     .eq("curated_selection_id", curatedSelectionId)
     .maybeSingle();
+
+  if (error) {
+    throw erroDeBanco("Não foi possível carregar o Relatório desta seleção.", error, {
+      curatedSelectionId,
+    });
+  }
 
   if (!data) return null;
   return {

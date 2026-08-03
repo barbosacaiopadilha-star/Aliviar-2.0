@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { erroDeBanco } from "@/lib/observability/erros";
+
 import { isContactMode, type ConnectionStatus, type ContactMode } from "./types";
 
 /**
@@ -72,7 +74,13 @@ export async function loadContinuityWorklist(
     .not("status", "in", `(${TERMINAL_STATUSES.join(",")})`)
     .order("decided_at", { ascending: true });
 
-  if (error || !data) return [];
+  // Bloco D (gate D19): erro LANÇA; [] fica reservado para a ausência
+  // legítima ("ninguém espera nada"). Antes, uma falha de consulta fazia a
+  // fila aparecer vazia e o Concierge concluir que não havia trabalho.
+  if (error) {
+    throw erroDeBanco("Não foi possível carregar a Caixa de Continuidade.", error);
+  }
+  if (!data || data.length === 0) return [];
 
   const connectionIds = data.map((row) => row.id as string);
   const caseIds = data.map((row) => row.case_id as string);
@@ -85,14 +93,23 @@ export async function loadContinuityWorklist(
           .from("approach_attempts")
           .select("connection_id, status, response_kind")
           .in("connection_id", connectionIds)
-      : Promise.resolve({ data: [] as Record<string, unknown>[] }),
+      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
     caseIds.length
       ? supabase
           .from("team_notifications")
           .select("case_id, read_at, archived_at")
           .in("case_id", caseIds)
-      : Promise.resolve({ data: [] as Record<string, unknown>[] }),
+      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
   ]);
+
+  // Mesma regra do gate D19 para as consultas em lote: uma falha aqui
+  // silenciaria tentativas e avisos — o item apareceria "sem pendência".
+  if (attemptsResult.error) {
+    throw erroDeBanco("Não foi possível carregar as aproximações da continuidade.", attemptsResult.error);
+  }
+  if (notificationsResult.error) {
+    throw erroDeBanco("Não foi possível carregar os avisos da continuidade.", notificationsResult.error);
+  }
 
   const attemptsByConnection = new Map<string, { status: string; responseKind: string | null }[]>();
   for (const row of attemptsResult.data ?? []) {

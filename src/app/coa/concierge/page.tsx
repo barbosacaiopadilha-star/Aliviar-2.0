@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { DashboardLayout, DashboardList, DashboardSection, KpiCard } from "@/components/ads";
+import { falhaParaUsuario } from "@/lib/observability/erros";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRole } from "@/modules/auth/guard";
 import {
@@ -8,7 +9,10 @@ import {
   CONTACT_MODE_LABELS,
   readContinuity,
 } from "@/modules/connection/continuity-labels";
-import { loadContinuityWorklist } from "@/modules/connection/continuity-worklist";
+import {
+  loadContinuityWorklist,
+  type ContinuityWorkItem,
+} from "@/modules/connection/continuity-worklist";
 import { PIPELINE_STAGE_LABELS } from "@/modules/crm/pipeline";
 import { getConciergeDashboardData } from "@/modules/crm/repository";
 
@@ -25,7 +29,19 @@ export default async function CoaConciergeDashboardPage() {
   // A RLS é a autoridade: can_access_case decide o que aparece aqui. Esta
   // página não filtra por papel nem por id — se a policy não deixar ver, não
   // vem.
-  const continuity = await loadContinuityWorklist(supabase);
+  //
+  // Bloco D (gate D19): a projeção agora LANÇA em falha de consulta. A falha
+  // vira estado visível — mensagem digna + referência ERR- — nunca uma fila
+  // vazia que diria "ninguém espera nada" sem ser verdade.
+  let continuity: ContinuityWorkItem[] = [];
+  let continuityError: string | null = null;
+  try {
+    continuity = await loadContinuityWorklist(supabase);
+  } catch (erro) {
+    continuityError = falhaParaUsuario("coa.concierge.continuidade", erro, {
+      mensagem: "Não foi possível carregar a continuidade agora.",
+    });
+  }
 
   return (
     <DashboardLayout
@@ -62,7 +78,12 @@ export default async function CoaConciergeDashboardPage() {
           sobre quem precisa mais — não existe regra que defina isso.
         </p>
 
-        {continuity.length === 0 ? (
+        {continuityError ? (
+          <p role="alert" className="mt-5 max-w-2xl text-sm text-ink">
+            {continuityError} A fila não está vazia — nós é que não conseguimos lê-la. Tente
+            recarregar a página; se persistir, informe a referência acima.
+          </p>
+        ) : continuity.length === 0 ? (
           <p className="mt-5 max-w-2xl text-sm text-ink-muted">
             Nenhum caso com decisão registrada sob seus cuidados. Quando uma paciente decidir e
             o caso vier para você, ele aparece aqui.

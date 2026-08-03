@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { erroDeBanco } from "@/lib/observability/erros";
+
 /**
  * A POLÍTICA DA REDE — quem a Curadoria pode oferecer, num lugar só.
  *
@@ -27,15 +29,27 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * despublicar — e volta sozinho quando a divergência for resolvida.
  *
  * Bloqueia, nunca apaga: o cadastro continua lá, e o que falta é verificação.
+ *
+ * FAIL-CLOSED (Bloco D, gate D17): uma falha de consulta LANÇA — nunca vira
+ * Set vazio. Set vazio significa "ninguém está bloqueado", e afirmar isso a
+ * partir de um erro de infraestrutura liberaria para a Rede profissionais com
+ * divergência crítica em aberto. A causa original segue no `cause`.
  */
 export async function listCriticalDivergenceBlocklist(
   supabase: SupabaseClient,
 ): Promise<Set<string>> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("verification_divergences")
     .select("professional_profile_id")
     .eq("status", "aberta")
     .eq("severity", "critica");
+
+  if (error) {
+    throw erroDeBanco(
+      "Não foi possível consultar a lista de bloqueio da Rede.",
+      error,
+    );
+  }
 
   return new Set((data ?? []).map((row) => row.professional_profile_id as string));
 }

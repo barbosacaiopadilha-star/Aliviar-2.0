@@ -27,6 +27,7 @@ import { MesaWorkspace } from "@/components/curadoria/mesa-workspace";
 import { StartPriorityProfile } from "@/components/curadoria/start-priority-profile";
 import { ProtocoloPessoaPanel } from "@/components/curadoria/protocolo-pessoa-panel";
 import { conduct } from "@/modules/curadoria/cos/conduction";
+import { falhaParaUsuario } from "@/lib/observability/erros";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRole } from "@/modules/auth/guard";
 import { getAuthState } from "@/modules/auth/session";
@@ -95,11 +96,32 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
   const journey = buildCuratorJourney(record, state);
   const phaseAlerts = state.alerts.filter((alert) => alert.phase === "CURADORIA_TECNICA");
 
-  const view = await loadMesaCruzamento(
-    supabase,
-    record.caseId,
-    record.curadoriaTecnica.selectedProfessionalIds.length,
-  );
+  // Bloco D (gate D17): a construção da Rede é fail-closed — blocklist
+  // inacessível LANÇA, e a falha aparece aqui como erro dito, com referência
+  // ERR-. Nunca uma Rede inflada (profissional bloqueado aparecendo) nem uma
+  // Rede vazia mentirosa. Mínimo honesto: mensagem + referência.
+  let view;
+  try {
+    view = await loadMesaCruzamento(
+      supabase,
+      record.caseId,
+      record.curadoriaTecnica.selectedProfessionalIds.length,
+    );
+  } catch (erro) {
+    const mensagem = falhaParaUsuario("mesa.curadoriaTecnica.cruzamento", erro, {
+      mensagem: "Não foi possível montar a Mesa deste Case agora.",
+      contexto: { caseId: record.caseId },
+    });
+    return (
+      <main className="mx-auto max-w-reading px-6 py-10">
+        <h1 className="font-serif text-xl font-medium text-ink">Mesa de Curadoria</h1>
+        <p role="alert" className="mt-4 text-sm leading-relaxed text-ink">
+          {mensagem} A Rede deste Case não pôde ser lida — nada foi decidido nem perdido.
+          Recarregue a página; se persistir, informe a referência acima.
+        </p>
+      </main>
+    );
+  }
 
   // Governança da Base: leitura corrente completa, divergências e pendências —
   // a RLS decide o alcance; o papel decide as ações disponíveis no painel.
