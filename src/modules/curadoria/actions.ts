@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { ErroDaAplicacao, erroDeBanco, falhaParaUsuario } from "@/lib/observability/erros";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRoleForAction, requireRoleForAction } from "@/modules/auth/guard";
 
@@ -32,8 +33,35 @@ async function requireCurator() {
   return requireAnyRoleForAction([...CURATOR_ROLES]);
 }
 
-function fail(error: unknown, fallback: string): CuradoriaActionResult {
-  return { success: false, error: error instanceof Error ? error.message : fallback };
+/**
+ * Erros de domínio que o BANCO da Curadoria escreve em português para serem
+ * lidos: violação de constraint das guardas (23514) e RAISE EXCEPTION das
+ * RPCs/triggers (P0001). Só esses atravessam como estão — erro técnico vira
+ * frase digna, e o detalhe fica no log.
+ */
+const DOMAIN_SQLSTATES = new Set(["23514", "P0001"]);
+
+/**
+ * Bloco D: TODA saída de erro registra a causa completa (`registrarErro`,
+ * via `falhaParaUsuario`) e devolve frase digna + referência ERR- — quem
+ * reporta a referência aponta a linha exata do log. A mensagem exibida:
+ *  - erro de domínio do banco (23514/P0001, em PT) — exibida como está;
+ *  - ErroDaAplicacao — a frase digna que o repositório já escreveu;
+ *  - Error simples — a mensagem de domínio escrita à mão nos repositórios;
+ *  - qualquer outra coisa — o fallback da ação.
+ */
+function fail(escopo: string, error: unknown, fallback: string): CuradoriaActionResult {
+  let mensagem = fallback;
+  if (error instanceof ErroDaAplicacao) {
+    const causa = error.cause as { code?: unknown; message?: unknown } | null | undefined;
+    mensagem =
+      causa && typeof causa.message === "string" && DOMAIN_SQLSTATES.has(String(causa.code))
+        ? causa.message
+        : error.message;
+  } else if (error instanceof Error) {
+    mensagem = error.message;
+  }
+  return { success: false, error: falhaParaUsuario(escopo, error, { mensagem }) };
 }
 
 function revalidateCuradoria(caseId: string) {
@@ -79,7 +107,7 @@ export async function startConsultationAction(input: unknown): Promise<StartCons
     revalidateCuradoria(parsed.data.caseId);
     return { success: true, priorityProfileId };
   } catch (error) {
-    return fail(error, "Não foi possível iniciar a Consulta Inicial.") as StartConsultationResult;
+    return fail("curadoria.startConsultation", error, "Não foi possível iniciar a Consulta Inicial.") as StartConsultationResult;
   }
 }
 
@@ -120,7 +148,7 @@ export async function addMandatoryFilterAction(input: unknown): Promise<Curadori
     if (profile) revalidateCuradoria(profile.caseId);
     return { success: true };
   } catch (error) {
-    return fail(error, "Não foi possível adicionar o filtro.");
+    return fail("curadoria.addMandatoryFilter", error, "Não foi possível adicionar o filtro.");
   }
 }
 
@@ -153,7 +181,7 @@ export async function addPreferenceAction(input: unknown): Promise<CuradoriaActi
     if (profile) revalidateCuradoria(profile.caseId);
     return { success: true };
   } catch (error) {
-    return fail(error, "Não foi possível registrar a preferência.");
+    return fail("curadoria.addPreference", error, "Não foi possível registrar a preferência.");
   }
 }
 
@@ -175,7 +203,7 @@ export async function removeFilterAction(input: unknown): Promise<CuradoriaActio
     if (profile) revalidateCuradoria(profile.caseId);
     return { success: true };
   } catch (error) {
-    return fail(error, "Não foi possível remover o item.");
+    return fail("curadoria.removeFilter", error, "Não foi possível remover o item.");
   }
 }
 
@@ -256,7 +284,7 @@ export async function saveSelectionAction(input: unknown): Promise<CuradoriaActi
     revalidateCuradoria(profile.caseId);
     return { success: true };
   } catch (error) {
-    return fail(error, "Não foi possível salvar a seleção.");
+    return fail("curadoria.saveSelection", error, "Não foi possível salvar a seleção.");
   }
 }
 
@@ -287,7 +315,18 @@ export async function deliverSelectionAction(input: unknown): Promise<CuradoriaA
     _curated_selection_id: parsed.data.curatedSelectionId,
   });
 
-  if (error) return { success: false, error: error.message };
+  // Bloco D: registra a causa completa e devolve referência. A mensagem de
+  // domínio da RPC (P0001/23514, em PT) continua chegando inteira ao Curador
+  // — `fail` a deixa passar; erro técnico vira a frase digna.
+  if (error) {
+    return fail(
+      "curadoria.deliverSelection",
+      erroDeBanco("Não foi possível entregar a Curadoria.", error, {
+        curatedSelectionId: parsed.data.curatedSelectionId,
+      }),
+      "Não foi possível entregar a Curadoria.",
+    );
+  }
 
   revalidatePath("/paciente");
   revalidatePath("/paciente/curadoria");
@@ -337,7 +376,7 @@ export async function registerDecisionAction(input: unknown): Promise<CuradoriaA
     revalidatePath("/paciente/curadoria");
     return { success: true };
   } catch (error) {
-    return fail(error, "Não foi possível registrar sua decisão.");
+    return fail("curadoria.registerDecision", error, "Não foi possível registrar sua decisão.");
   }
 }
 
@@ -369,7 +408,13 @@ export async function registerAcolhimentoAction(input: unknown): Promise<Curador
     .eq("case_id", caseId)
     .maybeSingle();
 
-  if (readError) return { success: false, error: "Não foi possível ler o Acolhimento." };
+  if (readError) {
+    return fail(
+      "curadoria.registerAcolhimento.leitura",
+      erroDeBanco("Não foi possível ler o Acolhimento.", readError, { caseId }),
+      "Não foi possível ler o Acolhimento.",
+    );
+  }
 
   const next = {
     context_reviewed: Boolean(existing?.context_reviewed) || contextReviewed,
@@ -382,7 +427,13 @@ export async function registerAcolhimentoAction(input: unknown): Promise<Curador
         .from("consultation_records")
         .insert({ case_id: caseId, curator_id: authState.user.id, ...next });
 
-  if (error) return { success: false, error: "Não foi possível registrar o Acolhimento." };
+  if (error) {
+    return fail(
+      "curadoria.registerAcolhimento.gravacao",
+      erroDeBanco("Não foi possível registrar o Acolhimento.", error, { caseId }),
+      "Não foi possível registrar o Acolhimento.",
+    );
+  }
 
   revalidateCuradoria(caseId);
   revalidatePath(`/portal-curador/casos/${caseId}/acolhimento`);
@@ -413,7 +464,13 @@ export async function registerHistoriaAction(input: unknown): Promise<CuradoriaA
     .eq("case_id", caseId)
     .maybeSingle();
 
-  if (readError) return { success: false, error: "Não foi possível ler a História." };
+  if (readError) {
+    return fail(
+      "curadoria.registerHistoria.leitura",
+      erroDeBanco("Não foi possível ler a História.", readError, { caseId }),
+      "Não foi possível ler a História.",
+    );
+  }
   if (!existing) {
     // A História pressupõe o Acolhimento — que cria o registro da Consulta.
     return { success: false, error: "Conclua o Acolhimento antes de registrar a História." };
@@ -428,7 +485,13 @@ export async function registerHistoriaAction(input: unknown): Promise<CuradoriaA
   if (Object.keys(patch).length === 0) return { success: true };
 
   const { error } = await supabase.from("consultation_records").update(patch).eq("id", existing.id);
-  if (error) return { success: false, error: "Não foi possível registrar a História." };
+  if (error) {
+    return fail(
+      "curadoria.registerHistoria.gravacao",
+      erroDeBanco("Não foi possível registrar a História.", error, { caseId }),
+      "Não foi possível registrar a História.",
+    );
+  }
 
   revalidateCuradoria(caseId);
   revalidatePath(`/portal-curador/casos/${caseId}/historia`);
@@ -454,13 +517,25 @@ export async function registerCasoAction(input: unknown): Promise<CuradoriaActio
     .eq("case_id", caseId)
     .maybeSingle();
 
-  if (readError) return { success: false, error: "Não foi possível ler o Caso." };
+  if (readError) {
+    return fail(
+      "curadoria.registerCaso.leitura",
+      erroDeBanco("Não foi possível ler o Caso.", readError, { caseId }),
+      "Não foi possível ler o Caso.",
+    );
+  }
 
   const { error } = existing
     ? await supabase.from("case_clinical_context").update({ clinical_context: clinicalContext }).eq("id", existing.id)
     : await supabase.from("case_clinical_context").insert({ case_id: caseId, clinical_context: clinicalContext });
 
-  if (error) return { success: false, error: "Não foi possível registrar o contexto clínico." };
+  if (error) {
+    return fail(
+      "curadoria.registerCaso.gravacao",
+      erroDeBanco("Não foi possível registrar o contexto clínico.", error, { caseId }),
+      "Não foi possível registrar o contexto clínico.",
+    );
+  }
 
   revalidateCuradoria(caseId);
   revalidatePath(`/portal-curador/casos/${caseId}/caso`);
@@ -533,7 +608,7 @@ export async function saveReportAction(input: unknown): Promise<CuradoriaActionR
     revalidateCuradoria(found.selection.caseId);
     return { success: true };
   } catch (error) {
-    return fail(error, "Não foi possível salvar o Relatório.");
+    return fail("curadoria.saveReport", error, "Não foi possível salvar o Relatório.");
   }
 }
 
@@ -561,18 +636,21 @@ export async function emitReportAction(input: unknown): Promise<CuradoriaActionR
   const found = await selectionForProfile(supabase, parsed.data.priorityProfileId);
   if (!found.ok) return { success: false, error: found.error };
 
-  const report = await reportRepository.getReportBySelection(supabase, found.selection.id);
-  if (!report) {
-    return { success: false, error: "Escreva o Relatório antes de emiti-lo." };
-  }
-
+  // Bloco D (gate D18): a leitura do Relatório agora LANÇA em falha — o
+  // catch a transforma em erro visível com referência; `null` continua sendo
+  // apenas "o Relatório ainda não foi escrito".
   try {
+    const report = await reportRepository.getReportBySelection(supabase, found.selection.id);
+    if (!report) {
+      return { success: false, error: "Escreva o Relatório antes de emiti-lo." };
+    }
+
     await reportRepository.approveReport(supabase, report.id, authState.user.id);
     await reportRepository.emitReport(supabase, report.id);
     revalidateCuradoria(found.selection.caseId);
     return { success: true };
   } catch (error) {
-    return fail(error, "Não foi possível emitir o Relatório.");
+    return fail("curadoria.emitReport", error, "Não foi possível emitir o Relatório.");
   }
 }
 
@@ -607,7 +685,7 @@ export async function generateAssistedDraftAction(input: unknown): Promise<Curad
     revalidateCuradoria(found.selection.caseId);
     return { success: true };
   } catch (error) {
-    return fail(error, "Não foi possível gerar o rascunho assistido.");
+    return fail("curadoria.generateAssistedDraft", error, "Não foi possível gerar o rascunho assistido.");
   }
 }
 
@@ -632,15 +710,17 @@ export async function registerDevolutivaAction(input: unknown): Promise<Curadori
   const found = await selectionForProfile(supabase, parsed.data.priorityProfileId);
   if (!found.ok) return { success: false, error: found.error };
 
-  const report = await reportRepository.getReportBySelection(supabase, found.selection.id);
-  if (!report?.deliveredAt) {
-    return {
-      success: false,
-      error: "Entregue a Curadoria antes de registrar o encontro em que ela foi apresentada.",
-    };
-  }
-
+  // Bloco D (gate D18): falha de leitura vira erro com referência — nunca a
+  // conclusão de negócio "entregue antes" com o banco fora do ar.
   try {
+    const report = await reportRepository.getReportBySelection(supabase, found.selection.id);
+    if (!report?.deliveredAt) {
+      return {
+        success: false,
+        error: "Entregue a Curadoria antes de registrar o encontro em que ela foi apresentada.",
+      };
+    }
+
     await reportRepository.registerDevolutiva(supabase, {
       caseId: found.selection.caseId,
       reportId: report.id,
@@ -652,6 +732,6 @@ export async function registerDevolutivaAction(input: unknown): Promise<Curadori
     revalidateCuradoria(found.selection.caseId);
     return { success: true };
   } catch (error) {
-    return fail(error, "Não foi possível registrar a apresentação.");
+    return fail("curadoria.registerDevolutiva", error, "Não foi possível registrar a apresentação.");
   }
 }

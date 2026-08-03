@@ -2,7 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { erroDeBanco } from "@/lib/observability/erros";
+import { erroDeBanco, registrarErro } from "@/lib/observability/erros";
 
 import { isValidCaseTransition } from "./state-machine";
 import type {
@@ -211,21 +211,38 @@ export async function createCase(
 
   const row = created as CaseRow;
 
-  await supabase.from("case_events").insert({
+  // Bloco D (FS-05 restante): o histórico do Caso não pode ganhar buracos em
+  // SILÊNCIO. A falha do evento não desfaz o ato principal (sem mudança de
+  // domínio) — mas deixa rastro com referência no log do servidor.
+  const { error: createdEventError } = await supabase.from("case_events").insert({
     case_id: row.id,
     event_type: "created" as CaseEventType,
     actor_id: createdBy,
     to_value: row.status,
   });
+  if (createdEventError) {
+    registrarErro(
+      "cases.createCase.evento",
+      erroDeBanco("Falha ao registrar o evento de criação do caso.", createdEventError),
+      { caseId: row.id, eventType: "created" },
+    );
+  }
 
   if (assignedCuratorId) {
-    await supabase.from("case_events").insert({
+    const { error: assignedEventError } = await supabase.from("case_events").insert({
       case_id: row.id,
       event_type: "curator_assigned" as CaseEventType,
       actor_id: createdBy,
       from_value: null,
       to_value: assignedCuratorId,
     });
+    if (assignedEventError) {
+      registrarErro(
+        "cases.createCase.eventoAtribuicao",
+        erroDeBanco("Falha ao registrar o evento de atribuição do caso.", assignedEventError),
+        { caseId: row.id, eventType: "curator_assigned" },
+      );
+    }
   }
 
   const names = await namesByProfileIds(supabase, [row.patient_profile_id, assignedCuratorId].filter(Boolean) as string[]);
@@ -255,7 +272,7 @@ export async function reassignCurator(
     throw erroDeBanco("Não foi possível reatribuir o caso agora.", error);
   }
 
-  await supabase.from("case_events").insert({
+  const { error: eventError } = await supabase.from("case_events").insert({
     case_id: caseId,
     event_type: "curator_assigned" as CaseEventType,
     actor_id: changedBy,
@@ -263,6 +280,13 @@ export async function reassignCurator(
     to_value: newCuratorId,
     reason: reason ?? null,
   });
+  if (eventError) {
+    registrarErro(
+      "cases.reassignCurator.evento",
+      erroDeBanco("Falha ao registrar o evento de reatribuição do caso.", eventError),
+      { caseId, eventType: "curator_assigned" },
+    );
+  }
 }
 
 export async function changeCaseStatus(
@@ -293,13 +317,20 @@ export async function changeCaseStatus(
     throw erroDeBanco("Não foi possível mudar o status agora.", error);
   }
 
-  await supabase.from("case_events").insert({
+  const { error: eventError } = await supabase.from("case_events").insert({
     case_id: caseId,
     event_type: "status_changed" as CaseEventType,
     actor_id: actorId,
     from_value: currentStatus,
     to_value: nextStatus,
   });
+  if (eventError) {
+    registrarErro(
+      "cases.changeCaseStatus.evento",
+      erroDeBanco("Falha ao registrar o evento de mudança de status do caso.", eventError),
+      { caseId, eventType: "status_changed" },
+    );
+  }
 }
 
 // Append-only (ajuste pós-Sprint 2) — cada chamada cria uma nota nova,

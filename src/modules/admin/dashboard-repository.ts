@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { erroDeBanco, registrarErro } from "@/lib/observability/erros";
 import { isResponsibleRole } from "@/modules/cases/responsibility";
 
 import type {
@@ -23,12 +24,23 @@ import type {
  * ("não conseguimos ler"). Confundir os dois é como um painel executivo
  * mente sem querer.
  */
-async function safe<T>(run: () => PromiseLike<{ data: T | null; error: unknown }>): Promise<T | null> {
+// Bloco D (FS — silêncio restante): o `null` continua sendo a resposta ao
+// operador ("indisponível", nunca zero), mas a falha agora deixa RASTRO —
+// `registrarErro` grava a causa completa e a referência no log do servidor.
+// Antes, o painel ficava honesto e a operação ficava cega.
+async function safe<T>(
+  escopo: string,
+  run: () => PromiseLike<{ data: T | null; error: unknown }>,
+): Promise<T | null> {
   try {
     const { data, error } = await run();
-    if (error) return null;
+    if (error) {
+      registrarErro(escopo, erroDeBanco("Falha na leitura do painel executivo.", error));
+      return null;
+    }
     return data;
-  } catch {
+  } catch (erro) {
+    registrarErro(escopo, erro);
     return null;
   }
 }
@@ -37,17 +49,21 @@ export async function loadDashboardSource(client: SupabaseClient): Promise<Dashb
   const db = client.schema("curadoria");
 
   const [leadRows, caseRows, handoffRows, taskRows, appointmentRows, patientRows, roleRows] = await Promise.all([
-    safe(() =>
+    safe("admin.dashboard.leads", () =>
       db
         .from("crm_contacts")
         .select("id, source, created_at, qualified_at, converted_at, patient_profile_id, archived_at"),
     ),
-    safe(() => db.from("cases").select("id, status, responsible_role, responsible_id, created_at, started_at, closed_at")),
-    safe(() => db.from("case_responsibility_changes").select("case_id, new_role, changed_at").eq("new_role", "concierge")),
-    safe(() => db.from("crm_tasks").select("id, due_at, completed_at")),
-    safe(() => db.from("crm_appointments").select("id, start_at")),
-    safe(() => db.from("patient_profiles").select("profile_id, status")),
-    safe(() => db.from("user_roles").select("profile_id, roles(slug)")),
+    safe("admin.dashboard.cases", () =>
+      db.from("cases").select("id, status, responsible_role, responsible_id, created_at, started_at, closed_at"),
+    ),
+    safe("admin.dashboard.handoffs", () =>
+      db.from("case_responsibility_changes").select("case_id, new_role, changed_at").eq("new_role", "concierge"),
+    ),
+    safe("admin.dashboard.tasks", () => db.from("crm_tasks").select("id, due_at, completed_at")),
+    safe("admin.dashboard.appointments", () => db.from("crm_appointments").select("id, start_at")),
+    safe("admin.dashboard.patients", () => db.from("patient_profiles").select("profile_id, status")),
+    safe("admin.dashboard.team", () => db.from("user_roles").select("profile_id, roles(slug)")),
   ]);
 
   // Primeira ida ao Concierge por Case — a passagem que interessa é a

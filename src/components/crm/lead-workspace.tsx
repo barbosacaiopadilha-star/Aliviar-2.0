@@ -323,14 +323,19 @@ export function LeadWorkspace({
                   type="button"
                   disabled={bloqueado || motivo.trim() === "" || curadorId === ""}
                   onClick={() =>
-                    executar(() => {
-                      setEncaminhado(true);
-                      return transferCaseResponsibilityAction({
+                    executar(async () => {
+                      // Bloco D: "concluído" só DEPOIS de o servidor confirmar
+                      // (ADR-064 §4). Marcar antes escondia o formulário e
+                      // declarava encaminhado um Case que podia ter sido
+                      // recusado — falso sucesso na tela do Atendente.
+                      const resultado = await transferCaseResponsibilityAction({
                         caseId: lead.caseId!,
                         newResponsibleId: curadorId,
                         newRole: "curador_medico",
                         reason: motivo.trim(),
                       });
+                      if (resultado.success) setEncaminhado(true);
+                      return resultado;
                     }, "Case encaminhado ao Curador.")
                   }
                   className={botao}
