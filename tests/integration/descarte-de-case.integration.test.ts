@@ -215,14 +215,18 @@ describe("Descarte administrativo de Case (ADR-038, Supabase local)", () => {
 
     await descartar({ case_id: caseId, reason: motivo, executed_by: admin.userId });
 
+    // O filtro do Case vai na CONSULTA, não em JS depois: `audit_logs` é
+    // append-only e cresce a cada execução; buscar todas as linhas
+    // `case_discarded` e procurar entre elas passou a falhar em silêncio
+    // quando a tabela cruzou o teto de linhas da API (1000), porque o
+    // registro recém-criado ficava fora da página devolvida.
     const { data } = await service
       .from("audit_logs")
       .select("actor_id, action, metadata")
-      .eq("action", "case_discarded");
+      .eq("action", "case_discarded")
+      .contains("metadata", { case_id: caseId });
 
-    const registro = (data ?? []).find(
-      (linha) => (linha.metadata as Record<string, unknown>)?.case_id === caseId,
-    );
+    const registro = (data ?? [])[0];
 
     expect(registro, "o rastro do descarte precisa sobreviver ao Case").toBeTruthy();
     expect(registro!.actor_id).toBe(admin.userId);

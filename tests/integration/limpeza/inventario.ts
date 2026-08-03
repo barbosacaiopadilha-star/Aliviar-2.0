@@ -261,9 +261,34 @@ export async function limpar(admin: SupabaseClient, antes: Inventario): Promise<
   }
 
   // 3. Profissionais — cascateiam para áreas, formação, divergências e afins.
+  //
+  //    EXCEÇÃO (governança): profissional com aceite legal registrado NÃO é
+  //    removível, e isso é desenho, não obstáculo — `legal_acceptances` é
+  //    append-only e sua FK é `on delete restrict`, porque apagar o
+  //    profissional apagaria a prova de que ele aceitou os termos da Rede.
+  //    A limpeza respeita a retenção do mesmo jeito que respeita o
+  //    append-only dos Cases: em vez de forçar, desativa.
   await emLotes(criado.profissionais, async (lote) => {
-    const { error } = await admin.from("professional_profiles").delete().in("id", lote);
-    if (error) throw new Error(`limpeza de profissionais: ${error.message}`);
+    const { data: comAceite } = await admin
+      .from("legal_acceptances")
+      .select("professional_profile_id")
+      .in("professional_profile_id", lote);
+    const retidos = new Set(
+      (comAceite ?? []).map((linha) => linha.professional_profile_id as string),
+    );
+
+    const removiveis = lote.filter((id) => !retidos.has(id));
+    if (removiveis.length > 0) {
+      const { error } = await admin.from("professional_profiles").delete().in("id", removiveis);
+      if (error) throw new Error(`limpeza de profissionais: ${error.message}`);
+    }
+
+    if (retidos.size > 0) {
+      await admin
+        .from("professional_profiles")
+        .update({ status: "inativo" })
+        .in("id", [...retidos]);
+    }
   });
 
   // 4. Histórias que não saíram por cascata do perfil.
