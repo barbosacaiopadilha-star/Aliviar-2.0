@@ -88,12 +88,12 @@ describe("ProtocoloPessoaPanel", () => {
     const badges = screen.getAllByText("Declaração clínica do Curador");
     expect(badges).toHaveLength(2); // P8 e P9
     // Os botões de registrar existem só para as 14 perguntas.
-    expect(screen.getAllByRole("button", { name: "Registrar conversa" })).toHaveLength(14);
+    expect(screen.getAllByRole("button", { name: "Registrar conversa" })).toHaveLength(15);
   });
 
   it("a contagem é de conversas — sem percentual", () => {
     render(<ProtocoloPessoaPanel caseId="case-1" needs={[need()]} />);
-    expect(screen.getByText("1 de 14 conversas registradas")).toBeInTheDocument();
+    expect(screen.getByText("1 de 15 conversas registradas")).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/%/);
   });
 });
@@ -144,9 +144,9 @@ describe("MesaEvidenciasPanel — abertura progressiva", () => {
         nowIso={AGORA}
       />,
     );
-    expect(screen.getByText("1 de 28 conceitos com informação")).toBeInTheDocument();
+    expect(screen.getByText("1 de 29 conceitos com informação")).toBeInTheDocument();
     expect(screen.getByText("1 apenas declaradas")).toBeInTheDocument();
-    expect(screen.getByText("27 sem informação")).toBeInTheDocument();
+    expect(screen.getByText("28 sem informação")).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/atende|compatível|não atende|score|ranking|%/i);
   });
 

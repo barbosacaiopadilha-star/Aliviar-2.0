@@ -46,6 +46,9 @@ import {
   loadCasePriorityMap,
 } from "@/modules/curadoria/mapa-prioridades-repository";
 import { crossCaseWithProfessional } from "@/modules/curadoria/motor-compatibilidade-repository";
+import { crossCaseRelationalForProfessionals } from "@/modules/curadoria/motor-relacional-repository";
+import { AbasCompatibilidade } from "@/components/curadoria/mesa/abas-compatibilidade";
+import { LeituraRelacionalPanel } from "@/components/curadoria/mesa/leitura-relacional-panel";
 import { candidatosDaSelecao, foraDaSelecao } from "@/modules/curadoria/mesa-selecao";
 import {
   buildMesaEtapas,
@@ -194,8 +197,12 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
       criteriosPendentes:
         view.awaitingDeclaration[profissional.professionalProfileId]?.length ?? 0,
       // Lacuna do Motor: o que o Case declarou e o profissional não respondeu.
+      // ADR-065 §10.3: as lacunas relacionais entram na mesma contagem de
+      // atenção que as assistenciais — a linha de investigação não distingue
+      // a leitura de origem, só a pendência.
       criteriosInsuficientes:
-        coluna?.cells.filter((celula) => celula.result === "LACUNA_DE_INFORMACAO").length ?? 0,
+        (coluna?.cells.filter((celula) => celula.result === "LACUNA_DE_INFORMACAO").length ?? 0) +
+        (relacionalPorId.get(profissional.professionalProfileId)?.summary.lacunas ?? 0),
     };
   });
 
@@ -313,9 +320,32 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
     ? await crossCaseWithProfessional(supabase, record.caseId, primeiroElegivel)
     : null;
 
+  // ADR-065 — a quarta leitura, para os mesmos elegíveis da comparação.
+  // A interface não recalcula regra nenhuma: o motor relacional entrega
+  // células e sinalizações prontas, na ordem do Catálogo.
+  const idsElegiveis = view.comparison.map((coluna) => coluna.professionalProfileId);
+  const relacional =
+    idsElegiveis.length > 0
+      ? await crossCaseRelationalForProfessionals(supabase, record.caseId, idsElegiveis)
+      : { byProfessional: [], relationalNeedsCount: 0 };
+  const relacionalPorId = new Map(
+    relacional.byProfessional.map((leitura) => [leitura.professionalProfileId, leitura]),
+  );
+
   const comparacao =
     colunas.length > 0 ? (
-      <ComparacaoPremium colunas={colunas} />
+      <AbasCompatibilidade
+        assistencial={<ComparacaoPremium colunas={colunas} />}
+        relacional={
+          <LeituraRelacionalPanel
+            colunas={relacional.byProfessional.map((leitura) => ({
+              ...leitura,
+              nome: nomeDe(leitura.professionalProfileId),
+            }))}
+            relationalNeedsCount={relacional.relationalNeedsCount}
+          />
+        }
+      />
     ) : (
       <CompatibilidadeNaoIniciada
         motivo={

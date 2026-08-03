@@ -26,7 +26,7 @@ function renderForm(initial: Record<string, never> = {}) {
 describe("ProtocoloPraticaForm", () => {
   it("mostra progresso como contagem — nunca percentual", () => {
     renderForm();
-    expect(screen.getByText("0 de 28 perguntas respondidas")).toBeInTheDocument();
+    expect(screen.getByText("0 de 29 perguntas respondidas")).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/%|por cento|completo|qualidade/i);
   });
 
@@ -50,7 +50,7 @@ describe("ProtocoloPraticaForm", () => {
     fireEvent.click(screen.getByLabelText("Primeira remota, sob condição"));
 
     expect(screen.getByLabelText(/Condição — Modalidade/)).toBeInTheDocument();
-    expect(screen.getByText("1 de 28 perguntas respondidas")).toBeInTheDocument();
+    expect(screen.getByText("1 de 29 perguntas respondidas")).toBeInTheDocument();
   });
 
   it("a revisão fala em autodeclaração ainda não verificada — nunca em verificado", () => {
