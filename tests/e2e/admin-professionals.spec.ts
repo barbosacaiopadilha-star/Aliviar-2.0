@@ -99,7 +99,7 @@ test.describe("gestão administrativa de profissionais (Sprint Produto 2)", () =
     }
 
     // Múltipla escolha + escolha única + condicional (condição obrigatória).
-    await page.getByLabel("Atendimento presencial").check();
+    await page.getByLabel("Presencial", { exact: true }).check();
     await page.getByLabel("Primeira remota, sob condição").check();
     await page.getByLabel("Condição — Modalidade de atendimento").fill("Após avaliação do caso pela equipe");
     await page.getByLabel("Até 7 dias", { exact: true }).check();
@@ -110,7 +110,7 @@ test.describe("gestão administrativa de profissionais (Sprint Produto 2)", () =
     // Retomada: sair e voltar restaura condição e respostas.
     await page.reload();
     await expect(page.getByText(/Rascunho retomado/)).toBeVisible();
-    await expect(page.getByLabel("Atendimento presencial")).toBeChecked();
+    await expect(page.getByLabel("Presencial", { exact: true })).toBeChecked();
     await expect(page.getByLabel("Primeira remota, sob condição")).toBeChecked();
     await expect(page.getByLabel("Condição — Modalidade de atendimento")).toHaveValue(
       "Após avaliação do caso pela equipe",
