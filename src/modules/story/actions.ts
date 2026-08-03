@@ -1,16 +1,27 @@
 "use server";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { requireRoleForAction } from "@/modules/auth/guard";
+import { NaoAutenticadoError, requireRoleForAction } from "@/modules/auth/guard";
 
 import { saveStoryDraft, submitStory, type SaveStoryDraftResult } from "./repository";
 import { saveStoryDraftInputSchema, submitStoryInputSchema } from "./schema";
 import type { PatientStory } from "./types";
 
-export async function saveStoryDraftAction(input: unknown): Promise<SaveStoryDraftResult> {
+/**
+ * Bloco D (FS-02): sessão expirada é um DESFECHO discriminado, nunca uma
+ * string. O Provider decide o que mostrar pelo `outcome` — jamais por
+ * substring de mensagem — e pode dizer à pessoa a verdade específica:
+ * "sua sessão expirou; seu texto está guardado neste dispositivo".
+ */
+export type SaveStoryDraftActionResult = SaveStoryDraftResult | { outcome: "unauthenticated" };
+
+export async function saveStoryDraftAction(input: unknown): Promise<SaveStoryDraftActionResult> {
   try {
     await requireRoleForAction("paciente");
-  } catch {
+  } catch (erro) {
+    if (erro instanceof NaoAutenticadoError) {
+      return { outcome: "unauthenticated" };
+    }
     return { outcome: "error", error: "Não autorizado." };
   }
 

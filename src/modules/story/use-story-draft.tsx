@@ -31,6 +31,19 @@ type StoryDraftContextValue = {
   storyId: string;
   isSaving: boolean;
   hasConflict: boolean;
+  /**
+   * Bloco D (gate D22 / FS-02): a última gravação foi RECUSADA e o texto só
+   * existe neste dispositivo. `null` quando a última gravação confirmou.
+   * Estado observável DIFERENTE do sucesso — a superfície nunca mais diz
+   * "salvo" com a gravação recusada (ADR-064 §4).
+   */
+  saveError: string | null;
+  /**
+   * Sessão expirada como estado de 1ª classe: detectada pelo `outcome`
+   * discriminado da action ("unauthenticated"), nunca por substring de
+   * mensagem. O texto permanece no cache local (pending) até a reentrada.
+   */
+  sessionExpired: boolean;
   dismissConflict: () => void;
   submit: () => Promise<{ success: boolean; error?: string }>;
 };
@@ -56,6 +69,8 @@ export function StoryDraftProvider({ story, children }: StoryDraftProviderProps)
   const [current, setCurrent] = useState(story);
   const [isSaving, setIsSaving] = useState(false);
   const [hasConflict, setHasConflict] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const currentRef = useRef(current);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Corrente de promises: serializa toda gravação (autosave por debounce,
@@ -124,6 +139,10 @@ export function StoryDraftProvider({ story, children }: StoryDraftProviderProps)
       currentRef.current = merged;
       setCurrent(merged);
       setHasConflict(false);
+      // Persistência CONFIRMADA — só aqui os sinais de falha se apagam
+      // (ADR-064 §4: sucesso exige confirmação, nunca o contrário).
+      setSaveError(null);
+      setSessionExpired(false);
       saveStoryCache({
         storyId: merged.id,
         revision: merged.revision,
@@ -136,15 +155,29 @@ export function StoryDraftProvider({ story, children }: StoryDraftProviderProps)
       currentRef.current = result.story;
       setCurrent(result.story);
       setHasConflict(true);
+      setSaveError(null);
+      setSessionExpired(false);
       clearStoryCache(snapshot.id);
-    } else if (result.error === STORY_ALREADY_SUBMITTED_ERROR) {
-      // Nenhuma tentativa futura desta aba pode ter sucesso — manter
-      // pending:true indefinidamente no cache não ajuda em nada.
-      clearStoryCache(snapshot.id);
+    } else if (result.outcome === "unauthenticated") {
+      // Sessão expirada (Bloco D / FS-02): estado próprio, detectado pelo
+      // outcome discriminado — nunca por substring. O cache local permanece
+      // pending:true de propósito: é a promessa "seu texto está guardado
+      // neste dispositivo", e o efeito de recuperação reenvia após reentrar.
+      setSessionExpired(true);
+    } else {
+      // A recusa fica VISÍVEL e distinta do sucesso (gate D22): a superfície
+      // mostra o erro — com a referência que veio do servidor — em vez de
+      // fingir "salvo".
+      setSaveError(result.error ?? "Não foi possível salvar agora.");
+      if (result.error === STORY_ALREADY_SUBMITTED_ERROR) {
+        // Nenhuma tentativa futura desta aba pode ter sucesso — manter
+        // pending:true indefinidamente no cache não ajuda em nada.
+        clearStoryCache(snapshot.id);
+      }
+      // Outros erros (rede/servidor indisponível): cache continua pending:true
+      // de propósito — é o sinal que o efeito de recuperação usa para tentar
+      // de novo na próxima carga de página.
     }
-    // Outros erros (rede/servidor indisponível): cache continua pending:true
-    // de propósito — é o sinal que o efeito de recuperação usa para tentar
-    // de novo na próxima carga de página.
 
     setIsSaving(false);
     return result;
@@ -242,6 +275,13 @@ export function StoryDraftProvider({ story, children }: StoryDraftProviderProps)
     if (flushResult.outcome === "error") {
       return { success: false, error: flushResult.error };
     }
+    if (flushResult.outcome === "unauthenticated") {
+      return {
+        success: false,
+        error:
+          "Sua sessão expirou. Entre novamente para continuar — seu texto está guardado neste dispositivo.",
+      };
+    }
 
     // A revisão vem do RESULTADO do flush, não de `currentRef`.
     //
@@ -271,6 +311,8 @@ export function StoryDraftProvider({ story, children }: StoryDraftProviderProps)
     storyId: current.id,
     isSaving,
     hasConflict,
+    saveError,
+    sessionExpired,
     dismissConflict: () => setHasConflict(false),
     submit,
   };

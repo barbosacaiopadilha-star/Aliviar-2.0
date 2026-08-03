@@ -1,7 +1,8 @@
 "use server";
 
+import { erroDeBanco, falhaParaUsuario } from "@/lib/observability/erros";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { requireRoleForAction } from "@/modules/auth/guard";
+import { NaoAutenticadoError, requireRoleForAction } from "@/modules/auth/guard";
 import { DECISION_MESSAGES } from "@/modules/curadoria/reconhecimento-do-perfil";
 
 /**
@@ -22,9 +23,22 @@ import { DECISION_MESSAGES } from "@/modules/curadoria/reconhecimento-do-perfil"
  * campo livre obrigatório, nem comparação com a string "VALIDATED" — a
  * decisão inteira vive no banco, numa função que faz uma coisa só.
  */
+/**
+ * Bloco D: sessão expirada é um desfecho DISCRIMINADO (`code`), nunca uma
+ * frase para comparar por substring. Antes, qualquer falha de autenticação —
+ * inclusive a sessão que simplesmente venceu com a aba aberta — virava
+ * "Este Perfil não é seu.": uma acusação de posse para um erro de auth.
+ */
 export type ReconhecimentoResult =
   | { success: true; jaEstava: boolean }
-  | { success: false; error: string };
+  | { success: false; code: "SESSAO_EXPIRADA"; error: string }
+  | { success: false; code?: undefined; error: string };
+
+const SESSAO_EXPIRADA: ReconhecimentoResult = {
+  success: false,
+  code: "SESSAO_EXPIRADA",
+  error: "Sua sessão expirou. Entre novamente para continuar.",
+};
 
 /**
  * Cada código que a função do banco devolve vira uma frase que fala com ela.
@@ -44,7 +58,12 @@ export async function reconhecerPerfilAction(input: {
 }): Promise<ReconhecimentoResult> {
   try {
     await requireRoleForAction("paciente");
-  } catch {
+  } catch (erro) {
+    // Por TIPO, nunca por substring: sem sessão é reentrada, não acusação.
+    if (erro instanceof NaoAutenticadoError) {
+      return SESSAO_EXPIRADA;
+    }
+    // Autenticado sem o papel de paciente: aí sim o Perfil não é da pessoa.
     return { success: false, error: "Este Perfil não é seu." };
   }
 
@@ -59,7 +78,23 @@ export async function reconhecerPerfilAction(input: {
   });
 
   if (error) {
-    return { success: false, error: "Não foi possível registrar agora. Tente de novo." };
+    // 42501 aqui é falta de privilégio de EXECUTE — a sessão virou `anon`
+    // entre o guarda e a RPC (expirou no meio). É erro de AUTH, nunca de
+    // posse: a resposta de posse legítima da função do banco é o dado
+    // "NAO_AUTORIZADO", tratado abaixo. Detecção por código, não por texto.
+    if ((error as { code?: string }).code === "42501") {
+      return SESSAO_EXPIRADA;
+    }
+    return {
+      success: false,
+      error: falhaParaUsuario(
+        "paciente.reconhecerPerfil",
+        erroDeBanco("Não foi possível registrar o reconhecimento.", error, {
+          caseId: input.caseId,
+        }),
+        { mensagem: "Não foi possível registrar agora. Tente de novo." },
+      ),
+    };
   }
 
   // Idempotência: reconhecer duas vezes não é falha. A tela diz que já estava

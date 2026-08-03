@@ -1,5 +1,5 @@
 import "server-only";
-import { erroDeBanco } from "@/lib/observability/erros";
+import { erroDeBanco, falhaParaUsuario } from "@/lib/observability/erros";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -168,8 +168,18 @@ export async function saveStoryDraft(
     .eq("id", storyId)
     .single();
 
+  // Bloco D: erro de infraestrutura ganha rastro + referência (a causa vai
+  // inteira ao log estruturado); a frase à pessoa continua digna. `single()`
+  // sem linha também chega como error — a mensagem cobre os dois casos.
   if (fetchError || !currentRow) {
-    return { outcome: "error", error: "História não encontrada." };
+    return {
+      outcome: "error",
+      error: falhaParaUsuario(
+        "story.saveDraft.leitura",
+        erroDeBanco("Não foi possível salvar agora.", fetchError, { storyId }),
+        { mensagem: "Não foi possível salvar agora." },
+      ),
+    };
   }
 
   if (currentRow.status === "enviada") {
@@ -187,7 +197,14 @@ export async function saveStoryDraft(
     .maybeSingle();
 
   if (error) {
-    return { outcome: "error", error: "Não foi possível salvar agora." };
+    return {
+      outcome: "error",
+      error: falhaParaUsuario(
+        "story.saveDraft.gravacao",
+        erroDeBanco("Não foi possível salvar agora.", error, { storyId, expectedRevision }),
+        { mensagem: "Não foi possível salvar agora." },
+      ),
+    };
   }
 
   if (!updated) {
@@ -198,7 +215,14 @@ export async function saveStoryDraft(
       .single();
 
     if (latestError || !latest) {
-      return { outcome: "error", error: "Não foi possível salvar agora." };
+      return {
+        outcome: "error",
+        error: falhaParaUsuario(
+          "story.saveDraft.releitura",
+          erroDeBanco("Não foi possível salvar agora.", latestError, { storyId }),
+          { mensagem: "Não foi possível salvar agora." },
+        ),
+      };
     }
 
     return { outcome: "conflict", story: mapRow(latest as PatientStoryRow) };

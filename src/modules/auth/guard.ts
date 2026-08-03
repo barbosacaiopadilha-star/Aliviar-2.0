@@ -59,6 +59,23 @@ export async function requireAnyRole(roleSlugs: string[]): Promise<AuthState> {
 }
 
 /**
+ * Bloco D (FS-02 / sessão expirada como estado de 1ª classe): "não há
+ * sessão" e "há sessão sem o papel exigido" são estados DIFERENTES, e as
+ * actions precisam distingui-los por TIPO — nunca por substring de mensagem.
+ * Sessão expirada pede reentrada (/login) com o trabalho preservado;
+ * papel errado pede outra conversa. Quem não precisa distinguir continua
+ * tratando os dois como o mesmo `catch` de sempre — Error segue sendo Error.
+ */
+export class NaoAutenticadoError extends Error {
+  readonly code = "UNAUTHENTICATED" as const;
+
+  constructor() {
+    super("Não autenticado.");
+    this.name = "NaoAutenticadoError";
+  }
+}
+
+/**
  * Checagem autoritativa de papel para uso dentro de Server Actions —
  * nunca redireciona (uma Server Action pode ser chamada fora de uma
  * navegação de página, então `redirect()` não é o comportamento certo
@@ -69,7 +86,11 @@ export async function requireAnyRole(roleSlugs: string[]): Promise<AuthState> {
 export async function requireRoleForAction(roleSlug: string): Promise<AuthState> {
   const state = await getAuthState();
 
-  if (!state || !state.roles.includes(roleSlug)) {
+  if (!state) {
+    throw new NaoAutenticadoError();
+  }
+
+  if (!state.roles.includes(roleSlug)) {
     throw new Error("Não autorizado.");
   }
 
@@ -85,7 +106,11 @@ export async function requireRoleForAction(roleSlug: string): Promise<AuthState>
 export async function requireAnyRoleForAction(roleSlugs: string[]): Promise<AuthState> {
   const state = await getAuthState();
 
-  if (!state || !roleSlugs.some((slug) => state.roles.includes(slug))) {
+  if (!state) {
+    throw new NaoAutenticadoError();
+  }
+
+  if (!roleSlugs.some((slug) => state.roles.includes(slug))) {
     throw new Error("Não autorizado.");
   }
 
