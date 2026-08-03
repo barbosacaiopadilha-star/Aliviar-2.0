@@ -11,7 +11,9 @@ import { describe, expect, it } from "vitest";
 
 import { crossRelational, type RelationalNeed } from "@/modules/curadoria/motor-relacional";
 import {
+  FRASE_SENTINELA_JUIZO,
   generateReportDraft,
+  pendenciasDeJuizoRelacional,
   type DraftInput,
   type OptionDraftInput,
 } from "@/modules/curadoria/relatorio-inteligente";
@@ -140,6 +142,98 @@ describe("A seção relacional do rascunho", () => {
         /excelente|ótim|melhor|acolhedor|humanizad|%|mais compatível|atende ao seu perfil/i,
       );
     }
+  });
+
+  it("B-1 — correspondência universal tem frase própria: nada de listar condutas que soariam como contradição", () => {
+    const needsSozinha: RelationalNeed[] = [
+      {
+        subcriterionCode: "MODELO_PARTICIPACAO_FAMILIAR",
+        options: ["PREFIRO_SOZINHA"],
+        degree: "ESSENCIAL",
+      },
+    ];
+    const evidencia = new Map([
+      [
+        "MODELO_PARTICIPACAO_FAMILIAR",
+        { subcriterionCode: "MODELO_PARTICIPACAO_FAMILIAR", options: ["ATENDIMENTO_APENAS_INDIVIDUAL"] },
+      ],
+    ]);
+    const rascunho = generateReportDraft({
+      areaRequirement: null,
+      priorities: [],
+      options: IDS.map((id) => ({
+        professionalProfileId: id,
+        states: [],
+        areaDeclaration: {
+          compatibility: "COMPATIVEL",
+          rationale: null,
+          declaredBy: "curador",
+          declaredAt: "2026-08-03T00:00:00.000Z",
+        },
+        openCriticalDivergences: 0,
+        relationalReadings: crossRelational(needsSozinha, evidencia).readings,
+      })),
+    });
+
+    const texto = rascunho.options[0]!.leituraRelacional.text;
+    expect(texto).toContain(
+      "Para você é essencial prefiro sozinha. Nada nas condutas declaradas por este profissional impede isso.",
+    );
+    // A frase antiga — que verbalizava as condutas — não pode voltar.
+    expect(texto).not.toMatch(/declara que atendimento apenas individual/i);
+    // Rastreabilidade preservada: proveniência com conceito e resultado.
+    const frase = rascunho.options[0]!.leituraRelacional.sentences[0]!;
+    expect(frase.provenance[0]).toMatchObject({
+      sourceType: "leitura_relacional",
+      subcriterion: "MODELO_PARTICIPACAO_FAMILIAR",
+      compatibility: "ALTA_COMPATIBILIDADE",
+    });
+  });
+
+  it("B-1 — a guarda de emissão reconhece EXATAMENTE o que o gerador escreve (acoplamento à prova de deriva)", () => {
+    // O texto gerado (com sentinelas de decisão compartilhada e preferências)
+    // é detectado pela mesma função que a action de emissão consulta.
+    const pendencias = pendenciasDeJuizoRelacional(
+      draft.options.map((option) => ({
+        professionalProfileId: option.professionalProfileId,
+        relationalReading: option.leituraRelacional.text,
+      })),
+    );
+    expect(pendencias.length).toBeGreaterThan(0);
+    expect(pendencias.map((p) => p.conceito)).toContain("como conduz decisões");
+    // A constante e a linha gerada não podem divergir.
+    expect(completa!.leituraRelacional.text).toContain(FRASE_SENTINELA_JUIZO);
+  });
+
+  it("B-1 — emissão permitida: texto reescrito pelo Curador não tem pendência; vazio e null também não", () => {
+    expect(
+      pendenciasDeJuizoRelacional([
+        {
+          professionalProfileId: IDS[0]!,
+          relationalReading:
+            "Você disse que quer decidir, com orientação. As condutas declaradas sustentam o tipo de participação que você pediu.",
+        },
+        { professionalProfileId: IDS[1]!, relationalReading: "" },
+        { professionalProfileId: IDS[2]!, relationalReading: null },
+      ]),
+    ).toEqual([]);
+  });
+
+  it("B-1 — emissão bloqueada: cada linha-sentinela vira uma pendência nomeando o conceito", () => {
+    const pendencias = pendenciasDeJuizoRelacional([
+      {
+        professionalProfileId: IDS[0]!,
+        relationalReading: [
+          "Para você é essencial que confirmem se eu entendi. Este profissional declara que verifica se a pessoa compreendeu.",
+          `Sobre como conduz decisões: ${FRASE_SENTINELA_JUIZO}.`,
+          `Sobre respeito a recusas e restrições: ${FRASE_SENTINELA_JUIZO}.`,
+        ].join("\n"),
+      },
+    ]);
+    expect(pendencias).toEqual([
+      { professionalProfileId: IDS[0]!, conceito: "como conduz decisões" },
+      { professionalProfileId: IDS[0]!, conceito: "respeito a recusas e restrições" },
+    ]);
   });
 
   it("sem bloco relacional respondido, a seção nasce vazia e não inventa", () => {

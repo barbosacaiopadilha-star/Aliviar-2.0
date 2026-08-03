@@ -647,6 +647,35 @@ export async function emitReportAction(input: unknown): Promise<CuradoriaActionR
       return { success: false, error: "Escreva o Relatório antes de emiti-lo." };
     }
 
+    // B-1 (RELEASE BLOCKERS / ADR-064): um Relatório emitido é definitivo —
+    // ele não pode carregar a frase-sentinela do juízo relacional pendente.
+    // A emissão falha NOMEANDO o que ainda depende do Curador.
+    const { data: optionRows, error: optionsError } = await supabase
+      .from("curadoria_report_options")
+      .select("professional_profile_id, relational_reading")
+      .eq("report_id", report.id);
+    if (optionsError) {
+      return fail("curadoria.emitReport", new Error(optionsError.message), "Não foi possível verificar a leitura relacional do Relatório.");
+    }
+    const { pendenciasDeJuizoRelacional } = await import("./relatorio-inteligente");
+    const pendencias = pendenciasDeJuizoRelacional(
+      (optionRows ?? []).map((row) => ({
+        professionalProfileId: row.professional_profile_id as string,
+        relationalReading: (row.relational_reading as string | null) ?? null,
+      })),
+    );
+    if (pendencias.length > 0) {
+      const conceitos = [...new Set(pendencias.map((p) => p.conceito))].join("; ");
+      return {
+        success: false,
+        error:
+          `O Relatório não pode ser emitido: a leitura relacional sobre ${conceitos} ` +
+          `ainda aguarda a sua avaliação em ${pendencias.length} ponto(s). ` +
+          `Escreva sua leitura no campo "Como conversa com a forma como ela quer ser cuidada" ` +
+          `de cada opção — o documento que ela relê sozinha não pode prometer uma conversa que não virá.`,
+      };
+    }
+
     await reportRepository.approveReport(supabase, report.id, authState.user.id);
     await reportRepository.emitReport(supabase, report.id);
     revalidateCuradoria(found.selection.caseId);

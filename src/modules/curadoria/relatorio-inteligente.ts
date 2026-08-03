@@ -37,6 +37,7 @@ import {
 import type { SubcriterionStatus } from "./mapa-profissional";
 import { crossOne, type CompatibilityResult } from "./motor-compatibilidade";
 import {
+  RELATIONAL_CONCEPTS,
   relationalConductLabel,
   relationalPersonOptionLabel,
   type RelationalReading,
@@ -519,6 +520,36 @@ function buildLimitacoes(
 // A leitura relacional — ADR-065 (documento normativo, Parte 6)
 // ---------------------------------------------------------------------------
 
+/**
+ * A frase-sentinela do juízo humano pendente — B-1 (RELEASE BLOCKERS).
+ *
+ * UMA fonte só: o gerador a escreve, a guarda de emissão a procura. Um
+ * Relatório emitido jamais pode carregá-la — seria o documento definitivo
+ * prometendo uma leitura que nunca virá (ADR-064).
+ */
+export const FRASE_SENTINELA_JUIZO = "esta leitura aguarda a conversa com o Curador";
+
+/**
+ * B-1: as pendências de juízo relacional de um conjunto de opções — cada
+ * linha-sentinela ainda presente no texto, com o conceito nomeado.
+ * Pura e determinística: a action de emissão a consulta antes de emitir.
+ */
+export function pendenciasDeJuizoRelacional(
+  options: readonly { professionalProfileId: string; relationalReading: string | null }[],
+): { professionalProfileId: string; conceito: string }[] {
+  const pendencias: { professionalProfileId: string; conceito: string }[] = [];
+  for (const option of options) {
+    if (!option.relationalReading) continue;
+    for (const linha of option.relationalReading.split("\n")) {
+      const match = linha.match(/^Sobre (.+): esta leitura aguarda a conversa com o Curador\.\s*$/);
+      if (match) {
+        pendencias.push({ professionalProfileId: option.professionalProfileId, conceito: match[1]! });
+      }
+    }
+  }
+  return pendencias;
+}
+
 /** Como cada grau abre a frase — a linguagem dela, nunca a da matriz. */
 const DEGREE_PREFIX: Record<NeedDegree, string> = {
   ESSENCIAL: "Para você é essencial",
@@ -539,6 +570,24 @@ function minusculaInicial(texto: string): string {
 }
 
 /**
+ * B-1: as opções da pessoa com correspondência universal (`satisfied_by =
+ * ["*"]` no Catálogo). A frase delas é própria: verbalizar "todas as condutas
+ * declaradas" para quem pediu o oposto (ex.: prefere ficar sozinha) soaria
+ * como contradição. Lido do Catálogo — nenhuma lista paralela.
+ */
+const OPCOES_UNIVERSAIS: ReadonlySet<string> = new Set(
+  RELATIONAL_CONCEPTS.flatMap((concept) =>
+    concept.paciente
+      .filter((campo) => campo.field === "principal")
+      .flatMap((campo) =>
+        campo.options
+          .filter((opcao) => opcao.active && opcao.satisfiedBy?.includes("*"))
+          .map((opcao) => `${concept.code}:${opcao.value}`),
+      ),
+  ),
+);
+
+/**
  * As frases da seção relacional. Toda frase de célula é VERBALIZAÇÃO de um
  * par (opção da pessoa × conduta declarada) — nunca inferência, nunca
  * adjetivo. Conceito humano entra como estado declarado: a frase dele só
@@ -556,7 +605,7 @@ function buildLeituraRelacional(readings: readonly RelationalReading[]): DraftFi
     if (reading.kind === "JUIZO_HUMANO") {
       requiresCurator = true;
       sentences.push({
-        text: `Sobre ${minusculaInicial(reading.conceptName)}: esta leitura aguarda a conversa com o Curador.`,
+        text: `Sobre ${minusculaInicial(reading.conceptName)}: ${FRASE_SENTINELA_JUIZO}.`,
         provenance: [
           {
             sourceType: "leitura_relacional",
@@ -585,6 +634,13 @@ function buildLeituraRelacional(readings: readonly RelationalReading[]): DraftFi
       if (reading.state === "NAO_INFORMADO") {
         sentences.push({
           text: `${prefixo} ${pedido}. Ainda não há registro sobre como este profissional conduz esse ponto.`,
+          provenance,
+        });
+      } else if (match.satisfied && OPCOES_UNIVERSAIS.has(`${reading.code}:${match.personOption}`)) {
+        // B-1: correspondência universal — a frase diz que nada impede o que
+        // ela pediu, em vez de listar condutas que soariam como contradição.
+        sentences.push({
+          text: `${prefixo} ${pedido}. Nada nas condutas declaradas por este profissional impede isso.`,
           provenance,
         });
       } else if (match.satisfied) {
