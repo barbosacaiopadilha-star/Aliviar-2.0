@@ -108,7 +108,7 @@ describe("Transparência da Base para o profissional (Supabase local)", () => {
     await registerPracticeEvidence(service, {
       professionalProfileId: meuPerfil,
       subcriterionCode: "CONTINUIDADE_CANAIS",
-      options: ["MENSAGEM_COM_EQUIPE_OU_SECRETARIA"],
+      options: ["MENSAGEM_COM_A_EQUIPE_OU_SECRETARIA"],
       details: {},
       conditionNote: null,
       observation: null,

@@ -54,6 +54,8 @@ export type Contagens = {
   relatorios: number;
   conexoes: number;
   relacionamentos: number;
+  mapasDeCase: number;
+  mapasDeProfissional: number;
 };
 
 async function todosOsIds(admin: SupabaseClient, tabela: string, coluna = "id"): Promise<string[]> {
@@ -159,6 +161,11 @@ export async function contagens(admin: SupabaseClient): Promise<Contagens> {
     relatorios: await contar(admin, "curadoria_reports"),
     conexoes: await contar(admin, "connection_records"),
     relacionamentos: await contar(admin, "relationship_records"),
+    // Bloco E: os Mapas entram na baseline da sentinela — o oráculo de
+    // "nenhum Mapa ficou para trás" é relativo ao encontrado, nunca zero
+    // absoluto (a stack compartilhada carrega resíduo E2E pré-existente).
+    mapasDeCase: await contar(admin, "case_priority_map"),
+    mapasDeProfissional: await contar(admin, "professional_subcriterion_map"),
   };
 }
 

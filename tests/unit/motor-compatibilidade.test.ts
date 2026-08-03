@@ -105,11 +105,13 @@ describe("Cruzamento de um profissional", () => {
     });
 
     expect(leitura.rows).toHaveLength(4);
-    expect(leitura.rows.map((r) => r.result)).toEqual([
-      "ALTA_COMPATIBILIDADE",
-      "MEDIA_COMPATIBILIDADE",
-      "LACUNA_DE_INFORMACAO",
-      "ALTA_COMPATIBILIDADE",
+    // Na ordem canônica do catálogo (a do banco, Bloco E): continuidade →
+    // modelo → prática (formação, depois experiência).
+    expect(leitura.rows.map((r) => [r.subcriterionCode, r.result])).toEqual([
+      ["CONTINUIDADE_POS_PROCEDIMENTO", "LACUNA_DE_INFORMACAO"],
+      ["MODELO_COMUNICACAO", "ALTA_COMPATIBILIDADE"],
+      ["FORMACAO_RESIDENCIA", "ALTA_COMPATIBILIDADE"],
+      ["EXPERIENCIA_NO_TIPO_DE_CASO", "MEDIA_COMPATIBILIDADE"],
     ]);
     expect(leitura.summary).toMatchObject({
       totalSubcriteria: 4,

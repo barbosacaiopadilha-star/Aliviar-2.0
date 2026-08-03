@@ -55,7 +55,7 @@ describe("ProtocoloPraticaForm", () => {
 
   it("a revisão fala em autodeclaração ainda não verificada — nunca em verificado", () => {
     renderForm();
-    fireEvent.click(screen.getByLabelText("Atendimento presencial"));
+    fireEvent.click(screen.getByLabelText("Presencial"));
     fireEvent.click(screen.getByRole("button", { name: "Revisar e submeter" }));
 
     expect(screen.getByText(/declaração sua/)).toBeInTheDocument();

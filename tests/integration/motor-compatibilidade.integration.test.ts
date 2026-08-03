@@ -77,27 +77,30 @@ describe("Motor de Compatibilidade (Supabase local)", () => {
     const caseId = await casoNovo();
     const profissional = await seedPublishedProfessional(service, adminUserId, "Motor");
 
+    // Códigos do Catálogo 1.0.0 vigente (a virada aposentou
+    // EXPERIENCIA_CASOS_SEMELHANTES→EXPERIENCIA_NO_TIPO_DE_CASO e
+    // ACESSO_LOCALIZACAO→ACESSO_LOCAL_DE_ATENDIMENTO).
     await savePriorityMapEntries(service, caseId, [
       { subcriterionCode: "FORMACAO_RESIDENCIA", importance: "MUITO_IMPORTANTE" },
-      { subcriterionCode: "EXPERIENCIA_CASOS_SEMELHANTES", importance: "RELEVANTE" },
+      { subcriterionCode: "EXPERIENCIA_NO_TIPO_DE_CASO", importance: "RELEVANTE" },
       { subcriterionCode: "CONTINUIDADE_POS_PROCEDIMENTO", importance: "IMPORTANTE" },
-      { subcriterionCode: "ACESSO_LOCALIZACAO", importance: "NAO_INFLUENCIA" },
+      { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", importance: "NAO_INFLUENCIA" },
     ]);
 
     await saveProfessionalMapEntries(service, profissional, [
       { subcriterionCode: "FORMACAO_RESIDENCIA", status: "CONFIRMADO" },
-      { subcriterionCode: "EXPERIENCIA_CASOS_SEMELHANTES", status: "CONFIRMADO" },
+      { subcriterionCode: "EXPERIENCIA_NO_TIPO_DE_CASO", status: "CONFIRMADO" },
       { subcriterionCode: "CONTINUIDADE_POS_PROCEDIMENTO", status: "NAO_INFORMADO" },
-      { subcriterionCode: "ACESSO_LOCALIZACAO", status: "CONFIRMADO" },
+      { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", status: "CONFIRMADO" },
     ]);
 
     const leitura = await crossCaseWithProfessional(service, caseId, profissional);
 
     const porCodigo = new Map(leitura.rows.map((r) => [r.subcriterionCode, r.result]));
     expect(porCodigo.get("FORMACAO_RESIDENCIA")).toBe("ALTA_COMPATIBILIDADE");
-    expect(porCodigo.get("EXPERIENCIA_CASOS_SEMELHANTES")).toBe("MEDIA_COMPATIBILIDADE");
+    expect(porCodigo.get("EXPERIENCIA_NO_TIPO_DE_CASO")).toBe("MEDIA_COMPATIBILIDADE");
     expect(porCodigo.get("CONTINUIDADE_POS_PROCEDIMENTO")).toBe("LACUNA_DE_INFORMACAO");
-    expect(porCodigo.get("ACESSO_LOCALIZACAO")).toBe("NAO_RELEVANTE");
+    expect(porCodigo.get("ACESSO_LOCAL_DE_ATENDIMENTO")).toBe("NAO_RELEVANTE");
 
     expect(leitura.summary).toMatchObject({
       totalSubcriteria: 4,
@@ -134,37 +137,45 @@ describe("Motor de Compatibilidade (Supabase local)", () => {
     const leitura = await crossCaseWithProfessional(service, caseId, profissional);
     expect(leitura.rows).toHaveLength(0);
     expect(leitura.summary.totalSubcriteria).toBe(0);
-    expect(leitura.summary.notDeclaredByCase).toBe(26);
+    // O universo do Motor é o Catálogo 1.0.0: 28 vigentes.
+    expect(leitura.summary.notDeclaredByCase).toBe(28);
   });
 
-  it("subcritério fora de circulação sai do cruzamento sem quebrar nada", async () => {
+  it("subcritério fora de circulação não entra no cruzamento — o Motor fala só o vocabulário vigente", async () => {
+    // A aposentadoria que este teste antes simulava (desativar um código no
+    // meio do teste) aconteceu de verdade na virada do Catálogo 1.0.0 — e o
+    // catalog_guard (migration 20260802165000) passou a proibir exatamente
+    // aquele toque avulso no catálogo. A prova agora usa o aposentado REAL:
+    // ele não entra em mapa novo por nenhuma das portas, e o cruzamento só
+    // enxerga o vigente.
     const caseId = await casoNovo();
     const profissional = await seedPublishedProfessional(service, adminUserId, "Motor catalogo");
 
     await savePriorityMapEntries(service, caseId, [
-      { subcriterionCode: "HISTORICO_ENSINO_E_PESQUISA", importance: "IMPORTANTE" },
       { subcriterionCode: "MODELO_COMUNICACAO", importance: "IMPORTANTE" },
     ]);
     await saveProfessionalMapEntries(service, profissional, [
-      { subcriterionCode: "HISTORICO_ENSINO_E_PESQUISA", status: "CONFIRMADO" },
       { subcriterionCode: "MODELO_COMUNICACAO", status: "CONFIRMADO" },
     ]);
 
-    await service
-      .from("method_subcriteria")
-      .update({ active: false })
-      .eq("code", "HISTORICO_ENSINO_E_PESQUISA");
-    try {
-      const leitura = await crossCaseWithProfessional(service, caseId, profissional);
-      expect(leitura.rows).toHaveLength(1);
-      expect(leitura.rows[0]!.subcriterionCode).toBe("MODELO_COMUNICACAO");
-      expect(leitura.summary.totalSubcriteria).toBe(1);
-    } finally {
-      await service
-        .from("method_subcriteria")
-        .update({ active: true })
-        .eq("code", "HISTORICO_ENSINO_E_PESQUISA");
-    }
+    // Nenhum dos dois lados aceita o aposentado.
+    await expect(
+      savePriorityMapEntries(service, caseId, [
+        { subcriterionCode: "HISTORICO_ENSINO_E_PESQUISA", importance: "IMPORTANTE" },
+      ]),
+    ).rejects.toThrow(/saiu de circulação/);
+    await expect(
+      saveProfessionalMapEntries(service, profissional, [
+        { subcriterionCode: "HISTORICO_ENSINO_E_PESQUISA", status: "CONFIRMADO" },
+      ]),
+    ).rejects.toThrow(/saiu de circulação/);
+
+    const leitura = await crossCaseWithProfessional(service, caseId, profissional);
+    expect(leitura.rows).toHaveLength(1);
+    expect(leitura.rows[0]!.subcriterionCode).toBe("MODELO_COMUNICACAO");
+    expect(leitura.summary.totalSubcriteria).toBe(1);
+    // 28 vigentes − 1 declarado: os aposentados não aparecem nem como falta.
+    expect(leitura.summary.notDeclaredByCase).toBe(27);
   });
 
   it("vários profissionais saem na ordem de entrada — o Motor não ordena por resultado", async () => {

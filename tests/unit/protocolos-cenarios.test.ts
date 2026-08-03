@@ -34,7 +34,7 @@ describe("Cenários dos Protocolos", () => {
       details: {}, conditionNote: null, status: "nao_verificado", verifiedAt: null,
     })!;
     expect(frase.text).toBe(
-      "Disponibilidade — prática registrada: Manhã em dias úteis (declarado, ainda não verificado).",
+      "Disponibilidade — prática registrada: Manhã, dias úteis (declarado, ainda não verificado).",
     );
   });
 
@@ -83,8 +83,10 @@ describe("Cenários dos Protocolos", () => {
       validatePracticeEvidence({
         ...base,
         subcriterionCode: "PRATICA_LIMITES_DE_ATUACAO",
-        options: ["ENCAMINHA_COM_INDICACAO"],
-        details: { situacoes: ["Oncologia pediátrica"] },
+        // Estrutura por campos do aprovado: encaminhamento é campo fechado do
+        // banco (response_type estruturado) — nunca achatado em options[].
+        options: [],
+        details: { situacoes: ["Oncologia pediátrica"], encaminhamento: "ENCAMINHA_COM_INDICACAO" },
       }),
     ).toEqual([]);
     // Sem details, o conceito recusa: limite sem dizer qual não protege ninguém.
@@ -92,7 +94,7 @@ describe("Cenários dos Protocolos", () => {
       validatePracticeEvidence({
         ...base,
         subcriterionCode: "PRATICA_LIMITES_DE_ATUACAO",
-        options: ["ENCAMINHA_COM_INDICACAO"],
+        options: [],
       }),
     ).toEqual(expect.arrayContaining([expect.stringContaining("campos estruturados")]));
   });

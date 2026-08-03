@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { SUBCRITERION_CATALOG } from "@/modules/curadoria/mapa-prioridades";
+import { SUBCRITERION_CATALOG, SUBCRITERION_GROUPS } from "@/modules/curadoria/mapa-prioridades";
 import {
   generateReportDraft,
   GENERATOR_VERSION,
@@ -20,7 +20,16 @@ import {
  * e nenhuma lacuna pode virar conclusão.
  */
 
-const CODIGOS = SUBCRITERION_CATALOG.map((s) => s.code);
+// A ordem do RELATÓRIO é a do Mapa (grupos do Modelo v1.0 → display_order),
+// não a ordem de emissão do catálogo gerado (eixos do banco): os dois vêm da
+// mesma fonte, mas o Relatório apresenta pelo vocabulário do Mapa.
+const CODIGOS = [...SUBCRITERION_CATALOG]
+  .sort((a, b) =>
+    a.group === b.group
+      ? a.displayOrder - b.displayOrder
+      : SUBCRITERION_GROUPS.indexOf(a.group) - SUBCRITERION_GROUPS.indexOf(b.group),
+  )
+  .map((s) => s.code);
 const [PRIMEIRO, SEGUNDO, TERCEIRO] = CODIGOS;
 
 function opcao(id: string, states: OptionDraftInput["states"] = []): OptionDraftInput {

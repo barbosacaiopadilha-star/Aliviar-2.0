@@ -14,7 +14,7 @@ afterEach(cleanup);
 /** O que ela declarou — ADR-042: níveis, nunca pontos. */
 const MAPA = [
   { subcriterionCode: "FORMACAO_RESIDENCIA", importance: "MUITO_IMPORTANTE" as const },
-  { subcriterionCode: "EXPERIENCIA_CASOS_SEMELHANTES", importance: "MUITO_IMPORTANTE" as const },
+  { subcriterionCode: "EXPERIENCIA_NO_TIPO_DE_CASO", importance: "MUITO_IMPORTANTE" as const },
   { subcriterionCode: "MODELO_COMUNICACAO", importance: "IMPORTANTE" as const },
 ];
 

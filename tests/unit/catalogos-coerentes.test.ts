@@ -89,9 +89,11 @@ const DIVERGENCIAS_DE_NOME_ACEITAS: Record<string, { catalogo: string; banco: st
   },
 };
 
-/** O eixo do Catálogo 1.0.0 mapeado para o grupo do banco. */
+/** O eixo do Catálogo 1.0.0 mapeado para o grupo do banco de então (26). */
 const EIXO_PARA_GRUPO: Record<string, string> = {
-  ACESSO: "ACESSO",
+  // O eixo vigente é ACESSO_AO_CUIDADO (D1 corrigido no Bloco E); o grupo
+  // histórico do banco continua ACESSO.
+  ACESSO_AO_CUIDADO: "ACESSO",
   CONTINUIDADE_DO_CUIDADO: "CONTINUIDADE_DO_CUIDADO",
   MODELO_DE_ATENDIMENTO: "MODELO_DE_ATENDIMENTO",
   // PRATICA_E_TRAJETORIA reúne os três grupos técnicos do banco; VIABILIDADE

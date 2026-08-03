@@ -78,6 +78,9 @@ describe("Mapa de Prioridades do Case (Supabase local)", () => {
   it("o catálogo do banco é o mesmo do domínio — uma fonte, duas leituras", async () => {
     const doBanco = await listSubcriterionCatalog(service);
 
+    // Catálogo 1.0.0 vigente (ADR-046/047): 28 conceitos ativos. O número é
+    // explícito de propósito — este teste é guarda de universo, não espelho.
+    expect(doBanco).toHaveLength(28);
     expect(doBanco.length).toBe(SUBCRITERION_CATALOG.length);
     expect(doBanco.map((e) => e.code).sort()).toEqual(
       SUBCRITERION_CATALOG.map((e) => e.code).sort(),
@@ -89,7 +92,9 @@ describe("Mapa de Prioridades do Case (Supabase local)", () => {
     }
   });
 
-  it("o catálogo só usa os seis grupos do Modelo v1.0", async () => {
+  it("o catálogo só usa os grupos do vocabulário vigente — os seis do Modelo v1.0 mais VIABILIDADE", async () => {
+    // Catálogo 1.0.0: VIABILIDADE entrou no Mapa (a pessoa declara grau), mas
+    // continua fora da matriz do Motor (ADR-041). O universo segue fechado.
     const doBanco = await listSubcriterionCatalog(service);
     for (const entry of doBanco) {
       expect(SUBCRITERION_GROUPS, entry.code).toContain(entry.group);
@@ -97,6 +102,10 @@ describe("Mapa de Prioridades do Case (Supabase local)", () => {
   });
 
   it("o banco recusa grupo fora do universo fechado", async () => {
+    // Desde a migration 20260802165000 a recusa vem ANTES do CHECK de grupo:
+    // o catalog_guard barra qualquer escrita de catálogo sem justificativa
+    // registrada — inclusive da service key. O CHECK segue lá como segunda
+    // trava; quem barra primeiro não muda o resultado.
     const { error } = await service.from("method_subcriteria").insert({
       code: unico("INVENTADO"),
       group: "historico_profissional",
@@ -104,18 +113,22 @@ describe("Mapa de Prioridades do Case (Supabase local)", () => {
       description: "Não deve entrar.",
       display_order: 99,
     });
-    expect(error, "CHECK do grupo precisa recusar").not.toBeNull();
+    expect(error, "escrita avulsa no catálogo precisa ser recusada").not.toBeNull();
+    expect(error!.message).toMatch(/justificativa|check/i);
   });
 
   it("código duplicado é recusado pelo banco", async () => {
     const { error } = await service.from("method_subcriteria").insert({
-      code: "ACESSO_LOCALIZACAO",
+      code: "ACESSO_MODALIDADE",
       group: "ACESSO",
       name: "Duplicata",
       description: "Não deve entrar.",
       display_order: 98,
     });
-    expect(error?.message ?? "").toMatch(/duplicate|unique/i);
+    // O catalog_guard (migration 20260802165000) recusa o INSERT antes de a
+    // UNIQUE ser consultada — o catálogo não aceita escrita sem rastro, e
+    // duplicar código é um caso particular disso.
+    expect(error?.message ?? "").toMatch(/justificativa|duplicate|unique/i);
   });
 
   // -------------------------------------------------------------------------
@@ -129,14 +142,16 @@ describe("Mapa de Prioridades do Case (Supabase local)", () => {
     expect(vazio.completion.status).toBe("NOT_STARTED");
 
     const parcial = await savePriorityMapEntries(service, caseId, [
-      { subcriterionCode: "ACESSO_LOCALIZACAO", importance: "MUITO_IMPORTANTE" },
+      { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", importance: "MUITO_IMPORTANTE" },
       { subcriterionCode: "MODELO_COMUNICACAO", importance: "RELEVANTE" },
     ]);
 
     expect(parcial.completion.status).toBe("IN_PROGRESS");
     expect(parcial.completion.completed).toBe(2);
+    // 28 ativos no Catálogo 1.0.0 — a completude conta o vigente, nunca o legado.
+    expect(parcial.completion.total).toBe(28);
     expect(parcial.items).toContainEqual({
-      subcriterionCode: "ACESSO_LOCALIZACAO",
+      subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO",
       importance: "MUITO_IMPORTANTE",
     });
   });
@@ -145,16 +160,16 @@ describe("Mapa de Prioridades do Case (Supabase local)", () => {
     const { caseId } = await casoNovo();
 
     await savePriorityMapEntries(service, caseId, [
-      { subcriterionCode: "ACESSO_LOCALIZACAO", importance: "MUITO_IMPORTANTE" },
+      { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", importance: "MUITO_IMPORTANTE" },
     ]);
     await savePriorityMapEntries(service, caseId, [
-      { subcriterionCode: "ACESSO_LOCALIZACAO", importance: "MUITO_IMPORTANTE" },
+      { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", importance: "MUITO_IMPORTANTE" },
     ]);
     const depois = await savePriorityMapEntries(service, caseId, [
-      { subcriterionCode: "ACESSO_LOCALIZACAO", importance: "POUCO_IMPORTANTE" },
+      { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", importance: "POUCO_IMPORTANTE" },
     ]);
 
-    const doCriterio = depois.items.filter((i) => i.subcriterionCode === "ACESSO_LOCALIZACAO");
+    const doCriterio = depois.items.filter((i) => i.subcriterionCode === "ACESSO_LOCAL_DE_ATENDIMENTO");
     expect(doCriterio, "uma linha, não três").toHaveLength(1);
     expect(doCriterio[0]!.importance).toBe("POUCO_IMPORTANTE");
   });
@@ -216,47 +231,61 @@ describe("Mapa de Prioridades do Case (Supabase local)", () => {
   });
 
   it("subcritério fora de circulação não recebe classificação nova", async () => {
+    // A virada do Catálogo 1.0.0 aconteceu de verdade: ACESSO_LOCALIZACAO
+    // saiu de circulação por migration. O teste não simula mais a
+    // aposentadoria desativando um código vigente (o catalog_guard da
+    // migration 20260802165000 proíbe justamente esse tipo de toque avulso
+    // no catálogo) — ele prova contra o aposentado REAL.
     const { caseId } = await casoNovo();
-    const catalogo = await listSubcriterionCatalog(service);
-    const alvo = catalogo.find((e) => e.code === "HISTORICO_ENSINO_E_PESQUISA")!;
+    const catalogo = await listSubcriterionCatalog(service, { includeInactive: true });
+    const alvo = catalogo.find((e) => e.code === "ACESSO_LOCALIZACAO")!;
+    expect(alvo.active, "ACESSO_LOCALIZACAO está aposentado desde a virada").toBe(false);
 
-    await service.from("method_subcriteria").update({ active: false }).eq("id", alvo.id);
-    try {
-      const { error } = await service.from("case_priority_map").insert({
-        case_id: caseId,
-        subcriterion_id: alvo.id,
-        importance: "IMPORTANTE",
-      });
-      expect(error?.message ?? "").toMatch(/fora de circulacao/i);
-    } finally {
-      await service.from("method_subcriteria").update({ active: true }).eq("id", alvo.id);
-    }
+    // A trava do banco…
+    const { error } = await service.from("case_priority_map").insert({
+      case_id: caseId,
+      subcriterion_id: alvo.id,
+      importance: "IMPORTANTE",
+    });
+    expect(error?.message ?? "").toMatch(/fora de circulacao/i);
+
+    // …e a do domínio, que sabe explicar.
+    await expect(
+      savePriorityMapEntries(service, caseId, [
+        { subcriterionCode: "ACESSO_LOCALIZACAO", importance: "IMPORTANTE" },
+      ]),
+    ).rejects.toThrow(/saiu de circulação/);
   });
 
-  it("retirar um subcritério de circulação não apaga o que os Cases declararam", async () => {
+  it("a aposentadoria não reescreve o Case: o legado segue legível, fora da pendência e indeletável", async () => {
+    // Os seis códigos aposentados do 0.9.0 continuam no catálogo (histórico
+    // legível), mas nenhum deles entra na completude de um Case novo — e
+    // nenhum pode ser apagado: sair de circulação é active=false, nunca
+    // DELETE (ADR-039 item 6, agora garantido pelo catalog_guard).
     const { caseId } = await casoNovo();
-    const catalogo = await listSubcriterionCatalog(service);
-    const alvo = catalogo.find((e) => e.code === "HISTORICO_PRODUCAO_ACADEMICA")!;
-
-    await savePriorityMapEntries(service, caseId, [
-      { subcriterionCode: alvo.code, importance: "IMPORTANTE" },
+    const todos = await listSubcriterionCatalog(service, { includeInactive: true });
+    const aposentados = todos.filter((e) => !e.active).map((e) => e.code);
+    expect(aposentados.sort()).toEqual([
+      "ACESSO_LOCALIZACAO",
+      "EXPERIENCIA_CASOS_SEMELHANTES",
+      "EXPERIENCIA_CONDICAO_OU_PROCEDIMENTO",
+      "HISTORICO_ENSINO_E_PESQUISA",
+      "HISTORICO_PRODUCAO_ACADEMICA",
+      "HISTORICO_REGULARIDADE",
     ]);
 
-    await service.from("method_subcriteria").update({ active: false }).eq("id", alvo.id);
-    try {
-      const mapa = await loadCasePriorityMap(service, caseId);
-      expect(
-        mapa.items.some((i) => i.subcriterionCode === alvo.code),
-        "o histórico do Case permanece",
-      ).toBe(true);
-      expect(mapa.completion.pendingCodes).not.toContain(alvo.code);
-
-      // E o catálogo não pode ser apagado por baixo de um Case que o referencia.
-      const { error } = await service.from("method_subcriteria").delete().eq("id", alvo.id);
-      expect(error?.message ?? "", "ON DELETE RESTRICT").toMatch(/foreign key|violates/i);
-    } finally {
-      await service.from("method_subcriteria").update({ active: true }).eq("id", alvo.id);
+    const mapa = await loadCasePriorityMap(service, caseId);
+    expect(mapa.completion.total, "a completude conta só os 28 vigentes").toBe(28);
+    for (const codigo of aposentados) {
+      expect(mapa.completion.pendingCodes, codigo).not.toContain(codigo);
     }
+
+    // O catálogo não pode ser apagado — nem o legado, nem por service key.
+    const alvo = todos.find((e) => e.code === "HISTORICO_PRODUCAO_ACADEMICA")!;
+    const { error } = await service.from("method_subcriteria").delete().eq("id", alvo.id);
+    expect(error?.message ?? "", "catálogo não se apaga").toMatch(
+      /nao se apaga|foreign key|violates/i,
+    );
   });
 
   // -------------------------------------------------------------------------
@@ -297,7 +326,7 @@ describe("Mapa de Prioridades do Case (Supabase local)", () => {
     const { error: erroEscrita } = await curador.client
       .from("method_subcriteria")
       .update({ name: "Renomeado pelo Curador" })
-      .eq("code", "ACESSO_LOCALIZACAO");
+      .eq("code", "ACESSO_MODALIDADE");
     expect(erroEscrita, "o Curador não renomeia critério").not.toBeNull();
   });
 

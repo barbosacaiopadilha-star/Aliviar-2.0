@@ -61,7 +61,7 @@ describe("Mapa do Profissional (Supabase local)", () => {
     const mapa = await saveProfessionalMapEntries(service, id, [
       { subcriterionCode: "FORMACAO_RESIDENCIA", status: "CONFIRMADO" },
       { subcriterionCode: "ACESSO_MODALIDADE", status: "NAO_CONFIRMADO" },
-      { subcriterionCode: "HISTORICO_PRODUCAO_ACADEMICA", status: "NAO_INFORMADO" },
+      { subcriterionCode: "HISTORICO_ATIVIDADE_ACADEMICA", status: "NAO_INFORMADO" },
     ]);
 
     expect(mapa.items).toHaveLength(3);
@@ -128,13 +128,13 @@ describe("Mapa do Profissional (Supabase local)", () => {
     const id = await novoProfissional();
 
     await saveProfessionalMapEntries(service, id, [
-      { subcriterionCode: "ACESSO_LOCALIZACAO", status: "CONFIRMADO", note: "atende no centro" },
+      { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", status: "CONFIRMADO", note: "atende no centro" },
     ]);
     const depois = await saveProfessionalMapEntries(service, id, [
-      { subcriterionCode: "ACESSO_LOCALIZACAO", status: "NAO_CONFIRMADO" },
+      { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", status: "NAO_CONFIRMADO" },
     ]);
 
-    const doItem = depois.items.filter((i) => i.subcriterionCode === "ACESSO_LOCALIZACAO");
+    const doItem = depois.items.filter((i) => i.subcriterionCode === "ACESSO_LOCAL_DE_ATENDIMENTO");
     expect(doItem).toHaveLength(1);
     expect(doItem[0]!.status).toBe("NAO_CONFIRMADO");
     expect(doItem[0]!.note, "a observação foi substituída, não acumulada").toBeNull();
@@ -183,44 +183,60 @@ describe("Mapa do Profissional (Supabase local)", () => {
   // Catálogo
   // -------------------------------------------------------------------------
 
-  it("subcritério fora de circulação recusa declaração nova, mas o registro antigo fica", async () => {
+  it("subcritério fora de circulação recusa declaração nova — e o aposentado real prova isso", async () => {
+    // A virada do Catálogo 1.0.0 aposentou HISTORICO_ENSINO_E_PESQUISA de
+    // verdade (migration 20260802100000). O teste não simula mais a saída de
+    // circulação desativando um vigente — o catalog_guard da migration
+    // 20260802165000 proíbe toque avulso no catálogo, inclusive da service
+    // key — ele prova contra o aposentado REAL.
     const id = await novoProfissional();
-    const catalogo = await listSubcriterionCatalog(service);
+    const catalogo = await listSubcriterionCatalog(service, { includeInactive: true });
     const alvo = catalogo.find((e) => e.code === "HISTORICO_ENSINO_E_PESQUISA")!;
+    expect(alvo.active, "aposentado desde a virada").toBe(false);
 
-    await saveProfessionalMapEntries(service, id, [
-      { subcriterionCode: alvo.code, status: "CONFIRMADO" },
-    ]);
+    // A trava do banco…
+    const { error } = await service.from("professional_subcriterion_map").insert({
+      professional_profile_id: id,
+      subcriterion_id: alvo.id,
+      status: "CONFIRMADO",
+    });
+    expect(error?.message ?? "").toMatch(/fora de circulacao/i);
 
-    const outro = await novoProfissional();
-    await service.from("method_subcriteria").update({ active: false }).eq("id", alvo.id);
-    try {
-      const { error } = await service.from("professional_subcriterion_map").insert({
-        professional_profile_id: outro,
-        subcriterion_id: alvo.id,
-        status: "CONFIRMADO",
-      });
-      expect(error?.message ?? "").toMatch(/fora de circulacao/i);
+    // …a do domínio, que sabe explicar…
+    await expect(
+      saveProfessionalMapEntries(service, id, [
+        { subcriterionCode: alvo.code, status: "CONFIRMADO" },
+      ]),
+    ).rejects.toThrow(/saiu de circulação/);
 
-      const mapa = await loadProfessionalMap(service, id);
-      expect(
-        mapa.items.some((i) => i.subcriterionCode === alvo.code),
-        "o que já estava declarado permanece",
-      ).toBe(true);
+    // …e a completude, que não cobra o legado como pendência.
+    const mapa = await loadProfessionalMap(service, id);
+    expect(mapa.completion.total, "só os 28 vigentes contam").toBe(28);
+    expect(mapa.completion.pendingCodes).not.toContain(alvo.code);
 
-      const { error: erroDelete } = await service
-        .from("method_subcriteria")
-        .delete()
-        .eq("id", alvo.id);
-      expect(erroDelete?.message ?? "", "ON DELETE RESTRICT").toMatch(/foreign key|violates/i);
-    } finally {
-      await service.from("method_subcriteria").update({ active: true }).eq("id", alvo.id);
-    }
+    // O registro aposentado permanece legível — e indeletável: sair de
+    // circulação é active=false, nunca DELETE (ADR-039 item 6).
+    const { error: erroDelete } = await service
+      .from("method_subcriteria")
+      .delete()
+      .eq("id", alvo.id);
+    expect(erroDelete?.message ?? "", "catálogo não se apaga").toMatch(
+      /nao se apaga|foreign key|violates/i,
+    );
   });
 
-  it("o catálogo continua com os mesmos 26 itens, sem duplicação", async () => {
+  it("o catálogo vigente tem 28 ativos e 34 registros ao todo, sem duplicação", async () => {
+    // 28 ativos do Catálogo 1.0.0 + 6 aposentados do 0.9.0 (histórico
+    // legível). Os ativos são exatamente os que o domínio publica.
     const catalogo = await listSubcriterionCatalog(service, { includeInactive: true });
-    expect(catalogo).toHaveLength(SUBCRITERION_CATALOG.length);
+    expect(catalogo).toHaveLength(34);
+
+    const ativos = catalogo.filter((e) => e.active);
+    expect(ativos).toHaveLength(28);
+    expect(ativos.map((e) => e.code).sort()).toEqual(
+      SUBCRITERION_CATALOG.map((e) => e.code).sort(),
+    );
+
     expect(new Set(catalogo.map((e) => e.code)).size).toBe(catalogo.length);
   });
 

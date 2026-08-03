@@ -148,15 +148,25 @@ describe("Sentinela — a suíte devolve o banco como encontrou", () => {
       .select("*", { count: "exact", head: true })
       .eq("active", true);
 
-    expect(catalogo, "o catálogo não é apagado no teardown").toBe(26);
-    expect(ativos, "nenhum subcritério ficou fora de circulação").toBe(26);
+    // Catálogo 1.0.0 (ADR-046/047): 28 vigentes + 6 aposentados do 0.9.0,
+    // que permanecem legíveis como histórico — 34 registros ao todo.
+    expect(catalogo, "o catálogo não é apagado no teardown").toBe(34);
+    expect(ativos, "nenhum subcritério entrou ou saiu de circulação").toBe(28);
 
-    // Os Mapas saem por cascata de Case e de profissional. Se sobrou linha,
-    // sobrou dono.
-    for (const tabela of ["case_priority_map", "professional_subcriterion_map"]) {
-      const { count } = await admin.from(tabela).select("*", { count: "exact", head: true });
-      expect(count, `${tabela} deveria ter saído com o dono`).toBe(0);
-    }
+    // Os Mapas saem por cascata de Case e de profissional. Se sobrou linha
+    // NOVA, sobrou dono. O oráculo é relativo à baseline — a stack local
+    // compartilhada carrega resíduo legítimo de execuções E2E anteriores
+    // (pré-existente à suíte; ~476 linhas em 2026-08-03), e a função da
+    // sentinela é provar que ESTA suíte devolve o banco como encontrou,
+    // nunca que o mundo nasceu vazio (mesmo desenho das demais contagens).
+    expect(
+      agora.mapasDeCase,
+      `case_priority_map: a suíte deixou Mapas de Case para trás (baseline ${base.mapasDeCase})`,
+    ).toBe(base.mapasDeCase);
+    expect(
+      agora.mapasDeProfissional,
+      `professional_subcriterion_map: a suíte deixou Mapas de profissional para trás (baseline ${base.mapasDeProfissional})`,
+    ).toBe(base.mapasDeProfissional);
   });
 
   /**

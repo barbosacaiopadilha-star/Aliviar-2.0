@@ -84,7 +84,7 @@ describe("Base de Evidências de Prática (Supabase local)", () => {
     const registro = await registerPracticeEvidence(admin.client, {
       professionalProfileId: alvo,
       subcriterionCode: "CONTINUIDADE_CANAIS",
-      options: ["MENSAGEM_COM_EQUIPE_OU_SECRETARIA", "TELEFONE_HORARIO_COMERCIAL"],
+      options: ["MENSAGEM_COM_A_EQUIPE_OU_SECRETARIA", "TELEFONE_EM_HORARIO_COMERCIAL"],
       details: {},
       conditionNote: null,
       observation: null,

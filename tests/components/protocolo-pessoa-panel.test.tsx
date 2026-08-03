@@ -105,7 +105,7 @@ function evidenceRow(overrides: Partial<PracticeEvidenceRecord> = {}): PracticeE
     subcriterionCode: "CONTINUIDADE_CANAIS",
     catalogVersion: "1.0.0",
     version: 1,
-    options: ["MENSAGEM_COM_EQUIPE_OU_SECRETARIA"],
+    options: ["MENSAGEM_COM_A_EQUIPE_OU_SECRETARIA"],
     details: {},
     conditionNote: null,
     observation: null,
@@ -205,7 +205,10 @@ describe("MesaEvidenciasPanel — abertura progressiva", () => {
           "prof-1": [
             evidenceRow({
               subcriterionCode: "VIABILIDADE_CUSTO_E_PAGAMENTO",
-              options: ["FAIXA_ATE_300"],
+              // Estrutura por campos do catálogo aprovado: custo não achata
+              // faixa em options[] — a faixa vive no campo details.faixa.
+              options: [],
+              details: { faixa: "ATE_300" },
               status: "verificado",
               verifiedAt: "2026-04-01T00:00:00.000Z",
               verifiedBy: "admin-uuid",

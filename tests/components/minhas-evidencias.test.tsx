@@ -22,7 +22,7 @@ function versao(overrides: Partial<OwnEvidenceVersion> = {}): OwnEvidenceVersion
   return {
     subcriterionCode: "CONTINUIDADE_CANAIS",
     version: 1,
-    options: ["MENSAGEM_COM_EQUIPE_OU_SECRETARIA"],
+    options: ["MENSAGEM_COM_A_EQUIPE_OU_SECRETARIA"],
     details: {},
     conditionNote: null,
     status: "nao_verificado",

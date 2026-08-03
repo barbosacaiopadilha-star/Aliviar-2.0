@@ -43,7 +43,7 @@ describe("Catálogo 1.0.0 — o congelamento é verificável", () => {
     for (const conceito of PRACTICE_CATALOG) {
       porEixo.set(conceito.axis, (porEixo.get(conceito.axis) ?? 0) + 1);
     }
-    expect(porEixo.get("ACESSO")).toBe(4);
+    expect(porEixo.get("ACESSO_AO_CUIDADO")).toBe(4);
     expect(porEixo.get("CONTINUIDADE_DO_CUIDADO")).toBe(5);
     expect(porEixo.get("MODELO_DE_ATENDIMENTO")).toBe(5);
     expect(porEixo.get("PRATICA_E_TRAJETORIA")).toBe(12);
@@ -78,11 +78,16 @@ describe("Catálogo 1.0.0 — o congelamento é verificável", () => {
     }
   });
 
-  it("todo conceito de conduta oferece os escapes; todo fato exige details", () => {
+  it("conduta usa SÓ as opções do banco (escapes universais morreram — eram invenção da cópia TS); todo fato exige details", () => {
+    // AUDITORIA_01 §3.1 (menores): "escapes universais só no TS (38 opções sem
+    // lastro no banco)". O aprovado (doc+migration) materializa escape POR
+    // CONCEITO onde o Método o quis (ex.: NAO_INFORMADO em viabilidade) — o
+    // vocabulário aqui é exatamente o do banco, travado pelo gate de paridade.
     for (const conceito of PRACTICE_CATALOG) {
       if (conceito.kind === "CONDUTA") {
-        expect(conceito.options, conceito.code).toHaveProperty("NAO_SEI_INFORMAR");
-        expect(conceito.options, conceito.code).toHaveProperty("NAO_SE_APLICA");
+        expect(conceito.options, conceito.code).not.toHaveProperty("NAO_SEI_INFORMAR");
+        expect(conceito.options, conceito.code).not.toHaveProperty("NAO_SE_APLICA");
+        expect(Object.keys(conceito.options).length, conceito.code).toBeGreaterThan(0);
       } else {
         expect(conceito.requireDetails, conceito.code).toBe(true);
         expect(Object.keys(conceito.options), conceito.code).toHaveLength(0);
@@ -215,7 +220,7 @@ describe("Verbalização — repetir o selecionado, nunca inventar", () => {
   it("conduta verbaliza os rótulos canônicos com o estado da informação", () => {
     const frase = verbalizePracticeEvidence({
       subcriterionCode: "CONTINUIDADE_CANAIS",
-      options: ["MENSAGEM_COM_EQUIPE_OU_SECRETARIA", "CONTATO_DE_URGENCIA_FORA_DO_HORARIO"],
+      options: ["MENSAGEM_COM_A_EQUIPE_OU_SECRETARIA", "CONTATO_DE_URGENCIA_FORA_DO_HORARIO"],
       details: {},
       conditionNote: null,
       status: "verificado",
@@ -270,7 +275,9 @@ describe("Verbalização — repetir o selecionado, nunca inventar", () => {
     expect(
       verbalizePracticeEvidence({
         subcriterionCode: "VIABILIDADE_CUSTO_E_PAGAMENTO",
-        options: ["FAIXA_ATE_300"],
+        options: [],
+        // custo é estruturado por campos no aprovado — e mesmo assim não fala
+        // sem validação do Curador
         details: {}, conditionNote: null, status: "verificado", verifiedAt: "2026-07-31T00:00:00.000Z",
       }),
     ).toBeNull();

@@ -8,8 +8,9 @@
 //   3. a separação Base × Case (Etapa 7): evidência não tem case_id,
 //      julgamento tem, os dois Cases concluem diferente sobre o MESMO
 //      profissional, e nenhum lado reescreve o outro;
-//   4. as guardas do Motor (Etapa 8): nenhum conceito 1.0.0 novo está no
-//      catálogo ativo do banco — viabilidade não tem como chegar ao Motor.
+//   4. as guardas do Motor (Etapa 8): a virada do Catálogo 1.0.0 aconteceu —
+//      os conceitos novos ESTÃO no catálogo ativo, os aposentados saíram, e
+//      case_needs continua sem ser entrada do Motor.
 
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
@@ -149,7 +150,7 @@ describe("Protocolos Oficiais (Supabase local)", () => {
     const respostas = {
       ...retomado.responses,
       CONTINUIDADE_CANAIS: {
-        options: ["MENSAGEM_COM_EQUIPE_OU_SECRETARIA"],
+        options: ["MENSAGEM_COM_A_EQUIPE_OU_SECRETARIA"],
         details: {},
         conditionNote: null,
         observation: null,
@@ -228,7 +229,7 @@ describe("Protocolos Oficiais (Supabase local)", () => {
       .eq("subcriterion_code", "CONTINUIDADE_CANAIS")
       .order("version");
     expect(data).toHaveLength(2);
-    expect((data![0] as { options: string[] }).options).toEqual(["MENSAGEM_COM_EQUIPE_OU_SECRETARIA"]);
+    expect((data![0] as { options: string[] }).options).toEqual(["MENSAGEM_COM_A_EQUIPE_OU_SECRETARIA"]);
     expect((data![1] as { options: string[] }).options).toEqual(["APENAS_REAGENDAMENTO"]);
   });
 
@@ -434,13 +435,26 @@ describe("Protocolos Oficiais (Supabase local)", () => {
   // 4. Guardas do Motor (Etapa 8)
   // -------------------------------------------------------------------------
 
-  it("nenhum conceito novo do 1.0.0 está no catálogo ATIVO do banco — viabilidade não alcança o Motor", async () => {
+  it("a virada aconteceu: os conceitos novos do 1.0.0 estão no catálogo ATIVO, os aposentados saíram", async () => {
+    // Antes da virada este teste provava o oposto (novos FORA, 26 ativos).
+    // O Catálogo 1.0.0 é vigente (migrations 20260802100000/110000,
+    // ADR-046/047): agora a guarda é que o universo do Motor seja EXATAMENTE
+    // o aprovado — 28 ativos, com os 8 novos dentro e os 6 aposentados fora.
     const ativos = (await listSubcriterionCatalog(curador.client)).map((entry) => entry.code);
     for (const codigo of NOVOS_CODIGOS_1_0_0) {
-      expect(ativos, `${codigo} não pode estar no catálogo ativo antes da virada`).not.toContain(codigo);
+      expect(ativos, `${codigo} pertence ao catálogo ativo desde a virada`).toContain(codigo);
     }
-    // E o universo do Motor segue sendo o catálogo vigente de 26.
-    expect(ativos).toHaveLength(26);
+    for (const aposentado of [
+      "ACESSO_LOCALIZACAO",
+      "EXPERIENCIA_CASOS_SEMELHANTES",
+      "EXPERIENCIA_CONDICAO_OU_PROCEDIMENTO",
+      "HISTORICO_ENSINO_E_PESQUISA",
+      "HISTORICO_PRODUCAO_ACADEMICA",
+      "HISTORICO_REGULARIDADE",
+    ]) {
+      expect(ativos, `${aposentado} saiu de circulação na virada`).not.toContain(aposentado);
+    }
+    expect(ativos).toHaveLength(28);
   });
 
   it("case_needs não é entrada do Motor: o cruzamento continua lendo só o Mapa de Prioridades", async () => {
