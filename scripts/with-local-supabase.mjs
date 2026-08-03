@@ -55,11 +55,24 @@ try {
   throw erro;
 }
 
+// FUN-01/SEG-05 (FRENTE D2): o endpoint de leads exige CRM_SITE_LEAD_SECRET
+// em TODO ambiente — sem segredo ele responde 503, inclusive localmente. O
+// caminho local ganha aqui um valor de teste fixo (não é credencial de nada
+// real: só vale contra a stack local que este runner injeta), sem tocar
+// `.env.local`. Quem já injetou um valor próprio no processo mantém o dele.
+const CRM_SITE_LEAD_SECRET_LOCAL = "segredo-local-de-teste-crm-leads";
+
 const filho = spawn(argv[0], argv.slice(1), {
   cwd: projectRoot,
   stdio: "inherit",
   shell: true,
-  env: { ...process.env, ...alvo, ...extras, ALIVIAR_AMBIENTE: "local" },
+  env: {
+    ...process.env,
+    CRM_SITE_LEAD_SECRET: process.env.CRM_SITE_LEAD_SECRET ?? CRM_SITE_LEAD_SECRET_LOCAL,
+    ...alvo,
+    ...extras,
+    ALIVIAR_AMBIENTE: "local",
+  },
 });
 
 filho.on("exit", (codigo, sinal) => {

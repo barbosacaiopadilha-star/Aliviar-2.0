@@ -18,6 +18,13 @@ const PUBLIC_PATHS = new Set([
   // respondível antes de qualquer sessão existir.
   "/api/build-info",
   "/sua-historia",
+  // FUN-01 (gate D20): o formulário público do site posta aqui SEM sessão.
+  // Fora deste conjunto, o middleware devolvia 302 → /login e o lead morria
+  // em silêncio — o integrador lia o redirect como sucesso e o dado nunca
+  // chegava ao banco (perda irrecuperável). A rota é pública, mas nunca
+  // aberta: o handler exige o segredo CRM_SITE_LEAD_SECRET em TODO ambiente
+  // (src/app/api/crm/leads/route.ts).
+  "/api/crm/leads",
 ]);
 
 // Os Portais SAÍRAM daqui na MISSÃO 209, Fase 4: agora leem o banco de
