@@ -123,11 +123,31 @@ export const registerDecisionInputSchema = z
 
 // Fase 1 — Acolhimento: as duas revisões que o Motor espera antes de liberar
 // a História (COS_PHASE_DEFINITIONS.ACOLHIMENTO.exitCriteria).
-export const registerAcolhimentoInputSchema = z.object({
-  caseId: z.string().uuid(),
-  contextReviewed: z.boolean(),
-  documentsReviewed: z.boolean(),
-});
+/**
+ * Fase 1 — Acolhimento. M-003 §7.2: o payload deixa de ser dois booleanos de
+ * cerimônia e passa a ser o conteúdo extraído do material.
+ *
+ * Itens em branco são descartados na normalização; depois dela, **a soma dos
+ * itens das duas listas precisa ser ≥ 1** (D-4, ratificada pelo DT-06). É essa
+ * recusa que preserva a monotonicidade do M-001 §6.2 sem coluna nova: conteúdo
+ * presente só pode ser substituído por outro conteúdo, nunca esvaziado.
+ */
+const listaDeRegistro = z
+  .array(z.string())
+  .max(50)
+  .transform((itens) => itens.map((item) => item.trim()).filter((item) => item !== ""));
+
+export const registerAcolhimentoInputSchema = z
+  .object({
+    caseId: z.string().uuid(),
+    knownFacts: listaDeRegistro,
+    openPendencies: listaDeRegistro,
+  })
+  .refine((dados) => dados.knownFacts.length + dados.openPendencies.length >= 1, {
+    message:
+      "Registre ao menos um fato conhecido ou uma pendência — é o que substitui a antiga confirmação de leitura.",
+    path: ["knownFacts"],
+  });
 
 // Fase 2 — História: narrativa organizada + reconhecimento do paciente.
 export const registerHistoriaInputSchema = z

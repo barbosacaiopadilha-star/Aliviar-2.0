@@ -28,7 +28,39 @@ type CaseRow = {
   patient_profile_id: string;
   assigned_curator_id: string | null;
   created_at: string;
+  /** M-003 §2.4: a história do Case é esta, e não "qualquer história enviada". */
+  source_story_id: string | null;
 };
+
+/**
+ * M-003 §2.4 — os dois fatos de MATERIAL do Acolhimento.
+ *
+ * Não é rastreio de leitura (M-001 §0, proibição X2): nada aqui observa o
+ * Curador. São fatos sobre o material do paciente — existe história entregue?
+ * existe documento vinculado a ela? — e ambos já existiam no banco.
+ */
+async function materialDoAcolhimento(
+  supabase: SupabaseClient,
+  sourceStoryId: string | null,
+): Promise<{ hasSubmittedStory: boolean; hasLinkedDocument: boolean }> {
+  if (!sourceStoryId) return { hasSubmittedStory: false, hasLinkedDocument: false };
+
+  const [{ data: story }, { data: attachments }] = await Promise.all([
+    // Só `enviada` conta: rascunho ainda não foi entregue pela paciente (X7).
+    supabase.from("patient_stories").select("status").eq("id", sourceStoryId).maybeSingle(),
+    // O vínculo é o critério de pertencimento ao Case; órfão não conta (X6).
+    supabase
+      .from("patient_story_attachments")
+      .select("document_id")
+      .eq("story_id", sourceStoryId)
+      .limit(1),
+  ]);
+
+  return {
+    hasSubmittedStory: (story?.status as string | undefined) === "enviada",
+    hasLinkedDocument: (attachments ?? []).length > 0,
+  };
+}
 
 async function displayNames(
   supabase: SupabaseClient,
@@ -56,7 +88,7 @@ export async function loadCuradoriaRecord(
 ): Promise<CuradoriaRecord | null> {
   const { data: caseRow } = await supabase
     .from("cases")
-    .select("id, patient_profile_id, assigned_curator_id, created_at")
+    .select("id, patient_profile_id, assigned_curator_id, created_at, source_story_id")
     .eq("id", caseId)
     .maybeSingle();
 
@@ -68,6 +100,7 @@ export async function loadCuradoriaRecord(
     { data: clinical },
     { data: profile },
     names,
+    material,
   ] = await Promise.all([
     supabase.from("consultation_records").select("*").eq("case_id", caseId).maybeSingle(),
     supabase.from("case_clinical_context").select("*").eq("case_id", caseId).maybeSingle(),
@@ -78,6 +111,7 @@ export async function loadCuradoriaRecord(
       .neq("status", "SUPERSEDED")
       .maybeSingle(),
     displayNames(supabase, [kase.patient_profile_id, kase.assigned_curator_id]),
+    materialDoAcolhimento(supabase, kase.source_story_id),
   ]);
 
   const patientName = names.get(kase.patient_profile_id) ?? "Paciente";
@@ -241,6 +275,12 @@ export async function loadCuradoriaRecord(
       meetingScheduledAt: (consultation?.meeting_scheduled_at as string | null) ?? null,
       knownFacts: (consultation?.known_facts as string[]) ?? [],
       openPendencies: (consultation?.open_pendencies as string[]) ?? [],
+      hasSubmittedStory: material.hasSubmittedStory,
+      hasLinkedDocument: material.hasLinkedDocument,
+      // M-003 §9.1 — única leitura dos campos legados em regra de negócio.
+      // Sem ela, todo Case conduzido no regime anterior regrediria de fase.
+      preparedBefore:
+        Boolean(consultation?.context_reviewed) && Boolean(consultation?.documents_reviewed),
     },
 
     historia: {
