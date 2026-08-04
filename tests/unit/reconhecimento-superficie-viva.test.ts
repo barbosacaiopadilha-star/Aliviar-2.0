@@ -160,3 +160,54 @@ function varrer(dir: string): string[] {
     return /\.tsx?$/.test(entrada.name) ? [caminho] : [];
   });
 }
+
+/**
+ * ETAPA 2C — OS DESFECHOS, E O QUE OS BLOQUEIA.
+ *
+ * Discordar (RECUSADA) e corrigir (CORRIGIDA) exigem UPDATE em `case_needs`.
+ * A RLS concede esse UPDATE a `administrador` ou `is_curator_for_case` — nunca
+ * à paciente —, e `acknowledgePersonNeedAction` exige papel de Curador. Não há
+ * caminho para ela sem migration, que esta etapa proíbe.
+ *
+ * Estes testes não celebram o bloqueio: eles impedem que alguém o "resolva"
+ * pela porta errada, afrouxando o guarda de papel ou fazendo a tela dela
+ * chamar a ação do Curador. A porta certa é uma decisão de autoridade sobre
+ * quem escreve o reconhecimento dela — e ela ainda não foi tomada.
+ */
+describe("2C · DT-22 íntegro e nenhuma persistência nova", () => {
+  it("o escritor do DT-22 mantém o contrato exato — texto obrigatório nos dois", () => {
+    const repo = ler("src/modules/curadoria/protocolos-repository.ts");
+    expect(repo).toContain('params.acknowledgment === "CORRIGIDA" || params.acknowledgment === "RECUSADA"');
+    expect(repo).toContain("correction: exigeTexto ? texto : null");
+  });
+
+  it("a ação do Curador continua exigindo papel de Curador", () => {
+    const acoes = ler("src/modules/curadoria/protocolos-actions.ts");
+    expect(acoes).toContain('requireAnyRoleForAction(["curador_medico", "administrador"])');
+  });
+
+  it("nenhuma superfície da paciente chama a ação do Curador", () => {
+    for (const arquivo of [PAINEL, COMPONENTE, "src/components/paciente/reconhecer-perfil.tsx"]) {
+      expect(ler(arquivo).includes("acknowledgePersonNeed"), arquivo).toBe(false);
+    }
+  });
+
+  it("o desfecho 'deixar pendente' não escreve nada — nem action, nem estado novo", () => {
+    const ato = ler("src/components/paciente/reconhecer-perfil.tsx");
+    const trecho = ato.slice(ato.indexOf("adiado ?"), ato.indexOf("Voltar às opções"));
+    expect(trecho.includes("await"), "o desfecho pendente disparou uma escrita").toBe(false);
+    expect(trecho.includes("Action"), "o desfecho pendente chamou uma action").toBe(false);
+    // PENDENTE já é o estado inicial no banco: nenhum estado novo foi criado.
+    const estados = ler("src/modules/curadoria/protocolos.ts");
+    expect(estados).toContain('["PENDENTE", "RECONHECIDA", "CORRIGIDA", "RECUSADA"]');
+  });
+
+  it("C5 · o ato deixou de depender do Mapa não-vazio para se explicar", () => {
+    const painel = ler(PAINEL);
+    expect(painel).toContain("{!perfil.validated && caseId ? (");
+    expect(
+      painel.includes("!perfil.validated && perfil.prioridades.length > 0 && caseId"),
+      "o quadrante silencioso voltou",
+    ).toBe(false);
+  });
+});

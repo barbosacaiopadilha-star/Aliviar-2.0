@@ -31,6 +31,9 @@ export function ReconhecerPerfil({
   validated: boolean;
 }) {
   const [confirmando, setConfirmando] = useState(false);
+  /** C4 — "deixar pendente" é escolha dela, não ausência de escolha. Vive só
+      na tela: PENDENTE já é o estado no banco, e praticá-lo não escreve nada. */
+  const [adiado, setAdiado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [pendente, setPendente] = useState(false);
   const [sessaoExpirada, setSessaoExpirada] = useState(false);
@@ -141,14 +144,45 @@ export function ReconhecerPerfil({
             </button>
           </div>
         </div>
+      ) : adiado ? (
+        // C4 — DEIXAR PENDENTE, o desfecho que não escreve nada.
+        //
+        // PENDENTE é o estado em que o reconhecimento já nasce: praticá-lo é
+        // não praticar nenhum outro. Por isso aqui não há action, não há RPC e
+        // não há estado novo — só a verdade dita em voz alta, para que "ainda
+        // não" deixe de ser silêncio e passe a ser uma escolha dela.
+        <div className="mt-5 space-y-3">
+          <p role="status" className="max-w-reading text-sm leading-relaxed text-ink">
+            Nada foi registrado, e nada mudou. Este Perfil continua com você — volte quando quiser,
+            e fale com seu Curador se algo aqui não estiver com a sua cara.
+          </p>
+          <button
+            type="button"
+            onClick={() => setAdiado(false)}
+            className="inline-flex min-h-11 items-center rounded-md border border-[color-mix(in_srgb,var(--color-ink-muted)_30%,transparent)] px-4 py-2.5 text-sm text-ink transition-colors duration-fast ease-standard hover:bg-[color-mix(in_srgb,var(--color-ink)_5%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+          >
+            Voltar às opções
+          </button>
+        </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => setConfirmando(true)}
-          className="inline-flex min-h-11 items-center rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors duration-fast ease-standard hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
-        >
-          {ACKNOWLEDGE_ACTION_LABEL}
-        </button>
+        // C6 — os dois desfechos praticáveis hoje ficam lado a lado, no mesmo
+        // lugar, a um passo cada. Nenhum deles é o caminho "de saída".
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => setConfirmando(true)}
+            className="inline-flex min-h-11 items-center rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors duration-fast ease-standard hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+          >
+            {ACKNOWLEDGE_ACTION_LABEL}
+          </button>
+          <button
+            type="button"
+            onClick={() => setAdiado(true)}
+            className="inline-flex min-h-11 items-center rounded-md border border-[color-mix(in_srgb,var(--color-ink-muted)_30%,transparent)] px-4 py-2.5 text-sm text-ink transition-colors duration-fast ease-standard hover:bg-[color-mix(in_srgb,var(--color-ink)_5%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+          >
+            Ainda não quero confirmar
+          </button>
+        </div>
       )}
 
       {sessaoExpirada ? (

@@ -167,7 +167,15 @@ export function PerfilPanel({
         </p>
       ) : null}
 
-      {!perfil.validated && perfil.prioridades.length > 0 && caseId ? (
+      {/* C5 — O QUADRANTE DESCOBERTO PELO AGENTE 04.
+          Antes, a condição exigia `prioridades.length > 0`. Com Mapa vazio e
+          declaração dela existindo, a comparação aparecia e o bloco do ato
+          simplesmente não era renderizado: nenhuma ação, nenhuma explicação,
+          silêncio. Agora o bloco sempre entra quando o ato é dela, e é
+          `decideAcknowledgement` — que já sabe distinguir Mapa incompleto de
+          Perfil substituído — quem diz por que não há o que praticar. A
+          comparação não é escondida, e nenhum registro é inventado. */}
+      {!perfil.validated && caseId ? (
         <ReconhecerPerfil
           caseId={caseId}
           pendentes={perfil.total - perfil.classificados}

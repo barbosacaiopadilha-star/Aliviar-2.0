@@ -1,3 +1,4 @@
+import userEvent from "@testing-library/user-event";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -254,5 +255,131 @@ describe("Etapa 2B — a comparação substitui a lista enquanto o ato é dela",
     );
 
     expect(violatesPatientVocabulary(container.textContent ?? "")).toBeNull();
+  });
+});
+
+/**
+ * ETAPA 2C — OS DESFECHOS DO RECONHECIMENTO.
+ *
+ * Dois dos quatro são praticáveis hoje: confirmar (RPC própria da paciente) e
+ * deixar pendente (que não escreve nada). Discordar e corrigir dependem de
+ * UPDATE em `case_needs`, que a RLS só concede ao Curador — impedimento
+ * registrado no relatório da 2C, não contornado aqui.
+ */
+describe("Etapa 2C — C5 · o quadrante que não dizia nada", () => {
+  const LINHA_SEM_REGISTRO = {
+    subcriterionCode: "MODELO_COMUNICACAO",
+    label: "Como explica",
+    declaracao: {
+      grau: "É essencial para você",
+      opcoes: ["Com palavras simples"],
+      em: "2026-08-01T10:00:00Z",
+      autor: "perfil-paciente",
+    },
+    registro: null,
+    cadeia: montarCadeiaDeProveniencia({
+      subcriterionCode: "MODELO_COMUNICACAO",
+      pessoa: {
+        declaracao: {
+          degree: "ESSENCIAL",
+          options: ["explicacao_simples"],
+          declaredBy: "perfil-paciente",
+          declaredAt: "2026-08-01T10:00:00Z",
+        },
+        importancia: null,
+      },
+      profissional: { estado: null },
+    }),
+  };
+
+  /** Ela declarou; o Mapa está vazio. A comparação existe, o ato não. */
+  function renderQuadrante() {
+    return render(
+      <PerfilPanel
+        perfil={buildPerfilView([], false)}
+        caseId="c1"
+        linhas={[LINHA_SEM_REGISTRO]}
+        tecnicos={[]}
+      />,
+    );
+  }
+
+  it("a comparação continua visível — a fala dela não é escondida", () => {
+    renderQuadrante();
+
+    expect(screen.getByText("O que você disse")).toBeInTheDocument();
+    expect(screen.getByText("É essencial para você")).toBeInTheDocument();
+  });
+
+  it("a tela diz POR QUE nenhum ato pode ser praticado", () => {
+    const { container } = renderQuadrante();
+
+    expect(container.textContent).toContain("ainda está sendo construído junto com a Curadoria");
+  });
+
+  it("nenhuma ação inválida é oferecida", () => {
+    renderQuadrante();
+
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("nenhum registro é inventado — e a lacuna exibida é a que a cadeia nomeia (C7)", () => {
+    renderQuadrante();
+
+    const daCadeia = LINHA_SEM_REGISTRO.cadeia.lacunas.find(
+      (lacuna) => lacuna.lado === "PESSOA" && lacuna.elo === "CONFIRMACAO",
+    )!;
+
+    expect(daCadeia.porque.length).toBeGreaterThan(0);
+    expect(screen.getByText(daCadeia.porque)).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/Registrado por/);
+  });
+});
+
+describe("Etapa 2C — C4 · deixar pendente", () => {
+  function renderAto() {
+    return render(
+      <PerfilPanel perfil={buildPerfilView(MAPA_COMPLETO, false)} caseId="c1" linhas={[]} />,
+    );
+  }
+
+  it("o desfecho é oferecido ao lado de confirmar, a um passo cada (C6)", () => {
+    renderAto();
+
+    expect(
+      screen.getByRole("button", { name: "Confirmar que este Perfil representa minhas prioridades" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ainda não quero confirmar" })).toBeInTheDocument();
+  });
+
+  it("praticá-lo não registra nada e diz isso com todas as letras", async () => {
+    const { container } = renderAto();
+
+    await userEvent.click(screen.getByRole("button", { name: "Ainda não quero confirmar" }));
+
+    expect(container.textContent).toContain("Nada foi registrado, e nada mudou");
+    expect(container.textContent).toContain("volte quando quiser");
+  });
+
+  it("o retorno posterior continua possível — nada fecha a porta", async () => {
+    renderAto();
+
+    await userEvent.click(screen.getByRole("button", { name: "Ainda não quero confirmar" }));
+    await userEvent.click(screen.getByRole("button", { name: "Voltar às opções" }));
+
+    expect(
+      screen.getByRole("button", { name: "Confirmar que este Perfil representa minhas prioridades" }),
+    ).toBeInTheDocument();
+  });
+
+  it("C1 · confirmar segue com o mesmo aviso de sempre — nenhuma regressão", async () => {
+    const { container } = renderAto();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Confirmar que este Perfil representa minhas prioridades" }),
+    );
+
+    expect(container.textContent).toContain("Depois de confirmado, este Perfil não muda mais");
+    expect(screen.getByRole("button", { name: "Sim, confirmar" })).toBeInTheDocument();
   });
 });
