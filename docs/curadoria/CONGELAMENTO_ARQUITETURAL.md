@@ -2,6 +2,16 @@
 
 > **Data:** 2026-08-01 · **HEAD:** `f2904bc` · **Árvore:** limpa
 > **Status:** arquitetura operacional **CONGELADA**. A partir deste documento, toda alteração é evolução da plataforma — nunca implementação do Método.
+>
+> ## ⚖️ Emenda de 2026-08-04 — Curadoria 2.0 (pacote A-01)
+>
+> Três decisões do Fundador, aprovadas constitucionalmente pelo Guardião e lavradas como **ADR-066**, **ADR-067** e **ADR-068**, tocam este documento. O registro está no **§5.1** (invariantes), **§5.2** (princípios promovidos) e **§4.9** (o que não mudou):
+>
+> 1. **A invariante I-10 foi reaberta em substância** — a distinção formal entre as escalas permanece; a correspondência declarada entre elas passa a existir. **Valores estáveis só após Cases reais.**
+> 2. **P-07, P-08 e P-10 foram promovidos a princípios oficiais de domínio.**
+> 3. **A RLS do Mapa do Profissional (§4.7 · ADR-040 item 6) NÃO foi reaberta** — examinada e mantida intacta.
+>
+> Nenhum outro item deste congelamento foi tocado. As oito garantias do §4 permanecem, e duas delas foram **reforçadas**.
 
 ## 1. Estado final da arquitetura
 
@@ -68,9 +78,50 @@ Cada uma com guarda ativa na suíte:
 **I-7.** **Histórico é imutável.** Corrigir é gravar versão nova.
 **I-8.** **Ausência de informação nunca vira ausência da característica.**
 **I-9.** **Nenhuma frase automática conclui qualidade** nem promete que uma necessidade será atendida.
-**I-10.** **Grau da pessoa ≠ importância do Case** — escalas sem valor em comum, e só a importância alcança o Motor.
+**I-10.** **Grau da pessoa ≠ importância do Case** — escalas sem valor em comum, e só a importância alcança o Motor. **⚠️ REABERTA EM SUBSTÂNCIA pela ADR-066 (2026-08-04) — ver §5.1.**
 **I-11.** **Guarda de navegação não pode ser mais rígido que o domínio** que apresenta.
 **I-12.** **O profissional lê o que é dele**; a governança sobre ele continua da operação.
+
+## 5.1 Reabertura registrada — I-10 (ADR-066, 2026-08-04)
+
+> **A criação de uma ponte versionada entre grau declarado pela pessoa e importância utilizada no Case reabre a invariante I-10 em substância, embora preserve a distinção formal entre as duas escalas.**
+
+| O que permanece verdadeiro | O que deixa de ser verdadeiro |
+|---|---|
+| Os **domínios são disjuntos** — nenhum valor pertence às duas escalas | Que **não existe relação sistemática** entre elas |
+| **Nenhuma igualdade** é afirmada entre valores | Que a tradução é sempre juízo particular daquele Curador |
+| **Só a importância alcança o Motor** | Que **a origem da importância é opaca** — passa a ser rastreável |
+| A conversão **nunca é automática** — exige ato humano registrado | Que **nenhuma conversão institucional existe** |
+
+**Condições da reabertura, todas vinculantes:**
+
+1. **Forma e governança decididas agora; valores estáveis só após Cases reais.** O critério 1 do §6 — necessidade observada em operação real — **não está satisfeito**, e a reabertura foi autorizada sob essa condição explícita.
+2. Toda versão da tabela anterior à evidência operacional nasce **`PROVISÓRIA`**, com vigência limitada e revisão obrigatória.
+3. **O teste `importancia-vs-grau.test.ts` não pode ser afrouxado, renomeado ou ter asserção relaxada** — ele protege a disjunção dos domínios, que continua verdadeira. Sua finalidade só muda pela própria ADR-066.
+4. **Desligar a ponte é reversível sem perda de dado:** as confirmações feitas permanecem declarações humanas válidas; as propostas param de nascer.
+
+**Nenhuma outra invariante foi reaberta.** I-1 a I-9, I-11 e I-12 permanecem íntegras — e a ADR-066 **reforça** I-6 e I-7, levando proveniência a onde hoje não há nenhuma.
+
+## 5.2 Princípios promovidos a domínio (2026-08-04)
+
+Aprovados pelo Fundador e lavrados na ADR-066:
+
+| # | Princípio | Consequência |
+|---|---|---|
+| **P-07** | **Uma origem por fato.** Toda entrada do Motor tem exatamente uma fonte declarada, e essa fonte é sempre quem tem autoridade sobre o fato | elimina as duplicações R1, R3, R8 e R10 da auditoria |
+| **P-08** | **Proposta nunca é declaração.** Nada entra no Motor sem confirmação humana registrada com autor e data | estrutura a Camada de Derivação e a Fronteira Humana |
+| **P-10** | **Confirmar não pode ser mais barato que discordar** | contrato de superfície, verificável por teste |
+
+**P-09** permanece como **contrato de proveniência** (extensão de I-6 e do `ProvenanceRef` já vigentes), não como princípio independente. **P-11** depende da ADR-067; **P-12** é princípio arquitetural, sem ADR.
+
+## 5.3 O que foi examinado e **mantido** (2026-08-04)
+
+| Item | Decisão |
+|---|---|
+| **§4.7 — RLS do Mapa do Profissional (ADR-040 item 6)** | **NÃO reaberta.** A ADR-068 §14.2 examinou a ampliação do recorte de escrita e a **recusou**: o gargalo é de carga, não de autoridade, e ampliar tornaria mais provável a coincidência entre quem confirma e quem julga. Escrita permanece `administrador`; leitura permanece `administrador` e `curador_medico`. **A pendência DP-9 fica respondida com "não ampliar"** |
+| **§4.3 — viabilidade e preferências nunca entram no Motor** | mantido, e passa a ter **guarda executável** prevista (achado P15/RI8), pendente do veredito DP-1 |
+| **§4.8 — ausência de score, ranking e ordenação** | mantido, e **reforçado**: a proposta de ordenar a leitura por prontidão da informação foi recusada por ser ranking por construção |
+| **Todos os demais itens do §4** | intactos |
 
 ## 6. Critérios para reabrir uma decisão congelada
 
