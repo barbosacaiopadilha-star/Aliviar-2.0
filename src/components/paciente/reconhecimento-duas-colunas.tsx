@@ -1,4 +1,7 @@
-import type { CadeiaDeProveniencia } from "@/modules/curadoria/cadeia-de-proveniencia";
+import type {
+  LinhaDoReconhecimento,
+  LinhaTecnica,
+} from "@/modules/paciente/reconhecimento-contrato";
 
 /**
  * O Perfil em duas colunas — o que ela disse, e o que virou.
@@ -19,32 +22,37 @@ import type { CadeiaDeProveniencia } from "@/modules/curadoria/cadeia-de-proveni
  * regra própria — inclusive as lacunas exibidas são as que a cadeia nomeia.
  */
 
-export type LinhaDoReconhecimento = {
-  subcriterionCode: string;
-  /** O rótulo do conceito, como ela o lê. Nunca o código. */
-  label: string;
-  /** COLUNA 1 — a fala dela, literal. */
-  declaracao: { grau: string; opcoes: string[]; em: string | null } | null;
-  /** COLUNA 2 — o que ficou registrado, e por quem. */
-  registro: { importancia: string; autor: string | null } | null;
-  /** A cadeia do Item 1.9 — a fonte única do que falta e por quê. */
-  cadeia: CadeiaDeProveniencia;
-};
+/**
+ * Os tipos moram em `@/modules/paciente/reconhecimento-contrato` (B1): a camada
+ * de dados não pode depender de um `.tsx`. Reexportados aqui só para não
+ * quebrar quem já os importava deste caminho.
+ */
+export type { LinhaDoReconhecimento, LinhaTecnica };
+
+/** Uma data como ela lê — nunca o carimbo cru do banco. */
+function emPortugues(iso: string): string {
+  return new Date(iso).toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+}
 
 /**
- * O TERCEIRO BLOCO — os conceitos técnicos (§6.2.1).
+ * A procedência de um registro, dita por inteiro ou não dita.
  *
- * Formação, experiência e histórico não têm lado da pessoa: ela não declara
- * preferência por fellowship. Quem os declara é o Curador, contra este caso.
- * Por isso vivem em bloco **separado**, e nunca dentro da comparação: misturá-los
- * com a fala dela sugeriria que ela disse algo que não disse.
+ * O que nunca acontece aqui: completar metade. Se falta o autor, a frase não
+ * inventa "pela Curadoria"; se falta a data, não aproxima. Uma lacuna dita por
+ * nome é informação; uma lacuna preenchida é mentira (I-8).
  */
-export type LinhaTecnica = {
-  subcriterionCode: string;
-  label: string;
-  importancia: string;
-  autor: string | null;
-};
+function procedencia(autor: string | null, registradoEm: string | null): string {
+  if (autor && registradoEm) return `Registrado por ${autor} em ${emPortugues(registradoEm)}.`;
+  if (autor) return `Registrado por ${autor} — não consta a data.`;
+  if (registradoEm) {
+    return `Registrado em ${emPortugues(registradoEm)} — não consta quem registrou.`;
+  }
+  return "Registro anterior ao regime de autoria — não consta quem registrou, nem quando.";
+}
 
 export function ReconhecimentoDuasColunas({
   linhas,
@@ -114,9 +122,7 @@ export function ReconhecimentoDuasColunas({
                       {linha.registro.importancia}
                     </p>
                     <p className="mt-1 text-xs leading-relaxed text-ink-muted">
-                      {linha.registro.autor
-                        ? `Registrado por ${linha.registro.autor}.`
-                        : "Registro anterior ao regime de autoria — não consta quem registrou."}
+                      {procedencia(linha.registro.autor, linha.registro.registradoEm)}
                     </p>
                   </>
                 ) : (
@@ -139,9 +145,12 @@ export function ReconhecimentoDuasColunas({
           <h3 className="text-sm font-medium text-[var(--patient-ink)]">
             O que a Curadoria considerou por conta própria
           </h3>
+          {/* B3 — a origem dita por inteiro: este bloco NÃO veio dela. Sem essa
+              frase, um item técnico ao lado da comparação passa a parecer algo
+              que ela declarou e esqueceu. */}
           <p className="mt-1 max-w-reading text-sm leading-relaxed text-ink-muted">
-            Sobre estes pontos você não precisou dizer nada — quem os avalia, diante do seu caso,
-            é quem conduz a sua Curadoria.
+            Sobre estes pontos você não precisou dizer nada, e nada aqui veio de você — quem os
+            avalia, diante do seu caso, é quem conduz a sua Curadoria.
           </p>
           <ul className="mt-3 space-y-2">
             {tecnicos.map((tecnico) => (
@@ -153,9 +162,7 @@ export function ReconhecimentoDuasColunas({
                   <span className="font-medium">{tecnico.label}:</span> {tecnico.importancia}
                 </p>
                 <p className="mt-1 text-xs text-ink-muted">
-                  {tecnico.autor
-                    ? `Registrado por ${tecnico.autor}.`
-                    : "Registro anterior ao regime de autoria — não consta quem registrou."}
+                  {procedencia(tecnico.autor, tecnico.registradoEm)}
                 </p>
               </li>
             ))}

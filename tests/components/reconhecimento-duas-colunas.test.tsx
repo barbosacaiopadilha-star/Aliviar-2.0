@@ -1,10 +1,13 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import {
-  ReconhecimentoDuasColunas,
-  type LinhaDoReconhecimento,
-} from "@/components/paciente/reconhecimento-duas-colunas";
+import { ReconhecimentoDuasColunas } from "@/components/paciente/reconhecimento-duas-colunas";
+// B1 — os tipos vêm do MÓDULO, nunca do componente: a camada de dados não pode
+// depender de um `.tsx`.
+import type {
+  LinhaDoReconhecimento,
+  LinhaTecnica,
+} from "@/modules/paciente/reconhecimento-contrato";
 import { montarCadeiaDeProveniencia } from "@/modules/curadoria/cadeia-de-proveniencia";
 
 /**
@@ -39,8 +42,17 @@ function linha(overrides: Partial<LinhaDoReconhecimento> = {}): LinhaDoReconheci
   return {
     subcriterionCode: "ACESSO_MODALIDADE",
     label: "Como você quer ser atendida",
-    declaracao: { grau: "É essencial para você", opcoes: ["Por vídeo"], em: "2026-08-01T10:00:00Z" },
-    registro: { importancia: "Muito importante", autor: "Dra. Ana" },
+    declaracao: {
+      grau: "É essencial para você",
+      opcoes: ["Por vídeo"],
+      em: "2026-08-01T10:00:00Z",
+      autor: "perfil-paciente",
+    },
+    registro: {
+      importancia: "Muito importante",
+      autor: "Dra. Ana",
+      registradoEm: "2026-08-02T09:00:00Z",
+    },
     cadeia,
     ...overrides,
   };
@@ -73,15 +85,49 @@ describe("As duas colunas", () => {
 });
 
 describe("Consumo da autoria criada no Item 1.9", () => {
-  it("o registro diz quem registrou", () => {
+  it("o registro diz quem registrou e quando — B2, sem a tela procurar na cadeia", () => {
     render(<ReconhecimentoDuasColunas linhas={[linha()]} />);
-    expect(screen.getByText("Registrado por Dra. Ana.")).toBeInTheDocument();
+    expect(screen.getByText("Registrado por Dra. Ana em 02 de agosto de 2026.")).toBeInTheDocument();
+  });
+
+  it("com autor e sem data, diz o que sabe e declara o que falta — nunca aproxima", () => {
+    render(
+      <ReconhecimentoDuasColunas
+        linhas={[
+          linha({ registro: { importancia: "Importante", autor: "Dra. Ana", registradoEm: null } }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Registrado por Dra. Ana — não consta a data.")).toBeInTheDocument();
+  });
+
+  it("com data e sem autor, também não inventa a metade que falta", () => {
+    render(
+      <ReconhecimentoDuasColunas
+        linhas={[
+          linha({
+            registro: {
+              importancia: "Importante",
+              autor: null,
+              registradoEm: "2026-08-02T09:00:00Z",
+            },
+          }),
+        ]}
+      />,
+    );
+
+    expect(
+      screen.getByText("Registrado em 02 de agosto de 2026 — não consta quem registrou."),
+    ).toBeInTheDocument();
   });
 
   it("compatibilidade retroativa: sem autor, diz que é registro anterior ao regime", () => {
     render(
       <ReconhecimentoDuasColunas
-        linhas={[linha({ registro: { importancia: "Importante", autor: null } })]}
+        linhas={[
+          linha({ registro: { importancia: "Importante", autor: null, registradoEm: null } }),
+        ]}
       />,
     );
 
@@ -146,5 +192,65 @@ describe("Comparação correta", () => {
     for (const proibido of ["score", "ranking", "motor", "cruzamento", "proposta"]) {
       expect(document.body.textContent?.toLowerCase()).not.toContain(proibido);
     }
+  });
+});
+
+/**
+ * B3 — O TERCEIRO BLOCO TEM PROCEDÊNCIA, NÃO CADEIA.
+ *
+ * A cadeia do Item 1.9 tem dois lados, e um deles é a fala dela. Um conceito
+ * técnico não tem esse lado: fabricar cadeia aqui seria proveniência falsa. O
+ * que o bloco carrega é quem registrou e quando — e a lacuna dita por nome.
+ */
+describe("O terceiro bloco — o que não veio dela", () => {
+  function tecnico(overrides: Partial<LinhaTecnica> = {}): LinhaTecnica {
+    return {
+      subcriterionCode: "FORMACAO_TITULACAO",
+      label: "Titulação",
+      importancia: "Muito importante",
+      autor: "Dra. Ana",
+      registradoEm: "2026-08-02T09:00:00Z",
+      ...overrides,
+    };
+  }
+
+  it("diz explicitamente que nada ali veio dela", () => {
+    render(<ReconhecimentoDuasColunas linhas={[]} tecnicos={[tecnico()]} />);
+
+    expect(screen.getByText(/nada aqui veio de você/)).toBeInTheDocument();
+    expect(screen.getByText("O que a Curadoria considerou por conta própria")).toBeInTheDocument();
+  });
+
+  it("carrega autor e data quando existem", () => {
+    render(<ReconhecimentoDuasColunas linhas={[]} tecnicos={[tecnico()]} />);
+
+    expect(screen.getByText("Registrado por Dra. Ana em 02 de agosto de 2026.")).toBeInTheDocument();
+  });
+
+  it("declara a lacuna quando a origem não está disponível", () => {
+    render(
+      <ReconhecimentoDuasColunas
+        linhas={[]}
+        tecnicos={[tecnico({ autor: null, registradoEm: null })]}
+      />,
+    );
+
+    expect(screen.getByText(/não consta quem registrou, nem quando/)).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/autor desconhecido|sem autor|data desconhecida/i);
+  });
+
+  it("fica FORA da comparação — nunca vira uma das duas colunas", () => {
+    render(<ReconhecimentoDuasColunas linhas={[linha()]} tecnicos={[tecnico()]} />);
+
+    const comparacao = screen.getAllByRole("listitem")[0]!;
+    expect(comparacao.textContent).not.toContain("Titulação");
+  });
+
+  it("sem itens técnicos, o bloco simplesmente não existe", () => {
+    render(<ReconhecimentoDuasColunas linhas={[linha()]} tecnicos={[]} />);
+
+    expect(
+      screen.queryByText("O que a Curadoria considerou por conta própria"),
+    ).not.toBeInTheDocument();
   });
 });

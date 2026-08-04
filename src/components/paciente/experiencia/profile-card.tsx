@@ -2,6 +2,7 @@ import { PatientCard } from "@/components/paciente/dashboard/patient-primitives"
 import { ExpandableSection } from "@/components/paciente/experiencia/expandable-section";
 import { PerfilPanel } from "@/components/paciente/perfil-panel";
 import type { PerfilView } from "@/modules/paciente/experiencia";
+import type { ModeloDoReconhecimento } from "@/modules/paciente/reconhecimento-contrato";
 
 /**
  * ProfileCard — o Perfil como resumo, nunca como formulário aberto.
@@ -21,6 +22,7 @@ export function ProfileCard({
   validatedAt,
   curatorName,
   comoQuerSerCuidada,
+  modelo,
 }: {
   perfil: PerfilView;
   caseId?: string;
@@ -30,6 +32,12 @@ export function ProfileCard({
   curatorName?: string | null;
   /** ADR-065 — repassado ao retrato inteiro do Perfil. */
   comoQuerSerCuidada?: import("@/modules/paciente/experiencia-loader").ComoQuerSerCuidadaItem[];
+  /**
+   * Etapa 2B — o modelo do reconhecimento, montado no servidor por
+   * `loadModeloDoReconhecimento`. O cartão só o repassa: nenhuma consulta,
+   * nenhuma partição, nenhum rótulo recalculado aqui.
+   */
+  modelo?: ModeloDoReconhecimento;
 }) {
   const maisImportante = perfil.prioridades[0];
 
@@ -83,6 +91,8 @@ export function ProfileCard({
           validatedAt={validatedAt}
           curatorName={curatorName}
           comoQuerSerCuidada={comoQuerSerCuidada}
+          linhas={modelo?.linhas}
+          tecnicos={modelo?.tecnicos}
         />
       </ExpandableSection>
     </PatientCard>

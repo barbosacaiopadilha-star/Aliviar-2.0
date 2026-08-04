@@ -18,6 +18,7 @@ import {
   walkStatusOf,
 } from "@/modules/paciente/experiencia";
 import { loadComoQuerSerCuidada, loadPatientPerfil } from "@/modules/paciente/experiencia-loader";
+import { loadModeloDoReconhecimento } from "@/modules/paciente/reconhecimento-model";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import { getPatientCaseOverview } from "@/modules/cases";
@@ -69,6 +70,11 @@ export default async function PacienteHomePage() {
   const perfil = record ? await loadPatientPerfil(supabase, record.caseId) : null;
   // ADR-065 — o bloco relacional do Perfil: as respostas dela, nada inferido.
   const comoQuerSerCuidada = record ? await loadComoQuerSerCuidada(supabase, record.caseId) : [];
+  // Etapa 2B — a comparação que ela vê ao reconhecer o Perfil é montada AQUI,
+  // no servidor, e desce pronta. Nenhuma tela abaixo volta ao banco.
+  const modeloDoReconhecimento = record
+    ? await loadModeloDoReconhecimento(supabase, record.caseId)
+    : null;
 
   const state = derivePatientHomeState({
     storyStatuses: stories.map((story) => story.status),
@@ -151,6 +157,7 @@ export default async function PacienteHomePage() {
             validatedAt={record.validacao?.validatedAt ?? null}
             curatorName={jornada.curatorName}
             comoQuerSerCuidada={comoQuerSerCuidada}
+            modelo={modeloDoReconhecimento ?? undefined}
           />
         ) : null}
 

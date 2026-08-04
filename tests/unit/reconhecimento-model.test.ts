@@ -347,3 +347,58 @@ describe("O universo é a união — a lacuna é o que o reconhecimento existe p
     expect(codigos).toHaveLength(2);
   });
 });
+
+/**
+ * ETAPA 2B — B2/B3: O QUE A TELA EXIBE VEM NO MESMO OBJETO.
+ *
+ * Sem estes campos a tela teria de caçar autoria e data dentro da cadeia para
+ * montar uma frase — voltando a raciocinar sobre proveniência, que é
+ * exatamente o que o modelo existe para evitar.
+ */
+describe("B2/B3 · proveniência entregue pronta, e ausência declarada", () => {
+  it("a declaração dela carrega quem a registrou, além do grau e da data", async () => {
+    darDados([need(COM_PESSOA)], [item(COM_PESSOA)]);
+
+    const [linha] = (await loadModeloDoReconhecimento(SUPABASE, CASE_ID)).linhas;
+
+    expect(linha!.declaracao!.autor).toBe("a pessoa");
+    expect(linha!.declaracao!.em).toBe("2026-08-01T10:00:00.000Z");
+  });
+
+  it("o registro carrega autor E data — os dois, ou o que houver", async () => {
+    darDados([need(COM_PESSOA)], [item(COM_PESSOA)]);
+
+    const [linha] = (await loadModeloDoReconhecimento(SUPABASE, CASE_ID)).linhas;
+
+    expect(linha!.registro!.autor).toBe("Curador");
+    expect(linha!.registro!.registradoEm).toBe("2026-08-02T12:00:00.000Z");
+  });
+
+  it("o bloco técnico carrega procedência quando ela existe", async () => {
+    darDados([], [item(TECNICO)]);
+
+    const [tecnico] = (await loadModeloDoReconhecimento(SUPABASE, CASE_ID)).tecnicos;
+
+    expect(tecnico!.autor).toBe("Curador");
+    expect(tecnico!.registradoEm).toBe("2026-08-02T12:00:00.000Z");
+  });
+
+  it("procedência indisponível vira ausência declarada, nunca valor de enfeite", async () => {
+    darDados([], [item(TECNICO, { declaredBy: null, registradoEm: null })]);
+
+    const [tecnico] = (await loadModeloDoReconhecimento(SUPABASE, CASE_ID)).tecnicos;
+
+    expect(tecnico!.autor).toBeNull();
+    expect(tecnico!.registradoEm).toBeNull();
+    // E o rótulo continua real: a ausência da autoria não apaga o conceito.
+    expect(tecnico!.importancia.length).toBeGreaterThan(0);
+  });
+
+  it("B3 · o bloco técnico não ganha cadeia — não há lado dela para encadear", async () => {
+    darDados([], [item(TECNICO)]);
+
+    const [tecnico] = (await loadModeloDoReconhecimento(SUPABASE, CASE_ID)).tecnicos;
+
+    expect(tecnico).not.toHaveProperty("cadeia");
+  });
+});

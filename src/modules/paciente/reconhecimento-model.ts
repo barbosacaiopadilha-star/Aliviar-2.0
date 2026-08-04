@@ -2,11 +2,12 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { montarCadeiaDeProveniencia } from "@/modules/curadoria/cadeia-de-proveniencia";
 import type {
   LinhaDoReconhecimento,
   LinhaTecnica,
-} from "@/components/paciente/reconhecimento-duas-colunas";
-import { montarCadeiaDeProveniencia } from "@/modules/curadoria/cadeia-de-proveniencia";
+  ModeloDoReconhecimento,
+} from "@/modules/paciente/reconhecimento-contrato";
 import { loadCasePriorityMap } from "@/modules/curadoria/mapa-prioridades-repository";
 import { IMPORTANCE_LABELS, SUBCRITERION_CATALOG } from "@/modules/curadoria/mapa-prioridades";
 import { NEED_DEGREE_LABELS, PERSON_QUESTIONS_BY_CODE } from "@/modules/curadoria/protocolos";
@@ -40,13 +41,7 @@ import { loadCaseNeeds } from "@/modules/curadoria/protocolos-repository";
  * Leitura apenas. Nenhuma escrita, nenhuma decisão, nenhum desfecho.
  */
 
-export type ModeloDoReconhecimento = {
-  caseId: string;
-  /** Conceitos com lado da pessoa — vão para as duas colunas. */
-  linhas: LinhaDoReconhecimento[];
-  /** Conceitos técnicos — vão para o terceiro bloco, separados por construção. */
-  tecnicos: LinhaTecnica[];
-};
+export type { ModeloDoReconhecimento };
 
 const ROTULO_POR_CODIGO = new Map(
   SUBCRITERION_CATALOG.map((entrada) => [entrada.code, entrada.name]),
@@ -54,7 +49,7 @@ const ROTULO_POR_CODIGO = new Map(
 
 /**
  * Um conceito tem lado da pessoa quando existe pergunta a ela no Protocolo.
- * Os 11 técnicos não têm: ninguém declara preferência por fellowship, e é o
+ * Os 12 técnicos não têm: ninguém declara preferência por fellowship, e é o
  * Curador quem os julga contra o caso. A separação acontece **aqui**, no
  * modelo (A5) — a tela recebe duas listas prontas e não decide nada.
  */
@@ -93,11 +88,15 @@ export async function loadModeloDoReconhecimento(
       // Sem lado dela, não há o que comparar: o conceito só existe se alguém
       // o registrou. Sem registro, não entra em bloco nenhum.
       if (importancia) {
+        // B3 — procedência real, e só ela: quem registrou e quando. Sem cadeia,
+        // porque não há lado dela para encadear; sem valor de enfeite, porque
+        // ausência dita por nome é informação e ausência preenchida é mentira.
         tecnicos.push({
           subcriterionCode: code,
           label,
           importancia: IMPORTANCE_LABELS[importancia.importance],
           autor: importancia.declaredBy ?? null,
+          registradoEm: importancia.registradoEm ?? null,
         });
       }
       continue;
@@ -106,17 +105,21 @@ export async function loadModeloDoReconhecimento(
     linhas.push({
       subcriterionCode: code,
       label,
+      // B2 — a tela recebe o que vai exibir, no mesmo objeto: nada de procurar
+      // autoria ou data dentro da cadeia para montar uma frase.
       declaracao: declaracao
         ? {
             grau: NEED_DEGREE_LABELS[declaracao.degree],
             opcoes: declaracao.options,
             em: declaracao.declaredAt,
+            autor: declaracao.declaredBy,
           }
         : null,
       registro: importancia
         ? {
             importancia: IMPORTANCE_LABELS[importancia.importance],
             autor: importancia.declaredBy ?? null,
+            registradoEm: importancia.registradoEm ?? null,
           }
         : null,
       // A cadeia vem inteira do Item 1.9 — a tela nunca a remonta, e as lacunas

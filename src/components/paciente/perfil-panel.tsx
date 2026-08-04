@@ -1,7 +1,12 @@
 import { ReconhecerPerfil } from "@/components/paciente/reconhecer-perfil";
+import { ReconhecimentoDuasColunas } from "@/components/paciente/reconhecimento-duas-colunas";
 import { PatientCard } from "@/components/paciente/dashboard/patient-primitives";
 import type { PerfilView } from "@/modules/paciente/experiencia";
 import type { ComoQuerSerCuidadaItem } from "@/modules/paciente/experiencia-loader";
+import type {
+  LinhaDoReconhecimento,
+  LinhaTecnica,
+} from "@/modules/paciente/reconhecimento-contrato";
 
 /**
  * O que mais importa para o seu caso — ADR-042, agora como eco.
@@ -29,6 +34,8 @@ export function PerfilPanel({
   validatedAt,
   curatorName,
   comoQuerSerCuidada,
+  linhas,
+  tecnicos,
 }: {
   perfil: PerfilView;
   caseId?: string;
@@ -39,7 +46,28 @@ export function PerfilPanel({
   curatorName?: string | null;
   /** ADR-065 — o bloco relacional: as respostas dela, na linguagem dela. */
   comoQuerSerCuidada?: ComoQuerSerCuidadaItem[];
+  /** Etapa 2B — a comparação, vinda pronta de `loadModeloDoReconhecimento`. */
+  linhas?: LinhaDoReconhecimento[];
+  /** Etapa 2B — o terceiro bloco, já separado no modelo. */
+  tecnicos?: LinhaTecnica[];
 }) {
+  /**
+   * B6 — QUAL SUPERFÍCIE ELA VÊ AO RECONHECER.
+   *
+   * A superfície antiga do reconhecimento é a lista de níveis abaixo: ela
+   * mostra o que ficou registrado **sem a fala dela ao lado**, que é exatamente
+   * o achado P8 — reconhecer uma tradução sem ver a tradução. Enquanto o ato é
+   * dela, a comparação toma o lugar da lista; as duas nunca aparecem juntas,
+   * para não existirem dois retratos concorrentes do mesmo Perfil.
+   *
+   * Depois do reconhecimento, a lista volta a ser o retrato — não há mais o que
+   * comparar, e o que ela quer ver é o Perfil que passou a orientar a Curadoria.
+   */
+  const comparacao = linhas ?? [];
+  const tecnicosDoBloco = tecnicos ?? [];
+  const reconhecendo =
+    !perfil.validated && (comparacao.length > 0 || tecnicosDoBloco.length > 0);
+
   return (
     <PatientCard>
       <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
@@ -51,7 +79,11 @@ export function PerfilPanel({
         {perfil.headline}
       </p>
 
-      {perfil.prioridades.length === 0 ? (
+      {reconhecendo ? (
+        <div className="mt-5">
+          <ReconhecimentoDuasColunas linhas={comparacao} tecnicos={tecnicosDoBloco} />
+        </div>
+      ) : perfil.prioridades.length === 0 ? (
         // Nunca um card vazio: o estado é dito por nome.
         <p className="mt-4 max-w-reading text-sm leading-relaxed text-ink-muted">
           Assim que esta etapa for concluída, você verá aqui o que foi considerado mais importante
@@ -112,7 +144,10 @@ export function PerfilPanel({
         </div>
       ) : null}
 
-      {perfil.prioridades.length > 0 ? (
+      {/* A nota explica a LISTA de níveis. Quando a comparação toma o lugar
+          dela, a nota sai junto: explicar uma lista que não está na tela é
+          apontar para o vazio. */}
+      {!reconhecendo && perfil.prioridades.length > 0 ? (
         <p className="mt-6 max-w-prose text-sm leading-relaxed text-[var(--color-ink-muted)]">
           Estes níveis representam apenas a importância que você atribuiu a cada aspecto durante a
           conversa. Eles falam do que importa para você — nenhum profissional é medido por eles.

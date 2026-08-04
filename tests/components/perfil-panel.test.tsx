@@ -2,6 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { PerfilPanel } from "@/components/paciente/perfil-panel";
+import { montarCadeiaDeProveniencia } from "@/modules/curadoria/cadeia-de-proveniencia";
 import { SUBCRITERION_CATALOG } from "@/modules/curadoria/mapa-prioridades";
 import { buildPerfilView, violatesPatientVocabulary } from "@/modules/paciente/experiencia";
 
@@ -96,6 +97,162 @@ describe("PerfilPanel — o que mais importa, nas palavras dela", () => {
 
   it("o painel inteiro respeita o vocabulário do paciente", () => {
     const { container } = render(<PerfilPanel perfil={buildPerfilView(MAPA, true)} />);
+    expect(violatesPatientVocabulary(container.textContent ?? "")).toBeNull();
+  });
+});
+
+/**
+ * ETAPA 2B — A SUPERFÍCIE VIVA DO RECONHECIMENTO.
+ *
+ * A superfície antiga é a lista de níveis: ela mostra o que ficou registrado
+ * SEM a fala dela ao lado — o achado P8, reconhecer uma tradução sem ver a
+ * tradução. Enquanto o ato é dela, a comparação toma o lugar da lista. As duas
+ * nunca coexistem: dois retratos do mesmo Perfil na mesma tela seriam dois
+ * fluxos concorrentes.
+ */
+describe("Etapa 2B — a comparação substitui a lista enquanto o ato é dela", () => {
+  const CADEIA = montarCadeiaDeProveniencia({
+    subcriterionCode: "MODELO_COMUNICACAO",
+    pessoa: {
+      declaracao: {
+        degree: "ESSENCIAL",
+        options: ["explicacao_simples"],
+        declaredBy: "perfil-paciente",
+        declaredAt: "2026-08-01T10:00:00Z",
+      },
+      importancia: {
+        importance: "IMPORTANTE",
+        declaredBy: "Dra. Ana",
+        registradoEm: "2026-08-02T09:00:00Z",
+      },
+    },
+    profissional: { estado: null },
+  });
+
+  const LINHAS = [
+    {
+      subcriterionCode: "MODELO_COMUNICACAO",
+      label: "Como explica",
+      declaracao: {
+        grau: "É essencial para você",
+        opcoes: ["Com palavras simples"],
+        em: "2026-08-01T10:00:00Z",
+        autor: "perfil-paciente",
+      },
+      registro: {
+        importancia: "Importante",
+        autor: "Dra. Ana",
+        registradoEm: "2026-08-02T09:00:00Z",
+      },
+      cadeia: CADEIA,
+    },
+  ];
+
+  const TECNICOS = [
+    {
+      subcriterionCode: "FORMACAO_RESIDENCIA",
+      label: "Residência médica",
+      importancia: "Muito importante",
+      autor: "Dra. Ana",
+      registradoEm: "2026-08-02T09:00:00Z",
+    },
+  ];
+
+  it("com o modelo e o ato pendente, ela vê as duas colunas", () => {
+    render(
+      <PerfilPanel
+        perfil={buildPerfilView(MAPA_COMPLETO, false)}
+        caseId="c1"
+        linhas={LINHAS}
+        tecnicos={TECNICOS}
+      />,
+    );
+
+    expect(screen.getByText("O que você disse")).toBeInTheDocument();
+    expect(screen.getByText("O que ficou registrado")).toBeInTheDocument();
+  });
+
+  it("o terceiro bloco aparece junto, com a procedência dita por inteiro", () => {
+    render(
+      <PerfilPanel
+        perfil={buildPerfilView(MAPA_COMPLETO, false)}
+        caseId="c1"
+        linhas={LINHAS}
+        tecnicos={TECNICOS}
+      />,
+    );
+
+    expect(screen.getByText("O que a Curadoria considerou por conta própria")).toBeInTheDocument();
+    expect(screen.getByText(/nada aqui veio de você/)).toBeInTheDocument();
+  });
+
+  it("a lista antiga sai de cena — nunca os dois retratos ao mesmo tempo", () => {
+    const { container } = render(
+      <PerfilPanel
+        perfil={buildPerfilView(MAPA_COMPLETO, false)}
+        caseId="c1"
+        linhas={LINHAS}
+        tecnicos={TECNICOS}
+      />,
+    );
+
+    // A lista antiga é a dos cabeçalhos de nível. Se ela ainda estivesse na
+    // tela, o mesmo conceito apareceria duas vezes, com duas caras.
+    expect(screen.queryByRole("heading", { name: "Muito importante" })).not.toBeInTheDocument();
+    expect(container.textContent).not.toContain(
+      "Estes níveis representam apenas a importância",
+    );
+  });
+
+  it("B7 · só confirmar é oferecido — nenhuma ação das etapas futuras aparece", () => {
+    const { container } = render(
+      <PerfilPanel
+        perfil={buildPerfilView(MAPA_COMPLETO, false)}
+        caseId="c1"
+        linhas={LINHAS}
+        tecnicos={TECNICOS}
+      />,
+    );
+
+    const texto = container.textContent ?? "";
+    for (const aindaNao of ["Discordar", "Corrigir", "Deixar pendente", "Não reconheço"]) {
+      expect(texto, `"${aindaNao}" ainda não foi implementado (2C/2D)`).not.toContain(aindaNao);
+    }
+    // O ato que JÁ existe continua na tela dela.
+    expect(texto).toContain("Este retrato representa corretamente");
+  });
+
+  it("depois do reconhecimento, a lista volta a ser o retrato", () => {
+    render(
+      <PerfilPanel
+        perfil={buildPerfilView(MAPA_COMPLETO, true)}
+        caseId="c1"
+        linhas={LINHAS}
+        tecnicos={TECNICOS}
+      />,
+    );
+
+    expect(screen.queryByText("O que você disse")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Importante" })).toBeInTheDocument();
+  });
+
+  it("sem modelo, o painel segue como antes — rollback é simplesmente não passar linhas", () => {
+    render(<PerfilPanel perfil={buildPerfilView(MAPA, false)} caseId="c1" />);
+
+    expect(screen.queryByText("O que você disse")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Muito importante" })).toBeInTheDocument();
+  });
+
+  it("o painel inteiro segue respeitando o vocabulário dela", () => {
+    const { container } = render(
+      <PerfilPanel
+        perfil={buildPerfilView(MAPA_COMPLETO, false)}
+        caseId="c1"
+        linhas={LINHAS}
+        tecnicos={TECNICOS}
+      />,
+    );
+
     expect(violatesPatientVocabulary(container.textContent ?? "")).toBeNull();
   });
 });
