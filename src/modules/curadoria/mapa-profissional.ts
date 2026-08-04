@@ -90,6 +90,8 @@ export type ProfessionalMapItem = {
    * intocada (ADR-068 item 7).
    */
   declaredBy?: string | null;
+  /** Etapa 1: `updated_at` — quando o registro foi gravado. Mesma semantica do lado do Case. */
+  registradoEm?: string | null;
 };
 
 export type ProfessionalMapCompletion = {

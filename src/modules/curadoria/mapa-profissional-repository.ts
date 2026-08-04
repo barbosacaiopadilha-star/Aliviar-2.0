@@ -40,7 +40,7 @@ export async function loadProfessionalMap(
     listSubcriterionCatalog(supabase, { includeInactive: true }),
     supabase
       .from("professional_subcriterion_map")
-      .select("subcriterion_id, status, note, declared_by")
+      .select("subcriterion_id, status, note, declared_by, updated_at")
       .eq("professional_profile_id", professionalProfileId),
   ]);
 
@@ -59,6 +59,7 @@ export async function loadProfessionalMap(
         status,
         note: (row.note as string | null) ?? null,
         declaredBy: (row.declared_by as string | null) ?? null,
+        registradoEm: (row.updated_at as string | null) ?? null,
       },
     ];
   });

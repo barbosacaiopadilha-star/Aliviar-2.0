@@ -183,6 +183,8 @@ export type PriorityMapItem = {
    * confirmação (Itens 1.9/1.10), sob a ADR-068.
    */
   declaredBy?: string | null;
+  /** PP-02/Etapa 1: `updated_at` — quando o registro foi gravado. Nao e "data da confirmacao": essa coluna nao existe, e inventa-la seria afirmar precisao que o banco nao tem. */
+  registradoEm?: string | null;
 };
 
 export type CompletionStatus = "NOT_STARTED" | "IN_PROGRESS" | "COMPLETE";

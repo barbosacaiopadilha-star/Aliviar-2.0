@@ -27,9 +27,13 @@ function linha(overrides: Partial<LinhaDoReconhecimento> = {}): LinhaDoReconheci
         declaredBy: "perfil-paciente",
         declaredAt: "2026-08-01T10:00:00Z",
       },
-      importancia: { importance: "MUITO_IMPORTANTE", declaredBy: "Dra. Ana" },
+      importancia: {
+        importance: "MUITO_IMPORTANTE",
+        declaredBy: "Dra. Ana",
+        registradoEm: "2026-08-02T09:00:00Z",
+      },
     },
-    profissional: { evidencia: null, estado: null },
+    profissional: { estado: null },
   });
 
   return {
@@ -100,7 +104,7 @@ describe("Consumo da autoria criada no Item 1.9", () => {
         },
         importancia: null,
       },
-      profissional: { evidencia: null, estado: null },
+      profissional: { estado: null },
     });
 
     const daCadeia = cadeiaSemImportancia.lacunas.find(

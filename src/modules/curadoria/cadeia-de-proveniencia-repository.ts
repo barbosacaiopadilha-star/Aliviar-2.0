@@ -51,16 +51,21 @@ export async function loadCadeiaDeProveniencia(
           }
         : null,
       importancia: importancia
-        ? { importance: importancia.importance, declaredBy: importancia.declaredBy ?? null }
+        ? {
+            importance: importancia.importance,
+            declaredBy: importancia.declaredBy ?? null,
+            registradoEm: importancia.registradoEm ?? null,
+          }
         : null,
     },
     profissional: {
-      // A Base de Evidências não é lida por conceito neste pacote: o elo de
-      // origem do lado do profissional entra quando o Mapa passar a apontar
-      // para a evidência que o sustenta (Onda 2). Declarar `null` aqui é dizer
-      // a verdade — a cadeia mostra a lacuna em vez de supor a origem.
-      evidencia: null,
-      estado: estado ? { status: estado.status, declaredBy: estado.declaredBy ?? null } : null,
+      estado: estado
+        ? {
+            status: estado.status,
+            declaredBy: estado.declaredBy ?? null,
+            registradoEm: estado.registradoEm ?? null,
+          }
+        : null,
     },
   });
 }

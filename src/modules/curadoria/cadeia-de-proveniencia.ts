@@ -36,9 +36,24 @@ export type EloDeProveniencia = {
   /** O que este elo afirma, em uma frase. */
   afirma: string;
   presente: boolean;
+  /**
+   * O conteúdo do elo, quando ele tem um: o grau e as opções que ela escolheu,
+   * a importância registrada, o estado do profissional. Existe para que a
+   * superfície não precise buscar o mesmo dado numa segunda fonte — a cadeia é
+   * a fonte única do que este elo afirma.
+   */
+  detalhe: string | null;
   /** Quem praticou o ato. `null` quando o elo não existe ou não tem autor registrado. */
   autor: string | null;
-  /** Quando. `null` pelo mesmo motivo. */
+  /**
+   * A data do elo, e ela significa coisas diferentes conforme a fonte:
+   *
+   * - na declaração dela, é `case_needs.declared_at` — **quando ela declarou**;
+   * - na confirmação, é o `updated_at` do Mapa — **quando o registro foi
+   *   gravado pela última vez**, que é a data mais próxima da confirmação que
+   *   o banco guarda hoje. Não existe coluna de "data da confirmação", e
+   *   inventá-la seria afirmar precisão que o sistema não tem.
+   */
   em: string | null;
   /**
    * Por que o elo falta. `null` quando ele está presente. Nunca vazio quando
@@ -87,37 +102,35 @@ export type EntradaDaPessoa = {
   importancia: {
     importance: ImportanceLevel;
     declaredBy: string | null;
+    /** `updated_at` do Mapa — quando o registro foi gravado, não "quando confirmou". */
+    registradoEm: string | null;
   } | null;
 };
 
 export type EntradaDoProfissional = {
-  /** A evidência de origem, de `practice_evidence`. `null` = não há. */
-  evidencia: {
-    version: number | null;
-    source: string | null;
-    verifiedBy: string | null;
-    verifiedAt: string | null;
-  } | null;
   /** O estado vigente no Mapa do Profissional. `null` = ninguém declarou ainda. */
   estado: {
     status: SubcriterionStatus;
     declaredBy: string | null;
+    /** `updated_at` do Mapa — mesma semântica do lado do Case. */
+    registradoEm: string | null;
   } | null;
 };
 
 function elo(
   id: EloId,
   afirma: string,
-  dados: { autor?: string | null; em?: string | null } | null,
+  dados: { detalhe?: string | null; autor?: string | null; em?: string | null } | null,
   lacuna: string,
 ): EloDeProveniencia {
   if (!dados) {
-    return { id, afirma, presente: false, autor: null, em: null, lacuna };
+    return { id, afirma, presente: false, detalhe: null, autor: null, em: null, lacuna };
   }
   return {
     id,
     afirma,
     presente: true,
+    detalhe: dados.detalhe ?? null,
     autor: dados.autor ?? null,
     em: dados.em ?? null,
     lacuna: null,
@@ -149,7 +162,13 @@ export function montarCadeiaDeProveniencia(input: {
         "DECLARACAO_ORIGINAL",
         "O que ela declarou sobre este conceito, com o grau nas palavras dela.",
         pessoa.declaracao
-          ? { autor: pessoa.declaracao.declaredBy, em: pessoa.declaracao.declaredAt }
+          ? {
+              detalhe: [pessoa.declaracao.degree, ...pessoa.declaracao.options]
+                .filter((parte) => parte && parte.trim() !== "")
+                .join(" · "),
+              autor: pessoa.declaracao.declaredBy,
+              em: pessoa.declaracao.declaredAt,
+            }
           : null,
         "Ela ainda não declarou nada sobre este conceito — não há resposta em `case_needs`.",
       ),
@@ -157,7 +176,13 @@ export function montarCadeiaDeProveniencia(input: {
       elo(
         "CONFIRMACAO",
         "A importância que vale para este Case, e quem a declarou.",
-        pessoa.importancia ? { autor: pessoa.importancia.declaredBy } : null,
+        pessoa.importancia
+          ? {
+              detalhe: pessoa.importancia.importance,
+              autor: pessoa.importancia.declaredBy,
+              em: pessoa.importancia.registradoEm,
+            }
+          : null,
         "Ninguém declarou a importância deste conceito no Mapa de Prioridades.",
       ),
       elo(
@@ -173,19 +198,28 @@ export function montarCadeiaDeProveniencia(input: {
   const ramoProfissional: RamoDeProveniencia = {
     lado: "PROFISSIONAL",
     elos: [
+      // A1 (Etapa 1): este elo AFIRMAVA ler a Base de Evidências — fonte,
+      // versão e verificação —, e o repositório nunca a leu: entregava sempre
+      // ausência. Dizer que se lê o que não se lê é o mesmo vício que a cadeia
+      // existe para combater, do lado de dentro. O texto passa a declarar o
+      // que o sistema de fato sabe hoje: nada.
       elo(
         "DECLARACAO_ORIGINAL",
-        "A evidência de prática que sustenta este conceito, com fonte e verificação.",
-        profissional.evidencia
-          ? { autor: profissional.evidencia.verifiedBy, em: profissional.evidencia.verifiedAt }
-          : null,
-        "Não há evidência registrada na Base para este conceito.",
+        "A evidência de prática que sustentaria este estado, na Base de Evidências.",
+        null,
+        "A cadeia ainda não lê a Base de Evidências: não existe vínculo, no Mapa do Profissional, que aponte para a evidência que sustenta cada estado. Enquanto ele não existir, a origem deste lado permanece desconhecida — e é isso que está escrito aqui, em vez de uma fonte suposta.",
       ),
       elo("PROPOSTA", "A regra versionada que transformou a evidência em estado.", null, PROPOSTA_AINDA_NAO_EXISTE),
       elo(
         "CONFIRMACAO",
         "O estado que vale no Mapa do Profissional, e quem o declarou.",
-        profissional.estado ? { autor: profissional.estado.declaredBy } : null,
+        profissional.estado
+          ? {
+              detalhe: profissional.estado.status,
+              autor: profissional.estado.declaredBy,
+              em: profissional.estado.registradoEm,
+            }
+          : null,
         "Ninguém declarou o estado deste conceito no Mapa do Profissional.",
       ),
       elo(

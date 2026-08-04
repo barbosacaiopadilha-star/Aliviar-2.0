@@ -23,21 +23,23 @@ const PESSOA_COMPLETA: EntradaDaPessoa = {
     declaredBy: "perfil-paciente",
     declaredAt: "2026-08-01T10:00:00Z",
   },
-  importancia: { importance: "MUITO_IMPORTANTE", declaredBy: "perfil-curador" },
+  importancia: {
+    importance: "MUITO_IMPORTANTE",
+    declaredBy: "perfil-curador",
+    registradoEm: "2026-08-02T09:00:00Z",
+  },
 };
 
 const PROFISSIONAL_COMPLETO: EntradaDoProfissional = {
-  evidencia: {
-    version: 2,
-    source: "entrevista",
-    verifiedBy: "perfil-operacao",
-    verifiedAt: "2026-07-30T12:00:00Z",
+  estado: {
+    status: "CONFIRMADO",
+    declaredBy: "perfil-admin",
+    registradoEm: "2026-07-31T08:00:00Z",
   },
-  estado: { status: "CONFIRMADO", declaredBy: "perfil-admin" },
 };
 
 const VAZIO_PESSOA: EntradaDaPessoa = { declaracao: null, importancia: null };
-const VAZIO_PROFISSIONAL: EntradaDoProfissional = { evidencia: null, estado: null };
+const VAZIO_PROFISSIONAL: EntradaDoProfissional = { estado: null };
 
 function cadeia(pessoa: EntradaDaPessoa, profissional: EntradaDoProfissional) {
   return montarCadeiaDeProveniencia({
@@ -57,12 +59,16 @@ describe("Autoria — quem declarou chega à cadeia", () => {
     expect(ramo.elos.find((e) => e.id === "CONFIRMACAO")?.autor).toBe("perfil-curador");
   });
 
-  it("do lado do profissional, quem verificou a evidência e quem declarou o estado", () => {
+  it("do lado do profissional, a origem NAO e lida — e a cadeia diz isso (A1)", () => {
     const ramo = cadeia(PESSOA_COMPLETA, PROFISSIONAL_COMPLETO).ramos.find(
       (r) => r.lado === "PROFISSIONAL",
     )!;
 
-    expect(ramo.elos.find((e) => e.id === "DECLARACAO_ORIGINAL")?.autor).toBe("perfil-operacao");
+    const origem = ramo.elos.find((e) => e.id === "DECLARACAO_ORIGINAL")!;
+    // O texto antigo AFIRMAVA ler fonte e verificacao, e o repositorio nunca
+    // leu. Agora o elo declara a ausencia em vez de supor a origem.
+    expect(origem.presente).toBe(false);
+    expect(origem.lacuna).toContain("ainda não lê a Base de Evidências");
     expect(ramo.elos.find((e) => e.id === "CONFIRMACAO")?.autor).toBe("perfil-admin");
   });
 });
@@ -70,7 +76,10 @@ describe("Autoria — quem declarou chega à cadeia", () => {
 describe("Registros antigos — sem autor, e dito assim", () => {
   it("importância sem `declared_by` continua presente, com autor nulo", () => {
     const resultado = cadeia(
-      { ...PESSOA_COMPLETA, importancia: { importance: "IMPORTANTE", declaredBy: null } },
+      {
+        ...PESSOA_COMPLETA,
+        importancia: { importance: "IMPORTANTE", declaredBy: null, registradoEm: null },
+      },
       PROFISSIONAL_COMPLETO,
     );
     const confirmacao = resultado.ramos
@@ -118,11 +127,11 @@ describe("Nenhum elo é inventado", () => {
 });
 
 describe("Registros novos — o que já é reconstituível", () => {
-  it("com declaração, importância, evidência e estado, só a proposta falta", () => {
+  it("faltam a proposta (dois ramos) e a origem do lado do profissional", () => {
     const resultado = cadeia(PESSOA_COMPLETA, PROFISSIONAL_COMPLETO);
     const faltantes = resultado.lacunas.map((l) => l.elo);
-    expect(new Set(faltantes)).toEqual(new Set(["PROPOSTA"]));
-    expect(resultado.lacunas).toHaveLength(2); // um por ramo
+    expect(new Set(faltantes)).toEqual(new Set(["PROPOSTA", "DECLARACAO_ORIGINAL"]));
+    expect(resultado.lacunas).toHaveLength(3);
   });
 
   it("sem importância ou sem estado, a leitura do Motor não existe — e a cadeia diz por quê", () => {
@@ -138,7 +147,7 @@ describe("Registros novos — o que já é reconstituível", () => {
 describe("A frase da cadeia descreve rastreabilidade, nunca qualidade", () => {
   it("conta elos e nomeia o que falta", () => {
     const frase = fraseDaCadeia(cadeia(PESSOA_COMPLETA, PROFISSIONAL_COMPLETO));
-    expect(frase).toMatch(/6 de 8 elos registrados/);
+    expect(frase).toMatch(/5 de 8 elos registrados/);
     expect(frase).toMatch(/em vez de supor/);
   });
 
