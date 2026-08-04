@@ -80,6 +80,16 @@ export type ProfessionalMapItem = {
   subcriterionCode: string;
   status: SubcriterionStatus;
   note: string | null;
+  /**
+   * PP-02 — quem declarou este estado. `null` significa **registro anterior ao
+   * regime de autoria**, nunca "autor desconhecido" e nunca ausência de
+   * responsabilidade (I-8).
+   *
+   * Infraestrutura: a coluna existe e é lida; **nenhuma escrita a preenche
+   * ainda**, e nenhum consumidor a usa. A RLS da ADR-040 item 6 permanece
+   * intocada (ADR-068 item 7).
+   */
+  declaredBy?: string | null;
 };
 
 export type ProfessionalMapCompletion = {

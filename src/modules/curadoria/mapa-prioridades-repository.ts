@@ -73,7 +73,7 @@ export async function loadCasePriorityMap(
     listSubcriterionCatalog(supabase, { includeInactive: true }),
     supabase
       .from("case_priority_map")
-      .select("subcriterion_id, importance")
+      .select("subcriterion_id, importance, declared_by")
       .eq("case_id", caseId),
   ]);
 
@@ -85,7 +85,8 @@ export async function loadCasePriorityMap(
     const code = codigoPorId.get(row.subcriterion_id as string);
     const importance = row.importance as string;
     if (!code || !isImportanceLevel(importance)) return [];
-    return [{ subcriterionCode: code, importance }];
+    // PP-02: a autoria e lida; nenhuma escrita a preenche neste pacote.
+    return [{ subcriterionCode: code, importance, declaredBy: (row.declared_by as string | null) ?? null }];
   });
 
   return { caseId, items, completion: priorityMapCompletion(items, catalogo) };

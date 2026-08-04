@@ -173,6 +173,16 @@ export function subcriteriaOfGroup(
 export type PriorityMapItem = {
   subcriterionCode: string;
   importance: ImportanceLevel;
+  /**
+   * PP-02 — quem declarou esta importância. `null` significa **registro
+   * anterior ao regime de autoria**, nunca "autor desconhecido" e nunca
+   * ausência de responsabilidade (I-8).
+   *
+   * Infraestrutura: a coluna existe e é lida; **nenhuma escrita a preenche
+   * ainda**, e nenhum consumidor a usa. Quem passará a gravá-la é o pacote da
+   * confirmação (Itens 1.9/1.10), sob a ADR-068.
+   */
+  declaredBy?: string | null;
 };
 
 export type CompletionStatus = "NOT_STARTED" | "IN_PROGRESS" | "COMPLETE";
