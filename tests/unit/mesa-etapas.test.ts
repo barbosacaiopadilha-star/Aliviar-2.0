@@ -178,7 +178,64 @@ describe("Progresso da investigação", () => {
   it("o progresso conta o que está pronto, não o que foi visitado", () => {
     const facts = { ...ZERADO, mapPending: 0, professionalsFound: 4, eligible: 3, criteriaAwaiting: 6 };
     const { done } = mesaProgress(buildMesaEtapas(facts));
-    // Perfil e Rede prontos; avaliação e compatibilidade pendentes.
-    expect(done).toBe(2);
+    // Perfil, Rede e COMPATIBILIDADE prontos; só a avaliação está pendente.
+    //
+    // P11 (Onda 1.4): este oráculo esperava 2 porque a Mesa declarava a leitura
+    // do Motor pendente enquanto houvesse critério sem avaliação. Essa
+    // dependência não existe no domínio — o Motor cruza os dois Mapas, não as
+    // `criterion_declarations`. Com ela removida, a leitura está pronta.
+    expect(done).toBe(3);
+  });
+});
+
+/**
+ * P11 — ONDA 1.4: A LEITURA DO MOTOR NÃO DEPENDE DAS AVALIAÇÕES.
+ *
+ * `crossPriorityAndProfessional` recebe `casePriorities`, `professionalStates` e
+ * `activeSubcriterionCodes` — nunca `criterion_declarations`, que é o que
+ * `criteriaAwaiting` conta. A Mesa declarava uma dependência que o domínio não
+ * tem, e o Curador via "faltam avaliações para fechar a leitura" sobre uma
+ * leitura que já estava fechada (auditoria §2.9, achado P11).
+ */
+describe("P11 · COMPATIBILIDADE não depende de AVALIACAO", () => {
+  const SEM_AVALIACOES: MesaFacts = {
+    ...ZERADO,
+    mapPending: 0,
+    professionalsFound: 4,
+    eligible: 3,
+    criteriaAwaiting: 6,
+  };
+
+  it("com os dois Mapas prontos, a leitura fica PRONTA mesmo sem nenhuma avaliação", () => {
+    const compatibilidade = etapaDe(SEM_AVALIACOES, "COMPATIBILIDADE");
+    expect(compatibilidade.status).toBe("PRONTA");
+    expect(compatibilidade.pending).toBeNull();
+  });
+
+  it("nenhuma etapa culpa as avaliações pela leitura do Motor", () => {
+    const compatibilidade = etapaDe(SEM_AVALIACOES, "COMPATIBILIDADE");
+    const texto = `${compatibilidade.pending ?? ""} ${compatibilidade.waitingOn ?? ""}`;
+    expect(texto).not.toMatch(/avalia/i);
+  });
+
+  it("AVALIACAO continua pendente por conta própria — o defeito era só a dependência falsa", () => {
+    const avaliacao = etapaDe(SEM_AVALIACOES, "AVALIACAO");
+    expect(avaliacao.status).toBe("PENDENTE");
+    expect(avaliacao.pending).toContain("6 critérios sem avaliação");
+  });
+
+  it("as duas dependências reais da leitura permanecem", () => {
+    const semMapa = etapaDe({ ...SEM_AVALIACOES, mapPending: 4 }, "COMPATIBILIDADE");
+    expect(semMapa.status).toBe("AGUARDA");
+    expect(semMapa.waitingOn).toContain("Mapa de Prioridades");
+
+    const semElegivel = etapaDe({ ...SEM_AVALIACOES, eligible: 0 }, "COMPATIBILIDADE");
+    expect(semElegivel.status).toBe("AGUARDA");
+    expect(semElegivel.waitingOn).toContain("elegível");
+  });
+
+  it("a próxima decisão continua apontando para a avaliação, não para a leitura", () => {
+    const etapas = buildMesaEtapas(SEM_AVALIACOES);
+    expect(proximaDecisao(etapas, true).etapa).toBe("AVALIACAO");
   });
 });

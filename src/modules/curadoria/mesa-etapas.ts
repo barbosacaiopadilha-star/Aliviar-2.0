@@ -127,13 +127,20 @@ export function buildMesaEtapas(facts: MesaFacts): MesaEtapaState[] {
     // A leitura do Motor nasce do Mapa de Prioridades cruzado com o Mapa do
     // Profissional, e só existe para quem participa — por isso as duas
     // dependências aparecem aqui, na etapa única (M4).
+    //
+    // P11 (Onda 1.4): a terceira condição — `criteriaAwaiting > 0` marcando a
+    // etapa como PENDENTE com "Faltam avaliações para fechar a leitura" — foi
+    // REMOVIDA. Ela não existe no domínio: `crossPriorityAndProfessional` cruza
+    // `case_priority_map` com `professional_subcriterion_map`, e não recebe
+    // `criterion_declarations` (que é o que `criteriaAwaiting` conta). A
+    // leitura do Motor está completa sem nenhuma declaração de critério.
+    // As duas dependências que sobraram são reais: sem Mapa do Case não há o
+    // que cruzar, e sem elegível não há contra quem.
     facts.mapPending > 0
       ? etapa("COMPATIBILIDADE", "AGUARDA", null, "Depende do Mapa de Prioridades completo.")
       : !temElegiveis
         ? etapa("COMPATIBILIDADE", "AGUARDA", null, "Depende de haver ao menos um profissional elegível.")
-        : facts.criteriaAwaiting > 0
-          ? etapa("COMPATIBILIDADE", "PENDENTE", "Faltam avaliações para fechar a leitura.")
-          : etapa("COMPATIBILIDADE", "PRONTA", null),
+        : etapa("COMPATIBILIDADE", "PRONTA", null),
 
     facts.selected === 3
       ? etapa("CAMINHOS", "PRONTA", null)
