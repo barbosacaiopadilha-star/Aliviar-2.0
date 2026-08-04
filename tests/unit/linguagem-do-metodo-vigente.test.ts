@@ -107,38 +107,17 @@ describe("Metadados das fases exibidos ao Curador (NC-21)", () => {
   });
 });
 
-describe("Como funciona, para a paciente (NC-20)", () => {
-  const pagina = ler("src/app/portal-paciente/como-funciona/page.tsx");
-
-  it("não descreve o método como distribuição de pontos ou pesos", () => {
-    for (const proibido of ["cem pontos", "100 pontos", "distribuem", "orçamento", "saldo"]) {
-      expect(pagina.toLowerCase().includes(proibido), proibido).toBe(false);
-    }
-    expect(pagina).not.toMatch(/\bpeso[s]?\b/i);
-  });
-
-  it("explica níveis de importância, o registro do profissional e a leitura sem nota", () => {
-    expect(pagina).toContain("nível de importância");
-    expect(pagina).toContain("confirmado");
-    expect(pagina).toMatch(/sem nota/);
-    expect(pagina).toContain("aderência");
-  });
-
-  it("a decisão final continua sendo dela, e nada de vocabulário técnico", () => {
-    expect(pagina).toContain("decisão final é exclusivamente sua");
-    for (const tecnico of [
-      "case_priority_map",
-      "professional_subcriterion_map",
-      "NAO_INFORMADO",
-      "ALTA_COMPATIBILIDADE",
-      "ranking",
-      "score",
-    ]) {
-      expect(pagina.includes(tecnico), tecnico).toBe(false);
-    }
-  });
-});
-
+/**
+ * Item 1.7 (P20): aqui havia o bloco "Como funciona, para a paciente (NC-20)",
+ * que guardava o vocabulário de `src/app/portal-paciente/como-funciona/page.tsx`
+ * — superfície morta, interceptada por redirect permanente desde a Decisão A e
+ * **removida** por este pacote. Com o arquivo sai a guarda que o lia: o que ela
+ * protegia deixou de existir.
+ *
+ * A proteção equivalente sobre a superfície VIVA continua em
+ * `tests/unit/unificacao-experiencia.test.ts` ("nenhuma superfície do paciente
+ * usa vocabulário interno"), que passou a varrer `src/app/paciente`.
+ */
 describe("Estados vazios e rótulos do Curador", () => {
   it("nenhum vazio da Mesa promete dois resultados ou dois cruzamentos", () => {
     const vazios = ler("src/components/curadoria/mesa/mesa-vazios.tsx");

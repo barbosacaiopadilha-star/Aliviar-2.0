@@ -29,7 +29,9 @@ function listRoutes(dir: string): string[] {
   return found;
 }
 
-const PORTAL_DIRS = ["src/app/portal-curador", "src/app/portal-paciente"];
+// Item 1.7: `/portal-paciente/*` foi removido — superfície morta, interceptada
+// por redirect permanente desde a Decisão A. Resta o Portal do Curador.
+const PORTAL_DIRS = ["src/app/portal-curador"];
 
 describe("um shell só para os dois Portais", () => {
   it("nenhum layout de Portal desenha o próprio cabeçalho", () => {
@@ -73,14 +75,13 @@ describe("nenhum fluxo termina fora da experiência", () => {
 
   it("todo link interno estático dos Portais aponta para uma rota que existe", () => {
     const routes = new Set(
-      [...listRoutes("src/app/portal-curador"), ...listRoutes("src/app/portal-paciente")]
+      [...listRoutes("src/app/portal-curador")]
         .filter((file) => file.endsWith("page.tsx"))
         .map((file) => file.replace("src/app", "").replace("/page.tsx", "") || "/"),
     );
 
     const sources = [
       ...listRoutes("src/app/portal-curador"),
-      ...listRoutes("src/app/portal-paciente"),
       ...readdirSync(path.join(ROOT, "src/components/curadoria"))
         .filter((file) => file.endsWith(".tsx"))
         .map((file) => `src/components/curadoria/${file}`),
@@ -104,7 +105,9 @@ describe("uma linguagem só", () => {
   const FORBIDDEN_IN_PATIENT = ["Curador Médico", "P00", "ACE", "shortlist", "score"];
 
   it("nenhuma superfície do paciente usa vocabulário interno", () => {
-    for (const file of listRoutes("src/app/portal-paciente")) {
+    // Item 1.7: `/portal-paciente/*` saiu. A guarda passa a proteger a
+    // superfície VIVA da paciente — que é onde ela de fato lê.
+    for (const file of listRoutes("src/app/paciente")) {
       const content = read(file);
       for (const term of FORBIDDEN_IN_PATIENT) {
         expect(content, `${file} usa "${term}", que nunca chega ao paciente`).not.toContain(term);

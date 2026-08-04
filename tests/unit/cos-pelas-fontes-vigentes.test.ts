@@ -140,9 +140,9 @@ describe("Superfícies do Curador sem o legado", () => {
     }
   });
 
-  it("a página de prioridades da paciente fala níveis, nunca pontos", () => {
-    const pagina = ler("src/app/portal-paciente/prioridades/page.tsx");
-    expect(pagina).not.toMatch(/pontos?"|weight/);
-    expect(pagina).toContain("IMPORTANCE_LEVELS");
-  });
+  // Item 1.7 (P20): a guarda "a página de prioridades da paciente fala níveis,
+  // nunca pontos" lia `src/app/portal-paciente/prioridades/page.tsx` —
+  // superfície morta, interceptada por redirect permanente e removida por este
+  // pacote. A página viva do Perfil dela é `/paciente/perfil`, coberta pela
+  // varredura de vocabulário de `unificacao-experiencia.test.ts`.
 });
