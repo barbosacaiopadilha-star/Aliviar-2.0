@@ -59,7 +59,14 @@ export async function saveReport(
   supabase: SupabaseClient,
   caseId: string,
   curatedSelectionId: string,
-  compositionRationale: string,
+  /**
+   * P12 (Onda 1.3): `undefined` é "não mexi" — mesma semântica já usada em
+   * `favorablePoints` e `relationalReading`. A abertura JÁ GRAVADA é
+   * preservada. Quem decide se o texto gravado é do Curador ou do sistema é
+   * quem conhece a frase de trabalho (`relatorio-assistido.ts`), nunca este
+   * repositório: aqui não existe juízo sobre autoria.
+   */
+  compositionRationale: string | undefined,
   options: ReportOptionInput[],
 ): Promise<string> {
   const { data: existing } = await supabase
@@ -113,10 +120,12 @@ export async function saveReport(
   }
 
   if (reportId) {
-    const { error } = await supabase
-      .from("curadoria_reports")
-      .update({ composition_rationale: compositionRationale, updated_at: new Date().toISOString() })
-      .eq("id", reportId);
+    // `undefined` não entra no patch: a coluna sequer é tocada, e o que o
+    // Curador escreveu sobrevive à regeneração (P12).
+    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (compositionRationale !== undefined) patch.composition_rationale = compositionRationale;
+
+    const { error } = await supabase.from("curadoria_reports").update(patch).eq("id", reportId);
     if (error) throw new Error(error.message);
 
     await supabase.from("curadoria_report_options").delete().eq("report_id", reportId);
@@ -126,7 +135,10 @@ export async function saveReport(
       .insert({
         case_id: caseId,
         curated_selection_id: curatedSelectionId,
-        composition_rationale: compositionRationale,
+        // Relatório nascendo: não há abertura anterior a preservar. `undefined`
+        // vira `null` — a coluna é nullable, e a guarda de emissão trata
+        // ausência como pendência do Curador (`AUSENTE`).
+        composition_rationale: compositionRationale ?? null,
       })
       .select("id")
       .single();
