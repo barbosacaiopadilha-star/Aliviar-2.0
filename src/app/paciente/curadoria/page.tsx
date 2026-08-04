@@ -117,17 +117,19 @@ export default async function PatientCuradoriaPage() {
 
       {/* O PDF pertence à Mesa: material de consulta — para reler com a
           família ou levar à consulta —, nunca ação principal. Link de texto
-          discreto, sem competir com os três caminhos (Etapa Mesa §10). */}
-      {delivery ? (
-        <p className="mt-10">
-          <Link
-            href="/paciente/curadoria/imprimir"
-            className="text-sm font-medium text-[var(--patient-acento)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
-          >
-            Levar em PDF — para reler com a família ou na consulta
-          </Link>
-        </p>
-      ) : null}
+          discreto, sem competir com os três caminhos (Etapa Mesa §10).
+
+          Item 1.7 (A5): o link deixou de depender da entrega legada. Ele
+          existia só quando havia documento legado — quem tinha apenas a
+          Curadoria do Método não tinha PDF nenhum. */}
+      <p className="mt-10">
+        <Link
+          href="/paciente/curadoria/imprimir"
+          className="text-sm font-medium text-[var(--patient-acento)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+        >
+          Levar em PDF — para reler com a família ou na consulta
+        </Link>
+      </p>
     </>
   ) : null;
 
@@ -135,16 +137,14 @@ export default async function PatientCuradoriaPage() {
     <div className="pb-16">
       {varandaPrimeiro ? blocoAcompanhamento : blocoMesa}
 
+      {/* Item 1.7 (P9/RI5 · critério X4): UMA entrega, sempre. Quando existe a
+          Curadoria do Método, é ela — e só ela. O formato legado aparece
+          apenas para quem não tem outro: nada é apagado, e ninguém perde o
+          documento que já recebeu (DP-2: histórico preservado). O que saiu
+          daqui foi a SEGUNDA entrega, que exibia os dois ao mesmo tempo. */}
       {!curadoria && delivery ? <FinalCuradoriaView delivery={delivery} /> : null}
 
       {varandaPrimeiro ? blocoMesa : blocoAcompanhamento}
-
-      {curadoria && delivery ? (
-        <>
-          <Limiar nome="Seu relatório anterior" />
-          <FinalCuradoriaView delivery={delivery} />
-        </>
-      ) : null}
 
       {/* Entrega apenas no formato legado: o documento é o conteúdo
           principal, e o PDF o acompanha. O rótulo "Baixar em PDF" permanece

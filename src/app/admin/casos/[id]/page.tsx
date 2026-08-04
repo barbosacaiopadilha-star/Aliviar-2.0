@@ -178,7 +178,12 @@ export default async function AdminCaseDetailPage({ params }: AdminCaseDetailPag
           <h2 className="font-sans text-lg font-semibold text-ink">Execuções anteriores</h2>
           <p className="text-sm text-ink-muted">Todas as tentativas — nenhuma falha ou bloqueio desaparece do histórico.</p>
         </CardHeader>
-        <AceExecutionsHistory executions={executions} events={executionEvents} detailBasePath="/admin/ace" />
+        {/* Item 1.7 (DP-2): o histórico do ACE permanece inteiro e visível
+            aqui — nenhuma execução, evento ou artefato foi apagado. O que saiu
+            foi o link para `/admin/ace`, o dashboard de um motor que não
+            executa mais. Sem `detailBasePath`, a lista não oferece o destino
+            removido. */}
+        <AceExecutionsHistory executions={executions} events={executionEvents} />
       </Card>
 
       <Card>
