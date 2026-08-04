@@ -17,6 +17,11 @@ O log é append-only: nenhum verbete é reescrito. Este índice é o mapa que os
 | ADR-041 ("nenhum consumidor ligado") · ADR-043 ("incrementos futuros") · ADR-044 ("nada implementado") | ADR-063 | emenda de status (afirmações superadas pela implementação) |
 | ADR-003 · ADR-005 · ADR-009 · ADR-011 (divergências de fato) | ADR-063 | nota de status |
 | Ontologia §6 ONT-30 (escolha imutável) | ADR-063 §6 | emenda (correção em `DECISAO_REGISTRADA` é desenho vigente) |
+| ADR-039 · ADR-040 (Mapas preenchidos por digitação manual) | ADR-066 · ADR-068 | emenda de origem — os Mapas passam a ser confirmação registrada; **as escalas, os estados e a RLS permanecem intactos** |
+| **Invariante I-10** (`CONGELAMENTO_ARQUITETURAL.md` §5) | **ADR-066** | **reabertura substancial** — a distinção formal entre as escalas permanece; a ponte versionada reabre a invariante em substância |
+| ADR-065 (juízo relacional sem lugar de registro) | ADR-067 | complemento — os três conceitos `humano` passam a registrar-se em `curator_judgments` |
+| `MODELO_CURADORIA_V1.md` §7.1–§7.4 e §11 (v2.0) | ADR-067 → **Modelo v3.0** | emenda — remoção de "0–100" e dos percentuais de peso; quitação do achado P17 |
+| ADR-060 ("quem avalia não atesta", inexequível) | ADR-068 item 6 | complemento — a incompatibilidade é declarada e a exceção fica visível até a segunda conta existir |
 
 ---
 
@@ -1475,3 +1480,73 @@ Novo agregado `approach_attempts` · nova estrutura `team_notifications` · proj
   8. **Emenda ao Modelo:** `MODELO_CURADORIA_V1.md` passa a **v2.0** no mesmo commit — §7 passa a três cruzamentos e o §11 é regularizado (dívida de versão das ADR-039/042 quitada).
 - **Consequência:** o domínio relacional fica **congelado**: nenhum conceito, opção ou dimensão nova sem nova ADR que referencie o documento normativo e demonstre por que ele não responde. Exclusões conscientes registradas: traços, demografia e reputação (vetos constitucionais permanentes); idioma/acessibilidade e vínculo de longo prazo (evoluções possíveis por ADR futura). A implementação segue a ordem aprovada: migration 1.1.0 → motor relacional → Mesa → Relatório → Dashboard; sem push, deploy ou migration remota sem autorização expressa.
 - **Revisitar quando:** primeira operação real da Mesa com a leitura relacional (candidatos: chave de ordenação; vínculo de longo prazo; idioma/acessibilidade).
+
+---
+
+## ADR-066 — Propostas de Derivação e a Ponte entre Declaração e Método (ADR-A da Curadoria 2.0)
+
+- **Data:** 2026-08-04
+- **Status:** **Aprovada constitucionalmente com ressalvas** pelo Agente 00 — Guardião, sobre decisões do Fundador de 2026-08-04 (reabertura condicionada de I-10; estrutura da régua de consequência aprovada, com valores pendentes de Rede Real; Autoridade de Método instituída; P-07, P-08 e P-10 promovidos a princípios oficiais de domínio). Lavrada pelo pacote A-01.
+- **Conteúdo normativo:** **`docs/curadoria/ADR_A_PROPOSTAS_DE_DERIVACAO.md`** (v1.0) — anexo canônico desta ADR, na íntegra. Este verbete registra; o anexo normatiza.
+- **Dependências:** ADR-035 · ADR-039 · ADR-040 · ADR-041 · ADR-048 · `docs/curadoria/MODELO_CURADORIA_V1.md` · `docs/curadoria/CONGELAMENTO_ARQUITETURAL.md` · `docs/curadoria/ARQUITETURA_CURADORIA_2_0.md`
+- **Contexto:** a auditoria operacional de 2026-08-04 constatou que as duas entradas do Motor de Compatibilidade são transcrições manuais de dados estruturados que já existem (achados D1 e D2): `case_needs` não alcança o Motor — quem alcança é `case_priority_map`, digitado pelo Curador; e `practice_evidence`, com proveniência completa e regime append-only, não alimenta `professional_subcriterion_map`, digitado por um administrador. As duas tabelas com proveniência não decidem; as duas que decidem não têm proveniência.
+- **Decisão:** fica instituída a **Camada de Derivação**, com as seguintes definições de domínio:
+  1. **Proposta de derivação é um oferecimento**, não um valor: o registro imutável de que o Método, aplicando regra versionada a declaração identificada, sugeriu um valor a quem tem autoridade para declará-lo. **Autoridade probatória, nunca decisória.**
+  2. **A proposta é imutável e o desfecho é fato separado que a referencia** — não há UPDATE em nenhum ponto do ciclo; o append-only passa a ser propriedade da modelagem, não disciplina.
+  3. **Cinco estados, lista fechada:** `PROPOSTA` · `CONFIRMADA` · `RECUSADA` · `SUPERADA` · `RETIRADA`. `PENDENTE` é recusado como estado — é ausência de desfecho.
+  4. **Somente o Pipeline de Derivação cria**; ninguém altera; confirma e recusa quem tem autoridade sobre o campo alvo (ADR-068).
+  5. **Doze itens obrigatórios de proveniência.** Autor-da-proposta não existe; a justificativa vive na regra, referenciada, nunca copiada.
+  6. **Cinco causas de supersessão**, e a supersessão **atravessa** para a confirmação: nenhuma confirmação permanece vigente apontando para origem retratada.
+  7. **A ponte entre declaração e Método** é correspondência total, declarada, versionada e revogável, com sete condições de existência e quatro exclusões nomeadas — **filtros eliminatórios nunca têm ponte**.
+  8. **Reabertura substancial de I-10 declarada** (§18 do anexo): a ponte preserva a distinção formal entre as escalas e reabre a invariante em substância. **Forma e governança decididas agora; valores estáveis só após Cases reais.** Toda versão anterior à evidência operacional nasce `PROVISÓRIA`. O teste `importancia-vs-grau.test.ts` não pode ser afrouxado, renomeado ou ter asserção relaxada; sua finalidade só muda por esta ADR.
+  9. **Desligar a ponte é reversível sem perda de dado** — as confirmações feitas permanecem declarações humanas válidas.
+- **Consequência:** o domínio de `derivation_proposals` fica fechado; o Implementador pode construí-lo sem tomar decisão de domínio. O `CONGELAMENTO_ARQUITETURAL.md` §5 passa a registrar a reabertura de I-10 e a promoção de P-07/P-08/P-10. **Esta ADR não autoriza implementação:** o pacote F-02 permanece bloqueado por sequenciamento (Onda 1 não iniciada), pela nomeação da Autoridade de Método e pela guarda C-01, que deve continuar ativa.
+- **Ressalva de lavratura:** a lista de ressalvas do Guardião **não existe como arquivo** (PA-05/PA-06 do `docs/curadoria/REGISTRO_DOS_PARECERES.md`; pendência DP-11). Este verbete registra a aprovação tal como comunicada e **não reproduz ressalvas que não pôde ler**. Quando o parecer for versionado, este verbete recebe emenda pelo índice do topo.
+- **Revisitar quando:** os primeiros Cases reais permitirem calibrar os valores da ponte; ou se o Guardião recusar a reabertura de I-10 — caso em que a ponte não nasce e o restante da 2.0 permanece de pé.
+
+---
+
+## ADR-067 — Juízo Humano e o registro dos julgamentos do Curador (ADR-B da Curadoria 2.0)
+
+- **Data:** 2026-08-04
+- **Status:** **Aprovada constitucionalmente com ressalvas** pelo Agente 00 — Guardião. Lavrada pelo pacote A-01.
+- **Conteúdo normativo:** **`docs/curadoria/ADR_B_JUIZO_HUMANO.md`** (v1.0) — anexo canônico desta ADR, na íntegra.
+- **Dependências:** ADR-035 · ADR-040 · ADR-041 · ADR-064 · ADR-065 · ADR-066 · `docs/curadoria/MODELO_CURADORIA_V1.md`
+- **Contexto:** a etapa AVALIAÇÃO da Mesa reproduzia à mão, em 6 critérios × 4 estados, o que o Motor já lê em 28 conceitos — metade dela era duplicação declarada (achados D3/R2). Ao mesmo tempo, o juízo relacional instituído pela ADR-065 não tinha lugar de registro, e o juízo técnico convivia em `criterion_declarations` com o que sai da cadeia.
+- **Decisão:**
+  1. **Juízo Humano é o ato indivisível** pelo qual pessoa nomeada, com autoridade prevista, atribui sentido a fatos que o Método reuniu mas não pode compor, produzindo conclusão não dedutível dos fatos e respondendo por ela. **Critério de irredutibilidade:** há juízo onde duas pessoas competentes podem divergir legitimamente.
+  2. **`curator_judgments` registra exatamente duas naturezas — `TECNICO` e `RELACIONAL` — sobre exatamente seis conceitos:** `FORMACAO`, `EXPERIENCIA`, `HISTORICO`; `MODELO_DECISAO_COMPARTILHADA`, `MODELO_PREFERENCIAS_E_RESTRICOES`, `MODELO_CONDUCAO_DE_NOTICIAS_DIFICEIS`. Lista fechada.
+  3. **Quatro exclusões fundamentadas:** **área** (é filtro eliminatório, com quatro estados próprios); **verificação de evidência** e **resolução de divergência** (são governança da informação — I-5 separa governança de compatibilidade); **seleção e autoria** (são decisão e autoria, não juízo).
+  4. **Divisão da etapa AVALIAÇÃO:** os três critérios do lado da pessoa (`ACESSO`, `CONTINUIDADE_DO_CUIDADO`, `MODELO_DE_ATENDIMENTO`) **deixam de ser humanos** e passam à leitura do Motor; os três técnicos permanecem juízo do Curador; os três conceitos relacionais `humano` permanecem juízo (ADR-065).
+  5. **Nunca existe proposta de julgamento** — o Método não pré-escreve o juízo do Curador, nem como rascunho.
+  6. **Julgamento tem versões**, em regime append-only; retificar é gravar versão nova. **Três estados, lista fechada:** `VIGENTE` · `SUPERADO` · `RETIRADO`. **No máximo um `VIGENTE`** por (Case, profissional, conceito).
+  7. **Quatro causas de supersessão**, entre elas **evidência nova supersede o juízo** ainda que a conclusão provavelmente não mudasse — nenhuma conclusão vigente pode apoiar-se em fato que ninguém releu.
+  8. **`criterion_declarations` é preservada**: os juízos técnicos são **copiados** para `curator_judgments` preservando integralmente a origem — nunca migrados —, e os três critérios do lado da pessoa apenas param de receber escrita nova.
+  9. **A Aliviar não aprende com juízos** nesta versão: sem modelo, sem memória, sem sugestão por histórico. Mudar isso é decisão constitucional.
+- **Consequência:** o domínio de `curator_judgments` fica fechado. **Emenda ao Modelo:** `MODELO_CURADORIA_V1.md` passa a **v3.0** no mesmo ato — §7.1, §7.2, §7.3 e §7.4 reescritos sem pontuação e sem percentual, e §11 regularizado; é a quitação da dívida P17 da auditoria.
+- **Ressalva de lavratura:** idem ADR-066 — a lista de ressalvas do Guardião não existe como arquivo (DP-11).
+- **Revisitar quando:** a operação real mostrar que o volume de juízo relacional inviabiliza a Mesa — caso em que a resposta é reduzir o escopo de conceitos `humano` por ADR, nunca automatizá-los.
+
+---
+
+## ADR-068 — Autoridade de Confirmação e Declaração (ADR-D da Curadoria 2.0)
+
+- **Data:** 2026-08-04
+- **Status:** **Aprovada constitucionalmente com ressalvas** pelo Agente 00 — Guardião. Lavrada pelo pacote A-01.
+- **Conteúdo normativo:** **`docs/curadoria/ADR_D_AUTORIDADE_DE_CONFIRMACAO.md`** (v1.0) — anexo canônico desta ADR, na íntegra.
+- **Dependências:** ADR-035 · **ADR-040 item 6** · ADR-042 · ADR-049 · **ADR-060** · ADR-066 · ADR-067
+- **Contexto:** as ADR-066 e ADR-067 definiram o oferecimento e o juízo, mas não quem transforma uma proposta em declaração válida. Sem essa definição, `derivation_proposals` não podia ser materializada sem que o Implementador escolhesse domínio (impedimento I-3 do pacote F-02).
+- **Decisão:**
+  1. **Confirmar é adotar:** quem confirma passa a responder pela formulação **como se a tivesse formulado**. A autoria da declaração resultante é integralmente de quem confirmou; a regra não divide responsabilidade com ninguém.
+  2. **Só confirma quem poderia ter declarado.** A proposta não cria autoridade; oferece a quem já a tem.
+  3. **Cinco verbos distinguidos formalmente** — declarar, confirmar, reconhecer, validar, revisar. **Reconhecer produz habilitação, nunca valor** (ato exclusivo da paciente); **validar é do sistema e não cria fato**; **"revisar" não é ato de domínio** nesta versão.
+  4. **Confirmação sem proposta não existe**; declaração sem confirmação é o caminho majoritário. **Das dezenove categorias de informação, apenas duas são confirmáveis** — a confirmação é a exceção do sistema, não a regra.
+  5. **Autoridade não se delega** (substituição em nome próprio é o mecanismo) e **não se compartilha sobre o mesmo fato**. Retira-se prospectivamente, **nunca retroativamente**.
+  6. **Incompatibilidade nova:** quem confirma o Mapa de um profissional em um Case **não pode** ser quem julga e seleciona esse profissional nesse Case — aplicação do "quem avalia não atesta" da ADR-060 ao ato novo. **Hoje inexequível** (uma única conta acumula Administrador e Curador): a exceção é aceita, datada, **obrigatoriamente visível na Ficha de Explicação**, e caduca com a segunda conta prevista na ADR-060.
+  7. **A RLS da ADR-040 item 6 NÃO é reaberta.** O gargalo G4 é de carga, e a 2.0 já o resolve transformando 28 digitações em 28 confirmações informadas; ampliar o recorte trataria o sintoma e tornaria mais provável a coincidência que o item 6 desta decisão proíbe. Escrita permanece `administrador`; leitura permanece `administrador` e `curador_medico`. **A pendência DP-9 fica respondida com "não ampliar".**
+  8. **Não existe confirmação parcial.** **Não existe confirmação automática** — nove formas nomeadas e proibidas, entre elas decurso de prazo, caixa pré-marcada, herança entre Cases e "confiança na regra".
+  9. **Confirmar acrescenta; nunca modifica:** não altera a proposta (imutável), não altera a declaração (cria), não altera o histórico (acrescenta), não altera o juízo (atos independentes), não altera a proveniência (estende).
+  10. **Assimetria deliberada:** origem retratada supersede a confirmação; **regra revogada não** — o fato não mudou, e quem adotou continua respondendo.
+- **Consequência:** com as ADR-066, ADR-067 e ADR-068, **nenhuma decisão de domínio falta** ao pacote F-02. O bloqueio remanescente é de sequenciamento (Onda 1 não iniciada), de nomeação (Autoridade de Método) e de guarda (C-01, que deve permanecer ativa). **Nenhum item congelado foi reaberto por esta ADR.**
+- **Ressalva de lavratura:** idem ADR-066 — a lista de ressalvas do Guardião não existe como arquivo (DP-11).
+- **Revisitar quando:** a segunda conta da ADR-060 entrar em operação (torna exequível o item 6); ou se a operação real demonstrar que o recorte de escrita de um único papel é inviável — caso em que a ampliação exige o rito completo do §6 do Congelamento.

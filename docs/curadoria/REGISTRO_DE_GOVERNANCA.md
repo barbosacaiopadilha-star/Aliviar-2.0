@@ -1,0 +1,138 @@
+# Registro de Governança — Curadoria 2.0
+
+| Campo | Valor |
+|---|---|
+| **Versão** | v1.0 |
+| **Autor** | Agente 03 — Implementador (pacote F-00) |
+| **Data** | 2026-08-04 · **HEAD:** `97ed8b2` · **Branch:** `seguranca/menor-privilegio-funcoes-governanca` |
+| **Status** | **Vigente** — nível derivado; registra, não decide |
+| **Dependências** | [`ARQUITETURA_CURADORIA_2_0.md`](ARQUITETURA_CURADORIA_2_0.md) §18 · [`CONGELAMENTO_ARQUITETURAL.md`](CONGELAMENTO_ARQUITETURAL.md) · [`../DECISIONS.md`](../DECISIONS.md) |
+| **Documentos relacionados** | [`INDICE_DA_CURADORIA_2_0.md`](INDICE_DA_CURADORIA_2_0.md) · [`MAPA_DOS_PACOTES.md`](MAPA_DOS_PACOTES.md) · [`REGISTRO_DOS_PARECERES.md`](REGISTRO_DOS_PARECERES.md) |
+| **Origem** | Pacote F-00 |
+
+> **Natureza deste documento:** registro. Ele **não cria** autoridade, **não decide** nada e
+> **não interpreta** o domínio. Onde ele divergir da Arquitetura ou do Modelo, vale o
+> documento com autoridade — e a divergência é defeito deste registro.
+
+---
+
+## 1. Autoridades
+
+| Papel | Quem | Autoridade sobre | Estado |
+|---|---|---|---|
+| **Fundador** | responsável de negócio | Método, Constituição, reabertura de decisão congelada, nomeações | **Ativo** |
+| **Agente 00 — Guardião** | revisão constitucional | aprovar arquitetura; aprovar princípios que não exigem ADR (P-12); DP-7, DP-8, DP-9 | **Ativo** — parecer **não versionado** (DP-11) |
+| **Agente 01 — Auditor** | diagnóstico | auditoria operacional | **Concluído** (2026-08-04) |
+| **Agente 02 — Arquiteto** | arquitetura da 2.0 | documento arquitetural | **Concluído** — v1.2 aguardando revisão |
+| **Agente 03 — Implementador** | planejamento e execução de pacotes | ordem de execução, pacotes, testes, rollback | **Ativo** — **implementação não autorizada** |
+| **Agente 04 — Verificador** | verificação independente de pacote | aceite técnico | **Sem parecer emitido** |
+| **Certificador** | certificação de release | publicação | **Sem parecer emitido para a 2.0** |
+| **Autoridade de Método sobre Regras de Derivação** | §10.5 da Arquitetura | criar, versionar, suspender e retificar regra de derivação | **VAGA — função definida, sem ocupante** (DP-4 / RR-3) |
+| **Responsável de engenharia** | operação do repositório | versionamento, janela de publicação, ambiente | **Ativo** |
+
+**Regra estrutural:** o Implementador não decide domínio. Toda ambiguidade retorna ao
+Arquiteto; toda decisão de Método retorna ao Fundador ou ao Guardião.
+
+## 2. Ordem de precedência entre documentos
+
+1. Decisões explícitas do Fundador.
+2. ADRs vigentes (`../DECISIONS.md`).
+3. [`CONGELAMENTO_ARQUITETURAL.md`](CONGELAMENTO_ARQUITETURAL.md) — o que não pode ser violado.
+4. [`MODELO_CURADORIA_V1.md`](MODELO_CURADORIA_V1.md) v2.0 — canônico do domínio.
+5. [`DOMINIO_COMPATIBILIDADE_RELACIONAL.md`](DOMINIO_COMPATIBILIDADE_RELACIONAL.md) v1.0.
+6. [`ARQUITETURA_CURADORIA_2_0.md`](ARQUITETURA_CURADORIA_2_0.md) v1.2 — **seções DOMÍNIO/ARQUITETURA/GOVERNANÇA, quando aprovada**.
+7. [`MAPA_DOS_PACOTES.md`](MAPA_DOS_PACOTES.md) e [`ROADMAP_EXECUTIVO_CURADORIA_2_0.md`](ROADMAP_EXECUTIVO_CURADORIA_2_0.md) — derivados.
+8. Comportamento atual do sistema.
+9. Código existente.
+
+## 3. Estado atual da Curadoria 2.0
+
+| Fato | Situação | Evidência |
+|---|---|---|
+| Auditoria | **Concluída** | documento datado 2026-08-04 |
+| Arquitetura | **v1.2 — proposta revisada**, candidata a canônica; aguardando revisão do Agente 00 | cabeçalho do próprio documento |
+| Aprovação constitucional | **Declarada pelo Fundador** na missão de planejamento; o documento ainda se declara "aguardando revisão" | **divergência registrada — ver §6, G-01** |
+| Planejamento executivo | **Concluído** (33 pacotes), **reconciliado** com a Arquitetura no Mapa dos Pacotes | `MAPA_DOS_PACOTES.md` §5 |
+| Implementação | **Não autorizada.** Nenhum pacote aberto | Arquitetura, linha final |
+| Código alterado pela 2.0 | **Zero** | nenhum commit da 2.0 existe |
+| Migrations criadas pela 2.0 | **Zero** | — |
+| ADRs da 2.0 | **Zero de cinco** (ADR-A, B, D, E necessárias; ADR-C retirada) | último ADR do log é o **065** |
+| Documentos versionados | **Não** — 11 arquivos não rastreados, incluindo os insumos canônicos da 2.0 | `git status` |
+| Rede real | **Inexistente** | Congelamento §7.2 |
+| Janela de publicação | **Inexistente** | Congelamento §7.1 |
+
+## 4. Decisões pendentes (DP-1 a DP-11)
+
+Transcritas da Arquitetura §18. **Nenhuma é do Implementador.**
+
+| # | Decisão | De quem | Bloqueia | Estado |
+|---|---|---|---|---|
+| **DP-1** | P15 — o Motor recebe viabilidade? Guarda executável ou correção do Congelamento §4.3 | Arquiteto + Guardião | Onda 1.1, e portanto tudo | **Aberta** |
+| **DP-2** | Destino formal do ACE e do dado histórico | **Fundador** | retirada da segunda entrega (P9) | **Aberta** |
+| **DP-3** | Listas provisórias P3–P7 (`OPCOES_PROVISORIAS_*`) | Método | ponte grau→importância | **Aberta** |
+| **DP-4** | Quem exerce a Autoridade de Método sobre Regras de Derivação | **Fundador** | toda a Onda 2 | **Aberta** |
+| **DP-5** | Régua de graduação por consequência + lista nominal do que nunca entra em bloco | Método, **por ADR** | subescopo 2.5; enquanto aberta, o regime de bloco é **proibido de existir no repositório** | **Aberta** |
+| **DP-6** | Tabela grau→importância — os **valores** | Método, **após Cases reais** | estabilização da regra (Onda 5) | **Aberta, bloqueada por DP-Rede** |
+| **DP-7** | P-07, P-08, P-10, P-11 viram domínio? | Guardião, por ADR | Onda 2 inteira | **RESPONDIDA** (ADR-066): P-07, P-08 e P-10 promovidos a princípios oficiais de domínio |
+| **DP-8** | P-12 (um relógio) aprovado como princípio arquitetural? | Guardião, sem ADR | Onda 3 | **Aberta** |
+| **DP-9** | Ampliar quem confirma o Mapa do Profissional (toca RLS congelada, ADR-040 item 6) | Guardião, por ADR-D | G4/RI4 | **RESPONDIDA com "não ampliar"** (ADR-068 item 7): a RLS **não** é reaberta; G4 resolve-se por redução de carga |
+| **DP-10** | Versionar os documentos da 2.0 e separar o pacote de segurança | responsável de engenharia | qualquer decisão constitucional definitiva | **Aberta — endereçada por este pacote F-00, pendente de commit** |
+| **DP-11** | Gravar o parecer do Guardião como arquivo | Agente 00 | validação das matrizes §0.2/§0.3 da Arquitetura | **RESPONDIDA em parte** — [`PARECER_CONSTITUCIONAL_DO_BLOCO_DE_DOMINIO.md`](PARECER_CONSTITUCIONAL_DO_BLOCO_DE_DOMINIO.md) consolida os pareceres do bloco de domínio; as ADR-066/067/068 registram que a lista original de ressalvas continua sem arquivo |
+
+## 5. ADRs pendentes
+
+| ADR | Objeto | Necessária para | Estado |
+|---|---|---|---|
+| **ADR-A** → **ADR-066** | Camada de derivação: `derivation_proposals`, ponte grau→importância (**forma e governança**), graduação por consequência, princípios P-07/P-08/P-10 | Onda 2 | **LAVRADA** 2026-08-04 — anexo [`ADR_A_PROPOSTAS_DE_DERIVACAO.md`](ADR_A_PROPOSTAS_DE_DERIVACAO.md). **Não autoriza implementação** (ver §7) |
+| **ADR-B** → **ADR-067** | Divisão da etapa AVALIAÇÃO, `curator_judgments`, e a emenda do Modelo para **v3.0** (§7.1–§7.4 e §11) | Onda 2 | **LAVRADA** 2026-08-04 — anexo [`ADR_B_JUIZO_HUMANO.md`](ADR_B_JUIZO_HUMANO.md) |
+| ~~ADR-C~~ | ~~Chave de ordenação interna~~ | — | **RETIRADA DO CAMINHO** (bloqueador B2): decisão futura bloqueada por ausência de necessidade operacional real |
+| **ADR-D** → **ADR-068** | Autoridade de confirmação e declaração; **RLS da ADR-040 item 6 não reaberta** | Onda 2 | **LAVRADA** 2026-08-04 — anexo [`ADR_D_AUTORIDADE_DE_CONFIRMACAO.md`](ADR_D_AUTORIDADE_DE_CONFIRMACAO.md) |
+| **ADR-E** | Destino formal do ACE e do dado histórico | Onda 0/1 | **Não escrita** |
+
+**Numeração:** o log tem **68** ADRs. Os rótulos A/B/D permanecem como apelidos de leitura;
+a numeração oficial é **066/067/068**.
+
+## 7. Bloqueio remanescente do pacote F-02 — declarado pelas próprias ADRs
+
+Registro literal, porque é a fonte da decisão e não deve depender de interpretação:
+
+> **ADR-066:** *"Esta ADR não autoriza implementação: o pacote F-02 permanece bloqueado por
+> sequenciamento (Onda 1 não iniciada), pela nomeação da Autoridade de Método e pela guarda
+> C-01, que deve continuar ativa."*
+>
+> **ADR-068:** *"nenhuma decisão de domínio falta ao pacote F-02. O bloqueio remanescente é
+> de sequenciamento (Onda 1 não iniciada), de nomeação (Autoridade de Método) e de guarda
+> (C-01, que deve permanecer ativa)."*
+
+Detalhamento em [`IMPEDIMENTO_F_02_MODELO_DE_DADOS.md`](IMPEDIMENTO_F_02_MODELO_DE_DADOS.md) v2.0.
+
+## 6. Divergências de governança registradas
+
+| # | Divergência | Entre | Efeito | Encaminhamento |
+|---|---|---|---|---|
+| **G-01** | A Arquitetura declara-se **"aguardando revisão constitucional"**; a missão de planejamento declarou-a **aprovada constitucionalmente** | Arquitetura (cabeçalho) × instrução do Fundador | Sob a regra de precedência §2, a decisão do Fundador prevalece — **mas o cabeçalho do documento continua dizendo o contrário**, e quem o ler isoladamente concluirá que nada foi aprovado | O Agente 02 ou o Guardião deve atualizar o cabeçalho da Arquitetura. **O Implementador não altera documento de outro agente** |
+| **G-02** | O parecer do Guardião **não existe como arquivo**; as matrizes §0.2/§0.3 da Arquitetura são reconstrução | Arquitetura §0.1 × repositório | Sete bloqueadores e doze ressalvas podem ter sido endereçados contra uma enumeração diferente da real | **DP-11** |
+| **G-03** | O Congelamento §6 exige **operação real** para reabrir decisão congelada; a ADR-A reabre I-10 em substância sem Rede real | Congelamento × Arquitetura §10.3.0 | A ADR-A nasce sob exceção ao critério 1 do §6 | Decisão explícita do Fundador, **registrada na própria ADR-A** |
+| **G-04** | O Plano Executivo (33 pacotes F/C/L/K) foi escrito antes de a Arquitetura estar disponível | Plano × Arquitetura §15 | Ordem, taxonomia e três pacotes divergem | **Reconciliado** em `MAPA_DOS_PACOTES.md` §5; a Arquitetura vence |
+| **G-05** | `docs/INDEX.md` registra **1 de 11** documentos de `docs/curadoria/` | INDEX × pasta | Dez documentos órfãos do índice geral do projeto | **PD-04** — exige autorização para alterar `INDEX.md` |
+| **G-06** | **Dívida documental da ADR-065:** o domínio tem **29 conceitos ativos** (banco e código concordam); documentos anteriores dizem 28 | Congelamento §2/§4.1 (2026-08-01) e Arquitetura §2.6/§17.1 × ADR-065 (2026-08-03) + migration `20260803100000` | O critério de aceite **A7** ("28 conceitos inalterados") está escrito sobre número superado | **Atualizar os documentos para 29.** Não cabe reconciliar o código para 28 — desfaria a ADR-065. Achado **F-01/01**, reclassificado no pacote **F-01A** |
+| **G-07** | **Dívida documental da ADR-065:** a vigência única do catálogo é **1.1.0**; o Congelamento nomeia 1.0.0 | Congelamento (anterior à ADR-065) × `catalogo-gerado.ts` + migration `20260803100000` | Quem ler o Congelamento como estado atual usará versão superada | Mesma atualização de G-06. Achado **F-01/02**, reclassificado em **F-01A** |
+| ~~**G-09**~~ | ~~"O banco tem 26 conceitos"~~ | — | — | **REMOVIDO em F-01A:** os 26 pertencem só à migration histórica `20260728010000`. Banco e código têm 29. O achado F-01/04 saiu da base oficial |
+| **G-10** | **A assinatura do Curador (P7 / item 1.2) não é implementável sem tocar RLS** — e, pior, a paciente hoje lê o literal **"Curador"** em vez de um nome | `curadoria.profiles` tem quatro policies (`profiles_select_own_or_admin`, `profiles_insert_own`, `profiles_update_own_or_admin`, `profiles_select_paciente_por_curador`). **Nenhuma** permite ao paciente ler o perfil do Curador. `cos/repository.ts:84` resolve `names.get(assigned_curator_id) ?? "Curador"` — sob a RLS da paciente, o `get` sempre falha | A auditoria registrou o problema só na entrega (`curatorName: null`); ele é **maior**: atinge toda superfície dela que nomeia o responsável (`/paciente`, `/portal-paciente/como-funciona`) | **Decisão do Guardião + Arquiteto sobre a via** (policy nova · view · RPC · denormalização do nome assinado no Relatório). Item 1.2 fica **bloqueado** até lá — a Onda 1 não pode mudar RLS |
+| **G-08** | **P15 confirmado por evidência executável:** o Motor cruza os quatro conceitos marcados `MOTOR_PARTICIPATION: NUNCA` | Congelamento §4.3 × `crossPriorityAndProfessional` | O invariante §4.3 é promessa sem guarda | **DP-1** — agora com a evidência que faltava ([`REGISTRO_DAS_GUARDAS_2_0.md`](REGISTRO_DAS_GUARDAS_2_0.md) §2, achado F-01/03) |
+
+## 7. Garantias que a 2.0 se compromete a não violar
+
+Transcritas do Congelamento §4 — **nenhum pacote pode enfraquecê-las**:
+
+1. Número, nomes e semântica dos **28 conceitos**.
+2. **15 células**, **4 resultados**, **5 níveis** de importância, **3 estados** do profissional.
+3. **Viabilidade e preferências/restrições nunca entram no Motor.**
+4. **Append-only** e **proveniência obrigatória** da Base.
+5. Separação **Base (permanente) × Case (temporário)**.
+6. **Autodeclaração nunca nasce verificada.**
+7. **RLS do Mapa do Profissional** (ADR-040 item 6).
+8. Ausência de **score, ranking, ordenação e conclusão automática**.
+
+E as **treze decisões humanas** do §4 da Auditoria, que a Arquitetura §3.5 declara sem porta
+de evolução.
