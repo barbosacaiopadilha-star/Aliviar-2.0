@@ -223,11 +223,32 @@ describe("A migration: aditiva, e só", () => {
     }
   });
 
-  it("é SECURITY DEFINER com search_path fixo e grants endurecidos", () => {
-    expect(sql).toContain("security definer");
-    expect(sql).toContain("set search_path = curadoria, pg_temp");
-    expect(sql).toMatch(/revoke execute on function curadoria\.acknowledge_case_need.* from anon/);
-    expect(sql).toMatch(/grant execute on function curadoria\.acknowledge_case_need.* to authenticated/);
+  /**
+   * PP-03B · D-2 — A ACL NÃO SE PROVA POR TEXTO.
+   *
+   * Aqui havia asserções sobre `revoke ... from anon` e `grant ... to
+   * authenticated` no SQL. Elas passaram verdes enquanto PUBLIC mantinha
+   * EXECUTE — porque `create function` concede a PUBLIC por padrão e revogar
+   * de `anon` não desfaz o herdado. A guarda provava que a migration DIZIA a
+   * coisa certa, não que o banco ESTAVA certo.
+   *
+   * A prova da ACL mudou de lugar e de método: passou a perguntar ao catálogo
+   * do PostgreSQL, em
+   * `tests/remediacao/desfecho-da-paciente-grants.integration.test.ts`.
+   * Nenhuma asserção sobre grants sobrevive neste arquivo, de propósito.
+   */
+  it("nenhuma guarda deste arquivo tenta provar ACL por texto", () => {
+    const proprioTeste = readFileSync(
+      join(process.cwd(), "tests/unit/desfecho-da-paciente.test.ts"),
+      "utf8",
+    );
+    const asserções = proprioTeste
+      .split("\n")
+      .filter((linha) => linha.includes("expect(sql)"))
+      .join("\n");
+
+    expect(asserções.toLowerCase().includes("revoke")).toBe(false);
+    expect(asserções.toLowerCase().includes("grant")).toBe(false);
   });
 
   it("a autorização é a PRIMEIRA instrução do corpo", () => {

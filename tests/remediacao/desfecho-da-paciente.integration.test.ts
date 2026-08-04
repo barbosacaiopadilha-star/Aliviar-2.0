@@ -344,3 +344,51 @@ describe("PP-03A · depois do reconhecimento do Perfil", () => {
     expect((await linha(outra.caseId, code)).acknowledgment).toBe("PENDENTE");
   });
 });
+
+/**
+ * PP-03B · D-3 — SUPERSEDED ALINHADO AO PRECEDENTE.
+ *
+ * `acknowledge_priority_profile` distingue três estados: VALIDATED, SUPERSEDED
+ * e o resto. A escrita por conceito tratava só VALIDATED — com o Perfil
+ * substituído e nenhum sucessor criado, o desfecho era aceito sobre um Perfil
+ * que saiu de cena. Aqui os dois passam a responder a mesma coisa ao mesmo
+ * estado, com o mesmo nome de retorno.
+ */
+describe("PP-03B · Perfil substituído", () => {
+  let terceira: CadeiaCuradoria;
+
+  beforeAll(async () => {
+    terceira = await casoComCurador(service, curadorId, "pp03c");
+  });
+
+  it("PERFIL_SUBSTITUIDO — o ato acontece sobre o Perfil vigente", async () => {
+    const code = "MODELO_COMUNICACAO";
+    await traducaoPendente(terceira.caseId, curadorId, code);
+
+    const { error } = await service.from("priority_profiles").insert({
+      case_id: terceira.caseId,
+      curator_id: curadorId,
+      status: "SUPERSEDED",
+    });
+    if (error) throw new Error(`fixture perfil substituído: ${error.message}`);
+
+    const { data } = await terceira.paciente.client.rpc("acknowledge_case_need", {
+      _case_id: terceira.caseId,
+      _subcriterion_code: code,
+      _acknowledgment: "CORRIGIDA",
+      _correction: "quero corrigir num Perfil que saiu de cena",
+    });
+
+    expect(data).toBe("PERFIL_SUBSTITUIDO");
+    expect((await linha(terceira.caseId, code)).acknowledgment).toBe("PENDENTE");
+  });
+
+  it("responde exatamente o mesmo que o precedente responde ao mesmo estado", async () => {
+    const { data: doPrecedente } = await terceira.paciente.client.rpc(
+      "acknowledge_priority_profile",
+      { _case_id: terceira.caseId },
+    );
+
+    expect(doPrecedente).toBe("PERFIL_SUBSTITUIDO");
+  });
+});
