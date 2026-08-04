@@ -245,9 +245,23 @@ export async function registerPersonNeed(
 }
 
 /**
- * O ato da pessoa sobre uma leitura traduzida: reconhecer, corrigir (com o
- * texto da correção) ou recusar. Registrado pelo Curador na conversa — mas o
- * conteúdo é dela, e fica separado da leitura proposta.
+ * O ato da pessoa sobre uma leitura traduzida: reconhecer, corrigir ou
+ * discordar. Registrado pelo Curador na conversa — mas o conteúdo é dela, e
+ * fica separado da leitura proposta.
+ *
+ * **Contrato do campo `correction` (DT-22):**
+ *
+ * | Desfecho | `correction` |
+ * |---|---|
+ * | `CORRIGIDA` | o texto **substitutivo** dela — "não é isso, é isto" |
+ * | `RECUSADA` | a **justificativa da discordância** — "eu disse isso, mas não é isso que significa" |
+ * | `RECONHECIDA` | `null` — não há o que acrescentar |
+ * | `PENDENTE` | `null` — é a ausência de ato, e não passa por aqui |
+ *
+ * Antes do DT-22 a recusa era gravada sem texto, e a discordância dela se
+ * perdia: sobrava um estado sem o motivo. Oferecer "discordar" e não guardar o
+ * que ela disse é cerimônia vazia — os dois desfechos que afirmam algo sobre a
+ * tradução exigem texto, e a validação abaixo recusa os dois sem ele.
  */
 export async function acknowledgePersonNeed(
   supabase: SupabaseClient,
@@ -258,15 +272,24 @@ export async function acknowledgePersonNeed(
     correction?: string | null;
   },
 ): Promise<void> {
-  if (params.acknowledgment === "CORRIGIDA" && (!params.correction || params.correction.trim() === "")) {
-    throw new Error("Correção sem texto não é correção — o que ela disse precisa ficar registrado.");
+  const exigeTexto = params.acknowledgment === "CORRIGIDA" || params.acknowledgment === "RECUSADA";
+  const texto = (params.correction ?? "").trim();
+
+  if (exigeTexto && texto === "") {
+    throw new Error(
+      params.acknowledgment === "CORRIGIDA"
+        ? "Correção sem texto não é correção — o que ela disse precisa ficar registrado."
+        : "Discordância sem texto não é discordância — o que ela disse precisa ficar registrado.",
+    );
   }
 
   const { data, error } = await supabase
     .from("case_needs")
     .update({
       acknowledgment: params.acknowledgment,
-      correction: params.acknowledgment === "CORRIGIDA" ? params.correction : null,
+      // DT-22: os dois desfechos que afirmam algo sobre a tradução guardam o
+      // texto dela; o reconhecimento não tem o que guardar.
+      correction: exigeTexto ? texto : null,
     })
     .eq("case_id", params.caseId)
     .eq("subcriterion_code", params.subcriterionCode)

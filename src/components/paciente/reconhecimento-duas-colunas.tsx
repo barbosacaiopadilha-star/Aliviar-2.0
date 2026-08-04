@@ -31,8 +31,30 @@ export type LinhaDoReconhecimento = {
   cadeia: CadeiaDeProveniencia;
 };
 
-export function ReconhecimentoDuasColunas({ linhas }: { linhas: LinhaDoReconhecimento[] }) {
-  if (linhas.length === 0) {
+/**
+ * O TERCEIRO BLOCO — os conceitos técnicos (§6.2.1).
+ *
+ * Formação, experiência e histórico não têm lado da pessoa: ela não declara
+ * preferência por fellowship. Quem os declara é o Curador, contra este caso.
+ * Por isso vivem em bloco **separado**, e nunca dentro da comparação: misturá-los
+ * com a fala dela sugeriria que ela disse algo que não disse.
+ */
+export type LinhaTecnica = {
+  subcriterionCode: string;
+  label: string;
+  importancia: string;
+  autor: string | null;
+};
+
+export function ReconhecimentoDuasColunas({
+  linhas,
+  tecnicos = [],
+}: {
+  linhas: LinhaDoReconhecimento[];
+  /** Terceiro bloco — declarações do Curador, sem lado dela. */
+  tecnicos?: LinhaTecnica[];
+}) {
+  if (linhas.length === 0 && tecnicos.length === 0) {
     return (
       <p className="max-w-reading text-sm leading-relaxed text-ink-muted">
         Ainda não há nada para comparar aqui — o Perfil começa a existir quando você responde o que
@@ -42,7 +64,8 @@ export function ReconhecimentoDuasColunas({ linhas }: { linhas: LinhaDoReconheci
   }
 
   return (
-    <ul className="space-y-4">
+    <>
+      <ul className="space-y-4">
       {linhas.map((linha) => {
         const lacunasDaConfirmacao = linha.cadeia.lacunas.filter(
           (lacuna) => lacuna.lado === "PESSOA" && lacuna.elo === "CONFIRMACAO",
@@ -106,6 +129,39 @@ export function ReconhecimentoDuasColunas({ linhas }: { linhas: LinhaDoReconheci
           </li>
         );
       })}
-    </ul>
+      </ul>
+
+      {/* TERCEIRO BLOCO — o que o Curador declarou contra este caso. Fica FORA
+          da comparação: ela nunca disse nada sobre isto, e sugerir que disse
+          seria pôr palavra na boca dela. */}
+      {tecnicos.length > 0 ? (
+        <section className="mt-8">
+          <h3 className="text-sm font-medium text-[var(--patient-ink)]">
+            O que a Curadoria considerou por conta própria
+          </h3>
+          <p className="mt-1 max-w-reading text-sm leading-relaxed text-ink-muted">
+            Sobre estes pontos você não precisou dizer nada — quem os avalia, diante do seu caso,
+            é quem conduz a sua Curadoria.
+          </p>
+          <ul className="mt-3 space-y-2">
+            {tecnicos.map((tecnico) => (
+              <li
+                key={tecnico.subcriterionCode}
+                className="rounded-md border border-[var(--color-border)] p-3"
+              >
+                <p className="text-sm text-[var(--patient-ink)]">
+                  <span className="font-medium">{tecnico.label}:</span> {tecnico.importancia}
+                </p>
+                <p className="mt-1 text-xs text-ink-muted">
+                  {tecnico.autor
+                    ? `Registrado por ${tecnico.autor}.`
+                    : "Registro anterior ao regime de autoria — não consta quem registrou."}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+    </>
   );
 }

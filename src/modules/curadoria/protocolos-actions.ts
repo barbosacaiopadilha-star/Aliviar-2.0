@@ -149,17 +149,39 @@ export async function registerPersonNeedAction(input: unknown) {
   return { success: true as const };
 }
 
-const acknowledgeSchema = z.object({
-  caseId: z.string().uuid(),
-  subcriterionCode: z.string().max(80),
-  acknowledgment: z.enum(["RECONHECIDA", "CORRIGIDA", "RECUSADA"]),
-  correction: z.string().max(500).nullable(),
-});
+/**
+ * DT-22 — `correction` guarda o texto dela nos DOIS desfechos que afirmam algo
+ * sobre a tradução: o substitutivo (`CORRIGIDA`) e a justificativa da
+ * discordância (`RECUSADA`). Reconhecer não tem o que guardar.
+ *
+ * A recusa é validada aqui e no repositório: a superfície nunca é a única
+ * guarda de um conteúdo que pertence a ela.
+ */
+const acknowledgeSchema = z
+  .object({
+    caseId: z.string().uuid(),
+    subcriterionCode: z.string().max(80),
+    acknowledgment: z.enum(["RECONHECIDA", "CORRIGIDA", "RECUSADA"]),
+    correction: z.string().max(500).nullable(),
+  })
+  .refine(
+    (dados) =>
+      dados.acknowledgment === "RECONHECIDA" || (dados.correction ?? "").trim().length > 0,
+    {
+      message:
+        "Corrigir e discordar exigem o texto dela — sem ele, fica o estado sem o motivo, e o motivo é o que importa.",
+      path: ["correction"],
+    },
+  );
 
 export async function acknowledgePersonNeedAction(input: unknown) {
   await requireAnyRoleForAction(["curador_medico", "administrador"]);
   const parsed = acknowledgeSchema.safeParse(input);
-  if (!parsed.success) return { success: false as const, error: "Formato inválido." };
+  if (!parsed.success) {
+    // A recusa do payload chega com a propria frase: "Formato invalido"
+    // esconderia justamente o que falta (DT-22).
+    return { success: false as const, error: parsed.error.issues[0]?.message ?? "Formato inválido." };
+  }
 
   const supabase = await createServerSupabaseClient();
   try {
