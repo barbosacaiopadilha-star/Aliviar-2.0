@@ -69,7 +69,10 @@ describe("Painel A — contexto que não sai da tela", () => {
     montar();
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Maria Andrade");
     // M4: seis etapas — COMPATIBILIDADE e CRUZAMENTO viraram uma só.
-    expect(screen.getByText(/Ortopedia de coluna · Dra. Ana · 2 de 6 etapas/)).toBeInTheDocument();
+    // P11 (Onda 1.4): eram 2 de 6 porque a leitura do Motor era declarada
+    // pendente enquanto houvesse critério sem avaliação — dependência que o
+    // domínio não tem. Removida, a leitura conta como pronta: 3 de 6.
+    expect(screen.getByText(/Ortopedia de coluna · Dra. Ana · 3 de 6 etapas/)).toBeInTheDocument();
   });
 
   it("diz qual é a próxima decisão, e ela é anunciada", () => {
