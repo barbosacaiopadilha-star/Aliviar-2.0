@@ -1,0 +1,55 @@
+# Registro dos Pareceres — Curadoria 2.0
+
+| Campo | Valor |
+|---|---|
+| **Versão** | v1.0 |
+| **Autor** | Agente 03 — Implementador (pacote F-00) |
+| **Data** | 2026-08-04 |
+| **Status** | **Vigente** — catálogo; nível derivado |
+| **Dependências** | os próprios pareceres catalogados |
+| **Documentos relacionados** | [`INDICE_DA_CURADORIA_2_0.md`](INDICE_DA_CURADORIA_2_0.md) · [`REGISTRO_DE_GOVERNANCA.md`](REGISTRO_DE_GOVERNANCA.md) |
+| **Origem** | Pacote F-00 |
+
+> **Regra deste documento: catalogar, nunca resumir.** Nenhuma linha abaixo interpreta,
+> condensa ou reformula o conteúdo de um parecer. Cada entrada aponta **onde o parecer
+> está**, e o parecer é lido no original. Um resumo aqui viraria uma segunda versão do
+> parecer — exatamente o defeito que a 2.0 combate.
+
+---
+
+## 1. Pareceres da Curadoria 2.0
+
+| # | Parecer | Emissor | Data | Localização | Estado |
+|---|---|---|---|---|---|
+| **PA-01** | Auditoria Operacional da Curadoria — preparação da Curadoria 2.0 | **Agente 01 — Auditor** | 2026-08-04 | [`AUDITORIA_OPERACIONAL_PRE_CURADORIA_2_0.md`](AUDITORIA_OPERACIONAL_PRE_CURADORIA_2_0.md) — íntegra; recomendações no §12 | **Emitido.** Não versionado em git |
+| **PA-02** | Arquitetura da Curadoria 2.0 — v1.0 (inicial) | **Agente 02 — Arquiteto** | 2026-08-04 | **Não existe como arquivo.** Superada pela v1.1; o que dela se sabe está nas matrizes §0.2/§0.3 da v1.2 | **Superado — original não preservado** |
+| **PA-03** | Arquitetura da Curadoria 2.0 — v1.1 (revisão dirigida) | **Agente 02 — Arquiteto** | 2026-08-04 | **Não existe como arquivo separado.** Incorporada à v1.2 | **Superado — original não preservado** |
+| **PA-04** | Arquitetura da Curadoria 2.0 — **v1.2** | **Agente 02 — Arquiteto** | 2026-08-04 | [`ARQUITETURA_CURADORIA_2_0.md`](ARQUITETURA_CURADORIA_2_0.md) — íntegra | **Vigente.** Declara-se aguardando revisão constitucional (ver G-01 do Registro de Governança) |
+| **PA-05** | Parecer constitucional sobre a v1.0 — sete bloqueadores e doze ressalvas | **Agente 00 — Guardião** | — | **AUSENTE.** `grep -rl "Agente 00\|parecer constitucional" docs/` não retorna arquivo. Chegou apenas pela missão; reconstruído em §0.2/§0.3 da Arquitetura, **por outro agente** | **Não versionado — DP-11 / RR-5** |
+| **PA-06** | Veredito sobre a v1.1 — "arquitetura aprovada com correções documentais" (cinco correções C-1..C-5) | **Agente 00 — Guardião** | 2026-08-04 | **AUSENTE como arquivo.** Registrado indiretamente em §0.3b da Arquitetura | **Não versionado — DP-11** |
+| **PA-07** | Aprovação constitucional da Arquitetura da 2.0 | **Fundador** | 2026-08-04 | **AUSENTE como arquivo.** Declarada na missão de planejamento executivo; nenhum documento a registra | **Não versionado — ver G-01** |
+| **PA-08** | Plano de Pacotes — registro de impedimento | **Agente 03 — Implementador** | 2026-08-04 | [`PLANO_DE_PACOTES_CURADORIA_2_0.md`](PLANO_DE_PACOTES_CURADORIA_2_0.md) §1 | **Emitido.** Impedimento respondido pelo §18 da Arquitetura |
+| **PA-09** | Plano Executivo de Implantação | **Agente 03 — Implementador** | 2026-08-04 | [`PLANO_EXECUTIVO_CURADORIA_2_0.md`](PLANO_EXECUTIVO_CURADORIA_2_0.md) | **Emitido.** Superado em parte — [`MAPA_DOS_PACOTES.md`](MAPA_DOS_PACOTES.md) §5 |
+| **PA-10** | Verificação independente de pacote da 2.0 | **Agente 04 — Verificador** | — | **AUSENTE.** Nenhum pacote foi implementado; nada a verificar | **Não aplicável ainda** |
+| **PA-11** | Certificação de release da 2.0 | **Certificador** | — | **AUSENTE.** Nada a certificar | **Não aplicável ainda** |
+
+## 2. Pareceres anteriores à 2.0 que continuam vinculando
+
+Catalogados porque a 2.0 promete não os violar. **Não são pareceres sobre a 2.0.**
+
+| # | Parecer | Emissor | Data | Localização |
+|---|---|---|---|---|
+| **PX-01** | Parecer de congelamento arquitetural da Curadoria — "Arquitetura aprovada para congelamento" | Arquitetura/engenharia | 2026-08-01 | [`CONGELAMENTO_ARQUITETURAL.md`](CONGELAMENTO_ARQUITETURAL.md) §8 |
+| **PX-02** | Aprovação e congelamento do Domínio da Compatibilidade Relacional (ADR-065) | **Fundador** | 2026-08-03 | [`DOMINIO_COMPATIBILIDADE_RELACIONAL.md`](DOMINIO_COMPATIBILIDADE_RELACIONAL.md) — cabeçalho |
+| **PX-03** | Aprovação formal do Catálogo Canônico 1.0.0 | ADR-046 | — | [`../DECISIONS.md`](../DECISIONS.md) |
+| **PX-04** | Parecer técnico final de prontidão 1.0 — "GO CONDICIONADO / NO GO para o primeiro paciente" | Engenharia | 2026-08 | [`../RELATORIO_FINAL_DE_PRONTIDAO_1_0.md`](../RELATORIO_FINAL_DE_PRONTIDAO_1_0.md) §10 |
+| **PX-05** | Certificação final RC1 | Certificador | — | [`../CERTIFICACAO_FINAL_RC1.md`](../CERTIFICACAO_FINAL_RC1.md) |
+| **PX-06** | GO/NO-GO final | Fundador + engenharia | — | [`../GO_NO_GO_FINAL.md`](../GO_NO_GO_FINAL.md) |
+
+## 3. Lacunas do registro
+
+| # | Lacuna | Consequência | Encaminhamento |
+|---|---|---|---|
+| **LP-1** | **Quatro dos onze pareceres da 2.0 não existem como arquivo** (PA-05, PA-06, PA-07, e as versões PA-02/PA-03) | Decisões constitucionais da 2.0 vivem em histórico de conversa — exatamente o que o princípio **P-01** proíbe | **DP-11** (Agente 00) e registro da aprovação do Fundador (PA-07) |
+| **LP-2** | As matrizes §0.2/§0.3 da Arquitetura são **reconstrução** do parecer do Guardião, feitas pelo agente revisado | A correção pode ter endereçado enumeração diferente da original | Se a enumeração do Guardião divergir, **vale a dele** (Arquitetura §0.1) |
+| **LP-3** | Nenhum parecer da 2.0 está versionado em git | Todo o corpo de pareceres pode mudar sem registro | **DP-10** — endereçado pelo pacote 0.6, pendente de commit |
