@@ -8,6 +8,7 @@ import { loadCasePriorityMap } from "./mapa-prioridades-repository";
 import { loadProfessionalMap } from "./mapa-profissional-repository";
 import { crossCaseRelationalForProfessionals } from "./motor-relacional-repository";
 import {
+  composicaoPendenteDoCurador,
   FRASE_COMPOSICAO_RASCUNHO,
   generateReportDraft,
   GENERATOR_VERSION,
@@ -205,11 +206,32 @@ export async function generateAndSaveAssistedDraft(
   // dirigido ao Curador. Escrita a partir da MESMA constante que a guarda de
   // emissão procura — a deriva entre gerador e guarda é impossível por
   // construção, e o documento definitivo nunca a carrega até a paciente.
+  //
+  // P12 / Onda 1.3 — REGENERAR NUNCA APAGA A ABERTURA DO CURADOR.
+  // A classificação é a MESMA da guarda de emissão (`composicaoPendenteDoCurador`),
+  // e não uma segunda leitura: `AUSENTE` ou `DO_SISTEMA` podem ser reescritos
+  // pelo rascunho; qualquer outro texto é dele e sobrevive intacto
+  // (`undefined` = "não mexi", contrato do `saveReport`). Sem isso, um ato que
+  // parece inócuo — pedir o rascunho de novo — destruía trabalho humano sem
+  // aviso (auditoria P12/RI7).
+  const { data: reportAtual, error: erroAberturaAtual } = await supabase
+    .from("curadoria_reports")
+    .select("composition_rationale")
+    .eq("curated_selection_id", selection.id)
+    .maybeSingle();
+  // Fail-closed, como no Bloco D: se não dá para saber o que está gravado, não
+  // se sobrescreve. Preservar é o lado seguro do erro.
+  const aberturaEhDoCurador = erroAberturaAtual
+    ? true
+    : composicaoPendenteDoCurador(
+        (reportAtual?.composition_rationale as string | null) ?? null,
+      ) === null;
+
   const reportId = await saveReport(
     supabase,
     input.caseId,
     selection.id,
-    FRASE_COMPOSICAO_RASCUNHO,
+    aberturaEhDoCurador ? undefined : FRASE_COMPOSICAO_RASCUNHO,
     optionInputs,
   );
 
