@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { OpcaoRelatorio } from "@/modules/curadoria/cos/types";
+import type { ProntidaoParaEmissao } from "@/modules/curadoria/prontidao-para-emissao";
 
 /**
  * O estado do documento que o paciente vai reler sozinho.
@@ -23,6 +24,12 @@ import type { OpcaoRelatorio } from "@/modules/curadoria/cos/types";
  * O que nunca faz: ordenar as opções por qualidade, sugerir texto de parecer, ou
  * chamar de "pronta" uma opção que só tem virtudes escritas — uma opção sem
  * ponto de atenção é recomendação disfarçada, e aparece aqui como pendente.
+ *
+ * Item 1.6 (G6): esta tela decidia sozinha se a composição estava escrita — um
+ * `trim()` próprio que dizia "está escrita" mesmo quando o texto era o do
+ * rascunho, isto é, exatamente o que a emissão recusa. Essa segunda
+ * interpretação saiu: a prontidão chega pronta de `prontidaoParaEmissao`, que
+ * consulta as guardas da própria emissão.
  */
 
 type Props = {
@@ -30,7 +37,13 @@ type Props = {
   patientFirstName: string;
   options: OpcaoRelatorio[];
   professionalNames: Map<string, string>;
-  compositionRationale: string | null;
+  /**
+   * Item 1.6 — a prontidão chega **derivada** das guardas da emissão
+   * (`prontidaoParaEmissao`). Esta tela não a recalcula: antes, decidia sozinha
+   * se a composição estava escrita, e dizia que sim justamente quando a emissão
+   * recusaria.
+   */
+  prontidao: ProntidaoParaEmissao;
 };
 
 /** O que ainda falta nesta opção, nas palavras do Método. */
@@ -47,7 +60,7 @@ export function ReportStatus({
   patientFirstName,
   options,
   professionalNames,
-  compositionRationale,
+  prontidao,
 }: Props) {
   // A ordem é a de apresentação, nunca de colocação (Ontologia §3.13).
   const ordenadas = [...options].sort((a, b) => a.position - b.position);
@@ -97,12 +110,32 @@ export function ReportStatus({
         </ul>
       )}
 
+      {/* PAINEL DE PRONTIDÃO (Item 1.6 · G6 · Arquitetura §17.3 O3).
+          Diz o que impediria a emissão agora — antes de o Curador tentar. Cada
+          linha vem de `prontidaoParaEmissao`, que consulta as MESMAS guardas da
+          emissão; esta tela não avalia nenhuma condição por conta própria. */}
       <div className="mt-4 border-t border-border pt-4">
-        <p className="text-sm leading-relaxed text-ink-muted">
-          {compositionRationale?.trim()
-            ? "A justificativa da composição das três como conjunto está escrita."
-            : "Falta justificar por que estas três, juntas, formam uma escolha honesta."}
-        </p>
+        <h3 className="text-sm font-medium text-ink">Prontidão para emitir</h3>
+
+        {prontidao.jaEmitido ? (
+          <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+            O Relatório já foi emitido. Documento definitivo — nada mais é exigido aqui.
+          </p>
+        ) : prontidao.pronto ? (
+          <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+            Nada impede a emissão agora: a abertura está na sua voz e nenhuma leitura relacional
+            aguarda o seu juízo.
+          </p>
+        ) : (
+          <ul className="mt-2 space-y-2">
+            {prontidao.bloqueios.map((bloqueio) => (
+              <li key={bloqueio.id} className="max-w-reading text-sm leading-relaxed text-ink">
+                <span className="font-medium">Falta: {bloqueio.oQueFalta}</span>{" "}
+                <span className="text-ink-muted">{bloqueio.porQue}</span>
+              </li>
+            ))}
+          </ul>
+        )}
 
         <Link
           href={`/coa/curadoria/casos/${caseId}/curadoria_tecnica`}
