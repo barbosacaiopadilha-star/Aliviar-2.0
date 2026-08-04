@@ -22,6 +22,7 @@ import { requireAnyRole } from "@/modules/auth/guard";
 import { getSourceStoryText } from "@/modules/cases/repository";
 import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { getReportLifecycle } from "@/modules/curadoria/relatorio-assistido";
+import { prontidaoParaEmissao } from "@/modules/curadoria/prontidao-para-emissao";
 import {
   CURATOR_JOURNEY_DEFINITIONS,
   buildCuratorJourney,
@@ -262,7 +263,16 @@ export default async function EtapaPage({ params }: { params: Promise<{ id: stri
               professionalNames={
                 new Map(Object.entries(record.curadoriaTecnica.professionalNames))
               }
-              compositionRationale={record.relatorio.compositionRationale}
+              // Item 1.6: a prontidão é derivada das guardas da emissão, aqui,
+              // uma vez — a tela recebe o resultado e apenas o lê.
+              prontidao={prontidaoParaEmissao({
+                lifecycle: reportLifecycle,
+                compositionRationale: record.relatorio.compositionRationale,
+                options: record.relatorio.options.map((option) => ({
+                  professionalProfileId: option.professionalId,
+                  relationalReading: option.relationalReading,
+                })),
+              })}
             />
           ) : null}
 
