@@ -53,6 +53,43 @@ const always: PhaseCriterion = {
   isMet: () => true,
 };
 
+/**
+ * M-001 §2.3 — "não vazio" é ao menos um item com conteúdo depois de aparado.
+ * Um array com `""` ou `"   "` não conta; é o mesmo tratamento que o COS já dá
+ * à narrativa (`Boolean(record.historia.narrative?.trim())`).
+ */
+function naoVazio(lista: readonly string[]): boolean {
+  return lista.some((item) => item.trim() !== "");
+}
+
+/**
+ * ACOLHIMENTO PREPARADO — M-001 §9.2, ratificado por M-003 §11.2.
+ *
+ * ```
+ *   ( ¬hasSubmittedStory ∧ ¬hasLinkedDocument )           -- ramo B: não há material
+ * ∨ ( naoVazio(knownFacts) ∨ naoVazio(openPendencies) )   -- ramo A: registro de preparação
+ * ∨ preparedBefore                                        -- legado (regime anterior)
+ * ```
+ *
+ * Substitui os dois checkboxes, que eram *proxy* da informação que a própria
+ * fase já declara obrigatória (`requiredInformation`). O Curador deixa de
+ * afirmar "eu li" e passa a registrar "isto é o que eu li" — achado P13.
+ *
+ * O ramo B **nunca afirma que o Curador se preparou**: afirma que não havia o
+ * que preparar (I-8). Por ser avaliado no instante da leitura, produz
+ * naturalmente a exceção do M-001 §6.3 — material que chega depois reabre o
+ * gate, que é exatamente o dano que a fase existe para impedir.
+ */
+function acolhimentoPreparado(record: CuradoriaRecord): boolean {
+  const { hasSubmittedStory, hasLinkedDocument, knownFacts, openPendencies, preparedBefore } =
+    record.acolhimento;
+
+  const semMaterial = !hasSubmittedStory && !hasLinkedDocument;
+  const registroDePreparacao = naoVazio(knownFacts) || naoVazio(openPendencies);
+
+  return semMaterial || registroDePreparacao || preparedBefore;
+}
+
 export const COS_PHASE_DEFINITIONS: Record<CosPhaseId, CosPhaseDefinition> = {
   // -------------------------------------------------------------------------
   ACOLHIMENTO: {
@@ -65,14 +102,10 @@ export const COS_PHASE_DEFINITIONS: Record<CosPhaseId, CosPhaseDefinition> = {
     entryCriteria: [always],
     exitCriteria: [
       {
-        id: "contexto-lido",
-        description: "O Curador revisou o que já se sabe sobre o paciente.",
-        isMet: (record) => record.acolhimento.contextReviewed,
-      },
-      {
-        id: "documentos-revisados",
-        description: "Os documentos disponíveis foram revisados.",
-        isMet: (record) => record.acolhimento.documentsReviewed,
+        id: "acolhimento-preparado",
+        description:
+          "O Curador registrou o que extraiu do material disponível — ou não havia material.",
+        isMet: acolhimentoPreparado,
       },
     ],
     requiredInformation: ["Contexto já conhecido", "Documentos disponíveis"],
@@ -108,7 +141,10 @@ export const COS_PHASE_DEFINITIONS: Record<CosPhaseId, CosPhaseDefinition> = {
       {
         id: "acolhimento-concluido",
         description: "O Acolhimento foi concluído.",
-        isMet: (record) => record.acolhimento.contextReviewed && record.acolhimento.documentsReviewed,
+        // M-001 §3.4: a entrada de HISTORIA passa a derivar do MESMO predicado
+        // da saída de ACOLHIMENTO. Como a saída endurece (§8.3), a entrada
+        // endurece na mesma medida.
+        isMet: acolhimentoPreparado,
       },
     ],
     exitCriteria: [

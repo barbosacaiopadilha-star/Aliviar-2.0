@@ -15,6 +15,7 @@ import { LastUpdate, StepStatus } from "@/components/journey";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { conduct } from "@/modules/curadoria/cos/conduction";
+import { COS_PHASE_DEFINITIONS } from "@/modules/curadoria/cos/phases";
 import { buildMemory } from "@/modules/curadoria/cos/memory";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRole } from "@/modules/auth/guard";
@@ -141,10 +142,19 @@ export default async function EtapaPage({ params }: { params: Promise<{ id: stri
               pensa. */}
           {stepId === "ACOLHER" ? (
             <>
+              {/* M-003 §11.1 A7 — corrige o P-3: as props de material eram
+                  aceitas pelo componente e nunca passadas pela página, caindo
+                  no default. Agora chegam da Memória, junto com o predicado
+                  já calculado pelo COS. */}
               <AcolhimentoWorkspace
                 caseId={record.caseId}
-                contextReviewed={record.acolhimento.contextReviewed}
-                documentsReviewed={record.acolhimento.documentsReviewed}
+                knownFacts={record.acolhimento.knownFacts}
+                openPendencies={record.acolhimento.openPendencies}
+                hasSubmittedStory={record.acolhimento.hasSubmittedStory}
+                hasLinkedDocument={record.acolhimento.hasLinkedDocument}
+                preparado={COS_PHASE_DEFINITIONS.ACOLHIMENTO.exitCriteria.every((criterio) =>
+                  criterio.isMet(record),
+                )}
                 nextPhaseHref="#a-historia"
               />
 

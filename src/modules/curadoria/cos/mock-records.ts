@@ -27,6 +27,10 @@ function baseRecord(
       meetingScheduledAt: null,
       knownFacts: [],
       openPendencies: [],
+      // Base: Case novo, sem material e sem registro — o ramo B do M-001.
+      hasSubmittedStory: false,
+      hasLinkedDocument: false,
+      preparedBefore: false,
     },
     historia: {
       narrative: null,
@@ -88,6 +92,9 @@ const marina: CuradoriaRecord = baseRecord({
       "Dois exames anexados antes da conversa.",
     ],
     openPendencies: [],
+    hasSubmittedStory: true,
+    hasLinkedDocument: true,
+    preparedBefore: true,
   },
   historia: {
     narrative:
@@ -145,6 +152,9 @@ const joaquim: CuradoriaRecord = baseRecord({
     meetingScheduledAt: "2026-07-18T18:30:00-03:00",
     knownFacts: ["Adiou procurar ajuda por quase um ano.", "Trabalha por conta própria."],
     openPendencies: [],
+    hasSubmittedStory: true,
+    hasLinkedDocument: false,
+    preparedBefore: true,
   },
   historia: {
     narrative:
@@ -278,6 +288,9 @@ const rosa: CuradoriaRecord = baseRecord({
     meetingScheduledAt: "2026-07-05T09:00:00-03:00",
     knownFacts: ["Primeira busca por Curadoria."],
     openPendencies: [],
+    hasSubmittedStory: true,
+    hasLinkedDocument: false,
+    preparedBefore: true,
   },
   historia: {
     narrative:

@@ -47,12 +47,35 @@ export const COS_PHASE_LABELS: Record<CosPhaseId, string> = {
 // ---------------------------------------------------------------------------
 
 export type AcolhimentoRecord = {
-  /** O Curador leu o que já se sabe antes da conversa. Nunca iniciar sem contexto. */
+  /**
+   * M-001 §7 / M-003 §9 — **LEGADO**. Os dois booleanos deixaram de ser gate e
+   * deixaram de ser escritos. Permanecem legíveis para auditoria dos Cases
+   * conduzidos no regime anterior, e são lidos em **um único ponto**: o cálculo
+   * de `preparedBefore`.
+   */
   contextReviewed: boolean;
   documentsReviewed: boolean;
   meetingScheduledAt: string | null;
+  /** O que o Curador extraiu do material — registro de preparação (M-001 §2). */
   knownFacts: string[];
+  /** O que falta, descoberto ao ler o material. Alimenta as pendências da condução. */
   openPendencies: string[];
+  /**
+   * M-003 §2.4: `cases.source_story_id` existe e sua história está `enviada`.
+   * Rascunho não conta — a paciente ainda não a entregou.
+   */
+  hasSubmittedStory: boolean;
+  /**
+   * M-003 §2.4: existe vínculo em `patient_story_attachments` para a história
+   * do Case. Documento órfão não conta (M-001 §4.2).
+   */
+  hasLinkedDocument: boolean;
+  /**
+   * M-003 §9.1: `context_reviewed ∧ documents_reviewed`. Existe para que Cases
+   * já conduzidos no regime anterior não regridam de fase. **Nunca é `true`
+   * para Case novo** — ninguém mais escreve aqueles campos.
+   */
+  preparedBefore: boolean;
 };
 
 export type HistoriaRecord = {

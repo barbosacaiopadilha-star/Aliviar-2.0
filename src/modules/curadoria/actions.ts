@@ -394,17 +394,20 @@ export async function registerAcolhimentoAction(input: unknown): Promise<Curador
   }
 
   const parsed = registerAcolhimentoInputSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: "Dados inválidos." };
+  if (!parsed.success) {
+    // A recusa de payload vazio (M-003 D-4, DT-06) precisa chegar ao Curador
+    // com a própria frase — "Dados inválidos" esconderia o motivo.
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+  }
 
-  const { caseId, contextReviewed, documentsReviewed } = parsed.data;
+  const { caseId, knownFacts, openPendencies } = parsed.data;
   const supabase = await createServerSupabaseClient();
 
-  // Upsert por case_id: a Consulta Inicial é uma por Caso. Registrar a
-  // revisão NÃO desmarca o que já foi revisado antes — o Acolhimento é
-  // acumulativo, nunca regressivo (o paciente nunca recomeça do zero).
+  // A Consulta Inicial é uma por Caso (índice único). A linha existe para
+  // guardar conteúdo — nunca para destravar fase (M-003 D-1).
   const { data: existing, error: readError } = await supabase
     .from("consultation_records")
-    .select("id, context_reviewed, documents_reviewed")
+    .select("id")
     .eq("case_id", caseId)
     .maybeSingle();
 
@@ -416,15 +419,20 @@ export async function registerAcolhimentoAction(input: unknown): Promise<Curador
     );
   }
 
-  const next = {
-    context_reviewed: Boolean(existing?.context_reviewed) || contextReviewed,
-    documents_reviewed: Boolean(existing?.documents_reviewed) || documentsReviewed,
-  };
+  // M-003 D-5: as listas são SUBSTITUÍDAS, não acumuladas — acumular tornaria
+  // a correção impossível sem um caminho de remoção, que este pacote não
+  // constrói. Com a recusa de vazio (D-4), substituir nunca produz vazio.
+  //
+  // M-003 §9.2 proibição 1: `context_reviewed` e `documents_reviewed` NÃO
+  // aparecem aqui, nem no insert nem no update. Permanecem como histórico.
+  const next = { known_facts: knownFacts, open_pendencies: openPendencies };
 
   const { error } = existing
     ? await supabase.from("consultation_records").update(next).eq("id", existing.id)
     : await supabase
         .from("consultation_records")
+        // `curator_id` é NOT NULL: quem cria é quem age, e a autoria fica
+        // registrada nativamente (M-003 §8).
         .insert({ case_id: caseId, curator_id: authState.user.id, ...next });
 
   if (error) {
@@ -446,8 +454,11 @@ export async function registerAcolhimentoAction(input: unknown): Promise<Curador
 // ---------------------------------------------------------------------------
 
 export async function registerHistoriaAction(input: unknown): Promise<CuradoriaActionResult> {
+  let authState;
   try {
-    await requireCurator();
+    // M-003 §7.3: passa a capturar o usuário — `curator_id` é NOT NULL e esta
+    // action pode agora criar a linha da Consulta. Ajuste mecânico.
+    authState = await requireCurator();
   } catch {
     return { success: false, error: "Não autorizado." };
   }
@@ -471,20 +482,23 @@ export async function registerHistoriaAction(input: unknown): Promise<CuradoriaA
       "Não foi possível ler a História.",
     );
   }
-  if (!existing) {
-    // A História pressupõe o Acolhimento — que cria o registro da Consulta.
-    return { success: false, error: "Conclua o Acolhimento antes de registrar a História." };
-  }
-
   const patch: Record<string, unknown> = {};
   if (narrative?.trim()) patch.narrative = narrative.trim();
   // Confirmação é acumulativa: uma vez reconhecida, nunca regride (P5).
-  if (confirmUnderstanding && !existing.understanding_confirmed_at) {
+  if (confirmUnderstanding && !existing?.understanding_confirmed_at) {
     patch.understanding_confirmed_at = new Date().toISOString();
   }
   if (Object.keys(patch).length === 0) return { success: true };
 
-  const { error } = await supabase.from("consultation_records").update(patch).eq("id", existing.id);
+  // M-003 D-2: a linha nasce de quem primeiro escreve conteúdo. A dependência
+  // artificial "Conclua o Acolhimento antes de registrar a História" existia
+  // só porque a action do Acolhimento era a única criadora — e, no ramo B,
+  // deixaria a História inalcançável, porque lá não há nada a registrar.
+  const { error } = existing
+    ? await supabase.from("consultation_records").update(patch).eq("id", existing.id)
+    : await supabase
+        .from("consultation_records")
+        .insert({ case_id: caseId, curator_id: authState.user.id, ...patch });
   if (error) {
     return fail(
       "curadoria.registerHistoria.gravacao",

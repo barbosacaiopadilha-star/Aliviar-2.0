@@ -6,7 +6,6 @@ import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { registerAcolhimentoAction } from "@/modules/curadoria/actions";
 
 /**
@@ -15,39 +14,55 @@ import { registerAcolhimentoAction } from "@/modules/curadoria/actions";
  * @metodo Engine §4 — o Motor reconhece e explica; quem declara é o Curador
  * @metodo Experience §5 — UX3: nunca esconder o próximo passo
  *
- * Por que existe: achado do Fundador em produção (2026-07-24) — a tela da
- * fase explicava os dois itens em aberto, mas não oferecia como resolvê-los
- * nem como prosseguir. O Curador lia "falta revisar o contexto" e não tinha
- * onde declarar que revisou.
+ * Por que existe: o Curador precisa de um lugar para registrar o que extraiu do
+ * material da pessoa antes da conversa — e, quando não há material, precisa
+ * seguir sem cerimônia. Antes desta tela, a fase explicava o que faltava sem
+ * oferecer como resolver (achado do Fundador em produção, 2026-07-24).
  *
- * O que esta tela NUNCA faz: marcar revisão sozinha. Cada declaração é um ato
- * do Curador — o Motor só reconhece o que uma pessoa afirmou.
+ * M-001/M-003 (Item 1.5, achado P13): os dois checkboxes saíram. Eles pediam
+ * ao Curador que AFIRMASSE ter lido; agora ele REGISTRA o que leu, e é esse
+ * conteúdo que conclui a fase. A doutrina que já estava escrita aqui em
+ * comentário — "confirmar revisão do que não está à vista é pedir uma
+ * declaração falsa" — passa a valer de fato: sem material, nada é pedido.
+ *
+ * O que esta tela NUNCA faz: registrar sozinha. Cada linha é ato do Curador.
  */
 export function AcolhimentoWorkspace({
   caseId,
-  contextReviewed,
-  documentsReviewed,
-  hasContext = true,
-  hasDocuments = true,
+  knownFacts,
+  openPendencies,
+  hasSubmittedStory,
+  hasLinkedDocument,
+  preparado,
   nextPhaseHref,
 }: {
   caseId: string;
-  contextReviewed: boolean;
-  documentsReviewed: boolean;
-  /** Há contexto prévio à vista nesta tela? */
-  hasContext?: boolean;
-  /** Há documento à vista nesta tela? */
-  hasDocuments?: boolean;
+  knownFacts: string[];
+  openPendencies: string[];
+  /** M-003 §2.4 — há história enviada vinculada a este Case? */
+  hasSubmittedStory: boolean;
+  /** M-003 §2.4 — há documento vinculado à história deste Case? */
+  hasLinkedDocument: boolean;
+  /** O predicado do COS, já calculado — a tela nunca o recalcula. */
+  preparado: boolean;
   nextPhaseHref: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
-  const [context, setContext] = useState(contextReviewed);
-  const [documents, setDocuments] = useState(documentsReviewed);
+  const [fatos, setFatos] = useState(knownFacts.join("\n"));
+  const [pendencias, setPendencias] = useState(openPendencies.join("\n"));
 
-  const done = contextReviewed && documentsReviewed;
-  const dirty = context !== contextReviewed || documents !== documentsReviewed;
+  const temMaterial = hasSubmittedStory || hasLinkedDocument;
+
+  function linhas(texto: string): string[] {
+    return texto
+      .split("\n")
+      .map((linha) => linha.trim())
+      .filter((linha) => linha !== "");
+  }
+
+  const registravel = linhas(fatos).length + linhas(pendencias).length >= 1;
 
   function salvar() {
     if (pending) return;
@@ -55,20 +70,54 @@ export function AcolhimentoWorkspace({
     startTransition(async () => {
       const result = await registerAcolhimentoAction({
         caseId,
-        contextReviewed: context,
-        documentsReviewed: documents,
+        knownFacts: linhas(fatos),
+        openPendencies: linhas(pendencias),
       });
       if (result.success) router.refresh();
       else setErro(result.error);
     });
   }
 
+  // RAMO B (M-003 §5): sem material, não há o que preparar. Nenhum formulário,
+  // nenhum clique — e a fase já está concluída por derivação. A tela diz que
+  // não há material, nunca que "não foi revisado" (I-8).
+  if (!temMaterial) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Acolhimento</CardTitle>
+          <CardDescription>
+            Ainda não há material desta pessoa para revisar — nem história enviada, nem
+            documentos. Nada a registrar aqui.
+          </CardDescription>
+        </CardHeader>
+
+        <div className="mt-5 border-t border-border pt-4">
+          <Link
+            href={nextPhaseHref}
+            className="inline-flex min-h-11 items-center gap-2 rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors duration-fast ease-standard hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+          >
+            Prosseguir para a História
+            <span aria-hidden="true">→</span>
+          </Link>
+          <p className="mt-3 text-xs text-ink-muted">
+            Se a história ou algum documento chegar depois, esta etapa volta a pedir o
+            registro do que você extraiu deles.
+          </p>
+        </div>
+      </Card>
+    );
+  }
+
+  // RAMO A (M-003 §4): há material. O Curador registra o que extraiu — ao menos
+  // um item, em qualquer das duas listas.
   return (
     <Card>
       <CardHeader>
         <CardTitle>Registrar o Acolhimento</CardTitle>
         <CardDescription>
-          Marque o que você já fez. O registro é seu — o sistema nunca marca por você.
+          Escreva o que você extraiu do material desta pessoa — um item por linha. É o que
+          faz o paciente não precisar recomeçar do zero.
         </CardDescription>
       </CardHeader>
 
@@ -78,45 +127,44 @@ export function AcolhimentoWorkspace({
         </p>
       ) : null}
 
-      {/* Confirmar revisão do que não está à vista é pedir uma declaração
-          falsa. Sem conteúdo, a tela diz que não há — e não oferece o
-          controle. */}
-      <div className="space-y-3">
-        {hasContext ? (
-          <Checkbox
-            label="Revisei o que já se sabe sobre o paciente"
-            checked={context}
-            disabled={contextReviewed || pending}
-            onChange={(event) => setContext(event.target.checked)}
+      <div className="space-y-4">
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium text-ink">O que já se sabe</span>
+          <span className="mb-2 block text-xs text-ink-muted">
+            Fatos que você levou da história e dos documentos para a conversa.
+          </span>
+          <textarea
+            value={fatos}
+            onChange={(event) => setFatos(event.target.value)}
+            disabled={pending}
+            rows={5}
+            className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm leading-relaxed text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            placeholder={"Um fato por linha."}
           />
-        ) : (
-          <p className="max-w-reading text-sm leading-relaxed text-ink-muted">
-            Ainda não há registro prévio sobre esta pessoa para revisar.
-          </p>
-        )}
+        </label>
 
-        {hasDocuments ? (
-          <Checkbox
-            label="Revisei os documentos disponíveis"
-            checked={documents}
-            disabled={documentsReviewed || pending}
-            onChange={(event) => setDocuments(event.target.checked)}
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium text-ink">O que ficou em aberto</span>
+          <span className="mb-2 block text-xs text-ink-muted">
+            Pendências que a leitura revelou — o exame citado que não veio, o que falta confirmar.
+          </span>
+          <textarea
+            value={pendencias}
+            onChange={(event) => setPendencias(event.target.value)}
+            disabled={pending}
+            rows={4}
+            className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm leading-relaxed text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            placeholder={"Uma pendência por linha."}
           />
-        ) : (
-          <p className="max-w-reading text-sm leading-relaxed text-ink-muted">
-            Nenhum documento foi enviado até aqui.
-          </p>
-        )}
+        </label>
       </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-border pt-4">
-        {!done ? (
-          <Button type="button" onClick={salvar} disabled={pending || !dirty} isLoading={pending}>
-            {pending ? "Registrando…" : "Registrar revisão"}
-          </Button>
-        ) : null}
+        <Button type="button" onClick={salvar} disabled={pending || !registravel} isLoading={pending}>
+          {pending ? "Registrando…" : "Registrar preparação"}
+        </Button>
 
-        {done ? (
+        {preparado ? (
           <Link
             href={nextPhaseHref}
             className="inline-flex min-h-11 items-center gap-2 rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors duration-fast ease-standard hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
@@ -126,7 +174,7 @@ export function AcolhimentoWorkspace({
           </Link>
         ) : (
           <p className="text-xs text-ink-muted">
-            A História abre quando as duas revisões estiverem registradas.
+            A História abre quando houver ao menos um item registrado.
           </p>
         )}
       </div>
