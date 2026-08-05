@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { IMPORTANCE_LEVELS, SUBCRITERION_CATALOG, type ImportanceLevel } from "@/modules/curadoria/mapa-prioridades";
+import { apenasConceitosDoMotor } from "@/modules/curadoria/participacao-no-motor";
 import { SUBCRITERION_STATUSES, type SubcriterionStatus } from "@/modules/curadoria/mapa-profissional";
 import {
   assertSameCatalog,
@@ -13,6 +14,18 @@ import {
 } from "@/modules/curadoria/motor-compatibilidade";
 
 const ATIVOS = SUBCRITERION_CATALOG.map((entry) => entry.code);
+
+/**
+ * ITEM 1.1 — O UNIVERSO DO MOTOR NÃO É O CATÁLOGO INTEIRO.
+ *
+ * Quatro conceitos têm `MOTOR_PARTICIPATION = NUNCA` e, desde a guarda do Item
+ * 1.1, não chegam ao cruzamento. Os oráculos abaixo esperavam `ATIVOS.length`
+ * porque, até então, o Motor cruzava todos — o achado P15.
+ *
+ * O número continua DERIVADO, nunca literal: um conceito que mude de
+ * participação move os dois lados juntos.
+ */
+const NO_MOTOR = apenasConceitosDoMotor(ATIVOS);
 
 /** As nove combinações escritas na definição do Modelo, palavra por palavra. */
 const DEFINIDAS: [ImportanceLevel, SubcriterionStatus, CompatibilityResult][] = [
@@ -178,7 +191,7 @@ describe("Cruzamento de um profissional", () => {
 
     expect(leitura.rows).toHaveLength(0);
     expect(leitura.summary.totalSubcriteria).toBe(0);
-    expect(leitura.summary.notDeclaredByCase).toBe(ATIVOS.length);
+    expect(leitura.summary.notDeclaredByCase).toBe(NO_MOTOR.length);
     expect(summarySentence(leitura.summary)).toContain("ainda não foi preenchido");
   });
 
@@ -189,7 +202,7 @@ describe("Cruzamento de um profissional", () => {
       activeSubcriterionCodes: ATIVOS,
     });
     expect(leitura.summary.totalSubcriteria).toBe(4);
-    expect(leitura.summary.notDeclaredByCase).toBe(ATIVOS.length - 4);
+    expect(leitura.summary.notDeclaredByCase).toBe(NO_MOTOR.length - 4);
   });
 
   it("mapas completos dos dois lados: nenhuma linha fica sem resultado", () => {
@@ -206,8 +219,8 @@ describe("Cruzamento de um profissional", () => {
       activeSubcriterionCodes: ATIVOS,
     });
 
-    expect(leitura.rows).toHaveLength(ATIVOS.length);
-    expect(leitura.summary.highCompatibility).toBe(ATIVOS.length);
+    expect(leitura.rows).toHaveLength(NO_MOTOR.length);
+    expect(leitura.summary.highCompatibility).toBe(NO_MOTOR.length);
     expect(leitura.summary.notDeclaredByCase).toBe(0);
     expect(leitura.rows.every((r) => COMPATIBILITY_RESULTS.includes(r.result))).toBe(true);
   });

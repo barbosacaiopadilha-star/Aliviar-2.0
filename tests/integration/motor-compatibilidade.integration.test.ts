@@ -4,6 +4,8 @@ import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import { SUBCRITERION_CATALOG } from "@/modules/curadoria/mapa-prioridades";
+import { apenasConceitosDoMotor } from "@/modules/curadoria/participacao-no-motor";
 import { createCase } from "@/modules/cases/repository";
 import { createPatientAccount } from "@/modules/profiles/patient-account-repository";
 import { getOrCreateActiveStory, submitStory } from "@/modules/story/repository";
@@ -16,6 +18,14 @@ import {
 
 import { createCuradoriaClient } from "./curadoria-client";
 import { seedPublishedProfessional } from "./rede-fixture";
+
+/**
+ * ITEM 1.1 — o universo do Motor é o Catálogo MENOS os quatro conceitos com
+ * `MOTOR_PARTICIPATION = NUNCA`. Os oráculos abaixo fixavam 29 e 28 porque,
+ * até a guarda existir, o Motor cruzava todos (achado P15). Derivado, nunca
+ * literal: conceito que mude de participação move o número junto.
+ */
+const NO_MOTOR = apenasConceitosDoMotor(SUBCRITERION_CATALOG.map((s) => s.code)).length;
 
 /**
  * MOTOR DE COMPATIBILIDADE — cruzamento sobre o banco real.
@@ -137,8 +147,8 @@ describe("Motor de Compatibilidade (Supabase local)", () => {
     const leitura = await crossCaseWithProfessional(service, caseId, profissional);
     expect(leitura.rows).toHaveLength(0);
     expect(leitura.summary.totalSubcriteria).toBe(0);
-    // O universo do Motor é o Catálogo 1.0.0: 28 vigentes.
-    expect(leitura.summary.notDeclaredByCase).toBe(29);
+    // ITEM 1.1: o universo do Motor é o Catálogo MENOS os quatro NUNCA.
+    expect(leitura.summary.notDeclaredByCase).toBe(NO_MOTOR);
   });
 
   it("subcritério fora de circulação não entra no cruzamento — o Motor fala só o vocabulário vigente", async () => {
@@ -174,8 +184,8 @@ describe("Motor de Compatibilidade (Supabase local)", () => {
     expect(leitura.rows).toHaveLength(1);
     expect(leitura.rows[0]!.subcriterionCode).toBe("MODELO_COMUNICACAO");
     expect(leitura.summary.totalSubcriteria).toBe(1);
-    // 29 vigentes − 1 declarado: os aposentados não aparecem nem como falta.
-    expect(leitura.summary.notDeclaredByCase).toBe(28);
+    // Universo do Motor − 1 declarado: aposentados e NUNCA não contam.
+    expect(leitura.summary.notDeclaredByCase).toBe(NO_MOTOR - 1);
   });
 
   it("vários profissionais saem na ordem de entrada — o Motor não ordena por resultado", async () => {

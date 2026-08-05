@@ -19,6 +19,11 @@
 
 import type { ImportanceLevel } from "./mapa-prioridades";
 import type { SubcriterionStatus } from "./mapa-profissional";
+import {
+  apenasConceitosDoMotor,
+  ConceitoForaDoMotorError,
+  participaDoMotor,
+} from "./participacao-no-motor";
 
 // ---------------------------------------------------------------------------
 // Os quatro resultados
@@ -147,12 +152,43 @@ export type CompatibilityReading = {
 };
 
 /**
+ * ITEM 1.1 — GUARDA DA CÉLULA (segundo nível).
+ *
+ * `crossOne` é a matriz da ADR-041 e continua sendo o que sempre foi: uma
+ * função de (importância, estado) para um dos quatro resultados. Ela não sabe
+ * de conceito, e não deve saber — congelada, quinze células, sem exceção.
+ *
+ * A guarda vive AQUI, uma camada acima: nenhuma célula nasce sem o conceito ser
+ * nomeado, e conceito `NUNCA` para o processo em vez de devolver resultado.
+ *
+ * Por que dois níveis, se a entrada já filtra: a entrada protege o caminho que
+ * existe hoje; esta protege o caminho que alguém escrever amanhã. Um `.map`
+ * novo sobre o Mapa de Prioridades, uma tela que cruze por conta própria, uma
+ * refatoração que perca o filtro — todos caem aqui, com o nome do conceito na
+ * mensagem. Defesa em profundidade é isso: a segunda barreira existe justamente
+ * para o dia em que a primeira falhar.
+ */
+export function celulaDoMotor(
+  subcriterionCode: string,
+  importance: ImportanceLevel,
+  status: SubcriterionStatus,
+): CompatibilityResult {
+  if (!participaDoMotor(subcriterionCode)) {
+    throw new ConceitoForaDoMotorError(subcriterionCode);
+  }
+  return crossOne(importance, status);
+}
+
+/**
  * Cruza o Mapa do Case com o Mapa de um profissional.
  *
  * Só entram os subcritérios que o Case declarou: sem importância não existe
  * pergunta a fazer. Os que o Case ainda não declarou saem contados à parte —
  * o Curador precisa saber que o próprio Mapa dele está incompleto, e isso
  * não pode virar "compatibilidade" de espécie nenhuma.
+ *
+ * E só entram os que PARTICIPAM do Motor: os quatro `NUNCA` ficam de fora por
+ * decisão de Método, não por acaso de dado (Item 1.1 · DP-1).
  *
  * Determinístico: mesma entrada, mesma saída, sempre. Nada de data, aleatório
  * ou ordem de chegada.
@@ -171,9 +207,20 @@ export function crossPriorityAndProfessional(input: {
     input.casePriorities.map((entry) => [entry.subcriterionCode, entry.importance]),
   );
 
+  // ITEM 1.1 — GUARDA DE ENTRADA (primeiro nível).
+  //
+  // Os conceitos `MOTOR_PARTICIPATION = NUNCA` saem do universo AQUI, antes de
+  // qualquer leitura. Não é filtro de linha depois de montada: eles não chegam
+  // a existir para o cruzamento — nem como linha, nem no resumo, nem entre os
+  // "ainda não declarados", porque não estão pendentes de declaração nenhuma.
+  //
+  // Nada é apagado: o dado segue no banco e nas superfícies que o mostram. O
+  // que muda é quem pode usá-lo (DP-1).
+  const universo = apenasConceitosDoMotor(input.activeSubcriterionCodes);
+
   // A ordem é a do catálogo ativo — nunca a de inserção, que faria a mesma
   // leitura sair diferente conforme a ordem de gravação.
-  const rows: CompatibilityRow[] = input.activeSubcriterionCodes
+  const rows: CompatibilityRow[] = universo
     .filter((code) => importanciaPorCodigo.has(code))
     .map((code) => {
       const importance = importanciaPorCodigo.get(code)!;
@@ -184,7 +231,7 @@ export function crossPriorityAndProfessional(input: {
         status,
         // Sem declaração do profissional, a pergunta segue sem resposta — o
         // mesmo lugar de `NAO_INFORMADO`, e por isso a matriz o recebe.
-        result: crossOne(importance, status ?? "NAO_INFORMADO"),
+        result: celulaDoMotor(code, importance, status ?? "NAO_INFORMADO"),
       };
     });
 
@@ -202,9 +249,7 @@ export function crossPriorityAndProfessional(input: {
       gapsWithoutAnyRecord: rows.filter(
         (row) => row.result === "LACUNA_DE_INFORMACAO" && row.status === null,
       ).length,
-      notDeclaredByCase: input.activeSubcriterionCodes.filter(
-        (code) => !importanciaPorCodigo.has(code),
-      ).length,
+      notDeclaredByCase: universo.filter((code) => !importanciaPorCodigo.has(code)).length,
     },
   };
 }

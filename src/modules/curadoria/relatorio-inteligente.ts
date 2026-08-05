@@ -35,7 +35,8 @@ import {
   type Subcriterion,
 } from "./mapa-prioridades";
 import type { SubcriterionStatus } from "./mapa-profissional";
-import { crossOne, type CompatibilityResult } from "./motor-compatibilidade";
+import { celulaDoMotor, type CompatibilityResult } from "./motor-compatibilidade";
+import { participaDoMotor } from "./participacao-no-motor";
 import {
   RELATIONAL_CONCEPTS,
   relationalConductLabel,
@@ -225,6 +226,13 @@ function readingsOf(
       // Método vigente, e um item retirado de circulação não volta por aqui.
       if (!subcriterion || !subcriterion.active) return [];
 
+      // ITEM 1.1 — o Relatório é o SEGUNDO caminho até o cruzamento, e a guarda
+      // vale igual aqui: conceito `MOTOR_PARTICIPATION = NUNCA` não vira célula
+      // nem frase de compatibilidade. Sem isto, "quanto este profissional
+      // responde ao seu convênio" chegaria ao Relatório como leitura do Motor —
+      // exatamente o que a DP-1 recusa.
+      if (!participaDoMotor(priority.subcriterionCode)) return [];
+
       const status = estados.get(priority.subcriterionCode);
 
       return [
@@ -234,7 +242,11 @@ function readingsOf(
           origin: (status ?? "SEM_REGISTRO") as FactualOrigin,
           // Sem registro entra no Motor como ausência de informação — a mesma
           // classe de NAO_INFORMADO. O texto é que os separa.
-          compatibility: crossOne(priority.importance, status ?? "NAO_INFORMADO"),
+          compatibility: celulaDoMotor(
+            priority.subcriterionCode,
+            priority.importance,
+            status ?? "NAO_INFORMADO",
+          ),
         },
       ];
     })

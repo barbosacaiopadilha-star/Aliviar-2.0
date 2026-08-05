@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { SUBCRITERION_CATALOG, SUBCRITERION_GROUPS } from "@/modules/curadoria/mapa-prioridades";
+import { apenasConceitosDoMotor } from "@/modules/curadoria/participacao-no-motor";
 import {
   generateReportDraft,
   GENERATOR_VERSION,
@@ -30,7 +31,20 @@ const CODIGOS = [...SUBCRITERION_CATALOG]
       : SUBCRITERION_GROUPS.indexOf(a.group) - SUBCRITERION_GROUPS.indexOf(b.group),
   )
   .map((s) => s.code);
-const [PRIMEIRO, SEGUNDO, TERCEIRO] = CODIGOS;
+
+/**
+ * ITEM 1.1 — O RELATÓRIO É O SEGUNDO CAMINHO ATÉ O CRUZAMENTO.
+ *
+ * Quatro conceitos têm `MOTOR_PARTICIPATION = NUNCA` e deixaram de virar frase
+ * de compatibilidade: sem a guarda, "quanto este profissional responde ao seu
+ * convênio" chegava ao Relatório como leitura do Motor. O oráculo abaixo
+ * esperava o catálogo inteiro porque, até então, era isso que acontecia.
+ *
+ * Derivado, nunca literal: conceito que mude de participação move os dois
+ * lados juntos.
+ */
+const CODIGOS_NO_MOTOR = apenasConceitosDoMotor(CODIGOS);
+const [PRIMEIRO, SEGUNDO, TERCEIRO] = CODIGOS_NO_MOTOR;
 
 function opcao(id: string, states: OptionDraftInput["states"] = []): OptionDraftInput {
   return {
@@ -87,7 +101,7 @@ describe("Ordenação — pelo Mapa, nunca por peso", () => {
     const nomes = draft.options[0]!.relacaoPrioridades.sentences.map(
       (s) => s.provenance[0]!.subcriterion,
     );
-    expect(nomes).toEqual(CODIGOS);
+    expect(nomes).toEqual(CODIGOS_NO_MOTOR);
   });
 
   it("subcritério fora do catálogo não vira frase", () => {
