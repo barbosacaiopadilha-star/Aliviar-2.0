@@ -86,11 +86,58 @@ function escritoresDe(arquivos: string[], tabela: string): string[] {
 }
 
 describe("C-01 · Nenhuma proposta persistida existe", () => {
-  it("a tabela `derivation_proposals` não existe em migration nenhuma", () => {
+  /**
+   * ITEM 2.1 — ESTA ASSERÇÃO MUDOU DE FORMA, NÃO DE INTENÇÃO.
+   *
+   * Até aqui ela exigia que `derivation_proposals` não existisse em migration
+   * nenhuma, com a justificativa: "a Camada de Derivação exige a ADR-A e as dez
+   * dependências do §15.0 **antes de persistir qualquer proposta**".
+   *
+   * A ADR-A foi lavrada (ADR-066), e o §15.0 lista `derivation_proposals` como
+   * a PRIMEIRA das dez dependências que precisam existir simultaneamente. A
+   * regra proíbe derivação **persistida ou consumida** — não proíbe a estrutura
+   * vazia nascer. Manter a proibição na forma antiga tornaria impossível
+   * cumprir a própria pré-condição que ela cobra.
+   *
+   * A guarda passa a provar o que sempre quis dizer, e prova MAIS: a estrutura
+   * pode existir, mas tem de estar INERTE. Zero linha, zero policy, RLS ligada
+   * e nenhum grant a papel de aplicação — a fronteira imposta pelo banco, não
+   * pela disciplina de quem programa.
+   *
+   * As outras duas asserções de C-01 seguem intactas, e são o que impede a
+   * inércia de virar operação por descuido.
+   */
+  it("a estrutura pode existir, mas nasce e permanece INERTE", () => {
+    const declaracoes = ocorrencias(MIGRATIONS, /create table curadoria\.derivation_proposals/i);
+
+    // Enquanto ninguém a criar, não há o que auditar — e isso também é válido.
+    if (declaracoes.length === 0) return;
+
+    expect(declaracoes, "a estrutura foi declarada mais de uma vez").toHaveLength(1);
+
+    // `ocorrencias` devolve caminho relativo à raiz.
+    const sql = readFileSync(path.join(RAIZ, declaracoes[0]!), "utf8");
+
+    // Nenhum dado nasce com ela: nem seed, nem backfill, nem valor inicial.
+    for (const escrita of [
+      /insert\s+into\s+curadoria\.derivation_proposals/i,
+      /update\s+curadoria\.derivation_proposals/i,
+    ]) {
+      expect(escrita.test(sql), `a migration escreve na estrutura: ${escrita}`).toBe(false);
+    }
+
+    // RLS ligada e NENHUMA policy: ninguém alcança a estrutura pela aplicação.
+    expect(sql).toMatch(/alter table curadoria\.derivation_proposals enable row level security/i);
     expect(
-      ocorrencias(MIGRATIONS, /derivation_proposals/i),
-      "A Camada de Derivação exige a ADR-A e as dez dependências do §15.0 antes de persistir qualquer proposta.",
-    ).toEqual([]);
+      /create policy[^;]*on curadoria\.derivation_proposals/i.test(sql),
+      "uma policy abriu a estrutura antes das dez dependências do §15.0",
+    ).toBe(false);
+
+    // E nenhum grant a papel de aplicação.
+    expect(
+      /grant[^;]*on curadoria\.derivation_proposals[^;]*to\s+(anon|authenticated)/i.test(sql),
+      "um grant abriu a estrutura a papel de aplicação",
+    ).toBe(false);
   });
 
   it("nenhum módulo do código conhece propostas de derivação persistidas", () => {

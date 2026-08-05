@@ -1,0 +1,111 @@
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+
+import { describe, expect, it } from "vitest";
+
+import {
+  ehEstadoTerminal,
+  ESTADO_INICIAL,
+  ESTADOS_DO_OFERECIMENTO,
+} from "@/modules/curadoria/derivacao-contrato";
+
+/**
+ * ITEM 2.1 — O CONTRATO DA ESTRUTURA, E A PROVA DE QUE ELE NÃO OPERA.
+ *
+ * A estrutura existe (migration 20260805090000) e nada a alcança. Estes testes
+ * guardam a segunda metade: que o contrato seja TIPO, e que nenhum pipeline
+ * nasça em `src/` — nem repositório, nem action, nem RPC, nem loader.
+ *
+ * A prova de inércia no BANCO vive em
+ * `tests/integration/derivacao-inerte.integration.test.ts`: zero linha, zero
+ * policy, RLS ligada, nenhum grant.
+ */
+
+const RAIZ = process.cwd();
+const CONTRATO = "src/modules/curadoria/derivacao-contrato.ts";
+const fonte = readFileSync(join(RAIZ, CONTRATO), "utf8");
+
+function varrer(dir: string): string[] {
+  return readdirSync(join(RAIZ, dir), { withFileTypes: true }).flatMap((entrada) => {
+    const caminho = `${dir}/${entrada.name}`;
+    if (entrada.isDirectory()) return varrer(caminho);
+    return /\.tsx?$/.test(entrada.name) ? [caminho] : [];
+  });
+}
+
+describe("A3 · o contrato é tipo, e só", () => {
+  it("os cinco estados do §11, na ordem da ADR — e PENDENTE não é um deles", () => {
+    expect([...ESTADOS_DO_OFERECIMENTO]).toEqual([
+      "PROPOSTA",
+      "CONFIRMADA",
+      "RECUSADA",
+      "SUPERADA",
+      "RETIRADA",
+    ]);
+    expect(ESTADOS_DO_OFERECIMENTO).not.toContain("PENDENTE");
+  });
+
+  it("PROPOSTA é o único não terminal (§11)", () => {
+    expect(ESTADO_INICIAL).toBe("PROPOSTA");
+    expect(ehEstadoTerminal("PROPOSTA")).toBe(false);
+    for (const estado of ESTADOS_DO_OFERECIMENTO.filter((e) => e !== "PROPOSTA")) {
+      expect(ehEstadoTerminal(estado), estado).toBe(true);
+    }
+  });
+
+  it("nenhuma implementação operacional: sem banco, sem cliente, sem escrita", () => {
+    for (const proibido of [
+      "supabase",
+      "createClient",
+      ".from(",
+      ".rpc(",
+      "insert",
+      "update",
+      "delete",
+      "use server",
+      "use client",
+    ]) {
+      expect(fonte.includes(proibido), `o contrato faz ${proibido}`).toBe(false);
+    }
+  });
+
+  it("não importa nada — o contrato não depende de ninguém", () => {
+    const imports = fonte.split("\n").filter((linha) => linha.trimStart().startsWith("import"));
+    expect(imports).toEqual([]);
+  });
+});
+
+describe("A4 · nenhum pipeline nasceu", () => {
+  const FONTES = varrer("src");
+
+  it("a varredura cobre a árvore inteira — lista vazia passaria calada", () => {
+    expect(FONTES.length).toBeGreaterThan(100);
+  });
+
+  it("nenhum repositório, action, loader ou serviço da Camada de Derivação existe", () => {
+    const suspeitos = FONTES.filter((arquivo) =>
+      /derivacao-(repository|actions?|loader|service|servico)|derivation-(repository|actions?)/i.test(
+        arquivo,
+      ),
+    );
+    expect(suspeitos, "um pipeline nasceu antes das dez dependências do §15.0").toEqual([]);
+  });
+
+  it("A2 · nenhum módulo de `src/` alcança a estrutura", () => {
+    // C-01 já prova isto pelo nome da tabela; aqui a mesma verdade pela porta
+    // do consumo, para que renomear a tabela não abra a porta em silêncio.
+    const alcancam = FONTES.filter((arquivo) => {
+      const codigo = readFileSync(join(RAIZ, arquivo), "utf8");
+      return /from\(\s*["'`]derivation_proposals["'`]\s*\)/i.test(codigo);
+    });
+    expect(alcancam).toEqual([]);
+  });
+
+  it("o contrato não tem consumidor — é biblioteca inerte, por desenho", () => {
+    const consumidores = FONTES.filter(
+      (arquivo) =>
+        arquivo !== CONTRATO && readFileSync(join(RAIZ, arquivo), "utf8").includes("derivacao-contrato"),
+    );
+    expect(consumidores, "alguém começou a consumir o contrato antes da 2.C").toEqual([]);
+  });
+});
