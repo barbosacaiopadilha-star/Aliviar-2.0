@@ -154,26 +154,68 @@ describe("Relatório assistido — geração, ciclo de vida e congelamento (Supa
     // ADR-042 — o Relatório lê o Mapa do Profissional. Cada fixture recebe um
     // padrão distinto para que os três dossiês possam divergir por FATO, e não
     // por acaso de geração.
+    //
+    // POR CÓDIGO, NUNCA POR POSIÇÃO. A versão anterior pegava `codigos[0..2]`
+    // de um `order by display_order`, e `display_order` ordena DENTRO do eixo,
+    // não globalmente: 29 conceitos ativos ocupam 6 valores. Sem critério de
+    // desempate, quem cai em cada índice é a ordem física da tabela, que muda a
+    // cada UPDATE — inclusive o que materializou `motor_participation`.
+    //
+    // Numa dessas ordens o índice 2 caiu em `VIABILIDADE_COBERTURA_E_CONVENIO`,
+    // que é `MOTOR_PARTICIPATION = NUNCA` e por isso JAMAIS aparece no
+    // Relatório. A única diferença entre A e B estava escrita num conceito que
+    // o Relatório não narra: os dois dossiês saíam byte a byte iguais, e o
+    // teste acusava "expected 2 to be 3" sem nada de errado no gerador.
+    const ANCORAS = [
+      "EXPERIENCIA_TEMPO_DE_PRATICA",
+      "MODELO_COMUNICACAO",
+      "CONTINUIDADE_RETORNOS",
+    ] as const;
+
     const { data: subcriterios } = await service
       .from("method_subcriteria")
-      .select("id, code")
-      .eq("active", true)
-      .order("display_order");
-    const idPorCodigo = new Map((subcriterios ?? []).map((row) => [row.code, row.id]));
-    const codigos = (subcriterios ?? []).map((row) => row.code);
+      .select("id, code, active, motor_participation")
+      .in("code", ANCORAS);
 
-    const mapasDoProfissional: Record<string, Record<number, string>> = {
-      // Confirma os três primeiros: um dossiê com âncoras reais.
-      "fixture-a": { 0: "CONFIRMADO", 1: "CONFIRMADO", 2: "CONFIRMADO" },
+    // A âncora só serve se o Relatório puder narrá-la. Se uma delas sair de
+    // circulação ou deixar de participar do Motor, a fixture para AQUI, em vez
+    // de produzir dossiês silenciosamente iguais lá na frente.
+    for (const code of ANCORAS) {
+      const linha = (subcriterios ?? []).find((row) => row.code === code);
+      expect(linha, `âncora ${code} não existe no Catálogo`).toBeDefined();
+      expect(linha!.active, `âncora ${code} saiu de circulação`).toBe(true);
+      expect(
+        linha!.motor_participation,
+        `âncora ${code} não participa do Motor: o Relatório não a narraria, e a diferença entre os dossiês sumiria`,
+      ).not.toBe("NUNCA");
+    }
+
+    const idPorCodigo = new Map((subcriterios ?? []).map((row) => [row.code, row.id]));
+
+    const mapasDoProfissional: Record<string, Record<string, string>> = {
+      // Confirma as três âncoras: um dossiê com âncoras reais.
+      "fixture-a": {
+        EXPERIENCIA_TEMPO_DE_PRATICA: "CONFIRMADO",
+        MODELO_COMUNICACAO: "CONFIRMADO",
+        CONTINUIDADE_RETORNOS: "CONFIRMADO",
+      },
       // Analisado e sem informação — diferente de nunca investigado.
-      "fixture-b": { 0: "CONFIRMADO", 1: "CONFIRMADO", 2: "NAO_INFORMADO" },
+      "fixture-b": {
+        EXPERIENCIA_TEMPO_DE_PRATICA: "CONFIRMADO",
+        MODELO_COMUNICACAO: "CONFIRMADO",
+        CONTINUIDADE_RETORNOS: "NAO_INFORMADO",
+      },
       // Não confirmado: nunca vira "incompatível" no texto.
-      "fixture-c": { 0: "CONFIRMADO", 1: "NAO_CONFIRMADO", 2: "CONFIRMADO" },
+      "fixture-c": {
+        EXPERIENCIA_TEMPO_DE_PRATICA: "CONFIRMADO",
+        MODELO_COMUNICACAO: "NAO_CONFIRMADO",
+        CONTINUIDADE_RETORNOS: "CONFIRMADO",
+      },
     };
-    for (const [key, porIndice] of Object.entries(mapasDoProfissional)) {
-      const linhas = Object.entries(porIndice).map(([indice, status]) => ({
+    for (const [key, porCodigo] of Object.entries(mapasDoProfissional)) {
+      const linhas = Object.entries(porCodigo).map(([code, status]) => ({
         professional_profile_id: professionalIds[key]!,
-        subcriterion_id: idPorCodigo.get(codigos[Number(indice)]!)!,
+        subcriterion_id: idPorCodigo.get(code)!,
         status,
       }));
       const { error } = await service.from("professional_subcriterion_map").upsert(linhas, {
