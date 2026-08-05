@@ -496,6 +496,7 @@ como hoje.
 | 5 | **Existe regra vigente, aprovada e não suspensa** para aquele conceito |
 | 6 | **A Autoridade de Método está nomeada e ativa** (DP-4) — regra sem dono não propõe |
 | 7 | **Os dois lados estão na mesma versão de catálogo** |
+| **8** | **Para o conceito, existe no máximo uma versão de regra vigente que o cobre naquele instante** — condição acrescentada pela **Emenda F-2 de 2026-08-05** (§23.2) |
 
 **Quatro exclusões nomeadas, para não deixar dúvida:**
 
@@ -800,6 +801,124 @@ impedimentos de sequenciamento e de governança permanecem, e estão nomeados no
 
 ---
 
-*Fim da ADR-A. **Próximo destino obrigatório: Agente 00 — Guardião, para revisão
-constitucional**, com atenção especial ao §18.5, que devolve a ele uma decisão que não é do
-Arquiteto. Nenhuma implementação antes dessa revisão.*
+*Fim da ADR-A v1.0. **Próximo destino obrigatório à época: Agente 00 — Guardião, para
+revisão constitucional**, com atenção especial ao §18.5. **Aprovada e lavrada como
+ADR-066.** Emendas posteriores no §23.*
+
+---
+
+# §23 — EMENDA DE 2026-08-05 (DT-01)
+
+**Origem:** verificação independente do **Item 2.2C — Ponte grau → importância**
+(commit `b38cd34`), achados **F-1**, **F-2** e **F-3**.
+
+**Lavrada por acréscimo, conforme a ADR-062.** **Nenhum texto histórico foi
+sobrescrito** — o corpo §1 a §22 permanece como aprovado. A única alteração no
+corpo é **aditiva e assinalada**: a oitava condição do §16.
+
+**Nenhuma ADR nova foi criada.** As três emendas cabem nesta ADR porque tratam
+das condições de existência da ponte, que é o seu objeto.
+
+---
+
+## 23.1 Emenda F-1 — a participação do motor passa a ser derivável no banco
+
+**O que a verificação encontrou:** um conceito marcado `MOTOR_PARTICIPATION =
+NUNCA` **conseguia receber correspondência e emitir proposta**, porque a
+classificação vivia em `Record` TypeScript e o banco não a conhecia. A guarda
+existente detectava divergência **em teste**, não em execução.
+
+**A decisão do DT-01 é a aplicação da ADR-047** (*"o banco é autoritativo"*) a um
+atributo que ficou de fora por ordem de construção — **não é decisão de domínio
+nova, e nenhum valor dos 28 conceitos muda.**
+
+| # | Declaração vinculante |
+|---|---|
+| 1 | **`MOTOR_PARTICIPATION` é atributo do conceito** — não da regra, não do emissor, não política de aplicação |
+| 2 | **O banco é sua fonte autoritativa** (ADR-047) |
+| 3 | **O TypeScript é gerado a partir do Catálogo**, pelo mecanismo canônico já existente, com o teste de paridade por hash |
+| 4 | **Conceito `NUNCA` não pode receber correspondência** |
+| 5 | **Conceito `NUNCA` não pode emitir proposta** |
+| 6 | **A proteção opera no banco, para todo papel** — inclusive `service_role`. É o precedente do MR1.1: *"trigger, e não policy"* |
+| 7 | **As guardas permanecem como regressão, nunca como barreira principal** |
+| 8 | **Não será criada lista duplicada em SQL** — seria a segunda fonte que a ADR-047 veio extinguir |
+| 9 | **O `Record` TypeScript manual é eliminado** quando a implementação for executada |
+
+**Precisão registrada — não confundir com `cruzamento`.** O Catálogo já
+materializa a coluna `cruzamento` (`automatico` · `humano` · `misto`). Ela **não
+serve** a esta condição: colapsa `NUNCA` e `INDIRETO` em `humano`, e os 12
+conceitos de Prática e Trajetória são `INDIRETO` — participam do Case e **devem**
+continuar participando. **`cruzamento` diz quem julga; a participação diz quem
+entra. São dois fatos distintos, e o segundo ainda não estava materializado.**
+
+**Efeito sobre o §16 condição 4:** a condição não muda de conteúdo — passa a ser
+**operacionalmente derivável e imposta pelo banco**, em vez de declarada e
+verificada apenas em teste.
+
+## 23.2 Emenda F-2 — unicidade de regra vigente por conceito
+
+**O que a verificação encontrou:** duas regras distintas, ambas vigentes, podiam
+cobrir o mesmo conceito, e o emissor escolhia por `order by rule_id`.
+**Determinístico e metodologicamente arbitrário** — renomear uma regra mudaria
+qual tradução a paciente recebe.
+
+**Invariante aprovado, acrescentado ao §16 como oitava condição:**
+
+> **Em qualquer instante, para cada conceito, existe no máximo uma versão de
+> Regra de Derivação vigente que o cobre.**
+
+| Propriedade | Conteúdo |
+|---|---|
+| **Granularidade** | por **conceito** e **período de vigência** |
+| **Independente de** | `rule_id` · versão |
+| **Não admite** | desempate alfabético · prioridade implícita |
+| **Natureza da garantia** | **declarativa**, resistente à concorrência |
+| **Porta 1** | **promoção ou reativação** de regra |
+| **Porta 2** | **inclusão de correspondência em regra já vigente** |
+
+**Três consequências que precisam estar visíveis na operação:**
+
+| # | Consequência |
+|---|---|
+| 1 | **Uma regra pode cobrir vários conceitos.** O que se proíbe é o inverso: dois donos do mesmo conceito |
+| 2 | **A reativação pode ser legitimamente recusada** quando outra regra já assumiu o conceito. Recusa correta, não defeito |
+| 3 | **`order by rule_id` deixa de arbitrar.** Com a unicidade garantida, não há o que desempatar |
+
+**Relação com invariantes vigentes:**
+
+| Invariante | Relação |
+|---|---|
+| **MR1.2** | **complementado, não substituído.** MR1.2 é *uma vigente **por regra***; esta é *uma vigente **por conceito***. Eixos distintos, ambos necessários |
+| **ADR-069** | **não altera o grafo** — os sete arcos, a terminalidade de `REVOGADA` e o freio assimétrico do Curador permanecem intactos. Acrescenta-se **uma condição à promoção**, não um arco |
+| **§10.3 item 1** (totalidade) | preservado — duas totalidades sobre o mesmo conceito seriam ambiguidade, não completude. É o fundamento desta emenda |
+
+## 23.3 Emenda F-3 — `SEM_CORRESPONDENCIA` é reserva contratual
+
+**O que a verificação encontrou:** o desfecho existe no emissor e é
+**inalcançável**, porque DR3 já seleciona regra que cobre o conceito.
+
+**Confirmado, e por invariante:** o `constraint trigger` de cobertura total exige
+**os quatro graus** por `(regra, versão, conceito)`. Se DR3 encontrou a regra, a
+cobertura do conceito é total, e DR4 não pode falhar.
+
+**Decisão: mantido como reserva explicitamente não operacional.**
+
+| # | Declaração vinculante |
+|---|---|
+| 1 | **`SEM_CORRESPONDENCIA` é reserva contratual não operacional** enquanto a cobertura total dos quatro graus permanecer obrigatória (§10.3 item 1) |
+| 2 | **Não representa desfecho atualmente alcançável** |
+| 3 | **Não deve aparecer como capacidade operacional existente** — em documento, contrato, superfície ou relatório |
+| 4 | **Torna-se relevante apenas se a totalidade for alterada por decisão arquitetural futura** |
+| 5 | **Não remover o desfecho** — a distinção entre *"não há regra"* e *"há regra sem este grau"* é conceitualmente legítima |
+| 6 | **Não alterar o DR3 apenas para torná-lo artificialmente alcançável** — degradaria o diagnóstico verdadeiro de hoje |
+
+**Por que reserva declarada e não ramo removido:** reserva **não declarada** é
+ramo morto tratado como contrato — o vício de prometer o que não se cumpre.
+**Declarada**, é defesa em profundidade: se algum dia a totalidade falhar, o
+emissor recusa e nomeia, em vez de emitir errado.
+
+---
+
+*Fim da ADR-A / ADR-066 — v1.0 **+ emenda de 2026-08-05** (§23). O corpo §1–§22
+permanece como aprovado; a única alteração aditiva no corpo é a **oitava condição
+do §16**. Destino do trabalho corretivo: pacote **2.2C-R1**.*

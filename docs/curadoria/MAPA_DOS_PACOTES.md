@@ -91,8 +91,9 @@ O Item 2.2 foi executado em subpacotes que **não estavam registrados neste mapa
 | **2.2A** | Estrutura da Regra de Derivação | **CONCLUÍDO** | `30c6809` |
 | **2.2A-MR1** | Endurecimento dos invariantes | **CONCLUÍDO COM RESSALVAS REGISTRADAS** | `7770d7f` |
 | **2.2B** | Ciclo de vida das Regras de Derivação | **CONCLUÍDO COM RESSALVAS REGISTRADAS** | `1a7ef86` |
-| **2.2C** | **Ponte grau → importância** | **PLANEJADO — AGUARDA PACOTE CORRETIVO E AUTORIZAÇÃO DE ABERTURA** | — |
-| **2.2B-R1** | Endurecimento pós-verificação (pacote corretivo) | **AUTORIZÁVEL APÓS ESTA LAVRATURA** | — |
+| **2.2C** | **Ponte grau → importância** | **ENCERRADO — USO OPERACIONAL BLOQUEADO ATÉ O 2.2C-R1** (ver §3.3) | `b38cd34` |
+| **2.2B-R1** | Endurecimento pós-verificação (pacote corretivo) | **AUTORIZÁVEL** | — |
+| **2.2C-R1** | **Participação do motor e unicidade por conceito** | **PLANEJADO — AGUARDA IMPLEMENTAÇÃO** (ver §3.3) | — |
 
 #### Ressalvas registradas no encerramento do 2.2B
 
@@ -149,6 +150,76 @@ arquitetural da ADR-069.**
 **Não é correto afirmar que o índice, isoladamente, prova todo o invariante.** Ele
 arbitra; quem valida a cadeia é o trigger. Descrever apenas um dos dois deixaria
 metade do invariante sem guarda declarada.
+
+### 3.3 Item 2.2C — encerramento e pacote corretivo 2.2C-R1
+
+**Decisão do DT-01 em 2026-08-05**, sobre o commit verificado `b38cd34`.
+
+#### Estado do 2.2C
+
+> **2.2C ENCERRADO — USO OPERACIONAL BLOQUEADO ATÉ O 2.2C-R1.**
+
+**Aprovados:** estrutura · emissor · **A2** · proveniência · concorrência ·
+rollback. **O item não é reaberto.**
+
+**Permanece proibido até a implementação e verificação do 2.2C-R1:**
+materializar a primeira regra real · iniciar a Fronteira Humana · iniciar `2.C` ·
+iniciar `2.3`.
+
+| Ressalva | Achado | Destino |
+|---|---|---|
+| **F-1** | Conceito `MOTOR_PARTICIPATION = NUNCA` recebe correspondência e emite; a fonte vive em `Record` TypeScript, e a guarda detecta em teste, não em execução | **2.2C-R1** · emenda **ADR-066 §23.1** |
+| **F-2** | Duas regras vigentes podem cobrir o mesmo conceito; o emissor arbitra por `order by rule_id` | **2.2C-R1** · emenda **ADR-066 §23.2** (oitava condição do §16) |
+| **F-3** | `SEM_CORRESPONDENCIA` é inalcançável — a cobertura total dos quatro graus o impede | **2.2C-R1** (documental) · emenda **ADR-066 §23.3** |
+
+#### 2.2C-R1 — Participação do motor e unicidade por conceito
+
+| Campo | Conteúdo |
+|---|---|
+| **Identificador** | **2.2C-R1** |
+| **Nome** | Participação do motor e unicidade por conceito |
+| **Estado** | **PLANEJADO — AGUARDA IMPLEMENTAÇÃO** |
+| **Objetivo** | materializar a participação do motor no Catálogo · impedir correspondência e emissão para conceitos `NUNCA` · garantir uma única regra vigente por conceito · declarar corretamente o contrato de `SEM_CORRESPONDENCIA` |
+| **Dependências** | ADR-047 · **ADR-066 emendada** ✅ · ADR-069 ✅ · Item 2.2C verificado ✅ · **Item 2.2B-R1 verificado** ❌ · **ausência de regra real materializada** ✅ |
+
+**Escopo**
+
+acrescentar `MOTOR_PARTICIPATION` ao Catálogo materializado · regenerar o
+contrato TypeScript · **eliminar o `Record` manual equivalente** · impedir
+correspondência para conceito `NUNCA` · impedir emissão para conceito `NUNCA` ·
+garantir unicidade vigente por conceito · garantir a unicidade **na promoção e
+reativação** · garantir a unicidade **na escrita de correspondência para regra
+vigente** · **remover a arbitragem por `order by rule_id`** · documentar
+`SEM_CORRESPONDENCIA` como reserva · testes, mutações, concorrência e rollback.
+
+**Fora de escopo**
+
+materializar regra real · definir valores definitivos · Fronteira Humana ·
+confirmação · interface · painel · métricas · observabilidade · `2.C` · `2.3` ·
+vínculo técnico da Autoridade de Método.
+
+**Aceite mínimo — catorze critérios**
+
+| # | Critério |
+|---|---|
+| 1 | O Catálogo é a **única fonte** de `MOTOR_PARTICIPATION` |
+| 2 | O `Record` TypeScript manual **deixa de existir** |
+| 3 | Conceito `NUNCA` **não aceita correspondência** |
+| 4 | Conceito `NUNCA` **não emite** |
+| 5 | **Escrita privilegiada não contorna** a proteção |
+| 6 | Duas regras vigentes para o mesmo conceito são **recusadas** |
+| 7 | Duas promoções concorrentes resultam em **apenas uma** cobertura vigente |
+| 8 | **Reativação é recusada** quando o conceito foi assumido |
+| 9 | Correspondência adicionada a regra vigente é **recusada** quando há outra dona |
+| 10 | Uma regra **continua podendo cobrir vários conceitos** |
+| 11 | **MR1.1, MR1.2 e MR1.3 permanecem verdes** |
+| 12 | **A2 permanece verde** |
+| 13 | `SEM_CORRESPONDENCIA` é **declarado não operacional** |
+| 14 | **Rollback não apaga propostas nem declarações históricas** |
+
+> **A janela é agora:** **nenhuma regra real existe**. Corrigir antes da primeira
+> regra custa migration aditiva; depois, custaria migração de dados sobre
+> proveniência append-only.
 
 ## 4. Ondas 3, 4 e 5
 
