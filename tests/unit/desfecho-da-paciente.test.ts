@@ -288,3 +288,92 @@ describe("A migration: aditiva, e só", () => {
     expect(auditoria.includes("_correction"), "o texto clínico entrou no metadata").toBe(false);
   });
 });
+
+/**
+ * ETAPA 2C · C9 — NENHUM RETORNO ESPECÍFICO CAI NO GENÉRICO.
+ *
+ * A lista de frases não é conferida contra outra lista escrita à mão — seria
+ * tautologia. Ela é conferida contra os `return '...'` do PRÓPRIO SQL da RPC:
+ * se uma migration futura acrescentar um retorno nomeado sem frase, este teste
+ * cai antes de "Não foi possível registrar agora" chegar à tela dela.
+ */
+describe("C9 · toda saída nomeada da RPC tem frase própria", () => {
+  const MIGRATIONS = [
+    "supabase/migrations/20260804160000_paciente_registra_o_proprio_desfecho.sql",
+    "supabase/migrations/20260804170000_desfecho_da_paciente_grants_hardening.sql",
+  ];
+
+  /** Os três desfechos são SUCESSO — devolvem o estado, não uma frase. */
+  const DESFECHOS = new Set(["RECONHECIDA", "CORRIGIDA", "RECUSADA"]);
+
+  function retornosDoSql(): Set<string> {
+    const encontrados = new Set<string>();
+    for (const arquivo of MIGRATIONS) {
+      const sql = readFileSync(join(process.cwd(), arquivo), "utf8");
+      for (const achado of sql.matchAll(/return '([A-Z_]+)'/g)) encontrados.add(achado[1]!);
+    }
+    return encontrados;
+  }
+
+  it("o SQL realmente devolve retornos nomeados — a varredura não está vazia", () => {
+    expect(retornosDoSql().size).toBeGreaterThan(5);
+  });
+
+  it("cada retorno de recusa do SQL tem uma frase própria", async () => {
+    const { MENSAGENS_DO_DESFECHO, MENSAGEM_GENERICA, mensagemDoRetorno } = await import(
+      "@/modules/paciente/desfecho-mensagens"
+    );
+
+    for (const retorno of retornosDoSql()) {
+      if (DESFECHOS.has(retorno)) continue;
+
+      expect(
+        Object.keys(MENSAGENS_DO_DESFECHO),
+        `a RPC devolve "${retorno}" e nenhuma frase o cobre`,
+      ).toContain(retorno);
+      expect(mensagemDoRetorno(retorno), retorno).not.toBe(MENSAGEM_GENERICA);
+      expect(mensagemDoRetorno(retorno).length, retorno).toBeGreaterThan(20);
+    }
+  });
+
+  it("nenhuma frase expõe o código cru do banco à paciente", async () => {
+    const { MENSAGENS_DO_DESFECHO } = await import("@/modules/paciente/desfecho-mensagens");
+
+    for (const [retorno, frase] of Object.entries(MENSAGENS_DO_DESFECHO)) {
+      expect(frase, retorno).not.toContain(retorno);
+      expect(frase, retorno).not.toMatch(/[A-Z]{4,}_[A-Z]{4,}/);
+    }
+  });
+
+  it("PERFIL_SUBSTITUIDO usa a frase do domínio, não uma inventada", async () => {
+    const { MENSAGENS_DO_DESFECHO } = await import("@/modules/paciente/desfecho-mensagens");
+    const { DECISION_MESSAGES } = await import("@/modules/curadoria/reconhecimento-do-perfil");
+
+    expect(MENSAGENS_DO_DESFECHO.PERFIL_SUBSTITUIDO).toBe(DECISION_MESSAGES.PERFIL_SUBSTITUIDO);
+  });
+});
+
+describe("Etapa 2C · a superfície usa o caminho autorizado", () => {
+  const componente = readFileSync(
+    join(process.cwd(), "src/components/paciente/desfechos-do-conceito.tsx"),
+    "utf8",
+  );
+
+  it("consome `registrarDesfechoAction` e nunca a action do Curador", () => {
+    expect(componente).toContain("registrarDesfechoAction");
+    expect(componente.includes("acknowledgePersonNeed")).toBe(false);
+    expect(componente.includes("@/modules/curadoria/")).toBe(false);
+  });
+
+  it("não consulta banco, não chama RPC direto, não escreve", () => {
+    for (const proibido of ["createServerSupabaseClient", ".from(", ".rpc(", "supabase"]) {
+      expect(componente.includes(proibido), `a tela faz ${proibido}`).toBe(false);
+    }
+  });
+
+  it("C6/C7 · não remonta cadeia nem refaz partição", () => {
+    expect(componente.includes("montarCadeiaDeProveniencia")).toBe(false);
+    expect(componente.includes("PERSON_QUESTIONS_BY_CODE")).toBe(false);
+    expect(componente.includes("loadCaseNeeds")).toBe(false);
+  });
+});

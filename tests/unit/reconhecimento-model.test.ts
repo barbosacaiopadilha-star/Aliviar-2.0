@@ -402,3 +402,71 @@ describe("B2/B3 · proveniência entregue pronta, e ausência declarada", () => 
     expect(tecnico).not.toHaveProperty("cadeia");
   });
 });
+
+/**
+ * ETAPA 2C · C6 — O ESTADO DO ATO VEM DO MESMO CARREGAMENTO.
+ *
+ * `origin`, `acknowledgment`, `proposed_reading` e `correction` já vinham em
+ * `loadCaseNeeds` desde a Etapa 2A. Aqui só passam a atravessar o contrato:
+ * nenhuma consulta nova, nenhuma regra nova.
+ */
+describe("C6 · o ato sobre a tradução, sem consulta nova", () => {
+  it("linha traduzida e pendente chega pronta para receber desfecho", async () => {
+    darDados([need(COM_PESSOA, { origin: "TRADUCAO", proposedReading: "Entendi assim." })], []);
+
+    const [linha] = (await loadModeloDoReconhecimento(SUPABASE, CASE_ID)).linhas;
+
+    expect(linha!.ato).toEqual({
+      houveTraducao: true,
+      desfecho: "PENDENTE",
+      leituraProposta: "Entendi assim.",
+      correcao: null,
+    });
+  });
+
+  it("resposta direta dela não admite desfecho — ninguém traduziu nada", async () => {
+    darDados([need(COM_PESSOA, { origin: "DIRETO" })], []);
+
+    const [linha] = (await loadModeloDoReconhecimento(SUPABASE, CASE_ID)).linhas;
+
+    expect(linha!.ato.houveTraducao).toBe(false);
+  });
+
+  it("desfecho já praticado atravessa com o texto dela", async () => {
+    darDados(
+      [
+        need(COM_PESSOA, {
+          origin: "TRADUCAO",
+          proposedReading: "Entendi assim.",
+          acknowledgment: "RECUSADA",
+          correction: "não foi isso",
+        }),
+      ],
+      [],
+    );
+
+    const [linha] = (await loadModeloDoReconhecimento(SUPABASE, CASE_ID)).linhas;
+
+    expect(linha!.ato.desfecho).toBe("RECUSADA");
+    expect(linha!.ato.correcao).toBe("não foi isso");
+  });
+
+  it("conceito só registrado, sem fala dela, não inventa tradução", async () => {
+    darDados([], [item(COM_PESSOA)]);
+
+    const [linha] = (await loadModeloDoReconhecimento(SUPABASE, CASE_ID)).linhas;
+
+    expect(linha!.ato.houveTraducao).toBe(false);
+    expect(linha!.ato.desfecho).toBe("PENDENTE");
+    expect(linha!.ato.leituraProposta).toBeNull();
+  });
+
+  it("o loader continua lendo as MESMAS duas fontes — nenhuma terceira apareceu", async () => {
+    darDados([need(COM_PESSOA, { origin: "TRADUCAO" })], [item(COM_PESSOA)]);
+
+    await loadModeloDoReconhecimento(SUPABASE, CASE_ID);
+
+    expect(mocks.loadCaseNeeds).toHaveBeenCalledTimes(1);
+    expect(mocks.loadCasePriorityMap).toHaveBeenCalledTimes(1);
+  });
+});

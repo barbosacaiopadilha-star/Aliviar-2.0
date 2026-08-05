@@ -146,6 +146,7 @@ describe("Etapa 2B — a comparação substitui a lista enquanto o ato é dela",
         registradoEm: "2026-08-02T09:00:00Z",
       },
       cadeia: CADEIA,
+      ato: { houveTraducao: false, desfecho: "PENDENTE" as const, leituraProposta: null, correcao: null },
     },
   ];
 
@@ -277,6 +278,7 @@ describe("Etapa 2C — C5 · o quadrante que não dizia nada", () => {
       autor: "perfil-paciente",
     },
     registro: null,
+    ato: { houveTraducao: false, desfecho: "PENDENTE" as const, leituraProposta: null, correcao: null },
     cadeia: montarCadeiaDeProveniencia({
       subcriterionCode: "MODELO_COMUNICACAO",
       pessoa: {

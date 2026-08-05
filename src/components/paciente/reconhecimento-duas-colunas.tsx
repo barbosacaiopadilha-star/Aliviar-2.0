@@ -1,3 +1,4 @@
+import { DesfechosDoConceito } from "@/components/paciente/desfechos-do-conceito";
 import type {
   LinhaDoReconhecimento,
   LinhaTecnica,
@@ -57,8 +58,11 @@ function procedencia(autor: string | null, registradoEm: string | null): string 
 export function ReconhecimentoDuasColunas({
   linhas,
   tecnicos = [],
+  caseId,
 }: {
   linhas: LinhaDoReconhecimento[];
+  /** Etapa 2C — sem o Case, os desfechos nao tem onde ser registrados. */
+  caseId?: string;
   /** Terceiro bloco — declarações do Curador, sem lado dela. */
   tecnicos?: LinhaTecnica[];
 }) {
@@ -132,6 +136,19 @@ export function ReconhecimentoDuasColunas({
                 )}
               </div>
             </div>
+
+            {/* ETAPA 2C — os quatro desfechos, na linha do conceito de que
+                tratam. Ficam aqui, e não num rodapé, porque ela responde SOBRE
+                esta leitura: uma decisão longe do que ela decide vira um
+                formulário. Sem tradução, o componente não desenha nada. */}
+            {caseId ? (
+              <DesfechosDoConceito
+                caseId={caseId}
+                subcriterionCode={linha.subcriterionCode}
+                label={linha.label}
+                ato={linha.ato}
+              />
+            ) : null}
           </li>
         );
       })}

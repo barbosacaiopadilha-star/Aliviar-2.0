@@ -5,6 +5,7 @@ import { z } from "zod";
 import { erroDeBanco, falhaParaUsuario } from "@/lib/observability/erros";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { NaoAutenticadoError, requireRoleForAction } from "@/modules/auth/guard";
+import { mensagemDoRetorno } from "@/modules/paciente/desfecho-mensagens";
 
 /**
  * O DESFECHO DELA, POR CONCEITO — PP-03A.
@@ -65,19 +66,12 @@ const SESSAO_EXPIRADA: DesfechoResult = {
  * Cada retorno nomeado da RPC vira uma frase para ela. Nenhum é acusação: o
  * conceito que não existe, a tradução que não houve e o Perfil já reconhecido
  * são estados do trabalho, não erros dela.
+ *
+ * As frases vivem em `desfecho-mensagens.ts`, módulo puro: este arquivo é
+ * `"use server"` e só pode exportar funções async. C9 — nenhum retorno
+ * específico da RPC cai no genérico; um teste compara a lista de retornos com
+ * as chaves do mapa.
  */
-const MENSAGENS: Record<string, string> = {
-  NAO_AUTORIZADO: "Este Perfil não é seu.",
-  ESTADO_INVALIDO: "Não foi possível registrar essa resposta.",
-  TEXTO_OBRIGATORIO:
-    "Para corrigir ou discordar, conte o que está diferente — é o que a Curadoria precisa saber.",
-  CONCEITO_INEXISTENTE: "Este ponto ainda não faz parte do seu Perfil.",
-  NAO_TRADUZIDO:
-    "Aqui não houve tradução de ninguém — esta é a sua própria resposta, do jeito que você deu.",
-  JA_RESPONDIDO: "Você já respondeu sobre este ponto. Para mudar, fale com seu Curador.",
-  PERFIL_JA_RECONHECIDO:
-    "Você já reconheceu este Perfil, e ele não muda mais. Para corrigir, é preciso construir um novo junto com a Curadoria.",
-};
 
 export async function registrarDesfechoAction(input: unknown): Promise<DesfechoResult> {
   try {
@@ -135,6 +129,6 @@ export async function registrarDesfechoAction(input: unknown): Promise<DesfechoR
 
   return {
     success: false,
-    error: MENSAGENS[data as string] ?? "Não foi possível registrar agora.",
+    error: mensagemDoRetorno(data as string),
   };
 }

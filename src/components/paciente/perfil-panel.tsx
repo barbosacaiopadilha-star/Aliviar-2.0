@@ -81,7 +81,11 @@ export function PerfilPanel({
 
       {reconhecendo ? (
         <div className="mt-5">
-          <ReconhecimentoDuasColunas linhas={comparacao} tecnicos={tecnicosDoBloco} />
+          <ReconhecimentoDuasColunas
+            linhas={comparacao}
+            tecnicos={tecnicosDoBloco}
+            caseId={caseId}
+          />
         </div>
       ) : perfil.prioridades.length === 0 ? (
         // Nunca um card vazio: o estado é dito por nome.

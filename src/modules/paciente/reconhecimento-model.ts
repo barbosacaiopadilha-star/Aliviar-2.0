@@ -148,6 +148,15 @@ export async function loadModeloDoReconhecimento(
         // inventar um profissional produziria uma cadeia falsa.
         profissional: { estado: null },
       }),
+      // Etapa 2C — o estado do ato dela, vindo do MESMO `loadCaseNeeds` da
+      // Etapa 2A. Nenhuma consulta nova, nenhuma regra nova: a tela precisa
+      // saber o que já foi praticado para não oferecer o que não cabe.
+      ato: {
+        houveTraducao: declaracao?.origin === "TRADUCAO",
+        desfecho: declaracao?.acknowledgment ?? "PENDENTE",
+        leituraProposta: declaracao?.proposedReading ?? null,
+        correcao: declaracao?.correction ?? null,
+      },
     });
   }
 

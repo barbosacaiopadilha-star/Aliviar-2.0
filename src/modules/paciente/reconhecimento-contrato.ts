@@ -36,6 +36,26 @@ export type RegistroDaCuradoria = {
   registradoEm: string | null;
 };
 
+/**
+ * O ESTADO DO ATO DELA SOBRE A TRADUÇÃO — Etapa 2C.
+ *
+ * Os quatro desfechos do DT-22 são POR CONCEITO, e só existem onde houve
+ * tradução: onde ela respondeu direto, não há leitura de terceiro sobre a qual
+ * concordar ou discordar. Estes campos já vinham de `case_needs` no mesmo
+ * `loadCaseNeeds` da Etapa 2A — não há consulta nova aqui, só o contrato
+ * completando o que a tela precisa para saber o que oferecer.
+ */
+export type AtoSobreATraducao = {
+  /** Só `TRADUCAO` admite desfecho. `DIRETO` e `DECLARACAO_CLINICA` não. */
+  houveTraducao: boolean;
+  /** O desfecho já praticado. `PENDENTE` é a ausência de ato, não um ato. */
+  desfecho: "PENDENTE" | "RECONHECIDA" | "CORRIGIDA" | "RECUSADA";
+  /** O que o Curador entendeu — o objeto sobre o qual ela se manifesta. */
+  leituraProposta: string | null;
+  /** O texto dela, quando já corrigiu ou discordou. */
+  correcao: string | null;
+};
+
 export type LinhaDoReconhecimento = {
   subcriterionCode: string;
   /** O rótulo do conceito, como ela o lê. Nunca o código. */
@@ -44,6 +64,7 @@ export type LinhaDoReconhecimento = {
   registro: RegistroDaCuradoria | null;
   /** A cadeia do Item 1.9 — a fonte única do que falta e por quê. */
   cadeia: CadeiaDeProveniencia;
+  ato: AtoSobreATraducao;
 };
 
 /**

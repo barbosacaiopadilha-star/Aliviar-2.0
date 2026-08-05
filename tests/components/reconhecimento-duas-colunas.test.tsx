@@ -54,6 +54,7 @@ function linha(overrides: Partial<LinhaDoReconhecimento> = {}): LinhaDoReconheci
       registradoEm: "2026-08-02T09:00:00Z",
     },
     cadeia,
+    ato: { houveTraducao: false, desfecho: "PENDENTE" as const, leituraProposta: null, correcao: null },
     ...overrides,
   };
 }
