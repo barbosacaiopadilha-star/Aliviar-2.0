@@ -88,8 +88,3 @@ scripts/local/.tmp-password-update.sql
 
 # Backups locais de verificação de restore (Bloco I) — nunca versionados
 .backups/
-
-# Capturas de verificacao em navegador (Etapa 2D em diante): evidencia de
-# execucao local, regenerada pelo proprio spec. Nao versionada — binario que
-# muda a cada rodada e nao se le em diff.
-evidencias/
