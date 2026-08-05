@@ -38,7 +38,7 @@ A proposta anterior recomendou a arquitetura; **esta ADR fecha as três decisõe
 | # | Decisão | Resposta |
 |---|---|---|
 | **B-1** | Destino de `derivation_rules.state` | **Deixa de ser fonte de verdade e passa a ser o registro do estado inicial** — imutável, como todo o resto da linha. **Não vira cache** |
-| **B-2** | Grafo de transições | **Nove pares avaliados; cinco permitidos, quatro proibidos.** `REVOGADA` é terminal; **`PROPOSTA → REVOGADA` não existe** — o ato correto é `PROPOSTA → SUSPENSA` |
+| **B-2** | Grafo de transições | **Sete arcos permitidos, incluindo o nascimento obrigatório em `PROPOSTA`** (ver §21 — emenda aritmética). `REVOGADA` é terminal; **`PROPOSTA → REVOGADA` não existe** — o ato correto é `PROPOSTA → SUSPENSA` |
 | **B-3** | Novo significado de MR1.2 | O invariante muda de **sujeito**, não de conteúdo: passa a ser garantido sobre a **transição** — *"no máximo uma transição para `VIGENTE` sem transição de saída posterior, por `rule_id`"* |
 
 **O princípio que sustenta as três:**
@@ -206,7 +206,9 @@ Poderia parecer natural: *"a proposta foi recusada, revoguem-na"*. **É erro de 
 | **qualquer** | `PROPOSTA` | **NÃO** | — | — · nascimento não se repete |
 | **X** | **X** (mesmo estado) | **NÃO** | — | — · transição sem mudança não é ato |
 
-**Cinco transições permitidas. Lista fechada.** Acrescentar qualquer uma exige nova ADR que referencie esta.
+**Sete arcos permitidos, incluindo o nascimento obrigatório em `PROPOSTA`. Lista
+fechada** — a enumeração é a da tabela acima, e não mudou (ver §21). Acrescentar
+qualquer arco exige nova ADR que referencie esta.
 
 **Todas exigem motivo. Sem exceção.** O §10.5 diz *"suspensão é ato reversível e registrado"*, e registrado sem porquê é carimbo. Duas exigem **ADR**: entrada em `VIGENTE` e qualquer entrada em `REVOGADA`.
 
@@ -431,7 +433,7 @@ previstos foram cumpridos nesta ordem:
 - **Decisão:**
   1. **A versão da regra é fato imutável; a transição é ato append-only; o estado vigente é leitura derivada.** É a ADR-066 §5 aplicada ao terceiro objeto da mesma família.
   2. **`derivation_rules.state` deixa de ser fonte de verdade** e permanece como registro imutável do **estado inicial**. Não é removido e **não vira cache** — cache seria segunda fonte de verdade, contra P-07.
-  3. **Cinco transições permitidas, lista fechada:** `→PROPOSTA` · `PROPOSTA→VIGENTE` · `PROPOSTA→SUSPENSA` · `VIGENTE→SUSPENSA` · `VIGENTE→REVOGADA` · `SUSPENSA→VIGENTE` · `SUSPENSA→REVOGADA`. **`REVOGADA` é terminal**; **`PROPOSTA→REVOGADA` não existe** (não se revoga o que nunca valeu); nenhuma versão volta a `PROPOSTA`.
+  3. **Sete arcos permitidos, incluindo o nascimento obrigatório em `PROPOSTA`; lista fechada:** `→PROPOSTA` · `PROPOSTA→VIGENTE` · `PROPOSTA→SUSPENSA` · `VIGENTE→SUSPENSA` · `VIGENTE→REVOGADA` · `SUSPENSA→VIGENTE` · `SUSPENSA→REVOGADA`. **`REVOGADA` é terminal**; **`PROPOSTA→REVOGADA` não existe** (não se revoga o que nunca valeu); nenhuma versão volta a `PROPOSTA`.
   4. **MR1.2 muda de sujeito, não de conteúdo:** de "uma linha VIGENTE por regra" para "uma transição de entrada em VIGENTE sem saída posterior, por regra" — e **a garantia deve permanecer declarativa**, nunca verificação em código de aplicação.
   5. **Toda versão nasce com transição inicial obrigatória para `PROPOSTA`.** Nenhuma nasce vigente.
   6. **Toda transição tem autor, data e motivo.** Entrada em VIGENTE e qualquer entrada em REVOGADA exigem **ADR**. O **Curador do Case** pode suspender como freio de emergência (§5.4 cond. 7), com justificativa de emergência — **e não pode reativar**.
@@ -462,6 +464,81 @@ previstos foram cumpridos nesta ordem:
 
 ---
 
-*Fim da ADR-069 v1.0. **Estado: APROVADA e lavrada** (DT-01, 2026-08-05).
-**Esta ADR não autoriza implementação.** Encaminhamento: **DT-01**, para a
-autorização formal de abertura do Item 2.2B.*
+---
+
+## 21. Emenda aritmética — 2026-08-05 (DT-01)
+
+**Origem:** ressalva 3 do encerramento do Item 2.2B, apontada pela verificação
+independente.
+
+### 21.1 O que estava errado
+
+A ADR v1.0 dizia, em três lugares, **"cinco transições permitidas"** — e
+**enumerava sete arcos** na própria matriz do §7. **O texto contava errado a
+lista que ele mesmo apresentava.**
+
+A origem do erro é rastreável: a contagem "cinco" refere-se aos **cinco arcos
+entre estados existentes** e omite o **nascimento** (`inexistente → PROPOSTA`) e
+um dos arcos de saída. **A matriz nunca esteve errada; o adjetivo numérico
+estava.**
+
+### 21.2 A correção
+
+| De | Para |
+|---|---|
+| *"cinco transições permitidas"* | **"sete arcos permitidos, incluindo o nascimento obrigatório em `PROPOSTA`"** |
+
+Corrigido em três ocorrências: §1 (tabela B-2), §7 (nota da matriz) e §19.1
+(verbete). **Nada além do numeral foi alterado.**
+
+### 21.3 O que a emenda NÃO faz — declaração expressa
+
+| # | Declaração |
+|---|---|
+| 1 | **O conjunto enumerado não mudou** — os mesmos sete arcos do §7 |
+| 2 | **Nenhuma nova transição foi autorizada** |
+| 3 | **Nenhuma transição foi removida** |
+| 4 | **A correção é exclusivamente aritmética** — não toca autoridade, motivo, terminalidade nem ordenação |
+| 5 | **O commit `1a7ef86` seguiu corretamente a matriz normativa** — a implementação leu a tabela, não o numeral. **Não há defeito de implementação decorrente deste erro** |
+
+### 21.4 Os sete arcos, para dirimir dúvida futura
+
+`inexistente→PROPOSTA` · `PROPOSTA→VIGENTE` · `PROPOSTA→SUSPENSA` ·
+`VIGENTE→SUSPENSA` · `VIGENTE→REVOGADA` · `SUSPENSA→VIGENTE` ·
+`SUSPENSA→REVOGADA`.
+
+**Proibidos:** `PROPOSTA→REVOGADA` · qualquer arco a partir de `REVOGADA` ·
+qualquer arco de retorno a `PROPOSTA` · arco de um estado para ele mesmo.
+
+### 21.5 Registro append-only
+
+Conforme a **ADR-062**, o verbete da ADR-069 em `DECISIONS.md` **não foi
+reescrito**: a emenda é registrada **acrescentando** a correção ao verbete e uma
+linha ao índice de supersessões e emendas do topo do log.
+
+---
+
+## 22. Precisão do contrato MR1.2 — 2026-08-05
+
+**Origem:** ressalva 2 do encerramento do 2.2B. **Não altera a decisão
+arquitetural do §8.**
+
+> **A garantia do MR1.2 reinterpretado é produzida pelo conjunto formado pelo
+> trigger de cadeia e pelo índice único parcial.**
+
+| Componente | Papel |
+|---|---|
+| **Trigger de cadeia** | valida a **continuidade** · valida a **sequência** · valida o **ordinal de vigência** |
+| **Índice único parcial** | **arbitra colisões** · **protege a concorrência** · impede duas entradas com a mesma chave de período de vigência |
+
+**Não é correto afirmar que o índice, isoladamente, prova todo o invariante.**
+O §8.2 exigiu que a garantia permanecesse **declarativa**; a implementação a
+entregou em duas peças declarativas complementares, e descrever apenas uma
+deixaria metade do invariante sem guarda registrada.
+
+---
+
+*Fim da ADR-069 v1.0 **+ emendas de 2026-08-05** (§21 aritmética, §22 precisão do
+MR1.2). **Estado: APROVADA e lavrada** (DT-01, 2026-08-05). **Esta ADR não
+autoriza implementação.** O Item 2.2B está encerrado com ressalvas; o **2.2C**
+aguarda o pacote corretivo **2.2B-R1** e autorização formal do DT-01.*

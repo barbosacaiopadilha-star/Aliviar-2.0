@@ -73,12 +73,82 @@ direta **sem perder dado** — confirmações feitas permanecem válidas, propos
 | Código | Nome | Objetivo | Dep. | Aceite | Estado | Resp. | Rollback | Era |
 |---|---|---|---|---|---|---|---|---|
 | **2.1** | `derivation_proposals` append-only | Materializar a Camada de Derivação | **ADR-A**, todas as dez do §15.0 | A3 verde; falta de proveniência ⇒ não persiste | BLOQUEADO | Implementador | migration aditiva reversível | (parte de L-21) |
-| **2.2** | Ponte grau→importância — **forma e governança**, valores provisórios | Proposta de importância nos ~17 conceitos com lado da pessoa | **ADR-A**, 0.3, 2.1 | A1, A2 verdes; reabertura de I-10 declarada (§10.3.0); teste `importancia-vs-grau.test.ts` protegido até a ADR-A | BLOQUEADO | Implementador | flag; classificação manual permanece o caminho padrão | L-30 + L-31 |
+| **2.2** | Ponte grau→importância — **forma e governança**, valores provisórios | Proposta de importância nos ~17 conceitos com lado da pessoa | **ADR-A**, 0.3, 2.1 | A1, A2 verdes; reabertura de I-10 declarada (§10.3.0); teste `importancia-vs-grau.test.ts` protegido até a ADR-A | **PARTICIONADO** — ver §3.1 | Implementador | flag; classificação manual permanece o caminho padrão | L-30 + L-31 |
 | **2.3** | Divisão da etapa AVALIAÇÃO | 3 critérios do lado da pessoa passam a vir do Motor | **ADR-B**, 1.4 | X1 verde; FORMACAO/EXPERIENCIA/HISTORICO permanecem humanos | BLOQUEADO | Implementador | flag restaura 6×N | L-40 + L-41 |
 | **2.4** | `curator_judgments` **sem `AREA`** | Registrar juízo humano onde não há célula | **ADR-B**, 2.1 | Append-only; `AREA` ausente (RS-03) | BLOQUEADO | Implementador | migration aditiva | **novo** |
 | **2.5** | ~~Regime de confirmação em bloco~~ | — | **DP-5** | **AC-BLOCO:** nenhum mecanismo no repositório, **nem atrás de feature flag** | **PROIBIDO** até DP-5 por ADR (§5.4.0) | — | n/a | (não existia) |
 | **2.6** | Governança de quem confirma o Mapa do Profissional | Corrigir G4/RI4 | **ADR-D** (toca ADR-040 item 6) | RLS não enfraquece; teste de permissão por papel | BLOQUEADO | Implementador + Guardião | restaurar permissão anterior | L-23 |
 | **2.C** | Persistência e apresentação da derivação do Mapa do Profissional — **confirmação item a item** | Ligar 1.A ao mundo real | 1.A, 2.1, 2.6, **todas as dez do §15.0** | Fronteira Humana com os nove elementos (A2c); ausência de ato nunca confirma (A2d) | BLOQUEADO | Implementador | flag desliga a superfície; preenchimento manual permanece | L-21 + L-22 |
+
+### 3.1 Partição do Item 2.2 — ratificada pelo DT-01 em 2026-08-05
+
+O Item 2.2 foi executado em subpacotes que **não estavam registrados neste mapa**
+— dívida de processo apontada no Dossiê de pré-voo e agora quitada. **A partição
+é ratificada; nenhum escopo foi acrescentado ou retirado do 2.2 original.**
+
+| Subitem | Objeto | Estado | Commit |
+|---|---|---|---|
+| **2.2A** | Estrutura da Regra de Derivação | **CONCLUÍDO** | `30c6809` |
+| **2.2A-MR1** | Endurecimento dos invariantes | **CONCLUÍDO COM RESSALVAS REGISTRADAS** | `7770d7f` |
+| **2.2B** | Ciclo de vida das Regras de Derivação | **CONCLUÍDO COM RESSALVAS REGISTRADAS** | `1a7ef86` |
+| **2.2C** | **Ponte grau → importância** | **PLANEJADO — AGUARDA PACOTE CORRETIVO E AUTORIZAÇÃO DE ABERTURA** | — |
+| **2.2B-R1** | Endurecimento pós-verificação (pacote corretivo) | **AUTORIZÁVEL APÓS ESTA LAVRATURA** | — |
+
+#### Ressalvas registradas no encerramento do 2.2B
+
+Encerrado pelo DT-01 em 2026-08-05, **com ressalvas que não impedem o
+encerramento** e que **serão corrigidas antes do 2.2C**:
+
+| # | Ressalva | Destino |
+|---|---|---|
+| **1** | `PUBLIC` mantém `EXECUTE` nas duas funções de leitura (`derivation_rule_state`, `derivation_rule_current_version`) | **2.2B-R1** |
+| **2** | A garantia do MR1.2 depende do **conjunto** trigger de cadeia **+** índice único parcial — não do índice isolado | **2.2B-R1** (documental) e §3.2 |
+| **3** | A ADR-069 contém **erro aritmético** na quantidade de transições | **emenda lavrada** — ADR-069 §21 |
+| **4** | Dívida de **prova comportamental completa** sobre proposta histórica após revogação | registrada; fora do 2.2B-R1 |
+| **5** | A Autoridade de Método estava **vaga** até esta decisão | **DP-4 fechada** — Registro de Governança §1.1 |
+
+**O item não é reaberto.**
+
+#### 2.2B-R1 — escopo fechado
+
+| Entra | Não entra |
+|---|---|
+| `REVOKE EXECUTE FROM PUBLIC` nas duas funções de leitura | mudança de domínio |
+| teste de grants | escritor |
+| confirmação de `SECURITY INVOKER` | pipeline |
+| preservação de **zero policies e zero grants de aplicação** | qualquer emissão |
+| documentação precisa do conjunto **trigger + índice** | alteração do grafo de estados |
+
+> **O 2.2C só pode ser aberto após a verificação independente do 2.2B-R1.**
+
+#### 2.2C — contrato canônico
+
+| Campo | Conteúdo |
+|---|---|
+| **Nome** | **Ponte grau → importância** |
+| **Objetivo** | Produzir propostas de importância para os conceitos que possuem lado da pessoa, utilizando **regra versionada, vigente e rastreável** |
+| **Dependências** | ADR-066 · ADR-069 · 0.3 ✅ · 2.1 ✅ · 2.2A ✅ · 2.2A-MR1 ✅ · 2.2B ✅ · **DP-4 fechada** ✅ · **pacote corretivo 2.2B-R1 aprovado** ❌ |
+| **Escopo** | correspondência versionada grau↔importância · primeira versão da regra em condição **`PROVISÓRIA`** · emissão conforme **DR1–DR5** · referência à **versão exata** da regra · **ausência de emissão sob regra não vigente** · preservação da classificação manual · preservação do Pipeline de Leitura |
+| **Fora de escopo** | Fronteira Humana · confirmação pelo Curador · interface · painel · métricas · observabilidade · valores definitivos · Item 2.C |
+| **Aceite mínimo** | regra vigente emite · `PROPOSTA`/`SUSPENSA`/`REVOGADA` **não** emitem · proposta referencia `(rule_id, version)` · proposta **não** alcança o Pipeline de Leitura · suspensão impede novas emissões · reativação permite novas · propostas históricas permanecem · **um único escritor** · rollback não elimina proposta nem declaração manual · **A1 e A2 permanecem verdes** |
+| **Estado** | **PLANEJADO — AGUARDA PACOTE CORRETIVO E AUTORIZAÇÃO DE ABERTURA** |
+
+### 3.2 Precisão do contrato MR1.2 — como a garantia é produzida
+
+Registro exigido pela ressalva 2 do encerramento do 2.2B. **Não altera a decisão
+arquitetural da ADR-069.**
+
+> **A garantia do MR1.2 reinterpretado é produzida pelo conjunto formado pelo
+> trigger de cadeia e pelo índice único parcial.**
+
+| Componente | Papel |
+|---|---|
+| **Trigger de cadeia** | valida a **continuidade** · valida a **sequência** · valida o **ordinal de vigência** |
+| **Índice único parcial** | **arbitra colisões** · **protege a concorrência** · impede duas entradas com a mesma chave de período de vigência |
+
+**Não é correto afirmar que o índice, isoladamente, prova todo o invariante.** Ele
+arbitra; quem valida a cadeia é o trigger. Descrever apenas um dos dois deixaria
+metade do invariante sem guarda declarada.
 
 ## 4. Ondas 3, 4 e 5
 

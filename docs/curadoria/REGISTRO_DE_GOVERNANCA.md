@@ -27,11 +27,50 @@
 | **Agente 03 — Implementador** | planejamento e execução de pacotes | ordem de execução, pacotes, testes, rollback | **Ativo** — **implementação não autorizada** |
 | **Agente 04 — Verificador** | verificação independente de pacote | aceite técnico | **Sem parecer emitido** |
 | **Certificador** | certificação de release | publicação | **Sem parecer emitido para a 2.0** |
-| **Autoridade de Método sobre Regras de Derivação** | §10.5 da Arquitetura | criar, versionar, suspender e retificar regra de derivação | **VAGA — função definida, sem ocupante** (DP-4 / RR-3) |
+| **Autoridade de Método sobre Regras de Derivação** | §10.5 da Arquitetura | criar, versionar, suspender e retificar regra de derivação | **ATIVA — ocupante: `DT-01 — Fundador`**, desde **2026-08-05**, em **acumulação temporária** (DP-4 fechada; ver §1.1) |
 | **Responsável de engenharia** | operação do repositório | versionamento, janela de publicação, ambiente | **Ativo** |
 
 **Regra estrutural:** o Implementador não decide domínio. Toda ambiguidade retorna ao
 Arquiteto; toda decisão de Método retorna ao Fundador ou ao Guardião.
+
+### 1.1 Autoridade de Método sobre Regras de Derivação — nomeação
+
+**Decisão do DT-01 — Fundador, em 2026-08-05 (fecha a DP-4).**
+
+| Campo | Valor |
+|---|---|
+| **Função** | Autoridade de Método sobre Regras de Derivação (§10.5 da Arquitetura) |
+| **Ocupante** | **`DT-01 — Fundador`** |
+| **Situação** | **ATIVA** |
+| **Início** | **2026-08-05** |
+| **Natureza** | **Acumulação temporária** |
+| **Escopo** | Regras de Derivação da Curadoria 2.0 |
+| **Substituição** | **somente por decisão formal versionada** |
+
+**Autoridade conferida:** aprovar regra · promover para `VIGENTE` · suspender ·
+reativar · revogar. **Obrigação de motivo, e de ADR onde a ADR-069 a exige.**
+**Autoria individual preservada** — cada ato é praticado e registrado em nome
+próprio.
+
+**A nomeação NÃO autoriza:**
+
+| # | Proibição |
+|---|---|
+| 1 | `service_role` como autoridade humana |
+| 2 | conta técnica sem vínculo com o DT-01 |
+| 3 | delegação informal |
+| 4 | aprovação pelo Implementador |
+
+**Vínculo técnico:** o padrão vigente exige identificador técnico para a autoria
+dos atos. Ele **não está documentado** neste repositório, e não é inventado aqui:
+fica registrado como **vínculo técnico pendente de resolução operacional, sem
+alterar a validade da nomeação humana**.
+
+**Nota de risco herdada (ADR-068 item 6, RA-1 do PA-2):** a acumulação concentra,
+na mesma pessoa, propor · aprovar · confirmar · responder. A ADR-060 já registrou
+a mesma classe de risco como **aceito e datado**, vinculado à segunda conta ali
+prevista. **A acumulação é declarada, não silenciosa** — e é essa declaração que
+impede que ela vire o normal.
 
 ## 2. Ordem de precedência entre documentos
 
@@ -70,7 +109,7 @@ Transcritas da Arquitetura §18. **Nenhuma é do Implementador.**
 | **DP-1** | P15 — o Motor recebe viabilidade? Guarda executável ou correção do Congelamento §4.3 | Arquiteto + Guardião | Onda 1.1, e portanto tudo | **Aberta** |
 | **DP-2** | Destino formal do ACE e do dado histórico | **Fundador** | retirada da segunda entrega (P9) | **Aberta** |
 | **DP-3** | Listas provisórias P3–P7 (`OPCOES_PROVISORIAS_*`) | Método | ponte grau→importância | **Aberta** |
-| **DP-4** | Quem exerce a Autoridade de Método sobre Regras de Derivação | **Fundador** | toda a Onda 2 | **Aberta** |
+| ~~**DP-4**~~ | Quem exerce a Autoridade de Método sobre Regras de Derivação | Fundador | — | **FECHADA (2026-08-05)** — **DT-01 nomeado**, em acumulação temporária (§1.1). **Consequência operacional:** a condição 6 da ADR-066 §497 (*"nomeada e ativa"*) passa a estar satisfeita; regras de derivação podem ser aprovadas e promovidas a `VIGENTE`. **Não autoriza abrir o 2.2C** |
 | **DP-5** | Régua de graduação por consequência + lista nominal do que nunca entra em bloco | Método, **por ADR** | subescopo 2.5; enquanto aberta, o regime de bloco é **proibido de existir no repositório** | **Aberta** |
 | **DP-6** | Tabela grau→importância — os **valores** | Método, **após Cases reais** | estabilização da regra (Onda 5) | **Aberta, bloqueada por DP-Rede** |
 | **DP-7** | P-07, P-08, P-10, P-11 viram domínio? | Guardião, por ADR | Onda 2 inteira | **RESPONDIDA** (ADR-066): P-07, P-08 e P-10 promovidos a princípios oficiais de domínio |
