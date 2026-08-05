@@ -92,8 +92,8 @@ O Item 2.2 foi executado em subpacotes que **não estavam registrados neste mapa
 | **2.2A-MR1** | Endurecimento dos invariantes | **CONCLUÍDO COM RESSALVAS REGISTRADAS** | `7770d7f` |
 | **2.2B** | Ciclo de vida das Regras de Derivação | **CONCLUÍDO COM RESSALVAS REGISTRADAS** | `1a7ef86` |
 | **2.2C** | **Ponte grau → importância** | **ENCERRADO — USO OPERACIONAL BLOQUEADO ATÉ O 2.2C-R1** (ver §3.3) | `b38cd34` |
-| **2.2B-R1** | Endurecimento pós-verificação (pacote corretivo) | **AUTORIZÁVEL** | — |
-| **2.2C-R1** | **Participação do motor e unicidade por conceito** | **PLANEJADO — AGUARDA IMPLEMENTAÇÃO** (ver §3.3) | — |
+| **2.2B-R1** | Endurecimento pós-verificação (pacote corretivo) | **CONCLUÍDO E VERIFICADO** — implementação concluída, verificação independente concluída, **sem ressalvas bloqueadoras**, efeito técnico vigente na base | `72e0a2b` |
+| **2.2C-R1** | **Participação do motor e unicidade por conceito** | **AUTORIZADO PARA IMPLEMENTAÇÃO — não iniciado** (ver §3.3) | — |
 
 #### Ressalvas registradas no encerramento do 2.2B
 
@@ -121,6 +121,7 @@ encerramento** e que **serão corrigidas antes do 2.2C**:
 | documentação precisa do conjunto **trigger + índice** | alteração do grafo de estados |
 
 > **O 2.2C só pode ser aberto após a verificação independente do 2.2B-R1.**
+> **Condição satisfeita em `72e0a2b`** — implementado e verificado sem ressalvas.
 
 #### 2.2C — contrato canônico
 
@@ -128,7 +129,7 @@ encerramento** e que **serão corrigidas antes do 2.2C**:
 |---|---|
 | **Nome** | **Ponte grau → importância** |
 | **Objetivo** | Produzir propostas de importância para os conceitos que possuem lado da pessoa, utilizando **regra versionada, vigente e rastreável** |
-| **Dependências** | ADR-066 · ADR-069 · 0.3 ✅ · 2.1 ✅ · 2.2A ✅ · 2.2A-MR1 ✅ · 2.2B ✅ · **DP-4 fechada** ✅ · **pacote corretivo 2.2B-R1 aprovado** ❌ |
+| **Dependências** | ADR-066 · ADR-069 · 0.3 ✅ · 2.1 ✅ · 2.2A ✅ · 2.2A-MR1 ✅ · 2.2B ✅ · **DP-4 fechada** ✅ · **pacote corretivo 2.2B-R1 implementado e verificado** ✅ (`72e0a2b`) |
 | **Escopo** | correspondência versionada grau↔importância · primeira versão da regra em condição **`PROVISÓRIA`** · emissão conforme **DR1–DR5** · referência à **versão exata** da regra · **ausência de emissão sob regra não vigente** · preservação da classificação manual · preservação do Pipeline de Leitura |
 | **Fora de escopo** | Fronteira Humana · confirmação pelo Curador · interface · painel · métricas · observabilidade · valores definitivos · Item 2.C |
 | **Aceite mínimo** | regra vigente emite · `PROPOSTA`/`SUSPENSA`/`REVOGADA` **não** emitem · proposta referencia `(rule_id, version)` · proposta **não** alcança o Pipeline de Leitura · suspensão impede novas emissões · reativação permite novas · propostas históricas permanecem · **um único escritor** · rollback não elimina proposta nem declaração manual · **A1 e A2 permanecem verdes** |
@@ -178,9 +179,9 @@ iniciar `2.3`.
 |---|---|
 | **Identificador** | **2.2C-R1** |
 | **Nome** | Participação do motor e unicidade por conceito |
-| **Estado** | **PLANEJADO — AGUARDA IMPLEMENTAÇÃO** |
+| **Estado** | **AUTORIZADO PARA IMPLEMENTAÇÃO** — todas as dependências documentais satisfeitas; **não iniciado** |
 | **Objetivo** | materializar a participação do motor no Catálogo · impedir correspondência e emissão para conceitos `NUNCA` · garantir uma única regra vigente por conceito · declarar corretamente o contrato de `SEM_CORRESPONDENCIA` |
-| **Dependências** | ADR-047 · **ADR-066 emendada** ✅ · ADR-069 ✅ · Item 2.2C verificado ✅ · **Item 2.2B-R1 verificado** ❌ · **ausência de regra real materializada** ✅ |
+| **Dependências** | ADR-047 ✅ · **ADR-066 emendada** ✅ · ADR-069 ✅ · Item 2.2C verificado ✅ · **Item 2.2B-R1 verificado** ✅ (`72e0a2b`) · **ausência de regra real materializada** ✅ — **todas satisfeitas** |
 
 **Escopo**
 
@@ -220,6 +221,27 @@ vínculo técnico da Autoridade de Método.
 > **A janela é agora:** **nenhuma regra real existe**. Corrigir antes da primeira
 > regra custa migration aditiva; depois, custaria migração de dados sobre
 > proveniência append-only.
+
+#### Estado do 2.2C-R1 — correção documental de 2026-08-05
+
+> **2.2C-R1 AUTORIZADO PARA IMPLEMENTAÇÃO.**
+
+O Agente 01 **interrompeu corretamente** a implementação: o mapa ainda afirmava
+que o `2.2B-R1` estava pendente, quando ele já fora implementado e verificado em
+`72e0a2b`. **A interrupção foi acerto de processo — a regra 1 do Processo de
+Engenharia funcionando.** A divergência era documental; foi corrigida aqui.
+
+| Confirmação | Estado |
+|---|---|
+| Arquitetura aprovada | ✅ |
+| **ADR-066 emendada** (§23: F-1, F-2, F-3) | ✅ |
+| **2.2B-R1 implementado e verificado** (`72e0a2b`) | ✅ |
+| **2.2C encerrado** — uso operacional bloqueado até o 2.2C-R1 | ✅ |
+| **Primeira regra real** | ❌ **ainda proibida** |
+| **Fronteira Humana** | ❌ **ainda proibida** |
+| **`2.C` e `2.3`** | ❌ **ainda fechados** |
+
+**O 2.2C-R1 não está iniciado.** Nenhuma linha técnica foi produzida.
 
 ## 4. Ondas 3, 4 e 5
 
