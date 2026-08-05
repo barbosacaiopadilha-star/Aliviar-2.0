@@ -6,7 +6,7 @@
 | **Versão** | v1.0 |
 | **Autor** | Agente 02 — Arquiteto da Curadoria 2.0 |
 | **Data** | 2026-08-05 · **Branch:** `curadoria/onda-1-9-1-10-proveniencia` · **HEAD:** `7770d7f` |
-| **Estado** | **PROPOSTA — aguardando decisão expressa do DT-01.** **Não lavrada em `DECISIONS.md`** |
+| **Estado** | **APROVADA** pelo **DT-01** em **2026-08-05**. **Lavrada em `DECISIONS.md`** |
 | **Objeto único** | Ciclo de vida das regras de derivação |
 | **Origem** | Verificação independente do Item 2.2A-MR1 · interrupção do Item 2.2B pelo Agente 01 |
 | **Subordinada a** | Constituição · ADR-035 · **ADR-066** · **ADR-067** · Arquitetura §5.4 e §10.5 · Congelamento (I-7) |
@@ -16,14 +16,18 @@
 > implementação foi criado ou alterado.** Nenhuma ADR existente foi tocada.
 > 2.2B não iniciada; 2.C não aberta.
 >
-> ## ⚠️ Estado de autoridade
+> ## ✅ Estado de autoridade
 >
-> **Esta ADR NÃO está aprovada.** A aprovação do DT-01 não está formalmente
-> disponível no momento da redação. O verbete de lavratura em `DECISIONS.md`
-> **não foi inserido** — o log é append-only (ADR-062), e inserir verbete de
-> decisão não tomada o poluiria de forma irreversível.
+> **Esta ADR está APROVADA pelo DT-01 em 2026-08-05** e **lavrada** no log
+> canônico (`DECISIONS.md`, verbete ADR-069).
 >
-> **O texto exato do verbete e a instrução de lavratura estão no §19.**
+> A lavratura ocorreu **somente após a aprovação**, por determinação do DT-01:
+> o log é append-only (ADR-062), e **nenhum registro intermediário em estado
+> `PROPOSTA` foi inserido**. O conteúdo arquitetural aprovado é o mesmo do
+> commit da proposta, `4e43b74` — **nenhuma decisão foi alterada na lavratura**.
+>
+> **Esta ADR não autoriza implementação.** O Item 2.2B exige autorização formal
+> de abertura pelo DT-01.
 
 ---
 
@@ -49,12 +53,12 @@ A proposta anterior recomendou a arquitetura; **esta ADR fecha as três decisõe
 
 | Item | Situação |
 |---|---|
-| **Número** | ADR-069 — confirmado disponível (`grep "^## ADR-" docs/DECISIONS.md \| tail` → ADR-068) |
-| **Estado** | **PROPOSTA** |
-| **Aprovação DT-01** | **NÃO EXISTE.** Nada neste documento afirma o contrário |
-| **Lavratura** | **não realizada** — instrução no §19 |
+| **Número** | **ADR-069** — confirmado disponível na lavratura (último lavrado: ADR-068) |
+| **Estado** | **APROVADA** |
+| **Aprovação DT-01** | **2026-08-05** — arquitetura aprovada integralmente, sem alteração de conteúdo |
+| **Lavratura** | **realizada** — verbete único em `DECISIONS.md`, **sem registro intermediário em `PROPOSTA`** |
 | **Local canônico** | `docs/curadoria/ADR_069_CICLO_DE_VIDA_DAS_REGRAS.md`, no padrão de ADR_A/B/D |
-| **Versionamento** | commit documental único (§19) |
+| **Versionamento** | proposta em `4e43b74`; lavratura em commit documental próprio |
 
 ---
 
@@ -388,7 +392,7 @@ Carimbo de tempo empata. Duas transições no mesmo instante — plausível sob 
 | **RA-4** | **Alguém criar `PROPOSTA → REVOGADA`** por parecer natural | §6.2 explica por que não existe |
 | **RA-5** | **Curador reativar regra que suspendeu** | §6.3: freio é assimétrico. Reativar é da Autoridade |
 | **RA-6** | **Custo de um conceito novo** | terceiro uso do mesmo padrão — custo de coerência |
-| **RA-7** | **A ADR ser implementada sem aprovação do DT-01** | §2 e §19: não há aprovação; o verbete não foi lavrado |
+| **RA-7** | **A aprovação da ADR ser lida como autorização de implementação** | São atos distintos. A ADR-069 aprova **a arquitetura**; abrir o Item 2.2B exige **autorização formal própria** do DT-01 |
 
 ---
 
@@ -398,25 +402,29 @@ Escritores · pipeline de aprovação · máquina de estados **completa em níve
 
 ---
 
-## 19. Lavratura — instrução exata
+## 19. Lavratura — executada
 
-**A ADR NÃO foi lavrada.** Após decisão expressa do DT-01, executar **nesta ordem**:
+**A ADR foi lavrada em 2026-08-05, após a aprovação do DT-01.** Os cinco passos
+previstos foram cumpridos nesta ordem:
 
-| # | Passo |
-|---|---|
-| 1 | Alterar o campo **Estado** deste documento para o veredito do DT-01, com data |
-| 2 | Inserir em `docs/DECISIONS.md`, **após a ADR-068**, o verbete do §19.1 |
-| 3 | Acrescentar ao **índice de supersessões e emendas** (topo do log, ADR-062) a linha do §19.2 |
-| 4 | Acrescentar entrada no `INDICE_DA_CURADORIA_2_0.md`, seção 2, no padrão de ADR_A/B/D |
-| 5 | Commit documental único |
+| # | Passo | Situação |
+|---|---|---|
+| 1 | Estado deste documento alterado para **APROVADA**, com data e autoridade | ✅ |
+| 2 | Verbete **único** inserido em `docs/DECISIONS.md`, após a ADR-068 — **sem registro intermediário em `PROPOSTA`** | ✅ |
+| 3 | Linha acrescentada ao **índice de supersessões e emendas** (topo do log, ADR-062) | ✅ |
+| 4 | Entrada acrescentada no `INDICE_DA_CURADORIA_2_0.md` | ✅ |
+| 5 | Commit documental único | ✅ |
 
-### 19.1 Verbete pronto para `DECISIONS.md`
+**Nenhuma decisão arquitetural foi alterada na lavratura.** O conteúdo dos §4 a
+§18 é idêntico ao aprovado em `4e43b74`.
+
+### 19.1 Verbete lavrado em `DECISIONS.md`
 
 ```markdown
 ## ADR-069 — Ciclo de vida das regras de derivação: a versão é fato, o estado é leitura
 
 - **Data:** 2026-08-05
-- **Status:** <VEREDITO DO DT-01>
+- **Status:** **Aprovada pelo DT-01** em 2026-08-05.
 - **Conteúdo normativo:** `docs/curadoria/ADR_069_CICLO_DE_VIDA_DAS_REGRAS.md` (v1.0) — anexo canônico desta ADR.
 - **Dependências:** ADR-066 · ADR-067 · ADR-068 · Arquitetura §5.4 e §10.5 · I-7 · MR1.1/MR1.2/MR1.3
 - **Contexto:** a verificação independente do Item 2.2A-MR1 encontrou que dois invariantes corretos — append-only por trigger (MR1.1) e uma única VIGENTE por regra (MR1.2) — produzem juntos um estado terminal: uma regra que alcança VIGENTE não pode ser suspensa, revogada nem sucedida. A causa raiz é `state` ter sido modelado como propriedade de uma linha imutável.
@@ -446,12 +454,14 @@ Escritores · pipeline de aprovação · máquina de estados **completa em níve
 | Item | Situação |
 |---|---|
 | **Conteúdo** | **completo** — B-1, B-2, B-3 e as cinco decisões adicionais respondidas |
-| **Estado** | **PROPOSTA** |
-| **Aprovação DT-01** | **inexistente** — e nada neste documento afirma o contrário |
-| **Lavratura** | **não realizada**; instrução e verbete prontos no §19 |
+| **Estado** | **APROVADA** |
+| **Aprovação DT-01** | **2026-08-05** — integral, sem alteração de conteúdo |
+| **Lavratura** | **realizada** — verbete único, sem registro intermediário em `PROPOSTA` (§19) |
 | **Código** | **nenhum** |
-| **2.2B** | **não iniciada** |
+| **2.2B** | **não iniciada** — depende de autorização formal de abertura pelo DT-01 |
 
 ---
 
-*Fim da ADR-069 v1.0. **Estado: PROPOSTA.** Encaminhamento exclusivo: **DT-01**.*
+*Fim da ADR-069 v1.0. **Estado: APROVADA e lavrada** (DT-01, 2026-08-05).
+**Esta ADR não autoriza implementação.** Encaminhamento: **DT-01**, para a
+autorização formal de abertura do Item 2.2B.*
