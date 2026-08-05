@@ -150,10 +150,53 @@ describe("Mapa de Prioridades do Case (Supabase local)", () => {
     expect(parcial.completion.completed).toBe(2);
     // 28 ativos no Catálogo 1.0.0 — a completude conta o vigente, nunca o legado.
     expect(parcial.completion.total).toBe(29);
-    expect(parcial.items).toContainEqual({
-      subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO",
-      importance: "MUITO_IMPORTANTE",
-    });
+    // CONTRATO DO ITEM DEPOIS DO PP-02 (commit 89c4225).
+    //
+    // O leitor devolve QUATRO campos, não dois. O oráculo anterior usava
+    // `toContainEqual` com um objeto de dois — igualdade profunda —, então
+    // qualquer campo novo o derrubava. Foi o que aconteceu: quem envelheceu
+    // foi a expectativa, não o leitor.
+    //
+    // Cada campo é afirmado pela REGRA que o governa hoje, e não por
+    // "aceita qualquer coisa":
+    //   · `declaredBy` é `null` porque a coluna é LIDA e nenhuma escrita a
+    //     preenche neste regime — `savePriorityMapEntries` grava `case_id`,
+    //     `subcriterion_id`, `importance` e `updated_at`, mais nada. Quem
+    //     passará a gravá-la é o pacote da confirmação (Itens 1.9/1.10, sob a
+    //     ADR-068). `null` significa "registro anterior ao regime de autoria",
+    //     nunca "autor desconhecido" (I-8).
+    //   · `registradoEm` é o `updated_at` DA PRÓPRIA LINHA, e isso é provado
+    //     contra o banco — aceitar "qualquer string de data" deixaria passar
+    //     uma troca por `created_at`.
+    const item = parcial.items.find(
+      (i) => i.subcriterionCode === "ACESSO_LOCAL_DE_ATENDIMENTO",
+    );
+    expect(item, "o subcritério classificado sumiu da leitura").toBeDefined();
+
+    // Nem um campo a menos, nem um a mais: se o contrato crescer de novo, esta
+    // linha cai — que é exatamente o serviço que o oráculo antigo prestava.
+    expect(Object.keys(item!).sort()).toEqual([
+      "declaredBy",
+      "importance",
+      "registradoEm",
+      "subcriterionCode",
+    ]);
+    expect(item!.importance).toBe("MUITO_IMPORTANTE");
+    expect(item!.declaredBy, "alguém passou a gravar autoria sem a ADR-068").toBeNull();
+
+    const catalogo = await listSubcriterionCatalog(service);
+    const alvo = catalogo.find((e) => e.code === "ACESSO_LOCAL_DE_ATENDIMENTO")!;
+    const { data: linha } = await service
+      .from("case_priority_map")
+      .select("updated_at, declared_by")
+      .eq("case_id", caseId)
+      .eq("subcriterion_id", alvo.id)
+      .single();
+
+    expect(item!.registradoEm, "`registradoEm` deixou de vir de `updated_at`").toBe(
+      linha!.updated_at,
+    );
+    expect(linha!.declared_by, "a coluna foi preenchida por fora do domínio").toBeNull();
   });
 
   it("salvar de novo substitui, nunca duplica — idempotente", async () => {
