@@ -143,13 +143,61 @@ describe("2.1 · e permanece INERTE", () => {
     }
   });
 
-  it("zero escritor e zero leitor: nenhuma função do banco a menciona", () => {
-    const [linha] = consultar(`
-      select count(*) from pg_proc p
-      join pg_namespace n on n.oid = p.pronamespace
-      where n.nspname = 'curadoria' and p.prosrc ilike '%derivation_proposals%'
+  /**
+   * ORÁCULO SUBSTITUÍDO NO ITEM 2.2C — registro da substituição.
+   *
+   * CONTRATO ANTERIOR (2.1): *"zero escritor e zero leitor: nenhuma função do
+   * banco menciona a estrutura"*. Correto enquanto a Camada de Derivação não
+   * tinha como nascer — a ADR-066 ainda não estava lavrada e não havia regra
+   * versionada para sustentar oferecimento algum.
+   *
+   * CONTRATO NOVO (2.2C): *"existe EXATAMENTE UM emissor autorizado, e ele
+   * produz somente proposta inerte"*. A ponte grau → importância é o produto
+   * do Item 2.2C, e um emissor é o que ela é — contar zero passaria a proibir
+   * o pacote que o DT-01 autorizou.
+   *
+   * POR QUE A SUBSTITUIÇÃO É CONSEQUÊNCIA DIRETA DO 2.2C, e não conveniência:
+   * sem escritor não há proposta; sem proposta não há Fronteira Humana; e a
+   * ADR-066 §15 define a ponte justamente como **produtora de oferecimento**.
+   *
+   * O QUE CONTINUA PROIBIDO, e é o que estas asserções guardam:
+   *   · um SEGUNDO escritor — a guarda nomeia o único permitido;
+   *   · qualquer LEITOR — nenhuma função consome propostas para produzir
+   *     leitura canônica (A2 / AC-PIPELINE);
+   *   · policy, grant ou alcance por papel de aplicação (asserções acima).
+   */
+  it("existe exatamente UM emissor autorizado, e nenhum leitor", () => {
+    const [escritores] = consultar(`
+      select coalesce(string_agg(p.proname, ',' order by p.proname), '(nenhum)')
+      from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'curadoria'
+        and p.prosrc ~* '(insert|update|delete)[[:space:]]+(into[[:space:]]+)?curadoria\\.derivation_proposals'
     `);
-    expect(linha![0], "uma função do banco já opera a estrutura").toBe("0");
+    expect(escritores![0], "nasceu um segundo escritor de propostas").toBe(
+      "emitir_proposta_de_importancia",
+    );
+
+    // Ler propostas para produzir leitura canônica é o que A2 proíbe. O próprio
+    // emissor é a única função que as menciona — e ele escreve, não alimenta o
+    // Pipeline de Leitura.
+    const [leitores] = consultar(`
+      select coalesce(string_agg(p.proname, ',' order by p.proname), '(nenhum)')
+      from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'curadoria'
+        and p.prosrc ilike '%derivation_proposals%'
+        and p.proname <> 'emitir_proposta_de_importancia'
+    `);
+    expect(leitores![0], "uma função passou a consumir propostas").toBe("(nenhum)");
+  });
+
+  it("o emissor não alcança papel de aplicação — a estrutura segue inerte", () => {
+    for (const papel of ["anon", "authenticated", "service_role"]) {
+      const [linha] = consultar(`
+        select has_function_privilege('${papel}',
+          'curadoria.emitir_proposta_de_importancia(uuid,text,uuid)', 'EXECUTE')::text
+      `);
+      expect(linha![0], `${papel} executa o emissor`).toBe("false");
+    }
   });
 
   it("zero trigger — nada dispara a partir dela", () => {

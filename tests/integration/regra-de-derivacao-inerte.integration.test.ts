@@ -254,14 +254,43 @@ describe("2.2A · A4/A5 — e permanece INERTE", () => {
       "derivation_rules_append_only,derivation_rules_exige_transicao_inicial",
     );
 
-    // E nenhuma função MENCIONA a tabela — nem a da proteção, que é genérica:
-    // ela recusa o que lhe atribuírem, sem saber o nome de quem protege. Uma
-    // função que citasse `derivation_rules` no corpo estaria operando sobre ela.
-    const [funcoes] = consultar(`
-      select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-      where n.nspname='curadoria' and p.prosrc ilike '%derivation_rules%'
+    /**
+     * ORÁCULO SUBSTITUÍDO NO ITEM 2.2C — registro da substituição.
+     *
+     * CONTRATO ANTERIOR (2.2A/MR1): *"nenhuma função MENCIONA a tabela"* —
+     * correto enquanto nada podia lê-la. A guarda da proteção é genérica e
+     * não a cita, então zero era alcançável.
+     *
+     * CONTRATO NOVO (2.2C): *"nenhuma função ESCREVE na Regra; a única que a
+     * LÊ é o emissor da ponte, e ele só lê"*. A ponte precisa saber qual regra
+     * está vigente — é a condição 5 da ADR-066 §16. Ler para decidir se pode
+     * propor não é operar: operar seria criar, versionar, promover ou suspender.
+     *
+     * POR QUE É CONSEQUÊNCIA DIRETA DO 2.2C: sem ler a Regra, o emissor não
+     * tem como cumprir "existe regra vigente" — e emitir sem verificar seria
+     * exatamente o que a ADR-069 e o §16 proíbem.
+     *
+     * O QUE CONTINUA GUARDADO, e é o que importa: nenhuma função escreve na
+     * Regra (o ciclo de vida continua sendo ato humano registrado em
+     * transição), e o leitor autorizado é nomeado — um segundo cai aqui.
+     */
+    const [escritoras] = consultar(`
+      select coalesce(string_agg(p.proname, ',' order by p.proname), '(nenhuma)')
+      from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+      where n.nspname='curadoria'
+        and p.prosrc ~* '(insert|update|delete)[[:space:]]+(into[[:space:]]+|from[[:space:]]+)?curadoria\\.derivation_rules\\M'
     `);
-    expect(funcoes![0], "uma função passou a OPERAR a Regra, não apenas a protegê-la").toBe("0");
+    expect(escritoras![0], "uma função passou a ESCREVER na Regra").toBe("(nenhuma)");
+
+    const [leitoras] = consultar(`
+      select coalesce(string_agg(p.proname, ',' order by p.proname), '(nenhuma)')
+      from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+      where n.nspname='curadoria' and p.prosrc ilike '%curadoria.derivation_rules%'
+    `);
+    expect(
+      leitoras![0],
+      "uma função além do emissor da ponte passou a ler a Regra",
+    ).toBe("emitir_proposta_de_importancia");
   });
 
   it("A4 · nenhuma proposta nasceu: a estrutura da 2.1 continua vazia", () => {

@@ -541,3 +541,187 @@ describe("C-10 · O MR1.2 é do CONJUNTO — trigger e índice, com papéis dist
     );
   });
 });
+
+/**
+ * ┌ C-11 — A ponte é o ÚNICO escritor, e produz só proposta (Item 2.2C)
+ * │ Objetivo ......... impedir segundo escritor, escrita direta nos Mapas do
+ * │                    Motor e consumo de proposta pelo Pipeline de Leitura.
+ * │ Princípio ........ ADR-066 §2 e §15 · A2 · AC-PIPELINE.
+ * │ Falha ............ nasce outra função que escreve propostas; ou o emissor
+ * │                    passa a escrever em `case_priority_map`/`case_needs`.
+ * ├ C-12 — A correspondência é DADO versionado, nunca `case` em código
+ * │ Princípio ........ ADR-066 §15: os valores vivem em tabela, não em lógica.
+ * │ Falha ............ alguém escreve a tabela grau→importância em SQL ou TS.
+ * └ C-13 — As duas escalas continuam disjuntas
+ *   Princípio ........ migration 20260801140000; ADR-066 §15 propriedade 5.
+ */
+
+const PONTE_SQL = MIGRATIONS.filter((arquivo) => /ponte_grau_importancia/i.test(arquivo)).map(
+  (arquivo) => readFileSync(arquivo, "utf8"),
+);
+
+const PONTE_CODIGO = PONTE_SQL.join("\n").replace(/^\s*--.*$/gm, "");
+
+/**
+ * O CORPO do emissor, entre `as $$` e `$$;`, sem comentários.
+ *
+ * Fatiar importa: o `comment on function` do emissor explica em prosa que ele
+ * NÃO lê `derivation_rules.state`, e uma guarda que olhasse o arquivo inteiro
+ * cairia justamente sobre a frase que cumpre a regra.
+ */
+const CORPO_DO_EMISSOR = (() => {
+  const depois = PONTE_CODIGO.split(/function curadoria\.emitir_proposta_de_importancia/i)[1] ?? "";
+  const abre = depois.indexOf("$$");
+  const fecha = depois.indexOf("$$;", abre + 2);
+  return abre === -1 || fecha === -1 ? "" : depois.slice(abre + 2, fecha);
+})();
+
+describe("C-11 · A ponte é o único escritor, e produz só proposta (2.2C)", () => {
+  it("a migration da ponte existe — sem ela, tudo abaixo seria vácuo", () => {
+    expect(PONTE_SQL.length, "a migration do Item 2.2C não foi encontrada").toBeGreaterThan(0);
+    expect(PONTE_CODIGO).toMatch(/function curadoria\.emitir_proposta_de_importancia/i);
+  });
+
+  it("existe exatamente UMA função que escreve propostas em todas as migrations", () => {
+    const escritoras = MIGRATIONS_CODIGO.flatMap((sql) => {
+      const funcoes = sql.split(/create\s+or\s+replace\s+function|create\s+function/i).slice(1);
+      return funcoes
+        .filter((corpo) => /insert\s+into\s+curadoria\.derivation_proposals/i.test(corpo))
+        .map((corpo) => corpo.trim().split(/[\s(]/)[0]);
+    });
+    expect(escritoras, "nasceu um segundo escritor de propostas").toEqual([
+      "curadoria.emitir_proposta_de_importancia",
+    ]);
+  });
+
+  it("o emissor não escreve nos Mapas que alimentam o Motor (A2)", () => {
+    const emissor = PONTE_CODIGO.split(/function curadoria\.emitir_proposta_de_importancia/i)[1] ?? "";
+    expect(emissor.length, "o corpo do emissor não foi encontrado").toBeGreaterThan(200);
+    for (const escrita of [
+      /insert\s+into\s+curadoria\.case_priority_map/i,
+      /update\s+curadoria\.case_priority_map/i,
+      /delete\s+from\s+curadoria\.case_priority_map/i,
+      /insert\s+into\s+curadoria\.case_needs/i,
+      /update\s+curadoria\.case_needs/i,
+      /delete\s+from\s+curadoria\.case_needs/i,
+    ]) {
+      expect(
+        escrita.test(emissor),
+        "A proposta virou declaração: o emissor escreveu onde o Motor lê (A2 / AC-PIPELINE).",
+      ).toBe(false);
+    }
+  });
+
+  it("o emissor lê o estado pela ADR-069, nunca por `derivation_rules.state`", () => {
+    // O CORPO da função, entre `as $$` e `$$;`. Fatiar aqui é necessário: o
+    // `comment on function` explica, em prosa, que o emissor NÃO lê
+    // `derivation_rules.state` — e a frase que cumpre a regra derrubaria a
+    // guarda se ela olhasse o arquivo inteiro. Foi o que aconteceu na primeira
+    // execução desta guarda.
+    const corpo = CORPO_DO_EMISSOR;
+    expect(corpo.length, "o corpo do emissor não foi encontrado").toBeGreaterThan(500);
+    expect(corpo).toMatch(/derivation_rule_state\s*\(/i);
+    expect(
+      /derivation_rules\.state|\br\.state\b/i.test(corpo),
+      "o emissor voltou a ler o estado inicial como se fosse o corrente (ADR-069 B-1).",
+    ).toBe(false);
+  });
+
+  it("nenhum módulo de `src/` alcança a correspondência nem o emissor", () => {
+    expect(
+      ocorrencias(FONTES, /derivation_rule_degree_map|emitir_proposta_de_importancia/i),
+      "A ponte é inerte: nenhum módulo da aplicação a alcança.",
+    ).toEqual([]);
+  });
+
+  it("a estrutura nasce inerte: RLS, sem policy, sem grant, sem PUBLIC EXECUTE", () => {
+    expect(PONTE_CODIGO).toMatch(
+      /alter table curadoria\.derivation_rule_degree_map enable row level security/i,
+    );
+    expect(
+      /create policy[^;]*on curadoria\.derivation_rule_degree_map/i.test(PONTE_CODIGO),
+      "uma policy abriu a correspondência.",
+    ).toBe(false);
+    expect(/\bgrant\b/i.test(PONTE_CODIGO), "a ponte concedeu privilégio a alguém").toBe(false);
+    expect(PONTE_CODIGO).toMatch(
+      /revoke execute on function curadoria\.emitir_proposta_de_importancia[\s\S]*from public/i,
+    );
+  });
+
+  it("o emissor é SECURITY INVOKER com search_path fixo", () => {
+    const emissor = PONTE_CODIGO.split(/function curadoria\.emitir_proposta_de_importancia/i)[1] ?? "";
+    expect(
+      /security\s+definer/i.test(emissor),
+      "o emissor virou SECURITY DEFINER — elevaria autoridade para escrever.",
+    ).toBe(false);
+    expect(emissor).toMatch(/set search_path\s*=\s*curadoria,\s*pg_temp/i);
+  });
+
+  it("a migration não semeia regra, correspondência nem proposta", () => {
+    for (const semeadura of [
+      /insert\s+into\s+curadoria\.derivation_rules\b/i,
+      /insert\s+into\s+curadoria\.derivation_rule_degree_map/i,
+      /insert\s+into\s+curadoria\.derivation_rule_transitions/i,
+    ]) {
+      expect(
+        semeadura.test(PONTE_CODIGO),
+        "A primeira regra vigente exige identidade técnica da Autoridade, que não existe (impedimento declarado).",
+      ).toBe(false);
+    }
+  });
+});
+
+describe("C-12 · A correspondência é DADO versionado, nunca `case` em código", () => {
+  it("a tabela existe e é chaveada por (regra, versão, conceito, grau)", () => {
+    expect(PONTE_CODIGO).toMatch(/create table[^;]*curadoria\.derivation_rule_degree_map/i);
+    expect(PONTE_CODIGO).toMatch(
+      /primary key\s*\(\s*rule_id,\s*rule_version,\s*subcriterion_code,\s*degree\s*\)/i,
+    );
+  });
+
+  it("nenhuma migration traduz grau em importância por lógica embutida", () => {
+    // Um `case when degree = 'ESSENCIAL' then 'MUITO_IMPORTANTE'` seria a
+    // correspondência voltando a viver em código, fora de qualquer versão.
+    for (const sql of MIGRATIONS_CODIGO) {
+      expect(
+        /when\s+[^;]{0,40}'(ESSENCIAL|PESA_MUITO|DESEJAVEL|SEM_PREFERENCIA)'[^;]{0,80}then\s+'(MUITO_IMPORTANTE|IMPORTANTE|RELEVANTE|POUCO_IMPORTANTE|NAO_INFLUENCIA)'/i.test(
+          sql,
+        ),
+        "A tradução voltou a ser lógica embutida: ela precisa ser DADO versionado (ADR-066 §15).",
+      ).toBe(false);
+    }
+  });
+
+  it("nenhum módulo de `src/` traduz grau em importância", () => {
+    expect(
+      ocorrencias(
+        FONTES,
+        /(ESSENCIAL|PESA_MUITO)\s*:\s*["'](MUITO_IMPORTANTE|IMPORTANTE|RELEVANTE|POUCO_IMPORTANTE|NAO_INFLUENCIA)["']/,
+      ),
+      "A ponte nasceu em código, fora da regra versionada.",
+    ).toEqual([]);
+  });
+});
+
+describe("C-13 · As duas escalas continuam disjuntas", () => {
+  it("nenhum valor de grau é valor de importância, e vice-versa", async () => {
+    const { NEED_DEGREES } = await import("@/modules/curadoria/protocolos");
+    const { IMPORTANCE_LEVELS } = await import("@/modules/curadoria/mapa-prioridades");
+    const comuns = (NEED_DEGREES as readonly string[]).filter((g) =>
+      (IMPORTANCE_LEVELS as readonly string[]).includes(g),
+    );
+    expect(
+      comuns,
+      "As escalas voltaram a ter valor em comum — a colisão da migration 20260801140000.",
+    ).toEqual([]);
+  });
+
+  it("a migration da ponte declara as duas listas fechadas, separadas", () => {
+    expect(PONTE_CODIGO).toMatch(
+      /degree[\s\S]{0,120}'ESSENCIAL',\s*'PESA_MUITO',\s*'DESEJAVEL',\s*'SEM_PREFERENCIA'/i,
+    );
+    expect(PONTE_CODIGO).toMatch(
+      /importance[\s\S]{0,160}'MUITO_IMPORTANTE',\s*'IMPORTANTE',\s*'RELEVANTE',\s*'POUCO_IMPORTANTE',\s*'NAO_INFLUENCIA'/i,
+    );
+  });
+});
