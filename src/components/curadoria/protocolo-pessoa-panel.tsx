@@ -16,6 +16,12 @@ import {
 } from "@/modules/curadoria/protocolos";
 import type { CaseNeedRecord } from "@/modules/curadoria/protocolos-repository";
 import {
+  NADA_A_REVISAR,
+  ordenarPelaRevisao,
+  respostasQueExigemRevisao,
+  ROTULO_DO_DESFECHO,
+} from "@/modules/curadoria/respostas-que-exigem-revisao";
+import {
   registerPersonNeedAction,
 } from "@/modules/curadoria/protocolos-actions";
 
@@ -57,12 +63,63 @@ export function ProtocoloPessoaPanel({ caseId, needs }: Props) {
   ).length;
   const totalPerguntas = PERSON_PROTOCOL.filter((p) => p.mode !== "DECLARACAO_CLINICA").length;
 
+  // Item 1.10C-A — a ordem em que ele precisa ver, derivada de `case_needs`.
+  // Nenhum estado novo, nenhuma consulta nova: os mesmos `needs` que já
+  // chegavam, lidos por uma regra que mora fora da tela.
+  const revisao = respostasQueExigemRevisao(needs);
+  const perguntas = ordenarPelaRevisao(PERSON_PROTOCOL, needs);
+
   return (
     <div className="space-y-3">
       <Badge variant="sage">{`${respondidas} de ${totalPerguntas} conversas registradas`}</Badge>
 
+      {/* ITEM 1.10C-A — O QUE ELA RESPONDEU, ANTES DE QUALQUER OUTRA COISA.
+          Desde o PP-03C ela discorda por conta própria, e ele só descobria
+          rolando o Protocolo inteiro até topar com um estado diferente: uma
+          discordância no fim da lista atravessava a Curadoria sem ninguém ver.
+          O bloco NUNCA some — quando não há nada, ele diz que não há. */}
+      <section className="rounded border border-dashed p-3 text-sm">
+        <h3 className="text-xs font-medium uppercase tracking-wide text-[var(--color-ink-muted)]">
+          Respostas dela que exigem revisão
+        </h3>
+
+        {revisao.length === 0 ? (
+          <p className="mt-2 text-[var(--color-ink-muted)]">{NADA_A_REVISAR}</p>
+        ) : (
+          <ul className="mt-2 space-y-3">
+            {revisao.map((resposta) => (
+              <li key={resposta.subcriterionCode} className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant={resposta.desfecho === "RECUSADA" ? "default" : "sage"}>
+                    {ROTULO_DO_DESFECHO[resposta.desfecho]}
+                  </Badge>
+                  <span className="font-medium">{resposta.pergunta}</span>
+                </div>
+
+                {resposta.leituraProposta ? (
+                  <p className="italic text-[var(--color-ink-muted)]">
+                    Sua leitura: {resposta.leituraProposta}
+                  </p>
+                ) : null}
+
+                {/* A2 — o texto DELA, inteiro. Sem `line-clamp`, sem corte,
+                    sem reticências: resumir a discordância é pôr alguém entre
+                    a fala dela e quem precisa lê-la. */}
+                {resposta.texto ? (
+                  <p className="whitespace-pre-wrap">Ela disse: {resposta.texto}</p>
+                ) : (
+                  <p className="text-[var(--color-ink-muted)]">
+                    Registro anterior à exigência de texto — não consta o que ela disse.
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       <ul className="space-y-2">
-        {PERSON_PROTOCOL.map((question) => {
+        {perguntas.map((question) => {
           const need = byCode.get(question.subcriterionCode) ?? null;
           return (
             <li key={question.id} className="rounded border p-2 text-sm">

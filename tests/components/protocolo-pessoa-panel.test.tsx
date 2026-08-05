@@ -233,3 +233,97 @@ describe("MesaEvidenciasPanel — abertura progressiva", () => {
     expect(screen.getByText("1 com verificação vencida")).toBeInTheDocument();
   });
 });
+
+/**
+ * ITEM 1.10C-A — O RETORNO DOS DESFECHOS AO CURADOR.
+ *
+ * Desde o PP-03C ela discorda por conta própria. Antes deste bloco, ele só
+ * descobria isso rolando o Protocolo inteiro até topar com um estado diferente
+ * — e uma discordância no fim da lista atravessava a Curadoria sem ninguém ver.
+ */
+describe("1.10C-A · o que ela respondeu, antes de qualquer outra coisa", () => {
+  it("A5 · sem nada a revisar, o bloco NÃO some — ele diz que não há", () => {
+    render(<ProtocoloPessoaPanel caseId="case-1" needs={[need()]} />);
+
+    expect(screen.getByText("Respostas dela que exigem revisão")).toBeInTheDocument();
+    expect(
+      screen.getByText("Nenhuma resposta da paciente exige revisão neste momento."),
+    ).toBeInTheDocument();
+  });
+
+  it("A4 · PENDENTE e RECONHECIDA nunca aparecem como pendência dele", () => {
+    render(
+      <ProtocoloPessoaPanel
+        caseId="case-1"
+        needs={[
+          need(),
+          need({ subcriterionCode: "MODELO_COMUNICACAO", acknowledgment: "RECONHECIDA" }),
+        ]}
+      />,
+    );
+
+    expect(
+      screen.getByText("Nenhuma resposta da paciente exige revisão neste momento."),
+    ).toBeInTheDocument();
+  });
+
+  it("A2 · o texto dela aparece inteiro, sem corte", () => {
+    const texto =
+      "Não foi isso. Eu disse que aceito conversar sobre cirurgia, mas só depois de seis meses " +
+      "de tratamento clínico, e com a minha irmã junto na consulta.";
+
+    render(
+      <ProtocoloPessoaPanel
+        caseId="case-1"
+        needs={[need({ acknowledgment: "RECUSADA", correction: texto })]}
+      />,
+    );
+
+    expect(screen.getByText(`Ela disse: ${texto}`)).toBeInTheDocument();
+    expect(screen.getByText(/Sua leitura: Pelo que você me contou/)).toBeInTheDocument();
+  });
+
+  it("A1 · RECUSADA aparece antes de CORRIGIDA no bloco de revisão", () => {
+    const { container } = render(
+      <ProtocoloPessoaPanel
+        caseId="case-1"
+        needs={[
+          need({ subcriterionCode: "MODELO_COMUNICACAO", acknowledgment: "CORRIGIDA", correction: "quase isso" }),
+          need({ acknowledgment: "RECUSADA", correction: "nao foi isso" }),
+        ]}
+      />,
+    );
+
+    const texto = container.textContent ?? "";
+    expect(texto.indexOf("nao foi isso")).toBeLessThan(texto.indexOf("quase isso"));
+    expect(screen.getByText("Ela discordou desta leitura")).toBeInTheDocument();
+    expect(screen.getByText("Ela corrigiu esta leitura")).toBeInTheDocument();
+  });
+
+  it("A1 · a lista do Protocolo sobe o conceito contestado, sem perder nenhum", () => {
+    const { container } = render(
+      <ProtocoloPessoaPanel
+        caseId="case-1"
+        needs={[need({ subcriterionCode: "VIABILIDADE_CUSTO_E_PAGAMENTO", acknowledgment: "RECUSADA", correction: "nao" })]}
+      />,
+    );
+
+    const itens = container.querySelectorAll("ul > li.rounded.border");
+    // Nenhuma pergunta some do painel dele.
+    expect(itens.length).toBe(17);
+    // E a contestada é a primeira da lista.
+    expect(itens[0]!.textContent).toContain("P16");
+  });
+
+  it("A7 · o bloco de revisão é só leitura — nenhum botão nasce dele", () => {
+    render(
+      <ProtocoloPessoaPanel
+        caseId="case-1"
+        needs={[need({ acknowledgment: "RECUSADA", correction: "nao foi isso" })]}
+      />,
+    );
+
+    const bloco = screen.getByText("Respostas dela que exigem revisão").closest("section")!;
+    expect(bloco.querySelectorAll("button")).toHaveLength(0);
+  });
+});
