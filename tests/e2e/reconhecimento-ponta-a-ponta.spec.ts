@@ -3,6 +3,13 @@ import path from "node:path";
 
 import { expect, test, type Page } from "@playwright/test";
 
+import {
+  criarCenario,
+  limparCenario,
+  residuosDe,
+  type Cenario,
+} from "./apoio-reconhecimento";
+
 /**
  * ETAPA 2D · D4 — O FLUXO NO NAVEGADOR, COM PACIENTE AUTENTICADA DE VERDADE.
  *
@@ -12,13 +19,15 @@ import { expect, test, type Page } from "@playwright/test";
  * texto é exigido antes de registrar, e que **depois de recarregar a página**
  * o que ela vê é o que ficou no banco.
  *
- * O último ponto é o que justifica este arquivo existir: a Etapa 2C mostra o
- * desfecho por estado local, sem `revalidatePath` (dívida RECONHECE-REFRESH-001).
- * Só um GET novo, de documento inteiro, prova que a tela não está mentindo.
+ * MR-02 — CADA EXECUÇÃO É DONA DO PRÓPRIO CENÁRIO.
  *
- * Pré-condição de dados: um Case da paciente permanente com traduções
- * PENDENTES. O teste as procura e se declara inconclusivo se não existirem —
- * nunca passa vazio.
+ * Antes, o spec logava com a paciente permanente e consumia uma tradução
+ * pendente pré-semeada: a segunda execução encontrava tudo respondido e
+ * falhava, e cada rodada deixava resíduo. Agora cada teste cria a própria
+ * paciente, o próprio Case e as próprias traduções, e apaga o que criou —
+ * inclusive quando o corpo do teste falha, porque a limpeza vive no `finally`.
+ *
+ * Nenhum teste depende de outro nem da ordem: qualquer um roda sozinho.
  */
 
 type TestAccount = { role: string; email: string; password: string };
@@ -36,11 +45,10 @@ function conta(role: string): TestAccount {
   return achada;
 }
 
-async function entrar(page: Page, role: string) {
-  const account = conta(role);
+async function entrar(page: Page, email: string, password: string) {
   await page.goto("/login");
-  await page.getByLabel("E-mail").fill(account.email);
-  await page.getByLabel("Senha").fill(account.password);
+  await page.getByLabel("E-mail").fill(email);
+  await page.getByLabel("Senha").fill(password);
   await page.getByRole("button", { name: "Entrar" }).click();
   await page.waitForURL((url) => !url.pathname.startsWith("/login"));
 }
@@ -62,48 +70,98 @@ test.describe("Etapa 2D — reconhecimento ponta a ponta", () => {
   test("ela vê a comparação, os quatro desfechos, e o que registra sobrevive à recarga", async ({
     page,
   }) => {
-    await entrar(page, "paciente");
-    await abrirOPerfil(page);
+    let cenario: Cenario | null = null;
+    try {
+      cenario = await criarCenario();
+      await entrar(page, cenario.email, cenario.password);
+      await abrirOPerfil(page);
 
-    // 1. A COMPARAÇÃO — as duas colunas, o achado P8 resolvido.
-    await expect(page.getByText("O que você disse").first()).toBeVisible();
-    await expect(page.getByText("O que ficou registrado").first()).toBeVisible();
-    await capturar(page, "01-comparacao-duas-colunas");
+      // 1. A COMPARAÇÃO — as duas colunas, o achado P8 resolvido.
+      await expect(page.getByText("O que você disse").first()).toBeVisible();
+      await expect(page.getByText("O que ficou registrado").first()).toBeVisible();
+      await capturar(page, "01-comparacao-duas-colunas");
 
-    // 2. OS QUATRO DESFECHOS, com o mesmo peso (Etapa 2C · C5).
-    const opcoes = ["É isso mesmo", "Quase — quero ajustar", "Não foi isso que eu disse", "Prefiro pensar"];
-    for (const rotulo of opcoes) {
-      await expect(page.getByRole("button", { name: rotulo }).first()).toBeVisible();
+      // MR-01 — a coluna dela fala a língua dela: o rótulo do Catálogo, nunca
+      // o código com que a resposta é armazenada.
+      for (const { valor, rotulo } of cenario.opcoes) {
+        await expect(page.getByText(rotulo, { exact: false }).first()).toBeVisible();
+        await expect(page.getByText(valor, { exact: false })).toHaveCount(0);
+      }
+
+      // 2. OS QUATRO DESFECHOS, com o mesmo peso (Etapa 2C · C5).
+      const opcoes = [
+        "É isso mesmo",
+        "Quase — quero ajustar",
+        "Não foi isso que eu disse",
+        "Prefiro pensar",
+      ];
+      for (const rotulo of opcoes) {
+        await expect(page.getByRole("button", { name: rotulo }).first()).toBeVisible();
+      }
+      await capturar(page, "02-quatro-desfechos");
+
+      // 3. DT-22 — o texto é exigido ANTES de registrar.
+      await page.getByRole("button", { name: "Não foi isso que eu disse" }).first().click();
+      const registrar = page.getByRole("button", { name: "Registrar" }).first();
+      await expect(registrar).toBeDisabled();
+      await capturar(page, "03-texto-obrigatorio");
+
+      const TEXTO = `Prova da Etapa 2D (${cenario.marca}): nao foi isso que eu disse.`;
+      await page.getByRole("textbox").first().fill(TEXTO);
+      await expect(registrar).toBeEnabled();
+      await registrar.click();
+
+      // 4. O ATO REGISTRADO — a tela conta o que ficou.
+      await expect(page.getByText("Você discordou desta leitura.")).toBeVisible({
+        timeout: 15_000,
+      });
+      await capturar(page, "04-desfecho-registrado");
+
+      // 5. A RECARGA — GET novo, documento inteiro, zero estado local.
+      await page.reload();
+      await abrirOPerfil(page);
+
+      await expect(page.getByText("Você discordou desta leitura.")).toBeVisible();
+      await expect(page.getByText(TEXTO)).toBeVisible();
+      await capturar(page, "05-apos-recarga");
+    } finally {
+      await limparCenario(cenario);
     }
-    await capturar(page, "02-quatro-desfechos");
+  });
 
-    // 3. DT-22 — o texto é exigido ANTES de registrar.
-    await page.getByRole("button", { name: "Não foi isso que eu disse" }).first().click();
-    const registrar = page.getByRole("button", { name: "Registrar" }).first();
-    await expect(registrar).toBeDisabled();
-    await capturar(page, "03-texto-obrigatorio");
+  /**
+   * MR-02 · a prova de que a limpeza limpa. Sem este teste, "descartável" seria
+   * uma promessa do comentário — e resíduo só apareceria na terceira execução
+   * de alguém, meses depois.
+   */
+  test("o cenário não sobrevive à própria execução", async () => {
+    const cenario = await criarCenario();
 
-    const TEXTO = "Prova da Etapa 2D: nao foi isso que eu disse.";
-    await page.getByRole("textbox").first().fill(TEXTO);
-    await expect(registrar).toBeEnabled();
-    await registrar.click();
+    const antes = await residuosDe(cenario);
+    expect(antes.cases, "a fixture nasceu vazia — o teste seguinte seria vácuo").toBe(1);
+    expect(antes.case_needs).toBe(3);
+    expect(antes.case_priority_map).toBe(3);
+    expect(antes.priority_profiles).toBe(1);
+    expect(antes.patient_stories).toBe(1);
 
-    // 4. O ATO REGISTRADO — a tela conta o que ficou.
-    await expect(page.getByText("Você discordou desta leitura.")).toBeVisible({ timeout: 15_000 });
-    await capturar(page, "04-desfecho-registrado");
+    await limparCenario(cenario);
 
-    // 5. A RECARGA — GET novo, documento inteiro, zero estado local.
-    await page.reload();
-    await abrirOPerfil(page);
+    expect(await residuosDe(cenario)).toEqual({
+      cases: 0,
+      case_needs: 0,
+      case_priority_map: 0,
+      priority_profiles: 0,
+      patient_stories: 0,
+      audit_logs: 0,
+    });
 
-    await expect(page.getByText("Você discordou desta leitura.")).toBeVisible();
-    await expect(page.getByText(TEXTO)).toBeVisible();
-    // E o desfecho não regride: os botões não voltam para aquela linha.
-    await capturar(page, "05-apos-recarga");
+    // Limpar de novo não explode: cenário parcial e re-limpeza são normais.
+    await limparCenario(cenario);
   });
 
   test("D5 · o Curador lê a resposta dela e não tem como praticá-la", async ({ page }) => {
-    await entrar(page, "curador_medico");
+    const curador = conta("curador_medico");
+    await entrar(page, curador.email, curador.password);
 
     // O painel do Protocolo da Pessoa vive dentro do Case do Curador. Aqui
     // basta provar que a superfície dele não oferece mais os desfechos — o que
