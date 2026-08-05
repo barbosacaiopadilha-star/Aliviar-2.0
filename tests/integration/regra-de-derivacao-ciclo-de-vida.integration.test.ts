@@ -299,6 +299,116 @@ describe("Promoção · PROPOSTA → VIGENTE", () => {
 
 // ---------------------------------------------------------------------------
 
+/**
+ * 2.2B-R1 · A RESPONSABILIDADE PELO ORDINAL É DO TRIGGER DE CADEIA.
+ *
+ * A Verificação Independente pediu que a divisão do MR1.2 ficasse provada, e
+ * não apenas afirmada. **O MR1.2 é garantido pelo CONJUNTO**, com papéis
+ * distintos e não intercambiáveis:
+ *
+ *   · TRIGGER DE CADEIA — valida `from_state`, a continuidade, o `seq` e o
+ *     ORDINAL CORRETO de `vigencia_seq`. É ele, e só ele, que impede ordinal
+ *     forjado.
+ *   · ÍNDICE ÚNICO PARCIAL — arbitra a COLISÃO: duas entradas concorrentes sob
+ *     o mesmo ordinal canônico, uma vence. Vale para todo papel, inclusive
+ *     `service_role`, e não depende de disciplina de aplicação.
+ *
+ * **Nenhum dos dois garante o MR1.2 sozinho**, e este bloco existe para que
+ * nenhuma leitura futura atribua ao índice a validação do ordinal: o índice
+ * não sabe qual ordinal é o certo — ele só recusa o repetido.
+ *
+ * A mutação B do pacote 2.2B-R1 remove o trigger e confirma que estas provas
+ * caem enquanto as do índice permanecem distinguíveis.
+ */
+describe("2.2B-R1 · ordinal forjado — a prova nomeia o trigger de cadeia", () => {
+  it("com o trigger ativo, um vigencia_seq incompatível é recusado POR ELE", () => {
+    const r = emTransacaoRevertida(`
+      ${VERSAO("r1-forja", 1)}
+      ${NASCIMENTO("r1-forja", 1)}
+      select 'NASCEU:' || count(*) from ${TRANSICOES} where rule_id = 'r1-forja';
+      select 'ANTES:' || curadoria.derivation_rule_state('r1-forja', 1);
+      select 'VIGENCIAS_FECHADAS:' || count(*) from ${TRANSICOES}
+        where rule_id = 'r1-forja' and from_state = 'VIGENTE';
+      ${TRANSICAO({ id: "r1-forja", seq: 2, de: "PROPOSTA", para: "VIGENTE", vigencia: 7 })}
+    `);
+
+    // 1. o cenário nasceu; 2. o estado anterior é o certo; 3. o ordinal
+    // canônico seria 1 (zero vigências fechadas + 1), e 7 é incompatível.
+    expect(r.saida, "o cenário não nasceu").toContain("NASCEU:1");
+    expect(r.saida, "a versão não estava em PROPOSTA").toContain("ANTES:PROPOSTA");
+    expect(r.saida, "havia vigência fechada — o ordinal canônico não seria 1").toContain(
+      "VIGENCIAS_FECHADAS:0",
+    );
+
+    // 4. a recusa NOMEIA o responsável, com a mensagem do trigger de cadeia.
+    expect(r.ok, "um ordinal forjado entrou").toBe(false);
+    expect(r.saida, "a recusa não veio do trigger de cadeia").toContain(
+      "vigencia_seq de r1-forja/1 deve ser 1 (vigencias fechadas + 1), recebido 7",
+    );
+
+    // 5. NENHUMA outra constraint é responsável: nem o índice (não há linha
+    // repetida a colidir), nem o CHECK de coerência (o valor não é nulo), nem
+    // o grafo (PROPOSTA→VIGENTE é permitido), nem a FK (a versão existe).
+    for (const alheio of [
+      "uma_vigente_por_regra",
+      "vigencia_seq_coerente",
+      "grafo_fechado",
+      "versao_fk",
+      "adr_quando_exigida",
+    ]) {
+      expect(r.saida, `a recusa veio de ${alheio}, não do trigger`).not.toContain(alheio);
+    }
+  });
+
+  it("a MESMA linha, com o ordinal canônico, é aceita — a única diferença é o ordinal", () => {
+    // Prova complementar e indispensável: sem ela, "recusou" poderia ser
+    // qualquer outra coisa errada na linha.
+    const r = emTransacaoRevertida(`
+      ${VERSAO("r1-canon", 1)}
+      ${NASCIMENTO("r1-canon", 1)}
+      ${TRANSICAO({ id: "r1-canon", seq: 2, de: "PROPOSTA", para: "VIGENTE", vigencia: 1 })}
+      select 'ACEITA:' || curadoria.derivation_rule_state('r1-canon', 1);
+    `);
+
+    expect(r.ok, r.saida).toBe(true);
+    expect(r.saida).toContain("ACEITA:VIGENTE");
+  });
+
+  it("depois de uma vigência fechada, o ordinal canônico anda — e o antigo é recusado", () => {
+    const r = emTransacaoRevertida(`
+      ${ATE_VIGENTE("r1-anda")}
+      ${TRANSICAO({ id: "r1-anda", seq: 3, de: "VIGENTE", para: "SUSPENSA" })}
+      select 'VIGENCIAS_FECHADAS:' || count(*) from ${TRANSICOES}
+        where rule_id = 'r1-anda' and from_state = 'VIGENTE';
+      ${TRANSICAO({ id: "r1-anda", seq: 4, de: "SUSPENSA", para: "VIGENTE", vigencia: 1 })}
+    `);
+
+    expect(r.saida, "a vigência não foi fechada").toContain("VIGENCIAS_FECHADAS:1");
+    expect(r.ok, "reativou reusando o ordinal da vigência anterior").toBe(false);
+    expect(r.saida).toContain("deve ser 2 (vigencias fechadas + 1), recebido 1");
+  });
+
+  it("o índice NÃO sabe qual ordinal é o certo — ele só recusa o repetido", () => {
+    // Duas entradas com ordinal 1 e 2 numa regra sem vigência fechada: a
+    // segunda é forjada, e quem a recusa é o trigger. Se fosse o índice, ela
+    // passaria — os dois valores são diferentes.
+    const r = emTransacaoRevertida(`
+      ${ATE_VIGENTE("r1-indice", 1)}
+      ${VERSAO("r1-indice", 2)}
+      ${NASCIMENTO("r1-indice", 2)}
+      ${TRANSICAO({ id: "r1-indice", v: 2, seq: 2, de: "PROPOSTA", para: "VIGENTE", vigencia: 2 })}
+    `);
+
+    expect(r.ok, "duas vigências abertas coexistiram sob ordinais diferentes").toBe(false);
+    expect(r.saida, "quem recusou foi o índice — mas o índice não valida ordinal").toContain(
+      "deve ser 1 (vigencias fechadas + 1), recebido 2",
+    );
+    expect(r.saida).not.toContain("uma_vigente_por_regra");
+  });
+});
+
+// ---------------------------------------------------------------------------
+
 describe("Suspensão · VIGENTE → SUSPENSA, e o freio do Curador", () => {
   it("a Autoridade suspende, o histórico fica e a regra deixa de ser lida como vigente", () => {
     const r = emTransacaoRevertida(`

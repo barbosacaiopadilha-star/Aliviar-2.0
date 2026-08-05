@@ -379,3 +379,165 @@ describe("C-08 · Nenhum escritor, nenhum pipeline nasceu com o ciclo de vida", 
     expect(CICLO_CODIGO).toMatch(/revoke all on curadoria\.derivation_rule_transitions/i);
   });
 });
+
+/**
+ * ┌ C-09 — As leituras do ciclo de vida não são anônimas (pacote 2.2B-R1)
+ * │ Objetivo ......... impedir que `EXECUTE` volte a `PUBLIC` — e com ele a
+ * │                    `anon` —, e que a correção seja "compensada" tornando as
+ * │                    funções `SECURITY DEFINER`.
+ * │ Princípio ........ menor privilégio; inércia do 2.2B; ADR-069 §8.
+ * │ Falha ............ uma migration futura concede a PUBLIC, ou recria a
+ * │                    função com `drop`+`create` (que restaura o padrão), ou
+ * │                    a declara `security definer`.
+ * │ Detecção ......... varredura das migrations. O CATÁLOGO é conferido pelo
+ * │                    oráculo de integração — as duas portas, de propósito:
+ * │                    esta pega a intenção no texto, aquela pega o efeito.
+ * │
+ * │ FRONTEIRA DELIBERADA: esta guarda diz **"não expor NESTE pacote"**, não
+ * │ "nunca poderá existir API autorizada". Uma exposição futura é legítima —
+ * │ exige pacote próprio, com decisão registrada e política de acesso. O que
+ * │ ela proíbe é a exposição por herança, sem ninguém ter decidido nada.
+ * └
+ * ┌ C-10 — O MR1.2 é do CONJUNTO, e nenhum texto pode dizer o contrário
+ * │ Princípio ........ ressalva 2 da Verificação Independente do 2.2B.
+ * │ Falha ............ alguém escreve, em teste ou comentário, que o índice
+ * │                    isolado garante todo o MR1.2 — e a próxima pessoa
+ * │                    remove o trigger achando que é redundante.
+ * └
+ */
+
+/** As duas leituras, com a assinatura que o catálogo confirma. */
+const LEITURAS_DO_CICLO = ["derivation_rule_state", "derivation_rule_current_version"] as const;
+
+const R1_SQL = MIGRATIONS.filter((arquivo) =>
+  /menor_privilegio_nas_leituras_do_ciclo_de_vida/i.test(arquivo),
+).map((arquivo) => readFileSync(arquivo, "utf8"));
+
+const R1_CODIGO = R1_SQL.join("\n").replace(/^\s*--.*$/gm, "");
+
+/** Todas as migrations, sem comentários: um exemplo de rollback não é um grant. */
+const MIGRATIONS_CODIGO = MIGRATIONS.map((arquivo) =>
+  readFileSync(arquivo, "utf8").replace(/^\s*--.*$/gm, ""),
+);
+
+describe("C-09 · As leituras do ciclo de vida não são anônimas (2.2B-R1)", () => {
+  it("a migration de endurecimento existe — sem ela, tudo abaixo seria vácuo", () => {
+    expect(R1_SQL.length, "a migration do 2.2B-R1 não foi encontrada").toBeGreaterThan(0);
+    expect(R1_CODIGO).toMatch(/revoke execute on function[\s\S]*from public/i);
+  });
+
+  it("nenhuma migration concede EXECUTE dessas funções a PUBLIC ou a papel de aplicação", () => {
+    for (const sql of MIGRATIONS_CODIGO) {
+      for (const funcao of LEITURAS_DO_CICLO) {
+        const concessoes = new RegExp(
+          `grant[^;]*execute[^;]*${funcao}[^;]*to\\s+(public|anon|authenticated|service_role)`,
+          "i",
+        );
+        expect(
+          concessoes.test(sql),
+          `${funcao} recebeu grant. Expor é legítimo — mas por pacote próprio, com decisão registrada, nunca por herança.`,
+        ).toBe(false);
+      }
+    }
+  });
+
+  it("nenhuma das duas é declarada SECURITY DEFINER", () => {
+    for (const sql of MIGRATIONS_CODIGO) {
+      for (const funcao of LEITURAS_DO_CICLO) {
+        const definer = new RegExp(
+          `create\\s+(or\\s+replace\\s+)?function\\s+curadoria\\.${funcao}[\\s\\S]{0,600}?security\\s+definer`,
+          "i",
+        );
+        expect(
+          definer.test(sql),
+          `${funcao} virou SECURITY DEFINER — ler passaria a usar a autoridade do dono, não a do chamador. É o oposto da correção.`,
+        ).toBe(false);
+      }
+    }
+  });
+
+  it("nenhuma policy de leitura nasceu nas estruturas inertes", () => {
+    for (const sql of MIGRATIONS_CODIGO) {
+      for (const tabela of ["derivation_rule_transitions", "derivation_rules", "derivation_proposals"]) {
+        expect(
+          new RegExp(`create policy[^;]*on curadoria\\.${tabela}`, "i").test(sql),
+          `Nasceu uma policy em ${tabela}: a estrutura é inerte até o pacote que a abrir.`,
+        ).toBe(false);
+      }
+    }
+  });
+
+  it("o endurecimento é mínimo: não concede nada, não toca corpo, trigger, índice nem RLS", () => {
+    expect(/\bgrant\b/i.test(R1_CODIGO), "o pacote corretivo concedeu privilégio").toBe(false);
+    for (const proibido of [
+      /create\s+(or\s+replace\s+)?function/i,
+      /create\s+(unique\s+)?index/i,
+      /create\s+(constraint\s+)?trigger/i,
+      /alter\s+table/i,
+      /create\s+table/i,
+      /create\s+policy/i,
+    ]) {
+      expect(
+        proibido.test(R1_CODIGO),
+        "o pacote corretivo saiu do escopo: ele corrige privilégio, e nada mais.",
+      ).toBe(false);
+    }
+  });
+
+  it("o oráculo de catálogo existe — a guarda de texto não substitui a de efeito", () => {
+    const oraculo = path.join(RAIZ, "tests", "integration", "ciclo-de-vida-privilegios.integration.test.ts");
+    const fonte = readFileSync(oraculo, "utf8");
+    expect(fonte).toMatch(/has_function_privilege/);
+    expect(fonte).toMatch(/proacl/);
+    expect(fonte).toMatch(/prosecdef/);
+  });
+});
+
+describe("C-10 · O MR1.2 é do CONJUNTO — trigger e índice, com papéis distintos", () => {
+  const CICLO_TESTE = path.join(
+    RAIZ,
+    "tests",
+    "integration",
+    "regra-de-derivacao-ciclo-de-vida.integration.test.ts",
+  );
+
+  it("a prova contra ordinal forjado existe e nomeia o trigger de cadeia", () => {
+    const fonte = readFileSync(CICLO_TESTE, "utf8");
+    expect(
+      fonte,
+      "a prova contra ordinal forjado foi removida — era a ressalva 2 da Verificação.",
+    ).toMatch(/ordinal forjado/i);
+    expect(fonte).toMatch(/vigencias fechadas \+ 1/);
+  });
+
+  it("nenhum texto afirma que o índice sozinho garante todo o MR1.2", () => {
+    const textos = [
+      readFileSync(CICLO_TESTE, "utf8"),
+      ...CICLO_SQL,
+      ...R1_SQL,
+      readFileSync(path.join(RAIZ, "src", "modules", "curadoria", "ciclo-de-vida-da-regra.ts"), "utf8"),
+    ];
+    // Formulações que atribuiriam ao índice a garantia inteira. A frase certa
+    // é "o índice arbitra a colisão"; a errada é "o índice garante o MR1.2".
+    const afirmacoesProibidas = [
+      /[oó]\s*[ií]ndice\s+(sozinho|isolado|isoladamente)/i,
+      /apenas\s+o\s+[ií]ndice\s+garante/i,
+      /[oó]\s*[ií]ndice\s+garante\s+(todo\s+)?o\s+MR1\.2/i,
+    ];
+    for (const texto of textos) {
+      for (const proibida of afirmacoesProibidas) {
+        expect(
+          proibida.test(texto),
+          "Um texto atribuiu ao índice a garantia inteira. O índice arbitra a colisão; quem valida o ordinal é o trigger.",
+        ).toBe(false);
+      }
+    }
+  });
+
+  it("a migration do ciclo de vida registra a divisão de responsabilidade", () => {
+    const comComentarios = CICLO_SQL.join("\n");
+    expect(comComentarios, "a divisão trigger × índice saiu da documentação da migration").toMatch(
+      /O trigger apenas CALCULA e CONFERE o ordinal|ele n[aã]o [eé] a garantia/i,
+    );
+  });
+});
