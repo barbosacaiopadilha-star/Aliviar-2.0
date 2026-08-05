@@ -128,7 +128,11 @@ describe("GATE-E1-CAT [Bloco E/Frente 1] paridade do Catálogo Canônico", () =>
     const { data: conceitos, error: erroConceitos } = await service
       .from("method_subcriteria")
       .select(
-        'code, "group", name, description, display_order, active, axis, catalog_version, professional_question, patient_question, response_type, cruzamento, required, conditional_rules, evidence_source, review_months',
+        // `motor_participation` entrou no 2.2C-R1: o gate recompõe a carga com
+        // as MESMAS colunas do gerador. Esquecer uma aqui faria o hash divergir
+        // por falta de leitura, não por divergência real — e é justamente essa
+        // divergência que ele existe para acusar.
+        'code, "group", name, description, display_order, active, axis, catalog_version, professional_question, patient_question, response_type, cruzamento, motor_participation, required, conditional_rules, evidence_source, review_months',
       );
     if (erroConceitos) throw new Error(`method_subcriteria: ${erroConceitos.message}`);
     linhas = conceitos as LinhaConceito[];

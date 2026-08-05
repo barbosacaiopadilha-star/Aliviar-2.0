@@ -97,6 +97,7 @@ export function montarCarga(conceitos, opcoes) {
       patientQuestion: linha.patient_question ?? null,
       responseType: linha.response_type ?? null,
       cruzamento: linha.cruzamento ?? null,
+      motorParticipation: linha.motor_participation ?? null,
       required: linha.required ?? false,
       conditionalRules: linha.conditional_rules ?? [],
       evidenceSource: linha.evidence_source ?? null,
@@ -172,7 +173,7 @@ async function main() {
   const { data: conceitos, error: erroConceitos } = await client
     .from("method_subcriteria")
     .select(
-      'code, "group", name, description, display_order, active, axis, catalog_version, professional_question, patient_question, response_type, cruzamento, required, conditional_rules, evidence_source, review_months',
+      'code, "group", name, description, display_order, active, axis, catalog_version, professional_question, patient_question, response_type, cruzamento, motor_participation, required, conditional_rules, evidence_source, review_months',
     );
   if (erroConceitos) throw new Error(`method_subcriteria: ${erroConceitos.message}`);
 
@@ -265,6 +266,16 @@ export type CatalogoConceito = {
   patientQuestion: string | null;
   responseType: string | null;
   cruzamento: string | null;
+  /**
+   * ADR-066 §16 — SE E COMO o conceito participa do Motor: DIRETO, INDIRETO ou
+   * NUNCA. Fonte autoritativa: \`method_subcriteria.motor_participation\`
+   * (2.2C-R1). \`null\` só no legado 0.9.0 inativo, que saiu de circulação antes
+   * de o atributo existir.
+   *
+   * NÃO confundir com \`cruzamento\`, que diz QUEM JULGA: entre os \`humano\` há
+   * dois \`NUNCA\` e um \`INDIRETO\`. E \`INDIRETO\` não é \`NUNCA\`.
+   */
+  motorParticipation: string | null;
   required: boolean;
   conditionalRules: readonly CatalogoConditionalRule[];
   evidenceSource: string | null;

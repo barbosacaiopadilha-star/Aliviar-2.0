@@ -35,6 +35,8 @@ const TRANSICOES = "curadoria.derivation_rule_transitions";
 const MAPA = "curadoria.derivation_rule_degree_map";
 const PROPOSTAS = "curadoria.derivation_proposals";
 const NEEDS = "curadoria.case_needs";
+/** Ocupação do conceito — nasceu no 2.2C-R1 e entrou na limpeza da corrida. */
+const OCUPACAO = "curadoria.derivation_concept_vigencia";
 const MAPA_MANUAL = "curadoria.case_priority_map";
 
 const ARGS = (sql: string) => [
@@ -269,14 +271,29 @@ describe("2.2C · quais conceitos podem ter ponte (ADR-066 §16)", () => {
     expect(r.saida).toContain("nao tem lado da pessoa");
   });
 
-  it("conceito do eixo Viabilidade é recusado — fora do Motor por Método", () => {
+  /**
+   * MUDANÇA DE CONTRATO REGISTRADA — 2.2C-R1.
+   *
+   * A 2.2C recusava este conceito por HEURÍSTICA de eixo (`VIABILIDADE_DE_ACESSO`),
+   * e a mensagem dizia "eixo Viabilidade". A 2.2C-R1 materializou
+   * `MOTOR_PARTICIPATION` no Catálogo e trocou a heurística pela coluna
+   * autoritativa — porque duas fontes para a mesma pergunta divergem em
+   * silêncio, e o eixo nunca alcançaria os dois conceitos de juízo humano.
+   *
+   * A recusa é a mesma; a AUTORIDADE dela mudou, e o oráculo acompanha.
+   */
+  it("conceito fora do Motor é recusado — e a recusa cita o Catálogo", () => {
     const r = emTransacaoRevertida(`
       ${REGRA("viab")}
       insert into ${MAPA} (rule_id, rule_version, subcriterion_code, degree, importance)
       values ('viab', 1, 'VIABILIDADE_CUSTO_E_PAGAMENTO', 'ESSENCIAL', 'MUITO_IMPORTANTE');
     `);
     expect(r.ok, "Viabilidade ganhou ponte").toBe(false);
-    expect(r.saida).toContain("eixo Viabilidade");
+    expect(r.saida).toContain("MOTOR_PARTICIPATION = NUNCA");
+    expect(
+      r.saida,
+      "a heurística de eixo voltou: ela é a segunda fonte que o 2.2C-R1 eliminou.",
+    ).not.toContain("eixo Viabilidade");
   });
 
   it("o emissor recusa conceito sem ponte, com desfecho nomeado", () => {
@@ -291,16 +308,18 @@ describe("2.2C · quais conceitos podem ter ponte (ADR-066 §16)", () => {
 
 describe("2.2C · a quarta exclusão do §16 — MOTOR_PARTICIPATION = NUNCA", () => {
   /**
-   * O banco NÃO tem `MOTOR_PARTICIPATION`: ele vive em
-   * `src/modules/curadoria/evidencias-pratica.ts`. Duplicar a lista em SQL
-   * criaria uma segunda fonte de um fato de domínio — o defeito que este
-   * projeto combate desde o Catálogo.
+   * MUDANÇA DE CONTRATO REGISTRADA — 2.2C-R1.
    *
-   * A coerência é garantida AQUI, com a fonte única do lado do código
-   * atravessando a fronteira uma vez, em leitura. Se alguém criar
-   * correspondência para um conceito `NUNCA`, esta prova cai.
+   * Na 2.2C o banco NÃO conhecia `MOTOR_PARTICIPATION`: a lista vivia num
+   * `Record` manual em `evidencias-pratica.ts`, e a coerência era garantida
+   * AQUI, por teste. Um teste é aviso depois do fato: ele constata a violação,
+   * não a impede — e o conceito de juízo humano com lado da pessoa passava.
    *
-   * `MODELO_CONDUCAO_DE_NOTICIAS_DIFICEIS` é o caso que só esta guarda pega:
+   * A 2.2C-R1 moveu o atributo para o Catálogo, onde o fato de domínio já
+   * morava, e a recusa virou trigger. Este bloco deixou de ser a garantia e
+   * passou a ser a CONFERÊNCIA: o que o código lê é o que o banco declara.
+   *
+   * `MODELO_CONDUCAO_DE_NOTICIAS_DIFICEIS` continua sendo o caso decisivo —
    * tem lado da pessoa e não é Viabilidade, e mesmo assim é `NUNCA`.
    */
   it("nenhuma correspondência existe para conceito que não participa do Motor", async () => {
@@ -320,15 +339,24 @@ describe("2.2C · a quarta exclusão do §16 — MOTOR_PARTICIPATION = NUNCA", (
   });
 
   it("o emissor recusa o conceito de juízo humano que TEM lado da pessoa", () => {
-    // Sem correspondência não há ponte — e a guarda acima garante que nenhuma
-    // correspondência nascerá para ele.
+    // MUDANÇA DE CONTRATO — 2.2C-R1. Na 2.2C o desfecho era
+    // `SEM_REGRA_VIGENTE`: o conceito atravessava a verificação de ponte (a
+    // heurística de eixo não o alcançava) e só parava por falta de regra.
+    // Recusa por acidente, não por método: no dia em que uma regra vigente
+    // cobrisse o conceito, ele emitiria.
+    //
+    // Agora para na própria pergunta, com o nome certo.
     const r = emTransacaoRevertida(`
       ${CASE_FIXTURE}
       ${GRAU("ESSENCIAL", "MODELO_CONDUCAO_DE_NOTICIAS_DIFICEIS")}
       select 'DESFECHO:' || curadoria.emitir_proposta_de_importancia(
         ${CASO}, 'MODELO_CONDUCAO_DE_NOTICIAS_DIFICEIS', ${AUTORIDADE_FIXTURE});
     `);
-    expect(r.saida).toContain("DESFECHO:SEM_REGRA_VIGENTE");
+    expect(r.saida).toContain("DESFECHO:CONCEITO_SEM_PONTE");
+    expect(
+      r.saida,
+      "voltou a parar por falta de regra: a recusa seria acidente, não método.",
+    ).not.toContain("DESFECHO:SEM_REGRA_VIGENTE");
   });
 });
 
@@ -661,11 +689,19 @@ describe("2.2C · idempotência e concorrência", () => {
       // Limpeza explícita: propostas e transições são append-only por trigger,
       // então a remoção passa por desabilitá-los — no cenário de teste, e com
       // restauração imediata. `cases` cascateia para a proposta.
+      //
+      // A OCUPAÇÃO DO CONCEITO entrou nesta lista no 2.2C-R1: promover a regra
+      // passou a ocupar `MODELO_COMUNICACAO`, e essa linha tem FK RESTRICT para
+      // a versão. Sem apagá-la primeiro, o `delete` da regra é recusado, a
+      // limpeza morre no meio e o resíduo derruba a suíte inteira na corrida
+      // seguinte — foi exatamente o que aconteceu.
       psql(`
+        alter table ${OCUPACAO} disable trigger derivation_concept_vigencia_append_only;
         alter table ${TRANSICOES} disable trigger derivation_rule_transitions_append_only;
         alter table ${MAPA} disable trigger derivation_rule_degree_map_append_only;
         alter table ${REGRAS} disable trigger derivation_rules_append_only;
         delete from ${PROPOSTAS} where case_id = ${CASO};
+        delete from ${OCUPACAO} where rule_id = 'race';
         delete from ${MAPA} where rule_id = 'race';
         delete from ${TRANSICOES} where rule_id = 'race';
         delete from ${REGRAS} where rule_id = 'race';

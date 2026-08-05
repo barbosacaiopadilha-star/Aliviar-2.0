@@ -247,16 +247,23 @@ const CICLO_SQL = MIGRATIONS.filter((arquivo) => /ciclo_de_vida_da_regra/i.test(
 const CICLO_CODIGO = CICLO_SQL.join("\n").replace(/^\s*--.*$/gm, "");
 
 /**
- * O mesmo, para TypeScript.
+ * O mesmo, para TypeScript — e, desde o 2.2C-R1, também para SQL.
  *
  * A guarda C-05 nasceu acusando o próprio `ciclo-de-vida-da-regra.ts`, cujo
  * comentário diz — corretamente — que a leitura derivada **não** consulta
  * `derivation_rules.state`. Guarda que cai sobre a frase que a cumpre não
  * protege nada; ela só ensina a não escrever a frase. O que se procura é
  * LEITURA, e leitura mora em código.
+ *
+ * A lição se repetiu inteira três vezes no 2.2C-R1: o comentário do Catálogo
+ * gerado que manda "NÃO confundir com `cruzamento`", o do emissor que declara
+ * "SEM `order by rule_id`", e o rollback documentado no cabeçalho da migration
+ * — cada um acusado pela guarda que ele cumpre. Daí o `--` aqui.
  */
 function semComentarios(fonte: string): string {
-  return fonte.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  return fonte
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^\s*(\/\/|--|\*).*$/gm, "");
 }
 
 function ocorrenciasNoCodigo(arquivos: string[], padrao: RegExp): string[] {
@@ -569,12 +576,37 @@ const PONTE_CODIGO = PONTE_SQL.join("\n").replace(/^\s*--.*$/gm, "");
  * NÃO lê `derivation_rules.state`, e uma guarda que olhasse o arquivo inteiro
  * cairia justamente sobre a frase que cumpre a regra.
  */
-const CORPO_DO_EMISSOR = (() => {
-  const depois = PONTE_CODIGO.split(/function curadoria\.emitir_proposta_de_importancia/i)[1] ?? "";
+/**
+ * O corpo VIGENTE de uma função, entre `as $$` e `$$;`.
+ *
+ * Duas precisões que a primeira versão desta guarda não tinha, e que a fizeram
+ * cair sobre o nada:
+ *
+ *   1. o split é no `create [or replace] function`, não no nome solto — o nome
+ *      também aparece em `comment on function` e em `revoke execute`, e cortar
+ *      por ele devolvia a linha do revoke em vez do corpo;
+ *   2. vale a ÚLTIMA definição — `create or replace` numa migration posterior
+ *      substitui a anterior, e auditar a primeira seria validar código morto.
+ */
+function corpoDaFuncao(sql: string, nome: string): string {
+  const partes = sql.split(
+    new RegExp(`create\\s+(?:or\\s+replace\\s+)?function\\s+curadoria\\.${nome}`, "i"),
+  );
+  const depois = partes[partes.length - 1] ?? "";
   const abre = depois.indexOf("$$");
   const fecha = depois.indexOf("$$;", abre + 2);
   return abre === -1 || fecha === -1 ? "" : depois.slice(abre + 2, fecha);
-})();
+}
+
+/** Todas as migrations que definem o emissor, na ordem cronológica do nome. */
+const SQL_DO_EMISSOR = MIGRATIONS.filter((arquivo) =>
+  /function curadoria\.emitir_proposta_de_importancia/i.test(readFileSync(arquivo, "utf8")),
+)
+  .sort()
+  .map((arquivo) => readFileSync(arquivo, "utf8").replace(/^\s*--.*$/gm, ""))
+  .join("\n");
+
+const CORPO_DO_EMISSOR = corpoDaFuncao(SQL_DO_EMISSOR, "emitir_proposta_de_importancia");
 
 describe("C-11 · A ponte é o único escritor, e produz só proposta (2.2C)", () => {
   it("a migration da ponte existe — sem ela, tudo abaixo seria vácuo", () => {
@@ -582,14 +614,20 @@ describe("C-11 · A ponte é o único escritor, e produz só proposta (2.2C)", (
     expect(PONTE_CODIGO).toMatch(/function curadoria\.emitir_proposta_de_importancia/i);
   });
 
-  it("existe exatamente UMA função que escreve propostas em todas as migrations", () => {
-    const escritoras = MIGRATIONS_CODIGO.flatMap((sql) => {
-      const funcoes = sql.split(/create\s+or\s+replace\s+function|create\s+function/i).slice(1);
-      return funcoes
-        .filter((corpo) => /insert\s+into\s+curadoria\.derivation_proposals/i.test(corpo))
-        .map((corpo) => corpo.trim().split(/[\s(]/)[0]);
-    });
-    expect(escritoras, "nasceu um segundo escritor de propostas").toEqual([
+  it("existe exatamente UM NOME de função que escreve propostas", () => {
+    // Contamos NOMES DISTINTOS, não ocorrências: o 2.2C-R1 reescreve o emissor
+    // com `create or replace` numa migration nova, e isso é evolução legítima
+    // do mesmo escritor. O que a guarda proíbe é um SEGUNDO nome.
+    const escritoras = new Set(
+      MIGRATIONS_CODIGO.flatMap((sql) =>
+        sql
+          .split(/create\s+or\s+replace\s+function|create\s+function/i)
+          .slice(1)
+          .filter((corpo) => /insert\s+into\s+curadoria\.derivation_proposals/i.test(corpo))
+          .map((corpo) => corpo.trim().split(/[\s(]/)[0]),
+      ),
+    );
+    expect([...escritoras], "nasceu um segundo escritor de propostas").toEqual([
       "curadoria.emitir_proposta_de_importancia",
     ]);
   });
@@ -723,5 +761,293 @@ describe("C-13 · As duas escalas continuam disjuntas", () => {
     expect(PONTE_CODIGO).toMatch(
       /importance[\s\S]{0,160}'MUITO_IMPORTANTE',\s*'IMPORTANTE',\s*'RELEVANTE',\s*'POUCO_IMPORTANTE',\s*'NAO_INFLUENCIA'/i,
     );
+  });
+});
+
+// ===========================================================================
+// PACOTE 2.2C-R1 — PARTICIPAÇÃO DO MOTOR E UNICIDADE POR CONCEITO
+//
+// ┌ C-14 — A participação no Motor tem UMA fonte, e ela é o Catálogo
+// │ Objetivo ......... impedir o retorno do `Record` manual, de uma segunda
+// │                    fonte qualquer, ou do uso de `cruzamento` como atalho.
+// │ Princípio ........ ADR-066 §16: o fato é de domínio, logo é do Catálogo.
+// │ Falha ............ duas listas divergem em silêncio e o Motor passa a
+// │                    responder por conceito que o método excluiu dele.
+// ├ C-15 — A unicidade por conceito é do BANCO, e não arbitra por nome
+// │ Princípio ........ 2.2C-R1: as DUAS portas, arbitragem declarativa, e
+// │                    recusa explícita em vez de escolha silenciosa.
+// └ C-16 — O que o pacote NÃO fez continua não feito
+//   Princípio ........ `SEM_CORRESPONDENCIA` é reserva declarada; nenhuma
+//                      regra real foi materializada; a Fronteira Humana não
+//                      nasceu de carona.
+// ===========================================================================
+
+const R1C_SQL = MIGRATIONS.filter((arquivo) =>
+  /participacao_do_motor_e_unicidade_por_conceito/i.test(arquivo),
+).map((arquivo) => readFileSync(arquivo, "utf8"));
+
+const R1C_CODIGO = R1C_SQL.join("\n").replace(/^\s*--.*$/gm, "");
+
+/**
+ * Toda função `curadoria.*` definida em migrations, na sua ÚLTIMA definição.
+ * `create or replace` numa migration posterior é evolução legítima: auditar a
+ * primeira seria reprovar o repositório pelo código que ele já substituiu.
+ */
+function funcoesVigentes(): Map<string, string> {
+  const sql = MIGRATIONS.sort()
+    .map((arquivo) => semComentarios(readFileSync(arquivo, "utf8")))
+    .join("\n");
+  const nomes = new Set(
+    [...sql.matchAll(/create\s+(?:or\s+replace\s+)?function\s+curadoria\.(\w+)/gi)].map(
+      (m) => m[1] as string,
+    ),
+  );
+  return new Map([...nomes].map((nome) => [nome, corpoDaFuncao(sql, nome)]));
+}
+
+/** O validador do conceito, na sua ÚLTIMA definição — a que de fato vigora. */
+const VALIDADOR_VIGENTE = corpoDaFuncao(
+  MIGRATIONS.filter((arquivo) =>
+    /function curadoria\.valida_conceito_da_correspondencia/i.test(readFileSync(arquivo, "utf8")),
+  )
+    .sort()
+    .map((arquivo) => readFileSync(arquivo, "utf8").replace(/^\s*--.*$/gm, ""))
+    .join("\n"),
+  "valida_conceito_da_correspondencia",
+);
+
+describe("C-14 · A participação no Motor tem uma única fonte (2.2C-R1)", () => {
+  it("a migration existe — sem ela, tudo abaixo seria vácuo", () => {
+    expect(R1C_SQL.length, "a migration do 2.2C-R1 sumiu").toBe(1);
+    expect(R1C_CODIGO).toMatch(/add column if not exists motor_participation/i);
+  });
+
+  it("o `Record` manual não voltou, em nenhum arquivo", () => {
+    expect(
+      ocorrencias(FONTES, /const\s+MOTOR_PARTICIPATION\s*:\s*Record/),
+      "O Record manual voltou: duas fontes para o mesmo fato, divergindo em silêncio.",
+    ).toEqual([]);
+  });
+
+  it("nenhuma lista literal de conceitos `NUNCA` mora em código", () => {
+    // Três nomes canônicos numa mesma expressão é a assinatura da lista manual
+    // — mesmo travestida de `Set`, de `array` ou de `switch`.
+    expect(
+      ocorrencias(
+        FONTES,
+        /VIABILIDADE_CUSTO_E_PAGAMENTO[\s\S]{0,200}VIABILIDADE_COBERTURA_E_CONVENIO[\s\S]{0,200}MODELO_PREFERENCIAS_E_RESTRICOES/,
+      ),
+      "A lista de conceitos fora do Motor reapareceu em código.",
+    ).toEqual([]);
+  });
+
+  it("o valor consumido vem do Catálogo gerado, não de constante local", () => {
+    const evidencias = readFileSync(
+      path.join(RAIZ, "src", "modules", "curadoria", "evidencias-pratica.ts"),
+      "utf8",
+    );
+    expect(evidencias, "o módulo parou de ler o atributo gerado").toMatch(
+      /entry\.motorParticipation/,
+    );
+    const gerado = readFileSync(
+      path.join(RAIZ, "src", "modules", "curadoria", "catalogo-gerado.ts"),
+      "utf8",
+    );
+    expect(gerado, "o atributo saiu do Catálogo gerado").toMatch(/motorParticipation/);
+  });
+
+  it("o gerador e o portão de paridade projetam EXATAMENTE as mesmas colunas", () => {
+    // Mencionar a coluna não basta — a primeira versão desta guarda passava com
+    // o gerador já mutilado, porque o nome sobrevivia num comentário e num
+    // `linha.motor_participation`. O que decide o hash é a LISTA DE PROJEÇÃO.
+    const projecao = (arquivo: string): string => {
+      const fonte = readFileSync(path.join(RAIZ, ...arquivo.split("/")), "utf8");
+      const achado = fonte.match(/'code, "group", name[^']*'/);
+      expect(achado, `lista de projeção não encontrada em ${arquivo}`).not.toBeNull();
+      return (achado?.[0] ?? "").replace(/\s+/g, " ");
+    };
+
+    const doGerador = projecao("scripts/gerar-catalogo-ts.mjs");
+    const doPortao = projecao("tests/remediacao/paridade-catalogo.integration.test.ts");
+
+    expect(doGerador, "o gerador parou de projetar a participação no Motor").toContain(
+      "motor_participation",
+    );
+    expect(
+      doPortao,
+      "o portão recompõe a carga com colunas diferentes das do gerador: o hash passaria a comparar dois Catálogos distintos.",
+    ).toBe(doGerador);
+  });
+
+  it("`cruzamento` não foi reutilizado como substituto da participação", () => {
+    expect(
+      ocorrenciasNoCodigo(
+        FONTES,
+        /cruzamento\s*(===?|!==?)[\s\S]{0,120}(MotorParticipation|motorParticipation|DIRETO|INDIRETO|NUNCA)/,
+      ),
+      "`cruzamento` virou proxy da participação — são perguntas diferentes.",
+    ).toEqual([]);
+    expect(
+      /cruzamento/i.test(VALIDADOR_VIGENTE),
+      "o validador do conceito voltou a consultar `cruzamento`.",
+    ).toBe(false);
+  });
+
+  it("a recusa do conceito `NUNCA` está no VALIDADOR, e cita a participação", () => {
+    expect(VALIDADOR_VIGENTE.length, "o validador não foi encontrado").toBeGreaterThan(200);
+    expect(VALIDADOR_VIGENTE).toMatch(/motor_participation\s*=\s*'NUNCA'/i);
+    expect(VALIDADOR_VIGENTE).toMatch(/raise exception/i);
+  });
+
+  it("a heurística por eixo foi EMBORA — ela era a segunda fonte", () => {
+    expect(
+      /axis\s*=\s*'VIABILIDADE_DE_ACESSO'/i.test(VALIDADOR_VIGENTE),
+      "o eixo voltou a decidir participação: duas fontes para a mesma pergunta.",
+    ).toBe(false);
+  });
+
+  it("o emissor recusa o conceito `NUNCA` pela mesma coluna", () => {
+    expect(CORPO_DO_EMISSOR).toMatch(/motor_participation\s*=\s*'NUNCA'/i);
+    expect(CORPO_DO_EMISSOR).toMatch(/CONCEITO_SEM_PONTE/);
+  });
+
+  it("todo conceito ativo é obrigado a declarar — e a obrigação é CHECK", () => {
+    expect(R1C_CODIGO).toMatch(/method_subcriteria_ativo_declara_motor/);
+    expect(R1C_CODIGO).toMatch(/check\s*\(\s*not active or motor_participation is not null\s*\)/i);
+  });
+
+  it("a mudança do Catálogo passou pelo `catalog_guard`, com justificativa", () => {
+    expect(
+      R1C_CODIGO,
+      "o Catálogo foi alterado sem registrar a razão: o guarda existe para isso.",
+    ).toMatch(/set_config\(\s*'curadoria\.catalog_change_rationale'/);
+    expect(R1C_CODIGO).toMatch(/ADR-066/);
+  });
+});
+
+describe("C-15 · A unicidade por conceito é do banco (2.2C-R1)", () => {
+  it("a tabela de ocupação existe, e é a árbitra declarativa", () => {
+    expect(R1C_CODIGO).toMatch(/create table[^;]*curadoria\.derivation_concept_vigencia/i);
+    expect(
+      R1C_CODIGO,
+      "sem chave primária composta não há arbitragem: sobra disciplina.",
+    ).toMatch(/primary key\s*\(\s*subcriterion_code\s*,\s*ocupacao_seq\s*\)/i);
+  });
+
+  it("as DUAS portas existem — cobrir depois de vigorar é o caminho esquecido", () => {
+    expect(R1C_CODIGO, "porta 1 (promoção/reativação) sumiu").toMatch(
+      /function curadoria\.ocupa_conceitos_da_versao/i,
+    );
+    expect(R1C_CODIGO, "porta 2 (correspondência em versão vigente) sumiu").toMatch(
+      /function curadoria\.ocupa_conceito_por_correspondencia/i,
+    );
+    expect(R1C_CODIGO).toMatch(/create trigger[^;]*on curadoria\.derivation_rule_transitions/i);
+    expect(R1C_CODIGO).toMatch(/create trigger[^;]*on curadoria\.derivation_rule_degree_map/i);
+  });
+
+  it("a ocupação é append-only, como todo o resto do ciclo de vida", () => {
+    expect(R1C_CODIGO).toMatch(/derivation_concept_vigencia_append_only/);
+    expect(R1C_CODIGO).toMatch(/curadoria\.recusa_alteracao_de_regra/);
+  });
+
+  it("o emissor não arbitra por nome — e a remoção não é só de comentário", () => {
+    expect(
+      /order\s+by\s+r?\.?rule_id/i.test(CORPO_DO_EMISSOR),
+      "A arbitragem por nome voltou: escolher regra por ordem alfabética é o oposto de método.",
+    ).toBe(false);
+    expect(
+      CORPO_DO_EMISSOR,
+      "sem a contagem, duas regras vigentes voltariam a degradar em escolha silenciosa.",
+    ).toMatch(/candidatas\s*>\s*1/);
+    expect(CORPO_DO_EMISSOR).toMatch(/INVARIANTE VIOLADO/);
+  });
+
+  it("NENHUMA função vigente do schema arbitra regra por nome", () => {
+    // A pergunta é sobre o estado EFETIVO do banco, não sobre o histórico: a
+    // 2.2C definiu o emissor com `order by r.rule_id` e a 2.2C-R1 o
+    // substituiu. Auditar o arquivo antigo seria reprovar código já morto.
+    const vigentes = funcoesVigentes();
+    expect(vigentes.size, "nenhuma função foi encontrada — a varredura falhou").toBeGreaterThan(5);
+
+    const arbitram = [...vigentes]
+      .filter(([, corpo]) => /order\s+by\s+r?\.?rule_id\b/i.test(corpo))
+      .map(([nome]) => nome);
+    expect(arbitram, "alguma função vigente voltou a escolher a regra pelo nome.").toEqual([]);
+
+    // A varredura enxerga o emissor — sem isto, o vazio acima seria vácuo.
+    expect([...vigentes.keys()]).toContain("emitir_proposta_de_importancia");
+  });
+
+  it("a proteção NÃO é de aplicação: nada em `src` guarda a unicidade", () => {
+    expect(
+      ocorrencias(FONTES, /derivation_concept_vigencia/),
+      "a unicidade virou responsabilidade da aplicação — o banco é que a garante.",
+    ).toEqual([]);
+  });
+
+  it("a tabela de ocupação nasce inerte: RLS ligada e sem privilégio concedido", () => {
+    expect(R1C_CODIGO).toMatch(
+      /alter table curadoria\.derivation_concept_vigencia enable row level security/i,
+    );
+    expect(R1C_CODIGO).toMatch(/revoke all[\s\S]{0,120}derivation_concept_vigencia/i);
+    expect(/\bgrant\b/i.test(R1C_CODIGO), "o pacote concedeu privilégio a alguém").toBe(false);
+  });
+});
+
+describe("C-16 · O que o 2.2C-R1 não fez continua não feito", () => {
+  it("`SEM_CORRESPONDENCIA` continua no contrato, declarado como reserva", () => {
+    expect(CORPO_DO_EMISSOR).toMatch(/SEM_CORRESPONDENCIA/);
+    expect(
+      R1C_CODIGO,
+      "o desfecho deixou de ser declarado reserva: viraria fluxo sem decisão registrada.",
+    ).toMatch(/RESERVA NAO OPERACIONAL/i);
+  });
+
+  it("a cobertura total dos quatro graus continua obrigatória", () => {
+    // `drop trigger if exists` seguido de `create trigger` no MESMO arquivo é
+    // o padrão idempotente de sempre. O que afrouxaria a cobertura é a última
+    // migration que fala do trigger deixá-lo derrubado.
+    const falam = MIGRATIONS.filter((arquivo) =>
+      /derivation_rule_degree_map_cobertura/.test(semComentarios(readFileSync(arquivo, "utf8"))),
+    ).sort();
+    expect(falam.length, "o trigger de cobertura total sumiu do repositório").toBeGreaterThan(0);
+
+    const ultima = semComentarios(readFileSync(falam[falam.length - 1] as string, "utf8"));
+    expect(
+      /create constraint trigger derivation_rule_degree_map_cobertura/i.test(ultima),
+      "a última migration que toca o trigger o deixou derrubado: seria fabricar o ramo em vez de alcançá-lo.",
+    ).toBe(true);
+    // Deferido: as quatro linhas entram na mesma transação, em qualquer ordem.
+    // Sem isso a cobertura total seria inalcançável, e o ramo viraria rotina.
+    expect(ultima).toMatch(/deferrable initially deferred/i);
+
+    // E o validador que ele chama continua exigindo os quatro graus.
+    const validador = funcoesVigentes().get("exige_cobertura_total_dos_graus") ?? "";
+    expect(validador, "o validador de cobertura não foi encontrado").toMatch(
+      /Correspondencia incompleta/i,
+    );
+  });
+
+  it("nenhuma regra de derivação real foi materializada", () => {
+    expect(
+      ocorrencias(MIGRATIONS, /insert into curadoria\.derivation_rules/i),
+      "uma regra foi semeada por migration, sem identidade técnica da Autoridade de Método.",
+    ).toEqual([]);
+    expect(
+      ocorrencias(MIGRATIONS, /insert into curadoria\.derivation_rule_degree_map/i),
+      "uma correspondência real foi semeada por migration.",
+    ).toEqual([]);
+  });
+
+  it("a Fronteira Humana não nasceu de carona", () => {
+    const INTERFACE = FONTES.filter(
+      (arquivo) =>
+        arquivo.includes(`${path.sep}app${path.sep}`) ||
+        arquivo.includes(`${path.sep}components${path.sep}`),
+    );
+    expect(
+      ocorrencias(INTERFACE, /derivation_(proposals|rules|concept_vigencia|rule_degree_map)/),
+      "nasceu tela sobre a Camada de Derivação antes da Fronteira Humana ser decidida.",
+    ).toEqual([]);
   });
 });

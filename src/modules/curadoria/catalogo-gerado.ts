@@ -56,6 +56,16 @@ export type CatalogoConceito = {
   patientQuestion: string | null;
   responseType: string | null;
   cruzamento: string | null;
+  /**
+   * ADR-066 §16 — SE E COMO o conceito participa do Motor: DIRETO, INDIRETO ou
+   * NUNCA. Fonte autoritativa: `method_subcriteria.motor_participation`
+   * (2.2C-R1). `null` só no legado 0.9.0 inativo, que saiu de circulação antes
+   * de o atributo existir.
+   *
+   * NÃO confundir com `cruzamento`, que diz QUEM JULGA: entre os `humano` há
+   * dois `NUNCA` e um `INDIRETO`. E `INDIRETO` não é `NUNCA`.
+   */
+  motorParticipation: string | null;
   required: boolean;
   conditionalRules: readonly CatalogoConditionalRule[];
   evidenceSource: string | null;
@@ -73,7 +83,7 @@ export const CATALOGO_EIXOS = ["ACESSO_AO_CUIDADO","CONTINUIDADE_DO_CUIDADO","MO
 export const CATALOGO_VERSAO = "1.1.0";
 
 /** SHA-256 da carga (conceitos+opções, ordem canônica) — paridade executável. */
-export const CATALOGO_GERADO_HASH = "dbde9bfbf8dbde4f18b802d75ba4767ba9eba3a926ff294cbe9cc83060d4ab45";
+export const CATALOGO_GERADO_HASH = "4b53a6b551d88a3617484a4d5d9ef5f289159a4d807d44c7f8ea1e0559f6e292";
 
 /** Total de opções no banco na geração (ativas e inativas). */
 export const CATALOGO_TOTAL_OPCOES = 208;
@@ -96,6 +106,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": "Como você consegue ser atendida?",
     "responseType": "multipla_escolha",
     "cruzamento": "automatico",
+    "motorParticipation": "DIRETO",
     "required": false,
     "conditionalRules": [
       {
@@ -253,6 +264,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": "Quando você consegue ser atendida?",
     "responseType": "multipla_escolha",
     "cruzamento": "automatico",
+    "motorParticipation": "DIRETO",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "institucional",
@@ -395,6 +407,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": "Em quanto tempo você precisa ser atendida?",
     "responseType": "escolha_unica",
     "cruzamento": "automatico",
+    "motorParticipation": "DIRETO",
     "required": false,
     "conditionalRules": [
       {
@@ -535,6 +548,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": "De onde você pode se deslocar, e até onde?",
     "responseType": "estruturado",
     "cruzamento": "misto",
+    "motorParticipation": "DIRETO",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "institucional",
@@ -657,6 +671,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": "Como você gostaria que fosse o acompanhamento depois da primeira consulta?",
     "responseType": "multipla_escolha",
     "cruzamento": "misto",
+    "motorParticipation": "DIRETO",
     "required": false,
     "conditionalRules": [
       {
@@ -859,6 +874,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": null,
     "responseType": "multipla_escolha",
     "cruzamento": "humano",
+    "motorParticipation": "INDIRETO",
     "required": false,
     "conditionalRules": [
       {
@@ -998,6 +1014,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": "Você precisa de acompanhamento de mais de um tipo de profissional?",
     "responseType": "multipla_escolha",
     "cruzamento": "automatico",
+    "motorParticipation": "DIRETO",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "institucional",
@@ -1104,6 +1121,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": "Você já é acompanhada por outros profissionais que precisariam conversar entre si?",
     "responseType": "multipla_escolha",
     "cruzamento": "automatico",
+    "motorParticipation": "DIRETO",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "entrevista",
@@ -1216,6 +1234,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": "Você precisa conseguir falar com alguém entre as consultas?",
     "responseType": "multipla_escolha",
     "cruzamento": "automatico",
+    "motorParticipation": "DIRETO",
     "required": false,
     "conditionalRules": [
       {
@@ -1421,6 +1440,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": "O que te ajudaria a entender melhor o que for explicado?",
     "responseType": "multipla_escolha",
     "cruzamento": "automatico",
+    "motorParticipation": "DIRETO",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "entrevista",
@@ -1596,6 +1616,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": "Quando houver mais de um caminho possível, como você gostaria de participar da decisão?",
     "responseType": "multipla_escolha",
     "cruzamento": "humano",
+    "motorParticipation": "INDIRETO",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "entrevista",
@@ -1738,6 +1759,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": "Você quer que alguém participe das conversas?",
     "responseType": "multipla_escolha",
     "cruzamento": "automatico",
+    "motorParticipation": "DIRETO",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "entrevista",
@@ -1869,6 +1891,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": "O que você precisa saber antes de aceitar um tratamento?",
     "responseType": "multipla_escolha",
     "cruzamento": "automatico",
+    "motorParticipation": "DIRETO",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "entrevista",
@@ -2010,6 +2033,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": "Existe algo que você não aceita, ou que precisa ser respeitado no seu cuidado?",
     "responseType": "multipla_escolha",
     "cruzamento": "humano",
+    "motorParticipation": "NUNCA",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "entrevista",
@@ -2086,6 +2110,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": "Se houver uma notícia difícil, como você prefere recebê-la?",
     "responseType": "multipla_escolha",
     "cruzamento": "humano",
+    "motorParticipation": "NUNCA",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "entrevista",
@@ -2218,6 +2243,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": null,
     "responseType": "estruturado",
     "cruzamento": "humano",
+    "motorParticipation": "INDIRETO",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "oficial_primaria",
@@ -2238,6 +2264,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": null,
     "responseType": "estruturado",
     "cruzamento": "humano",
+    "motorParticipation": "INDIRETO",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "oficial_primaria",
@@ -2258,6 +2285,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": null,
     "responseType": "estruturado",
     "cruzamento": "humano",
+    "motorParticipation": "INDIRETO",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "oficial_primaria",
@@ -2278,6 +2306,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": null,
     "responseType": "estruturado",
     "cruzamento": "humano",
+    "motorParticipation": "INDIRETO",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "oficial_primaria",
@@ -2298,6 +2327,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": null,
     "responseType": "estruturado",
     "cruzamento": "humano",
+    "motorParticipation": "INDIRETO",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "institucional",
@@ -2318,6 +2348,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": null,
     "responseType": "escolha_unica",
     "cruzamento": "humano",
+    "motorParticipation": "INDIRETO",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "institucional",
@@ -2394,6 +2425,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": null,
     "responseType": "escolha_unica",
     "cruzamento": "humano",
+    "motorParticipation": "INDIRETO",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "institucional",
@@ -2460,6 +2492,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": null,
     "responseType": "estruturado",
     "cruzamento": "humano",
+    "motorParticipation": "INDIRETO",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "institucional",
@@ -2480,6 +2513,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": null,
     "responseType": "estruturado",
     "cruzamento": "humano",
+    "motorParticipation": "INDIRETO",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "entrevista",
@@ -2526,6 +2560,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": null,
     "responseType": "estruturado",
     "cruzamento": "humano",
+    "motorParticipation": "INDIRETO",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "oficial_primaria",
@@ -2546,6 +2581,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": null,
     "responseType": "multipla_escolha",
     "cruzamento": "humano",
+    "motorParticipation": "INDIRETO",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "publica_secundaria",
@@ -2622,6 +2658,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": null,
     "responseType": "estruturado",
     "cruzamento": "humano",
+    "motorParticipation": "INDIRETO",
     "required": false,
     "conditionalRules": [],
     "evidenceSource": "institucional",
@@ -2642,6 +2679,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": "Como você pretende usar sua cobertura?",
     "responseType": "multipla_escolha",
     "cruzamento": "humano",
+    "motorParticipation": "NUNCA",
     "required": false,
     "conditionalRules": [
       {
@@ -2809,6 +2847,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": "O que precisa ser verdade para você conseguir pagar?",
     "responseType": "estruturado",
     "cruzamento": "humano",
+    "motorParticipation": "NUNCA",
     "required": false,
     "conditionalRules": [
       {
@@ -3106,6 +3145,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": null,
     "responseType": null,
     "cruzamento": null,
+    "motorParticipation": null,
     "required": false,
     "conditionalRules": [],
     "evidenceSource": null,
@@ -3126,6 +3166,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": null,
     "responseType": null,
     "cruzamento": null,
+    "motorParticipation": null,
     "required": false,
     "conditionalRules": [],
     "evidenceSource": null,
@@ -3146,6 +3187,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": null,
     "responseType": null,
     "cruzamento": null,
+    "motorParticipation": null,
     "required": false,
     "conditionalRules": [],
     "evidenceSource": null,
@@ -3166,6 +3208,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": null,
     "responseType": null,
     "cruzamento": null,
+    "motorParticipation": null,
     "required": false,
     "conditionalRules": [],
     "evidenceSource": null,
@@ -3186,6 +3229,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": null,
     "responseType": null,
     "cruzamento": null,
+    "motorParticipation": null,
     "required": false,
     "conditionalRules": [],
     "evidenceSource": null,
@@ -3206,6 +3250,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "patientQuestion": null,
     "responseType": null,
     "cruzamento": null,
+    "motorParticipation": null,
     "required": false,
     "conditionalRules": [],
     "evidenceSource": null,

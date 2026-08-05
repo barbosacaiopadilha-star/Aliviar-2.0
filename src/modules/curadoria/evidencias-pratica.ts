@@ -100,44 +100,21 @@ export type PracticeConcept = {
 };
 
 /**
- * Participação no Motor — decisão de Método da Matriz de Cobertura; o banco
- * não a carrega. Todo conceito ativo PRECISA constar aqui: a guarda de
- * construção abaixo transforma ausência em erro de código, nunca de dado.
+ * Participação no Motor — DERIVADA DO CATÁLOGO desde o pacote 2.2C-R1.
+ *
+ * O `Record` manual que vivia aqui era a última fonte de domínio fora do
+ * banco: a proteção contra derivar conceito `NUNCA` dependia de guarda de
+ * teste, e guarda de teste não impede escrita direta. Agora o atributo é
+ * coluna autoritativa de `method_subcriteria`, gerada para cá pelo mecanismo
+ * canônico e travada pelo hash de paridade.
+ *
+ * NÃO é `cruzamento`: aquele diz QUEM JULGA, este diz SE E COMO o conceito
+ * entra no Motor. Entre os `cruzamento = "humano"` há dois `NUNCA` e um
+ * `INDIRETO` — a prova de que não são a mesma coisa.
  */
-const MOTOR_PARTICIPATION: Record<string, MotorParticipation> = {
-  ACESSO_MODALIDADE: "DIRETO",
-  ACESSO_DISPONIBILIDADE: "DIRETO",
-  ACESSO_PRAZO_PARA_CONSULTA: "DIRETO",
-  ACESSO_LOCAL_DE_ATENDIMENTO: "DIRETO",
-  CONTINUIDADE_RETORNOS: "DIRETO",
-  CONTINUIDADE_POS_PROCEDIMENTO: "INDIRETO",
-  CONTINUIDADE_EQUIPE_DE_APOIO: "DIRETO",
-  CONTINUIDADE_COORDENACAO: "DIRETO",
-  CONTINUIDADE_CANAIS: "DIRETO",
-  MODELO_COMUNICACAO: "DIRETO",
-  MODELO_DECISAO_COMPARTILHADA: "INDIRETO",
-  MODELO_ALTERNATIVAS: "DIRETO",
-  MODELO_PARTICIPACAO_FAMILIAR: "DIRETO",
-  MODELO_PREFERENCIAS_E_RESTRICOES: "NUNCA",
-  // ADR-065: cruzamento humano obrigatório — nunca entra no Motor
-  // (assistencial nem relacional automático); emite AGUARDA_JUIZO_DO_CURADOR.
-  MODELO_CONDUCAO_DE_NOTICIAS_DIFICEIS: "NUNCA",
-  FORMACAO_GRADUACAO: "INDIRETO",
-  FORMACAO_RESIDENCIA: "INDIRETO",
-  FORMACAO_ESPECIALIZACAO: "INDIRETO",
-  FORMACAO_FELLOWSHIP: "INDIRETO",
-  FORMACAO_COMPLEMENTAR: "INDIRETO",
-  EXPERIENCIA_TEMPO_DE_PRATICA: "INDIRETO",
-  EXPERIENCIA_NO_TIPO_DE_CASO: "INDIRETO",
-  EXPERIENCIA_VOLUME_DE_ATUACAO: "INDIRETO",
-  PRATICA_LIMITES_DE_ATUACAO: "INDIRETO",
-  HISTORICO_TRAJETORIA_INSTITUCIONAL: "INDIRETO",
-  HISTORICO_ATIVIDADE_ACADEMICA: "INDIRETO",
-  HISTORICO_AREAS_DE_ATUACAO: "INDIRETO",
-  VIABILIDADE_COBERTURA_E_CONVENIO: "NUNCA",
-  VIABILIDADE_CUSTO_E_PAGAMENTO: "NUNCA",
-};
-
+function participacaoNoMotor(valor: string | null): MotorParticipation | null {
+  return valor === "DIRETO" || valor === "INDIRETO" || valor === "NUNCA" ? valor : null;
+}
 /**
  * evidence_source do banco → fonte mínima da Política de Fontes.
  * "entrevista" É fonte institucional: SOURCE_TIER_EXAMPLES lista a
@@ -159,11 +136,13 @@ function campoParaRecord(campo: CatalogoCampo | undefined): Record<string, strin
 }
 
 function conceptFromCatalogo(entry: CatalogoConceito): PracticeConcept {
-  const motor = MOTOR_PARTICIPATION[entry.code];
+  const motor = participacaoNoMotor(entry.motorParticipation);
   if (!motor) {
-    // Guarda de construção: conceito ativo sem decisão de Motor é catálogo e
-    // Matriz de Cobertura divergindo — erro de código, nunca de dado.
-    throw new Error(`Conceito sem participação declarada no Motor: ${entry.code}`);
+    // Guarda de construção: conceito ativo sem participação no Catálogo é o
+    // banco e o contrato divergindo — o CHECK
+    // `method_subcriteria_ativo_declara_motor` torna isso impossível pelo lado
+    // do dado, e esta guarda o prova pelo lado do código.
+    throw new Error(`Conceito sem participação declarada no Motor: ${entry.code} (${entry.motorParticipation}).`);
   }
   const minimumTier = EVIDENCE_SOURCE_TIER[entry.evidenceSource ?? ""];
   if (!minimumTier) {
