@@ -98,10 +98,14 @@ describe("2.2A · a estrutura da Regra existe", () => {
   it("os QUATRO estados do §10.5 são a lista fechada", () => {
     // O Postgres reescreve `state in (...)` como `state = ANY (ARRAY[...])`.
     // O que se procura é o CHECK que fala de `state` e enumera valores.
+    // `and ... like '%REVOGADA%'` entrou no 2.2B: a tabela ganhou um segundo
+    // CHECK que fala de `state` (`..._nasce_em_proposta`, ADR-069 §9). Quem
+    // enumera os QUATRO estados é o que também menciona REVOGADA.
     const [linha] = consultar(`
       select pg_get_constraintdef(oid) from pg_constraint
       where conrelid = '${TABELA}'::regclass and contype='c'
         and pg_get_constraintdef(oid) like '%PROPOSTA%'
+        and pg_get_constraintdef(oid) like '%REVOGADA%'
     `);
     expect(linha, "nenhum CHECK enumera os estados da Regra").toBeTruthy();
     const check = linha![0]!;
@@ -124,40 +128,50 @@ describe("2.2A · a estrutura da Regra existe", () => {
   });
 });
 
-describe("2.2A · A3 — nenhuma regra vigora sem Autoridade de Método", () => {
-  it("VIGENTE sem autoridade aprovadora é RECUSADA pelo banco", () => {
-    const erro = tentarGravar(
-      `${BASE_COLUNAS}, effective_from`,
-      `'r1', 1, 'VIGENTE', ${AUTOR}, 'porque sim', 'nenhuma operacao real', now()`,
-    );
-    expect(erro, "o banco aceitou uma regra vigente sem dono").not.toBeNull();
-    expect(erro).toContain("derivation_rules_vigente_exige_autoridade");
+/**
+ * A3 MUDOU DE LUGAR NO ITEM 2.2B — e a exigência ficou MAIS forte.
+ *
+ * A 2.2A exigia autoridade, ADR e vigência de uma versão que NASCESSE VIGENTE.
+ * A ADR-069 §9 fechou esse nascimento: nenhuma versão nasce vigente, e vigorar
+ * passou a ser um ATO posterior e separado. O CHECK original não é removido
+ * (§15: preservá-lo ou não é do implementador, e foi preservado como cinto de
+ * segurança), mas ficou **vacuamente verdadeiro** — e um oráculo que o exercita
+ * inserindo VIGENTE deixou de ter caminho.
+ *
+ * FORTALECIMENTO: antes, quem tivesse os três campos criava uma regra vigente
+ * de uma vez. Agora precisa de dois atos, e o segundo exige **ADR na própria
+ * transição** (`..._adr_quando_exigida`) — não há como vigorar sem passar pela
+ * Autoridade. As provas do ato vivem em
+ * `regra-de-derivacao-ciclo-de-vida.integration.test.ts`.
+ */
+describe("2.2A · A3 — a exigência de autoridade migrou para o ato (ADR-069 §15)", () => {
+  it("o CHECK original foi PRESERVADO — nenhuma remoção silenciosa", () => {
+    const [linha] = consultar(`
+      select count(*) from pg_constraint
+      where conrelid = '${TABELA}'::regclass
+        and conname = 'derivation_rules_vigente_exige_autoridade'
+    `);
+    expect(linha![0], "o CHECK de autoridade foi removido em silêncio").toBe("1");
   });
 
-  it("VIGENTE sem a ADR que aprovou é RECUSADA — aprovação sem ADR é opinião", () => {
-    const erro = tentarGravar(
-      `${BASE_COLUNAS}, approved_by, effective_from`,
-      `'r2', 1, 'VIGENTE', ${AUTOR}, 'porque sim', 'nenhuma operacao real', ${AUTOR}, now()`,
-    );
-    expect(erro).not.toBeNull();
-    expect(erro).toContain("derivation_rules_vigente_exige_autoridade");
-  });
-
-  it("VIGENTE sem início de vigência é RECUSADA — fora da vigência, não propõe", () => {
-    const erro = tentarGravar(
-      `${BASE_COLUNAS}, approved_by, approval_adr`,
-      `'r3', 1, 'VIGENTE', ${AUTOR}, 'porque sim', 'nenhuma operacao real', ${AUTOR}, 'ADR-999'`,
-    );
-    expect(erro).not.toBeNull();
-    expect(erro).toContain("derivation_rules_vigente_exige_autoridade");
-  });
-
-  it("com autoridade, ADR e vigência, a estrutura aceita — a regra NASCE", () => {
+  it("e ficou vacuamente verdadeiro: o caminho que ele guardava está fechado", () => {
     const erro = tentarGravar(
       `${BASE_COLUNAS}, approved_by, approval_adr, effective_from`,
       `'r4', 1, 'VIGENTE', ${AUTOR}, 'porque sim', 'nenhuma operacao real', ${AUTOR}, 'ADR-999', now()`,
     );
-    expect(erro, "a estrutura recusa até o caminho legítimo — o CHECK está errado").toBeNull();
+    // Nem com os três campos: quem recusa agora é o nascimento, antes dele.
+    expect(erro, "uma versão nasceu vigente").not.toBeNull();
+    expect(erro).toContain("derivation_rules_nasce_em_proposta");
+  });
+
+  it("a exigência real vive na transição: entrar em VIGENTE sem ADR é recusado", () => {
+    const [linha] = consultar(`
+      select pg_get_constraintdef(oid) from pg_constraint
+      where conrelid = 'curadoria.derivation_rule_transitions'::regclass
+        and conname = 'derivation_rule_transitions_adr_quando_exigida'
+    `);
+    expect(linha, "a exigência de ADR não migrou para o ato").toBeTruthy();
+    expect(linha![0]).toContain("approval_adr IS NOT NULL");
   });
 
   it("PROPOSTA nasce sem autoridade — é onde toda regra começa", () => {
@@ -224,13 +238,20 @@ describe("2.2A · A4/A5 — e permanece INERTE", () => {
    * A guarda passa a nomear o que é permitido, em vez de contar zero — assim
    * um escritor de verdade nascendo aqui continua caindo.
    */
-  it("o único trigger é a proteção append-only, e a única função é a que recusa", () => {
+  it("os únicos triggers são as duas proteções, e nenhuma função OPERA a Regra", () => {
+    // O 2.2B (ADR-069 §9) acrescentou o segundo, e ele também só RECUSA: um
+    // constraint trigger DEFERIDO que confere, no commit, se a versão nasceu
+    // com o seu ato de nascimento. Não cria transição, não promove, não escreve
+    // — recusa a versão órfã e nada mais. Proteção não é pipeline.
+    //
+    // A guarda continua NOMEANDO o permitido, em vez de contar zero: um
+    // escritor de verdade nascendo aqui continua caindo.
     const [triggers] = consultar(`
       select coalesce(string_agg(tgname, ',' order by tgname), '(nenhum)')
       from pg_trigger where tgrelid = '${TABELA}'::regclass and not tgisinternal
     `);
-    expect(triggers![0], "um trigger que não é a proteção append-only nasceu").toBe(
-      "derivation_rules_append_only",
+    expect(triggers![0], "um trigger que não é uma das duas proteções nasceu").toBe(
+      "derivation_rules_append_only,derivation_rules_exige_transicao_inicial",
     );
 
     // E nenhuma função MENCIONA a tabela — nem a da proteção, que é genérica:

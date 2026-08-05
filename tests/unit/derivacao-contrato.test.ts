@@ -102,9 +102,14 @@ describe("A4 · nenhum pipeline nasceu", () => {
   });
 
   it("o contrato não tem consumidor — é biblioteca inerte, por desenho", () => {
+    // A busca é por FRONTEIRA, não por substring: o 2.2B criou
+    // `regra-de-derivacao-contrato`, que CONTÉM `derivacao-contrato` no nome e
+    // é outro arquivo. Casar por substring acusaria quem nunca importou este
+    // contrato — e a guarda passaria a proteger o nome, não a inércia.
     const consumidores = FONTES.filter(
       (arquivo) =>
-        arquivo !== CONTRATO && readFileSync(join(RAIZ, arquivo), "utf8").includes("derivacao-contrato"),
+        arquivo !== CONTRATO &&
+        /(^|[/"'`])derivacao-contrato["'`]/.test(readFileSync(join(RAIZ, arquivo), "utf8")),
     );
     expect(consumidores, "alguém começou a consumir o contrato antes da 2.C").toEqual([]);
   });

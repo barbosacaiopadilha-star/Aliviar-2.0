@@ -87,17 +87,36 @@ describe("MR1.1 · append-only — a versão anterior permanece legível, sempre
     expect(r.saida).toContain("append-only");
   });
 
+  /**
+   * VACUIDADE CORRIGIDA NO ITEM 2.2B.
+   *
+   * A versão anterior fazia `rollback to savepoint antes` depois da tentativa —
+   * e era o savepoint, não o trigger, que devolvia a linha ao estado original.
+   * Com o trigger removido, o UPDATE passava, o savepoint o desfazia, e o teste
+   * continuava VERDE: provava o savepoint, não a proteção.
+   *
+   * Sem o savepoint, quem desfaz é o bloco `exception` do PL/pgSQL — e ele só
+   * desfaz porque houve exceção. Sem trigger não há exceção, o UPDATE persiste
+   * na transação e a leitura seguinte acusa `reescrita`.
+   *
+   * SEGUNDA CORREÇÃO, encontrada pela mutação: o UPDATE mexia também em
+   * `state`, e a partir do 2.2B o CHECK `derivation_rules_nasce_em_proposta`
+   * recusaria essa parte SOZINHO — a exceção viria dele, e o teste voltaria a
+   * passar sem o trigger. O alvo passou a ser só `rationale`, campo que
+   * nenhuma outra trava protege: agora a única coisa entre o UPDATE e o efeito
+   * é MR1.1.
+   *
+   * Nada além disso mudou.
+   */
   it("a recusa não altera nada: rationale, estado, autoria e created_at ficam", () => {
     // A tentativa e a leitura acontecem na MESMA transação: se o UPDATE tivesse
     // efeito parcial, apareceria aqui.
     const r = emTransacaoRevertida(`
       insert into ${REGRAS} (${COLS}) values (${VALS("mr1-int", 1)});
-      savepoint antes;
       do $$ begin
-        update curadoria.derivation_rules set rationale = 'reescrita', state = 'REVOGADA'
+        update curadoria.derivation_rules set rationale = 'reescrita'
         where rule_id = 'mr1-int';
       exception when others then null; end $$;
-      rollback to savepoint antes;
       select 'DEPOIS:' || rationale || '/' || state || '/' || proposed_by
       from ${REGRAS} where rule_id = 'mr1-int';
     `);
@@ -121,71 +140,83 @@ describe("MR1.1 · append-only — a versão anterior permanece legível, sempre
   });
 });
 
-describe("MR1.2 · no máximo uma VIGENTE por regra", () => {
-  it("a primeira VIGENTE é aceita", () => {
-    const r = emTransacaoRevertida(`
-      ${VIGENTE("mr1-vig", 1)}
-      select 'ACEITA:' || count(*) from ${REGRAS} where rule_id='mr1-vig' and state='VIGENTE';
-    `);
-    expect(r.ok).toBe(true);
-    expect(r.saida).toContain("ACEITA:1");
+/**
+ * MR1.2 MUDOU DE SUJEITO NO ITEM 2.2B — e este bloco registra a substituição.
+ *
+ * O invariante é o MESMO: no máximo uma versão vigente por `rule_id`. O que
+ * mudou é o objeto que o carrega. A ADR-069 §8 o moveu da LINHA DA VERSÃO para
+ * o FLUXO DE TRANSIÇÕES, porque `state` deixou de ser o estado corrente.
+ *
+ * Consequência direta e inevitável: **nenhuma versão nasce VIGENTE** (§9,
+ * `derivation_rules_nasce_em_proposta`). Os cinco oráculos anteriores deste
+ * bloco inseriam versões já vigentes — o caminho que a ADR fechou. Eles não
+ * foram removidos por conveniência: foram **substituídos** por provas do novo
+ * enunciado, e a prova de que o antigo caminho está fechado é a primeira delas.
+ *
+ * Onde o invariante vive agora, com todas as provas de recusa e a disputa real
+ * de concorrência: `regra-de-derivacao-ciclo-de-vida.integration.test.ts`.
+ *
+ * FORTALECIMENTO, não afrouxamento — três razões:
+ *   1. o antigo protegia uma linha por `rule_id`; o novo protege a REGRA
+ *      inteira, independentemente de quantas versões ela tenha;
+ *   2. o antigo não tinha como liberar a vigência (uma regra que entrava em
+ *      VIGENTE nunca saía — era o nó que a ADR desfez); o novo libera por ato
+ *      registrado, com autor e motivo;
+ *   3. os dois são declarativos e valem para `service_role` — o patamar do
+ *      §8.3 é mantido.
+ */
+describe("MR1.2 · o invariante mudou de sujeito (ADR-069 §8)", () => {
+  it("o caminho antigo está fechado: nenhuma versão nasce VIGENTE", () => {
+    const r = emTransacaoRevertida(VIGENTE("mr1-vig", 1));
+
+    expect(r.ok, "uma versão nasceu vigente — a ADR-069 §9 fechou esse caminho").toBe(false);
+    expect(r.saida).toContain("derivation_rules_nasce_em_proposta");
   });
 
-  it("a segunda VIGENTE do MESMO rule_id é recusada pelo índice parcial", () => {
-    const r = emTransacaoRevertida(`
-      ${VIGENTE("mr1-dup", 1)}
-      select 'PRIMEIRA:' || count(*) from ${REGRAS} where rule_id='mr1-dup';
-      ${VIGENTE("mr1-dup", 2)}
+  it("o índice antigo NÃO foi removido — continua existindo, agora sobre conjunto vazio", () => {
+    const { saida } = psql(`
+      select indexdef from pg_indexes where indexname='derivation_rules_uma_vigente_por_regra'
     `);
-
-    expect(r.saida, "a primeira não nasceu").toContain("PRIMEIRA:1");
-    expect(r.ok, "o banco aceitou duas versões vigentes da mesma regra").toBe(false);
-    expect(r.saida).toContain("derivation_rules_uma_vigente_por_regra");
+    expect(saida, "o índice do MR1.2 foi removido em silêncio").toContain("CREATE UNIQUE INDEX");
+    expect(saida).toContain("WHERE (state = 'VIGENTE'::text)");
   });
 
-  it("PROPOSTA, SUSPENSA e REVOGADA coexistem — o histórico depende disso", () => {
+  it("e é vacuamente verdadeiro: nenhuma linha pode entrar no conjunto que ele indexa", () => {
+    const { saida } = psql(`
+      select count(*) from ${REGRAS} where state = 'VIGENTE'
+    `);
+    // Zero não por acaso: o CHECK de nascimento torna o conjunto inalcançável.
+    expect(saida, "existe linha VIGENTE — o CHECK de nascimento não está ativo").toBe("0");
+
+    const check = psql(`
+      select count(*) from pg_constraint
+      where conrelid='${REGRAS}'::regclass and conname='derivation_rules_nasce_em_proposta'
+    `);
+    expect(check.saida, "o CHECK que torna o conjunto vazio não existe").toBe("1");
+  });
+
+  it("PROPOSTA continua sendo o único estado de nascimento, e versões coexistem", () => {
     const r = emTransacaoRevertida(`
       insert into ${REGRAS} (${COLS}) values (${VALS("mr1-hist", 1)});
-      insert into ${REGRAS} (${COLS}, suspended_or_revoked_at) values (${VALS("mr1-hist", 2, "SUSPENSA")}, now());
-      insert into ${REGRAS} (${COLS}, suspended_or_revoked_at) values (${VALS("mr1-hist", 3, "REVOGADA")}, now());
-      ${VIGENTE("mr1-hist", 4)}
+      insert into ${REGRAS} (${COLS}) values (${VALS("mr1-hist", 2)});
+      insert into ${REGRAS} (${COLS}) values (${VALS("mr1-hist", 3)});
       select 'HIST:' || count(*) from ${REGRAS} where rule_id='mr1-hist';
     `);
 
-    expect(r.ok, "estados não vigentes deixaram de coexistir").toBe(true);
-    expect(r.saida).toContain("HIST:4");
+    expect(r.ok, "versões da mesma regra deixaram de coexistir").toBe(true);
+    expect(r.saida).toContain("HIST:3");
   });
 
-  it("rule_id diferentes vigoram em paralelo", () => {
-    const r = emTransacaoRevertida(`
-      ${VIGENTE("mr1-a", 1)}
-      ${VIGENTE("mr1-b", 1)}
-      select 'PARALELO:' || count(*) from ${REGRAS} where state='VIGENTE';
+  it("o novo sujeito existe e é declarativo — índice único parcial sobre a transição", () => {
+    const { saida } = psql(`
+      select indexdef from pg_indexes
+      where indexname='derivation_rule_transitions_uma_vigente_por_regra'
     `);
-    expect(r.ok, "o índice virou global em vez de por regra").toBe(true);
-    expect(r.saida).toContain("PARALELO:2");
-  });
-
-  it("revogar a vigente libera a próxima — sem editar a linha antiga no lugar", () => {
-    // A antiga NÃO é atualizada (append-only proíbe). O que a libera é a linha
-    // vigente sair do estado por uma versão nova... e é justamente aqui que a
-    // 2.2B terá de decidir COMO. Esta prova mostra a fronteira: com a v1 ainda
-    // VIGENTE, a v2 não entra.
-    const r = emTransacaoRevertida(`
-      ${VIGENTE("mr1-suc", 1)}
-      ${VIGENTE("mr1-suc", 2)}
-    `);
-    expect(r.ok).toBe(false);
-    expect(r.saida).toContain("derivation_rules_uma_vigente_por_regra");
-
-    // Com a anterior nascida SUSPENSA, a seguinte vigora sem tocar em nada.
-    const ok = emTransacaoRevertida(`
-      insert into ${REGRAS} (${COLS}, suspended_or_revoked_at) values (${VALS("mr1-suc2", 1, "SUSPENSA")}, now());
-      ${VIGENTE("mr1-suc2", 2)}
-      select 'SUCESSAO:' || string_agg(state, ',' order by version) from ${REGRAS} where rule_id='mr1-suc2';
-    `);
-    expect(ok.ok).toBe(true);
-    expect(ok.saida).toContain("SUCESSAO:SUSPENSA,VIGENTE");
+    expect(saida, "o invariante ficou sem sujeito: o novo índice não existe").toContain(
+      "CREATE UNIQUE INDEX",
+    );
+    expect(saida).toContain("WHERE (to_state = 'VIGENTE'::text)");
+    expect(saida, "a unicidade deixou de ser por regra").toContain("(rule_id, vigencia_seq)");
   });
 });
 
@@ -269,8 +300,12 @@ describe("MR1 · as estruturas lidas do catálogo do Postgres", () => {
       select tgname || ':' || (tgtype::int & 16)::text || ':' || (tgtype::int & 8)::text
       from pg_trigger
       where tgrelid = '${REGRAS}'::regclass and not tgisinternal
+        and tgname = 'derivation_rules_append_only'
     `);
     // 16 = UPDATE, 8 = DELETE — os dois presentes no mesmo trigger.
+    // O filtro por nome entrou no 2.2B: a tabela ganhou um segundo trigger
+    // (`..._exige_transicao_inicial`, ADR-069 §9), e este oráculo é sobre
+    // MR1.1. Quem cobra a LISTA de triggers é a guarda da estrutura inerte.
     expect(saida).toBe("derivation_rules_append_only:16:8");
   });
 

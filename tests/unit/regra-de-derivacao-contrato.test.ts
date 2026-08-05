@@ -127,6 +127,20 @@ describe("A1/A4/A5 · o contrato é tipo, e nada o consome", () => {
     }
   });
 
+  /**
+   * A5 GANHOU UMA EXCEÇÃO NOMEADA NO ITEM 2.2B — e ela não afrouxa nada.
+   *
+   * O ciclo de vida (ADR-069) precisa dos MESMOS quatro estados do §10.5.
+   * Duplicá-los criaria dois vocabulários fechados para a mesma lista — o
+   * defeito que este projeto combate desde o Catálogo. Então ele importa.
+   *
+   * O que a guarda protege continua intacto: `ciclo-de-vida-da-regra.ts` é
+   * outra BIBLIOTECA INERTE — sem banco, sem cliente, sem escrita, sem
+   * chamador —, e a guarda C-07 prova que nenhum módulo alcança a estrutura.
+   * A exceção é por NOME: qualquer terceiro arquivo continua caindo aqui.
+   */
+  const INERTES_AUTORIZADOS = ["src/modules/curadoria/ciclo-de-vida-da-regra.ts"];
+
   it("A5 · nenhum Pipeline consome a Regra", () => {
     const FONTES = varrer("src");
     expect(FONTES.length).toBeGreaterThan(100);
@@ -134,9 +148,23 @@ describe("A1/A4/A5 · o contrato é tipo, e nada o consome", () => {
     const consumidores = FONTES.filter(
       (arquivo) =>
         arquivo !== CONTRATO &&
+        !INERTES_AUTORIZADOS.includes(arquivo.split("\\").join("/")) &&
         readFileSync(join(RAIZ, arquivo), "utf8").includes("regra-de-derivacao-contrato"),
     );
     expect(consumidores, "alguém começou a consumir a Regra antes da 2.2B").toEqual([]);
+  });
+
+  it("A5b · o único consumidor autorizado é, ele mesmo, inerte", () => {
+    const fonteDoCiclo = readFileSync(
+      join(RAIZ, "src", "modules", "curadoria", "ciclo-de-vida-da-regra.ts"),
+      "utf8",
+    );
+    for (const proibido of [/supabase/i, /\.insert\(/, /\.update\(/, /\.delete\(/, /await /, /from\(/]) {
+      expect(
+        proibido.test(fonteDoCiclo),
+        "o consumidor autorizado deixou de ser biblioteca inerte",
+      ).toBe(false);
+    }
   });
 
   it("nenhum módulo de `src/` alcança a estrutura da Regra", () => {

@@ -217,3 +217,165 @@ describe("C-04 · A única derivação autorizada não persiste nada", () => {
     }
   });
 });
+
+/**
+ * AS GUARDAS DO ITEM 2.2B — o ciclo de vida da Regra (ADR-069).
+ *
+ * ┌ C-05 — O estado da Regra é leitura derivada, nunca campo consultado
+ * │ Objetivo ......... impedir que `derivation_rules.state` volte a ser lido
+ * │                    como estado corrente, e que nasça um cache dele.
+ * │ Princípio ........ ADR-069 B-1 e §5.4 · P-07 (uma origem por fato).
+ * │ Falha ............ alguém consulta `state` para saber "está vigente?", ou
+ * │                    cria coluna/tabela de cache do estado corrente.
+ * ├ C-06 — O grafo é fechado, e fechado no BANCO
+ * │ Princípio ........ ADR-069 §7 — seis pares permitidos, REVOGADA terminal.
+ * ├ C-07 — MR1.2 continua declarativo depois de mudar de sujeito
+ * │ Princípio ........ ADR-069 §8.3 — o patamar não cai para código de
+ * │                    aplicação nem para consulta-antes-de-inserir.
+ * └ C-08 — Nenhum escritor, nenhum pipeline nasceu com o ciclo de vida
+ *   Princípio ........ 2.2B é estrutura inerte; 2.C não foi aberta.
+ *
+ * Elas protegem SEMÂNTICA, não detalhe físico: nenhuma congela nome de coluna
+ * ou forma de índice que a arquitetura permita substituir.
+ */
+
+const CICLO_SQL = MIGRATIONS.filter((arquivo) => /ciclo_de_vida_da_regra/i.test(arquivo)).map(
+  (arquivo) => readFileSync(arquivo, "utf8"),
+);
+
+/** Sem os comentários: uma explicação não pode disparar guarda de conteúdo. */
+const CICLO_CODIGO = CICLO_SQL.join("\n").replace(/^\s*--.*$/gm, "");
+
+/**
+ * O mesmo, para TypeScript.
+ *
+ * A guarda C-05 nasceu acusando o próprio `ciclo-de-vida-da-regra.ts`, cujo
+ * comentário diz — corretamente — que a leitura derivada **não** consulta
+ * `derivation_rules.state`. Guarda que cai sobre a frase que a cumpre não
+ * protege nada; ela só ensina a não escrever a frase. O que se procura é
+ * LEITURA, e leitura mora em código.
+ */
+function semComentarios(fonte: string): string {
+  return fonte.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+}
+
+function ocorrenciasNoCodigo(arquivos: string[], padrao: RegExp): string[] {
+  return arquivos
+    .filter((arquivo) => padrao.test(semComentarios(readFileSync(arquivo, "utf8"))))
+    .map((arquivo) => path.relative(RAIZ, arquivo).split(path.sep).join("/"));
+}
+
+describe("C-05 · O estado da Regra é leitura derivada, nunca campo consultado", () => {
+  it("a migration do ciclo de vida existe — sem ela, tudo abaixo seria vácuo", () => {
+    expect(CICLO_SQL.length, "a migration do Item 2.2B não foi encontrada").toBeGreaterThan(0);
+  });
+
+  it("nenhum módulo de `src/` lê `derivation_rules.state` como estado corrente", () => {
+    expect(
+      ocorrenciasNoCodigo(FONTES, /derivation_rules\.state|state\s*===\s*['"]VIGENTE['"]/i),
+      "`state` diz como a versão NASCEU. Quem pergunta 'está vigente?' lê a última transição.",
+    ).toEqual([]);
+  });
+
+  it("nenhuma coluna ou tabela de cache do estado corrente nasceu", () => {
+    for (const padrao of [/current_state/i, /estado_atual/i, /cached?_state/i, /state_cache/i]) {
+      expect(
+        padrao.test(CICLO_CODIGO),
+        "Cache é segunda fonte de verdade, e só diverge quando ninguém está olhando (ADR-069 §5.4).",
+      ).toBe(false);
+    }
+  });
+
+  it("a leitura derivada ordena por `seq` — nunca pelo relógio", () => {
+    expect(CICLO_CODIGO).toMatch(/function curadoria\.derivation_rule_state/i);
+    expect(CICLO_CODIGO).toMatch(/order by t\.seq desc/i);
+    expect(
+      /order by[^;]*occurred_at/i.test(CICLO_CODIGO),
+      "Carimbo de tempo empata sob concorrência; estado que depende de desempate não é auditável (§11).",
+    ).toBe(false);
+  });
+
+  it("nenhuma versão nasce fora de PROPOSTA, e isso é CHECK", () => {
+    expect(CICLO_CODIGO).toMatch(/check\s*\(\s*state\s*=\s*'PROPOSTA'\s*\)/i);
+  });
+});
+
+describe("C-06 · O grafo é fechado, e fechado no banco", () => {
+  it("o grafo é CHECK, não convenção de aplicação", () => {
+    expect(CICLO_CODIGO).toMatch(/constraint\s+\w*grafo_fechado\s+check/i);
+  });
+
+  it("PROPOSTA → REVOGADA não existe: não se revoga o que nunca valeu (§6.2)", () => {
+    expect(
+      /'PROPOSTA'\s+and\s+to_state\s+in\s*\([^)]*REVOGADA/i.test(CICLO_CODIGO),
+      "PROPOSTA → REVOGADA nasceu.",
+    ).toBe(false);
+  });
+
+  it("nada parte de REVOGADA: o estado é terminal (§6.1)", () => {
+    expect(
+      /from_state\s*=\s*'REVOGADA'/i.test(CICLO_CODIGO),
+      "Uma transição partindo de REVOGADA nasceu.",
+    ).toBe(false);
+  });
+
+  it("o domínio puro declara o mesmo grafo que o banco", () => {
+    const fonte = readFileSync(
+      path.join(RAIZ, "src", "modules", "curadoria", "ciclo-de-vida-da-regra.ts"),
+      "utf8",
+    );
+    // Se um dia divergirem, o banco vence — e esta guarda cai antes disso.
+    expect(fonte).toMatch(/"PROPOSTA"[^\]]*\["VIGENTE",\s*"SUSPENSA"\]/);
+    expect(fonte).toMatch(/"VIGENTE"[^\]]*\["SUSPENSA",\s*"REVOGADA"\]/);
+    expect(fonte).toMatch(/"SUSPENSA"[^\]]*\["VIGENTE",\s*"REVOGADA"\]/);
+    expect(fonte).toMatch(/"REVOGADA"[^\]]*\[\]/);
+  });
+});
+
+describe("C-07 · MR1.2 continua declarativo depois de mudar de sujeito", () => {
+  it("a unicidade da vigente é índice único parcial, não verificação em código", () => {
+    expect(CICLO_CODIGO).toMatch(
+      /create unique index[\s\S]*derivation_rule_transitions_uma_vigente_por_regra/i,
+    );
+    expect(CICLO_CODIGO).toMatch(/where to_state = 'VIGENTE'/i);
+  });
+
+  it("nenhum módulo de `src/` alcança a estrutura do ciclo de vida", () => {
+    expect(
+      ocorrencias(FONTES, /derivation_rule_transitions/i),
+      "A estrutura do 2.2B é inerte: nenhum módulo a alcança.",
+    ).toEqual([]);
+  });
+
+  it("o índice antigo do MR1.2 deixou de ser apresentado como a garantia", () => {
+    const comComentarios = CICLO_SQL.join("\n");
+    expect(comComentarios).toMatch(/VACUAMENTE VERDADEIRO/i);
+    expect(comComentarios).toMatch(/NAO E MAIS A GARANTIA/i);
+  });
+});
+
+describe("C-08 · Nenhum escritor, nenhum pipeline nasceu com o ciclo de vida", () => {
+  it("a migration não semeia, não avalia e não emite proposta", () => {
+    for (const padrao of [
+      /insert\s+into\s+curadoria\.derivation_rule_transitions/i,
+      /insert\s+into\s+curadoria\.derivation_rules/i,
+      /insert\s+into\s+curadoria\.derivation_proposals/i,
+    ]) {
+      expect(
+        padrao.test(CICLO_CODIGO),
+        "Um escritor nasceu junto da estrutura — 2.C não foi aberta.",
+      ).toBe(false);
+    }
+  });
+
+  it("a estrutura nasce inerte: RLS habilitada, sem policy, sem grant de aplicação", () => {
+    expect(CICLO_CODIGO).toMatch(
+      /alter table curadoria\.derivation_rule_transitions enable row level security/i,
+    );
+    expect(
+      /create policy[^;]*on curadoria\.derivation_rule_transitions/i.test(CICLO_CODIGO),
+      "Uma policy nasceu: a estrutura do 2.2B é inerte.",
+    ).toBe(false);
+    expect(CICLO_CODIGO).toMatch(/revoke all on curadoria\.derivation_rule_transitions/i);
+  });
+});
