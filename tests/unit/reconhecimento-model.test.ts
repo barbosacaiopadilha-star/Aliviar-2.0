@@ -304,11 +304,18 @@ describe("A6 · a tela não poderá voltar ao banco", () => {
   });
 
   it("as opções que ela escolheu e a data em que declarou vêm junto", async () => {
-    darDados([need(COM_PESSOA, { options: ["a", "b"] })], [item(COM_PESSOA)]);
+    // MR-01: as opções chegam TRADUZIDAS. O teste usava códigos inventados
+    // ("a", "b") e afirmava o repasse cru — afirmava o defeito DEF-2.
+    const codigos = Object.keys(PERSON_QUESTIONS_BY_CODE.get(COM_PESSOA)!.options).slice(0, 2);
+    expect(codigos.length, "o conceito de teste perdeu suas opções").toBe(2);
+
+    darDados([need(COM_PESSOA, { options: codigos })], [item(COM_PESSOA)]);
 
     const [linha] = (await loadModeloDoReconhecimento(SUPABASE, CASE_ID)).linhas;
 
-    expect(linha!.declaracao!.opcoes).toEqual(["a", "b"]);
+    expect(linha!.declaracao!.opcoes).toEqual(
+      codigos.map((codigo) => PERSON_QUESTIONS_BY_CODE.get(COM_PESSOA)!.options[codigo]),
+    );
     expect(linha!.declaracao!.em).toBe("2026-08-01T10:00:00.000Z");
   });
 });
@@ -468,5 +475,96 @@ describe("C6 · o ato sobre a tradução, sem consulta nova", () => {
 
     expect(mocks.loadCaseNeeds).toHaveBeenCalledTimes(1);
     expect(mocks.loadCasePriorityMap).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * MR-01 — DEF-2: A COLUNA DELA NÃO FALA EM CÓDIGO.
+ *
+ * A verificação em navegador da Etapa 2D mostrou `explicacao_simples` em "O que
+ * você disse". O código com que a resposta é ARMAZENADA chegava inteiro à tela.
+ *
+ * A cobertura aqui não é por amostra: percorre TODAS as opções de TODOS os
+ * conceitos com lado da pessoa. Uma opção nova no Catálogo entra na varredura
+ * sozinha, sem ninguém lembrar deste teste.
+ */
+describe("MR-01 · o que ela disse, dito como ela disse", () => {
+  const COM_OPCOES = [...PERSON_QUESTIONS_BY_CODE.entries()].filter(
+    ([, pergunta]) => Object.keys(pergunta.options).length > 0,
+  );
+
+  it("a varredura tem matéria — o Catálogo não está vazio", () => {
+    expect(COM_OPCOES.length).toBeGreaterThan(8);
+    const total = COM_OPCOES.reduce((soma, [, p]) => soma + Object.keys(p.options).length, 0);
+    expect(total).toBeGreaterThan(30);
+  });
+
+  it("toda opção do Catálogo chega como rótulo humano, nunca como código", async () => {
+    for (const [code, pergunta] of COM_OPCOES) {
+      const codigos = Object.keys(pergunta.options);
+      darDados([need(code, { options: codigos })], []);
+
+      const [linha] = (await loadModeloDoReconhecimento(SUPABASE, CASE_ID)).linhas;
+
+      expect(linha!.declaracao!.opcoes, code).toEqual(
+        codigos.map((codigo) => pergunta.options[codigo]),
+      );
+
+      for (const codigo of codigos) {
+        expect(linha!.declaracao!.opcoes, `${code} → ${codigo}`).not.toContain(codigo);
+      }
+    }
+  });
+
+  it("nenhum rótulo tem cara de identificador interno", async () => {
+    for (const [code, pergunta] of COM_OPCOES) {
+      darDados([need(code, { options: Object.keys(pergunta.options) })], []);
+
+      const [linha] = (await loadModeloDoReconhecimento(SUPABASE, CASE_ID)).linhas;
+
+      for (const rotulo of linha!.declaracao!.opcoes) {
+        // Códigos canônicos são MAIÚSCULAS_COM_UNDERSCORE ou minúsculas_com_underscore.
+        expect(rotulo, `${code} → ${rotulo}`).not.toMatch(/^[a-z0-9]+(_[a-z0-9]+)+$/);
+        expect(rotulo, `${code} → ${rotulo}`).not.toMatch(/^[A-Z0-9]+(_[A-Z0-9]+)+$/);
+        expect(rotulo.length, `${code} → ${rotulo}`).toBeGreaterThan(1);
+      }
+    }
+  });
+
+  it("opção que o Catálogo não nomeia mais: nem some, nem vira código", async () => {
+    darDados([need(COM_PESSOA, { options: ["opcao_aposentada_qualquer"] })], []);
+
+    const [linha] = (await loadModeloDoReconhecimento(SUPABASE, CASE_ID)).linhas;
+
+    // I-8: a escolha dela não desaparece por falta de rótulo...
+    expect(linha!.declaracao!.opcoes).toHaveLength(1);
+    // ...e M3: o código também não chega à tela dela.
+    expect(linha!.declaracao!.opcoes[0]).not.toBe("opcao_aposentada_qualquer");
+    expect(linha!.declaracao!.opcoes[0]).toBe("Uma opção que o Catálogo não descreve mais");
+  });
+
+  it("sem opção nenhuma, a lista fica vazia — nada é inventado", async () => {
+    darDados([need(COM_PESSOA, { options: [] })], []);
+
+    const [linha] = (await loadModeloDoReconhecimento(SUPABASE, CASE_ID)).linhas;
+
+    expect(linha!.declaracao!.opcoes).toEqual([]);
+    expect(linha!.declaracao).not.toBeNull();
+  });
+
+  it("o mapa é o MESMO do painel do Curador — os dois lados verbalizam igual", () => {
+    const painel = readFileSync(
+      join(process.cwd(), "src/components/curadoria/protocolo-pessoa-panel.tsx"),
+      "utf8",
+    );
+    const modelo = readFileSync(
+      join(process.cwd(), "src/modules/paciente/reconhecimento-model.ts"),
+      "utf8",
+    );
+
+    expect(painel).toContain("question.options[option]");
+    expect(modelo).toContain("PERSON_QUESTIONS_BY_CODE.get(subcriterionCode)?.options[valor]");
+    // Nenhum mapa novo nasceu aqui (M1).
+    expect(modelo).not.toMatch(/const [A-Z_]*LABELS[A-Z_]* *[:=] *\{/);
   });
 });

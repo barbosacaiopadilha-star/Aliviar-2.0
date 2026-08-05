@@ -57,6 +57,33 @@ function temLadoDaPessoa(subcriterionCode: string): boolean {
   return PERSON_QUESTIONS_BY_CODE.has(subcriterionCode);
 }
 
+/**
+ * MR-01 — O QUE ELA DISSE, DITO COMO ELA DISSE.
+ *
+ * A verificação em navegador da Etapa 2D mostrou `explicacao_simples` na coluna
+ * "O que você disse" (DEF-2): o código canônico com que a resposta é ARMAZENADA
+ * chegava inteiro à tela dela. O modelo era o único lugar do produto que não
+ * traduzia — o painel do Curador faz `question.options[option]`, e o bloco da
+ * ADR-065 usa `relationalPersonOptionLabel`.
+ *
+ * O mapa é o mesmo do painel do Curador: `PERSON_QUESTIONS_BY_CODE`, derivado
+ * do Catálogo. Nenhum mapa novo nasce aqui — os dois lados passam a verbalizar
+ * pela mesma fonte, que é o ponto.
+ *
+ * (`relationalPersonOptionLabel` não serve: cobre só os conceitos relacionais
+ * da ADR-065 e só o campo `principal`. Aqui o universo é o Protocolo inteiro.)
+ *
+ * Opção que o Catálogo não nomeia mais: a resposta dela NÃO some — isso seria
+ * transformar ausência de rótulo em ausência da escolha (I-8) —, mas também
+ * não vira código na tela (M3). Vira o que de fato é: algo que ela escolheu e
+ * que o Catálogo deixou de nomear.
+ */
+const OPCAO_SEM_ROTULO = "Uma opção que o Catálogo não descreve mais";
+
+function rotuloDaOpcao(subcriterionCode: string, valor: string): string {
+  return PERSON_QUESTIONS_BY_CODE.get(subcriterionCode)?.options[valor] ?? OPCAO_SEM_ROTULO;
+}
+
 export async function loadModeloDoReconhecimento(
   supabase: SupabaseClient,
   caseId: string,
@@ -110,7 +137,8 @@ export async function loadModeloDoReconhecimento(
       declaracao: declaracao
         ? {
             grau: NEED_DEGREE_LABELS[declaracao.degree],
-            opcoes: declaracao.options,
+            // MR-01 — rótulo humano, nunca o código com que se armazena.
+            opcoes: declaracao.options.map((valor) => rotuloDaOpcao(code, valor)),
             em: declaracao.declaredAt,
             autor: declaracao.declaredBy,
           }
