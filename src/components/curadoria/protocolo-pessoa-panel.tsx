@@ -16,8 +16,9 @@ import {
 } from "@/modules/curadoria/protocolos";
 import type { CaseNeedRecord } from "@/modules/curadoria/protocolos-repository";
 import {
-  NADA_A_REVISAR,
   ordenarPelaRevisao,
+  quantasExigemRevisao,
+  RESOLUCAO_INDISPONIVEL,
   respostasQueExigemRevisao,
   ROTULO_DO_DESFECHO,
 } from "@/modules/curadoria/respostas-que-exigem-revisao";
@@ -83,9 +84,29 @@ export function ProtocoloPessoaPanel({ caseId, needs }: Props) {
           Respostas dela que exigem revisão
         </h3>
 
-        {revisao.length === 0 ? (
-          <p className="mt-2 text-[var(--color-ink-muted)]">{NADA_A_REVISAR}</p>
-        ) : (
+        {/* M1 — quantas são, derivado de `revisao.length` na renderização.
+            Nenhum estado, nada persistido: com uma ou com seis, ele lê o
+            número em vez de contar. */}
+        <p
+          className={
+            revisao.length === 0 ? "mt-2 text-[var(--color-ink-muted)]" : "mt-1 font-medium"
+          }
+        >
+          {quantasExigemRevisao(revisao.length)}
+        </p>
+
+        {/* M2 — o limite operacional, dito antes da lista.
+            Sem esta frase a ausência de botão parece defeito da tela, e um
+            Curador diante de uma discordância sem caminho tende a resolver por
+            fora — editando a tradução ou pedindo que "corrijam" o registro
+            dela. Qualquer um dos dois desfaz o ato que o PP-03 devolveu a ela. */}
+        {revisao.length > 0 ? (
+          <p className="mt-2 max-w-prose text-[var(--color-ink-muted)]">
+            {RESOLUCAO_INDISPONIVEL}
+          </p>
+        ) : null}
+
+        {revisao.length === 0 ? null : (
           <ul className="mt-2 space-y-3">
             {revisao.map((resposta) => (
               <li key={resposta.subcriterionCode} className="space-y-1">

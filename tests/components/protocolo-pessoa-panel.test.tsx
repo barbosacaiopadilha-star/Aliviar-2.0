@@ -327,3 +327,98 @@ describe("1.10C-A · o que ela respondeu, antes de qualquer outra coisa", () => 
     expect(bloco.querySelectorAll("button")).toHaveLength(0);
   });
 });
+
+/**
+ * MR-1.10C-A — CONTADOR (D-1) E LIMITE OPERACIONAL (D-2).
+ *
+ * Sem o número, ele conta. Sem a frase de limite, a ausência de botão parece
+ * defeito da tela — e um Curador diante de uma discordância sem caminho tende
+ * a resolver por fora, desfazendo o ato que o PP-03 devolveu a ela.
+ */
+describe("MR-1.10C-A · quantas são, e o que ele pode fazer com isso hoje", () => {
+  it("D-1 · uma resposta aparece no singular", () => {
+    render(
+      <ProtocoloPessoaPanel
+        caseId="case-1"
+        needs={[need({ acknowledgment: "RECUSADA", correction: "nao foi isso" })]}
+      />,
+    );
+
+    expect(screen.getByText("1 resposta da paciente exige revisão")).toBeInTheDocument();
+  });
+
+  it("D-1 · duas ou mais aparecem no plural, com o número certo", () => {
+    render(
+      <ProtocoloPessoaPanel
+        caseId="case-1"
+        needs={[
+          need({ acknowledgment: "RECUSADA", correction: "nao foi isso" }),
+          need({ subcriterionCode: "MODELO_COMUNICACAO", acknowledgment: "CORRIGIDA", correction: "quase" }),
+          need({ subcriterionCode: "MODELO_ALTERNATIVAS", acknowledgment: "CORRIGIDA", correction: "ajuste" }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("3 respostas da paciente exigem revisão")).toBeInTheDocument();
+  });
+
+  it("D-1 · zero preserva a frase da A5, sem contador postiço", () => {
+    const { container } = render(<ProtocoloPessoaPanel caseId="case-1" needs={[need()]} />);
+
+    expect(
+      screen.getByText("Nenhuma resposta da paciente exige revisão neste momento."),
+    ).toBeInTheDocument();
+    expect(container.textContent).not.toContain("0 respostas");
+    expect(container.textContent).not.toContain("(0)");
+  });
+
+  it("D-2 · havendo revisão, a tela diz que a resolução ainda não existe", () => {
+    const { container } = render(
+      <ProtocoloPessoaPanel
+        caseId="case-1"
+        needs={[need({ acknowledgment: "RECUSADA", correction: "nao foi isso" })]}
+      />,
+    );
+
+    const texto = container.textContent ?? "";
+    expect(texto).toContain("Ainda não existe, aqui, um caminho para resolvê-lo");
+    expect(texto).toContain("a falta dele é intencional");
+    expect(texto).toContain("não reescreva o que ela registrou");
+  });
+
+  it("D-2 · no estado vazio, a mensagem de limite NÃO aparece", () => {
+    const { container } = render(<ProtocoloPessoaPanel caseId="case-1" needs={[need()]} />);
+
+    expect(container.textContent).not.toContain("caminho para resolvê-lo");
+    expect(container.textContent).not.toContain("intencional");
+  });
+
+  it("nenhuma ação nova nasceu do bloco, mesmo com a frase de limite", () => {
+    render(
+      <ProtocoloPessoaPanel
+        caseId="case-1"
+        needs={[need({ acknowledgment: "RECUSADA", correction: "nao foi isso" })]}
+      />,
+    );
+
+    const bloco = screen.getByText("Respostas dela que exigem revisão").closest("section")!;
+    expect(bloco.querySelectorAll("button")).toHaveLength(0);
+    expect(bloco.querySelectorAll("a")).toHaveLength(0);
+  });
+
+  it("o texto integral dela continua inteiro ao lado do contador", () => {
+    const texto =
+      "Não foi isso. Eu disse que aceito conversar sobre cirurgia, mas só depois de seis meses " +
+      "de tratamento clínico, e com a minha irmã junto na consulta.";
+
+    render(
+      <ProtocoloPessoaPanel
+        caseId="case-1"
+        needs={[need({ acknowledgment: "RECUSADA", correction: texto })]}
+      />,
+    );
+
+    expect(screen.getByText("1 resposta da paciente exige revisão")).toBeInTheDocument();
+    expect(screen.getByText(`Ela disse: ${texto}`)).toBeInTheDocument();
+  });
+});

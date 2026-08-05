@@ -139,6 +139,39 @@ export function ordenarPelaRevisao<T extends { subcriterionCode: string }>(
 /** Dito por extenso quando não há nada a revisar (A5) — nunca um bloco vazio. */
 export const NADA_A_REVISAR = "Nenhuma resposta da paciente exige revisão neste momento.";
 
+/**
+ * M1 — QUANTAS SÃO, DITO NO TÍTULO.
+ *
+ * A Verificação apontou que o bloco mostrava a lista sem dizer o tamanho: com
+ * uma resposta ou com seis, o Curador só descobria contando. O número é
+ * derivado de `revisao.length` na renderização — nenhum estado, nada
+ * persistido, nada para sincronizar.
+ */
+export function quantasExigemRevisao(total: number): string {
+  if (total === 0) return NADA_A_REVISAR;
+  return total === 1
+    ? "1 resposta da paciente exige revisão"
+    : `${total} respostas da paciente exigem revisão`;
+}
+
+/**
+ * M2 — O QUE ELE PODE FAZER COM ISTO HOJE: LER.
+ *
+ * Sem esta frase, a ausência de botão parece defeito da tela — e um Curador
+ * diante de uma discordância sem caminho tende a resolver por fora, editando
+ * a tradução ou pedindo a alguém que "corrija" o registro dela. Qualquer um
+ * dos dois desfaz o ato da paciente, que é justamente o que o PP-03 devolveu
+ * a ela.
+ *
+ * Diz quatro coisas e nada além: o retorno é real, ainda não há fluxo de
+ * resolução, ele não deve reescrever o que ela registrou, e a ausência de
+ * botão é deliberada. Sem prazo prometido, sem vocabulário interno.
+ */
+export const RESOLUCAO_INDISPONIVEL =
+  "Este retorno é real e veio dela. Ainda não existe, aqui, um caminho para resolvê-lo — " +
+  "por isso não há botão nesta tela, e a falta dele é intencional. Converse com a paciente " +
+  "quando for o caso, mas não reescreva o que ela registrou.";
+
 export const ROTULO_DO_DESFECHO: Record<DesfechoQueExigeRevisao, string> = {
   RECUSADA: "Ela discordou desta leitura",
   CORRIGIDA: "Ela corrigiu esta leitura",

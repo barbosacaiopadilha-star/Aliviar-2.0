@@ -8,6 +8,8 @@ import type { CaseNeedRecord } from "@/modules/curadoria/protocolos-repository";
 import {
   NADA_A_REVISAR,
   ordenarPelaRevisao,
+  quantasExigemRevisao,
+  RESOLUCAO_INDISPONIVEL,
   respostasQueExigemRevisao,
 } from "@/modules/curadoria/respostas-que-exigem-revisao";
 
@@ -242,9 +244,25 @@ describe("A6/A7 · fonte única, e nenhuma autoridade nova", () => {
   });
 
   it("nenhuma retradução ou resolução foi antecipada (DT-72 · 1.10C-B)", () => {
-    for (const futuro of ["retraduz", "Retraduz", "resolver", "Resolver", "reabrir"]) {
-      expect(painel.includes(futuro), `o painel antecipou "${futuro}"`).toBe(false);
+    // A guarda mira CAPACIDADE, não vocabulário: a mensagem de limite (M2)
+    // fala em resolver justamente para dizer que resolver NÃO é possível aqui.
+    // Confundir as duas coisas proibiria explicar o bloqueio.
+    for (const capacidade of [
+      "resolverAction",
+      "retraduzirAction",
+      "reabrirAction",
+      "resolverDesfecho",
+      "retraduzir(",
+      "reabrir(",
+    ]) {
+      expect(painel.includes(capacidade), `o painel antecipou "${capacidade}"`).toBe(false);
     }
+    // E nenhuma action de qualquer nome nasce do bloco de revisão.
+    const bloco = painel.slice(
+      painel.indexOf("Respostas dela que exigem revisão"),
+      painel.indexOf('<ul className="space-y-2">'),
+    );
+    expect(bloco.includes("Action(")).toBe(false);
   });
 });
 
@@ -259,10 +277,95 @@ describe("A5 · quando não há nada, o bloco diz que não há", () => {
       "utf8",
     );
 
-    expect(painel).toContain("NADA_A_REVISAR");
+    // A frase chega pelo contador, que a devolve quando o total é zero (M1).
+    expect(painel).toContain("quantasExigemRevisao(revisao.length)");
     // O título do bloco fica FORA do condicional: ele nunca some.
     const titulo = painel.indexOf("Respostas dela que exigem revisão");
     const condicional = painel.indexOf("revisao.length === 0");
     expect(titulo).toBeLessThan(condicional);
+  });
+});
+
+/**
+ * MR-1.10C-A — CONTADOR E LIMITE OPERACIONAL.
+ *
+ * D-1: o bloco mostrava a lista sem dizer o tamanho — com uma resposta ou com
+ * seis, o Curador só descobria contando.
+ *
+ * D-2: sem dizer que não há resolução, a ausência de botão parece defeito da
+ * tela. Um Curador diante de uma discordância sem caminho tende a resolver por
+ * fora — editando a tradução ou pedindo que "corrijam" o registro dela —, e
+ * qualquer um dos dois desfaz o ato que o PP-03 devolveu a ela.
+ */
+describe("MR · M1 · a quantidade dita por extenso", () => {
+  it("uma resposta fala no singular", () => {
+    expect(quantasExigemRevisao(1)).toBe("1 resposta da paciente exige revisão");
+  });
+
+  it("mais de uma fala no plural, com o número certo", () => {
+    expect(quantasExigemRevisao(2)).toBe("2 respostas da paciente exigem revisão");
+    expect(quantasExigemRevisao(7)).toBe("7 respostas da paciente exigem revisão");
+  });
+
+  it("zero preserva a frase exigida pela A5 — nem 'nenhuma (0)', nem lista vazia", () => {
+    expect(quantasExigemRevisao(0)).toBe(NADA_A_REVISAR);
+    expect(quantasExigemRevisao(0)).toBe(
+      "Nenhuma resposta da paciente exige revisão neste momento.",
+    );
+  });
+
+  it("o contador é derivado do tamanho real da lista, não de um campo à parte", () => {
+    const needs = [
+      need({ subcriterionCode: CODIGOS[0]!, acknowledgment: "RECUSADA", correction: "a" }),
+      need({ subcriterionCode: CODIGOS[1]!, acknowledgment: "CORRIGIDA", correction: "b" }),
+      need({ subcriterionCode: CODIGOS[2]!, acknowledgment: "RECONHECIDA" }),
+      need({ subcriterionCode: CODIGOS[3]! }),
+    ];
+
+    const revisao = respostasQueExigemRevisao(needs);
+    expect(quantasExigemRevisao(revisao.length)).toBe("2 respostas da paciente exigem revisão");
+  });
+});
+
+describe("MR · M2 · o limite operacional, dito sem promessa", () => {
+  it("diz as quatro coisas que precisa dizer", () => {
+    const frase = RESOLUCAO_INDISPONIVEL.toLowerCase();
+
+    // 1. o retorno é real e veio dela
+    expect(frase).toContain("real");
+    expect(frase).toContain("dela");
+    // 2. ainda não há caminho de resolução
+    expect(frase).toMatch(/ainda não existe|ainda não há/);
+    // 3. ele não deve reescrever o ato dela
+    expect(frase).toContain("não reescreva");
+    // 4. a ausência de botão é intencional
+    expect(frase).toContain("intencional");
+    expect(frase).toContain("botão");
+  });
+
+  it("não promete prazo", () => {
+    for (const promessa of ["em breve", "logo", "próxima versão", "prazo", "estamos trabalhando"]) {
+      expect(RESOLUCAO_INDISPONIVEL.toLowerCase(), promessa).not.toContain(promessa);
+    }
+  });
+
+  it("não vaza vocabulário interno para a Mesa", () => {
+    for (const interno of [
+      "JA_RESPONDIDO",
+      "migration",
+      "RPC",
+      "case_needs",
+      "acknowledgment",
+      "1.10C-B",
+      "arquitetura",
+    ]) {
+      expect(RESOLUCAO_INDISPONIVEL, interno).not.toContain(interno);
+    }
+  });
+
+  it("não sugere ação nenhuma que a tela não ofereça", () => {
+    for (const acao of ["clique", "botão abaixo", "selecione", "aprove", "resolva aqui"]) {
+      expect(RESOLUCAO_INDISPONIVEL.toLowerCase(), acao).not.toContain(acao);
+    }
   });
 });
