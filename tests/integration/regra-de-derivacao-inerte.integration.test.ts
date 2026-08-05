@@ -213,18 +213,34 @@ describe("2.2A · A4/A5 — e permanece INERTE", () => {
     }
   });
 
-  it("zero função do banco a menciona, zero trigger dispara dela", () => {
+  /**
+   * MR1.1 mudou este oráculo, e a distinção importa.
+   *
+   * Ele exigia ZERO trigger e ZERO função — correto enquanto nada existia. O
+   * endurecimento acrescentou um de cada, e nenhum dos dois OPERA a Regra: o
+   * trigger só RECUSA `UPDATE` e `DELETE`, e a função só levanta a exceção.
+   * Proteção não é pipeline.
+   *
+   * A guarda passa a nomear o que é permitido, em vez de contar zero — assim
+   * um escritor de verdade nascendo aqui continua caindo.
+   */
+  it("o único trigger é a proteção append-only, e a única função é a que recusa", () => {
+    const [triggers] = consultar(`
+      select coalesce(string_agg(tgname, ',' order by tgname), '(nenhum)')
+      from pg_trigger where tgrelid = '${TABELA}'::regclass and not tgisinternal
+    `);
+    expect(triggers![0], "um trigger que não é a proteção append-only nasceu").toBe(
+      "derivation_rules_append_only",
+    );
+
+    // E nenhuma função MENCIONA a tabela — nem a da proteção, que é genérica:
+    // ela recusa o que lhe atribuírem, sem saber o nome de quem protege. Uma
+    // função que citasse `derivation_rules` no corpo estaria operando sobre ela.
     const [funcoes] = consultar(`
       select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
       where n.nspname='curadoria' and p.prosrc ilike '%derivation_rules%'
     `);
-    expect(funcoes![0], "uma função já opera a Regra").toBe("0");
-
-    const [triggers] = consultar(`
-      select count(*) from pg_trigger
-      where tgrelid = '${TABELA}'::regclass and not tgisinternal
-    `);
-    expect(triggers![0]).toBe("0");
+    expect(funcoes![0], "uma função passou a OPERAR a Regra, não apenas a protegê-la").toBe("0");
   });
 
   it("A4 · nenhuma proposta nasceu: a estrutura da 2.1 continua vazia", () => {

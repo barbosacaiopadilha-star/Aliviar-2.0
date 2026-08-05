@@ -85,8 +85,15 @@ export type ProvenienciaDaOrigem = {
 export type RegraAplicada = {
   /** Item 8 — qual regra. Sem ela, o valor é mágico. */
   identificador: string;
-  /** Item 9 — chave da calibração e da auditoria retroativa. */
-  versao: string;
+  /**
+   * Item 9 — chave da calibração e da auditoria retroativa.
+   *
+   * NÚMERO, não texto (MR1.0). Nasceu `string` aqui e `integer` do lado da
+   * Regra (§10.5: versão ordinal, `>= 1`), e a divergência só apareceu quando a
+   * FK composta a tornou impossível de ignorar. O tipo certo é o da Regra: é
+   * ela quem versiona, e a proposta apenas guarda qual versão a gerou.
+   */
+  versao: number;
 };
 
 /**
