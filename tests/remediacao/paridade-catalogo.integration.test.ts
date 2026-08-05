@@ -17,7 +17,7 @@
 //   3. a ordem canônica
 //   4. os 7 grupos e a filiação
 //   5. os tipos de resposta (response_type ↔ kind/multi)
-//   6. as 186 opções
+//   6. as 208 opções
 //   7. os códigos das opções, por conceito/lado/campo
 //   8. as condicionais (uma representação, lida do banco)
 //   9. a versão (vigência única; gravação nova = 1.1.0; defaults unificados)
@@ -269,10 +269,11 @@ describe("GATE-E1-CAT [Bloco E/Frente 1] paridade do Catálogo Canônico", () =>
   });
 
   // -------------------------------------------------------------------------
-  // 6. As 186 opções
+  // 6. As 208 opções (186 + as 22 da DP-3)
   // -------------------------------------------------------------------------
-  it("gate 6 — o banco tem 186 opções e o gerado as carrega todas", () => {
-    expect(opcoes, "fonte: banco method_subcriterion_options").toHaveLength(186);
+  it("gate 6 — o banco tem 208 opções e o gerado as carrega todas", () => {
+    // DP-3: eram 186 até as cinco listas P3-P7 (22 linhas) irem para o banco.
+    expect(opcoes, "fonte: banco method_subcriterion_options").toHaveLength(208);
     const totalNoGerado = CATALOGO_GERADO.reduce(
       (soma, conceito) =>
         soma +
@@ -282,7 +283,7 @@ describe("GATE-E1-CAT [Bloco E/Frente 1] paridade do Catálogo Canônico", () =>
         ),
       0,
     );
-    expect(totalNoGerado, "gerado × banco — total de opções").toBe(186);
+    expect(totalNoGerado, "gerado × banco — total de opções").toBe(208);
   });
 
   // -------------------------------------------------------------------------
@@ -334,19 +335,142 @@ describe("GATE-E1-CAT [Bloco E/Frente 1] paridade do Catálogo Canônico", () =>
     }
   });
 
-  it("gate 7b — o lado da pessoa usa os códigos do banco onde o banco os materializa", () => {
-    for (const noBanco of ativosDoBanco) {
-      if (noBanco.paciente.length === 0) continue;
-      const pergunta = PERSON_PROTOCOL.find((p) => p.subcriterionCode === noBanco.code);
-      expect(pergunta, `${noBanco.code} tem lado da paciente no banco e nenhuma pergunta em PERSON_PROTOCOL`).toBeTruthy();
+  /**
+   * DP-3 — O PONTO CEGO FOI ELIMINADO.
+   *
+   * Este gate dizia "onde o banco os materializa" e começava com
+   * `if (noBanco.paciente.length === 0) continue`. Era exatamente o ponto cego:
+   * P3–P7 tinham as opções no CÓDIGO e nenhuma no banco, então o gate as pulava
+   * — e uma divergência entre as duas fontes não tinha como aparecer. Ele
+   * passava verde justamente onde havia fonte dupla.
+   *
+   * Agora a varredura parte das PERGUNTAS, não do banco: toda pergunta com
+   * opções tem de encontrá-las materializadas e iguais. Um conceito que perca
+   * as opções do banco cai aqui, em vez de sumir da conferência.
+   *
+   * As exceções são nomeadas e verificadas, e são três: P8 e P9 são declarações
+   * clínicas do Curador (a pessoa não é perguntada), e P14 é o ÚNICO texto
+   * guiado do protocolo dela — restrições pessoais, que nenhuma lista fechada
+   * representa. Nas três não há opção da pessoa a materializar.
+   */
+  it("gate 7b — TODA pergunta da pessoa lê os códigos do banco (DP-3: sem ponto cego)", () => {
+    const porCodigo = new Map(ativosDoBanco.map((entrada) => [entrada.code, entrada]));
+    const semOpcoes: string[] = [];
 
-      const valoresDoBanco = noBanco.paciente
+    for (const pergunta of PERSON_PROTOCOL) {
+      const noBanco = porCodigo.get(pergunta.subcriterionCode);
+      expect(
+        noBanco,
+        `${pergunta.id} · ${pergunta.subcriterionCode} não existe no catálogo ativo do banco`,
+      ).toBeTruthy();
+
+      const valoresDoBanco = noBanco!.paciente
         .flatMap((campo) => campo.options.filter((o) => o.active).map((o) => o.value))
         .sort();
+
+      if (Object.keys(pergunta.options).length === 0) {
+        // Sem opções no código: o banco também não pode ter, senão a pergunta
+        // está cega para um vocabulário que existe.
+        expect(
+          valoresDoBanco,
+          `${pergunta.id} não tem opções em PERSON_PROTOCOL, mas o banco materializa [${valoresDoBanco.join(", ")}]`,
+        ).toEqual([]);
+        semOpcoes.push(pergunta.id);
+        continue;
+      }
+
       expect(
-        Object.keys(pergunta!.options).sort(),
-        `${noBanco.code} · opções da pessoa — esperado (banco): [${valoresDoBanco.join(", ")}], encontrado (protocolos.ts): [${Object.keys(pergunta!.options).sort().join(", ")}]`,
+        Object.keys(pergunta.options).sort(),
+        `${noBanco!.code} · opções da pessoa — esperado (banco): [${valoresDoBanco.join(", ")}], encontrado (protocolos.ts): [${Object.keys(pergunta.options).sort().join(", ")}]`,
       ).toEqual(valoresDoBanco);
+    }
+
+    // A exceção é fechada e nomeada: só as duas declarações clínicas.
+    expect(
+      semOpcoes.sort(),
+      "uma pergunta ficou sem opções dos dois lados — o vocabulário sumiu, ou a exceção cresceu além de P8/P9 (declarações clínicas) e P14 (texto guiado)",
+    ).toEqual(["P14", "P8", "P9"]);
+  });
+
+  /**
+   * DP-3 · D1–D5 — a materialização, conferida contra o que era o código.
+   *
+   * Os valores esperados NÃO são relidos de `protocolos.ts`: isso seria
+   * tautologia, já que ele agora lê do banco. São os literais que estavam nas
+   * listas provisórias, transcritos aqui uma única vez — se a migration tiver
+   * mudado um código, um rótulo ou a ordem, é aqui que aparece.
+   */
+  it("gate 7c — DP-3: as cinco listas chegaram ao banco exatamente como estavam", () => {
+    const ESPERADO: Record<string, [string, string][]> = {
+      ACESSO_DISPONIBILIDADE: [
+        ["MANHA_DIAS_UTEIS", "Manhã em dias úteis"],
+        ["TARDE_DIAS_UTEIS", "Tarde em dias úteis"],
+        ["NOITE_APOS_18H", "Noite, após as 18h"],
+        ["SABADO", "Sábado"],
+        ["DOMINGO_OU_FERIADO", "Domingo ou feriado"],
+      ],
+      ACESSO_PRAZO_PARA_CONSULTA: [
+        ["ATE_7_DIAS", "Em até 7 dias"],
+        ["ATE_15_DIAS", "Em até 15 dias"],
+        ["ATE_30_DIAS", "Em até 30 dias"],
+        ["SEM_URGENCIA_DECLARADA", "Sem urgência declarada"],
+      ],
+      CONTINUIDADE_RETORNOS: [
+        ["RETORNO_JA_MARCADO_AO_SAIR", "Sair com o retorno já marcado"],
+        ["RETORNO_CONFORME_EU_EVOLUIR", "Retorno conforme eu evoluir"],
+        ["PREFIRO_PROCURAR_QUANDO_PRECISAR", "Prefiro procurar quando precisar"],
+        ["QUERO_ORIENTACAO_ESCRITA_APOS_CONSULTA", "Quero orientação escrita após a consulta"],
+        ["NAO_TENHO_PREFERENCIA", "Não tenho preferência"],
+      ],
+      CONTINUIDADE_CANAIS: [
+        ["PODER_MANDAR_MENSAGEM", "Poder mandar mensagem"],
+        ["TELEFONE_PARA_LIGAR", "Um telefone para ligar"],
+        ["CONTATO_PARA_URGENCIA_FORA_DO_HORARIO", "Contato para urgência fora do horário"],
+        ["BASTA_REAGENDAR", "Basta poder reagendar"],
+        ["NAO_TENHO_PREFERENCIA", "Não tenho preferência"],
+      ],
+      CONTINUIDADE_COORDENACAO: [
+        ["SIM", "Sim"],
+        ["NAO", "Não"],
+        ["NAO_SEI_INFORMAR", "Não sei informar"],
+      ],
+    };
+
+    const porCodigo = new Map(ativosDoBanco.map((entrada) => [entrada.code, entrada]));
+    let linhas = 0;
+
+    for (const [code, esperado] of Object.entries(ESPERADO)) {
+      const paciente = porCodigo.get(code)!.paciente.find((campo) => campo.field === "principal");
+      expect(paciente, `${code} não tem campo principal do lado da pessoa`).toBeTruthy();
+
+      // D2/D3/D4 — mesmo código, mesmo rótulo, MESMA ORDEM.
+      expect(
+        paciente!.options.filter((o) => o.active).map((o) => [o.value, o.label]),
+        `${code} · a lista mudou ao ir para o banco`,
+      ).toEqual(esperado);
+
+      linhas += esperado.length;
+    }
+
+    // D1 — 22 linhas, 21 códigos distintos. `NAO_TENHO_PREFERENCIA` serve a
+    // dois conceitos: um código, duas linhas. A DM-1 conta códigos.
+    expect(linhas).toBe(22);
+    const distintos = new Set(Object.values(ESPERADO).flatMap((l) => l.map(([v]) => v)));
+    expect(distintos.size).toBe(21);
+  });
+
+  it("gate 7d — DP-3: a multiplicidade não mudou (D5)", () => {
+    const MULTI: Record<string, boolean> = {
+      ACESSO_DISPONIBILIDADE: true,
+      ACESSO_PRAZO_PARA_CONSULTA: false,
+      CONTINUIDADE_RETORNOS: true,
+      CONTINUIDADE_CANAIS: true,
+      CONTINUIDADE_COORDENACAO: false,
+    };
+
+    for (const [code, multi] of Object.entries(MULTI)) {
+      const pergunta = PERSON_PROTOCOL.find((p) => p.subcriterionCode === code)!;
+      expect(pergunta.multi, `${code} mudou de multiplicidade`).toBe(multi);
     }
   });
 

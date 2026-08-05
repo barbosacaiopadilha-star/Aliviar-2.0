@@ -14,15 +14,15 @@
  * opções do lado da pessoa, `method_subcriterion_options` com
  * side='paciente'.
  *
- * PENDÊNCIA DE DOMÍNIO REGISTRADA (ambiguidade doc×migration — decisão fica
- * com o Método, não com este código): para 5 conceitos de TRADUÇÃO (P3–P7)
- * o Catálogo aprovado promete "múltipla escolha + grau" do lado da pessoa,
- * mas NEM o doc NEM a migration materializam a lista de opções. As listas
- * provisórias abaixo (marcadas OPCOES_PROVISORIAS_*) preservam o
- * comportamento existente até a decisão (escopo do Bloco F); o gate de
- * paridade compara com o banco apenas onde o banco materializa opções.
- * P10 e P12 foram materializados no banco pela migration 20260803100000
- * (ADR-065) e agora leem da fonte única, como P11/P13.
+ * PENDÊNCIA ENCERRADA PELA DP-3. Havia aqui uma ressalva: para 5 conceitos de
+ * TRADUÇÃO (P3–P7), o Catálogo prometia "múltipla escolha + grau" do lado da
+ * pessoa e nem o doc nem a migration materializavam a lista — as opções viviam
+ * no código, e o gate de paridade comparava com o banco apenas onde o banco
+ * materializava. Era a última fonte dupla conhecida.
+ *
+ * A migration 20260805140000 levou as cinco listas ao banco preservando
+ * códigos, rótulos, ordem e multiplicidade. Não há mais lista paralela: as 17
+ * perguntas leem do Catálogo, e o gate de paridade cobre todas.
  *
  * Puro e determinístico: sem React, sem banco.
  */
@@ -104,48 +104,24 @@ export type PersonQuestion = {
   allowsGuidedText: boolean;
 };
 
-const SEM_PREFERENCIA = { NAO_TENHO_PREFERENCIA: "Não tenho preferência" } as const;
-const NAO_SEI = { NAO_SEI_INFORMAR: "Não sei informar" } as const;
+// `SEM_PREFERENCIA` e `NAO_SEI` viviam aqui, compartilhados pelas listas
+// provisórias. Saíram com elas: os dois códigos agora são linhas do Catálogo,
+// como qualquer outra opção.
 
 // ---------------------------------------------------------------------------
-// Listas provisórias — PENDÊNCIA DE DOMÍNIO registrada no cabeçalho.
-// O banco não materializa o lado da pessoa destes conceitos; o doc o promete
-// sem listar. Nada aqui é identidade nova de catálogo: são as listas que já
-// operavam, aguardando a decisão de Método que as leve (ou não) ao banco.
+// DP-3 — AQUI VIVIAM AS CINCO LISTAS PROVISÓRIAS.
+//
+// Eram a última violação conhecida da regra de fonte única: P3–P7 tinham o
+// vocabulário do lado da pessoa no CÓDIGO, enquanto P1, P2 e P10–P13 já o liam
+// do Catálogo. O gate de paridade comparava os materializados e passava verde
+// ignorando estes — uma divergência aqui não tinha como aparecer.
+//
+// As 22 linhas (21 códigos distintos — `NAO_TENHO_PREFERENCIA` serve a dois
+// conceitos) foram para `method_subcriterion_options` pela migration
+// 20260805140000, com os mesmos códigos, rótulos, ordem e multiplicidade.
+// Daqui em diante as cinco leem por `opcoesDaPessoa`, como todas as outras, e
+// a evolução acontece por versionamento do Catálogo — nunca editando código.
 // ---------------------------------------------------------------------------
-
-const OPCOES_PROVISORIAS_DISPONIBILIDADE = {
-  MANHA_DIAS_UTEIS: "Manhã em dias úteis",
-  TARDE_DIAS_UTEIS: "Tarde em dias úteis",
-  NOITE_APOS_18H: "Noite, após as 18h",
-  SABADO: "Sábado",
-  DOMINGO_OU_FERIADO: "Domingo ou feriado",
-} as const;
-
-const OPCOES_PROVISORIAS_PRAZO = {
-  ATE_7_DIAS: "Em até 7 dias",
-  ATE_15_DIAS: "Em até 15 dias",
-  ATE_30_DIAS: "Em até 30 dias",
-  SEM_URGENCIA_DECLARADA: "Sem urgência declarada",
-} as const;
-
-const OPCOES_PROVISORIAS_RETORNOS = {
-  RETORNO_JA_MARCADO_AO_SAIR: "Sair com o retorno já marcado",
-  RETORNO_CONFORME_EU_EVOLUIR: "Retorno conforme eu evoluir",
-  PREFIRO_PROCURAR_QUANDO_PRECISAR: "Prefiro procurar quando precisar",
-  QUERO_ORIENTACAO_ESCRITA_APOS_CONSULTA: "Quero orientação escrita após a consulta",
-  ...SEM_PREFERENCIA,
-} as const;
-
-const OPCOES_PROVISORIAS_CANAIS = {
-  PODER_MANDAR_MENSAGEM: "Poder mandar mensagem",
-  TELEFONE_PARA_LIGAR: "Um telefone para ligar",
-  CONTATO_PARA_URGENCIA_FORA_DO_HORARIO: "Contato para urgência fora do horário",
-  BASTA_REAGENDAR: "Basta poder reagendar",
-  ...SEM_PREFERENCIA,
-} as const;
-
-const OPCOES_PROVISORIAS_COORDENACAO = { SIM: "Sim", NAO: "Não", ...NAO_SEI } as const;
 
 // ---------------------------------------------------------------------------
 // PROTOCOLO DA PESSOA — P1..P17 (P8 e P9 são declarações do Curador;
@@ -170,7 +146,7 @@ export const PERSON_PROTOCOL: readonly PersonQuestion[] = [
   {
     id: "P3", subcriterionCode: "ACESSO_DISPONIBILIDADE", mode: "DIRETO",
     question: perguntaDaPessoa("ACESSO_DISPONIBILIDADE", "Quando você consegue ser atendida?"),
-    options: OPCOES_PROVISORIAS_DISPONIBILIDADE,
+    options: opcoesDaPessoa("ACESSO_DISPONIBILIDADE"),
     multi: true,
     flexibilityQuestion: "Você conseguiria faltar ao trabalho ou compromisso para uma consulta?",
     allowsGuidedText: false,
@@ -178,7 +154,7 @@ export const PERSON_PROTOCOL: readonly PersonQuestion[] = [
   {
     id: "P4", subcriterionCode: "ACESSO_PRAZO_PARA_CONSULTA", mode: "TRADUCAO",
     question: perguntaDaPessoa("ACESSO_PRAZO_PARA_CONSULTA", "Em quanto tempo você precisa ser atendida?"),
-    options: OPCOES_PROVISORIAS_PRAZO,
+    options: opcoesDaPessoa("ACESSO_PRAZO_PARA_CONSULTA"),
     multi: false, flexibilityQuestion: null, allowsGuidedText: false,
   },
   {
@@ -187,7 +163,7 @@ export const PERSON_PROTOCOL: readonly PersonQuestion[] = [
       "CONTINUIDADE_RETORNOS",
       "Como você gostaria que fosse o acompanhamento depois da primeira consulta?",
     ),
-    options: OPCOES_PROVISORIAS_RETORNOS,
+    options: opcoesDaPessoa("CONTINUIDADE_RETORNOS"),
     multi: true, flexibilityQuestion: null, allowsGuidedText: false,
   },
   {
@@ -196,7 +172,7 @@ export const PERSON_PROTOCOL: readonly PersonQuestion[] = [
       "CONTINUIDADE_CANAIS",
       "Você precisa conseguir falar com alguém entre as consultas?",
     ),
-    options: OPCOES_PROVISORIAS_CANAIS,
+    options: opcoesDaPessoa("CONTINUIDADE_CANAIS"),
     multi: true, flexibilityQuestion: null, allowsGuidedText: false,
   },
   {
@@ -205,7 +181,7 @@ export const PERSON_PROTOCOL: readonly PersonQuestion[] = [
       "CONTINUIDADE_COORDENACAO",
       "Você já é acompanhada por outros profissionais que precisariam conversar entre si?",
     ),
-    options: OPCOES_PROVISORIAS_COORDENACAO,
+    options: opcoesDaPessoa("CONTINUIDADE_COORDENACAO"),
     multi: false, flexibilityQuestion: null, allowsGuidedText: false,
   },
   {

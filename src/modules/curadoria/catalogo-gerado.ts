@@ -73,10 +73,10 @@ export const CATALOGO_EIXOS = ["ACESSO_AO_CUIDADO","CONTINUIDADE_DO_CUIDADO","MO
 export const CATALOGO_VERSAO = "1.1.0";
 
 /** SHA-256 da carga (conceitos+opções, ordem canônica) — paridade executável. */
-export const CATALOGO_GERADO_HASH = "b1554f95b634b92786b0cf7eb0c56e424af0b12e25bdb69957bb0c4d71f26cfc";
+export const CATALOGO_GERADO_HASH = "dbde9bfbf8dbde4f18b802d75ba4767ba9eba3a926ff294cbe9cc83060d4ab45";
 
 /** Total de opções no banco na geração (ativas e inativas). */
-export const CATALOGO_TOTAL_OPCOES = 186;
+export const CATALOGO_TOTAL_OPCOES = 208;
 
 /**
  * Todos os conceitos: os 29 ativos na ordem canônica, depois o legado 0.9.0
@@ -324,7 +324,63 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
         ]
       }
     ],
-    "paciente": []
+    "paciente": [
+      {
+        "field": "principal",
+        "options": [
+          {
+            "value": "MANHA_DIAS_UTEIS",
+            "label": "Manhã em dias úteis",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 1,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "TARDE_DIAS_UTEIS",
+            "label": "Tarde em dias úteis",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 2,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "NOITE_APOS_18H",
+            "label": "Noite, após as 18h",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 3,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "SABADO",
+            "label": "Sábado",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 4,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "DOMINGO_OU_FERIADO",
+            "label": "Domingo ou feriado",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 5,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          }
+        ]
+      }
+    ]
   },
   {
     "code": "ACESSO_PRAZO_PARA_CONSULTA",
@@ -418,7 +474,53 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
         ]
       }
     ],
-    "paciente": []
+    "paciente": [
+      {
+        "field": "principal",
+        "options": [
+          {
+            "value": "ATE_7_DIAS",
+            "label": "Em até 7 dias",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 1,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "ATE_15_DIAS",
+            "label": "Em até 15 dias",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 2,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "ATE_30_DIAS",
+            "label": "Em até 30 dias",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 3,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "SEM_URGENCIA_DECLARADA",
+            "label": "Sem urgência declarada",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 4,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          }
+        ]
+      }
+    ]
   },
   {
     "code": "ACESSO_LOCAL_DE_ATENDIMENTO",
@@ -686,7 +788,63 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
         ]
       }
     ],
-    "paciente": []
+    "paciente": [
+      {
+        "field": "principal",
+        "options": [
+          {
+            "value": "RETORNO_JA_MARCADO_AO_SAIR",
+            "label": "Sair com o retorno já marcado",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 1,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "RETORNO_CONFORME_EU_EVOLUIR",
+            "label": "Retorno conforme eu evoluir",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 2,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "PREFIRO_PROCURAR_QUANDO_PRECISAR",
+            "label": "Prefiro procurar quando precisar",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 3,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "QUERO_ORIENTACAO_ESCRITA_APOS_CONSULTA",
+            "label": "Quero orientação escrita após a consulta",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 4,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "NAO_TENHO_PREFERENCIA",
+            "label": "Não tenho preferência",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 5,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          }
+        ]
+      }
+    ]
   },
   {
     "code": "CONTINUIDADE_POS_PROCEDIMENTO",
@@ -1007,7 +1165,43 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
         ]
       }
     ],
-    "paciente": []
+    "paciente": [
+      {
+        "field": "principal",
+        "options": [
+          {
+            "value": "SIM",
+            "label": "Sim",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 1,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "NAO",
+            "label": "Não",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 2,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "NAO_SEI_INFORMAR",
+            "label": "Não sei informar",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 3,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          }
+        ]
+      }
+    ]
   },
   {
     "code": "CONTINUIDADE_CANAIS",
@@ -1156,7 +1350,63 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
         ]
       }
     ],
-    "paciente": []
+    "paciente": [
+      {
+        "field": "principal",
+        "options": [
+          {
+            "value": "PODER_MANDAR_MENSAGEM",
+            "label": "Poder mandar mensagem",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 1,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "TELEFONE_PARA_LIGAR",
+            "label": "Um telefone para ligar",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 2,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "CONTATO_PARA_URGENCIA_FORA_DO_HORARIO",
+            "label": "Contato para urgência fora do horário",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 3,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "BASTA_REAGENDAR",
+            "label": "Basta poder reagendar",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 4,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          },
+          {
+            "value": "NAO_TENHO_PREFERENCIA",
+            "label": "Não tenho preferência",
+            "requiresDetail": false,
+            "detailKind": null,
+            "displayOrder": 5,
+            "active": true,
+            "catalogVersion": "1.1.0",
+            "satisfiedBy": null
+          }
+        ]
+      }
+    ]
   },
   {
     "code": "MODELO_COMUNICACAO",
