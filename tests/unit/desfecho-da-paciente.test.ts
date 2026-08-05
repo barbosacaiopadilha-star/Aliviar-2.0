@@ -184,19 +184,30 @@ describe("A fronteira com a action do Curador", () => {
     expect(fonte).toContain('rpc("acknowledge_case_need"');
   });
 
-  it("A4 · o escritor do Curador permanece intacto", () => {
-    const acoes = readFileSync(
-      join(process.cwd(), "src/modules/curadoria/protocolos-actions.ts"),
-      "utf8",
-    );
-    expect(acoes).toContain('requireAnyRoleForAction(["curador_medico", "administrador"])');
-
+  /**
+   * PP-03C inverteu esta asserção de propósito.
+   *
+   * No PP-03A ela dizia "o escritor do Curador permanece intacto" — era a
+   * condição A4 daquele pacote, que só criava o caminho dela sem mexer no
+   * dele. A R-1 do PP-03 sempre previu o segundo passo, e ele aconteceu: o
+   * ESCRITOR DO DESFECHO morreu; o escritor da TRADUÇÃO continua vivo.
+   */
+  it("o Curador mantém a tradução e perdeu o desfecho", () => {
     const repo = readFileSync(
       join(process.cwd(), "src/modules/curadoria/protocolos-repository.ts"),
       "utf8",
     );
-    expect(repo).toContain("export async function acknowledgePersonNeed");
-    expect(repo).toContain("correction: exigeTexto ? texto : null");
+
+    expect(repo).toMatch(/^export async function registerPersonNeed/m);
+    expect(repo).not.toMatch(/^export async function acknowledgePersonNeed/m);
+
+    const acoes = readFileSync(
+      join(process.cwd(), "src/modules/curadoria/protocolos-actions.ts"),
+      "utf8",
+    );
+    // O guarda de papel dele continua onde estava, para o que é dele.
+    expect(acoes).toContain('requireAnyRoleForAction(["curador_medico", "administrador"])');
+    expect(acoes).not.toMatch(/^export async function acknowledgePersonNeedAction/m);
   });
 });
 

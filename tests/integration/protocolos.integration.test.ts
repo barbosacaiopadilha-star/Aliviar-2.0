@@ -24,7 +24,6 @@ import { declareCriterion } from "@/modules/curadoria/mesa-cruzamento";
 import { listSubcriterionCatalog } from "@/modules/curadoria/mapa-prioridades-repository";
 import { loadCurrentPracticeEvidence } from "@/modules/curadoria/evidencias-pratica-repository";
 import {
-  acknowledgePersonNeed,
   loadCaseNeeds,
   loadProtocolDraft,
   registerPersonNeed,
@@ -268,17 +267,16 @@ describe("Protocolos Oficiais (Supabase local)", () => {
     });
     expect(registro.acknowledgment).toBe("PENDENTE");
 
-    await acknowledgePersonNeed(curador.client, {
-      caseId: caseA,
-      subcriterionCode: "CONTINUIDADE_RETORNOS",
-      acknowledgment: "CORRIGIDA",
-      correction: "Prefere retorno conforme a evolução, não data fixa.",
-    });
-
+    // PP-03C — aqui o Curador gravava o desfecho dela ("CORRIGIDA" + texto).
+    // Esse caminho deixou de existir: o desfecho e ato da paciente, por
+    // acknowledge_case_need (coberto em
+    // tests/remediacao/desfecho-da-paciente.integration.test.ts). O que
+    // permanece verificado aqui e o que e DELE: a traducao nasce PENDENTE e a
+    // leitura proposta fica registrada.
     const necessidades = await loadCaseNeeds(curador.client, caseA);
     const retornos = necessidades.find((n) => n.subcriterionCode === "CONTINUIDADE_RETORNOS")!;
-    expect(retornos.acknowledgment).toBe("CORRIGIDA");
-    expect(retornos.correction).toContain("conforme a evolução");
+    expect(retornos.acknowledgment).toBe("PENDENTE");
+    expect(retornos.correction).toBeNull();
     expect(retornos.proposedReading).toContain("Pelo que você me contou");
   });
 
@@ -328,14 +326,9 @@ describe("Protocolos Oficiais (Supabase local)", () => {
       }),
     ).rejects.toThrow(/leitura proposta/);
 
-    // Reconhecer o que não é tradução: não há o que reconhecer.
-    await expect(
-      acknowledgePersonNeed(curador.client, {
-        caseId: caseA,
-        subcriterionCode: "ACESSO_MODALIDADE",
-        acknowledgment: "RECONHECIDA",
-      }),
-    ).rejects.toThrow(/leitura traduzida/);
+    // "Reconhecer o que nao e traducao" saiu daqui com o escritor do Curador.
+    // A mesma regra e hoje da RPC, que devolve NAO_TRADUZIDO — verificada em
+    // tests/remediacao/desfecho-da-paciente.integration.test.ts.
   });
 
   // -------------------------------------------------------------------------

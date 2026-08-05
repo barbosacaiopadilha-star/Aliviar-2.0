@@ -218,89 +218,77 @@ export async function registerPersonNeed(
 
   const acknowledgment: AcknowledgmentState = params.origin === "TRADUCAO" ? "PENDENTE" : "RECONHECIDA";
 
-  const { data, error } = await supabase
+  /**
+   * PP-03C — O CURADOR NÃO ALCANÇA O DESFECHO DELA, NEM POR ACIDENTE.
+   *
+   * Este `upsert` gravava `acknowledgment` e `correction` em toda gravação. No
+   * caminho de ATUALIZAÇÃO isso era um segundo escritor silencioso: bastava o
+   * Curador reabrir "Atualizar registro" e salvar para o desfecho dela voltar a
+   * `PENDENTE` e o texto dela virar `null` — sem aviso, sem trilha, e sem que
+   * ninguém tivesse clicado em nada parecido com "desfazer o que ela disse".
+   *
+   * Agora os dois campos só são escritos no NASCIMENTO da linha, onde ainda não
+   * há ato dela para apagar. Existindo linha, a atualização toca a tradução e
+   * nada mais — o que ela respondeu é dela e permanece (I-7).
+   */
+  const { data: existente } = await supabase
     .from("case_needs")
-    .upsert(
-      {
-        case_id: params.caseId,
-        subcriterion_code: params.subcriterionCode,
-        options: params.options,
-        degree: params.degree,
-        flexibility: params.flexibility,
-        guided_text: params.guidedText,
-        origin: params.origin,
-        proposed_reading: params.proposedReading,
-        acknowledgment,
-        correction: null,
-        declared_by: params.declaredBy,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "case_id,subcriterion_code" },
-    )
-    .select(NEED_COLUMNS)
-    .single();
+    .select("id")
+    .eq("case_id", params.caseId)
+    .eq("subcriterion_code", params.subcriterionCode)
+    .maybeSingle();
+
+  const traducao = {
+    options: params.options,
+    degree: params.degree,
+    flexibility: params.flexibility,
+    guided_text: params.guidedText,
+    origin: params.origin,
+    proposed_reading: params.proposedReading,
+    declared_by: params.declaredBy,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data, error } = existente
+    ? await supabase
+        .from("case_needs")
+        .update(traducao)
+        .eq("id", existente.id as string)
+        .select(NEED_COLUMNS)
+        .single()
+    : await supabase
+        .from("case_needs")
+        .insert({
+          case_id: params.caseId,
+          subcriterion_code: params.subcriterionCode,
+          ...traducao,
+          acknowledgment,
+          correction: null,
+        })
+        .select(NEED_COLUMNS)
+        .single();
 
   if (error) throw new Error(`Necessidade da pessoa: ${error.message}`);
   return needFromRow(data as Record<string, unknown>);
 }
 
 /**
- * O ato da pessoa sobre uma leitura traduzida: reconhecer, corrigir ou
- * discordar. Registrado pelo Curador na conversa — mas o conteúdo é dela, e
- * fica separado da leitura proposta.
+ * PP-03C — AQUI VIVIA `acknowledgePersonNeed`.
  *
- * **Contrato do campo `correction` (DT-22):**
+ * Ela gravava `acknowledgment` e `correction` — o ato que o Método reserva à
+ * paciente — a partir de uma action que exigia papel de Curador. O registro
+ * dizia "reconhecida por ela" e ninguém podia provar que foi ela: assinatura
+ * sem o autor não é autoria (ADR-068 §1).
  *
- * | Desfecho | `correction` |
- * |---|---|
- * | `CORRIGIDA` | o texto **substitutivo** dela — "não é isso, é isto" |
- * | `RECUSADA` | a **justificativa da discordância** — "eu disse isso, mas não é isso que significa" |
- * | `RECONHECIDA` | `null` — não há o que acrescentar |
- * | `PENDENTE` | `null` — é a ausência de ato, e não passa por aqui |
+ * O desfecho passou a ter escritor único: a RPC `acknowledge_case_need`
+ * (SECURITY DEFINER, autorizada por `is_patient_for_case`), chamada por
+ * `registrarDesfechoAction`. O contrato do DT-22 não mudou de conteúdo — a
+ * exigência do texto dela em CORRIGIDA e RECUSADA agora vive no banco, onde
+ * nenhuma superfície a contorna. Mudou de dono, não de regra.
  *
- * Antes do DT-22 a recusa era gravada sem texto, e a discordância dela se
- * perdia: sobrava um estado sem o motivo. Oferecer "discordar" e não guardar o
- * que ela disse é cerimônia vazia — os dois desfechos que afirmam algo sobre a
- * tradução exigem texto, e a validação abaixo recusa os dois sem ele.
+ * `registerPersonNeed`, acima, continua sendo do Curador: a TRADUÇÃO é dele,
+ * o DESFECHO é dela, e os dois nunca mais se escrevem pela mesma mão.
  */
-export async function acknowledgePersonNeed(
-  supabase: SupabaseClient,
-  params: {
-    caseId: string;
-    subcriterionCode: string;
-    acknowledgment: Exclude<AcknowledgmentState, "PENDENTE">;
-    correction?: string | null;
-  },
-): Promise<void> {
-  const exigeTexto = params.acknowledgment === "CORRIGIDA" || params.acknowledgment === "RECUSADA";
-  const texto = (params.correction ?? "").trim();
-
-  if (exigeTexto && texto === "") {
-    throw new Error(
-      params.acknowledgment === "CORRIGIDA"
-        ? "Correção sem texto não é correção — o que ela disse precisa ficar registrado."
-        : "Discordância sem texto não é discordância — o que ela disse precisa ficar registrado.",
-    );
-  }
-
-  const { data, error } = await supabase
-    .from("case_needs")
-    .update({
-      acknowledgment: params.acknowledgment,
-      // DT-22: os dois desfechos que afirmam algo sobre a tradução guardam o
-      // texto dela; o reconhecimento não tem o que guardar.
-      correction: exigeTexto ? texto : null,
-    })
-    .eq("case_id", params.caseId)
-    .eq("subcriterion_code", params.subcriterionCode)
-    .eq("origin", "TRADUCAO")
-    .select("case_id");
-
-  if (error) throw new Error(`Reconhecimento: ${error.message}`);
-  if (!data || data.length === 0) {
-    throw new Error("Não há leitura traduzida deste conceito para reconhecer neste Case.");
-  }
-}
 
 export async function loadCaseNeeds(
   supabase: SupabaseClient,

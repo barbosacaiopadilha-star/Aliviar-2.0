@@ -175,13 +175,22 @@ function varrer(dir: string): string[] {
  * quem escreve o reconhecimento dela — e ela ainda não foi tomada.
  */
 describe("2C · DT-22 íntegro e nenhuma persistência nova", () => {
-  it("o escritor do DT-22 mantém o contrato exato — texto obrigatório nos dois", () => {
-    const repo = ler("src/modules/curadoria/protocolos-repository.ts");
-    expect(repo).toContain('params.acknowledgment === "CORRIGIDA" || params.acknowledgment === "RECUSADA"');
-    expect(repo).toContain("correction: exigeTexto ? texto : null");
+  /**
+   * PP-03C — o contrato do DT-22 mudou de camada. Ele vivia em TypeScript, no
+   * escritor do Curador; passou a viver na RPC e no CHECK do banco, onde
+   * nenhuma superfície o contorna. O conteúdo é o mesmo.
+   */
+  it("o contrato do DT-22 é exigido no banco, não numa função que o Curador chama", () => {
+    const rpc = ler("supabase/migrations/20260804170000_desfecho_da_paciente_grants_hardening.sql");
+    expect(rpc).toContain("if _acknowledgment in ('CORRIGIDA', 'RECUSADA') and texto is null then");
+    expect(rpc).toContain("return 'TEXTO_OBRIGATORIO'");
+
+    expect(ler("src/modules/curadoria/protocolos-repository.ts")).not.toMatch(
+      /^export async function acknowledgePersonNeed/m,
+    );
   });
 
-  it("a ação do Curador continua exigindo papel de Curador", () => {
+  it("a ação do Curador continua exigindo papel de Curador — para o que é dele", () => {
     const acoes = ler("src/modules/curadoria/protocolos-actions.ts");
     expect(acoes).toContain('requireAnyRoleForAction(["curador_medico", "administrador"])');
   });

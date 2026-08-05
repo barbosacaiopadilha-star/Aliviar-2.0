@@ -15,7 +15,6 @@ import { PRACTICE_CONCEPTS_BY_CODE } from "./evidencias-pratica";
 import { NEED_DEGREES, PERSON_QUESTIONS_BY_CODE } from "./protocolos";
 
 import {
-  acknowledgePersonNeed,
   loadProtocolDraft,
   registerPersonNeed,
   saveProtocolDraft,
@@ -148,51 +147,19 @@ export async function registerPersonNeedAction(input: unknown) {
   revalidateCaseSurfaces(parsed.data.caseId);
   return { success: true as const };
 }
-
 /**
- * DT-22 — `correction` guarda o texto dela nos DOIS desfechos que afirmam algo
- * sobre a tradução: o substitutivo (`CORRIGIDA`) e a justificativa da
- * discordância (`RECUSADA`). Reconhecer não tem o que guardar.
+ * PP-03C — AQUI VIVIA `acknowledgePersonNeedAction`.
  *
- * A recusa é validada aqui e no repositório: a superfície nunca é a única
- * guarda de um conteúdo que pertence a ela.
+ * Ela exigia `curador_medico` ou `administrador` para gravar o desfecho da
+ * paciente: o Curador praticava, no código, o ato que o Método reserva a ela.
+ * Os três botões que a chamavam saíram do painel na mesma entrega.
+ *
+ * O caminho autorizado é `registrarDesfechoAction` →
+ * `acknowledge_case_need`, com autorização por `is_patient_for_case` e
+ * trilha em `audit_logs` com `actor_id` = ela (PP-03A/B).
+ *
+ * `registerPersonNeedAction` continua sendo do Curador — a TRADUÇÃO é dele.
  */
-const acknowledgeSchema = z
-  .object({
-    caseId: z.string().uuid(),
-    subcriterionCode: z.string().max(80),
-    acknowledgment: z.enum(["RECONHECIDA", "CORRIGIDA", "RECUSADA"]),
-    correction: z.string().max(500).nullable(),
-  })
-  .refine(
-    (dados) =>
-      dados.acknowledgment === "RECONHECIDA" || (dados.correction ?? "").trim().length > 0,
-    {
-      message:
-        "Corrigir e discordar exigem o texto dela — sem ele, fica o estado sem o motivo, e o motivo é o que importa.",
-      path: ["correction"],
-    },
-  );
-
-export async function acknowledgePersonNeedAction(input: unknown) {
-  await requireAnyRoleForAction(["curador_medico", "administrador"]);
-  const parsed = acknowledgeSchema.safeParse(input);
-  if (!parsed.success) {
-    // A recusa do payload chega com a propria frase: "Formato invalido"
-    // esconderia justamente o que falta (DT-22).
-    return { success: false as const, error: parsed.error.issues[0]?.message ?? "Formato inválido." };
-  }
-
-  const supabase = await createServerSupabaseClient();
-  try {
-    await acknowledgePersonNeed(supabase, parsed.data);
-  } catch (erro) {
-    return { success: false as const, error: (erro as Error).message };
-  }
-
-  revalidateCaseSurfaces(parsed.data.caseId);
-  return { success: true as const };
-}
 
 // ---------------------------------------------------------------------------
 // Cadastro administrativo do Protocolo (Release de Reconstrução, ETAPA 5).

@@ -16,7 +16,6 @@ import {
 } from "@/modules/curadoria/protocolos";
 import type { CaseNeedRecord } from "@/modules/curadoria/protocolos-repository";
 import {
-  acknowledgePersonNeedAction,
   registerPersonNeedAction,
 } from "@/modules/curadoria/protocolos-actions";
 
@@ -134,8 +133,19 @@ function NeedRow({
       ) : null}
 
       {open ? <NeedForm caseId={caseId} question={question} existing={need} onDone={onToggle} /> : null}
+
+      {/* PP-03C — AQUI HAVIA OS TRÊS BOTÕES DE DESFECHO.
+          "Reconheceu", "Corrigiu" e "Recusou" gravavam, pela mão do Curador, o
+          ato que o Método reserva à paciente: o registro dizia "reconhecida" e
+          ninguém podia provar que foi ela. O desfecho passou a ser praticado
+          por ela, na tela dela, por `acknowledge_case_need`.
+          O Curador continua registrando a TRADUÇÃO — e passa a apenas ler o
+          que ela respondeu, que é a relação correta entre os dois. */}
       {need?.origin === "TRADUCAO" && need.acknowledgment === "PENDENTE" ? (
-        <AcknowledgeForm caseId={caseId} subcriterionCode={need.subcriterionCode} />
+        <p className="rounded border border-dashed p-2 text-xs text-[var(--color-ink-muted)]">
+          Esta leitura aguarda a resposta dela. O desfecho é ato da paciente, na Jornada dela — não
+          se registra por aqui.
+        </p>
       ) : null}
     </div>
   );
@@ -256,54 +266,6 @@ function NeedForm({
       <Button type="button" size="sm" onClick={submit} disabled={pending}>
         Registrar
       </Button>
-    </div>
-  );
-}
-
-function AcknowledgeForm({ caseId, subcriterionCode }: { caseId: string; subcriterionCode: string }) {
-  const [correction, setCorrection] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
-
-  function act(acknowledgment: "RECONHECIDA" | "CORRIGIDA" | "RECUSADA") {
-    startTransition(async () => {
-      const result = await acknowledgePersonNeedAction({
-        caseId,
-        subcriterionCode,
-        acknowledgment,
-        correction: acknowledgment === "CORRIGIDA" ? correction : null,
-      });
-      if (!result.success) setError(result.error);
-    });
-  }
-
-  return (
-    <div className="space-y-2 rounded border border-dashed p-2">
-      <p className="text-xs font-medium">O que ela disse sobre esta leitura?</p>
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" size="sm" onClick={() => act("RECONHECIDA")} disabled={pending}>
-          Reconheceu
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          onClick={() => act("CORRIGIDA")}
-          disabled={pending || correction.trim() === ""}
-        >
-          Corrigiu
-        </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={() => act("RECUSADA")} disabled={pending}>
-          Recusou
-        </Button>
-      </div>
-      <Textarea
-        aria-label="Correção dela"
-        value={correction}
-        onChange={(event) => setCorrection(event.target.value)}
-        placeholder="Se corrigiu: o que ela disse, nas palavras dela."
-      />
-      {error ? <p className="text-sm text-red-700" role="alert">{error}</p> : null}
     </div>
   );
 }

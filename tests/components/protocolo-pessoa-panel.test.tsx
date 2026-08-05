@@ -50,25 +50,33 @@ function need(overrides: Partial<CaseNeedRecord> = {}): CaseNeedRecord {
 }
 
 describe("ProtocoloPessoaPanel", () => {
-  it("tradução pendente mostra a leitura proposta e pede o ato dela", () => {
+  it("traducao pendente mostra a leitura proposta e diz de quem e o ato", () => {
     render(<ProtocoloPessoaPanel caseId="case-1" needs={[need()]} />);
 
     expect(screen.getByText(/Leitura proposta: Pelo que você me contou/)).toBeInTheDocument();
     expect(screen.getByText("Aguardando o reconhecimento dela")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Reconheceu" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Recusou" })).toBeInTheDocument();
+    expect(screen.getByText(/O desfecho é ato da paciente/)).toBeInTheDocument();
   });
 
-  it("'Corrigiu' fica desabilitado sem o texto da correção — correção sem texto não é correção", () => {
+  /**
+   * PP-03C — AQUI HAVIA DOIS TESTES DOS BOTOES DE DESFECHO.
+   *
+   * "Reconheceu", "Corrigiu" e "Recusou" gravavam, pela mao do Curador, o ato
+   * que o Metodo reserva a paciente. O segundo teste protegia o DT-22 naquele
+   * formulario (corrigir sem texto ficava desabilitado) — regra que continua
+   * viva, mas agora na RPC e no CHECK do banco, e verificada em
+   * tests/unit/desfechos-do-reconhecimento.test.ts.
+   *
+   * O painel do Curador nao tem mais o que testar aqui porque nao tem mais o
+   * que escrever aqui.
+   */
+  it("o painel do Curador nao oferece nenhum desfecho", () => {
     render(<ProtocoloPessoaPanel caseId="case-1" needs={[need()]} />);
 
-    const corrigiu = screen.getByRole("button", { name: "Corrigiu" });
-    expect(corrigiu).toBeDisabled();
-
-    fireEvent.change(screen.getByLabelText("Correção dela"), {
-      target: { value: "Prefere retorno conforme a evolução." },
-    });
-    expect(screen.getByRole("button", { name: "Corrigiu" })).not.toBeDisabled();
+    for (const botao of ["Reconheceu", "Corrigiu", "Recusou"]) {
+      expect(screen.queryByRole("button", { name: botao }), botao).not.toBeInTheDocument();
+    }
+    expect(screen.queryByLabelText("Correcao dela")).not.toBeInTheDocument();
   });
 
   it("resposta corrigida exibe a correção nas palavras dela, separada da leitura", () => {
