@@ -358,7 +358,194 @@ git show 22cb0d3:docs/curadoria/PROCESSO_DE_ENGENHARIA_2_0.md
 
 O Agente 01 **não executa a R1 sem ter lido o Processo por esse caminho**.
 
-## 18. Fora de escopo — expresso
+## 18. Emenda da guarda C-01 — DT-01, 2026-08-07
+
+> **Contexto.** O Implementador **interrompeu corretamente** antes de editar: o
+> §10 deste contrato exige confrontar fatos da Ficha contra linhas persistidas de
+> `derivation_proposals`, e a C-01 proíbe que qualquer módulo de `src/` conheça
+> propostas persistidas. A interrupção foi acerto de processo.
+
+### 18.1 A C-01 como está — auditoria
+
+| Item | Achado |
+|---|---|
+| **Arquivo** | [`tests/unit/guardas-curadoria-2-0/grupo-c-derivacao.test.ts`](../../tests/unit/guardas-curadoria-2-0/grupo-c-derivacao.test.ts) |
+| **Asserção bloqueante** | `it("nenhum módulo do código conhece propostas de derivação persistidas")` |
+| **Varredura** | `ocorrencias(FONTES, /derivation_proposals\|derivationProposal/i)` deve ser `[]` |
+| **Escopo `FONTES`** | todos os `.ts`/`.tsx` sob `src/`, **conteúdo integral — comentários inclusive** |
+| **Origem** | `b85b968` (pacote F-01, retificado por F-01A) |
+| **Emendada antes** | **sim** — `1ed29f8` (Item 2.1) reescreveu a primeira asserção. Há precedente de emendar a C-01 **na forma**, preservando a intenção |
+| **Princípio** | P-08 ("proposta nunca é declaração") · Arquitetura §15.0 |
+
+**O risco que a C-01 quis impedir, com evidência no próprio texto:** que a
+derivação alcançasse um humano ou o Motor **por atalho**, antes da Fronteira
+Humana — proposta virando declaração sem ato. O cabeçalho do arquivo o diz
+("guardas de **ausência**: provam que nada no repositório já faz, por atalho, o
+que a arquitetura só autoriza depois de decisão registrada"), e a emenda do 2.1
+já precisou o verbo: *"a regra proíbe derivação **persistida ou consumida**"*.
+
+**A distinção normativa já estava latente ali.** Ler uma proposta para
+reconstruir e verificar sua proveniência **não é consumi-la** para decidir,
+derivar, ordenar ou executar o Motor. A emenda torna explícita uma fronteira que
+a guarda sempre quis ter, e nunca soube escrever.
+
+> **Prova de que a varredura alcança comentário:** o módulo do Item 1.9 registra,
+> em [`cadeia-de-proveniencia.ts:83`](../../src/modules/curadoria/cadeia-de-proveniencia.ts),
+> ter sido apanhado por ela — *"faz bem: foi ela que apanhou este comentário"*.
+
+### 18.2 A exceção nominal — um único ponto canônico
+
+> **Consumidor autorizado: `src/modules/curadoria/cadeia-de-proveniencia-repository.ts`.**
+> **Um só.**
+
+```
+derivation_proposals
+        ↓ leitura somente
+cadeia-de-proveniencia-repository.ts     ← único ponto canônico
+        ↓
+CadeiaDeProveniencia   (puro — compara e monta)
+        ↓
+Ficha                  (puro — consome)
+```
+
+**Por que este e não `ficha-de-explicacao-repository.ts`:** a proposta é **um nó
+da cadeia** (o elo `PROPOSTA`), não um insumo da Ficha. Ler os nós é a
+responsabilidade que o repositório da cadeia já exerce sobre as quatro fontes
+existentes; a proposta é a quinta. E o repositório da Ficha **pode delegar** a
+ele — logo, pelo critério do DT-01, **não se autorizam os dois**.
+
+### 18.3 A semântica nova da C-01
+
+> **Nenhum módulo de produção consome propostas persistidas, exceto o
+> repositório canônico de proveniência, que pode somente lê-las para
+> reconstrução e auditoria.**
+
+| Consumo — **proibido a todos, inclusive ao autorizado** | Leitura — **autorizada só ao repositório canônico** |
+|---|---|
+| escolher regra | buscar proposta por identidade |
+| emitir proposta | confrontar `rule_id` |
+| alterar proposta | confrontar `rule_version` |
+| calcular importância | confrontar origem |
+| recalcular Motor | confrontar Case / conceito |
+| ordenar | montar `CadeiaDeProveniencia` |
+| filtrar profissionais | — |
+| tomar decisão | — |
+| montar superfície diretamente | — |
+
+A coluna da esquerda **não é liberada pela exceção**. A exceção autoriza um
+verbo — *ler para reconstruir* —, nunca um arquivo.
+
+### 18.4 C-01b — auditoria da exceção
+
+A exceção nominal precisa de guarda própria. **C-01b: o consumidor autorizado de
+propostas é estritamente inerte e read-only.**
+
+Falha se o arquivo autorizado contiver, direta ou indiretamente:
+`.insert(` · `.update(` · `.delete(` · `.upsert(` · RPC de escrita
+(`rpc("emitir_…")` e equivalentes) · emissão · seleção de regra · cálculo do
+Motor · `export` de função de decisão.
+
+> **Fonte única, à semelhança de `INERTES_AUTORIZADOS`:** a lista nominal
+> `LEITORES_DE_PROPOSTA_AUTORIZADOS` é declarada **uma vez** e usada pelas duas
+> guardas — **C-01** para isentar, **C-01b** para auditar. Autorizar passa a ser,
+> no mesmo ato, submeter à auditoria de inércia. Um segundo nome futuro nasce
+> auditado por construção.
+
+### 18.5 Terceiro consumidor — prova obrigatória
+
+A emenda **não pode generalizar a permissão**. Exige-se prova de falseamento:
+
+```
+src/modules/curadoria/qualquer-outro-modulo.ts
+        → derivation_proposals
+⇒ C-01 FALHA
+```
+
+**Como provar sem sujar a árvore:** a detecção deve ser extraída em **função
+pura** sobre `(lista de arquivos, conteúdo)`, para que o falseamento se prove
+com entrada sintética. Guarda que só pode ser falseada criando arquivo real não
+é falseável na prática — e uma guarda que ninguém consegue derrubar de propósito
+não prova que pegaria o descuido.
+
+### 18.6 Superfícies — continuam proibidas
+
+`components` · `routes` · `actions` · interfaces da paciente · Relatório · Mesa ·
+Fronteira Humana **não acessam a proposta**, nem direta nem indiretamente. Todas
+recebem a informação por `CadeiaDeProveniencia → Ficha`, **nunca por query**.
+
+Isto já é parcialmente guardado pela **C-16** (`app/` e `components/`); a C-01
+emendada cobre o restante de `src/`, inclusive `actions`, porque tudo o que não
+estiver na lista nominal continua caindo.
+
+### 18.7 Relação com A5 — listas independentes, mecanismo comum
+
+**Não confundir, e não fundir.**
+
+| | **A5 / A5b** | **C-01 / C-01b** |
+|---|---|---|
+| Sujeito | o **contrato** da Regra (`regra-de-derivacao-contrato`) | a **proposta persistida** (`derivation_proposals`) |
+| Risco | a camada inerte ganhar lógica viva | a derivação alcançar humano ou Motor sem Fronteira |
+| Critério de admissão | **pureza** — o autorizado não faz I/O | **leitura somente** — o autorizado **faz** I/O, por definição |
+| Lista | `INERTES_AUTORIZADOS` | `LEITORES_DE_PROPOSTA_AUTORIZADOS` |
+
+**As duas listas têm membros incompatíveis, e é isso que decide a questão.** A
+Ficha está na lista da A5 e **não pode** estar na da C-01. O repositório da
+cadeia está na da C-01 e **jamais** poderia estar na da A5 — ele faz I/O, que é
+exatamente o que a A5b reprova.
+
+> **Abstração comum legítima: o mecanismo, nunca a lista.** Compartilhar o
+> ajudante de varredura e o formato de exceção nominal é bom. Fundir as listas
+> obrigaria a afrouxar um dos dois critérios de admissão — reduzir código à custa
+> de reduzir proteção.
+
+### 18.8 RPC ou view não satisfazem a guarda
+
+> **Abstrair o nome da tabela sem mudar a semântica do acesso não satisfaz a
+> C-01.** Uma view `proveniencia_da_proposta` ou uma RPC de leitura que apenas
+> escondam `derivation_proposals` do regex são **evasão**, não solução.
+
+RPC ou view só são aceitáveis por **razão arquitetural própria** — decidida e
+registrada —, nunca para escapar da varredura. Consequência operacional: toda
+view ou função nova sobre `derivation_proposals` entra na **mesma lista
+nominal**, e quem a consome fica sujeito à mesma regra.
+
+### 18.9 O escopo do 1.8-R1 não é reduzido
+
+Registrado expressamente: **os discriminadores de incoerência do ramo importância
+permanecem no 1.8-R1**, e **nenhum é adiado para `2.C`**:
+
+`PROPOSTA_INEXISTENTE` · `PROPOSTA_DE_OUTRA_REGRA` · `PROPOSTA_DE_OUTRA_VERSAO` ·
+`ALVO_DIVERGENTE` · `ORIGEM_DE_OUTRA_PESSOA` · `ORIGEM_SUPERADA` ·
+`CONCEITO_DIVERGENTE`
+
+Era exatamente para poder verificá-los que a emenda foi pedida; usá-la para
+encolher o pacote inverteria o propósito.
+
+### 18.10 O que a emenda **não** muda
+
+A Ficha continua **pura**, sem I/O · a `CadeiaDeProveniencia` continua a **única**
+modelagem de proveniência (§9) · o repositório **não vira autoridade** sobre
+regra nem sobre proposta — ele lê e entrega · a estrutura de
+`derivation_proposals` continua **inerte no banco**: RLS ligada, sem policy, sem
+grant a papel de aplicação, e a C-01 primeira asserção segue provando isso.
+
+## 19. Estado do checkpoint técnico
+
+O pacote `1.8-R1` está **em execução** e tem checkpoint válido:
+
+| Item | Estado |
+|---|---|
+| `HEAD` | `5afe937` |
+| Migration | `20260807120000_vinculo_de_evidencia_no_mapa_do_profissional.sql` — **não rastreada**, já aplicada, arquivo e funções conferidos idênticos ao banco |
+| Ledger local | `104/104` |
+| Restante do R1 | **não iniciado** |
+
+> **A migration não faz parte desta emenda documental.** Ela **não é revertida**,
+> **não é commitada nesta missão** e **permanece checkpoint técnico do pacote em
+> execução**. O Agente 01 retoma exatamente daqui — não há motivo para recomeçar
+> o R1 nem descartar a migration já provada.
+
+## 20. Fora de escopo — expresso
 
 `2.C` · emissor de proposta do lado profissional · Fronteira Humana ·
 confirmação · interface · painel · métricas · reabertura do 2.2 · histórico dos
