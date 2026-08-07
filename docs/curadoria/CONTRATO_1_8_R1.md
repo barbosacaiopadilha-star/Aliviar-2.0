@@ -551,3 +551,205 @@ O pacote `1.8-R1` está **em execução** e tem checkpoint válido:
 confirmação · interface · painel · métricas · reabertura do 2.2 · histórico dos
 Mapas (UPSERT) · `confirmed_at` · unificação `subcriterion_id`/`subcriterion_code` ·
 qualquer superfície nova.
+
+## 21. Leitor controlado de `derivation_proposals` — DT-01, 2026-08-07
+
+> **Contexto.** O caminho autorizado pelo §18 encontrou o invariante do Item 2.1:
+> o repositório canônico leu a tabela diretamente e o banco recusou —
+> `permission denied` para `service_role`, porque a 2.1 deliberadamente não
+> concede `SELECT` a papel de aplicação. O teste A1.1 está vermelho por isso, e
+> **isso é o banco funcionando**, não defeito.
+>
+> **Decisão do DT-01:** função leitora `SECURITY DEFINER`, contrato read-only
+> estreito, `EXECUTE` exclusivamente para `service_role`. A tabela permanece
+> inacessível aos papéis de aplicação. **A autoridade pertence à função, nunca ao
+> papel sobre a tabela.**
+
+### 21.1 Auditoria do contrato de inércia do 2.1 — o que continua verdadeiro
+
+| Item | Achado |
+|---|---|
+| Migration | `20260805090000_estrutura_inerte_da_camada_de_derivacao.sql` — RLS ligada, zero policy, `revoke all … from anon, authenticated`; a `service_role` **nunca recebeu grant** (ausência, não revogação) |
+| Oráculo | [`derivacao-inerte.integration.test.ts`](../../tests/integration/derivacao-inerte.integration.test.ts) — `has_table_privilege` **falso** para `anon`/`authenticated`/`service_role`, select e insert, e zero policies |
+| Justificativa canônica | *"Quem escreve, quem lê e sob que autoridade é decisão das dez dependências do §15.0 — enquanto ela não existir, a tabela permanece fechada **por construção, não por convenção**"* |
+| Precedente `SECURITY DEFINER` | há dezenas na Curadoria — `transfer_case_responsibility`, `practice_evidence_append_only`, os triggers de catálogo — todas com `search_path` fixo |
+
+**Todas as afirmações da 2.1 continuam verdadeiras após a capability**, porque
+todas falam da **tabela**: nenhuma policy nasce, nenhum grant de tabela nasce,
+nenhum papel de aplicação passa a alcançá-la diretamente. E a leitura por função
+nomeada é exatamente a espécie de decisão que a justificativa canônica
+anunciava: uma autoridade **decidida e lavrada**, não uma abertura por herança.
+
+> **Aceite positivo permanente do R1:**
+> `has_table_privilege('service_role', 'curadoria.derivation_proposals', 'select') = false`.
+
+### 21.2 A função — uma, e com este contrato
+
+| Campo | Especificação |
+|---|---|
+| **Nome** | `curadoria.ler_proposta_para_proveniencia` — verbo-primeiro, como `emitir_…`, `valida_…`, `exige_…`, `ocupa_…` |
+| **Natureza** | **capability de auditoria** — não é repository, não é writer, não é RPC de negócio |
+| **Entrada** | `(p_case_id uuid, p_subcriterion_code text)` — a identidade do alvo, que é o que o repositório tem ao montar a cadeia. **`STRICT`**: entrada nula devolve vazio sem executar — nenhum curinga |
+| **Cardinalidade** | devolve **0 ou 1 linha**. Zero linhas é fato de domínio (o elo decide-se na cadeia, não aqui). **Mais de uma linha ⇒ `RAISE` com mensagem nomeada `PROPOSTA_AMBIGUA`** — recusa explícita, nunca escolha silenciosa (mesmo padrão do 2.2C-R1). Hoje a unicidade por alvo decorre dos invariantes (uma regra vigente por conceito + `JA_EMITIDA`); quando os fluxos S1/S2 da `2.C` existirem, evoluir este arco é pacote próprio |
+| **Escopo do alvo** | **lado do Case apenas.** Propostas do lado profissional não existem e seu emissor é matéria da `2.C`; um segundo arco de entrada será decisão própria |
+| **Proibido** | listar propostas arbitrariamente · aceitar predicados abertos · paginação · `select *` · `returns setof derivation_proposals` |
+
+### 21.3 Saída fechada — projeção nominal
+
+`returns table` com **exatamente** estas colunas, confirmadas no schema:
+
+`id uuid` · `case_id uuid` · `subcriterion_code text` · `rule_id text` ·
+`rule_version integer` · `origin_record text` · `origin_version text` ·
+`origin_declared_at timestamptz` · `origin_author uuid` · `suggested_value text` ·
+`emitted_at timestamptz`
+
+`origin_declared_at` entra além da lista esperada porque a árvore do §11.4 exige
+*"resposta dela, **data**"*. **Ficam fora, deliberadamente:**
+`professional_profile_id` (sempre nulo no alvo Case), `target_field`,
+`catalog_version`, `consequence_degree` e `state` — nenhum dos sete
+discriminadores do §10 precisa deles. **Alargar a projeção é mudança de contrato
+e exige lavratura.**
+
+### 21.4 `SECURITY DEFINER` — endurecimento obrigatório
+
+| Item | Especificação |
+|---|---|
+| Owner | o papel que executa migrations (`postgres`); **nunca reatribuído** a papel de aplicação |
+| Definer | `security definer` — a autoridade de leitura é da função |
+| `search_path` | `set search_path = curadoria, pg_temp` — fixo na definição; `pg_temp` **por último**, para que objeto temporário do chamador não faça shadowing |
+| Referências | **totalmente qualificadas** (`curadoria.derivation_proposals`) mesmo com o path fixo |
+| SQL dinâmico | **proibido** — nenhum `EXECUTE`, nenhum `format()`, nenhuma interpolação; parâmetros usados só como valores tipados |
+| Volatilidade | **`STABLE`** — e não é decoração: o PostgreSQL **recusa em execução** qualquer escrita dentro de função não-volátil. O read-only é do motor, não da disciplina |
+
+### 21.5 Grants — o contrato completo
+
+```
+PUBLIC          → REVOKE EXECUTE (imediato, na mesma migration — o default é PUBLIC)
+anon            → sem EXECUTE
+authenticated   → sem EXECUTE
+service_role    → GRANT EXECUTE (o único)
+postgres/owner  → conforme administração
+```
+
+E, simultaneamente, **inalterado**: `service_role` sem `SELECT`, sem `INSERT`,
+sem nada sobre a tabela. Nenhuma permissão adicional de qualquer espécie.
+
+### 21.6 A C-01 evolui de novo — a tabela some de `src/` por inteiro
+
+Com a capability, o repositório **não consulta mais a tabela**: ele invoca a
+função (`.rpc("ler_proposta_para_proveniencia", …)`), cujo nome não contém o da
+tabela. Decisão lavrada, acolhendo a preferência do DT-01:
+
+> **A C-01 volta a proibir `derivation_proposals`/`derivationProposal` em TODO o
+> `src/`, sem exceção nominal.** O único conhecimento da tabela em runtime de
+> aplicação fica **encapsulado no objeto SQL**. O repositório conhece a função,
+> não a tabela.
+
+| Guarda | Sujeito após esta lavratura |
+|---|---|
+| **C-01** | a string da tabela — proibida em todo `src/`, **lista de isenção zerada**; comentários incluídos (a varredura sempre alcançou prosa) |
+| **C-01b** | os arquivos de `LEITORES_DE_PROPOSTA_AUTORIZADOS` continuam auditados como read-only e não decisórios — a lista **muda de sujeito**: deixa de isentar acesso à tabela e passa a nomear **quem pode invocar a capability** |
+| **C-01c** | intocada — o vínculo é ponteiro, nunca busca |
+| **C-01d** (nova) | a capability tem **um chamador só** — ver §21.7 |
+
+Não se reutiliza a C-01b para o novo sujeito da C-01d: **inércia do arquivo** e
+**exclusividade do chamador** são perguntas diferentes, e fundi-las repetiria o
+erro que o §18.7 já recusou para A5×C-01.
+
+Consequência prática para o Agente 01: tipos e comentários do repositório não
+podem conter os radicais proibidos — nomear `PropostaParaProveniencia` e
+explicar por "capability de proveniência" resolve.
+
+### 21.7 C-01d — a guarda da capability
+
+Prova, com a lista nominal como fonte única:
+
+1. **apenas** os arquivos de `LEITORES_DE_PROPOSTA_AUTORIZADOS` mencionam
+   `ler_proposta_para_proveniencia` em `src/`;
+2. nenhum `component`, `route`, `action`, superfície ou módulo fora da lista a
+   invoca;
+3. **nenhuma segunda função SQL expõe propostas**: varrendo as migrations, o
+   conjunto de funções cujo corpo alcança `derivation_proposals` é exatamente
+   `{ emitir_proposta_de_importancia (escritor, C-11), ler_proposta_para_proveniencia (leitor) }` —
+   um terceiro nome derruba a guarda;
+4. a detecção é **função pura** sobre `(arquivos, conteúdo)`, falseável com
+   entrada sintética (§18.5).
+
+### 21.8 O contrato do 2.1 não foi relaxado
+
+| Continua proibido | Passa a existir |
+|---|---|
+| papel de aplicação → acesso **direto** à tabela | `service_role` → `EXECUTE` numa capability **read-only** de projeção mínima |
+
+A proposta continua: **não consumida pelo Motor** · **não convertida
+automaticamente em declaração** · **não apresentada diretamente a humano** ·
+**não escrevível por aplicação**. A capability lê fatos para reconstruir
+proveniência — os nove verbos de consumo do §18.3 permanecem proibidos a todos.
+
+### 21.9 Oráculos — o que fica verde e o que ganha complemento
+
+**Permanecem literalmente verdes, sem edição:** `service_role`/`authenticated`/
+`anon` sem `SELECT` e sem `INSERT` na tabela · zero policies · ausência de
+escrita · C-01 primeira asserção (inércia na migration) · C-09 · C-11.
+
+**Complemento novo (nunca substituição):**
+`has_function_privilege('service_role', 'curadoria.ler_proposta_para_proveniencia(uuid,text)', 'execute') = true`
+· o mesmo, **falso**, para `anon`, `authenticated` e `PUBLIC` · `prosecdef = true`
+· `proconfig` contém o `search_path` fixo · `provolatile = 's'`.
+
+> Proibido trocar "sem SELECT" por "agora pode SELECT". Os dois aceites coexistem.
+
+### 21.10 Anti-vacuidade — dez mutações obrigatórias
+
+| # | Mutação | Efeito exigido |
+|---|---|---|
+| 1 | `GRANT SELECT ON … TO service_role` | oráculo da 2.1 falha |
+| 2 | `GRANT EXECUTE … TO authenticated` | complemento falha |
+| 3 | `GRANT EXECUTE … TO PUBLIC` | complemento falha |
+| 4 | `SECURITY INVOKER` | o caminho real (A1.1) deixa de funcionar |
+| 5 | `search_path` sem fixação ou sem `pg_temp` ao fim | guarda falha |
+| 6 | coluna extra na projeção | contrato de saída falha |
+| 7 | função aceitando listagem ampla | falha |
+| 8 | segundo chamador em `src/` | C-01d falha |
+| 9 | acesso direto à tabela no repositório | C-01 falha |
+| 10 | operação de escrita no corpo da função | `STABLE` recusa em execução **e** a guarda textual falha |
+
+### 21.11 A1.1 — o aceite que esta lavratura desbloqueia
+
+O teste **já escrito** ([`cadeia-de-proveniencia-vinculo.integration.test.ts`](../../tests/integration/cadeia-de-proveniencia-vinculo.integration.test.ts))
+é o aceite, sem reescrita de cenário: `practice_evidence` v1 e v2 · Mapa →
+`evidence_id` da **v1** · proposta persistida → **capability** → repositório →
+`CadeiaDeProveniencia`. Ele prova, de uma vez: a proposta real acessível **pelo
+caminho autorizado** · a tabela inacessível diretamente · **v1 retornada apesar
+da v2** (nenhum `max(version)`) · nenhuma autoridade nova sobre a proposta.
+
+### 21.12 Migration — caminho B, e a regra que o decide
+
+> **Nova migration sequencial.** A `20260807120000` **não é editada.**
+
+Duas razões, nenhuma de conveniência:
+
+1. **Regra oficial do projeto: migration aplicada é imutável.** O precedente
+   está lavrado na própria C-11: o 2.2C-R1 evoluiu o emissor por
+   `create or replace` **numa migration nova** — *"evolução legítima do mesmo
+   escritor"*. Editar arquivo já aplicado dessincroniza arquivo ⟂ ledger
+   (104/104): o runner não reexecuta versão registrada, e o aceite do checkpoint
+   ("arquivo e funções no banco conferidos como idênticos") deixaria de valer.
+2. **Autoridades distintas.** Vínculo de evidência (Mapa ↔ `practice_evidence`)
+   e capability de leitura de propostas têm donos, riscos e rollbacks próprios.
+   Misturá-los faria o rollback de um arrastar o outro.
+
+### 21.13 Retomada do Agente 01 — ordem obrigatória
+
+1. implementar a capability (migration nova, §21.2–§21.5);
+2. ajustar o repositório para chamá-la — a tabela some de `src/`;
+3. restaurar a C-01 como proibição total (lista de isenção da tabela zerada);
+4. implementar a C-01d;
+5. executar o A1.1;
+6. provar v1 × v2;
+7. provar a ausência de `SELECT` direto (aceites coexistentes do §21.9);
+8. **só então** prosseguir no restante do R1.
+
+O checkpoint técnico permanece intocado por esta lavratura: a migration
+`20260807120000` não foi revertida nem commitada; o teste A1.1 permanece
+vermelho até a capability existir — **e deve ser o primeiro verde da retomada**.
