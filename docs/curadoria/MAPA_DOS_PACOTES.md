@@ -74,10 +74,10 @@ direta **sem perder dado** — confirmações feitas permanecem válidas, propos
 |---|---|---|---|---|---|---|---|---|
 | **2.1** | `derivation_proposals` append-only | Materializar a Camada de Derivação | **ADR-A**, todas as dez do §15.0 | A3 verde; falta de proveniência ⇒ não persiste | BLOQUEADO | Implementador | migration aditiva reversível | (parte de L-21) |
 | **2.2** | Ponte grau→importância — **forma e governança**, valores provisórios | Proposta de importância nos ~17 conceitos com lado da pessoa | **ADR-A**, 0.3, 2.1 | A1, A2 verdes; reabertura de I-10 declarada (§10.3.0); teste `importancia-vs-grau.test.ts` protegido até a ADR-A | **PARTICIONADO** — ver §3.1 | Implementador | flag; classificação manual permanece o caminho padrão | L-30 + L-31 |
-| **2.3** | Divisão da etapa AVALIAÇÃO | 3 critérios do lado da pessoa passam a vir do Motor | **ADR-B**, 1.4 | X1 verde; FORMACAO/EXPERIENCIA/HISTORICO permanecem humanos | BLOQUEADO | Implementador | flag restaura 6×N | L-40 + L-41 |
-| **2.4** | `curator_judgments` **sem `AREA`** | Registrar juízo humano onde não há célula | **ADR-B**, 2.1 | Append-only; `AREA` ausente (RS-03) | BLOQUEADO | Implementador | migration aditiva | **novo** |
+| **2.3** | Divisão da etapa AVALIAÇÃO | 3 critérios do lado da pessoa passam a vir do Motor | **ADR-067** (ex-"ADR-B"), 1.4 | X1 verde; FORMACAO/EXPERIENCIA/HISTORICO permanecem humanos | BLOQUEADO | Implementador | flag restaura 6×N | L-40 + L-41 |
+| **2.4** | `curator_judgments` **sem `AREA`** | Registrar juízo humano onde não há célula | **ADR-067** (ex-"ADR-B"), 2.1 | Append-only; `AREA` ausente (RS-03) | BLOQUEADO | Implementador | migration aditiva | **novo** |
 | **2.5** | ~~Regime de confirmação em bloco~~ | — | **DP-5** | **AC-BLOCO:** nenhum mecanismo no repositório, **nem atrás de feature flag** | **PROIBIDO** até DP-5 por ADR (§5.4.0) | — | n/a | (não existia) |
-| **2.6** | Governança de quem confirma o Mapa do Profissional | Corrigir G4/RI4 | **ADR-D** (toca ADR-040 item 6) | RLS não enfraquece; teste de permissão por papel | BLOQUEADO | Implementador + Guardião | restaurar permissão anterior | L-23 |
+| **2.6** | Governança de quem confirma o Mapa do Profissional | Corrigir G4/RI4 | **ADR-068** (ex-"ADR-D"; toca ADR-040 item 6) | RLS não enfraquece; teste de permissão por papel | BLOQUEADO | Implementador + Guardião | restaurar permissão anterior | L-23 |
 | **2.C** | Persistência e apresentação da derivação do Mapa do Profissional — **confirmação item a item** | Ligar 1.A ao mundo real | 1.A, 2.1, 2.6, **todas as dez do §15.0** | Fronteira Humana com os nove elementos (A2c); ausência de ato nunca confirma (A2d) | BLOQUEADO | Implementador | flag desliga a superfície; preenchimento manual permanece | L-21 + L-22 |
 
 ### 3.1 Partição do Item 2.2 — ratificada pelo DT-01 em 2026-08-05
@@ -91,9 +91,9 @@ O Item 2.2 foi executado em subpacotes que **não estavam registrados neste mapa
 | **2.2A** | Estrutura da Regra de Derivação | **CONCLUÍDO** | `30c6809` |
 | **2.2A-MR1** | Endurecimento dos invariantes | **CONCLUÍDO COM RESSALVAS REGISTRADAS** | `7770d7f` |
 | **2.2B** | Ciclo de vida das Regras de Derivação | **CONCLUÍDO COM RESSALVAS REGISTRADAS** | `1a7ef86` |
-| **2.2C** | **Ponte grau → importância** | **ENCERRADO — USO OPERACIONAL BLOQUEADO ATÉ O 2.2C-R1** (ver §3.3) | `b38cd34` |
+| **2.2C** | **Ponte grau → importância** | **ENCERRADO** — o bloqueio de uso operacional era condicionado ao 2.2C-R1 e **foi levantado em 2026-08-07**, quando essa condição se cumpriu (ver §3.3) | `b38cd34` |
 | **2.2B-R1** | Endurecimento pós-verificação (pacote corretivo) | **CONCLUÍDO E VERIFICADO** — implementação concluída, verificação independente concluída, **sem ressalvas bloqueadoras**, efeito técnico vigente na base | `72e0a2b` |
-| **2.2C-R1** | **Participação do motor e unicidade por conceito** | **AUTORIZADO PARA IMPLEMENTAÇÃO — não iniciado** (ver §3.3) | — |
+| **2.2C-R1** | **Participação do motor e unicidade por conceito** | **CONCLUÍDO E VERIFICADO** — implementação concluída, verificação independente concluída, **encerrado formalmente pelo DT-01 em 2026-08-07** (ver §3.3) | `36dde31` |
 
 #### Ressalvas registradas no encerramento do 2.2B
 
@@ -158,14 +158,18 @@ metade do invariante sem guarda declarada.
 
 #### Estado do 2.2C
 
-> **2.2C ENCERRADO — USO OPERACIONAL BLOQUEADO ATÉ O 2.2C-R1.**
+> **2.2C ENCERRADO.** O bloqueio de uso operacional lavrado em 2026-08-05 era
+> **condicionado à implementação e verificação do 2.2C-R1**. Essa condição
+> **cumpriu-se**, e o bloqueio **foi levantado pelo DT-01 em 2026-08-07**.
 
 **Aprovados:** estrutura · emissor · **A2** · proveniência · concorrência ·
 rollback. **O item não é reaberto.**
 
-**Permanece proibido até a implementação e verificação do 2.2C-R1:**
-materializar a primeira regra real · iniciar a Fronteira Humana · iniciar `2.C` ·
-iniciar `2.3`.
+**O levantamento não autoriza nada por si.** Materializar a primeira regra real ·
+iniciar a Fronteira Humana · iniciar `2.C` · iniciar `2.3` **continuam não
+autorizados**, agora por suas **próprias** dependências registradas neste mapa
+(`2.C` e `2.3` seguem `BLOQUEADO` nas tabelas da Onda 2), e não mais por
+pendência do 2.2C-R1.
 
 | Ressalva | Achado | Destino |
 |---|---|---|
@@ -179,7 +183,7 @@ iniciar `2.3`.
 |---|---|
 | **Identificador** | **2.2C-R1** |
 | **Nome** | Participação do motor e unicidade por conceito |
-| **Estado** | **AUTORIZADO PARA IMPLEMENTAÇÃO** — todas as dependências documentais satisfeitas; **não iniciado** |
+| **Estado** | **CONCLUÍDO E VERIFICADO** — implementação em `36dde31`; verificação independente concluída; **encerrado formalmente pelo DT-01 em 2026-08-07** |
 | **Objetivo** | materializar a participação do motor no Catálogo · impedir correspondência e emissão para conceitos `NUNCA` · garantir uma única regra vigente por conceito · declarar corretamente o contrato de `SEM_CORRESPONDENCIA` |
 | **Dependências** | ADR-047 ✅ · **ADR-066 emendada** ✅ · ADR-069 ✅ · Item 2.2C verificado ✅ · **Item 2.2B-R1 verificado** ✅ (`72e0a2b`) · **ausência de regra real materializada** ✅ — **todas satisfeitas** |
 
@@ -222,9 +226,10 @@ vínculo técnico da Autoridade de Método.
 > regra custa migration aditiva; depois, custaria migração de dados sobre
 > proveniência append-only.
 
-#### Estado do 2.2C-R1 — correção documental de 2026-08-05
+#### Estado do 2.2C-R1 — correção documental de 2026-08-05 *(registro histórico — superado pelo §3.4)*
 
-> **2.2C-R1 AUTORIZADO PARA IMPLEMENTAÇÃO.**
+> **2.2C-R1 AUTORIZADO PARA IMPLEMENTAÇÃO.** *(estado de 2026-08-05; o estado
+> vigente é **CONCLUÍDO E VERIFICADO** — ver §3.4)*
 
 O Agente 01 **interrompeu corretamente** a implementação: o mapa ainda afirmava
 que o `2.2B-R1` estava pendente, quando ele já fora implementado e verificado em
@@ -236,12 +241,59 @@ Engenharia funcionando.** A divergência era documental; foi corrigida aqui.
 | Arquitetura aprovada | ✅ |
 | **ADR-066 emendada** (§23: F-1, F-2, F-3) | ✅ |
 | **2.2B-R1 implementado e verificado** (`72e0a2b`) | ✅ |
-| **2.2C encerrado** — uso operacional bloqueado até o 2.2C-R1 | ✅ |
+| **2.2C encerrado** — uso operacional então bloqueado até o 2.2C-R1 *(condição cumprida e bloqueio levantado em 2026-08-07 — §3.4)* | ✅ |
 | **Primeira regra real** | ❌ **ainda proibida** |
 | **Fronteira Humana** | ❌ **ainda proibida** |
 | **`2.C` e `2.3`** | ❌ **ainda fechados** |
 
 **O 2.2C-R1 não está iniciado.** Nenhuma linha técnica foi produzida.
+*(Verdadeiro em 2026-08-05. Superado em 2026-08-07: ver §3.4.)*
+
+### 3.4 Encerramento documental do bloco 2.2 — DT-01, 2026-08-07
+
+Decisão do DT-01 sobre a base `593d61d`. **Encerramento documental**: nenhuma
+decisão de domínio é criada, alterada ou revogada aqui.
+
+#### Estado final do bloco
+
+| Subitem | Estado final | Commit |
+|---|---|---|
+| **2.2A** | CONCLUÍDO | `30c6809` |
+| **2.2A-MR1** | CONCLUÍDO COM RESSALVAS REGISTRADAS | `7770d7f` |
+| **2.2B** | CONCLUÍDO COM RESSALVAS REGISTRADAS | `1a7ef86` |
+| **2.2C** | ENCERRADO — bloqueio operacional **levantado** (condição cumprida) | `b38cd34` |
+| **2.2B-R1** | CONCLUÍDO E VERIFICADO | `72e0a2b` |
+| **2.2C-R1** | **CONCLUÍDO E VERIFICADO** — encerrado formalmente nesta decisão | `36dde31` |
+
+#### Estado do Item 2.2
+
+> **ITEM 2.2 — CONCLUÍDO COM DÍVIDAS NÃO BLOQUEADORAS.**
+
+As dívidas são as **ressalvas já registradas** no encerramento do 2.2A-MR1 e do
+2.2B, mantidas neste documento em seus lugares de origem. Elas **não bloqueiam**
+nenhum pacote seguinte e **não reabrem** nenhum subitem.
+
+#### Correções de certificação — não são subpacotes do 2.2
+
+Registradas aqui apenas para rastreabilidade. **Classificação: manutenção /
+correção de certificação.** Nenhuma delas altera produto, domínio ou invariante,
+e **nenhuma origina item novo**.
+
+| Commit | Objeto | Natureza |
+|---|---|---|
+| `490e4b6` | Oráculo do `mapa-prioridades` atualizado após o PP-02 | Correção de certificação |
+| `593d61d` | Fixture determinística do `relatorio-assistido` | Correção de certificação |
+
+#### Próximo pacote
+
+| Campo | Conteúdo |
+|---|---|
+| **Recomendado** | **Item 1.8 — Ficha de Explicação** |
+| **Estado** | **PRONTO PARA AUTORIZAÇÃO PELO DT-01** — não autorizado, não iniciado |
+| **Por que** | não exige migration, não exige decisão de domínio nova, e destrava 1.9, 1.10, 1.11 e 1.12 |
+
+Nenhum pacote posterior ao bloco 2.2 passa a `EM EXECUÇÃO` por força desta
+decisão.
 
 ## 4. Ondas 3, 4 e 5
 
