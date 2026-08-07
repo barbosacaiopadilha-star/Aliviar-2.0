@@ -42,30 +42,53 @@ export type FichaNaMesa = {
   readonly proveniencia: readonly string[];
 };
 
+/**
+ * A SUPRESSÃO NOMEADA (§13/§20). Afirmação bloqueada não some em silêncio e
+ * não ganha texto de reserva: a superfície recebe UMA linha dizendo que aquela
+ * afirmação específica não é exibível. O detalhe técnico (conceito, motivo,
+ * contradição) vive em `ResultadoDaFicha.bloqueios`, que a Mesa/Auditoria leem
+ * ao lado — a paciente nunca.
+ */
+const AFIRMACAO_SUPRIMIDA_MESA = "AFIRMACAO_NAO_EXIBIVEL — ver bloqueios da leitura" as const;
+
 export function paraMesa(ficha: FichaDeExplicacao): FichaNaMesa {
   const r = ficha.respostas;
+  const s = ficha.status;
   return {
     profissional: ficha.professionalProfileId,
     // "MODELO_COMUNICACAO · ESSENCIAL × CONFIRMADO → ALTA" (§11.5)
-    porQueFoiEscolhida: r.porQueFoiEscolhida.map(
-      (c) => `${c.subcriterionCode} · ${c.degreeDela} × ${c.estadoDele} → ${c.resultado}`,
-    ),
+    porQueFoiEscolhida: s.R1.exibivel
+      ? r.porQueFoiEscolhida.map(
+          (c) => `${c.subcriterionCode} · ${c.degreeDela} × ${c.estadoDele} → ${c.resultado}`,
+        )
+      : [AFIRMACAO_SUPRIMIDA_MESA],
     porQueNestaPosicao:
       "Não há posição. A ordem é a neutra da Rede e não afirma nada sobre ninguém.",
-    criteriosQueInfluenciaram: r.criteriosQueInfluenciaram.map(
-      (c) => `${c.subcriterionCode} → ${c.resultado}`,
-    ),
+    criteriosQueInfluenciaram: s.R3.exibivel
+      ? r.criteriosQueInfluenciaram.map((c) => `${c.subcriterionCode} → ${c.resultado}`)
+      : [AFIRMACAO_SUPRIMIDA_MESA],
     criteriosQueNaoInfluenciaram: r.criteriosQueNaoInfluenciaram.map(
       (c) => `${c.subcriterionCode} · ${c.motivo}`,
     ),
-    lacunas: r.lacunas.map((l) => `${l.subcriterionCode} · ${l.natureza}`),
-    grauDeConfianca: r.grauDeConfianca,
-    // A árvore do §11.4, sem prosa: identificadores, versões, autores, datas.
-    proveniencia: ficha.proveniencia.map((p) => {
-      const origem = `${p.subcriterionCode} ← case_needs(${p.declaracaoOriginal.degree}, ${p.declaracaoOriginal.declaredAt}, ${p.declaracaoOriginal.declaredBy})`;
-      return p.regra
-        ? `${origem} ← regra ${p.regra.ruleId} v${p.regra.ruleVersion} [${p.regra.estadoDaRegra}] ← proposta ${p.regra.propostaId}`
-        : `${origem} ← declaração direta do Curador (sem regra)`;
+    lacunas: s.R5.exibivel
+      ? r.lacunas.map((l) => `${l.subcriterionCode} · ${l.natureza}`)
+      : [AFIRMACAO_SUPRIMIDA_MESA],
+    grauDeConfianca: s.R6.exibivel ? r.grauDeConfianca : AFIRMACAO_SUPRIMIDA_MESA,
+    // A árvore do §11.4, sem prosa: identificadores, versões, autores, datas —
+    // lida DIRETO das cadeias canônicas que a Ficha carrega (A2). Nenhum fato
+    // é copiado para um segundo formato antes de virar linha.
+    proveniencia: ficha.cadeias.map((c) => {
+      const f = c.fatos;
+      const origem = f.declaracao
+        ? `${c.subcriterionCode} ← case_needs(${f.declaracao.degree}, ${f.declaracao.declaredAt ?? "sem data"}, ${f.declaracao.declaredBy ?? "anterior ao regime de autoria"})`
+        : `${c.subcriterionCode} ← (sem declaração original)`;
+      const regra = f.proposta
+        ? ` ← regra ${f.proposta.ruleId} v${f.proposta.ruleVersion} ← proposta ${f.proposta.propostaId}`
+        : " ← declaração direta do Curador (sem regra)";
+      const evidencia = f.evidencia
+        ? ` ⇄ evidência v${f.evidencia.version} (${f.evidencia.sourceTier} · ${f.evidencia.source})`
+        : "";
+      return `${origem}${regra}${evidencia}`;
     }),
   };
 }
@@ -105,28 +128,42 @@ export type FichaNoRelatorio = {
   readonly grauDeConfianca: string;
 };
 
+const AFIRMACAO_SUPRIMIDA_RELATORIO =
+  "Esta parte ainda não pode ser exibida: a proveniência que a sustentaria está incompleta ou incoerente.";
+
 export function paraRelatorio(ficha: FichaDeExplicacao): FichaNoRelatorio {
   const r = ficha.respostas;
-  const regraPorConceito = new Map(ficha.proveniencia.map((p) => [p.subcriterionCode, p.regra]));
+  const s = ficha.status;
+  // A regra vem da cadeia canônica — `fatos.proposta` é `null` no caminho
+  // manual, e a frase diz "declarada pelo Curador" em vez de citar regra.
+  const regraPorConceito = new Map(
+    ficha.cadeias.map((c) => [c.subcriterionCode, c.fatos.proposta]),
+  );
 
   return {
-    porQueFoiEscolhida: r.porQueFoiEscolhida.map((c) => {
-      const regra = regraPorConceito.get(c.subcriterionCode);
-      const origem = regra
-        ? ` A classificação veio da regra ${regra.ruleId}, versão ${regra.ruleVersion}.`
-        : " A classificação foi declarada pelo Curador.";
-      return `${nome(c.subcriterionCode)} foi classificado neste caso, e este profissional tem a característica registrada.${origem}`;
-    }),
+    porQueFoiEscolhida: s.R1.exibivel
+      ? r.porQueFoiEscolhida.map((c) => {
+          const regra = regraPorConceito.get(c.subcriterionCode);
+          const origem = regra
+            ? ` A classificação veio da regra ${regra.ruleId}, versão ${regra.ruleVersion}.`
+            : " A classificação foi declarada pelo Curador.";
+          return `${nome(c.subcriterionCode)} foi classificado neste caso, e este profissional tem a característica registrada.${origem}`;
+        })
+      : [AFIRMACAO_SUPRIMIDA_RELATORIO],
     porQueNestaPosicao:
       "Não há posição: a ordem em que os profissionais aparecem não afirma nada sobre nenhum deles.",
-    criteriosQueInfluenciaram: r.criteriosQueInfluenciaram.map(
-      (c) => `${nome(c.subcriterionCode)} entrou na leitura.`,
-    ),
+    criteriosQueInfluenciaram: s.R3.exibivel
+      ? r.criteriosQueInfluenciaram.map((c) => `${nome(c.subcriterionCode)} entrou na leitura.`)
+      : [AFIRMACAO_SUPRIMIDA_RELATORIO],
     criteriosQueNaoInfluenciaram: r.criteriosQueNaoInfluenciaram.map(
       (c) => `${nome(c.subcriterionCode)} não entrou na leitura: ${MOTIVO_VERBALIZADO[c.motivo]}.`,
     ),
-    lacunas: r.lacunas.map((l) => `${nome(l.subcriterionCode)} ${LACUNA_VERBALIZADA[l.natureza]}.`),
-    grauDeConfianca: CONFIANCA_VERBALIZADA[r.grauDeConfianca],
+    lacunas: s.R5.exibivel
+      ? r.lacunas.map((l) => `${nome(l.subcriterionCode)} ${LACUNA_VERBALIZADA[l.natureza]}.`)
+      : [AFIRMACAO_SUPRIMIDA_RELATORIO],
+    grauDeConfianca: s.R6.exibivel
+      ? CONFIANCA_VERBALIZADA[r.grauDeConfianca]
+      : AFIRMACAO_SUPRIMIDA_RELATORIO,
   };
 }
 
@@ -161,14 +198,15 @@ export type FichaParaPaciente = {
  */
 export function paraPaciente(ficha: FichaDeExplicacao): FichaParaPaciente {
   const r = ficha.respostas;
+  const s = ficha.status;
   return {
-    porQueApareceu: r.porQueFoiEscolhida.map(
+    porQueApareceu: (s.R1.exibivel ? r.porQueFoiEscolhida : []).map(
       (c) =>
         `Você indicou que ${nome(c.subcriterionCode).toLowerCase()} é importante para você, e este profissional tem isso registrado.`,
     ),
     sobreAOrdem:
       "A ordem em que os profissionais aparecem não quer dizer nada. Nenhum está à frente do outro.",
-    oQueFoiConsiderado: r.criteriosQueInfluenciaram.map(
+    oQueFoiConsiderado: (s.R3.exibivel ? r.criteriosQueInfluenciaram : []).map(
       (c) => `${nome(c.subcriterionCode)}, que você indicou.`,
     ),
     oQueNaoFoiConsiderado: r.criteriosQueNaoInfluenciaram
@@ -180,10 +218,12 @@ export function paraPaciente(ficha: FichaDeExplicacao): FichaParaPaciente {
           ? `${nome(c.subcriterionCode)}, porque você disse que não faz diferença para você.`
           : `${nome(c.subcriterionCode)}, porque isso é conversado com você, não decidido por comparação.`,
       ),
-    oQueAindaFalta: r.lacunas.map(
+    oQueAindaFalta: (s.R5.exibivel ? r.lacunas : []).map(
       (l) => `${nome(l.subcriterionCode)}: ${LACUNA_PARA_PACIENTE[l.natureza]}`,
     ),
-    sobreAsInformacoes: CONFIANCA_PARA_PACIENTE[r.grauDeConfianca],
+    sobreAsInformacoes: s.R6.exibivel
+      ? CONFIANCA_PARA_PACIENTE[r.grauDeConfianca]
+      : "Parte das informações desta leitura ainda não pode ser mostrada.",
   };
 }
 

@@ -343,3 +343,163 @@ describe("E-07 · A confiança é qualitativa, e não vira ordem", () => {
     }
   });
 });
+
+// ===========================================================================
+// R1 · A2 — E-08: UMA ÚNICA MODELAGEM DE PROVENIÊNCIA
+//
+// Princípio (CONTRATO_1_8_R1 §9): `CadeiaDeProveniencia` é o único modelo
+// autoritativo. O `c3242ea` provou como o segundo nasce: um tipo "inofensivo"
+// (`OrigemDoConceito`) copiando regra/versão/proposta para uso local — e dois
+// modelos para o mesmo fato divergem em silêncio.
+// ===========================================================================
+
+describe("E-08 · CadeiaDeProveniencia é o único modelo de proveniência", () => {
+  const MODULO_CANONICO = "cadeia-de-proveniencia.ts";
+
+  /**
+   * Detecção PURA sobre `(caminho, conteúdo)` — falseável com entrada
+   * sintética (§18.5).
+   *
+   * O que caracteriza um modelo concorrente não é citar um campo — é um TIPO
+   * declarado fora do módulo canônico que COMBINA a identidade da regra
+   * (rule id/versão) com outro elo de proveniência (proposta, evidência,
+   * origem). Projeção legítima não faz isso: ela referencia a cadeia, não
+   * recopia os fatos dela.
+   */
+  function modelosConcorrentes(
+    arquivos: readonly { caminho: string; conteudo: string }[],
+  ): string[] {
+    const encontrados: string[] = [];
+    for (const { caminho, conteudo } of arquivos) {
+      const normalizado = caminho.split("\\").join("/");
+      if (normalizado.endsWith(MODULO_CANONICO)) continue;
+
+      const declaracoes = semComentario(conteudo).matchAll(
+        /(?:type|interface)\s+(\w+)[^={]*=?\s*\{([\s\S]*?)\n\}/g,
+      );
+      for (const [, nome, corpo] of declaracoes) {
+        const temRegra = /ruleId|ruleVersion|rule_id|rule_version/.test(corpo!);
+        const temOutroElo =
+          /propostaId|proposalId|evidenceId|evidence_id|originRecord|origin_record/.test(corpo!);
+        if (temRegra && temOutroElo) encontrados.push(`${normalizado} → ${nome}`);
+      }
+    }
+    return encontrados;
+  }
+
+  const FONTES_A2 = FONTES_18.map((arquivo) => ({
+    caminho: path18.relative(RAIZ_18, arquivo),
+    conteudo: lerArquivo(arquivo, "utf8"),
+  }));
+
+  it("nenhum tipo fora do módulo canônico combina regra com outro elo", () => {
+    expect(
+      modelosConcorrentes(FONTES_A2),
+      "nasceu um segundo modelo de proveniência — o defeito que a A2 eliminou.",
+    ).toEqual([]);
+  });
+
+  it("o falseamento: `OutraProveniencia` sintética derruba a guarda", () => {
+    const sintetico = [
+      ...FONTES_A2,
+      {
+        caminho: "src/modules/curadoria/outra-proveniencia.ts",
+        conteudo: `export type OutraProveniencia = {
+  ruleId: string;
+  ruleVersion: number;
+  proposalId: string;
+  evidenceId: string;
+}`,
+      },
+    ];
+    expect(modelosConcorrentes(sintetico)).toEqual([
+      "src/modules/curadoria/outra-proveniencia.ts → OutraProveniencia",
+    ]);
+  });
+
+  it("projeção legítima NÃO cai: tipo que referencia a cadeia não é modelo", () => {
+    const projecao = modelosConcorrentes([
+      {
+        caminho: "src/modules/curadoria/uma-projecao.ts",
+        conteudo: `export type FichaProjection = {
+  titulo: string;
+  cadeia: CadeiaDeProveniencia;
+  frases: string[];
+}`,
+      },
+    ]);
+    expect(projecao, "a guarda ficou ampla demais e proíbe projeção legítima").toEqual([]);
+  });
+
+  it("a Ficha consome a cadeia — e não possui campos de proveniência próprios", () => {
+    // Só o CÓDIGO: o cabeçalho da Ficha NOMEIA o modelo eliminado ao explicar
+    // a mudança, e guarda que cai sobre a frase que registra o cumprimento não
+    // protege nada — a mesma lição da C-05 e do 2.2C-R1.
+    const ficha = semComentario(lerArquivo(FICHA, "utf8"));
+    expect(ficha, "a Ficha parou de consumir a cadeia canônica").toMatch(
+      /CadeiaDeProveniencia/,
+    );
+    expect(
+      /OrigemDoConceito|ProvenienciaDoConceito/.test(ficha),
+      "o modelo paralelo do c3242ea voltou.",
+    ).toBe(false);
+  });
+});
+
+// ===========================================================================
+// R1 · A3 — E-09: O BLOQUEIO É POR AFIRMAÇÃO, E NINGUÉM O CONTORNA
+//
+// Princípio (CONTRATO_1_8_R1 §12/§13, missão A3 §20/§21): a supressão é
+// nomeada, o discriminador técnico morre antes da paciente, e nenhuma
+// superfície consome a Ficha antes do regime autorizar.
+// ===========================================================================
+
+describe("E-09 · supressão nomeada, paciente sem discriminador, superfície sem atalho", () => {
+  it("os adaptadores suprimem COM NOME — as linhas de supressão existem", () => {
+    // Falseável: a mutação que remove a supressão (afirmação bloqueada
+    // simplesmente sumindo) derruba esta guarda antes de qualquer teste de
+    // comportamento — silêncio é o defeito que o AC-EXPLICA proíbe.
+    expect(CODIGO_DO_VOCABULARIO).toMatch(/AFIRMACAO_SUPRIMIDA_MESA/);
+    expect(CODIGO_DO_VOCABULARIO).toMatch(/AFIRMACAO_SUPRIMIDA_RELATORIO/);
+    expect(CODIGO_DO_VOCABULARIO).toMatch(/exibivel/);
+  });
+
+  it("o adaptador da paciente não conhece bloqueio técnico: nem motivo, nem contradição", () => {
+    const trecho =
+      CODIGO_DO_VOCABULARIO.split("export function paraPaciente")[1] ?? "";
+    expect(trecho.length, "o adaptador da paciente não foi encontrado").toBeGreaterThan(100);
+    for (const tecnico of [
+      "contradicao",
+      "PROVENIENCIA_INCONSISTENTE",
+      "SEM_EVIDENCIA_VINCULADA",
+      "bloqueios",
+      "PROPOSTA_DE_OUTRA_VERSAO",
+    ]) {
+      expect(trecho, `o texto da paciente passou a citar ${tecnico}`).not.toContain(tecnico);
+    }
+  });
+
+  it("nenhuma superfície importa a Ficha — o regime de transição continua fechado", () => {
+    // CONTRATO §13 (regime de transição): AC-EXPLICA integral é requisito
+    // ANTERIOR ao primeiro consumidor. Enquanto o R1 não fechar e a Fronteira
+    // não abrir, componente/route/action nenhum consome a Ficha.
+    const INTERFACE = FONTES_18.filter(
+      (arquivo) =>
+        arquivo.includes(`${path18.sep}app${path18.sep}`) ||
+        arquivo.includes(`${path18.sep}components${path18.sep}`),
+    );
+    expect(
+      ocorrencias18(INTERFACE, /ficha-de-explicacao/),
+      "uma superfície ligou a Ficha antes do regime autorizar.",
+    ).toEqual([]);
+  });
+
+  it("a Ficha não decide a partir do bloqueio: nenhum sort/filter de profissionais por status", () => {
+    for (const codigo of [CODIGO_DA_FICHA, CODIGO_DO_VOCABULARIO]) {
+      expect(
+        /\.sort\([^)]*(exibivel|bloqueio|integral)/i.test(codigo),
+        "o status de afirmação virou chave de ordenação — explicar não é decidir.",
+      ).toBe(false);
+    }
+  });
+});

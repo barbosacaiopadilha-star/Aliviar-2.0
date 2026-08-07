@@ -170,16 +170,20 @@ describe("A1/A4/A5 · o contrato é tipo, e nada o consome", () => {
     expect(consumidores, "alguém começou a consumir a Regra antes da 2.2B").toEqual([]);
   });
 
-  it("A5b · o único consumidor autorizado é, ele mesmo, inerte", () => {
-    const fonteDoCiclo = readFileSync(
-      join(RAIZ, "src", "modules", "curadoria", "ciclo-de-vida-da-regra.ts"),
-      "utf8",
-    );
-    for (const proibido of [/supabase/i, /\.insert\(/, /\.update\(/, /\.delete\(/, /await /, /from\(/]) {
-      expect(
-        proibido.test(fonteDoCiclo),
-        "o consumidor autorizado deixou de ser biblioteca inerte",
-      ).toBe(false);
+  it("A5b · TODO consumidor autorizado é, ele mesmo, inerte — a lista é a fonte", () => {
+    // 1.8-R1 · A3 (§22): a A5 autoriza DOIS nomes e a A5b auditava um só, por
+    // caminho fixo — "autorizado" e "auditado" tinham divergido. Agora a
+    // auditoria itera a MESMA lista: autorizar é, no mesmo ato, submeter à
+    // prova de inércia. Um terceiro nome futuro nasce auditado por construção.
+    expect(INERTES_AUTORIZADOS.length).toBeGreaterThanOrEqual(2);
+    for (const autorizado of INERTES_AUTORIZADOS) {
+      const fonte = readFileSync(join(RAIZ, autorizado), "utf8");
+      for (const proibido of [/supabase/i, /\.insert\(/, /\.update\(/, /\.delete\(/, /await /, /from\(/]) {
+        expect(
+          proibido.test(fonte),
+          `${autorizado} deixou de ser biblioteca inerte: ${proibido}`,
+        ).toBe(false);
+      }
     }
   });
 

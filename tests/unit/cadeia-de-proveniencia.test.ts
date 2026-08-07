@@ -68,7 +68,14 @@ describe("Autoria — quem declarou chega à cadeia", () => {
     // O texto antigo AFIRMAVA ler fonte e verificacao, e o repositorio nunca
     // leu. Agora o elo declara a ausencia em vez de supor a origem.
     expect(origem.presente).toBe(false);
-    expect(origem.lacuna).toContain("ainda não lê a Base de Evidências");
+    // MUDANCA DE CONTRATO — 1.8-R1. O vinculo passou a existir
+    // (professional_subcriterion_map.evidence_id). Sem ele a origem continua
+    // AUSENTE, mas o motivo deixou de ser "a cadeia nao le" para ser "este
+    // registro nao tem vinculo" — e nenhuma evidencia e escolhida por
+    // proximidade ou por maior versao para tapar o buraco.
+    expect(origem.marca).toBe("AUSENTE");
+    expect(origem.lacuna).toContain("não tem vínculo com a evidência");
+    expect(origem.lacuna).toContain("mais recente");
     expect(ramo.elos.find((e) => e.id === "CONFIRMACAO")?.autor).toBe("perfil-admin");
   });
 });
@@ -103,14 +110,19 @@ describe("Registros antigos — sem autor, e dito assim", () => {
 });
 
 describe("Nenhum elo é inventado", () => {
-  it("o elo da PROPOSTA é sempre ausente — a Camada de Derivação é da Onda 2", () => {
+  it("sem derivação, a PROPOSTA é NAO_APLICAVEL — não é lacuna", () => {
+    // MUDANÇA DE CONTRATO — 1.8-R1 §16. Marcar como ausente um nó que
+    // semanticamente não deveria existir tornava `completa` permanentemente
+    // falsa, e transformava o caminho manual — o único que existe hoje — em
+    // pendência eterna. Ausente e não-aplicável deixaram de ser a mesma coisa.
     const resultado = cadeia(PESSOA_COMPLETA, PROFISSIONAL_COMPLETO);
     for (const ramo of resultado.ramos) {
       const proposta = ramo.elos.find((e) => e.id === "PROPOSTA")!;
-      expect(proposta.presente, `${ramo.lado}: proposta não pode existir na Onda 1`).toBe(false);
-      expect(proposta.lacuna).toContain("Camada de Derivação");
-      expect(proposta.lacuna).toContain("ADR-066");
+      expect(proposta.marca, `${ramo.lado}`).toBe("NAO_APLICAVEL");
+      expect(proposta.presente).toBe(false);
+      expect(proposta.lacuna, "não-aplicável sem motivo é ausência silenciosa").toBeTruthy();
     }
+    expect(resultado.lacunas.map((l) => l.elo)).not.toContain("PROPOSTA");
   });
 
   it("toda lacuna é nomeada — nunca ausência silenciosa", () => {
@@ -130,8 +142,10 @@ describe("Registros novos — o que já é reconstituível", () => {
   it("faltam a proposta (dois ramos) e a origem do lado do profissional", () => {
     const resultado = cadeia(PESSOA_COMPLETA, PROFISSIONAL_COMPLETO);
     const faltantes = resultado.lacunas.map((l) => l.elo);
-    expect(new Set(faltantes)).toEqual(new Set(["PROPOSTA", "DECLARACAO_ORIGINAL"]));
-    expect(resultado.lacunas).toHaveLength(3);
+    // 1.8-R1: sobra UMA lacuna real — a origem do lado do profissional, sem
+    // vínculo de evidência. As duas PROPOSTA saíram da lista por NAO_APLICAVEL.
+    expect(new Set(faltantes)).toEqual(new Set(["DECLARACAO_ORIGINAL"]));
+    expect(resultado.lacunas).toHaveLength(1);
   });
 
   it("sem importância ou sem estado, a leitura do Motor não existe — e a cadeia diz por quê", () => {
@@ -147,7 +161,10 @@ describe("Registros novos — o que já é reconstituível", () => {
 describe("A frase da cadeia descreve rastreabilidade, nunca qualidade", () => {
   it("conta elos e nomeia o que falta", () => {
     const frase = fraseDaCadeia(cadeia(PESSOA_COMPLETA, PROFISSIONAL_COMPLETO));
-    expect(frase).toMatch(/5 de 8 elos registrados/);
+    // MUDANÇA DE CONTRATO — 1.8-R1 §16. A contagem subiu de 5 para 7 porque as
+    // duas PROPOSTA deixaram de ser buracos: no caminho manual elas não
+    // deveriam existir. Sobra 1 elo de fato ausente — a evidência sem vínculo.
+    expect(frase).toMatch(/7 de 8 elos registrados/);
     expect(frase).toMatch(/em vez de supor/);
   });
 

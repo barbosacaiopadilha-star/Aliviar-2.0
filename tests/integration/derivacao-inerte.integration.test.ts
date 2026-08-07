@@ -177,9 +177,14 @@ describe("2.1 · e permanece INERTE", () => {
       "emitir_proposta_de_importancia",
     );
 
-    // Ler propostas para produzir leitura canônica é o que A2 proíbe. O próprio
-    // emissor é a única função que as menciona — e ele escreve, não alimenta o
-    // Pipeline de Leitura.
+    // MUDANÇA DE CONTRATO LAVRADA — 1.8-R1 §21 (`78e261c`). Ler propostas para
+    // produzir leitura canônica continua proibido (A2). O que a lavratura
+    // criou foi um LEITOR DE AUDITORIA: `ler_proposta_para_proveniencia`,
+    // SECURITY DEFINER, STABLE, EXECUTE só de service_role, que reconstrói
+    // proveniência — nunca alimenta o Pipeline de Leitura. O conjunto fechado
+    // passa a ser { escritor, leitor }, e um TERCEIRO nome derruba este
+    // oráculo como sempre derrubou (§21.7; guarda C-01d cobre o mesmo em
+    // unitário).
     const [leitores] = consultar(`
       select coalesce(string_agg(p.proname, ',' order by p.proname), '(nenhum)')
       from pg_proc p join pg_namespace n on n.oid = p.pronamespace
@@ -187,7 +192,21 @@ describe("2.1 · e permanece INERTE", () => {
         and p.prosrc ilike '%derivation_proposals%'
         and p.proname <> 'emitir_proposta_de_importancia'
     `);
-    expect(leitores![0], "uma função passou a consumir propostas").toBe("(nenhum)");
+    expect(leitores![0], "nasceu função além do par lavrado escritor/leitor").toBe(
+      "ler_proposta_para_proveniencia",
+    );
+
+    // E o leitor é o que a lavratura diz: definer, estável, fora do alcance
+    // dos papéis de aplicação — a tabela continua fechada a todos eles.
+    const [contratoDoLeitor] = consultar(`
+      select prosecdef || '/' || provolatile::text || '/' ||
+        has_function_privilege('service_role','curadoria.ler_proposta_para_proveniencia(uuid,text)','execute') || '/' ||
+        has_function_privilege('authenticated','curadoria.ler_proposta_para_proveniencia(uuid,text)','execute') || '/' ||
+        has_table_privilege('service_role','curadoria.derivation_proposals','select')
+      from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'curadoria' and p.proname = 'ler_proposta_para_proveniencia'
+    `);
+    expect(contratoDoLeitor![0]).toBe("true/s/true/false/false");
   });
 
   it("o emissor não alcança papel de aplicação — a estrutura segue inerte", () => {

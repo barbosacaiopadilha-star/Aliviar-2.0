@@ -3,6 +3,11 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import {
+  ehLeitorAutorizado,
+  LEITORES_DE_PROPOSTA_AUTORIZADOS,
+} from "./leitores-de-proposta-autorizados";
+
 /**
  * GUARDAS DA CURADORIA 2.0 — GRUPO C: DERIVAÇÃO
  *
@@ -140,8 +145,149 @@ describe("C-01 · Nenhuma proposta persistida existe", () => {
     ).toBe(false);
   });
 
-  it("nenhum módulo do código conhece propostas de derivação persistidas", () => {
-    expect(ocorrencias(FONTES, /derivation_proposals|derivationProposal/i)).toEqual([]);
+  /**
+   * TERCEIRA EVOLUÇÃO DA C-01 (`78e261c`, CONTRATO_1_8_R1 §21.6) — A TABELA
+   * SOME DE `src/` POR INTEIRO.
+   *
+   * A emenda `e1186ec` havia aberto exceção nominal para o repositório ler a
+   * tabela; a prova de banco real (A1.1) mostrou que o banco a negava de
+   * qualquer forma — a inércia do 2.1 não concede SELECT a papel algum. A
+   * decisão lavrada foi a capability `ler_proposta_para_proveniencia`
+   * (SECURITY DEFINER, §21): o repositório invoca a FUNÇÃO, cujo nome não
+   * contém o da tabela. O único conhecimento da tabela em runtime de
+   * aplicação fica encapsulado no objeto SQL.
+   *
+   * Logo: a C-01 volta a proibir a string em TODO o `src/`, LISTA DE ISENÇÃO
+   * ZERADA — comentários incluídos, porque a varredura sempre alcançou prosa.
+   * A lista nominal muda de sujeito: deixa de isentar acesso à tabela e passa
+   * a nomear quem pode invocar a capability (C-01b audita inércia; C-01d
+   * audita exclusividade).
+   */
+  function leitoresDePropostas(
+    arquivos: readonly { caminho: string; conteudo: string }[],
+  ): string[] {
+    return arquivos
+      .filter(({ conteudo }) => /derivation_proposals|derivationProposal/i.test(conteudo))
+      .map(({ caminho }) => caminho.split("\\").join("/"));
+  }
+
+  const FONTES_COM_CONTEUDO = FONTES.map((arquivo) => ({
+    caminho: path.relative(RAIZ, arquivo),
+    conteudo: readFileSync(arquivo, "utf8"),
+  }));
+
+  it("NENHUM módulo de src/ conhece a tabela de propostas — sem exceção", () => {
+    expect(
+      leitoresDePropostas(FONTES_COM_CONTEUDO),
+      "a string da tabela voltou a src/ — o conhecimento dela é do objeto SQL, não da aplicação.",
+    ).toEqual([]);
+  });
+
+  it("a proibição é total: até o repositório canônico cai se citar a tabela", () => {
+    // §18.5 — falseamento com entrada sintética, sem sujar a árvore. E desta
+    // vez o próprio arquivo da lista nominal NÃO escapa: a autorização dele é
+    // para invocar a capability, nunca para citar a tabela.
+    const sintetico = [
+      {
+        caminho: "src/modules/curadoria/qualquer-outro-modulo.ts",
+        conteudo: 'const x = await supabase.from("derivation_proposals").select("*");',
+      },
+      {
+        caminho: LEITORES_DE_PROPOSTA_AUTORIZADOS[0]!,
+        conteudo: "// comentário citando derivation_proposals",
+      },
+    ];
+    expect(leitoresDePropostas(sintetico)).toEqual([
+      "src/modules/curadoria/qualquer-outro-modulo.ts",
+      LEITORES_DE_PROPOSTA_AUTORIZADOS[0]!,
+    ]);
+  });
+
+  it("o leitor autorizado existe — sem ele, a isenção seria uma porta aberta para ninguém", () => {
+    for (const autorizado of LEITORES_DE_PROPOSTA_AUTORIZADOS) {
+      expect(
+        FONTES_COM_CONTEUDO.some((f) => f.caminho.split("\\").join("/") === autorizado),
+        `o arquivo autorizado ${autorizado} não existe`,
+      ).toBe(true);
+    }
+  });
+
+  /**
+   * C-01b — AUDITORIA DA EXCEÇÃO (§18.4).
+   *
+   * Autorizar e auditar passam a ser o mesmo ato: a lista nominal é fonte única,
+   * e um segundo nome futuro nasce auditado por construção.
+   */
+  describe("C-01b · o leitor autorizado de propostas é read-only e não decisório", () => {
+    for (const autorizado of LEITORES_DE_PROPOSTA_AUTORIZADOS) {
+      it(`${autorizado} não escreve, não emite, não decide`, () => {
+        const fonte = readFileSync(path.join(RAIZ, autorizado), "utf8");
+        const codigo = fonte.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*(\/\/|\*).*$/gm, "");
+
+        for (const escrita of [/\.insert\s*\(/, /\.update\s*\(/, /\.delete\s*\(/, /\.upsert\s*\(/]) {
+          expect(escrita.test(codigo), `o leitor autorizado escreve: ${escrita}`).toBe(false);
+        }
+        expect(
+          /\.rpc\s*\(\s*["'`](emitir|criar|gravar|registrar|aplicar)/i.test(codigo),
+          "o leitor autorizado chama RPC de escrita",
+        ).toBe(false);
+
+        // Consumo (§18.3): decidir, derivar, ordenar, rodar o Motor.
+        for (const consumo of [
+          /crossPriorityAndProfessional|celulaDoMotor|crossOne/,
+          /\.sort\s*\(/,
+          /escolherRegra|selecionarRegra|emitirProposta/i,
+        ]) {
+          expect(consumo.test(codigo), `o leitor autorizado passou a consumir: ${consumo}`).toBe(
+            false,
+          );
+        }
+
+        // E não exporta função de decisão: o que sai dele é cadeia, não veredito.
+        const exportados = [...codigo.matchAll(/export\s+(?:async\s+)?function\s+(\w+)/g)].map(
+          (m) => m[1] as string,
+        );
+        for (const nome of exportados) {
+          expect(
+            /^(decidir|escolher|selecionar|ordenar|filtrar|emitir|aprovar|classificar)/i.test(nome),
+            `o leitor autorizado exporta função de decisão: ${nome}`,
+          ).toBe(false);
+        }
+      });
+
+      /**
+       * C-01c — O VÍNCULO É PONTEIRO, NUNCA BUSCA.
+       *
+       * `evidence_id` aponta para a linha que sustentava o estado no momento da
+       * confirmação. Resolver isso por `max(version)`, por data ou por "primeira
+       * compatível" faria a cadeia afirmar que uma confirmação de julho se
+       * apoiou numa evidência que nasceu em agosto — a mentira exata que o
+       * vínculo existe para impedir (1.8-R1 §4, §6).
+       */
+      it(`${autorizado} resolve a evidência pelo vínculo, nunca por busca`, () => {
+        const fonte = readFileSync(path.join(RAIZ, autorizado), "utf8");
+        const codigo = fonte.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*(\/\/|\*).*$/gm, "");
+
+        for (const inferencia of [
+          /max\s*\(\s*["'`]?version/i,
+          /\.order\s*\([^)]*version/i,
+          /\.order\s*\([^)]*collected_at/i,
+          /\.order\s*\([^)]*created_at/i,
+          /\.limit\s*\(\s*1\s*\)/,
+        ]) {
+          expect(
+            inferencia.test(codigo),
+            `o vínculo passou a ser inferido por ${inferencia} em vez de resolvido por evidence_id.`,
+          ).toBe(false);
+        }
+
+        // E a resolução acontece mesmo: por igualdade de `id`.
+        expect(codigo, "a evidência deixou de ser alcançada pelo vínculo").toMatch(
+          /evidence_id/,
+        );
+        expect(codigo).toMatch(/\.eq\s*\(\s*["'`]id["'`]\s*,\s*evidenceId\s*\)/);
+      });
+    }
   });
 
   it("nenhum módulo persiste 'proposta' como estado de domínio", () => {
@@ -149,6 +295,108 @@ describe("C-01 · Nenhuma proposta persistida existe", () => {
       ocorrencias(FONTES, /\bPROPOSTA\b\s*[:=]|status\s*[:=]\s*["']PROPOSTA["']/),
       "Um estado PROPOSTA persistido é a Camada de Derivação nascendo sem fronteira humana.",
     ).toEqual([]);
+  });
+
+  /**
+   * C-01d — A CAPABILITY TEM UM CHAMADOR SÓ (§21.7).
+   *
+   * A tabela sumiu de `src/` (C-01); o que a aplicação conhece agora é a
+   * capability. A mesma disciplina se repete um nível acima: quem pode
+   * invocá-la é a lista nominal — e mais ninguém. Inércia do arquivo (C-01b) e
+   * exclusividade do chamador (C-01d) são perguntas diferentes, e fundi-las
+   * repetiria o erro que o §18.7 já recusou para A5×C-01.
+   */
+  describe("C-01d · a capability de proveniência tem um chamador só", () => {
+    /** Detecção pura, falseável com entrada sintética (§18.5). */
+    function chamadoresNaoAutorizadosDaCapability(
+      arquivos: readonly { caminho: string; conteudo: string }[],
+    ): string[] {
+      return arquivos
+        .filter(({ conteudo }) => /ler_proposta_para_proveniencia/.test(conteudo))
+        .map(({ caminho }) => caminho.split("\\").join("/"))
+        .filter((caminho) => !ehLeitorAutorizado(caminho));
+    }
+
+    it("somente o repositório nominal invoca a capability", () => {
+      expect(
+        chamadoresNaoAutorizadosDaCapability(FONTES_COM_CONTEUDO),
+        "um módulo fora da lista passou a invocar a capability de proveniência.",
+      ).toEqual([]);
+      // E o autorizado a invoca de verdade — sem isto, a lista isentaria o vazio.
+      const autorizado = FONTES_COM_CONTEUDO.find((f) =>
+        ehLeitorAutorizado(f.caminho.split("\\").join("/")),
+      );
+      expect(autorizado, "o arquivo autorizado sumiu").toBeDefined();
+      expect(autorizado!.conteudo).toContain("ler_proposta_para_proveniencia");
+    });
+
+    it("nenhuma superfície — component, route, action — a invoca", () => {
+      const SUPERFICIES = FONTES_COM_CONTEUDO.filter(
+        ({ caminho }) =>
+          /[\\/](app|components)[\\/]/.test(caminho) || /actions?\.tsx?$/.test(caminho),
+      );
+      expect(
+        SUPERFICIES.filter(({ conteudo }) => /ler_proposta_para_proveniencia/.test(conteudo)).map(
+          ({ caminho }) => caminho,
+        ),
+        "uma superfície passou a invocar a capability direto — a informação chega por CadeiaDeProveniencia → Ficha, nunca por chamada própria.",
+      ).toEqual([]);
+    });
+
+    it("um terceiro chamador sintético derruba a guarda — a autorização é por caminho exato", () => {
+      const sintetico = [
+        ...FONTES_COM_CONTEUDO,
+        {
+          caminho: "src/modules/curadoria/qualquer-outro-modulo.ts",
+          conteudo: 'await supabase.rpc("ler_proposta_para_proveniencia", { p_case_id });',
+        },
+      ];
+      expect(chamadoresNaoAutorizadosDaCapability(sintetico)).toEqual([
+        "src/modules/curadoria/qualquer-outro-modulo.ts",
+      ]);
+    });
+
+    /**
+     * §21.7 item 3 — NENHUMA SEGUNDA FUNÇÃO SQL EXPÕE PROPOSTAS.
+     *
+     * O conjunto de funções cujo CORPO alcança a tabela é exatamente
+     * { emitir_proposta_de_importancia (escritor, C-11),
+     *   ler_proposta_para_proveniencia (leitor, §21) }.
+     * Um terceiro nome derruba a guarda.
+     */
+    function nomesDeFuncoesQueTocamPropostas(sqlSemComentarios: string): string[] {
+      const nomes = new Set(
+        [...sqlSemComentarios.matchAll(/create\s+(?:or\s+replace\s+)?function\s+curadoria\.(\w+)/gi)].map(
+          (m) => m[1] as string,
+        ),
+      );
+      return [...nomes]
+        .filter((nome) => /derivation_proposals/.test(corpoDaFuncao(sqlSemComentarios, nome)))
+        .sort();
+    }
+
+    it("as migrations definem exatamente duas funções que tocam a tabela", () => {
+      const sql = MIGRATIONS.sort()
+        .map((arquivo) => semComentarios(readFileSync(arquivo, "utf8")))
+        .join("\n");
+      expect(nomesDeFuncoesQueTocamPropostas(sql)).toEqual([
+        "emitir_proposta_de_importancia",
+        "ler_proposta_para_proveniencia",
+      ]);
+    });
+
+    it("uma terceira função sintética derruba a guarda", () => {
+      const sintetico = `
+        create or replace function curadoria.exportar_propostas_para_planilha()
+        returns void language plpgsql as $$
+        begin
+          perform * from curadoria.derivation_proposals;
+        end;
+        $$;`;
+      expect(nomesDeFuncoesQueTocamPropostas(sintetico)).toEqual([
+        "exportar_propostas_para_planilha",
+      ]);
+    });
   });
 });
 

@@ -31,10 +31,27 @@ export type EloId =
   | "CONFIRMACAO"
   | "LEITURA";
 
+/**
+ * ITEM 1.8-R1 §16 — AUSENTE E NAO_APLICAVEL SÃO COISAS DIFERENTES.
+ *
+ * Um booleano só sabia dizer "tem" ou "não tem", e com isso empurrava para a
+ * mesma vala dois fatos opostos: o nó que **deveria existir e não existe** — que
+ * é lacuna e bloqueia a afirmação dependente — e o nó que **não existe
+ * semanticamente naquele caminho**, que não é lacuna nenhuma.
+ *
+ * O caso que obrigou a distinção: importância declarada à mão pelo Curador não
+ * passou por regra, logo não tem proposta. Marcar isso como ausente tornava
+ * `cadeia.completa` permanentemente falsa e transformava o funcionamento normal
+ * do regime atual em pendência eterna.
+ */
+export type MarcaDoElo = "PRESENTE" | "AUSENTE" | "NAO_APLICAVEL";
+
 export type EloDeProveniencia = {
   id: EloId;
   /** O que este elo afirma, em uma frase. */
   afirma: string;
+  marca: MarcaDoElo;
+  /** Atalho de leitura: `marca === "PRESENTE"`. Nunca verdadeiro para o que não existe. */
   presente: boolean;
   /**
    * O conteúdo do elo, quando ele tem um: o grau e as opções que ela escolheu,
@@ -56,8 +73,9 @@ export type EloDeProveniencia = {
    */
   em: string | null;
   /**
-   * Por que o elo falta. `null` quando ele está presente. Nunca vazio quando
-   * ausente: uma lacuna sem explicação é indistinguível de um erro de leitura.
+   * Por que o elo falta — ou por que ele não se aplica. `null` só quando o elo
+   * está presente. Nunca vazio quando não está: uma ausência sem explicação é
+   * indistinguível de um erro de leitura.
    */
   lacuna: string | null;
 };
@@ -65,7 +83,11 @@ export type EloDeProveniencia = {
 export type RamoDeProveniencia = {
   lado: "PESSOA" | "PROFISSIONAL";
   elos: EloDeProveniencia[];
-  /** Verdadeiro só quando TODOS os elos do ramo existem. */
+  /**
+   * Verdadeiro quando nenhum elo do ramo está AUSENTE. `NAO_APLICAVEL` não
+   * impede completude: um caminho que não passa por regra está completo sem
+   * proposta, e dizer o contrário seria cobrar um fato que não deveria existir.
+   */
   completo: boolean;
 };
 
@@ -75,6 +97,33 @@ export type CadeiaDeProveniencia = {
   completa: boolean;
   /** Os elos ausentes, nomeados — a lista que um auditor lê primeiro. */
   lacunas: { lado: RamoDeProveniencia["lado"]; elo: EloId; porque: string }[];
+  /** A identidade do alvo desta cadeia — `null` quando o chamador não a deu. */
+  alvo: { caseId: string | null; professionalProfileId: string | null };
+  /**
+   * OS FATOS TIPADOS, ECOADOS — 1.8-R1 · A2.
+   *
+   * Os elos contam a história em prosa; quem CONSOME a cadeia (a Ficha, a
+   * coerência da A3) precisa dos fatos como dado: o grau declarado, a regra e
+   * a versão exatas, a evidência apontada. Até aqui o montador os descartava
+   * depois de escrever as frases — e um consumidor que precisasse deles teria
+   * de recebê-los por fora, num segundo modelo. Foi exatamente assim que
+   * `OrigemDoConceito` nasceu.
+   *
+   * Agora a cadeia carrega o que recebeu. Um modelo só: elos para ler, fatos
+   * para confrontar. Nenhum campo aqui é uma segunda fonte — são os MESMOS
+   * valores que produziram os elos, sem transformação.
+   */
+  fatos: FatosDaCadeia;
+};
+
+export type FatosDaCadeia = {
+  declaracao: EntradaDaPessoa["declaracao"];
+  importancia: EntradaDaPessoa["importancia"];
+  /** `null` = não houve derivação (elo `NAO_APLICAVEL`), nunca "faltou". */
+  proposta: PropostaDaCadeia | null;
+  estado: EntradaDoProfissional["estado"];
+  /** `null` = registro sem vínculo (elo `AUSENTE`), nunca "a mais recente". */
+  evidencia: EvidenciaDaCadeia | null;
 };
 
 /**
@@ -87,8 +136,8 @@ export type CadeiaDeProveniencia = {
  * comportamento correto: a cadeia declara o que falta em vez de fingir que a
  * importância nasceu de uma regra.
  */
-const PROPOSTA_AINDA_NAO_EXISTE =
-  "A Camada de Derivação ainda não existe (Onda 2, ADR-066): não há regra versionada que tenha proposto este valor. Quem o declarou, declarou diretamente.";
+const IMPORTANCIA_DECLARADA_A_MAO =
+  "Esta importância não veio de derivação: o Curador a declarou diretamente. Não há regra versionada a citar porque nenhuma foi usada — e isso não é lacuna, é o caminho manual funcionando como previsto (1.8-R1 §16).";
 
 export type EntradaDaPessoa = {
   /** O que ela declarou, de `case_needs`. `null` = ela não declarou este conceito. */
@@ -105,6 +154,33 @@ export type EntradaDaPessoa = {
     /** `updated_at` do Mapa — quando o registro foi gravado, não "quando confirmou". */
     registradoEm: string | null;
   } | null;
+  /**
+   * A proposta persistida que derivou esta importância, quando houve derivação.
+   *
+   * `null` = a importância foi declarada à mão, e o elo `PROPOSTA` é
+   * `NAO_APLICAVEL` (§16) — não uma lacuna.
+   *
+   * Os campos de confronto (`caseId`, `subcriterionCode`, `originRecord`,
+   * `originVersion`) viajam junto de propósito: a fase seguinte confronta cada
+   * um contra a linha persistida, e descartá-los aqui obrigaria a segunda
+   * consulta que este contrato existe para evitar.
+   */
+  proposta?: PropostaDaCadeia | null;
+};
+
+/** O nó `PROPOSTA` como o banco o guarda — lido só pelo repositório canônico. */
+export type PropostaDaCadeia = {
+  propostaId: string;
+  ruleId: string;
+  ruleVersion: number;
+  caseId: string;
+  subcriterionCode: string;
+  suggestedValue: string;
+  /** `case_needs` de origem e o grau que valia quando a proposta foi emitida. */
+  originRecord: string | null;
+  originVersion: string | null;
+  originAuthor: string | null;
+  emittedAt: string | null;
 };
 
 export type EntradaDoProfissional = {
@@ -115,6 +191,29 @@ export type EntradaDoProfissional = {
     /** `updated_at` do Mapa — mesma semântica do lado do Case. */
     registradoEm: string | null;
   } | null;
+  /**
+   * A evidência EXATA apontada por `professional_subcriterion_map.evidence_id`.
+   *
+   * `null` = registro sem vínculo (legado ou fluxo que ainda não o informa) —
+   * o elo vira `AUSENTE`, e **nenhuma evidência é escolhida por proximidade ou
+   * por maior versão** para preencher o buraco (1.8-R1 §11, §13).
+   */
+  evidencia?: EvidenciaDaCadeia | null;
+};
+
+/** A linha de `practice_evidence` alcançada pelo vínculo — nunca por `max(version)`. */
+export type EvidenciaDaCadeia = {
+  evidenceId: string;
+  professionalProfileId: string;
+  subcriterionCode: string;
+  version: number;
+  source: string;
+  sourceTier: string;
+  collectedBy: string | null;
+  collectedAt: string | null;
+  verifiedBy: string | null;
+  verifiedAt: string | null;
+  verificationSource: string | null;
 };
 
 function elo(
@@ -124,16 +223,34 @@ function elo(
   lacuna: string,
 ): EloDeProveniencia {
   if (!dados) {
-    return { id, afirma, presente: false, detalhe: null, autor: null, em: null, lacuna };
+    return { id, afirma, marca: "AUSENTE", presente: false, detalhe: null, autor: null, em: null, lacuna };
   }
   return {
     id,
     afirma,
+    marca: "PRESENTE",
     presente: true,
     detalhe: dados.detalhe ?? null,
     autor: dados.autor ?? null,
     em: dados.em ?? null,
     lacuna: null,
+  };
+}
+
+/**
+ * O elo que não se aplica àquele caminho. Carrega o motivo, como os ausentes —
+ * mas não conta como lacuna e não bloqueia nada.
+ */
+function eloNaoAplicavel(id: EloId, afirma: string, porque: string): EloDeProveniencia {
+  return {
+    id,
+    afirma,
+    marca: "NAO_APLICAVEL",
+    presente: false,
+    detalhe: null,
+    autor: null,
+    em: null,
+    lacuna: porque,
   };
 }
 
@@ -150,6 +267,14 @@ export function montarCadeiaDeProveniencia(input: {
   subcriterionCode: string;
   pessoa: EntradaDaPessoa;
   profissional: EntradaDoProfissional;
+  /**
+   * A IDENTIDADE DO ALVO — de quem é esta cadeia (A3). O repositório canônico
+   * a preenche com os parâmetros da consulta; sem ela, a coerência não teria
+   * contra o que confrontar uma proposta ou evidência "de outro lugar".
+   * `null` em chamadores antigos: a coerência pula o confronto que não pode
+   * fazer, em vez de inventar identidade.
+   */
+  alvo?: { caseId: string | null; professionalProfileId: string | null };
 }): CadeiaDeProveniencia {
   const { pessoa, profissional } = input;
 
@@ -172,7 +297,22 @@ export function montarCadeiaDeProveniencia(input: {
           : null,
         "Ela ainda não declarou nada sobre este conceito — não há resposta em `case_needs`.",
       ),
-      elo("PROPOSTA", "A regra versionada que transformou a declaração em importância.", null, PROPOSTA_AINDA_NAO_EXISTE),
+      pessoa.proposta
+        ? elo(
+            "PROPOSTA",
+            "A regra versionada que transformou a declaração em importância.",
+            {
+              detalhe: `${pessoa.proposta.suggestedValue} · regra ${pessoa.proposta.ruleId} v${pessoa.proposta.ruleVersion}`,
+              autor: pessoa.proposta.originAuthor,
+              em: pessoa.proposta.emittedAt,
+            },
+            "",
+          )
+        : eloNaoAplicavel(
+            "PROPOSTA",
+            "A regra versionada que transformou a declaração em importância.",
+            IMPORTANCIA_DECLARADA_A_MAO,
+          ),
       elo(
         "CONFIRMACAO",
         "A importância que vale para este Case, e quem a declarou.",
@@ -203,13 +343,31 @@ export function montarCadeiaDeProveniencia(input: {
       // ausência. Dizer que se lê o que não se lê é o mesmo vício que a cadeia
       // existe para combater, do lado de dentro. O texto passa a declarar o
       // que o sistema de fato sabe hoje: nada.
-      elo(
-        "DECLARACAO_ORIGINAL",
-        "A evidência de prática que sustentaria este estado, na Base de Evidências.",
-        null,
-        "A cadeia ainda não lê a Base de Evidências: não existe vínculo, no Mapa do Profissional, que aponte para a evidência que sustenta cada estado. Enquanto ele não existir, a origem deste lado permanece desconhecida — e é isso que está escrito aqui, em vez de uma fonte suposta.",
+      // 1.8-R1: o vínculo passou a existir (`evidence_id`). Quando ele está lá,
+      // a cadeia lê a linha EXATA que sustentava o estado — nunca "a mais
+      // recente". Quando não está, o elo é AUSENTE e diz por quê.
+      profissional.evidencia
+        ? elo(
+            "DECLARACAO_ORIGINAL",
+            "A evidência de prática que sustenta este estado, na Base de Evidências.",
+            {
+              detalhe: `v${profissional.evidencia.version} · ${profissional.evidencia.sourceTier} · ${profissional.evidencia.source}`,
+              autor: profissional.evidencia.collectedBy,
+              em: profissional.evidencia.collectedAt,
+            },
+            "",
+          )
+        : elo(
+            "DECLARACAO_ORIGINAL",
+            "A evidência de prática que sustenta este estado, na Base de Evidências.",
+            null,
+            "Este registro não tem vínculo com a evidência que o sustentava: é anterior ao regime do vínculo, ou foi gravado por fluxo que ainda não o informa. Nenhuma evidência é escolhida por proximidade ou por ser a mais recente — sem vínculo, a origem deste lado permanece desconhecida.",
+          ),
+      eloNaoAplicavel(
+        "PROPOSTA",
+        "A regra versionada que transformou a evidência em estado.",
+        "Não existe proposta do lado do profissional: o estado é declarado a partir da evidência, sem passar por regra de derivação. O emissor do lado profissional não pertence a esta Onda.",
       ),
-      elo("PROPOSTA", "A regra versionada que transformou a evidência em estado.", null, PROPOSTA_AINDA_NAO_EXISTE),
       elo(
         "CONFIRMACAO",
         "O estado que vale no Mapa do Profissional, e quem o declarou.",
@@ -232,13 +390,15 @@ export function montarCadeiaDeProveniencia(input: {
     completo: false,
   };
 
+  // 1.8-R1 §16: só `AUSENTE` é lacuna. `NAO_APLICAVEL` é caminho que não passa
+  // por ali, e cobrá-lo seria exigir um fato que não deveria existir.
   for (const ramo of [ramoPessoa, ramoProfissional]) {
-    ramo.completo = ramo.elos.every((entrada) => entrada.presente);
+    ramo.completo = ramo.elos.every((entrada) => entrada.marca !== "AUSENTE");
   }
 
   const lacunas = [ramoPessoa, ramoProfissional].flatMap((ramo) =>
     ramo.elos
-      .filter((entrada) => !entrada.presente)
+      .filter((entrada) => entrada.marca === "AUSENTE")
       .map((entrada) => ({ lado: ramo.lado, elo: entrada.id, porque: entrada.lacuna! })),
   );
 
@@ -247,6 +407,18 @@ export function montarCadeiaDeProveniencia(input: {
     ramos: [ramoPessoa, ramoProfissional],
     completa: lacunas.length === 0,
     lacunas,
+    alvo: {
+      caseId: input.alvo?.caseId ?? null,
+      professionalProfileId: input.alvo?.professionalProfileId ?? null,
+    },
+    // Os mesmos valores que produziram os elos, sem transformação (A2).
+    fatos: {
+      declaracao: pessoa.declaracao,
+      importancia: pessoa.importancia,
+      proposta: pessoa.proposta ?? null,
+      estado: profissional.estado,
+      evidencia: profissional.evidencia ?? null,
+    },
   };
 }
 
@@ -265,4 +437,126 @@ export function fraseDaCadeia(cadeia: CadeiaDeProveniencia): string {
   return `${presentes} de ${total} elos registrados. ${cadeia.lacunas.length} ainda não existe${
     cadeia.lacunas.length === 1 ? "" : "m"
   } — e a cadeia diz qual, em vez de supor.`;
+}
+
+// ---------------------------------------------------------------------------
+// COERÊNCIA — 1.8-R1 · A3 (CONTRATO §10)
+// ---------------------------------------------------------------------------
+
+/**
+ * O ENUM FECHADO DAS CONTRADIÇÕES, na ordem lavrada do §10.
+ *
+ * "Regra inexistente" e "versão inexistente" NÃO recebem código, de propósito:
+ * a FK composta da MR1.3 as torna impossíveis no banco, e criar motivo para o
+ * impossível seria código morto de outro tipo (§10, nota final).
+ */
+export const CONTRADICOES_DE_PROVENIENCIA = [
+  "PROPOSTA_INEXISTENTE",
+  "PROPOSTA_DE_OUTRA_REGRA",
+  "PROPOSTA_DE_OUTRA_VERSAO",
+  "ALVO_DIVERGENTE",
+  "ORIGEM_DE_OUTRA_PESSOA",
+  "ORIGEM_SUPERADA",
+  "CONCEITO_DIVERGENTE",
+  "EVIDENCIA_DIVERGENTE",
+] as const;
+
+export type ContradicaoDeProveniencia = (typeof CONTRADICOES_DE_PROVENIENCIA)[number];
+
+/**
+ * O que um CONSUMIDOR afirma sobre a derivação — a frase do Relatório que cita
+ * regra e versão, o registro de auditoria que cita a proposta. A coerência
+ * confronta o afirmado contra o persistido; a AUTORIDADE é sempre o fato que a
+ * cadeia carregou do banco, nunca o valor recebido de fora.
+ */
+export type AfirmacaoDeDerivacao = {
+  readonly ruleId?: string;
+  readonly ruleVersion?: number;
+  readonly propostaId?: string;
+};
+
+/**
+ * Confronta a cadeia contra si mesma e contra o que o consumidor afirma.
+ *
+ * SEM segunda leitura do banco: os fatos já vieram do repositório canônico, e
+ * reler aqui seria a segunda fonte que este módulo existe para impedir. O que
+ * se confronta:
+ *
+ *  - fatos ↔ fatos (a proposta é DESTE alvo? a origem é DESTA declaração? a
+ *    evidência é DESTE profissional e DESTE conceito?);
+ *  - afirmado ↔ persistido (a regra/versão que alguém citou é a que emitiu?).
+ *
+ * Regime histórico (§16): `declaredBy = null` é registro anterior ao regime de
+ * autoria — o confronto de autor SÓ acontece quando os dois lados existem.
+ * Ausência legítima nunca vira contradição.
+ */
+export function conferirCoerencia(
+  cadeia: CadeiaDeProveniencia,
+  afirmado?: AfirmacaoDeDerivacao,
+): ContradicaoDeProveniencia[] {
+  const contradicoes: ContradicaoDeProveniencia[] = [];
+  const { proposta, declaracao, evidencia } = cadeia.fatos;
+
+  // --- afirmado ↔ persistido -----------------------------------------------
+  if (afirmado && (afirmado.ruleId !== undefined || afirmado.ruleVersion !== undefined)) {
+    if (!proposta) {
+      // O caminho afirmado exige proposta, e ela não existe. Isto NÃO é o
+      // caminho manual: manual é quando NINGUÉM afirma regra (§6).
+      contradicoes.push("PROPOSTA_INEXISTENTE");
+    } else {
+      if (afirmado.ruleId !== undefined && afirmado.ruleId !== proposta.ruleId) {
+        contradicoes.push("PROPOSTA_DE_OUTRA_REGRA");
+      }
+      if (afirmado.ruleVersion !== undefined && afirmado.ruleVersion !== proposta.ruleVersion) {
+        contradicoes.push("PROPOSTA_DE_OUTRA_VERSAO");
+      }
+      if (afirmado.propostaId !== undefined && afirmado.propostaId !== proposta.propostaId) {
+        contradicoes.push("ALVO_DIVERGENTE");
+      }
+    }
+  }
+
+  // --- a proposta é deste alvo? --------------------------------------------
+  if (proposta) {
+    if (cadeia.alvo.caseId !== null && proposta.caseId !== cadeia.alvo.caseId) {
+      contradicoes.push("ALVO_DIVERGENTE");
+    }
+    if (proposta.subcriterionCode !== cadeia.subcriterionCode) {
+      contradicoes.push("CONCEITO_DIVERGENTE");
+    }
+
+    // --- a origem é desta declaração? --------------------------------------
+    if (declaracao) {
+      if (
+        proposta.originAuthor !== null &&
+        declaracao.declaredBy !== null &&
+        proposta.originAuthor !== declaracao.declaredBy
+      ) {
+        contradicoes.push("ORIGEM_DE_OUTRA_PESSOA");
+      }
+      // S1 (ADR-066 §9): a proposta guarda o grau que valia quando foi
+      // emitida. Se a pessoa redeclarou depois, a proposta está SUPERADA — e
+      // uma frase apoiada nela estaria afirmando o passado como presente.
+      if (proposta.originVersion !== null && proposta.originVersion !== declaracao.degree) {
+        contradicoes.push("ORIGEM_SUPERADA");
+      }
+    }
+  }
+
+  // --- a evidência é deste profissional, deste conceito? -------------------
+  if (evidencia) {
+    const profissionalDivergente =
+      cadeia.alvo.professionalProfileId !== null &&
+      evidencia.professionalProfileId !== cadeia.alvo.professionalProfileId;
+    const conceitoDivergente = evidencia.subcriterionCode !== cadeia.subcriterionCode;
+    if (profissionalDivergente || conceitoDivergente) {
+      // No banco, a FK composta e o trigger de conceito tornam isto
+      // impossível (provas A/B/C da A1.1). A conferência existe para a cadeia
+      // sintética e para o dia em que alguém desligar a proteção — defesa em
+      // profundidade, com o mesmo nome nas duas camadas.
+      contradicoes.push("EVIDENCIA_DIVERGENTE");
+    }
+  }
+
+  return contradicoes;
 }

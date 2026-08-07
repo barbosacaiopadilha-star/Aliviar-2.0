@@ -3,6 +3,8 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { ehLeitorAutorizado } from "./guardas-curadoria-2-0/leitores-de-proposta-autorizados";
+
 import {
   ehEstadoTerminal,
   ESTADO_INICIAL,
@@ -91,14 +93,32 @@ describe("A4 · nenhum pipeline nasceu", () => {
     expect(suspeitos, "um pipeline nasceu antes das dez dependências do §15.0").toEqual([]);
   });
 
-  it("A2 · nenhum módulo de `src/` alcança a estrutura", () => {
+  it("A2 · nenhum módulo de `src/` alcança a estrutura — sem exceção", () => {
     // C-01 já prova isto pelo nome da tabela; aqui a mesma verdade pela porta
     // do consumo, para que renomear a tabela não abra a porta em silêncio.
+    //
+    // LAVRATURA `78e261c` (§21.6): a exceção nominal da `e1186ec` deixou de
+    // existir — com a capability, o repositório invoca a FUNÇÃO e a tabela some
+    // de `src/` por inteiro. A lista nominal mudou de sujeito (chamadores da
+    // capability, C-01d) e não isenta mais ninguém aqui.
     const alcancam = FONTES.filter((arquivo) => {
       const codigo = readFileSync(join(RAIZ, arquivo), "utf8");
       return /from\(\s*["'`]derivation_proposals["'`]\s*\)/i.test(codigo);
     });
     expect(alcancam).toEqual([]);
+
+    // E a lista de chamadores não vaza para cá: nem o nome exato isenta.
+    expect(ehLeitorAutorizado("src/modules/curadoria/cadeia-de-proveniencia-repository.ts")).toBe(
+      true,
+    );
+    expect(
+      FONTES.filter(
+        (arquivo) =>
+          ehLeitorAutorizado(arquivo) &&
+          /from\(\s*["'`]derivation_proposals["'`]\s*\)/i.test(readFileSync(join(RAIZ, arquivo), "utf8")),
+      ),
+      "o chamador da capability voltou a alcançar a tabela diretamente.",
+    ).toEqual([]);
   });
 
   it("o contrato não tem consumidor — é biblioteca inerte, por desenho", () => {

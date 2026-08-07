@@ -1,69 +1,67 @@
 import { CATALOGO_GERADO } from "./catalogo-gerado";
+import {
+  conferirCoerencia,
+  type AfirmacaoDeDerivacao,
+  type CadeiaDeProveniencia,
+  type ContradicaoDeProveniencia,
+} from "./cadeia-de-proveniencia";
 import type { CompatibilityReading, CompatibilityResult } from "./motor-compatibilidade";
 import type { SubcriterionStatus } from "./mapa-profissional";
 import type { NeedDegree } from "./protocolos";
-import { deixouDeValer, type EstadoDaRegra } from "./regra-de-derivacao-contrato";
 
 /**
- * FICHA DE EXPLICAÇÃO — Item 1.8 (Arquitetura §11).
+ * FICHA DE EXPLICAÇÃO — Item 1.8 (Arquitetura §11), fechada na R1 · A3.
  *
  * @metodo §11.0 — nenhuma derivação entra em superfície sem explicação
- *                 reproduzível. A explicabilidade é PRÉ-CONDIÇÃO da primeira
- *                 derivação apresentada a qualquer humano, não refinamento
- *                 posterior.
+ *                 reproduzível
  * @metodo §11.2 — seis respostas obrigatórias, nunca fundidas num resumo
  * @metodo §11.3 — grau de confiança qualitativo, com cinco proibições
  * @metodo §11.4 — cadeia de proveniência fechada ponta a ponta
  * @metodo §11.5 — a mesma Ficha, três vocabulários
+ * @metodo CONTRATO_1_8_R1 §9 — UMA única modelagem de proveniência
+ * @metodo CONTRATO_1_8_R1 §12 — A UNIDADE DE BLOQUEIO É A AFIRMAÇÃO
  *
- * LEITURA DERIVADA, NUNCA FATO NOVO. A Ficha não persiste nada, não corrige
- * proposta, não reordena ninguém e não cria classificação. Ela recompõe, a
- * partir de fatos que já existem, o porquê de um profissional aparecer como
- * aparece. Se os fatos não bastam, ela **não inventa**: declara o bloqueio com
- * nome, e a superfície não renderiza (AC-EXPLICA).
+ * O QUE A A3 MUDOU: o bloqueio deixou de ser tudo-ou-nada. Cada uma das seis
+ * respostas exige ramos específicos da cadeia (a matriz do §12), e uma
+ * afirmação cujo ramo está ausente ou incoerente é marcada NÃO EXIBÍVEL — com
+ * conceito, motivo e, quando houver, a contradição nomeada — enquanto as
+ * respostas independentes continuam de pé. R2 ("não há posição") não depende
+ * de ramo nenhum e nunca bloqueia.
  *
- * Puro: sem React, sem banco, sem relógio. Mesma entrada, mesma saída.
+ * A COERÊNCIA é do módulo canônico (`conferirCoerencia`): fatos da cadeia
+ * confrontados entre si e contra o que um consumidor afirma. A autoridade é
+ * sempre o fato persistido que a cadeia carregou — nunca o valor recebido de
+ * fora. A Ficha não relê banco, não resolve vínculo, não escolhe versão.
+ *
+ * Pura: sem React, sem banco, sem relógio. Mesma entrada, mesma saída.
  */
 
 // ---------------------------------------------------------------------------
-// Entrada — só contratos que já existem
+// Entrada — a leitura do Motor e a cadeia canônica, nada além
 // ---------------------------------------------------------------------------
-
-/**
- * A origem da importância de um conceito, quando ela foi DERIVADA.
- *
- * `null` em `derivacao` significa importância declarada à mão pelo Curador —
- * caminho legítimo e hoje único, já que nenhuma regra real foi materializada.
- * O que **não** é legítimo é derivação sem regra, sem versão ou sem a
- * declaração original da pessoa: aí a cadeia do §11.4 está rompida.
- */
-export type OrigemDoConceito = {
-  readonly subcriterionCode: string;
-  /** `case_needs` — o que a pessoa declarou, com data e autoria. */
-  readonly declaracaoOriginal: {
-    readonly degree: NeedDegree;
-    readonly declaredAt: string;
-    readonly declaredBy: string;
-  } | null;
-  /** Presente quando a importância veio da Camada de Derivação. */
-  readonly derivacao: {
-    readonly ruleId: string;
-    readonly ruleVersion: number;
-    readonly estadoDaRegra: EstadoDaRegra;
-    readonly propostaId: string;
-  } | null;
-};
 
 export type EntradaDaFicha = {
   readonly professionalProfileId: string;
   /** LE3 — o cruzamento que o Motor já produziu. A Ficha não recalcula. */
   readonly leitura: CompatibilityReading;
-  /** LE1 — a origem de cada conceito lido. */
-  readonly origens: readonly OrigemDoConceito[];
+  /**
+   * A proveniência de cada conceito lido — UMA cadeia por conceito, montada
+   * pelo repositório canônico. Conceito lido sem cadeia correspondente tem
+   * TODAS as afirmações dependentes bloqueadas (`SEM_ORIGEM`).
+   */
+  readonly cadeias: readonly CadeiaDeProveniencia[];
   /** Conceitos que o Método mantém fora do Motor (participação `NUNCA`). */
   readonly foraDoMotorPorMetodo: readonly string[];
   /** Conceitos com juízo humano pendente, evidência vencida ou divergência. */
   readonly pendencias?: readonly PendenciaDeLeitura[];
+  /**
+   * O que um CONSUMIDOR afirma sobre a derivação de cada conceito — a frase
+   * que cita regra e versão. A coerência confronta contra o persistido; a
+   * divergência bloqueia a afirmação dependente com a contradição nomeada.
+   */
+  readonly afirmacoes?: readonly (AfirmacaoDeDerivacao & {
+    readonly subcriterionCode: string;
+  })[];
 };
 
 export const NATUREZAS_DE_LACUNA = [
@@ -156,55 +154,67 @@ export type SeisRespostas = {
 export const NAO_HA_POSICAO = "NAO_HA_POSICAO" as const;
 
 // ---------------------------------------------------------------------------
-// Proveniência — §11.4
+// AC-EXPLICA POR AFIRMAÇÃO — §12/§13
 // ---------------------------------------------------------------------------
 
-export type ProvenienciaDoConceito = {
-  readonly subcriterionCode: string;
-  readonly declaracaoOriginal: NonNullable<OrigemDoConceito["declaracaoOriginal"]>;
-  /** `null` quando a importância foi declarada à mão, sem passar por regra. */
-  readonly regra: {
-    readonly ruleId: string;
-    readonly ruleVersion: number;
-    readonly estadoDaRegra: EstadoDaRegra;
-    readonly propostaId: string;
-  } | null;
-};
+/** As seis afirmações da matriz lavrada. */
+export const AFIRMACOES = ["R1", "R2", "R3", "R4", "R5", "R6"] as const;
+export type Afirmacao = (typeof AFIRMACOES)[number];
 
-export type FichaDeExplicacao = {
-  readonly professionalProfileId: string;
-  readonly respostas: SeisRespostas;
-  readonly proveniencia: readonly ProvenienciaDoConceito[];
-};
-
-// ---------------------------------------------------------------------------
-// AC-EXPLICA — bloqueio nomeado, nunca silêncio, nunca reserva genérica
-// ---------------------------------------------------------------------------
-
+/**
+ * Os motivos de não-exibição. `SEM_EVIDENCIA_VINCULADA` materializa o §6 do
+ * contrato: estado afirmado sem vínculo → ramo estado AUSENTE → afirmação
+ * dependente não exibível. `PROVENIENCIA_INCONSISTENTE` é o único que EXIGE
+ * discriminador — o tipo torna a omissão incompilável.
+ */
 export const MOTIVOS_DE_BLOQUEIO = [
   "SEM_ORIGEM",
   "SEM_DECLARACAO_ORIGINAL",
   "SEM_REGRA",
   "SEM_VERSAO",
   "VERSAO_INVALIDA",
-  "REGRA_NAO_APLICAVEL",
+  "SEM_EVIDENCIA_VINCULADA",
   "PROVENIENCIA_INCONSISTENTE",
 ] as const;
 
 export type MotivoDeBloqueio = (typeof MOTIVOS_DE_BLOQUEIO)[number];
 
-export type Bloqueio = {
-  readonly subcriterionCode: string;
-  readonly motivo: MotivoDeBloqueio;
+export type BloqueioDeAfirmacao =
+  | {
+      readonly afirmacao: Afirmacao;
+      readonly subcriterionCode: string;
+      readonly motivo: Exclude<MotivoDeBloqueio, "PROVENIENCIA_INCONSISTENTE">;
+    }
+  | {
+      readonly afirmacao: Afirmacao;
+      readonly subcriterionCode: string;
+      readonly motivo: "PROVENIENCIA_INCONSISTENTE";
+      /** OBRIGATÓRIO: inconsistência sem contradição nomeada não compila. */
+      readonly contradicao: ContradicaoDeProveniencia;
+    };
+
+/** O status de cada afirmação — a unidade de bloqueio do §12. */
+export type StatusDasAfirmacoes = Readonly<Record<Afirmacao, { readonly exibivel: boolean }>>;
+
+export type FichaDeExplicacao = {
+  readonly professionalProfileId: string;
+  readonly respostas: SeisRespostas;
+  /** Por afirmação: o que a superfície pode exibir (§12). R2 nunca bloqueia. */
+  readonly status: StatusDasAfirmacoes;
+  readonly cadeias: readonly CadeiaDeProveniencia[];
 };
 
-export type ResultadoDaFicha =
-  | { readonly renderizavel: true; readonly ficha: FichaDeExplicacao }
-  | {
-      readonly renderizavel: false;
-      readonly professionalProfileId: string;
-      readonly bloqueios: readonly Bloqueio[];
-    };
+/**
+ * O resultado NÃO é mais tudo-ou-nada (§13): a Ficha sempre existe, com o
+ * status de cada afirmação; os bloqueios dizem exatamente qual afirmação não é
+ * exibível, sobre qual conceito e por quê. `integral` é o atalho: nenhuma
+ * afirmação bloqueada.
+ */
+export type ResultadoDaFicha = {
+  readonly ficha: FichaDeExplicacao;
+  readonly bloqueios: readonly BloqueioDeAfirmacao[];
+  readonly integral: boolean;
+};
 
 // ---------------------------------------------------------------------------
 // Construção
@@ -215,41 +225,19 @@ const CONCEITOS_ATIVOS = new Set(
 );
 
 /**
- * A cadeia do §11.4, conferida conceito a conceito.
+ * A MATRIZ DO §12, por contradição/motivo → afirmações atingidas.
  *
- * Uma importância pode chegar por dois caminhos legítimos: declarada à mão pelo
- * Curador, ou derivada por regra. O que a Ficha recusa é o meio-termo — algo
- * que se apresenta como derivado mas não consegue dizer de qual regra, de qual
- * versão, ou sobre qual declaração da pessoa. Aí não há explicação: há
- * aparência de explicação, que é pior.
+ * Ramo importância sustenta R1, R3 e R6; ramo estado sustenta R1, R5 e R6.
+ * R2 não depende de ramo (constante do contrato). R4-metodológica é fato do
+ * Catálogo; R4-grau depende da declaração, e cai junto com ela.
  */
-function conferirProveniencia(origem: OrigemDoConceito): Bloqueio[] {
-  const bloqueios: Bloqueio[] = [];
-  const code = origem.subcriterionCode;
+const RAMO_IMPORTANCIA: readonly Afirmacao[] = ["R1", "R3", "R6"];
+const RAMO_ESTADO: readonly Afirmacao[] = ["R1", "R5", "R6"];
+const TODOS_OS_RAMOS: readonly Afirmacao[] = ["R1", "R3", "R4", "R5", "R6"];
 
-  if (!origem.declaracaoOriginal) {
-    bloqueios.push({ subcriterionCode: code, motivo: "SEM_DECLARACAO_ORIGINAL" });
-  }
-
-  if (origem.derivacao) {
-    const { ruleId, ruleVersion, estadoDaRegra } = origem.derivacao;
-    if (!ruleId.trim()) bloqueios.push({ subcriterionCode: code, motivo: "SEM_REGRA" });
-    if (ruleVersion === null || ruleVersion === undefined) {
-      bloqueios.push({ subcriterionCode: code, motivo: "SEM_VERSAO" });
-    } else if (!Number.isInteger(ruleVersion) || ruleVersion < 1) {
-      // Versão não é "a regra atual": é um número exato. Zero, fracionário ou
-      // negativo não identifica versão nenhuma — é lookup implícito disfarçado.
-      bloqueios.push({ subcriterionCode: code, motivo: "VERSAO_INVALIDA" });
-    }
-    if (deixouDeValer(estadoDaRegra) || estadoDaRegra === "PROPOSTA") {
-      // Regra revogada, suspensa ou ainda em proposta não sustenta a frase que
-      // já está na tela. Fingir validade é o defeito que o §11.0 nomeia.
-      bloqueios.push({ subcriterionCode: code, motivo: "REGRA_NAO_APLICAVEL" });
-    }
-  }
-
-  return bloqueios;
-}
+const CONTRADICOES_DO_ESTADO: ReadonlySet<ContradicaoDeProveniencia> = new Set([
+  "EVIDENCIA_DIVERGENTE",
+]);
 
 function classificarLacuna(
   status: SubcriterionStatus | null,
@@ -263,10 +251,9 @@ function classificarLacuna(
 
 /**
  * §11.3 — a confiança descreve a suficiência da leitura de um profissional
- * CONSIGO MESMO. Nenhum termo aqui olha para outro profissional, e o resultado
- * é um dos três estados nomeados: não há número intermediário do qual ele seja
- * derivado, porque um número intermediário viraria chave de ordenação no dia
- * seguinte.
+ * CONSIGO MESMO, calculada só sobre o que passou no AC-EXPLICA (§15).
+ * Inconsistência de proveniência nunca vira score: ela bloqueia R6, e o valor
+ * calculado fica registrado sem ser exibível.
  */
 function grauDeConfianca(
   lidos: readonly ConceitoComCorrespondencia[],
@@ -283,63 +270,123 @@ function grauDeConfianca(
 }
 
 export function construirFicha(entrada: EntradaDaFicha): ResultadoDaFicha {
-  const origemPorCodigo = new Map(entrada.origens.map((o) => [o.subcriterionCode, o]));
+  const cadeiaPorCodigo = new Map(entrada.cadeias.map((c) => [c.subcriterionCode, c]));
   const pendenciaPorCodigo = new Map(
     (entrada.pendencias ?? []).map((p) => [p.subcriterionCode, p]),
   );
+  const afirmacaoPorCodigo = new Map(
+    (entrada.afirmacoes ?? []).map((a) => [a.subcriterionCode, a]),
+  );
   const foraDoMotor = new Set(entrada.foraDoMotorPorMetodo);
 
-  const bloqueios: Bloqueio[] = [];
-  const proveniencia: ProvenienciaDoConceito[] = [];
+  const bloqueios: BloqueioDeAfirmacao[] = [];
+  const cadeiasUsadas: CadeiaDeProveniencia[] = [];
   const comCorrespondencia: ConceitoComCorrespondencia[] = [];
   const influenciaram: CriterioQueInfluenciou[] = [];
   const naoInfluenciaram: CriterioQueNaoInfluenciou[] = [];
   const lacunas: LacunaDaLeitura[] = [];
   const essenciais: string[] = [];
 
+  const bloquear = (
+    afirmacoes: readonly Afirmacao[],
+    subcriterionCode: string,
+    motivo: Exclude<MotivoDeBloqueio, "PROVENIENCIA_INCONSISTENTE">,
+  ) => {
+    for (const afirmacao of afirmacoes) bloqueios.push({ afirmacao, subcriterionCode, motivo });
+  };
+  const bloquearPorContradicao = (
+    afirmacoes: readonly Afirmacao[],
+    subcriterionCode: string,
+    contradicao: ContradicaoDeProveniencia,
+  ) => {
+    for (const afirmacao of afirmacoes) {
+      bloqueios.push({
+        afirmacao,
+        subcriterionCode,
+        motivo: "PROVENIENCIA_INCONSISTENTE",
+        contradicao,
+      });
+    }
+  };
+
   for (const row of entrada.leitura.rows) {
     const code = row.subcriterionCode;
-    const origem = origemPorCodigo.get(code);
+    const cadeia = cadeiaPorCodigo.get(code);
 
-    // Sem origem não há o que explicar. Renderizar aqui seria afirmar um fato
-    // sobre alguém sem conseguir dizer de onde ele veio.
-    if (!origem) {
-      bloqueios.push({ subcriterionCode: code, motivo: "SEM_ORIGEM" });
+    // Sem cadeia não há o que explicar sobre NENHUM ramo deste conceito.
+    if (!cadeia) {
+      bloquear(TODOS_OS_RAMOS, code, "SEM_ORIGEM");
       continue;
     }
+    cadeiasUsadas.push(cadeia);
 
-    const problemas = conferirProveniencia(origem);
-    if (problemas.length > 0) {
-      bloqueios.push(...problemas);
-      continue;
-    }
-
-    // A partir daqui `declaracaoOriginal` existe: `conferirProveniencia` já
-    // teria bloqueado.
-    const declaracao = origem.declaracaoOriginal!;
-    if (declaracao.degree === "ESSENCIAL") essenciais.push(code);
-
-    proveniencia.push({
-      subcriterionCode: code,
-      declaracaoOriginal: declaracao,
-      regra: origem.derivacao,
-    });
-
+    // R4-metodológica é fato do Catálogo — não depende de ramo (§12).
     if (foraDoMotor.has(code)) {
       naoInfluenciaram.push({ subcriterionCode: code, motivo: "FORA_DO_MOTOR_POR_METODO" });
       continue;
     }
-    if (declaracao.degree === "SEM_PREFERENCIA") {
+
+    const { declaracao, proposta } = cadeia.fatos;
+    let importanciaSustentada = true;
+    let estadoSustentado = true;
+
+    // --- ramo importância --------------------------------------------------
+    if (!declaracao) {
+      bloquear([...RAMO_IMPORTANCIA, "R4"], code, "SEM_DECLARACAO_ORIGINAL");
+      importanciaSustentada = false;
+    } else {
+      if (declaracao.degree === "ESSENCIAL") essenciais.push(code);
+
+      if (proposta) {
+        if (!proposta.ruleId.trim()) {
+          bloquear(RAMO_IMPORTANCIA, code, "SEM_REGRA");
+          importanciaSustentada = false;
+        }
+        if (proposta.ruleVersion === null || proposta.ruleVersion === undefined) {
+          bloquear(RAMO_IMPORTANCIA, code, "SEM_VERSAO");
+          importanciaSustentada = false;
+        } else if (!Number.isInteger(proposta.ruleVersion) || proposta.ruleVersion < 1) {
+          bloquear(RAMO_IMPORTANCIA, code, "VERSAO_INVALIDA");
+          importanciaSustentada = false;
+        }
+      }
+    }
+
+    // --- coerência: fatos ↔ fatos, afirmado ↔ persistido (§10) -------------
+    for (const contradicao of conferirCoerencia(cadeia, afirmacaoPorCodigo.get(code))) {
+      if (CONTRADICOES_DO_ESTADO.has(contradicao)) {
+        bloquearPorContradicao(RAMO_ESTADO, code, contradicao);
+        estadoSustentado = false;
+      } else {
+        bloquearPorContradicao(RAMO_IMPORTANCIA, code, contradicao);
+        importanciaSustentada = false;
+      }
+    }
+
+    // --- ramo estado (§6): estado AFIRMADO exige a evidência exata ---------
+    const estadoAfirmado = row.status !== null;
+    if (estadoAfirmado && !cadeia.fatos.evidencia) {
+      // R5 fica de fora DE PROPÓSITO: a frase de R5 é sobre a lacuna, e a
+      // lacuna é exatamente o que existe. Bloquear o relato da falta porque
+      // falta seria o silêncio que o AC-EXPLICA proíbe.
+      bloquear(["R1", "R3", "R6"], code, "SEM_EVIDENCIA_VINCULADA");
+      estadoSustentado = false;
+    }
+
+    // --- conteúdo ----------------------------------------------------------
+    if (declaracao?.degree === "SEM_PREFERENCIA") {
       naoInfluenciaram.push({ subcriterionCode: code, motivo: "GRAU_SEM_PREFERENCIA" });
       continue;
     }
 
-    influenciaram.push({ subcriterionCode: code, resultado: row.result });
+    if (importanciaSustentada && (!estadoAfirmado || estadoSustentado)) {
+      influenciaram.push({ subcriterionCode: code, resultado: row.result });
+    }
 
     const natureza = classificarLacuna(row.status, pendenciaPorCodigo.get(code));
     if (natureza) {
       lacunas.push({ subcriterionCode: code, natureza });
-    } else if (row.status) {
+    } else if (row.status && importanciaSustentada && estadoSustentado && declaracao) {
       comCorrespondencia.push({
         subcriterionCode: code,
         degreeDela: declaracao.degree,
@@ -361,16 +408,17 @@ export function construirFicha(entrada: EntradaDaFicha): ResultadoDaFicha {
     }
   }
 
-  if (bloqueios.length > 0) {
-    return {
-      renderizavel: false,
-      professionalProfileId: entrada.professionalProfileId,
-      bloqueios,
-    };
-  }
+  const bloqueadas = new Set(bloqueios.map((b) => b.afirmacao));
+  const status: StatusDasAfirmacoes = {
+    R1: { exibivel: !bloqueadas.has("R1") },
+    R2: { exibivel: true }, // constante do contrato — nenhum ramo (§12)
+    R3: { exibivel: !bloqueadas.has("R3") },
+    R4: { exibivel: !bloqueadas.has("R4") },
+    R5: { exibivel: !bloqueadas.has("R5") },
+    R6: { exibivel: !bloqueadas.has("R6") },
+  };
 
   return {
-    renderizavel: true,
     ficha: {
       professionalProfileId: entrada.professionalProfileId,
       respostas: {
@@ -381,21 +429,25 @@ export function construirFicha(entrada: EntradaDaFicha): ResultadoDaFicha {
         lacunas,
         grauDeConfianca: grauDeConfianca(comCorrespondencia, lacunas, essenciais),
       },
-      proveniencia,
+      status,
+      cadeias: cadeiasUsadas,
     },
+    bloqueios,
+    integral: bloqueios.length === 0,
   };
 }
 
 /**
- * AC-EXPLICA para um conjunto. A superfície precisa de DUAS listas: o que pode
- * renderizar e o que existe mas não é exibível. Devolver só a primeira seria o
- * silêncio que o critério proíbe.
+ * AC-EXPLICA para um conjunto. A superfície precisa das DUAS informações: as
+ * Fichas (todas — bloqueio de afirmação não é desaparecimento da Ficha, §13) e
+ * a lista do que não é exibível, com motivo e contradição. Devolver só a
+ * primeira seria o silêncio que o critério proíbe.
  */
 export type LeituraExplicada = {
   readonly fichas: readonly FichaDeExplicacao[];
   readonly naoExibiveis: readonly {
     readonly professionalProfileId: string;
-    readonly bloqueios: readonly Bloqueio[];
+    readonly bloqueios: readonly BloqueioDeAfirmacao[];
   }[];
 };
 
@@ -405,10 +457,10 @@ export function explicarLeitura(entradas: readonly EntradaDaFicha[]): LeituraExp
 
   for (const entrada of entradas) {
     const resultado = construirFicha(entrada);
-    if (resultado.renderizavel) fichas.push(resultado.ficha);
-    else {
+    fichas.push(resultado.ficha);
+    if (!resultado.integral) {
       naoExibiveis.push({
-        professionalProfileId: resultado.professionalProfileId,
+        professionalProfileId: resultado.ficha.professionalProfileId,
         bloqueios: resultado.bloqueios,
       });
     }

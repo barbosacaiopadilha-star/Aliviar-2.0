@@ -618,7 +618,13 @@ describe("2.2C · A2 — a proposta não entra no Pipeline de Leitura", () => {
     expect(saida, "nasceu um segundo escritor de propostas").toBe("emitir_proposta_de_importancia");
   });
 
-  it("nenhuma função lê derivation_proposals para produzir leitura canônica", () => {
+  it("além do emissor, só o leitor de auditoria lavrado alcança as propostas", () => {
+    // MUDANÇA DE CONTRATO — 1.8-R1 §21 (`78e261c`). O A2 continua intacto:
+    // nenhuma função produz leitura canônica a partir de propostas. O que a
+    // lavratura criou foi `ler_proposta_para_proveniencia` — leitor de
+    // AUDITORIA, SECURITY DEFINER/STABLE, EXECUTE só de service_role, para
+    // reconstruir proveniência (§11.4). O conjunto é fechado em DOIS nomes, e
+    // um terceiro derruba este oráculo como sempre derrubou.
     const { saida } = psql(`
       select coalesce(string_agg(p.proname, ',' order by p.proname), '(nenhuma)')
       from pg_proc p join pg_namespace n on n.oid = p.pronamespace
@@ -626,7 +632,9 @@ describe("2.2C · A2 — a proposta não entra no Pipeline de Leitura", () => {
         and p.prosrc ilike '%derivation_proposals%'
         and p.proname <> 'emitir_proposta_de_importancia'
     `);
-    expect(saida, "uma função passou a consumir propostas").toBe("(nenhuma)");
+    expect(saida, "nasceu função além do par lavrado escritor/leitor").toBe(
+      "ler_proposta_para_proveniencia",
+    );
   });
 });
 
