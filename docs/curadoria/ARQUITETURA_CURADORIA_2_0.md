@@ -1539,6 +1539,56 @@ permanece e passa a cobrir a Ficha:
 
 A paciente **nunca** vê célula, matriz, contagem ou resultado nomeado.
 
+## 11.6 Emenda de 2026-08-07 — superfícies × Auditoria, e AC-EXPLICA por afirmação
+
+> **Emenda por acréscimo (ADR-062).** As formulações do §11.1, §11.4 e §11.5
+> permanecem acima, no texto original. Esta seção declara o que passa a valer
+> onde houver divergência. Decisão do DT-01, lavrada em
+> [`CONTRATO_1_8_R1.md`](CONTRATO_1_8_R1.md).
+
+### 11.6.1 A contradição corrigida
+
+O §11.1 nomeia três superfícies — **Mesa, Relatório, painel da paciente**. O
+§11.5 tabula três vocabulários — **Mesa, Relatório, Auditoria**. Somados, são
+quatro consumidores, e cada seção afirmava "três". O erro está no §11.5, que
+trocou a paciente pela Auditoria.
+
+### 11.6.2 O que passa a valer
+
+**Superfícies — três, e só três:**
+
+| # | Superfície | Vocabulário |
+|---|---|---|
+| 1 | **Mesa** | técnico completo |
+| 2 | **Relatório** | verbalização com proveniência |
+| 3 | **Paciente** | linguagem dela; `PATIENT_FORBIDDEN_TERMS` vale integralmente |
+
+**Auditoria não é a quarta superfície nem um quarto vocabulário.** É a
+**projeção transversal** da árvore do §11.4 — identificadores · autores ·
+timestamps · versões · fontes · verificadores — disponível a quem tiver
+autoridade, atravessando as três superfícies. Ela é a ausência de prosa, não uma
+linguagem a mais.
+
+**Por que importa, e não é preciosismo:** é na projeção de Auditoria que versão,
+fonte, verificador e data da evidência aparecem. Sem ela, o ramo estado do §11.4
+não tem onde ser exibido nem verificado.
+
+### 11.6.3 `AUSENTE` × `NAO_APLICAVEL`
+
+| Marca | Definição | Efeito |
+|---|---|---|
+| **`AUSENTE`** | o fato **deveria existir** e não existe | lacuna · **bloqueia** a afirmação dependente |
+| **`NAO_APLICAVEL`** | o nó **não existe semanticamente** naquele caminho | não é lacuna · **não bloqueia por si só** |
+
+Aplicação obrigatória ao nó **proposta** quando a importância foi declarada
+manualmente: não houve derivação, logo o nó é `NAO_APLICAVEL` — nunca lacuna.
+
+### 11.6.4 Cadeia única
+
+> **Existe uma única modelagem de proveniência da Curadoria:
+> `CadeiaDeProveniencia`.** Nenhum segundo modelo paralelo pode existir, e a
+> proibição tem guarda própria.
+
 ---
 
 # 12. Novo modelo de relatórios **[INTERFACE]**
@@ -1987,6 +2037,24 @@ implementação; aqui se define o que ele prova):
 um item não exibível por falta de explicação. **Não** significa esconder em
 silêncio — silêncio é indistinguível de "não existe", e a 2.0 proíbe essa
 confusão desde o P-04.
+
+> **Emenda de 2026-08-07 — a unidade de bloqueio é a afirmação.** A tabela acima
+> permanece válida. Acrescenta-se que o bloqueio **não** opera sobre a Ficha
+> inteira, e sim sobre **cada afirmação exibida**: uma afirmação só é exibível se
+> **todos os ramos que a sustentam** estiverem reconstruídos e coerentes. A
+> granularidade grossa anterior é o que permitiu ao Item 1.8 exibir resultado de
+> célula com o ramo estado inteiro ausente.
+>
+> | Afirmação (§11.2) | Ramo necessário |
+> |---|---|
+> | **R1** por que foi escolhida · **R3** critérios que influenciaram | **AMBOS** |
+> | **R2** não há posição · **R4** fora do Motor por Método | **NENHUM** |
+> | **R4** importância ausente · grau sem preferência | **IMPORTÂNCIA** |
+> | **R5** lacunas de estado | **ESTADO** |
+> | **R6** grau de confiança | união dos ramos usados no cálculo |
+>
+> Nenhuma afirmação pode usar ramo incompleto e continuar marcada como completa.
+> Ver [`CONTRATO_1_8_R1.md`](CONTRATO_1_8_R1.md) §12.
 
 **Este critério torna verificável o invariante do §11.0.**
 

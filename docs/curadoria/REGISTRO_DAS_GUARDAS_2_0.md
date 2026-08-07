@@ -67,10 +67,14 @@ protegem a **metade que já existe**.
 | **D-02** Separação física (AC-PIPELINE antecipado) | Quem lê não importa quem escreve, e vice-versa | Arquitetura §17.4, §2.3 | motores puros e os dois repositórios | um import cruza a fronteira | análise de imports |
 | **D-03** Leitura nunca é persistida | A leitura é recalculada sempre | Arquitetura §2.3 | `src/**` · contrato da leitura | nasce gravação de resultado ou campo `id`/`created_at` no contrato | varredura + inspeção de chaves |
 
-### Grupo E — Explicabilidade (`grupo-e-explicabilidade.test.ts`, 9 testes)
+### Grupo E — Explicabilidade (`grupo-e-explicabilidade.test.ts`, 21 testes)
 
-AC-EXPLICA completo depende da Ficha de Explicação (Onda 1.8). Estas guardas protegem a
-**primitiva** de que toda explicação futura dependerá.
+E-01 a E-04 protegem a **primitiva** de que toda explicação depende. **E-05, E-06 e
+E-07 nasceram com o Item 1.8** (`c3242ea`, 12 testes) e protegem a Ficha em si.
+
+> **Ressalva de 2026-08-07.** O grupo E **não** cobre o §11.4: o `c3242ea` está
+> `CONCLUÍDO PARCIALMENTE` e o ramo estado da proveniência não existe na Ficha.
+> Fechar isso é o `1.8-R1` — ver [`CONTRATO_1_8_R1.md`](CONTRATO_1_8_R1.md).
 
 | Guarda | Objetivo | Princípio | Arquivos | Como falha | Como é detectada |
 |---|---|---|---|---|---|
@@ -78,6 +82,9 @@ AC-EXPLICA completo depende da Ficha de Explicação (Onda 1.8). Estas guardas p
 | **E-02** Nenhuma frase conclui qualidade | O Motor organiza; quem conclui é pessoa | Congelamento I-9; Arquitetura §11.5 | motor + rótulos de estado | um texto ganha "melhor", "garantido", "recomendado" | varredura léxica |
 | **E-03** Nenhum texto de reserva | Erro é erro; não vira explicação | Arquitetura §17.4 AC-EXPLICA item 6 | motor + rótulos | surge "informação indisponível", traço, vazio | varredura léxica |
 | **E-04** O vocabulário do Motor não alcança a paciente | A fronteira de linguagem é mecânica | Congelamento I-5; Arquitetura §11.5 | `paciente/experiencia.ts` | "motor", "cruzamento", "score", "ranking" deixam de ser barrados | `violatesPatientVocabulary` |
+| **E-05** A Ficha é derivada — nada dela é persistido *(1.8)* | Explicação é leitura, nunca fato novo | Arquitetura §11.0; A5 | `ficha-de-explicacao.ts` · `-vocabulario.ts` | nasce `insert`/`upsert`/`update`/`delete`, banco, React, relógio, cache, snapshot, migration ou tabela | varredura das duas fontes + ausência de migration no pacote |
+| **E-06** AC-PIPELINE — ninguém explica por fora do leitor oficial *(1.8)* | Uma explicação, uma fonte | Arquitetura §17.4 AC-PIPELINE | superfícies · adaptadores dos três vocabulários | uma superfície remonta as seis respostas por conta própria, ou o adaptador da paciente passa a conhecer regra/versão/proposta | análise de imports + varredura |
+| **E-07** A confiança é qualitativa, e não vira ordem *(1.8)* | Arquitetura §11.3 — cinco proibições | `ficha-de-explicacao.ts` | a confiança vira número, percentual, contagem, ou é usada para ordenar/agrupar/comparar | estados fechados + varredura de uso |
 
 ### Grupo F — Governança (`grupo-f-governanca.test.ts`, 6 testes)
 

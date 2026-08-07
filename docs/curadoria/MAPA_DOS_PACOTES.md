@@ -39,7 +39,7 @@
 
 | Código | Nome | Objetivo | Dep. | Aceite | Estado | Resp. | Rollback | Era |
 |---|---|---|---|---|---|---|---|---|
-| **1.1** | Guarda executável de participação no Motor | Tornar executável o invariante P15/RI8 | **0.1 / DP-1** | A4 verde: conceito `MOTOR_PARTICIPATION: NUNCA` nunca aparece em cruzamento | **BLOQUEADO** — a **evidência** já existe (caracterização F-03 do pacote F-01); falta a decisão | Arquiteto + Guardião, depois Implementador | reverter commit | F-01 |
+| **1.1** | Guarda executável de participação no Motor | Tornar executável o invariante P15/RI8 | ~~0.1 / DP-1~~ — **DP-1 ratificada (PA-1)** | A4 verde: conceito `MOTOR_PARTICIPATION: NUNCA` nunca aparece em cruzamento | **CONCLUÍDO** — corrigido em 2026-08-07: DP-1 ratificada, `participacao-no-motor.ts` existe (`f1a7427`), e o **2.2C-R1** (`36dde31`) levou `MOTOR_PARTICIPATION` ao Catálogo, eliminando o `Record` manual. O estado `BLOQUEADO` anterior era divergência mapa ⟂ git | Arquiteto + Guardião, depois Implementador | reverter commit | F-01 |
 | **F-01** | **Guardas executáveis da Curadoria 2.0** | 21 guardas + 1 caracterização, sem tocar código de produto | — | 53 testes verdes; suíte unitária e typecheck limpos; nenhuma alteração funcional | **CONCLUÍDO** (2026-08-04), **retificado por F-01A** | Implementador | apagar `tests/unit/guardas-curadoria-2-0/` | — |
 | **F-01A** | **Retificação dirigida das guardas** | Executar os sete itens da verificação do Agente 04 | F-01; relatório do Agente 04 | achado F-01/04 removido; F-01/01 e F-01/02 reclassificados como dívida documental; F-02 protegendo de verdade; teste tautológico eliminado; 55 testes verdes | **CONCLUÍDO** (2026-08-04) — segue para o Agente 04 | Implementador | reverter os dois arquivos de teste ao estado de F-01 | — |
 | **F-02** | **Modelo de Dados da 2.0** (`derivation_proposals`, `curator_judgments`) | Materializar a camada de persistência da 2.0 | **~~ADR-A/B/D~~ lavradas (066/067/068)** · restam: **Onda 1 verde**, **DP-4** (Autoridade de Método), **guarda C-01** | — | **IMPEDIDO** (2026-08-04, relatório v2.0) — o bloqueio é **declarado pelas próprias ADRs**; nada implementado | Fundador (sequenciamento e nomeação) + Guardião/Arquiteto/Governança (C-01) | n/a — nada foi criado | 2.1 + 2.4 |
@@ -54,12 +54,34 @@
 
 | Código | Nome | Objetivo | Dep. | Aceite | Estado | Resp. | Rollback | Era |
 |---|---|---|---|---|---|---|---|---|
-| **1.8** | **Ficha de Explicação** (§11) | Explicabilidade obrigatória, incluindo explicação de proposta | 1.1 | **AC-EXPLICA** (bloqueante): sem explicação, a superfície **não renderiza**; fallback genérico proibido | PLANEJADO | Implementador | remover a Ficha desliga o consumo, não a regra | **novo** |
-| **1.9** | Cadeia de proveniência ponta a ponta (§11.4) | Reconstruir qualquer frase até a origem | 1.8 | M3 verde | PLANEJADO | Implementador | reverter | **novo** |
-| **1.10** | Reconhecimento em duas colunas (§6.2.1) | Ela lê **o que declarou** ao lado da tradução (P8) | 1.9 | X2 verde; Perfis antigos exibidos no formato da época (R-07) | PLANEJADO | Implementador + decisão sobre o texto de reconhecimento | flag; reconhecimentos feitos permanecem válidos | L-32 (antecipado) |
+| **1.8** | **Ficha de Explicação** (§11) | Explicabilidade obrigatória, incluindo explicação de proposta | 1.1 · **1.9** (ver §2.3) | **AC-EXPLICA** (bloqueante): sem explicação, a superfície **não renderiza**; fallback genérico proibido | **CONCLUÍDO PARCIALMENTE** — `c3242ea` é **base técnica válida**; o §11.4 **não** está satisfeito. Ver `1.8-R1` | Implementador | remover a Ficha desliga o consumo, não a regra | **novo** |
+| **1.8-R1** | **Fechamento da Proveniência da Ficha** | Cumprir integralmente o §11.4 | 1.8 · 1.9 · [`CONTRATO_1_8_R1.md`](CONTRATO_1_8_R1.md) | os **doze** critérios do §16 do Contrato | **LAVRADO — aguarda autorização do DT-01 para implementar** | Implementador | reverter ao estado de `c3242ea`; a migration é aditiva e reversível | **novo** |
+| **1.9** | Cadeia de proveniência ponta a ponta (§11.4) | Reconstruir qualquer frase até a origem | ~~1.8~~ — **dependência invertida**, ver §2.3 | M3 verde | **CONCLUÍDO** (`30d8163`) — corrigido em 2026-08-07 | Implementador | reverter | **novo** |
+| **1.10** | Reconhecimento em duas colunas (§6.2.1) | Ela lê **o que declarou** ao lado da tradução (P8) | 1.9 | X2 verde; Perfis antigos exibidos no formato da época (R-07) | **CONCLUÍDO** — série `1.10B-P2` e `1.10C-A` (`79949b5`, `9de858e`); corrigido em 2026-08-07 | Implementador + decisão sobre o texto de reconhecimento | flag; reconhecimentos feitos permanecem válidos | L-32 (antecipado) |
 | **1.11** | Painel de discordância, vazio | Existir antes da primeira regra | 1.8 | O6: taxa de discordância observável por conceito e por versão | PLANEJADO | Implementador | remover | **novo** |
 | **1.12** | Mecanismo de discordância na Fronteira Humana | Discordar custar o mesmo que concordar | 1.11 | O2 verde (P-10 como contrato testado) | PLANEJADO | Implementador | remover | **novo** |
 | **1.A** | **Função pura de derivação do Mapa do Profissional** | Contrato puro, **sem persistência, sem consumidor, sem superfície** | 1.1 | Zero chamadores (verificável); lacuna nunca vira estado positivo (P-04/I-8) | PLANEJADO | Implementador | remover o módulo — não tem chamador | L-20 |
+
+### 2.3 Item 1.8-R1 e a inversão 1.8 ↔ 1.9 — correção de 2026-08-07
+
+**A dependência estava invertida no mapa.** O mapa declarava `1.9` dependente de
+`1.8`. Na prática o **1.9 veio antes** (`30d8163`) e entregou
+[`cadeia-de-proveniencia.ts`](../../src/modules/curadoria/cadeia-de-proveniencia.ts)
+— a árvore do §11.4 **com os dois ramos** e com o nó `CONFIRMACAO` em cada um.
+
+O `1.8` então criou um **segundo modelo de proveniência** (`OrigemDoConceito`),
+que cobre só o ramo importância, não tem o nó confirmação e confere os fatos
+**por forma**, nunca contra o banco. Não é que o ramo estado falte no
+repositório: ele falta **na Ficha**, que não usou o módulo que já o tinha.
+
+| Decisão do DT-01, 2026-08-07 |
+|---|
+| O **§11.4 vincula o Item 1.8**: ele só se encerra quando a árvore **aplicável** puder ser reconstruída de forma coerente |
+| `c3242ea` é **BASE TÉCNICA VÁLIDA — 1.8 CONCLUÍDO PARCIALMENTE**, preservado integralmente |
+| Abre-se o **`1.8-R1`**, regido por [`CONTRATO_1_8_R1.md`](CONTRATO_1_8_R1.md) |
+| **Uma migration é autorizada**, exclusivamente para o vínculo `professional_subcriterion_map → practice_evidence` (versão exata). Não antecipa `2.C`, não cria proposta do lado profissional |
+| **Cadeia única**: existe uma só modelagem de proveniência — `CadeiaDeProveniencia`. `OrigemDoConceito` desaparece |
+| `c3242ea` **não é ligado a nenhuma superfície de produção**; a Fronteira Humana não abre antes do `1.8-R1` verificado |
 
 **Critério de saída da Onda 1:** as **dez dependências do §15.0** existem e são testadas ·
 a paciente já lê o que o Motor concluiu · nenhum invariante do Motor é mais promessa sem guarda.
