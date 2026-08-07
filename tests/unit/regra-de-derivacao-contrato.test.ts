@@ -139,7 +139,23 @@ describe("A1/A4/A5 · o contrato é tipo, e nada o consome", () => {
    * chamador —, e a guarda C-07 prova que nenhum módulo alcança a estrutura.
    * A exceção é por NOME: qualquer terceiro arquivo continua caindo aqui.
    */
-  const INERTES_AUTORIZADOS = ["src/modules/curadoria/ciclo-de-vida-da-regra.ts"];
+  /**
+   * SEGUNDA EXCEÇÃO NOMEADA — ITEM 1.8, pela mesma razão.
+   *
+   * A Ficha de Explicação (§11) precisa dizer, sobre a regra que sustenta uma
+   * frase, QUAL é e se ela ainda vale. Reimplementar "deixou de valer" dentro
+   * da Ficha criaria a segunda fonte que o parágrafo acima descreve — e desta
+   * vez a divergência apareceria na tela de alguém, afirmando validade que a
+   * regra já perdeu.
+   *
+   * A Ficha também é inerte: sem banco, sem cliente, sem escrita, sem relógio
+   * — e a guarda E-05 prova cada uma dessas coisas. A exceção continua sendo
+   * por NOME: qualquer terceiro arquivo cai aqui.
+   */
+  const INERTES_AUTORIZADOS = [
+    "src/modules/curadoria/ciclo-de-vida-da-regra.ts",
+    "src/modules/curadoria/ficha-de-explicacao.ts",
+  ];
 
   it("A5 · nenhum Pipeline consome a Regra", () => {
     const FONTES = varrer("src");

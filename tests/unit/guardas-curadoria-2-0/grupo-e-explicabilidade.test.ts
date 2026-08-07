@@ -151,3 +151,195 @@ describe("E-04 · O vocabulário do Motor não alcança a paciente", () => {
     }
   });
 });
+
+// ===========================================================================
+// ITEM 1.8 — FICHA DE EXPLICAÇÃO
+//
+// ┌ E-05 — A Ficha é derivada: não persiste, não cacheia, não guarda snapshot
+// │ Princípio ........ §11.0/§11.1 — a Ficha é estágio do Motor com saída
+// │                    própria, reconstruível a partir dos fatos. Um snapshot
+// │                    congelaria uma explicação que a regra já mudou.
+// ├ E-06 — AC-PIPELINE: nenhuma superfície explica por fora
+// │ Princípio ........ nenhuma derivação alcança humano sem passar pelo leitor
+// │                    oficial. Texto paralelo é explicação sem proveniência.
+// └ E-07 — A confiança é qualitativa, e não vira ordem
+//   Princípio ........ §11.3, proibições 1 e 3.
+// ===========================================================================
+
+import { readdirSync as lerDir, readFileSync as lerArquivo, statSync as statDe } from "node:fs";
+import path18 from "node:path";
+
+const RAIZ_18 = process.cwd();
+
+function arquivosDe18(dir: string, exts: readonly string[]): string[] {
+  const achados: string[] = [];
+  const andar = (atual: string) => {
+    for (const entrada of lerDir(atual)) {
+      const completo = path18.join(atual, entrada);
+      if (statDe(completo).isDirectory()) { andar(completo); continue; }
+      if (exts.some((e) => entrada.endsWith(e))) achados.push(completo);
+    }
+  };
+  andar(dir);
+  return achados;
+}
+
+const FONTES_18 = arquivosDe18(path18.join(RAIZ_18, "src"), [".ts", ".tsx"]);
+const MIGRATIONS_18 = arquivosDe18(path18.join(RAIZ_18, "supabase", "migrations"), [".sql"]);
+
+function ocorrencias18(arquivos: readonly string[], padrao: RegExp): string[] {
+  return arquivos
+    .filter((a) => padrao.test(lerArquivo(a, "utf8")))
+    .map((a) => path18.relative(RAIZ_18, a).split(path18.sep).join("/"));
+}
+
+const FICHA = path18.join(RAIZ_18, "src", "modules", "curadoria", "ficha-de-explicacao.ts");
+const VOCABULARIO = path18.join(
+  RAIZ_18,
+  "src",
+  "modules",
+  "curadoria",
+  "ficha-de-explicacao-vocabulario.ts",
+);
+
+const FONTE_DA_FICHA = lerArquivo(FICHA, "utf8");
+const FONTE_DO_VOCABULARIO = lerArquivo(VOCABULARIO, "utf8");
+/** Só o código: comentário que NOMEIA o defeito não é o defeito. */
+const semComentario = (s: string) =>
+  s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*(\/\/|\*).*$/gm, "");
+const CODIGO_DA_FICHA = semComentario(FONTE_DA_FICHA);
+const CODIGO_DO_VOCABULARIO = semComentario(FONTE_DO_VOCABULARIO);
+
+describe("E-05 · A Ficha é derivada — nada dela é persistido", () => {
+  it("os dois módulos existem — sem eles, tudo abaixo seria vácuo", () => {
+    expect(CODIGO_DA_FICHA).toMatch(/export function construirFicha/);
+    expect(CODIGO_DO_VOCABULARIO).toMatch(/export function paraPaciente/);
+  });
+
+  it("nenhuma escrita: sem insert, upsert, update ou delete", () => {
+    for (const [nome, codigo] of [
+      ["ficha-de-explicacao", CODIGO_DA_FICHA],
+      ["ficha-de-explicacao-vocabulario", CODIGO_DO_VOCABULARIO],
+    ] as const) {
+      expect(
+        /\.(insert|upsert|update|delete)\s*\(/.test(codigo),
+        `${nome} passou a escrever — a Ficha viraria fato persistido.`,
+      ).toBe(false);
+    }
+  });
+
+  it("nem banco, nem React, nem relógio: a Ficha é pura", () => {
+    const imports = CODIGO_DA_FICHA.match(/^import[\s\S]*?;$/gm)?.join("\n") ?? "";
+    expect(imports).not.toMatch(/@supabase|supabase-js|react|next\//i);
+    // Relógio e sorteio quebrariam o determinismo que o §11.4 exige para
+    // reconstruir a mesma árvore seis meses depois.
+    expect(/Date\.now\(|new Date\(|Math\.random\(/.test(CODIGO_DA_FICHA)).toBe(false);
+    expect(/Date\.now\(|new Date\(|Math\.random\(/.test(CODIGO_DO_VOCABULARIO)).toBe(false);
+  });
+
+  it("nenhum texto de reserva ocupa o lugar da explicação nos três vocabulários", () => {
+    // A E-03 varre as frases do Motor. Os adaptadores da Ficha são superfície
+    // nova, e uma frase de reserva aqui é pior do que no Motor: ela chega à
+    // paciente parecendo explicação. A mutação M4 do Item 1.8 nasceu vácua
+    // justamente porque nada olhava para este arquivo.
+    const RESERVA =
+      /não foi possível|nao foi possivel|informação indisponível|dados insuficientes|gerado pelo sistema|não disponível no momento|sem informações|tente novamente|erro ao/i;
+    for (const [nome, codigo] of [
+      ["ficha-de-explicacao", CODIGO_DA_FICHA],
+      ["ficha-de-explicacao-vocabulario", CODIGO_DO_VOCABULARIO],
+    ] as const) {
+      const achado = codigo.match(RESERVA);
+      expect(achado?.[0], `${nome} ganhou texto genérico de reserva`).toBeUndefined();
+    }
+  });
+
+  it("nenhum cache nem snapshot da explicação", () => {
+    for (const proibido of [/\bcache\b/i, /\bsnapshot\b/i, /localStorage/, /sessionStorage/]) {
+      expect(proibido.test(CODIGO_DA_FICHA), `a Ficha ganhou ${proibido}`).toBe(false);
+    }
+  });
+
+  it("o pacote não criou migration nem tabela", () => {
+    const novas = MIGRATIONS_18.filter((arquivo) =>
+      /ficha|explicacao|explanation/i.test(path18.basename(arquivo)),
+    );
+    expect(novas, "o Item 1.8 criou migration — a Ficha é derivada").toEqual([]);
+    // O que se procura é uma tabela cujo NOME guarde explicação. Varrer
+    // `create table[^;]*explicacao` pegava a palavra em qualquer coluna ou
+    // comentário de qualquer migration — prosa, não estrutura.
+    const comTabelaDeFicha = MIGRATIONS_18.filter((arquivo) =>
+      /create table\s+(if not exists\s+)?[a-z_.]*(ficha|explicacao|explanation)/i.test(
+        semComentario(lerArquivo(arquivo, "utf8")),
+      ),
+    ).map((a) => path18.basename(a));
+    expect(comTabelaDeFicha, "nasceu tabela para guardar explicação").toEqual([]);
+  });
+});
+
+describe("E-06 · AC-PIPELINE — ninguém explica por fora do leitor oficial", () => {
+  it("nenhuma superfície reconstrói a explicação por conta própria", () => {
+    const INTERFACE = FONTES_18.filter(
+      (arquivo) =>
+        arquivo.includes(`${path18.sep}app${path18.sep}`) ||
+        arquivo.includes(`${path18.sep}components${path18.sep}`),
+    );
+    expect(
+      ocorrencias18(INTERFACE, /derivation_(proposals|rules|rule_degree_map|concept_vigencia)/),
+      "uma superfície foi ler a Camada de Derivação direto, sem passar pela Ficha.",
+    ).toEqual([]);
+    expect(
+      ocorrencias18(INTERFACE, /crossPriorityAndProfessional|celulaDoMotor|crossOne/),
+      "uma superfície cruzou o Motor por conta própria em vez de consumir a Ficha.",
+    ).toEqual([]);
+  });
+
+  it("a Ficha é a única a montar as seis respostas", () => {
+    // Se um segundo lugar montar `porQueFoiEscolhida`, existem duas explicações
+    // possíveis para o mesmo fato — e nenhuma delas é a oficial.
+    const montadores = ocorrencias18(FONTES_18, /porQueFoiEscolhida\s*:/).filter(
+      (arquivo) => !arquivo.includes("ficha-de-explicacao"),
+    );
+    expect(montadores, "nasceu um segundo montador das seis respostas").toEqual([]);
+  });
+
+  it("o adaptador da paciente não conhece regra, versão nem proposta", () => {
+    const trecho =
+      CODIGO_DO_VOCABULARIO.split("export function paraPaciente")[1]?.split(
+        "const LACUNA_PARA_PACIENTE",
+      )[0] ?? "";
+    expect(trecho.length, "o adaptador da paciente não foi encontrado").toBeGreaterThan(100);
+    for (const tecnico of ["ruleId", "ruleVersion", "propostaId", "estadoDaRegra", "resultado"]) {
+      expect(trecho, `o texto da paciente passou a citar ${tecnico}`).not.toContain(tecnico);
+    }
+  });
+});
+
+describe("E-07 · A confiança é qualitativa, e não vira ordem", () => {
+  it("os três estados são fechados, e nenhum é número", () => {
+    expect(CODIGO_DA_FICHA).toMatch(
+      /GRAUS_DE_CONFIANCA[\s\S]{0,140}"LEITURA_COMPLETA"[\s\S]{0,80}"LEITURA_COM_LACUNAS"[\s\S]{0,80}"LEITURA_INSUFICIENTE"/,
+    );
+  });
+
+  it("a confiança nunca é usada para ordenar, agrupar ou comparar", () => {
+    for (const codigo of [CODIGO_DA_FICHA, CODIGO_DO_VOCABULARIO]) {
+      expect(
+        /\.sort\([^)]*(grauDeConfianca|confianca)/i.test(codigo),
+        "a confiança virou chave de ordenação — a proibição 3 do §11.3.",
+      ).toBe(false);
+    }
+    expect(
+      /(grauDeConfianca|confianca)[\s\S]{0,40}(>|<|>=|<=)[\s\S]{0,40}(grauDeConfianca|confianca)/i.test(
+        CODIGO_DA_FICHA,
+      ),
+      "a confiança passou a ser comparada entre si — comparativo é a proibição 2.",
+    ).toBe(false);
+  });
+
+  it("nenhum score, percentual ou contagem nasce dentro da Ficha", () => {
+    for (const proibido of [/\bscore\b/i, /percentual/i, /\bpontuacao\b/i, /\bpontuação\b/i]) {
+      expect(proibido.test(CODIGO_DA_FICHA), `a Ficha ganhou ${proibido}`).toBe(false);
+      expect(proibido.test(CODIGO_DO_VOCABULARIO), `o vocabulário ganhou ${proibido}`).toBe(false);
+    }
+  });
+});
