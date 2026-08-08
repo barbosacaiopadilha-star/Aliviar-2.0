@@ -5,11 +5,11 @@
 | **Versão** | v1.0 |
 | **Autor** | Agente 02 — Arquiteto da Curadoria 2.0 |
 | **Data** | 2026-08-08 |
-| **Status** | **PROPOSTA — aguarda aprovação do Guardião da CURADORIA 2.0** |
+| **Status** | **APROVADO — Guardião da CURADORIA 2.0, 2026-08-08** (`APROVADO COM RESSALVA`; ressalva incorporada: catálogo final de **três** desfechos com fusão anti-vazamento, regra **gate-first** e mutação **MUT-CAT** — §11/§17). Parecer catalogado como **PA-14** no [`REGISTRO_DOS_PARECERES.md`](REGISTRO_DOS_PARECERES.md). Nasceu como **PROPOSTA** na base `279a8fb`; lavratura da aprovação no commit registrado no PA-14 |
 | **Base** | `9afaead` (Onda 2 formalmente aberta; releitura do 2.6 nomeada como primeiro movimento canônico) |
 | **Item** | **2.6 residual** — Governança de quem confirma o Mapa do Profissional, relido pós-ADR-068 §14.2, **agora carregando o Item 1.2** |
-| **Decisão principal requerida** | **G-10: RLS × capability × read-model** (§7–§8) |
-| **Implementação** | **NÃO AUTORIZADA** por este documento |
+| **Decisão G-10** | **OPÇÃO B APROVADA** pelo Guardião — capability nominal read-only; **Opções A e C rejeitadas** (§6–§8) |
+| **Implementação** | **NÃO AUTORIZADA** por este documento — exige missão própria |
 
 ---
 
@@ -98,22 +98,24 @@ um segundo lugar para um fato que já tem fonte (P-07 em risco na sincronizaçã
 para servir **um campo** em **uma superfície**. Custo alto, benefício nulo sobre
 a B.
 
-## 7. Recomendação arquitetural
+## 7. Recomendação arquitetural *(histórico — decisão tomada, ver §8)*
 
 > **Recomendação: OPÇÃO B.** É a única que entrega exatamente o dado mínimo pela
 > menor superfície, com gate interno já existente, zero mudança de policy e o
 > padrão de authority boundary que a casa já provou três vezes.
 
-**Distinção de autoridade, com clareza:** isto é **recomendação do Arquiteto**.
-A autoridade existente cobre o padrão (precedentes §21/§17.4); **a decisão sobre
-a boundary do G-10 — A × B × C — pertence ao Guardião**, e nada aqui a antecipa.
+## 8. Decisão do Guardião — lavrada (2026-08-08)
 
-## 8. Decisão requerida do Guardião
-
-1. **Escolher o desenho do G-10** (recomendação: B).
-2. **Aprovar o escopo residual** deste contrato (§2).
-3. Confirmar que a escrita do Mapa **permanece intacta** (§9) — reafirmação, não
-   decisão nova.
+> **G-10 — OPÇÃO B APROVADA.** As **Opções A e C foram rejeitadas** (A: RLS
+> filtra linha, não coluna — exporia o perfil e exigiria view; C: excesso
+> arquitetural, segunda origem para fato com fonte). O **escopo residual do §2
+> está aprovado** e a **escrita do Mapa permanece intacta** (§9) — reafirmada,
+> nenhuma decisão nova.
+>
+> A capability do G-10 **não é abertura de superfície nova**: ela serve a
+> **superfície da paciente já autorizada** (portal existente). A Fronteira
+> Humana permanece **FECHADA**, com grants do 1.12 = zero e O2-A/B pendentes —
+> exceção distinta, nomeada aqui para que ninguém a confunda com abertura.
 
 ## 9. Autoridade de escrita do Mapa — preservada e testada
 
@@ -145,10 +147,10 @@ ADR-040 item 6 (`administrador`), conforme ADR-068 §14.2. O contrato acrescenta
 | Item | Especificação |
 |---|---|
 | Nome | `curadoria.nome_do_curador_do_caso(p_case_id uuid)` |
-| Regime | `SECURITY DEFINER` · `STABLE` · `STRICT` · `search_path` fixo com `pg_temp` ao fim · referências qualificadas · zero SQL dinâmico |
-| Gate interno | `is_patient_for_case(p_case_id)` — senão, `SEM_AUTORIDADE` |
-| Saída | **`display_name text`** — uma coluna, uma linha no máximo. **Nenhum identificador de operador** (a superfície não precisa; se um dia precisar, é emenda) |
-| Erros | `OK` (implícito) · `CASE_NAO_ENCONTRADO` · `SEM_AUTORIDADE` · `CURADOR_NAO_ATRIBUIDO` — catálogo fechado |
+| Regime | nominal · read-only · `SECURITY DEFINER` · `STABLE` · `STRICT` · `search_path` fixo com `pg_temp` ao fim · referências qualificadas · zero SQL dinâmico · **sem policy nova de SELECT** · **sem leitura genérica de `profiles`** |
+| **Gate-first — ordem vinculante** | **o gate vem primeiro.** `is_patient_for_case(p_case_id)` é a **primeira e única** authority boundary, avaliada **antes de qualquer dado** do Case ou do Curador ser resolvido. A implementação **não pode** consultar existência e depois testar autoridade — testa a boundary, e **só então** resolve o nome. Consequência deliberada: **terceiros não distinguem Case inexistente de Case alheio** |
+| Saída | **`display_name text` SOMENTE** — uma coluna, uma linha no máximo. **Proibidos na saída**: `profile.id` · uuid de autenticação · e-mail · telefone · papel · avatar · metadados · timestamps · histórico. **O identificador interno nunca aparece ao cliente** — se a superfície um dia precisar de mais, é emenda com lavratura |
+| **Desfechos — catálogo fechado em TRÊS** *(ressalva do Guardião — `CASE_NAO_ENCONTRADO` removido do domínio)* | **`OK`** — a chamadora é a dona do Case e há Curador atribuído · **`SEM_AUTORIDADE`** — funde **indistinguivelmente** Case inexistente, Case de terceiro e qualquer chamador que não seja a paciente do Case · **`CURADOR_NAO_ATRIBUIDO`** — o Case é da chamadora, mas não há Curador atribuído |
 | Grants | `REVOKE FROM PUBLIC` imediato · `EXECUTE` a `authenticated` (o gate real é interno, padrão `acknowledge_case_need`) |
 | Quem invoca | o cliente **autenticado da paciente**; o administrativo **não participa** |
 | Consumo | `repository`/`jornada` trocam o `displayName(profiles)` pela capability **no caminho da paciente**; caminhos internos (Mesa) seguem lendo `profiles` normalmente |
@@ -159,17 +161,24 @@ O requisito "ato com autor, data e contexto visível" está **SATISFEITO POR
 DEPENDÊNCIA EXISTENTE** (`derivation_proposal_acts`, capability `decidir_proposta`,
 atestado do visível — Contrato 1.12 §10/§19). O 2.6 **referencia, não duplica**.
 
-## 13. Relação com o 2.C — o que o encerramento do 2.6 entrega
+## 13. Relação com o 2.C — o que "2.6 satisfeito" significa *(lavrado na aprovação)*
 
-Quando o 2.6 residual encerrar, o 2.C poderá considerar satisfeitos:
+O futuro 2.C **só poderá considerar o 2.6 satisfeito** quando, cumulativamente:
 
-1. a **governança de quem confirma** — decidida (ADR-068) e **guardada por teste** (§9);
-2. a **incompatibilidade §13.2** — lavrada como aceite herdado (§10);
-3. **I-12 executável** (§10);
-4. o **G-10 resolvido** — a paciente lê o nome do Curador pelo boundary aprovado.
+1. o **G-10 (Opção B)** estiver **implementado e verde**;
+2. o **recorte de escrita** estiver **guardado por teste** (§9, G-2.6-4);
+3. **I-12** estiver **verde** (G-2.6-3);
+4. o **aceite de permissão por papel** estiver **verde** (§9);
+5. o **ato do 1.12** estiver reconhecido como **dependência satisfeita** (§12);
+6. a **incompatibilidade §13.2** estiver **herdada — incluindo o regime de
+   transição da exceção**: enquanto a Fronteira não abrir, a incompatibilidade é
+   cláusula lavrada; ao abrir, vira verificação executável entre os dois atos no
+   mesmo Case.
 
 O que o 2.C **não** herda daqui: Fronteira, grants, superfícies, emissor
-profissional — gates próprios dele. **O 2.C permanece bloqueado.**
+profissional — gates próprios dele. **O 2.C permanece BLOQUEADO até a
+implementação e o encerramento formal do 2.6 — e mesmo então, pelos seus
+próprios gates.**
 
 ## 14. Não-objetivos
 
@@ -178,12 +187,14 @@ decidir DP-5 · expor `profiles` genericamente · criar leitor administrativo
 genérico · duplicar o ato do 1.12 · alterar o Motor · tocar `curator_judgments`
 (matéria do 2.4).
 
-## 15. Privacidade
+## 15. Privacidade — não-vazamento por desenho
 
 Menor dado (uma coluna), menor superfície (um Case, uma dona), gate interno no
-banco, catálogo de erros sem vazamento (o `SEM_AUTORIDADE` não revela se o Case
-existe para terceiros — `CASE_NAO_ENCONTRADO` só para a própria dona com id
-inválido), cliente administrativo fora do fluxo.
+banco. **Regra de não-vazamento lavrada pela ressalva**: com o catálogo de três
+desfechos e o gate-first (§11), `SEM_AUTORIDADE` é a resposta **única e
+indistinguível** para Case inexistente e Case alheio — a capability **nunca
+confirma a existência de um Case a quem não é sua dona**. Cliente administrativo
+fora do fluxo.
 
 ## 16. Guardas
 
@@ -202,9 +213,18 @@ campo extra ⇒ contrato de saída cai · `SELECT` genérico em `profiles` ⇒ G
 cai · profissional ganha writer ⇒ G-2.6-3 cai · papel não autorizado escreve o
 Mapa ⇒ G-2.6-4/§9 caem · 2.C consome antes do encerramento ⇒ G-2.6-5 cai.
 
+> **MUT-CAT** *(ressalva do Guardião — obrigatória na implementação e na
+> verificação)*: alterar temporariamente a capability para **responder de forma
+> diferente** a Case inexistente e a Case de terceiro ⇒ **o oráculo de
+> não-vazamento (§15) deve cair.** Sem esta mutação, a fusão do
+> `SEM_AUTORIDADE` seria promessa sem prova.
+
 ## 18. Erros
 
-Catálogo fechado do §11 — quatro desfechos, semântica de domínio, saída mínima.
+Catálogo fechado do §11 — **três desfechos** (`OK` · `SEM_AUTORIDADE` ·
+`CURADOR_NAO_ATRIBUIDO`), semântica de domínio, saída mínima.
+`CASE_NAO_ENCONTRADO` **não existe no domínio** — removido pela ressalva do
+Guardião de catálogo, exemplos, critérios e testes futuros.
 
 ## 19. Rollback
 
@@ -226,13 +246,14 @@ dado tocado, nenhuma policy alterada (na Opção B).
 | 8 | 2.C segue bloqueado; Fronteira fechada; grants do 1.12 zero |
 | 9 | Regressão integral verde; rollback limpo |
 
-## 21. Decisão requerida do Guardião
+## 21. Decisão do Guardião — tomada e lavrada
 
-**G-10: A × B × C** (recomendação: **B**) · aprovação do escopo residual (§2) ·
-reafirmação do recorte de escrita (§9). Sem essas três, nada se implementa.
+**G-10 = OPÇÃO B** (A e C rejeitadas) · escopo residual do §2 **aprovado** ·
+recorte de escrita **reafirmado intacto** · ressalva incorporada: catálogo de
+três desfechos, gate-first, MUT-CAT. Parecer **PA-14**.
 
 ## 22. Encaminhamento
 
-Ao **Guardião da CURADORIA 2.0**. Após aprovação: contrato vira vigente, o 2.6
-residual segue para implementação por missão própria (Engenheiro), e o 2.C ganha
-seu penúltimo pré-requisito no caminho da abertura.
+Contrato **APROVADO E LAVRADO**. O 2.6 residual está **apto a receber missão de
+implementação** (Engenheiro); a implementação **não** começa sem essa missão. O
+2.C permanece bloqueado; a Fronteira, fechada.

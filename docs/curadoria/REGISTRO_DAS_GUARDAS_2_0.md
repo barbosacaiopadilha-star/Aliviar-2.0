@@ -97,6 +97,22 @@ E-07 nasceram com o Item 1.8** (`c3242ea`, 12 testes) e protegem a Ficha em si.
 | **F-02** O catálogo não muda em silêncio *(corrigida em F-01A)* | **Recomputa** o hash a partir do conteúdo real e compara com o declarado; verifica a vigência única de versão | Congelamento §2; I-3 | `catalogo-gerado.ts` · algoritmo de `scripts/gerar-catalogo-ts.mjs` | alguém edita `catalogo-gerado.ts` à mão sem regenerar | `sha256(JSON.stringify(CATALOGO_GERADO))` ≠ `CATALOGO_GERADO_HASH` |
 | **F-03** *(caracterização, não guarda)* | Produzir a evidência executável do achado P15 para a decisão **DP-1** | — | motor · repositório do motor · `mesa-cruzamento.ts` | **falha quando alguém implementar a guarda A4** — que é exatamente o sinal desejado | teste de estado atual |
 
+### Guardas do Item 2.6 — **APROVADAS, PENDENTES DE IMPLEMENTAÇÃO** (PA-14, 2026-08-08)
+
+Lavradas no [`CONTRATO_2_6_RELEITURA_DE_ESCOPO.md`](CONTRATO_2_6_RELEITURA_DE_ESCOPO.md)
+§16–§17; **nenhuma está implementada** — entram com o pacote do 2.6 residual.
+
+| Guarda | Objetivo | Cai se |
+|---|---|---|
+| **G-2.6-1** | paciente só obtém o nome do Curador **do próprio Case** | a capability aceitar Case de terceiro |
+| **G-2.6-2** | **nenhuma leitura genérica/listagem de `profiles`** | policy nova de SELECT para paciente/`authenticated`, ou capability com listagem |
+| **G-2.6-3** | profissional **não escreve** o próprio Mapa (I-12) | writer/policy aceitando o vínculo profissional-autenticado |
+| **G-2.6-4** | recorte de escrita do Mapa **íntegro** (ADR-040 item 6 · ADR-068 §14.2) | migration concede escrita a papel novo |
+| **G-2.6-5** | **2.C permanece fechado** | superfície/emissor/grant do 2.C nasce citando o 2.6 |
+
+Mutação obrigatória associada: **MUT-CAT** — respostas distintas para Case
+inexistente × Case alheio derrubam o oráculo de não-vazamento (Contrato §17).
+
 ### Guardas do Item 1.A — **IMPLEMENTADAS** (PA-13; Item 1.A formalmente encerrado — `c03cc26`, 2026-08-08)
 
 Lavradas no [`CONTRATO_1_A`](CONTRATO_1_A_FUNCAO_PURA_DERIVACAO_MAPA_PROFISSIONAL.md) §13;
