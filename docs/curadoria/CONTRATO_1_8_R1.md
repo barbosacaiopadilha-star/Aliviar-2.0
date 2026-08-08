@@ -753,3 +753,148 @@ Duas razões, nenhuma de conveniência:
 O checkpoint técnico permanece intocado por esta lavratura: a migration
 `20260807120000` não foi revertida nem commitada; o teste A1.1 permanece
 vermelho até a capability existir — **e deve ser o primeiro verde da retomada**.
+
+## 22. Condições finais do Item 1.8 — DT-01, 2026-08-07
+
+> **Contexto.** O Agente 04 emitiu **ITEM 1.8-R1 VERIFICADO COM RESSALVAS** sobre
+> `041b423`: 12/12 critérios do §16 confirmados, capability e inércia sem
+> ressalvas, AC-EXPLICA verificado, regressão integralmente verde — e **três
+> condições antes do encerramento formal**. Esta seção as lavra. `041b423` **não
+> é reclassificado como reprovado.**
+
+### 22.1 D1 — Proposta é ato histórico
+
+> **Uma proposta emitida enquanto a versão da regra estava `VIGENTE` é um ato
+> histórico válido.** Mudança posterior da regra para `SUSPENSA` ou `REVOGADA`
+> **não invalida retroativamente** aquela proposta nem sua capacidade de compor a
+> proveniência da derivação já emitida.
+
+**A suspensão e a revogação controlam atos futuros; não reescrevem fatos
+passados.** É o mesmo princípio que rege todo o corpus (ADR-062, append-only;
+ADR-069, transição é ato): o estado corrente da regra governa o que ela **pode
+fazer agora**, nunca o que ela **fez quando podia**.
+
+### 22.2 D2 — O que a Ficha diz, e o que ela não pode dizer
+
+A Ficha explica **qual regra e qual versão efetivamente emitiram** aquela
+proposta. Ela **não afirma** que a regra continua vigente hoje, que continua
+autorizada a nova emissão, nem que é "a regra atual".
+
+```
+validade histórica do ato  ≠  estado corrente da regra
+```
+
+A primeira sustenta a frase na tela; o segundo pertence ao ciclo de vida
+(ADR-069) e às decisões de emissão futura — nunca à explicação do que já foi.
+
+### 22.3 D3 — O destino de `REGRA_NAO_APLICAVEL`
+
+O comportamento do `c3242ea` — `SUSPENSA`/`REVOGADA` ⇒ `REGRA_NAO_APLICAVEL` ⇒
+frase removida — fica **formalmente substituído pelo regime histórico acima**, e
+a substituição já está implementada em `041b423` (a Ficha não importa mais
+`deixouDeValer`; o bloqueio por estado corrente deixou de existir).
+
+**Não se cria nono discriminador** (`REGRA_NAO_VIGENTE` ou equivalente) neste
+pacote, e **o R1 não é reaberto** por este motivo. Se um dia a superfície
+precisar *anotar* que a regra mudou de estado depois do ato, isso é evolução de
+vocabulário com lavratura própria.
+
+### 22.4 D4 — Reapresentação obrigatória do vínculo
+
+Se uma linha de `professional_subcriterion_map` **já possui `evidence_id`** e o
+`status` é alterado, a nova gravação **deve apresentar explicitamente um vínculo
+de evidência válido**:
+
+| Gravação | Resultado |
+|---|---|
+| `status` muda + `evidence_id` antigo mantido implicitamente | **RECUSA** *(já implementado em `041b423`)* |
+| `status` muda + `evidence_id = NULL` | **RECUSA** *(a lacuna — hoje passa; é o objeto do microcorretivo)* |
+| `status` muda + **novo** `evidence_id` válido | **ACEITA** (FK composta e trigger de conceito arbitram a validade) |
+
+**Apagar o vínculo no mesmo ato é proibido.** Revincular **sem** mudar `status`
+permanece permitido — o regime disciplina a mudança de estado, não a manutenção
+da evidência.
+
+### 22.5 D5 — Por que o `NULL` é recusado
+
+O Mapa é **UPSERT**: não existe histórico da confirmação anterior. Zerar
+`evidence_id` na mesma gravação que muda o `status` **apagaria a sustentação
+explícita do estado** — e apagaria para sempre, porque não há de onde recuperá-la.
+
+```
+legado sem vínculo  ≠  ato novo removendo vínculo
+```
+
+`NULL` **continua permitido** para linhas legadas já existentes (§4 — registro
+sem vínculo, nunca "sem evidência"). O que ele **não pode** é ser o **resultado
+de uma nova alteração de `status`** numa linha vinculada: o legado é herança de
+antes do regime; o ato novo acontece sob o regime.
+
+### 22.6 D6 — Testes obrigatórios do trigger
+
+| # | Cenário | Resultado exigido |
+|---|---|---|
+| 1 | `status` muda, vínculo antigo não reapresentado | recusa |
+| 2 | `status` muda + `evidence_id = NULL` | recusa |
+| 3 | `status` muda + novo vínculo válido | aceita |
+| 4 | linha legada sem vínculo | compatibilidade preservada conforme §7.2 — muda de `status` sem vínculo e permanece não exibível |
+| 5 | evidência de **outro profissional** | recusa (FK composta) |
+| 6 | evidência de **outro conceito** | recusa (trigger de conceito) |
+
+### 22.7 D7 — Concorrência
+
+**Cenário mínimo:** duas transações concorrentes atualizam **a mesma
+confirmação** — mesmo `(professional_profile_id, subcriterion_id)` — com
+`evidence_id` **diferentes e válidos**, mesmo `status` alvo ou estados
+distintos.
+
+A certificação demonstra: resultado **determinístico** · **nenhuma gravação
+perde o vínculo** · **nenhuma confirmação termina sustentada por evidência não
+reapresentada explicitamente** · o comportamento é a semântica normal do
+row-lock do banco — o `BEFORE UPDATE` serializa sobre a linha, e a segunda
+transação reavalia contra o estado que a primeira gravou.
+
+> **Nenhum lock novo é inventado.** O lock de linha existente basta; criar
+> mecanismo extra seria complexidade sem ameaça que a justifique.
+
+### 22.8 D8 — A5/A5b: a Ficha sai de `INERTES_AUTORIZADOS`
+
+Após o R1, `ficha-de-explicacao.ts` **não importa mais** o contrato da Regra
+(verificado em `041b423`: o import de `deixouDeValer` não existe). **Autorização
+nominal sem consumo real é autoridade desnecessária** — e autoridade
+desnecessária é exatamente o que este corpus remove.
+
+Lavrado: `ficha-de-explicacao.ts` **é removido** de `INERTES_AUTORIZADOS`. Após
+a correção: só consumidores efetivamente necessários permanecem
+(`ciclo-de-vida-da-regra.ts`) · **A5 continua barrando terceiros** · **A5b
+continua iterando a lista como fonte única** (§14).
+
+### 22.9 D9 — Escopo fechado do microcorretivo
+
+**Exclusivamente:**
+
+1. ajuste do trigger `exige_vinculo_ao_mudar_status` para recusar `NULL` na
+   mudança de `status` quando havia vínculo (§22.4) — **em migration nova**,
+   conforme a regra de imutabilidade do §21.12;
+2. os seis testes do §22.6;
+3. o teste concorrente do §22.7;
+4. remoção da Ficha de `INERTES_AUTORIZADOS`;
+5. ajuste dos oráculos **diretamente afetados**, e só deles;
+6. documentação técnica mínima.
+
+**Proibido alterar:** capability · cadeia · coerência · AC-EXPLICA ·
+vocabulários · Motor · proposta · `2.C` · Fronteira Humana.
+
+### 22.10 D10 — Estado do Item 1.8 e identificador
+
+> **`041b423` = R1 VERIFICADO COM RESSALVAS — AGUARDA MICROCORRETIVO DE
+> ENCERRAMENTO.** O Item 1.8 **permanece aberto** até o microcorretivo ser
+> implementado e verificado. `041b423` **não é reprovado**.
+
+**Identificador do microcorretivo: `1.8-R1-MR1`** — pela convenção já existente
+no mapa (`2.2A-MR1`; nível *Micro-retificação* do Processo de Engenharia).
+Nenhuma hierarquia nova é inventada.
+
+Sequência esperada de encerramento: `1.8-R1-MR1` implementado → verificação
+curta do Agente 04 → **ITEM 1.8 ENCERRADO** → retorno ao mapa canônico para o
+próximo pacote de produto.
