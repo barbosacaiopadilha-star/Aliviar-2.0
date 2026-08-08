@@ -237,3 +237,121 @@ taxa com denominador zero.
 | 8 | **C-01, C-01b, C-01c e C-01d verdes**, com a C-01d evoluída para duas capabilities |
 | 9 | **Rollback limpo** — drop da função + remoção do painel |
 | 10 | **Regressão integralmente verde** — nada do 1.8 encerrado regride |
+
+## 17. Microcorretivo de encerramento — `1.11-MR1` (DT-01, 2026-08-07)
+
+> **Contexto.** O Agente 04 emitiu **ITEM 1.11 VERIFICADO COM RESSALVAS** sobre
+> `4928af6` — três ressalvas, nenhuma de domínio. Decisão do DT-01: **quitá-las
+> antes do encerramento formal**, sem reabrir o domínio do 1.11 e sem alterar
+> taxa, capability, segurança, versionamento ou privacidade estrutural.
+> `4928af6` **não é reclassificado como reprovado**.
+
+### 17.1 R-1 — Byte `NUL` literal é dívida de auditabilidade
+
+**O fato, localizado:** dois bytes `NUL` literais na linha 119 de
+[`painel-de-discordancia.ts`](../../src/modules/curadoria/painel-de-discordancia.ts)
+— os separadores da chave composta
+`` `${subcriterionCode}␀${ruleId}␀${ruleVersion}` `` — tornam o arquivo
+**binário para o Git** (`Bin 0 -> 6191 bytes` no próprio commit).
+
+**Correção lavrada:**
+
+```
+byte NUL literal  →  sequência escapada de seis caracteres ASCII: barra invertida, u, 0000
+```
+
+A escolha do `NUL` como separador **permanece correta** (nenhum código canônico
+pode contê-lo — a colisão de chave é impossível); o que muda é a **grafia**, de
+byte cru para escape. **Aceite:** o arquivo volta a ser texto para o Git ·
+`git diff` por linha volta a funcionar · a chave gerada em runtime é
+**byte a byte idêntica** · nenhum teste funcional muda de intenção.
+
+### 17.2 R-2 — Guarda anti-ranking: fortalecer (Opção A)
+
+**O defeito, demonstrado:** a detecção atual usa
+`/\.sort\([^)]*(taxa|discordancia|recusad|contagem)/i` — e `[^)]*` para no
+**primeiro** `)`, que é o fecho de `(a, b)`. Um comparador realista nunca é
+alcançado:
+
+```ts
+series.sort((a, b) => {
+  return b.discordancia.taxa - a.discordancia.taxa;   // passa hoje — vácuo
+});
+```
+
+A promessa normativa **não muda** — *o painel não ordena por taxa, recusa,
+volume ou mérito* —; o que muda é a guarda passar a medi-la.
+
+**Decisão: Opção A — fortalecer a guarda textual.** A detecção passa a extrair o
+**argumento completo** de cada `.sort(...)` — parênteses balanceados, comparador
+multilinha e aninhado incluídos — e a procurar os radicais proibidos
+(`taxa` · `discordancia` · `recusad` · `contagem` · `merito`) **dentro do corpo
+extraído**. A Opção B (arbitragem só comportamental) fica registrada como
+alternativa **não adotada**: a guarda textual robusta é adequada ao padrão do
+projeto (é o mesmo salto que C-11 deu com `corpoDaFuncao`), e uma guarda com
+nome mais forte do que sua medida é exatamente o que o Agente 04 apontou.
+
+### 17.3 Falseabilidade — mutação real e controle negativo
+
+| Prova | Entrada | Esperado |
+|---|---|---|
+| **Mutação positiva** | `.sort((a, b) => { return taxaB - taxaA; })` (comparador multilinha com radical proibido) aplicada temporariamente a um arquivo do painel | **a guarda cai** |
+| **Controle negativo** | `.sort((a, b) => ordemNeutra(a) - ordemNeutra(b))` — ordenação neutra permitida | **a guarda não cai** |
+
+Sem o controle negativo, a guarda forte demais proibiria a própria ordem neutra
+do catálogo — o erro simétrico ao que se corrige.
+
+### 17.4 R-3 — `admin.ts`: o cabeçalho contradiz o uso lavrado
+
+**Auditoria do contrato atual** ([`admin.ts`](../../src/lib/supabase/admin.ts)):
+o cabeçalho afirma **(a)** *"nunca para leitura/escrita de dado de negócio"* e
+**(b)** *"toda função que chama este cliente já deve ter passado por
+`requireRoleForAction('administrador')`"*.
+
+**Confronto com o uso do 1.11** (lavrado neste contrato, §3): leitura **agregada**
+via capability `SECURITY DEFINER` com `EXECUTE` exclusivo de `service_role` ·
+gate humano `requireAnyRole(["curador_medico", "administrador"])` na superfície ·
+**nenhuma** leitura direta de tabela. As duas frases do cabeçalho são
+contrariadas por um uso **correto e decidido** — o texto está errado, não o uso.
+
+**Semântica lavrada para o cliente administrativo:**
+
+> O cliente administrativo **não é usado para leitura direta de tabelas de
+> negócio**. Ele **pode invocar capabilities SQL nominalmente lavradas,
+> read-only e de saída mínima**, quando a autorização humana da superfície já
+> foi verificada pelo gate de papel apropriado — que é o **declarado pela
+> lavratura de cada capability**, não necessariamente `administrador`.
+> **O uso arbitrário de `service_role` continua proibido**, e o cliente
+> administrativo **não se torna cliente genérico de leitura.**
+
+A correção do 1.11-MR1 é **documental no cabeçalho** — reescrevê-lo para dizer
+isso — sem tocar o código da função.
+
+### 17.5 Wrapper estreito — avaliado e **não** exigido
+
+Um wrapper conceitual (`invocar capability nominal` em vez de expor o cliente
+inteiro) **reduziria autoridade acidental** — quem importa o cliente hoje recebe
+`.from()` sobre qualquer tabela, ignorando RLS. Mas: esse risco **antecede o
+1.11**, está mitigado por `server-only` + convenção + guardas, e os dois únicos
+usos de capability são nominais e auditados (C-01d). Conforme a preferência do
+DT-01 — correção documental mínima, salvo risco concreto —, **o wrapper fica
+registrado como evolução futura opcional, não condição do 1.11.**
+
+### 17.6 Escopo do `1.11-MR1`
+
+| Dentro | Fora |
+|---|---|
+| remover os 2 `NUL` literais (§17.1) | capability · migration · taxa |
+| fortalecer a guarda anti-ranking (§17.2) | repository · modelo de privacidade |
+| mutação + controle negativo (§17.3) | C-01/C-01d (semântica) |
+| reescrever o cabeçalho de `admin.ts` (§17.4) | `1.12` · Fronteira Humana · `2.C` |
+| testes diretamente afetados · regressão completa | qualquer refatoração do cliente (§17.5) |
+
+### 17.7 Identificador e estado
+
+**Identificador: `1.11-MR1`** — mesma convenção de `2.2A-MR1` e `1.8-R1-MR1`
+(nível *Micro-retificação* do Processo). Nenhuma hierarquia nova.
+
+> **`4928af6` = ITEM 1.11 VERIFICADO COM RESSALVAS — AGUARDA MICROCORRETIVO DE
+> ENCERRAMENTO.** O encerramento formal do Item 1.11 acontece **só** após o
+> `1.11-MR1` implementado e verificado; em seguida, o pré-voo do `1.12`.
