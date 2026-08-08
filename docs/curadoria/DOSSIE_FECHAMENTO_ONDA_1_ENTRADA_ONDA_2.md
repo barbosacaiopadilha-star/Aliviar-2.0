@@ -5,7 +5,7 @@
 | **Versão** | v1.0 |
 | **Autor** | Agente 02 — Arquiteto da Curadoria 2.0 |
 | **Data** | 2026-08-08 |
-| **Status** | **PROPOSTA — pronta para decisão de governança** |
+| **Status** | **DECIDIDO E EXECUTADO** — Guardião aprovou (`ONDA 1 APROVADA PARA ENCERRAMENTO — ENTRADA DA ONDA 2 AUTORIZADA APÓS LAVRATURAS`); Fundador fechou a DP-2 (2026-08-08); ciclo de lavraturas executado (Ato 1 `66717ab`; Atos 2–7 no commit seguinte). **ONDA 1 FORMALMENTE ENCERRADA · ONDA 2 FORMALMENTE ABERTA · FRONTEIRA FECHADA** |
 | **Base** | `1389183` (mapa reconciliado com 1.6 e 1.A encerrados) |
 | **Decide** | Guardião da CURADORIA 2.0 (e, onde indicado, Fundador / Autoridade de Método) |
 | **Regressão desta preparação** | `tsc` limpo · **253/253** testes verdes (guardas completas + módulos-chave), executados sobre a base |

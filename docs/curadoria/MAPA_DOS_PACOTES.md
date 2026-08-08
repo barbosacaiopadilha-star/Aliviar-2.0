@@ -24,13 +24,31 @@
 | Código | Nome | Objetivo | Dependências | Critérios de aceite | Estado | Responsável | Rollback |
 |---|---|---|---|---|---|---|---|
 | **0.1** | Veredito sobre P15 | Confirmar/refutar se o Motor recebe viabilidade | — | Veredito escrito, sem ambiguidade: guarda executável **ou** correção do Congelamento §4.3 | **BLOQUEADO** (DP-1) | Arquiteto + Guardião | n/a |
-| **0.2** | Destino formal do ACE | Descontinuado, suspenso ou ativo; destino do dado histórico e das superfícies | — | Decisão registrada (ADR-E) | **BLOQUEADO** (DP-2) | **Fundador** | n/a |
+| **0.2** | Destino formal do ACE | Descontinuado, suspenso ou ativo; destino do dado histórico e das superfícies | — | Decisão registrada (ADR-E) | **DECIDIDO** — **DP-2 fechada pelo Fundador em 2026-08-08** (motor anterior congelado, histórico preservado; Registro de Governança §4). **ADR-E permanece recomendada, não bloqueante** | **Fundador** | n/a |
 | **0.3** | Listas provisórias P3–P7 | Fechar as cinco listas `OPCOES_PROVISORIAS_*` | — | Listas definitivas; efeito sobre dados gravados declarado | **BLOQUEADO** (DP-3) | Método | n/a |
 | **0.4** | Aprovação da Arquitetura | Tornar a v1.2 canônica nas seções DOMÍNIO/ARQUITETURA/GOVERNANÇA | 0.1 | Parecer do Guardião **versionado** (DP-11) e cabeçalho da Arquitetura atualizado (G-01) | **BLOQUEADO** | Agente 00 | n/a |
 | **0.5** | Nomear a Autoridade de Método sobre Regras de Derivação | Dar dono à regra de derivação (§10.5) | — | Ocupante nomeado por escrito | **BLOQUEADO** (DP-4 / RR-3) | **Fundador** | n/a |
 | **0.6** | **Versionar os documentos da 2.0** | Governança documental controlada e rastreável | — | Documentos criados, indexados, versionados; pacote de segurança separado; commit autorizado | **EM EXECUÇÃO — este pacote (F-00)**; commit **pendente de autorização** | Implementador + engenharia | remover os arquivos criados |
 
 ## 2. Onda 1 — Corrigir defeitos e construir a base de auditabilidade
+
+> ### ONDA 1 FORMALMENTE ENCERRADA — 2026-08-08
+>
+> Decisão do **Guardião da CURADORIA 2.0** sobre o dossiê
+> [`DOSSIE_FECHAMENTO_ONDA_1_ENTRADA_ONDA_2.md`](DOSSIE_FECHAMENTO_ONDA_1_ENTRADA_ONDA_2.md)
+> (`ddadcd7`), executada pelo ciclo de lavraturas (Ato 1: `66717ab` — porte de
+> M-001/M-003 e do Processo; Atos 2–7: este commit), com o **ato do Fundador
+> que fechou a DP-2** (2026-08-08).
+>
+> **Composição:** 12 itens implementados e encerrados — 1.1, 1.3, 1.4, **1.5**
+> (`9f6ee86`, M-001/M-003/DT-06), 1.6 (`56ccfd0`), **1.7** (`2c039a3`, DP-2),
+> 1.8+R1+MR1, 1.9, 1.10, 1.11+MR1, 1.12+MR1, 1.A. O **1.2** foi **CARREGADO
+> PARA A ONDA 2** (G-10/RLS, junto à releitura do 2.6) — **pendência carregada ≠
+> falha de encerramento**; nenhuma policy foi alterada retroativamente.
+>
+> **As dez condições do §15.0: 10/10 satisfeitas e testadas** (dossiê §12).
+> Dívidas não bloqueantes consolidadas no dossiê §15. Nenhum item de engenharia
+> permanece aberto na onda.
 
 **Entrada:** Onda 0 fechada · P15 com veredito · Autoridade nomeada.
 **Proibição da onda:** nenhuma proposta persistida, nenhuma proposta apresentada a humano.
@@ -43,12 +61,12 @@
 | **F-01** | **Guardas executáveis da Curadoria 2.0** | 21 guardas + 1 caracterização, sem tocar código de produto | — | 53 testes verdes; suíte unitária e typecheck limpos; nenhuma alteração funcional | **CONCLUÍDO** (2026-08-04), **retificado por F-01A** | Implementador | apagar `tests/unit/guardas-curadoria-2-0/` | — |
 | **F-01A** | **Retificação dirigida das guardas** | Executar os sete itens da verificação do Agente 04 | F-01; relatório do Agente 04 | achado F-01/04 removido; F-01/01 e F-01/02 reclassificados como dívida documental; F-02 protegendo de verdade; teste tautológico eliminado; 55 testes verdes | **CONCLUÍDO** (2026-08-04) — segue para o Agente 04 | Implementador | reverter os dois arquivos de teste ao estado de F-01 | — |
 | **F-02** | **Modelo de Dados da 2.0** (`derivation_proposals`, `curator_judgments`) | Materializar a camada de persistência da 2.0 | **~~ADR-A/B/D~~ lavradas (066/067/068)** · restam: **Onda 1 verde**, **DP-4** (Autoridade de Método), **guarda C-01** | — | **IMPEDIDO** (2026-08-04, relatório v2.0) — o bloqueio é **declarado pelas próprias ADRs**; nada implementado | Fundador (sequenciamento e nomeação) + Guardião/Arquiteto/Governança (C-01) | n/a — nada foi criado | 2.1 + 2.4 |
-| **1.2** | Assinatura do Curador | `curatorName` deixa de ser `null` | **RLS de `curadoria.profiles`** | X3 verde | **BLOQUEADO** — nenhuma policy permite ao paciente ler o perfil do Curador; corrigir exige mudança de RLS, vedada à Onda 1. Ver achado **G-10** | Guardião + Arquiteto decidem a via | reverter; volta a `null` | C-10 |
+| **1.2** | Assinatura do Curador | `curatorName` deixa de ser `null` | **RLS de `curadoria.profiles`** | X3 verde | **CARREGADO PARA A ONDA 2** (2026-08-08) — o mérito **não** foi encerrado: G-10 permanece (nenhuma policy permite ao paciente ler o perfil do Curador); a correção exige RLS, **vedada à Onda 1** por definição — não é falha do fechamento. **Nenhuma policy foi alterada retroativamente.** A resolução passa à releitura do **2.6**, que agora o carrega | Guardião + Arquiteto decidem a via (na Onda 2) | reverter; volta a `null` | C-10 |
 | **1.3** | Abertura preservada na regeneração | Fim da sobrescrita do texto humano (P12) | — | O5 verde; guardas da ADR-064 intactas | **CONCLUÍDO** (2026-08-04) — 9 testes novos, falseabilidade provada | Implementador | reverter os dois arquivos; o pacote só deixa de destruir | C-11 |
 | **1.4** | Remoção da dependência falsa COMPAT→AVALIAÇÃO | P11 | — | Estado da etapa reflete a leitura; Mesa segue não bloqueando | **CONCLUÍDO** (`fae6465`) — corrigido em 2026-08-07: o mapa dizia `PLANEJADO` mas o commit se autodeclara "Item 1.4 da Onda 1", os dois oráculos foram corrigidos nele, e toda a regressão verificada desde então o cobre. **Sem verificação independente dedicada** — coberto pela regressão certificada do 1.8-R1-MR1 | Implementador | reverter | C-12 |
-| **1.5** | Checkboxes derivados do Acolhimento | P13 | definição de Método do que é "aberto" | Nenhum critério de saída do COS enfraquece | **BLOQUEADO** (decisão de Método) | Implementador | reverter | C-13 |
+| **1.5** | Checkboxes derivados do Acolhimento | P13 | ~~definição de Método~~ — **M-001/M-003 decididas e portadas** (`66717ab`, lastro `8911c5e`) | Nenhum critério de saída do COS enfraquece | **FORMALMENTE ENCERRADO** (2026-08-08) — implementação `9f6ee86` sob autoridades **M-001, M-003 e DT-06** citadas no próprio commit; lastro agora no branch vigente; **nenhuma decisão de Método nova, nenhuma reimplementação**. O `BLOQUEADO` anterior era F-REC-1 (lastro noutro branch) | Implementador | reverter | C-13 |
 | **1.6** | Painel de prontidão para emissão | G6/O8 | — | O3 verde; a prontidão **deriva** das mesmas guardas, não as reimplementa | **FORMALMENTE ENCERRADO** — implementação histórica em `56ccfd0`, integrada em `1599390`; verificação independente no HEAD `c03cc26` e certificação formal em 2026-08-08: O3 verde, sincronia painel × emissão confirmada, duplicação de guardas inexistente; **R-obs-1** registrada como observação não bloqueante, fora do item. O `PLANEJADO` anterior era divergência mapa ⟂ git | Implementador | remover componente | C-14 |
-| **1.7** | Retirada da segunda entrega e das superfícies mortas | P9/P20/RI5 | **0.2** | X4 verde; **nenhum dado histórico apagado** | **BLOQUEADO** (DP-2) | Implementador | reverter | K-61 |
+| **1.7** | Retirada da segunda entrega e das superfícies mortas | P9/P20/RI5 | ~~0.2~~ — **DP-2 FECHADA pelo Fundador (2026-08-08)** | X4 verde; **nenhum dado histórico apagado** | **FORMALMENTE ENCERRADO** (2026-08-08) — implementação `2c039a3`, reconhecida pela DP-2 lavrada como **execução da decisão material prévia** (motor anterior congelado · nenhuma operação nova · histórico preservado). O `BLOQUEADO` anterior era F-REC-2 (decisão real, lavratura pendente) | Implementador | reverter | K-61 |
 
 ### 2.2 Base de auditabilidade — **nasce antes da primeira proposta**
 
@@ -99,6 +117,23 @@ a paciente já lê o que o Motor concluiu · nenhum invariante do Motor é mais 
 
 ## 3. Onda 2 — A virada do eixo (cada item exige ADR)
 
+> ### ONDA 2 FORMALMENTE ABERTA — 2026-08-08
+>
+> Entrada autorizada pelo **Guardião** (condicionada apenas às lavraturas, todas
+> cumpridas) e registrada após o fechamento formal da Onda 1. **A entrada não é
+> abertura da Fronteira Humana** — são atos distintos.
+>
+> **O que a entrada destrava** — passam a poder receber **pré-voo próprio**
+> (nenhum se torna implementável automaticamente): **2.3** · **2.4** · a
+> **releitura do 2.6**, agora **carregando o Item 1.2** (G-10/RLS).
+>
+> **O que permanece como está:** **2.5 PROIBIDO** enquanto DP-5 estiver aberta ·
+> **2.C BLOQUEADO** (2.6 + gates próprios + abertura própria da Fronteira) ·
+> **Fronteira Humana FECHADA** — grants da capability decisora do 1.12 = **zero**;
+> O2-A/B pertencem ao pacote futuro de abertura · **R-1/CD-1 preservado**:
+> nenhum valor da ponte estabiliza antes de Cases reais — a abertura formal da
+> onda não autoriza estabilização antecipada.
+
 **Entrada:** Onda 1 integralmente verde · ADRs aprovadas · Autoridade ativa · DP-1 respondido.
 **Rollback mestre da onda:** suspender a regra devolve o sistema ao regime de declaração
 direta **sem perder dado** — confirmações feitas permanecem válidas, propostas param de nascer.
@@ -107,10 +142,10 @@ direta **sem perder dado** — confirmações feitas permanecem válidas, propos
 |---|---|---|---|---|---|---|---|---|
 | **2.1** | `derivation_proposals` append-only | Materializar a Camada de Derivação | **ADR-A**, todas as dez do §15.0 | A3 verde; falta de proveniência ⇒ não persiste | **CONCLUÍDO COMO ESTRUTURA INERTE** (`1ed29f8`) — corrigido em 2026-08-07: a estrutura nasceu inerte (RLS sem policy, zero grants); o escritor único veio no 2.2C (`b38cd34`) e a leitura controlada no 1.8-R1 (Contrato §21). **Consumo pelo Pipeline de Leitura continua proibido (A2)** | Implementador | migration aditiva reversível | (parte de L-21) |
 | **2.2** | Ponte grau→importância — **forma e governança**, valores provisórios | Proposta de importância nos ~17 conceitos com lado da pessoa | **ADR-A**, 0.3, 2.1 | A1, A2 verdes; reabertura de I-10 declarada (§10.3.0); teste `importancia-vs-grau.test.ts` protegido até a ADR-A | **PARTICIONADO** — ver §3.1 | Implementador | flag; classificação manual permanece o caminho padrão | L-30 + L-31 |
-| **2.3** | Divisão da etapa AVALIAÇÃO | 3 critérios do lado da pessoa passam a vir do Motor | **ADR-067** (ex-"ADR-B"), 1.4 | X1 verde; FORMACAO/EXPERIENCIA/HISTORICO permanecem humanos | **BLOQUEADO por sequenciamento de onda** — as dependências da célula estão **satisfeitas** desde 2026-08-07 (ADR-067 lavrada · 1.4 concluído em `fae6465`); a entrada segue a critério do DT-01 | Implementador | flag restaura 6×N | L-40 + L-41 |
-| **2.4** | `curator_judgments` **sem `AREA`** | Registrar juízo humano onde não há célula | **ADR-067** (ex-"ADR-B"), 2.1 | Append-only; `AREA` ausente (RS-03) | BLOQUEADO | Implementador | migration aditiva | **novo** |
+| **2.3** | Divisão da etapa AVALIAÇÃO | 3 critérios do lado da pessoa passam a vir do Motor | **ADR-067** (ex-"ADR-B"), 1.4 | X1 verde; FORMACAO/EXPERIENCIA/HISTORICO permanecem humanos | **PLANEJADO — destravado pela entrada formal da Onda 2 (2026-08-08)**; dependências satisfeitas (ADR-067 · 1.4 `fae6465`); **exige pré-voo próprio** | Implementador | flag restaura 6×N | L-40 + L-41 |
+| **2.4** | `curator_judgments` **sem `AREA`** | Registrar juízo humano onde não há célula | **ADR-067** (ex-"ADR-B"), 2.1 | Append-only; `AREA` ausente (RS-03) | **PLANEJADO — destravado pela entrada formal da Onda 2 (2026-08-08)**; o gate "Onda 1 verde" da ADR-067 está satisfeito; **exige pré-voo próprio** | Implementador | migration aditiva | **novo** |
 | **2.5** | ~~Regime de confirmação em bloco~~ | — | **DP-5** | **AC-BLOCO:** nenhum mecanismo no repositório, **nem atrás de feature flag** | **PROIBIDO** até DP-5 por ADR (§5.4.0) | — | n/a | (não existia) |
-| **2.6** | Governança de quem confirma o Mapa do Profissional | Corrigir G4/RI4 | **ADR-068** (ex-"ADR-D"; toca ADR-040 item 6) | RLS não enfraquece; teste de permissão por papel | BLOQUEADO | Implementador + Guardião | restaurar permissão anterior | L-23 |
+| **2.6** | Governança de quem confirma o Mapa do Profissional | Corrigir G4/RI4 | **ADR-068** (ex-"ADR-D"; toca ADR-040 item 6) | RLS não enfraquece; teste de permissão por papel | **RELEITURA DE ESCOPO PENDENTE — agora carregando o Item 1.2 (G-10/RLS)**; a ADR-068 decidiu não reabrir a RLS do item 6, e o objeto precisa ser relido antes de pré-voo | Implementador + Guardião | restaurar permissão anterior | L-23 |
 | **2.C** | Persistência e apresentação da derivação do Mapa do Profissional — **confirmação item a item** | Ligar 1.A ao mundo real | 1.A, 2.1, 2.6, **todas as dez do §15.0** | Fronteira Humana com os nove elementos (A2c); ausência de ato nunca confirma (A2d) | BLOQUEADO | Implementador | flag desliga a superfície; preenchimento manual permanece | L-21 + L-22 |
 
 ### 3.1 Partição do Item 2.2 — ratificada pelo DT-01 em 2026-08-05

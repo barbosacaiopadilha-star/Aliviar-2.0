@@ -84,19 +84,19 @@ impede que ela vire o normal.
 8. Comportamento atual do sistema.
 9. Código existente.
 
-## 3. Estado atual da Curadoria 2.0
+## 3. Estado atual da Curadoria 2.0 *(reescrito em 2026-08-08, no fechamento da Onda 1 — a versão anterior descrevia o estado de 2026-08-04)*
 
 | Fato | Situação | Evidência |
 |---|---|---|
-| Auditoria | **Concluída** | documento datado 2026-08-04 |
-| Arquitetura | **v1.2 — proposta revisada**, candidata a canônica; aguardando revisão do Agente 00 | cabeçalho do próprio documento |
-| Aprovação constitucional | **Declarada pelo Fundador** na missão de planejamento; o documento ainda se declara "aguardando revisão" | **divergência registrada — ver §6, G-01** |
-| Planejamento executivo | **Concluído** (33 pacotes), **reconciliado** com a Arquitetura no Mapa dos Pacotes | `MAPA_DOS_PACOTES.md` §5 |
-| Implementação | **Não autorizada.** Nenhum pacote aberto | Arquitetura, linha final |
-| Código alterado pela 2.0 | **Zero** | nenhum commit da 2.0 existe |
-| Migrations criadas pela 2.0 | **Zero** | — |
-| ADRs da 2.0 | **Zero de cinco** (ADR-A, B, D, E necessárias; ADR-C retirada) | último ADR do log é o **065** |
-| Documentos versionados | **Não** — 11 arquivos não rastreados, incluindo os insumos canônicos da 2.0 | `git status` |
+| **Onda 0** | Fechada na prática: DP-1 ratificada (PA-1) · DP-2 **fechada** (2026-08-08) · DP-3 resolvida · DP-4 fechada (DT-01) · documentos versionados | este registro §4; mapa |
+| **Onda 1** | **FORMALMENTE ENCERRADA (2026-08-08)** — 12 itens implementados e encerrados; 1.2 **carregado para a Onda 2** | dossiê `ddadcd7`; decisão do Guardião; mapa §2 |
+| **Onda 2** | **FORMALMENTE ABERTA (2026-08-08)** — 2.1 e bloco 2.2 já executados por autorização caso a caso; 2.3/2.4 elegíveis para pré-voo; 2.6 em releitura carregando o 1.2; **2.5 proibido (DP-5)**; **2.C bloqueado** | mapa §3 |
+| ADRs da 2.0 | **ADR-066/067/068/069 lavradas**; ADR-C retirada; ADR-E recomendada (DP-2 já fechada sem ela) | `DECISIONS.md` |
+| Contratos | 1.8-R1 cumprido · 1.11 e 1.12 aprovados e encerrados · 1.A aprovado e encerrado | índice 16d–16g |
+| Camada de Derivação | estrutura inerte completa: propostas, regras, ciclo de vida, ponte, atos de decisão — **zero regra real, zero proposta real, zero grant operacional** | migrations `20260805..20260808` |
+| **Fronteira Humana** | **FECHADA** — grants da capability decisora = zero; O2-A/B pertencem ao pacote futuro de abertura | Contrato 1.12 §20 |
+| Dez condições do §15.0 | **10/10 satisfeitas e testadas** | dossiê §12 |
+| R-1 / CD-1 | preservado: **nenhum valor da ponte estabiliza antes de Cases reais** | Arquitetura §16 |
 | Rede real | **Inexistente** | Congelamento §7.2 |
 | Janela de publicação | **Inexistente** | Congelamento §7.1 |
 
@@ -107,7 +107,7 @@ Transcritas da Arquitetura §18. **Nenhuma é do Implementador.**
 | # | Decisão | De quem | Bloqueia | Estado |
 |---|---|---|---|---|
 | **DP-1** | P15 — o Motor recebe viabilidade? Guarda executável ou correção do Congelamento §4.3 | Arquiteto + Guardião | Onda 1.1, e portanto tudo | **Aberta** |
-| **DP-2** | Destino formal do ACE e do dado histórico | **Fundador** | retirada da segunda entrega (P9) | **Aberta** |
+| ~~**DP-2**~~ | Destino formal do ACE e do dado histórico | **Fundador** | retirada da segunda entrega (P9) | **FECHADA (2026-08-08)** — **aprovada e lavrada pelo Fundador.** Teor vinculante: **motor anterior permanece congelado** · **nenhuma operação nova** nele · **histórico existente preservado integralmente** · o congelamento **não autoriza exclusão, reescrita ou migração destrutiva** · novos fluxos seguem a arquitetura da Curadoria 2.0 · **a implementação existente do Item 1.7 (`2c039a3`) é reconhecida como execução desta decisão** — a decisão antecedeu materialmente a implementação; a lavratura formal ocorreu agora. ADR-E permanece **recomendada, não bloqueante** |
 | **DP-3** | Listas provisórias P3–P7 (`OPCOES_PROVISORIAS_*`) | Método | ponte grau→importância | **Aberta** |
 | ~~**DP-4**~~ | Quem exerce a Autoridade de Método sobre Regras de Derivação | Fundador | — | **FECHADA (2026-08-05)** — **DT-01 nomeado**, em acumulação temporária (§1.1). **Consequência operacional:** a condição 6 da ADR-066 §497 (*"nomeada e ativa"*) passa a estar satisfeita; regras de derivação podem ser aprovadas e promovidas a `VIGENTE`. **Não autoriza abrir o 2.2C** |
 | **DP-5** | Régua de graduação por consequência + lista nominal do que nunca entra em bloco | Método, **por ADR** | subescopo 2.5; enquanto aberta, o regime de bloco é **proibido de existir no repositório** | **Aberta** |
