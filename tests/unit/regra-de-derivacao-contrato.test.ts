@@ -140,22 +140,19 @@ describe("A1/A4/A5 · o contrato é tipo, e nada o consome", () => {
    * A exceção é por NOME: qualquer terceiro arquivo continua caindo aqui.
    */
   /**
-   * SEGUNDA EXCEÇÃO NOMEADA — ITEM 1.8, pela mesma razão.
+   * A SEGUNDA EXCEÇÃO (Ficha, Item 1.8) FOI REMOVIDA — 1.8-R1-MR1 §22.8.
    *
-   * A Ficha de Explicação (§11) precisa dizer, sobre a regra que sustenta uma
-   * frase, QUAL é e se ela ainda vale. Reimplementar "deixou de valer" dentro
-   * da Ficha criaria a segunda fonte que o parágrafo acima descreve — e desta
-   * vez a divergência apareceria na tela de alguém, afirmando validade que a
-   * regra já perdeu.
+   * Ela existiu porque a Ficha do `c3242ea` importava `deixouDeValer` para
+   * julgar o estado da regra. O R1 mudou o desenho: o estado afirmado pelo
+   * chamador morreu, a pergunta "a regra ainda vale?" virou matéria de
+   * coerência contra o banco, e a Ficha deixou de importar o contrato —
+   * verificado em `041b423`. Autorização nominal sem consumo real é
+   * autoridade desnecessária, e autoridade desnecessária é exatamente o que
+   * este corpus remove.
    *
-   * A Ficha também é inerte: sem banco, sem cliente, sem escrita, sem relógio
-   * — e a guarda E-05 prova cada uma dessas coisas. A exceção continua sendo
-   * por NOME: qualquer terceiro arquivo cai aqui.
+   * A exceção continua sendo por NOME: qualquer segundo arquivo cai aqui.
    */
-  const INERTES_AUTORIZADOS = [
-    "src/modules/curadoria/ciclo-de-vida-da-regra.ts",
-    "src/modules/curadoria/ficha-de-explicacao.ts",
-  ];
+  const INERTES_AUTORIZADOS = ["src/modules/curadoria/ciclo-de-vida-da-regra.ts"];
 
   it("A5 · nenhum Pipeline consome a Regra", () => {
     const FONTES = varrer("src");
@@ -175,7 +172,10 @@ describe("A1/A4/A5 · o contrato é tipo, e nada o consome", () => {
     // caminho fixo — "autorizado" e "auditado" tinham divergido. Agora a
     // auditoria itera a MESMA lista: autorizar é, no mesmo ato, submeter à
     // prova de inércia. Um terceiro nome futuro nasce auditado por construção.
-    expect(INERTES_AUTORIZADOS.length).toBeGreaterThanOrEqual(2);
+    // 1.8-R1-MR1 §22.8: a lista voltou a UM nome — a Ficha saiu porque não
+    // consome mais o contrato. O mínimo aqui é 1, e a varredura de consumo
+    // logo abaixo é quem prova que ninguém ficou de fora por engano.
+    expect(INERTES_AUTORIZADOS.length).toBeGreaterThanOrEqual(1);
     for (const autorizado of INERTES_AUTORIZADOS) {
       const fonte = readFileSync(join(RAIZ, autorizado), "utf8");
       for (const proibido of [/supabase/i, /\.insert\(/, /\.update\(/, /\.delete\(/, /await /, /from\(/]) {
