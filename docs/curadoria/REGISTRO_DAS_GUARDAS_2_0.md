@@ -97,12 +97,21 @@ E-07 nasceram com o Item 1.8** (`c3242ea`, 12 testes) e protegem a Ficha em si.
 | **F-02** O catálogo não muda em silêncio *(corrigida em F-01A)* | **Recomputa** o hash a partir do conteúdo real e compara com o declarado; verifica a vigência única de versão | Congelamento §2; I-3 | `catalogo-gerado.ts` · algoritmo de `scripts/gerar-catalogo-ts.mjs` | alguém edita `catalogo-gerado.ts` à mão sem regenerar | `sha256(JSON.stringify(CATALOGO_GERADO))` ≠ `CATALOGO_GERADO_HASH` |
 | **F-03** *(caracterização, não guarda)* | Produzir a evidência executável do achado P15 para a decisão **DP-1** | — | motor · repositório do motor · `mesa-cruzamento.ts` | **falha quando alguém implementar a guarda A4** — que é exatamente o sinal desejado | teste de estado atual |
 
-### Guardas do Item 2.3 — **APROVADAS, PENDENTES DE IMPLEMENTAÇÃO** (PA-16, 2026-08-08)
+### Guardas do Item 2.3 — **IMPLEMENTADAS E VERIFICADAS** (PA-16; Item 2.3 formalmente encerrado — `8305d97`, 2026-08-08)
 
 Lavradas no [`CONTRATO_2_3_DIVISAO_DA_AVALIACAO.md`](CONTRATO_2_3_DIVISAO_DA_AVALIACAO.md)
-§15–§16; **nenhuma está implementada** — entram com o pacote técnico do 2.3. A
-**RS-2.3-1** acrescenta **mutação obrigatória** (não-autor retirando julgamento
-alheio ⇒ queda), sem criar guarda nova.
+§15–§16; implementadas no pacote técnico do 2.3 (`8305d97`), verificadas de forma
+independente pelo Agente 04 (13 famílias de mutação mordidas, incluída a mutação
+obrigatória da **RS-2.3-1** — não-autor retirando julgamento alheio ⇒ queda) e
+certificadas pelo Agente 05 em 2026-08-08. **Ressalva vinculada `F-2.3-1`
+(higiene não bloqueante, classe de `F-2.4-1`/`F-2.6-1`):** as varreduras
+**estáticas** de assinatura sem `actor_id` e de ausência de destino paralelo
+leem a migration lavrada do 2.3 e o `src/` atuais, e não capturariam, sozinhas,
+uma migration futura que introduzisse deriva (overload aceitando ator; tabela
+staging paralela); as camadas **vivas** pinam o regime efetivamente aplicado e
+consumido. Nenhum pacote que altere as capabilities de julgamento ou seu destino
+pode ser aprovado sem reproduzir os oráculos dessas guardas sobre a definição
+efetiva. **F-2.4-1 permanece vigente e não é absorvida por esta.**
 
 | Guarda | Objetivo | Cai se |
 |---|---|---|
