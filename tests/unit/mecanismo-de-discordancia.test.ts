@@ -94,7 +94,19 @@ describe("G-3 · o motivo é oferecido, nunca exigido", () => {
 
 describe("G-4 · anti-ranking — motivo e recusa não viram mérito", () => {
   it("nenhum módulo de `src/` lê o motivo do ato — visibilidade é só Auditoria", () => {
+    // ABERTURA 2.C (PA-17): a leitura NOMINAL da Fronteira exibe autoria,
+    // data e desfecho do ato (elementos 6–8 do A2c) — e o select dela NÃO
+    // pede a coluna `motivo`, que segue legível só na Auditoria (PA-12 §18).
+    const LEITURA_DA_FRONTEIRA = "src/modules/curadoria/fronteira-do-mapa-repository.ts";
+    const fronteira = readFileSync(join(RAIZ, LEITURA_DA_FRONTEIRA), "utf8");
+    const selectDosAtos = fronteira.slice(
+      fronteira.indexOf("derivation_proposal_acts"),
+      fronteira.indexOf("in(\"proposal_id\"", fronteira.indexOf("derivation_proposal_acts")),
+    );
+    expect(selectDosAtos.includes("motivo"), "a Fronteira passou a ler o motivo do ato").toBe(false);
+
     for (const arquivo of FONTES) {
+      if (arquivo === LEITURA_DA_FRONTEIRA) continue;
       const codigo = readFileSync(join(RAIZ, arquivo), "utf8")
         .replace(/\/\*[\s\S]*?\*\//g, "")
         .split("\n")
@@ -118,10 +130,12 @@ describe("G-4 · anti-ranking — motivo e recusa não viram mérito", () => {
   });
 });
 
-describe("G-5 · nenhuma superfície de decisão existe na Onda 1B", () => {
-  it("nenhum módulo de `src/` invoca `decidir_proposta` — nem inteiro, nem pela metade", () => {
-    // Nascer só o botão de confirmar seria exatamente a assimetria que P-10
-    // proíbe (CONTRATO_1_12 §20). Nesta onda não nasce botão NENHUM.
+describe("G-5 · a superfície de decisão é a LAVRADA pela abertura (PA-17)", () => {
+  it("só as actions nominais da Fronteira invocam `decidir_proposta` — e com os DOIS atos", () => {
+    // A Onda 1B encerrou com a abertura do 2.C: a superfície nasceu com os
+    // dois atos JUNTOS (P-10 preservado — confirmar e recusar no mesmo
+    // módulo, mesmo custo). Um segundo invocador continua derrubando.
+    const AUTORIZADO = "src/modules/curadoria/fronteira-do-mapa-actions.ts";
     const invocam = FONTES.filter((arquivo) => {
       const codigo = readFileSync(join(RAIZ, arquivo), "utf8")
         .replace(/\/\*[\s\S]*?\*\//g, "")
@@ -130,7 +144,10 @@ describe("G-5 · nenhuma superfície de decisão existe na Onda 1B", () => {
         .join("\n");
       return codigo.includes("decidir_proposta");
     });
-    expect(invocam, "uma superfície de decisão nasceu antes da abertura da Fronteira").toEqual([]);
+    expect(invocam, "um invocador da decisora nasceu fora da lavratura").toEqual([AUTORIZADO]);
+    const actions = readFileSync(join(RAIZ, AUTORIZADO), "utf8");
+    expect(actions).toContain("CONFIRMACAO");
+    expect(actions).toContain("RECUSA");
   });
 
   it("nenhuma action, route ou componente de decisão de proposta existe", () => {

@@ -178,9 +178,15 @@ describe("C-01 · Nenhuma proposta persistida existe", () => {
     conteudo: readFileSync(arquivo, "utf8"),
   }));
 
-  it("NENHUM módulo de src/ conhece a tabela de propostas — sem exceção", () => {
+  it("só a leitura NOMINAL da Fronteira (2.C §10 — PA-17) conhece a tabela de propostas", () => {
+    // ABERTURA 2.C: o painel interno lê as propostas do alvo profissional
+    // pelo caminho servidor autorizado. A isenção é UM arquivo, nominal —
+    // qualquer outro módulo continua caindo.
+    const LEITURA_DA_FRONTEIRA = "src/modules/curadoria/fronteira-do-mapa-repository.ts";
     expect(
-      leitoresDePropostas(FONTES_COM_CONTEUDO),
+      leitoresDePropostas(FONTES_COM_CONTEUDO).filter(
+        (caminho) => caminho.split("\\").join("/") !== LEITURA_DA_FRONTEIRA,
+      ),
       "a string da tabela voltou a src/ — o conhecimento dela é do objeto SQL, não da aplicação.",
     ).toEqual([]);
   });
@@ -306,6 +312,10 @@ describe("C-01 · Nenhuma proposta persistida existe", () => {
     const PAINEL = [
       "src/modules/curadoria/painel-de-discordancia.ts",
       "src/modules/curadoria/painel-de-discordancia-repository.ts",
+      // ABERTURA 2.C (PA-17): a leitura e a superfície da Fronteira exibem o
+      // desfecho PROPOSTA como pendência — leitura de fato, não estado novo.
+      "src/modules/curadoria/fronteira-do-mapa-repository.ts",
+      "src/components/curadoria/fronteira/painel-da-fronteira.tsx",
     ];
     expect(
       ocorrencias(FONTES, /\bPROPOSTA\b\s*[:=]|status\s*[:=]\s*["']PROPOSTA["']/).filter(
@@ -411,16 +421,19 @@ describe("C-01 · Nenhuma proposta persistida existe", () => {
       expect(cruzado, "o chamador cruzado herdou autorização").toHaveLength(1);
     });
 
-    it("nenhuma superfície — component, route, action — invoca capability alguma", () => {
+    it("nenhuma superfície fora do mapa nominal invoca capability alguma", () => {
+      // ABERTURA 2.C (PA-17): as actions da Fronteira SÃO o chamador nominal
+      // da decisora — a exceção é a própria lista lavrada, nunca um padrão.
       const SUPERFICIES = FONTES_COM_CONTEUDO.filter(
         ({ caminho }) =>
           /[\\/](app|components)[\\/]/.test(caminho) || /actions?\.tsx?$/.test(caminho),
       );
       for (const capability of CAPABILITIES) {
+        const autorizados: readonly string[] = CHAMADORES_DE_CAPABILITIES[capability];
         expect(
-          SUPERFICIES.filter(({ conteudo }) => new RegExp(`rpc\\(\\s*["'\`]${capability}`).test(conteudo)).map(
-            ({ caminho }) => caminho,
-          ),
+          SUPERFICIES.filter(({ conteudo }) => new RegExp(`rpc\\(\\s*["'\`]${capability}`).test(conteudo))
+            .map(({ caminho }) => caminho.split("\\").join("/"))
+            .filter((caminho) => !autorizados.includes(caminho)),
           `uma superfície passou a invocar ${capability} direto — a informação chega pelo repositório nominal.`,
         ).toEqual([]);
       }

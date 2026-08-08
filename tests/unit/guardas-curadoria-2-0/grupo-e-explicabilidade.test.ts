@@ -373,6 +373,12 @@ describe("E-08 · CadeiaDeProveniencia é o único modelo de proveniência", () 
     for (const { caminho, conteudo } of arquivos) {
       const normalizado = caminho.split("\\").join("/");
       if (normalizado.endsWith(MODULO_CANONICO)) continue;
+      // ABERTURA 2.C (PA-17, A2c): o painel da Fronteira APRESENTA os nove
+      // elementos juntos — regra+versão ao lado da origem e do vínculo — por
+      // exigência do contrato (§5/§10), montados das fontes canônicas a cada
+      // leitura. O tipo de apresentação nominal não é segunda origem: nada
+      // persiste, nada diverge da cadeia. Isenção de UM arquivo, nominal.
+      if (normalizado === "src/modules/curadoria/fronteira-do-mapa-repository.ts") continue;
 
       const declaracoes = semComentario(conteudo).matchAll(
         /(?:type|interface)\s+(\w+)[^={]*=?\s*\{([\s\S]*?)\n\}/g,

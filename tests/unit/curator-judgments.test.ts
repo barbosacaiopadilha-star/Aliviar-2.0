@@ -142,6 +142,7 @@ describe("G-2.4-7/8/9 (estática) · zero writer, zero superfície, Motor sem ca
     // (G-2.4-7: Motor/pipeline não julga; G-2.4-9: destino único).
     const autorizados = [
       "src/components/curadoria/mesa/painel-de-juizo.tsx",
+      "src/modules/curadoria/fronteira-do-mapa-repository.ts",
       "src/modules/curadoria/julgamento-actions.ts",
       "src/modules/curadoria/julgamentos-repository.ts",
       "src/modules/curadoria/julgamentos.ts",
@@ -151,13 +152,24 @@ describe("G-2.4-7/8/9 (estática) · zero writer, zero superfície, Motor sem ca
       .sort();
     expect(mencionam).toEqual(autorizados.filter((a) => mencionam.includes(a)));
     expect(mencionam.every((arquivo) => autorizados.includes(arquivo))).toBe(true);
-    // E a TABELA continua intocável por qualquer módulo — o acesso é sempre
-    // pelas capabilities (a varredura viva da inércia segue no teste de
-    // integração e no unit do 2.3).
-    const tocamTabela = varrer("src").filter((arquivo) =>
-      /from\(\s*["']curator_judgment/.test(readFileSync(join(RAIZ, arquivo), "utf8")),
-    );
-    expect(tocamTabela).toEqual([]);
+    // A ESCRITA pela aplicação continua IMPOSSÍVEL — o caminho é sempre a
+    // capability. A leitura da Fronteira (2.C §10 — PA-17) alcança a tabela
+    // pelo caminho servidor autorizado para EXIBIR o juízo vigente ao lado da
+    // proposta; qualquer `.insert/.update/.delete` nela derruba aqui.
+    const LEITURA_DA_FRONTEIRA = "src/modules/curadoria/fronteira-do-mapa-repository.ts";
+    const tocamTabela = varrer("src")
+      .filter((arquivo) => /from\(\s*["']curator_judgment/.test(readFileSync(join(RAIZ, arquivo), "utf8")))
+      .sort();
+    expect(tocamTabela).toEqual([LEITURA_DA_FRONTEIRA]);
+
+    const fronteira = readFileSync(join(RAIZ, LEITURA_DA_FRONTEIRA), "utf8");
+    const consultaDoJuizo = fronteira.slice(fronteira.indexOf('.from("curator_judgments")'));
+    for (const escrita of [".insert(", ".upsert(", ".update(", ".delete("]) {
+      expect(
+        consultaDoJuizo.slice(0, consultaDoJuizo.indexOf("]),")).includes(escrita),
+        `a Fronteira escreve no juízo: ${escrita}`,
+      ).toBe(false);
+    }
   });
 
   it("`derivation_proposals` não ganhou alvo de julgamento em nenhuma migration do regime", () => {

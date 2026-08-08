@@ -208,10 +208,13 @@ describe("G-2.3-1/6 (estática) · o JS3 só supersede; o writer aceita o árbit
 
 describe("G-2.3-2/8 (estática) · destino único; o cliente nunca toca a tabela; 2.C fechado", () => {
   it("NENHUM módulo de src acessa a tabela `curator_judgments` — só as capabilities via RPC", () => {
+    // ABERTURA 2.C (PA-17 §10): a leitura da Fronteira exibe o julgamento
+    // VIGENTE associado — LEITURA nominal pelo caminho servidor, nunca edição
+    // (o unit do 2.C prova que o arquivo não escreve na entidade).
     const violadores = FONTES.filter((arquivo) => {
       const codigo = readFileSync(join(RAIZ, arquivo), "utf8");
       return /from\(\s*["']curator_judgment/.test(codigo);
-    });
+    }).filter((arquivo) => arquivo !== "src/modules/curadoria/fronteira-do-mapa-repository.ts");
     expect(violadores).toEqual([]);
   });
 
@@ -231,10 +234,13 @@ describe("G-2.3-2/8 (estática) · destino único; o cliente nunca toca a tabela
   });
 
   it("nenhum destino paralelo nasceu: só a Mesa fala de julgamento; 2.C segue sem consumidor", () => {
+    // ABERTURA 2.C (PA-17): o invocador nominal existe agora — e é ÚNICO.
     const decisora = FONTES.filter((arquivo) =>
       readFileSync(join(RAIZ, arquivo), "utf8").includes("decidir_proposta"),
     );
-    expect(decisora, "o 2.3 virou pretexto para abrir o 2.C (G-2.3-8)").toEqual([]);
+    expect(decisora, "um invocador da decisora fora da lavratura (G-2.3-8)").toEqual([
+      "src/modules/curadoria/fronteira-do-mapa-actions.ts",
+    ]);
   });
 });
 

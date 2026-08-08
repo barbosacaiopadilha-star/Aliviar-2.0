@@ -341,12 +341,12 @@ from pg_policies where schemaname = 'curadoria' and tablename = 'professional_su
 // ---------------------------------------------------------------------------
 
 describe("G-2.6-5 · nada do 2.6 abriu o 2.C nem a Fronteira", () => {
-  it("os grants da capability decisora do 1.12 seguem ZERO — a Fronteira está fechada", () => {
+  it("ABERTURA 2.C (PA-17): a decisora tem EXECUTE só de authenticated — anon e PUBLIC fechados", () => {
     const saida = psql(`
 select has_function_privilege('anon', 'curadoria.decidir_proposta(uuid, text, text)', 'execute')
   || '|' || has_function_privilege('authenticated', 'curadoria.decidir_proposta(uuid, text, text)', 'execute')
   || '|' || has_function_privilege('public', 'curadoria.decidir_proposta(uuid, text, text)', 'execute');`);
-    expect(saida).toBe("false|false|false");
+    expect(saida).toBe("false|true|false");
   });
 
   it("o 2.6 não criou tabela, view ou writer novo — só a capability", () => {

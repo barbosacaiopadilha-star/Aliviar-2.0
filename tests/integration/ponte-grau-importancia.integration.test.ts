@@ -620,6 +620,11 @@ describe("2.2C · A2 — a proposta não entra no Pipeline de Leitura", () => {
         and p.prosrc ~* '(insert|update|delete)[[:space:]]+(into[[:space:]]+)?curadoria\\.derivation_proposals'
     `);
     expect(saida, "nasceu um escritor de propostas fora da lavratura").toBe(
+      // ABERTURA 2.C (PA-17, RS-2.C-1): o emissor PROFISSIONAL é o segundo
+      // emissor NOMINAL (C-11 evoluída) — mas o braço de INSERT dele é
+      // INALCANÇÁVEL até a forma da correspondência ser lavrada (PA-13
+      // §10.2): vazio-honesto, ele ainda NÃO figura entre os escritores
+      // vivos. Quando a emenda ativar o braço, esta lista evolui para TRÊS.
       "emitir_proposta_de_importancia,projetar_estado_da_proposta",
     );
   });
@@ -638,7 +643,7 @@ describe("2.2C · A2 — a proposta não entra no Pipeline de Leitura", () => {
       from pg_proc p join pg_namespace n on n.oid = p.pronamespace
       where n.nspname = 'curadoria'
         and p.prosrc ilike '%derivation_proposals%'
-        and p.proname <> 'emitir_proposta_de_importancia'
+        and p.proname not in ('emitir_proposta_de_importancia', 'emitir_proposta_de_estado')
     `);
     expect(saida, "nasceu função além do conjunto lavrado C-01d(4) + projeção").toBe(
       "contar_propostas_por_desfecho,decidir_proposta,ler_proposta_para_proveniencia,projetar_estado_da_proposta",

@@ -524,12 +524,14 @@ describe("painel 1.11 — a recusa entra no agregado sem nenhuma alteração", (
 // §20 · INÉRCIA — a Onda 1B não abre nada
 // ---------------------------------------------------------------------------
 describe("inércia — capacidade técnica não é abertura da Fronteira", () => {
-  it("a capability não tem EXECUTE para PUBLIC, anon nem authenticated", () => {
+  it("ABERTURA 2.C (PA-17): EXECUTE somente a authenticated — PUBLIC e anon seguem revogados", () => {
     const { saida } = psql(`
       select has_function_privilege('public', 'curadoria.decidir_proposta(uuid,text,text)', 'execute')
         || '|' || has_function_privilege('anon', 'curadoria.decidir_proposta(uuid,text,text)', 'execute')
         || '|' || has_function_privilege('authenticated', 'curadoria.decidir_proposta(uuid,text,text)', 'execute')`);
-    expect(saida).toBe("false|false|false");
+    // O recorte exato do CONTRATO_2_C §8: o grant é a porta; a autoridade
+    // é o gate interno por alvo.
+    expect(saida).toBe("false|false|true");
   });
 
   it("a tabela de atos é inalcançável por papel de aplicação — RLS sem policy, zero grant", () => {
@@ -564,13 +566,16 @@ describe("D-01(2) · case_priority_map tem exatamente dois escritores nominais",
     expect(saida, "um terceiro escritor do Mapa nasceu no banco").toBe("decidir_proposta");
   });
 
-  it("o Mapa do Profissional permanece com escritor único — nenhuma função o escreve", () => {
+  it("D-01 evoluída (PA-17): a decisora é a ÚNICA função que escreve o Mapa do Profissional", () => {
     const { saida } = psql(`
       select coalesce(string_agg(p.proname, ',' order by p.proname), '(nenhuma)')
       from pg_proc p join pg_namespace n on n.oid = p.pronamespace
       where n.nspname = 'curadoria'
         and p.prosrc ~* '(insert[[:space:]]+into|update|delete[[:space:]]+from)[[:space:]]+curadoria\.professional_subcriterion_map'`);
-    expect(saida).toBe("(nenhuma)");
+    // O segundo escritor nominal do recorte 2.C §8 — repository (manual) +
+    // decidir_proposta (confirmação), validações idênticas. Um segundo nome
+    // de função aqui derruba.
+    expect(saida).toBe("decidir_proposta");
   });
 
   it("G-7 · as validações do Mapa são as MESMAS: os triggers são da tabela, não do caminho", () => {

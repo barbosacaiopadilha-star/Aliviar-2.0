@@ -101,11 +101,23 @@ describe("A4 · nenhum pipeline nasceu", () => {
     // existir — com a capability, o repositório invoca a FUNÇÃO e a tabela some
     // de `src/` por inteiro. A lista nominal mudou de sujeito (chamadores da
     // capability, C-01d) e não isenta mais ninguém aqui.
+    // ABERTURA 2.C (PA-17 §10): a Fronteira APRESENTA cada proposta com os
+    // nove elementos do A2c, e a leitura nominal dela alcança a tabela pelo
+    // caminho servidor autorizado — LEITURA, jamais escrita (provado logo
+    // abaixo e no unit do 2.C). A isenção é de UM arquivo, por nome.
+    const LEITURA_DA_FRONTEIRA = "src/modules/curadoria/fronteira-do-mapa-repository.ts";
     const alcancam = FONTES.filter((arquivo) => {
       const codigo = readFileSync(join(RAIZ, arquivo), "utf8");
       return /from\(\s*["'`]derivation_proposals["'`]\s*\)/i.test(codigo);
     });
-    expect(alcancam).toEqual([]);
+    expect(alcancam.map((a) => a.split("\\").join("/"))).toEqual([LEITURA_DA_FRONTEIRA]);
+
+    // E o que ela faz com a tabela continua sendo só ler: qualquer escrita
+    // pela aplicação derruba — o caminho de escrita é a capability.
+    const fronteira = readFileSync(join(RAIZ, LEITURA_DA_FRONTEIRA), "utf8");
+    for (const escrita of [".insert(", ".upsert(", ".update(", ".delete("]) {
+      expect(fronteira.includes(escrita), `a leitura da Fronteira escreve: ${escrita}`).toBe(false);
+    }
 
     // E a lista de chamadores não vaza para cá: nem o nome exato isenta.
     expect(ehLeitorAutorizado("src/modules/curadoria/cadeia-de-proveniencia-repository.ts")).toBe(

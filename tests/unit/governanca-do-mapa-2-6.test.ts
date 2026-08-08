@@ -173,10 +173,12 @@ describe("G-2.6-5 (estática) · o 2.C segue fechado — o 2.6 não é pretexto"
     // As guardas do 1.12 (G-5) e do 1.A (G-2) já vigiam isso arquivo a
     // arquivo; aqui fica o oráculo do 2.6 — que a exceção do G-10 não virou
     // porta para o resto.
+    // ABERTURA 2.C (PA-17): o chamador nominal da decisora é a exceção
+    // lavrada; a derivação pura do 1.A segue sem consumidor nenhum.
     const violadores = FONTES.filter((arquivo) => {
       const codigo = codigoSemComentarios(arquivo);
       return codigo.includes("decidir_proposta") || codigo.includes("derivacao-do-mapa-profissional");
-    });
+    }).filter((arquivo) => arquivo !== "src/modules/curadoria/fronteira-do-mapa-actions.ts");
     expect(violadores).toEqual([]);
   });
 });

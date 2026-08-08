@@ -39,7 +39,7 @@ export const CHAMADORES_DE_CAPABILITIES = {
    * para os DOIS atos de uma vez (P-10: só o botão de confirmar seria
    * exatamente a assimetria que o princípio proíbe).
    */
-  decidir_proposta: [],
+  decidir_proposta: ["src/modules/curadoria/fronteira-do-mapa-actions.ts"],
 } as const;
 
 export type CapabilityDePropostas = keyof typeof CHAMADORES_DE_CAPABILITIES;
