@@ -30,6 +30,16 @@ export const CHAMADORES_DE_CAPABILITIES = {
   contar_propostas_por_desfecho: [
     "src/modules/curadoria/painel-de-discordancia-repository.ts",
   ],
+  /**
+   * CONTRATO_1_12 §14/§20 (PA-12) — a DECISORA da Fronteira Humana. A lista de
+   * chamadores é VAZIA de propósito, e isso é a inércia da Onda 1B como
+   * guarda: qualquer módulo de `src/` que a invoque cai na C-01d, porque
+   * nenhum está autorizado. A superfície de decisão pertence ao pacote da
+   * abertura da Fronteira, com lavratura própria — e quando nascer, nascerá
+   * para os DOIS atos de uma vez (P-10: só o botão de confirmar seria
+   * exatamente a assimetria que o princípio proíbe).
+   */
+  decidir_proposta: [],
 } as const;
 
 export type CapabilityDePropostas = keyof typeof CHAMADORES_DE_CAPABILITIES;

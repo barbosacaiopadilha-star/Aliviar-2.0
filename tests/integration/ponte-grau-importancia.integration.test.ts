@@ -608,25 +608,31 @@ describe("2.2C · A2 — a proposta não entra no Pipeline de Leitura", () => {
     expect(r.saida, "a emissão alterou case_needs").toContain("NEEDS_INTACTO:ESSENCIAL");
   });
 
-  it("o emissor é o ÚNICO escritor de derivation_proposals no banco", () => {
+  it("os escritores de derivation_proposals são o emissor e a projeção do ato", () => {
+    // MUDANÇA DE CONTRATO LAVRADA — CONTRATO_1_12 §10 (PA-12): o `state`
+    // decisório passou a ser projeção do ato humano, escrita pelo trigger
+    // `projetar_estado_da_proposta` disparado pelo INSERT do ato. A cerca
+    // `protege_estado_decisorio` garante que nenhum outro caminho o produz.
     const { saida } = psql(`
       select coalesce(string_agg(p.proname, ',' order by p.proname), '(nenhuma)')
       from pg_proc p join pg_namespace n on n.oid = p.pronamespace
       where n.nspname = 'curadoria'
         and p.prosrc ~* '(insert|update|delete)[[:space:]]+(into[[:space:]]+)?curadoria\\.derivation_proposals'
     `);
-    expect(saida, "nasceu um segundo escritor de propostas").toBe("emitir_proposta_de_importancia");
+    expect(saida, "nasceu um escritor de propostas fora da lavratura").toBe(
+      "emitir_proposta_de_importancia,projetar_estado_da_proposta",
+    );
   });
 
-  it("além do emissor, só os leitores lavrados alcançam as propostas", () => {
-    // MUDANÇA DE CONTRATO — 1.8-R1 §21 (`78e261c`) e CONTRATO_1_11 §3
-    // (`ca49293`). O A2 continua intacto: nenhuma função produz leitura
-    // canônica a partir de propostas. O que as lavraturas criaram foram dois
-    // leitores de capability, ambos SECURITY DEFINER/STABLE com EXECUTE só de
-    // service_role: `ler_proposta_para_proveniencia` (auditoria individual,
-    // §11.4) e `contar_propostas_por_desfecho` (agregação observacional do
-    // Painel de Discordância, sem dimensão pessoal). O conjunto é fechado em
-    // TRÊS nomes, e um quarto derruba este oráculo como sempre derrubou.
+  it("além do emissor, só as capabilities lavradas alcançam as propostas", () => {
+    // MUDANÇA DE CONTRATO — 1.8-R1 §21 (`78e261c`), CONTRATO_1_11 §3
+    // (`ca49293`) e agora CONTRATO_1_12 §14 (PA-12): C-01d(4). O A2 continua
+    // intacto: nenhuma função produz leitura canônica a partir de propostas.
+    // O conjunto fechado é {emissor · leitora individual · leitora agregada ·
+    // decisora} + o trigger de projeção — a decisora (`decidir_proposta`) lê a
+    // proposta com `for update` para a precondição transacional (§13) e nasce
+    // SEM grant algum (Onda 1B inerte). Um SEXTO nome derruba este oráculo
+    // como o quarto sempre derrubou.
     const { saida } = psql(`
       select coalesce(string_agg(p.proname, ',' order by p.proname), '(nenhuma)')
       from pg_proc p join pg_namespace n on n.oid = p.pronamespace
@@ -634,8 +640,8 @@ describe("2.2C · A2 — a proposta não entra no Pipeline de Leitura", () => {
         and p.prosrc ilike '%derivation_proposals%'
         and p.proname <> 'emitir_proposta_de_importancia'
     `);
-    expect(saida, "nasceu função além do trio lavrado escritor/leitores").toBe(
-      "contar_propostas_por_desfecho,ler_proposta_para_proveniencia",
+    expect(saida, "nasceu função além do conjunto lavrado C-01d(4) + projeção").toBe(
+      "contar_propostas_por_desfecho,decidir_proposta,ler_proposta_para_proveniencia,projetar_estado_da_proposta",
     );
   });
 });

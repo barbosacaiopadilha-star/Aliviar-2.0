@@ -167,27 +167,32 @@ describe("2.1 · e permanece INERTE", () => {
    *   · policy, grant ou alcance por papel de aplicação (asserções acima).
    */
   it("existe exatamente UM emissor autorizado, e nenhum leitor", () => {
+    // MUDANÇA DE CONTRATO LAVRADA — CONTRATO_1_12 §10/§14 (PA-12). O `state`
+    // decisório da proposta passou a ser PROJEÇÃO do ato humano, atualizada
+    // pelo trigger `projetar_estado_da_proposta` disparado pelo INSERT em
+    // `derivation_proposal_acts`. Esse trigger É um escritor do `state` — o
+    // ÚNICO legítimo além do emissor, e a cerca
+    // `protege_estado_decisorio` garante que nenhum outro caminho o produz.
     const [escritores] = consultar(`
       select coalesce(string_agg(p.proname, ',' order by p.proname), '(nenhum)')
       from pg_proc p join pg_namespace n on n.oid = p.pronamespace
       where n.nspname = 'curadoria'
         and p.prosrc ~* '(insert|update|delete)[[:space:]]+(into[[:space:]]+)?curadoria\\.derivation_proposals'
     `);
-    expect(escritores![0], "nasceu um segundo escritor de propostas").toBe(
-      "emitir_proposta_de_importancia",
+    expect(escritores![0], "nasceu um escritor de propostas fora da lavratura").toBe(
+      "emitir_proposta_de_importancia,projetar_estado_da_proposta",
     );
 
-    // MUDANÇA DE CONTRATO LAVRADA — 1.8-R1 §21 (`78e261c`) e agora
-    // CONTRATO_1_11 §3 (`ca49293`). Ler propostas para produzir leitura
-    // canônica continua proibido (A2). O que as lavraturas criaram foram
-    // LEITORES DE CAPABILITY — ambos SECURITY DEFINER, STABLE, EXECUTE só de
-    // service_role, nunca alimentando o Pipeline de Leitura:
+    // C-01d(4) — CONTRATO_1_12 §14: o conjunto de funções que alcançam
+    // `derivation_proposals` passa a QUATRO capabilities nominais
+    // {emissor · leitora individual · leitora agregada · decisora}, mais o
+    // trigger de projeção que a decisora dispara. Um SEXTO nome derruba este
+    // oráculo como o quarto sempre derrubou:
     //   · `ler_proposta_para_proveniencia` — auditoria individual (1.8-R1);
-    //   · `contar_propostas_por_desfecho` — agregação observacional sem
-    //     dimensão pessoal, para o Painel de Discordância (1.11).
-    // O conjunto fechado passa a ser { escritor, leitor individual, leitor
-    // agregado }, e um QUARTO nome derruba este oráculo como sempre derrubou
-    // (§21.7; guarda C-01d cobre chamadores e o trio em unitário).
+    //   · `contar_propostas_por_desfecho` — agregação do painel (1.11);
+    //   · `decidir_proposta` — o ato decisório da Fronteira (1.12), que LÊ a
+    //     proposta com `for update` para a precondição transacional (§13) e
+    //     nasce SEM grant algum (Onda 1B inerte).
     const [leitores] = consultar(`
       select coalesce(string_agg(p.proname, ',' order by p.proname), '(nenhum)')
       from pg_proc p join pg_namespace n on n.oid = p.pronamespace
@@ -195,9 +200,21 @@ describe("2.1 · e permanece INERTE", () => {
         and p.prosrc ilike '%derivation_proposals%'
         and p.proname <> 'emitir_proposta_de_importancia'
     `);
-    expect(leitores![0], "nasceu função além do trio lavrado escritor/leitores").toBe(
-      "contar_propostas_por_desfecho,ler_proposta_para_proveniencia",
+    expect(leitores![0], "nasceu função além do conjunto lavrado C-01d(4) + projeção").toBe(
+      "contar_propostas_por_desfecho,decidir_proposta,ler_proposta_para_proveniencia,projetar_estado_da_proposta",
     );
+
+    // A decisora é o que a lavratura diz: SECURITY DEFINER, VOLATILE (ela
+    // escreve o ato), e INERTE — nenhum papel de aplicação a executa.
+    const [contratoDaDecisora] = consultar(`
+      select prosecdef || '/' || provolatile::text || '/' ||
+        has_function_privilege('authenticated','curadoria.decidir_proposta(uuid,text,text)','execute') || '/' ||
+        has_function_privilege('anon','curadoria.decidir_proposta(uuid,text,text)','execute') || '/' ||
+        has_function_privilege('service_role','curadoria.decidir_proposta(uuid,text,text)','execute')
+      from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'curadoria' and p.proname = 'decidir_proposta'
+    `);
+    expect(contratoDaDecisora![0]).toBe("true/v/false/false/false");
 
     // E cada leitor é o que a lavratura diz: definer, estável, fora do alcance
     // dos papéis de aplicação — a tabela continua fechada a todos eles.
@@ -232,11 +249,20 @@ describe("2.1 · e permanece INERTE", () => {
     }
   });
 
-  it("zero trigger — nada dispara a partir dela", () => {
+  /**
+   * ORÁCULO EVOLUÍDO PELO ITEM 1.12 (CONTRATO_1_12 §10, PA-12): "zero trigger"
+   * valia enquanto o `state` não era projeção de nada. Agora a CERCA
+   * `protege_estado_decisorio` vive na tabela — ela não opera a proposta,
+   * ela IMPEDE que o estado decisório nasça por UPDATE direto. Proteção não é
+   * pipeline (mesma distinção do MR1 da Regra). O trigger de PROJEÇÃO dispara
+   * da tabela de ATOS, não desta.
+   */
+  it("o único trigger é a cerca do estado decisório — proteção, não operação", () => {
     const [linha] = consultar(`
-      select count(*) from pg_trigger
+      select coalesce(string_agg(tgname, ',' order by tgname), '(nenhum)')
+      from pg_trigger
       where tgrelid = '${TABELA}'::regclass and not tgisinternal
     `);
-    expect(linha![0]).toBe("0");
+    expect(linha![0]).toBe("derivation_proposals_estado_decisorio_so_pelo_ato");
   });
 });

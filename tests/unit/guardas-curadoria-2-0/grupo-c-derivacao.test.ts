@@ -446,14 +446,23 @@ describe("C-01 · Nenhuma proposta persistida existe", () => {
         .sort();
     }
 
-    it("as migrations definem exatamente três funções que tocam a tabela", () => {
+    /**
+     * C-01d(4) — CONTRATO_1_12 §14 (PA-12): o conjunto passou de três para
+     * QUATRO capabilities nominais com a decisora da Fronteira, mais o trigger
+     * de projeção que o INSERT do ato dispara (§10 — o `state` decisório é
+     * leitura materializada do ato, e o trigger é o único que a escreve).
+     * Um SEXTO nome derruba, como o quarto sempre derrubou.
+     */
+    it("as migrations definem exatamente o conjunto lavrado C-01d(4) + projeção", () => {
       const sql = MIGRATIONS.sort()
         .map((arquivo) => semComentarios(readFileSync(arquivo, "utf8")))
         .join("\n");
       expect(nomesDeFuncoesQueTocamPropostas(sql)).toEqual([
         "contar_propostas_por_desfecho",
+        "decidir_proposta",
         "emitir_proposta_de_importancia",
         "ler_proposta_para_proveniencia",
+        "projetar_estado_da_proposta",
       ]);
     });
 
