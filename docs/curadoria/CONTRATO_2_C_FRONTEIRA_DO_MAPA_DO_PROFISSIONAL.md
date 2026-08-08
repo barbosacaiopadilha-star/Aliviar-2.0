@@ -5,7 +5,7 @@
 | **Versão** | v1.0 |
 | **Autor** | Agente 02 — Arquiteto da Curadoria 2.0 |
 | **Data** | 2026-08-08 |
-| **Status** | **PROPOSTA — pronta para julgamento do Guardião da CURADORIA 2.0** |
+| **Status** | **APROVADO — Guardião da CURADORIA 2.0, 2026-08-08** (`CONTRATO_2_C APROVADO COM RESSALVA`; **RS-2.C-1** — C-01d evolui para **cinco** funções nominais com o nascimento autorizado do emissor profissional — **incorporada como norma** nos §7/§15, com o registro de transparência do recorte no §8). **Decisão normativa explícita do Guardião: `ABERTURA DA FRONTEIRA AUTORIZADA SOMENTE APÓS LAVRATURA E EM MISSÃO PRÓPRIA, EXCLUSIVAMENTE NO RECORTE DO CONTRATO 2.C`** — nada foi aberto materialmente. Parecer catalogado como **PA-17** no [`REGISTRO_DOS_PARECERES.md`](REGISTRO_DOS_PARECERES.md). Nasceu como **PROPOSTA** na base `b565a02`; lavratura no commit registrado no PA-17 |
 | **Base** | `6cf87ad` ([`AUDITORIA_GATES_2C.md`](AUDITORIA_GATES_2C.md): **10/10 gates do §15.0 satisfeitos**; Fronteira medida FECHADA) |
 | **Item** | **2.C** — "Ligar 1.A ao mundo real"; aceite canônico **A2c** (nove elementos) + **A2d** (ausência de ato nunca confirma) |
 | **Autoridades** | Arquitetura §2.4/§15.0/§17.4 (A2b/A2c/A2d)/§16 (R-01) · ADR-066 §6–§8/§14–§16 · ADR-067 (§13.2 via 2.6 §13) · ADR-068 §14.2 · CONTRATO_1_12 (mecanismo de decisão, §7 herança do alvo profissional) · CONTRATO_1_8_R1 (vínculo `evidence_id`) · CONTRATO_1_A (função pura; PA-13) · CONTRATO_2_6 §13 · DP-5 (intocada) · PA-12..PA-16 |
@@ -97,6 +97,7 @@ Espelho do emissor Case-side (2.2C), sob as **mesmas oito condições da ponte**
 | Pergunta | Cláusula |
 |---|---|
 | Quem emite | função SQL única `curadoria.emitir_proposta_de_estado(professional_profile_id, subcriterion_code, ...)` — **segundo escritor nominal de `derivation_proposals`** (C-11 evolui por lavratura: `{emissor Case · emissor profissional}`) |
+| **RS-2.C-1 (Guardião, 2026-08-08)** | `emitir_proposta_de_estado` é a **quinta função SQL nominal autorizada** no regime de `derivation_proposals` — a **C-01d evolui para o conjunto fechado de CINCO nomes**: **(1)** emissor Case (`emitir_proposta_de_importancia`) · **(2)** emissor profissional (`emitir_proposta_de_estado`) · **(3)** leitora individual (`ler_proposta_para_proveniencia`) · **(4)** leitora agregada (`contar_propostas_por_desfecho`) · **(5)** decisora (`decidir_proposta`). **Um sexto nome derruba a guarda.** A enumeração permanece **nominal e fechada** — nenhum wildcard, prefixo ou critério aberto |
 | O que emite | **proposta de `status`** do Mapa (`target_field='status'`, alvo `professional_profile_id` — o `alvo_unico` da estrutura já o permite) com os **doze itens** (§14.1): origem = `practice_evidence:<id>` exata + versão + data + autor da coleta |
 | Sob o quê | **regra de correspondência evidência→estado, versionada e VIGENTE** (ciclo ADR-069) — **cuja semântica material NÃO existe e NÃO é criada aqui** (PA-13: autoridade da Autoridade de Método). **O 2.C nasce operacionalmente vazio-honesto**: emissor completo, zero propostas até a primeira regra lavrada — o mesmo desenho do 2.2C |
 | Relação com 1.A | a função pura é o contrato de referência da mecânica (braço `PROPOSTO` com regra por argumento); o emissor é sua materialização persistente — **"ligar 1.A ao mundo real"** |
@@ -118,8 +119,20 @@ Espelho do emissor Case-side (2.2C), sob as **mesmas oito condições da ponte**
 | Fronteira | `FECHADA` | **ABERTA apenas no recorte deste pacote** — mensurável pela diferença exata desta tabela |
 
 **Permanecem fechados/zero**: qualquer grant além do `EXECUTE` da decisora ·
-qualquer policy · qualquer superfície fora do painel interno · regime de bloco ·
-paciente/Curador confirmando o Mapa do Profissional.
+qualquer policy · grant de tabela · grant a `anon`/`PUBLIC` · qualquer
+superfície fora do painel interno · regime de bloco/2.5 · valores da ponte
+(R-1/CD-1) · superfície da paciente · confirmação por paciente · confirmação do
+Mapa do Profissional por Curador · emissor Case-side novo · confirmação ou
+julgamento automáticos.
+
+> **Registro de transparência do recorte (determinado pelo Guardião):** o futuro
+> `GRANT EXECUTE` na decisora **habilita o mecanismo para os dois alvos já
+> contratados** — mas **não equivale a abertura material automática dos dois
+> lados**. O **lado profissional** torna-se operacional no recorte do 2.C, sob o
+> gate `administrador`. O **lado Case permanece vazio por construção** enquanto
+> não existirem regras da ponte **materialmente autorizadas sob R-1/CD-1**
+> (Autoridade de Método, com Cases reais). **Este registro existe para impedir a
+> interpretação futura de que o 2.C liberou valores da ponte — não liberou.**
 
 ## 9. O2-A e O2-B — de condição a aceite executável (bloqueantes)
 
@@ -161,7 +174,7 @@ mecanismo paralelo nasce.**
 
 | | Texto normativo | Implicação no desenho | Guarda/Aceite |
 |---|---|---|---|
-| **R-01** | *"A proposta vira decisão automática disfarçada. O registro dirá 'o humano confirmou' quando ninguém leu"* — risco dominante (Arquitetura §16) | tudo que encarece o carimbo: nove elementos exibidos (A2c) · ato por item (DP-5) · P-10 executável (O2-A/B) · A2d · painel de discordância observando desde o dia 1 | G-2.C-1/7 + O2-A/B + mutação "auto-confirmação" |
+| **R-01** | *"A proposta vira decisão automática disfarçada. O registro dirá 'o humano confirmou' quando ninguém leu"* — risco dominante (Arquitetura §16) | tudo que encarece o carimbo: nove elementos exibidos (A2c) · ato por item (DP-5) · P-10 executável (O2-A/B) · A2d · painel de discordância observando desde o dia 1. **O 2.C não "resolve" R-1 — mitiga e instrumenta. Discordância zero sustentada é ALARME, não sucesso**: um painel que nunca registra recusa é o sintoma do carimbo, e a operação o lê assim | G-2.C-1/7 + O2-A/B + mutação "auto-confirmação" |
 | **CD-1** | *"nenhum valor da ponte estabiliza antes de Cases reais"* (entrada da Onda 2; R-02) | **nenhuma regra material nasce no 2.C**; valores são da Autoridade de Método, com Cases reais; o 2.C entrega o mecanismo vazio-honesto | G-2.C-9: nenhuma migration do 2.C semeia `derivation_rules`/`degree_map`/correspondência profissional |
 
 ## 13. Rollback — fechar sem apagar
@@ -193,6 +206,9 @@ grant, um comando, sem migração destrutiva.
 
 ## 15. Falseabilidade — mutações obrigatórias
 
+**sexto nome SQL sobre `derivation_proposals`** ⇒ **C-01d evoluída (RS-2.C-1)
+cai** — e cai igualmente se a lista nominal for substituída por critério aberto
+que admita nomes não lavrados ·
 grant excessivo (`PUBLIC`/tabela) ⇒ G-2.C-2 · confirmação em bloco ⇒ G-2.C-3/7 ·
 ator no payload ⇒ G-2.C-5 · Motor auto-confirma / decurso confirma ⇒ G-2.C-1/6 ·
 confirmação cria julgamento ⇒ G-2.C-6 · proveniência removida do painel ⇒
@@ -229,9 +245,10 @@ a implementação **reexecuta e mantém verdes** os oráculos vivos corresponden
 
 ## 18. Encaminhamento
 
-Ao **Guardião da CURADORIA 2.0**, para julgamento integral — incluindo **a
-decisão explícita de abertura da Fronteira** no recorte do §8, O2-A/B como
-aceites bloqueantes, a extensão herdada da decisora ao alvo profissional, DP-5,
-o emissor vazio-honesto, R-1/CD-1, guardas, falseabilidade e rollback. Após
-julgamento e lavratura: implementação por missão própria ao Engenheiro. **Nada
-foi aberto nesta missão.**
+Contrato **APROVADO E LAVRADO** (PA-17), com a **decisão explícita do Guardião**:
+a abertura da Fronteira está **normativamente autorizada — somente após esta
+lavratura, em missão própria, exclusivamente no recorte do §8**. O Item 2.C está
+**APTO A RECEBER MISSÃO PRÓPRIA DE IMPLEMENTAÇÃO/ABERTURA** (Engenheiro). A
+Fronteira permanece **materialmente FECHADA** até essa missão executar o pacote —
+e o rollback do §13 garante que fechá-la de novo é um comando, sem apagar
+nenhum fato humano.
