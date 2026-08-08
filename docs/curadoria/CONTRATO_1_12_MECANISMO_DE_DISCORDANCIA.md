@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 |---|---|
-| **Versão** | v1.0 |
+| **Versão** | v1.1 |
 | **Autor** | Agente 02 — Arquiteto da Curadoria 2.0 |
 | **Data** | 2026-08-08 |
-| **Status** | **PROPOSTA — aguarda aprovação da autoridade de governança** |
+| **Status** | **APROVADO — Guardião da CURADORIA 2.0, 2026-08-08** (`CONTRATO_1_12 APROVADO COM RESSALVA`; ressalva não material, incorporada no §13; pendência do §18 resolvida — Opção 1). Parecer catalogado como **PA-12** no [`REGISTRO_DOS_PARECERES.md`](REGISTRO_DOS_PARECERES.md). Nasceu como **PROPOSTA** na base `2d11f81`; lavratura da aprovação no commit registrado no PA-12 |
 | **Base** | `cfbcc41` (Item 1.11 formalmente encerrado; pré-voo do 1.12 concluído) |
 | **Objeto canônico** | Mecanismo de discordância na Fronteira Humana |
 | **Princípio** | **P-10 — "Confirmar não pode ser mais barato que discordar"** (oficial: DP-7, ADR-066, Congelamento §5.2) |
@@ -18,7 +18,7 @@
 
 Vinculantes: **P-10** (oficial) · **ADR-066** §6 (quem confirma), §7 (quem recusa
 e as três decisões), §8 (proposta nunca deixa de existir), §11 (cinco estados,
-lista fechada), §14.2 (o alvo define a autoridade) · **ADR-068** (o ato registra
+lista fechada), §14.1 item 2 (o alvo define a autoridade) · **ADR-068** (o ato registra
 autor, data e o que estava visível; a confirmação grava **duas** coisas) ·
 **Arquitetura §2.4** (nove elementos; ato válido definido negativamente) ·
 **Congelamento §5.2** · **CONTRATO_1_8_R1** §18/§21 (C-01, capabilities
@@ -92,7 +92,7 @@ dois atos**; a falta de qualquer uma torna o ato **inexistente**.
 
 ## 8. Semântica de confirmação
 
-Grava **duas coisas, na mesma transação** (ADR-068 §228):
+Grava **duas coisas, na mesma transação** (ADR-068 §16):
 
 1. **o ato humano** — autor, data, proposta referenciada, atestado do visível;
 2. **a declaração no Mapa** (`case_priority_map`), com o valor sugerido,
@@ -167,10 +167,24 @@ precondição sobre a linha da proposta.
 | Cenário | Resultado |
 |---|---|
 | confirmar × recusar simultâneos | o primeiro INSERT vence; o segundo cai no índice e é traduzido para `ATO_JA_CONSUMADO` |
-| dois confirmadores concorrentes | o primeiro vence; o segundo recebe `ATO_JA_REGISTRADO` (mesmo sentido) — e o registro do ato tem **um** autor: o primeiro |
-| dois recusadores concorrentes | idem |
+| dois confirmadores concorrentes (**outro** ator, mesmo sentido) | o primeiro vence; o segundo recebe **`ATO_JA_CONSUMADO`** *(ressalva do Guardião, 2026-08-08)* |
+| dois recusadores concorrentes (**outro** ator, mesmo sentido) | **`ATO_JA_CONSUMADO`** — mesma regra |
 | decisão durante supersessão (S1) | a condição 6 é reavaliada na transação; se a origem deixou de estar vigente, `PROPOSTA_NAO_DECIDIVEL` |
 | retry concorrente | resolvido pelas linhas acima — determinístico, sem lock inventado |
+
+> **Regra vinculante (ressalva do Guardião, alinhando este §13 ao §12):**
+> `ATO_JA_REGISTRADO` é **exclusivo** de *mesmo ator + mesma intenção*.
+> **Qualquer outro ator recebe `ATO_JA_CONSUMADO` — inclusive quando tenta o
+> mesmo sentido.** A autoria do primeiro ato prevalece, e o segundo ator nunca
+> recebe resposta que possa fazê-lo acreditar que registrou pessoalmente um ato
+> cujo autor real é outro.
+>
+> | Combinação | Desfecho |
+> |---|---|
+> | mesmo ator + mesma intenção | `ATO_JA_REGISTRADO` |
+> | mesmo ator + intenção contrária | `ATO_JA_CONSUMADO` |
+> | outro ator + mesma intenção | `ATO_JA_CONSUMADO` |
+> | outro ator + intenção contrária | `ATO_JA_CONSUMADO` |
 
 ## 14. Capability e writer
 
@@ -224,10 +238,12 @@ inversa) · **nunca obrigatório** — exigi-lo é violar P-10 pela porta dos fu
 ausência é dado válido e observável · texto curto (mesma família dos campos de
 280 do domínio), sem formato imposto · não alimenta ranking.
 
-> **PENDÊNCIA DE AUTORIDADE (única):** a **visibilidade do motivo fora da
-> projeção de Auditoria** não está definida por nenhuma autoridade existente.
-> Até decisão em contrário, o contrato fixa o mínimo seguro: **motivo legível
-> apenas na projeção de Auditoria**; qualquer exposição além exige lavratura.
+> **MOTIVO DA RECUSA — VISIBILIDADE MÍNIMA SEGURA** *(pendência resolvida pela
+> autoridade — Guardião da CURADORIA 2.0, 2026-08-08, **Opção 1**)*:
+>
+> **O motivo da recusa é legível somente na projeção de Auditoria.** Qualquer
+> exposição adicional exige nova lavratura específica que declare:
+> **destinatário · superfície · contexto · finalidade · restrições.**
 
 ## 19. "O que estava visível" — atestado, não fotografia
 
@@ -332,15 +348,14 @@ mudanças no painel · emissor · qualquer regra real.
 
 ## 27. Autoridade para implementação
 
-Este documento é **PROPOSTA**. A implementação exige: **(1)** aprovação deste
-contrato pela autoridade de governança; **(2)** missão própria ao agente
-implementador. Nenhuma parte deste texto autoriza código, migration, grant ou
-superfície.
+Este documento está **APROVADO** (Guardião da CURADORIA 2.0, 2026-08-08 —
+parecer PA-12). A aprovação **não autoriza implementação**: ela exige **missão
+própria e explícita** ao agente implementador. Nenhuma parte deste texto, por si,
+autoriza código, migration, grant ou superfície.
 
 ## 28. Encaminhamento
 
-À autoridade de governança, para aprovação — com **uma** pendência de autoridade
-explícita (§18: visibilidade do motivo fora da Auditoria, já fixada no mínimo
-seguro até decisão). Após aprovação, o caminho é: implementação do mecanismo
-inerte (§20) → verificação → o pacote futuro da **abertura da Fronteira** herda
-O2-A/B como aceite.
+Aprovado com a ressalva do §13 incorporada e a pendência do §18 **resolvida pela
+autoridade (Opção 1)** — nenhuma pendência normativa remanescente. O caminho é:
+implementação do mecanismo inerte (§20), mediante missão própria → verificação →
+o pacote futuro da **abertura da Fronteira** herda O2-A/B como aceite.
