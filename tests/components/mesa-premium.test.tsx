@@ -24,6 +24,8 @@ const FATOS: MesaFacts = {
   awaitingAreaDeclaration: 0,
   eligible: 3,
   criteriaAwaiting: 6,
+  julgamentosAguardando: 0,
+  regimeDaAvaliacao: "LEGADO_6XN",
   selected: 0,
   reportExists: false,
   reportApproved: false,

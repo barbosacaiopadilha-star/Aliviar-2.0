@@ -756,8 +756,16 @@ describe("C-05 · O estado da Regra é leitura derivada, nunca campo consultado"
   });
 
   it("nenhum módulo de `src/` lê `derivation_rules.state` como estado corrente", () => {
+    // O domínio do JULGAMENTO (Item 2.3/2.4) fica fora desta varredura por
+    // lavratura própria: em `curator_judgments` o `state` É o estado corrente
+    // por contrato (ADR-067 §13; CONTRATO_2_4 §12 — "a versão mais recente em
+    // estado VIGENTE"), arbitrado por índice único parcial no banco. A guarda
+    // C-05 protege `derivation_rules`, cuja vigência é a última TRANSIÇÃO.
+    const foraDaGuarda = ["src/modules/curadoria/julgamentos.ts"];
     expect(
-      ocorrenciasNoCodigo(FONTES, /derivation_rules\.state|state\s*===\s*['"]VIGENTE['"]/i),
+      ocorrenciasNoCodigo(FONTES, /derivation_rules\.state|state\s*===\s*['"]VIGENTE['"]/i).filter(
+        (arquivo) => !foraDaGuarda.includes(arquivo),
+      ),
       "`state` diz como a versão NASCEU. Quem pergunta 'está vigente?' lê a última transição.",
     ).toEqual([]);
   });

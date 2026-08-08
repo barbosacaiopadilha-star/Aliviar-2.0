@@ -577,14 +577,19 @@ where n.nspname = 'curadoria' and p.proname like 'curator_judgment%';`);
     expect(proprias).toBe(
       "curator_judgment_evidence_refs_apenas_apendavel,curator_judgment_evidence_refs_valida_referencia,curator_judgments_cadeia_coerente,curator_judgments_sem_delete,curator_judgments_so_transicao_de_estado",
     );
-    // …e NENHUMA outra função do schema menciona a tabela — um sexto nome
-    // (Motor, regra, pipeline escrevendo juízo) derruba aqui.
+    // …e fora delas, SOMENTE as cinco operacionais lavradas pelo Item 2.3
+    // (CONTRATO_2_3 §10/§12: as duas capabilities, a leitura da Mesa, o
+    // comparador interno e o trigger JS3 — que supersede, nunca cria)
+    // alcançam a tabela. Qualquer OUTRO nome (Motor, regra, pipeline
+    // escrevendo juízo) derruba aqui.
     const externas = psql(`
-select coalesce(string_agg(p.proname, ','), '<nenhuma>')
+select coalesce(string_agg(p.proname, ',' order by p.proname), '<nenhuma>')
 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
 where n.nspname = 'curadoria' and p.prosrc ilike '%curator_judgment%'
   and p.proname not like 'curator_judgment%';`);
-    expect(externas).toBe("<nenhuma>");
+    expect(externas).toBe(
+      "js3_evidencia_nova_supersede_juizo,julgamento_tem_mesmo_conteudo,ler_julgamentos_para_avaliacao,registrar_julgamento,retirar_julgamento",
+    );
   });
 
   it("G-2.4-7 · `derivation_proposals` NÃO recebeu alvo de julgamento — colunas inalteradas", () => {

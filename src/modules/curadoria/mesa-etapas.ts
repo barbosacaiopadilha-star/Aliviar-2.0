@@ -77,6 +77,17 @@ export type MesaFacts = {
   eligible: number;
   /** Critérios sem declaração, somados entre os elegíveis. */
   criteriaAwaiting: number;
+  /**
+   * Item 2.3 — lacunas de JUÍZO (H8–H10 + H11 declarados) somadas entre os
+   * elegíveis. É o que conclui a etapa AVALIAÇÃO no regime `JUIZO`.
+   */
+  julgamentosAguardando: number;
+  /**
+   * G-2.3-7 — a flag de rollback: `LEGADO_6XN` restaura a conclusão da etapa
+   * pela avaliação manual (`criterion_declarations`, intactas). O padrão é a
+   * divisão do 2.3 (`JUIZO`).
+   */
+  regimeDaAvaliacao: "JUIZO" | "LEGADO_6XN";
   selected: number;
   reportExists: boolean;
   reportApproved: boolean;
@@ -114,15 +125,27 @@ export function buildMesaEtapas(facts: MesaFacts): MesaEtapaState[] {
           )
         : etapa("REDE", "PRONTA", null),
 
+    // Item 2.3 — a divisão da AVALIAÇÃO: no regime JUIZO a etapa conclui
+    // pelos julgamentos exigidos (H8–H10 sempre; H11 quando o Case declarou),
+    // derivados da AUSÊNCIA de registro vigente — nunca de um estado
+    // persistido paralelo. A leitura 6×N permanece atrás da flag (G-2.3-7).
     !temElegiveis
       ? etapa("AVALIACAO", "AGUARDA", null, "Depende de haver ao menos um profissional elegível.")
-      : facts.criteriaAwaiting > 0
-        ? etapa(
-            "AVALIACAO",
-            "PENDENTE",
-            `${facts.criteriaAwaiting} critério${facts.criteriaAwaiting === 1 ? "" : "s"} sem avaliação.`,
-          )
-        : etapa("AVALIACAO", "PRONTA", null),
+      : facts.regimeDaAvaliacao === "LEGADO_6XN"
+        ? facts.criteriaAwaiting > 0
+          ? etapa(
+              "AVALIACAO",
+              "PENDENTE",
+              `${facts.criteriaAwaiting} critério${facts.criteriaAwaiting === 1 ? "" : "s"} sem avaliação.`,
+            )
+          : etapa("AVALIACAO", "PRONTA", null)
+        : facts.julgamentosAguardando > 0
+          ? etapa(
+              "AVALIACAO",
+              "PENDENTE",
+              `${facts.julgamentosAguardando} juízo${facts.julgamentosAguardando === 1 ? "" : "s"} aguardando o Curador.`,
+            )
+          : etapa("AVALIACAO", "PRONTA", null),
 
     // A leitura do Motor nasce do Mapa de Prioridades cruzado com o Mapa do
     // Profissional, e só existe para quem participa — por isso as duas

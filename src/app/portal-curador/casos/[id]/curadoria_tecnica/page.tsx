@@ -19,6 +19,7 @@ import {
   RelatorioNaoGerado,
 } from "@/components/curadoria/mesa/mesa-vazios";
 import { PainelAtencao } from "@/components/curadoria/mesa/painel-atencao";
+import { PainelDeJuizo, type ConceitoDeJuizo } from "@/components/curadoria/mesa/painel-de-juizo";
 import { RedeFiltravel } from "@/components/curadoria/mesa/rede-filtravel";
 import { MesaContextPanel } from "@/components/curadoria/mesa-context-panel";
 import { MesaEvidenciasPanel } from "@/components/curadoria/mesa-evidencias-panel";
@@ -47,6 +48,14 @@ import {
 } from "@/modules/curadoria/mapa-prioridades-repository";
 import { crossCaseWithProfessional } from "@/modules/curadoria/motor-compatibilidade-repository";
 import { crossCaseRelationalForProfessionals } from "@/modules/curadoria/motor-relacional-repository";
+import { RELATIONAL_CONCEPTS_BY_CODE } from "@/modules/curadoria/motor-relacional";
+import {
+  conceitosExigidos,
+  julgamentoVigente,
+  lacunasDeJuizo,
+  regimeDaAvaliacao,
+} from "@/modules/curadoria/julgamentos";
+import { loadJulgamentosDaAvaliacao } from "@/modules/curadoria/julgamentos-repository";
 import { AbasCompatibilidade } from "@/components/curadoria/mesa/abas-compatibilidade";
 import { LeituraRelacionalPanel } from "@/components/curadoria/mesa/leitura-relacional-panel";
 import { candidatosDaSelecao, foraDaSelecao } from "@/modules/curadoria/mesa-selecao";
@@ -162,6 +171,39 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
     0,
   );
 
+  // ADR-065 — a quarta leitura, computada ANTES das etapas porque o Item 2.3
+  // deriva dela os conceitos H11 exigidos: o Motor emite JUIZO_HUMANO
+  // exatamente quando o Case declarou grau para o conceito relacional humano.
+  const idsElegiveis = view.comparison.map((coluna) => coluna.professionalProfileId);
+  const relacional =
+    idsElegiveis.length > 0
+      ? await crossCaseRelationalForProfessionals(supabase, record.caseId, idsElegiveis)
+      : { byProfessional: [], relationalNeedsCount: 0 };
+  const relacionalPorId = new Map(
+    relacional.byProfessional.map((leitura) => [leitura.professionalProfileId, leitura]),
+  );
+
+  // Item 2.3 — a divisão da AVALIAÇÃO: o juízo humano por profissional
+  // elegível, lido pela capability (gate-first) e derivado pelo módulo puro.
+  const regime = regimeDaAvaliacao(process.env.AVALIACAO_LEGADO_6XN);
+  const juizoPorProfissional = await Promise.all(
+    idsElegiveis.map(async (professionalProfileId) => {
+      const julgamentos = await loadJulgamentosDaAvaliacao(
+        supabase,
+        record.caseId,
+        professionalProfileId,
+      );
+      const declarados = (relacionalPorId.get(professionalProfileId)?.readings ?? [])
+        .filter((reading) => reading.kind === "JUIZO_HUMANO")
+        .map((reading) => reading.code);
+      return { professionalProfileId, julgamentos, declarados };
+    }),
+  );
+  const julgamentosAguardando = juizoPorProfissional.reduce(
+    (total, entrada) => total + lacunasDeJuizo(entrada.julgamentos, entrada.declarados).length,
+    0,
+  );
+
   const etapas = buildMesaEtapas({
     profileAcknowledged: view.profileAcknowledged,
     mapPending: mapa.completion.pending,
@@ -169,6 +211,8 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
     awaitingAreaDeclaration: view.counts.awaiting,
     eligible: view.counts.eligible,
     criteriaAwaiting,
+    julgamentosAguardando,
+    regimeDaAvaliacao: regime,
     selected: view.counts.selected,
     reportExists: Boolean(lifecycle),
     reportApproved: Boolean(lifecycle?.approvedAt),
@@ -180,19 +224,6 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
   // ------------------------------------------------------------------
   // A leitura da investigação — tudo derivado do que já está na Mesa.
   // ------------------------------------------------------------------
-
-  // ADR-065 — a quarta leitura, para os mesmos elegíveis da comparação.
-  // Computada ANTES da investigação, que soma as lacunas relacionais à
-  // contagem de atenção. A interface não recalcula regra nenhuma: o motor
-  // relacional entrega células e sinalizações prontas, na ordem do Catálogo.
-  const idsElegiveis = view.comparison.map((coluna) => coluna.professionalProfileId);
-  const relacional =
-    idsElegiveis.length > 0
-      ? await crossCaseRelationalForProfessionals(supabase, record.caseId, idsElegiveis)
-      : { byProfessional: [], relationalNeedsCount: 0 };
-  const relacionalPorId = new Map(
-    relacional.byProfessional.map((leitura) => [leitura.professionalProfileId, leitura]),
-  );
 
   const colunaPorId = new Map(view.comparison.map((coluna) => [coluna.professionalProfileId, coluna]));
 
@@ -391,7 +422,64 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
         <RedeFiltravel view={view} profissionais={profissionais} />
       ),
 
-    AVALIACAO: semElegiveis ? <AvaliacaoSemElegiveis /> : <EligibilityPanel view={view} />,
+    // Item 2.3 — a etapa exibe a leitura de elegibilidade E o painel de juízo
+    // (H8–H11): evidências por referência, aguardo nomeado, vigente com
+    // histórico, ato de registrar/retirar. No regime LEGADO_6XN (flag de
+    // rollback, G-2.3-7) a superfície volta a ser somente a antiga.
+    AVALIACAO: semElegiveis ? (
+      <AvaliacaoSemElegiveis />
+    ) : (
+      <div className="space-y-6">
+        <EligibilityPanel view={view} />
+        {regime === "JUIZO" ? (
+          <PainelDeJuizo
+            caseId={record.caseId}
+            profissionais={juizoPorProfissional.map(
+              ({ professionalProfileId, julgamentos, declarados }) => {
+                const evidencias = evidenceRows.get(professionalProfileId) ?? [];
+                const lacunas = lacunasDeJuizo(julgamentos, declarados);
+                const lacunaPorCode = new Map(lacunas.map((l) => [l.subcriterionCode, l.motivo]));
+                return {
+                  professionalProfileId,
+                  nome: nomeDe(professionalProfileId),
+                  conceitos: conceitosExigidos(declarados).map((exigido): ConceitoDeJuizo => {
+                    const cadeia = julgamentos
+                      .filter((j) => j.subcriterionCode === exigido.code)
+                      .sort((a, b) => a.versao - b.versao);
+                    const vigente = julgamentoVigente(julgamentos, exigido.code);
+                    const correntes = evidencias.filter((evidencia) =>
+                      exigido.natureza === "RELACIONAL"
+                        ? evidencia.subcriterionCode === exigido.code
+                        : evidencia.subcriterionCode.startsWith(`${exigido.code}_`),
+                    );
+                    return {
+                      code: exigido.code,
+                      label:
+                        exigido.natureza === "TECNICO"
+                          ? (CRITERION_LABELS[exigido.code as keyof typeof CRITERION_LABELS] ??
+                            exigido.code)
+                          : (RELATIONAL_CONCEPTS_BY_CODE.get(exigido.code)?.name ?? exigido.code),
+                      natureza: exigido.natureza,
+                      lacuna: vigente ? null : (lacunaPorCode.get(exigido.code) ?? "SEM_JUIZO"),
+                      vigente,
+                      historico: cadeia.filter((j) => j.state !== "VIGENTE"),
+                      evidenciasCorrentes: correntes.map((evidencia) => ({
+                        id: evidencia.id,
+                        version: evidencia.version,
+                        subcriterionCode: evidencia.subcriterionCode,
+                        status: evidencia.status,
+                        resumo: evidencia.subcriterionCode,
+                      })),
+                      versaoBaseId: cadeia.length > 0 ? cadeia[cadeia.length - 1].id : null,
+                    };
+                  }),
+                };
+              },
+            )}
+          />
+        ) : null}
+      </div>
+    ),
 
     // M4: uma única etapa de leitura do Motor — COMPATIBILIDADE. A antiga
     // CRUZAMENTO renderizava exatamente este mesmo nó.

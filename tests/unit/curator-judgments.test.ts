@@ -134,15 +134,30 @@ describe("G-2.4-8 (estática) · a migration nasce inerte e o regime não abre n
 });
 
 describe("G-2.4-7/8/9 (estática) · zero writer, zero superfície, Motor sem caminho ao juízo", () => {
-  it("NENHUM módulo de `src/` menciona `curator_judgments` — não há writer, action, route ou UI", () => {
-    // Cobre três guardas de uma vez: o Motor não escreve juízo (G-2.4-7), a
-    // estrutura permanece inerte (G-2.4-8) e a etapa dividida não ganhou
-    // destino nem caminho paralelo (G-2.4-9) — o único destino lavrado é a
-    // entidade, e por ora ninguém a alcança.
-    const violadores = varrer("src").filter((arquivo) =>
-      readFileSync(join(RAIZ, arquivo), "utf8").includes("curator_judgment"),
+  it("só o caminho LAVRADO do 2.3 menciona `curator_judgments` — e nenhum módulo toca a tabela", () => {
+    // Na origem (2.4 inerte) esta lista era VAZIA. O CONTRATO_2_3 §12/§13
+    // lavrou o caminho operacional — domínio puro, repository de leitura,
+    // actions finas e o painel da Mesa — e a lista fechada cresce por
+    // contrato, nunca por silêncio: qualquer QUINTO módulo derruba aqui
+    // (G-2.4-7: Motor/pipeline não julga; G-2.4-9: destino único).
+    const autorizados = [
+      "src/components/curadoria/mesa/painel-de-juizo.tsx",
+      "src/modules/curadoria/julgamento-actions.ts",
+      "src/modules/curadoria/julgamentos-repository.ts",
+      "src/modules/curadoria/julgamentos.ts",
+    ];
+    const mencionam = varrer("src")
+      .filter((arquivo) => readFileSync(join(RAIZ, arquivo), "utf8").includes("curator_judgment"))
+      .sort();
+    expect(mencionam).toEqual(autorizados.filter((a) => mencionam.includes(a)));
+    expect(mencionam.every((arquivo) => autorizados.includes(arquivo))).toBe(true);
+    // E a TABELA continua intocável por qualquer módulo — o acesso é sempre
+    // pelas capabilities (a varredura viva da inércia segue no teste de
+    // integração e no unit do 2.3).
+    const tocamTabela = varrer("src").filter((arquivo) =>
+      /from\(\s*["']curator_judgment/.test(readFileSync(join(RAIZ, arquivo), "utf8")),
     );
-    expect(violadores).toEqual([]);
+    expect(tocamTabela).toEqual([]);
   });
 
   it("`derivation_proposals` não ganhou alvo de julgamento em nenhuma migration do regime", () => {
