@@ -9,6 +9,7 @@ import { JourneyWalk, type WalkStage } from "@/components/paciente/experiencia/j
 import { ProfileCard } from "@/components/paciente/experiencia/profile-card";
 import { PatientWelcome } from "@/components/paciente/dashboard/patient-primitives";
 import { derivePatientPending } from "@/modules/paciente/next-action";
+import { nomeDoCuradorDoCaso } from "@/modules/paciente/nome-do-curador";
 import { currentHourInBrazil, greetingFor } from "@/modules/paciente/ambiente";
 import {
   mensagemPrincipal,
@@ -66,7 +67,13 @@ export default async function PacienteHomePage() {
   ]);
 
   const record = caseIds.length > 0 ? await loadCuradoriaRecord(supabase, caseIds[0]) : null;
-  const jornada = record ? buildJornada(record) : null;
+  // 2.6/G-10: o nome do Curador vem da capability nominal — a RLS de
+  // `profiles` segue fechada para ela. Sem desfecho OK, o fallback genérico
+  // do registro permanece; superfícies internas não passam por aqui.
+  const nomeDoCurador = record ? await nomeDoCuradorDoCaso(supabase, record.caseId) : null;
+  const jornada = record
+    ? buildJornada(nomeDoCurador ? { ...record, curatorName: nomeDoCurador } : record)
+    : null;
   const perfil = record ? await loadPatientPerfil(supabase, record.caseId) : null;
   // ADR-065 — o bloco relacional do Perfil: as respostas dela, nada inferido.
   const comoQuerSerCuidada = record ? await loadComoQuerSerCuidada(supabase, record.caseId) : [];
