@@ -177,14 +177,17 @@ describe("2.1 · e permanece INERTE", () => {
       "emitir_proposta_de_importancia",
     );
 
-    // MUDANÇA DE CONTRATO LAVRADA — 1.8-R1 §21 (`78e261c`). Ler propostas para
-    // produzir leitura canônica continua proibido (A2). O que a lavratura
-    // criou foi um LEITOR DE AUDITORIA: `ler_proposta_para_proveniencia`,
-    // SECURITY DEFINER, STABLE, EXECUTE só de service_role, que reconstrói
-    // proveniência — nunca alimenta o Pipeline de Leitura. O conjunto fechado
-    // passa a ser { escritor, leitor }, e um TERCEIRO nome derruba este
-    // oráculo como sempre derrubou (§21.7; guarda C-01d cobre o mesmo em
-    // unitário).
+    // MUDANÇA DE CONTRATO LAVRADA — 1.8-R1 §21 (`78e261c`) e agora
+    // CONTRATO_1_11 §3 (`ca49293`). Ler propostas para produzir leitura
+    // canônica continua proibido (A2). O que as lavraturas criaram foram
+    // LEITORES DE CAPABILITY — ambos SECURITY DEFINER, STABLE, EXECUTE só de
+    // service_role, nunca alimentando o Pipeline de Leitura:
+    //   · `ler_proposta_para_proveniencia` — auditoria individual (1.8-R1);
+    //   · `contar_propostas_por_desfecho` — agregação observacional sem
+    //     dimensão pessoal, para o Painel de Discordância (1.11).
+    // O conjunto fechado passa a ser { escritor, leitor individual, leitor
+    // agregado }, e um QUARTO nome derruba este oráculo como sempre derrubou
+    // (§21.7; guarda C-01d cobre chamadores e o trio em unitário).
     const [leitores] = consultar(`
       select coalesce(string_agg(p.proname, ',' order by p.proname), '(nenhum)')
       from pg_proc p join pg_namespace n on n.oid = p.pronamespace
@@ -192,11 +195,11 @@ describe("2.1 · e permanece INERTE", () => {
         and p.prosrc ilike '%derivation_proposals%'
         and p.proname <> 'emitir_proposta_de_importancia'
     `);
-    expect(leitores![0], "nasceu função além do par lavrado escritor/leitor").toBe(
-      "ler_proposta_para_proveniencia",
+    expect(leitores![0], "nasceu função além do trio lavrado escritor/leitores").toBe(
+      "contar_propostas_por_desfecho,ler_proposta_para_proveniencia",
     );
 
-    // E o leitor é o que a lavratura diz: definer, estável, fora do alcance
+    // E cada leitor é o que a lavratura diz: definer, estável, fora do alcance
     // dos papéis de aplicação — a tabela continua fechada a todos eles.
     const [contratoDoLeitor] = consultar(`
       select prosecdef || '/' || provolatile::text || '/' ||
@@ -207,6 +210,16 @@ describe("2.1 · e permanece INERTE", () => {
       where n.nspname = 'curadoria' and p.proname = 'ler_proposta_para_proveniencia'
     `);
     expect(contratoDoLeitor![0]).toBe("true/s/true/false/false");
+
+    const [contratoDoAgregado] = consultar(`
+      select prosecdef || '/' || provolatile::text || '/' ||
+        has_function_privilege('service_role','curadoria.contar_propostas_por_desfecho()','execute') || '/' ||
+        has_function_privilege('authenticated','curadoria.contar_propostas_por_desfecho()','execute') || '/' ||
+        has_table_privilege('service_role','curadoria.derivation_proposals','select')
+      from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'curadoria' and p.proname = 'contar_propostas_por_desfecho'
+    `);
+    expect(contratoDoAgregado![0]).toBe("true/s/true/false/false");
   });
 
   it("o emissor não alcança papel de aplicação — a estrutura segue inerte", () => {

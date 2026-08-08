@@ -618,13 +618,15 @@ describe("2.2C · A2 — a proposta não entra no Pipeline de Leitura", () => {
     expect(saida, "nasceu um segundo escritor de propostas").toBe("emitir_proposta_de_importancia");
   });
 
-  it("além do emissor, só o leitor de auditoria lavrado alcança as propostas", () => {
-    // MUDANÇA DE CONTRATO — 1.8-R1 §21 (`78e261c`). O A2 continua intacto:
-    // nenhuma função produz leitura canônica a partir de propostas. O que a
-    // lavratura criou foi `ler_proposta_para_proveniencia` — leitor de
-    // AUDITORIA, SECURITY DEFINER/STABLE, EXECUTE só de service_role, para
-    // reconstruir proveniência (§11.4). O conjunto é fechado em DOIS nomes, e
-    // um terceiro derruba este oráculo como sempre derrubou.
+  it("além do emissor, só os leitores lavrados alcançam as propostas", () => {
+    // MUDANÇA DE CONTRATO — 1.8-R1 §21 (`78e261c`) e CONTRATO_1_11 §3
+    // (`ca49293`). O A2 continua intacto: nenhuma função produz leitura
+    // canônica a partir de propostas. O que as lavraturas criaram foram dois
+    // leitores de capability, ambos SECURITY DEFINER/STABLE com EXECUTE só de
+    // service_role: `ler_proposta_para_proveniencia` (auditoria individual,
+    // §11.4) e `contar_propostas_por_desfecho` (agregação observacional do
+    // Painel de Discordância, sem dimensão pessoal). O conjunto é fechado em
+    // TRÊS nomes, e um quarto derruba este oráculo como sempre derrubou.
     const { saida } = psql(`
       select coalesce(string_agg(p.proname, ',' order by p.proname), '(nenhuma)')
       from pg_proc p join pg_namespace n on n.oid = p.pronamespace
@@ -632,8 +634,8 @@ describe("2.2C · A2 — a proposta não entra no Pipeline de Leitura", () => {
         and p.prosrc ilike '%derivation_proposals%'
         and p.proname <> 'emitir_proposta_de_importancia'
     `);
-    expect(saida, "nasceu função além do par lavrado escritor/leitor").toBe(
-      "ler_proposta_para_proveniencia",
+    expect(saida, "nasceu função além do trio lavrado escritor/leitores").toBe(
+      "contar_propostas_por_desfecho,ler_proposta_para_proveniencia",
     );
   });
 });

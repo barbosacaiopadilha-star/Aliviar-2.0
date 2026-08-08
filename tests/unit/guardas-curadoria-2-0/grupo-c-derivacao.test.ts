@@ -4,6 +4,8 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  CHAMADORES_DE_CAPABILITIES,
+  ehChamadorDe,
   ehLeitorAutorizado,
   LEITORES_DE_PROPOSTA_AUTORIZADOS,
 } from "./leitores-de-proposta-autorizados";
@@ -255,15 +257,21 @@ describe("C-01 · Nenhuma proposta persistida existe", () => {
         }
       });
 
-      /**
-       * C-01c — O VÍNCULO É PONTEIRO, NUNCA BUSCA.
-       *
-       * `evidence_id` aponta para a linha que sustentava o estado no momento da
-       * confirmação. Resolver isso por `max(version)`, por data ou por "primeira
-       * compatível" faria a cadeia afirmar que uma confirmação de julho se
-       * apoiou numa evidência que nasceu em agosto — a mentira exata que o
-       * vínculo existe para impedir (1.8-R1 §4, §6).
-       */
+    }
+
+    /**
+     * C-01c — O VÍNCULO É PONTEIRO, NUNCA BUSCA.
+     *
+     * `evidence_id` aponta para a linha que sustentava o estado no momento da
+     * confirmação. Resolver isso por `max(version)`, por data ou por "primeira
+     * compatível" faria a cadeia afirmar que uma confirmação de julho se
+     * apoiou numa evidência que nasceu em agosto — a mentira exata que o
+     * vínculo existe para impedir (1.8-R1 §4, §6).
+     *
+     * 1.11: esta pergunta é DO CHAMADOR DA CAPABILITY INDIVIDUAL — o painel
+     * agregado não resolve vínculo nenhum, então o laço é só sobre ele.
+     */
+    for (const autorizado of CHAMADORES_DE_CAPABILITIES.ler_proposta_para_proveniencia) {
       it(`${autorizado} resolve a evidência pelo vínculo, nunca por busca`, () => {
         const fonte = readFileSync(path.join(RAIZ, autorizado), "utf8");
         const codigo = fonte.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*(\/\/|\*).*$/gm, "");
@@ -291,78 +299,141 @@ describe("C-01 · Nenhuma proposta persistida existe", () => {
   });
 
   it("nenhum módulo persiste 'proposta' como estado de domínio", () => {
+    // EVOLUÇÃO 1.11 (CONTRATO_1_11 §4): o Painel de Discordância CONSOME os
+    // cinco desfechos do schema como CONTAGENS agregadas — `PROPOSTA: 0` num
+    // mapa de contadores é leitura de fato, não estado nascendo. A isenção é
+    // nominal e por par de arquivos; qualquer outro módulo continua caindo.
+    const PAINEL = [
+      "src/modules/curadoria/painel-de-discordancia.ts",
+      "src/modules/curadoria/painel-de-discordancia-repository.ts",
+    ];
     expect(
-      ocorrencias(FONTES, /\bPROPOSTA\b\s*[:=]|status\s*[:=]\s*["']PROPOSTA["']/),
+      ocorrencias(FONTES, /\bPROPOSTA\b\s*[:=]|status\s*[:=]\s*["']PROPOSTA["']/).filter(
+        (caminho) => !PAINEL.includes(caminho.split("\\").join("/")),
+      ),
       "Um estado PROPOSTA persistido é a Camada de Derivação nascendo sem fronteira humana.",
     ).toEqual([]);
+    // E a isenção não é cheque em branco: o painel só LÊ — a C-01b audita os
+    // chamadores como read-only, e a varredura de escrita pega qualquer
+    // `.insert/.update` que nascesse ali.
   });
 
   /**
-   * C-01d — A CAPABILITY TEM UM CHAMADOR SÓ (§21.7).
+   * C-01d — CADA CAPABILITY TEM UM CHAMADOR SÓ (§21.7 · CONTRATO_1_11 §10).
    *
-   * A tabela sumiu de `src/` (C-01); o que a aplicação conhece agora é a
-   * capability. A mesma disciplina se repete um nível acima: quem pode
-   * invocá-la é a lista nominal — e mais ninguém. Inércia do arquivo (C-01b) e
-   * exclusividade do chamador (C-01d) são perguntas diferentes, e fundi-las
-   * repetiria o erro que o §18.7 já recusou para A5×C-01.
+   * A tabela sumiu de `src/` (C-01); o que a aplicação conhece são FUNÇÕES.
+   * Com o 1.11 são DUAS — a leitora individual (proveniência) e a leitora
+   * agregada (painel) — cada uma com seu chamador nominal, e os papéis não se
+   * cruzam: o painel que lesse a individual poderia reconstituir linhas e
+   * agregar em memória (§10.1); a cadeia que lesse a agregada estaria
+   * decidindo por estatística.
+   *
+   * A detecção olha CÓDIGO (comentário que documenta a proibição não é a
+   * violação — a lição da C-05, de novo), e é pura sobre `(caminho, conteúdo)`
+   * para o falseamento sintético do §18.5.
    */
-  describe("C-01d · a capability de proveniência tem um chamador só", () => {
-    /** Detecção pura, falseável com entrada sintética (§18.5). */
-    function chamadoresNaoAutorizadosDaCapability(
+  describe("C-01d · cada capability de propostas tem um chamador só", () => {
+    const CAPABILITIES = Object.keys(CHAMADORES_DE_CAPABILITIES) as Array<
+      keyof typeof CHAMADORES_DE_CAPABILITIES
+    >;
+
+    function chamadoresForaDoMapa(
+      capability: keyof typeof CHAMADORES_DE_CAPABILITIES,
       arquivos: readonly { caminho: string; conteudo: string }[],
     ): string[] {
       return arquivos
-        .filter(({ conteudo }) => /ler_proposta_para_proveniencia/.test(conteudo))
+        .filter(({ conteudo }) => {
+          const codigo = conteudo
+            .replace(/\/\*[\s\S]*?\*\//g, "")
+            .replace(/^\s*(\/\/|\*).*$/gm, "");
+          return new RegExp(capability).test(codigo);
+        })
         .map(({ caminho }) => caminho.split("\\").join("/"))
-        .filter((caminho) => !ehLeitorAutorizado(caminho));
+        .filter((caminho) => !ehChamadorDe(capability, caminho));
     }
 
-    it("somente o repositório nominal invoca a capability", () => {
+    for (const capability of CAPABILITIES) {
+      it(`${capability}: somente o chamador nominal a invoca — e a invoca de verdade`, () => {
+        expect(
+          chamadoresForaDoMapa(capability, FONTES_COM_CONTEUDO),
+          `um módulo fora do mapa passou a invocar ${capability}.`,
+        ).toEqual([]);
+        // A lista não isenta o vazio: o chamador nominal existe e invoca.
+        for (const autorizado of CHAMADORES_DE_CAPABILITIES[capability]) {
+          const arquivo = FONTES_COM_CONTEUDO.find(
+            (f) => f.caminho.split("\\").join("/") === autorizado,
+          );
+          expect(arquivo, `o chamador nominal ${autorizado} não existe`).toBeDefined();
+          expect(arquivo!.conteudo).toContain(capability);
+        }
+      });
+    }
+
+    it("chamador CRUZADO é proibido nos dois sentidos — em código, não em prosa", () => {
+      const cadeiaRepo = FONTES_COM_CONTEUDO.find((f) =>
+        ehChamadorDe("ler_proposta_para_proveniencia", f.caminho.split("\\").join("/")),
+      )!;
+      const painelRepo = FONTES_COM_CONTEUDO.find((f) =>
+        ehChamadorDe("contar_propostas_por_desfecho", f.caminho.split("\\").join("/")),
+      )!;
+      const soCodigo = (s: string) =>
+        s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*(\/\/|\*).*$/gm, "");
+
       expect(
-        chamadoresNaoAutorizadosDaCapability(FONTES_COM_CONTEUDO),
-        "um módulo fora da lista passou a invocar a capability de proveniência.",
-      ).toEqual([]);
-      // E o autorizado a invoca de verdade — sem isto, a lista isentaria o vazio.
-      const autorizado = FONTES_COM_CONTEUDO.find((f) =>
-        ehLeitorAutorizado(f.caminho.split("\\").join("/")),
-      );
-      expect(autorizado, "o arquivo autorizado sumiu").toBeDefined();
-      expect(autorizado!.conteudo).toContain("ler_proposta_para_proveniencia");
+        /contar_propostas_por_desfecho/.test(soCodigo(cadeiaRepo.conteudo)),
+        "a cadeia passou a ler o agregado — decidir por estatística não é reconstruir proveniência.",
+      ).toBe(false);
+      expect(
+        /ler_proposta_para_proveniencia/.test(soCodigo(painelRepo.conteudo)),
+        "o painel passou a ler proposta individual — a agregação nasce no banco, e só nele (§10.1).",
+      ).toBe(false);
     });
 
-    it("nenhuma superfície — component, route, action — a invoca", () => {
+    it("um chamador sintético fora do mapa derruba a guarda — por caminho exato", () => {
+      for (const capability of CAPABILITIES) {
+        const sintetico = [
+          {
+            caminho: "src/modules/curadoria/qualquer-outro-modulo.ts",
+            conteudo: `await supabase.rpc("${capability}");`,
+          },
+        ];
+        expect(chamadoresForaDoMapa(capability, sintetico), capability).toEqual([
+          "src/modules/curadoria/qualquer-outro-modulo.ts",
+        ]);
+      }
+      // E o cruzamento sintético também cai: o painel invocando a individual.
+      const cruzado = chamadoresForaDoMapa("ler_proposta_para_proveniencia", [
+        {
+          caminho: "src/modules/curadoria/painel-de-discordancia-repository.ts",
+          conteudo: 'await supabase.rpc("ler_proposta_para_proveniencia", { p_case_id });',
+        },
+      ]);
+      expect(cruzado, "o chamador cruzado herdou autorização").toHaveLength(1);
+    });
+
+    it("nenhuma superfície — component, route, action — invoca capability alguma", () => {
       const SUPERFICIES = FONTES_COM_CONTEUDO.filter(
         ({ caminho }) =>
           /[\\/](app|components)[\\/]/.test(caminho) || /actions?\.tsx?$/.test(caminho),
       );
-      expect(
-        SUPERFICIES.filter(({ conteudo }) => /ler_proposta_para_proveniencia/.test(conteudo)).map(
-          ({ caminho }) => caminho,
-        ),
-        "uma superfície passou a invocar a capability direto — a informação chega por CadeiaDeProveniencia → Ficha, nunca por chamada própria.",
-      ).toEqual([]);
-    });
-
-    it("um terceiro chamador sintético derruba a guarda — a autorização é por caminho exato", () => {
-      const sintetico = [
-        ...FONTES_COM_CONTEUDO,
-        {
-          caminho: "src/modules/curadoria/qualquer-outro-modulo.ts",
-          conteudo: 'await supabase.rpc("ler_proposta_para_proveniencia", { p_case_id });',
-        },
-      ];
-      expect(chamadoresNaoAutorizadosDaCapability(sintetico)).toEqual([
-        "src/modules/curadoria/qualquer-outro-modulo.ts",
-      ]);
+      for (const capability of CAPABILITIES) {
+        expect(
+          SUPERFICIES.filter(({ conteudo }) => new RegExp(`rpc\\(\\s*["'\`]${capability}`).test(conteudo)).map(
+            ({ caminho }) => caminho,
+          ),
+          `uma superfície passou a invocar ${capability} direto — a informação chega pelo repositório nominal.`,
+        ).toEqual([]);
+      }
     });
 
     /**
-     * §21.7 item 3 — NENHUMA SEGUNDA FUNÇÃO SQL EXPÕE PROPOSTAS.
+     * §21.7 item 3 + CONTRATO_1_11 §10 — O CONJUNTO DE FUNÇÕES SQL É FECHADO.
      *
-     * O conjunto de funções cujo CORPO alcança a tabela é exatamente
+     * Quem alcança a tabela é exatamente
      * { emitir_proposta_de_importancia (escritor, C-11),
-     *   ler_proposta_para_proveniencia (leitor, §21) }.
-     * Um terceiro nome derruba a guarda.
+     *   ler_proposta_para_proveniencia (leitora individual, §21),
+     *   contar_propostas_por_desfecho (leitora agregada, 1.11) }.
+     * Um QUARTO nome derruba a guarda.
      */
     function nomesDeFuncoesQueTocamPropostas(sqlSemComentarios: string): string[] {
       const nomes = new Set(
@@ -375,17 +446,18 @@ describe("C-01 · Nenhuma proposta persistida existe", () => {
         .sort();
     }
 
-    it("as migrations definem exatamente duas funções que tocam a tabela", () => {
+    it("as migrations definem exatamente três funções que tocam a tabela", () => {
       const sql = MIGRATIONS.sort()
         .map((arquivo) => semComentarios(readFileSync(arquivo, "utf8")))
         .join("\n");
       expect(nomesDeFuncoesQueTocamPropostas(sql)).toEqual([
+        "contar_propostas_por_desfecho",
         "emitir_proposta_de_importancia",
         "ler_proposta_para_proveniencia",
       ]);
     });
 
-    it("uma terceira função sintética derruba a guarda", () => {
+    it("uma quarta função sintética derruba a guarda", () => {
       const sintetico = `
         create or replace function curadoria.exportar_propostas_para_planilha()
         returns void language plpgsql as $$
@@ -397,7 +469,85 @@ describe("C-01 · Nenhuma proposta persistida existe", () => {
         "exportar_propostas_para_planilha",
       ]);
     });
+
+    /**
+     * ANTI-RANKING POR DESENHO (CONTRATO_1_11 §7) — a dimensão pessoal não
+     * existe em NENHUMA camada da cadeia agregada, e a ordenação nunca é por
+     * taxa.
+     */
+    it("a capability agregada não conhece dimensão pessoal — nem no corpo, nem no retorno", () => {
+      const migracao = MIGRATIONS.map((a) => readFileSync(a, "utf8")).find((s) =>
+        s.includes("contar_propostas_por_desfecho"),
+      );
+      expect(migracao, "a migration da capability agregada sumiu").toBeDefined();
+      const corpo = corpoDaFuncao(semComentarios(migracao!), "contar_propostas_por_desfecho");
+      expect(corpo.length, "o corpo da agregada não foi encontrado").toBeGreaterThan(50);
+      for (const pessoal of [
+        /professional_profile_id/,
+        /case_id/,
+        /\bp\.id\b/,
+        /origin_author/,
+        /origin_record/,
+        /suggested_value/,
+      ]) {
+        expect(
+          pessoal.test(corpo),
+          `a capability agregada passou a expor dimensão individual: ${pessoal}`,
+        ).toBe(false);
+      }
+    });
+
+    it("o painel não ordena por taxa, não agrupa por pessoa, não vaza individual", () => {
+      const ARQUIVOS_DO_PAINEL = [
+        "src/modules/curadoria/painel-de-discordancia.ts",
+        "src/modules/curadoria/painel-de-discordancia-repository.ts",
+        "src/components/curadoria/painel-de-discordancia.tsx",
+      ];
+      for (const caminho of ARQUIVOS_DO_PAINEL) {
+        const arquivo = FONTES_COM_CONTEUDO.find(
+          (f) => f.caminho.split("\\").join("/") === caminho,
+        );
+        expect(arquivo, `${caminho} não existe`).toBeDefined();
+        const codigo = arquivo!.conteudo
+          .replace(/\/\*[\s\S]*?\*\//g, "")
+          .replace(/^\s*(\/\/|\*).*$/gm, "");
+        for (const proibido of [
+          /professional_profile_id/i,
+          /professionalProfileId/,
+          /patient/i,
+          /caseId|case_id/,
+          /proposal_?id|propostaId/i,
+          /\.sort\([^)]*(taxa|discordancia|recusad|contagem)/i,
+          /\btop\b|\bbottom\b|ranking/i,
+        ]) {
+          expect(
+            proibido.test(codigo),
+            `${caminho} ganhou dimensão pessoal ou ranking: ${proibido}`,
+          ).toBe(false);
+        }
+      }
+    });
+
+    it("o painel vive na Mesa, e só nela", () => {
+      // Quem importa o componente ou o repositório do painel tem de morar em
+      // `app/portal-curador/` — paciente, público e qualquer outra superfície
+      // continuam sem acesso (CONTRATO_1_11 §9.3).
+      const importadores = FONTES_COM_CONTEUDO.filter(({ caminho, conteudo }) => {
+        const normalizado = caminho.split("\\").join("/");
+        if (normalizado.includes("modules/curadoria/painel-de-discordancia")) return false;
+        if (normalizado.includes("components/curadoria/painel-de-discordancia")) return false;
+        return /painel-de-discordancia/.test(conteudo);
+      }).map(({ caminho }) => caminho.split("\\").join("/"));
+      for (const importador of importadores) {
+        expect(
+          importador.startsWith("src/app/portal-curador/"),
+          `o painel vazou para fora da Mesa: ${importador}`,
+        ).toBe(true);
+      }
+      expect(importadores.length, "ninguém liga o painel — a Mesa perdeu a tela").toBeGreaterThan(0);
+    });
   });
+
 });
 
 describe("C-02 · Nenhum regime de confirmação em bloco (AC-BLOCO)", () => {
