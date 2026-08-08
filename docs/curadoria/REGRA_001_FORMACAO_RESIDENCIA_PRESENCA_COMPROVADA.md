@@ -5,7 +5,7 @@
 | **Versão** | v1.0 |
 | **Autor** | Agente 02 — Arquiteto da Curadoria 2.0 |
 | **Data** | 2026-08-08 |
-| **Status** | **BLOQUEADA — decisão material faltante** (ver §2) |
+| **Status** | **TENTATIVA INAUGURAL BLOQUEADA — substituída por decisão DT-01 (VIA V1, 2026-08-08)**; o novo alvo inaugural é `MODELO_COMUNICACAO` (ver [`REGRA_INAUGURAL_MODELO_COMUNICACAO.md`](REGRA_INAUGURAL_MODELO_COMUNICACAO.md)). **Registro histórico preservado na íntegra — não renumerado, não apagado**; a decisão material faltante do §11 permanece registrada e não foi praticada |
 | **Base** | `4bcf6ea` |
 | **Decisão de origem** | **DT-01 — Fundador / Autoridade de Método**: adotar `FORMACAO_RESIDENCIA` como alvo da primeira regra material |
 | **Objeto desta ficha** | formalizar a decisão **e confrontá-la com as autoridades vigentes antes da promoção**, conforme determinado |
