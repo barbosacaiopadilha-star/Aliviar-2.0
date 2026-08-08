@@ -123,7 +123,7 @@ sobre a definição efetiva.
 | **G-2.4-8** | inércia da estrutura | policy/grant/writer/superfície prematuros |
 | **G-2.4-9** | **o 2.3 não inventa destino paralelo para o juízo humano** | código da etapa dividida grava juízo fora de `curator_judgments` |
 
-### Guardas do Item 2.6 — **APROVADAS, PENDENTES DE IMPLEMENTAÇÃO** (PA-14, 2026-08-08)
+### Guardas do Item 2.6 — **IMPLEMENTADAS** (PA-14; Item 2.6 formalmente encerrado — `01f45dc`, 2026-08-08)
 
 Lavradas no [`CONTRATO_2_6_RELEITURA_DE_ESCOPO.md`](CONTRATO_2_6_RELEITURA_DE_ESCOPO.md)
 §16–§17; **nenhuma está implementada** — entram com o pacote do 2.6 residual.
