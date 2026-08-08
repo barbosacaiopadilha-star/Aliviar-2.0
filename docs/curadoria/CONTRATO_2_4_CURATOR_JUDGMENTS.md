@@ -5,7 +5,7 @@
 | **Versão** | v1.0 |
 | **Autor** | Agente 02 — Arquiteto da Curadoria 2.0 |
 | **Data** | 2026-08-08 |
-| **Status** | **PROPOSTA — aguarda aprovação do Guardião da CURADORIA 2.0** |
+| **Status** | **APROVADO — Guardião da CURADORIA 2.0, 2026-08-08** (`CONTRATO_2_4 APROVADO COM RESSALVA`; a ressalva — compatibilidade evidência×julgamento — está **incorporada como norma no §10**, com os dois registros vinculantes nos §6/§13 e a mutação adicional no §21). Parecer catalogado como **PA-15** no [`REGISTRO_DOS_PARECERES.md`](REGISTRO_DOS_PARECERES.md). Nasceu como **PROPOSTA** na base `ee50fc1`; lavratura da aprovação no commit registrado no PA-15. **A implementação permanece NÃO AUTORIZADA — exige missão própria ao Engenheiro** |
 | **Base** | `01f45dc` (2.6 residual implementado; 2.4 declarado próximo movimento canônico) |
 | **Item** | **2.4** — `curator_judgments` **sem `AREA`** |
 | **Autoridade central** | **ADR-067** (anexo `ADR_B_JUIZO_HUMANO.md`) — domínio integralmente fechado: §4.4 naturezas · §5 divisão da AVALIAÇÃO · §7 ato válido · §8 onze itens · §9–§10 versões · §12 supersessão (JS1–JS4) · §13 estados e unicidade · RS-03 (`AREA` fora) |
@@ -61,6 +61,18 @@ Sétimo conceito não existe no domínio — CHECK estrutural + guarda G-2.4-2.
 eliminatório** com quatro estados próprios; nenhuma coluna, valor ou conceito
 `AREA` nasce nesta entidade. Falseabilidade: adicionar `AREA` à entidade ou à
 lista ⇒ **G-2.4-3 cai**.
+
+> **Registro vinculante nº 1 (Guardião, 2026-08-08) — a lista é CHECK, nunca FK
+> ao Catálogo.** Os seis conceitos constituem **lista fechada por CHECK
+> estrutural**. `FORMACAO`, `EXPERIENCIA` e `HISTORICO` são **identificadores de
+> critério** — **não são códigos de subcritério do Catálogo** — e portanto
+> **qualquer validação do próprio campo de conceito do julgamento por FK ou
+> equivalência direta contra os códigos do Catálogo é incorreta e fica vedada**.
+> A validação contra o Catálogo aplica-se **às evidências referenciadas**, cujos
+> `subcriterionCode` efetivamente pertencem a ele (§10). Os três conceitos
+> `RELACIONAL` permanecem os fixados pela ADR-067; o universo total permanece
+> fechado em **seis**. Substituir o CHECK por FK ao Catálogo é **proibição
+> expressa** desta lavratura.
 
 ## 7. Estados — os três da ADR-067 §13, nominalmente
 
@@ -119,6 +131,23 @@ inexistente ⇒ recusa (a referência é à linha exata) · *"evidência de outr
 Case"* não se aplica — `practice_evidence` é do profissional, não do Case; o
 alvo do juízo é quem carrega o Case.
 
+> **Ressalva do Guardião (2026-08-08) — compatibilidade evidência × julgamento,
+> norma incorporada:**
+>
+> | Julgamento | Evidência admissível — e nenhuma outra |
+> |---|---|
+> | **`RELACIONAL`** | somente evidência com **`subcriterionCode` igual ao conceito julgado**; código distinto ⇒ **recusa** |
+> | **`TECNICO` · `FORMACAO`** | somente evidências **`FORMACAO_*`** |
+> | **`TECNICO` · `EXPERIENCIA`** | somente evidências **`EXPERIENCIA_*`** |
+> | **`TECNICO` · `HISTORICO`** | somente evidências **`HISTORICO_*`** |
+>
+> Evidência fora da família correspondente ⇒ **recusa**. **Fundamento material:
+> cada critério possui suas próprias evidências, e citação cruzada de família
+> comprometeria a proveniência da conclusão.** Se um dia for necessário admitir
+> evidência técnica de família diversa, isso **exigirá emenda normativa
+> explícita — nunca flexibilização implementacional.** A decisão já foi tomada;
+> a implementação não escolhe como resolvê-la.
+
 ## 11. Append-only — história como fato
 
 **Nenhum UPDATE, nenhum DELETE — imposto por trigger** (padrão
@@ -144,6 +173,7 @@ mecanismo estrutural**, nunca reescrita do ato original.
 |---|---|
 | Primeiro ato válido sobre o alvo | `JUIZO_REGISTRADO` |
 | **Duplo clique / retry** — mesmo ator, mesma versão-base, mesmo conteúdo | **`VERSAO_JA_GRAVADA`** — sucesso idempotente, nada gravado (o árbitro é a cadeia: a versão-base já tem sucessora idêntica) |
+| — | **Registro vinculante nº 2 (Guardião, 2026-08-08) — "MESMO CONTEÚDO", definido:** igualdade de **todos os campos de domínio da versão** — alvo · natureza · conceito · **conclusão** · referências de fatos · referências de evidências **com as versões referenciadas** · motivo · demais campos materiais do ato. **Excluídos da comparação, e só eles**: a identidade primária da linha, o instante técnico de gravação e metadados que não compõem o conteúdo material. E permanece: **outro ator diante de versão-base já sucedida recebe `CONFLITO_DE_VERSAO` — nunca sucesso idempotente por ato que ele não autorou** |
 | Mesmo ator, versão-base já sucedida, conteúdo **diferente** | **`CONFLITO_DE_VERSAO`** — recusa explícita; o ator relê o vigente e age de novo |
 | **Outro ator** sobre versão-base já sucedida | `CONFLITO_DE_VERSAO` — mesma regra; autoria do primeiro prevalece (padrão da ressalva PA-12) |
 | Ato sobre alvo cujo vigente está `RETIRADO`/`SUPERADO` | válido — abre versão nova (§12) |
@@ -219,6 +249,14 @@ grant/policy prematuros ⇒ G-2.4-8 · dois `VIGENTE` no mesmo alvo ⇒ unicidad
 (§12) · sucessão dupla da mesma versão-base ⇒ cadeia (§13) · 2.3 gravando fora ⇒
 G-2.4-9.
 
+> **Mutação adicional obrigatória (ressalva do Guardião) — "evidência de família
+> incompatível aceita":** se a implementação aceitar evidência `EXPERIENCIA_*`
+> para julgamento `FORMACAO`, `HISTORICO_*` para `EXPERIENCIA`, **ou qualquer
+> outra combinação técnica fora da família correspondente**, a guarda/oráculo da
+> compatibilidade (§10) **deve falhar**. Analogamente, para julgamento
+> `RELACIONAL`, evidência cujo `subcriterionCode` **não coincida com o conceito
+> julgado** deve provocar falha.
+
 ## 22. Rollback
 
 Tudo aditivo: `drop` da entidade + triggers + índices; nenhuma tabela existente
@@ -245,6 +283,8 @@ alterada; **nenhum fato real existe enquanto inerte** (zero grants, zero writer)
 
 ## 24. Encaminhamento
 
-Ao **Guardião da CURADORIA 2.0**, para aprovação. Após aprovada: implementação
-por missão própria (Engenheiro), verificação, encerramento — e o 2.3 torna-se o
-próximo elegível, herdando as cláusulas §9/§13.
+Contrato **APROVADO E LAVRADO** (PA-15). O Item 2.4 está **APTO A RECEBER MISSÃO
+DE IMPLEMENTAÇÃO** (Engenheiro) — a implementação **não** começa sem essa
+missão. Sequência: implementação → verificação → encerramento; **só então** o
+2.3 se torna elegível, herdando as cláusulas §9/§13. O 2.C permanece bloqueado;
+a Fronteira, fechada.

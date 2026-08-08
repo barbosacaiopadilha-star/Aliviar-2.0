@@ -97,6 +97,24 @@ E-07 nasceram com o Item 1.8** (`c3242ea`, 12 testes) e protegem a Ficha em si.
 | **F-02** O catálogo não muda em silêncio *(corrigida em F-01A)* | **Recomputa** o hash a partir do conteúdo real e compara com o declarado; verifica a vigência única de versão | Congelamento §2; I-3 | `catalogo-gerado.ts` · algoritmo de `scripts/gerar-catalogo-ts.mjs` | alguém edita `catalogo-gerado.ts` à mão sem regenerar | `sha256(JSON.stringify(CATALOGO_GERADO))` ≠ `CATALOGO_GERADO_HASH` |
 | **F-03** *(caracterização, não guarda)* | Produzir a evidência executável do achado P15 para a decisão **DP-1** | — | motor · repositório do motor · `mesa-cruzamento.ts` | **falha quando alguém implementar a guarda A4** — que é exatamente o sinal desejado | teste de estado atual |
 
+### Guardas do Item 2.4 — **APROVADAS, PENDENTES DE IMPLEMENTAÇÃO** (PA-15, 2026-08-08)
+
+Lavradas no [`CONTRATO_2_4_CURATOR_JUDGMENTS.md`](CONTRATO_2_4_CURATOR_JUDGMENTS.md)
+§20–§21; **nenhuma está implementada, executável ou verificada** — entram com o
+pacote técnico do 2.4.
+
+| Guarda | Objetivo | Cai se |
+|---|---|---|
+| **G-2.4-1** | natureza somente `TECNICO`|`RELACIONAL` | terceira natureza nasce |
+| **G-2.4-2** | conceitos exatamente os seis, nos pares certos — **por CHECK, nunca FK ao Catálogo** | sétimo conceito, par trocado, ou FK ao Catálogo no campo de conceito |
+| **G-2.4-3** | `AREA` inexistente (RS-03) | coluna/valor/conceito `AREA` aparece |
+| **G-2.4-4** | append-only | UPDATE/DELETE deixa de ser recusado |
+| **G-2.4-5** | evidência por referência+versão, **da família/conceito compatível** (ressalva PA-15), nunca texto duplicado | texto copiado, ou família incompatível aceita |
+| **G-2.4-6** | autoria real obrigatória, por sessão | `actor_id` nullable ou vindo de payload |
+| **G-2.4-7** | **o Motor nunca cria julgamento; `derivation_proposals` nunca recebe alvo de julgamento** | pipeline/regra/Motor escreve na entidade |
+| **G-2.4-8** | inércia da estrutura | policy/grant/writer/superfície prematuros |
+| **G-2.4-9** | **o 2.3 não inventa destino paralelo para o juízo humano** | código da etapa dividida grava juízo fora de `curator_judgments` |
+
 ### Guardas do Item 2.6 — **APROVADAS, PENDENTES DE IMPLEMENTAÇÃO** (PA-14, 2026-08-08)
 
 Lavradas no [`CONTRATO_2_6_RELEITURA_DE_ESCOPO.md`](CONTRATO_2_6_RELEITURA_DE_ESCOPO.md)
