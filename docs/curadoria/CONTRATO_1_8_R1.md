@@ -5,7 +5,7 @@
 | **Versão** | v1.0 |
 | **Autor** | Agente 02 — Arquiteto da Curadoria 2.0 |
 | **Data** | 2026-08-07 |
-| **Status** | **Vigente — contrato lavrado pelo DT-01**, nível derivado |
+| **Status** | **CUMPRIDO — Item 1.8 encerrado pelo DT-01 em 2026-08-07** (`c3242ea` → `041b423` → `095054e`, verificação final sem ressalvas); permanece como registro histórico das decisões, nível derivado |
 | **Decide** | DT-01 — Fundador |
 | **Base técnica** | `c3242ea` |
 | **Dependências** | [`ARQUITETURA_CURADORIA_2_0.md`](ARQUITETURA_CURADORIA_2_0.md) §11, §17.4 · [`ADR_A_PROPOSTAS_DE_DERIVACAO.md`](ADR_A_PROPOSTAS_DE_DERIVACAO.md) · [`ADR_069_CICLO_DE_VIDA_DAS_REGRAS.md`](ADR_069_CICLO_DE_VIDA_DAS_REGRAS.md) |
@@ -898,3 +898,15 @@ Nenhuma hierarquia nova é inventada.
 Sequência esperada de encerramento: `1.8-R1-MR1` implementado → verificação
 curta do Agente 04 → **ITEM 1.8 ENCERRADO** → retorno ao mapa canônico para o
 próximo pacote de produto.
+
+### 22.11 Encerramento — DT-01, 2026-08-07
+
+A sequência acima **cumpriu-se**: `1.8-R1-MR1` implementado em `095054e`,
+verificado pelo Agente 04 **sem ressalvas** (reapresentação e borda `NULL` ·
+concorrência · autoridade morta da A5 removida · regressão completa verde).
+
+> **ITEM 1.8 — ENCERRADO.** As seis decisões deste §22 estão **encerradas e não
+> se reabrem**: (1) proposta como ato histórico; (2) validade histórica ≠ estado
+> corrente da regra; (3) recusa de `evidence_id = NULL` em mudança de `status` de
+> linha vinculada; (4) compatibilidade do legado; (5) concorrência certificada;
+> (6) Ficha removida de `INERTES_AUTORIZADOS`.

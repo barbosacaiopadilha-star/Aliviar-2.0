@@ -61,7 +61,7 @@
 | 16 | [`REGISTRO_DOS_PARECERES.md`](REGISTRO_DOS_PARECERES.md) | Derivado | Vigente | Catálogo dos pareceres — sem resumo |
 | 16b | [`REGISTRO_DAS_GUARDAS_2_0.md`](REGISTRO_DAS_GUARDAS_2_0.md) | Derivado | Vigente | **21 guardas executáveis + 1 caracterização** (pacotes F-01 e F-01A), achados F-01/01..03 |
 | 16c | [`IMPEDIMENTO_F_02_MODELO_DE_DADOS.md`](IMPEDIMENTO_F_02_MODELO_DE_DADOS.md) | Derivado | **Impedimento aberto** | Por que a camada de dados da 2.0 não pode ser criada hoje, e as 8 decisões que a desbloqueiam |
-| 16d | [`CONTRATO_1_8_R1.md`](CONTRATO_1_8_R1.md) | Derivado | **Vigente — lavrado pelo DT-01 em 2026-08-07** | Contrato corretivo do Item 1.8-R1: §11.4 vincula o 1.8 · migration autorizada para o vínculo `professional_subcriterion_map → practice_evidence` · cadeia única · `AUSENTE` × `NAO_APLICAVEL` · AC-EXPLICA por afirmação · 12 critérios de aceite |
+| 16d | [`CONTRATO_1_8_R1.md`](CONTRATO_1_8_R1.md) | Derivado | **Cumprido — Item 1.8 encerrado em 2026-08-07** (`c3242ea` → `041b423` → `095054e`) | Registro histórico do contrato corretivo: §11.4 vincula o 1.8 · vínculo de evidência · cadeia única · leitor controlado (§21) · condições finais (§22) · encerramento (§22.11) |
 | 17 | [`PLANO_EXECUTIVO_CURADORIA_2_0.md`](PLANO_EXECUTIVO_CURADORIA_2_0.md) | Derivado | **Superado em parte** pelo item 13 — ver §5 do Mapa dos Pacotes | Planejamento executivo do Implementador (33 pacotes F/C/L/K) |
 | 18 | [`PLANO_DE_PACOTES_CURADORIA_2_0.md`](PLANO_DE_PACOTES_CURADORIA_2_0.md) | Derivado | **Histórico** — impedimento respondido pelo §18 da Arquitetura | Registro do impedimento e da primeira partição |
 
