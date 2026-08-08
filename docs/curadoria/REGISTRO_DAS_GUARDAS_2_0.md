@@ -97,10 +97,12 @@ E-07 nasceram com o Item 1.8** (`c3242ea`, 12 testes) e protegem a Ficha em si.
 | **F-02** O catálogo não muda em silêncio *(corrigida em F-01A)* | **Recomputa** o hash a partir do conteúdo real e compara com o declarado; verifica a vigência única de versão | Congelamento §2; I-3 | `catalogo-gerado.ts` · algoritmo de `scripts/gerar-catalogo-ts.mjs` | alguém edita `catalogo-gerado.ts` à mão sem regenerar | `sha256(JSON.stringify(CATALOGO_GERADO))` ≠ `CATALOGO_GERADO_HASH` |
 | **F-03** *(caracterização, não guarda)* | Produzir a evidência executável do achado P15 para a decisão **DP-1** | — | motor · repositório do motor · `mesa-cruzamento.ts` | **falha quando alguém implementar a guarda A4** — que é exatamente o sinal desejado | teste de estado atual |
 
-### Guardas do Item 1.A — **APROVADAS, PENDENTES DE IMPLEMENTAÇÃO** (PA-13, 2026-08-08)
+### Guardas do Item 1.A — **IMPLEMENTADAS** (PA-13; Item 1.A formalmente encerrado — `c03cc26`, 2026-08-08)
 
 Lavradas no [`CONTRATO_1_A`](CONTRATO_1_A_FUNCAO_PURA_DERIVACAO_MAPA_PROFISSIONAL.md) §13;
-**nenhuma está implementada** — entram com o pacote técnico do 1.A.
+as cinco vivem em `tests/unit/derivacao-do-mapa-profissional.test.ts` desde `c03cc26`,
+falseadas na implementação (bancada M1–M6) e cobertas pela verificação independente
+e pela certificação do item.
 
 | Guarda | Objetivo | Cai se |
 |---|---|---|
