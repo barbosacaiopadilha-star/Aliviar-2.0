@@ -97,6 +97,24 @@ E-07 nasceram com o Item 1.8** (`c3242ea`, 12 testes) e protegem a Ficha em si.
 | **F-02** O catálogo não muda em silêncio *(corrigida em F-01A)* | **Recomputa** o hash a partir do conteúdo real e compara com o declarado; verifica a vigência única de versão | Congelamento §2; I-3 | `catalogo-gerado.ts` · algoritmo de `scripts/gerar-catalogo-ts.mjs` | alguém edita `catalogo-gerado.ts` à mão sem regenerar | `sha256(JSON.stringify(CATALOGO_GERADO))` ≠ `CATALOGO_GERADO_HASH` |
 | **F-03** *(caracterização, não guarda)* | Produzir a evidência executável do achado P15 para a decisão **DP-1** | — | motor · repositório do motor · `mesa-cruzamento.ts` | **falha quando alguém implementar a guarda A4** — que é exatamente o sinal desejado | teste de estado atual |
 
+### Guardas do Item 2.3 — **APROVADAS, PENDENTES DE IMPLEMENTAÇÃO** (PA-16, 2026-08-08)
+
+Lavradas no [`CONTRATO_2_3_DIVISAO_DA_AVALIACAO.md`](CONTRATO_2_3_DIVISAO_DA_AVALIACAO.md)
+§15–§16; **nenhuma está implementada** — entram com o pacote técnico do 2.3. A
+**RS-2.3-1** acrescenta **mutação obrigatória** (não-autor retirando julgamento
+alheio ⇒ queda), sem criar guarda nova.
+
+| Guarda | Objetivo | Cai se |
+|---|---|---|
+| **G-2.3-1** | o Motor não julga; JS3 só supersede, nunca cria | pipeline/Motor insere versão; JS3 cria juízo |
+| **G-2.3-2** | destino único — nenhum juízo fora de `curator_judgments` | tabela/cache/rascunho persistente paralelo |
+| **G-2.3-3** | autoria por sessão — capabilities sem parâmetro de autor | `actor_id` em assinatura/payload |
+| **G-2.3-4** | gate-first (`is_curator_for_case`) — e, na retirada, **RS-2.3-1**: ator = autor da versão vigente | dado antes do gate · não-autor retira ato alheio |
+| **G-2.3-5** | sem pré-julgamento — conclusão nasce vazia; zero minuta/carry-forward (inclusive pós-JS3) | UI inicializa conclusão |
+| **G-2.3-6** | o árbitro é o banco do 2.4 | writer decide concorrência por `SELECT→INSERT` |
+| **G-2.3-7** | flag restaura 6×N sem perda — `criterion_declarations` intactas (O-1: sem backfill) | dado legado apagado/reescrito |
+| **G-2.3-8** | 2.C fechado — nenhum grant externo/superfície pública | abertura citando o 2.3 |
+
 ### Guardas do Item 2.4 — **IMPLEMENTADAS E VERIFICADAS** (PA-15; Item 2.4 formalmente encerrado — `2f6ec05`, 2026-08-08)
 
 Lavradas no [`CONTRATO_2_4_CURATOR_JUDGMENTS.md`](CONTRATO_2_4_CURATOR_JUDGMENTS.md)

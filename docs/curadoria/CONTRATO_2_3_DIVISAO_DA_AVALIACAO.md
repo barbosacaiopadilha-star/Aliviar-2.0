@@ -5,7 +5,7 @@
 | **Versão** | v1.0 |
 | **Autor** | Agente 02 — Arquiteto da Curadoria 2.0 |
 | **Data** | 2026-08-08 |
-| **Status** | **PROPOSTA — pronta para julgamento do Guardião da CURADORIA 2.0** |
+| **Status** | **APROVADO — Guardião da CURADORIA 2.0, 2026-08-08** (`CONTRATO_2_3 APROVADO COM RESSALVA`; a ressalva **RS-2.3-1** — retirada exige, cumulativamente, ser Curador do Case **e** autor da versão `VIGENTE` — está **incorporada como norma** nos §7/§12, com a mutação no §16 e o aceite 1 ajustado; observações **O-1/O-2** registradas como notas não bloqueantes no §21). Parecer catalogado como **PA-16** no [`REGISTRO_DOS_PARECERES.md`](REGISTRO_DOS_PARECERES.md). Nasceu como **PROPOSTA** na base `2e49f31`; lavratura no commit registrado no PA-16. **Implementação permanece NÃO AUTORIZADA — exige missão própria ao Engenheiro** |
 | **Base** | `279daad` (Item 2.4 formalmente encerrado; 2.3 elegível) |
 | **Item** | **2.3** — Divisão da etapa AVALIAÇÃO (ADR-067 §5) |
 | **Autoridades** | ADR-067 (integral) · [`CONTRATO_2_4_CURATOR_JUDGMENTS.md`](CONTRATO_2_4_CURATOR_JUDGMENTS.md) + **PA-15** · ADR-065 §3 (`AGUARDA_JUIZO_DO_CURADOR`) · ADR-035 (autoridade decisória única) · precedentes 1.12/2.6 (capabilities com gate interno) |
@@ -99,11 +99,25 @@ autenticada** (`auth.uid()`); `service_role` não constitui autoria humana.
 
 ### `retirar_julgamento`
 
+> **RS-2.3-1 — regra vinculante da retirada (ressalva do Guardião, incorporada):**
+> retirar exige **cumulativamente**: **(1)** ator autorizado no Case pelo gate
+> `is_curator_for_case`; **(2)** **ator = autor da versão `VIGENTE` que está
+> sendo retirada**. Não confundir *"é Curador do Case"* com *"é autor desta
+> versão"* — para retirada, **ambas** são necessárias.
+>
+> **Curador sucessor que discorda de julgamento alheio não retira o ato
+> anterior — supersede por versão própria** (`registrar_julgamento`).
+> Discordância de terceiro não é retirada; troca de Curador não invalida ato
+> anterior; retirar-sem-substituir ato de outro autor **permanece proibido**.
+> Qualquer permissão futura de retirada por sucessor depende de autoridade
+> normativa futura sobre múltiplos Curadores — **não criada aqui**.
+
 | Cenário | Desfecho |
 |---|---|
-| Autor retira o vigente do alvo (motivo **oferecido, nunca exigido**) | **`JUIZO_RETIRADO`** — `VIGENTE → RETIRADO`; o conceito **volta a ausência de juízo**, e a etapa volta a `AGUARDA_JUIZO_DO_CURADOR` |
+| **Autor** da versão vigente, Curador do Case, retira (motivo **oferecido, nunca exigido**) | **`JUIZO_RETIRADO`** — `VIGENTE → RETIRADO`; o conceito **volta a ausência de juízo**, e a etapa volta a `AGUARDA_JUIZO_DO_CURADOR` |
+| **Ator diferente do autor da versão `VIGENTE`** tenta retirar — mesmo sendo Curador do Case | **`SEM_AUTORIDADE`** (RS-2.3-1) |
+| Chamador não é Curador do Case | `SEM_AUTORIDADE` (gate-first) |
 | Base obsoleta / corrida com outra transição | `CONFLITO_DE_VERSAO` |
-| Chamador sem autoridade | `SEM_AUTORIDADE` |
 
 **Idempotência e concorrência não são lógica de aplicação**: o árbitro é o
 conjunto estrutural **já implementado no 2.4** — `um_vigente_por_alvo` ·
@@ -177,6 +191,7 @@ cópia autoritativa em lugar nenhum: o que persiste são **referências**.
 | Regime | `SECURITY DEFINER` · `search_path` fixo com `pg_temp` ao fim · referências qualificadas · zero SQL dinâmico · **gate-first**: `is_curator_for_case(case_id)` é a primeira verificação; sem autoridade ⇒ `SEM_AUTORIDADE`, **antes de qualquer dado** (padrão 2.6) |
 | Autoria | `actor_id := auth.uid()` — **não existe parâmetro de autor** |
 | Entrada mínima (registrar) | `case_id` · `professional_profile_id` · `subcriterion_code` · `natureza` · `conclusao` · `fatos_visiveis` · refs de evidência (`id`+`version`)[] · `motivo?` · **`versao_base_id?`** (null = primeiro julgamento do alvo) |
+| **Entrada mínima (retirar) — RS-2.3-1** | **`versao_vigente_id`** (identidade da versão vigente a retirar — suficiente para resolver estruturalmente o julgamento e **seu autor**) · `motivo?`. **Não existe** `actor_id`, autor escolhido pelo cliente, nem identidade humana como parâmetro. A capability compara **`auth.uid()` da sessão × `actor_id` da versão vigente**: divergiu ⇒ `SEM_AUTORIDADE`; e o gate `is_curator_for_case` continua vindo **primeiro** |
 | Saída | **um desfecho nomeado** (§7) + o `id` da versão quando gravada — nada além |
 | Transação | nova versão + `SUPERADO` da anterior + refs de evidência: **uma transação**; falha parcial não existe |
 | Erros estruturais | violações do banco (natureza/par/estado/família/versão de evidência) são **recusas do árbitro**, traduzidas sem serem re-julgadas na aplicação |
@@ -222,6 +237,9 @@ item, Fronteira. **2.C permanece `BLOQUEADO`; Fronteira `FECHADA`.**
 
 Motor criando juízo ⇒ G-2.3-1 · `derivation_proposals` ganhando alvo de
 julgamento ⇒ G-2.4-7 (oráculo vivo) · cliente escolhendo `actor_id` ⇒ G-2.3-3 ·
+**não-autor consegue retirar julgamento alheio** — Curador válido do Case, mas
+diferente do autor da versão vigente, retira ato de terceiro ⇒ **a guarda/oráculo
+da RS-2.3-1 deve cair** (prova **adicional** ao gate de Case) ·
 outro ator recebendo `VERSAO_JA_GRAVADA` ⇒ §7 (PA-15) · writer ignorando base
 obsoleta ⇒ §7/G-2.3-6 · evidência de família incompatível aceita ⇒ trigger do
 2.4 (oráculo vivo, mutação PA-15) · versão de evidência inexistente ⇒ refs FK ·
@@ -250,7 +268,7 @@ vigilância preservada.
 
 | # | Aceite |
 |---|---|
-| 1 | As duas capabilities existem, gate-first, autoria por sessão, desfechos nomeados do §7 **todos alcançáveis por teste** |
+| 1 | As duas capabilities existem, gate-first, autoria por sessão, desfechos nomeados do §7 **todos alcançáveis por teste** — **incluindo a RS-2.3-1**: é **impossível** considerar conforme uma implementação em que alguém que não é Curador do Case, **ou** que é Curador mas **não é o autor da versão vigente**, consiga retirar; a retirada válida exige **ambas** as autoridades |
 | 2 | "Mesmo conteúdo" comparado conforme PA-15 — mutação de campo material qualquer quebra a idempotência |
 | 3 | Outro ator **nunca** recebe sucesso idempotente (prova de corrida) |
 | 4 | Concorrência arbitrada pelos índices/triggers do 2.4 (provas: dois curadores; duas sucessoras; supersessão×retirada; base obsoleta) |
@@ -265,6 +283,29 @@ vigilância preservada.
 
 ## 20. Encaminhamento
 
-Ao **Guardião da CURADORIA 2.0**, para julgamento integral. Após aprovado:
-implementação por missão própria (Engenheiro) → verificação → encerramento — e
-o caminho da Onda 2 fica inteiro para a decisão de abertura que o 2.C exigirá.
+Contrato **APROVADO E LAVRADO** (PA-16). O Item 2.3 está **APTO A RECEBER MISSÃO
+DE IMPLEMENTAÇÃO** (Engenheiro) — a implementação **não** começa sem essa
+missão. Sequência: implementação → verificação → encerramento — e o caminho da
+Onda 2 fica inteiro para a decisão de abertura que o 2.C exigirá. **2.C
+permanece BLOQUEADO; Fronteira FECHADA.**
+
+## 21. Notas do julgamento — não bloqueantes, fora do escopo do 2.3
+
+**O-1 — legado de `criterion_declarations`:** a cópia histórica dos juízos
+técnicos de `criterion_declarations` para `curator_judgments` **não é
+responsabilidade do Item 2.3**. Cases antigos permanecem no regime em que
+nasceram (regra de compatibilidade/rollback vigente, G-2.3-7). **Proibido neste
+pacote**: migration de cópia, backfill, conversão histórica, alteração de Cases
+legados. Se a cópia se tornar operacionalmente necessária, será **missão
+própria**.
+
+**O-2 — momento do `EXECUTE` (nota de arquitetura, ratificada pelo Guardião):**
+o precedente de `decidir_proposta` vale para o **padrão de gate interno**, não
+necessariamente para o **momento de concessão** do `EXECUTE`. Para o 2.3, o
+juízo é operação **interna da Mesa já autorizada pela ADR-067** — o writer pode
+nascer operacional com **`EXECUTE` controlado para `authenticated`**, desde que
+preservados integralmente: `SECURITY DEFINER` · gate-first · `auth.uid()` ·
+`search_path` seguro · revogação de `PUBLIC` · tabela **sem grant direto** e
+**sem policy direta** · banco como árbitro · **zero bypass por parâmetro**.
+Precedentes: `acknowledge_case_need` · `nome_do_curador_do_caso`. **Esta nota
+não abre nada além do writer contratado.**
