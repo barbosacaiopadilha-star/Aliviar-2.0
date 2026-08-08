@@ -97,6 +97,19 @@ E-07 nasceram com o Item 1.8** (`c3242ea`, 12 testes) e protegem a Ficha em si.
 | **F-02** O catálogo não muda em silêncio *(corrigida em F-01A)* | **Recomputa** o hash a partir do conteúdo real e compara com o declarado; verifica a vigência única de versão | Congelamento §2; I-3 | `catalogo-gerado.ts` · algoritmo de `scripts/gerar-catalogo-ts.mjs` | alguém edita `catalogo-gerado.ts` à mão sem regenerar | `sha256(JSON.stringify(CATALOGO_GERADO))` ≠ `CATALOGO_GERADO_HASH` |
 | **F-03** *(caracterização, não guarda)* | Produzir a evidência executável do achado P15 para a decisão **DP-1** | — | motor · repositório do motor · `mesa-cruzamento.ts` | **falha quando alguém implementar a guarda A4** — que é exatamente o sinal desejado | teste de estado atual |
 
+### Guardas do Item 1.A — **APROVADAS, PENDENTES DE IMPLEMENTAÇÃO** (PA-13, 2026-08-08)
+
+Lavradas no [`CONTRATO_1_A`](CONTRATO_1_A_FUNCAO_PURA_DERIVACAO_MAPA_PROFISSIONAL.md) §13;
+**nenhuma está implementada** — entram com o pacote técnico do 1.A.
+
+| Guarda | Objetivo | Cai se |
+|---|---|---|
+| **G-1** Pureza | a função é pura por contrato | importar supabase/repository/cliente · `Date.now()`/random · env/sessão/auth · escrita · singleton mutável |
+| **G-2** Zero chamadores | nenhum consumidor de produção | import operacional em `src/` (app, actions, routes, repositories, components) — **testes excluídos da varredura** |
+| **G-3** P-04/I-8 — **do vazio, nada se afirma** | entrada sem evidência jamais produz `PROPOSTO` | sem evidência → estado · conceito sem regra → `PROPOSTO` · fallback/default de estado · inferência por ausência · coerção de `null`/`undefined` · heurística não lavrada |
+| **G-4** Semântica ad hoc proibida | conteúdo só por regra versionada | nasce tradução literal opção→estado em TS/SQL (padrão C-12) |
+| **G-5** Fronteira com 2.C | nenhuma ativação operacional | o módulo menciona tabela, capability, Fronteira ou emissor · ganha caminho de persistência/apresentação |
+
 ---
 
 ## 2. Achados — estado após a retificação F-01A

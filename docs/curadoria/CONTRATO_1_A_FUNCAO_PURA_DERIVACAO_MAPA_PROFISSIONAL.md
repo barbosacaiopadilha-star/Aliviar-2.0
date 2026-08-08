@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 |---|---|
-| **Versão** | v1.0 |
+| **Versão** | v1.1 |
 | **Autor** | Agente 02 — Arquiteto da Curadoria 2.0 |
 | **Data** | 2026-08-08 |
-| **Status** | **PROPOSTA — aguarda aprovação do Guardião da CURADORIA 2.0** |
+| **Status** | **APROVADO — Guardião da CURADORIA 2.0, 2026-08-08** (`APROVADO COM RESSALVA`; a ressalva — reformulação da propriedade de lacuna do §9 — está incorporada, com três registros vinculantes nos §5/§8/§10). Parecer catalogado como **PA-13** no [`REGISTRO_DOS_PARECERES.md`](REGISTRO_DOS_PARECERES.md). Nasceu como **PROPOSTA** na base `09486f2`; lavratura da aprovação no commit registrado no PA-13. **Nenhuma semântica material evidência→estado foi aprovada** |
 | **Base** | `2c52832` (Item 1.12 formalmente encerrado; pré-voo do 1.A concluído) |
 | **Item** | **1.A** — a metade **pura e inerte** da antiga 1.2, partida pelo §15.0/RC-4; a metade operacional é o `2.C` |
 | **Dependência** | 1.1 ✓ |
@@ -90,9 +90,10 @@ inalcançáveis até a primeira regra lavrada.
 
 Quando `PROPOSTO` existir, ele carrega **obrigatoriamente**: o estado proposto ·
 `ruleId` + `ruleVersion` (ADR-066: *"sem regra nomeada e versionada, o valor é
-mágico"*) · a **evidência exata** por `id` + `version` — **ponteiro, nunca
-busca** (a proibição de `max(version)` para proveniência, C-01c, vale aqui). Isso
-não é metadado: é o domínio que a Fronteira e a Ficha exigem.
+mágico"*) · a **evidência exata** por `id` + `version` — **sempre ponteiro,
+nunca snapshot, nunca busca** (a proibição de `max(version)` para proveniência,
+C-01c, vale aqui). Isso não é metadado: é o domínio que a Fronteira e a Ficha
+exigem. *(Preservado expressamente pela aprovação — PA-13.)*
 
 ## 4. Pureza — invariantes contratuais
 
@@ -116,6 +117,14 @@ Os únicos estados propositáveis são os três do enum vigente:
 **Ausência de evidência não produz estado nenhum: produz `LACUNA`** — que não é
 estado do Mapa, é a declaração honesta de que não há o que propor. Nenhum estado
 novo é inventado.
+
+> **Registro vinculante (Guardião, 2026-08-08).** A linha da Arquitetura §10.4
+> — *"Nenhuma evidência vigente do conceito → `NAO_INFORMADO`"* (linha 1317) —
+> está **superada pela ADR-066 §14.1** e **não pode fundamentar regra futura**.
+> Regra vinculante: **`NAO_INFORMADO` exige evidência existente que declare a
+> não-informação; ausência de evidência produz `LACUNA`, nunca `NAO_INFORMADO`.**
+> A Arquitetura não é editada nesta lavratura; a emenda daquela linha será
+> lavrada quando o documento for tocado — este registro é a autoridade até lá.
 
 ## 6. P-04 / I-8 — cláusula executável
 
@@ -162,6 +171,18 @@ estão decididas** para conceito algum: são matéria da regra versionada futura
 até lá, conflito ⇒ `LACUNA · EVIDENCIA_CONFLITANTE` (§6). **Nenhuma regra é
 inventada.**
 
+> **Registro vinculante — completude da entrada (Guardião, 2026-08-08).**
+> A separação é normativa e permanente:
+>
+> | Responsabilidade | De quem |
+> |---|---|
+> | **Completar o conjunto** — reunir as evidências e entregá-las por argumento | **do chamador futuro (`2.C`)** |
+> | **Selecionar dentro do conjunto** — a corrente por conceito, pela regra já lavrada acima | **da função pura** |
+>
+> O 1.A **não descobre evidência faltante, não busca banco e não sabe o que não
+> recebeu**. O que não veio na entrada, para a função, não existe — e o
+> resultado honesto disso é `LACUNA`, nunca suposição.
+
 ## 9. Determinismo, totalidade e propriedades
 
 - **Total sobre domínio fechado, discriminada por conceito**: todo conceito
@@ -170,10 +191,18 @@ inventada.**
   permutação das coleções de entrada (ordem sem semântica) → mesma saída ·
   serializar/desserializar a entrada → mesma saída · ambiente diferente → mesma
   saída.
-- **Propriedades permanentes** (valem já na v1 e sobrevivem à era pós-regra):
-  **lacuna monotônica** — remover evidência da entrada **nunca** cria estado
-  onde não havia · ausência de efeito · invariância de ordenação. Sem framework
-  novo: os oráculos são exprimíveis na base de teste existente.
+- **Propriedade permanente** *(reformulada pela ressalva do Guardião, 2026-08-08)*:
+  > **"Entrada sem evidência para o conceito jamais produz `PROPOSTO`."**
+  > É a forma permanente de P-04/I-8: **do vazio, nada se afirma.**
+  Junto dela, permanentes também: ausência de efeito · invariância de ordenação.
+- **Monotonicidade forte — v1 apenas**: a propriedade *"remover evidência nunca
+  cria estado onde não havia"* vale **somente na v1**, enquanto `PROPOSTO`
+  permanece inalcançável. Sua manutenção, alteração ou rejeição após existir
+  semântica material é **decisão da futura emenda do §10** — ela **não é
+  declarada eterna** (uma regra futura legítima pode, por exemplo, derivar
+  `NAO_CONFIRMADO` de evidência que o declare, e a remoção dessa evidência
+  mudaria a saída — o que a forma forte proibiria por acidente).
+- Sem framework novo: os oráculos são exprimíveis na base de teste existente.
 
 ## 10. Evolução — como a semântica entra, sem mudança silenciosa
 
@@ -182,6 +211,15 @@ inventada.**
    o mesmo regime da ponte grau→importância (C-12: *"a correspondência é DADO
    versionado, nunca `case` em código"*; ADR-069 para o ciclo de vida; Autoridade
    de Método como dona).
+
+   > **Registro vinculante — regra por argumento (Guardião, 2026-08-08).**
+   > A função pura **nunca resolve regra "vigente", nunca busca regra, nunca
+   > consulta banco**. Ela **recebe a(s) regra(s) por argumento, já resolvidas
+   > pelo chamador, com versão explícita** — e a saída declara `ruleId` +
+   > `ruleVersion` recebidos. **A seleção de regra corrente fica fora do 1.A**
+   > (é do chamador futuro, sob o ciclo de vida da ADR-069). Vale para a regra o
+   > mesmo que o §8 fixa para a evidência: completar é do chamador; a função só
+   > aplica o que recebeu.
 2. **A forma da regra e sua primeira instância exigem lavratura própria** (ADR ou
    contrato aprovado — a mesma família da ADR-066 §15). Este contrato **não a
    define** — define apenas que sem ela o braço `PROPOSTO` é inalcançável.
