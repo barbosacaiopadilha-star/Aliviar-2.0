@@ -607,3 +607,119 @@ describe("D-01(2) · case_priority_map tem exatamente dois escritores nominais",
     expect(r.saida).toContain("MAPA:0");
   });
 });
+
+// ---------------------------------------------------------------------------
+// MR1 (F-1.12-1) · A CERCA COMPLETA — entrada decisória e terminalidade
+// ---------------------------------------------------------------------------
+//
+// A certificação encontrou a borda que o primeiro desenho deixou: a exigência
+// do token valia só para `PROPOSTA → decisório`, e `SUPERADA → CONFIRMADA`
+// nascia com ATOS = 0; `SUPERADA → PROPOSTA` reabria um terminal. Os dois
+// defeitos foram REPRODUZIDOS na base `cdf485d` antes da correção — como
+// OWNER, que foi onde a certificação os detectou: RLS, grants e aplicação não
+// contam aqui, o teste roda no nível de quem tudo pode.
+describe("MR1 · nenhum estado decisório nasce sem ato, venha de onde vier", () => {
+  const IR_PARA = (estado: string) =>
+    `update ${PROPOSTAS} set state='${estado}' where id=current_setting('t.proposal')::uuid;`;
+
+  it("SUPERADA → CONFIRMADA e SUPERADA → RECUSADA são recusados, com ATOS = 0", () => {
+    for (const decisorio of ["CONFIRMADA", "RECUSADA"]) {
+      const r = emTransacaoRevertida(`
+        ${EMITIR(`mr1-sup-${decisorio.toLowerCase()}`)}
+        ${IR_PARA("SUPERADA")}
+        ${IR_PARA(decisorio)}`);
+      expect(r.ok, `SUPERADA → ${decisorio} passou`).toBe(false);
+      expect(r.saida, decisorio).toContain("Estado sistemico e terminal");
+    }
+  });
+
+  it("RETIRADA → CONFIRMADA e RETIRADA → RECUSADA são recusados", () => {
+    for (const decisorio of ["CONFIRMADA", "RECUSADA"]) {
+      const r = emTransacaoRevertida(`
+        ${EMITIR(`mr1-ret-${decisorio.toLowerCase()}`)}
+        ${IR_PARA("RETIRADA")}
+        ${IR_PARA(decisorio)}`);
+      expect(r.ok, `RETIRADA → ${decisorio} passou`).toBe(false);
+      expect(r.saida, decisorio).toContain("Estado sistemico e terminal");
+    }
+  });
+
+  it("a prova central: a recusa deixa o estado como estava e ATOS = 0", () => {
+    const r = emTransacaoRevertida(`
+      ${EMITIR("mr1-central")}
+      ${IR_PARA("SUPERADA")}
+      do $tenta$ begin
+        update curadoria.derivation_proposals set state='CONFIRMADA'
+        where id=current_setting('t.proposal')::uuid;
+      exception when others then null;
+      end $tenta$;
+      select 'ESTADO:' || state from ${PROPOSTAS} where id=current_setting('t.proposal')::uuid;
+      select 'ATOS:' || count(*) from ${ATOS};`);
+
+    expect(r.ok, r.saida).toBe(true);
+    expect(r.saida).toContain("ESTADO:SUPERADA");
+    expect(r.saida).toContain("ATOS:0");
+  });
+});
+
+describe("MR1 · SUPERADA e RETIRADA são terminais — não reabrem", () => {
+  const IR_PARA = (estado: string) =>
+    `update ${PROPOSTAS} set state='${estado}' where id=current_setting('t.proposal')::uuid;`;
+
+  it("SUPERADA → PROPOSTA e RETIRADA → PROPOSTA são recusados", () => {
+    for (const terminal of ["SUPERADA", "RETIRADA"]) {
+      const r = emTransacaoRevertida(`
+        ${EMITIR(`mr1-reabre-${terminal.toLowerCase()}`)}
+        ${IR_PARA(terminal)}
+        ${IR_PARA("PROPOSTA")}`);
+      expect(r.ok, `${terminal} → PROPOSTA reabriu`).toBe(false);
+      expect(r.saida, terminal).toContain("Estado sistemico e terminal");
+    }
+  });
+
+  it("nem entre si: SUPERADA → RETIRADA é recusado", () => {
+    const r = emTransacaoRevertida(`
+      ${EMITIR("mr1-cruzado")}
+      ${IR_PARA("SUPERADA")}
+      ${IR_PARA("RETIRADA")}`);
+    expect(r.ok).toBe(false);
+    expect(r.saida).toContain("Estado sistemico e terminal");
+  });
+});
+
+describe("MR1 · controles negativos — a cerca não bloqueia o legítimo", () => {
+  it("C1 · PROPOSTA → SUPERADA e PROPOSTA → RETIRADA seguem livres", () => {
+    for (const sistemico of ["SUPERADA", "RETIRADA"]) {
+      const r = emTransacaoRevertida(`
+        ${EMITIR(`mr1-c1-${sistemico.toLowerCase()}`)}
+        update ${PROPOSTAS} set state='${sistemico}' where id=current_setting('t.proposal')::uuid;
+        select 'ESTADO:' || state from ${PROPOSTAS} where id=current_setting('t.proposal')::uuid;`);
+      expect(r.ok, `${sistemico}: ${r.saida}`).toBe(true);
+      expect(r.saida).toContain(`ESTADO:${sistemico}`);
+    }
+  });
+
+  it("C2 · a confirmação legítima pela capability continua passando", () => {
+    const r = emTransacaoRevertida(`
+      ${EMITIR("mr1-c2")}
+      ${COMO(CURADOR)}
+      ${DECIDIR("CONFIRMACAO")}
+      ${RAIO_X}`);
+    expect(r.ok, r.saida).toBe(true);
+    expect(r.saida).toContain("DESFECHO:ATO_REGISTRADO");
+    expect(r.saida).toContain("ESTADO:CONFIRMADA");
+    expect(r.saida).toContain("MAPA:1");
+  });
+
+  it("C3 · a recusa legítima pela capability continua passando", () => {
+    const r = emTransacaoRevertida(`
+      ${EMITIR("mr1-c3")}
+      ${COMO(CURADOR)}
+      ${DECIDIR("RECUSA")}
+      ${RAIO_X}`);
+    expect(r.ok, r.saida).toBe(true);
+    expect(r.saida).toContain("DESFECHO:ATO_REGISTRADO");
+    expect(r.saida).toContain("ESTADO:RECUSADA");
+    expect(r.saida).toContain("MAPA:0");
+  });
+});
