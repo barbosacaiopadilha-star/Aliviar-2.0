@@ -2,20 +2,19 @@
 
 | Campo | Valor |
 |---|---|
-| **Versão do documento** | v1.0 |
+| **Versão do documento** | **v2.0** — incorpora a decisão final do DT-01 sobre a lacuna do §9 |
 | **Autor** | Agente 02 — Arquiteto da Curadoria 2.0 |
 | **Data** | 2026-08-08 |
-| **Status** | **BLOQUEADA POR UMA DECISÃO MATERIAL** — semântica completa em 4 das 5 opções; falta **um** ato do DT-01 (§9 desta ficha) |
-| **Base** | `deeb9f3` |
+| **Status** | **PRONTA PARA ATO DE MÉTODO** — semântica **fechada nas cinco opções**; zero comportamento implícito; nenhuma ADR nova; **não promovida** |
+| **Base** | `f3f8a77` (v1.0 lavrada em `deeb9f3`) |
 | **Origem** | Decisão do **DT-01** após a classificação dos nove automáticos: `CONTINUIDADE_COORDENACAO` é o alvo da primeira Regra Material |
 | **Natureza** | Lavratura documental. **Zero código, zero migration, zero promoção** |
 
-> **Esta não é uma terceira tentativa fracassada.** A Residência foi bloqueada
-> por **três impedimentos estruturais** (a regra não podia sequer executar). A
-> Comunicação foi bloqueada por **ausência total** de semântica absoluta lavrada.
-> Aqui a semântica **existe e está completa** para quatro das cinco opções
-> canônicas; resta **uma classificação binária** que o próprio DT-01 mandou não
-> inferir (§9 da missão). **Um ato de método destrava a regra inteira.**
+> **A v1.0 desta ficha registrou uma lacuna única e se recusou a preenchê-la por
+> inferência. O DT-01 a resolveu em ato próprio (§9).** A semântica da v1 está
+> agora **fechada nas cinco opções canônicas**, exaustivamente, sem qualquer
+> comportamento implícito remanescente. A regra está pronta para o ato formal de
+> promoção.
 
 ---
 
@@ -113,13 +112,16 @@ NAO_INFORMADO**: a primeira é item não trabalhado, a segunda é item analisado
 
 ### 6.1 `CONFIRMADO`
 
-Derivar quando a evidência corrente contiver **pelo menos uma** das condutas
-canônicas positivas:
+Derivar quando a evidência corrente contiver **pelo menos uma** das **três**
+condutas canônicas **diretas** de coordenação:
 
 - `CONTATA_DIRETAMENTE_O_OUTRO_PROFISSIONAL`
 - `ENVIA_RELATORIO_ESCRITO`
 - `PARTICIPA_DE_DISCUSSAO_DE_CASO`
-- *(`ORIENTA_A_PESSOA_A_LEVAR_INFORMACAO` — **pendente do §9**)*
+
+**`ORIENTA_A_PESSOA_A_LEVAR_INFORMACAO` não integra este conjunto** (§9). Quando
+acompanha uma das três, o resultado continua `CONFIRMADO` — **mas quem governa é
+a conduta direta**, nunca a soma.
 
 ### 6.2 `NAO_CONFIRMADO`
 
@@ -209,9 +211,42 @@ O enum real `curadoria.verification_status` tem **cinco** valores:
 > **nenhum** jamais é ocultado nem traduzido em vocabulário de correspondência.
 > A Fronteira Humana é onde o estado é visto e pesado — por gente, não por regra.
 
-## 9. **A LACUNA — `ORIENTA_A_PESSOA_A_LEVAR_INFORMACAO`**
+## 9. `ORIENTA_A_PESSOA_A_LEVAR_INFORMACAO` — **DECIDIDA PELO DT-01**
 
-### 9.1 O que foi procurado, e não encontrado
+### 9.0 A decisão — ato do DT-01, 2026-08-08
+
+> **Quando presente isoladamente**, a opção canônica
+> `ORIENTA_A_PESSOA_A_LEVAR_INFORMACAO`:
+> **não deriva `CONFIRMADO`** · **não deriva `NAO_CONFIRMADO`** · **não deriva
+> `NAO_INFORMADO`**.
+>
+> **Resultado: `NENHUMA_PROPOSTA`.**
+>
+> **Fundamento do DT-01:** a conduta orienta a pessoa a transportar a
+> informação, mas, isoladamente, **não demonstra ato de coordenação praticado
+> pelo profissional com outro profissional**. Isto **não constitui juízo
+> negativo sobre a conduta** — é apenas **insuficiência para afirmar** o estado
+> absoluto `CONFIRMADO` de `CONTINUIDADE_COORDENACAO`.
+>
+> **Quando presente junto de uma conduta positiva direta já classificada**, a
+> **conduta positiva direta governa o resultado** e a regra propõe
+> `CONFIRMADO`. **Sem score, sem contagem, sem gradação.**
+
+**Leitura adotada: B** (das duas apresentadas na v1.0 desta ficha).
+
+### 9.0.1 A decisão é P-04 aplicado — não apenas compatível com ele
+
+**P-04** (Arquitetura §180): *"Ausência de informação nunca vira ausência da
+característica. `null` ≠ `false`; lacuna ≠ 'não atende'."* E o `CONTRATO_1_A`
+§111 é explícito: *"`NAO_CONFIRMADO` afirma ausência **verificada**"*.
+
+`ORIENTA…` isolada é exatamente uma **lacuna** quanto ao ato de coordenação
+praticado: não é prova de que ele ocorre, **nem** verificação de que não ocorre.
+O DT-01 poderia ter escolhido `NAO_CONFIRMADO`; escolher `NENHUMA_PROPOSTA` é o
+**único desfecho que P-04 admite**. A decisão não passou no teste de P-04 — ela
+**é** P-04 no caso concreto.
+
+### 9.1 Registro histórico: o que foi procurado antes do ato, e não encontrado
 
 Varredura completa por autoridade que classifique esta opção como coordenação
 positiva ou não:
@@ -224,10 +259,10 @@ positiva ou não:
 | `CATALOGO_CANONICO_PROPOSTA.md` | lista as cinco em linha; **não classifica** |
 | ADRs, Domínio Relacional, Modelo da Curadoria, Contratos 1.A/2.C | **silêncio total** |
 
-**Nenhuma autoridade vigente resolve.** O §9 da missão é literal: *"Não inferir.
-Se a autoridade existente não resolver: trazer especificamente ao DT-01."*
+**Nenhuma autoridade vigente resolvia** — por isso a questão subiu ao DT-01, e
+por isso a resposta teve de ser **ato de método**, não leitura de arquitetura.
 
-### 9.2 Por que não posso resolver sozinho
+### 9.2 Por que o Agente 02 não podia resolver sozinho
 
 O único elemento que **sugere** resposta é a `description` do próprio conceito —
 **"Como conversa com os outros profissionais"** —, sob a qual orientar a pessoa
@@ -241,28 +276,41 @@ há **declaração positiva** cujo significado é que está em aberto. Adotar o
 conservador seria criar **comportamento implícito** para uma de cinco opções
 canônicas — exatamente o que a Q26 desta lavratura proíbe.
 
-### 9.3 O tamanho exato da lacuna
+### 9.3 Consequência exata da decisão
 
-**A decisão só altera um único caso** — a opção **isolada**:
+| Composição da evidência | Saída **decidida** |
+|---|---|
+| `ORIENTA…` **sozinha** | **`NENHUMA_PROPOSTA`** |
+| `ORIENTA…` + uma das três condutas diretas | **`CONFIRMADO`** — governado pela conduta direta |
+| `ORIENTA…` + `ATUA_DE_FORMA_INDEPENDENTE` | **`NAO_CONFIRMADO`** — ver §9.4 |
 
-| Composição da evidência | Saída se **conta** | Saída se **não conta** |
+O conjunto positivo da v1 fica em **três** condutas diretas.
+
+### 9.4 Consequência derivada: a contradição **estreita**
+
+A v1.0 tratava como contraditória a coexistência de "conduta positiva **+**
+`ATUA_DE_FORMA_INDEPENDENTE`". Com `ORIENTA…` **fora** do conjunto positivo,
+essa combinação **deixa de ser contraditória**.
+
+**Derivação, pelo princípio que o próprio DT-01 enunciou** — *"a conduta positiva
+direta governa o resultado"*, isto é, **a conduta classificada governa sobre a
+insuficiente**:
+
+| Presente | Classificação | Governa? |
 |---|---|---|
-| `ORIENTA…` **sozinha** | **`CONFIRMADO`** | **nenhuma proposta** |
-| `ORIENTA…` + qualquer positiva | `CONFIRMADO` | `CONFIRMADO` (§10) |
-| `ORIENTA…` + `ATUA_DE_FORMA_INDEPENDENTE` | contradição → §11 desta ficha | contradição → §11 desta ficha |
+| `ORIENTA…` | **insuficiente** para afirmar o estado (§9.0) | não |
+| `ATUA_DE_FORMA_INDEPENDENTE` | **negativa explícita** classificada (§6.2) | **sim** |
 
-Em **nenhuma** hipótese a opção produz `NAO_CONFIRMADO` — este exige a negativa
-explícita (§6.2). **Nada de punitivo depende desta decisão**; depende apenas se
-a conduta, sozinha, é suficiente para afirmar coordenação.
+⇒ `ORIENTA…` + `ATUA_DE_FORMA_INDEPENDENTE` (sem conduta direta) ⇒
+**`NAO_CONFIRMADO`**.
 
-### 9.4 As duas saídas para o DT-01
-
-| | Leitura | Consequência |
-|---|---|---|
-| **A** | é **coordenação positiva suficiente** — o profissional age deliberadamente para que a informação circule | conjunto positivo = **quatro** condutas |
-| **B** | é **conduta intermediária** que não caracteriza coordenação direta — o conceito mede *"como conversa com os outros profissionais"*, e aqui não há conversa | conjunto positivo = **três** condutas; a opção isolada **não propõe nada** |
-
-**Sem recomendação.** A escolha é ato de método, não de arquitetura.
+> **Isto é aplicação simétrica da regra do DT-01, não decisão nova.** A
+> alternativa — tratar como contradição — exigiria que `ORIENTA…` fosse
+> positiva, que é precisamente o que o ato acaba de negar. **Registrado
+> explicitamente para que não reste comportamento implícito.**
+>
+> **A contradição real passa a exigir uma das três condutas diretas** junto com
+> a negativa (§11).
 
 ## 10. Múltiplas condutas
 
@@ -283,11 +331,16 @@ versão** de evidência.
 Não há regime vigente que arbitre entre valores dentro de **uma mesma versão** —
 o versionamento arbitra entre versões (`max(version)`), não dentro delas.
 
-> **Decisão, pelo fallback expressamente autorizado no §20 da missão:**
-> presença simultânea de conduta positiva **e** `ATUA_DE_FORMA_INDEPENDENTE` na
-> mesma versão corrente ⇒ **nenhuma proposta**, com desfecho tipado
-> `EVIDENCIA_CONTRADITORIA`. A regra **não arbitra silenciosamente**. A
-> contradição é fato da evidência e volta para quem a coletou.
+> **Decisão, pelo fallback expressamente autorizado no §20 da missão de
+> lavratura:** presença simultânea de **uma das três condutas diretas** e de
+> `ATUA_DE_FORMA_INDEPENDENTE` na mesma versão corrente ⇒ **`NENHUMA_PROPOSTA`**,
+> com desfecho tipado `EVIDENCIA_CONTRADITORIA`. A regra **não arbitra
+> silenciosamente**. A contradição é fato da evidência e volta para quem a
+> coletou.
+
+**Estreitada pela decisão do §9:** `ORIENTA…` + `ATUA_DE_FORMA_INDEPENDENTE`
+**não** é contradição — é `NAO_CONFIRMADO` (§9.4). Só as **três diretas**
+contradizem a negativa.
 
 ## 12. Evidência incompatível
 
@@ -332,15 +385,40 @@ estruturalmente, e a declaração manual **prevalece** sobre a proposta
 | **A** | `CONTATA_DIRETAMENTE_O_OUTRO_PROFISSIONAL` | **`CONFIRMADO`** |
 | **B** | `ENVIA_RELATORIO_ESCRITO` | **`CONFIRMADO`** |
 | **C** | `PARTICIPA_DE_DISCUSSAO_DE_CASO` | **`CONFIRMADO`** |
-| **D** | `ORIENTA_A_PESSOA_A_LEVAR_INFORMACAO` **isolada** | ⛔ **PENDENTE DO §9** — `CONFIRMADO` (A) ou nenhuma proposta (B) |
+| **D** | `ORIENTA_A_PESSOA_A_LEVAR_INFORMACAO` **isolada** | **`NENHUMA_PROPOSTA`** — decidido pelo DT-01 (§9) |
 | **E** | `ATUA_DE_FORMA_INDEPENDENTE` | **`NAO_CONFIRMADO`** |
 | **F** | nenhuma evidência | **nenhuma proposta** |
 | **G** | valor fora das cinco canônicas | **nenhuma proposta** · `EVIDENCIA_INCOMPATIVEL` |
 | **H** | evidência `nao_verificado` (ou `divergente`/`nao_localizado`/`desatualizado`) | **propõe normalmente**; estado acompanha a proveniência, **nunca oculto, nunca traduzido** (§8.1) |
 | **I** | múltiplas condutas positivas | **um único `CONFIRMADO`** |
 | **J** | cenário nunca aplicável | **nenhuma proposta** — jamais `NAO_CONFIRMADO`, jamais `NAO_INFORMADO` (§7) |
-| **K** | positiva **+** `ATUA_DE_FORMA_INDEPENDENTE` na mesma versão | **nenhuma proposta** · `EVIDENCIA_CONTRADITORIA` (§11) |
-| **L** | evidência corrente com `options` vazio | **nenhuma proposta** (§6.4) |
+| **K** | **conduta direta** + `ATUA_DE_FORMA_INDEPENDENTE` na mesma versão | **`NENHUMA_PROPOSTA`** · `EVIDENCIA_CONTRADITORIA` (§11) |
+| **L** | evidência corrente com `options` vazio | **`NENHUMA_PROPOSTA`** (§6.4) |
+| **M** | `ORIENTA…` + `ATUA_DE_FORMA_INDEPENDENTE`, **sem** conduta direta | **`NAO_CONFIRMADO`** — a classificada governa (§9.4) |
+| **N** | `ORIENTA…` + conduta direta | **`CONFIRMADO`** — governado pela direta, **sem soma** (§9.3) |
+
+### 15.1 Matriz **exaustiva** — prova de zero comportamento implícito
+
+Sejam **D** = {`CONTATA_DIRETAMENTE_O_OUTRO_PROFISSIONAL`,
+`ENVIA_RELATORIO_ESCRITO`, `PARTICIPA_DE_DISCUSSAO_DE_CASO`} (diretas),
+**O** = `ORIENTA_A_PESSOA_A_LEVAR_INFORMACAO`, **N** =
+`ATUA_DE_FORMA_INDEPENDENTE`. Toda evidência possível é um subconjunto das cinco
+opções — **as 32 combinações caem, sem sobra, em oito classes**:
+
+| # | Composição | Saída | Fundamento |
+|---|---|---|---|
+| 1 | sem linha de evidência | `NENHUMA_PROPOSTA` | §6.4 · P-04 |
+| 2 | `options` vazio | `NENHUMA_PROPOSTA` | §6.4 · P-04 |
+| 3 | **O** sozinha | `NENHUMA_PROPOSTA` | **§9.0 — ato do DT-01** |
+| 4 | **≥1 D**, sem N (com ou sem O) | `CONFIRMADO` | §6.1 · §9.3 |
+| 5 | **N** sozinha | `NAO_CONFIRMADO` | §6.2 |
+| 6 | **O + N**, sem D | `NAO_CONFIRMADO` | §9.4 |
+| 7 | **≥1 D + N** (com ou sem O) | `NENHUMA_PROPOSTA` · `EVIDENCIA_CONTRADITORIA` | §11 |
+| 8 | qualquer valor fora das cinco canônicas | `NENHUMA_PROPOSTA` · `EVIDENCIA_INCOMPATIVEL` | §12 |
+
+> **Cobertura verificável:** as classes 1–8 são **mutuamente exclusivas** e
+> **cobrem todo o espaço** de entradas. Nenhuma composição fica sem saída
+> nomeada. **Zero comportamento implícito.**
 
 ## 16. Versionamento e proveniência
 
@@ -363,7 +441,9 @@ delete) e `derivation_rules` versiona por linha nova.
 
 ## 17. Maturidade
 
-Nasce **`PROPOSTA`** (default da tabela) e **metodologicamente provisória**.
+Nasce **`PROPOSTA`** — não por convenção, mas por **constraint**
+(`derivation_rules_nasce_em_proposta`: `check (state = 'PROPOSTA')`) — e
+**metodologicamente provisória**.
 **Nenhum threshold inventado.** **R-1 permanece aberta.**
 
 **Descoberta relevante para a promoção:** a constraint
@@ -374,9 +454,14 @@ banco**. A transição pela ADR-069 é possível e já tem guarda física.
 
 ## 18. O que R-1 deve observar
 
+**R-1 permanece ABERTA.** Observáveis:
+
 Confirmação pelo Curador · recusa e **motivo** · distância entre conduta
 declarada e prática observada · **quantas vezes `ORIENTA_A_PESSOA_A_LEVAR_INFORMACAO`
-aparece isolada** (mede o custo real da decisão do §9) · seleção de
+aparece isolada** — mede o **custo empírico da decisão do §9**: cada ocorrência
+é um profissional sobre quem a v1 escolheu não afirmar nada, e a frequência dirá
+se a leitura B se sustenta ou se o Catálogo precisa distinguir melhor a conduta ·
+seleção de
 `ATUA_DE_FORMA_INDEPENDENTE` por quem nunca enfrentou o cenário (§7) ·
 frequência de `EVIDENCIA_CONTRADITORIA` · mudanças de evidência ao longo dos
 12 meses de revisão.
@@ -388,9 +473,11 @@ frequência de `EVIDENCIA_CONTRADITORIA` · mudanças de evidência ao longo dos
 | 1 | [`REGRA_001_FORMACAO_RESIDENCIA_PRESENCA_COMPROVADA`](REGRA_001_FORMACAO_RESIDENCIA_PRESENCA_COMPROVADA.md) | 2026-08-08 · `fc25ff7` | **BLOQUEADA** — três impedimentos estruturais |
 | 2 | [`REGRA_INAUGURAL_MODELO_COMUNICACAO`](REGRA_INAUGURAL_MODELO_COMUNICACAO.md) | 2026-08-08 · `846d594` | **BLOQUEADA** — semântica absoluta inexistente |
 | 3 | [`CLASSIFICACAO_DOS_NOVE_AUTOMATICOS`](CLASSIFICACAO_DOS_NOVE_AUTOMATICOS.md) | 2026-08-08 · `deeb9f3` | decisão preparatória — 2 candidatos legítimos |
-| 4 | **Esta ficha** | 2026-08-08 | primeira candidata **escolhida após classificação completa** |
+| 4 | **Esta ficha, v1.0** | 2026-08-08 · `f3f8a77` | primeira candidata **escolhida após classificação completa** — lavrada com **uma** lacuna nomeada |
+| 5 | **Esta ficha, v2.0** | 2026-08-08 | **decisão do DT-01 incorporada** — semântica fechada; **PRONTA PARA ATO DE MÉTODO** |
 
-Nenhum ato anterior apagado ou renumerado.
+Nenhum ato anterior apagado ou renumerado. A v1.0 permanece integralmente
+legível no histórico do repositório, com a lacuna que registrou.
 
 ## 20. Perguntas obrigatórias
 
@@ -402,12 +489,12 @@ Nenhum ato anterior apagado ou renumerado.
 | 4 | **Sim** — classificado assim em `deeb9f3`, candidato nº 1 |
 | 5 | **Sim** — `evidenceSource: entrevista` |
 | 6 | As cinco de §1, campo `principal`, todas ativas, todas `satisfiedBy: null` |
-| 7 | Três inequívocas: `CONTATA_DIRETAMENTE_O_OUTRO_PROFISSIONAL`, `ENVIA_RELATORIO_ESCRITO`, `PARTICIPA_DE_DISCUSSAO_DE_CASO`. A quarta depende do §9 |
+| 7 | **Três, definitivamente**: `CONTATA_DIRETAMENTE_O_OUTRO_PROFISSIONAL`, `ENVIA_RELATORIO_ESCRITO`, `PARTICIPA_DE_DISCUSSAO_DE_CASO` |
 | 8 | **Sim** — negativa explícita e declarada |
 | 9 | **Sim** — e é a **única** entrada que sustenta `NAO_CONFIRMADO` |
 | 10 | **Sim** — uma basta |
 | 11 | **Sim** — um único `CONFIRMADO`, sem gradação |
-| 12 | ⛔ **INDETERMINADO — a lacuna.** Nenhuma autoridade vigente resolve (§9) |
+| 12 | **Não** — decidido pelo DT-01: isolada ⇒ `NENHUMA_PROPOSTA`; acompanhada de conduta direta ⇒ `CONFIRMADO` governado pela direta (§9) |
 | 13 | Condicional **no enunciado**, sem representação estrutural (`conditionalRules: []`, `required: false`) |
 | 14 | Por **não resposta** ⇒ sem evidência ⇒ **nenhuma proposta**. Não existe opção de "não se aplica", e a regra nunca lê ausência como independência |
 | 15 | **Sim** — nenhuma proposta |
@@ -418,26 +505,86 @@ Nenhum ato anterior apagado ou renumerado.
 | 20 | **Não participa** — as cinco opções têm `satisfiedBy: null` |
 | 21 | **Sim** — zero ponte, zero linha em `derivation_rule_degree_map`, zero valor Case-side, zero estabilização |
 | 22 | **Sim** — o Concierge facilita; o ato clínico permanece do profissional (§3) |
-| 23 | **Não** — nenhum conflito. ADR-065 não se aplica (sem `satisfied_by`); ADR-066 é Case-side; ADR-067 confirma o automático; ADR-068 rege a confirmação; ADR-069 rege o ciclo |
+| 23 | **Não** — nenhum conflito. ADR-065 não se aplica (sem `satisfied_by`); ADR-066 é Case-side; ADR-067 confirma o automático; ADR-068 rege a confirmação; ADR-069 rege o ciclo. **1.A e 2.C: compatibilidade provada em §21** — a Regra 001 é exatamente a lavratura que o DR3 do emissor do 2.C previu |
 | 24 | **Não para nascer `PROPOSTA`.** **Sim, estruturalmente, para promover a `VIGENTE`** — `approval_adr` é `not null` na constraint (§17) |
-| 25 | **Não** — completa em 4 de 5 opções; falta o §9 |
-| 26 | **Não** — nenhum comportamento implícito foi adotado; **é justamente por recusar adotá-lo que a ficha está bloqueada** |
-| 27 | **Sim** — cada um dos doze casos de §15 tem saída verificável, e onze estão fechados |
+| 25 | **Sim** — fechada nas **cinco** opções; matriz exaustiva em §15.1 |
+| 26 | **Não** — as 32 composições possíveis caem em **oito classes mutuamente exclusivas e exaustivas**, cada uma com saída nomeada (§15.1). A única consequência derivada (§9.4) foi **lavrada explicitamente**, não adotada em silêncio |
+| 27 | **Sim** — as catorze entradas de §15 e as oito classes de §15.1 têm saída verificável |
 | 28 | **Sim** — R-1 tem sete observáveis nomeados (§18) |
-| 29 | **Quase** — pronta em tudo, exceto **um** ato de método |
-| 30 | **Sim** — `PROPOSTA → VIGENTE` pela ADR-069, com a guarda física da constraint |
+| 29 | **Sim** — pronta para o ato de método |
+| 30 | **Sim** — `PROPOSTA → VIGENTE` é um dos cinco pares permitidos pelo grafo fechado da ADR-069, com guarda física (§21.2) |
 
-## 21. Veredito
+## 21. Compatibilidades confirmadas na fonte
 
-> ### `CONTINUIDADE_COORDENACAO` — BLOQUEADA
+### 21.1 `I-5` — governança ≠ compatibilidade
+
+**Compatível.** Nenhum dos cinco estados de `verification_status` é traduzido em
+vocabulário de correspondência; nenhum bloqueia a proposta; todos acompanham
+pelo vínculo exato a `evidence_id`. `nao_localizado` **não** vira
+`NAO_INFORMADO` (§6.3) — foi a tentação, e foi recusada.
+
+### 21.2 `ADR-069` — ciclo de vida
+
+**Compatível, com guarda física.** Lido na migration do ciclo:
+
+| Fato verificado | Efeito |
+|---|---|
+| `derivation_rules_nasce_em_proposta` — `check (state = 'PROPOSTA')` | a Regra 001 **nasce `PROPOSTA` obrigatoriamente** |
+| grafo fechado, cinco pares permitidos | **`PROPOSTA → VIGENTE` é um deles** |
+| `qualquer → PROPOSTA` proibido | o nascimento não se repete |
+| `PROPOSTA → REVOGADA` proibido | não se revoga o que nunca valeu |
+| estado corrente = leitura derivada da última transição (`derivation_rule_state()`), nunca coluna atualizada | a ficha não pressupõe cache algum |
+| ADR exigida na entrada em `VIGENTE` | a promoção terá de citar a ADR do ato |
+
+### 21.3 `P-04` — ausência nunca vira ausência da característica
+
+**Compatível — e mais que isso: a decisão do §9 é P-04 aplicado** (§9.0.1).
+Quatro das oito classes de §15.1 terminam em `NENHUMA_PROPOSTA` justamente
+porque P-04 impede que silêncio, lacuna, contradição ou insuficiência virem
+afirmação.
+
+### 21.4 `CONTRATO_1_A` (PA-13) — a função pura
+
+**Compatível, e é o caminho que o próprio 1.A desenhou.** O §7 do 1.A classifica
+os nove automáticos como `NAO_SUPORTADO` — *"conceito automático **sem regra de
+correspondência aprovada**"* — e os nomeia *"os **únicos candidatos estruturais**
+a regras futuras"*.
+
+| Momento | Ramo do 1.A para `CONTINUIDADE_COORDENACAO` |
+|---|---|
+| **hoje** (regra `PROPOSTA`) | permanece **`NAO_SUPORTADO`** — nada muda |
+| após `PROPOSTA → VIGENTE` | sai de `NAO_SUPORTADO` e passa a **`PROPOSTO`/`LACUNA`** conforme a evidência |
+
+A Regra 001 **não contradiz o 1.A: cumpre-o.**
+
+### 21.5 `CONTRATO_2_C` (PA-17) — a Fronteira e o emissor
+
+**Compatível, e responde a uma pendência que o 2.C deixou nomeada.** O DR3 do
+emissor diz literalmente que *"a FORMA da correspondência evidência→estado NÃO
+TEM LAVRATURA (PA-13 §10.2)"*, que o conjunto de candidatas é **vazio por
+construção**, e que *"quando a lavratura da forma acontecer, é ELA que pluga a
+consulta aqui (**emenda própria, nunca edição silenciosa**)"*.
+
+> **Esta ficha é exatamente a lavratura que o 2.C previu.** Enquanto a regra não
+> for `VIGENTE`, o emissor continua retornando `SEM_REGRA_VIGENTE` e a Fronteira
+> segue vazio-honesta. A ligação ao emissor será **emenda própria**, em missão de
+> engenharia — **não nesta**.
+
+## 22. Veredito
+
+> ### `CONTINUIDADE_COORDENACAO` — REGRA INAUGURAL PRONTA PARA ATO DE MÉTODO
 >
-> **Lacuna, exclusivamente:**
+> **Semântica fechada nas cinco opções canônicas.** As 32 composições possíveis
+> de evidência caem em **oito classes mutuamente exclusivas e exaustivas**, cada
+> uma com saída nomeada (§15.1).
 >
-> **A classificação da opção canônica `ORIENTA_A_PESSOA_A_LEVAR_INFORMACAO`
-> como conduta de coordenação positiva suficiente para `CONFIRMADO` (A) ou como
-> conduta intermediária que não caracteriza coordenação (B).**
+> **Zero comportamento implícito** — a única consequência derivada da decisão
+> (§9.4) foi lavrada explicitamente, com a derivação exposta.
 >
-> Nenhuma autoridade vigente a resolve, e o §9 da missão proíbe inferir.
-> Decidido isso, **nada mais falta**: as outras onze saídas estão fechadas, a
-> proveniência está completa, CD-1 está intacta, nenhuma ADR nova é necessária
-> e a regra nasce `PROPOSTA` apta ao ciclo da ADR-069.
+> **Nenhuma ADR nova é necessária** para a regra nascer `PROPOSTA`. A ADR passa
+> a ser exigida — **estruturalmente, pelo banco** — apenas na entrada em
+> `VIGENTE`.
+>
+> **Apta a `PROPOSTA → VIGENTE`** pelo ciclo da ADR-069.
+>
+> **CD-1 intacta. R-1 aberta. Regra não promovida.**
