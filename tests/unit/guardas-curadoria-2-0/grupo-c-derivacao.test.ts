@@ -497,6 +497,35 @@ describe("C-01 · Nenhuma proposta persistida existe", () => {
       }
     });
 
+    /**
+     * §17.2 (1.11-MR1) — EXTRAÇÃO BALANCEADA DO ARGUMENTO DE `.sort(...)`.
+     *
+     * A detecção antiga (`/\.sort\([^)]*…/`) parava no PRIMEIRO `)` — o fecho
+     * de `(a, b)` — e nunca alcançava um comparador realista. Esta extração
+     * devolve o argumento COMPLETO de cada `.sort(...)`: parênteses
+     * balanceados, comparador multilinha e aninhado incluídos. É o mesmo
+     * salto que C-11 deu com `corpoDaFuncao`.
+     */
+    function argumentosDeSort(codigo: string): string[] {
+      const corpos: string[] = [];
+      const abertura = /\.sort\s*\(/g;
+      let ocorrencia: RegExpExecArray | null;
+      while ((ocorrencia = abertura.exec(codigo)) !== null) {
+        let profundidade = 1;
+        let i = ocorrencia.index + ocorrencia[0].length;
+        const inicio = i;
+        while (i < codigo.length && profundidade > 0) {
+          if (codigo[i] === "(") profundidade += 1;
+          else if (codigo[i] === ")") profundidade -= 1;
+          i += 1;
+        }
+        corpos.push(codigo.slice(inicio, i - 1));
+      }
+      return corpos;
+    }
+
+    const RADICAIS_DE_MERITO = /taxa|discordancia|recusad|contagem|merito/i;
+
     it("o painel não ordena por taxa, não agrupa por pessoa, não vaza individual", () => {
       const ARQUIVOS_DO_PAINEL = [
         "src/modules/curadoria/painel-de-discordancia.ts",
@@ -517,7 +546,6 @@ describe("C-01 · Nenhuma proposta persistida existe", () => {
           /patient/i,
           /caseId|case_id/,
           /proposal_?id|propostaId/i,
-          /\.sort\([^)]*(taxa|discordancia|recusad|contagem)/i,
           /\btop\b|\bbottom\b|ranking/i,
         ]) {
           expect(
@@ -525,7 +553,50 @@ describe("C-01 · Nenhuma proposta persistida existe", () => {
             `${caminho} ganhou dimensão pessoal ou ranking: ${proibido}`,
           ).toBe(false);
         }
+        // §17.2: cada corpo completo de `.sort(...)` é vasculhado pelos
+        // radicais de mérito. A ordem neutra (posição do catálogo, identidade
+        // da regra, ordem canônica dos desfechos) passa; qualquer comparador
+        // que toque taxa/discordância/recusa/contagem/mérito cai.
+        for (const corpo of argumentosDeSort(codigo)) {
+          expect(
+            RADICAIS_DE_MERITO.test(corpo),
+            `${caminho} ordena por mérito dentro de .sort(...): ${corpo.slice(0, 120)}`,
+          ).toBe(false);
+        }
       }
+    });
+
+    it("a extração balanceada alcança comparador multilinha — e não proíbe a ordem neutra (§17.3)", () => {
+      // Falseabilidade sintética permanente (§18.5): o comparador multilinha
+      // que a regex antiga NUNCA alcançava (o vácuo demonstrado no §17.2)…
+      const mutado = [
+        "series.sort((a, b) => {",
+        "  return b.discordancia.taxa - a.discordancia.taxa;",
+        "});",
+      ].join("\n");
+      const corposMutados = argumentosDeSort(mutado);
+      expect(corposMutados).toHaveLength(1);
+      expect(
+        RADICAIS_DE_MERITO.test(corposMutados[0]!),
+        "a extração balanceada deixou de alcançar o comparador multilinha por taxa",
+      ).toBe(true);
+
+      // …um aninhamento com chamada interna também é alcançado…
+      const aninhado = "series.sort((a, b) => pontuar(b.contagens.RECUSADA) - pontuar(a.contagens.RECUSADA))";
+      const corposAninhados = argumentosDeSort(aninhado);
+      expect(corposAninhados).toHaveLength(1);
+      expect(RADICAIS_DE_MERITO.test(corposAninhados[0]!)).toBe(true);
+
+      // …e o controle negativo: a ordenação neutra permitida NÃO cai — a
+      // guarda forte demais proibiria a própria ordem do catálogo, o erro
+      // simétrico ao que o §17.2 corrige.
+      const neutro = "series.sort((a, b) => ordemNeutra(a) - ordemNeutra(b))";
+      const corposNeutros = argumentosDeSort(neutro);
+      expect(corposNeutros).toHaveLength(1);
+      expect(
+        RADICAIS_DE_MERITO.test(corposNeutros[0]!),
+        "a guarda passou a proibir a ordenação neutra permitida",
+      ).toBe(false);
     });
 
     it("o painel vive na Mesa, e só nela", () => {
