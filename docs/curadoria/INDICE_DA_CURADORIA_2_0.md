@@ -24,12 +24,14 @@
 | # | Documento | Nível | Status | Papel na 2.0 |
 |---|---|---|---|---|
 | 1 | [`MODELO_CURADORIA_V1.md`](MODELO_CURADORIA_V1.md) v2.0 | **Canônico** | Vigente | Canônico do domínio da Curadoria. **A 2.0 é subordinada a ele.** §7.1–§7.4 e §11 serão atualizados pela ADR-B |
-| 2 | [`../DECISIONS.md`](../DECISIONS.md) (ADR-001..**ADR-068**) | **Canônico** | Vigente | Log de decisões. **ADR-066 (=A), ADR-067 (=B) e ADR-068 (=D) lavradas em 2026-08-04**; ADR-C retirada; ADR-E ainda não escrita |
+| 2 | [`../DECISIONS.md`](../DECISIONS.md) (ADR-001..**ADR-069**) | **Canônico** | Vigente | Log de decisões. **ADR-066 (=A), ADR-067 (=B) e ADR-068 (=D) lavradas em 2026-08-04**; ADR-C retirada; **ADR-069 lavrada em 2026-08-05**; ADR-E ainda não escrita |
 | 2a | [`ADR_A_PROPOSTAS_DE_DERIVACAO.md`](ADR_A_PROPOSTAS_DE_DERIVACAO.md) | **Canônico** (anexo da ADR-066) | Vigente — **emendado em 2026-08-05** (§23: F-1, F-2, F-3) | Domínio fechado de `derivation_proposals`: cinco estados, doze itens de proveniência, **oito** condições da ponte (a oitava: uma regra vigente por conceito). Participação do motor passa ao Catálogo; `SEM_CORRESPONDENCIA` é reserva não operacional |
 | 2b | [`ADR_B_JUIZO_HUMANO.md`](ADR_B_JUIZO_HUMANO.md) | **Canônico** (anexo da ADR-067) | Vigente | Domínio fechado de `curator_judgments`: duas naturezas, seis conceitos, três estados |
 | 2c | [`ADR_D_AUTORIDADE_DE_CONFIRMACAO.md`](ADR_D_AUTORIDADE_DE_CONFIRMACAO.md) | **Canônico** (anexo da ADR-068) | Vigente | Quem confirma, quem declara; RLS da ADR-040 item 6 **não reaberta** |
 | 2d | [`ADR_069_CICLO_DE_VIDA_DAS_REGRAS.md`](ADR_069_CICLO_DE_VIDA_DAS_REGRAS.md) | **Canônico** (anexo da ADR-069) | **Vigente — aprovada pelo DT-01 em 2026-08-05**, com emendas de 2026-08-05 (§21 aritmética, §22 MR1.2) | Ciclo de vida da Regra de Derivação: versão é fato, transição é ato, estado é leitura derivada. **Sete arcos permitidos**, `REVOGADA` terminal, freio assimétrico do Curador, MR1.2 reinterpretado e garantido por trigger de cadeia + índice parcial |
 | 2d | [`PARECER_CONSTITUCIONAL_DO_BLOCO_DE_DOMINIO.md`](PARECER_CONSTITUCIONAL_DO_BLOCO_DE_DOMINIO.md) | Derivado | Vigente | Parecer do Agente 00 sobre as três ADRs — responde em parte a DP-11 |
+| 2e | [`METODO_ACOLHIMENTO_PREPARADO.md`](METODO_ACOLHIMENTO_PREPARADO.md) | **Canônico** (M-001) | Vigente — **portado de `8911c5e`** (branch documental) no Ato 1 do fechamento da Onda 1 | Decisão de Método: quando o Acolhimento está PREPARADO — dois ramos, predicado, monotonicidade. Desbloqueou o Item 1.5 |
+| 2f | [`METODO_ACOLHIMENTO_REGISTRO.md`](METODO_ACOLHIMENTO_REGISTRO.md) | **Canônico** (M-003) | Vigente — **portado de `8911c5e`** no mesmo ato | Caminho de registro da preparação: contrato da action, emenda sobre "a história do Case", recusa de payload vazio |
 | 3 | [`CONGELAMENTO_ARQUITETURAL.md`](CONGELAMENTO_ARQUITETURAL.md) | **Canônico** | **CONGELADO** (2026-08-01) | O que a 2.0 promete não violar: 8 garantias, 12 invariantes, critérios de reabertura |
 | 4 | [`DOMINIO_COMPATIBILIDADE_RELACIONAL.md`](DOMINIO_COMPATIBILIDADE_RELACIONAL.md) v1.0 | **Canônico** | Aprovado e congelado (ADR-065) | Precedente que a 2.0 generaliza aos 28 conceitos |
 | 5 | [`../FUNDAMENTOS_DO_METODO_ALIVIAR.md`](../FUNDAMENTOS_DO_METODO_ALIVIAR.md) | Institucional | Proposto | Método; origem das decisões humanas irredutíveis |
@@ -68,6 +70,8 @@
 | 16h | [`DOSSIE_FECHAMENTO_ONDA_1_ENTRADA_ONDA_2.md`](DOSSIE_FECHAMENTO_ONDA_1_ENTRADA_ONDA_2.md) | Derivado | **PROPOSTA (2026-08-08) — pronta para decisão de governança** | Fechamento da Onda 1: inventário 13 itens · dez condições do §15.0 **todas satisfeitas** · F-REC-1..3 reconstruídos (1.5/1.7 implementados com autoridade real, lastro noutro branch/não lavrado) · disposições D-1..D-5 · entrada da Onda 2 **não** abre a Fronteira |
 | 17 | [`PLANO_EXECUTIVO_CURADORIA_2_0.md`](PLANO_EXECUTIVO_CURADORIA_2_0.md) | Derivado | **Superado em parte** pelo item 13 — ver §5 do Mapa dos Pacotes | Planejamento executivo do Implementador (33 pacotes F/C/L/K) |
 | 18 | [`PLANO_DE_PACOTES_CURADORIA_2_0.md`](PLANO_DE_PACOTES_CURADORIA_2_0.md) | Derivado | **Histórico** — impedimento respondido pelo §18 da Arquitetura | Registro do impedimento e da primeira partição |
+| 18b | [`PP_01_PREPARACAO_ONDA_1B.md`](PP_01_PREPARACAO_ONDA_1B.md) | Derivado | **Parecer emitido** — decisão **ONDA 1B PARCIALMENTE LIBERADA** — portado de `22cb0d3` no Ato 1 | Preparação da Onda 1B: os três bloqueios (dois reais, um inexistente), grafo corrigido, sequência ótima, ressalvas R-1 a R-5 |
+| 18c | [`PROCESSO_DE_ENGENHARIA_2_0.md`](PROCESSO_DE_ENGENHARIA_2_0.md) | **Processo oficial** (DT-27) | Vigente — alterável só por decisão formal do DT-01 — portado de `22cb0d3` no Ato 1 | Como a engenharia da 2.0 trabalha: níveis, fluxo, Dossiê de Prontidão, interrupção, Capacidade Operacional, 8 regras permanentes |
 
 ## 5. Instrumentos oficiais
 
@@ -100,3 +104,5 @@
 | O que se implementa, e quando? | Mapa dos Pacotes + Roadmap |
 | Quem responde por quê? | Registro de Governança §1 |
 | Quem já deu parecer? | Registro dos Pareceres |
+| **Como a engenharia trabalha?** | `PROCESSO_DE_ENGENHARIA_2_0.md` — níveis, fluxo, regras permanentes |
+| **Por que a Onda 1B está parcialmente liberada?** | `PP_01_PREPARACAO_ONDA_1B.md` §2 e §6 |
