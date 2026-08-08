@@ -66,6 +66,19 @@ dos atos. Ele **não está documentado** neste repositório, e não é inventado
 fica registrado como **vínculo técnico pendente de resolução operacional, sem
 alterar a validade da nomeação humana**.
 
+> **Reverificado em 2026-08-08 (Agente 02) — permanece pendente, e agora é
+> bloqueante.** O pré-flight da Regra 001 mediu o efeito: `derivation_rules.proposed_by`
+> e `derivation_rule_transitions.actor_id` são **`uuid not null`**, de modo que
+> **nenhuma regra de derivação pode sequer nascer** — não só ser promovida — sem
+> identidade técnica real. Nada foi encontrado que resolvesse a pendência:
+> nenhuma identidade humana semeada em migration, nenhum papel `AUTORIDADE_DE_METODO`
+> atribuível no banco (existe apenas como valor de `CHECK`), nenhum UUID em
+> documento. **Ato mínimo** (`cadastro operacional` + `decisão de governança`,
+> **não** migration, **não** código): o DT-01 designa a conta real que o
+> representa · o Responsável de engenharia verifica sua existência sem divulgar
+> credencial · o Agente 02 lavra o vínculo aqui, substituindo esta nota.
+> Detalhamento em [`PREFLIGHT_MATERIALIZACAO_REGRA_001.md`](PREFLIGHT_MATERIALIZACAO_REGRA_001.md) §3.
+
 **Nota de risco herdada (ADR-068 item 6, RA-1 do PA-2):** a acumulação concentra,
 na mesma pessoa, propor · aprovar · confirmar · responder. A ADR-060 já registrou
 a mesma classe de risco como **aceito e datado**, vinculado à segunda conta ali
