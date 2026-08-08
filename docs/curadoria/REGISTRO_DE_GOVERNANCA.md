@@ -61,23 +61,47 @@ próprio.
 | 3 | delegação informal |
 | 4 | aprovação pelo Implementador |
 
-**Vínculo técnico:** o padrão vigente exige identificador técnico para a autoria
-dos atos. Ele **não está documentado** neste repositório, e não é inventado aqui:
-fica registrado como **vínculo técnico pendente de resolução operacional, sem
-alterar a validade da nomeação humana**.
+### Vínculo técnico — **RESOLVIDO E LAVRADO em 2026-08-08**
 
-> **Reverificado em 2026-08-08 (Agente 02) — permanece pendente, e agora é
-> bloqueante.** O pré-flight da Regra 001 mediu o efeito: `derivation_rules.proposed_by`
-> e `derivation_rule_transitions.actor_id` são **`uuid not null`**, de modo que
-> **nenhuma regra de derivação pode sequer nascer** — não só ser promovida — sem
-> identidade técnica real. Nada foi encontrado que resolvesse a pendência:
-> nenhuma identidade humana semeada em migration, nenhum papel `AUTORIDADE_DE_METODO`
-> atribuível no banco (existe apenas como valor de `CHECK`), nenhum UUID em
-> documento. **Ato mínimo** (`cadastro operacional` + `decisão de governança`,
-> **não** migration, **não** código): o DT-01 designa a conta real que o
-> representa · o Responsável de engenharia verifica sua existência sem divulgar
-> credencial · o Agente 02 lavra o vínculo aqui, substituindo esta nota.
-> Detalhamento em [`PREFLIGHT_MATERIALIZACAO_REGRA_001.md`](PREFLIGHT_MATERIALIZACAO_REGRA_001.md) §3.
+*(Histórico: de 2026-08-05 a 2026-08-08 este campo registrou "vínculo técnico
+pendente de resolução operacional, sem alterar a validade da nomeação humana".
+O pré-flight da Regra 001 mediu o efeito — `derivation_rules.proposed_by` e
+`derivation_rule_transitions.actor_id` são `uuid not null`, logo nenhuma regra
+podia sequer nascer. A pendência foi resolvida pelo ato abaixo.)*
+
+| Campo | Valor |
+|---|---|
+| **Identidade normativa** | **`DT-01 — Fundador / Autoridade de Método`** (DP-4, 2026-08-05) |
+| **Identidade técnica** | **`54ec5c6a-ed07-4e37-b3dd-c7b1300c2c7b`** |
+| **Conta humana** | `barbosacaiopadilha@gmail.com` |
+| **Fonte canônica** | `auth.users` do projeto **`aliviar-2-prod`** |
+| **Verificador técnico** | **Agente 01 — Implementador / Responsável de Engenharia** |
+| **Data da comprovação** | **2026-08-08** |
+| **Ratificação** | **DT-01**, no mesmo ato |
+
+**Qualificação comprovada da conta:** humana · pessoal · ativa · e-mail
+confirmado · **anterior a esta missão** · **não** fixture · **não** service
+account · **não** conta técnica compartilhada · **não** conta de Curador ·
+**não** conta do Concierge · **não** criada para satisfazer constraint.
+
+**Compatibilidade técnica verificada** com `derivation_rules.proposed_by`,
+`derivation_rules.approved_by` e `derivation_rule_transitions.actor_id` —
+nenhuma dessas colunas possui FK que impeça o uso do identificador.
+
+> **UUID ≠ autoridade.** O identificador prova **quem é a pessoa**; a autoridade
+> continua derivando **exclusivamente** da governança que constituiu o papel
+> `DT-01 — Fundador / Autoridade de Método` (DP-4). O vínculo legítimo é
+> **pessoa técnica comprovada + papel normativo já lavrado** — e as quatro
+> proibições acima permanecem integralmente em vigor.
+
+**Nenhuma tabela de mapeamento foi criada**: nenhuma autoridade vigente a exige,
+e este registro é a fonte documental do vínculo.
+
+**Nenhum segredo ou credencial foi publicado** — apenas identidade e vínculo
+normativo.
+
+Detalhamento e consequências em
+[`PREFLIGHT_MATERIALIZACAO_REGRA_001.md`](PREFLIGHT_MATERIALIZACAO_REGRA_001.md) §3.
 
 **Nota de risco herdada (ADR-068 item 6, RA-1 do PA-2):** a acumulação concentra,
 na mesma pessoa, propor · aprovar · confirmar · responder. A ADR-060 já registrou

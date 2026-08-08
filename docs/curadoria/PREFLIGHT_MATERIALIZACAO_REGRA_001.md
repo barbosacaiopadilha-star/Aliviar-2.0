@@ -2,28 +2,35 @@
 
 | Campo | Valor |
 |---|---|
-| **Versão** | v1.0 |
+| **Versão** | **v2.0** — Gate B fechado; Gate C desdobrado em C1/C2; inventário 91→113 |
 | **Autor** | Agente 02 — Arquiteto da Curadoria 2.0 |
 | **Data** | 2026-08-08 |
-| **Base** | `368fe99` |
+| **Base** | `c40b896` (v1.0 lavrada em `368fe99`) |
 | **Regra** | `CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA`, versão 1 |
-| **Status** | **BLOQUEADO EM GATE B** (e, por consequência, em GATE C) |
-| **Natureza** | governança documental. **Zero código, zero migration, zero inserção, zero promoção** |
+| **Status** | **BLOQUEADO EM C1** — e C1 depende de uma decisão do Fundador que já estava aberta (**D-13**) |
+| **Natureza** | governança documental. **Zero código, zero migration, zero deploy, zero inserção, zero promoção** |
 
 > **A semântica da Regra 001 não é objeto desta missão e não foi tocada.** A
 > ficha v2.0 permanece a autoridade material.
 
 ---
 
-## 1. Os três gates
+## 1. Os gates, agora em quatro
 
 | Gate | Objeto | Resultado |
 |---|---|---|
-| **A — Autoridade documental** | `approval_adr` | 🟢 **VERDE** — instrumento lavrado: **ADR-070** |
-| **B — Identidade técnica** | `approved_by` / `actor_id` | 🔴 **VERMELHO** — não existe, e já estava registrado como pendente |
-| **C — Materialização** | regra existir em `PROPOSTA` | 🔴 **VERMELHO** — não há escritor; **e depende de B** |
+| **A — Autoridade documental** | `approval_adr` | 🟢 **VERDE** — **ADR-070** lavrada |
+| **B — Identidade técnica** | `approved_by` / `actor_id` | 🟢 **VERDE** — comprovada pelo Agente 01, ratificada pelo DT-01, lavrada em 2026-08-08 |
+| **C1 — Schema no ambiente alvo** | tabelas existirem onde o ato ocorrerá | 🔴 **VERMELHO em produção** · 🟢 verde em dev/local |
+| **C2 — Caminho de materialização** | como escrever a primeira regra | 🟡 **AMARELO** — o mecanismo existe e é legítimo (**migration**, ato administrativo controlado); depende de C1 e de uma escolha menor do DT-01 (§6.3) |
 
-**Promoção apta somente com A + B + C verdes.**
+**Promoção apta somente com A + B + C1 + C2 verdes.**
+
+> **O desdobramento do Gate C não é formalidade.** A v1.0 dizia "falta writer".
+> Está mais claro agora: **o writer legítimo existe** (a migration, ato
+> administrativo do regime), e o que falta é **o schema no ambiente onde o ato
+> vale** — problema de natureza inteiramente diferente, e que não se resolve
+> criando writer nenhum.
 
 ---
 
@@ -84,7 +91,38 @@ O instrumento existe, está completo e tem número. **Nada falta a produzir aqui
 
 ---
 
-## 3. GATE B — identidade técnica da Autoridade
+## 3. GATE B — 🟢 **VERDE** (lavrado em 2026-08-08)
+
+| Campo | Valor |
+|---|---|
+| **Identidade normativa** | `DT-01 — Fundador / Autoridade de Método` (DP-4, 2026-08-05) |
+| **Identidade técnica** | **`54ec5c6a-ed07-4e37-b3dd-c7b1300c2c7b`** |
+| **Conta humana** | `barbosacaiopadilha@gmail.com` |
+| **Fonte da comprovação** | `auth.users` do projeto **`aliviar-2-prod`** |
+| **Verificador técnico** | **Agente 01 — Implementador / Responsável de Engenharia** |
+| **Data** | **2026-08-08** · ratificado pelo DT-01 no mesmo ato |
+| **Documento que registra** | [`REGISTRO_DE_GOVERNANCA.md`](REGISTRO_DE_GOVERNANCA.md) §1.1 |
+
+Conta comprovadamente **humana · pessoal · ativa · e-mail confirmado · anterior
+a esta missão**, e comprovadamente **não** fixture, service account, conta
+técnica compartilhada, conta de Curador, conta do Concierge, nem conta criada
+para satisfazer constraint. Compatível com as três colunas (`proposed_by`,
+`approved_by`, `actor_id`) — **nenhuma tem FK que o impeça**.
+
+> **UUID ≠ autoridade.** O identificador prova **quem é a pessoa**. A autoridade
+> segue derivando **só** da governança que constituiu o papel (DP-4). O vínculo
+> é **pessoa técnica comprovada + papel normativo já lavrado** — e as quatro
+> proibições do §1.1 (nada de `service_role` como autoridade humana, conta
+> técnica sem vínculo, delegação informal, aprovação pelo Implementador)
+> permanecem integralmente em vigor.
+
+**Nenhuma tabela de mapeamento criada** — nenhuma autoridade vigente a exige.
+**Nenhum segredo publicado.**
+
+### 3.0 Histórico — por que este gate esteve vermelho
+
+*(Preservado: a pendência foi real, foi registrada pelo próprio ato de nomeação
+de 2026-08-05, e o pré-flight v1.0 mediu que ela bloqueava até o nascimento.)*
 
 ### 3.1 A autoridade normativa existe
 
@@ -93,7 +131,7 @@ O instrumento existe, está completo e tem número. **Nada falta a produzir aqui
 de Derivação da Curadoria 2.0. Autoridade conferida: *aprovar regra · promover
 para `VIGENTE` · suspender · reativar · revogar*.
 
-### 3.2 A identidade técnica **não** existe — registrado pelo próprio ato de nomeação
+### 3.2 *(histórico)* A identidade técnica não existia — registrado pelo próprio ato de nomeação
 
 O mesmo §1.1, no ato que nomeou o DT-01, já dizia:
 
@@ -143,27 +181,168 @@ legítimo** — não precisa ser a do DT-01. **Só a promoção exige o DT-01.**
 **nenhuma** identidade humana está documentada neste repositório, então hoje as
 duas faltam.
 
-### 3.5 Ato mínimo para constituir o vínculo
+### 3.5 Ato mínimo — **EXECUTADO em 2026-08-08**
 
-**Classificação: `cadastro operacional` + `decisão de governança`.
-Não é migration. Não é código.**
+Os três passos previstos foram cumpridos exatamente como especificados: o DT-01
+designou a conta, o **Agente 01** verificou-a em `auth.users` de produção, e o
+Agente 02 lavra aqui e no §1.1 do Registro. **Nenhuma migration, nenhum código.**
 
-| Passo | Quem | O quê |
-|---|---|---|
-| 1 | **DT-01** | designar **qual conta real** (a que já usa no sistema) o representa como Autoridade de Método |
-| 2 | **Responsável de engenharia** | verificar operacionalmente que a conta existe e obter seu identificador em `curadoria.profiles` — **sem divulgar credencial** |
-| 3 | **Agente 02** | lavrar o vínculo no `REGISTRO_DE_GOVERNANCA.md` §1.1, substituindo a nota de pendência |
+### 3.6 A escolha menor que resta — quem **propõe**
 
-**Menor pacote possível.** Nada além disso é necessário para este gate.
+O comentário de `derivation_rules.proposed_by` é explícito: *"São pessoas
+diferentes por desenho — **propor é de qualquer papel interno; aprovar é da
+Autoridade**."*
 
-**Fica em aberto, e é decisão do DT-01, não desta missão:** se o **nascimento**
-usará a identidade do próprio DT-01 (acumulando também o papel de propositor) ou
-a de outro papel interno. A segunda opção reduz a acumulação já declarada como
-risco aceito (ADR-068 item 6 / RA-1 do PA-2).
+| Opção | Efeito |
+|---|---|
+| **outro humano interno** propõe | preserva o desenho; exige **um segundo vínculo técnico** lavrado (hoje inexistente) |
+| **DT-01** propõe **e** aprova | tecnicamente permitido (sem FK, sem constraint que o impeça) e normativamente admissível — **mas aprofunda a acumulação** já declarada em ADR-068 item 6 / RA-1 do PA-2 |
+
+**Recomendação:** se hoje não existe segundo vínculo lavrado — e não existe —, o
+DT-01 pode propor, **com uma condição**: a acumulação deve ser **nomeada no
+`reason` da transição de nascimento**. É a aplicação literal do §1.1: *"a
+acumulação é declarada, não silenciosa — e é essa declaração que impede que ela
+vire o normal."* **Não inventar segunda identidade** só para satisfazer o
+desenho.
 
 ---
 
-## 4. GATE C — materialização em `PROPOSTA`
+## 3B. GATE C1 — o schema **não existe em produção**
+
+### 3B.1 O descompasso, e a corroboração independente
+
+| Ambiente | Ledger | Última migration |
+|---|---|---|
+| **produção** (`aliviar-2-prod`) | **91** | `20260803150000` |
+| **dev / local** | **113** | `20260808270000` |
+
+**Faltam exatamente 22.** O repositório **corrobora a medição do Agente 01 por
+fonte independente**: o `PLANO_OFICIAL_DE_LANCAMENTO_1_0.md` §152 registra que
+*"as migrations já foram aplicadas. Em 2026-08-03 às 22:10:08Z, **pela
+integração Supabase↔GitHub, disparada pelo push do merge**. Produção está em
+`91 / 20260803150000`, com equivalência estrutural provada."* **Os dois números
+batem.**
+
+**Consequência direta:** `curadoria.derivation_rules` (migration nº 7 da lista)
+e `curadoria.derivation_rule_transitions` (nº 9) **não existem em produção**. É
+**impossível** materializar a Regra 001 lá hoje — não por falta de autorização,
+mas por falta de tabela.
+
+### 3B.2 Isto **não** é detalhe de deploy — classificação arquitetural
+
+O descompasso 91→113 é **dívida de publicação de um arco inteiro de trabalho
+certificado**, não deriva acidental. Três fatos vigentes o classificam:
+
+1. **A publicação é all-or-nothing.** `PLANO_OFICIAL_DE_LANCAMENTO_1_0.md` §349:
+   *"enquanto a integração Supabase↔GitHub estiver ativa, **parar de mergear
+   `.sql` em `main` é a única forma** [de conter alterações de schema] — ou
+   desligá-la. **Não existe congelamento parcial.**"*
+2. **A contenção foi deliberada.** `INVENTARIO_ESTADO_ATUAL_CONGELAMENTO.md` §88
+   registra o branch `g0-1-regime-de-instrumentos` com **PR deliberadamente não
+   aberto**, *"aguarda janela autorizada"*, pela mesma razão. O descompasso é
+   **efeito de uma decisão de segurança**, não de esquecimento.
+3. **A pré-condição do deploy é uma decisão do Fundador que segue aberta.** A
+   `AUDITORIA_09_PRODUCAO` fixa a **"Ordem segura (não executada)"** com o passo
+   **1 = backup ampliado e PITR confirmado**, e registra que a documentação
+   **se contradiz** sobre a existência de backup (*"plano free — sem PITR"* ×
+   *"o Supabase mantém PITR"* × *"NÃO VERIFICADO"*). Na consolidação NO-GO isso
+   é a decisão **D-13 — nível mínimo de backup + RTO/RPO**, dona: **Fundador**,
+   prazo: **antes de produção**. **Continua aberta.**
+
+> **Achado que muda o destinatário:** o GATE C1 **não está bloqueado por
+> engenharia**. Está bloqueado por **D-13**, uma decisão que o DT-01 já devia
+> desde a Auditoria Geral. Engenharia executa depois; não pode decidir antes.
+
+### 3B.3 Inventário das 22 — uma a uma
+
+Legenda: **E** = estrutura · **D** = contém **DML de topo** (dado material
+aplicado pela própria migration).
+
+| # | Migration | Commit | Pacote / item de origem | Governança | Tipo |
+|---|---|---|---|---|---|
+| 92 | `20260803170000_menor_privilegio_nas_funcoes_de_governanca` | `912db46` | endurecimento de segurança (menor privilégio) | encerrado | E |
+| 93 | `20260804120000_autoria_nos_dois_mapas` | `89c4225` | **PP-02** — proveniência/autoria nos dois Mapas | encerrado | E |
+| 94 | `20260804160000_paciente_registra_o_proprio_desfecho` | `cc82e0f` | **PP-03A** — caminho autorizado de escrita da paciente | encerrado | E |
+| 95 | `20260804170000_desfecho_da_paciente_grants_hardening` | `56793ea` | **PP-03B** — ACL efetiva, guarda real, `SUPERSEDED` | encerrado | E |
+| 96 | `20260805090000_estrutura_inerte_da_camada_de_derivacao` | `1ed29f8` | **Item 2.1** | **FORMALMENTE ENCERRADO** | E |
+| 97 | `20260805140000_dp3_listas_p3_a_p7_no_catalogo` | `94caeec` | **DP-3** — listas P3..P7 no Catálogo | **DP-3 resolvida** | **D** |
+| 98 | `20260805170000_infraestrutura_da_regra_de_derivacao` | `30c6809` | **Item 2.2A** | **ENCERRADO** | E |
+| 99 | `20260805200000_endurecimento_da_regra_de_derivacao` | `7770d7f` | **Item 2.2A-MR1** | **ENCERRADO** | E |
+| 100 | `20260806100000_ciclo_de_vida_da_regra_de_derivacao` | `1a7ef86` | **Item 2.2B** (ADR-069) | **ENCERRADO com ressalvas registradas** | E |
+| 101 | `20260806140000_menor_privilegio_nas_leituras_do_ciclo_de_vida` | `72e0a2b` | **Item 2.2B-R1** | **ENCERRADO** | E |
+| 102 | `20260806180000_ponte_grau_importancia` | `b38cd34` | **Item 2.2C** (ADR-066) | **ENCERRADO** | E |
+| 103 | `20260806220000_participacao_do_motor_e_unicidade_por_conceito` | `36dde31` | **Item 2.2C-R1** (+ fecha o **1.1**) | **ENCERRADO** | **D** |
+| 104 | `20260807120000_vinculo_de_evidencia_no_mapa_do_profissional` | `041b423` | **Item 1.8-R1** — migration expressamente autorizada pelo Contrato | **ENCERRADO** (12/12) | E |
+| 105 | `20260807150000_leitor_controlado_de_propostas` | `041b423` | **Item 1.8-R1** | **ENCERRADO** | E |
+| 106 | `20260807190000_reapresentacao_estrita_do_vinculo` | `095054e` | **Item 1.8-R1-MR1** | **ENCERRADO sem ressalvas** | E |
+| 107 | `20260808100000_leitor_agregado_de_propostas` | `4928af6` | **Item 1.11** (+ MR1) | **FORMALMENTE ENCERRADO** | E |
+| 108 | `20260808150000_mecanismo_de_discordancia` | `cdf485d` | **Item 1.12** (PA-12) | **FORMALMENTE ENCERRADO** | E |
+| 109 | `20260808190000_1_12_mr1_cerca_total_do_estado_decisorio` | `2c52832` | **Item 1.12-MR1** | **ENCERRADO** | E |
+| 110 | `20260808210000_2_6_g10_nome_do_curador_do_caso` | `01f45dc` | **Item 2.6** (PA-14; absorve o **1.2**) | **ENCERRADO** | E |
+| 111 | `20260808230000_2_4_curator_judgments` | `2f6ec05` | **Item 2.4** (PA-15) | **ENCERRADO** | E |
+| 112 | `20260808250000_2_3_divisao_da_avaliacao` | `8305d97` | **Item 2.3** (PA-16) | **ENCERRADO** | E |
+| 113 | `20260808270000_2_c_abertura_da_fronteira` | `42bca9b` | **Item 2.C** (PA-17) | **ENCERRADO** | E |
+
+**Resposta ao §6 da missão — verificado, não presumido:** as 22 correspondem
+integralmente a pacotes **implementados, verificados, certificados e formalmente
+encerrados**. As Ondas 1 e 2 foram declaradas **FORMALMENTE ENCERRADAS** pelo
+Guardião em 2026-08-08 (PA-18), e o `MAPA_DOS_PACOTES.md` §3 confirma item a
+item. **Nenhuma certificação foi reexecutada** — apenas conferida.
+
+**Dado material: apenas duas.** Todas as demais são estrutura pura (o restante
+do DML mora **dentro de corpos de função**, não é aplicado pela migration):
+
+| Migration | O que grava |
+|---|---|
+| **97** `dp3_listas_p3_a_p7_no_catalogo` | `insert into method_subcriterion_options` — **opções do Catálogo** |
+| **103** `participacao_do_motor_e_unicidade_por_conceito` | `update method_subcriteria set motor_participation` — **atualiza o Catálogo** |
+
+> Essas duas **tocam o Catálogo em produção**. São exatamente as que exigem
+> conferência pós-deploy própria, e as únicas em que "estrutura idêntica" não
+> basta como prova.
+
+**Ordem obrigatória: a cronológica dos timestamps**, sem exceção — há
+dependências duras (2.2A→2.2A-MR1→2.2B→2.2B-R1→2.2C→2.2C-R1; 1.11→1.12→1.12-MR1;
+2.6→2.4→2.3→2.C). É a ordem natural do `db push`; **nenhuma pode subir
+isolada**.
+
+**Pendências bloqueantes entre elas: nenhuma.** As quatro higienes não
+bloqueantes (F-2.3-1, F-2.4-1, F-2.6-1, F-2.C-1) foram consolidadas em **H-T-01**,
+que o Guardião decidiu tratar em **missão separada** e que **não bloqueia a
+primeira regra material**.
+
+**H-T-01 conferida, não reaberta (§10 da missão):** nenhuma das 22 depende de
+guarda ainda inexistente para ser implantada com segurança. As guardas de que
+dependem já estão **dentro das próprias migrations** (triggers, CHECKs, índices
+parciais), e as tabelas novas nascem **inertes** — RLS ligada, zero policies,
+zero grants. **O descompasso de produção não é motivo para reabrir H-T-01.**
+
+### 3B.4 Ato legítimo para fechar C1
+
+**Dois mecanismos existem e ambos estão documentados:**
+
+| Via | Como | Consequência |
+|---|---|---|
+| **merge em `main`** | a integração Supabase↔GitHub aplica o DDL automaticamente — foi o que ocorreu em 2026-08-03 | **all-or-nothing**, e o push em `main` **também publica a aplicação** na Vercel: schema e código sobem juntos |
+| **CLI em janela autorizada** | `supabase db push` / `migration up --linked` | é o **rito escrito** do [`PLANO_RECONCILIACAO_LEDGER.md`](PLANO_RECONCILIACAO_LEDGER.md), que fixa: *"migration em ambiente hospedado se aplica pelo fluxo da CLI, que preserva a versão do arquivo"*; o MCP `apply_migration` **só em emergência autorizada**, porque carimba timestamp novo e **cria dívida de ledger** |
+
+**Pré-condições que o repositório já fixa** (`PLANO_RECONCILIACAO_LEDGER` §3
+passo 0 + `AUDITORIA_09` "Ordem segura"): árvore limpa · **backup/ponto de
+restauração confirmado no painel** · token da CLI · **janela sem operação
+ativa** · ordem obrigatória · `migration list --linked` conferido antes e depois.
+
+**Rollback:** as migrations são **aditivas** e cada uma traz seu bloco de
+rollback objeto a objeto. Mas a `AUDITORIA_09` registra o **ponto de
+não-retorno** operacional: aplicado o DDL, o Instant Rollback da Vercel deixa de
+ser seguro. **Rollback de schema ≠ rollback de aplicação.**
+
+**Verificação pós-deploy: obrigatória**, e com dois itens que não são genéricos —
+as migrations **97** e **103**, que alteram o Catálogo.
+
+**Quem autoriza:** **DT-01**, e antes disso **D-13**. **Quem executa:** Agente 01,
+em **missão própria de Engenharia**.
+
+## 4. GATE C2 — o caminho de materialização
 
 ### 4.1 Não existe escritor — e isso é intencional
 
@@ -183,8 +362,59 @@ O repositório concede `grant all … to service_role` tabela a tabela, dezenas 
 vezes. **Estas duas foram deliberadamente deixadas de fora.**
 
 > **Não invento writer.** O único caminho legítimo hoje é uma **migration**
-> (executada com privilégio de dono, fora de RLS) — o que torna o GATE C um ato
+> (executada com privilégio de dono, fora de RLS) — o que torna o GATE C2 um ato
 > de **engenharia**.
+
+### 4.1.1 Mecanismo de **menor autoridade residual**
+
+A primeira regra é **ato raro de Método**, não função de produto. Antes de criar
+qualquer superfície permanente, o teste é: *o que resta ligado depois do ato?*
+
+| Mecanismo | Autoridade residual | Veredito |
+|---|---|---|
+| **migration com os dois `INSERT`** | **zero** — o privilégio é do processo de deploy, que já existe; nada novo fica ligado; o ato fica versionado, revisável e auditável no repositório | ✅ **escolhido** |
+| RPC `SECURITY DEFINER` + grant | **permanente** — uma função capaz de criar regras passa a existir para sempre | ❌ |
+| Action / endpoint / UI | **permanente e exposta** — superfície de produto para ato que ocorre uma vez | ❌ |
+| `grant` direto nas tabelas | **permanente** — desfaz a inércia deliberada do 2.2A/2.2B | ❌ |
+| MCP `apply_migration` | baixa, **mas cria dívida de ledger** (carimba timestamp novo) — o `PLANO_RECONCILIACAO_LEDGER` o reserva a **emergência autorizada** | ❌ não é emergência |
+
+> **A migration é o "ato administrativo controlado" que o regime já prevê.**
+> Ela deixa **menos** autoridade residual que qualquer alternativa — inclusive
+> menos que um writer "temporário", que só é temporário enquanto alguém lembra
+> de removê-lo. **Nenhum writer permanente será criado.**
+
+### 4.1.2 Ambiente do ato — decisão confrontada com as autoridades
+
+A preferência do DT-01 (§8 da missão) foi confrontada e **é sustentada pelos
+documentos vigentes**:
+
+| Preferência do DT-01 | Autoridade que a sustenta |
+|---|---|
+| não inserir em produção antes de reconciliar o schema | impossível de outro modo: as tabelas **não existem** lá (C1) |
+| não tratar local/fixture como primeiro ato real de R-1 | **CD-1** (*"nenhum valor estabiliza antes de Cases reais"*) · ADR-070 §2.6 (a regra nasce **para ser observada**) · a `practice_evidence` real não existe em dev |
+
+**Escolha: A → B, nesta ordem.** Smoke técnico em local **primeiro**, deploy e
+materialização em produção **depois** — e **o smoke não conta como R-1**.
+
+### 4.1.3 O UUID real **não** vai para o ambiente local
+
+Tecnicamente caberia (não há FK). **Deve ser evitado**, por três razões:
+
+1. Criaria uma linha que **parece** o DT-01 num ambiente onde ele nunca se
+   autenticou — identidade sem autenticação é exatamente o que o §1.1 proíbe em
+   espírito.
+2. O repositório já carrega o achado inverso (**ADR-057 / D-20**, dados de teste
+   em produção). *Identidade de produção em ambiente de teste* é a mesma classe
+   de contaminação, na direção contrária.
+3. **É desnecessário.** Como não há FK, um UUID local claramente rotulado prova
+   **exatamente as mesmas coisas**: as constraints, os triggers, o grafo, o
+   constraint trigger deferido e a unicidade da vigência. **Nada se perde.**
+
+> **Regra:** smoke local usa UUID local rotulado. O UUID real
+> `54ec5c6a-…` aparece **uma única vez**: no ato real, em produção.
+
+**O smoke local não cria identidade real, não representa autenticação, não é ato
+operacional e não inicia R-1.**
 
 ### 4.2 O rito de nascimento, na estrutura real
 
@@ -333,68 +563,99 @@ concreto (essa é vinculada por `evidence_id` em cada proposta, individualmente)
 **Nenhum valor inexistente foi preenchido por inferência.** As três lacunas são
 a mesma: **GATE B**.
 
+## 7B. A sequência até `REGRA 001 — VIGENTE / PROVISÓRIA`
+
+| # | Ato | Quem | Gate |
+|---|---|---|---|
+| **0** | **Decidir D-13** — nível mínimo de backup, RTO/RPO, e **resolver no painel a contradição sobre PITR** | **DT-01** | pré-condição de C1 |
+| 1 | ~~lavratura do Gate B~~ | Agente 02 | ✅ **feito** (`REGISTRO_DE_GOVERNANCA` §1.1) |
+| 2 | **Smoke técnico local** — nascimento + promoção com **UUID local rotulado**, provando cadeia, grafo, constraint trigger deferido e unicidade da vigência. **Não é R-1** | Agente 01 | prepara C2 |
+| 3 | **Backup ampliado + ponto de restauração confirmado no painel** | Agente 01, sob D-13 | abre C1 |
+| 4 | **Deploy das 22 migrations** em janela autorizada, na ordem cronológica, pelo fluxo da CLI | Agente 01, **missão própria** | **C1 → 🟢** |
+| 5 | **Verificação pós-deploy** — `migration list --linked` = 113; existência de `derivation_rules` e `derivation_rule_transitions`; **e conferência específica do Catálogo** (migrations 97 e 103) | Agente 01 | confirma C1 |
+| 6 | **Nascimento** — dois `INSERT` numa única transação, `PAPEL_INTERNO`, `actor_id` real, acumulação declarada no `reason` (§3.6). Por **migration** | Agente 01 | **C2 → 🟢** |
+| 7 | **Aprovação e lavratura da ADR-070** — inscrição do verbete em `DECISIONS.md` | **DT-01** + Agente 02 | fixa `approval_adr` |
+| 8 | **Promoção** `PROPOSTA → VIGENTE` — `seq=2`, `AUTORIDADE_DE_METODO`, `vigencia_seq=1`, `approval_adr='ADR-070'`, motivo | **DT-01**, executado por Agente 01 | **regra VIGENTE** |
+| 9 | **Leitura derivada** — `derivation_rule_state()` retorna `VIGENTE`; o DR3 do emissor do 2.C passa a ter candidata, por **emenda própria** | Agente 01 | verificação |
+| 10 | **Smoke controlado** com evidência real, e **só então R-1 começa** | Agente 01 + Curadoria | **R-1 inicia** |
+
+**Os passos 7 e 8 são o mesmo momento** (§2.4). O passo 6 vem **antes** do 7 —
+a versão nasce sem ADR; a ADR é exigida na promoção.
+
+
 ## 8. Perguntas obrigatórias
 
 | # | Resposta |
 |---|---|
-| 1 | **Não** |
-| 2 | Ela se exclui em texto (*"não autoriza implementação… o pipeline de aprovação permanece fora de escopo"*), **exige** ADR na entrada em `VIGENTE` — não pode ser a ADR que exige — e governa o **movimento**, não o conteúdo |
-| 3 | **Não** — nenhuma ADR aprova o conteúdo de regra concreta; o `CONTRATO_1_A` §10.2 declara que isso **exige lavratura própria** |
-| 4 | — |
-| 5 | — |
-| 6 | **Sim** |
-| 7 | **ADR-070** — o log termina em ADR-069 |
-| 8 | *Aprovação da Regra Material 001 — Continuidade / Coordenação*. Objeto único |
-| 9 | **Sim** — curta e **referencial**: aponta a ficha v2.0 como autoridade material |
-| 10 | **`DT-01 — Fundador / Autoridade de Método`** |
-| 11 | **Sim** — DP-4 fechada em 2026-08-05, situação **ATIVA** |
-| 12 | **Não** |
-| 13 | A fonte que a governaria é `curadoria.profiles`, alimentada por signup real — **nenhuma linha do DT-01 documentada aqui**; o §1.1 já registrava a pendência em 2026-08-05 |
-| 14 | **Não hoje** |
-| 15 | **Não hoje** |
-| 16 | Designação da conta real pelo DT-01 + verificação operacional + lavratura do vínculo no §1.1 (§3.5) |
-| 17 | **DT-01** designa · **Responsável de engenharia** verifica · **Agente 02** lavra |
-| 18 | **Não** — zero policies, zero grants (nem `service_role`), nenhuma RPC. Inércia **deliberada** |
-| 19 | **Dois `INSERT` numa única transação** — regra + transição `seq=1`; o constraint trigger deferido valida o par no COMMIT (§4.2) |
-| 20 | Os das duas tabelas em §4.2 |
-| 21 | **Sim — e permanentemente** (§4.3) |
-| 22 | **Sim — e permanentemente** (§4.3). O aprovador vinculante é `actor_id` da transição de promoção |
-| 23 | **Sim** (§4.4) |
-| 24 | `authority = 'PAPEL_INTERNO'`, `seq=1`, `null→PROPOSTA`, sem ADR |
-| 25 | `authority = 'AUTORIDADE_DE_METODO'`, `seq=2`, `PROPOSTA→VIGENTE`, `vigencia_seq=1`, `approval_adr='ADR-070'` |
-| 26 | §5 |
-| 27 | §6 |
-| 28 | **Não** — nenhum impedimento além de A/B/C. A semântica está fechada e CD-1 intacta |
-| 29 | **Não.** O GATE C exige **migration** — não há escritor. E o GATE B precisa vir **antes**, porque `proposed_by` e `actor_id` são `NOT NULL` |
-| 30 | **`DT-01 — FUNDADOR / AUTORIDADE DE MÉTODO`** — só ele pode designar a conta que o representa |
+| 1 | **Sim** — Agente 01 comprovou em `auth.users` de `aliviar-2-prod`; DT-01 ratificou |
+| 2 | **Sim** — nenhuma autoridade vigente exige tabela de mapeamento; o `REGISTRO_DE_GOVERNANCA` §1.1 é a fonte documental |
+| 3 | **Sim — 🟢 VERDE** |
+| 4 | [`REGISTRO_DE_GOVERNANCA.md`](REGISTRO_DE_GOVERNANCA.md) §1.1, com espelho neste §3 |
+| 5 | **Não** — `curadoria.derivation_rules` é a migration nº 98 da série; produção parou na 91 |
+| 6 | **Não** — `curadoria.derivation_rule_transitions` é a nº 100 |
+| 7 | **22** (91 → 113) |
+| 8 | Inventariadas uma a uma em §3B.3 |
+| 9 | **Sim** — todas pertencem a pacotes implementados, verificados, certificados e **formalmente encerrados**; Ondas 1 e 2 encerradas pelo Guardião (PA-18) e conferidas no `MAPA_DOS_PACOTES` §3. **Nenhuma certificação foi reexecutada** |
+| 10 | **Nenhuma pendência bloqueante.** As quatro higienes viraram **H-T-01**, tratada em missão separada e **não bloqueante** |
+| 11 | **Todas podem ser aplicadas** do ponto de vista de conteúdo. O impedimento é **de pré-condição operacional**, não de migration: **D-13** (backup/PITR) segue aberta |
+| 12 | **A cronológica dos timestamps**, sem exceção — há dependências duras (2.2A→MR1→2.2B→B-R1→2.2C→C-R1; 1.11→1.12→MR1; 2.6→2.4→2.3→2.C). Nenhuma sobe isolada |
+| 13 | **Sim** — missão própria do Agente 01 |
+| 14 | **DT-01** — e antes dele, a decisão **D-13** |
+| 15 | **Sim, recomendado** — smoke técnico local com UUID **local rotulado** (§4.1.3). Não é R-1 |
+| 16 | **Sim, obrigatório** — `migration list --linked` = 113, existência das duas tabelas, **e conferência específica do Catálogo** (migrations 97 e 103, as únicas com DML de topo) |
+| 17 | Tecnicamente sim (sem FK) — **mas produziria significado falso** |
+| 18 | **Sim, deve ser evitado.** Um UUID local rotulado prova exatamente o mesmo; o real aparece **uma única vez**, no ato real em produção (§4.1.3) |
+| 19 | **Qualquer papel interno** — `authority = 'PAPEL_INTERNO'`, restrito ao nascimento pela constraint `papel_interno_so_propoe` |
+| 20 | **Sim, tecnicamente e normativamente** — mas aprofunda a acumulação já declarada (ADR-068 item 6 / RA-1 do PA-2). **Condição:** declarar a acumulação no `reason` da transição (§3.6). **Não inventar segunda identidade** |
+| 21 | **Agente 01**, por migration |
+| 22 | **Não** — e não deve ser criado |
+| 23 | **Sim** — a **migration é** o ato administrativo controlado que o regime prevê |
+| 24 | **A migration**: autoridade residual **zero**; versionada, revisável, auditável (§4.1.1) |
+| 25 | No **mesmo ato** em que o DT-01 promove a regra (§2.4) — passo 7 da sequência. **Nunca silenciosamente** |
+| 26 | **`derivation_rule_transitions`** na transição de promoção: `actor_id` + `authority = 'AUTORIDADE_DE_METODO'` + `approval_adr = 'ADR-070'`. **Confrontado com a ADR-069 e confirmado**: *"a versão é fato; a transição é ato"* — e `derivation_rules.approved_by` é inalcançável após o nascimento (MR1.1 recusa `UPDATE`) |
+| 27 | Após o passo 5 — deploy das 22 verificado em produção |
+| 28 | Após o passo 6 — nascimento consumado em `PROPOSTA` |
+| 29 | **`DT-01 — FUNDADOR / AUTORIDADE DE MÉTODO`** |
+| 30 | Os dez atos de §7B |
 
 ## 9. CD-1 e R-1
 
-**CD-1 — `INTACTA`.** Nada nesta missão tocou a ponte grau→importância: nenhuma
-linha em `derivation_rule_degree_map`, nenhum valor Case-side, nenhuma
-estabilização. A Regra 001 é do lado profissional e não povoa a ponte.
+**CD-1 — `INTACTA`.** Nada nesta missão tocou grau, importância, ponte,
+Case-side ou `derivation_rule_degree_map`. Nenhuma das 22 migrations pendentes
+altera esse quadro: a ponte (`b38cd34`) sobe **vazia**, sem uma única linha de
+correspondência.
 
-**R-1 — `ABERTA`.** Nenhuma observação real começou: a regra não existe como
-dado, nenhuma proposta foi emitida, o emissor do 2.C segue retornando
-`SEM_REGRA_VIGENTE`.
+**R-1 — `ABERTA / NÃO INICIADA OPERACIONALMENTE`.** Nenhuma observação real
+começou. Smoke local e fixtures **não contam**. O primeiro ato real exige
+ambiente operacional legítimo **e** evidência profissional real — nenhum dos
+dois existe hoje.
 
 ## 10. Veredito
 
-> ### PRÉ-FLIGHT — BLOQUEADO EM GATE B
+> ### GATE A 🟢 · GATE B 🟢 · GATE C1 🔴 · GATE C2 🟡
 >
-> **GATE A 🟢** — `approval_adr = 'ADR-070'`, instrumento lavrado e completo.
+> ### PRÉ-FLIGHT — BLOQUEADO EM C1
 >
-> **GATE B 🔴** — não existe identidade técnica do DT-01. Pendência **já
-> registrada em 2026-08-05** pelo próprio ato de nomeação; nada mudou.
+> **O Gate B fechou.** O vínculo `DT-01 → 54ec5c6a-…` está comprovado,
+> ratificado e lavrado. Era o bloqueio nomeado na v1.0, e não é mais.
 >
-> **GATE C 🔴** — não há escritor legítimo (zero policies, zero grants, nenhuma
-> RPC) **e o gate depende de B**: `proposed_by` e `actor_id` são `NOT NULL`,
-> então **nem o nascimento ocorre sem identidade**.
+> **O bloqueio mudou de natureza — e de dono.** Não é falta de writer: o
+> mecanismo legítimo existe e é a **migration**, com autoridade residual zero.
+> É **falta de schema no ambiente onde o ato vale** — as tabelas do ciclo da
+> Regra 001 **não existem em produção**, que parou em `91 / 20260803150000`.
 >
-> **Ato mínimo, único e suficiente para destravar o próximo passo:**
-> **o DT-01 designar qual conta real o representa como Autoridade de Método** —
-> verificada pelo Responsável de engenharia e lavrada no §1.1. **Não é
-> migration, não é código, não abre pacote algum.**
+> **E o que trava o deploy não é engenharia: é uma decisão que o DT-01 já
+> devia.** A `AUDITORIA_09_PRODUCAO` fixa backup e PITR como passo 1 da ordem
+> segura e registra que a documentação **se contradiz** sobre a existência de
+> backup. Na consolidação NO-GO isso é **D-13 — nível mínimo de backup +
+> RTO/RPO**, dona **Fundador**, prazo *"antes de produção"*, **aberta**.
 >
-> Com B resolvido, o GATE C vira uma migration de duas linhas em uma transação,
-> e a promoção vira um `INSERT` — ambos já integralmente especificados aqui.
+> **Ato mínimo, único e suficiente para destravar:** **decidir D-13** e
+> confirmar o ponto de restauração no painel. Tudo o mais já está especificado —
+> o inventário das 22, a ordem, o rito de deploy, o rito de nascimento, o rito
+> de promoção e a sequência dos dez atos.
+>
+> **As 22 migrations estão integralmente certificadas.** O descompasso 91→113 é
+> **dívida de publicação de trabalho pronto**, efeito de uma contenção
+> deliberada de segurança — não deriva acidental, e não motivo para reabrir
+> pacote algum.
