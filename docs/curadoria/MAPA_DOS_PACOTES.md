@@ -117,6 +117,36 @@ a paciente já lê o que o Motor concluiu · nenhum invariante do Motor é mais 
 
 ## 3. Onda 2 — A virada do eixo (cada item exige ADR)
 
+> ### ONDA 2 — FORMALMENTE ENCERRADA · 2026-08-08
+>
+> Decisão do **Guardião da CURADORIA 2.0** sobre o dossiê
+> [`DOSSIE_DE_FECHAMENTO_ONDAS_1_E_2.md`](DOSSIE_DE_FECHAMENTO_ONDAS_1_E_2.md)
+> (`34132aa`): **`ONDAS 1 E 2 — ENCERRAMENTO COM PENDÊNCIAS NÃO BLOQUEANTES`**.
+>
+> **Composição:** 2.1 · série 2.2 (A/MR1/B/B-R1/C/C-R1) · 2.3 · 2.4 · 2.6 · 2.C —
+> **todos formalmente encerrados**. **2.5 permanece PROIBIDO POR ADR** enquanto
+> DP-5 estiver aberta (§5.4.0) — a onda fecha sem ele, como o §15 previu.
+> **Pacote funcional obrigatório restante: NENHUM.**
+>
+> **Fronteira Humana: ABERTA NO RECORTE AUTORIZADO DO 2.C** — um único
+> `EXECUTE` de `decidir_proposta` com gate interno por alvo; `anon`, `PUBLIC`,
+> policies e grants de tabela permanecem fechados; **o recorte não se amplia sem
+> nova lavratura**.
+>
+> **Pendências: apenas não bloqueantes** — F-2.3-1 · F-2.4-1 · F-2.6-1 · F-2.C-1,
+> e a baixa recognitiva dos F-REC pelo Certificador (paralela).
+> **H-T-01 aprovada (Opção C — guarda de regime)** como **missão futura
+> separada**: não bloqueia o fechamento, não bloqueia a primeira regra material,
+> não reabre pacote certificado; a lista nominal cresce **só por lavratura**, e
+> as quatro higienes serão **consumidas por ela, nunca apagadas**.
+>
+> **Operação/observação: APTA CONDICIONALMENTE** — a condição única é a
+> **primeira regra material `VIGENTE`**, lavrada pela **Autoridade de Método
+> (DT-01)** pelo ciclo da ADR-069, seguida do **primeiro ato real**. **Não há
+> bloqueio material de engenharia restante.**
+>
+> *(Registro histórico — a abertura formal da onda, lavrada no mesmo dia:)*
+>
 > ### ONDA 2 FORMALMENTE ABERTA — 2026-08-08
 >
 > Entrada autorizada pelo **Guardião** (condicionada apenas às lavraturas, todas

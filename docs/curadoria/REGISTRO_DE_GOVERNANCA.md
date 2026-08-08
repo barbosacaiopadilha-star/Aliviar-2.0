@@ -89,14 +89,17 @@ impede que ela vire o normal.
 | Fato | Situação | Evidência |
 |---|---|---|
 | **Onda 0** | Fechada na prática: DP-1 ratificada (PA-1) · DP-2 **fechada** (2026-08-08) · DP-3 resolvida · DP-4 fechada (DT-01) · documentos versionados | este registro §4; mapa |
-| **Onda 1** | **FORMALMENTE ENCERRADA (2026-08-08)** — 12 itens implementados e encerrados; 1.2 **carregado para a Onda 2** | dossiê `ddadcd7`; decisão do Guardião; mapa §2 |
-| **Onda 2** | **FORMALMENTE ABERTA (2026-08-08)** — 2.1 e bloco 2.2 já executados por autorização caso a caso; 2.3/2.4 elegíveis para pré-voo; 2.6 em releitura carregando o 1.2; **2.5 proibido (DP-5)**; **2.C bloqueado** | mapa §3 |
+| **Onda 1** | **FORMALMENTE ENCERRADA (2026-08-08)** — 12 itens encerrados; o **1.2** foi carregado e depois **encerrado por absorção autorizada no 2.6** (PA-14). **Sem pendência material ou formal bloqueante**: 1.5 e 1.7 encerrados (Atos 3 e 4 do ciclo); F-REC-1..3 resolvidos — a baixa recognitiva pelo Certificador é **paralela e não bloqueante** | dossiê `ddadcd7`; ciclo `66717ab`/`9afaead`; decisão do Guardião |
+| **Onda 2** | **FORMALMENTE ENCERRADA (2026-08-08)** — 2.1 · série 2.2 · 2.3 · 2.4 · 2.6 · 2.C **todos encerrados**; **2.5 PROIBIDO POR ADR** enquanto DP-5 estiver aberta. **Pacote funcional obrigatório restante: NENHUM.** Veredito do Guardião: `ONDAS 1 E 2 — ENCERRAMENTO COM PENDÊNCIAS NÃO BLOQUEANTES` | dossiê [`DOSSIE_DE_FECHAMENTO_ONDAS_1_E_2.md`](DOSSIE_DE_FECHAMENTO_ONDAS_1_E_2.md) (`34132aa`); mapa §3 |
 | ADRs da 2.0 | **ADR-066/067/068/069 lavradas**; ADR-C retirada; ADR-E recomendada (DP-2 já fechada sem ela) | `DECISIONS.md` |
 | Contratos | 1.8-R1 cumprido · 1.11 e 1.12 aprovados e encerrados · 1.A aprovado e encerrado | índice 16d–16g |
-| Camada de Derivação | estrutura inerte completa: propostas, regras, ciclo de vida, ponte, atos de decisão — **zero regra real, zero proposta real, zero grant operacional** | migrations `20260805..20260808` |
-| **Fronteira Humana** | **FECHADA** — grants da capability decisora = zero; O2-A/B pertencem ao pacote futuro de abertura | Contrato 1.12 §20 |
+| Camada de Derivação | estrutura completa: propostas, regras, ciclo de vida, ponte, atos de decisão, juízo humano. **Um único `EXECUTE` operacional — na decisora** (2.C). **Nenhum grant de tabela** na camada de derivação/juízo · **nenhuma policy nova** · **zero regra material real** · **zero proposta real** — os emissores (Case e profissional) permanecem **vazio-honestos**, devolvendo `SEM_REGRA_VIGENTE` enquanto nenhuma regra `VIGENTE` existir | migrations `20260805..20260808`; PA-17 |
+| **Fronteira Humana** | **ABERTA NO RECORTE AUTORIZADO DO 2.C (2026-08-08)** — **um único `EXECUTE` de `decidir_proposta` a `authenticated`**, com **gate interno por alvo** (Curador do Case · `administrador` no profissional). **Fechados**: `anon` · `PUBLIC` · `service_role` sem autoria humana · **zero policy nova** · **zero grant de tabela** · nenhuma abertura lateral. **O recorte não é ampliável sem nova lavratura** | Contrato 2.C §8; PA-17 |
 | Dez condições do §15.0 | **10/10 satisfeitas e testadas** | dossiê §12 |
-| R-1 / CD-1 | preservado: **nenhum valor da ponte estabiliza antes de Cases reais** | Arquitetura §16 |
+| **R-1** | **INSTRUMENTADA E MITIGADA, NÃO RESOLVIDA.** A observação **ainda não começou** — começa no **primeiro ato operacional real**. **Discordância zero sustentada é ALARME**, não sucesso. **Nenhum threshold novo criado** | Arquitetura §16; Contrato 2.C §12 |
+| **CD-1** | **bloqueia estabilizar ou inventar valores da ponte**; **não** bloqueia a infraestrutura, **não** bloqueia regra profissional legítima, **não** bloqueia a observação futura. **O lado Case continua vazio por construção** | Arquitetura; Contrato 2.C §8/§12 |
+| **H-T-01** | **APROVADA — OPÇÃO C (guarda de regime)**, em **missão separada**: enumeração nominal das migrations de cada regime protegido; migration nova que toque o regime sem estar lavrada **derruba**. **Não bloqueia** o fechamento das Ondas nem a primeira regra material; **não reabre** pacote certificado; a lista **cresce só por lavratura**. F-2.3-1/F-2.4-1/F-2.6-1/F-2.C-1 seguem **não bloqueantes até a guarda existir — e então são consumidas por ela, não apagadas** | dossiê §6; decisão do Guardião |
+| Certificação global | **não existe rito separado** — o fechamento **por onda** é suficiente no processo vigente | conclusão do Guardião |
 | Rede real | **Inexistente** | Congelamento §7.2 |
 | Janela de publicação | **Inexistente** | Congelamento §7.1 |
 
