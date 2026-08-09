@@ -166,10 +166,10 @@ validação. O Curador contextualiza editando.
 │  Modelos de redação — nenhum é uma conclusão.        │
 │  Escolha, edite ou ignore.                           │
 │                                                      │
-│  Elementos suficientes      "…"     [ Usar este ]   │
-│  Elementos parciais         "…"     [ Usar este ]   │
-│  Informação insuficiente    "…"     [ Usar este ]   │
-│  Com ressalva               "…"     [ Usar este ]   │
+│  Elementos suficientes      "…"     [ Usar este texto ]   │
+│  Elementos parciais         "…"     [ Usar este texto ]   │
+│  Informação insuficiente    "…"     [ Usar este texto ]   │
+│  Com ressalva               "…"     [ Usar este texto ]   │
 │                                            [ ✕ ]     │
 │                                                      │
 │  Motivo (opcional — nunca exigido)                   │
@@ -182,7 +182,7 @@ validação. O Curador contextualiza editando.
 | textarea | **vazio**, sem `defaultValue`, sem carry-forward — **G-2.3-5 preservada** |
 | botão | **abaixo** do campo: escrever do zero é o padrão |
 | abrir a lista | **não altera** o textarea |
-| `Usar este` | copia para o textarea; **100% editável**, nenhuma parte travada |
+| `Usar este texto` | copia para o textarea; **100% editável**, nenhuma parte travada |
 | sobrescrita | se já houver texto, **confirmação** — mantém o `window.confirm` de `a365c4e`, suficiente nesta versão; **nenhum redesign de modal** |
 | `✕` | fecha a lista; não toca o textarea |
 | **não há** | estado de carregamento · `Gerar outras` · mensagem de erro · timeout |
@@ -267,7 +267,7 @@ um dia fizer sentido, é missão separada.**
 
 | Peça | Ajuste |
 |---|---|
-| bloco de alternativas, seleção, `Usar esta` | manter — renomear para `Usar este` |
+| bloco de alternativas, seleção, `Usar esta` | manter — renomear para **`Usar este texto`** (§17.1) |
 | confirmação de sobrescrita (`window.confirm`) | **manter como está** |
 | botão abaixo do campo, nada pré-selecionado, `✕` | manter |
 | estado de carregamento · `Gerar outras` · desfechos de erro · limite de 3 gerações | **remover** — perderam objeto |
@@ -302,7 +302,7 @@ impossibilidade estrutural** — e isso é o ganho:
 | 3 | todos os 24 textos | **≤ 280 caracteres** |
 | 4 | textarea | inicia vazio |
 | 5 | abrir a lista | não altera o textarea |
-| 6 | `Usar este` | copia corretamente |
+| 6 | `Usar este texto` | copia corretamente |
 | 7 | após usar | totalmente editável |
 | 8 | escrever do zero | funciona |
 | 9 | sobrescrita | exige confirmação |
@@ -360,3 +360,119 @@ nova.
 >
 > **G-2.3-5 preservada:** campo vazio, nada entra sem ato do Curador, autoria
 > exclusivamente humana. **CD-1 e R-1 intocadas.**
+
+---
+
+## 17. Emendas B-1 e B-2 (2026-08-09)
+
+**Origem:** DT-01, sobre o parecer `APROVADO COM RESSALVAS` do `04 VERIFICADOR`,
+base implementada `71028fb`. **Os 24 textos não são reabertos** — foram
+verificados byte a byte e permanecem intocados.
+
+### 17.1 B-1 — o rótulo · **FECHADA**
+
+| | |
+|---|---|
+| implementado | **`Usar este texto`** |
+| contrato (v1.0) | `Usar este` |
+| **canônico a partir de agora** | **`Usar este texto`** |
+
+**O código estava certo, o contrato é que se ajusta.** `Usar este texto` diz ao
+Curador exatamente o que o botão faz — copia **aquele texto** para o campo —,
+enquanto `Usar este` deixa o objeto implícito. **Não se altera código por
+aderência a uma copy menos clara.**
+
+Todas as ocorrências normativas do contrato foram atualizadas (§7, §12, §13);
+nenhuma outra ocorrência existe nos documentos da 2.0. **Sem substituição cega.**
+
+### 17.2 B-2 — endurecimento da guarda de natureza · **AUTORIZADO (Opção A)**
+
+**O que a ressalva acertou.** A guarda vigente foi escrita por **significado**,
+e por isso não dá falso positivo em *"registra vínculos e instituições"* — que é
+justamente a guarda do Histórico. Isso está correto e **não muda**. Mas ela
+cobre poucas famílias, e **uma edição futura** poderia introduzir termo
+relacional em texto técnico, ou de mérito em texto relacional, sem que nada
+caísse.
+
+**Opção A, com o limite que o §7 impôs:** léxico **pequeno e dirigido**, por
+**família semântica**, sem lista infinita e **sem reintroduzir o falso positivo
+de `vínculo institucional`**.
+
+#### Acrescentar a `LEXICO_RELACIONAL` — duas entradas
+
+```js
+/\b(vinculos?|relacao|relacoes)\s+(terapeutic|afetiv|humaniz|de\s+confianca|de\s+cuidado|de\s+proximidade)\w*/,
+/\bdisponibilidade\s+emocional\b/,
+```
+
+> **Por que o qualificador, e não `\bvinculo\b`.** O padrão exige que `vínculo`
+> ou `relação` venha **seguido de um qualificador relacional**. Em *"vínculos
+> **e** instituições"* o que segue é `e`; em *"vínculo **institucional**"*, um
+> termo fora da lista. **Nenhum dos dois casa** — que é exatamente a precisão
+> que o §7 mandou preservar.
+
+#### Acrescentar a `LEXICO_DE_MERITO` — sete entradas
+
+```js
+/\bexperient\w*\b/,
+/\b(mais|maior)\s+experienc\w*\b/,
+/\brenomad\w*\b/,
+/\bexcelenci\w*\b/,
+/\bsuperior\w*\b/,
+/\bpreparo\s+tecnic\w*\b/,
+/\bdomin\w*\s+(a\s+)?tecnic\w*\b/,
+```
+
+> **`experient\w*` pega `experiente`, e não pega `experiência`.** Depois de
+> `experien` vem `t` no adjetivo e `c` no substantivo. O **adjetivo de mérito**
+> é bloqueado; o **substantivo descritivo** — *"a experiência da pessoa na
+> consulta"*, legítima num texto relacional — permanece livre. A forma
+> comparativa é coberta à parte por `(mais|maior)\s+experienc`.
+>
+> **`especialista` continua livre.** Só `renomado` é bloqueado — a missão pediu
+> *"especialista **como juízo de superioridade**"*, e encaminhar a um
+> especialista é conduta descritiva legítima.
+
+#### Verificação executada nesta missão
+
+Os nove padrões foram rodados contra as 24 constantes reais e contra dois
+conjuntos de contraprova:
+
+| Conjunto | Resultado |
+|---|---|
+| **24 textos atuais** | **zero falso positivo** — nenhuma alteração de texto será necessária |
+| **13 casos da ressalva** (vínculo terapêutico/afetivo/de confiança, relação de cuidado, disponibilidade emocional; mais experiente, maior experiência, renomado, especialista renomado, domina a técnica, preparo técnico, superior tecnicamente, excelência técnica) | **13/13 pegos** |
+| **9 usos legítimos do §9** (vínculos e instituições · vínculo institucional · vínculo com a instituição · trajetória institucional · instituição de formação · experiência descritiva · experiência da pessoa na consulta · encaminha a um especialista · conduta declarada) | **9/9 livres** |
+
+**A engenharia não precisa descobrir a redação dos padrões nem validá-los do
+zero** — só transcrevê-los e reproduzir as contraprovas como casos de teste.
+
+### 17.3 Natureza da guarda — lavrada
+
+> A guarda de natureza é **proteção contra regressão editorial**, não
+> interpretador semântico. Ela existe para que uma edição futura dos 24 textos
+> não atravesse a fronteira técnico↔relacional sem alguém perceber.
+>
+> **A autoridade sobre o conteúdo dos textos continua sendo este contrato**, e a
+> revisão humana em Git continua sendo a defesa principal. Ampliar o léxico
+> indefinidamente seria confundir as duas coisas.
+
+### 17.4 Escopo desta emenda
+
+**Delta de código previsto:** duas listas de regex no arquivo de testes, mais os
+casos de contraprova. **Nenhuma alteração** em `modelos-de-redacao.ts`, nos 24
+textos, na UI, no rótulo implementado, em banco ou em migration.
+
+**CRLF:** observação ambiental, alheia a este pacote — permanece em backlog
+técnico separado, **não** tratada aqui.
+
+### 17.5 Estado das ressalvas
+
+| Ressalva | Estado |
+|---|---|
+| **B-1** — rótulo | 🟢 **FECHADA** — contrato alinhado ao código |
+| **B-2** — guarda permissiva | 🟢 **ENDURECIMENTO AUTORIZADO** — nove padrões especificados e validados |
+
+> ### B-1 FECHADA · B-2 ENDURECIMENTO AUTORIZADO
+>
+> **24 textos intocados. Migration zero. Nenhuma ADR.**
