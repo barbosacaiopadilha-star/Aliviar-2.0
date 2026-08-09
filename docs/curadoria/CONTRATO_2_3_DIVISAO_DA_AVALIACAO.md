@@ -228,7 +228,7 @@ item, Fronteira. **2.C permanece `BLOQUEADO`; Fronteira `FECHADA`.**
 | **G-2.3-2** | destino único — nenhum juízo fora de `curator_judgments` (G-2.4-9 operacional) | nasce tabela/cache/rascunho persistente paralelo |
 | **G-2.3-3** | autoria por sessão — as capabilities não têm parâmetro de autor | `actor_id` aparece em assinatura/payload |
 | **G-2.3-4** | gate-first — `SEM_AUTORIDADE` antes de qualquer dado | capability consulta dados antes do gate |
-| **G-2.3-5** | sem pré-julgamento — campo de conclusão nasce vazio; zero minuta/sugestão/carry-forward | UI inicializa conclusão com texto (inclusive a anterior pós-JS3) |
+| **G-2.3-5** | sem pré-julgamento — campo de conclusão nasce vazio; **zero minuta automática, zero pré-preenchimento, zero carry-forward** (emendada em 2026-08-09 — **§22**) | UI inicializa conclusão com texto (inclusive a anterior pós-JS3) |
 | **G-2.3-6** | o árbitro é o banco — o writer traduz constraints, não as reimplementa como autoridade | writer decide concorrência por `SELECT→INSERT` sem aceitar a constraint |
 | **G-2.3-7** | flag de rollback restaura 6×N sem perda — `criterion_declarations` intactas | dado histórico da avaliação antiga apagado/reescrito |
 | **G-2.3-8** | 2.C fechado — nenhum grant externo/superfície pública nasce | qualquer abertura citando o 2.3 |
@@ -309,3 +309,71 @@ preservados integralmente: `SECURITY DEFINER` · gate-first · `auth.uid()` ·
 **sem policy direta** · banco como árbitro · **zero bypass por parâmetro**.
 Precedentes: `acknowledge_case_need` · `nome_do_curador_do_caso`. **Esta nota
 não abre nada além do writer contratado.**
+
+## 22. Emenda da G-2.3-5 (2026-08-09) — sugestão de redação × pré-preenchimento
+
+**Origem:** DT-01, ao ativar a assistência de redação por IA no Juízo do Curador
+([`CONTRATO_ASSISTENCIA_DE_REDACAO_IA.md`](CONTRATO_ASSISTENCIA_DE_REDACAO_IA.md)).
+
+**O conflito, e seu tamanho exato.** A redação original dizia *"zero
+minuta/**sugestão**/carry-forward"*. A palavra **sugestão** foi escrita para
+proibir *minuta apresentada como juízo* — e, lida ao pé da letra, passou a
+alcançar também uma alternativa de redação que o próprio Curador pede, que
+aparece fora do campo oficial e que ele pode ignorar. **São coisas diferentes**,
+e a guarda sempre quis proibir só a primeira.
+
+> **Nota de escopo:** o [`REGISTRO_DAS_GUARDAS_2_0.md`](REGISTRO_DAS_GUARDAS_2_0.md)
+> já dizia *"zero minuta/carry-forward"*, **sem** a palavra `sugestão`. O
+> conflito textual existia **apenas aqui**. Esta emenda alinha os dois sem
+> alterar o que qualquer um deles protegia.
+
+### 22.1 A distinção normativa
+
+| **PROIBIDO** — o que a guarda sempre protegeu |
+|---|
+| minuta automática apresentada como juízo |
+| **pré-preenchimento** do campo de conclusão, por qualquer origem |
+| **carry-forward** de conclusão anterior, inclusive pós-JS3 |
+| reaproveitamento automático de juízo |
+| sugestão que decide **mérito, estado ou conclusão** |
+
+| **PERMITIDO** — e sempre esteve fora do alcance da guarda |
+|---|
+| alternativas de **redação** solicitadas **explicitamente** pelo Curador |
+| alternativas exibidas **fora** do campo oficial, sem pré-seleção |
+| inserção no campo **somente após ação humana** |
+| edição livre depois da inserção, sem trecho travado |
+| autoria final **exclusivamente humana** |
+
+### 22.2 O critério que separa
+
+> **Quem inicia, e onde aparece.** Se o texto entra no campo **sem** ato do
+> Curador, é pré-preenchimento — **proibido**. Se ele **pede**, vê **fora** do
+> campo, e só entra quando **ele** manda, é assistência de redação — **permitida**.
+>
+> **A guarda nunca mediu a origem do texto; mediu a passividade do Curador.**
+
+### 22.3 O que **não** muda
+
+**A guarda executável permanece idêntica.** Ela protege: campo nasce vazio · sem
+`defaultValue` · sem `.conclusao` prévia · sem carry-forward pós-JS3. **Nenhuma
+linha de código é alterada por esta emenda** — a assistência verificada não
+executa nenhum dos cinco atos proibidos, e a mutação de falseabilidade
+(*"UI inicializa conclusão com texto"*) continua derrubando a guarda como antes.
+
+**Esta é uma emenda de redação normativa, não de proteção.**
+
+### 22.4 O §5 desta mesma norma — conferido, e **não** conflita
+
+O §5 (*"Ergonomia sem pré-julgamento, lavrada"*) proíbe quatro atos. Conferidos
+um a um contra a assistência verificada:
+
+| Proibição do §5 | A assistência faz? |
+|---|---|
+| iniciar o campo de conclusão com texto | **não** — o campo nasce e permanece vazio até `Usar` |
+| oferecer **"aceitar"** | **não** — o rótulo é `Usar`, e o que ele faz é **copiar para edição**, não aceitar um juízo |
+| **ordenar conclusões candidatas** | **não** — as três não são conclusões nem estão ranqueadas: são **registros de linguagem** (Objetiva/Cautelosa/Explicativa), lado a lado, sem preferida |
+| transformar a sinalização de aguardo em minuta | **não** — a assistência só existe por clique, e nunca é acionada pela sinalização |
+
+**§5 permanece íntegro e sem emenda.** Registrado aqui para que a conferência
+não precise ser refeita.

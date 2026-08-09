@@ -158,7 +158,7 @@ efetiva. **F-2.4-1 permanece vigente e não é absorvida por esta.**
 | **G-2.3-2** | destino único — nenhum juízo fora de `curator_judgments` | tabela/cache/rascunho persistente paralelo |
 | **G-2.3-3** | autoria por sessão — capabilities sem parâmetro de autor | `actor_id` em assinatura/payload |
 | **G-2.3-4** | gate-first (`is_curator_for_case`) — e, na retirada, **RS-2.3-1**: ator = autor da versão vigente | dado antes do gate · não-autor retira ato alheio |
-| **G-2.3-5** | sem pré-julgamento — conclusão nasce vazia; zero minuta/carry-forward (inclusive pós-JS3) | UI inicializa conclusão |
+| **G-2.3-5** | sem pré-julgamento — conclusão nasce vazia; zero minuta automática/pré-preenchimento/carry-forward (inclusive pós-JS3) — **emendada 2026-08-09**, ver [`CONTRATO_2_3`](CONTRATO_2_3_DIVISAO_DA_AVALIACAO.md) §22: alternativa de **redação** pedida pelo Curador, exibida fora do campo e inserida só por ato dele, **não** é pré-preenchimento | UI inicializa conclusão |
 | **G-2.3-6** | o árbitro é o banco do 2.4 | writer decide concorrência por `SELECT→INSERT` |
 | **G-2.3-7** | flag restaura 6×N sem perda — `criterion_declarations` intactas (O-1: sem backfill) | dado legado apagado/reescrito |
 | **G-2.3-8** | 2.C fechado — nenhum grant externo/superfície pública | abertura citando o 2.3 |
