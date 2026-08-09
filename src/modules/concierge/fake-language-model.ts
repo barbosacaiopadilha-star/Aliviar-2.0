@@ -15,11 +15,6 @@ import type { Narrative } from "@/modules/ace/artifacts/narrative";
 import type { DecisionCase } from "@/modules/ace/artifacts/decision-case";
 import type { DecisionContext, DecisionType } from "@/modules/ace/artifacts/decision-context";
 import type { HumanReviewResult } from "@/modules/ace/artifacts/human-review-result";
-import {
-  USO_DA_ASSISTENCIA,
-  type ContextoDeRedacao,
-  type Sugestoes,
-} from "@/modules/curadoria/assistencia-de-redacao";
 
 import type { AceLanguageModel, AceLanguageModelRequest, AceLanguageModelResponse } from "./language-model";
 
@@ -122,43 +117,6 @@ function deriveP010Presentation(
   };
 }
 
-/**
- * Assistência de redação (CONTRATO_ASSISTENCIA_DE_REDACAO_IA) — o fake
- * mantém a honestidade conservadora do restante do módulo: nunca afirma
- * conduta que não está no contexto, nunca determina estado, e sem evidência
- * corrente só formula INSUFICIÊNCIA (§5, P-04). Respeita a regra de natureza
- * (§1.2) e o limite de 280 — as três alternativas passam pela mesma
- * validação do domínio que a resposta real.
- */
-function deriveSugestoesDeRedacao(contexto: ContextoDeRedacao): Sugestoes {
-  const alvo = contexto.rotulo;
-
-  if (!contexto.temEvidenciaCorrente) {
-    return {
-      objetiva: `Não há elementos suficientes disponíveis sobre ${alvo} para uma conclusão mais específica neste momento.`,
-      cautelosa: `A documentação disponível não permite firmar conclusão sobre ${alvo}. A lacuna fica registrada como tal.`,
-      explicativa: `Sobre ${alvo}, não há registro corrente que sustente uma conclusão. Registro a insuficiência, sem inferir nada além dela.`,
-    };
-  }
-
-  const quantas = contexto.evidencias.length;
-  const plural = quantas === 1 ? "registro corrente" : "registros correntes";
-
-  if (contexto.natureza === "TECNICO") {
-    return {
-      objetiva: `Há ${quantas} ${plural} sobre ${alvo}. A conclusão aponta o que foi documentado, sem acrescentar interpretação.`,
-      cautelosa: `Sobre ${alvo}, há ${quantas} ${plural}; o alcance do que foi documentado é limitado e a leitura permanece parcial.`,
-      explicativa: `A leitura de ${alvo} apoia-se em ${quantas} ${plural}. Descrevo o que consta e distingo o documentado do que segue em aberto.`,
-    };
-  }
-
-  return {
-    objetiva: `Há ${quantas} ${plural} sobre a conduta declarada em ${alvo}.`,
-    cautelosa: `A conduta declarada em ${alvo} aparece em ${quantas} ${plural}; o que foi declarado não esgota o que ocorre na prática.`,
-    explicativa: `Sobre ${alvo}, a conduta declarada consta em ${quantas} ${plural}. Descrevo o que foi declarado, sem extrapolar para além disso.`,
-  };
-}
-
 export class FakeAceLanguageModel implements AceLanguageModel {
   async run<TInput, TOutput>(
     request: AceLanguageModelRequest<TInput>,
@@ -167,13 +125,6 @@ export class FakeAceLanguageModel implements AceLanguageModel {
 
     try {
       let output: unknown;
-
-      if (request.usageId === USO_DA_ASSISTENCIA) {
-        return {
-          output: deriveSugestoesDeRedacao(request.input as ContextoDeRedacao) as TOutput,
-          metadata: { modelId: FAKE_MODEL_ID, executedAt, status: "ok" },
-        };
-      }
 
       switch (request.protocolId) {
         case "P002": {

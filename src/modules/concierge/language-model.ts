@@ -12,22 +12,12 @@
 
 import type { ProtocolId } from "@/modules/ace/core/protocol-id";
 
-// `protocolId`/`protocolVersion` são OPCIONAIS desde a assistência de
-// redação da Curadoria (CONTRATO_ASSISTENCIA_DE_REDACAO_IA §11, opção 1):
-// nem todo chamador desta porta é um protocolo do ACE. Quem não é protocolo
-// identifica-se por `usageId`. O ACE continua passando os dois — nada muda
-// para ele. Alargamento deliberadamente mínimo: nenhum segundo mecanismo de
-// fornecedor, nenhuma nova detecção de produção, nenhum fallback próprio.
 export type AceLanguageModelRequest<TInput = unknown> = {
-  protocolId?: ProtocolId;
-  protocolVersion?: string;
-  /** Identifica um chamador que não é protocolo do ACE. */
-  usageId?: string;
+  protocolId: ProtocolId;
+  protocolVersion: string;
   prompt: string;
   input: TInput;
   context?: Record<string, unknown>;
-  /** Teto de espera desta chamada. Sem valor, vale o padrão do fornecedor. */
-  timeoutMs?: number;
 };
 
 export type AceLanguageModelErrorInfo = {

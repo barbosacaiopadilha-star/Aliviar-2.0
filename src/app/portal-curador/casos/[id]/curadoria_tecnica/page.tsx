@@ -20,7 +20,6 @@ import {
 } from "@/components/curadoria/mesa/mesa-vazios";
 import { PainelAtencao } from "@/components/curadoria/mesa/painel-atencao";
 import { PainelDeJuizo, type ConceitoDeJuizo } from "@/components/curadoria/mesa/painel-de-juizo";
-import { assistenciaDeRedacaoDisponivel } from "@/modules/curadoria/assistencia-de-redacao-actions";
 import { RedeFiltravel } from "@/components/curadoria/mesa/rede-filtravel";
 import { MesaContextPanel } from "@/components/curadoria/mesa-context-panel";
 import { MesaEvidenciasPanel } from "@/components/curadoria/mesa-evidencias-panel";
@@ -187,10 +186,6 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
   // Item 2.3 — a divisão da AVALIAÇÃO: o juízo humano por profissional
   // elegível, lido pela capability (gate-first) e derivado pelo módulo puro.
   const regime = regimeDaAvaliacao(process.env.AVALIACAO_LEGADO_6XN);
-  // Assistência de redação: decisão do SERVIDOR (regime + fornecedor
-  // configurado). Fechada por omissão — enquanto o gate documental de
-  // privacidade da ADR-056 estiver aberto, o botão não é exibido.
-  const assistenciaDisponivel = await assistenciaDeRedacaoDisponivel();
   const juizoPorProfissional = await Promise.all(
     idsElegiveis.map(async (professionalProfileId) => {
       const julgamentos = await loadJulgamentosDaAvaliacao(
@@ -438,7 +433,6 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
         <EligibilityPanel view={view} />
         {regime === "JUIZO" ? (
           <PainelDeJuizo
-            assistenciaDisponivel={assistenciaDisponivel}
             caseId={record.caseId}
             profissionais={juizoPorProfissional.map(
               ({ professionalProfileId, julgamentos, declarados }) => {

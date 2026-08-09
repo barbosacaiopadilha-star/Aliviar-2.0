@@ -9,11 +9,10 @@ import {
   type DesfechoDoJulgamento,
 } from "@/modules/curadoria/julgamento-actions";
 import type { JulgamentoLido, LacunaDeJuizo } from "@/modules/curadoria/julgamentos";
-import { sugerirRedacaoAction } from "@/modules/curadoria/assistencia-de-redacao-actions";
 import {
-  ROTULOS_DAS_ALTERNATIVAS,
-  type Sugestoes,
-} from "@/modules/curadoria/assistencia-de-redacao";
+  TITULO_DA_SITUACAO,
+  modelosDoConceito,
+} from "@/modules/curadoria/modelos-de-redacao";
 
 /**
  * O PAINEL DE JUÍZO da etapa AVALIAÇÃO (Item 2.3 §13/§16) — a menor
@@ -22,10 +21,16 @@ import {
  * O que ele mostra: as evidências (por referência), o aguardo NOMEADO, o
  * vigente com sua atualidade, o histórico. O que ele recebe: a decisão
  * EXPLÍCITA do Curador — conclusão digitada num campo que NASCE VAZIO,
- * sempre, inclusive na revisão pós-JS3 (G-2.3-5: zero minuta, zero sugestão,
- * zero carry-forward; copiar a conclusão anterior é decisão humana de
- * digitar de novo). Texto em edição morre no cliente — não é julgamento,
- * não persiste, não é segunda origem (ADR-067 §13b).
+ * sempre, inclusive na revisão pós-JS3 (G-2.3-5: zero minuta automática,
+ * zero pré-preenchimento, zero carry-forward; copiar a conclusão anterior é
+ * decisão humana de digitar de novo). Texto em edição morre no cliente — não
+ * é julgamento, não persiste, não é segunda origem (ADR-067 §13b).
+ *
+ * A biblioteca de modelos de redação (CONTRATO_BIBLIOTECA_DE_REDACAO) não
+ * abre exceção nenhuma a isso: os textos vivem FORA do campo, abrir a lista
+ * não o toca, e nada entra sem o ato do Curador — que é exatamente o recorte
+ * da G-2.3-5 emendada em 2026-08-09. São constantes do build: nenhuma rede,
+ * nenhum fornecedor, nenhum dado sai da Aliviar.
  */
 
 export type EvidenciaCorrente = {
@@ -65,82 +70,42 @@ const DESFECHO_LEGIVEL: Record<DesfechoDoJulgamento["desfecho"], string> = {
   ERRO_TECNICO: "Não foi possível concluir o ato agora.",
 };
 
-/** Teto de gerações por cartão, por sessão (contrato §2) — evita a busca
- *  da "frase perfeita", que é ancoragem por outro caminho. */
-const MAXIMO_DE_GERACOES = 3;
-
-const FALHA_DA_SUGESTAO: Record<string, string> = {
-  ASSISTENCIA_INDISPONIVEL: "A assistência de redação não está disponível agora.",
-  SEM_AUTORIDADE: "Você não tem autoridade para pedir sugestões neste Case.",
-  CONCEITO_FORA_DO_ESCOPO: "Este conceito não recebe assistência de redação.",
-  SAIDA_RECUSADA: "A sugestão não passou na verificação e não será exibida.",
-  ERRO_TECNICO: "Não foi possível gerar sugestões agora.",
-};
-
 function FormularioDeJuizo({
   caseId,
   professionalProfileId,
   conceito,
-  assistenciaDisponivel,
 }: {
   caseId: string;
   professionalProfileId: string;
   conceito: ConceitoDeJuizo;
-  assistenciaDisponivel: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   // O campo nasce vazio SEMPRE — o estado inicial não olha para nenhuma
   // conclusão anterior (G-2.3-5). A key por versão-base derruba qualquer
-  // resquício local quando a cadeia avança. A assistência de redação NÃO
-  // muda isso: nenhum texto aparece aqui sem um clique explícito do Curador
-  // em "Usar esta" (contrato §2).
+  // resquício local quando a cadeia avança. Os modelos de redação NÃO
+  // mudam isso: abrir a lista não toca no campo, e nenhum texto entra sem
+  // um clique explícito do Curador em "Usar este".
   const [conclusao, setConclusao] = useState("");
   const [motivo, setMotivo] = useState("");
   const [selecionadas, setSelecionadas] = useState<Record<string, boolean>>({});
   const [resultado, setResultado] = useState<string | null>(null);
-  // As alternativas vivem só aqui, na memória desta sessão do navegador:
-  // não são persistidas, não são logadas, não viram julgamento (§8).
-  const [sugestoes, setSugestoes] = useState<Sugestoes | null>(null);
-  const [gerando, setGerando] = useState(false);
-  const [falhaDaSugestao, setFalhaDaSugestao] = useState<string | null>(null);
-  const [geracoes, setGeracoes] = useState(0);
+  // Abrir/fechar a lista é estado puramente local. Não há geração, não há
+  // espera, não há falha: os textos são constantes do build.
+  const [modelosAbertos, setModelosAbertos] = useState(false);
 
-  const pedirSugestoes = async () => {
-    // Estado próprio: o cartão inteiro não congela, e um segundo clique
-    // durante a geração não dispara requisição concorrente (§30).
-    if (gerando || geracoes >= MAXIMO_DE_GERACOES) return;
-    setGerando(true);
-    setFalhaDaSugestao(null);
-    try {
-      const desfecho = await sugerirRedacaoAction({
-        caseId,
-        professionalProfileId,
-        subcriterionCode: conceito.code,
-      });
-      if (desfecho.desfecho === "SUGESTOES_GERADAS") {
-        setSugestoes(desfecho.sugestoes);
-        setGeracoes((atual) => atual + 1);
-      } else {
-        setSugestoes(null);
-        setFalhaDaSugestao(FALHA_DA_SUGESTAO[desfecho.desfecho] ?? FALHA_DA_SUGESTAO.ERRO_TECNICO);
-      }
-    } catch {
-      setSugestoes(null);
-      setFalhaDaSugestao(FALHA_DA_SUGESTAO.ERRO_TECNICO);
-    } finally {
-      setGerando(false);
-    }
-  };
+  // A biblioteca do cartão — escolhida SÓ pelo conceito. Nenhum Case,
+  // profissional, evidência ou paciente participa desta decisão.
+  const modelos = modelosDoConceito(conceito.code);
 
   // O texto vai para o campo SÓ por este caminho, e a partir daí é texto
-  // comum: totalmente editável, sem trecho travado, sem vínculo com a
-  // alternativa. Se já houver trabalho do Curador no campo, ele confirma
-  // antes — o que ele escreveu nunca some por clique acidental (§2).
-  const usarAlternativa = (texto: string) => {
+  // comum: totalmente editável, sem trecho travado, sem vínculo com o
+  // modelo. Se já houver trabalho do Curador no campo, ele confirma antes —
+  // o que ele escreveu nunca some por clique acidental.
+  const usarModelo = (texto: string) => {
     if (conclusao.trim().length > 0) {
       const segue = window.confirm(
-        "Substituir o que você já escreveu por esta sugestão?",
+        "Substituir o que você já escreveu por este modelo?",
       );
       if (!segue) return;
     }
@@ -209,67 +174,52 @@ function FormularioDeJuizo({
         className="w-full rounded-md border border-edge bg-transparent p-2 text-sm"
         rows={3}
         maxLength={280}
-        placeholder="Escreva sua conclusão ou use uma sugestão de redação como ponto de partida."
+        placeholder="A sua conclusão — expressa, curta, sua."
         value={conclusao}
         onChange={(evento) => setConclusao(evento.target.value)}
       />
 
       {/* Escrever do zero é o PADRÃO, não a opção secundária: o botão fica
-          ABAIXO do campo, nunca acima, e o campo funciona sem ele. */}
-      {assistenciaDisponivel ? (
-        <div className="space-y-2" data-testid={`assistencia-${conceito.code}`}>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className="rounded-md border border-edge px-2 py-1 text-xs disabled:opacity-50"
-              disabled={gerando || geracoes >= MAXIMO_DE_GERACOES}
-              onClick={pedirSugestoes}
-            >
-              {gerando
-                ? "Gerando…"
-                : sugestoes
-                  ? "Gerar outras"
-                  : "✨ Sugerir redação"}
-            </button>
-            {falhaDaSugestao ? (
-              <span className="text-xs text-ink-muted" role="status">
-                {falhaDaSugestao}
-              </span>
-            ) : null}
-            {geracoes >= MAXIMO_DE_GERACOES ? (
-              <span className="text-xs text-ink-muted">
-                Limite de gerações deste cartão atingido.
-              </span>
-            ) : null}
-          </div>
+          ABAIXO do campo, nunca acima, e o campo funciona sem ele. Abrir a
+          lista é instantâneo — os textos são constantes do build. */}
+      {modelos.length > 0 ? (
+        <div className="space-y-2" data-testid={`modelos-${conceito.code}`}>
+          <button
+            type="button"
+            className="rounded-md border border-edge px-2 py-1 text-xs"
+            aria-expanded={modelosAbertos}
+            onClick={() => setModelosAbertos((aberto) => !aberto)}
+          >
+            Modelos de redação
+          </button>
 
-          {sugestoes ? (
+          {modelosAbertos ? (
             <div className="space-y-2 rounded-md border border-edge/60 p-2">
               <div className="flex items-baseline justify-between gap-2">
-                <p className="text-[11px] uppercase tracking-wide text-ink-muted">
-                  Sugestão de redação — nenhuma delas é juízo
+                <p className="text-[11px] text-ink-muted">
+                  Modelos de redação — nenhum é uma conclusão. Escolha, edite ou ignore.
                 </p>
                 <button
                   type="button"
-                  aria-label="Descartar sugestões"
+                  aria-label="Fechar modelos de redação"
                   className="text-xs text-ink-muted"
-                  onClick={() => setSugestoes(null)}
+                  onClick={() => setModelosAbertos(false)}
                 >
                   ✕
                 </button>
               </div>
-              {(["objetiva", "cautelosa", "explicativa"] as const).map((alternativa) => (
-                <div key={alternativa} className="space-y-1">
+              {modelos.map((modelo) => (
+                <div key={modelo.id} className="space-y-1">
                   <p className="text-[11px] font-medium text-ink-muted">
-                    {ROTULOS_DAS_ALTERNATIVAS[alternativa]}
+                    {TITULO_DA_SITUACAO[modelo.situacao]}
                   </p>
-                  <p className="text-xs">{sugestoes[alternativa]}</p>
+                  <p className="text-xs">{modelo.texto}</p>
                   <button
                     type="button"
                     className="rounded-md border border-edge px-2 py-0.5 text-[11px]"
-                    onClick={() => usarAlternativa(sugestoes[alternativa])}
+                    onClick={() => usarModelo(modelo.texto)}
                   >
-                    Usar esta
+                    Usar este texto
                   </button>
                 </div>
               ))}
@@ -305,12 +255,10 @@ function BlocoDoConceito({
   caseId,
   professionalProfileId,
   conceito,
-  assistenciaDisponivel,
 }: {
   caseId: string;
   professionalProfileId: string;
   conceito: ConceitoDeJuizo;
-  assistenciaDisponivel: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -364,7 +312,6 @@ function BlocoDoConceito({
             caseId={caseId}
             professionalProfileId={professionalProfileId}
             conceito={conceito}
-            assistenciaDisponivel={assistenciaDisponivel}
           />
         </>
       )}
@@ -388,7 +335,6 @@ function BlocoDoConceito({
 export function PainelDeJuizo({
   caseId,
   profissionais,
-  assistenciaDisponivel = false,
 }: {
   caseId: string;
   profissionais: {
@@ -396,11 +342,6 @@ export function PainelDeJuizo({
     nome: string;
     conceitos: ConceitoDeJuizo[];
   }[];
-  /**
-   * Decidido no SERVIDOR (regime + fornecedor configurado). Fechado por
-   * omissão: sem esta propriedade, a assistência não existe na tela.
-   */
-  assistenciaDisponivel?: boolean;
 }) {
   if (profissionais.length === 0) return null;
 
@@ -409,8 +350,8 @@ export function PainelDeJuizo({
       <header>
         <h3 className="text-base font-semibold">Juízo do Curador (H8–H11)</h3>
         <p className="text-xs text-ink-muted">
-          O Motor lê e sinaliza; a conclusão é sua — registrada, versionada e auditável. Nada aqui
-          é sugerido, pré-preenchido ou copiado.
+          O Motor lê e sinaliza; a conclusão é sua — registrada, versionada e auditável. Nada é
+          pré-preenchido ou copiado. Se quiser, comece de um modelo de redação e edite livremente.
         </p>
       </header>
       {profissionais.map((profissional) => (
@@ -423,7 +364,6 @@ export function PainelDeJuizo({
                 caseId={caseId}
                 professionalProfileId={profissional.professionalProfileId}
                 conceito={conceito}
-                assistenciaDisponivel={assistenciaDisponivel}
               />
             ))}
           </div>
