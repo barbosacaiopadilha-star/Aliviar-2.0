@@ -112,6 +112,11 @@ describe("§4 · regra de natureza — território conferido texto a texto", () 
     /\bempati\w*\b/,
     /\bvinculo\s+com\s+(a|o)\s+(pessoa|paciente)\b/,
     /\brelacao\s+com\s+(a|o)\s+(pessoa|paciente)\b/,
+    // B-2 (§17.2) — famílias relacionais inequívocas. O qualificador é
+    // OBRIGATÓRIO: em "vínculos **e** instituições" o que segue é `e`, e em
+    // "vínculo **institucional**" é termo fora da lista — nenhum casa.
+    /\b(vinculos?|relacao|relacoes)\s+(terapeutic|afetiv|humaniz|de\s+confianca|de\s+cuidado|de\s+proximidade)\w*/,
+    /\bdisponibilidade\s+emocional\b/,
   ];
 
   const LEXICO_DE_MERITO = [
@@ -121,7 +126,18 @@ describe("§4 · regra de natureza — território conferido texto a texto", () 
     /\btitulac\w*\b/,
     /\bcredenci\w*\b/,
     /\bformacao\b/,
+    // B-2 (§17.2) — famílias de mérito comparativo.
+    /\bexperient\w*\b/,
+    /\b(mais|maior)\s+experienc\w*\b/,
+    /\brenomad\w*\b/,
+    /\bexcelenci\w*\b/,
+    /\bsuperior\w*\b/,
+    /\bpreparo\s+tecnic\w*\b/,
+    /\bdomin\w*\s+(a\s+)?tecnic\w*\b/,
   ];
+
+  const bloqueia = (frase: string, lexico: readonly RegExp[]) =>
+    lexico.some((padrao) => padrao.test(semAcento(frase)));
 
   const semAcento = (texto: string) =>
     texto
@@ -152,6 +168,98 @@ describe("§4 · regra de natureza — território conferido texto a texto", () 
   it("as bibliotecas não compartilham texto entre naturezas — nem dentro delas", () => {
     const textos = TODOS_OS_TEXTOS.map((m) => m.texto);
     expect(new Set(textos).size).toBe(24);
+  });
+
+  // -------------------------------------------------------------------------
+  // B-2 · as contraprovas do §17.2 — a guarda pega o que deve e solta o que
+  // deve. Sem os dois lados, "endurecer" viraria bloquear tudo.
+  // -------------------------------------------------------------------------
+
+  it("B-2 · os 13 casos da ressalva são TODOS detectados", () => {
+    const PROIBIDOS: [string, "TECNICO" | "RELACIONAL"][] = [
+      ["vínculo terapêutico", "TECNICO"],
+      ["vínculo afetivo", "TECNICO"],
+      ["vínculo de confiança", "TECNICO"],
+      ["relação de cuidado", "TECNICO"],
+      ["disponibilidade emocional", "TECNICO"],
+      ["mais experiente", "RELACIONAL"],
+      ["maior experiência", "RELACIONAL"],
+      ["renomado", "RELACIONAL"],
+      ["especialista renomado", "RELACIONAL"],
+      ["domina a técnica", "RELACIONAL"],
+      ["preparo técnico", "RELACIONAL"],
+      ["superior tecnicamente", "RELACIONAL"],
+      ["excelência técnica", "RELACIONAL"],
+    ];
+    expect(PROIBIDOS).toHaveLength(13);
+    for (const [frase, natureza] of PROIBIDOS) {
+      const lexico = natureza === "TECNICO" ? LEXICO_RELACIONAL : LEXICO_DE_MERITO;
+      expect(bloqueia(frase, lexico), `escapou da guarda: "${frase}"`).toBe(true);
+    }
+  });
+
+  it("B-2 · os 9 usos legítimos do §9 continuam TODOS livres", () => {
+    const LEGITIMOS: [string, "TECNICO" | "RELACIONAL"][] = [
+      ["vínculos e instituições", "TECNICO"],
+      ["vínculo institucional", "TECNICO"],
+      ["vínculo com a instituição", "TECNICO"],
+      ["trajetória institucional", "TECNICO"],
+      ["instituição de formação", "TECNICO"],
+      ["experiência descritiva", "RELACIONAL"],
+      ["a experiência da pessoa na consulta", "RELACIONAL"],
+      ["encaminha a um especialista", "RELACIONAL"],
+      ["conduta declarada", "RELACIONAL"],
+    ];
+    expect(LEGITIMOS).toHaveLength(9);
+    for (const [frase, natureza] of LEGITIMOS) {
+      const lexico = natureza === "TECNICO" ? LEXICO_RELACIONAL : LEXICO_DE_MERITO;
+      expect(bloqueia(frase, lexico), `bloqueado indevidamente: "${frase}"`).toBe(false);
+    }
+  });
+
+  it("B-2 · `experiente` é bloqueado; `experiência` permanece livre", () => {
+    // Depois de `experien` vem `t` no adjetivo de mérito e `c` no substantivo
+    // descritivo — é essa letra que separa o juízo da descrição.
+    expect(bloqueia("profissional experiente", LEXICO_DE_MERITO)).toBe(true);
+    expect(bloqueia("mais experiente", LEXICO_DE_MERITO)).toBe(true);
+    expect(bloqueia("maior experiência", LEXICO_DE_MERITO)).toBe(true);
+
+    expect(bloqueia("a experiência da pessoa na consulta", LEXICO_DE_MERITO)).toBe(false);
+    expect(bloqueia("a experiência relatada", LEXICO_DE_MERITO)).toBe(false);
+  });
+
+  it("B-2 · `especialista` sozinho continua livre — só o juízo de mérito cai", () => {
+    expect(bloqueia("encaminha a um especialista", LEXICO_DE_MERITO)).toBe(false);
+    expect(bloqueia("conversa com o especialista que acompanha", LEXICO_DE_MERITO)).toBe(false);
+    expect(bloqueia("especialista renomado", LEXICO_DE_MERITO)).toBe(true);
+  });
+
+  it("B-2 · `vínculo` só cai com qualificador relacional — o institucional passa", () => {
+    // A guarda vigente já era precisa aqui; o endurecimento não podia
+    // reintroduzir o falso positivo que o §7 mandou preservar.
+    expect(bloqueia("O histórico registra vínculos e instituições.", LEXICO_RELACIONAL)).toBe(false);
+    expect(bloqueia("vínculo institucional", LEXICO_RELACIONAL)).toBe(false);
+    expect(bloqueia("vínculo terapêutico", LEXICO_RELACIONAL)).toBe(true);
+    expect(bloqueia("relação de cuidado", LEXICO_RELACIONAL)).toBe(true);
+  });
+
+  it("B-2 · o texto real do Histórico que motivou a precisão continua verde", () => {
+    const ressalva = MODELOS_DE_REDACAO.HISTORICO.find((m) => m.situacao === "COM_RESSALVA")!;
+    expect(ressalva.texto).toContain("vínculos e instituições");
+    expect(bloqueia(ressalva.texto, LEXICO_RELACIONAL)).toBe(false);
+  });
+
+  it("B-2 · a guarda é proteção contra REGRESSÃO EDITORIAL — e prova isso", () => {
+    // Falseabilidade: um texto técnico editado para falar de vínculo
+    // terapêutico DEVE cair. Se este teste passasse com a guarda anterior,
+    // o endurecimento não teria efeito nenhum.
+    const editadoIndevidamente =
+      "A formação está documentada e sustenta um vínculo terapêutico sólido com a pessoa.";
+    expect(bloqueia(editadoIndevidamente, LEXICO_RELACIONAL)).toBe(true);
+
+    const relacionalEditadoIndevidamente =
+      "As condutas declaradas mostram excelência técnica e preparo técnico.";
+    expect(bloqueia(relacionalEditadoIndevidamente, LEXICO_DE_MERITO)).toBe(true);
   });
 
   it("nenhum texto usa vocabulário comparativo de mérito", () => {
