@@ -165,7 +165,9 @@ afterAll(() => {
             (select count(*) from curadoria.case_priority_map) || '|' ||
             (select count(*) from curadoria.derivation_proposals) || '|' ||
             (select count(*) from curadoria.derivation_rules where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA') || '|' ||
-            (select count(*) from curadoria.derivation_concept_vigencia)`,
+            -- EMENDA DR3: a ocupacao LAVRADA da Regra 001 nao e residuo nem
+-- cenario desta suite — sai da conta POR NOME. Qualquer OUTRA derruba.
+            (select count(*) from curadoria.derivation_concept_vigencia where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA')`,
   );
   if (saida !== "0|0|0|0|0|0|0") {
     throw new Error(

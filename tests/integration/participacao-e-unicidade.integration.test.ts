@@ -105,7 +105,10 @@ const EMITIR = (code = C1) =>
 afterAll(() => {
   const { saida } = psql(
     `select (select count(*) from ${REGRAS} where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA') || '|' || (select count(*) from ${TRANSICOES} where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA') || '|' ||
-            (select count(*) from ${MAPA}) || '|' || (select count(*) from ${OCUPACAO}) || '|' ||
+            (select count(*) from ${MAPA}) || '|' ||
+            -- EMENDA DR3: a ocupação LAVRADA da Regra 001 não é resíduo desta
+            -- suíte — sai por nome. Qualquer OUTRA ocupação sobrevivente derruba.
+            (select count(*) from ${OCUPACAO} where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA') || '|' ||
             (select count(*) from ${PROPOSTAS}) || '|' || (select count(*) from curadoria.cases)`,
   );
   if (saida !== "0|0|0|0|0|0") {
@@ -331,7 +334,7 @@ describe("F-2 · porta 1 — promoção e reativação", () => {
       ${CORRESPONDENCIA("multi", C1)}
       ${CORRESPONDENCIA("multi", C2)}
       ${TRANSICAO("multi", 2, "PROPOSTA", "VIGENTE")}
-      select 'OCUPACOES:' || string_agg(subcriterion_code, ',' order by subcriterion_code) from ${OCUPACAO};
+      select 'OCUPACOES:' || string_agg(subcriterion_code, ',' order by subcriterion_code) from ${OCUPACAO} where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA';
     `);
     expect(r.ok, r.saida).toBe(true);
     expect(r.saida).toContain(`OCUPACOES:${[C1, C2].sort().join(",")}`);
@@ -359,7 +362,7 @@ describe("F-2 · porta 1 — promoção e reativação", () => {
       ${VIGENTE_COBRINDO("dona-b", C2)}
       select 'A:' || curadoria.derivation_rule_state('dona-a', 1);
       select 'B:' || curadoria.derivation_rule_state('dona-b', 1);
-      select 'OCUPACOES:' || count(*) from ${OCUPACAO};
+      select 'OCUPACOES:' || count(*) from ${OCUPACAO} where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA';
     `);
     expect(r.ok, r.saida).toBe(true);
     expect(r.saida).toContain("A:VIGENTE");
@@ -450,9 +453,9 @@ describe("F-2 · porta 2 — correspondência em regra já vigente", () => {
   it("cobertura nova numa versão vigente ocupa o conceito na hora", () => {
     const r = emTransacaoRevertida(`
       ${VIGENTE_COBRINDO("depois", C1)}
-      select 'ANTES:' || count(*) from ${OCUPACAO};
+      select 'ANTES:' || count(*) from ${OCUPACAO} where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA';
       ${CORRESPONDENCIA("depois", C2)}
-      select 'DEPOIS:' || string_agg(subcriterion_code, ',' order by subcriterion_code) from ${OCUPACAO};
+      select 'DEPOIS:' || string_agg(subcriterion_code, ',' order by subcriterion_code) from ${OCUPACAO} where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA';
     `);
     expect(r.saida).toContain("ANTES:1");
     expect(r.ok, r.saida).toBe(true);
@@ -463,7 +466,7 @@ describe("F-2 · porta 2 — correspondência em regra já vigente", () => {
     const r = emTransacaoRevertida(`
       ${VIGENTE_COBRINDO("dona-2", C1)}
       ${VIGENTE_COBRINDO("outra-2", C2)}
-      select 'DUAS:' || count(*) from ${OCUPACAO};
+      select 'DUAS:' || count(*) from ${OCUPACAO} where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA';
       ${CORRESPONDENCIA("outra-2", C1)}
     `);
     expect(r.saida, "o cenário das duas vigentes não nasceu").toContain("DUAS:2");
@@ -492,7 +495,7 @@ describe("F-2 · porta 2 — correspondência em regra já vigente", () => {
       $tentativa$;
       select 'RECUSA:' || mensagem from recusa;
       select 'PRESERVADAS:' || count(*) from ${MAPA};
-      select 'OCUPACOES:' || count(*) from ${OCUPACAO};
+      select 'OCUPACOES:' || count(*) from ${OCUPACAO} where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA';
     `);
     expect(r.ok, r.saida).toBe(true);
     // 4 graus × 2 regras = 8, antes e depois. A recusa não levou nada consigo.
@@ -507,7 +510,7 @@ describe("F-2 · porta 2 — correspondência em regra já vigente", () => {
       ${REGRA("so-proposta")}
       ${CORRESPONDENCIA("so-proposta", C1)}
       select 'ESTADO:' || curadoria.derivation_rule_state('so-proposta', 1);
-      select 'OCUPACOES:' || count(*) from ${OCUPACAO};
+      select 'OCUPACOES:' || count(*) from ${OCUPACAO} where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA';
     `);
     expect(r.saida).toContain("ESTADO:PROPOSTA");
     expect(r.saida, "uma regra em PROPOSTA ocupou o conceito").toContain("OCUPACOES:0");

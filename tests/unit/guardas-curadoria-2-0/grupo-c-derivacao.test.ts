@@ -470,9 +470,15 @@ describe("C-01 · Nenhuma proposta persistida existe", () => {
       const sql = MIGRATIONS.sort()
         .map((arquivo) => semComentarios(readFileSync(arquivo, "utf8")))
         .join("\n");
+      // EMENDA DR3: o emissor PROFISSIONAL — quinta capability nominal da
+      // C-01d desde a RS-2.C-1 — só aparece aqui AGORA, porque só agora ele
+      // escreve: até a emenda seu corpo nem citava a tabela (vazio-honesto).
+      // São as CINCO capabilities lavradas + o trigger de projeção. Um
+      // SÉTIMO nome derruba, como o sexto sempre derrubou.
       expect(nomesDeFuncoesQueTocamPropostas(sql)).toEqual([
         "contar_propostas_por_desfecho",
         "decidir_proposta",
+        "emitir_proposta_de_estado",
         "emitir_proposta_de_importancia",
         "ler_proposta_para_proveniencia",
         "projetar_estado_da_proposta",
@@ -1113,7 +1119,7 @@ describe("C-11 · A ponte é o único escritor, e produz só proposta (2.2C)", (
     expect(PONTE_CODIGO).toMatch(/function curadoria\.emitir_proposta_de_importancia/i);
   });
 
-  it("existe exatamente UM NOME de função que escreve propostas", () => {
+  it("existem exatamente DOIS NOMES de função que escrevem propostas", () => {
     // Contamos NOMES DISTINTOS, não ocorrências: o 2.2C-R1 reescreve o emissor
     // com `create or replace` numa migration nova, e isso é evolução legítima
     // do mesmo escritor. O que a guarda proíbe é um SEGUNDO nome.
@@ -1126,7 +1132,10 @@ describe("C-11 · A ponte é o único escritor, e produz só proposta (2.2C)", (
           .map((corpo) => corpo.trim().split(/[\s(]/)[0]),
       ),
     );
-    expect([...escritoras], "nasceu um segundo escritor de propostas").toEqual([
+    // CONTRATO_2_C §7 + EMENDA DR3: a C-11 evoluiu POR LAVRATURA para os DOIS
+    // emissores nominais — Case e profissional. Um TERCEIRO nome derruba.
+    expect([...escritoras].sort(), "nasceu um escritor de propostas fora da lavratura").toEqual([
+      "curadoria.emitir_proposta_de_estado",
       "curadoria.emitir_proposta_de_importancia",
     ]);
   });

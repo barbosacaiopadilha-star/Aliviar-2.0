@@ -185,7 +185,10 @@ describe("2.1 · e permanece INERTE", () => {
       // INALCANÇÁVEL até a forma da correspondência ser lavrada (PA-13
       // §10.2): vazio-honesto, ele ainda NÃO figura entre os escritores
       // vivos. Quando a emenda ativar o braço, esta lista evolui para TRÊS.
-      "emitir_proposta_de_importancia,projetar_estado_da_proposta",
+      // EMENDA DR3: o emissor PROFISSIONAL passou a escrever de verdade — o
+      // braco de emissao foi conectado ao DR3 pela emenda lavrada. Sao TRES
+      // escritores nominais; um QUARTO nome derruba.
+      "emitir_proposta_de_estado,emitir_proposta_de_importancia,projetar_estado_da_proposta",
     );
 
     // C-01d(4) — CONTRATO_1_12 §14: o conjunto de funções que alcançam

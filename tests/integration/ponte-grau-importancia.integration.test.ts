@@ -637,7 +637,10 @@ describe("2.2C · A2 — a proposta não entra no Pipeline de Leitura", () => {
       // INALCANÇÁVEL até a forma da correspondência ser lavrada (PA-13
       // §10.2): vazio-honesto, ele ainda NÃO figura entre os escritores
       // vivos. Quando a emenda ativar o braço, esta lista evolui para TRÊS.
-      "emitir_proposta_de_importancia,projetar_estado_da_proposta",
+      // EMENDA DR3: o emissor PROFISSIONAL passou a escrever de verdade — o
+      // braco de emissao foi conectado ao DR3 pela emenda lavrada. Sao TRES
+      // escritores nominais; um QUARTO nome derruba.
+      "emitir_proposta_de_estado,emitir_proposta_de_importancia,projetar_estado_da_proposta",
     );
   });
 
