@@ -9,6 +9,11 @@ import {
   type DesfechoDoJulgamento,
 } from "@/modules/curadoria/julgamento-actions";
 import type { JulgamentoLido, LacunaDeJuizo } from "@/modules/curadoria/julgamentos";
+import { sugerirRedacaoAction } from "@/modules/curadoria/assistencia-de-redacao-actions";
+import {
+  ROTULOS_DAS_ALTERNATIVAS,
+  type Sugestoes,
+} from "@/modules/curadoria/assistencia-de-redacao";
 
 /**
  * O PAINEL DE JUÍZO da etapa AVALIAÇÃO (Item 2.3 §13/§16) — a menor
@@ -60,24 +65,87 @@ const DESFECHO_LEGIVEL: Record<DesfechoDoJulgamento["desfecho"], string> = {
   ERRO_TECNICO: "Não foi possível concluir o ato agora.",
 };
 
+/** Teto de gerações por cartão, por sessão (contrato §2) — evita a busca
+ *  da "frase perfeita", que é ancoragem por outro caminho. */
+const MAXIMO_DE_GERACOES = 3;
+
+const FALHA_DA_SUGESTAO: Record<string, string> = {
+  ASSISTENCIA_INDISPONIVEL: "A assistência de redação não está disponível agora.",
+  SEM_AUTORIDADE: "Você não tem autoridade para pedir sugestões neste Case.",
+  CONCEITO_FORA_DO_ESCOPO: "Este conceito não recebe assistência de redação.",
+  SAIDA_RECUSADA: "A sugestão não passou na verificação e não será exibida.",
+  ERRO_TECNICO: "Não foi possível gerar sugestões agora.",
+};
+
 function FormularioDeJuizo({
   caseId,
   professionalProfileId,
   conceito,
+  assistenciaDisponivel,
 }: {
   caseId: string;
   professionalProfileId: string;
   conceito: ConceitoDeJuizo;
+  assistenciaDisponivel: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   // O campo nasce vazio SEMPRE — o estado inicial não olha para nenhuma
   // conclusão anterior (G-2.3-5). A key por versão-base derruba qualquer
-  // resquício local quando a cadeia avança.
+  // resquício local quando a cadeia avança. A assistência de redação NÃO
+  // muda isso: nenhum texto aparece aqui sem um clique explícito do Curador
+  // em "Usar esta" (contrato §2).
   const [conclusao, setConclusao] = useState("");
   const [motivo, setMotivo] = useState("");
   const [selecionadas, setSelecionadas] = useState<Record<string, boolean>>({});
   const [resultado, setResultado] = useState<string | null>(null);
+  // As alternativas vivem só aqui, na memória desta sessão do navegador:
+  // não são persistidas, não são logadas, não viram julgamento (§8).
+  const [sugestoes, setSugestoes] = useState<Sugestoes | null>(null);
+  const [gerando, setGerando] = useState(false);
+  const [falhaDaSugestao, setFalhaDaSugestao] = useState<string | null>(null);
+  const [geracoes, setGeracoes] = useState(0);
+
+  const pedirSugestoes = async () => {
+    // Estado próprio: o cartão inteiro não congela, e um segundo clique
+    // durante a geração não dispara requisição concorrente (§30).
+    if (gerando || geracoes >= MAXIMO_DE_GERACOES) return;
+    setGerando(true);
+    setFalhaDaSugestao(null);
+    try {
+      const desfecho = await sugerirRedacaoAction({
+        caseId,
+        professionalProfileId,
+        subcriterionCode: conceito.code,
+      });
+      if (desfecho.desfecho === "SUGESTOES_GERADAS") {
+        setSugestoes(desfecho.sugestoes);
+        setGeracoes((atual) => atual + 1);
+      } else {
+        setSugestoes(null);
+        setFalhaDaSugestao(FALHA_DA_SUGESTAO[desfecho.desfecho] ?? FALHA_DA_SUGESTAO.ERRO_TECNICO);
+      }
+    } catch {
+      setSugestoes(null);
+      setFalhaDaSugestao(FALHA_DA_SUGESTAO.ERRO_TECNICO);
+    } finally {
+      setGerando(false);
+    }
+  };
+
+  // O texto vai para o campo SÓ por este caminho, e a partir daí é texto
+  // comum: totalmente editável, sem trecho travado, sem vínculo com a
+  // alternativa. Se já houver trabalho do Curador no campo, ele confirma
+  // antes — o que ele escreveu nunca some por clique acidental (§2).
+  const usarAlternativa = (texto: string) => {
+    if (conclusao.trim().length > 0) {
+      const segue = window.confirm(
+        "Substituir o que você já escreveu por esta sugestão?",
+      );
+      if (!segue) return;
+    }
+    setConclusao(texto);
+  };
 
   const registrar = () => {
     startTransition(async () => {
@@ -141,10 +209,75 @@ function FormularioDeJuizo({
         className="w-full rounded-md border border-edge bg-transparent p-2 text-sm"
         rows={3}
         maxLength={280}
-        placeholder="A sua conclusão — expressa, curta, sua."
+        placeholder="Escreva sua conclusão ou use uma sugestão de redação como ponto de partida."
         value={conclusao}
         onChange={(evento) => setConclusao(evento.target.value)}
       />
+
+      {/* Escrever do zero é o PADRÃO, não a opção secundária: o botão fica
+          ABAIXO do campo, nunca acima, e o campo funciona sem ele. */}
+      {assistenciaDisponivel ? (
+        <div className="space-y-2" data-testid={`assistencia-${conceito.code}`}>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              className="rounded-md border border-edge px-2 py-1 text-xs disabled:opacity-50"
+              disabled={gerando || geracoes >= MAXIMO_DE_GERACOES}
+              onClick={pedirSugestoes}
+            >
+              {gerando
+                ? "Gerando…"
+                : sugestoes
+                  ? "Gerar outras"
+                  : "✨ Sugerir redação"}
+            </button>
+            {falhaDaSugestao ? (
+              <span className="text-xs text-ink-muted" role="status">
+                {falhaDaSugestao}
+              </span>
+            ) : null}
+            {geracoes >= MAXIMO_DE_GERACOES ? (
+              <span className="text-xs text-ink-muted">
+                Limite de gerações deste cartão atingido.
+              </span>
+            ) : null}
+          </div>
+
+          {sugestoes ? (
+            <div className="space-y-2 rounded-md border border-edge/60 p-2">
+              <div className="flex items-baseline justify-between gap-2">
+                <p className="text-[11px] uppercase tracking-wide text-ink-muted">
+                  Sugestão de redação — nenhuma delas é juízo
+                </p>
+                <button
+                  type="button"
+                  aria-label="Descartar sugestões"
+                  className="text-xs text-ink-muted"
+                  onClick={() => setSugestoes(null)}
+                >
+                  ✕
+                </button>
+              </div>
+              {(["objetiva", "cautelosa", "explicativa"] as const).map((alternativa) => (
+                <div key={alternativa} className="space-y-1">
+                  <p className="text-[11px] font-medium text-ink-muted">
+                    {ROTULOS_DAS_ALTERNATIVAS[alternativa]}
+                  </p>
+                  <p className="text-xs">{sugestoes[alternativa]}</p>
+                  <button
+                    type="button"
+                    className="rounded-md border border-edge px-2 py-0.5 text-[11px]"
+                    onClick={() => usarAlternativa(sugestoes[alternativa])}
+                  >
+                    Usar esta
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       <input
         aria-label="Motivo (opcional)"
         className="w-full rounded-md border border-edge bg-transparent p-2 text-xs"
@@ -172,10 +305,12 @@ function BlocoDoConceito({
   caseId,
   professionalProfileId,
   conceito,
+  assistenciaDisponivel,
 }: {
   caseId: string;
   professionalProfileId: string;
   conceito: ConceitoDeJuizo;
+  assistenciaDisponivel: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -229,6 +364,7 @@ function BlocoDoConceito({
             caseId={caseId}
             professionalProfileId={professionalProfileId}
             conceito={conceito}
+            assistenciaDisponivel={assistenciaDisponivel}
           />
         </>
       )}
@@ -252,6 +388,7 @@ function BlocoDoConceito({
 export function PainelDeJuizo({
   caseId,
   profissionais,
+  assistenciaDisponivel = false,
 }: {
   caseId: string;
   profissionais: {
@@ -259,6 +396,11 @@ export function PainelDeJuizo({
     nome: string;
     conceitos: ConceitoDeJuizo[];
   }[];
+  /**
+   * Decidido no SERVIDOR (regime + fornecedor configurado). Fechado por
+   * omissão: sem esta propriedade, a assistência não existe na tela.
+   */
+  assistenciaDisponivel?: boolean;
 }) {
   if (profissionais.length === 0) return null;
 
@@ -281,6 +423,7 @@ export function PainelDeJuizo({
                 caseId={caseId}
                 professionalProfileId={profissional.professionalProfileId}
                 conceito={conceito}
+                assistenciaDisponivel={assistenciaDisponivel}
               />
             ))}
           </div>

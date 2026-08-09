@@ -7,6 +7,13 @@ import type { DecisionCase } from "@/modules/ace/artifacts/decision-case";
 import type { DecisionContext } from "@/modules/ace/artifacts/decision-context";
 import type { HumanReviewResult } from "@/modules/ace/artifacts/human-review-result";
 import type { Narrative } from "@/modules/ace/artifacts/narrative";
+import {
+  ESQUEMA_DAS_SUGESTOES,
+  SYSTEM_PROMPT as SYSTEM_PROMPT_DA_REDACAO,
+  USO_DA_ASSISTENCIA,
+  sugestoesZod,
+  type ContextoDeRedacao,
+} from "@/modules/curadoria/assistencia-de-redacao";
 
 import type {
   AceLanguageModel,
@@ -454,6 +461,21 @@ type ProtocolConfig = {
   buildUserContent: (input: never) => unknown;
 };
 
+// A assistência de redação da Curadoria (CONTRATO_ASSISTENCIA_DE_REDACAO_IA)
+// não é um protocolo do ACE: entra pela mesma porta, identificada por
+// `usageId`. O prompt, o schema e a validação são do DOMÍNIO — este arquivo
+// só os liga ao fornecedor, nunca os redefine (fonte única).
+const USAGE_CONFIG: Partial<Record<string, ProtocolConfig>> = {
+  [USO_DA_ASSISTENCIA]: {
+    systemPrompt: SYSTEM_PROMPT_DA_REDACAO,
+    schema: ESQUEMA_DAS_SUGESTOES as unknown as Record<string, unknown>,
+    responseSchema: sugestoesZod,
+    // O contexto já chega minimizado pela função pura do domínio — este
+    // adaptador nunca acrescenta campo nenhum ao payload.
+    buildUserContent: (input: ContextoDeRedacao) => input,
+  },
+};
+
 const PROTOCOL_CONFIG: Partial<Record<string, ProtocolConfig>> = {
   P002: {
     systemPrompt: P002_SYSTEM_PROMPT,
@@ -614,7 +636,13 @@ export class AnthropicAceLanguageModel implements AceLanguageModel {
     request: AceLanguageModelRequest<TInput>,
   ): Promise<AceLanguageModelResponse<TOutput>> {
     const executedAt = new Date().toISOString();
-    const config = PROTOCOL_CONFIG[request.protocolId];
+    // Um chamador é um protocolo do ACE OU um uso identificado (`usageId`) —
+    // nunca os dois ao mesmo tempo, e o `usageId` tem precedência por ser o
+    // mais específico.
+    const chave = request.usageId ?? request.protocolId;
+    const config = chave
+      ? (USAGE_CONFIG[chave] ?? PROTOCOL_CONFIG[chave])
+      : undefined;
 
     if (!config) {
       return {
@@ -625,7 +653,7 @@ export class AnthropicAceLanguageModel implements AceLanguageModel {
           status: "error",
           error: {
             code: "UNSUPPORTED_PROTOCOL",
-            message: `AnthropicAceLanguageModel não implementa o protocolo "${request.protocolId}".`,
+            message: `AnthropicAceLanguageModel não implementa o chamador "${chave ?? "(sem identificação)"}".`,
           },
         },
       };
@@ -634,21 +662,28 @@ export class AnthropicAceLanguageModel implements AceLanguageModel {
     try {
       const userContent = config.buildUserContent(request.input as never);
 
-      const message = await this.client.messages.create({
-        model: this.modelId,
-        max_tokens: MAX_TOKENS,
-        system: config.systemPrompt,
-        messages: [{ role: "user", content: JSON.stringify(userContent) }],
-        tools: [
-          {
-            name: TOOL_NAME,
-            description:
-              "Envie a saída estruturada exigida, exatamente no formato do schema.",
-            input_schema: config.schema as Anthropic.Tool.InputSchema,
-          },
-        ],
-        tool_choice: { type: "tool", name: TOOL_NAME },
-      });
+      // O conteúdo do chamador viaja SEMPRE como mensagem de dados (JSON) —
+      // nunca concatenado ao prompt de sistema. É essa separação que torna
+      // uma instrução escondida no dado inócua. A única ferramenta exposta é
+      // o coletor da saída estruturada: sem web, sem função, sem arquivo.
+      const message = await this.client.messages.create(
+        {
+          model: this.modelId,
+          max_tokens: MAX_TOKENS,
+          system: config.systemPrompt,
+          messages: [{ role: "user", content: JSON.stringify(userContent) }],
+          tools: [
+            {
+              name: TOOL_NAME,
+              description:
+                "Envie a saída estruturada exigida, exatamente no formato do schema.",
+              input_schema: config.schema as Anthropic.Tool.InputSchema,
+            },
+          ],
+          tool_choice: { type: "tool", name: TOOL_NAME },
+        },
+        request.timeoutMs ? { timeout: request.timeoutMs } : undefined,
+      );
 
       const toolUse = message.content.find(
         (block): block is Anthropic.ToolUseBlock =>
