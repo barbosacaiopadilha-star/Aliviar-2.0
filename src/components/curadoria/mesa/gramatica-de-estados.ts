@@ -32,6 +32,7 @@
  */
 
 import type { LacunaDeJuizo } from "@/modules/curadoria/julgamentos";
+import type { SubcriterionStatus } from "@/modules/curadoria/mapa-profissional";
 import type { MesaEtapaState } from "@/modules/curadoria/mesa-etapas";
 
 export type PapelVisual = "estrutura" | "resolvido" | "atencao" | "impedimento" | "neutro";
@@ -77,9 +78,42 @@ export const MARCA_DO_AGUARDO = {
   JUIZO_SUPERADO_POR_EVIDENCIA: { papel: "atencao", sinal: "↻" },
 } as const satisfies Record<NonNullable<LacunaDeJuizo["motivo"]>, MarcaDeEstado>;
 
+/**
+ * R-2 · o sinal `AGUARDA_JUIZO_DO_CURADOR` do motor relacional é o MESMO
+ * estado operacional do conceito sem julgamento registrado — falta ato
+ * humano. É um alias deliberado, não uma segunda decisão: a leitura
+ * relacional passa a buscar o papel aqui em vez de repetir a regra.
+ */
+export const MARCA_DE_AGUARDA_JUIZO: MarcaDeEstado = MARCA_DO_AGUARDO.SEM_JUIZO;
+
 /** As etapas da trilha. `AGUARDA` é "ainda não é a vez", jamais bloqueio. */
 export const MARCA_DA_ETAPA = {
   PRONTA: { papel: "resolvido", sinal: "✓" },
   PENDENTE: { papel: "atencao", sinal: "●" },
   AGUARDA: { papel: "neutro", sinal: "·" },
 } as const satisfies Record<MesaEtapaState["status"], MarcaDeEstado>;
+
+/**
+ * R-1 · `LACUNA_DE_INFORMACAO` não tem um papel visual só, porque não é uma
+ * situação só. O domínio já separa as duas — **este arquivo apenas lê**:
+ *
+ * > *"ADR-040: ausência de registro é diferente de `NAO_INFORMADO`. As duas
+ * > caem em `LACUNA_DE_INFORMACAO` — mas o Curador precisa saber se alguém
+ * > olhou e não soube, ou se ninguém olhou ainda. Por isso o estado vem
+ * > junto, e não some dentro do resultado."* — `motor-compatibilidade.ts`
+ *
+ * | `status`         | significa                        | ato humano? | papel     |
+ * |------------------|----------------------------------|-------------|-----------|
+ * | `null`           | ninguém olhou ainda              | **sim**     | `atencao` |
+ * | `NAO_INFORMADO`  | olharam e não havia              | não         | `neutro`  |
+ *
+ * Existe aqui, e não em cada painel, por um motivo empírico: a mesma regra
+ * decidida em dois lugares já divergiu — a comparação gastava âmbar no que
+ * já fora investigado, e a leitura relacional não tinha de onde distinguir.
+ *
+ * Nenhum estado novo, nenhuma enum, nenhuma inferência: é `status`, que já
+ * viaja ao lado de `result` na mesma linha.
+ */
+export function papelDaLacuna(status: SubcriterionStatus | null): PapelVisual {
+  return status === null ? "atencao" : "neutro";
+}

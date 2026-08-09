@@ -15,6 +15,10 @@
  * O que nunca faz: somar, pontuar, ordenar por resultado ou sugerir escolha.
  */
 
+import {
+  classeDoPapel,
+  papelDaLacuna,
+} from "@/components/curadoria/mesa/gramatica-de-estados";
 import type { Subcriterion } from "@/modules/curadoria/mapa-prioridades";
 import type { CompatibilityReading } from "@/modules/curadoria/motor-compatibilidade";
 
@@ -46,6 +50,10 @@ export function PainelInvestigacao({
       nome: nome(row.subcriterionCode),
       // ADR-040: ninguém tratou ainda é diferente de analisado sem informação.
       semRegistro: row.status === null,
+      // R-1 · o papel vem da MESMA fonte que a comparação e a leitura
+      // relacional consultam. A distinção já estava dita aqui em texto; o
+      // que faltava era a cor concordar com ela — e concordar em toda a Mesa.
+      papel: papelDaLacuna(row.status),
     }));
 
   const naoInfluencia = leitura.rows
@@ -79,6 +87,9 @@ export function PainelInvestigacao({
           <ul className="mt-2 space-y-1 text-sm">
             {oQueFalta.map((item) => (
               <li key={item.nome} className="text-ink">
+                <span aria-hidden="true" className={`mr-1 ${classeDoPapel(item.papel)}`}>
+                  {item.semRegistro ? "●" : "·"}
+                </span>
                 {item.nome}
                 <span className="ml-2 text-xs text-ink-muted">
                   {item.semRegistro

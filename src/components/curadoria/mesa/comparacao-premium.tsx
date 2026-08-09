@@ -21,6 +21,7 @@
 import { Fragment, useState } from "react";
 
 import { cn } from "@/components/ui/cn";
+import { papelDaLacuna } from "@/components/curadoria/mesa/gramatica-de-estados";
 import { useMesaFoco } from "@/components/curadoria/mesa/mesa-foco";
 import { IMPORTANCE_LABELS, type ImportanceLevel } from "@/modules/curadoria/mapa-prioridades";
 import type { SubcriterionStatus } from "@/modules/curadoria/mapa-profissional";
@@ -71,6 +72,20 @@ const CLASSE_RESULTADO: Record<CompatibilityResult, string> = {
   LACUNA_DE_INFORMACAO: "mesa-celula--insuficiente",
   NAO_RELEVANTE: "mesa-celula--nao",
 };
+
+/**
+ * R-1 · a FORMA da célula continua sendo do resultado (tracejada = lacuna);
+ * o PAPEL — âmbar ou neutro — vem da gramática central, que lê o `status`
+ * que já viajava nesta linha e nunca era consumido.
+ *
+ * Antes, toda lacuna saía âmbar: o que já fora investigado e concluído como
+ * insuficiente pedia ação que não existe, e o âmbar só orienta se for raro.
+ */
+function classeDaCelula(celula: { result: CompatibilityResult; status: SubcriterionStatus | null }) {
+  const forma = CLASSE_RESULTADO[celula.result];
+  if (celula.result !== "LACUNA_DE_INFORMACAO") return forma;
+  return cn(forma, `mesa-celula--lacuna-${papelDaLacuna(celula.status)}`);
+}
 
 export function ComparacaoPremium({ colunas }: { colunas: ComparacaoColuna[] }) {
   const [aberta, setAberta] = useState<string | null>(null);
@@ -182,7 +197,7 @@ export function ComparacaoPremium({ colunas }: { colunas: ComparacaoColuna[] }) 
                         onClick={() => setAberta(expandida ? null : chave)}
                         className={cn(
                           "mesa-celula",
-                          celula ? CLASSE_RESULTADO[celula.result] : "mesa-celula--vazio",
+                          celula ? classeDaCelula(celula) : "mesa-celula--vazio",
                         )}
                       >
                         {/* O estado nunca é dito só por cor. */}

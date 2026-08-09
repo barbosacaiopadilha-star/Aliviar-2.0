@@ -608,9 +608,24 @@ button.mesa-chip:focus-visible {
   border-left-color: color-mix(in srgb, var(--color-ink) 25%, transparent);
 }
 
+/* R-1 · a FORMA diz "lacuna"; o PAPEL diz se ela pede ato humano.
+   `LACUNA_DE_INFORMACAO` funde duas situações (ADR-040), e a cor precisa
+   separá-las: o que ninguém investigou ainda pede ação; o que já foi
+   analisado e não trouxe informação é fato registrado, não pendência. Quem
+   decide qual é a gramática central — aqui só se pinta. */
 .mesa-celula--insuficiente {
-  border-left-color: color-mix(in srgb, var(--color-attention) 60%, transparent);
   border-left-style: dashed;
+}
+
+/* Ninguém olhou ainda — investigar é ato do Curador. */
+.mesa-celula--lacuna-atencao {
+  border-left-color: color-mix(in srgb, var(--color-attention) 60%, transparent);
+}
+
+/* Olharam e não havia. A lacuna continua visível pela forma tracejada, mas
+   não gasta o âmbar: não há ato pendente. */
+.mesa-celula--lacuna-neutro {
+  border-left-color: color-mix(in srgb, var(--color-ink) 35%, transparent);
 }
 
 .mesa-celula--vazio {

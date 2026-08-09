@@ -14,6 +14,11 @@
  * lado, na íntegra, para serem lidas.
  */
 
+import { cn } from "@/components/ui/cn";
+import {
+  MARCA_DE_AGUARDA_JUIZO,
+  type PapelVisual,
+} from "@/components/curadoria/mesa/gramatica-de-estados";
 import { NEED_DEGREE_LABELS } from "@/modules/curadoria/protocolos";
 import { COMPATIBILITY_LABELS } from "@/modules/curadoria/motor-compatibilidade";
 import {
@@ -77,22 +82,45 @@ function leituraDe(reading: RelationalReading): { texto: string; tom: "alta" | "
  * proíbe. Verde ensinaria a ler "boa opção"; âmbar, "cuidado" — e nenhuma
  * das duas leituras existe no domínio.
  *
- * Agora as leituras compartilham a cor institucional e se distinguem por
- * FORMA — sólida, tracejada, apagada —, que sobrevive ao daltonismo e à
+ * As leituras compartilham a cor institucional e se distinguem por FORMA —
+ * sólida, pontilhada, tracejada, fina —, que sobrevive ao daltonismo e à
  * impressão em cinza. O rótulo textual (`COMPATIBILITY_LABELS`) continua ao
  * lado e não mudou.
  *
- * A única exceção é `juizo`: "Aguarda juízo do Curador" é falta de ATO
- * HUMANO, não leitura de evidência — e por isso é o único que recebe âmbar,
- * na mesma gramática do resto da Mesa.
+ * R-2 · **esta tabela é taxonomia de FORMA, e fica local.** As quatro
+ * leituras existem justamente porque compartilham a cor e se distinguem pelo
+ * traço; forçá-las dentro de `PapelVisual` misturaria as duas taxonomias que
+ * a gramática central existe para separar.
+ *
+ * A exceção é `juizo`: "Aguarda juízo do Curador" é falta de ATO HUMANO —
+ * estado operacional, não leitura de evidência. Ele mantém a forma local
+ * (dupla) e passa a buscar o PAPEL na fonte central, em vez de repetir a
+ * decisão aqui. A regra deixa de morar em dois lugares.
  */
 const TOM_CLASSES: Record<string, string> = {
   alta: "border-l-2 border-[color-mix(in_srgb,var(--color-brand-primary)_70%,transparent)]",
   media: "border-l-2 border-dotted border-[color-mix(in_srgb,var(--color-brand-primary)_70%,transparent)]",
   lacuna: "border-l-2 border-dashed border-slate-400",
   neutra: "border-l-2 border-slate-200",
-  juizo: "border-l-2 border-double border-[color-mix(in_srgb,var(--color-attention)_75%,transparent)]",
+  juizo: "border-l-2 border-double",
 };
+
+/**
+ * COMO um papel é pintado nesta superfície — mapa LOCAL, de propósito: a
+ * gramática central decide o estado, nunca a borda. Só existem aqui os
+ * papéis que esta leitura realmente usa.
+ */
+const BORDA_DO_PAPEL: Partial<Record<PapelVisual, string>> = {
+  atencao: "border-[color-mix(in_srgb,var(--color-attention)_75%,transparent)]",
+  neutro: "border-slate-400",
+};
+
+/** A forma é local; quando há estado operacional, o papel vem do centro. */
+function classeDaLeitura(tom: string): string {
+  return tom === "juizo"
+    ? cn(TOM_CLASSES.juizo, BORDA_DO_PAPEL[MARCA_DE_AGUARDA_JUIZO.papel])
+    : TOM_CLASSES[tom];
+}
 
 export function LeituraRelacionalPanel({
   colunas,
@@ -127,7 +155,7 @@ export function LeituraRelacionalPanel({
               return (
                 <li
                   key={reading.code}
-                  className={`rounded-md bg-surface px-3 py-2 ${TOM_CLASSES[leitura.tom]}`}
+                  className={`rounded-md bg-surface px-3 py-2 ${classeDaLeitura(leitura.tom)}`}
                 >
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <span className="text-sm font-medium text-ink">{reading.conceptName}</span>

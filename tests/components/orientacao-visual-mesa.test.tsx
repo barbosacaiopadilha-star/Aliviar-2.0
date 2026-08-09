@@ -1,13 +1,20 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { ComparacaoPremium } from "@/components/curadoria/mesa/comparacao-premium";
 import { MesaSteps } from "@/components/curadoria/mesa/mesa-steps";
 import { PainelDeJuizo, type ConceitoDeJuizo } from "@/components/curadoria/mesa/painel-de-juizo";
 import {
   MARCA_DA_ETAPA,
   MARCA_DO_AGUARDO,
+  MARCA_DE_AGUARDA_JUIZO,
   MARCA_DO_DESFECHO,
+  papelDaLacuna,
 } from "@/components/curadoria/mesa/gramatica-de-estados";
+import {
+  SUBCRITERION_STATUSES,
+  type SubcriterionStatus,
+} from "@/modules/curadoria/mapa-profissional";
 import type { MesaEtapaState } from "@/modules/curadoria/mesa-etapas";
 
 /**
@@ -226,5 +233,207 @@ describe("E-3 · evidência sem código verde/vermelho", () => {
     // `juizo` (aguarda o Curador) é o único com a cor de atenção.
     expect(tons.match(/color-attention/g) ?? []).toHaveLength(1);
     expect(tons.slice(tons.indexOf("juizo:"))).toContain("color-attention");
+  });
+});
+
+describe("R-1 · `LACUNA_DE_INFORMACAO` não tem um papel só", () => {
+  it("T-1 · sem registro (`status` null) — ninguém olhou ainda ⇒ atenção", () => {
+    expect(papelDaLacuna(null)).toBe("atencao");
+  });
+
+  it("T-2 · `NAO_INFORMADO` — olharam e não havia ⇒ neutro", () => {
+    expect(papelDaLacuna("NAO_INFORMADO")).toBe("neutro");
+  });
+
+  it("os dois casos são REALMENTE distintos — senão a correção seria decorativa", () => {
+    expect(papelDaLacuna(null)).not.toBe(papelDaLacuna("NAO_INFORMADO"));
+  });
+
+  it("T-6 · nenhum estado formal novo: a função só lê `status`, que já existia", () => {
+    // Os únicos valores que o domínio produz — nenhum inventado aqui.
+    for (const status of [...SUBCRITERION_STATUSES, null]) {
+      expect(["atencao", "neutro"]).toContain(papelDaLacuna(status));
+    }
+  });
+});
+
+describe("R-1 · consistência entre superfícies (regressão do §15)", () => {
+  /**
+   * A regressão que este bloco impede é a que aconteceu: a MESMA regra
+   * decidida em dois lugares divergiu — a comparação pintava âmbar em toda
+   * lacuna, a leitura relacional pintava neutro em toda lacuna.
+   *
+   * A guarda é semântica: nenhuma superfície pode decidir o papel de uma
+   * lacuna por conta própria. Todas consultam a fonte única.
+   */
+  const SUPERFICIES = [
+    "src/components/curadoria/mesa/comparacao-premium.tsx",
+    "src/components/curadoria/mesa/painel-investigacao.tsx",
+    "src/components/curadoria/mesa/leitura-relacional-panel.tsx",
+  ];
+
+  it("T-3 · toda superfície que decide papel de lacuna consulta a fonte única", async () => {
+    const { readFileSync } = await import("node:fs");
+    for (const arquivo of SUPERFICIES.slice(0, 2)) {
+      const fonte = readFileSync(arquivo, "utf8");
+      expect(fonte.includes("papelDaLacuna"), `${arquivo} não consulta a fonte única`).toBe(true);
+      // E não reimplementa a decisão localmente.
+      expect(
+        /status\s*===\s*null\s*\?\s*["']atencao/.test(fonte),
+        `${arquivo} reimplementa a regra de R-1`,
+      ).toBe(false);
+    }
+  });
+
+  it("T-3 · a leitura relacional é coerente por construção do domínio", async () => {
+    const { readFileSync } = await import("node:fs");
+    const motor = readFileSync("src/modules/curadoria/motor-relacional.ts", "utf8");
+    // `deriveRelationalState` funde ausência de evidência em NAO_INFORMADO:
+    // naquele motor toda lacuna é o CASO B, e neutro é a leitura correta.
+    expect(motor).toContain('state: "NAO_INFORMADO"');
+    expect(papelDaLacuna("NAO_INFORMADO")).toBe("neutro");
+
+    const painel = readFileSync(SUPERFICIES[2], "utf8");
+    const tons = painel.slice(painel.indexOf("const TOM_CLASSES"), painel.indexOf("BORDA_DO_PAPEL"));
+    // A lacuna relacional não gasta âmbar — coerente com o papel `neutro`.
+    expect(tons.includes("color-attention")).toBe(false);
+  });
+});
+
+describe("R-2 · estado é central; forma da evidência é local", () => {
+  it("T-5 · `juizo` consome a decisão central, sem regra paralela", async () => {
+    const { readFileSync } = await import("node:fs");
+    const painel = readFileSync(
+      "src/components/curadoria/mesa/leitura-relacional-panel.tsx",
+      "utf8",
+    );
+    expect(painel).toContain("MARCA_DE_AGUARDA_JUIZO");
+    // A entrada local de `juizo` guarda só a FORMA — nenhuma cor decidida ali.
+    const tons = painel.slice(painel.indexOf("const TOM_CLASSES"), painel.indexOf("BORDA_DO_PAPEL"));
+    expect(tons).toContain("juizo:");
+    expect(tons.slice(tons.indexOf("juizo:")).includes("color-attention")).toBe(false);
+    // E é o mesmo estado operacional do conceito sem juízo — uma definição só.
+    expect(MARCA_DE_AGUARDA_JUIZO).toBe(MARCA_DO_AGUARDO.SEM_JUIZO);
+    expect(MARCA_DE_AGUARDA_JUIZO.papel).toBe("atencao");
+  });
+
+  it("T-4 · `alta` e `media` seguem locais, distintas por forma, sem verde/âmbar", async () => {
+    const { readFileSync } = await import("node:fs");
+    const painel = readFileSync(
+      "src/components/curadoria/mesa/leitura-relacional-panel.tsx",
+      "utf8",
+    );
+    const tons = painel.slice(painel.indexOf("const TOM_CLASSES"), painel.indexOf("BORDA_DO_PAPEL"));
+    for (const leitura of ["alta:", "media:", "lacuna:", "neutra:"]) {
+      expect(tons, `a taxonomia de forma perdeu ${leitura}`).toContain(leitura);
+    }
+    // Nem verde, nem âmbar interpretando conteúdo de evidência.
+    for (const proibido of ["emerald", "green", "amber", "color-attention"]) {
+      expect(
+        tons.slice(0, tons.indexOf("juizo:")).includes(proibido),
+        `leitura de evidência voltou a usar ${proibido}`,
+      ).toBe(false);
+    }
+    // A distinção continua sendo o traço.
+    expect(tons).toContain("border-dotted");
+    expect(tons).toContain("border-dashed");
+  });
+
+  it("§16 · a gramática central NÃO absorveu taxonomia de evidência", async () => {
+    const { readFileSync } = await import("node:fs");
+    const gramatica = readFileSync(
+      "src/components/curadoria/mesa/gramatica-de-estados.ts",
+      "utf8",
+    );
+    // Ela decide ESTADO. Não conhece borda, opacidade nem classe de leitura.
+    // Limite de palavra de propósito: "falta ato humano" contém `alta`, e a
+    // prosa que EXPLICA o estado não pode derrubar a guarda do mecanismo.
+    for (const proibido of [
+      /border-/,
+      /\bdotted\b/,
+      /\bdashed\b/,
+      /\bdouble\b/,
+      /\bopacity\b/,
+      /\balta\b/,
+      /\bmedia\b/,
+      /ALTA_COMPATIBILIDADE/,
+      /MEDIA_COMPATIBILIDADE/,
+      /TOM_CLASSES/,
+    ]) {
+      expect(
+        proibido.test(gramatica),
+        `a gramática passou a conhecer taxonomia de evidência: ${proibido}`,
+      ).toBe(false);
+    }
+    // O vocabulário central continua sendo o de estados.
+    for (const papel of ["estrutura", "resolvido", "atencao", "impedimento", "neutro"]) {
+      expect(gramatica).toContain(papel);
+    }
+  });
+
+  it("T-7 · `DESFECHO_LEGIVEL` permanece intacto", async () => {
+    const { readFileSync } = await import("node:fs");
+    const painel = readFileSync("src/components/curadoria/mesa/painel-de-juizo.tsx", "utf8");
+    for (const rotulo of [
+      'JUIZO_REGISTRADO: "Juízo registrado."',
+      'VERSAO_JA_GRAVADA: "Este juízo já estava gravado — nada foi duplicado."',
+      'SEM_AUTORIDADE: "Você não tem autoridade para este ato."',
+    ]) {
+      expect(painel, `DESFECHO_LEGIVEL alterado: ${rotulo}`).toContain(rotulo);
+    }
+  });
+});
+
+describe("R-1 · a comparação premium deixa de gastar âmbar em tudo", () => {
+  function celula(code: string, status: SubcriterionStatus | null) {
+    return {
+      subcriterionCode: code,
+      label: code,
+      importance: "MUITO_IMPORTANTE" as const,
+      status,
+      result: "LACUNA_DE_INFORMACAO" as const,
+      stateSentence: "—",
+    };
+  }
+
+  function montarComparacao() {
+    render(
+      <ComparacaoPremium
+        colunas={[
+          {
+            id: "prof-1",
+            nome: "Dra. Exemplo",
+            resumo: "2 lacunas",
+            celulas: [celula("NUNCA_OLHADO", null), celula("JA_ANALISADO", "NAO_INFORMADO")],
+          },
+        ]}
+      />,
+    );
+  }
+
+  it("mesma lacuna, `status` diferente ⇒ papéis visuais DIFERENTES", () => {
+    montarComparacao();
+    const celulas = [...document.querySelectorAll(".mesa-celula--insuficiente")];
+    expect(celulas).toHaveLength(2);
+    expect(celulas[0]!.className).toContain("mesa-celula--lacuna-atencao");
+    expect(celulas[1]!.className).toContain("mesa-celula--lacuna-neutro");
+  });
+
+  it("a FORMA continua dizendo 'lacuna' nas duas — só a cor separa o ato pendente", () => {
+    montarComparacao();
+    const celulas = [...document.querySelectorAll(".mesa-celula--insuficiente")];
+    // As duas seguem tracejadas: a lacuna não desaparece por ter sido olhada.
+    expect(celulas.every((n) => n.className.includes("mesa-celula--insuficiente"))).toBe(true);
+    // E nenhuma depende só de cor — o rótulo textual do estado continua lá.
+    expect(celulas.every((n) => (n.textContent ?? "").trim().length > 0)).toBe(true);
+  });
+
+  it("T-3 · o papel de cada caso bate com o que a fonte única decide", () => {
+    montarComparacao();
+    const celulas = [...document.querySelectorAll(".mesa-celula--insuficiente")];
+    expect(celulas[0]!.className).toContain(`mesa-celula--lacuna-${papelDaLacuna(null)}`);
+    expect(celulas[1]!.className).toContain(
+      `mesa-celula--lacuna-${papelDaLacuna("NAO_INFORMADO")}`,
+    );
   });
 });
