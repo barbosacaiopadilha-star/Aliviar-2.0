@@ -452,16 +452,19 @@ select 'CASE_SIDE=' || count(*) from curadoria.derivation_proposals where case_i
   });
 
   it("G-2.C-9 · a única regra material é a LAVRADA pelo DT-01 — e a ponte segue vazia", () => {
-    // A guarda nasceu exigindo `0|0`. Em 2026-08-08 o DT-01 praticou o
-    // nascimento da REGRA 001 em `PROPOSTA` (migration 20260808290000, ato
-    // próprio, posterior e independente do 2.C) — então a asserção evolui
-    // POR LAVRATURA para o que ela sempre quis dizer: o 2.C não semeia, e
-    // nenhuma regra existe além da que a Autoridade de Método lavrou.
-    // Uma SEGUNDA regra, ou qualquer valor na ponte, derruba aqui.
+    // A guarda nasceu exigindo `0|0`. Dois atos próprios do DT-01, posteriores
+    // e independentes do 2.C, a fizeram evoluir POR LAVRATURA — nunca afrouxar:
+    //   · 2026-08-08, nascimento da REGRA 001 em `PROPOSTA` (20260808290000);
+    //   · 2026-08-09, promoção a `VIGENTE` sob a ADR-070 (20260808310000).
+    // O que a guarda protege segue igual: o 2.C não semeia, e não existe regra
+    // além da que a Autoridade de Método lavrou. O estado é fixado no valor
+    // LAVRADO — uma mudança futura (SUSPENSA/REVOGADA) é ato novo, com ADR
+    // própria, e deve reaparecer aqui. Uma SEGUNDA regra, ou qualquer valor na
+    // ponte, derruba.
     const saida = psql(`
 select coalesce((select string_agg(rule_id || '@v' || version || ':' || curadoria.derivation_rule_state(rule_id, version), ',' order by rule_id) from curadoria.derivation_rules), '<nenhuma>')
   || '|' || (select count(*) from curadoria.derivation_rule_degree_map);`);
-    expect(saida).toBe("CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA@v1:PROPOSTA|0");
+    expect(saida).toBe("CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA@v1:VIGENTE|0");
   });
 
   it("G-2.C-6 · a decisora LÊ curator_judgments (§13.2) e JAMAIS escreve — prova no fonte vivo", () => {
