@@ -236,10 +236,15 @@ export function itensDeAtencao(profissionais: InvestigacaoProfissional[]): Atenc
         id: `${profissional.id}:insuficientes`,
         tipo: "INSUFICIENTE",
         quem: profissional.nome,
+        // S-4(texto): "declarados" era falso em dois dos três casos somados
+        // aqui — lacuna assistencial sem registro e lacuna relacional sem
+        // evidência são justamente "ninguém declarou". A frase passa a
+        // descrever o que se conta, sem afirmar ato que não houve. O NÚMERO
+        // não muda: o que a contagem deve medir é decisão normativa pendente.
         frase:
           profissional.criteriosInsuficientes === 1
-            ? "1 critério declarado como informação insuficiente."
-            : `${profissional.criteriosInsuficientes} critérios declarados como informação insuficiente.`,
+            ? "1 critério sem informação suficiente."
+            : `${profissional.criteriosInsuficientes} critérios sem informação suficiente.`,
         etapa: "AVALIACAO",
       });
     }

@@ -17,6 +17,7 @@
 import { cn } from "@/components/ui/cn";
 import {
   MARCA_DE_AGUARDA_JUIZO,
+  PAPEL_DA_AUSENCIA_DE_DECLARACAO,
   type PapelVisual,
 } from "@/components/curadoria/mesa/gramatica-de-estados";
 import { NEED_DEGREE_LABELS } from "@/modules/curadoria/protocolos";
@@ -92,15 +93,18 @@ function leituraDe(reading: RelationalReading): { texto: string; tom: "alta" | "
  * traço; forçá-las dentro de `PapelVisual` misturaria as duas taxonomias que
  * a gramática central existe para separar.
  *
- * A exceção é `juizo`: "Aguarda juízo do Curador" é falta de ATO HUMANO —
- * estado operacional, não leitura de evidência. Ele mantém a forma local
- * (dupla) e passa a buscar o PAPEL na fonte central, em vez de repetir a
- * decisão aqui. A regra deixa de morar em dois lugares.
+ * Duas entradas guardam só a forma, porque o PAPEL delas vem do centro:
+ *
+ * - `juizo` — "Aguarda juízo do Curador" é falta de ato humano (R-2);
+ * - `lacuna` — ausência de declaração do profissional é falta de ato humano
+ *   também: o Curador pode solicitar atualização da prática (S-1).
+ *
+ * Nenhuma das duas repete a decisão aqui: a forma é local, o papel é buscado.
  */
 const TOM_CLASSES: Record<string, string> = {
   alta: "border-l-2 border-[color-mix(in_srgb,var(--color-brand-primary)_70%,transparent)]",
   media: "border-l-2 border-dotted border-[color-mix(in_srgb,var(--color-brand-primary)_70%,transparent)]",
-  lacuna: "border-l-2 border-dashed border-slate-400",
+  lacuna: "border-l-2 border-dashed",
   neutra: "border-l-2 border-slate-200",
   juizo: "border-l-2 border-double",
 };
@@ -109,17 +113,32 @@ const TOM_CLASSES: Record<string, string> = {
  * COMO um papel é pintado nesta superfície — mapa LOCAL, de propósito: a
  * gramática central decide o estado, nunca a borda. Só existem aqui os
  * papéis que esta leitura realmente usa.
+ *
+ * S-3 · `neutro` foi removido. Enquanto a lacuna relacional era neutra ele
+ * tinha um consumidor em potencial; com S-1 os dois tons que buscam papel
+ * pedem `atencao`, e a entrada ficou sem caminho que a alcance. `neutro`
+ * continua vivo onde importa: como `PapelVisual` e em `classeDoPapel`, na
+ * fonte central. O que saiu foi uma variante de borda sem consumidor.
  */
 const BORDA_DO_PAPEL: Partial<Record<PapelVisual, string>> = {
   atencao: "border-[color-mix(in_srgb,var(--color-attention)_75%,transparent)]",
-  neutro: "border-slate-400",
+};
+
+/**
+ * Quais tons são ESTADO OPERACIONAL — e portanto buscam papel no centro.
+ * Os demais são leitura de evidência: forma local, sem papel, sem cor de
+ * estado. É esta tabela, e não uma cadeia de `if`, que mantém a fronteira
+ * visível quando alguém acrescentar um tom novo.
+ */
+const PAPEL_DO_TOM: Readonly<Record<string, PapelVisual>> = {
+  juizo: MARCA_DE_AGUARDA_JUIZO.papel,
+  lacuna: PAPEL_DA_AUSENCIA_DE_DECLARACAO,
 };
 
 /** A forma é local; quando há estado operacional, o papel vem do centro. */
 function classeDaLeitura(tom: string): string {
-  return tom === "juizo"
-    ? cn(TOM_CLASSES.juizo, BORDA_DO_PAPEL[MARCA_DE_AGUARDA_JUIZO.papel])
-    : TOM_CLASSES[tom];
+  const papel = PAPEL_DO_TOM[tom];
+  return papel ? cn(TOM_CLASSES[tom], BORDA_DO_PAPEL[papel]) : TOM_CLASSES[tom];
 }
 
 export function LeituraRelacionalPanel({

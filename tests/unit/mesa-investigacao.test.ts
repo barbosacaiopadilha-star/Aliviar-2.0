@@ -270,3 +270,71 @@ describe("Atalhos — aceleram, nunca decidem", () => {
     expect(new Set(teclas).size).toBe(teclas.length);
   });
 });
+
+/**
+ * S-4(texto) · a frase da contagem deixa de afirmar um ato que não houve.
+ *
+ * `criteriosInsuficientes` soma três causas distintas:
+ *
+ *   assistencial `status = null`    → ninguém olhou       ← "declarado" é falso
+ *   assistencial `NAO_INFORMADO`    → olharam, não havia  ← "declarado" é verdade
+ *   relacional sem evidência        → ninguém declarou    ← "declarado" é falso
+ *
+ * A frase antiga afirmava "declarados" para os três. A nova descreve o que se
+ * conta sem prometer que tudo ali teve ato humano.
+ *
+ * **O número não muda.** S-4(cálculo) — decidir o que a contagem DEVE medir —
+ * é decisão normativa (ADR-065 §10.3) e permanece fora daqui.
+ */
+describe("S-4 · a redação da contagem, sem tocar a contagem", () => {
+  const insuficientes = (n: number) =>
+    itensDeAtencao([profissional({ id: "p1", criteriosInsuficientes: n })]).filter(
+      (item) => item.id === "p1:insuficientes",
+    );
+
+  it("S4-T1 · a frase nova está lá, no singular e no plural", () => {
+    expect(insuficientes(1)[0]?.frase).toBe("1 critério sem informação suficiente.");
+    expect(insuficientes(4)[0]?.frase).toBe("4 critérios sem informação suficiente.");
+  });
+
+  it("S4-T2 · a frase antiga sumiu — ela afirmava ato que ninguém praticou", () => {
+    for (const n of [1, 2, 9]) {
+      const frase = insuficientes(n)[0]?.frase ?? "";
+      expect(frase.length).toBeGreaterThan(0); // o alvo existe (anti-vacuidade)
+      expect(frase).not.toContain("declarado");
+      expect(frase).not.toContain("declarados");
+    }
+  });
+
+  /**
+   * S4-T3 · a prova de que só o texto mudou.
+   *
+   * Nada aqui olha a redação: é o CONTRATO da contagem — quando emite, quantos
+   * itens emite, qual número carrega, e como alimenta o filtro. Este teste
+   * passa igual na versão anterior da frase; é assim que ele serve de
+   * antes-e-depois.
+   */
+  it("S4-T3 · o valor de `criteriosInsuficientes` não mudou (invariante de cálculo)", () => {
+    for (const n of [0, 1, 2, 7, 42]) {
+      const itens = insuficientes(n);
+      // Emite um item — e apenas um — exatamente quando a contagem é positiva.
+      expect(itens).toHaveLength(n > 0 ? 1 : 0);
+      if (n === 0) continue;
+      // O número que chega à tela é o número que entrou: sem recontar, sem
+      // filtrar por causa, sem somar nada por fora.
+      const numeros = (itens[0]!.frase.match(/\d+/g) ?? []).map(Number);
+      expect(numeros).toEqual([n]);
+      expect(itens[0]!.tipo).toBe("INSUFICIENTE");
+      expect(itens[0]!.etapa).toBe("AVALIACAO");
+    }
+  });
+
+  it("S4-T3b · e o filtro que a consome segue com o mesmo recorte", () => {
+    const rede = [
+      profissional({ id: "zero", criteriosInsuficientes: 0 }),
+      profissional({ id: "um", criteriosInsuficientes: 1 }),
+      profissional({ id: "muitos", criteriosInsuficientes: 5 }),
+    ];
+    expect(aplicarFiltros(rede, ["INSUFICIENTE"]).map((p) => p.id)).toEqual(["um", "muitos"]);
+  });
+});

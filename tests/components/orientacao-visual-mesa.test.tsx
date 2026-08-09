@@ -1,7 +1,10 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { readFileSync } from "node:fs";
+
 import { ComparacaoPremium } from "@/components/curadoria/mesa/comparacao-premium";
+import { LeituraRelacionalPanel } from "@/components/curadoria/mesa/leitura-relacional-panel";
 import { MesaSteps } from "@/components/curadoria/mesa/mesa-steps";
 import { PainelDeJuizo, type ConceitoDeJuizo } from "@/components/curadoria/mesa/painel-de-juizo";
 import {
@@ -9,12 +12,23 @@ import {
   MARCA_DO_AGUARDO,
   MARCA_DE_AGUARDA_JUIZO,
   MARCA_DO_DESFECHO,
+  PAPEL_DA_AUSENCIA_DE_DECLARACAO,
+  classeDoPapel,
   papelDaLacuna,
 } from "@/components/curadoria/mesa/gramatica-de-estados";
 import {
   SUBCRITERION_STATUSES,
   type SubcriterionStatus,
 } from "@/modules/curadoria/mapa-profissional";
+import { COMPATIBILITY_LABELS } from "@/modules/curadoria/motor-compatibilidade";
+import {
+  RELATIONAL_CONCEPTS,
+  crossRelational,
+  relationalSummary,
+  relationalSummarySentence,
+  type RelationalEvidence,
+  type RelationalNeed,
+} from "@/modules/curadoria/motor-relacional";
 import type { MesaEtapaState } from "@/modules/curadoria/mesa-etapas";
 
 /**
@@ -230,7 +244,9 @@ describe("E-3 · evidência sem código verde/vermelho", () => {
     const { readFileSync } = await import("node:fs");
     const fonte = readFileSync(arquivos[0], "utf8");
     const tons = fonte.slice(fonte.indexOf("const TOM_CLASSES"), fonte.indexOf("export function"));
-    // `juizo` (aguarda o Curador) é o único com a cor de atenção.
+    // A cor de atenção é declarada UMA vez, no mapa de papel — nunca dentro
+    // da taxonomia de forma. Quem a recebe são os estados operacionais
+    // (`juizo` desde a R-2, `lacuna` desde S-1), nunca a leitura de evidência.
     expect(tons.match(/color-attention/g) ?? []).toHaveLength(1);
     expect(tons.slice(tons.indexOf("juizo:"))).toContain("color-attention");
   });
@@ -285,19 +301,16 @@ describe("R-1 · consistência entre superfícies (regressão do §15)", () => {
     }
   });
 
-  it("T-3 · a leitura relacional é coerente por construção do domínio", async () => {
-    const { readFileSync } = await import("node:fs");
-    const motor = readFileSync("src/modules/curadoria/motor-relacional.ts", "utf8");
-    // `deriveRelationalState` funde ausência de evidência em NAO_INFORMADO:
-    // naquele motor toda lacuna é o CASO B, e neutro é a leitura correta.
-    expect(motor).toContain('state: "NAO_INFORMADO"');
-    expect(papelDaLacuna("NAO_INFORMADO")).toBe("neutro");
-
-    const painel = readFileSync(SUPERFICIES[2], "utf8");
-    const tons = painel.slice(painel.indexOf("const TOM_CLASSES"), painel.indexOf("BORDA_DO_PAPEL"));
-    // A lacuna relacional não gasta âmbar — coerente com o papel `neutro`.
-    expect(tons.includes("color-attention")).toBe(false);
-  });
+  /**
+   * S-2 · o T-3 relacional que existia aqui foi REMOVIDO, não relaxado.
+   *
+   * Ele afirmava que a lacuna relacional deveria ser `neutro` — premissa
+   * formalmente corrigida pelo `02 ARQUITETO` (S-1) — e provava isso por
+   * recorte de texto, que passaria com recorte vazio e sobreviveu a uma
+   * mutação do comportamento real. O substituto está no bloco S-1 abaixo:
+   * renderiza o painel com leituras produzidas pelo motor de verdade e olha
+   * o papel resultante.
+   */
 });
 
 describe("R-2 · estado é central; forma da evidência é local", () => {
@@ -435,5 +448,226 @@ describe("R-1 · a comparação premium deixa de gastar âmbar em tudo", () => {
     expect(celulas[1]!.className).toContain(
       `mesa-celula--lacuna-${papelDaLacuna("NAO_INFORMADO")}`,
     );
+  });
+});
+
+/**
+ * S-1 · A LACUNA RELACIONAL É "NINGUÉM DECLAROU".
+ *
+ * O oráculo não olha o código-fonte: monta leituras com o **motor de
+ * verdade** (`crossRelational` sobre o Catálogo real), renderiza o painel e
+ * observa o papel que cada leitura recebeu.
+ *
+ * Como o papel é verificado sem citar nenhuma cor: `juizo` já foi certificado
+ * como `atencao` na Rodada 1, e vem de outra constante central
+ * (`MARCA_DE_AGUARDA_JUIZO`). Se a lacuna é atenção, ela tem de coincidir com
+ * o juízo **na parte de papel** — e divergir dele na parte de forma. É uma
+ * comparação entre dois elementos renderizados, não uma asserção sobre CSS.
+ */
+describe("S-1 · lacuna relacional ⇒ atenção (oráculo comportamental)", () => {
+  const AUTOMATICOS = RELATIONAL_CONCEPTS.filter((c) => c.cruzamento === "automatico");
+  const HUMANOS = RELATIONAL_CONCEPTS.filter((c) => c.cruzamento === "humano");
+
+  /** Uma opção da pessoa que o Catálogo real sabe satisfazer — nada inventado. */
+  function opcaoReal(conceito: (typeof RELATIONAL_CONCEPTS)[number]) {
+    const campo = conceito.paciente.find((c) => c.field === "principal");
+    const opcao = (campo?.options ?? []).find(
+      (o) => o.active && o.satisfiedBy !== null && !o.satisfiedBy.includes("*"),
+    );
+    if (!opcao) throw new Error(`Catálogo sem opção utilizável em ${conceito.code}`);
+    return opcao as typeof opcao & { satisfiedBy: readonly string[] };
+  }
+
+  function coluna(
+    id: string,
+    nome: string,
+    needs: RelationalNeed[],
+    evidencias: RelationalEvidence[],
+  ) {
+    const { readings, notAnsweredByPerson } = crossRelational(
+      needs,
+      new Map(evidencias.map((e) => [e.subcriterionCode, e])),
+    );
+    const summary = relationalSummary(readings);
+    return {
+      professionalProfileId: id,
+      nome,
+      readings,
+      notAnsweredByPerson,
+      summary,
+      summarySentence: relationalSummarySentence(summary),
+    };
+  }
+
+  /**
+   * Uma Mesa com as cinco leituras vivas ao mesmo tempo — todas saídas do
+   * motor, nenhuma escrita à mão:
+   *
+   *   coluna A · ninguém declarou nada → LACUNA (xN) e AGUARDA JUÍZO
+   *   coluna B · declarou              → ALTA, MÉDIA e NÃO RELEVANTE
+   */
+  function montarPainel() {
+    const semDeclaracao = coluna(
+      "prof-sem",
+      "Profissional sem declaração",
+      [
+        ...AUTOMATICOS.map((c) => ({
+          subcriterionCode: c.code,
+          options: [opcaoReal(c).value],
+          degree: "ESSENCIAL" as const,
+        })),
+        { subcriterionCode: HUMANOS[0]!.code, options: [], degree: "ESSENCIAL" as const },
+      ],
+      [], // ← nenhuma evidência vigente: é exatamente o caso de S-1
+    );
+
+    const alta = opcaoReal(AUTOMATICOS[0]!);
+    const comDeclaracao = coluna(
+      "prof-com",
+      "Profissional com declaração",
+      [
+        { subcriterionCode: AUTOMATICOS[0]!.code, options: [alta.value], degree: "ESSENCIAL" },
+        {
+          subcriterionCode: AUTOMATICOS[1]!.code,
+          options: [opcaoReal(AUTOMATICOS[1]!).value],
+          degree: "ESSENCIAL",
+        },
+        {
+          subcriterionCode: AUTOMATICOS[2]!.code,
+          options: [opcaoReal(AUTOMATICOS[2]!).value],
+          degree: "SEM_PREFERENCIA",
+        },
+      ],
+      [
+        // Conduta correspondente ⇒ CONFIRMADO ⇒ ALTA.
+        { subcriterionCode: AUTOMATICOS[0]!.code, options: [alta.satisfiedBy[0]!] },
+        // Declarou, mas nada que corresponda ⇒ NAO_CONFIRMADO ⇒ MÉDIA.
+        { subcriterionCode: AUTOMATICOS[1]!.code, options: [] },
+        // Sem preferência ⇒ NÃO RELEVANTE, qualquer que seja a conduta.
+        { subcriterionCode: AUTOMATICOS[2]!.code, options: [] },
+      ],
+    );
+
+    render(
+      <LeituraRelacionalPanel
+        colunas={[semDeclaracao, comDeclaracao]}
+        relationalNeedsCount={semDeclaracao.readings.length + comDeclaracao.readings.length}
+      />,
+    );
+  }
+
+  const AGUARDA = "Aguarda juízo do Curador";
+  /** Classes que toda leitura tem por ser um item da lista — não são papel. */
+  const ESTRUTURA = new Set(["rounded-md", "bg-surface", "px-3", "py-2", "border-l-2"]);
+
+  function itens(rotulo: string): HTMLElement[] {
+    const todos = [
+      ...document.querySelectorAll<HTMLElement>('[data-testid="leitura-relacional"] li'),
+    ];
+    return todos.filter((li) => (li.textContent ?? "").includes(rotulo));
+  }
+
+  const tokens = (el: HTMLElement) => new Set(el.className.split(/\s+/).filter(Boolean));
+
+  /** O que dois elementos compartilham além da estrutura: o papel. */
+  function papelComum(a: HTMLElement, b: HTMLElement): string[] {
+    return [...tokens(a)].filter((t) => tokens(b).has(t) && !ESTRUTURA.has(t));
+  }
+
+  it("o cenário é real: o motor produziu as cinco leituras (anti-vacuidade §10)", () => {
+    montarPainel();
+    for (const rotulo of [
+      COMPATIBILITY_LABELS.LACUNA_DE_INFORMACAO,
+      COMPATIBILITY_LABELS.ALTA_COMPATIBILIDADE,
+      COMPATIBILITY_LABELS.MEDIA_COMPATIBILIDADE,
+      COMPATIBILITY_LABELS.NAO_RELEVANTE,
+      AGUARDA,
+    ]) {
+      expect(
+        itens(rotulo).length,
+        `o motor não produziu nenhuma leitura "${rotulo}"`,
+      ).toBeGreaterThan(0);
+    }
+  });
+
+  it("S1-T1 · a lacuna relacional recebe o mesmo papel do estado já certificado como atenção", () => {
+    // Pré-condição lida do CENTRO, não do DOM: os dois estados operacionais
+    // desta superfície têm o mesmo papel, e ele é `atencao`.
+    expect(PAPEL_DA_AUSENCIA_DE_DECLARACAO).toBe(MARCA_DE_AGUARDA_JUIZO.papel);
+    expect(PAPEL_DA_AUSENCIA_DE_DECLARACAO).toBe("atencao");
+
+    montarPainel();
+    const lacunas = itens(COMPATIBILITY_LABELS.LACUNA_DE_INFORMACAO);
+    const juizos = itens(AGUARDA);
+    expect(lacunas.length).toBeGreaterThan(0);
+    expect(juizos.length).toBeGreaterThan(0);
+
+    // Então toda lacuna tem de coincidir com o juízo na parte de PAPEL.
+    for (const lacuna of lacunas) {
+      expect(
+        papelComum(lacuna, juizos[0]!),
+        "a lacuna relacional não recebeu o papel de atenção",
+      ).not.toHaveLength(0);
+    }
+  });
+
+  it("S1-T1b · e continua distinta dele na FORMA — o papel não apaga a leitura", () => {
+    montarPainel();
+    const lacuna = itens(COMPATIBILITY_LABELS.LACUNA_DE_INFORMACAO)[0]!;
+    const juizo = itens(AGUARDA)[0]!;
+    // Mesmo papel, formas diferentes: cada um tem token que o outro não tem.
+    expect([...tokens(lacuna)].some((t) => !tokens(juizo).has(t))).toBe(true);
+    expect([...tokens(juizo)].some((t) => !tokens(lacuna).has(t))).toBe(true);
+    // E o texto continua ao lado — nenhuma distinção depende de cor sozinha.
+    expect((lacuna.textContent ?? "").includes(COMPATIBILITY_LABELS.LACUNA_DE_INFORMACAO)).toBe(
+      true,
+    );
+  });
+
+  it("S1-T2 · leitura COM evidência NÃO recebe papel de estado (caso negativo)", () => {
+    montarPainel();
+    const juizo = itens(AGUARDA)[0]!;
+    const comEvidencia: Array<[string, HTMLElement]> = [
+      ["alta", itens(COMPATIBILITY_LABELS.ALTA_COMPATIBILIDADE)[0]!],
+      ["média", itens(COMPATIBILITY_LABELS.MEDIA_COMPATIBILIDADE)[0]!],
+      ["não relevante", itens(COMPATIBILITY_LABELS.NAO_RELEVANTE)[0]!],
+    ];
+    for (const [nome, el] of comEvidencia) {
+      expect(el, `o motor não produziu a leitura "${nome}"`).toBeTruthy();
+      // Com um estado operacional só pode coincidir na ESTRUTURA. Se passar a
+      // compartilhar papel, alguém pintou tudo de âmbar.
+      expect(
+        papelComum(el, juizo),
+        `a leitura "${nome}" passou a compartilhar papel com um estado operacional`,
+      ).toHaveLength(0);
+    }
+  });
+
+  it("S-2 · o painel consulta a decisão central, não uma regra própria", () => {
+    // Companheiro estrutural do oráculo comportamental — com a guarda de
+    // não-vacuidade que o §10 exige: o alvo existe e o recorte não é vazio.
+    const fonte = readFileSync("src/components/curadoria/mesa/leitura-relacional-panel.tsx", "utf8");
+    expect(fonte.length).toBeGreaterThan(0);
+    const inicio = fonte.indexOf("const PAPEL_DO_TOM");
+    expect(inicio, "PAPEL_DO_TOM desapareceu — o recorte seria vazio").toBeGreaterThan(-1);
+    const mapa = fonte.slice(inicio, fonte.indexOf("}", inicio));
+    expect(mapa).toContain("PAPEL_DA_AUSENCIA_DE_DECLARACAO");
+    expect(mapa).toContain("MARCA_DE_AGUARDA_JUIZO");
+    // E não redecide localmente o que o centro já decidiu.
+    expect(/lacuna:\s*["']/.test(mapa), "o painel voltou a decidir o papel por conta própria").toBe(
+      false,
+    );
+  });
+
+  it("S3-T1 · `BORDA_DO_PAPEL.neutro` foi removido — e `neutro` segue vivo no centro", () => {
+    const fonte = readFileSync("src/components/curadoria/mesa/leitura-relacional-panel.tsx", "utf8");
+    const inicio = fonte.indexOf("const BORDA_DO_PAPEL");
+    expect(inicio, "BORDA_DO_PAPEL desapareceu — o recorte seria vazio").toBeGreaterThan(-1);
+    const mapa = fonte.slice(inicio, fonte.indexOf("};", inicio));
+    expect(mapa).toContain("atencao:");
+    expect(/\bneutro:/.test(mapa), "o ramo morto voltou").toBe(false);
+    // O que saiu foi uma borda local sem consumidor, não o papel.
+    expect(classeDoPapel("neutro")).toContain("neutro");
+    expect(MARCA_DA_ETAPA.AGUARDA.papel).toBe("neutro");
   });
 });

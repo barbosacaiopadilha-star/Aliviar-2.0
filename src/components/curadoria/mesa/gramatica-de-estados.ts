@@ -117,3 +117,28 @@ export const MARCA_DA_ETAPA = {
 export function papelDaLacuna(status: SubcriterionStatus | null): PapelVisual {
   return status === null ? "atencao" : "neutro";
 }
+
+/**
+ * S-1 · a lacuna do motor RELACIONAL é o caso *"ninguém declarou ainda"*.
+ *
+ * Os dois motores usam o mesmo token para coisas opostas, e foi essa colisão
+ * que fez a inconsistência sobreviver à Rodada 1:
+ *
+ * | motor         | token             | significa                   | papel     |
+ * |---------------|-------------------|-----------------------------|-----------|
+ * | assistencial  | `NAO_INFORMADO`   | analisado, e não havia      | `neutro`  |
+ * | assistencial  | `status = null`   | ninguém olhou ainda         | `atencao` |
+ * | relacional    | `NAO_INFORMADO`   | **sem evidência vigente**   | `atencao` |
+ *
+ * Quem decide a cor é a semântica do fluxo, nunca o nome do estado. No motor
+ * relacional, `LACUNA_DE_INFORMACAO` sai de `MATRIZ_RELACIONAL` em três
+ * células, todas sob `NAO_INFORMADO`, e `deriveRelationalState` só devolve
+ * `NAO_INFORMADO` quando **não há evidência**. Lacuna relacional ⟺ ausência de
+ * declaração — bicondicional, verificável na matriz inteira.
+ *
+ * Por isso é definido *como* o caso `null`: não é papel novo nem regra nova, é
+ * a regra da Rodada 1 aplicada à terceira superfície. O ato humano existe, é do
+ * Curador e já está na Mesa (solicitar atualização da prática) — e `atencao`
+ * pede olhar, nunca bloqueia (§18: `atencao` ≠ `impedimento`).
+ */
+export const PAPEL_DA_AUSENCIA_DE_DECLARACAO: PapelVisual = papelDaLacuna(null);
