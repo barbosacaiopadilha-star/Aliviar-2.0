@@ -6,8 +6,9 @@
 | **Objeto único** | aprovar o **conteúdo** da Regra Material 001, versão 1 |
 | **Autoridade aprovadora** | **`DT-01 — Fundador / Autoridade de Método`** (DP-4 fechada em 2026-08-05) |
 | **Redação** | Agente 02 — Arquiteto da Curadoria 2.0, 2026-08-08 |
-| **Status** | **TEXTO LAVRADO — aguardando o ato de aprovação do DT-01.** Ainda **não** inscrita em `DECISIONS.md` (ver §9) |
-| **Base** | `368fe99` |
+| **Status** | ✅ **APROVADA E LAVRADA pelo DT-01 em 2026-08-08.** Inscrita em [`DECISIONS.md`](../DECISIONS.md) |
+| **Identidade técnica do aprovador** | `54ec5c6a-ed07-4e37-b3dd-c7b1300c2c7b` (`REGISTRO_DE_GOVERNANCA.md` §1.1) |
+| **Base do ato** | `f1a7060` — a Regra 001 **já existe em produção**, em `PROPOSTA` |
 
 ---
 
@@ -165,14 +166,132 @@ confirmação) · `CONTRATO_1_A` (PA-13) · `CONTRATO_2_C` (PA-17) · Arquitetur
 §10.5 · `CONGELAMENTO_ARQUITETURAL.md` (P-04, I-5) ·
 `REGISTRO_DE_GOVERNANCA.md` §1.1 (DP-4).
 
-## 9. Por que esta ADR ainda não está em `DECISIONS.md`
+## 9. Inscrição em `DECISIONS.md` — feita **agora**, e por quê
 
-O verbete **não foi inscrito** no log, deliberadamente. A ADR-069 registra a
-determinação do próprio DT-01: *"Lavrada somente após a aprovação… **nenhum
-registro intermediário em estado `PROPOSTA` foi inserido neste log
-append-only** (ADR-062)."*
+A v1.0 deste texto **não** foi inscrita no log, deliberadamente: a ADR-069
+registra a determinação do próprio DT-01 de que *"nenhum registro intermediário
+em estado `PROPOSTA` foi inserido neste log append-only"* (ADR-062).
 
-O log é **append-only puro** — inscrever agora seria irreversível e afirmaria
-uma aprovação que ainda não ocorreu. **O texto está pronto e completo aqui.** A
-inscrição do verbete em `DECISIONS.md` é parte do **ato de aprovação do DT-01**,
-não desta missão.
+**Essa condição deixou de existir.** O DT-01 pratica **agora** o ato de
+aprovação, e a regra **já existe** em `PROPOSTA` no banco de produção. O
+registro deixa de ser proposta de decisão e passa a ser **decisão efetiva** —
+que é exatamente o que o log append-only recebe. **Data real do ato:
+2026-08-08.** Nenhuma data retroativa foi usada.
+
+---
+
+## 10. Pré-flight documental da promoção — o pacote exato
+
+**Nada aqui é executado.** É o conteúdo do `INSERT` único que o ato posterior
+fará em `curadoria.derivation_rule_transitions`:
+
+| Coluna | Valor | Guarda que o determina |
+|---|---|---|
+| `rule_id` | `CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA` | FK para a versão existente |
+| `rule_version` | `1` | idem |
+| `seq` | **`2`** | `valida_transicao_da_regra`: `seq = anterior + 1`, e a anterior é `1` |
+| `from_state` | **`PROPOSTA`** | cadeia: precisa igualar o `to_state` da transição `seq=1` |
+| `to_state` | **`VIGENTE`** | `grafo_fechado` — `PROPOSTA→VIGENTE` é arco permitido |
+| `vigencia_seq` | **`1`** | `vigencia_seq_coerente` (obrigatório em `VIGENTE`) + o trigger calcula *vigências fechadas + 1* = **0 + 1** |
+| `actor_id` | **`54ec5c6a-ed07-4e37-b3dd-c7b1300c2c7b`** | `not null` — identidade técnica lavrada do DT-01 |
+| `authority` | **`AUTORIDADE_DE_METODO`** | `papel_interno_so_propoe` **proíbe** `PAPEL_INTERNO` aqui; `CURADOR_DO_CASE` só freia |
+| `approval_adr` | **`ADR-070`** | `adr_quando_exigida`: obrigatório na entrada em `VIGENTE` |
+| `emergency_justification` | **`null`** | `emergencia_e_do_freio`: exclusiva do Curador |
+| `occurred_at` | **`default now()`** — fato, no momento real | §11.3: fato, nunca chave de ordenação |
+
+### 10.1 `reason` canônico
+
+> Promoção da primeira regra material da Curadoria 2.0 a VIGENTE, por ato da
+> Autoridade de Método sobre a ADR-070, que aprovou o conteúdo da versão 1 nos
+> termos da ficha REGRA_001_CONTINUIDADE_COORDENACAO.md v2.0. Maturidade
+> metodológica PROVISÓRIA: vigente no ciclo, provisória no Método. R-1 aberta e
+> ainda não iniciada — a promoção não emite proposta alguma (§10.4). Revisão
+> somente por versão nova; jamais por atualização silenciosa (MR1.1).
+
+### 10.2 `derivation_rules.approved_by` — **confirmado: não é o registro vinculante**
+
+| Prova | Resultado |
+|---|---|
+| `derivation_rules_vigente_exige_autoridade` = `state <> 'VIGENTE' or (approved_by …)` | `state` está **preso em `PROPOSTA`** pela constraint `derivation_rules_nasce_em_proposta` ⇒ o CHECK é **vacuamente verdadeiro para sempre** |
+| MR1.1 (`recusa_alteracao_de_regra`) | recusa `UPDATE` para **todo** papel ⇒ `approved_by` é **inalcançável** após o nascimento |
+| ADR-069, Consequência | declara, em texto, que este CHECK *"torna-se vacuamente verdadeiro — o que é diferente de errado"* |
+| Documento que ainda exija `approved_by` preenchido | **nenhum** |
+
+> **Nenhuma inconsistência.** O aprovador vinculante é
+> **`derivation_rule_transitions.actor_id`** com **`authority = 'AUTORIDADE_DE_METODO'`**
+> e **`approval_adr = 'ADR-070'`**. É a doutrina da ADR-069 aplicada: *a versão é
+> fato, a transição é ato* — e aprovar é ato.
+
+### 10.3 `effective_from` — **onde vive a vigência temporal**
+
+**Varredura completa por leitores de `derivation_rules.effective_from` em
+migrations e código: nenhum.** As duas únicas ocorrências fora da definição da
+coluna são o `insert` do nascimento (grava `null`) e um comentário.
+
+| Pergunta | Resposta provada |
+|---|---|
+| Algo lê `effective_from`? | **não** |
+| Alguma constraint o exige? | **não** — `vigencia_coerente` só compara `effective_to > effective_from` quando ambos existem |
+| Onde vive o fato temporal vinculante? | **`derivation_rule_transitions.occurred_at`** da transição de entrada em `VIGENTE` |
+| A doutrina *"fora da vigência, não propõe"* (Arquitetura §10.5) está honrada? | **sim** — o emissor testa `derivation_rule_state(...) = 'VIGENTE'`, e `SUSPENSA`/`REVOGADA` deixam de propor imediatamente |
+
+**Conflito real: não há.** A doutrina foi preservada; **só o mecanismo mudou** de
+coluna para transição, que é precisamente o que a ADR-069 decidiu.
+
+**Duas observações honestas, nenhuma bloqueante:**
+
+1. O comentário da coluna ainda diz *"Vigência: início e fim. 'Fora da vigência,
+   não propõe'"* — promessa que a coluna **não cumpre mais**. É **comentário
+   defasado**, e a ADR-069 já autorizou tratar os vestígios como decisão do
+   implementador (manter como cinto de segurança ou remover).
+2. Com transições, a vigência **começa quando o ato é praticado** — não é
+   possível **agendar** início futuro, o que `effective_from` permitiria. É
+   **consequência assumida** da ADR-069, e **nenhuma necessidade atual existe**.
+   Se um dia existir, o caminho é ADR nova, não `UPDATE`.
+
+### 10.4 A prova exigida: promoção por `INSERT` puro
+
+> **SIM — é possível promover exclusivamente por `INSERT` na tabela de
+> transições, sem nenhum `UPDATE` em `derivation_rules`.**
+
+Prova, na fonte:
+
+```sql
+create or replace function curadoria.derivation_rule_state(_rule_id text, _version integer)
+returns text language sql stable as $$
+  select t.to_state
+  from curadoria.derivation_rule_transitions t     -- ← lê SÓ as transições
+  where t.rule_id = _rule_id and t.rule_version = _version
+  order by t.seq desc
+  limit 1;
+$$;
+```
+
+A leitura canônica do estado **não toca `derivation_rules`**. O mesmo vale para
+`derivation_rule_current_version(text)`, que deriva a versão vigente inteiramente
+das transições. E o emissor da ponte confirma o uso: `and
+curadoria.derivation_rule_state(r.rule_id, r.version) = 'VIGENTE'` — com o
+comentário *"nunca de `derivation_rules.state`, que é o inicial"*.
+
+**Inserida a transição `seq=2 → VIGENTE`, o estado derivado passa a `VIGENTE`
+imediatamente.** Nenhum `UPDATE` é necessário — e nenhum seria possível.
+
+### 10.5 O que a promoção **não** liga — e por que isso importa
+
+Achado que o ato de promoção precisa carregar, para que ninguém espere efeito
+que não virá:
+
+| Emissor | Por que **não** emitirá, mesmo com a regra `VIGENTE` |
+|---|---|
+| **Case-side** (ponte, `b38cd34`) | seu DR3 exige linha em `derivation_rule_degree_map` para o conceito. A Regra 001 é **profissional-side** e tem **zero** linhas lá — **e CD-1 proíbe criá-las** |
+| **Profissional** (`emitir_proposta_de_estado`, 2.C) | seu DR3 tem `candidatas := 0` **por construção**, e o próprio código diz: *"quando a lavratura da forma acontecer, é ELA que pluga a consulta aqui — **emenda própria, nunca edição silenciosa**"* |
+
+> **A promoção torna a regra vigente e legalmente utilizável; ela não emite
+> nada.** O emissor profissional continuará devolvendo `SEM_REGRA_VIGENTE` até a
+> **emenda própria** que ligue a consulta — ato de engenharia posterior, previsto
+> em texto pelo `CONTRATO_2_C`, e **fora desta ADR**.
+>
+> **Consequência direta: R-1 não começa na promoção.** Começa quando a emenda
+> existir **e** houver `practice_evidence` real. Isso é coerência, não atraso: a
+> Fronteira nasceu vazio-honesta e assim permanece até que alguém a ligue
+> deliberadamente.

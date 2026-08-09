@@ -7,7 +7,7 @@
 | **Data** | 2026-08-08 |
 | **Base** | `c40b896` (v1.0 lavrada em `368fe99`) |
 | **Regra** | `CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA`, versão 1 |
-| **Status** | **BLOQUEADO EM C1** — e C1 depende de uma decisão do Fundador que já estava aberta (**D-13**) |
+| **Status** | ⚠️ **SUPERADO PELOS FATOS (2026-08-08)** — os quatro gates fecharam: **D-13 comprovada** por backup lógico com restauração ensaiada · deploy feito (produção em **114**) · **Regra 001 nascida em `PROPOSTA`** (`f1a7060`) · **ADR-070 APROVADA E LAVRADA**. Mantido como **registro histórico do rito**; o pacote vigente da promoção vive em [`ADR_070_APROVACAO_DA_REGRA_001.md`](ADR_070_APROVACAO_DA_REGRA_001.md) §10 |
 | **Natureza** | governança documental. **Zero código, zero migration, zero deploy, zero inserção, zero promoção** |
 
 > **A semântica da Regra 001 não é objeto desta missão e não foi tocada.** A
@@ -567,20 +567,28 @@ a mesma: **GATE B**.
 
 | # | Ato | Quem | Gate |
 |---|---|---|---|
-| **0** | **Decidir D-13** — nível mínimo de backup, RTO/RPO, e **resolver no painel a contradição sobre PITR** | **DT-01** | pré-condição de C1 |
-| 1 | ~~lavratura do Gate B~~ | Agente 02 | ✅ **feito** (`REGISTRO_DE_GOVERNANCA` §1.1) |
-| 2 | **Smoke técnico local** — nascimento + promoção com **UUID local rotulado**, provando cadeia, grafo, constraint trigger deferido e unicidade da vigência. **Não é R-1** | Agente 01 | prepara C2 |
-| 3 | **Backup ampliado + ponto de restauração confirmado no painel** | Agente 01, sob D-13 | abre C1 |
-| 4 | **Deploy das 22 migrations** em janela autorizada, na ordem cronológica, pelo fluxo da CLI | Agente 01, **missão própria** | **C1 → 🟢** |
-| 5 | **Verificação pós-deploy** — `migration list --linked` = 113; existência de `derivation_rules` e `derivation_rule_transitions`; **e conferência específica do Catálogo** (migrations 97 e 103) | Agente 01 | confirma C1 |
-| 6 | **Nascimento** — dois `INSERT` numa única transação, `PAPEL_INTERNO`, `actor_id` real, acumulação declarada no `reason` (§3.6). Por **migration** | Agente 01 | **C2 → 🟢** |
-| 7 | **Aprovação e lavratura da ADR-070** — inscrição do verbete em `DECISIONS.md` | **DT-01** + Agente 02 | fixa `approval_adr` |
-| 8 | **Promoção** `PROPOSTA → VIGENTE` — `seq=2`, `AUTORIDADE_DE_METODO`, `vigencia_seq=1`, `approval_adr='ADR-070'`, motivo | **DT-01**, executado por Agente 01 | **regra VIGENTE** |
-| 9 | **Leitura derivada** — `derivation_rule_state()` retorna `VIGENTE`; o DR3 do emissor do 2.C passa a ter candidata, por **emenda própria** | Agente 01 | verificação |
-| 10 | **Smoke controlado** com evidência real, e **só então R-1 começa** | Agente 01 + Curadoria | **R-1 inicia** |
+| # | Ato | Quem | Situação em 2026-08-08 |
+|---|---|---|---|
+| **0** | **Decidir D-13** — backup e ponto de restauração | **DT-01** | ✅ **FEITO** — comprovada por **backup lógico com restauração ensaiada** (PITR não contratado) |
+| 1 | Lavratura do Gate B | Agente 02 | ✅ **FEITO** — `REGISTRO_DE_GOVERNANCA` §1.1 |
+| 2 | Smoke técnico local | Agente 01 | ✅ **FEITO** |
+| 3 | Backup ampliado + ponto de restauração | Agente 01, sob D-13 | ✅ **FEITO** |
+| 4 | **Deploy das 22 migrations** | Agente 01 | ✅ **FEITO** — produção saiu de 91 |
+| 5 | Verificação pós-deploy | Agente 01 | ✅ **FEITO** — as duas tabelas do ciclo existem em produção |
+| 6 | **Nascimento** em `PROPOSTA` — dois `INSERT`, uma transação | Agente 01 | ✅ **FEITO** — `f1a7060`, migration 114; `actor_id` real, `PAPEL_INTERNO`, **acumulação declarada no `reason`** |
+| 7 | **Aprovação e lavratura da ADR-070** | **DT-01** + Agente 02 | ✅ **FEITO** — inscrita em `DECISIONS.md` no ato |
+| **8** | **Promoção** `PROPOSTA → VIGENTE` | **DT-01**, executado pelo **Engenheiro** | 🟡 **PRÓXIMO ATO** — pacote pronto em [`ADR_070`](ADR_070_APROVACAO_DA_REGRA_001.md) §10 |
+| 9 | **Leitura derivada** — `derivation_rule_state()` = `VIGENTE` | Engenheiro | após o 8 |
+| 10 | **Emenda própria** que liga a regra ao DR3 do emissor profissional | Engenheiro, **missão própria** | **só depois** — e é ela, não a promoção, que aproxima R-1 |
+| 11 | Smoke controlado com evidência real | Engenharia + Curadoria | **R-1 inicia aqui** |
 
-**Os passos 7 e 8 são o mesmo momento** (§2.4). O passo 6 vem **antes** do 7 —
-a versão nasce sem ADR; a ADR é exigida na promoção.
+> **Correção da sequência original, provada em `ADR_070` §10.5:** a v2.0 deste
+> documento supunha que R-1 começaria logo após a promoção. **Não começa.** A
+> regra `VIGENTE` **não emite proposta alguma** — o emissor Case-side exige
+> cobertura em `derivation_rule_degree_map` (zero linhas, e CD-1 proíbe criá-las)
+> e o emissor profissional tem `candidatas := 0` por construção. **Falta a
+> emenda própria** que o `CONTRATO_2_C` previu em texto. Por isso o passo 10
+> existe, e é ele — não o 8 — que antecede R-1.
 
 
 ## 8. Perguntas obrigatórias
