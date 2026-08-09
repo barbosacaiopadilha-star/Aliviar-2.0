@@ -120,9 +120,18 @@ const REGRA_VIGENTE = (id: string, code = CONCEITO) => `
 const EMITIR = (code = CONCEITO) =>
   `select 'DESFECHO:' || curadoria.emitir_proposta_de_importancia(${CASO}, '${code}', ${AUTORIDADE_FIXTURE});`;
 
+/**
+ * A REGRA 001 nasceu em `PROPOSTA` por ato do DT-01 (migration 20260808290000)
+ * e é a única regra material lavrada. Ela NÃO é resíduo desta suíte: fica de
+ * fora da contagem, por nome. Qualquer OUTRA regra sobrevivente continua sendo
+ * resíduo e derruba o afterAll.
+ */
+const REGRA_LAVRADA = "CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA";
+
 afterAll(() => {
   const { saida } = psql(
-    `select (select count(*) from ${REGRAS}) || '|' || (select count(*) from ${TRANSICOES}) || '|' ||
+    `select (select count(*) from ${REGRAS} where rule_id <> '${REGRA_LAVRADA}') || '|' ||
+            (select count(*) from ${TRANSICOES} where rule_id <> '${REGRA_LAVRADA}') || '|' ||
             (select count(*) from ${MAPA}) || '|' || (select count(*) from ${PROPOSTAS}) || '|' ||
             (select count(*) from ${NEEDS}) || '|' || (select count(*) from curadoria.cases)`,
   );
@@ -447,9 +456,12 @@ describe("2.2C · não emissão — sempre com desfecho nomeado", () => {
     const r = emTransacaoRevertida(`
       ${CASE_FIXTURE}
       ${GRAU("ESSENCIAL")}
-      select 'REGRAS:' || count(*) from ${REGRAS};
+      select 'REGRAS:' || count(*) from ${MAPA} where subcriterion_code = '${CONCEITO}';
       ${EMITIR()}
     `);
+    // A precondição é "nenhuma regra COBRE este conceito" — que é o que o
+    // emissor procura (DR3). Contar a tabela inteira era um atalho que a
+    // REGRA 001 lavrada (outro conceito, e em `PROPOSTA`) tornou impreciso.
     expect(r.saida).toContain("REGRAS:0");
     expect(r.saida).toContain("DESFECHO:SEM_REGRA_VIGENTE");
   });

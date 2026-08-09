@@ -152,7 +152,7 @@ afterAll(() => {
   `);
   const { saida } = psql(
     `select (select count(*) from curadoria.derivation_proposals) || '|' ||
-            (select count(*) from curadoria.derivation_rules) || '|' ||
+            (select count(*) from curadoria.derivation_rules where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA') || '|' ||
             (select count(*) from curadoria.practice_evidence) || '|' ||
             (select count(*) from curadoria.professional_subcriterion_map) || '|' ||
             (select count(*) from curadoria.cases)`,

@@ -121,7 +121,7 @@ afterAll(() => {
   `);
   const { saida } = psql(
     `select (select count(*) from curadoria.derivation_proposals) || '|' ||
-            (select count(*) from curadoria.derivation_rules) || '|' ||
+            (select count(*) from curadoria.derivation_rules where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA') || '|' ||
             (select count(*) from curadoria.cases)`,
   );
   if (saida !== "0|0|0") throw new Error(`1.11 deixou resíduo: propostas|regras|cases = ${saida}`);

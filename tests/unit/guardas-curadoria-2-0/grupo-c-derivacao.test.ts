@@ -1527,11 +1527,37 @@ describe("C-16 · O que o 2.2C-R1 não fez continua não feito", () => {
     );
   });
 
-  it("nenhuma regra de derivação real foi materializada", () => {
+  it("a única regra materializada é a LAVRADA — e com identidade técnica real", () => {
+    // A guarda nasceu exigindo ZERO: naquele momento a identidade técnica da
+    // Autoridade de Método **não existia**, e semear regra por migration
+    // seria fabricar autoria. O Gate B fechou (2026-08-08, identidade humana
+    // comprovada em `auth.users` de produção e lavrada), e o DT-01 praticou o
+    // nascimento da REGRA 001 em `PROPOSTA` — dois INSERT numa transação,
+    // pelo mecanismo lavrado (migration, ato administrativo controlado).
+    //
+    // A guarda evolui POR LAVRATURA para o que sempre protegeu: nenhuma regra
+    // sem autoria humana real. Uma SEGUNDA migration semeando regra derruba;
+    // e a lavrada precisa carregar a identidade real, não um placeholder.
+    const NASCIMENTO = "20260808290000_regra_001_nascimento_em_proposta.sql";
+    const IDENTIDADE_DT01 = "54ec5c6a-ed07-4e37-b3dd-c7b1300c2c7b";
+
+    const semeiam = ocorrencias(MIGRATIONS, /insert into curadoria\.derivation_rules/i);
     expect(
-      ocorrencias(MIGRATIONS, /insert into curadoria\.derivation_rules/i),
-      "uma regra foi semeada por migration, sem identidade técnica da Autoridade de Método.",
-    ).toEqual([]);
+      semeiam.map((caminho) => path.basename(caminho)),
+      "uma regra foi semeada por migration fora do ato lavrado do DT-01.",
+    ).toEqual([NASCIMENTO]);
+
+    const ato = semComentarios(
+      readFileSync(semeiam[0] as string, "utf8"),
+    );
+    expect(ato, "o nascimento não carrega a identidade técnica real").toContain(IDENTIDADE_DT01);
+    expect(ato, "o nascimento não é em PROPOSTA").toMatch(/'PROPOSTA'/);
+    expect(
+      /'VIGENTE'/.test(ato),
+      "o ato de nascimento promoveu a regra — promoção é ato separado, com ADR própria",
+    ).toBe(false);
+
+    // A ponte continua vazia: CD-1 intacta, nenhum valor material semeado.
     expect(
       ocorrencias(MIGRATIONS, /insert into curadoria\.derivation_rule_degree_map/i),
       "uma correspondência real foi semeada por migration.",

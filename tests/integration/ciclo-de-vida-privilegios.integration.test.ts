@@ -182,8 +182,8 @@ describe("2.2B-R1 · a inércia do 2.2B permanece intacta", () => {
 
   it("as estruturas continuam vazias: o pacote não inaugurou uso", () => {
     const [linha] = linhas(`
-      select (select count(*) from curadoria.derivation_rules) || '|' ||
-             (select count(*) from curadoria.derivation_rule_transitions) || '|' ||
+      select (select count(*) from curadoria.derivation_rules where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA') || '|' ||
+             (select count(*) from curadoria.derivation_rule_transitions where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA') || '|' ||
              (select count(*) from curadoria.derivation_proposals)
     `);
     expect(linha).toBe("0|0|0");

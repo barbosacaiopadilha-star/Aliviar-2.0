@@ -53,7 +53,7 @@ const VIGENTE = (id: string, v: number) =>
 
 afterAll(() => {
   const { saida } = psql(
-    `select (select count(*) from ${REGRAS}) || '|' || (select count(*) from ${PROPOSTAS})`,
+    `select (select count(*) from ${REGRAS} where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA') || '|' || (select count(*) from ${PROPOSTAS})`,
   );
   if (saida !== "0|0") {
     throw new Error(`MR1 deixou resíduo: regras|propostas = ${saida}`);

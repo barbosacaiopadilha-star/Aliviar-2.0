@@ -117,8 +117,8 @@ const ATE_VIGENTE = (id: string, v = 1) =>
 
 afterAll(() => {
   const { saida } = psql(
-    `select (select count(*) from ${REGRAS}) || '|' ||
-            (select count(*) from ${TRANSICOES}) || '|' ||
+    `select (select count(*) from ${REGRAS} where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA') || '|' ||
+            (select count(*) from ${TRANSICOES} where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA') || '|' ||
             (select count(*) from ${PROPOSTAS})`,
   );
   if (saida !== "0|0|0") {

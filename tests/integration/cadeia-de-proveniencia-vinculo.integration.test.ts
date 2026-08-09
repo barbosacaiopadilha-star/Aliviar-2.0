@@ -164,7 +164,7 @@ afterAll(() => {
             (select count(*) from curadoria.cases) || '|' ||
             (select count(*) from curadoria.case_priority_map) || '|' ||
             (select count(*) from curadoria.derivation_proposals) || '|' ||
-            (select count(*) from curadoria.derivation_rules) || '|' ||
+            (select count(*) from curadoria.derivation_rules where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA') || '|' ||
             (select count(*) from curadoria.derivation_concept_vigencia)`,
   );
   if (saida !== "0|0|0|0|0|0|0") {

@@ -195,9 +195,17 @@ describe("2.2A · A3 — a exigência de autoridade migrou para o ato (ADR-069 �
 });
 
 describe("2.2A · A4/A5 — e permanece INERTE", () => {
-  it("zero linhas: nenhuma regra, nenhuma proposta, nenhum exemplo semeado", () => {
-    const [linha] = consultar(`select count(*) from ${TABELA}`);
-    expect(linha![0]).toBe("0");
+  it("nenhum exemplo semeado: a única regra é a LAVRADA pelo DT-01, nunca uma fixture", () => {
+    // A estrutura nasceu vazia (A4/A5) e nenhuma migration de ESTRUTURA
+    // semeia — isso não mudou. A REGRA 001 existe desde 2026-08-08 por ATO
+    // do DT-01 (migration 20260808290000: dois INSERT numa transação, com
+    // autoria humana real). A guarda passa a nomeá-la: qualquer OUTRA linha
+    // aqui é semeadura, e derruba.
+    const [linha] = consultar(`
+      select coalesce(string_agg(rule_id || '@v' || version, ',' order by rule_id), '<nenhuma>')
+      from ${TABELA}
+    `);
+    expect(linha![0]).toBe("CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA@v1");
   });
 
   it("zero policies com RLS ligada", () => {

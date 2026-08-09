@@ -104,7 +104,7 @@ const EMITIR = (code = C1) =>
 
 afterAll(() => {
   const { saida } = psql(
-    `select (select count(*) from ${REGRAS}) || '|' || (select count(*) from ${TRANSICOES}) || '|' ||
+    `select (select count(*) from ${REGRAS} where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA') || '|' || (select count(*) from ${TRANSICOES} where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA') || '|' ||
             (select count(*) from ${MAPA}) || '|' || (select count(*) from ${OCUPACAO}) || '|' ||
             (select count(*) from ${PROPOSTAS}) || '|' || (select count(*) from curadoria.cases)`,
   );

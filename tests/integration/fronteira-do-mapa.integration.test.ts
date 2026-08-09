@@ -451,11 +451,17 @@ select 'CASE_SIDE=' || count(*) from curadoria.derivation_proposals where case_i
     expect(saida).toContain("CASE_SIDE=0");
   });
 
-  it("G-2.C-9 · zero semeadura material: nenhuma regra, nenhuma correspondência no banco", () => {
+  it("G-2.C-9 · a única regra material é a LAVRADA pelo DT-01 — e a ponte segue vazia", () => {
+    // A guarda nasceu exigindo `0|0`. Em 2026-08-08 o DT-01 praticou o
+    // nascimento da REGRA 001 em `PROPOSTA` (migration 20260808290000, ato
+    // próprio, posterior e independente do 2.C) — então a asserção evolui
+    // POR LAVRATURA para o que ela sempre quis dizer: o 2.C não semeia, e
+    // nenhuma regra existe além da que a Autoridade de Método lavrou.
+    // Uma SEGUNDA regra, ou qualquer valor na ponte, derruba aqui.
     const saida = psql(`
-select (select count(*) from curadoria.derivation_rules)
+select coalesce((select string_agg(rule_id || '@v' || version || ':' || curadoria.derivation_rule_state(rule_id, version), ',' order by rule_id) from curadoria.derivation_rules), '<nenhuma>')
   || '|' || (select count(*) from curadoria.derivation_rule_degree_map);`);
-    expect(saida).toBe("0|0");
+    expect(saida).toBe("CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA@v1:PROPOSTA|0");
   });
 
   it("G-2.C-6 · a decisora LÊ curator_judgments (§13.2) e JAMAIS escreve — prova no fonte vivo", () => {
