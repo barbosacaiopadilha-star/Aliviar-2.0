@@ -107,19 +107,79 @@
   line-height: 1;
 }
 
-.mesa-step__marca--pronta {
-  color: var(--color-ambient-accent);
+/* ------------------------------- gramática de estados -------------------- */
+/* E-2 · uma cor por FUNÇÃO, e a mesma em toda a Mesa. Antes, "respondida" e
+   "aguarda você" eram ambas índigo: a trilha tinha três formas e uma cor só,
+   então a cor não dizia nada. Agora resolvido/atenção/impedimento/neutro têm
+   papéis distintos — e cada um continua acompanhado de forma e texto, porque
+   nenhuma distinção pode depender de cor sozinha. */
+.mesa-estado {
+  line-height: 1;
 }
 
-.mesa-step__marca--pendente {
+/* Processual concluído. NUNCA desfecho clínico favorável. */
+.mesa-estado--resolvido {
+  color: var(--color-success);
+}
+
+/* Falta ato humano. É a cor mais cara da Mesa: escassa por regra. */
+.mesa-estado--atencao {
+  color: var(--color-attention);
+}
+
+/* Erro, conflito, bloqueio. NUNCA divergência ou discordância legítima. */
+.mesa-estado--impedimento {
+  color: var(--color-error);
+}
+
+/* Identidade e estrutura — nunca comunica resultado. */
+.mesa-estado--estrutura {
   color: var(--color-brand-primary);
 }
 
-/* A marca "·" a 30% sumia no papel. A identidade do estado não é só cor — a
-   forma muda (✓ ● ·) e o leitor de tela recebe o rótulo —, mas uma marca
-   invisível não identifica nada para quem enxerga. */
-.mesa-step__marca--aguarda {
+/* Contexto, não iniciado, repouso. A marca "·" a 30% sumia no papel; uma
+   marca invisível não identifica nada para quem enxerga. */
+.mesa-estado--neutro {
   color: color-mix(in srgb, var(--color-ink) 50%, transparent);
+}
+
+/* ------------------------------- A-2: a pendência visível ---------------- */
+/* Secundária por desenho: abaixo da trilha, menor, sem borda e sem card. Diz
+   o que falta sem virar painel. */
+.mesa-steps__pendencias {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  margin-top: 0.375rem;
+  padding-left: 0.75rem;
+}
+
+.mesa-steps__pendencia {
+  display: flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--color-ink-muted);
+  /* Frase curta pode quebrar em duas linhas no celular; o que ela nunca faz
+     é empurrar a largura da página. */
+  min-width: 0;
+}
+
+.mesa-steps__pendencia-marca {
+  font-size: 0.625rem;
+  flex: none;
+}
+
+.mesa-steps__pendencia-etapa {
+  flex: none;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.mesa-steps__pendencia-frase {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* Onde está a próxima decisão. Um ponto, não um badge: sinaliza sem gritar. */
@@ -294,6 +354,18 @@ button.mesa-chip:focus-visible {
   .mesa-step {
     min-height: 2rem;
     padding: 0 0.5rem;
+  }
+
+  /* A-2 no celular: a pendência é o item ② da ordem vertical e NUNCA vai
+     para gaveta. Em faixa estreita o rótulo da etapa e a frase empilham em
+     vez de disputar a mesma linha — o texto quebra, a página não alarga. */
+  .mesa-steps__pendencias {
+    padding-left: 0.5rem;
+  }
+
+  .mesa-steps__pendencia {
+    flex-wrap: wrap;
+    gap: 0.25rem;
   }
 
   /* Alvo de toque: no desktop "Resolver em…" é um link de 16px e funciona;

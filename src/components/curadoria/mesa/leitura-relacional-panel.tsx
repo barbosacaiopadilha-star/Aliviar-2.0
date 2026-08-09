@@ -69,12 +69,29 @@ function leituraDe(reading: RelationalReading): { texto: string; tom: "alta" | "
   return { texto: COMPATIBILITY_LABELS[reading.result], tom: tons[reading.result] };
 }
 
+/**
+ * E-3 · a leitura relacional NÃO é acerto e erro.
+ *
+ * Antes, `ALTA_COMPATIBILIDADE` era verde e `MEDIA` era âmbar: cor
+ * interpretando o CONTEÚDO da evidência, que é exatamente o que o Método
+ * proíbe. Verde ensinaria a ler "boa opção"; âmbar, "cuidado" — e nenhuma
+ * das duas leituras existe no domínio.
+ *
+ * Agora as leituras compartilham a cor institucional e se distinguem por
+ * FORMA — sólida, tracejada, apagada —, que sobrevive ao daltonismo e à
+ * impressão em cinza. O rótulo textual (`COMPATIBILITY_LABELS`) continua ao
+ * lado e não mudou.
+ *
+ * A única exceção é `juizo`: "Aguarda juízo do Curador" é falta de ATO
+ * HUMANO, não leitura de evidência — e por isso é o único que recebe âmbar,
+ * na mesma gramática do resto da Mesa.
+ */
 const TOM_CLASSES: Record<string, string> = {
-  alta: "border-l-2 border-emerald-600/60",
-  media: "border-l-2 border-amber-500/60",
+  alta: "border-l-2 border-[color-mix(in_srgb,var(--color-brand-primary)_70%,transparent)]",
+  media: "border-l-2 border-dotted border-[color-mix(in_srgb,var(--color-brand-primary)_70%,transparent)]",
   lacuna: "border-l-2 border-dashed border-slate-400",
   neutra: "border-l-2 border-slate-200",
-  juizo: "border-l-2 border-double border-indigo-500/60",
+  juizo: "border-l-2 border-double border-[color-mix(in_srgb,var(--color-attention)_75%,transparent)]",
 };
 
 export function LeituraRelacionalPanel({

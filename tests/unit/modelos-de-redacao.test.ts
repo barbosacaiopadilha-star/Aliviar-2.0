@@ -434,10 +434,15 @@ describe("§11/§10 · persistência e Método", () => {
   const painel = readFileSync("src/components/curadoria/mesa/painel-de-juizo.tsx", "utf8");
 
   it("23 · zero template persistido: nenhum id de modelo viaja para o ato", () => {
-    const registro = painel.slice(
-      painel.indexOf("const registrar = ()"),
-      painel.indexOf("return ("),
-    );
+    // O recorte ancora no `return (` QUE VEM DEPOIS do registrar — buscar o
+    // primeiro do arquivo tornava a guarda vacuosa assim que qualquer
+    // componente nascesse acima dele (foi o que aconteceu com a marca de
+    // estado do E-2: o recorte virou string vazia e a guarda passou a não
+    // olhar nada).
+    const inicio = painel.indexOf("const registrar = ()");
+    expect(inicio).toBeGreaterThan(0);
+    const registro = painel.slice(inicio, painel.indexOf("return (", inicio));
+    expect(registro).toContain("registrarJulgamentoAction");
     for (const proibido of ["modelo", "template", "situacao", "biblioteca"]) {
       expect(registro.includes(proibido), `o ato carrega: ${proibido}`).toBe(false);
     }

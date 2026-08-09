@@ -13,6 +13,11 @@ import {
   TITULO_DA_SITUACAO,
   modelosDoConceito,
 } from "@/modules/curadoria/modelos-de-redacao";
+import {
+  MARCA_DO_AGUARDO,
+  MARCA_DO_DESFECHO,
+  classeDoPapel,
+} from "./gramatica-de-estados";
 
 /**
  * O PAINEL DE JUÍZO da etapa AVALIAÇÃO (Item 2.3 §13/§16) — a menor
@@ -61,6 +66,27 @@ const MOTIVO_DO_AGUARDO: Record<NonNullable<ConceitoDeJuizo["lacuna"]>, string> 
     "Evidência nova superou o juízo anterior — julgue de novo sobre os fatos vigentes.",
 };
 
+/**
+ * O desfecho de um ato, com cor e sinal (E-2). A TRADUÇÃO é a de sempre —
+ * `DESFECHO_LEGIVEL` abaixo não muda uma vírgula; o que se acrescenta é a
+ * camada visual que faltava, vinda da gramática central.
+ *
+ * Dois cuidados que a auditoria nomeou e este componente respeita:
+ * `VERSAO_JA_GRAVADA` é **sucesso idempotente** e não pode parecer falha; e
+ * o aguardo por evidência nova é **atualidade**, nunca erro.
+ */
+function MarcaDoDesfecho({ desfecho }: { desfecho: DesfechoDoJulgamento["desfecho"] }) {
+  const marca = MARCA_DO_DESFECHO[desfecho];
+  return (
+    <span className="inline-flex items-baseline gap-1 text-xs text-ink-muted">
+      <span aria-hidden="true" className={classeDoPapel(marca.papel)}>
+        {marca.sinal}
+      </span>
+      {DESFECHO_LEGIVEL[desfecho]}
+    </span>
+  );
+}
+
 const DESFECHO_LEGIVEL: Record<DesfechoDoJulgamento["desfecho"], string> = {
   JUIZO_REGISTRADO: "Juízo registrado.",
   VERSAO_JA_GRAVADA: "Este juízo já estava gravado — nada foi duplicado.",
@@ -89,7 +115,7 @@ function FormularioDeJuizo({
   const [conclusao, setConclusao] = useState("");
   const [motivo, setMotivo] = useState("");
   const [selecionadas, setSelecionadas] = useState<Record<string, boolean>>({});
-  const [resultado, setResultado] = useState<string | null>(null);
+  const [resultado, setResultado] = useState<DesfechoDoJulgamento["desfecho"] | null>(null);
   // Abrir/fechar a lista é estado puramente local. Não há geração, não há
   // espera, não há falha: os textos são constantes do build.
   const [modelosAbertos, setModelosAbertos] = useState(false);
@@ -131,7 +157,7 @@ function FormularioDeJuizo({
         motivo: motivo || null,
         versaoBaseId: conceito.versaoBaseId,
       });
-      setResultado(DESFECHO_LEGIVEL[desfecho.desfecho]);
+      setResultado(desfecho.desfecho);
       if (desfecho.desfecho === "JUIZO_REGISTRADO") {
         setConclusao("");
         setMotivo("");
@@ -245,7 +271,7 @@ function FormularioDeJuizo({
         >
           Registrar juízo
         </button>
-        {resultado ? <span className="text-xs text-ink-muted">{resultado}</span> : null}
+        {resultado ? <MarcaDoDesfecho desfecho={resultado} /> : null}
       </div>
     </div>
   );
@@ -262,12 +288,12 @@ function BlocoDoConceito({
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [resultado, setResultado] = useState<string | null>(null);
+  const [resultado, setResultado] = useState<DesfechoDoJulgamento["desfecho"] | null>(null);
 
   const retirar = (versaoVigenteId: string) => {
     startTransition(async () => {
       const desfecho = await retirarJulgamentoAction({ versaoVigenteId, motivo: null });
-      setResultado(DESFECHO_LEGIVEL[desfecho.desfecho]);
+      setResultado(desfecho.desfecho);
       if (desfecho.desfecho === "JUIZO_RETIRADO") router.refresh();
     });
   };
@@ -297,14 +323,22 @@ function BlocoDoConceito({
             >
               Retirar (só o autor)
             </button>
-            {resultado ? <span className="text-xs text-ink-muted">{resultado}</span> : null}
+            {resultado ? <MarcaDoDesfecho desfecho={resultado} /> : null}
           </div>
         </div>
       ) : (
         <>
           {conceito.lacuna ? (
-            <p className="text-xs font-medium text-ink-muted" data-testid={`aguardo-${conceito.code}`}>
-              {MOTIVO_DO_AGUARDO[conceito.lacuna]}
+            <p
+              className="flex items-baseline gap-1 text-xs font-medium text-ink-muted"
+              data-testid={`aguardo-${conceito.code}`}
+            >
+              {/* Âmbar: falta ato humano. Nunca vermelho — nem o juízo
+                  retirado nem a supersessão por evidência nova são falha. */}
+              <span aria-hidden="true" className={classeDoPapel(MARCA_DO_AGUARDO[conceito.lacuna].papel)}>
+                {MARCA_DO_AGUARDO[conceito.lacuna].sinal}
+              </span>
+              <span>{MOTIVO_DO_AGUARDO[conceito.lacuna]}</span>
             </p>
           ) : null}
           <FormularioDeJuizo
