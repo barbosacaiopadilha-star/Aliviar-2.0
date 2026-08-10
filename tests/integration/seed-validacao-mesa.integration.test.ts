@@ -97,10 +97,36 @@ describe.skipIf(!process.env.SEED_MESA)("seed — validação de usabilidade da 
       const residuo = pacienteExistente?.users.find((u) => u.email === SEED_PATIENT_EMAIL);
 
       if (residuo) {
+        // SEED-1 · a limpeza tinha um buraco, e ele custou três missões.
+        //
+        // A cadeia real é `crm_contacts → curadoria.profiles → auth.users`.
+        // O ramo limpava só o meio dela — histórias, perfil de paciente e
+        // papéis —, deixando `profiles` e `crm_contacts` de pé. Com eles,
+        // `deleteUser` falha por chave estrangeira; e como o erro era
+        // ignorado, o seed seguia adiante e só quebrava depois, em
+        // `createPatientAccount`, com "e-mail já existe" — uma mensagem que
+        // não aponta para a causa.
+        //
+        // A ordem abaixo é a da dependência, do mais externo para o mais
+        // interno, e cada delete é fechado por `profile_id`/`id` da conta
+        // sintética: nada genérico, nada que alcance outra conta.
         await service.from("patient_stories").delete().eq("profile_id", residuo.id);
         await service.from("patient_profiles").delete().eq("profile_id", residuo.id);
         await service.from("user_roles").delete().eq("profile_id", residuo.id);
-        await service.auth.admin.deleteUser(residuo.id);
+        await service.from("crm_contacts").delete().eq("patient_profile_id", residuo.id);
+        await service.from("profiles").delete().eq("id", residuo.id);
+
+        // E o erro deixa de ser engolido: se ainda restar dependência, o seed
+        // para aqui, dizendo qual conta e qual causa — em vez de falhar
+        // adiante com um sintoma que não explica nada.
+        const { error: erroDelete } = await service.auth.admin.deleteUser(residuo.id);
+        if (erroDelete) {
+          throw new Error(
+            `SEED-1: resíduo da paciente sintética não pôde ser removido (${SEED_PATIENT_EMAIL}, ` +
+              `id ${residuo.id}). Causa: ${erroDelete.message}. ` +
+              "Alguma tabela nova passou a referenciar a conta e precisa entrar nesta limpeza.",
+          );
+        }
       }
 
       const paciente = await createPatientAccount(
