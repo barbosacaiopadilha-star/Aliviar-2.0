@@ -1,7 +1,7 @@
 import { ImmersiveBackdrop } from "@/components/shared/immersive-backdrop";
 
 /**
- * A ATMOSFERA DA CASA — o mesmo edifício da recepção, visto por dentro.
+ * A ATMOSFERA DA CASA — provisória, até o Master Visual chegar.
  *
  * A3b (adendo) · esta camada era feita à mão: três `div`s com gradiente
  * próprio, imagem a 22% de opacidade e um véu de 90–96% por cima. O resultado
@@ -15,27 +15,36 @@ import { ImmersiveBackdrop } from "@/components/shared/immersive-backdrop";
  *    nunca ter sido usado aqui — a variante `patient-intimate`. A casa tinha
  *    uma segunda linguagem de ambiente para a mesma marca.
  *
- * 2. **A cena passa a ser `landingAtrium`.** Era `patientStudy`, um detalhe
- *    fechado de mesa: pertence ao mesmo conjunto, mas não é *reconhecível*
- *    como o lugar da landing. `landingAtrium` (`grand-finale.jpg`) é a sala
- *    ampla que a landing usa nas suas próprias bandas — atravessar a porta
- *    passa a mostrar o mesmo salão.
+ * 2. **A cena é `patientStudy` — e isto é um FALLBACK TEMPORÁRIO.**
  *
- * A opacidade é **a mesma das bandas da landing** (`imageOpacity={16}` em
- * `LandingSection`). Foi calibrada, não escolhida: a 30% o salão aparecia
- * atrás do corpo do texto — a régua sobre o piso de madeira, o nome do Curador
- * sobre um banco — e legibilidade não se negocia por atmosfera. A 16% o lugar
- * continua reconhecível e o texto continua sendo o protagonista.
+ *    Uma passagem anterior trocou esta cena por `landingAtrium`
+ *    (`grand-finale.jpg`), com o argumento de que era o salão que a landing
+ *    usa nas próprias bandas. O argumento estava errado porque o arquivo nunca
+ *    foi aberto: `grand-finale.jpg` **não é o edifício da Aliviar**. É um
+ *    apartamento vazio genérico — luz fria, armários escuros, piso laminado,
+ *    radiador, janela europeia. Ficou atrás da casa inteira da paciente.
  *
- * Quem carrega a arquitetura com força é o hero, a 62%, exatamente como o hero
- * da landing. É a mesma divisão de trabalho que a página pública faz: uma
- * abertura com o ambiente presente, e o resto da leitura sobre o ambiente
- * recuado.
+ *    A revisão foi feita comparando as imagens, não os nomes, e é essa a regra
+ *    daqui em diante: asset se confere abrindo.
+ *
+ *    `cena-6-detalhe.jpg` é o estado imediatamente anterior, confirmado no
+ *    histórico (`18d5a04`), e pertence de fato ao conjunto Aliviar em uso. Ele
+ *    **não corresponde ao Master Visual oficial** — a referência aprovada
+ *    mostra outro edifício, em travertino, cujos arquivos ainda não existem
+ *    neste repositório. É um fallback do edifício Aliviar existente enquanto os
+ *    assets oficiais não chegam.
+ *
+ * A opacidade é a mesma das bandas da landing (`imageOpacity={16}` em
+ * `LandingSection`), e é um teto de legibilidade, não um alvo estético: a 30%
+ * a fotografia aparecia atrás do corpo do texto, e legibilidade não se negocia
+ * por atmosfera. Quem carrega a arquitetura com força é o hero. Quando os
+ * assets oficiais chegarem, os dois números voltam à mesa — mas a ordem é
+ * sempre a mesma: **asset certo primeiro, opacidade depois.**
  */
 export function PatientAmbientLayer() {
   return (
     <div className="patient-ambient-layer" aria-hidden="true">
-      <ImmersiveBackdrop scene="landingAtrium" variant="patient-intimate" imageOpacity={16} />
+      <ImmersiveBackdrop scene="patientStudy" variant="patient-intimate" imageOpacity={16} />
     </div>
   );
 }

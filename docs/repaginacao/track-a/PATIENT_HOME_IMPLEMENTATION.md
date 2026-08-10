@@ -302,6 +302,50 @@ viewport, como um lugar em que se está parado. Na captura `fullPage` isso
 produz uma emenda na altura da viewport (~900px), onde a arquitetura termina.
 **Não é o que a paciente vê** ao rolar.
 
+### 8.7 · MASTER-0 · o fundo de outro edifício saiu
+
+**Decisão de DT-01:** a imagem de referência enviada por ele é o **Master
+Visual oficial**. A landing implementada **não** é fonte de verdade visual.
+
+A auditoria de assets (§4/§5 da missão MASTER) mostrou que **os arquivos do
+Master Visual não existem neste workspace** — procurados em `public/`, no
+histórico completo (`--diff-filter=D`), em 15+ branches, nos worktrees e nos
+cinco repositórios irmãos, working tree e histórico git. A referência mostra
+outro edifício: travertino bege, parede de pedra com o logotipo gravado no
+lockup que inclui "· CONCIERGE", piso de pedra. O que o repositório tem é uma
+recepção em mármore branco/rosado, com placa acrílica e piso de madeira.
+
+E dentro dessa auditoria, um erro meu:
+
+> **`grand-finale.jpg` não é o edifício da Aliviar.** É um apartamento vazio
+> genérico — luz fria, armários escuros, piso laminado, radiador, janela
+> europeia. Eu a coloquei atrás da casa inteira da paciente porque o código a
+> chamava de `landingAtrium` e ela estava nas bandas da landing. **Nunca abri o
+> arquivo.**
+
+**MASTER-0 reverteu exatamente isso**, e só isso: a cena da camada atmosférica
+volta a `patientStudy` (`cena-6-detalhe.jpg`), o estado imediatamente anterior,
+confirmado em `18d5a04`.
+
+| | valor | natureza |
+|---|---|---|
+| cena | `patientStudy` = `cena-6-detalhe.jpg` | **fallback temporário** do edifício Aliviar existente |
+| componente | `ImmersiveBackdrop` · `patient-intimate` | preservado — é o da landing |
+| opacidade | 16% | preservada, teto de legibilidade |
+
+O fallback **não corresponde ao Master Visual** e não deve ser lido como tal.
+
+**Gap aberto — `grand-finale.jpg` ainda aparece em duas superfícies
+preexistentes**, fora do escopo do §6 da MASTER-0:
+
+- `src/modules/paciente/ambiente.ts:68` — hero da paciente na etapa **DOSSIE**;
+- `src/components/landing/editorial/editorial-sections.tsx:151,205` — bandas
+  "warm" da landing.
+
+Ou seja: o prédio alheio saiu do campo da Home, mas **volta a aparecer no hero
+quando a jornada chega ao Relatório**. Corrigir isso depende dos assets
+oficiais — e a regra que fica é: **asset se confere abrindo, nunca pelo nome.**
+
 ### 8.5 · Gaps registrados
 
 - **`ExpandableSection`** ("Como sua Curadoria é feita", "Conhecer meu Perfil")
