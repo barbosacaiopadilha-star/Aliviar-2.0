@@ -30,6 +30,31 @@ export function resolveCurrentResponsible(
   const stage = input.pipelineStage ?? null;
   const phase = stage ? resolveJourneyPhase(stage) : inferPhaseFromCuradoria(input.curadoriaRecord);
 
+  /**
+   * **Antes da decisão, quem responde pelo caso é o Curador. Sempre.**
+   *
+   * A fase `escolha` é alcançada por `inferPhaseFromCuradoria` apenas com
+   * `relatorio.emittedAt` — Curadoria preparada **dentro** da Aliviar, sem
+   * entrega digital, sem o encontro de entrega e sem decisão registrada. Como
+   * `escolha` está na lista do Concierge, a paciente passava a ver o Concierge
+   * como responsável no exato momento em que o trabalho ainda era todo do
+   * Curador.
+   *
+   * O fluxo aprovado é claro: são dois encontros, o segundo é conduzido pelo
+   * Curador, e é nele que a decisão nasce. O Concierge assume **depois** dela.
+   *
+   * A guarda vem antes da fase porque a decisão é o fato mais específico —
+   * e ela já existe no registro. Nada novo foi criado.
+   */
+  if (input.curadoriaRecord && !input.curadoriaRecord.devolutiva.decision) {
+    return {
+      role: "curador",
+      roleLabel: COA_RESPONSIBLE_LABELS.curador,
+      name: input.curatorName?.trim() || input.curadoriaRecord.curatorName || "Seu Curador",
+      levelLabel: "Curadoria",
+    };
+  }
+
   if (phase === "acompanhamento" || phase === "encerramento" || phase === "escolha") {
     return {
       role: "concierge",
