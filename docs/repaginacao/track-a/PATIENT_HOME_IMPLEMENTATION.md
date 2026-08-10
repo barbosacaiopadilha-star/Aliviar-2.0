@@ -121,19 +121,57 @@ menção ao mesmo ato. É um link de **resumo**, não a declaração da pendênc
 
 ---
 
-## 5 · Divergência registrada, não arbitrada
+## 5 · Divergência registrada — e resolvida na A3a.1
 
-**`/sua-historia` × `/sua-historia/continuar`.** O §6 desta missão é explícito:
-*"Não recriar href manualmente se `pending` já fornece o caminho."* Segui a
-projeção. Para `HISTORIA_NAO_INICIADA` isso significa que o CTA aponta para
-`/sua-historia` (a recepção), enquanto o resto da casa — `SECONDARY_LINKS`,
-`PatientHomeState` e o oráculo certificado — padronizou `/sua-historia/continuar`
-("abre a história EXISTENTE, no passo em que parou").
+**`/sua-historia` × `/sua-historia/continuar`.** A A3a seguiu a projeção, como o
+§6 daquela missão exigia, e com isso o CTA de `HISTORIA_NAO_INICIADA` apontava
+para `/sua-historia` — a fachada pública — enquanto o resto da casa padronizou
+`/sua-historia/continuar`.
 
-Para quem ainda não tem história nenhuma os dois destinos funcionam. **Não é
-decisão de engenharia** qual das duas fontes está certa: é decisão de produto se
-a recepção deve reaparecer para quem nunca escreveu nada. Enquanto não houver
-decisão, a Home segue a projeção, que é a fonte declarada.
+**Decisão de DT-01 (A3a.1):** na Home autenticada, iniciar e continuar levam ao
+mesmo lugar — a entrada autenticada do wizard. A A2B já havia estabelecido a
+semântica: `/sua-historia` é a página pública explicativa; `/continuar` exige
+paciente, veste o `PatientShell` e resolve a história ativa, criando a primeira
+quando não existe nenhuma.
+
+A correção foi feita **na fonte** (`derivePatientPending`), não na UI —
+`ProximaAcao` continua com `href={cta.href}` e sem nenhum `if` de rota. A página
+pública segue existindo, pública e separada. Detalhe em
+[§7 abaixo](#7--a3a1--o-destino-da-história) e nas guardas de
+`tests/unit/patient-next-action.test.ts`.
+
+---
+
+## 7 · A3a.1 · o destino da História
+
+| | antes | depois |
+|---|---|---|
+| `HISTORIA_NAO_INICIADA` | `/sua-historia` | **`/sua-historia/continuar`** |
+| `HISTORIA_EM_PREENCHIMENTO` | `/sua-historia/continuar` | inalterado |
+
+Começar e retomar passam a ser o mesmo destino, porque para a paciente são o
+mesmo ato: entrar na própria história. Quem nunca escreveu nada não é mandado
+para uma página que explica o que ela já decidiu fazer.
+
+### Ocorrências auditadas de `/sua-historia`
+
+| ocorrência | classe | ação |
+|---|---|---|
+| 6 links da Landing (`hero-editorial`, `editorial-sections`, `hero-experience`, `public-footer`, `portal-frames`, `final-actions`) | **A** — porta pública de quem ainda não entrou | preservados |
+| `public-footer-gate.tsx:23` | **A** — teste de prefixo, não destino | preservado |
+| `public-paths.ts:24` | **A** — a declaração da rota pública | preservada |
+| `next-action.ts:100` (`HISTORIA_NAO_INICIADA`) | **B** — ação autenticada | **corrigido** |
+| `next-action.ts:219` (`patientStageHref("CONSULTA_INICIAL")`) | ver abaixo | não alterado |
+
+**`patientStageHref` não tem consumidor de produção.** A régua da Home usa
+`WALK_HREFS` (`experiencia.ts`), que **não** mapeia `CONSULTA_INICIAL` — logo
+`/sua-historia` nunca chega à tela por esse caminho. `patientStageHref` é a
+projeção anterior, hoje exercitada só por teste, e seu contrato é de **leitura**
+("nenhuma delas reinicia fluxo"), não de iniciar História. Alterá-la seria mexer
+em código sem usuário, fora do objeto único da A3a.1.
+
+**Fica como achado:** ou ela ganha consumidor e o destino é revisto junto, ou é
+removida. Decisão de DT-01.
 
 ---
 

@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import { buildJornada } from "@/modules/curadoria/jornada";
@@ -32,7 +34,11 @@ describe("toda pendência diz O QUE falta — nunca só que falta algo", () => {
     expect(pending.kind).toBe("action");
     if (pending.kind !== "action") return;
     expect(pending.action.title).toContain("sua história");
-    expect(pending.action.cta?.href).toBe("/sua-historia");
+    // A3a.1 · era `/sua-historia` — a fachada pública. A pendência só existe
+    // para quem já está autenticada, e a saída para a página explicativa a
+    // fazia deixar a casa para ler o que já sabe. `/continuar` é a entrada
+    // autenticada do wizard, e cria a primeira história quando não há nenhuma.
+    expect(pending.action.cta?.href).toBe("/sua-historia/continuar");
   });
 
   it("rascunho: leva para continuar de onde parou, não para o começo", () => {
@@ -147,6 +153,66 @@ describe("o vocabulário do paciente continua protegido", () => {
         expect(texto, `vocabulário interno vazou: ${termo}`).not.toContain(termo);
       }
     }
+  });
+});
+
+describe("A3a.1 · a História, da Home, é sempre a entrada autenticada", () => {
+  const PRIVADO = "/sua-historia/continuar";
+
+  it("começar e retomar levam ao MESMO destino — o wizard dentro da casa", () => {
+    const naoIniciada = derivePatientPending({
+      leitura: leituraDe("HISTORIA_NAO_INICIADA"),
+      jornada: null,
+    });
+    const emPreenchimento = derivePatientPending({
+      leitura: leituraDe("HISTORIA_EM_PREENCHIMENTO"),
+      jornada: null,
+    });
+
+    if (naoIniciada.kind !== "action" || emPreenchimento.kind !== "action") {
+      throw new Error("esperava ação nos dois estados da História");
+    }
+
+    // O conflito que esta guarda existe para impedir: duas fontes mandando a
+    // mesma paciente para lugares diferentes pelo mesmo ato.
+    expect(naoIniciada.action.cta?.href).toBe(PRIVADO);
+    expect(emPreenchimento.action.cta?.href).toBe(PRIVADO);
+    expect(naoIniciada.action.cta?.href).toBe(emPreenchimento.action.cta?.href);
+  });
+
+  it("nenhuma pendência da Home despacha a paciente para a fachada pública", () => {
+    const entradas = [
+      { leitura: leituraDe("HISTORIA_NAO_INICIADA"), jornada: null },
+      { leitura: leituraDe("HISTORIA_EM_PREENCHIMENTO"), jornada: null },
+      { leitura: leituraDe("HISTORIA_ENVIADA"), jornada: null },
+      ...Object.keys(MOCK_RECORDS).map((key) => ({
+        leitura: leituraDe("CASO_EM_CURADORIA"),
+        jornada: jornadaDe(key),
+      })),
+    ];
+
+    for (const entrada of entradas) {
+      const pending = derivePatientPending(entrada);
+      if (pending.kind !== "action" || !pending.action.cta) continue;
+      // Exato: `/sua-historia/continuar` é legítimo; a raiz sozinha não é.
+      expect(
+        pending.action.cta.href,
+        `pendência autenticada apontando para a página pública: ${pending.action.title}`,
+      ).not.toBe("/sua-historia");
+    }
+  });
+
+  it("e a página pública continua existindo, pública e separada", () => {
+    // A correção move a PACIENTE AUTENTICADA para dentro da casa. Ela não
+    // transforma a fachada em rota privada — quem chega de fora continua
+    // tendo uma página que explica o que é contar a própria história.
+    const bruto = readFileSync("src/modules/auth/public-paths.ts", "utf8");
+    const declarado = bruto.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+
+    expect(declarado).toContain('"/sua-historia"');
+    // E o passo autenticado segue fora da lista pública (contrato da A2C).
+    expect(declarado).not.toContain('"/sua-historia/continuar"');
+    expect(existsSync("src/app/(public)/sua-historia/page.tsx")).toBe(true);
   });
 });
 

@@ -97,7 +97,16 @@ export function derivePatientPending(input: {
         why: "Tudo na Aliviar parte do que você viveu — não de um formulário.",
         whatHappensNext:
           "Um Curador lê o que você escreveu e marca uma conversa com você. Você não vai precisar recontar nada.",
-        cta: { label: "Contar minha história", href: "/sua-historia" },
+        // A3a.1 · `/sua-historia` (raiz) é a página PÚBLICA explicativa — a
+        // porta de quem ainda não entrou. Esta pendência só existe para quem
+        // já está autenticada na casa, e mandá-la para a fachada a fazia sair
+        // da experiência privada para ler o que ela já sabe.
+        //
+        // `/continuar` é a entrada autenticada do wizard (A2B): exige paciente,
+        // veste o PatientShell e resolve a história ativa — criando a primeira
+        // quando ainda não existe nenhuma. Por isso o mesmo destino serve para
+        // começar e para retomar, e é o que o resto da casa já usava.
+        cta: { label: "Contar minha história", href: "/sua-historia/continuar" },
         happensInConversation: false,
       },
     };
