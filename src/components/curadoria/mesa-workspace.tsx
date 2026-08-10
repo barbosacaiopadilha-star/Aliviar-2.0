@@ -376,7 +376,11 @@ export function MesaWorkspace({
   return (
     <div className="space-y-6">
       {/* ÁREA 3 — PROFISSIONAIS ELEGÍVEIS */}
-      <section aria-labelledby="elegiveis-heading" className="space-y-4">
+      <section
+        aria-labelledby="elegiveis-heading"
+        aria-describedby={candidatos.length > 0 ? "elegiveis-comum" : undefined}
+        className="space-y-4"
+      >
         <div>
           <h2 id="elegiveis-heading" className="font-sans text-xl font-semibold text-ink">
             Profissionais elegíveis
@@ -389,6 +393,24 @@ export function MesaWorkspace({
               : ""}
             . A ordem é a da Rede — leitura, nunca colocação.
           </p>
+
+          {/* O que vale para TODOS os candidatos é dito uma vez, aqui, no nível
+              do conjunto. Repetido dentro de cada cartão, fazia informação
+              comum parecer característica individual — e o leitor de tela a
+              ouvia N vezes sem ganhar nada. As duas afirmações continuam
+              separadas porque dizem coisas diferentes: de onde vem quem está
+              na lista, e como ler o que o Motor contou. */}
+          {candidatos.length > 0 ? (
+            <div id="elegiveis-comum" className="mt-2 space-y-0.5">
+              <p className="text-xs text-ink-muted">
+                Aprovado pela Aliviar — critério próprio, anterior a este caso.
+              </p>
+              <p className="text-xs text-ink-muted">
+                Contagens por estado — nunca uma nota. O detalhe, critério a critério, está na
+                Comparação.
+              </p>
+            </div>
+          ) : null}
         </div>
 
         <div className="grid gap-4 xl:grid-cols-2">
@@ -698,12 +720,10 @@ function CandidatoCard({
   return (
     <Card className={cn("space-y-4", selected && "border-[color-mix(in_srgb,var(--color-brand-primary)_50%,transparent)]")}>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="font-sans text-base font-semibold text-ink">{candidato.nome}</h3>
-          <p className="mt-0.5 text-xs text-ink-muted">
-            Aprovado pela Aliviar — critério próprio, anterior a este caso.
-          </p>
-        </div>
+        {/* A proveniência ("aprovado pela Aliviar") e como ler as contagens
+            valem para todos e são ditas uma vez, acima da lista. Aqui fica só
+            o que distingue este candidato dos outros. */}
+        <h3 className="font-sans text-base font-semibold text-ink">{candidato.nome}</h3>
         {selected ? <Badge variant="sage">Selecionado</Badge> : null}
       </div>
 
@@ -712,9 +732,6 @@ function CandidatoCard({
           Leitura do Motor para este caso
         </p>
         <p className="mt-1 text-sm text-ink">{candidato.resumo}</p>
-        <p className="mt-1 text-xs text-ink-muted">
-          Contagens por estado — nunca uma nota. O detalhe, critério a critério, está na Comparação.
-        </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
