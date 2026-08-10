@@ -82,7 +82,29 @@ export function buildJornada(record: CuradoriaRecord): Jornada {
   const consultaDone = Boolean(historia.understandingConfirmedAt);
   const perfilDone = Boolean(validacao?.validatedAt);
   const curadoriaDone = curadoriaTecnica.selectedProfessionalIds.length === 3;
-  const dossieDone = Boolean(relatorio.emittedAt);
+  /**
+   * TRILHA B · 5A — **três fatos, três significados, nenhum implica o outro.**
+   *
+   * | fato | prova |
+   * |---|---|
+   * | `emittedAt` | a Curadoria foi preparada **dentro** da Aliviar |
+   * | `presentedAt` | houve conversa em que os caminhos foram apresentados |
+   * | `deliveredAt` | o conteúdo digital foi **disponibilizado a ela** |
+   *
+   * O marco DOSSIE chama-se *"Dossiê preparado"* — ele mede **preparação**, e
+   * por isso continua completando em `emittedAt`. O que estava errado não era
+   * o critério: era a frase, que dizia *"seu Dossiê está pronto"* e se lia como
+   * disponibilidade. Preparado e disponível são coisas diferentes, e agora o
+   * texto diz qual das duas aconteceu.
+   *
+   * Isto sustenta o estado legítimo em que a Curadora **apresentou os caminhos
+   * numa conversa** e o conteúdo digital ainda não foi liberado: a régua
+   * reconhece as duas coisas que aconteceram, sem afirmar a terceira.
+   */
+  const dossiePreparado = Boolean(relatorio.emittedAt);
+  /** Disponibilidade digital. Só `deliveredAt` prova — nunca reunião, nunca emissão. */
+  const conteudoDisponivel = Boolean(relatorio.deliveredAt);
+  const dossieDone = dossiePreparado;
   const reuniaoDone = Boolean(devolutiva.presentedAt);
   const escolhaDone = Boolean(devolutiva.decision);
 
@@ -135,12 +157,20 @@ export function buildJornada(record: CuradoriaRecord): Jornada {
       id: "DOSSIE",
       label: JORNADA_STAGE_LABELS.DOSSIE,
       status: dossieDone ? "CONCLUIDA" : curadoriaDone ? "EM_ANDAMENTO" : "A_CAMINHO",
-      description: dossieDone
-        ? "Seu Dossiê está pronto: as três opções, o que cada uma oferece e o que cada uma custa."
-        : curadoriaDone
-          ? `${curator} está escrevendo o parecer de cada opção.`
-          : "Você vai receber um documento explicando cada opção e sua relação com suas prioridades.",
-      updatedAt: relatorio.emittedAt,
+      description: conteudoDisponivel
+        ? // Entregue: e só aqui a frase pode falar em disponibilidade.
+          "Seu Dossiê está disponível para você: as três opções, o que cada uma oferece e o que cada uma custa."
+        : dossiePreparado
+          ? // Preparado e ainda não disponibilizado. Verdadeiro tanto antes da
+            // conversa quanto depois dela — quem conta que a conversa
+            // aconteceu é o marco seguinte, não este.
+            `${curator} preparou seu Dossiê: as três opções, o que cada uma oferece e o que cada uma custa.`
+          : curadoriaDone
+            ? `${curator} está escrevendo o parecer de cada opção.`
+            : "Você vai receber um documento explicando cada opção e sua relação com suas prioridades.",
+      // O marco mede preparação; a disponibilização é movimento posterior e
+      // mais recente quando existe.
+      updatedAt: relatorio.deliveredAt ?? relatorio.emittedAt,
       // Sem destino enquanto a tela do Dossiê não existe. Prometer "Ler meu
       // Dossiê" sem ter onde levar seria pior que não prometer: a MISSÃO 206
       // exige que nenhum fluxo termine abruptamente, e um convite que não
