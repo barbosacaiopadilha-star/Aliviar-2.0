@@ -273,7 +273,18 @@
   display: none;
 }
 
+/* O `position: relative` fecha o P0 de overflow no celular, e a causa não era
+   a largura da régua — era um bloco de contenção errado.
+   Cada marco carrega um `.sr-only`, que é `position: absolute`. Com o `li`
+   estático, o bloco de contenção deles resolvia para o `<main>`, que é
+   `relative` — então esses spans escapavam do `overflow-x: auto` da trilha e
+   pousavam na coordenada do CONTEÚDO ROLADO (x≈471), esticando a página para
+   472px. A trilha em si sempre esteve contida e rolando por dentro
+   (clientWidth 358, scrollWidth 560).
+   Ancorando o `sr-only` no próprio marco, ele volta a ser clipado junto com o
+   resto — e nada muda visualmente, porque ele é invisível por definição. */
 .patient-dashboard .patient-walk__step {
+  position: relative;
   display: flex;
   flex: 1 0 auto;
   min-width: 4.5rem;
