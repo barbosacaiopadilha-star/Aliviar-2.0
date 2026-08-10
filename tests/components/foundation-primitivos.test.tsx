@@ -46,15 +46,52 @@ describe("Tokens · as três camadas não se atropelam", () => {
     expect(emComponentes, "primitivo consumindo a escala bruta").toHaveLength(0);
   });
 
-  it("`prefers-reduced-motion` cobre TODAS as folhas — nenhuma escapa", () => {
+  it("`prefers-reduced-motion` cobre TODAS as folhas — como REGRA, não como comentário", () => {
+    // F-2 · a guarda anterior procurava a expressão no arquivo inteiro, então
+    // um comentário dizendo "respeitamos prefers-reduced-motion" a satisfazia
+    // com zero CSS aplicado. Agora o texto é lido sem comentários, e o que se
+    // exige é um bloco @media de verdade, com corpo.
     for (const folha of FOLHAS) {
-      const fonte = readFileSync(folha, "utf8");
-      expect(fonte.length, `${folha} vazia`).toBeGreaterThan(0);
+      const bruto = readFileSync(folha, "utf8");
+      expect(bruto.length, `${folha} vazia`).toBeGreaterThan(0);
+
+      const semComentarios = bruto.replace(/\/\*[\s\S]*?\*\//g, "");
       expect(
-        fonte.includes("prefers-reduced-motion"),
-        `${folha} anima sem respeitar quem pediu menos movimento`,
+        semComentarios.includes("prefers-reduced-motion"),
+        `${folha}: a expressão só existe em comentário — nenhuma regra é aplicada`,
+      ).toBe(true);
+
+      // `@media` + a feature + abertura de bloco, tolerando espaço e quebra.
+      const regra = /@media[^{]*\(\s*prefers-reduced-motion\s*:\s*reduce\s*\)[^{]*\{/;
+      expect(
+        regra.test(semComentarios),
+        `${folha}: menciona a preferência mas não tem bloco @media que a implemente`,
+      ).toBe(true);
+
+      // E o bloco não pode estar vazio: `@media (...) { }` não desliga nada.
+      const inicio = semComentarios.search(regra);
+      const corpo = semComentarios.slice(inicio, inicio + 600);
+      expect(
+        /\{[^}]*[a-z-]+\s*:\s*[^;}]+;/.test(corpo.slice(corpo.indexOf("{") + 1)),
+        `${folha}: bloco @media sem nenhuma declaração`,
       ).toBe(true);
     }
+  });
+
+  it("§27 · prova negativa: comentário sozinho NÃO satisfaz a guarda", () => {
+    // O texto que passava na guarda antiga e deve reprovar na nova.
+    const impostor = `/* respeitamos prefers-reduced-motion: reduce em todo lugar */\n.a { color: red; }`;
+    const semComentarios = impostor.replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(semComentarios.includes("prefers-reduced-motion")).toBe(false);
+    expect(/@media[^{]*\(\s*prefers-reduced-motion\s*:\s*reduce\s*\)[^{]*\{/.test(semComentarios)).toBe(
+      false,
+    );
+  });
+
+  it("§27 · prova negativa: bloco @media VAZIO não desliga movimento", () => {
+    const vazio = `@media (prefers-reduced-motion: reduce) {\n}`;
+    const corpo = vazio.slice(vazio.indexOf("{") + 1);
+    expect(/[a-z-]+\s*:\s*[^;}]+;/.test(corpo)).toBe(false);
   });
 
   it("os dicionários locais DERIVAM do motion canônico — não inventam tempo", () => {

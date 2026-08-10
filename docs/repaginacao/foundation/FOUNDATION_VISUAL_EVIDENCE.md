@@ -56,3 +56,19 @@ sequência para ser provado).
 - **EV-FND-007** → foco visível por teclado nos primitivos.
 - **EV-FND-008** → `prefers-reduced-motion` respeitado.
 - **EV-FND-000** → a mesma composição sobrevive a 390px sem overflow.
+
+
+---
+
+## Correção 3A · recaptura
+
+A vitrine **mudou**: EV-FND-004 ganhou duas linhas — `cancelado (closed_at
+preenchido, nada entregue)` e `encerrado sem entrega`. Ambas com tom neutro,
+sem `VER_CURADORIA` e sem a palavra concluída, que é o que o Gate reprovou.
+
+**Recapturados:** EV-FND-000 e EV-FND-004, em desktop e mobile — 4 arquivos
+substituídos. Overflow horizontal medido em falso nos dois viewports.
+
+**Não recapturados:** EV-FND-001, 002, 003, 005, 006, 007 e 008 — nenhum deles
+mudou um pixel: a correção é de contrato de estado, e não tocou primitivo, token
+nem folha de estilo.
