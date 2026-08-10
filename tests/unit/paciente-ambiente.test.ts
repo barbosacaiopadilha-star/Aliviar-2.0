@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -67,6 +67,61 @@ describe("Storytelling Ambiental — identidade por etapa", () => {
     const greeting = heroGreeting("João", "CURADORIA");
     expect(greeting.title).toBe("Olá, João.");
     expect(greeting.subtitle).toBe("Seu Curador está analisando cuidadosamente o seu caso.");
+  });
+});
+
+describe("MASTER-0B · nenhum edifício alheio na experiência da paciente", () => {
+  /**
+   * `grand-finale.jpg` foi classificado materialmente — abrindo o arquivo, não
+   * lendo o nome — como NÃO pertencente ao edifício da Aliviar: apartamento
+   * vazio genérico, luz fria, armários escuros, piso laminado, radiador,
+   * janela europeia. Ele chegou às superfícies da paciente duas vezes: no
+   * campo da Home e no hero da etapa DOSSIE.
+   *
+   * A guarda é por arquivo, não por etapa: uma etapa nova que o adotasse
+   * passaria despercebida numa asserção etapa a etapa.
+   */
+  const ALHEIO = "grand-finale.jpg";
+
+  it("nenhuma etapa da jornada usa o asset de edifício alheio", () => {
+    for (const stage of JORNADA_STAGES) {
+      expect(ambienceFor(stage).scene, `${stage} voltou a usar o prédio alheio`).not.toContain(
+        ALHEIO,
+      );
+    }
+  });
+
+  it("e nenhum arquivo das superfícies da paciente o referencia", () => {
+    // Varre o código real. Comentários fora: estes arquivos CITAM o asset para
+    // explicar por que ele saiu, e explicação não é uso.
+    const alvos = ["src/modules/paciente", "src/components/paciente", "src/app/paciente"];
+    const encontrados: string[] = [];
+
+    const varrer = (dir: string) => {
+      for (const entrada of readdirSync(dir, { withFileTypes: true })) {
+        const caminho = path.join(dir, entrada.name);
+        if (entrada.isDirectory()) {
+          varrer(caminho);
+          continue;
+        }
+        if (!/\.(ts|tsx|css)$/.test(entrada.name)) continue;
+        const codigo = readFileSync(caminho, "utf8")
+          .replace(/\/\*[\s\S]*?\*\//g, "")
+          .replace(/\/\/.*$/gm, "");
+        if (codigo.includes(ALHEIO)) encontrados.push(caminho);
+      }
+    };
+
+    for (const alvo of alvos) varrer(path.resolve(process.cwd(), alvo));
+    expect(encontrados, `o prédio alheio voltou a ser usado em: ${encontrados.join(", ")}`).toEqual(
+      [],
+    );
+  });
+
+  it("o fallback aponta para uma imagem que existe e é do conjunto Aliviar", () => {
+    const cena = ambienceFor("DOSSIE").scene;
+    expect(cena).toBe("/scenes/recepcao.jpg");
+    expect(existsSync(path.resolve(process.cwd(), "public", cena.replace(/^\//, "")))).toBe(true);
   });
 });
 

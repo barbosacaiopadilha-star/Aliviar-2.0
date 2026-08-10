@@ -7,6 +7,7 @@ import { CuradoriaCard } from "@/components/paciente/experiencia/curadoria-card"
 import { ExpandableSection } from "@/components/paciente/experiencia/expandable-section";
 import { JourneyWalk, type WalkStage } from "@/components/paciente/experiencia/journey-walk";
 import { ProfileCard } from "@/components/paciente/experiencia/profile-card";
+import { ambienceFor } from "@/modules/paciente/ambiente";
 import { buildPerfilView, violatesPatientVocabulary } from "@/modules/paciente/experiencia";
 
 afterEach(cleanup);
@@ -45,7 +46,13 @@ describe("AmbientHero — responde visualmente antes de textualmente", () => {
     // A imagem de fundo não é anunciada como conteúdo…
     expect(container.querySelector(".patient-hero__scene")).toHaveAttribute("aria-hidden", "true");
     // …mas a informação que ela carrega chega em texto.
-    expect(screen.getByText(/ambiente amplo e aberto/i)).toBeInTheDocument();
+    //
+    // MASTER-0B · a asserção lê a projeção, não um literal. A frase estava
+    // escrita à mão aqui ("ambiente amplo e aberto") e virou oráculo defasado
+    // no instante em que a cena do DOSSIE mudou — descrevendo para leitor de
+    // tela uma foto que a etapa não usa mais. O que este teste protege é o
+    // PAR: cena escondida, descrição presente.
+    expect(screen.getByText(ambienceFor("DOSSIE").sceneDescription)).toBeInTheDocument();
   });
 
   it("o ambiente muda com a etapa — é linguagem, não decoração fixa", () => {

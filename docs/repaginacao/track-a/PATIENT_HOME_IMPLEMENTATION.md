@@ -335,16 +335,47 @@ confirmado em `18d5a04`.
 
 O fallback **não corresponde ao Master Visual** e não deve ser lido como tal.
 
-**Gap aberto — `grand-finale.jpg` ainda aparece em duas superfícies
-preexistentes**, fora do escopo do §6 da MASTER-0:
+### 8.8 · MASTER-0B · o último resquício sai da experiência da paciente
 
-- `src/modules/paciente/ambiente.ts:68` — hero da paciente na etapa **DOSSIE**;
-- `src/components/landing/editorial/editorial-sections.tsx:151,205` — bandas
-  "warm" da landing.
+A MASTER-0 tirou o prédio alheio do campo da Home e deixou registrado que ele
+**voltava a aparecer no hero da etapa DOSSIE**. A MASTER-0B fecha isso.
 
-Ou seja: o prédio alheio saiu do campo da Home, mas **volta a aparecer no hero
-quando a jornada chega ao Relatório**. Corrigir isso depende dos assets
-oficiais — e a regra que fica é: **asset se confere abrindo, nunca pelo nome.**
+| | antes | depois |
+|---|---|---|
+| cena do `DOSSIE` | `grand-finale.jpg` (edifício alheio) | `recepcao.jpg` — **fallback temporário** |
+| `sceneDescription` | "Um ambiente amplo e aberto…" | "A recepção da Aliviar, ampla e clara…" |
+
+**A descrição mudou junto, e isso não é detalhe.** Ela é o que chega a quem usa
+leitor de tela: mantê-la descreveria uma fotografia que a etapa não usa mais —
+a interface passaria a mentir exatamente para quem não pode conferir.
+
+**Por que `recepcao.jpg`:** é o único asset Aliviar já auditado que estava
+**ocioso**. Qualquer outro tiraria a cena de uma etapa vizinha. **O custo está
+registrado:** ele é quase idêntico ao de `CONSULTA_INICIAL`, então a jornada
+perde, por ora, a distinção visual entre a chegada e o Relatório. O conjunto
+Aliviar existente **não tem** um "ambiente amplo e aberto" — quem tinha era o
+prédio alheio.
+
+**FALLBACK TEMPORÁRIO — aguarda pacote arquitetônico oficial do Master Visual.**
+
+**Guardas** (`tests/unit/paciente-ambiente.test.ts`), com prova de perda:
+
+1. nenhuma etapa da jornada usa o asset alheio — por **arquivo**, não por
+   etapa, para que uma etapa nova que o adotasse não passe despercebida;
+2. nenhum arquivo de `src/{modules,components,app}/paciente` o referencia, com
+   comentários removidos antes da varredura — estes arquivos o **citam** para
+   explicar por que ele saiu, e explicação não é uso;
+3. o fallback aponta para uma imagem que existe.
+
+Devolver `grand-finale.jpg` ao `DOSSIE` derruba as três.
+
+**Oráculo corrigido:** `paciente-experiencia.test.tsx` fixava a frase
+"ambiente amplo e aberto" à mão. Passou a ler `ambienceFor("DOSSIE")` — o que o
+teste protege é o par *cena escondida × descrição presente*, não a redação.
+
+**Consumidor restante, fora da experiência da paciente:**
+`landingAtrium` → `editorial-sections.tsx:151,205` (bandas "warm" da landing).
+O §3 da MASTER-0 proíbe tocar a landing. **Registrado, não alterado.**
 
 ### 8.5 · Gaps registrados
 

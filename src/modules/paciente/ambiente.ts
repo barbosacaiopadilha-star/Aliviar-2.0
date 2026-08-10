@@ -65,11 +65,25 @@ export const STAGE_AMBIENCES: Record<JornadaStageId, StageAmbience> = {
     sceneDescription: "Uma mesa de trabalho sob luz focada, com documentos abertos.",
   },
   DOSSIE: {
-    scene: "/scenes/grand-finale.jpg",
+    // FALLBACK TEMPORÁRIO — aguarda pacote arquitetônico oficial do Master Visual.
+    //
+    // Esta etapa usava `grand-finale.jpg`, que a auditoria de assets provou
+    // NÃO ser o edifício da Aliviar: é um apartamento vazio genérico, com luz
+    // fria, armários escuros, piso laminado e radiador. Era o último lugar da
+    // experiência da paciente onde o prédio alheio ainda aparecia.
+    //
+    // `recepcao.jpg` é o único asset Aliviar já auditado que estava ocioso —
+    // trocar por qualquer outro tiraria a cena de uma etapa vizinha. O custo
+    // está registrado: ele é quase idêntico ao de `CONSULTA_INICIAL`, então a
+    // jornada perde, por ora, a distinção visual entre a chegada e o Relatório.
+    // O conjunto Aliviar existente não tem um "ambiente amplo e aberto".
+    scene: "/scenes/recepcao.jpg",
     tone: "CLAREZA",
     sensation: "Clareza",
     message: "Conseguimos organizar tudo para você.",
-    sceneDescription: "Um ambiente amplo e aberto, com luz natural entrando por inteiro.",
+    // A descrição acompanha a imagem: quem usa leitor de tela recebia
+    // "ambiente amplo e aberto" para uma foto que deixou de existir aqui.
+    sceneDescription: "A recepção da Aliviar, ampla e clara, com a luz entrando por inteiro.",
   },
   REUNIAO: {
     scene: "/scenes/cena-2-recepcao-proxima.jpg",
