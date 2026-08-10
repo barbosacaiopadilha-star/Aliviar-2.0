@@ -16,9 +16,23 @@ type PatientHomeStateProps = {
    * permitiu a Home contradizer a realidade.
    */
   statusLabel: string | null;
+  /**
+   * A3a · a ação desta pendência é apresentada por `ProximaAcao`, no nível 2 da
+   * Home. Quando a Home a exibe lá, este componente para de repetir o botão:
+   * a mesma pendência oferecida duas vezes obriga a pessoa a decidir se são
+   * dois atos ou um só (§9 da missão).
+   *
+   * O padrão é `false` — quem monta a tela declara que assumiu a ação. O
+   * estado, que é a responsabilidade deste componente, nunca deixa de ser dito.
+   */
+  acaoEmOutroLugar?: boolean;
 };
 
-export function PatientHomeState({ leitura, statusLabel }: PatientHomeStateProps) {
+export function PatientHomeState({
+  leitura,
+  statusLabel,
+  acaoEmOutroLugar = false,
+}: PatientHomeStateProps) {
   switch (leitura.estado) {
     case "HISTORIA_NAO_INICIADA":
       return (
@@ -30,7 +44,9 @@ export function PatientHomeState({ leitura, statusLabel }: PatientHomeStateProps
             Quando você se sentir pronto, pode nos contar o que está vivendo. Não precisa organizar tudo
             antes de começar.
           </p>
-          <LinkButton href="/sua-historia/continuar">Contar minha história</LinkButton>
+          {acaoEmOutroLugar ? null : (
+            <LinkButton href="/sua-historia/continuar">Contar minha história</LinkButton>
+          )}
         </PatientCard>
       );
 
@@ -43,7 +59,9 @@ export function PatientHomeState({ leitura, statusLabel }: PatientHomeStateProps
           <p className="patient-body max-w-2xl text-[var(--color-ink-muted)]">
             O que você já escreveu foi preservado. Você pode continuar de onde parou, no seu tempo.
           </p>
-          <LinkButton href="/sua-historia/continuar">Continuar minha história</LinkButton>
+          {acaoEmOutroLugar ? null : (
+            <LinkButton href="/sua-historia/continuar">Continuar minha história</LinkButton>
+          )}
         </PatientCard>
       );
 

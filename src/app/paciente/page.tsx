@@ -7,6 +7,7 @@ import { CuradoriaNaoIniciada } from "@/components/paciente/experiencia/estados-
 import { CuradoriaCard } from "@/components/paciente/experiencia/curadoria-card";
 import { JourneyWalk, type WalkStage } from "@/components/paciente/experiencia/journey-walk";
 import { ProfileCard } from "@/components/paciente/experiencia/profile-card";
+import { ProximaAcao } from "@/components/paciente/experiencia/proxima-acao";
 import { PatientWelcome } from "@/components/paciente/dashboard/patient-primitives";
 import { derivePatientPending } from "@/modules/paciente/next-action";
 import { nomeDoCuradorDoCaso } from "@/modules/paciente/nome-do-curador";
@@ -111,7 +112,15 @@ export default async function PacienteHomePage() {
     return (
       <div className="mx-auto max-w-3xl space-y-8">
         <PatientWelcome name={displayName} subtitle={`${saudacao}. Estamos por aqui.`} />
-        <PatientHomeState leitura={leitura} statusLabel={caseOverview?.statusLabel ?? null} />
+        {/* A3a · o estado diz ONDE ela está; a ação, logo abaixo, diz o que
+            depende dela. `acaoEmOutroLugar` evita que a mesma pendência seja
+            oferecida duas vezes na mesma dobra. */}
+        <PatientHomeState
+          leitura={leitura}
+          statusLabel={caseOverview?.statusLabel ?? null}
+          acaoEmOutroLugar
+        />
+        <ProximaAcao pending={pending} />
         {/* O resumo do que já é dela vale desde o primeiro dia — antes de
             existir Case, ele diz com honestidade o que ainda não existe. */}
         <MeuResumo
@@ -155,6 +164,13 @@ export default async function PacienteHomePage() {
         greeting={saudacao}
       />
 
+      {/* A3a · NÍVEL 2 — a próxima ação, antes da régua e antes dos cartões.
+          Ela era calculada na linha acima e descartada: o único consumo era um
+          `aside` no cartão da Curadoria, que só aparecia quando a ação NÃO
+          tinha destino. Com destino — justamente quando havia o que fazer — a
+          Home não dizia nada. */}
+      <ProximaAcao pending={pending} curatorName={jornada.curatorName} />
+
       <JourneyWalk
         stages={walkStages}
         currentDetail={currentStage?.description}
@@ -180,15 +196,12 @@ export default async function PacienteHomePage() {
           />
         ) : null}
 
-        <CuradoriaCard
-          message={mensagemPrincipal(jornada.currentStage)}
-          action={curadoriaAction}
-          aside={
-            pending.kind === "action" && !pending.action.cta
-              ? `Isso acontece na conversa com ${jornada.curatorName}.`
-              : undefined
-          }
-        />
+        {/* A3a · o `aside` saiu daqui. Ele dizia "isso acontece na conversa
+            com X" — a MESMA frase que `ProximaAcao` agora diz no nível 2, e
+            dizia-a no nível 4, onde ninguém procura o que precisa fazer. O
+            cartão volta a ter uma ideia só: o estado da Curadoria. A prop
+            `aside` permanece no componente, que não é objeto desta missão. */}
+        <CuradoriaCard message={mensagemPrincipal(jornada.currentStage)} action={curadoriaAction} />
       </div>
 
       <QuickLinks />
