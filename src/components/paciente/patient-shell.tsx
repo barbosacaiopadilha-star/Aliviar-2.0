@@ -14,6 +14,30 @@ import { cn } from "@/components/ui/cn";
 
 import { PATIENT_NAV_ITEMS } from "./patient-nav-items";
 
+/**
+ * A2B · o item ativo passa a reconhecer os subpassos.
+ *
+ * A comparação era `pathname === item.href`. "Minha história" aponta para
+ * `/sua-historia/continuar`, mas o wizard tem seis passos próprios
+ * (`/motivo`, `/historia`, `/revisao`…) — e em nenhum deles o item acendia.
+ * A paciente estava dentro da História com a navegação dizendo que não.
+ *
+ * `/paciente` é exato de propósito: é o Início, e prefixo faria dele o item
+ * ativo de todas as outras rotas da casa.
+ */
+function secaoDe(caminho: string): string {
+  const partes = caminho.split("/").filter(Boolean);
+  // Dentro de `/paciente`, cada item é o SEGUNDO segmento — `/paciente` sozinho
+  // é o Início. Fora dela (a História), a seção é o primeiro segmento, e os
+  // passos do wizard pendem todos dele.
+  if (partes[0] === "paciente") return `/paciente/${partes[1] ?? ""}`;
+  return `/${partes[0] ?? ""}`;
+}
+
+function itemAtivo(pathname: string, href: string): boolean {
+  return secaoDe(pathname) === secaoDe(href);
+}
+
 function NavLinks({
   pathname,
   onNavigate,
@@ -28,7 +52,7 @@ function NavLinks({
   return (
     <ul className={className}>
       {PATIENT_NAV_ITEMS.map((item) => {
-        const active = pathname === item.href;
+        const active = itemAtivo(pathname, item.href);
         return (
           <li key={item.href}>
             <Link
@@ -84,7 +108,14 @@ export function PatientShell({ children, userMenu }: PatientShellProps) {
           e a única linha que resta é um fio de dourado, que é o que a marca
           já usa lá fora. Nada foi acrescentado: é o mesmo header, com menos
           peso. */}
-      <header className="sticky top-0 z-20 border-b border-[color-mix(in_srgb,var(--color-brand-gold)_22%,transparent)] bg-[color-mix(in_srgb,var(--patient-linen)_82%,transparent)] backdrop-blur-sm print:hidden">
+      {/* PAPEL, NÃO VIDRO. A primeira versão desta faixa usava `backdrop-blur`
+          e a guarda de materiais derrubou — com razão: blur de fundo é
+          proibido nesta casa (Sistema Visual §3), e o cartão dela já é
+          superfície fosca. O efeito desejado nunca foi vidro: era o topo
+          deixar de ser uma barra que corta a página. Papel opaco sobre a
+          atmosfera, com fio de dourado no lugar da borda cinza, entrega isso
+          sem material proibido. */}
+      <header className="sticky top-0 z-20 border-b border-[color-mix(in_srgb,var(--color-brand-gold)_22%,transparent)] bg-[var(--patient-linen)] print:hidden">
         <div className="mx-auto flex min-h-[4.5rem] w-full max-w-content items-center justify-between gap-4 px-4 lg:px-8">
           <Link
             href="/paciente"
