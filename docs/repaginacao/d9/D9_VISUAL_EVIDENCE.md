@@ -17,32 +17,44 @@ no botão de verdade, recarregou a página, e o banco confirmou
 **Antes × depois com os mesmos fatos:** EV-D9-001 e EV-D9-002 são o mesmo Case,
 o mesmo viewport e a mesma rota — a única diferença é o ato.
 
-## EV-D9-005 / EV-D9-006 — NÃO produzidos
+## EV-D9-005 e EV-D9-006 — Jornada da paciente
 
-A Jornada da paciente mudou de verdade: o marco do Primeiro Encontro deixou de
-concluir por `understanding_confirmed_at`. Capturar o antes/depois exige uma
-sessão da PACIENTE dona de um Case com os fatos certos — e é aí que trava.
+**Cenário sintético recriado** (missão D-9F): banco local resetado pelo
+mecanismo oficial, 117 de 117 migrations, contas e Case reconstruidos pelo seed.
+Paciente sintetica `validacao-mesa@example.test`; credencial emitida pelo
+proprio seed e nao reproduzida aqui. Case `7451d110-46ee-4ff5-b017-42bb994c260a`.
 
-| conta | Cases | serve? |
+| | EV-D9-005 | EV-D9-006 |
 |---|---|---|
-| `paciente.teste@…` (permanente, em `test-users.local.json`) | **0** | não — a Jornada dela é o estado vazio |
-| `validacao-mesa@example.test` (sintética do seed) | 1, com os fatos certos | **sim, mas** a senha só é emitida quando o seed a CRIA |
+| rota | `/paciente` | `/paciente` |
+| role | paciente | paciente |
+| `meeting_held_at` | **nulo** | **presente** |
+| `meeting_scheduled_at` | nulo | nulo |
+| `understanding_confirmed_at` | nulo | nulo |
+| `validated_at` | presente | presente |
+| status do Perfil | `VALIDATED` | `VALIDATED` |
+| viewports | 1440x900 e 390x844 | 1440x900 e 390x844 |
 
-O seed reaproveita a conta existente e, nesse caminho, não imprime credencial.
-Recriá-la significaria apagar a paciente e o Case — destruindo justamente os
-fatos que a evidência precisa. E fabricar uma senha para a conta não é algo que
-eu faça.
+**A unica diferenca material entre as duas e `meeting_held_at`**, registrado
+entre as capturas pela **UI real do Curador** — nao por SQL. O banco confirmou
+depois: `meeting_held_at is not null = true`.
 
-**A mudança está provada por teste**: cinco provas derrubam a mutação que
-devolve o critério ao produto, e o oráculo olha o `status` do estágio, não a
-frase. **Não está provada por pixel.**
+As imagens **diferem** (hash MD5 distinto nos dois viewports), entao a mudanca
+chegou a tela.
 
-**Como destravar:** rodar o seed a partir de um banco sem a conta
-`validacao-mesa@example.test` — ele então cria a paciente e imprime o login.
-Com essa credencial, as duas capturas saem em uma passagem.
+Arquivos: `EV-D9-005__antes__jornada__{desktop,mobile}.png` e
+`EV-D9-006__depois__jornada__{desktop,mobile}.png`.
+
+### Dois achados colhidos na captura
+
+**1 · overflow horizontal a 390px** na Home da paciente, medido em ambos os
+estados. Nao pertence a D-9 e nao foi corrigido — fica para a Trilha A.
+
+**2 · D-11** — os mapas ja constavam `VALIDATED` num Case novo sem encontro
+agendado, sem encontro realizado e sem historia reconhecida. Detalhado em
+[D11_ORDEM_ENCONTRO_VALIDACAO.md](D11_ORDEM_ENCONTRO_VALIDACAO.md).
 
 ---
-
 ## §4 · ACHADO — os mapas foram validados sem prova do encontro
 
 Durante a captura, o Case `fc07b1a1…` apresentava:
