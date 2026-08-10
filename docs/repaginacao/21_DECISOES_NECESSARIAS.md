@@ -1,6 +1,6 @@
 # 21 · Decisões necessárias — DT-01
 
-**Oito.** Nenhuma foi resolvida silenciosamente. Cada uma diz **o que trava** e
+**Dez** — oito da repaginação e duas do [adendo dos dois encontros](23_ADENDO_DOIS_ENCONTROS.md). Nenhuma foi resolvida silenciosamente. Cada uma diz **o que trava** e
 **o que muda conforme a resposta**.
 
 ---
@@ -88,5 +88,7 @@ Se sim, **C/D** e missão própria. Se não, o WhatsApp continua sendo o canal.
 | **D-2** | decisão | A/C/D | — regra de negócio |
 | **D-5** | pendência | C/D | — produto |
 | **D-8** | teto | C/D | ❌ não agora |
+| **D-9** | migration do Encontro 1 — [adendo 23](23_ADENDO_DOIS_ENCONTROS.md) | **E, mínima** | ✅ uma coluna aditiva |
+| **D-10** | agendamento do Encontro 2 | E | ❌ só se a operação pedir |
 
 > **Os blocos 2, 3, 4 e 5 não dependem de nenhuma delas e podem começar hoje.**

@@ -84,7 +84,7 @@ da Curadoria 2.0.
 
 > ### CONTRATO MESTRE DE REPAGINAÇÃO APTO PARA REVISÃO E POSTERIOR HANDOFF AO 03 ENGENHEIRO
 >
-> **Com uma condição:** os **oito itens** de [21_DECISOES_NECESSARIAS](21_DECISOES_NECESSARIAS.md)
+> **Com uma condição:** os **dez itens** de [21_DECISOES_NECESSARIAS](21_DECISOES_NECESSARIAS.md)
 > precisam de resposta do DT-01 antes que os blocos correspondentes sejam
 > abertos. Os blocos que **não** dependem deles podem começar imediatamente.
 
@@ -112,5 +112,6 @@ da Curadoria 2.0.
 | 18 | [Fases](18_FASES_DE_IMPLEMENTACAO.md) | ordem segura |
 | 19 | [Critérios de aceite](19_CRITERIOS_DE_ACEITE.md) | para o 04 VERIFICADOR |
 | 20 | [Não-regressão](20_NAO_REGRESSAO.md) | o que não pode quebrar |
-| 21 | [Decisões necessárias](21_DECISOES_NECESSARIAS.md) | **oito**, do DT-01 |
+| 21 | [Decisões necessárias](21_DECISOES_NECESSARIAS.md) | **dez**, do DT-01 |
 | 22 | [Handoff](22_HANDOFF_ENGENHEIRO.md) | por bloco |
+| 23 | [Adendo — dois encontros](23_ADENDO_DOIS_ENCONTROS.md) | Encontro 1 e 2 como fatos; **uma coluna** |
