@@ -88,8 +88,10 @@ Se sim, **C/D** e missão própria. Se não, o WhatsApp continua sendo o canal.
 | **D-2** | decisão | A/C/D | — regra de negócio |
 | **D-5** | pendência | C/D | — produto |
 | **D-8** | teto | C/D | ❌ não agora |
-| **D-9** | migration do Encontro 1 — [adendo 23](23_ADENDO_DOIS_ENCONTROS.md) | **E, mínima** | ✅ uma coluna aditiva |
-| **D-10** | agendamento do Encontro 2 | E | ❌ só se a operação pedir |
-| **D-11** | o reconhecimento dela pode depender de `meeting_held_at`? — [24](24_D11_ORDEM_DO_PRIMEIRO_ENCONTRO.md) | **emenda de ADR** | ⚠️ **colide com a ADR-042** |
+| **D-9** | migration do Encontro 1 — [adendo 23](23_ADENDO_DOIS_ENCONTROS.md) | **E, mínima** | ✅ **FORMALMENTE CERTIFICADA E ENCERRADA** (2026-08-10, HEAD `996f109`) — `meeting_held_at` aditiva, nullable, sem default, sem backfill, sem trigger inferencial; writer com gate de Curador, idempotente e com guarda de corrida; a Jornada passa a concluir a Consulta Inicial pelo **fato do encontro**, não pelo produto |
+| **D-10** | agendamento do Encontro 2 | E | ❌ **PENDENTE — fora de escopo desta sequência**; nenhum mecanismo novo criado. `devolutiva.presentedAt` permanece o fato de realização |
+| **D-11A** | eliminação do bypass de validação do Perfil | correção | ✅ **FORMALMENTE CERTIFICADA E ENCERRADA** (2026-08-10, HEAD `996f109`) — `validatePriorityProfile` saiu de `src/` (**0 chamadores de produção**); substituído por `tests/apoio/fixture-perfil.ts :: fixtureValidarPerfil`, fora do runtime; via oficial preservada (paciente → ReconhecerPerfil → `acknowledge_priority_profile`) |
+| **D-11** (residual) | orquestração UX do Primeiro Encontro — [24](24_D11_ORDEM_DO_PRIMEIRO_ENCONTRO.md) | produto/UX | ⚠️ **AINDA PENDENTE** — o bypass de fixture/seed está **resolvido** (D-11A); o que resta é orquestração de experiência, **não defeito técnico**. **ADR-042 intacta**: nenhum gate `meetingHeldAt != null` foi criado para a paciente reconhecer o Perfil |
+| **GAP-A1** | `meeting_scheduled_at` continua sem writer | produto/UX | ⚠️ **ABERTO** — não reprova D-9 nem pertence a D-11A; volta ao planejamento como pendência de UX/operação do Primeiro Encontro |
 
 > **Os blocos 2, 3, 4 e 5 não dependem de nenhuma delas e podem começar hoje.**
