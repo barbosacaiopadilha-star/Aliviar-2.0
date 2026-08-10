@@ -47,7 +47,7 @@ const CENARIOS: ReadonlyArray<{ nome: string; fatos: FatosDoCaso }> = [
     nome: "em curadoria",
     fatos: {
       historia: { existe: true, enviadaEm: "2026-07-01T10:00:00Z" },
-      caso: { curadorResponsavel: "curador-1", concluidoEm: null },
+      caso: { curadorResponsavel: "curador-1", encerradoEm: null, cancelado: false },
       relatorio: null,
       pendencia: null,
     },
@@ -56,7 +56,7 @@ const CENARIOS: ReadonlyArray<{ nome: string; fatos: FatosDoCaso }> = [
     nome: "emitido — ainda NÃO entregue",
     fatos: {
       historia: { existe: true, enviadaEm: "2026-07-01T10:00:00Z" },
-      caso: { curadorResponsavel: "curador-1", concluidoEm: null },
+      caso: { curadorResponsavel: "curador-1", encerradoEm: null, cancelado: false },
       relatorio: { existe: true, emitidoEm: "2026-08-01T10:00:00Z", entregueEm: null },
       pendencia: null,
     },
@@ -65,7 +65,7 @@ const CENARIOS: ReadonlyArray<{ nome: string; fatos: FatosDoCaso }> = [
     nome: "entregue",
     fatos: {
       historia: { existe: true, enviadaEm: "2026-07-01T10:00:00Z" },
-      caso: { curadorResponsavel: "curador-1", concluidoEm: null },
+      caso: { curadorResponsavel: "curador-1", encerradoEm: null, cancelado: false },
       relatorio: { existe: true, emitidoEm: "2026-08-01T10:00:00Z", entregueEm: "2026-08-02T10:00:00Z" },
       pendencia: null,
     },
@@ -74,9 +74,29 @@ const CENARIOS: ReadonlyArray<{ nome: string; fatos: FatosDoCaso }> = [
     nome: "pendência aguarda a paciente",
     fatos: {
       historia: { existe: true, enviadaEm: "2026-07-01T10:00:00Z" },
-      caso: { curadorResponsavel: "curador-1", concluidoEm: null },
+      caso: { curadorResponsavel: "curador-1", encerradoEm: null, cancelado: false },
       relatorio: null,
       pendencia: { aberta: true, aguardando: "PACIENTE" },
+    },
+  },
+  {
+    // O caso que o Gate encontrou: `closed_at` é gravado para CLOSED **e** para
+    // CANCELLED, então encerramento sozinho não prova conclusão nem conteúdo.
+    nome: "cancelado (closed_at preenchido, nada entregue)",
+    fatos: {
+      historia: { existe: true, enviadaEm: "2026-07-01T10:00:00Z" },
+      caso: { curadorResponsavel: "curador-1", encerradoEm: "2026-08-03T10:00:00Z", cancelado: true },
+      relatorio: null,
+      pendencia: null,
+    },
+  },
+  {
+    nome: "encerrado sem entrega",
+    fatos: {
+      historia: { existe: true, enviadaEm: "2026-07-01T10:00:00Z" },
+      caso: { curadorResponsavel: "curador-1", encerradoEm: "2026-08-03T10:00:00Z", cancelado: false },
+      relatorio: { existe: true, emitidoEm: "2026-08-01T10:00:00Z", entregueEm: null },
+      pendencia: null,
     },
   },
   {

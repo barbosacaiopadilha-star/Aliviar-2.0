@@ -19,6 +19,7 @@
 | `src/foundation/contrato-de-estado.ts` | **Fundação** | estado novo exige fato real; trilha **não** cria macroestado local |
 | `src/components/ui/*` | **Fundação** | consolidar sim, bifurcar não; API muda com migração de todos os consumidores |
 | `src/components/ui/state-mark.tsx` | **Fundação** | não existe segundo Status |
+| `src/components/shell/app-shell.tsx` | **Fundação** | **compartilhado.** C e D são CONSUMIDORAS; nenhuma altera livremente — mudança é centralizada, via extensão registrada |
 | `src/components/ui/button.tsx` | **Fundação** | variante nova precisa de justificativa semântica, nunca "por tela" |
 
 ## Por trilha — edita à vontade
@@ -36,10 +37,16 @@
 |---|---|---|
 | `src/app/layout.tsx` | A, D | mudança combinada; é a raiz de todos |
 | `src/middleware.ts` · `public-paths.ts` | D (login) | **só D**; A/B/C abrem chamado |
-| `src/components/shell/app-shell.tsx` | C, D | shell de operação — **não** é o do paciente |
 | `src/components/paciente/patient-shell.tsx` | **A** | B consome, não edita |
 | `src/components/curadoria/mesa/gramatica-de-estados.ts` | C | mapeamentos são de C; o **vocabulário** é da Fundação |
 | `src/app/foundation/page.tsx` | Fundação | vitrine; toda trilha acrescenta ao consolidar um primitivo |
+
+## F-4 · por que `app-shell.tsx` é da Fundação
+
+Ele tinha dois pretendentes (C e D) e nenhum dono: a regra apenas distinguia
+escopo, sem arbitrar. Duas trilhas abertas em paralelo sobre o mesmo shell
+produziriam duas versões dele — que é exatamente o problema que a repaginação
+existe para resolver. **Compartilhado, dono Fundação, C e D consomem.**
 
 ## Regra de conflito
 

@@ -67,8 +67,23 @@ export type FatosDoCaso = {
   caso: {
     /** Responsável definido = saiu da fila. */
     curadorResponsavel: string | null;
-    /** Conclusão registrada — nunca inferida de relatório entregue. */
-    concluidoEm: string | null;
+    /**
+     * `closed_at` do Caso. **Encerramento, não conclusão** — e a diferença não
+     * é semântica fina: o gatilho do banco grava esta coluna para `CLOSED`
+     * **e para `CANCELLED`**, então ela sozinha não distingue as duas coisas.
+     *
+     * ```
+     * if new.status in ('CLOSED','CANCELLED')
+     *   then new.closed_at := coalesce(new.closed_at, now())
+     * ```
+     */
+    encerradoEm: string | null;
+    /**
+     * `status = 'CANCELLED'` — lido do estado real, nunca inferido de
+     * `closed_at`. `null` é "não sei" e continua significando isso; `false` é
+     * a afirmação explícita de que o Caso **não** foi cancelado.
+     */
+    cancelado: boolean | null;
   } | null;
   /** O Relatório da Curadoria. */
   relatorio: {
@@ -99,8 +114,25 @@ export type EstadoCanonico =
   | "RELATORIO_EMITIDO"
   | "CURADORIA_ENTREGUE"
   | "CASO_CONCLUIDO"
+  /**
+   * Projeções apresentacionais de encerramento. **Não são enum de domínio, não
+   * são persistidas e não criam regra clínica**: existem porque `closed_at`
+   * sozinho é ambíguo, e a interface precisa dizer algo verdadeiro nos dois
+   * casos que ele cobre.
+   */
+  | "CASO_CANCELADO"
+  | "CASO_ENCERRADO_SEM_ENTREGA"
   | "INDETERMINADO";
 
+/**
+ * As ações que a Fundação sabe oferecer.
+ *
+ * `RESPONDER_PENDENCIA` **foi removida**: nenhum ramo a produzia, porque o dado
+ * que a justificaria — pendência estruturada com destinatário — ainda não
+ * existe (nível C/D no modelo de estados). Manter uma ação pública sem produtor
+ * convida a primeira trilha que a encontrar a fabricar um CTA para preenchê-la.
+ * Quando a pendência estruturada existir, a trilha pede extensão da Fundação.
+ */
 export type AcaoPermitida =
   | "PREENCHER_HISTORIA"
   | "CONTINUAR_HISTORIA"
@@ -108,8 +140,7 @@ export type AcaoPermitida =
   | "ASSUMIR_CASO"
   | "TRABALHAR_NO_CASO"
   | "ENTREGAR_CURADORIA"
-  | "VER_CURADORIA"
-  | "RESPONDER_PENDENCIA";
+  | "VER_CURADORIA";
 
 export type LeituraDeEstado = {
   estado: EstadoCanonico;
@@ -162,17 +193,58 @@ export function lerEstado(fatos: FatosDoCaso): LeituraDeEstado {
         }
       : leitura;
 
-  // 1. Conclusão registrada. Nunca inferida de entrega.
-  if (fatos.caso?.concluidoEm) {
+  // A prova de conteúdo é uma só, e é a entrega. Nem emissão, nem encerramento,
+  // nem conclusão abrem a Curadoria para a pessoa: só `delivered_at`.
+  const entregue = Boolean(fatos.relatorio?.entregueEm);
+
+  // 1. Cancelamento — o fato mais específico, e o que vence todos os outros.
+  //    Precisa vir primeiro justamente porque `closed_at` também é gravado
+  //    aqui: se a conclusão fosse avaliada antes, um Caso cancelado seria
+  //    anunciado como Curadoria concluída, com conteúdo que não existe.
+  if (fatos.caso?.cancelado === true) {
     return comPendencia({
-      estado: "CASO_CONCLUIDO",
-      rotuloPaciente: "Sua Curadoria está concluída.",
-      rotuloCurador: "Concluído.",
-      tom: "resolvido",
+      estado: "CASO_CANCELADO",
+      // Verdadeiro sem inventar próximo passo e sem prometer canal que a
+      // Fundação ainda não tem.
+      rotuloPaciente: "Esta Curadoria foi encerrada.",
+      rotuloCurador: "Cancelado.",
+      tom: "neutro",
       quemAge: "NINGUEM",
       temPendencia: false,
-      temConteudoParaPaciente: true,
-      acoesPaciente: ["VER_CURADORIA"],
+      temConteudoParaPaciente: false,
+      acoesPaciente: [],
+      acoesCurador: [],
+    });
+  }
+
+  // 2. Encerramento registrado. Conclusão só é dita quando houve ENTREGA;
+  //    encerrar sem entregar é outra coisa, e a interface diz outra coisa.
+  if (fatos.caso?.encerradoEm) {
+    if (entregue) {
+      return comPendencia({
+        estado: "CASO_CONCLUIDO",
+        rotuloPaciente: "Sua Curadoria está concluída.",
+        rotuloCurador: "Concluído.",
+        tom: "resolvido",
+        quemAge: "NINGUEM",
+        temPendencia: false,
+        temConteudoParaPaciente: true,
+        acoesPaciente: ["VER_CURADORIA"],
+        acoesCurador: [],
+      });
+    }
+    return comPendencia({
+      estado: "CASO_ENCERRADO_SEM_ENTREGA",
+      // Encerrado é verdade; concluído não seria. E com `cancelado` em `null`
+      // não sabemos sequer por qual dos dois caminhos ele fechou — mais uma
+      // razão para a frase não afirmar desfecho.
+      rotuloPaciente: "Esta Curadoria foi encerrada.",
+      rotuloCurador: "Encerrado sem entrega.",
+      tom: "neutro",
+      quemAge: "NINGUEM",
+      temPendencia: false,
+      temConteudoParaPaciente: false,
+      acoesPaciente: [],
       acoesCurador: [],
     });
   }
