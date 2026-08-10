@@ -1,3 +1,4 @@
+import { fixtureValidarPerfil } from "../apoio/fixture-perfil";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
@@ -219,7 +220,7 @@ async function seedDeliveredCase(): Promise<DeliveredFixture> {
   // B-2 (ADR-065): o banco só valida Perfil com Mapa completo, e o
   // reconhecimento exige o bloco relacional — estado legítimo via factory.
   await preencherMapaEBlocoRelacional(cliente, created.id, adminUserId);
-  await curadoria.validatePriorityProfile(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
+  await fixtureValidarPerfil(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
 
   // B-2: os três são os que ESTA execução semeou e publicou. A versão
   // anterior tomava 3 publicados quaisquer da rede compartilhada — com

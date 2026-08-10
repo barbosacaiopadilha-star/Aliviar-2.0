@@ -1,3 +1,4 @@
+import { fixtureValidarPerfil } from "../apoio/fixture-perfil";
 // MESA DO CRUZAMENTO — persistência e montagem contra as fixtures reais
 //
 // O componente é testado em tests/components; a visão pura em tests/unit.
@@ -94,7 +95,7 @@ describe("Mesa do Cruzamento — banco e montagem (Supabase local)", () => {
     await curadoria.addFilter(curador.client, priorityProfileId, "FILTRO_OBRIGATORIO", "UF", "SP", null);
     await curadoria.addFilter(curador.client, priorityProfileId, "FILTRO_OBRIGATORIO", "CUIDADO_CONTINUO", "true", null);
     await completarMapaDePrioridades(curador.client, priorityProfileId);
-    await curadoria.validatePriorityProfile(curador.client, priorityProfileId, "Confirmado.");
+    await fixtureValidarPerfil(curador.client, priorityProfileId, "Confirmado.");
   }, 120_000);
 
   afterAll(async () => {

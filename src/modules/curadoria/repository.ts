@@ -173,19 +173,11 @@ export async function removeFilter(supabase: SupabaseClient, filterId: string): 
 // A validação do paciente é o que faz o Perfil existir de fato. A soma de 100
 // pontos é reforçada pelo banco (enforce_priority_profile_validation) — aqui
 // só propagamos a mensagem.
-export async function validatePriorityProfile(
-  supabase: SupabaseClient,
-  priorityProfileId: string,
-  validationNote: string,
-): Promise<void> {
-  const { error } = await supabase
-    .from("priority_profiles")
-    .update({ status: "VALIDATED", validated_at: new Date().toISOString(), validation_note: validationNote })
-    .eq("id", priorityProfileId);
-
-  if (error) throw new Error(error.message);
-}
-
+// D-11A · `validatePriorityProfile` saiu daqui. Era writer ORFAO de produção:
+// nenhum chamador legítimo, e ainda assim capaz de gravar VALIDATED fora da via
+// oficial da paciente (ADR-042 · acknowledge_priority_profile). O que precisava
+// dele era o seed — e montar cenário é trabalho da camada de teste, não do
+// produto. Vive em tests/apoio/fixture-perfil.ts.
 
 // ---------------------------------------------------------------------------
 // A Rede operacional — a base já aprovada da Aliviar, nunca uma busca externa

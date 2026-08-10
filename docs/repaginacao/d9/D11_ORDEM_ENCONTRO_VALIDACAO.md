@@ -1,75 +1,55 @@
-# D-11 · Ordem entre o Primeiro Encontro e a validação dos mapas
+# D-11 · reclassificada — o bypass era do seed, não do produto
 
-**Classificação:** DECISÃO / REGRA OPERACIONAL NECESSÁRIA
-**Status:** registrado, **não corrigido**
-**Origem:** teste material do §6/§7 da missão D-9F
+**Status:** **CORRIGIDO** em D-11A. A classificação original estava errada.
 
 ---
 
-## O que a regra de produto diz
+## O que a auditoria viu
 
-> A validação **definitiva** dos mapas de prioridades e preferências ocorre no
-> Primeiro Encontro com o Curador.
+Um Perfil `VALIDATED` sem encontro agendado, sem encontro realizado e sem
+história reconhecida — num Case criado já sob D-9.
 
-## O que o produto faz hoje
+## A leitura fácil, e por que estava errada
 
-**Resultado C do §7: o sistema PERMITE.**
+> ~~"a paciente consegue validar o Perfil antes do Primeiro Encontro pela via
+> oficial"~~
 
-Num Case criado **inteiramente sob D-9** — banco recriado do zero, 117 de 117
-migrations, cenário montado pelo seed oficial:
+**Não é reproduzível.** A via oficial de reconhecimento é ato da PACIENTE
+(ADR-042): `/paciente` → `ProfileCard` → `PerfilPanel` → `ReconhecerPerfil` →
+`acknowledge_priority_profile`, com gate `is_patient_for_case` e auditoria com
+`actor_role = paciente`. A antiga `validateProfileAction` do Curador foi
+removida deliberadamente, e há guarda impedindo o retorno.
 
-| fato | estado |
-|---|---|
-| `meeting_scheduled_at` | **nulo** — encontro nem agendado |
-| `meeting_held_at` | **nulo** — encontro não realizado |
-| `understanding_confirmed_at` | **nulo** — história nem reconhecida |
-| `validated_at` | **presente** |
-| `priority_profiles.status` | **`VALIDATED`** |
+## O que de fato acontecia
 
-Os mapas estão validados sem que exista **nenhum** dos fatos que deveriam
-precedê-los. Não é resíduo pré-D9: o Case nasceu depois dela.
+`repository.ts::validatePriorityProfile` — um writer que morava no repositório
+de **produção**, escrevia `status = VALIDATED` direto na tabela, e tinha
+**zero chamadores de produção**. Quinze consumidores, todos em `tests/`.
 
-## O que exatamente foi exercitado
+Foi ele que o seed usou para montar o cenário. **O bypass era do seed.**
 
-O cenário foi produzido pelo **seed oficial**, que chama a camada de repositório
-e de ações programaticamente — não por um humano clicando na UI. Portanto o que
-está provado é:
+## A correção (D-11A)
 
-- **a camada de ação/repositório permite** validar os mapas sem o encontro;
-- **não está provado** que a UI do Curador ofereça esse caminho.
+O writer saiu do produto e virou `tests/apoio/fixture-perfil.ts ::
+fixtureValidarPerfil` — nome que declara o que é. Quem monta cenário sintético
+agora diz que está montando cenário.
 
-A distinção importa para decidir **onde** impor a ordem, e é justamente a
-pergunta que esta decisão precisa responder.
+Guardas: nenhum arquivo de `src/` declara ou chama o writer · nenhum grava
+`status: "VALIDATED"` direto · nenhum importa a fixture · a RPC oficial segue
+viva e chamada · o Curador não tem action equivalente · nenhuma superfície de
+Curador ou Admin alcança a RPC. Todas leem o código **sem comentários**.
 
-## A pergunta a decidir
+## O que permanece verdadeiro da regra operacional
 
-Qual camada deve impor a ordem?
+O reconhecimento definitivo acontece **no contexto** do Primeiro Encontro. Isso
+é orquestração e UX, **não autorização técnica**: `meeting_held_at` não vira
+gate do ato dela, e `validated_at` pode cronologicamente preceder
+`meeting_held_at` sem violação — é legítimo a paciente reconhecer durante a
+conversa e o Curador registrar a realização depois.
 
-- **UI** — esconder/desabilitar a validação antes do encontro;
-- **Server Action** — recusar o ato, com mensagem própria;
-- **domínio** — regra explícita no modelo;
-- **banco** — constraint;
-- **combinação**.
+**ADR-042 permanece íntegra. Nenhum gate novo foi criado.**
 
-Cada uma tem custo diferente, e a escolha muda o que acontece com os Cases que
-já estão neste estado.
+## GAP-A1 preservado
 
-## Preparação ≠ validação definitiva
-
-A distinção que a decisão precisa preservar (§9):
-
-| ato | quando pode ocorrer |
-|---|---|
-| Curador lê a história | antes do encontro |
-| Curador prepara o Perfil / rascunha os mapas | antes do encontro |
-| Curador organiza os dados | antes do encontro |
-| **validação definitiva com a paciente** | **no Primeiro Encontro** |
-
-Hoje o produto tem **um** `validated_at`, e ele não distingue rascunho de
-validação definitiva. Se a decisão for que preparar e validar são atos
-diferentes, isso pode exigir mais do que uma constraint.
-
-## O que NÃO foi feito
-
-Zero constraint · zero alteração de action · zero trigger · zero mudança de
-domínio — conforme §8.
+`meeting_scheduled_at` continua sem writer. Não resolvido aqui, e será
+necessário para a UX do Primeiro Encontro.

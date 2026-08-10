@@ -1,3 +1,4 @@
+import { fixtureValidarPerfil } from "../apoio/fixture-perfil";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
@@ -146,7 +147,7 @@ describe("Curadoria completa — sem SQL, sem script, sem intervenção técnica
 
     // ---------------------------------------------------------- 4 — Validar
     await completarMapaDePrioridades(cliente, priorityProfileId);
-    await curadoria.validatePriorityProfile(
+    await fixtureValidarPerfil(
       cliente,
       priorityProfileId,
       "Li em voz alta e ela confirmou que é isso.",

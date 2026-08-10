@@ -1,3 +1,4 @@
+import { fixtureValidarPerfil } from "../apoio/fixture-perfil";
 // CERTIFICAÇÃO DO CICLO — do cadastro sintético à seleção dos três
 //
 // A Rede real está vazia e vai continuar vazia até alguém fornecer médicos de
@@ -144,7 +145,7 @@ describe("Certificação do ciclo da Curadoria — fixtures isoladas (Supabase l
     // 15 localização + 25 continuidade + 10 disponibilidade = 50 pessoal).
 
     await completarMapaDePrioridades(curador.client, priorityProfileId);
-    await curadoria.validatePriorityProfile(curador.client, priorityProfileId, "Lido em voz alta e confirmado.");
+    await fixtureValidarPerfil(curador.client, priorityProfileId, "Lido em voz alta e confirmado.");
   }, 120_000);
 
   afterAll(async () => {

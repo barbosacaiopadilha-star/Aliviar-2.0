@@ -1,3 +1,4 @@
+import { fixtureValidarPerfil } from "../apoio/fixture-perfil";
 // RELATÓRIO ASSISTIDO — o ciclo contra os contratos reais
 //
 // O gerador puro é testado em tests/unit. Aqui é o resto: a montagem da
@@ -93,7 +94,7 @@ describe("Relatório assistido — geração, ciclo de vida e congelamento (Supa
     priorityProfileId = await curadoria.createPriorityProfile(curador.client, caseId, curador.userId);
     await curadoria.addFilter(curador.client, priorityProfileId, "FILTRO_OBRIGATORIO", "AREA_DE_ATUACAO", CERTIFICATION_AREA_REQUIREMENT, null);
     await completarMapaDePrioridades(curador.client, priorityProfileId);
-    await curadoria.validatePriorityProfile(curador.client, priorityProfileId, "Confirmado.");
+    await fixtureValidarPerfil(curador.client, priorityProfileId, "Confirmado.");
 
     // Pesos do Modelo v1.0 — dois cruzamentos de 100.
 

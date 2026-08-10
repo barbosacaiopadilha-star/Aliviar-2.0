@@ -1,3 +1,4 @@
+import { fixtureValidarPerfil } from "../apoio/fixture-perfil";
 // COERÊNCIA MESA × COS — as duas leituras, contra o mesmo banco.
 //
 // A certificação dinâmica deixou este item como "não verificável": Mesa e COS
@@ -93,7 +94,7 @@ describe("Coerência Mesa × COS (Supabase local)", () => {
       null,
     );
     await completarMapaDePrioridades(curador.client, priorityProfileId);
-    await curadoria.validatePriorityProfile(curador.client, priorityProfileId, "Confirmado.");
+    await fixtureValidarPerfil(curador.client, priorityProfileId, "Confirmado.");
 
     // Duas áreas compatíveis, uma incompatível — a quarta fica sem declaração.
     await declareAreaCompatibility(curador.client, {

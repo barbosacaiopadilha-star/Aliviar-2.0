@@ -1,3 +1,4 @@
+import { fixtureValidarPerfil } from "../apoio/fixture-perfil";
 // SEED DA VALIDAÇÃO DE USABILIDADE — PROMPT 8
 //
 // Prepara o Case de certificação no ESTADO INICIAL RECOMENDADO do teste com
@@ -135,7 +136,7 @@ describe.skipIf(!process.env.SEED_MESA)("seed — validação de usabilidade da 
       await curadoria.addFilter(curadorAuth, priorityProfileId, "FILTRO_OBRIGATORIO", "UF", "SP", "Estado onde a pessoa reside.");
       await curadoria.addFilter(curadorAuth, priorityProfileId, "FILTRO_OBRIGATORIO", "CUIDADO_CONTINUO", "true", "Ela quer acompanhamento do começo ao fim.");
       await completarMapaDePrioridades(curadorAuth, priorityProfileId);
-      await curadoria.validatePriorityProfile(curadorAuth, priorityProfileId, "Lido em voz alta e confirmado.");
+      await fixtureValidarPerfil(curadorAuth, priorityProfileId, "Lido em voz alta e confirmado.");
     }
 
     // Estado inicial recomendado: zera o trabalho da Mesa, preservando o Case.

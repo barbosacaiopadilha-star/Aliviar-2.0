@@ -1,3 +1,4 @@
+import { fixtureValidarPerfil } from "../apoio/fixture-perfil";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createCuradoriaClient } from "./curadoria-client";
@@ -208,7 +209,7 @@ describe("Relationship Engine — MVP — PR1 (persistência, RLS, triggers, RPC
       "Ela quer alguém que acompanhe do começo ao fim.",
     );
     await completarMapaDePrioridades(cliente, priorityProfileId);
-    await curadoria.validatePriorityProfile(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
+    await fixtureValidarPerfil(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
 
     // M5: o motor legado nao existe mais. Os tres da fixture vem da Rede
     // publicada — o mesmo universo que a Mesa apresenta ao Curador.
