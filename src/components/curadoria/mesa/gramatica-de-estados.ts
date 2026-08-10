@@ -31,22 +31,20 @@
  * `sinal`, e o rótulo textual continua ao lado (§10 da missão).
  */
 
+import { classeDoPapel, type MarcaDeEstado, type PapelVisual } from "@/foundation/estado-visual";
 import type { LacunaDeJuizo } from "@/modules/curadoria/julgamentos";
 import type { SubcriterionStatus } from "@/modules/curadoria/mapa-profissional";
 import type { MesaEtapaState } from "@/modules/curadoria/mesa-etapas";
 
-export type PapelVisual = "estrutura" | "resolvido" | "atencao" | "impedimento" | "neutro";
-
-export type MarcaDeEstado = {
-  papel: PapelVisual;
-  /** Símbolo curto — a distinção que sobrevive ao daltonismo e ao cinza. */
-  sinal: string;
-};
-
-/** A classe CSS de um papel. Uma só fonte, para não espalhar regra. */
-export function classeDoPapel(papel: PapelVisual): string {
-  return `mesa-estado mesa-estado--${papel}`;
-}
+/**
+ * FUNDAÇÃO · o vocabulário (papéis, sinal, classe) subiu para
+ * `@/foundation/estado-visual` — as quatro trilhas da repaginação consomem a
+ * MESMA definição que a Mesa certificou. O que continua morando aqui são os
+ * MAPEAMENTOS da Mesa: qual desfecho, aguardo ou etapa recebe qual papel.
+ *
+ * Reexportado para não quebrar quem já importa daqui.
+ */
+export { classeDoPapel, type MarcaDeEstado, type PapelVisual };
 
 /**
  * Os desfechos de um ato do Curador. As chaves são exatamente as de

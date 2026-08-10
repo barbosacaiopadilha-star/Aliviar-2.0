@@ -570,3 +570,40 @@
 .weight-slider:focus-visible::-moz-range-thumb {
   box-shadow: 0 0 0 3px var(--color-bg-surface), 0 0 0 5px var(--color-focus-ring);
 }
+
+/* ---------------------------------------------------------------------------
+   FUNDAÇÃO · GRAMÁTICA CROMÁTICA DE ESTADO
+   docs/repaginacao/13_MODELO_DE_ESTADOS.md §4 — cor + símbolo + texto.
+   Vinha de mesa-curador.css, onde foi certificada. Está aqui porque as quatro
+   trilhas da repaginação precisam da MESMA aparência, não de uma cópia.
+   --------------------------------------------------------------------------- */
+
+.mesa-estado {
+  line-height: 1;
+}
+
+/* Processual concluído. NUNCA desfecho clínico favorável. */
+.mesa-estado--resolvido {
+  color: var(--color-success);
+}
+
+/* Falta ato humano. É a cor mais cara da Mesa: escassa por regra. */
+.mesa-estado--atencao {
+  color: var(--color-attention);
+}
+
+/* Erro, conflito, bloqueio. NUNCA divergência ou discordância legítima. */
+.mesa-estado--impedimento {
+  color: var(--color-error);
+}
+
+/* Identidade e estrutura — nunca comunica resultado. */
+.mesa-estado--estrutura {
+  color: var(--color-brand-primary);
+}
+
+/* Contexto, não iniciado, repouso. A marca "·" a 30% sumia no papel; uma
+   marca invisível não identifica nada para quem enxerga. */
+.mesa-estado--neutro {
+  color: color-mix(in srgb, var(--color-ink) 50%, transparent);
+}
