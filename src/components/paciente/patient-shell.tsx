@@ -77,11 +77,18 @@ export function PatientShell({ children, userMenu }: PatientShellProps) {
         Pular para o conteúdo
       </a>
 
-      <header className="border-b border-[color-mix(in_srgb,var(--color-border)_60%,transparent)] bg-[var(--patient-linen)] print:hidden">
+      {/* A2 · a moldura deixa de ser barra de aplicativo.
+          O fundo sólido com borda cinza fazia o topo ler como painel: uma
+          faixa opaca separando "sistema" de "conteúdo". Aqui ele passa a
+          repousar SOBRE a atmosfera da casa — véu translúcido, sem corte —
+          e a única linha que resta é um fio de dourado, que é o que a marca
+          já usa lá fora. Nada foi acrescentado: é o mesmo header, com menos
+          peso. */}
+      <header className="sticky top-0 z-20 border-b border-[color-mix(in_srgb,var(--color-brand-gold)_22%,transparent)] bg-[color-mix(in_srgb,var(--patient-linen)_82%,transparent)] backdrop-blur-sm print:hidden">
         <div className="mx-auto flex min-h-[4.5rem] w-full max-w-content items-center justify-between gap-4 px-4 lg:px-8">
           <Link
             href="/paciente"
-            className="font-serif text-xl font-medium text-[var(--patient-acento)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+            className="font-serif text-xl font-medium tracking-[0.01em] text-[var(--patient-acento)] transition-opacity duration-300 ease-standard hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
           >
             Aliviar
           </Link>
@@ -90,12 +97,17 @@ export function PatientShell({ children, userMenu }: PatientShellProps) {
             <NavLinks
               pathname={pathname}
               className="flex items-center gap-1"
+              /* A pílula preenchida era a marca administrativa mais visível do
+                 topo: seis cápsulas coloridas competindo entre si. O item
+                 ativo passa a se distinguir por PESO e por um fio de dourado
+                 sob ele — presença, não realce. */
               linkClassName={(active) =>
                 cn(
-                  "flex min-h-11 items-center rounded-full px-4 text-sm font-medium transition-all duration-300 ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2",
+                  "relative flex min-h-11 items-center px-3 text-sm transition-colors duration-300 ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2",
+                  "after:absolute after:inset-x-3 after:bottom-2.5 after:h-px after:transition-opacity after:duration-300",
                   active
-                    ? "bg-accent-soft text-accent"
-                    : "text-[var(--color-ink-muted)] hover:bg-white/60 hover:text-[var(--patient-ink)]",
+                    ? "font-medium text-[var(--patient-ink)] after:bg-[var(--color-brand-gold)] after:opacity-100"
+                    : "text-[var(--color-ink-muted)] hover:text-[var(--patient-ink)] after:bg-[var(--color-brand-gold)] after:opacity-0 hover:after:opacity-40",
                 )
               }
             />
@@ -105,8 +117,11 @@ export function PatientShell({ children, userMenu }: PatientShellProps) {
 
           <button
             type="button"
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-[var(--color-border)] bg-white text-[var(--patient-ink)] transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 lg:hidden"
+            /* O botão era um círculo branco sólido com borda — objeto de
+               interface. Passa a repousar sobre o mesmo véu do header. */
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--color-brand-gold)_28%,transparent)] text-[var(--patient-ink)] transition-colors duration-300 ease-standard hover:bg-[color-mix(in_srgb,var(--color-brand-gold)_10%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 lg:hidden"
             aria-label="Abrir menu"
+            aria-expanded={menuOpen}
             onClick={() => setMenuOpen(true)}
           >
             <Menu className="size-5" aria-hidden="true" />
@@ -135,7 +150,11 @@ export function PatientShell({ children, userMenu }: PatientShellProps) {
         </div>
       </Drawer>
 
-      <main id="patient-main" className="mx-auto w-full max-w-content px-4 py-12 lg:px-8 lg:py-16">
+      {/* O conteúdo ganha respiro: era o topo da página colado no header
+          opaco. Com o header translúcido e mais folga acima, a leitura começa
+          num espaço, não numa borda. Largura e gutters permanecem — mexer
+          neles moveria o conteúdo, e A2 é sobre a moldura. */}
+      <main id="patient-main" className="mx-auto w-full max-w-content px-4 pb-16 pt-14 lg:px-8 lg:pb-24 lg:pt-20">
         {children}
       </main>
     </div>
