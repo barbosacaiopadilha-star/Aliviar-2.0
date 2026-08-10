@@ -47,7 +47,11 @@ Com essa credencial, as duas capturas saem em uma passagem.
 
 Durante a captura, o Case `fc07b1a1…` apresentava:
 
-
+| fato | estado |
+|---|---|
+| `understanding_confirmed_at` | presente |
+| `validated_at` | presente |
+| `meeting_held_at` | **nulo** — até a captura de EV-D9-002 |
 
 Ou seja: **os mapas de prioridades foram validados enquanto o Primeiro Encontro
 não tinha prova de realização.** A regra de produto diz que a validação
