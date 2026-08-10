@@ -42,7 +42,6 @@ import type { LinhaEtapaState } from "@/modules/curadoria/mesa-investigacao";
 import {
   MESA_ETAPAS,
   MESA_ETAPA_QUESTIONS,
-  MESA_ETAPA_LABELS,
   type MesaEtapaId,
   type MesaEtapaState,
   type ProximaDecisao,
@@ -190,7 +189,11 @@ function MesaAmbiente({
           <main className="mesa-work" aria-live="polite">
             {linha && linha.length > 0 ? <LinhaInvestigacao etapas={linha} /> : null}
 
-            <p className="mesa-work__title">{MESA_ETAPA_LABELS[etapaAtual]}</p>
+            {/* A-1 · o rótulo da etapa saiu daqui. Ele era a terceira
+                ocorrência simultânea da mesma constante — a trilha já diz onde
+                estou (`mesa-step--ativa` + `aria-current="step"`) e a faixa de
+                pendência a nomeia quando a etapa deve algo. Aqui ele não
+                acrescentava nada, e a pergunta é que é a tarefa. */}
             <h2 className="mesa-work__question">{MESA_ETAPA_QUESTIONS[etapaAtual]}</h2>
 
             <div className="mt-6">{conteudo[etapaAtual]}</div>

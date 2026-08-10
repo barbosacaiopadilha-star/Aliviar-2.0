@@ -196,15 +196,11 @@
   padding-top: 1.75rem;
 }
 
-.mesa-work__title {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--color-ambient-accent);
-}
-
+/* A-1 · `.mesa-work__title` saiu com o elemento que a usava, e com ela o
+   `margin-top: 0.375rem` desta pergunta: aqueles 6px existiam para separá-la
+   do rótulo. A folga que resta é a que `.mesa-raciocinio` já declara de
+   propósito — 1rem e uma linha fina. */
 .mesa-work__question {
-  margin-top: 0.375rem;
   font-family: var(--font-serif, serif);
   font-size: 1.25rem;
   line-height: 1.35;
@@ -441,9 +437,11 @@ button.mesa-chip:focus-visible {
   color: var(--color-ink-muted);
 }
 
-/* Separa o raciocínio do rótulo da etapa. Empilhadas, as duas faixas em caixa
-   alta liam como uma coisa só, e "REDE ELEGÍVEL" parecia o quarto passo do
-   raciocínio. */
+/* Separa o raciocínio do que vem abaixo. Nasceu contra o rótulo da etapa —
+   empilhadas, as duas faixas em caixa alta liam como uma coisa só, e "REDE
+   ELEGÍVEL" parecia o quarto passo do raciocínio. Com o rótulo removido em
+   A-1, esta folga passou a ser a única separação entre o raciocínio e a
+   pergunta, e por isso permanece. */
 .mesa-raciocinio {
   padding-bottom: 0.625rem;
   border-bottom: 1px solid var(--mesa-line);
