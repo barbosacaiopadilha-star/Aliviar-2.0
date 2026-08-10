@@ -22,8 +22,8 @@
  * Puro e determinístico: sem banco, sem rede, sem data do sistema.
  */
 
+import type { LeituraDeEstado } from "@/foundation/contrato-de-estado";
 import type { Jornada } from "@/modules/curadoria/jornada";
-import type { PatientHomeState } from "./home-state";
 
 export type PatientNextAction = {
   /** O que falta — específico, nunca "uma informação adicional". */
@@ -52,17 +52,44 @@ export type PatientPendingState =
 
 /**
  * Deriva a pendência do paciente a partir da jornada já projetada e do estado
- * da história. A ordem é a da jornada: a primeira coisa que depende dela vence.
+ * lido pela Fundação. A ordem é a da jornada: a primeira coisa que depende
+ * dela vence.
+ *
+ * **Esta camada deixou de decidir macroestado.** Ela recebe `leitura` — a
+ * projeção do contrato congelado — e traduz em ação, texto e destino. O motor
+ * local que existia antes (`derivePatientHomeState`) foi aposentado: dois
+ * motores decidindo o mesmo estado foi exatamente o que produziu a Home
+ * dizendo "conte sua história" com a Curadoria entregue.
  */
 export function derivePatientPending(input: {
-  homeState: PatientHomeState;
+  leitura: LeituraDeEstado;
   jornada: Jornada | null;
 }): PatientPendingState {
-  const { homeState, jornada } = input;
+  const { leitura, jornada } = input;
+
+  // 0 — Encerrado ou cancelado: nada depende dela, e nada é prometido. Vem
+  // antes de tudo porque é terminal — e porque `closed_at` sozinho não
+  // distingue conclusão de cancelamento (é o contrato que já distinguiu).
+  if (leitura.estado === "CASO_CANCELADO" || leitura.estado === "CASO_ENCERRADO_SEM_ENTREGA") {
+    return {
+      kind: "nothing",
+      message: leitura.rotuloPaciente,
+      whatHappensNext: "Se quiser retomar, fale com a Aliviar.",
+    };
+  }
+
+  // Fallback seguro: sem fatos suficientes não se pede nada nem se promete nada.
+  if (leitura.estado === "INDETERMINADO") {
+    return {
+      kind: "nothing",
+      message: leitura.rotuloPaciente,
+      whatHappensNext: "Assim que houver uma etapa para você, ela aparece aqui.",
+    };
+  }
 
   // 1 — Antes de existir Case, a jornada é a história. Estes dois estados têm
   // ação real em tela e por isso vêm primeiro.
-  if (homeState.kind === "no_story") {
+  if (leitura.estado === "HISTORIA_NAO_INICIADA") {
     return {
       kind: "action",
       action: {
@@ -76,7 +103,7 @@ export function derivePatientPending(input: {
     };
   }
 
-  if (homeState.kind === "draft") {
+  if (leitura.estado === "HISTORIA_EM_PREENCHIMENTO") {
     return {
       kind: "action",
       action: {
@@ -90,7 +117,22 @@ export function derivePatientPending(input: {
     };
   }
 
-  if (homeState.kind === "submitted_without_case" || !jornada) {
+  // Curadoria entregue: há conteúdo, e o próximo passo é olhá-lo — nunca
+  // recontar a história. Só entra aqui quando o contrato confirmou entrega.
+  if (leitura.estado === "CURADORIA_ENTREGUE" || leitura.estado === "CASO_CONCLUIDO") {
+    return {
+      kind: "action",
+      action: {
+        title: "Sua Curadoria está pronta",
+        why: "As três opções foram escolhidas para o que você definiu como importante.",
+        whatHappensNext: "Você pode ler com calma, quantas vezes quiser. Nada expira.",
+        cta: { label: "Ver minha Curadoria", href: "/paciente/curadoria" },
+        happensInConversation: false,
+      },
+    };
+  }
+
+  if (!jornada) {
     return {
       kind: "nothing",
       message: "Nada depende de você agora. Sua história já está com a Aliviar.",

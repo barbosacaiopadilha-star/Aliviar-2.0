@@ -2,10 +2,25 @@ import { describe, expect, it } from "vitest";
 
 import { buildJornada } from "@/modules/curadoria/jornada";
 import { MOCK_RECORDS } from "@/modules/curadoria/cos/mock-records";
+import { lerEstado, type FatosDoCaso } from "@/foundation/contrato-de-estado";
 import { derivePatientPending, patientStageHref } from "@/modules/paciente/next-action";
-import type { PatientHomeState } from "@/modules/paciente/home-state";
 
-const comCaso: PatientHomeState = { kind: "case_available", statusLabel: "Em curadoria" };
+/**
+ * As leituras vêm do CONTRATO, não de literais: se a Fundação mudar a
+ * projeção de um estado, estes testes acompanham em vez de mentir.
+ */
+function leituraDe(estado: string) {
+  const fatos: Record<string, FatosDoCaso> = {
+    HISTORIA_NAO_INICIADA: { historia: { existe: false, enviadaEm: null }, caso: null, relatorio: null, pendencia: null },
+    HISTORIA_EM_PREENCHIMENTO: { historia: { existe: true, enviadaEm: null }, caso: null, relatorio: null, pendencia: null },
+    HISTORIA_ENVIADA: { historia: { existe: true, enviadaEm: "enviada" }, caso: null, relatorio: null, pendencia: null },
+    CASO_EM_CURADORIA: { historia: { existe: true, enviadaEm: "enviada" }, caso: { curadorResponsavel: "c", encerradoEm: null, cancelado: false }, relatorio: null, pendencia: null },
+  };
+  const leitura = lerEstado(fatos[estado]!);
+  if (leitura.estado !== estado) throw new Error(`fixture nao produz ${estado}, e sim ${leitura.estado}`);
+  return leitura;
+}
+
 
 function jornadaDe(caseKey: string) {
   return buildJornada(MOCK_RECORDS[caseKey]!);
@@ -13,7 +28,7 @@ function jornadaDe(caseKey: string) {
 
 describe("toda pendência diz O QUE falta — nunca só que falta algo", () => {
   it("sem história: a pendência é a história, com o caminho até ela", () => {
-    const pending = derivePatientPending({ homeState: { kind: "no_story" }, jornada: null });
+    const pending = derivePatientPending({ leitura: leituraDe("HISTORIA_NAO_INICIADA"), jornada: null });
     expect(pending.kind).toBe("action");
     if (pending.kind !== "action") return;
     expect(pending.action.title).toContain("sua história");
@@ -21,17 +36,17 @@ describe("toda pendência diz O QUE falta — nunca só que falta algo", () => {
   });
 
   it("rascunho: leva para continuar de onde parou, não para o começo", () => {
-    const pending = derivePatientPending({ homeState: { kind: "draft" }, jornada: null });
+    const pending = derivePatientPending({ leitura: leituraDe("HISTORIA_EM_PREENCHIMENTO"), jornada: null });
     if (pending.kind !== "action") throw new Error("esperava ação");
     expect(pending.action.cta?.href).toBe("/sua-historia/continuar");
   });
 
   it("nenhuma pendência usa a frase genérica que motivou esta correção", () => {
-    const estados: { homeState: PatientHomeState; jornada: ReturnType<typeof buildJornada> | null }[] = [
-      { homeState: { kind: "no_story" }, jornada: null },
-      { homeState: { kind: "draft" }, jornada: null },
-      { homeState: { kind: "submitted_without_case" }, jornada: null },
-      ...Object.keys(MOCK_RECORDS).map((key) => ({ homeState: comCaso, jornada: jornadaDe(key) })),
+    const estados: { leitura: ReturnType<typeof leituraDe>; jornada: ReturnType<typeof buildJornada> | null }[] = [
+      { leitura: leituraDe("HISTORIA_NAO_INICIADA"), jornada: null },
+      { leitura: leituraDe("HISTORIA_EM_PREENCHIMENTO"), jornada: null },
+      { leitura: leituraDe("HISTORIA_ENVIADA"), jornada: null },
+      ...Object.keys(MOCK_RECORDS).map((key) => ({ leitura: leituraDe("CASO_EM_CURADORIA"), jornada: jornadaDe(key) })),
     ];
 
     for (const entrada of estados) {
@@ -51,7 +66,7 @@ describe("toda pendência diz O QUE falta — nunca só que falta algo", () => {
 describe("toda pendência tem destino — ou declara que acontece na conversa", () => {
   it("nunca existe um terceiro caso: ou há link, ou o texto diz que é conversa", () => {
     for (const key of Object.keys(MOCK_RECORDS)) {
-      const pending = derivePatientPending({ homeState: comCaso, jornada: jornadaDe(key) });
+      const pending = derivePatientPending({ leitura: leituraDe("CASO_EM_CURADORIA"), jornada: jornadaDe(key) });
       if (pending.kind !== "action") continue;
 
       const { cta, happensInConversation, title } = pending.action;
@@ -77,7 +92,7 @@ describe("toda pendência tem destino — ou declara que acontece na conversa", 
       .find((j) => j.stages.some((s) => s.id === "PERFIL_DE_PRIORIDADES" && s.status === "AGUARDANDO_VOCE"));
 
     expect(jornada, "nenhum mock cobre o Perfil aguardando o paciente").toBeDefined();
-    const pending = derivePatientPending({ homeState: comCaso, jornada: jornada! });
+    const pending = derivePatientPending({ leitura: leituraDe("CASO_EM_CURADORIA"), jornada: jornada! });
     if (pending.kind !== "action") throw new Error("esperava ação");
     expect(pending.action.cta).toBeNull();
     expect(pending.action.title).toContain("prioridades");
@@ -89,7 +104,7 @@ describe("toda pendência tem destino — ou declara que acontece na conversa", 
       .find((j) => j.stages.some((s) => s.id === "ESCOLHA" && s.status === "AGUARDANDO_VOCE"));
 
     if (!jornada) return; // nenhum mock nesse ponto — nada a afirmar
-    const pending = derivePatientPending({ homeState: comCaso, jornada });
+    const pending = derivePatientPending({ leitura: leituraDe("CASO_EM_CURADORIA"), jornada });
     if (pending.kind !== "action") throw new Error("esperava ação");
     expect(pending.action.cta?.href).toBe("/paciente/curadoria");
   });
@@ -98,7 +113,7 @@ describe("toda pendência tem destino — ou declara que acontece na conversa", 
 describe("quando nada depende dela, o silêncio é declarado", () => {
   it("diz com quem o caso está, e o que vem depois", () => {
     for (const key of Object.keys(MOCK_RECORDS)) {
-      const pending = derivePatientPending({ homeState: comCaso, jornada: jornadaDe(key) });
+      const pending = derivePatientPending({ leitura: leituraDe("CASO_EM_CURADORIA"), jornada: jornadaDe(key) });
       if (pending.kind !== "nothing") continue;
       expect(pending.message).toContain("Nada depende de você");
       expect(pending.whatHappensNext.length).toBeGreaterThan(10);
@@ -107,7 +122,7 @@ describe("quando nada depende dela, o silêncio é declarado", () => {
 
   it("história enviada sem Caso: nenhuma cobrança, e o que vem a seguir é dito", () => {
     const pending = derivePatientPending({
-      homeState: { kind: "submitted_without_case" },
+      leitura: leituraDe("HISTORIA_ENVIADA"),
       jornada: null,
     });
     expect(pending.kind).toBe("nothing");
@@ -121,7 +136,7 @@ describe("o vocabulário do paciente continua protegido", () => {
     const proibidos = ["score", "ranking", "protocolo", "curadoria técnica", "devolutiva", "filtro"];
 
     for (const key of Object.keys(MOCK_RECORDS)) {
-      const pending = derivePatientPending({ homeState: comCaso, jornada: jornadaDe(key) });
+      const pending = derivePatientPending({ leitura: leituraDe("CASO_EM_CURADORIA"), jornada: jornadaDe(key) });
       const texto = (
         pending.kind === "action"
           ? `${pending.action.title} ${pending.action.why} ${pending.action.whatHappensNext}`

@@ -27,7 +27,9 @@ import { buildJornada } from "@/modules/curadoria/jornada";
 import { listCaseIds, loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { listStoriesForProfile } from "@/modules/story/repository";
 import { listPatientDocuments } from "@/modules/profiles/patient-document-repository";
-import { derivePatientHomeState } from "@/modules/paciente/home-state";
+import { lerEstado } from "@/foundation/contrato-de-estado";
+import { lerFatosDoCaso } from "@/modules/paciente/fatos-do-caso";
+import { loadPatientCuradoria } from "@/modules/curadoria/patient-curadoria";
 
 export const metadata: Metadata = {
   title: "Minha Jornada",
@@ -83,11 +85,21 @@ export default async function PacienteHomePage() {
     ? await loadModeloDoReconhecimento(supabase, record.caseId)
     : null;
 
-  const state = derivePatientHomeState({
+  // FATOS → CONTRATO CONGELADO → PROJEÇÃO. A Home deixou de decidir
+  // macroestado: ela lê o que a Fundação leu, e é a mesma leitura que a
+  // Jornada consome. Duas telas, uma verdade.
+  //
+  // `loadPatientCuradoria` é a prova de entrega: ele se recusa a devolver
+  // Curadoria sem `delivered_at`, então não há como confundir emitir com
+  // entregar por este caminho.
+  const curadoriaEntregue = record ? await loadPatientCuradoria(supabase) : null;
+  const fatos = await lerFatosDoCaso(supabase, {
     storyStatuses: stories.map((story) => story.status),
-    caseOverview,
+    caseId: caseOverview?.caseId ?? null,
+    curadoriaEntregueEm: curadoriaEntregue?.deliveredAt ?? null,
   });
-  const pending = derivePatientPending({ homeState: state, jornada });
+  const leitura = lerEstado(fatos);
+  const pending = derivePatientPending({ leitura, jornada });
 
   const saudacao = greetingFor(currentHourInBrazil());
   const displayName = authState.profile?.displayName ?? "Paciente";
@@ -99,7 +111,7 @@ export default async function PacienteHomePage() {
     return (
       <div className="mx-auto max-w-3xl space-y-8">
         <PatientWelcome name={displayName} subtitle={`${saudacao}. Estamos por aqui.`} />
-        <PatientHomeState state={state} />
+        <PatientHomeState leitura={leitura} statusLabel={caseOverview?.statusLabel ?? null} />
         {/* O resumo do que já é dela vale desde o primeiro dia — antes de
             existir Case, ele diz com honestidade o que ainda não existe. */}
         <MeuResumo

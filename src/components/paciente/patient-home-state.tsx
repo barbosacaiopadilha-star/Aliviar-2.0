@@ -1,15 +1,26 @@
 
 import { PatientCard } from "@/components/paciente/dashboard/patient-primitives";
 import { LinkButton } from "@/components/landing/link-button";
-import type { PatientHomeState as PatientHomeStateValue } from "@/modules/paciente/home-state";
+import type { LeituraDeEstado } from "@/foundation/contrato-de-estado";
 
 type PatientHomeStateProps = {
-  state: PatientHomeStateValue;
+  /**
+   * A projeção do contrato congelado. Este componente **não decide estado**:
+   * ele escolhe a composição do que a Fundação já leu. O motor local que
+   * existia antes foi aposentado.
+   */
+  leitura: LeituraDeEstado;
+  /**
+   * Descritivo do Case, quando existe. Continua sendo exibido, mas **nunca
+   * governa o macroestado** — derivar comportamento de texto foi o que
+   * permitiu a Home contradizer a realidade.
+   */
+  statusLabel: string | null;
 };
 
-export function PatientHomeState({ state }: PatientHomeStateProps) {
-  switch (state.kind) {
-    case "no_story":
+export function PatientHomeState({ leitura, statusLabel }: PatientHomeStateProps) {
+  switch (leitura.estado) {
+    case "HISTORIA_NAO_INICIADA":
       return (
         <PatientCard className="patient-fade-in space-y-5">
           <h2 className="font-serif text-2xl font-medium leading-snug text-[var(--patient-ink)] lg:text-3xl">
@@ -23,7 +34,7 @@ export function PatientHomeState({ state }: PatientHomeStateProps) {
         </PatientCard>
       );
 
-    case "draft":
+    case "HISTORIA_EM_PREENCHIMENTO":
       return (
         <PatientCard className="patient-fade-in space-y-5">
           <h2 className="font-serif text-2xl font-medium leading-snug text-[var(--patient-ink)] lg:text-3xl">
@@ -36,7 +47,7 @@ export function PatientHomeState({ state }: PatientHomeStateProps) {
         </PatientCard>
       );
 
-    case "submitted_without_case":
+    case "HISTORIA_ENVIADA":
       return (
         <PatientCard className="patient-fade-in space-y-5">
           <h2 className="font-serif text-2xl font-medium leading-snug text-[var(--patient-ink)] lg:text-3xl">
@@ -48,7 +59,7 @@ export function PatientHomeState({ state }: PatientHomeStateProps) {
         </PatientCard>
       );
 
-    case "case_available":
+    default:
       return (
         <PatientCard className="patient-fade-in space-y-5">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-brand-sage)]">
@@ -57,7 +68,7 @@ export function PatientHomeState({ state }: PatientHomeStateProps) {
           <h2 className="font-serif text-2xl font-medium leading-snug text-[var(--patient-ink)] lg:text-3xl">
             Seu cuidado está em andamento.
           </h2>
-          <p className="patient-body text-lg text-[var(--patient-ink)]">{state.statusLabel}</p>
+          <p className="patient-body text-lg text-[var(--patient-ink)]">{statusLabel ?? leitura.rotuloPaciente}</p>
           <p className="patient-body text-sm text-[var(--color-ink-muted)]">
             Este espaço será atualizado conforme o seu caso avançar — sempre com nome e data.
           </p>
