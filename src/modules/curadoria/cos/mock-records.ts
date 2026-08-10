@@ -25,6 +25,7 @@ function baseRecord(
       contextReviewed: false,
       documentsReviewed: false,
       meetingScheduledAt: null,
+    meetingHeldAt: null,
       knownFacts: [],
       openPendencies: [],
       // Base: Case novo, sem material e sem registro — o ramo B do M-001.
@@ -86,6 +87,7 @@ const marina: CuradoriaRecord = baseRecord({
     contextReviewed: true,
     documentsReviewed: true,
     meetingScheduledAt: "2026-07-21T10:00:00-03:00",
+    meetingHeldAt: null,
     knownFacts: [
       "Marina acompanha o pai, 78 anos.",
       "Mora em cidade diferente da do pai.",
@@ -150,6 +152,7 @@ const joaquim: CuradoriaRecord = baseRecord({
     contextReviewed: true,
     documentsReviewed: true,
     meetingScheduledAt: "2026-07-18T18:30:00-03:00",
+    meetingHeldAt: null,
     knownFacts: ["Adiou procurar ajuda por quase um ano.", "Trabalha por conta própria."],
     openPendencies: [],
     hasSubmittedStory: true,
@@ -286,6 +289,7 @@ const rosa: CuradoriaRecord = baseRecord({
     contextReviewed: true,
     documentsReviewed: true,
     meetingScheduledAt: "2026-07-05T09:00:00-03:00",
+    meetingHeldAt: null,
     knownFacts: ["Primeira busca por Curadoria."],
     openPendencies: [],
     hasSubmittedStory: true,

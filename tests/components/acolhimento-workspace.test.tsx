@@ -30,6 +30,7 @@ function renderWs(
   return render(
     <AcolhimentoWorkspace
       caseId={CASE_ID}
+      meetingHeldAt={null}
       knownFacts={[]}
       openPendencies={[]}
       hasSubmittedStory

@@ -23,6 +23,7 @@ const ACOLHIMENTO_VAZIO: AcolhimentoRecord = {
   contextReviewed: false,
   documentsReviewed: false,
   meetingScheduledAt: null,
+    meetingHeldAt: null,
   knownFacts: [],
   openPendencies: [],
   hasSubmittedStory: false,

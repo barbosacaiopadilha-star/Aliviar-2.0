@@ -16,6 +16,7 @@ import {
   emitReportInputSchema,
   generateAssistedDraftInputSchema,
   registerAcolhimentoInputSchema,
+  registrarPrimeiroEncontroInputSchema,
   registerCasoInputSchema,
   registerDecisionInputSchema,
   registerDevolutivaInputSchema,
@@ -800,4 +801,92 @@ export async function registerDevolutivaAction(input: unknown): Promise<Curadori
   } catch (error) {
     return fail("curadoria.registerDevolutiva", error, "Não foi possível registrar a apresentação.");
   }
+}
+
+// ---------------------------------------------------------------------------
+// D-9 · O PRIMEIRO ENCONTRO ACONTECEU
+// ---------------------------------------------------------------------------
+
+/**
+ * Registra que o Primeiro Encontro com o Curador **aconteceu**.
+ *
+ * Existe porque agendar não é realizar, e porque os produtos do encontro —
+ * reconhecimento da história, validação dos mapas — não provam o evento: o
+ * Curador pode confirmar entendimento lendo a história, sem ter havido
+ * encontro. Sem este ato, a realização só poderia ser inferida, e inferência
+ * não é fato.
+ *
+ * **Idempotente e não destrutivo.** Se já houver prova registrada, a data
+ * original permanece: um segundo clique não reescreve quando o encontro
+ * aconteceu. O retorno é de sucesso — nada falhou e nada foi duplicado.
+ *
+ * Não escreve `understanding_confirmed_at`, não valida mapas, não muda fase e
+ * não move responsabilidade: o handoff continua dependendo exclusivamente da
+ * decisão.
+ */
+export async function registrarPrimeiroEncontroRealizadoAction(
+  input: unknown,
+): Promise<CuradoriaActionResult> {
+  let authState;
+  try {
+    authState = await requireCurator();
+  } catch {
+    return { success: false, error: "Não autorizado." };
+  }
+
+  const parsed = registrarPrimeiroEncontroInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+  }
+
+  const { caseId } = parsed.data;
+  const supabase = await createServerSupabaseClient();
+
+  const { data: existing, error: readError } = await supabase
+    .from("consultation_records")
+    .select("id, meeting_held_at")
+    .eq("case_id", caseId)
+    .maybeSingle();
+
+  if (readError) {
+    return fail(
+      "curadoria.registrarPrimeiroEncontro.leitura",
+      erroDeBanco("Não foi possível ler o Acolhimento.", readError, { caseId }),
+      "Não foi possível ler o Acolhimento.",
+    );
+  }
+
+  // Já registrado: a data original é preservada. Sucesso idempotente.
+  if (existing?.meeting_held_at) {
+    return { success: true };
+  }
+
+  const agora = new Date().toISOString();
+
+  const { error } = existing
+    ? await supabase
+        .from("consultation_records")
+        .update({ meeting_held_at: agora })
+        .eq("id", existing.id)
+        // Corrida entre dois cliques: só grava quem chegar com a coluna ainda
+        // vazia. O segundo não sobrescreve o primeiro.
+        .is("meeting_held_at", null)
+    : await supabase.from("consultation_records").insert({
+        case_id: caseId,
+        // `curator_id` é NOT NULL: quem age é quem fica registrado.
+        curator_id: authState.user.id,
+        meeting_held_at: agora,
+      });
+
+  if (error) {
+    return fail(
+      "curadoria.registrarPrimeiroEncontro.gravacao",
+      erroDeBanco("Não foi possível registrar o Primeiro Encontro.", error, { caseId }),
+      "Não foi possível registrar o Primeiro Encontro.",
+    );
+  }
+
+  revalidateCuradoria(caseId);
+  revalidatePath(`/portal-curador/casos/${caseId}/acolhimento`);
+  return { success: true };
 }

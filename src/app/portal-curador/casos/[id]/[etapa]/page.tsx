@@ -150,6 +150,7 @@ export default async function EtapaPage({ params }: { params: Promise<{ id: stri
               <AcolhimentoWorkspace
                 caseId={record.caseId}
                 knownFacts={record.acolhimento.knownFacts}
+                meetingHeldAt={record.acolhimento.meetingHeldAt}
                 openPendencies={record.acolhimento.openPendencies}
                 hasSubmittedStory={record.acolhimento.hasSubmittedStory}
                 hasLinkedDocument={record.acolhimento.hasLinkedDocument}

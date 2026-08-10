@@ -55,7 +55,17 @@ export type AcolhimentoRecord = {
    */
   contextReviewed: boolean;
   documentsReviewed: boolean;
+  /** Data prevista do Primeiro Encontro. Agendar NÃO é realizar (D-9). */
   meetingScheduledAt: string | null;
+  /**
+   * D-9 · prova de que o Primeiro Encontro **aconteceu**.
+   *
+   * `null` significa "não existe prova registrada" — nunca "não houve". Nunca
+   * inferido de `understandingConfirmedAt`, da validação dos mapas ou do
+   * agendamento: o produto do encontro não é prova do evento, e o Curador pode
+   * confirmar entendimento lendo a história, sem ter havido encontro.
+   */
+  meetingHeldAt: string | null;
   /** O que o Curador extraiu do material — registro de preparação (M-001 §2). */
   knownFacts: string[];
   /** O que falta, descoberto ao ler o material. Alimenta as pendências da condução. */

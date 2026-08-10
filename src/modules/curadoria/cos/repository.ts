@@ -273,6 +273,8 @@ export async function loadCuradoriaRecord(
       contextReviewed: Boolean(consultation?.context_reviewed),
       documentsReviewed: Boolean(consultation?.documents_reviewed),
       meetingScheduledAt: (consultation?.meeting_scheduled_at as string | null) ?? null,
+      // D-9: lido cru, nunca derivado. Se a coluna é nula, o fato não existe.
+      meetingHeldAt: (consultation?.meeting_held_at as string | null) ?? null,
       knownFacts: (consultation?.known_facts as string[]) ?? [],
       openPendencies: (consultation?.open_pendencies as string[]) ?? [],
       hasSubmittedStory: material.hasSubmittedStory,

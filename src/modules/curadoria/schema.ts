@@ -231,3 +231,8 @@ export const registerDevolutivaInputSchema = z.object({
   observations: z.array(z.string().trim().min(1)).default([]),
   nextSteps: z.array(z.string().trim().min(1)).default([]),
 });
+
+/** D-9 · o ato que prova que o Primeiro Encontro aconteceu. */
+export const registrarPrimeiroEncontroInputSchema = z.object({
+  caseId: z.string().uuid("Case inválido."),
+});
