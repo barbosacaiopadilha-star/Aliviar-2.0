@@ -26,7 +26,13 @@ describe("estrutura da Jornada", () => {
   });
 
   it("aponta a etapa atual como a primeira não concluída", () => {
-    expect(buildJornada(marina).currentStage).toBe("PERFIL_DE_PRIORIDADES");
+    // D-9 · a Marina teve a história lida e reconhecida, mas o Primeiro
+    // Encontro NÃO tem prova de realização. Reconhecer é produto; o encontro é
+    // evento. Antes desta correção a régua a colocava uma etapa adiante, com
+    // base num fato que não sustenta a afirmação.
+    expect(marina.acolhimento.meetingHeldAt).toBeNull();
+    expect(marina.historia.understandingConfirmedAt).toBeTruthy();
+    expect(buildJornada(marina).currentStage).toBe("CONSULTA_INICIAL");
     expect(buildJornada(joaquim).currentStage).toBe("CURADORIA");
     expect(buildJornada(rosa).currentStage).toBe("ESCOLHA");
   });

@@ -153,24 +153,81 @@ describe("T-D9-11/12 · o Encontro 1 não move a responsabilidade", () => {
   });
 });
 
-describe("T-D9-9/10 · a régua não afirma o que não tem prova", () => {
-  it("sem prova, nenhuma frase da Jornada afirma que o encontro aconteceu", () => {
-    const semProva = acolhimento({ meetingHeldAt: null });
-    for (const stage of buildJornada(semProva).stages) {
-      expect(stage.description, stage.id).not.toMatch(/encontro (já )?(aconteceu|foi realizado)/i);
-    }
+describe("T-D9-9 · a guarda é do STATUS, não da frase", () => {
+  /**
+   * A versão anterior deste teste protegia só a `description` — e o
+   * Verificador mostrou que isso deixava o defeito passar: bastava mudar a
+   * copy para o estágio continuar aparecendo como CONCLUÍDA sem prova. O
+   * oráculo agora olha o campo que a interface realmente usa para pintar o
+   * marco.
+   */
+  const comProduto = (meetingHeldAt: string | null): CuradoriaRecord => ({
+    ...acolhimento({ meetingHeldAt }),
+    historia: { ...base.historia, understandingConfirmedAt: "2026-07-11T10:00:00-03:00" },
   });
 
-  it("e o fato viaja no registro, disponível para a projeção consumir", () => {
-    const comProva = acolhimento({ meetingHeldAt: "2026-07-10T11:00:00-03:00" });
-    expect(comProva.acolhimento.meetingHeldAt).toBe("2026-07-10T11:00:00-03:00");
+  const consulta = (r: CuradoriaRecord) =>
+    buildJornada(r).stages.find((s) => s.id === "CONSULTA_INICIAL")!;
+
+  it("produto presente + encontro sem prova ⇒ o estágio NÃO fica CONCLUÍDA", () => {
+    const r = comProduto(null);
+    expect(r.historia.understandingConfirmedAt).toBeTruthy();
+    expect(r.acolhimento.meetingHeldAt).toBeNull();
+    expect(consulta(r).status).not.toBe("CONCLUIDA");
+  });
+
+  it("e a etapa atual da régua permanece no Primeiro Encontro", () => {
+    expect(buildJornada(comProduto(null)).currentStage).toBe("CONSULTA_INICIAL");
+  });
+
+  it("T-D9-10 · com prova, o estágio reconhece a realização", () => {
+    expect(consulta(comProduto("2026-07-10T11:00:00-03:00")).status).toBe("CONCLUIDA");
+  });
+
+  it("§7 · a prova de perda: o critério do estágio é o encontro, não o produto", () => {
+    // Se `consultaDone` voltasse a olhar o produto, os dois registros abaixo
+    // — que diferem SÓ no fato do encontro — produziriam o mesmo status.
+    const semEncontro = consulta(comProduto(null)).status;
+    const comEncontro = consulta(comProduto("2026-07-10T11:00:00-03:00")).status;
+    expect(semEncontro).not.toBe(comEncontro);
+  });
+
+  it("nenhuma frase afirma o encontro sem prova", () => {
+    for (const stage of buildJornada(comProduto(null)).stages) {
+      expect(stage.description, stage.id).not.toMatch(
+        /encontro (já )?(aconteceu|foi realizado)|contou sua história para/i,
+      );
+    }
   });
 });
 
-describe("T-D9-2 · casos antigos permanecem sem prova", () => {
-  it("nenhuma fixture existente nasceu com o fato preenchido", () => {
+describe("T-D9-2 · sem backfill, e o estado independente é representável", () => {
+  /**
+   * A prova de "sem backfill" é do BANCO, e foi feita na migration: a linha
+   * existente ficou `null` (`total=1, com_prova=0`). Aqui o que importa é
+   * outra coisa — que o estado legítimo do §3 exista de verdade entre as
+   * fixtures, e não seja um cenário só de papel.
+   */
+  it("§3 · existe fixture com história reconhecida E encontro sem prova", () => {
+    const independente = Object.values(MOCK_RECORDS).filter(
+      (r) => r.historia.understandingConfirmedAt && !r.acolhimento.meetingHeldAt,
+    );
+    expect(independente.length, "o estado independente sumiu das fixtures").toBeGreaterThan(0);
+  });
+
+  it("e nela a régua NÃO conclui o Primeiro Encontro", () => {
+    const independente = Object.values(MOCK_RECORDS).find(
+      (r) => r.historia.understandingConfirmedAt && !r.acolhimento.meetingHeldAt,
+    )!;
+    const consulta = buildJornada(independente).stages.find((s) => s.id === "CONSULTA_INICIAL")!;
+    expect(consulta.status).not.toBe("CONCLUIDA");
+  });
+
+  it("nenhuma fixture ganhou o fato sem que o cenário o justifique", () => {
     for (const [nome, record] of Object.entries(MOCK_RECORDS)) {
-      expect(record.acolhimento.meetingHeldAt, `${nome} recebeu backfill`).toBeNull();
+      if (!record.acolhimento.meetingHeldAt) continue;
+      // Só quem validou mapas — ato que pressupõe o encontro — o declara.
+      expect(record.validacao?.validatedAt, `${nome} declara encontro sem cenário que o sustente`).toBeTruthy();
     }
   });
 });

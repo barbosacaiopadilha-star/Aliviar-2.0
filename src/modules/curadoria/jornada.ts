@@ -79,7 +79,22 @@ export function buildJornada(record: CuradoriaRecord): Jornada {
   const curator = record.curatorName;
   const name = record.patientFirstName;
 
-  const consultaDone = Boolean(historia.understandingConfirmedAt);
+  /**
+   * D-9 · o Primeiro Encontro completa pelo FATO DO ENCONTRO, não pelo produto.
+   *
+   * Antes: `Boolean(historia.understandingConfirmedAt)`. Mas reconhecer a
+   * história é **produto** do processo, e o Curador pode fazê-lo lendo o que
+   * ela escreveu — sem que encontro nenhum tenha havido. A régua dizia
+   * *"Consulta Inicial concluída"* a partir disso, o que é afirmar um evento
+   * que não tem prova.
+   *
+   * `meetingHeldAt` é o único fato que prova a realização. Os produtos seguem
+   * existindo e seguem compondo as etapas seguintes — o que eles não fazem é
+   * substituir a prova do encontro.
+   */
+  const consultaDone = Boolean(record.acolhimento.meetingHeldAt);
+  /** Produto do processo — reconhecido, mas nunca confundido com o evento. */
+  const historiaReconhecida = Boolean(historia.understandingConfirmedAt);
   const perfilDone = Boolean(validacao?.validatedAt);
   const curadoriaDone = curadoriaTecnica.selectedProfessionalIds.length === 3;
   /**
@@ -115,24 +130,33 @@ export function buildJornada(record: CuradoriaRecord): Jornada {
       status: consultaDone ? "CONCLUIDA" : "EM_ANDAMENTO",
       description: consultaDone
         ? `Você contou sua história para ${curator}, e ela devolveu organizada até você reconhecer.`
-        : `${curator} vai ouvir sua história inteira antes de organizar qualquer coisa.`,
-      updatedAt: historia.understandingConfirmedAt ?? historia.registeredAt,
+        : historiaReconhecida
+          ? // Produto sem evento: a leitura já foi feita, o encontro ainda não.
+            // A frase reconhece o trabalho sem afirmar a conversa.
+            `${curator} já leu e organizou sua história. O encontro de vocês é o próximo passo.`
+          : `${curator} vai ouvir sua história inteira antes de organizar qualquer coisa.`,
+      // A data do marco é a do encontro quando ele existe; antes disso, o
+      // último movimento real da história.
+      updatedAt:
+        record.acolhimento.meetingHeldAt ??
+        historia.understandingConfirmedAt ??
+        historia.registeredAt,
       nextAction: consultaDone ? null : { label: "Conversar com seu Curador", owner: "EQUIPE" },
       responsible: curator,
     },
     {
       id: "PERFIL_DE_PRIORIDADES",
       label: JORNADA_STAGE_LABELS.PERFIL_DE_PRIORIDADES,
-      status: perfilDone ? "CONCLUIDA" : consultaDone ? "AGUARDANDO_VOCE" : "A_CAMINHO",
+      status: perfilDone ? "CONCLUIDA" : historiaReconhecida ? "AGUARDANDO_VOCE" : "A_CAMINHO",
       description: perfilDone
         ? "Seu Perfil está completo, e você o reconheceu como seu."
-        : consultaDone
+        : historiaReconhecida
           ? "Falta você reconhecer este Perfil como seu. Sem essa confirmação, nada avança."
           : "Vocês vão definir juntos o que mais importa para você nesta decisão.",
       updatedAt: validacao?.validatedAt ?? null,
       nextAction: perfilDone
         ? null
-        : consultaDone
+        : historiaReconhecida
           ? { label: "Validar meu Perfil de Prioridades", owner: "VOCE" }
           : null,
       responsible: perfilDone ? name : curator,
