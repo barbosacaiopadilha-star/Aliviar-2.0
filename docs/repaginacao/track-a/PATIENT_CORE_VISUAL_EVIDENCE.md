@@ -119,6 +119,31 @@ rosto; nenhuma barra de navegação dentro da página.
 **Pergunta para a revisão:** *"parece que a paciente atravessou a porta e entrou
 no mesmo lugar?"*
 
+### Adendo · rastreabilidade dos fundos
+
+Nenhuma imagem nova foi criada. Os assets já existiam e já eram compartilhados:
+
+| asset | landing | Home da paciente | opacidade |
+|---|---|---|---|
+| `public/scenes/grand-finale.jpg` | bandas `LandingSection variant="warm"` | **campo da página** (`PatientAmbientLayer`) | **16%** — o mesmo da landing |
+| `public/scenes/recepcao-bright.jpg` | hero editorial | **hero da Home** em `CONSULTA_INICIAL` | **62%** — o mesmo da landing |
+
+Componente: **`ImmersiveBackdrop`**, o mesmo da landing, na variante
+`patient-intimate` — que ele já trazia e que a casa da paciente nunca havia
+usado (ela rolava três `div`s com gradiente próprio, imagem a 22% sob véu de
+90–96%).
+
+**Crops:** mesma imagem, `object-cover`, `sizes="100vw"`. Desktop mostra o salão
+em largura; mobile mostra o recorte central. No mobile, o hero exibe a recepção
+com o **logotipo da Aliviar no balcão** — o mesmo enquadramento da landing.
+
+**Overlay:** `patient-intimate` (`from-warm/94 via-canvas/90 to-warm/96`) mais
+os dois radiais que o componente já aplica. Nada acrescentado.
+
+**Artefato de captura:** a camada é `position: fixed`. Na captura `fullPage`
+aparece uma emenda na altura da viewport (~900px), onde a arquitetura termina —
+**não é o que a paciente vê** ao rolar.
+
 ---
 
 ## Medição de overflow (§18/§19)

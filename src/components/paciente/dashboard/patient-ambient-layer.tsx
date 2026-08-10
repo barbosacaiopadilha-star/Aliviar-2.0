@@ -1,15 +1,41 @@
-import { ALIVIAR_SCENES } from "@/lib/aliviar-environments";
+import { ImmersiveBackdrop } from "@/components/shared/immersive-backdrop";
 
-/** Camada atmosférica fixa — sala de leitura reservada, luz de fim de tarde. */
+/**
+ * A ATMOSFERA DA CASA — o mesmo edifício da recepção, visto por dentro.
+ *
+ * A3b (adendo) · esta camada era feita à mão: três `div`s com gradiente
+ * próprio, imagem a 22% de opacidade e um véu de 90–96% por cima. O resultado
+ * é que a arquitetura **existia no DOM e não existia na tela** — a paciente
+ * fazia login e o edifício desaparecia.
+ *
+ * Duas coisas mudam, e nenhuma delas é uma imagem nova:
+ *
+ * 1. **O componente passa a ser o da Aliviar pública.** `ImmersiveBackdrop` é
+ *    o mesmo que compõe o hero e as bandas da landing, e ele já trazia — sem
+ *    nunca ter sido usado aqui — a variante `patient-intimate`. A casa tinha
+ *    uma segunda linguagem de ambiente para a mesma marca.
+ *
+ * 2. **A cena passa a ser `landingAtrium`.** Era `patientStudy`, um detalhe
+ *    fechado de mesa: pertence ao mesmo conjunto, mas não é *reconhecível*
+ *    como o lugar da landing. `landingAtrium` (`grand-finale.jpg`) é a sala
+ *    ampla que a landing usa nas suas próprias bandas — atravessar a porta
+ *    passa a mostrar o mesmo salão.
+ *
+ * A opacidade é **a mesma das bandas da landing** (`imageOpacity={16}` em
+ * `LandingSection`). Foi calibrada, não escolhida: a 30% o salão aparecia
+ * atrás do corpo do texto — a régua sobre o piso de madeira, o nome do Curador
+ * sobre um banco — e legibilidade não se negocia por atmosfera. A 16% o lugar
+ * continua reconhecível e o texto continua sendo o protagonista.
+ *
+ * Quem carrega a arquitetura com força é o hero, a 62%, exatamente como o hero
+ * da landing. É a mesma divisão de trabalho que a página pública faz: uma
+ * abertura com o ambiente presente, e o resto da leitura sobre o ambiente
+ * recuado.
+ */
 export function PatientAmbientLayer() {
   return (
     <div className="patient-ambient-layer" aria-hidden="true">
-      <div
-        className="patient-ambient-layer__image"
-        style={{ backgroundImage: `url(${ALIVIAR_SCENES.patientStudy})` }}
-      />
-      <div className="patient-ambient-layer__wash" />
-      <div className="patient-ambient-layer__glow" />
+      <ImmersiveBackdrop scene="landingAtrium" variant="patient-intimate" imageOpacity={16} />
     </div>
   );
 }

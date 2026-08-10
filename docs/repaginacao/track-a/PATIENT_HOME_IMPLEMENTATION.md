@@ -251,6 +251,57 @@ acento, avatar, links, botão, brilho.
 faixa branca sobre marfim lia como barra de aplicativo. Está nas capturas
 BEFORE/AFTER desta missão, e a suíte A2C segue verde.
 
+### 8.6 · Adendo · os fundos arquitetônicos originais
+
+A A3b tinha acertado a paleta e errado o essencial: **o edifício sumia no
+login**. Não por falta de asset — por tratamento.
+
+**Auditoria (nenhuma imagem nova foi criada):**
+
+| asset | onde a landing usa | onde a paciente usa |
+|---|---|---|
+| `public/scenes/recepcao-bright.jpg` | hero editorial (`ImmersiveBackdrop scene="landingHero" imageOpacity={62}`) | hero da Home em `CONSULTA_INICIAL` |
+| `public/scenes/grand-finale.jpg` | bandas `LandingSection variant="warm"` (`imageOpacity={16}`) | **campo da página inteira** + hero em `DOSSIE` |
+| `cena-2-recepcao-proxima` · `cena-3-corredor` · `cena-4-transicao` · `cena-5-quadro-planta` · `cena-6-detalhe` | `portal-scenes.ts` | hero, por etapa (`STAGE_AMBIENCES`) |
+
+Ou seja: **os assets já eram os mesmos** — `ambiente.ts` e a landing puxam do
+mesmo conjunto desde sempre. O que havia de errado:
+
+1. **A camada atmosférica era feita à mão.** Três `div`s com gradiente próprio,
+   imagem a **0.22** sob véu de 90–96%: arquitetura que existe no DOM e não
+   existe na tela. Substituída pelo **`ImmersiveBackdrop`** — o mesmo
+   componente da landing, que já trazia a variante `patient-intimate` e que
+   esta casa **nunca havia usado**. Havia uma segunda linguagem de ambiente
+   para a mesma marca.
+2. **A cena do campo era um detalhe fechado** (`patientStudy` =
+   `cena-6-detalhe`, uma mesa de trabalho). Pertence ao conjunto, mas não é
+   *reconhecível* como o lugar da landing. Passou a ser **`landingAtrium`
+   (`grand-finale.jpg`)** — o salão que a landing usa nas próprias bandas.
+3. **O hero estava a 0.4** sob véu de 88–96%. Foi para **0.62**, o número
+   exato do hero da landing, e o véu ganhou a mesma curva (denso onde o texto
+   começa, aberto no meio).
+
+**Opacidades — herdadas, não escolhidas:**
+
+| superfície | valor | de onde vem |
+|---|---|---|
+| campo da página | **16%** | `LandingSection` |
+| hero | **62%** | `hero-editorial` |
+
+O campo foi testado a 30% e **recuado**: o salão aparecia atrás do corpo do
+texto — a régua sobre o piso de madeira, o nome do Curador sobre um banco. O
+§7 do adendo é explícito quanto a texto sem contraste, e legibilidade não se
+troca por atmosfera. A 16% o lugar continua reconhecível.
+
+**Crops:** a mesma imagem, `object-cover`, `sizes="100vw"`. Desktop mostra o
+salão em largura; mobile mostra o recorte central da mesma foto. Nenhum
+ambiente diferente inventado por viewport.
+
+**Artefato de captura:** a camada é `position: fixed` — ela acompanha a
+viewport, como um lugar em que se está parado. Na captura `fullPage` isso
+produz uma emenda na altura da viewport (~900px), onde a arquitetura termina.
+**Não é o que a paciente vê** ao rolar.
+
 ### 8.5 · Gaps registrados
 
 - **`ExpandableSection`** ("Como sua Curadoria é feita", "Conhecer meu Perfil")
