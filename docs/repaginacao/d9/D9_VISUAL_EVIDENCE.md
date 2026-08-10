@@ -19,12 +19,41 @@ o mesmo viewport e a mesma rota — a única diferença é o ato.
 
 ## EV-D9-005 / EV-D9-006 — NÃO produzidos
 
-A Jornada da paciente mudou de verdade nesta missão: o marco do Primeiro
-Encontro deixou de concluir por `understanding_confirmed_at`. Capturar o
-antes/depois exigiria sessão da paciente dona deste Case e a régua nos dois
-estados, e não foi feito.
+A Jornada da paciente mudou de verdade: o marco do Primeiro Encontro deixou de
+concluir por `understanding_confirmed_at`. Capturar o antes/depois exige uma
+sessão da PACIENTE dona de um Case com os fatos certos — e é aí que trava.
 
-**A mudança está provada por teste** — cinco provas derrubam a mutação que
+| conta | Cases | serve? |
+|---|---|---|
+| `paciente.teste@…` (permanente, em `test-users.local.json`) | **0** | não — a Jornada dela é o estado vazio |
+| `validacao-mesa@example.test` (sintética do seed) | 1, com os fatos certos | **sim, mas** a senha só é emitida quando o seed a CRIA |
+
+O seed reaproveita a conta existente e, nesse caminho, não imprime credencial.
+Recriá-la significaria apagar a paciente e o Case — destruindo justamente os
+fatos que a evidência precisa. E fabricar uma senha para a conta não é algo que
+eu faça.
+
+**A mudança está provada por teste**: cinco provas derrubam a mutação que
 devolve o critério ao produto, e o oráculo olha o `status` do estágio, não a
-frase. **Não está provada por pixel**, e digo isso em vez de declarar o pacote
-completo.
+frase. **Não está provada por pixel.**
+
+**Como destravar:** rodar o seed a partir de um banco sem a conta
+`validacao-mesa@example.test` — ele então cria a paciente e imprime o login.
+Com essa credencial, as duas capturas saem em uma passagem.
+
+---
+
+## §4 · ACHADO — os mapas foram validados sem prova do encontro
+
+Durante a captura, o Case `fc07b1a1…` apresentava:
+
+
+
+Ou seja: **os mapas de prioridades foram validados enquanto o Primeiro Encontro
+não tinha prova de realização.** A regra de produto diz que a validação
+definitiva dos mapas ocorre no Primeiro Encontro — então ou o fluxo permite
+validar antes, ou o encontro aconteceu sem ser registrado.
+
+**Registrado, não corrigido**, conforme §4. É o mesmo padrão dos outros gaps
+da D-9: o produto existe, o evento não tem prova, e ninguém deveria inferir um
+do outro.
