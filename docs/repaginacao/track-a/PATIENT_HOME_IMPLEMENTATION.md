@@ -175,6 +175,94 @@ removida. Decisão de DT-01.
 
 ---
 
+## 8 · A3b · repaginação visual e continuidade com a recepção
+
+**Master visual:** a landing oficial da Aliviar. A regra que a governa não é
+"parecer bonito", é **continuidade**: quem faz login deve sentir que atravessou
+uma porta, não que abriu outro software.
+
+### 8.1 · Estrutura
+
+| | ANTES | DEPOIS |
+|---|---|---|
+| 1 | `AmbientHero` (saudação + etapa) | `AmbientHero` + **macroestado do contrato** |
+| 2 | `ProximaAcao` | `ProximaAcao` (comportamento intocado) |
+| 3 | `JourneyWalk` | **`QuemAcompanha`** — novo |
+| 4 | `MeuResumo` | `JourneyWalk` |
+| 5 | grade 2 col: `ProfileCard` + `CuradoriaCard` | `MeuResumo` |
+| 6 | `QuickLinks` | `ProfileCard` · `CuradoriaCard` (em fluxo) |
+
+### 8.2 · Redundâncias eliminadas
+
+**1 · A mesma frase, dois blocos de distância.** Quando nada aguarda a
+paciente, `derivePatientPending` usa a descrição da etapa atual como *"o que
+acontece depois"* — **a mesma string** que a régua exibia logo abaixo. Estava
+visível na captura BEFORE: *"Curador Teste vai ouvir sua história inteira antes
+de organizar qualquer coisa."*, duas vezes. Agora a régua cala quando
+coincidem; o topo responde *o que acontece agora*, a régua responde *onde isso
+fica no percurso*.
+
+**2 · `QuickLinks` era uma segunda barra de navegação.** Seus quatro destinos já
+estão no menu do `PatientShell`, presente em toda a casa. Removido. **Nenhum
+destino foi perdido** — inclusive `/paciente/linha-do-tempo`, que o `QuickLinks`
+nem oferecia.
+
+**3 · O eyebrow de etapa repetia a régua.** No lugar dele entrou
+`leitura.rotuloPaciente` — o macroestado que a Home lia do contrato e **não
+exibia em nenhum lugar do caminho com Caso**.
+
+**4 · A grade de duas colunas** dava a Perfil e Curadoria o mesmo peso do estado
+e da ação. Agora cada um recebe o peso que tem, em fluxo.
+
+### 8.3 · Métricas objetivas (caminho com Caso)
+
+| | ANTES | DEPOIS |
+|---|---|---|
+| superfícies com fundo/borda/sombra | 5 | **1** (só a cena do hero) |
+| blocos principais | 6 | 7 (o responsável é novo) |
+| CTAs primários possíveis | 2 | **1** |
+| links secundários | 6 | **4** |
+| molduras/bordas de caixa | 4 | **0** (só fios) |
+| frases duplicadas | 1 | **0** |
+| barras de navegação na página | 1 | **0** |
+| overflow em 390/430/768/1440 | 0 | **0** |
+
+Altura até a próxima ação (desktop, lida na captura): ~477px → ~506px. Ela
+desceu ~30px de propósito — o respiro aumentou. Em 390px a posição é a mesma
+(~462px) e o responsável, que **não tinha bloco nenhum**, aparece a ~745px no
+desktop e ~755px no mobile.
+
+### 8.4 · Continuidade — o que mudou de material
+
+| | antes | depois |
+|---|---|---|
+| campo da página (`--patient-mist`) | `--color-bg-ambient` = 65% `indigo-50` — **cinza-azulado** | `--color-bg-canvas-warm` — **marfim** |
+| véu atmosférico | terminava no frio | marfim do começo ao fim |
+| topo (`PatientShell`) | `#ffffff` — branco de painel | marfim do campo |
+| botão da ação | pílula própria | **`LinkButton`** — o mesmo da Aliviar pública |
+| superfícies | cartão com sombra | faixa + fio |
+
+O token compartilhado `--color-bg-ambient` **não foi tocado**: ele pertence à
+narrativa cromática das seis casas. `--patient-mist` tinha um consumidor só — o
+fundo da página desta casa. O azul permanece inteiro onde significa algo:
+acento, avatar, links, botão, brilho.
+
+**O topo do `PatientShell` foi alterado** (A2 é anterior a esta missão): a
+faixa branca sobre marfim lia como barra de aplicativo. Está nas capturas
+BEFORE/AFTER desta missão, e a suíte A2C segue verde.
+
+### 8.5 · Gaps registrados
+
+- **`ExpandableSection`** ("Como sua Curadoria é feita", "Conhecer meu Perfil")
+  ainda usa pílula arredondada, mais SaaS que editorial. É componente
+  compartilhado — fora do objeto da A3b.
+- **`MeuResumo` diz "Você ainda não contou sua história"** num Caso cuja
+  história foi enviada: ele lê `stories[0].data.historia`, e a história do seed
+  tem esse campo vazio. **Não é da A3b** — é leitura de dado, não repaginação.
+- **A4** segue pendente: Início × Linha do tempo.
+
+---
+
 ## 6 · Zero domínio
 
 Sem migration, coluna, enum, estado, derivação nova ou alteração de handoff.

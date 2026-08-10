@@ -1,4 +1,3 @@
-import { PatientCard } from "@/components/paciente/dashboard/patient-primitives";
 import { ExpandableSection } from "@/components/paciente/experiencia/expandable-section";
 import { PerfilPanel } from "@/components/paciente/perfil-panel";
 import type { PerfilView } from "@/modules/paciente/experiencia";
@@ -42,8 +41,14 @@ export function ProfileCard({
   const maisImportante = perfil.prioridades[0];
 
   return (
-    <PatientCard>
-      <h2 className="patient-section-title">O que mais importa para o seu caso</h2>
+    // A3b · seção com fio, não cartão. O Perfil é contexto valioso, mas não
+    // disputa a primeira leitura com o estado atual e a próxima ação — e uma
+    // superfície com fundo e sombra fazia exatamente isso. O conteúdo é o
+    // mesmo, inclusive o retrato inteiro que abre abaixo.
+    <section aria-labelledby="perfil-resumo-titulo" className="border-t border-[var(--color-border)] pt-8">
+      <h2 id="perfil-resumo-titulo" className="patient-section-title">
+        O que mais importa para o seu caso
+      </h2>
 
       {maisImportante ? (
         <div className="mt-4">
@@ -95,6 +100,6 @@ export function ProfileCard({
           tecnicos={modelo?.tecnicos}
         />
       </ExpandableSection>
-    </PatientCard>
+    </section>
   );
 }

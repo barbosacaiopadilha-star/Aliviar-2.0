@@ -70,6 +70,57 @@ quando houver um Case local em andamento.
 
 ---
 
+## A3b — repaginação visual da Home
+
+**Conta:** `validacao-mesa@example.test` — a paciente sintética do seed da Mesa,
+**com Caso aberto**. A conta padrão de `test-users.local.json` não tem Caso e
+exercita só o ramo sem Case; `AmbientHero`, `JourneyWalk`, `ProfileCard` e
+`CuradoriaCard` — o objeto da A3b — só existem no outro ramo.
+
+A credencial é emitida pelo seed na criação e não fica persistida. Por isso a
+captura entra por variável de ambiente (`A3B_EMAIL`/`A3B_SENHA`) e a senha não
+aparece em arquivo nem em relatório. O Caso de certificação foi removido pela
+mesma operação de `cleanupCuradoriaCertificationFixture` e **reconstruído pelo
+seed oficial** — nada forjado por SQL.
+
+### ▸ OS QUATRO ARQUIVOS PARA REVISÃO VISUAL EXTERNA
+
+```
+evidencias/repaginacao/a3b/before/home-com-caso-desktop.png
+evidencias/repaginacao/a3b/after/home-com-caso-desktop.png
+evidencias/repaginacao/a3b/before/home-com-caso-mobile.png
+evidencias/repaginacao/a3b/after/home-com-caso-mobile.png
+```
+
+| ID | viewport | estado | arquivo |
+|---|---|---|---|
+| **EV-A3b-001** | 1440×900 | antes | `before/home-com-caso-desktop.png` |
+| **EV-A3b-002** | 390×844 | antes | `before/home-com-caso-mobile.png` |
+| **EV-A3b-003** | 1440×900 | depois | `after/home-com-caso-desktop.png` |
+| **EV-A3b-004** | 390×844 | depois | `after/home-com-caso-mobile.png` |
+
+Mesmos fatos nas quatro: Caso aberto em `CONSULTA_INICIAL`, sem encontro
+realizado, nada aguardando a paciente. A única diferença é a repaginação.
+
+O ramo **sem Caso** também tem par completo, em
+`{before,after}/06-paciente-home.png` e `{before,after}/19-paciente-home-mobile.png`.
+
+### O que a comparação deve mostrar
+
+**Antes:** cinco superfícies com fundo e sombra; grade de dois cartões iguais;
+topo branco de painel; a página **esfriando** para cinza-azulado ao rolar; a
+mesma frase repetida em dois blocos; uma segunda barra de navegação no rodapé.
+
+**Depois:** marfim contínuo do topo ao fim — a temperatura da recepção; seções
+separadas por fio, no lugar de caixas; colunas divididas por fio vertical (o
+padrão "Nosso método" da landing); versalete + serifa; o responsável com nome e
+rosto; nenhuma barra de navegação dentro da página.
+
+**Pergunta para a revisão:** *"parece que a paciente atravessou a porta e entrou
+no mesmo lugar?"*
+
+---
+
 ## Medição de overflow (§18/§19)
 
 `tests/e2e/a3a-medicao-overflow.spec.ts` — mede `scrollWidth` × `clientWidth` no
@@ -84,6 +135,16 @@ borda. Artefato: `after/medicao-overflow.txt`.
 | 1440 | 1440 | 1440 | nenhum |
 
 Sem `overflow-x: hidden`. A correção da A1 segue de pé.
+
+**A3b · a mesma medição no caminho com Caso** (`medicao-overflow-com-caso.txt`)
+— 390/430/768/1440, `scrollWidth == clientWidth`, nenhum elemento fora.
+
+A sonda foi corrigida nesta missão. Ela acusava três descendentes da régua a
+390px e a cena do hero a 768px — todos **contidos** por um ancestral que rola
+(`overflow-x: auto`, o scroll interno da régua que o §17 manda preservar) ou
+que recorta (`overflow: hidden`, a cena). Só `overflow-x: visible` deixa um
+filho vazar para a página. A sonda da A3a nunca havia topado nisso porque a
+conta sem Caso não renderiza a régua; as duas passam a usar a mesma regra.
 
 ---
 

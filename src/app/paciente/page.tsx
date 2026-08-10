@@ -8,6 +8,7 @@ import { CuradoriaCard } from "@/components/paciente/experiencia/curadoria-card"
 import { JourneyWalk, type WalkStage } from "@/components/paciente/experiencia/journey-walk";
 import { ProfileCard } from "@/components/paciente/experiencia/profile-card";
 import { ProximaAcao } from "@/components/paciente/experiencia/proxima-acao";
+import { QuemAcompanha } from "@/components/paciente/experiencia/quem-acompanha";
 import { PatientWelcome } from "@/components/paciente/dashboard/patient-primitives";
 import { derivePatientPending } from "@/modules/paciente/next-action";
 import { nomeDoCuradorDoCaso } from "@/modules/paciente/nome-do-curador";
@@ -37,26 +38,29 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const SECONDARY_LINKS = [
-  // ETAPA 9: abre a história EXISTENTE, no passo em que parou — nunca a
-  // recepção do wizard, que recomeçava a conversa do zero.
-  { label: "Minha história", href: "/sua-historia/continuar" },
-  { label: "Documentos", href: "/paciente/documentos" },
-  { label: "Minha Curadoria", href: "/paciente/curadoria" },
-  { label: "Conta", href: "/paciente/perfil" },
-];
+/** Link de leitura: sublinhado fino, sem virar botão nem competir com a ação. */
+const LINK_DISCRETO =
+  "text-[var(--patient-acento)] underline underline-offset-4 decoration-[color-mix(in_srgb,var(--patient-acento)_35%,transparent)] hover:decoration-[var(--patient-acento)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2";
 
 /**
- * A home do paciente — quatro blocos, uma ideia cada.
+ * A home da paciente — cinco níveis, em uma coluna.
  *
- * Hero ambiental · Jornada como caminhada · Meu Perfil (resumo) · Minha
- * Curadoria (uma frase, uma ação). Tudo o mais abre por Progressive
- * Disclosure, no mesmo ambiente.
+ * 1 estado atual · 2 próxima ação · 3 quem acompanha · 4 jornada resumida ·
+ * 5 suas coisas. A hierarquia é feita por **espaço, versalete, serifa e fio**
+ * — não por cartões empilhados.
  *
- * A régua de sete cartões com descrição, o cartão de próxima ação com três
- * parágrafos e o painel do Perfil aberto por padrão saíram da primeira
- * dobra: eram cinco ideias competindo em quem só queria saber se algo andou.
- * Nada foi removido do produto — mudou de momento.
+ * A3b · o que saiu, e por quê:
+ *
+ * - **`QuickLinks`** era uma segunda barra de navegação dentro da página. Seus
+ *   quatro destinos já estão no menu do `PatientShell`, que acompanha a
+ *   paciente em toda a casa; repeti-los no rodapé da Home não dava acesso
+ *   novo, só somava peso. Nenhum destino foi perdido.
+ * - **os cartões** — `MeuResumo`, `ProfileCard` e o cartão da Curadoria eram
+ *   quatro superfícies com fundo, borda e sombra disputando o mesmo olhar. A
+ *   referência visual da Aliviar não tem cartão flutuante em lugar nenhum: ela
+ *   separa assuntos por faixa e fio. A Home passa a falar essa língua.
+ * - **o eyebrow de etapa no topo** repetia o que a régua já dizia melhor. No
+ *   lugar dele entrou o macroestado do contrato — que a Home lia e não exibia.
  */
 export default async function PacienteHomePage() {
   const authState = await requireRole("paciente");
@@ -129,7 +133,6 @@ export default async function PacienteHomePage() {
           relatorioEmitido={false}
         />
         <CuradoriaNaoIniciada />
-        <QuickLinks />
       </div>
     );
   }
@@ -155,56 +158,77 @@ export default async function PacienteHomePage() {
       ? { label: "Acompanhar", href: "/paciente/curadoria" }
       : undefined;
 
+  // A3b · a régua não repete a frase que a próxima ação já disse.
+  //
+  // `derivePatientPending`, quando nada aguarda a paciente, usa a DESCRIÇÃO DA
+  // ETAPA ATUAL como "o que acontece depois". É literalmente a mesma string que
+  // a régua exibia logo abaixo — a mesma frase, dois blocos de distância. O
+  // topo responde "o que está acontecendo agora"; a régua responde "onde isso
+  // fica no percurso". Quando as duas coincidem, quem cala é a régua.
+  const detalheDaEtapa =
+    pending.kind === "nothing" && pending.whatHappensNext === currentStage?.description
+      ? undefined
+      : currentStage?.description;
+
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="mx-auto max-w-3xl space-y-14">
+      {/* NÍVEL 1 · o que está acontecendo agora. */}
       <AmbientHero
         firstName={firstName}
         stage={jornada.currentStage}
         eyebrow={STAGE_EYEBROWS[jornada.currentStage]}
         greeting={saudacao}
+        estado={{ texto: leitura.rotuloPaciente, papel: leitura.tom }}
       />
 
-      {/* A3a · NÍVEL 2 — a próxima ação, antes da régua e antes dos cartões.
-          Ela era calculada na linha acima e descartada: o único consumo era um
-          `aside` no cartão da Curadoria, que só aparecia quando a ação NÃO
-          tinha destino. Com destino — justamente quando havia o que fazer — a
-          Home não dizia nada. */}
+      {/* NÍVEL 2 · a próxima ação (A3a — comportamento intocado). */}
       <ProximaAcao pending={pending} curatorName={jornada.curatorName} />
 
+      {/* NÍVEL 3 · quem acompanha. Uma linha: a pessoa quer reconhecer um
+          nome, não abrir um canal de atendimento. */}
+      <QuemAcompanha responsavel={jornada.currentResponsible} />
+
+      {/* NÍVEL 4 · a jornada resumida — orientação, não cobrança. */}
       <JourneyWalk
         stages={walkStages}
-        currentDetail={currentStage?.description}
+        currentDetail={detalheDaEtapa}
         curatorName={jornada.curatorName}
       />
 
+      {/* NÍVEL 5 · o que já é dela. */}
       <MeuResumo
         historia={stories[0]?.data.historia ?? null}
         documentos={documentos.length}
         relatorioEmitido={Boolean(record?.relatorio.emittedAt)}
       />
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {perfil && record ? (
-          <ProfileCard
-            perfil={perfil}
-            caseId={record.caseId}
-            observations={record.prioridades.observations}
-            validatedAt={record.validacao?.validatedAt ?? null}
-            curatorName={jornada.curatorName}
-            comoQuerSerCuidada={comoQuerSerCuidada}
-            modelo={modeloDoReconhecimento ?? undefined}
-          />
-        ) : null}
+      {/* A grade de duas colunas saiu: ela dava a MESMA importância ao Perfil
+          e à Curadoria, lado a lado, com o mesmo peso do estado e da ação. Em
+          fluxo, cada um recebe o peso que tem. */}
+      {perfil && record ? (
+        <ProfileCard
+          perfil={perfil}
+          caseId={record.caseId}
+          observations={record.prioridades.observations}
+          validatedAt={record.validacao?.validatedAt ?? null}
+          curatorName={jornada.curatorName}
+          comoQuerSerCuidada={comoQuerSerCuidada}
+          modelo={modeloDoReconhecimento ?? undefined}
+        />
+      ) : null}
 
-        {/* A3a · o `aside` saiu daqui. Ele dizia "isso acontece na conversa
-            com X" — a MESMA frase que `ProximaAcao` agora diz no nível 2, e
-            dizia-a no nível 4, onde ninguém procura o que precisa fazer. O
-            cartão volta a ter uma ideia só: o estado da Curadoria. A prop
-            `aside` permanece no componente, que não é objeto desta missão. */}
-        <CuradoriaCard message={mensagemPrincipal(jornada.currentStage)} action={curadoriaAction} />
-      </div>
+      {/* A3a · o `aside` saiu daqui. Ele dizia "isso acontece na conversa com
+          X" — a MESMA frase que `ProximaAcao` agora diz no nível 2, e dizia-a
+          no nível 4, onde ninguém procura o que precisa fazer.
 
-      <QuickLinks />
+          A3b · e o cartão só continua cartão quando há para onde ir. Sem ação,
+          ele era uma superfície grande com uma frase curta no meio — o "card
+          vazio" que dominava o fim da página. */}
+      <CuradoriaCard
+        message={mensagemPrincipal(jornada.currentStage)}
+        action={curadoriaAction}
+        peso={curadoriaAction ? "cartao" : "discreto"}
+      />
     </div>
   );
 }
@@ -230,70 +254,58 @@ function MeuResumo({
     : null;
 
   return (
-    <section
-      aria-label="Resumo"
-      className="grid gap-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:grid-cols-3"
-    >
-      <div className="sm:col-span-2">
-        <p className="text-sm font-semibold text-ink">Sua história</p>
-        {resumoDaHistoria ? (
-          <p className="mt-1 text-sm leading-relaxed text-ink-muted">{resumoDaHistoria}</p>
-        ) : (
-          <p className="mt-1 text-sm text-ink-muted">
-            Você ainda não contou sua história.{" "}
-            <Link href="/sua-historia/continuar" className="underline underline-offset-4">
-              Começar agora
-            </Link>
-          </p>
-        )}
-      </div>
-      <div className="space-y-3">
-        <div>
-          <p className="text-sm font-semibold text-ink">Documentos</p>
-          <p className="mt-1 text-sm text-ink-muted">
-            {documentos === 0
-              ? "Nenhum documento enviado."
-              : `${documentos} documento(s) enviado(s).`}{" "}
-            <Link href="/paciente/documentos" className="underline underline-offset-4">
+    <section aria-labelledby="meu-resumo-titulo" className="border-t border-[var(--color-border)] pt-8">
+      <h2
+        id="meu-resumo-titulo"
+        className="text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]"
+      >
+        Suas coisas
+      </h2>
+
+      {/* A3b · o padrão de colunas da Aliviar pública: fio vertical entre os
+          assuntos, nunca caixa em volta de cada um. O `divide-*` só desenha
+          nas divisas internas, e some no empilhamento do mobile. */}
+      <dl className="mt-6 grid gap-6 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-[var(--color-border)]">
+        <div className="sm:pr-6">
+          <dt className="text-sm font-medium text-[var(--patient-ink)]">Sua história</dt>
+          <dd className="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+            {resumoDaHistoria ?? (
+              <>
+                Você ainda não contou sua história.{" "}
+                <Link href="/sua-historia/continuar" className={LINK_DISCRETO}>
+                  Começar agora
+                </Link>
+              </>
+            )}
+          </dd>
+        </div>
+
+        <div className="sm:px-6">
+          <dt className="text-sm font-medium text-[var(--patient-ink)]">Documentos</dt>
+          <dd className="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+            {documentos === 0 ? "Nenhum documento enviado." : `${documentos} documento(s) enviado(s).`}{" "}
+            <Link href="/paciente/documentos" className={LINK_DISCRETO}>
               Ver
             </Link>
-          </p>
+          </dd>
         </div>
-        <div>
-          <p className="text-sm font-semibold text-ink">Relatório</p>
-          <p className="mt-1 text-sm text-ink-muted">
+
+        <div className="sm:pl-6">
+          <dt className="text-sm font-medium text-[var(--patient-ink)]">Relatório</dt>
+          <dd className="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">
             {relatorioEmitido ? (
               <>
                 Pronto para você.{" "}
-                <Link href="/paciente/curadoria" className="underline underline-offset-4">
+                <Link href="/paciente/curadoria" className={LINK_DISCRETO}>
                   Abrir
                 </Link>
               </>
             ) : (
               "Em preparação pela sua Curadoria."
             )}
-          </p>
+          </dd>
         </div>
-      </div>
+      </dl>
     </section>
-  );
-}
-
-function QuickLinks() {
-  return (
-    <nav aria-label="Acessos rápidos" className="border-t border-[var(--color-border)] pt-6">
-      <ul className="flex flex-wrap gap-x-8 gap-y-3">
-        {SECONDARY_LINKS.map((link) => (
-          <li key={link.href}>
-            <Link
-              href={link.href}
-              className="text-sm font-medium text-[var(--patient-acento)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
-            >
-              {link.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </nav>
   );
 }

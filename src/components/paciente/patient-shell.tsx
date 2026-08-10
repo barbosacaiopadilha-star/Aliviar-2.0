@@ -115,7 +115,13 @@ export function PatientShell({ children, userMenu }: PatientShellProps) {
           deixar de ser uma barra que corta a página. Papel opaco sobre a
           atmosfera, com fio de dourado no lugar da borda cinza, entrega isso
           sem material proibido. */}
-      <header className="sticky top-0 z-20 border-b border-[color-mix(in_srgb,var(--color-brand-gold)_22%,transparent)] bg-[var(--patient-linen)] print:hidden">
+      {/* A3b · o topo deixa de ser branco puro.
+          `--patient-linen` é `#ffffff`, e uma faixa branca sobre o marfim da
+          casa lia como barra de aplicativo — o "branco de dashboard" que a
+          regra de continuidade proíbe. A recepção da Aliviar não tem essa
+          faixa: o topo dela repousa no mesmo marfim do resto. Aqui é o mesmo
+          marfim do campo, com o fio de dourado que já estava. */}
+      <header className="sticky top-0 z-20 border-b border-[color-mix(in_srgb,var(--color-brand-gold)_22%,transparent)] bg-[var(--color-bg-canvas-warm)] print:hidden">
         <div className="mx-auto flex min-h-[4.5rem] w-full max-w-content items-center justify-between gap-4 px-4 lg:px-8">
           <Link
             href="/paciente"

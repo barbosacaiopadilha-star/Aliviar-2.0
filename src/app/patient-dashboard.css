@@ -21,7 +21,14 @@
      quando a atmosfera desta casa passou a ser azul, e um token que mente
      sobre a própria cor é dívida garantida. */
   --patient-linen: var(--color-bg-surface);
-  --patient-mist: var(--color-bg-ambient);
+  /* A3b · o CAMPO da casa é marfim, como o da recepção.
+     Este alias tem um consumidor só — o fundo da página — e apontava para
+     `--color-bg-ambient`, que aqui é 65% indigo-50: cinza-azulado de painel.
+     A camada atmosférica é `fixed` e cobre a viewport, mas é translúcida, e
+     abaixo dela essa base fria atravessava. O azul desta casa permanece
+     inteiro onde ele significa alguma coisa — acento, avatar, botão, brilho —
+     e o token compartilhado não foi tocado. */
+  --patient-mist: var(--color-bg-canvas-warm);
   --patient-warm: var(--color-bg-canvas-warm);
   --patient-acento: var(--color-ambient-accent);
   --patient-ink: var(--color-ink);
@@ -114,14 +121,27 @@
   filter: saturate(0.85) brightness(1.05);
 }
 
+/* A3b · CONTINUIDADE COM A RECEPÇÃO.
+   O véu terminava em `--color-bg-ambient`, que nesta casa é 65% indigo-50
+   (#eef2f7) — frio. Resultado: a página começava no marfim da Aliviar pública
+   e ESFRIAVA descendo, até virar o cinza-azulado de painel. Quem entrava
+   sentia ter trocado de produto no meio da rolagem.
+
+   O azul continua sendo a atmosfera desta casa — mas como ACENTO, que é o
+   papel que ele tem lá fora: botão, avatar, link, o brilho no alto. O CAMPO
+   volta a ser marfim do começo ao fim, como na recepção.
+
+   O token `--color-bg-ambient` NÃO foi alterado: ele é da narrativa cromática
+   das seis casas e outras superfícies dependem dele. O que muda é só o véu
+   desta. */
 .patient-dashboard .patient-ambient-layer__wash {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     160deg,
     color-mix(in srgb, var(--color-bg-canvas-warm) 94%, transparent) 0%,
-    color-mix(in srgb, var(--color-bg-canvas) 90%, transparent) 40%,
-    color-mix(in srgb, var(--color-bg-ambient) 96%, transparent) 100%
+    color-mix(in srgb, var(--color-bg-canvas) 90%, transparent) 45%,
+    color-mix(in srgb, var(--color-bg-canvas-warm) 92%, transparent) 100%
   );
 }
 

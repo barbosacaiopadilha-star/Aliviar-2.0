@@ -48,10 +48,27 @@ test("A3a · a Home não estoura na horizontal em 390 / 430 / 768 / 1440", async
 
     const medida = await page.evaluate(() => {
       const doc = document.documentElement;
+
+      /**
+       * A3b · uma regra só para as duas sondas. Um elemento dentro de um
+       * contêiner que rola ou recorta na horizontal pode passar da viewport sem que a
+       * PÁGINA estoure — é o caso da régua da jornada, cujo scroll interno é
+       * legítimo. Esta sonda nunca havia topado com isso porque a conta sem
+       * Case não renderiza a régua; a da A3b topou no primeiro 390px.
+       */
+      const contidoPorAncestral = (el: Element): boolean => {
+        let pai = el.parentElement;
+        while (pai && pai !== doc) {
+          if (getComputedStyle(pai).overflowX !== "visible") return true;
+          pai = pai.parentElement;
+        }
+        return false;
+      };
+
       const culpados: string[] = [];
       for (const el of Array.from(document.querySelectorAll("#patient-main *"))) {
         const r = el.getBoundingClientRect();
-        if (r.right > doc.clientWidth + 1 || r.left < -1) {
+        if ((r.right > doc.clientWidth + 1 || r.left < -1) && !contidoPorAncestral(el)) {
           culpados.push(
             `${el.tagName.toLowerCase()}.${(el.className || "").toString().split(/\s+/).slice(0, 2).join(".")} [${Math.round(r.left)}→${Math.round(r.right)}]`,
           );
@@ -72,6 +89,6 @@ test("A3a · a Home não estoura na horizontal em 390 / 430 / 768 / 1440", async
 
   mkdirSync(DESTINO, { recursive: true });
   writeFileSync(path.join(DESTINO, "medicao-overflow.txt"), linhas.join("\n"));
-  // eslint-disable-next-line no-console
+   
   console.log(linhas.join("\n"));
 });

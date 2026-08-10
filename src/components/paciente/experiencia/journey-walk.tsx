@@ -129,7 +129,11 @@ export function JourneyWalk({
         ))}
       </ol>
 
-      {current ? (
+      {/* A3b · sem detalhe, sem parágrafo. A régua já marca a etapa atual em
+          negrito na trilha acima; repetir "Consulta." sozinho numa linha não
+          acrescenta nada e deixa um toco de texto no meio da página. O nome da
+          etapa só volta a aparecer aqui quando ele introduz uma frase. */}
+      {current && currentDetail ? (
         <p className="patient-body mt-5 max-w-xl text-[var(--color-ink-muted)]">
           <span className="font-medium text-[var(--patient-ink)]">{current.label}.</span>{" "}
           {currentDetail}

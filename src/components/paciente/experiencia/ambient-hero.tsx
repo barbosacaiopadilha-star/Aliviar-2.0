@@ -1,3 +1,5 @@
+import { StateMark } from "@/components/ui/state-mark";
+import type { PapelVisual } from "@/foundation/estado-visual";
 import { ambienceFor } from "@/modules/paciente/ambiente";
 import type { JornadaStageId } from "@/modules/curadoria/jornada";
 
@@ -18,13 +20,26 @@ export function AmbientHero({
   stage,
   eyebrow,
   greeting,
+  estado,
 }: {
   firstName: string;
   stage: JornadaStageId;
-  /** Onde a jornada está, em duas palavras. */
+  /** Onde a jornada está, em duas palavras. Usado quando não há `estado`. */
   eyebrow: string;
   /** "Bom dia" / "Boa tarde" / "Boa noite" — resolvido no servidor, sem flash. */
   greeting?: string;
+  /**
+   * A3b · o macroestado do contrato congelado, já projetado.
+   *
+   * A sobrescrita do `eyebrow` é deliberada. O eyebrow deriva da ETAPA — e a
+   * etapa já é dita, com mais precisão, pela régua logo abaixo: o topo repetia
+   * a jornada em vez de responder "o que está acontecendo agora?".
+   *
+   * O rótulo canônico responde essa pergunta e, até aqui, **não aparecia em
+   * nenhum lugar do caminho com Caso** — a Home lia o contrato e não mostrava
+   * o que ele dizia. Nada é decidido aqui: o texto e o papel chegam prontos.
+   */
+  estado?: { texto: string; papel: PapelVisual };
 }) {
   const ambience = ambienceFor(stage);
 
@@ -39,7 +54,7 @@ export function AmbientHero({
 
       <div className="patient-hero__content">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-brand-sage)]">
-          {eyebrow}
+          {estado ? <StateMark papel={estado.papel}>{estado.texto}</StateMark> : eyebrow}
         </p>
         <h1
           id="patient-hero-title"
