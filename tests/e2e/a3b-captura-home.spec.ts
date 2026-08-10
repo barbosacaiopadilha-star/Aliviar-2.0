@@ -41,16 +41,59 @@ async function capturar(page: Page, nome: string) {
   console.log(`capturado: ${nome}`);
 }
 
-test.skip(!process.env.CAPTURA || !EMAIL || !SENHA, "captura sob demanda — A3B_EMAIL/A3B_SENHA");
 test.describe.configure({ mode: "serial" });
 
+/**
+ * A landing, para a comparação de continuidade — e ela precisa de um passeio
+ * antes da foto.
+ *
+ * `reveal.tsx` revela as seções por `IntersectionObserver`. Numa captura
+ * `fullPage` o observador nunca dispara para o que está fora da viewport, e a
+ * página sai com o hero certo e o miolo em branco. Rolar de ponta a ponta
+ * antes de fotografar é o que torna a imagem comparável.
+ */
+test("A3b · a landing, com as seções reveladas", async ({ page }) => {
+  test.skip(!process.env.CAPTURA, "captura sob demanda — defina CAPTURA=1");
+
+  for (const [largura, altura, nome] of [
+    [1440, 900, "landing-desktop"],
+    [390, 844, "landing-mobile"],
+  ] as const) {
+    await page.setViewportSize({ width: largura, height: altura });
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+
+    const total = await page.evaluate(() => document.body.scrollHeight);
+    for (let y = 0; y < total; y += Math.floor(altura * 0.7)) {
+      await page.evaluate((topo) => window.scrollTo(0, topo), y);
+      await page.waitForTimeout(220);
+    }
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(900);
+
+    mkdirSync(DESTINO, { recursive: true });
+    await page.screenshot({ path: path.join(DESTINO, `${nome}.png`), fullPage: true });
+    console.log(`capturado: ${nome}`);
+  }
+});
+
+/**
+ * As capturas da Home exigem sessão; a da landing, não. Por isso a guarda é
+ * por teste — `test.skip` no topo do arquivo valeria para todos, inclusive
+ * para a landing, que não precisa de credencial nenhuma.
+ */
+function exigeSessao() {
+  test.skip(!process.env.CAPTURA || !EMAIL || !SENHA, "captura sob demanda — A3B_EMAIL/A3B_SENHA");
+}
+
 test("A3b · Home com Caso aberto — desktop 1440", async ({ page }) => {
+  exigeSessao();
   await entrar(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await capturar(page, "home-com-caso-desktop");
 });
 
 test("A3b · Home com Caso aberto — mobile 390", async ({ page }) => {
+  exigeSessao();
   await page.setViewportSize({ width: 390, height: 844 });
   await entrar(page);
   await capturar(page, "home-com-caso-mobile");
@@ -62,6 +105,7 @@ test("A3b · Home com Caso aberto — mobile 390", async ({ page }) => {
  * Curadoria em tela — que é onde a mudança aconteceu.
  */
 test("A3b · zero overflow em 390 / 430 / 768 / 1440, com Caso aberto", async ({ page }) => {
+  exigeSessao();
   await entrar(page);
   const linhas: string[] = ["viewport | docScrollW | docClientW | elemento que estoura"];
 
