@@ -118,3 +118,4 @@ da Curadoria 2.0.
 | 24 | [D-11 — ordem do Primeiro Encontro](24_D11_ORDEM_DO_PRIMEIRO_ENCONTRO.md) | preparado × validado; **colisão com a ADR-042** |
 | 25 | [D-12 — Central de Documentos](25_D12_CENTRAL_DE_DOCUMENTOS.md) | **duas policies**, sem tabela, sem coluna, sem bucket |
 | 26 | [B3-A — decisão, 2º encontro, handoff](26_B3A_DECISAO_SEGUNDO_ENCONTRO_HANDOFF.md) | contrato **suficiente**; a decisão persiste — o defeito é **silêncio** |
+| 27 | [B3-R — superfície alcançável](27_B3R_SUPERFICIE_ALCANCAVEL.md) | o painel canônico é **órfão**; arquitetura **E**, um só arquivo de produção |
