@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Radio } from "@/components/ui/radio";
 import { Textarea } from "@/components/ui/textarea";
+import { whatsappHref } from "@/components/curadoria/whatsapp-contact";
 import { registerDecisionAction } from "@/modules/curadoria/actions";
 
 /**
@@ -42,30 +43,93 @@ export function CuradoriaDecisionPanel({
   const [escolha, setEscolha] = useState<string>("");
   const [nota, setNota] = useState("");
   const [erro, setErro] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
+  const [registrado, setRegistrado] = useState(false);
+  const focoDaConfirmacao = useRef<HTMLDivElement>(null);
 
+  // O foco vai para a confirmação: quem navega por teclado ou leitor de tela
+  // não fica com o foco num botão que deixou de existir.
+  useEffect(() => {
+    if (registrado) focoDaConfirmacao.current?.focus();
+  }, [registrado]);
+
+  // ESTADO DURÁVEL — controlado pelo FATO persistido, nunca por estado React.
+  // Sobrevive a refresh, reload, nova montagem e nova sessão, porque a
+  // projeção da página é quem o alimenta.
   if (decided) {
     return (
-      <Card>
+      <Card className="space-y-4">
         <CardHeader>
-          <CardTitle>Sua decisão está registrada</CardTitle>
+          <CardTitle>Sua decisão está registrada.</CardTitle>
           <CardDescription>
             {new Date(decided.decidedAt).toLocaleDateString("pt-BR")}
           </CardDescription>
         </CardHeader>
+
+        {/* Qual decisão foi registrada — com o dado que a projeção já traz. */}
         <p className="max-w-reading text-sm leading-relaxed text-ink">
           {decided.outcome === "CHOSEN"
-            ? `Você escolheu ${decided.chosenName ?? "um dos caminhos"}. A partir daqui, cuidamos do agendamento e seguimos com você.`
+            ? `Você escolheu ${decided.chosenName ?? "um dos caminhos"}.`
             : "Você registrou que nenhuma das três serviu. Isso não é uma falha sua — significa que algo importante para você não foi capturado, e vamos entender o quê."}
+        </p>
+
+        {/* O handoff dito em uma frase: muda quem acompanha, não termina o
+            serviço. "Equipe Aliviar" é fallback institucional — não existe
+            identidade persistida de Concierge, e inventar uma seria pior. */}
+        <p className="max-w-reading text-sm leading-relaxed text-ink">
+          Com sua decisão registrada, a próxima etapa passa a ser acompanhada pela Equipe Aliviar.
+        </p>
+        <p className="max-w-reading text-sm leading-relaxed text-ink-muted">
+          Você continua podendo consultar sua Curadoria sempre que precisar.
+        </p>
+
+        {/* Canal REAL já configurado no produto (MISSÃO 205), reutilizado —
+            nenhum número novo, nenhuma integração nova. */}
+        <p>
+          <a
+            href={whatsappHref("duvida")}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-11 items-center text-sm font-medium text-[var(--patient-acento)] underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+          >
+            Falar com a Aliviar
+          </a>
         </p>
       </Card>
     );
   }
 
-  function registrar() {
-    if (!escolha) return;
+  // FEEDBACK IMEDIATO — a ponte entre o sucesso da action e a chegada do fato
+  // pela projeção. É transitório de propósito, e NÃO é a fonte da verdade:
+  // o `decided` acima é. Sem ele, o `router.refresh()` sozinho fazia o
+  // formulário voltar ao início como se nada tivesse acontecido.
+  if (registrado) {
+    return (
+      <Card className="space-y-3">
+        <div ref={focoDaConfirmacao} tabIndex={-1} role="status" aria-live="polite">
+          <CardTitle>Sua decisão foi registrada.</CardTitle>
+          <p className="mt-2 max-w-reading text-sm leading-relaxed text-ink">
+            Agora a Aliviar pode seguir com os próximos passos.
+          </p>
+        </div>
+      </Card>
+    );
+  }
+
+  /**
+   * Handler assíncrono comum, e não `startTransition`.
+   *
+   * A versão anterior envolvia o await numa transition e chamava
+   * `setRegistrado` depois dele — atualização de estado posterior ao await,
+   * dentro de uma transition assíncrona, não aterrissa: a action era chamada,
+   * o refresh acontecia, e a confirmação nunca aparecia. Era metade da causa
+   * do silêncio, e só um teste de interação a expõe.
+   */
+  async function registrar() {
+    if (!escolha || pending) return;
     setErro(null);
-    startTransition(async () => {
+    setPending(true);
+    try {
       const nenhuma = escolha === "NENHUMA";
       const result = await registerDecisionAction({
         curatedSelectionId,
@@ -73,9 +137,20 @@ export function CuradoriaDecisionPanel({
         chosenOptionId: nenhuma ? undefined : escolha,
         note: nota.trim() || undefined,
       });
-      if (result.success) router.refresh();
-      else setErro(result.error ?? "Não foi possível registrar sua decisão.");
-    });
+
+      if (result.success) {
+        // A ordem importa: confirma primeiro, revalida depois. O refresh
+        // continua necessário — é ele que troca o transitório pelo estado
+        // durável vindo do fato canônico.
+        setRegistrado(true);
+        router.refresh();
+      } else {
+        // Erro preserva o contexto: a escolha e a nota dela ficam onde estão.
+        setErro(result.error ?? "Não foi possível registrar sua decisão.");
+      }
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
