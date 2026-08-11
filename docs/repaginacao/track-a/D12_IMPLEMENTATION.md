@@ -152,3 +152,199 @@ alter table curadoria.patient_documents drop column if exists case_id;
 
 Tudo em Supabase **local** (`127.0.0.1:54321`), confirmado antes de cada passo.
 Contas sintéticas `d12-*@example.test`.
+---
+
+# D-12.2 · O writer da Aliviar — depósito, allowlist e trilha
+
+**Base:** `caecbb7` · **Migration:** `20260811100000_d12_2_deposito_da_aliviar_auditado.sql`
+**Escopo desta fatia:** o writer e o que ele precisa para existir com segurança.
+A projeção `DocumentCenterItem` e a Central visual **não** entram aqui — ver §15.
+
+## 9 · A origem da allowlist — e o ponto em que esta fatia divergiu
+
+**A allowlist não nasceu aqui.** A **ADR-054 — Política de documentos
+clínicos** (2026-08-02, aprovada pelo responsável, Bloco A/decisão D-08) já
+fixava *"MIME allowlist (PDF, JPG, PNG, WEBP) e teto de **20 MB**"*. A
+auditoria de origem foi feita depois da implementação, e o resultado corrige a
+atribuição que este documento fazia:
+
+| valor | classe | origem |
+|---|---|---|
+| teto de **20 MB** | **A** · já decidido | ADR-054 §1 |
+| **PDF · JPEG · PNG · WebP** | **A** · já decidido | ADR-054 §1 |
+| **HEIC/HEIF** | **B** · desta implementação | **não consta na ADR-054** |
+| `content_type` vazio recusado | **B** · desta implementação | não consta |
+| conferência dos bytes | **B** · desta implementação | não consta |
+
+> ### D-12-FILE-POLICY — DECISÃO PENDENTE
+>
+> **HEIC/HEIF é ampliação da allowlist da ADR-054, feita por engenharia.** A
+> própria ADR define o gatilho e o rito: *"Revisitar quando: o primeiro tipo
+> de arquivo legítimo fora da allowlist aparecer na operação real"* — ampliar
+> é ato de revisitar a ADR, não de um engenheiro. O motivo técnico continua
+> real (HEIC é o padrão do iPhone, e sem ele a foto do exame é recusada), mas
+> **motivo não é autoridade**.
+>
+> O comportamento implementado **fica preservado** — desmontá-lo agora
+> derrubaria a fatia provada sem que ninguém tenha decidido nada. Fica
+> **explicitamente não congelado** até a ADR-054 ser revisitada, que é quem
+> pode confirmar, reduzir ou ampliar.
+>
+> **A conferência de bytes permanece em qualquer cenário:** ela não altera
+> *quais* tipos entram, apenas impede que a etiqueta minta sobre o conteúdo.
+
+**Gap contra a ADR-054, não contra esta missão:** a ADR manda aplicar a regra
+em **três camadas** — bucket, action e config do framework. Esta fatia
+implementou **só a action**. Os buckets seguem com `file_size_limit` e
+`allowed_mime_types` **nulos** (achado F1 da AUDITORIA_03_BANCO) e o teto real
+do framework continua o acidental. **Registrado, não resolvido:** fechar as
+outras duas camadas é trabalho do Bloco H, e mexer em bucket seria capacidade
+de banco nova, fora da autorização desta passagem.
+
+**O alcance (decidido nesta passagem):** a regra vale para os **dois** writers
+— o dela e o da Aliviar.
+
+**Auditoria (não era decisão).** A passagem anterior apresentou como dilema
+"aceitar depósito sem trilha ou autorizar `alter type … add value`", por ter
+lido o enum na migration de origem. `curadoria.audit_action` tem **24 valores**
+e foi estendido aditivamente **15 vezes**, com dois irmãos na própria família
+de documentos — `patient_document_orphaned` (20260802153000) e
+`patient_document_deleted` (20260802162000). O §M do doc 25 já mandava reusar
+o mecanismo. Seguir a convenção era o caminho barato; **não** segui-la é que
+seria o desvio.
+
+## 10 · A allowlist é garantia, não etiqueta
+
+`src/modules/profiles/document-file-policy.ts` — **fonte única**, lida pelos
+dois writers e pelo `accept` da UI. Duas listas divergiriam na primeira vez
+que alguém acrescentasse um tipo de um lado só.
+
+`file.type` é **declarado pelo cliente**. Uma allowlist que só o lesse seria
+rótulo: um executável anunciado como `application/pdf` passaria, e o valor
+mentido ainda seria gravado em `content_type` e viraria o `Content-Type` do
+download. O validador confere a **assinatura real** do arquivo e devolve o
+tipo verificado — é ele que os writers gravam, nunca `file.type`.
+
+O nome do arquivo deixou de poder mexer no caminho. `foldername()[1..3]` é
+como as policies leem dona, namespace e Case; um nome com barra deslocaria
+essas posições. Falharia fechado, mas depender disso é depender de acidente.
+
+**Três pontos de entrada, não dois.** Além do upload da Central e do depósito
+novo, o **anexo à Sua História** (`story/attachment-actions`) também é upload
+dela. Os três validam pela mesma fonte.
+
+## 11 · O writer
+
+Entrada da action: **`caseId` e o arquivo, mais nada.** `patient_profile_id`
+é derivado do Case no servidor — aceitá-lo do formulário criaria duas fontes
+para o mesmo fato, e a divergência entre elas seria uma porta. A derivação
+**não é a autorização**: quem autoriza continua sendo a policy da D-12.1, e a
+recusa final é sempre do banco.
+
+Caminho: `<dona>/received/<Case>/<arquivo>`. Autoria real (`uploaded_by` = o
+Curador), de onde a Central deriva "recebido da Aliviar" sem coluna nenhuma.
+
+## 12 · A trilha é do banco, não do writer
+
+`patient_document_provided` gravado por **trigger** — mesma forma do DELETE
+(`log_patient_document_deleted_trigger`). Auditoria que depende de o código
+lembrar de chamá-la é auditoria que um caminho novo esquece; aqui **nenhum
+writer, atual ou futuro, aplicação ou console**, deposita sem deixar rastro.
+
+Guarda de autoria: só `uploaded_by <> profile_id`. O upload da própria
+paciente não entra — não é ato de terceiro sobre ela, e auditar tudo faria de
+`audit_logs` uma cópia da tabela. Metadata guarda **hash** do caminho, nunca o
+caminho em claro (precedente do tombstone de DELETE).
+
+## 13 · Duas lacunas que só apareceram com o writer existindo
+
+**A compensação não tinha porta.** A D-12.1 tirou o DELETE do Curador tanto da
+linha quanto do objeto. Nenhuma ordem de escrita se autocompensava: falhando o
+INSERT depois do upload, o arquivo ficava órfão na pasta da paciente —
+invisível na Central e sem ninguém que pudesse removê-lo. Conceder DELETE
+resolveria e criaria **revogação**, que o §N recusa. A policy concede
+exatamente a compensação pela cláusula que a define: **só apaga objeto SEM
+linha**. Documento entregue tem linha, e segue intocável pelo depositante.
+
+**S-2 fechado por experimento, não por argumento.** A D-12.1F registrou a
+dúvida sobre o Curador não ter SELECT de storage. A resposta veio de um teste
+que **falhou**: `remove()` busca o objeto sob a RLS de quem chama antes de
+apagar, então sem SELECT o depositante nunca alcança o DELETE — e a
+compensação não acontecia, **em silêncio**, porque `remove` também não levanta
+erro sem permissão. Concedeu-se a visibilidade mínima para o writer desfazer o
+próprio ato, com o **mesmo recorte do INSERT**: só `received/`, só o Case dele.
+Os uploads particulares dela ficam fora, e um teste fixa esse limite.
+
+## 14 · Provas — 80 testes, e seis mutações
+
+**23 unitários** (`tests/unit/document-file-policy.test.ts`) e **15 de
+integração** (`tests/integration/d12-2-deposito-da-aliviar.integration.test.ts`),
+com a mesma matriz de dois Casos simultâneos da D-12.1F. Baseline conjunta:
+**57 de integração + 23 unitários, todos verdes**, incluindo os 27 do piso da
+D-12.1 intactos.
+
+Método herdado e mantido: **recusa é medida lendo depois**, nunca por
+`error !== null` — nem DELETE nem `remove` levantam erro sem permissão.
+
+| mutação | testes derrubados |
+|---|---|
+| M1 · a lista de tipos deixa de filtrar | **5** |
+| M2 · a conferência de bytes é removida | **3** |
+| M3 · o teto de 20 MB some | **1** |
+| M4 · a compensação perde "objeto sem linha" (vira revogação) | **1** |
+| M5 · o SELECT do Curador perde o recorte `received/` | **1** |
+| M6 · o trigger perde a guarda de autoria | **1** |
+
+Banco reconstruído **do zero pelas migrations** ao fim do ciclo (`db reset` +
+`bootstrap`), confirmando que a migration se basta — as policies haviam sido
+aplicadas à mão durante o desenvolvimento. Ledger **119/119**.
+
+## 15 · O que esta fatia NÃO fez
+
+- **Projeção `DocumentCenterItem` e a Central visual** (§L do doc 25): as três
+  seções, classe A/B, o portão `deliveredAt` e Sua História como terceira área.
+  Nada foi começado — não há meia implementação no repositório.
+- **UI do Curador para depositar.** A action existe e está testada; nenhuma
+  tela a chama ainda.
+- **GAP-D12-C1 · Concierge** — confirmado por código: `resolveCurrentResponsible`
+  resolve o Concierge por **string de nome** (`conciergeName ?? attendantName ??
+  "Equipe Aliviar"`), sem id e sem assignment. Não há como provar vínculo com o
+  Case. Coincide com o §E (Concierge ❌ não agora): **não-escopo confirmado**.
+- **GAP-D12-2** (ela pode apagar o que recebeu?) segue com DT-01. Hoje **não
+  pode** — a D-12.1 já fechou, e um teste vigia.
+
+## 16 · Risco assumido, explicitamente
+
+A allowlist passou a valer para os uploads **dela**, por decisão do DT-01.
+**Um arquivo que ela conseguia enviar ontem pode ser recusado hoje** — tipo
+fora da lista, acima de 20 MB, ou sem `content_type`. A troca aceita foi: uma
+recusa que diz o motivo, em vez de um arquivo que entra e quebra adiante.
+Documentos **já enviados não são tocados** — a regra vale só na escrita nova.
+
+
+## 17 · Rollback da D-12.2
+
+```sql
+drop policy if exists "curadoria_patient_documents_storage_compensacao_curador" on storage.objects;
+drop policy if exists "curadoria_patient_documents_storage_select_curador_do_caso" on storage.objects;
+drop trigger if exists log_patient_document_provided_trigger on curadoria.patient_documents;
+drop function if exists curadoria.log_patient_document_provided();
+```
+
+**Não executado.** O valor `patient_document_provided` do enum **não** é
+removível sem recriar o tipo; fica inofensivo sem uso, como resíduo aceito —
+mesmo precedente de `case_discarded`, `curadoria_delivered` e
+`patient_document_orphaned`. Linhas já gravadas permanecem: auditoria é
+história real.
+
+O piso da D-12.1 **não é tocado** por este rollback. O código volta pelo Git;
+sem as policies, o writer da Aliviar simplesmente deixa de conseguir depositar
+— e a Central volta a ter só o que ela mesma enviou.
+
+## 18 · Zero produção
+
+Tudo em Supabase **local** (`127.0.0.1:54321`). A suíte de integração não lê
+`.env.local` — que neste repositório aponta deliberadamente para o projeto
+hospedado — e `assertSupabaseLocal` aborta antes da primeira chamada de rede.
+Contas sintéticas `d122-*@example.test`, removidas no `afterAll` junto com os
+objetos criados no bucket.

@@ -173,6 +173,10 @@ describe("anexar documento à própria história", () => {
       paciente,
       profileId,
       new File(["conteudo do exame"], "exame-compensavel.txt", { type: "text/plain" }),
+      // D-12.2: o repositório passou a receber o `content_type` já conferido
+      // pela action. Este teste exercita a SAGA, não a allowlist — o tipo vai
+      // explícito para manter exatamente o cenário anterior.
+      "text/plain",
     );
 
     // O vínculo falha (história inexistente) — a recusa chega inteira...

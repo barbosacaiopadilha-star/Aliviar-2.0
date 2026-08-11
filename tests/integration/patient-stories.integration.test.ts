@@ -180,6 +180,7 @@ describe("Módulo Sua História — persistência permanente (ÉPICO 1/SPRINT 1,
       clientA,
       profileIdA,
       new File(["conteudo"], "exame-a.txt", { type: "text/plain" }),
+      "text/plain",
     );
 
     const { client: clientB } = await createSignedInPatient("Paciente Anexo B");

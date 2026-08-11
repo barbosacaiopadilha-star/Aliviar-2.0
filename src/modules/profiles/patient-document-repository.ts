@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { erroDeBanco, registrarErro } from "@/lib/observability/erros";
 
+import { nomeDeArquivoParaCaminho } from "./document-file-policy";
 import type { PatientDocument } from "./types";
 
 const BUCKET = "patient-documents";
@@ -47,16 +48,25 @@ export async function listPatientDocuments(
   return (data as PatientDocumentRow[]).map(mapRow);
 }
 
+/**
+ * O upload da própria paciente. `case_id` fica ausente por construção: ela
+ * não associa o próprio arquivo a uma Curadoria, e a policy da D-12.1 exige
+ * `case_id is null` aqui.
+ *
+ * `contentType` chega já conferido contra os bytes (D-12.2) — o campo não é
+ * mais preenchido com o que o cliente declarou.
+ */
 export async function uploadPatientDocument(
   supabase: SupabaseClient,
   profileId: string,
   file: File,
+  contentType: string,
 ): Promise<PatientDocument> {
-  const filePath = `${profileId}/${Date.now()}-${file.name}`;
+  const filePath = `${profileId}/${Date.now()}-${nomeDeArquivoParaCaminho(file.name)}`;
 
   const { error: uploadError } = await supabase.storage
     .from(BUCKET)
-    .upload(filePath, file, { contentType: file.type || undefined });
+    .upload(filePath, file, { contentType });
 
   if (uploadError) {
     throw erroDeBanco("Não foi possível enviar o arquivo.", uploadError);
@@ -68,7 +78,7 @@ export async function uploadPatientDocument(
       profile_id: profileId,
       file_path: filePath,
       file_name: file.name,
-      content_type: file.type || null,
+      content_type: contentType,
       file_size: file.size,
       uploaded_by: profileId,
     })
@@ -83,6 +93,82 @@ export async function uploadPatientDocument(
     if (storageError) {
       registrarErro("profiles.uploadPatientDocument.compensacaoStorage", storageError, {
         profileId,
+        filePath,
+      });
+    }
+    throw erroDeBanco("Não foi possível registrar o documento.", error);
+  }
+
+  return mapRow(data as PatientDocumentRow);
+}
+
+/**
+ * D-12.2 · O DEPÓSITO DA ALIVIAR — o Curador grava PARA a paciente.
+ *
+ * O que distingue este writer do de cima não é o papel de quem chama: é a
+ * AUTORIA que fica gravada. `uploaded_by` é o Curador e `profile_id` é ela,
+ * e é dessa desigualdade que a Central deriva "recebido da Aliviar". Nenhuma
+ * coluna declara origem — a origem é fato estrutural (§C do doc 25).
+ *
+ * `caseId` não é enfeite: é o contexto que AUTORIZA. A policy da D-12.1 exige
+ * que este Case seja desta paciente e que o ator seja o curador atribuído a
+ * ele — nunca "algum Case dela".
+ *
+ * O caminho segue a convenção posicional que as policies leem:
+ *   <dona>/received/<Case que autorizou>/<arquivo>
+ *
+ * `content_type` vem já CONFERIDO contra os bytes do arquivo, nunca de
+ * `file.type` — ver `document-file-policy`. `file_name` guarda o nome
+ * original, porque é o que ela precisa reconhecer na tela; quem é saneado é
+ * só o caminho.
+ */
+export async function providePatientDocument(
+  supabase: SupabaseClient,
+  params: {
+    caseId: string;
+    patientProfileId: string;
+    curatorId: string;
+    file: File;
+    contentType: string;
+  },
+): Promise<PatientDocument> {
+  const { caseId, patientProfileId, curatorId, file, contentType } = params;
+
+  const filePath = `${patientProfileId}/received/${caseId}/${Date.now()}-${nomeDeArquivoParaCaminho(file.name)}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(BUCKET)
+    .upload(filePath, file, { contentType });
+
+  if (uploadError) {
+    throw erroDeBanco("Não foi possível enviar o arquivo.", uploadError);
+  }
+
+  const { data, error } = await supabase
+    .from("patient_documents")
+    .insert({
+      profile_id: patientProfileId,
+      file_path: filePath,
+      file_name: file.name,
+      content_type: contentType,
+      file_size: file.size,
+      uploaded_by: curatorId,
+      case_id: caseId,
+    })
+    .select("id, file_path, file_name, content_type, file_size, uploaded_by, created_at")
+    .single();
+
+  if (error || !data) {
+    // Compensação: sem linha, o objeto seria invisível na Central e ninguém
+    // mais poderia removê-lo — a paciente não tem DELETE em `received/`. A
+    // policy que torna esta remoção possível concede exatamente isto e nada
+    // mais: apagar objeto SEM linha. Documento efetivamente depositado tem
+    // linha e continua intocável pelo depositante (não há revogação, §N).
+    const { error: storageError } = await supabase.storage.from(BUCKET).remove([filePath]);
+    if (storageError) {
+      registrarErro("profiles.providePatientDocument.compensacaoStorage", storageError, {
+        caseId,
+        patientProfileId,
         filePath,
       });
     }

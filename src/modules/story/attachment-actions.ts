@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { falhaParaUsuario, registrarErro } from "@/lib/observability/erros";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRoleForAction } from "@/modules/auth/guard";
+import { validarArquivoDeDocumento } from "@/modules/profiles/document-file-policy";
 import { uploadPatientDocument } from "@/modules/profiles/patient-document-repository";
 
 import { attachDocumentToStory, detachDocumentFromStory, listStoryAttachments, type StoryAttachment } from "./attachment-repository";
@@ -42,8 +43,16 @@ export async function uploadAndAttachStoryDocumentAction(
   }
 
   const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) {
+  if (!(file instanceof File)) {
     return { success: false, error: "Selecione um arquivo para enviar." };
+  }
+
+  // D-12.2: o anexo à história é um upload DELA, e a decisão do DT-01 vale
+  // para os dois writers. A validação mora na mesma fonte da Central — dois
+  // caminhos dela não podem aceitar coisas diferentes.
+  const validacao = await validarArquivoDeDocumento(file);
+  if (!validacao.aceito) {
+    return { success: false, error: validacao.erro };
   }
 
   const supabase = await createServerSupabaseClient();
@@ -56,7 +65,12 @@ export async function uploadAndAttachStoryDocumentAction(
   // documento e vínculo confirmados; o retry reutiliza o vínculo existente e
   // o duplo clique não duplica (PK story+document).
   try {
-    const document = await uploadPatientDocument(supabase, authState.user.id, file);
+    const document = await uploadPatientDocument(
+      supabase,
+      authState.user.id,
+      file,
+      validacao.contentType,
+    );
     await attachDocumentToStory(supabase, storyId, document.id);
   } catch (erro) {
     return {
