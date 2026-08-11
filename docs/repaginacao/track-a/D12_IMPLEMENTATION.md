@@ -348,3 +348,109 @@ Tudo em Supabase **local** (`127.0.0.1:54321`). A suíte de integração não l�
 hospedado — e `assertSupabaseLocal` aborta antes da primeira chamada de rede.
 Contas sintéticas `d122-*@example.test`, removidas no `afterAll` junto com os
 objetos criados no bucket.
+
+---
+
+# D-12.2B · A Central como projeção
+
+**Base:** `85fa8de` · **Migration: nenhuma.** A Central não é domínio novo: é
+uma leitura de três fontes que já existem, na forma que a paciente entende.
+`src/modules/paciente/central-de-documentos.ts` — função pura, sem I/O.
+
+## 19 · Três decisões que o arquivo carrega
+
+**A origem não é declarada, é derivada.** `uploaded_by = profile_id` é dela;
+diferente é da Aliviar. Não existe campo por onde o cliente peça categoria —
+**ele não envia categoria nenhuma**. E mesmo forjando a linha ele não
+conseguiria: a policy da D-12.1 impede a paciente de gravar
+`uploaded_by <> auth.uid()`. A garantia é do banco; a projeção só a lê.
+
+**O portão da Curadoria é `deliveredAt`, e só ele.** `emittedAt` é a Aliviar
+ter terminado por dentro; `presentedAt` é o encontro ter acontecido. Nenhum
+dos dois é ela ter acesso. Os dois entram na ENTRADA da projeção **de
+propósito, para serem ignorados** — é isso que permite provar por mutação que
+o portão não os usa. Segunda condição: conteúdo real. Carimbo de entrega sobre
+Relatório sem nenhuma opção é carimbo apontando para o vazio.
+
+**Artefato não é arquivo.** A Curadoria não vira linha falsa em
+`patient_documents`, e "Levar em PDF" não é download: é
+`/paciente/curadoria/imprimir`, tela que **já existe** e já é guardada por
+papel. A distinção mora no TIPO — `FILE_DOWNLOAD` · `PRINTABLE_VIEW` · `NONE`
+— para que nenhuma tela possa confundir as duas coisas por descuido.
+
+## 20 · O que atravessa, e o que não
+
+Sai: id, categoria, classe, título, data, ação primária, capacidade de
+download e uma referência opaca. **Não sai** caminho, autoria, Case nem
+bucket — e a garantia é mais forte que um filtro: `file_path` e `case_id`
+**não estão sequer na entrada** da projeção. Ela não pode vazar o que nunca
+recebe.
+
+Para arquivo, a referência é o **id da linha**, não o caminho: é ele que um
+handler autorizado troca por URL assinada de curta validade, no clique.
+Nenhuma URL é materializada aqui.
+
+O descarte por `profileId` dentro da projeção é **segunda tranca**, não a
+primeira — a RLS continua sendo a autoridade. Filtro de segurança não pode
+viver só do lado do cliente.
+
+## 21 · Sua História, e o que ainda não existe
+
+Rascunho → **Continuar** (`/sua-historia/continuar`). Enviada → **Rever**
+(`/sua-historia/revisao`). Rotas verificadas em `src/app`: a projeção não
+inventa endereço, porque href que não existe é 404 na mão da paciente.
+
+**Sua História nunca é chamada de questionário** — e o teste varre a projeção
+inteira serializada, não só o título.
+
+**GAP-A6-Q1 segue aberto e por isso não há imprimível dela.** Os textos das
+perguntas vivem espalhados nas sete páginas do wizard, sem fonte única;
+gerar um PDF hoje exigiria duplicá-los, e duas fontes divergem na primeira
+pergunta que mudar. A projeção diz isso explicitamente
+(`NO_SAFE_PRINTABLE_REPRESENTATION`) em vez de simplesmente omitir o botão.
+
+**§11 respeitado:** não existindo outro formulário real, a categoria contém
+só Sua História. Nenhum item fictício foi criado para preencher a seção.
+
+## 22 · Provas — 23 testes e cinco mutações
+
+`tests/unit/central-de-documentos.test.ts`, cobrindo P1–P12.
+
+| mutação | testes derrubados |
+|---|---|
+| M-P1 · o portão vira `emittedAt` | **5** |
+| M-P2 · o portão vira `presentedAt` | **4** |
+| M-P3 · a origem passa a vir do input do cliente | **2** |
+| M-P4 · o artefato ganha download de arquivo | **2** |
+| M-P5 · a projeção vaza metadata interna | **2** |
+
+**Compatibilidade com os registros reais, verificada pelo compilador:** um
+`CuradoriaRecord` e um `PatientStory` reais satisfazem as entradas. E ficou
+registrado que **`PatientDocument` não tem `profileId`** e **tem `filePath`** —
+quem adaptar precisa informar a dona e deixar o caminho de fora. Isso é
+informação que o A6 precisa antes de escrever a tela, não depois.
+
+## 23 · O que esta fatia NÃO fez
+
+- **A tela.** `/paciente/documentos` não foi redesenhada, nenhum card, nenhum
+  layout. Nenhum loader especulativo foi criado: a projeção é exportada,
+  tipada e provada, e o A6 a consome quando existir.
+- **O handler de download assinado.** A projeção declara a capacidade; quem a
+  emite ainda não existe.
+- **Zero migration.** Nada nesta fatia pediu banco novo — como previsto.
+
+## 24 · Regressão da D-12.2 completa
+
+| verificação | resultado |
+|---|---|
+| suíte de integração **completa** (73 arquivos) | **926 passaram**, 3 skipped, **0 falhas** |
+| suíte unitária completa | 2 693 passaram · **1 falha pré-existente** |
+| typecheck | limpo |
+| lint | limpo (3 warnings pré-existentes, em arquivos não tocados) |
+| build local | íntegro — `85fa8de-mso5eg8c`, backend único e local (394 arquivos inspecionados) |
+| ledger | **119/119** |
+
+A falha unitária é `mecanismo-de-discordancia.test.ts`, sobre
+`curadoria.decidir_proposta`. **Provada pré-existente:** falha idêntica na base
+`caecbb7`, e nem o teste nem a migration que ele lê foram tocados por esta
+missão (`git diff caecbb7 HEAD` sobre os dois arquivos: vazio).
