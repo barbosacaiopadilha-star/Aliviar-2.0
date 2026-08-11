@@ -12,12 +12,18 @@ export type PatientNavItem = {
 // representar (só gera `${basePath}/sufixo`) — nunca um ramo daquela
 // função, sempre esta lista própria.
 //
-// "Linha do tempo" adicionada nesta fase — a rota já existia
+// "Linha do tempo" adicionada numa fase anterior — a rota já existia
 // (src/app/paciente/linha-do-tempo/page.tsx, autenticada via
-// requireRole("paciente"), conteúdo real: histórico da conta, perfil,
-// documentos e notificações), mas nunca tinha aparecido aqui. Rótulo
-// ("Linha do tempo") copiado do próprio h1/metadata.title da página, não
-// inventado.
+// requireRole("paciente")), mas nunca tinha aparecido aqui. O rótulo foi
+// copiado do h1 da própria página, não inventado.
+//
+// A4 · o rótulo passa a ser "Sua Jornada", e o h1 mudou junto: a página
+// deixou de ser um log de conta e passou a contar o percurso. Duas palavras
+// para a mesma coisa — "jornada" no resumo da Home e "linha do tempo" no
+// menu — faziam a paciente procurar duas superfícies onde há uma.
+//
+// O href continua `/paciente/linha-do-tempo`: ele está em uso, e trocá-lo só
+// pelo nome custaria um redirect sem nenhum ganho para quem navega.
 export const PATIENT_NAV_ITEMS: PatientNavItem[] = [
   { label: "Início", href: "/paciente" },
   // ETAPA 9: retoma a história existente no passo em que ela parou. Apontar
@@ -25,6 +31,6 @@ export const PATIENT_NAV_ITEMS: PatientNavItem[] = [
   { label: "Minha história", href: "/sua-historia/continuar" },
   { label: "Documentos", href: "/paciente/documentos" },
   { label: "Minha Curadoria", href: "/paciente/curadoria" },
-  { label: "Linha do tempo", href: "/paciente/linha-do-tempo" },
+  { label: "Sua Jornada", href: "/paciente/linha-do-tempo" },
   { label: "Perfil", href: "/paciente/perfil" },
 ];

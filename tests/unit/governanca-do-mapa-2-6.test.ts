@@ -152,11 +152,26 @@ describe("consumo · a capability serve UMA superfície — o caminho da pacient
     expect(conhecem).toEqual(["src/modules/paciente/nome-do-curador.ts"]);
   });
 
-  it("o único importador do wrapper é a home da paciente — Mesa, admin e portal interno ficam fora", () => {
+  it("só o caminho da paciente importa o wrapper — Mesa, admin e portal interno ficam fora", () => {
     const importam = FONTES.filter((arquivo) =>
       codigoSemComentarios(arquivo).includes("modules/paciente/nome-do-curador"),
     );
-    expect(importam).toEqual(["src/app/paciente/page.tsx"]);
+
+    // A4 · a asserção era a lista literal `["src/app/paciente/page.tsx"]`,
+    // congelada quando a Home era a única superfície da paciente a nomear o
+    // Curador. A Jornada detalhada passou a nomeá-lo também — mesmo papel,
+    // mesma RLS, mesma pessoa.
+    //
+    // O que a guarda protege, e continua protegendo, é o nome do seu próprio
+    // título: a capability serve o CAMINHO DA PACIENTE. Uma lista fixa
+    // confundia "quem pode" com "quem já usava" — e quebraria a cada
+    // superfície nova dela, sem que nada de errado tivesse acontecido.
+    expect(importam.length, "o wrapper ficou sem consumidor").toBeGreaterThan(0);
+    for (const arquivo of importam) {
+      expect(arquivo, `superfície fora do caminho da paciente usa a capability: ${arquivo}`).toMatch(
+        /^src\/app\/paciente\//,
+      );
+    }
   });
 
   it("nenhuma superfície interna trocou sua fonte: Mesa e COS seguem lendo profiles", () => {

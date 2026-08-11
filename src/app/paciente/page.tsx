@@ -188,12 +188,20 @@ export default async function PacienteHomePage() {
           nome, não abrir um canal de atendimento. */}
       <QuemAcompanha responsavel={jornada.currentResponsible} />
 
-      {/* NÍVEL 4 · a jornada resumida — orientação, não cobrança. */}
-      <JourneyWalk
-        stages={walkStages}
-        currentDetail={detalheDaEtapa}
-        curatorName={jornada.curatorName}
-      />
+      {/* NÍVEL 4 · a jornada resumida — orientação, não cobrança.
+          A4 · o resumo para aqui e aponta para o percurso inteiro. A Home
+          responde "onde estou"; a Jornada responde "como é o caminho". Uma
+          narrativa, dois níveis de detalhe — nunca duas histórias. */}
+      <div>
+        <JourneyWalk
+          stages={walkStages}
+          currentDetail={detalheDaEtapa}
+          curatorName={jornada.curatorName}
+        />
+        <Link href="/paciente/linha-do-tempo" className={`${LINK_DISCRETO} mt-6 inline-block text-sm`}>
+          Ver sua Jornada inteira
+        </Link>
+      </div>
 
       {/* NÍVEL 5 · o que já é dela. */}
       <MeuResumo

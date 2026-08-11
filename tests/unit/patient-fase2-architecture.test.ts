@@ -106,15 +106,22 @@ describe("Parte 2 — fonte única de navegação do paciente", () => {
     expect(pageSource).not.toMatch(/em breve|placeholder|TODO/i);
   });
 
-  it("ordem preservada: Início, Minha história, Documentos, Minha Curadoria, Linha do tempo, Perfil", () => {
-    expect(PATIENT_NAV_ITEMS.map((item) => item.label)).toEqual([
-      "Início",
-      "Minha história",
-      "Documentos",
-      "Minha Curadoria",
-      "Linha do tempo",
-      "Perfil",
+  // A4 · a ordem é ancorada nos DESTINOS, não na redação. O rótulo da Jornada
+  // mudou ("Linha do tempo" → "Sua Jornada") e derrubou este oráculo, que
+  // fixava as seis palavras à mão. O que esta guarda existe para proteger é a
+  // sequência da navegação e a fonte única — não o texto de cada item, que é
+  // copy e muda quando a experiência muda.
+  it("ordem preservada: Início, história, Documentos, Curadoria, Jornada, Perfil", () => {
+    expect(PATIENT_NAV_ITEMS.map((item) => item.href)).toEqual([
+      "/paciente",
+      "/sua-historia/continuar",
+      "/paciente/documentos",
+      "/paciente/curadoria",
+      "/paciente/linha-do-tempo",
+      "/paciente/perfil",
     ]);
+    // E nenhum item fica sem nome.
+    for (const item of PATIENT_NAV_ITEMS) expect(item.label.trim()).toBeTruthy();
   });
 
   it("getDefaultNavItems (AppShell) não gera mais navegação de paciente", () => {

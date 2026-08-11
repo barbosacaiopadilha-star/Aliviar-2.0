@@ -52,9 +52,17 @@ describe("PatientShell — navegação com fonte única", () => {
     const [desktopNav] = screen.getAllByRole("navigation", {
       name: "Navegação principal",
     });
-    expect(
-      within(desktopNav).getByRole("link", { name: "Linha do tempo" }),
-    ).toHaveAttribute("href", "/paciente/linha-do-tempo");
+    // A4 · a asserção passou a ancorar no DESTINO, não na redação. O rótulo
+    // estava escrito à mão aqui ("Linha do tempo") e virou oráculo defasado no
+    // instante em que ele mudou para "Sua Jornada" — e o que este teste
+    // protege é que o item exista e leve ao lugar certo, não como ele se
+    // chama neste mês.
+    const jornada = within(desktopNav)
+      .getAllByRole("link")
+      .find((link) => link.getAttribute("href") === "/paciente/linha-do-tempo");
+
+    expect(jornada, "o item da Jornada sumiu da navegação").toBeDefined();
+    expect(jornada?.textContent?.trim()).toBeTruthy();
   });
 
   it("navegação desktop e mobile (Drawer) mostram exatamente os mesmos itens, na mesma ordem", async () => {
