@@ -248,9 +248,8 @@ describe("B3 · §1 · a decisão persiste?", () => {
       // produzir o fato canônico.
       expect(await decisoesDaSelecao(semDecisao.curatedSelectionId)).toBe(0);
 
-      // A prova estrutural: o único writer de `patient_curadoria_decisions`
-      // em `src/` é o da decisão. Se um dia o domínio da conexão passar a
-      // gravar o fato canônico, este teste cai.
+      // Guarda estrutural, complementar: o domínio da conexão não referencia
+      // o fato canônico.
       const { readFileSync } = await import("node:fs");
       const conexao = readFileSync("src/modules/connection/repository.ts", "utf8");
       expect(
@@ -391,5 +390,97 @@ describe("B3 · §1 · a decisão persiste?", () => {
       // do parâmetro É a prova de que conexão não move responsabilidade.
       expect(responsavel(null)).toBe("curador");
     });
+  });
+  // ---------------------------------------------------------------------------
+  /**
+   * T-B3-R6 COMPORTAMENTAL — a conexão acontece de verdade, e o fato canônico
+   * não se move.
+   *
+   * A tentativa anterior inseria em `connection_records` pelo `service_role` e
+   * batia em `permission denied for function canonical_delivery_matches`.
+   * Diagnóstico: a função é SECURITY DEFINER com EXECUTE só para `postgres` e
+   * `authenticated`, e a policy de INSERT a invoca. **O service_role nunca foi
+   * o ator deste fluxo** — quem conecta é a paciente autenticada, que tem o
+   * grant. Não era defeito de ambiente nem de produção: era fixture usando o
+   * ator errado, e contagem em zero depois de operação RECUSADA não prova nada.
+   */
+  describe("T-B3-R6 · comportamental — conexão real, decisão inalterada", () => {
+    it("a paciente conecta pelo caminho real e nenhuma segunda decisão nasce", async () => {
+      const decidida = await seedDeliveredCase({ decidir: "CHOSEN" });
+      outrasFixtures.push(decidida);
+
+      const antes = await decisoesDaSelecao(decidida.curatedSelectionId);
+      expect(antes, "a fixture deveria nascer com exatamente uma decisão").toBe(1);
+
+      const { data: decisaoAntes } = await admin
+        .schema("curadoria")
+        .from("patient_curadoria_decisions")
+        .select("id, outcome, chosen_option_id")
+        .eq("curated_selection_id", decidida.curatedSelectionId)
+        .single();
+
+      // O writer REAL da conexão: a RPC canônica, chamada pela paciente
+      // autenticada — o mesmo caminho que o repositório de produção usa.
+      const cliente = await comoPaciente(decidida);
+      const agora = new Date().toISOString();
+      const { data: conexao, error } = await cliente.rpc("create_connection_from_report", {
+        p_report_id: decidida.reportId,
+        p_professional_profile_id: decidida.selectedProfessionals[0]!.id,
+        p_decided_at: agora,
+        p_actor_id: decidida.patientProfileId,
+        p_event_payload: {},
+        p_occurred_at: agora,
+        p_recorded_at: agora,
+      });
+
+      // A prova só vale se a conexão TIVER SUCESSO.
+      expect(error, error?.message).toBeNull();
+      expect(conexao, "a conexão não foi persistida — o teste não prova nada").toBeTruthy();
+
+      const { count } = await admin
+        .schema("curadoria")
+        .from("connection_records")
+        .select("id", { count: "exact", head: true })
+        .eq("case_id", decidida.caseId);
+      expect(count, "connection_record não existe").toBe(1);
+
+      // E o fato canônico segue intacto: mesma quantidade, mesmo outcome,
+      // mesma opção.
+      expect(await decisoesDaSelecao(decidida.curatedSelectionId)).toBe(1);
+
+      const { data: decisaoDepois } = await admin
+        .schema("curadoria")
+        .from("patient_curadoria_decisions")
+        .select("id, outcome, chosen_option_id")
+        .eq("curated_selection_id", decidida.curatedSelectionId)
+        .single();
+      expect(decisaoDepois).toEqual(decisaoAntes);
+    }, 300_000);
+
+    it("NONE_OF_THEM · a decisão existe, é única, e o responsável é a Equipe Aliviar", async () => {
+      const recusada = await seedDeliveredCase({ decidir: "NONE_OF_THEM" });
+      outrasFixtures.push(recusada);
+
+      expect(await decisoesDaSelecao(recusada.curatedSelectionId)).toBe(1);
+
+      const cliente = await comoPaciente(recusada);
+      const curadoria = await loadPatientCuradoria(cliente);
+      expect(curadoria?.decision?.outcome).toBe("NONE_OF_THEM");
+
+      const responsavel = resolveCurrentResponsible({
+        pipelineStage: null,
+        curatorName: "Curadora do Case",
+        conciergeName: null,
+        curadoriaRecord: {
+          historia: { understandingConfirmedAt: new Date().toISOString() },
+          validacao: null,
+          relatorio: { emittedAt: new Date().toISOString(), deliveredAt: curadoria!.deliveredAt },
+          devolutiva: { presentedAt: null, decision: curadoria!.decision },
+        } as never,
+      });
+
+      expect(responsavel.role).toBe("concierge");
+      expect(responsavel.name).toBe("Equipe Aliviar");
+    }, 300_000);
   });
 });
