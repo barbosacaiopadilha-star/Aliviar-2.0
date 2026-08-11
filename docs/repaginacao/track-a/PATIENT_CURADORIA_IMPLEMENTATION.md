@@ -139,3 +139,82 @@ B1 alterou apenas `tests/` e `docs/`.
 
 **Gaps preservados, não resolvidos:** B2 (comparador), B3 (decisão, Segundo
 Encontro, handoff, Concierge), D-10 e GAP-A1.
+
+---
+
+# B2 · O comparador — auditado e preservado
+
+**Base:** `abd0f27` · **Migration: nenhuma.** **`src/`: intocado.**
+
+## 1 · As dez perguntas da auditoria
+
+| | pergunta | resposta |
+|---|---|---|
+| A | já é por dimensões? | **sim** — `PATIENT_DIMENSIONS`, uma de cada vez |
+| B | desktop tem leitura clara? | **sim** — os caminhos empilham dentro da dimensão |
+| C | mobile evita tabela comprimida? | **sim** — não há tabela para comprimir |
+| D | duplica as cartas? | não: recorte inverso (uma dimensão × N caminhos) |
+| E | dimensões sem utilidade? | não — todas do domínio real |
+| F | pista de ranking? | **nenhuma** |
+| G | BarraCompatibilidade qualitativa? | **sim**, em modo `compact` |
+| H | comparar exige escolha consciente? | **sim** — checkbox por carta |
+| I | nasce vazia? | **sim** — `ComparacaoNaoIniciada` |
+| J | ajuda a ver trade-off? | sim, por contraste de estado dentro da dimensão |
+
+## 2 · Decisão: PRESERVAR
+
+O contrato do §3 pede matriz editorial no desktop **ou** equivalência funcional
+mais elegante. O comparador escolheu a segunda: **uma dimensão por vez**, com
+os caminhos empilhados dentro dela. O comentário do arquivo explica por quê —
+*"tabela com cinco linhas e três colunas convida a varrer o conjunto
+procurando quem ganha"*.
+
+Isso resolve desktop e mobile com **a mesma estrutura**: não existe layout de
+390px "espremendo" o de 1440px, porque não existe layout horizontal nenhum.
+
+## 3 · Explorar ≠ comparar — a diferença está no CONTROLE
+
+**Conhecer este caminho** é `button`: um ato, abre a carta ali mesmo.
+**Comparar** é `checkbox`: seleção reversível, não um ato.
+
+Marcar não abre nada; abrir não marca nada. A separação das intenções não
+depende de copy — depende do tipo de controle.
+
+## 4 · O que as 22 guardas não alcançavam
+
+Não duplicamos o que já estava protegido (uma dimensão por vez, troca de
+dimensão, menos de dois não compara, nasce vazia, zero número/nota/ranking).
+`b2-comparador-de-caminhos.test.tsx` fecha o resto:
+
+- **T-B2-6** · comparar não decide — nenhum `button` ou `link` dentro do painel,
+  e nenhuma copy de escolha no ambiente inteiro depois de conhecer os três;
+- **T-B2-8** · a comparação **não é tabela**, provado pela ESTRUTURA: nenhum
+  `<table>`/`<tr>`/`<td>`, nenhum `role="row"|"cell"`, e o painel empilha
+  (`space-y-*`) sem `grid-cols`, `flex-row` ou `overflow-x`;
+- **T-B2-3** · cada valor pertence a um caminho **nomeado**, com o estado
+  chegando ao leitor de tela junto do rótulo da dimensão;
+- **§8** · explorar e comparar têm controles distintos.
+
+O T-B2-8 é estrutural de propósito: um screenshot mostra que hoje está bom, mas
+não impede que amanhã alguém troque os blocos por tabela. A régua é o DOM.
+
+## 5 · Provas de perda
+
+| mutação | testes que caem |
+|---|---|
+| **M1** · comparação nasce pré-selecionada | **2** |
+| **M2** · percentual entra na compatibilidade | **3** |
+| **M3** · comparar passa a gravar decisão | **1** |
+| **M4** · comparação vira grade horizontal | **1** |
+
+Todas restauradas; baseline 30/30 (B2 8 + caminhos 22) nas duas pontas.
+
+## 6 · Regressão
+
+componentes **694/694** (64 arquivos) · B1 + curadoria **11/11** · typecheck
+limpo · lint 0 erros · build exit 0 · ledger 120/120.
+
+## 7 · Zero domínio
+
+`src/` intocado, zero migration. B3 (decisão, Segundo Encontro, handoff,
+Concierge) permanece fora.
