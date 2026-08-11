@@ -84,11 +84,41 @@ duas Curadorias não transforma a autorização em "qualquer Case serve".
 **7 provas**, entre elas R5, R5b e S2. É a demonstração material de que o
 modelo rejeitado pelo §2 seria detectado.
 
-**Não executadas nesta passagem:** M2 (paciente preenche `case_id`), M3
-(autorizar só por role), M4 (DELETE amplo) e M5 (storage sem caseId). Cada uma
-exige `db reset` + recriação de fixtures. **R2, R3, R11, S6 e S2 já cobrem os
-comportamentos correspondentes**, mas as mutações em si ficam pendentes — e
-ficam registradas como tal, não como feitas.
+### D-12.1F · a falseabilidade, agora automatizada
+
+A D-12.1 foi **reprovada** com razão: as garantias existiam no banco e **nada
+no repositório as defendia**. Um script descartável não é cobertura.
+
+`tests/integration/d12-central-documentos-rls.integration.test.ts` — **27
+testes**, matriz de fixtures obrigatória: pacientes A e B, curadores 1/2/3,
+Case A1→C1, A2→C2, B1→C3. As duas Curadorias simultâneas de A são o que
+distingue "este Case" de "algum Case".
+
+**As seis mutações, uma por vez, com `db reset` + `bootstrap` entre elas:**
+
+| mutação | testes derrubados |
+|---|---|
+| M1 · helper aceita "algum Case da paciente" | **4** |
+| M2 · paciente pode inserir `case_id` | **1** |
+| M3 · staff autorizado só por role | **7** |
+| M4 · DELETE amplo restaurado | **1** |
+| M5 · storage sem caseId específico | **1** |
+| M6 · SELECT do Curador por "algum Case" | **2** |
+
+Migration inalterada em todo o ciclo — SHA `84f3bd19…` idêntico antes e depois.
+Nenhuma migration temporária sobreviveu. Baseline verde nas duas pontas.
+
+**Duas escolhas de método que valem registro:**
+
+- **DELETE é medido por linhas removidas**, nunca por ausência de exceção: a
+  RLS não levanta erro no DELETE, ela simplesmente não encontra a linha. Um
+  teste que só checasse `error === null` passaria com a policy aberta.
+- **O storage também não devolve erro no `remove` sem permissão.** A prova é a
+  leitura depois: o objeto recebido continua baixável.
+
+**S-2 registrado, não corrigido:** o Curador depositante não tem hoje SELECT de
+storage sobre o objeto que acabou de gravar. A suíte **não inventa** essa
+capacidade — ela será decidida na D-12.2, se o writer precisar reler o objeto.
 
 ## 7 · Rollback
 
