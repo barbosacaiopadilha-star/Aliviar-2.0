@@ -210,6 +210,44 @@ export async function providePatientDocument(
   return mapRow(data as PatientDocumentRow);
 }
 
+/**
+ * A6 · O LINK DE UM DOCUMENTO, EMITIDO NO CLIQUE.
+ *
+ * O bucket é privado e continua privado. A projeção da Central entrega à tela
+ * apenas o **id da linha** — nunca o caminho, nunca uma URL. É aqui que o id
+ * vira um endereço, e ele nasce assinado, curto e descartável.
+ *
+ * Quem autoriza é a RLS: se a linha não é dela, o `select` não a encontra e
+ * não há caminho a assinar. Não existe segunda checagem de dono nesta função,
+ * de propósito — duas autoridades divergem, e a do banco é a que vale.
+ */
+export async function createPatientDocumentSignedUrl(
+  supabase: SupabaseClient,
+  documentId: string,
+): Promise<string> {
+  const { data: row, error: fetchError } = await supabase
+    .from("patient_documents")
+    .select("file_path")
+    .eq("id", documentId)
+    .maybeSingle();
+
+  if (fetchError || !row?.file_path) {
+    throw new Error("Documento não encontrado.");
+  }
+
+  // Curta: o link serve ao clique que acabou de acontecer, não a um
+  // compartilhamento. Nada é persistido — a próxima abertura emite outro.
+  const { data, error } = await supabase.storage
+    .from(BUCKET)
+    .createSignedUrl(row.file_path as string, 60);
+
+  if (error || !data?.signedUrl) {
+    throw erroDeBanco("Não foi possível abrir o documento.", error);
+  }
+
+  return data.signedUrl;
+}
+
 export async function deletePatientDocument(
   supabase: SupabaseClient,
   documentId: string,

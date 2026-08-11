@@ -67,6 +67,15 @@ export const TIPOS_DE_DOCUMENTO_ACEITOS: readonly string[] = ASSINATURAS.map((a)
 /** Para o atributo `accept` do input — a UI não mantém lista própria. */
 export const ACCEPT_DE_DOCUMENTO = TIPOS_DE_DOCUMENTO_ACEITOS.join(",");
 
+/**
+ * A regra em uma frase, para ser dita ANTES de a pessoa escolher o arquivo.
+ * Derivada das mesmas constantes — se o contrato mudar, a frase muda junto, e
+ * ninguém precisa lembrar de reescrevê-la.
+ */
+export const RESUMO_DA_POLITICA_DE_ARQUIVO = `PDF, JPEG, PNG ou WebP · até ${Math.round(
+  TAMANHO_MAXIMO_DOCUMENTO_BYTES / (1024 * 1024),
+)} MB`;
+
 function casa(bytes: Uint8Array, inicio: number, esperado: readonly number[]): boolean {
   if (bytes.length < inicio + esperado.length) return false;
   return esperado.every((valor, i) => bytes[inicio + i] === valor);

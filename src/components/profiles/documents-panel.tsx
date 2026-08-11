@@ -18,12 +18,6 @@ type DocumentsPanelProps<T extends DocumentItem> = {
   onDelete: (documentId: string) => Promise<ActionResult>;
   emptyTitle: string;
   emptyDescription: string;
-  /**
-   * Lista para o seletor de arquivos do navegador. Opcional de propósito: o
-   * painel serve dois domínios, e só o da paciente está sob a ADR-054.
-   * **Nunca é validação** — quem decide é o servidor.
-   */
-  accept?: string;
 };
 
 function formatFileSize(bytes: number | null): string {
@@ -41,7 +35,6 @@ export function DocumentsPanel<T extends DocumentItem>({
   onDelete,
   emptyTitle,
   emptyDescription,
-  accept,
 }: DocumentsPanelProps<T>) {
   const [documents, setDocuments] = useState(initialDocuments);
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -79,12 +72,6 @@ export function DocumentsPanel<T extends DocumentItem>({
           type="file"
           name="file"
           required
-          // Vem por prop, e não de uma constante daqui: este painel também
-          // serve os documentos do PROFISSIONAL, que não estão sob a ADR-054.
-          // Fixar a lista da paciente aqui aplicaria o contrato dela a um
-          // domínio que ninguém decidiu incluir. Ausente, o atributo some e o
-          // comportamento anterior fica intacto.
-          accept={accept}
           aria-label="Selecionar documento"
           className="block w-full text-sm text-ink file:mr-3 file:rounded-md file:border-0 file:bg-brand-primary file:px-4 file:py-2 file:text-sm file:font-medium file:text-surface hover:file:bg-brand-primary-deep"
         />

@@ -8,6 +8,7 @@ import { requireRoleForAction } from "@/modules/auth/guard";
 
 import { validarArquivoDeDocumento } from "./document-file-policy";
 import {
+  createPatientDocumentSignedUrl,
   deletePatientDocument,
   providePatientDocument,
   uploadPatientDocument,
@@ -126,6 +127,41 @@ export async function providePatientDocumentAction(
   // A Central dela passa a mostrar o documento em "Recebidos da Aliviar".
   revalidatePath("/paciente/documentos");
   return { success: true, document: created };
+}
+
+/**
+ * A6 · Abre ou baixa um documento da Central.
+ *
+ * Recebe o id que a projeção expôs e devolve um link assinado de curta
+ * validade. Nenhuma URL é persistida, e o caminho do objeto não atravessa
+ * para o cliente em momento nenhum.
+ */
+export type LinkDeDocumentoResult =
+  | { success: true; url: string }
+  | { success: false; error: string };
+
+export async function obterLinkDeDocumentoAction(
+  documentId: string,
+): Promise<LinkDeDocumentoResult> {
+  try {
+    await requireRoleForAction("paciente");
+  } catch {
+    return { success: false, error: "Não autorizado." };
+  }
+
+  const supabase = await createServerSupabaseClient();
+
+  try {
+    const url = await createPatientDocumentSignedUrl(supabase, documentId);
+    return { success: true, url };
+  } catch (erro) {
+    return {
+      success: false,
+      error: falhaParaUsuario("profiles.obterLinkDeDocumento", erro, {
+        mensagem: "Não foi possível abrir o documento agora. Tente novamente.",
+      }),
+    };
+  }
 }
 
 export async function deletePatientDocumentAction(documentId: string): Promise<ActionResult> {
