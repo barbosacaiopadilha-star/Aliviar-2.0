@@ -30,6 +30,31 @@ describe("B3-CLEANUP · a fixture canônica não deixa resíduo", () => {
     return (data ?? []).length;
   }
 
+  async function total(tabela: string) {
+    const { count, error } = await service.from(tabela).select("*", { count: "exact", head: true });
+    if (error) throw new Error(`${tabela}: ${error.message}`);
+    return count ?? 0;
+  }
+
+  /**
+   * Contagem por PREFIXO EXATO de e-mail — nunca por papel nem por contagem
+   * total. As contas históricas do banco local compartilham o papel
+   * `administrador` com o bootstrap permanente; contar por papel derrubaria a
+   * conta fixa junto.
+   */
+  async function contarPrefixo(prefixo: string) {
+    let pagina = 1;
+    let achados = 0;
+    for (;;) {
+      const { data, error } = await service.auth.admin.listUsers({ page: pagina, perPage: 1000 });
+      if (error) throw new Error(`listUsers: ${error.message}`);
+      const usuarios = data?.users ?? [];
+      achados += usuarios.filter((u) => (u.email ?? "").startsWith(prefixo)).length;
+      if (usuarios.length < 1000) return achados;
+      pagina += 1;
+    }
+  }
+
   it(
     "cria, limpa, e o Case, o perfil e os filhos somem juntos",
     { timeout: 180_000 },
@@ -87,6 +112,56 @@ describe("B3-CLEANUP · a fixture canônica não deixa resíduo", () => {
         await contar("crm_contacts", "patient_profile_id", fixture.patientProfileId),
         "o contato de CRM ficou para trás — foi ele que derrubava o deleteUser",
       ).toBe(0);
+
+      // O admin/curador da fixture: criado por execução, e por muito tempo
+      // nunca removido. Na integração a limpeza automática de
+      // `setup-limpeza.ts` absorvia a sobra; no E2E não há esse guarda-chuva,
+      // e foi lá que 225 contas se acumularam.
+      const { data: contaAdmin } = await service.auth.admin.getUserById(fixture.adminUserId);
+      expect(contaAdmin?.user ?? null, "a conta admin da fixture precisa ter saído").toBeNull();
+    },
+  );
+
+  it(
+    "duas execuções seguidas não fazem nenhuma contagem crescer",
+    { timeout: 300_000 },
+    async () => {
+      const base = {
+        admins: await contarPrefixo("connection-e2e-admin-"),
+        pacientes: await contarPrefixo("connection-e2e-patient-"),
+        cases: await total("cases"),
+        profissionais: await total("professional_profiles"),
+        papeis: await total("user_roles"),
+        auditoria: await total("audit_logs"),
+      };
+
+      // Duas voltas: um vazamento de uma conta por fixture só se distingue de
+      // ruído quando a contagem volta ao mesmo número DUAS vezes.
+      for (const volta of [1, 2]) {
+        const fixture = await seedDeliveredCase();
+        await cleanupFixture(fixture);
+
+        expect(await contarPrefixo("connection-e2e-admin-"), `admin vazou na volta ${volta}`).toBe(
+          base.admins,
+        );
+        expect(
+          await contarPrefixo("connection-e2e-patient-"),
+          `paciente vazou na volta ${volta}`,
+        ).toBe(base.pacientes);
+        expect(await total("cases"), `Case vazou na volta ${volta}`).toBe(base.cases);
+        expect(
+          await total("professional_profiles"),
+          `profissional vazou na volta ${volta}`,
+        ).toBe(base.profissionais);
+        expect(await total("user_roles"), `user_roles vazou na volta ${volta}`).toBe(base.papeis);
+      }
+
+      // A trilha é append-only: pode crescer, nunca encolher. Se um cleanup
+      // começar a apagar auditoria, é aqui que se descobre.
+      expect(
+        await total("audit_logs"),
+        "o cleanup não pode apagar audit trail",
+      ).toBeGreaterThanOrEqual(base.auditoria);
     },
   );
 

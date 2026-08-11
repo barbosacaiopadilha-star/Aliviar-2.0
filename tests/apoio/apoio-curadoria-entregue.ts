@@ -51,6 +51,15 @@ export type DeliveredFixture = {
   patientEmail: string;
   patientPassword: string;
   patientProfileId: string;
+  /**
+   * O administrador/curador sintético desta execução — âncora do cleanup.
+   *
+   * Ele era criado e nunca removido. Na suíte de INTEGRAÇÃO isso não aparecia:
+   * `tests/integration/setup-limpeza.ts` restaura a baseline a cada arquivo e
+   * absorvia a sobra. No E2E não existe esse guarda-chuva, e a conta ficava —
+   * uma por fixture, 225 acumuladas quando a B3-CLEANUP-ADMIN mediu.
+   */
+  adminUserId: string;
   caseId: string;
   /** Os profissionais criados por ESTA execução — âncora do cleanup. */
   createdProfessionalIds: string[];
@@ -346,6 +355,7 @@ export async function seedDeliveredCase(
     patientEmail,
     patientPassword: patientAccount.password,
     patientProfileId: patientAccount.profileId,
+    adminUserId,
     caseId: created.id,
     reportId: report!.id,
     curatedSelectionId: selection!.id,
@@ -429,13 +439,32 @@ export async function removerPacienteSintetico(
     "apagar patient_profiles",
     adminClient.from("patient_profiles").delete().eq("profile_id", profileId).select(),
   );
+  await removerContaSintetica(adminClient, profileId);
+
+  return { casesRemovidos };
+}
+
+/**
+ * Apaga uma conta sintética que já não tem fato material preso a ela.
+ *
+ * `user_roles` sai ANTES da conta, e não é detalhe de ordem: apagar
+ * `auth.users` cascateia até `curadoria.profiles` e daí até `user_roles`, cujo
+ * trigger `log_user_role_change()` grava auditoria com `old.profile_id` — com
+ * o perfil já removido no mesmo comando, a gravação viola
+ * `audit_logs_target_profile_id_fkey` (23503) e derruba a transação inteira.
+ * Foi assim que a remoção dos Cases órfãos abortou na B3-CLEANUP.
+ *
+ * O erro do `deleteUser` é LIDO. Era ele que ficava invisível.
+ */
+export async function removerContaSintetica(
+  adminClient: ReturnType<typeof createAdminSupabaseClient>,
+  profileId: string,
+): Promise<void> {
   await exigirSucesso(
     "apagar user_roles",
     adminClient.from("user_roles").delete().eq("profile_id", profileId).select(),
   );
 
-  // O erro que ficava invisível. Se algo ainda prender o perfil, é AQUI que se
-  // descobre — em vez de virar resíduo silencioso no banco compartilhado.
   const { error } = await adminClient.auth.admin.deleteUser(profileId);
   if (error) {
     throw new Error(
@@ -443,8 +472,6 @@ export async function removerPacienteSintetico(
         "Alguma tabela ainda referencia curadoria.profiles sem cascade — veja o log do supabase_auth.",
     );
   }
-
-  return { casesRemovidos };
 }
 
 /** Lê o `.error` de cada operação: silêncio deixou de ser resultado aceitável. */
@@ -489,12 +516,23 @@ export async function cleanupFixture(fixture: DeliveredFixture | undefined) {
   // Fixture parcial: o paciente pode nem ter sido criado. Os profissionais que
   // já existem precisam sair mesmo assim, senão uma preparação interrompida
   // deixa resíduo — e resíduo com nome colidente foi o que travou este spec.
+  // O admin/curador da fixture só pode sair DEPOIS do Case e dos profissionais:
+  // ele é `created_by` de ambos, e nenhuma dessas FKs cascateia. `audit_logs`
+  // permanece — `actor_id` é ON DELETE SET NULL, então a trilha não é apagada,
+  // só deixa de apontar para uma conta que não existe mais.
+  const removerAdmin = async () => {
+    if (!fixture.adminUserId) return;
+    await removerContaSintetica(adminClient, fixture.adminUserId);
+  };
+
   if (!fixture.patientProfileId) {
     await removerProfissionais();
+    await removerAdmin();
     return;
   }
 
   await removerPacienteSintetico(adminClient, fixture.patientProfileId, fixture.caseId);
 
   await removerProfissionais();
+  await removerAdmin();
 }
