@@ -22,7 +22,18 @@ const AUTOSAVE_DEBOUNCE_MS = 600;
 // nunca o módulo em si).
 type SaveResult = Awaited<ReturnType<typeof saveStoryDraftAction>>;
 
-const STORY_ALREADY_SUBMITTED_ERROR = "Esta história já foi enviada e não pode mais ser editada.";
+/**
+ * A recusa do servidor quando a história já foi enviada.
+ *
+ * Exportada a partir da A5.1: ela **não é uma falha de gravação**, e a
+ * superfície precisa poder distinguir. Enquanto era privada, o indicador de
+ * autosave a tratava como erro qualquer e a emoldurava com "sua última
+ * resposta ainda não foi salva" — duas afirmações incompatíveis na mesma
+ * frase. Comparar contra a constante é o que evita voltar a discriminar por
+ * substring.
+ */
+export const STORY_ALREADY_SUBMITTED_ERROR =
+  "Esta história já foi enviada e não pode mais ser editada.";
 
 type StoryDraftContextValue = {
   data: SuaHistoriaData;

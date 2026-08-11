@@ -3,7 +3,7 @@
 import { Check } from "lucide-react";
 import { usePathname } from "next/navigation";
 
-import { useStoryDraft } from "@/modules/story/use-story-draft";
+import { STORY_ALREADY_SUBMITTED_ERROR, useStoryDraft } from "@/modules/story/use-story-draft";
 
 // Só lê o estado do hook já existente — nenhuma mudança na lógica de
 // autosave. Comunica o estado em linguagem humana, nunca técnica ("salvando",
@@ -15,9 +15,37 @@ import { useStoryDraft } from "@/modules/story/use-story-draft";
 // guardado neste dispositivo. Sessão expirada tem frase própria e caminho de
 // reentrada — detectada por estado discriminado, nunca por texto de erro.
 export function AutosaveIndicator() {
-  const { isSaving, data, saveError, sessionExpired } = useStoryDraft();
+  const { isSaving, data, saveError, sessionExpired, status } = useStoryDraft();
   const pathname = usePathname();
   const hasAnyAnswer = Object.values(data).some((value) => Boolean(value));
+
+  /**
+   * A5.1 · HISTÓRIA ENVIADA NÃO É FALHA DE GRAVAÇÃO.
+   *
+   * A recusa por "já enviada" chegava aqui como `saveError` qualquer e caía no
+   * ramo de erro, que a emoldurava assim:
+   *
+   *   "Sua última resposta ainda não foi salva — o texto está guardado neste
+   *    dispositivo. Esta história já foi enviada e não pode mais ser editada."
+   *
+   * Duas afirmações incompatíveis na mesma frase — e a primeira metade era
+   * **falsa duas vezes**: não havia resposta pendente de gravação, e o texto
+   * não estava guardado no dispositivo, porque o próprio `runPersist` chama
+   * `clearStoryCache` exatamente nesse caso.
+   *
+   * O fato que distingue já existia: `status`. Ele vem do registro, não de
+   * substring nem de rota nem do passo do wizard.
+   */
+  const enviada = status === "enviada" || saveError === STORY_ALREADY_SUBMITTED_ERROR;
+
+  if (enviada) {
+    return (
+      <p className="max-w-reading text-xs leading-relaxed text-ink-muted" role="status">
+        Sua história já está com a Aliviar e não recebe mais edições. Um Curador vai lê-la
+        inteira.
+      </p>
+    );
+  }
 
   if (!hasAnyAnswer && !isSaving && !saveError && !sessionExpired) {
     return null;

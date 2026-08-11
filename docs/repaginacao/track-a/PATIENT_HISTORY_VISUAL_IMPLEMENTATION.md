@@ -97,14 +97,46 @@ como aprendizado:
 
 ---
 
-## 6 · Gaps registrados
+## 6 · A5.1 · a contradição entre rascunho e história enviada
 
-- **Mensagem de autosave contraditória.** Na captura, o rodapé do campo diz
-  ao mesmo tempo *"Sua última resposta ainda não foi salva — o texto está
-  guardado neste dispositivo"* e *"Esta história já foi enviada e não pode
-  mais ser editada"*. São dois avisos de origens diferentes colidindo. É
-  **copy/semântica**, não repaginação, e a A5 não deveria decidir sozinha o
-  que uma delas passa a dizer.
+O gap aberto pela A5 foi fechado. **Não eram dois componentes colidindo** — era
+um só, emoldurando a mensagem do outro.
+
+**Mecanismo:** `saveDraft` recusa a gravação quando `currentRow.status ===
+"enviada"` e devolve a frase *"Esta história já foi enviada e não pode mais ser
+editada."* como `result.error`. O `AutosaveIndicator` tratava isso como falha
+de gravação qualquer e caía no ramo de erro, que **interpola o erro depois do
+seu próprio texto**:
+
+> "Sua última resposta ainda não foi salva — o texto está guardado neste
+> dispositivo. **Esta história já foi enviada e não pode mais ser editada.**"
+
+E a primeira metade era **falsa duas vezes**: não havia gravação pendente, e o
+texto não estava guardado no dispositivo — `runPersist` chama
+`clearStoryCache` exatamente nesse caso, comentando que "nenhuma tentativa
+futura desta aba pode ter sucesso".
+
+**Correção, com o fato que já existia:** `status: StoryStatus`
+(`"rascunho" | "enviada"`), exposto pelo contexto desde sempre. História
+enviada ganhou ramo próprio, antes do de erro:
+
+> "Sua história já está com a Aliviar e não recebe mais edições. Um Curador vai
+> lê-la inteira."
+
+`STORY_ALREADY_SUBMITTED_ERROR` passou a ser exportada para que a comparação
+seja **contra a constante**, nunca por substring — o mesmo cuidado que o
+`sessionExpired` já tinha.
+
+**Zero domínio:** nenhuma migration, coluna, enum, RLS ou handoff. A regra de
+editabilidade não mudou; a tela passou a refleti-la.
+
+**Guardas** (`a5-1-rascunho-vs-enviada.test.tsx`, 8): rascunho fala de
+rascunho; enviada fala de enviada; as duas famílias nunca coexistem — inclusive
+no caminho exato do defeito, com o servidor recusando; autosave confirmado não
+faz a história parecer enviada; e nenhuma das três fontes toca `meetingHeldAt`.
+Desligar a distinção derruba duas delas.
+
+## 7 · Gaps registrados
 - **Os outros cinco passos** (`para-quem`, `preferencias`, `continuar`,
   `revisao`, capa) receberam a correção de moldura, mas não uma passagem de
   densidade campo a campo. O frame está resolvido; o interior de cada passo
