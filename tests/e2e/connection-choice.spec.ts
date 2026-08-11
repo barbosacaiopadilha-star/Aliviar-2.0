@@ -34,6 +34,7 @@ function loadTestAccounts(): Array<{ role: string; email: string; password: stri
 // à suíte que prova o portão de entrega.
 import {
   cleanupFixture,
+  removerPacienteSintetico,
   seedDeliveredCase,
 
   type DeliveredFixture,
@@ -608,9 +609,17 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
       await service.from("connection_records").delete().eq("case_id", caso.id);
 
       await cleanupLegacyAceChain(service, legada);
+
+      // B3-CLEANUP · era AQUI que o Case vazava. `deleteUser` sozinho devolvia
+      // 500 (`patient_story_versions_created_by_fkey`, SQLSTATE 23503) porque a
+      // história criada logo acima prende `curadoria.profiles` sem cascade — e
+      // o `.catch(() => undefined)` escondia o erro. A conta ficava, o perfil
+      // ficava, e o Case junto: dez deles acumulados no banco local sem
+      // nenhum teste ficar vermelho.
+      await removerPacienteSintetico(service, paciente.profileId, caso.id);
+
       await service.from("professional_competency_areas").delete().in("professional_profile_id", providerProfileIds);
       await service.from("professional_profiles").delete().in("id", providerProfileIds);
-      await service.auth.admin.deleteUser(paciente.profileId).catch(() => undefined);
     }
   });
 });

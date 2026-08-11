@@ -358,6 +358,107 @@ export async function seedDeliveredCase(
   };
 }
 
+/**
+ * Remove POR INTEIRO um paciente sintético — e prova que removeu.
+ *
+ * A versão anterior confiava em `auth.admin.deleteUser` para cascatear
+ * `auth.users → curadoria.profiles → cases`. A cascata existe (`profiles_id_fkey`
+ * é ON DELETE CASCADE), mas `deleteUser` NUNCA chegava a executá-la: ~60 chaves
+ * estrangeiras apontam para `curadoria.profiles` sem cascade, e três delas são
+ * criadas pela própria fixture — `patient_stories.created_by`,
+ * `patient_story_versions.created_by` e `crm_contacts.patient_profile_id`. O
+ * GoTrue devolvia 500 (SQLSTATE 23503) e ninguém lia:
+ *
+ *   cleanupFixture  → o erro do `deleteUser` era descartado sem checagem;
+ *   H4 (e2e legado) → `.catch(() => undefined)` engolia o mesmo 500.
+ *
+ * Resultado medido na B3-CLEANUP: 10 Cases e centenas de contas sintéticas
+ * acumuladas no banco local, sem que nenhum teste ficasse vermelho.
+ *
+ * A ordem abaixo não é estilo — é a topologia real das FKs:
+ *
+ *   1. `connection_events` sai antes das `connection_records` que os contêm;
+ *   2. o **Case** é a porta de saída de quase toda a cadeia (39 FKs apontam
+ *      para ele, quase todas em cascade) e precisa sair ANTES da história,
+ *      porque `cases.source_story_id` NÃO cascateia;
+ *   3. `patient_stories` leva junto as `patient_story_versions` (cascade);
+ *   4. `crm_contacts` prende o perfil e não cascateia;
+ *   5. só então o perfil, os papéis e a conta.
+ *
+ * Cada passo lê o próprio erro, e o Case esperado é EXIGIDO: zero linhas
+ * afetadas passa a ser falha, nunca silêncio.
+ */
+export async function removerPacienteSintetico(
+  adminClient: ReturnType<typeof createAdminSupabaseClient>,
+  profileId: string,
+  caseIdEsperado?: string,
+): Promise<{ casesRemovidos: string[] }> {
+  const conexoes = await exigirSucesso(
+    "ler connection_records",
+    adminClient.from("connection_records").select("id").eq("patient_profile_id", profileId),
+  );
+  for (const conexao of (conexoes ?? []) as Array<{ id: string }>) {
+    await exigirSucesso(
+      "apagar connection_events",
+      adminClient.from("connection_events").delete().eq("connection_id", conexao.id).select(),
+    );
+  }
+
+  const removidos = (await exigirSucesso(
+    "apagar cases",
+    adminClient.from("cases").delete().eq("patient_profile_id", profileId).select("id"),
+  )) as Array<{ id: string }> | null;
+  const casesRemovidos = (removidos ?? []).map((c) => c.id);
+
+  if (caseIdEsperado && !casesRemovidos.includes(caseIdEsperado)) {
+    throw new Error(
+      `o Case ${caseIdEsperado} não saiu do banco: o DELETE afetou ${casesRemovidos.length} linha(s) ` +
+        `(${casesRemovidos.join(", ") || "nenhuma"}). Sem isto, o perfil seria removido e o Case ficaria órfão.`,
+    );
+  }
+
+  await exigirSucesso(
+    "apagar patient_stories",
+    adminClient.from("patient_stories").delete().eq("profile_id", profileId).select(),
+  );
+  await exigirSucesso(
+    "apagar crm_contacts",
+    adminClient.from("crm_contacts").delete().eq("patient_profile_id", profileId).select(),
+  );
+  await exigirSucesso(
+    "apagar patient_profiles",
+    adminClient.from("patient_profiles").delete().eq("profile_id", profileId).select(),
+  );
+  await exigirSucesso(
+    "apagar user_roles",
+    adminClient.from("user_roles").delete().eq("profile_id", profileId).select(),
+  );
+
+  // O erro que ficava invisível. Se algo ainda prender o perfil, é AQUI que se
+  // descobre — em vez de virar resíduo silencioso no banco compartilhado.
+  const { error } = await adminClient.auth.admin.deleteUser(profileId);
+  if (error) {
+    throw new Error(
+      `apagar a conta sintética ${profileId} falhou (${error.status ?? "?"}): ${error.message}. ` +
+        "Alguma tabela ainda referencia curadoria.profiles sem cascade — veja o log do supabase_auth.",
+    );
+  }
+
+  return { casesRemovidos };
+}
+
+/** Lê o `.error` de cada operação: silêncio deixou de ser resultado aceitável. */
+async function exigirSucesso<T>(
+  rotulo: string,
+  operacao: PromiseLike<{ data: T | null; error: { message: string } | null }>,
+): Promise<T | null> {
+  const { data, error } = await operacao;
+  if (error) {
+    throw new Error(`limpeza da fixture — ${rotulo}: ${error.message}`);
+  }
+  return data;
+}
+
 export async function cleanupFixture(fixture: DeliveredFixture | undefined) {
   // A preparação pode ter falhado antes de produzir a fixture. Sem esta
   // guarda, o cleanup lança um TypeError que aparece no relatório NO LUGAR do
@@ -393,23 +494,7 @@ export async function cleanupFixture(fixture: DeliveredFixture | undefined) {
     return;
   }
 
-  await adminClient
-    .from("cases")
-    .delete()
-    .eq("patient_profile_id", fixture.patientProfileId);
-  await adminClient
-    .from("patient_stories")
-    .delete()
-    .eq("profile_id", fixture.patientProfileId);
-  await adminClient
-    .from("patient_profiles")
-    .delete()
-    .eq("profile_id", fixture.patientProfileId);
-  await adminClient
-    .from("user_roles")
-    .delete()
-    .eq("profile_id", fixture.patientProfileId);
-  await adminClient.auth.admin.deleteUser(fixture.patientProfileId);
+  await removerPacienteSintetico(adminClient, fixture.patientProfileId, fixture.caseId);
 
   await removerProfissionais();
 }
