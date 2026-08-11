@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { loadPatientCuradoria } from "@/modules/curadoria/patient-curadoria";
+import { resolveCurrentResponsible } from "@/modules/coa/journey-responsibility";
 import { getPatientDecision, registerPatientDecision } from "@/modules/curadoria/repository";
 
 import {
@@ -31,6 +32,7 @@ describe("B3 · §1 · a decisão persiste?", () => {
   const admin = createAdminSupabaseClient();
 
   let entregue: DeliveredFixture;
+  const outrasFixtures: DeliveredFixture[] = [];
 
   async function comoPaciente(fixture: DeliveredFixture) {
     const cliente = createCuradoriaClient(url, anonKey);
@@ -59,6 +61,7 @@ describe("B3 · §1 · a decisão persiste?", () => {
 
   afterAll(async () => {
     await cleanupFixture(entregue);
+    for (const f of outrasFixtures) await cleanupFixture(f);
   }, 300_000);
 
   it("T-B3-1 · ANTES 0 · escrita · DEPOIS 1 — a linha persiste", async () => {
@@ -120,5 +123,109 @@ describe("B3 · §1 · a decisão persiste?", () => {
     );
 
     expect(await decisoesDaSelecao(entregue.curatedSelectionId)).toBe(1);
+  }, 120_000);
+
+  // ---------------------------------------------------------------------------
+  describe("T-B3-11 · a decisão deixa trilha, gravada pelo banco", () => {
+    it("um INSERT legítimo produz exatamente uma entrada patient_curadoria_decided", async () => {
+      const { data } = await admin
+        .schema("curadoria")
+        .from("audit_logs")
+        .select("actor_id, target_profile_id, metadata")
+        .eq("action", "patient_curadoria_decided")
+        .eq("target_profile_id", entregue.patientProfileId);
+
+      const desta = (data ?? []).filter(
+        (l) => (l.metadata as Record<string, unknown>)?.curated_selection_id === entregue.curatedSelectionId,
+      );
+
+      expect(desta).toHaveLength(1);
+      expect(desta[0].actor_id).toBe(entregue.patientProfileId);
+      expect((desta[0].metadata as Record<string, unknown>).outcome).toBe("CHOSEN");
+    });
+
+    it("a trilha não carrega a nota que ela escreveu", async () => {
+      const { data } = await admin
+        .schema("curadoria")
+        .from("audit_logs")
+        .select("metadata")
+        .eq("action", "patient_curadoria_decided")
+        .eq("target_profile_id", entregue.patientProfileId);
+
+      for (const linha of data ?? []) {
+        expect(Object.keys(linha.metadata as object)).not.toContain("note");
+      }
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  describe("T-B3-4 / T-B3-5 · o handoff deriva da decisão, e só dela", () => {
+    const base = {
+      historia: { understandingConfirmedAt: new Date().toISOString() },
+      validacao: null,
+    };
+
+    it("T-B3-5 · entregue e SEM decisão → Curador", () => {
+      const responsavel = resolveCurrentResponsible({
+        pipelineStage: null,
+        curatorName: "Curadora do Case",
+        conciergeName: "Equipe Aliviar",
+        curadoriaRecord: {
+          ...base,
+          relatorio: { emittedAt: new Date().toISOString(), deliveredAt: new Date().toISOString() },
+          devolutiva: { presentedAt: new Date().toISOString(), decision: null },
+        } as never,
+      });
+
+      // Entregue E apresentada, e ainda assim o Curador: nenhum carimbo faz
+      // handoff — só a decisão faz.
+      expect(responsavel.role).toBe("curador");
+    });
+
+    it("T-B3-4 · com decisão → Concierge", () => {
+      const responsavel = resolveCurrentResponsible({
+        pipelineStage: null,
+        curatorName: "Curadora do Case",
+        conciergeName: null,
+        curadoriaRecord: {
+          ...base,
+          relatorio: { emittedAt: new Date().toISOString(), deliveredAt: new Date().toISOString() },
+          devolutiva: {
+            presentedAt: null,
+            decision: { outcome: "CHOSEN", chosenProfessionalId: "x", justification: null, decidedAt: new Date().toISOString() },
+          },
+        } as never,
+      });
+
+      expect(responsavel.role).toBe("concierge");
+      // Sem identidade persistida de Concierge, o fallback é institucional —
+      // nunca um nome inventado (§10 da B3, GAP-D12-C1 preservado).
+      expect(responsavel.name).toBe("Equipe Aliviar");
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  describe("T-B3-8 / T-B3-9 · quem NÃO decide", () => {
+    it("T-B3-9 · a paciente não decide seleção alheia", async () => {
+      const outra = await seedDeliveredCase();
+      outrasFixtures.push(outra);
+
+      const cliente = await comoPaciente(entregue);
+      await expect(
+        registerPatientDecision(cliente, outra.caseId, outra.curatedSelectionId, "NONE_OF_THEM", null, null),
+      ).rejects.toThrow();
+
+      expect(await decisoesDaSelecao(outra.curatedSelectionId)).toBe(0);
+    }, 300_000);
+  });
+
+  // ---------------------------------------------------------------------------
+  it("T-B3-12 · Minha Curadoria continua consultável depois da decisão", async () => {
+    const cliente = await comoPaciente(entregue);
+    const curadoria = await loadPatientCuradoria(cliente);
+
+    expect(curadoria).not.toBeNull();
+    expect(curadoria?.options).toHaveLength(3);
+    expect(curadoria?.decision).not.toBeNull();
   }, 120_000);
 });
