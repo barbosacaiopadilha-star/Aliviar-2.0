@@ -310,10 +310,21 @@ export async function seedDeliveredCase(
     // seleção humana —, não para as opções do Relatório. O contrato 27 §F já
     // dizia "chave: curated_selection_options.id"; usei a tabela errada e a
     // FK recusou.
+    // A opção é localizada pelo PROFISSIONAL, nunca por posição: esta consulta
+    // não tem `order by`, e o Postgres não garante ordem — pegar `[0]` fazia a
+    // pessoa decidida variar entre execuções e não corresponder a
+    // `selectedProfessionals[0]`, que é por onde os testes a encontram.
     const { data: opcoesDaSelecao } = await cliente
       .from("curated_selection_options")
-      .select("id")
+      .select("id, professional_profile_id")
       .eq("curated_selection_id", selection!.id);
+
+    const opcaoDecidida = (opcoesDaSelecao ?? []).find(
+      (o) => o.professional_profile_id === tres[0]!.professionalId,
+    );
+    if (!opcaoDecidida) {
+      throw new Error("Fixture: opção do primeiro profissional não encontrada na seleção.");
+    }
 
     const pacienteCliente = createCuradoriaClient(url, anonKey);
     await pacienteCliente.auth.signInWithPassword({
@@ -326,7 +337,7 @@ export async function seedDeliveredCase(
         case_id: created.id,
         curated_selection_id: selection!.id,
         outcome: opcoes.decidir,
-        chosen_option_id: opcoes.decidir === "CHOSEN" ? opcoesDaSelecao![0]!.id : null,
+        chosen_option_id: opcoes.decidir === "CHOSEN" ? opcaoDecidida.id : null,
       });
     if (erroDecisao) throw new Error(`Fixture: decisao nao registrada: ${erroDecisao.message}`);
   }
