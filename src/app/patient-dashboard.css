@@ -196,11 +196,10 @@
   inset: -2%;
   z-index: -2;
   background-size: cover;
-  /* MASTER-1 · o enquadramento pende para a direita, também no mobile.
-     Centralizado, o logotipo gravado na parede da recepção ficava atrás do
-     nome de quem chegou. Aqui o corte favorece o balcão e a luminária —
-     mesmo ambiente, sem nada para ler. */
-  background-position: 70% 38%;
+  /* Padrão das cenas SEM texto — os corredores e a sala de saída. A recepção
+     tem o logotipo gravado na parede e declara o próprio enquadramento em
+     `STAGE_AMBIENCES`, porque uma regra aqui valeria para as seis. */
+  background-position: center 35%;
   /* A3b (adendo) · 0.4 sob um véu de 88–96% apagava o ambiente. A landing
      mostra a MESMA fotografia a 62% (`imageOpacity={62}` no hero editorial),
      e é esse o alvo: quem entra tem de reconhecer o lugar onde estava. */
@@ -222,19 +221,6 @@
   }
 }
 
-@media (min-width: 1024px) {
-  /* MASTER-1 · o recorte tira o logotipo da parede de trás do título.
-     O hero é muito mais largo que alto, então `cover` mostra a LARGURA INTEIRA
-     da fotografia — e o logotipo da recepção, que fica no centro dela, caía
-     bem atrás de "Boa noite, <nome>". Dois logotipos disputando a mesma linha.
-     Ajustar o véu não resolveu: o problema é enquadramento, não opacidade.
-     Aqui a moldura passa a mostrar a metade direita — balcão, luminária e
-     oliveira, o mesmo ambiente, sem nada para ler. */
-  .patient-dashboard .patient-hero__scene {
-    background-size: 220% auto;
-    background-position: 100% 45%;
-  }
-}
 
 .patient-dashboard .patient-hero__veil {
   position: absolute;

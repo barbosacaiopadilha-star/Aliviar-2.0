@@ -178,14 +178,29 @@ sendo a recepção; ela só voltou ao lugar que o master lhe deu.
 reaparecia atrás de "Boa noite, ⟨nome⟩". Ajustar o véu não bastou: o problema
 era enquadramento.
 
-| | valor |
-|---|---|
-| desktop (≥1024px) | `background-size: 220% auto` · `background-position: 100% 45%` |
-| mobile | `background-size: cover` · `background-position: 70% 38%` |
-| véu | `95% → 90% (40%) → 62% (58%) → 40%` — denso onde o texto mora |
+**MASTER-1.1 · o recorte, agora medido.** A primeira tentativa (220% no
+desktop, `70% 38%` no mobile) foi estimada, e sobrou vestígio nos dois — no
+mobile, bem visível. O lockup foi então **localizado**, fatiando a fotografia em
+faixas verticais com `sharp`:
 
-Nos dois casos aparece o mesmo ambiente — balcão, luminária, oliveira — sem
-nada para ler. **Mesma imagem nos dois viewports**, só o recorte muda (§5).
+| faixa | conteúdo | lockup |
+|---|---|---|
+| 0%–34% | ripado de madeira, oliveira, vaso, balcão | não |
+| **34%–62%** | parede de travertino com o logotipo gravado | **sim** |
+| 62%–100% | balcão, luminária de cúpula, divisória de vidro, oliveira | não |
+
+`280% auto` a partir de `100% 42%` mostra os **36% da direita** — começa em
+64%, com folga sobre o fim do lockup. Um valor só, desktop e mobile: **a mesma
+imagem, o mesmo recorte**, e nenhum dos dois exibe o logotipo.
+
+O véu não foi tocado nesta correção: o defeito era enquadramento, e foi
+resolvido por enquadramento.
+
+**E o enquadramento saiu do CSS.** Uma regra em `.patient-hero__scene` vale
+para as **seis** cenas, e os corredores não têm nada escrito — apertá-los para
+consertar a recepção seria estragar cinco para corrigir uma. O recorte passou a
+ser um campo opcional de `StageAmbience` (`enquadramento`), declarado ao lado
+da cena. Só a recepção tem.
 
 ### Guardas
 

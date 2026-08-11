@@ -29,6 +29,21 @@ export type AmbienceTone =
 export type StageAmbience = {
   /** Chave da cena real da Aliviar. */
   scene: string;
+  /**
+   * Enquadramento próprio, quando o padrão (`cover`, centrado) mostra algo que
+   * não deveria ficar atrás do texto.
+   *
+   * Existe por um caso concreto: a recepção tem o **logotipo gravado na
+   * parede**, e ele caía atrás de "Boa noite, ⟨nome⟩" — o logotipo da
+   * fotografia disputando a linha com o nome de quem chegou. O lockup ocupa a
+   * faixa de 34% a 62% da largura da imagem; recortar fora dela resolve sem
+   * véu, sem blur e sem trocar de ambiente.
+   *
+   * Fica aqui, e não no CSS, porque o CSS vale para TODAS as etapas — e os
+   * corredores não têm nada escrito. Apertar o enquadramento deles para
+   * corrigir a recepção seria estragar seis cenas para consertar uma.
+   */
+  enquadramento?: { size: string; position: string };
   tone: AmbienceTone;
   /** A sensação que esta etapa precisa transmitir, em uma palavra. */
   sensation: string;
@@ -46,6 +61,10 @@ export type StageAmbience = {
 export const STAGE_AMBIENCES: Record<JornadaStageId, StageAmbience> = {
   CONSULTA_INICIAL: {
     scene: ALIVIAR_SCENES.recepcao,
+    // 280% mostra os 36% da direita — a partir de 64%, com folga sobre o fim
+    // do lockup (62%). O que aparece é balcão, luminária de cúpula, oliveira e
+    // travertino: a mesma recepção, sem nada para ler.
+    enquadramento: { size: "280% auto", position: "100% 42%" },
     tone: "ACOLHIMENTO",
     sensation: "Acolhimento",
     message: "Estamos começando a conhecer sua história.",

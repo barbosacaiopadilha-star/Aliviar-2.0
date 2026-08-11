@@ -47,7 +47,17 @@ export function AmbientHero({
     <section className="patient-hero patient-fade-in" aria-labelledby="patient-hero-title">
       <div
         className="patient-hero__scene"
-        style={{ backgroundImage: `url(${ambience.scene})` }}
+        style={{
+          backgroundImage: `url(${ambience.scene})`,
+          // Cena com enquadramento próprio sobrescreve o padrão do CSS. Hoje
+          // só a recepção tem: é a única com texto na parede.
+          ...(ambience.enquadramento
+            ? {
+                backgroundSize: ambience.enquadramento.size,
+                backgroundPosition: ambience.enquadramento.position,
+              }
+            : null),
+        }}
         aria-hidden="true"
       />
       <div className="patient-hero__veil" aria-hidden="true" />
