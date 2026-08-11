@@ -2,6 +2,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { ALIVIAR_SCENES, type AliviarSceneKey } from "@/lib/aliviar-environments";
 import { ambienceFor, heroGreeting, STAGE_AMBIENCES } from "@/modules/paciente/ambiente";
 import {
   STAGE_EYEBROWS,
@@ -118,10 +119,31 @@ describe("MASTER-0B · nenhum edifício alheio na experiência da paciente", () 
     );
   });
 
-  it("o fallback aponta para uma imagem que existe e é do conjunto Aliviar", () => {
-    const cena = ambienceFor("DOSSIE").scene;
-    expect(cena).toBe("/scenes/recepcao.jpg");
-    expect(existsSync(path.resolve(process.cwd(), "public", cena.replace(/^\//, "")))).toBe(true);
+  /**
+   * MASTER-1 · o fallback acabou. Esta asserção era `/scenes/recepcao.jpg` — o
+   * placeholder que segurou o DOSSIE enquanto o pacote oficial não existia.
+   * Agora ela cobra o contrário: **toda** etapa vem do pacote, e nenhuma pode
+   * escapar para o conjunto legado.
+   */
+  it("toda etapa usa o pacote arquitetônico oficial", () => {
+    const oficiais = new Set(Object.values(ALIVIAR_SCENES));
+    for (const stage of JORNADA_STAGES) {
+      const cena = ambienceFor(stage).scene;
+      expect(cena, `${stage} usa cena fora do pacote oficial: ${cena}`).toMatch(
+        /^\/scenes\/master\//,
+      );
+      expect(oficiais.has(cena as (typeof ALIVIAR_SCENES)[AliviarSceneKey]), stage).toBe(true);
+      expect(existsSync(path.resolve(process.cwd(), "public", cena.replace(/^\//, "")))).toBe(true);
+    }
+  });
+
+  it("os quatro ambientes do pacote existem em disco", () => {
+    for (const [chave, caminho] of Object.entries(ALIVIAR_SCENES)) {
+      expect(
+        existsSync(path.resolve(process.cwd(), "public", caminho.replace(/^\//, ""))),
+        `ambiente oficial ausente: ${chave} → ${caminho}`,
+      ).toBe(true);
+    }
   });
 });
 

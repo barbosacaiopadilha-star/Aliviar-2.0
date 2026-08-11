@@ -1,13 +1,35 @@
-/** Cenas reais da Aliviar — ambientes físicos de acolhimento e curadoria. */
+/**
+ * O EDIFÍCIO DA ALIVIAR — pacote arquitetônico oficial (Master Visual).
+ *
+ * Quatro ambientes do mesmo prédio, aprovados como fonte de verdade visual.
+ * A regra que eles existem para sustentar:
+ *
+ *   antes do login, a paciente **conhece** a Aliviar;
+ *   depois do login, a paciente **entra** na Aliviar.
+ *
+ * Por isso landing e área autenticada bebem desta mesma tabela: nenhuma
+ * superfície escolhe fotografia por conta própria.
+ *
+ * **As chaves antigas saíram de propósito.** `landingHero`, `landingAtrium`,
+ * `patientStudy` e `patientReading` apontavam para um conjunto anterior — e uma
+ * delas, `landingAtrium`, para `grand-finale.jpg`, que a auditoria provou não
+ * ser sequer o edifício da Aliviar: um apartamento vazio genérico, com luz
+ * fria, armários escuros e radiador. Ele chegou a ficar atrás da casa inteira
+ * da paciente porque o nome da chave dizia "atrium" e ninguém abriu o arquivo.
+ *
+ * Remover as chaves em vez de repontá-las é deliberado: o TypeScript passa a
+ * recusar qualquer superfície que tente voltar ao conjunto antigo. Os arquivos
+ * seguem em `public/scenes/` como legado — o que não sobrevive é o atalho.
+ */
 export const ALIVIAR_SCENES = {
-  /** Recepção iluminada — primeira dobra da landing (refúgio seguro). */
-  landingHero: "/scenes/recepcao-bright.jpg",
-  /** Sala ampla com luz natural — seções de impacto na landing. */
-  landingAtrium: "/scenes/grand-finale.jpg",
-  /** Detalhe íntimo com arte e planta — dashboard do paciente (diário de bordo). */
-  patientStudy: "/scenes/cena-6-detalhe.jpg",
-  /** Sala de leitura reservada — variação complementar do dashboard. */
-  patientReading: "/scenes/cena-5-quadro-planta.jpg",
+  /** 01 · Recepção — a chegada. Hero da landing e da Home na Consulta Inicial. */
+  recepcao: "/scenes/master/aliviar-01-recepcao.jpg",
+  /** 02 · Corredor de consultas — o percurso clínico, com privacidade. */
+  consultas: "/scenes/master/aliviar-02-corredor-consultas.jpg",
+  /** 03 · Corredor de transição — entre etapas; é o campo atmosférico da casa. */
+  transicao: "/scenes/master/aliviar-03-corredor-transicao.jpg",
+  /** 04 · Despedida — encerramento de etapa e continuidade do acompanhamento. */
+  despedida: "/scenes/master/aliviar-04-despedida.jpg",
 } as const;
 
 export type AliviarSceneKey = keyof typeof ALIVIAR_SCENES;

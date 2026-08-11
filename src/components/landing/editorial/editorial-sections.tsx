@@ -148,7 +148,7 @@ export function RespiroSection() {
  */
 export function MetodoSection() {
   return (
-    <LandingSection variant="warm" atmosphere="landingAtrium" spacing="densa">
+    <LandingSection variant="warm" atmosphere="consultas" spacing="densa">
       <div className="mx-auto max-w-2xl">
         <div className="landing-reveal">
           <LandingEyebrow>O Método</LandingEyebrow>
@@ -202,7 +202,7 @@ export function MetodoSection() {
  */
 export function PrioridadesSection() {
   return (
-    <LandingSection variant="warm" atmosphere="landingAtrium" spacing="media">
+    <LandingSection variant="warm" atmosphere="despedida" spacing="media">
       <div className="grid gap-14 lg:grid-cols-2 lg:gap-24">
         <div className="landing-reveal">
           <h2 className="landing-heading text-3xl lg:text-[2.625rem]">Suas prioridades, nas suas palavras.</h2>

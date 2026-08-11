@@ -14,6 +14,7 @@
  * `jornada.ts`, a mensagem vem de `experiencia.ts`. Aqui mora só a atmosfera.
  */
 
+import { ALIVIAR_SCENES } from "@/lib/aliviar-environments";
 import type { JornadaStageId } from "@/modules/curadoria/jornada";
 
 /** Como o ambiente se comporta — usado para escolher o tratamento visual. */
@@ -44,67 +45,53 @@ export type StageAmbience = {
  */
 export const STAGE_AMBIENCES: Record<JornadaStageId, StageAmbience> = {
   CONSULTA_INICIAL: {
-    scene: "/scenes/recepcao-bright.jpg",
+    scene: ALIVIAR_SCENES.recepcao,
     tone: "ACOLHIMENTO",
     sensation: "Acolhimento",
     message: "Estamos começando a conhecer sua história.",
-    sceneDescription: "A recepção da Aliviar em luz de manhã — o lugar de chegada.",
+    sceneDescription: "A recepção da Aliviar, em travertino e luz quente — o lugar de chegada.",
   },
   PERFIL_DE_PRIORIDADES: {
-    scene: "/scenes/cena-5-quadro-planta.jpg",
+    scene: ALIVIAR_SCENES.consultas,
     tone: "CONHECIMENTO",
     sensation: "Conhecimento",
     message: "Estamos entendendo o que é importante para você.",
-    sceneDescription: "Uma sala de leitura com luz natural, madeira e papel organizado.",
+    sceneDescription: "O corredor das consultas, com quadro em tons de verde e poltronas ao fundo.",
   },
   CURADORIA: {
-    scene: "/scenes/cena-6-detalhe.jpg",
+    scene: ALIVIAR_SCENES.consultas,
     tone: "TRABALHO",
     sensation: "Curador trabalhando",
     message: "Seu Curador está analisando cuidadosamente o seu caso.",
-    sceneDescription: "Uma mesa de trabalho sob luz focada, com documentos abertos.",
+    sceneDescription: "O corredor das consultas, em silêncio, com luz linear rente ao chão.",
   },
   DOSSIE: {
-    // FALLBACK TEMPORÁRIO — aguarda pacote arquitetônico oficial do Master Visual.
-    //
-    // Esta etapa usava `grand-finale.jpg`, que a auditoria de assets provou
-    // NÃO ser o edifício da Aliviar: é um apartamento vazio genérico, com luz
-    // fria, armários escuros, piso laminado e radiador. Era o último lugar da
-    // experiência da paciente onde o prédio alheio ainda aparecia.
-    //
-    // `recepcao.jpg` é o único asset Aliviar já auditado que estava ocioso —
-    // trocar por qualquer outro tiraria a cena de uma etapa vizinha. O custo
-    // está registrado: ele é quase idêntico ao de `CONSULTA_INICIAL`, então a
-    // jornada perde, por ora, a distinção visual entre a chegada e o Relatório.
-    // O conjunto Aliviar existente não tem um "ambiente amplo e aberto".
-    scene: "/scenes/recepcao.jpg",
+    scene: ALIVIAR_SCENES.despedida,
     tone: "CLAREZA",
     sensation: "Clareza",
     message: "Conseguimos organizar tudo para você.",
-    // A descrição acompanha a imagem: quem usa leitor de tela recebia
-    // "ambiente amplo e aberto" para uma foto que deixou de existir aqui.
-    sceneDescription: "A recepção da Aliviar, ampla e clara, com a luz entrando por inteiro.",
+    sceneDescription: "Uma sala clara de saída, com poltrona, oliveiras e luz de fim de tarde.",
   },
   REUNIAO: {
-    scene: "/scenes/cena-2-recepcao-proxima.jpg",
+    scene: ALIVIAR_SCENES.consultas,
     tone: "CONVERSA",
     sensation: "Conversa",
     message: "Agora vamos conhecer os caminhos encontrados.",
-    sceneDescription: "Poltronas em volta de uma mesa baixa, preparadas para uma conversa.",
+    sceneDescription: "Duas poltronas e uma mesa baixa ao fim do corredor, preparadas para conversar.",
   },
   ESCOLHA: {
-    scene: "/scenes/cena-4-transicao.jpg",
+    scene: ALIVIAR_SCENES.transicao,
     tone: "CONVERSA",
     sensation: "Conversa",
     message: "Agora vamos conhecer os caminhos encontrados.",
-    sceneDescription: "Uma passagem de luz suave entre dois ambientes.",
+    sceneDescription: "O corredor de transição, com luz suave conduzindo de um ambiente ao outro.",
   },
   ACOMPANHAMENTO: {
-    scene: "/scenes/cena-3-corredor.jpg",
+    scene: ALIVIAR_SCENES.despedida,
     tone: "CONTINUIDADE",
     sensation: "Continuidade",
     message: "Seguimos ao seu lado durante a próxima etapa da sua jornada.",
-    sceneDescription: "Um corredor claro que segue adiante, com vista para fora.",
+    sceneDescription: "A sala de saída, clara e aberta, de onde o acompanhamento continua.",
   },
 };
 

@@ -146,6 +146,71 @@ aparece uma emenda na altura da viewport (~900px), onde a arquitetura termina �
 
 ---
 
+## MASTER-1 — o pacote arquitetônico oficial
+
+Quatro ambientes do mesmo edifício, aprovados como Master Visual, entregues em
+2560×1440 e instalados em `public/scenes/master/`.
+
+| ambiente | arquivo | landing | área da paciente | opacidade |
+|---|---|---|---|---|
+| **01 Recepção** | `aliviar-01-recepcao.jpg` | cartaz do vídeo (a âncora) | hero em `CONSULTA_INICIAL` | 62% |
+| **02 Corredor de consultas** | `aliviar-02-corredor-consultas.jpg` | banda "O Método" | `PERFIL_DE_PRIORIDADES` · `CURADORIA` · `REUNIAO` | 16% / 62% |
+| **03 Corredor de transição** | `aliviar-03-corredor-transicao.jpg` | **fundo do hero** | **campo atmosférico da casa** · `ESCOLHA` | 62% / 16% |
+| **04 Despedida** | `aliviar-04-despedida.jpg` | banda "Suas prioridades" | `DOSSIE` · `ACOMPANHAMENTO` | 16% / 62% |
+
+**Componente:** `ImmersiveBackdrop` em ambos os lados — `landing-hero` na
+fachada, `patient-intimate` na casa. **Logo:** o `aliviar-logo-oficial.jpeg` do
+pacote é **byte-idêntico** (mesmo MD5) ao `public/brand/logo-aliviar.jpeg` que
+já existia. Nada a importar.
+
+### Dois desvios do mapeamento inicial, e por quê
+
+**1 · O fundo do hero da Landing não é a recepção — é o corredor.** A recepção
+entrou primeiro, como o §1 pedia, e o **logotipo gravado na parede dela caiu
+atrás do título**: dois logotipos disputando a mesma linha. A própria
+referência oficial não faz isso — nela a recepção aparece **dentro do cartão do
+vídeo**, e o fundo da faixa é um ambiente sem nada escrito. A âncora continua
+sendo a recepção; ela só voltou ao lugar que o master lhe deu.
+
+**2 · O hero da Home recorta a recepção.** Ali o §1 é literal (`01` em
+`CONSULTA_INICIAL`) e foi mantido. O hero é muito mais largo que alto, então
+`cover` mostrava a **largura inteira** da fotografia e o mesmo logotipo
+reaparecia atrás de "Boa noite, ⟨nome⟩". Ajustar o véu não bastou: o problema
+era enquadramento.
+
+| | valor |
+|---|---|
+| desktop (≥1024px) | `background-size: 220% auto` · `background-position: 100% 45%` |
+| mobile | `background-size: cover` · `background-position: 70% 38%` |
+| véu | `95% → 90% (40%) → 62% (58%) → 40%` — denso onde o texto mora |
+
+Nos dois casos aparece o mesmo ambiente — balcão, luminária, oliveira — sem
+nada para ler. **Mesma imagem nos dois viewports**, só o recorte muda (§5).
+
+### Guardas
+
+`tests/unit/paciente-ambiente.test.ts`: toda etapa vem de `/scenes/master/` e
+de `ALIVIAR_SCENES`; os quatro arquivos existem em disco; nenhum arquivo da
+experiência da paciente referencia o conjunto alheio.
+
+E uma guarda estrutural que não é teste: **as chaves antigas foram removidas do
+registro**. `landingHero`, `landingAtrium`, `patientStudy` e `patientReading`
+não existem mais — o TypeScript recusa qualquer superfície que tente voltar ao
+conjunto anterior.
+
+### ▸ ARQUIVOS PARA REVISÃO EXTERNA
+
+```
+evidencias/repaginacao/master-1/before/landing-desktop.png
+evidencias/repaginacao/master-1/after/landing-desktop.png
+evidencias/repaginacao/master-1/after/landing-mobile.png
+evidencias/repaginacao/master-1/before/home-com-caso-desktop.png
+evidencias/repaginacao/master-1/after/home-com-caso-desktop.png
+evidencias/repaginacao/master-1/after/home-com-caso-mobile.png
+```
+
+---
+
 ## Medição de overflow (§18/§19)
 
 `tests/e2e/a3a-medicao-overflow.spec.ts` — mede `scrollWidth` × `clientWidth` no

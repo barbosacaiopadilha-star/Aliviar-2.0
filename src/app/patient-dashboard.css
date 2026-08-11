@@ -185,6 +185,7 @@
   .patient-dashboard .patient-hero {
     padding: 4rem 3.5rem;
   }
+
 }
 
 /* A cena respira: 14s por ciclo, deslocamento de menos de 1% e variação de
@@ -195,7 +196,11 @@
   inset: -2%;
   z-index: -2;
   background-size: cover;
-  background-position: center 35%;
+  /* MASTER-1 · o enquadramento pende para a direita, também no mobile.
+     Centralizado, o logotipo gravado na parede da recepção ficava atrás do
+     nome de quem chegou. Aqui o corte favorece o balcão e a luminária —
+     mesmo ambiente, sem nada para ler. */
+  background-position: 70% 38%;
   /* A3b (adendo) · 0.4 sob um véu de 88–96% apagava o ambiente. A landing
      mostra a MESMA fotografia a 62% (`imageOpacity={62}` no hero editorial),
      e é esse o alvo: quem entra tem de reconhecer o lugar onde estava. */
@@ -217,19 +222,38 @@
   }
 }
 
+@media (min-width: 1024px) {
+  /* MASTER-1 · o recorte tira o logotipo da parede de trás do título.
+     O hero é muito mais largo que alto, então `cover` mostra a LARGURA INTEIRA
+     da fotografia — e o logotipo da recepção, que fica no centro dela, caía
+     bem atrás de "Boa noite, <nome>". Dois logotipos disputando a mesma linha.
+     Ajustar o véu não resolveu: o problema é enquadramento, não opacidade.
+     Aqui a moldura passa a mostrar a metade direita — balcão, luminária e
+     oliveira, o mesmo ambiente, sem nada para ler. */
+  .patient-dashboard .patient-hero__scene {
+    background-size: 220% auto;
+    background-position: 100% 45%;
+  }
+}
+
 .patient-dashboard .patient-hero__veil {
   position: absolute;
   inset: 0;
   z-index: -1;
-  /* A3b (adendo) · o véu do hero passa a ter a MESMA curva do hero da landing
-     (`landing-hero`: 88% → 45% → 90%): opaco onde o texto começa, aberto no
-     meio para o ambiente aparecer, fechando de novo na saída. O texto fica à
-     esquerda, que é justamente onde o véu é mais denso. */
+  /* MASTER-1 · o véu protege a METADE ESQUERDA, que é onde o texto mora.
+     A curva anterior abria aos 38% e o logotipo da parede da recepção — o
+     ambiente 01 do pacote oficial — caía bem atrás do título. Dois logotipos
+     disputando a mesma linha: o da marca, na parede, e o nome de quem chegou.
+
+     Agora o véu só abre depois dos 58%, onde o hero já não tem texto. O que
+     aparece à direita é a luminária, a oliveira e o balcão — arquitetura, sem
+     nada para ler. */
   background: linear-gradient(
-    105deg,
-    color-mix(in srgb, var(--color-bg-canvas) 92%, transparent) 0%,
-    color-mix(in srgb, var(--color-bg-canvas) 78%, transparent) 38%,
-    color-mix(in srgb, var(--color-bg-canvas-warm) 45%, transparent) 100%
+    100deg,
+    color-mix(in srgb, var(--color-bg-canvas) 95%, transparent) 0%,
+    color-mix(in srgb, var(--color-bg-canvas) 90%, transparent) 40%,
+    color-mix(in srgb, var(--color-bg-canvas) 62%, transparent) 58%,
+    color-mix(in srgb, var(--color-bg-canvas-warm) 40%, transparent) 100%
   );
 }
 

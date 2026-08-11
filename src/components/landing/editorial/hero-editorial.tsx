@@ -22,7 +22,18 @@ export function HeroEditorial({ videoSrc }: HeroEditorialProps = {}) {
 
   return (
     <section className="landing-hero-immersive">
-      <ImmersiveBackdrop scene="landingHero" variant="landing-hero" imageOpacity={62} priority />
+      {/* MASTER-1 · o fundo da faixa é o corredor; a recepção é o cartaz do
+          vídeo, logo abaixo.
+
+          A recepção (01) entrou aqui primeiro, por ser a âncora da Landing —
+          e o logotipo gravado na parede dela caiu bem atrás do título, dois
+          logotipos disputando a mesma linha. A própria referência oficial não
+          faz isso: nela a recepção aparece DENTRO do cartão do vídeo, e o
+          fundo da faixa é um ambiente sem nada escrito.
+
+          Então a âncora continua sendo a recepção — ela só volta ao lugar que
+          o master lhe deu. */}
+      <ImmersiveBackdrop scene="transicao" variant="landing-hero" imageOpacity={62} priority />
 
       <div className="relative z-10 mx-auto w-full max-w-content px-5 lg:px-10">
         <div className="landing-fade-in mx-auto max-w-3xl text-center">
@@ -57,7 +68,7 @@ export function HeroEditorial({ videoSrc }: HeroEditorialProps = {}) {
 
         {video.src ? (
           <div className="landing-approach mx-auto mt-20 max-w-4xl" style={{ animationDelay: "160ms" }}>
-            <HeroVideo src={video.src} posterScene={ALIVIAR_SCENES.landingHero} />
+            <HeroVideo src={video.src} posterScene={ALIVIAR_SCENES.recepcao} />
           </div>
         ) : null}
       </div>
