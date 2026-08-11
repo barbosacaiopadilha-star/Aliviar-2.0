@@ -2,7 +2,7 @@
 
 import { AutosaveIndicator } from "@/components/story/autosave-indicator";
 import { StoryAttachments } from "@/components/story/story-attachments";
-import { StoryStepLayout } from "@/components/story/story-step-layout";
+import { CAMPO_NARRATIVO, StoryStepLayout } from "@/components/story/story-step-layout";
 import { FormField } from "@/components/ui/form-field";
 import { Textarea } from "@/components/ui/textarea";
 import { useStoryDraft } from "@/modules/story/use-story-draft";
@@ -30,7 +30,7 @@ export default function InformacoesPage() {
           id="informacoes"
           name="informacoes"
           rows={5}
-          className="min-h-36"
+          className={CAMPO_NARRATIVO}
           value={data.informacoesImportantes ?? ""}
           onChange={(event) => update({ informacoesImportantes: event.target.value })}
         />

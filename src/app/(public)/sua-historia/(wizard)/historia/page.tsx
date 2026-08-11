@@ -1,7 +1,7 @@
 "use client";
 
 import { AutosaveIndicator } from "@/components/story/autosave-indicator";
-import { StoryStepLayout } from "@/components/story/story-step-layout";
+import { CAMPO_NARRATIVO, StoryStepLayout } from "@/components/story/story-step-layout";
 import { FormField } from "@/components/ui/form-field";
 import { Textarea } from "@/components/ui/textarea";
 import { useStoryDraft } from "@/modules/story/use-story-draft";
@@ -31,7 +31,7 @@ export default function HistoriaPage() {
           id="historia"
           name="historia"
           rows={7}
-          className="min-h-44"
+          className={CAMPO_NARRATIVO}
           value={data.historia ?? ""}
           onChange={(event) => update({ historia: event.target.value })}
         />

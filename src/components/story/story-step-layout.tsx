@@ -9,6 +9,25 @@ import { SectionReveal } from "@/components/ui/section-reveal";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 
+/**
+ * O campo de resposta narrativa — papel, e do tamanho de uma fala.
+ *
+ * A5 · o `Textarea` da casa é primitivo compartilhado (Mesa, admin, portal), e
+ * mexer nele para melhorar a Recepção mudaria dezenas de telas. Aqui vai só o
+ * que "Sua História" precisa, por cima dele:
+ *
+ * - **papel quente, opaco.** Era `bg-surface`, branco puro, flutuando sobre a
+ *   arquitetura — a caixa de sistema que o §17 proíbe. Sólido também é o que
+ *   permite manter a atmosfera atrás sem disputar a leitura (§16).
+ * - **altura e corpo de texto de resposta aberta.** Sete linhas num campo de
+ *   14px trata a história de alguém como observação de cadastro. Quem escreve
+ *   aqui está contando o que está vivendo (§10).
+ * - **fio discreto no lugar da borda de formulário**, e o foco continua sendo
+ *   o do sistema — acessibilidade não é o que estamos repaginando.
+ */
+export const CAMPO_NARRATIVO =
+  "min-h-56 rounded-md border-[color-mix(in_srgb,var(--color-brand-gold)_28%,transparent)] bg-[var(--color-bg-canvas-warm)] px-5 py-4 text-[1.0625rem] leading-relaxed lg:min-h-64";
+
 type StoryStepLayoutProps = {
   step: number;
   totalSteps: number;

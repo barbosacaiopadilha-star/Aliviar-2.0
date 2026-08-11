@@ -2,6 +2,7 @@ import "@/app/landing-editorial.css";
 
 import { PublicFooterGate } from "@/components/landing/public-footer-gate";
 import { PublicHeaderContainer } from "@/components/landing/public-header-container";
+import { PublicHeaderGate } from "@/components/landing/public-header-gate";
 
 export default function PublicLayout({
   children,
@@ -17,7 +18,12 @@ export default function PublicLayout({
         Pular para o conteúdo
       </a>
 
-      <PublicHeaderContainer />
+      {/* A5 · o topo da Fachada não entra na conversa. Em `/sua-historia` a
+          paciente já veste a moldura da casa (`PatientShell`, A2B), e os dois
+          cabeçalhos vinham empilhados. Mesmo gate do rodapé, logo abaixo. */}
+      <PublicHeaderGate>
+        <PublicHeaderContainer />
+      </PublicHeaderGate>
 
       <main id="conteudo-principal" className="flex-1">
         {children}
