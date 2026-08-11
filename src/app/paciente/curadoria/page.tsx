@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 
 import { PatientEmptyState } from "@/components/paciente/dashboard/patient-primitives";
 import { ConnectionChoicePanel } from "@/components/patient/connection-choice-panel";
+import { CuradoriaDecisionPanel } from "@/components/patient/curadoria-decision-panel";
 import { ContactModePanel } from "@/components/patient/contact-mode-panel";
 import { FinalCuradoriaView } from "@/components/patient/final-curadoria-view";
 import { RelationshipStatusPanel } from "@/components/patient/relationship-status-panel";
@@ -83,6 +84,33 @@ export default async function PatientCuradoriaPage() {
   // fecha atrás dela, L5), mas as alternativas saem de cena (A_DECISAO §8).
   const varandaPrimeiro = Boolean(relationship);
 
+  // B3-R · ARQUITETURA E — a pessoa é nomeada UMA vez, no fato canônico.
+  //
+  // `decided` já está aqui desde sempre: o loader consulta
+  // `patient_curadoria_decisions` e a rota o descartava. Nenhuma consulta
+  // nova, nenhum loader novo (L1).
+  const decisao = curadoria?.decision ?? null;
+
+  // H4 · caminho legado (só o documento antigo): nada muda. O painel de
+  // conexão mantém os três e a correção completa.
+  const legado = !curadoria && Boolean(delivery);
+
+  // H2 · no caminho canônico a conexão NUNCA pergunta "com quem" de novo:
+  // recebe o já decidido, ou o do próprio `connection` quando ele existe sem
+  // decisão. Filtrado no CALL SITE — o componente não muda (L6).
+  const opcoesDaConexao = legado
+    ? options
+    : options.filter((opcao) => {
+        if (decisao?.outcome === "CHOSEN") return opcao.displayName === decisao.chosenName;
+        if (connection) return opcao.providerId === connection.professionalProfileId;
+        return false;
+      });
+
+  // H3 · quem disse que nenhuma serviu não recebe "com quem seguir?".
+  // Perguntar isso seria incoerente e cruel.
+  const mostrarConexao =
+    legado || connection !== null || decisao?.outcome === "CHOSEN";
+
   const blocoAcompanhamento =
     caseId && options.length > 0 ? (
       <>
@@ -98,11 +126,33 @@ export default async function PatientCuradoriaPage() {
               providerPresentations={options}
             />
           ) : null}
-          <ConnectionChoicePanel
-            caseId={caseId}
-            providerPresentations={options}
-            connection={connection}
-          />
+          {/* §J · a superfície canônica mora AQUI: sob o Limiar que já se
+              chama "A decisão", abaixo da varanda (que é o presente) e ACIMA
+              da conexão (que pressupõe decisão). Nenhum Limiar novo, nenhuma
+              seção nova. Havendo `relationship`, é omitida: um foco
+              perceptivo por vez, doutrina já escrita nesta página. */}
+          {curadoria && !relationship ? (
+            <CuradoriaDecisionPanel
+              curatedSelectionId={curadoria.curatedSelectionId}
+              options={curadoria.options.map((opcao) => ({
+                id: opcao.id,
+                professionalName: opcao.professionalName,
+              }))}
+              decided={decisao}
+            />
+          ) : null}
+
+          {/* H3 · quem disse que nenhuma serviu não recebe "com quem seguir?".
+              H2 · e quem já decidiu não escolhe de novo: a conexão recebe só o
+              profissional já nomeado no fato canônico. */}
+          {mostrarConexao ? (
+            <ConnectionChoicePanel
+              caseId={caseId}
+              providerPresentations={opcoesDaConexao}
+              connection={connection}
+            />
+          ) : null}
+
           {connection ? (
             <ContactModePanel caseId={caseId} connection={connection} />
           ) : null}
