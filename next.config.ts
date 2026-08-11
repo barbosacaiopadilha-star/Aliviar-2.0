@@ -107,6 +107,36 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // ---------------------------------------------------------------------------
+  // V-1 (D-12.3) · O FRAMEWORK DEIXA DE CORTAR ANTES DA REGRA.
+  //
+  // A ADR-054 fixa 20 MB por arquivo. O framework cortava antes disso em DOIS
+  // pontos independentes, e corrigir só um não resolvia nada:
+  //
+  // 1 · `serverActions.bodySizeLimit` — default **1 MB**. Era o que o
+  //     Verificador apontou: qualquer exame escaneado morria aqui, com erro
+  //     genérico, antes de a nossa validação rodar.
+  //
+  // 2 · `middlewareClientMaxBodySize` — default **10 MB**, e só vale porque
+  //     este projeto TEM middleware. Descoberto depois de corrigir o (1): um
+  //     arquivo de 19,5 MB continuava falhando, e o log do servidor dizia o
+  //     motivo — "Request body exceeded 10MB ... Only the first 10MB will be
+  //     available". O corpo chegava TRUNCADO à action, que então estourava com
+  //     "Unexpected end of form". Nada nisso se parece com um limite de
+  //     tamanho do ponto de vista de quem lê o erro.
+  //
+  // Os dois tetos ficam ACIMA dos 20 MB de propósito: o corpo carrega o arquivo
+  // MAIS o overhead do multipart, e quem deve recusar "20 MB + 1 byte" é a
+  // nossa regra — com a frase que diz o motivo —, não um corte mudo. A folga
+  // não amplia o que se aceita: `validarArquivoDeDocumento` e o próprio bucket
+  // continuam sendo o teto real, e a prova material (e2e) fixa as duas pontas.
+  // ---------------------------------------------------------------------------
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "22mb",
+    },
+    middlewareClientMaxBodySize: "22mb",
+  },
   // Identidade do build, disponível em runtime e no cliente (/api/build-info).
   generateBuildId: () => buildId,
   env: {

@@ -171,10 +171,17 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
     // Upload na história: sucesso dito e lista atualizada sozinha.
     await page
       .getByLabel("Selecionar documento")
-      .setInputFiles({ name: `ressonancia-${stamp}.txt`, mimeType: "text/plain", buffer: Buffer.from("laudo E2E") });
+      // ADR-054 (D-12.3): `text/plain` deixou de ser aceito em qualquer
+      // camada — action e bucket. O anexo da história é upload da paciente e
+      // segue o mesmo contrato.
+      .setInputFiles({
+        name: `ressonancia-${stamp}.pdf`,
+        mimeType: "application/pdf",
+        buffer: Buffer.from("%PDF-1.7\nlaudo E2E"),
+      });
     await page.getByRole("button", { name: "Anexar" }).click();
     await expect(page.getByText("Documento anexado. Ele já aparece na lista abaixo.")).toBeVisible();
-    await expect(page.getByText(`ressonancia-${stamp}.txt`)).toBeVisible();
+    await expect(page.getByText(`ressonancia-${stamp}.pdf`)).toBeVisible();
 
     await page.getByRole("button", { name: "Continuar" }).click();
     await page.waitForURL(new RegExp("/sua-historia/preferencias$"));

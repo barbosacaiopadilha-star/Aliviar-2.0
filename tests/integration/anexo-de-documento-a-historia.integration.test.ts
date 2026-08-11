@@ -172,11 +172,12 @@ describe("anexar documento à própria história", () => {
     const enviado = await uploadPatientDocument(
       paciente,
       profileId,
-      new File(["conteudo do exame"], "exame-compensavel.txt", { type: "text/plain" }),
-      // D-12.2: o repositório passou a receber o `content_type` já conferido
-      // pela action. Este teste exercita a SAGA, não a allowlist — o tipo vai
-      // explícito para manter exatamente o cenário anterior.
-      "text/plain",
+      // D-12.3: o bucket passou a exigir os tipos da ADR-054 (terceira
+      // camada). O fixture deixa de ser `.txt` não por causa deste teste — que
+      // exercita a SAGA de compensação —, mas porque `text/plain` não existe
+      // mais como upload possível em lugar nenhum.
+      new File(["%PDF-1.7\n"], "exame-compensavel.pdf", { type: "application/pdf" }),
+      "application/pdf",
     );
 
     // O vínculo falha (história inexistente) — a recusa chega inteira...

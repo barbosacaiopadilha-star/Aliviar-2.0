@@ -454,3 +454,141 @@ A falha unitária é `mecanismo-de-discordancia.test.ts`, sobre
 `curadoria.decidir_proposta`. **Provada pré-existente:** falha idêntica na base
 `caecbb7`, e nem o teste nem a migration que ele lê foram tocados por esta
 missão (`git diff caecbb7 HEAD` sobre os dois arquivos: vazio).
+
+---
+
+# D-12.3 · ADR-054 cumprida nas três camadas
+
+**Base:** `f680a0c` · **Migration:** `20260811110000_adr054_terceira_camada_no_bucket.sql`
+**Objeto:** alinhar a implementação à ADR-054 vigente e fechar V-1 e V-2.
+
+## 25 · HEIC removido
+
+A ADR-054 lista **PDF, JPG, PNG, WEBP**. HEIC/HEIF entrou na D-12.2 como
+ampliação de engenharia e **saiu**: a lista agora é exatamente a do contrato.
+Nada nesta versão o aceita — nem a validação, nem o bucket, nem o `accept` do
+seletor —, e a mensagem de recusa deixou de oferecê-lo.
+
+> **HEIC/HEIF requer revisão futura da ADR-054.**
+
+O endurecimento técnico **permaneceu**, porque não amplia a allowlist: a
+conferência da assinatura real dos bytes, a recusa de MIME falso e a recusa de
+`content_type` vazio. Eles decidem se o arquivo *é* o que diz ser, não *quais
+tipos* entram.
+
+## 26 · V-1 encerrado — eram DUAS guilhotinas, não uma
+
+O Verificador apontou `serverActions.bodySizeLimit` (default **1 MB**).
+Corrigido, um arquivo de 19,5 MB **continuava falhando**, e com erro que não se
+parecia com tamanho: *"Unexpected end of form"*. O log do servidor do e2e disse
+o que era:
+
+```
+Request body exceeded 10MB for /paciente/documentos.
+Only the first 10MB will be available unless configured.
+```
+
+`middlewareClientMaxBodySize` tem default de **10 MB** e vale porque este
+projeto **tem middleware**. O corpo chegava truncado à action. Os dois limites
+foram levados a 22 MB — acima dos 20 MB de propósito, para que quem recuse
+"20 MB + 1 byte" seja a nossa regra, com a frase que explica, e não um corte
+mudo.
+
+**Prova material, não unitária** (`tests/e2e/adr054-limite-de-upload.spec.ts`):
+servidor real, login real, formulário real.
+
+| prova | resultado |
+|---|---|
+| **T-ADR054-9** · ~2 MB atravessa a Server Action | ✅ |
+| ~19,5 MB — perto do teto, abaixo dele | ✅ aceito |
+| 20 MB + 512 KB | ✅ recusado **pela nossa regra**, com o motivo |
+| `accept` do seletor | exatamente os quatro tipos da ADR |
+
+## 27 · A terceira camada — o bucket
+
+O bypass que o Verificador demonstrou está fechado: `patient-documents` passou
+a ter `file_size_limit` 20 MB e `allowed_mime_types` com os quatro tipos.
+Nenhuma policy expressa **o que** está sendo escrito — tamanho e tipo não são
+colunas que a RLS avalie —, e é por isso que a ADR pede a camada separada.
+
+`professional-documents` **não foi tocado** (§6): a ADR-054 chama-se "Política
+de documentos clínicos" e seus itens 2–4 tratam da equipe do Case, da paciente
+e de documento anexado a Case — ela não o nomeia. Um teste fixa esse escopo, e
+o achado FUN-02 sobre a action do profissional **segue aberto**.
+
+## 28 · V-2 encerrado e a autoria falseável
+
+**T-V2:** o Curador do Case A1 **não lê os bytes** de `A/received/A2/`, mesmo
+sendo curador da mesma paciente. É onde "este Case" se distingue de "algum
+Case" — e nada guardava isso no storage.
+
+**T-AUTH:** o Verificador observou que fazer o autor vir do formulário não
+derrubava nada — o banco recusava, e **a aplicação era omissa**. Agora
+`exigirAutoriaDaSessao` recusa antes de qualquer byte subir, nos dois writers.
+Isto **não reproduz a RLS**, que continua sendo o piso; impede a regressão
+óbvia, e é falseável.
+
+## 29 · Provas de perda
+
+| mutação | testes derrubados |
+|---|---|
+| M1 · bucket sem MIME allowlist | **3** |
+| M2 · bucket sem teto de tamanho | **2** |
+| M3 · framework volta aos defaults | **3** (as três provas de upload do e2e) |
+| M4 · storage SELECT por "algum Case" | **1** (T-V2) |
+| M5 · autoria vem do parâmetro, não da sessão | **2** (T-AUTH) |
+
+Todas restauradas; baselines verdes depois de cada uma.
+
+> **Nota de método:** a primeira tentativa da M5 **não aplicou** — o arquivo é
+> rastreado pelo Git e está em CRLF, e o padrão casava só `\n`. Ela "passou"
+> como zero falhas, o que teria sido lido como guarda não-falseável. Mutação
+> que não aplica é pior que mutação que falha: **conferir que a mutação entrou
+> passou a ser parte do rito.**
+
+## 30 · Regressão
+
+| verificação | resultado |
+|---|---|
+| integração completa (74 arquivos) | **937 passaram**, 3 skipped, **0 falhas** |
+| unitários completos | 2 672 passaram · **1 falha pré-existente** |
+| e2e — provas da ADR-054 | **6/6** |
+| e2e — suíte completa | ver ressalva abaixo |
+| typecheck · lint | limpos |
+| build local | íntegro, backend único e local |
+| ledger | **120/120** |
+
+**Ressalva honesta sobre o e2e completo.** A suíte roda 4 workers contra a
+mesma stack local e é **instável nesta máquina**: em três execuções seguidas o
+conjunto de falhas mudou toda vez (`admin-patients`, `connection-choice`,
+`sua-historia`, `admin-dashboard`, `sua-historia-access`, `admin-professionals`),
+e **todas passam quando executadas isoladamente** — `admin-professionals` foi
+rodado duas vezes seguidas, verde. Nenhuma delas é de documentos; as de
+documentos passam.
+
+**Uma falha é real, persistente e PRÉ-EXISTENTE:**
+`reconstrucao-fluxo-completo.spec.ts:244` procura o rótulo
+`'Revisei o que já se sabe sobre o paciente'`, que **não existe mais em
+`src/`** — foi removido em **2026-08-04** pelo commit `9f6ee86`
+(*"checkboxes derivados"*), ancestral da base desta missão. É oráculo obsoleto
+do redesenho do Acolhimento, não regressão. Estava mascarado antes porque o
+passo 4 do mesmo spec serial subia `.txt`, que a nova camada do bucket recusa —
+corrigido para PDF nesta missão, o passo 6 passou a ser alcançado e a
+obsolescência apareceu. **Não corrigido aqui: é escopo do dono do D-9/D-11.**
+
+## 31 · Fixtures atualizados
+
+`text/plain` deixou de existir como upload possível em qualquer camada. Os
+fixtures que o usavam passaram a PDF — não por conveniência de teste, mas
+porque o contrato mudou: `sample-document.pdf`, o anexo do
+`reconstrucao-fluxo-completo`, e os dois fixtures de integração.
+
+## 32 · Rollback da D-12.3
+
+```sql
+update storage.buckets
+   set file_size_limit = null, allowed_mime_types = null
+ where id = 'patient-documents';
+```
+
+O resto volta pelo Git. Sem as três camadas, a ADR-054 volta a ser promessa.

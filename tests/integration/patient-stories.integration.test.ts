@@ -179,8 +179,9 @@ describe("Módulo Sua História — persistência permanente (ÉPICO 1/SPRINT 1,
     const documentA = await uploadPatientDocument(
       clientA,
       profileIdA,
-      new File(["conteudo"], "exame-a.txt", { type: "text/plain" }),
-      "text/plain",
+      // D-12.3: `text/plain` deixou de ser aceitável no bucket (ADR-054).
+      new File(["%PDF-1.7\n"], "exame-a.pdf", { type: "application/pdf" }),
+      "application/pdf",
     );
 
     const { client: clientB } = await createSignedInPatient("Paciente Anexo B");

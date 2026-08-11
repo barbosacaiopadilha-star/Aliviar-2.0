@@ -39,13 +39,12 @@
 export const TAMANHO_MAXIMO_DOCUMENTO_BYTES = 20 * 1024 * 1024;
 
 /**
- * Os tipos aceitos, cada um com o reconhecedor da própria assinatura.
+ * Os quatro tipos da ADR-054, cada um com o reconhecedor da própria
+ * assinatura. **A lista é exatamente a do contrato — nem um a mais.**
  *
- * ⚠️ **D-12-FILE-POLICY — DECISÃO PENDENTE.** HEIC/HEIF **não constam da
- * ADR-054**: são ampliação feita por engenharia. O motivo é real (HEIC é o
- * padrão do iPhone, e sem ele a foto do exame é recusada), mas motivo não é
- * autoridade — a própria ADR diz que ampliar é ato de revisitá-la. Fica
- * preservado e **explicitamente não congelado** até essa revisão.
+ * **HEIC/HEIF requer revisão futura da ADR-054.** Não está aqui, e nada nesta
+ * versão o aceita: uma foto HEIC de iPhone é recusada com a mensagem de tipo
+ * não aceito. Ampliar é ato de revisitar a ADR, não de engenharia.
  */
 const ASSINATURAS: ReadonlyArray<{
   readonly mime: string;
@@ -61,19 +60,12 @@ const ASSINATURAS: ReadonlyArray<{
     mime: "image/webp",
     reconhece: (b) => texto(b, 0, 4) === "RIFF" && texto(b, 8, 4) === "WEBP",
   },
-  // ISO-BMFF: "ftyp" na posição 4, marca da variante logo depois.
-  { mime: "image/heic", reconhece: ehHeif },
-  { mime: "image/heif", reconhece: ehHeif },
 ];
 
 export const TIPOS_DE_DOCUMENTO_ACEITOS: readonly string[] = ASSINATURAS.map((a) => a.mime);
 
 /** Para o atributo `accept` do input — a UI não mantém lista própria. */
 export const ACCEPT_DE_DOCUMENTO = TIPOS_DE_DOCUMENTO_ACEITOS.join(",");
-
-const MARCAS_HEIF = new Set([
-  "heic", "heix", "hevc", "hevx", "heim", "heis", "hevm", "hevs", "mif1", "msf1",
-]);
 
 function casa(bytes: Uint8Array, inicio: number, esperado: readonly number[]): boolean {
   if (bytes.length < inicio + esperado.length) return false;
@@ -83,10 +75,6 @@ function casa(bytes: Uint8Array, inicio: number, esperado: readonly number[]): b
 function texto(bytes: Uint8Array, inicio: number, comprimento: number): string {
   if (bytes.length < inicio + comprimento) return "";
   return String.fromCharCode(...bytes.subarray(inicio, inicio + comprimento));
-}
-
-function ehHeif(bytes: Uint8Array): boolean {
-  return texto(bytes, 4, 4) === "ftyp" && MARCAS_HEIF.has(texto(bytes, 8, 4));
 }
 
 export type ValidacaoDeArquivo =
@@ -139,7 +127,7 @@ export async function validarArquivoDeDocumento(file: File): Promise<ValidacaoDe
 }
 
 const TIPO_NAO_ACEITO =
-  "Envie um PDF ou uma imagem (JPEG, PNG, HEIC ou WebP).";
+  "Envie um PDF ou uma imagem (JPEG, PNG ou WebP).";
 
 function formatarMb(bytes: number): string {
   return `${Math.round(bytes / (1024 * 1024))} MB`;

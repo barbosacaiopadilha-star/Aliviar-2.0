@@ -19,6 +19,31 @@ type PatientDocumentRow = {
   created_at: string;
 };
 
+/**
+ * D-12.3 · A AUTORIA GRAVADA TEM DE SER A DA SESSÃO.
+ *
+ * O Verificador mostrou que uma mutação fazendo o autor vir do formulário não
+ * derrubava nada: o banco recusava, mas **nada na aplicação recusava**, e a
+ * suíte não piscava. Uma garantia que só existe no piso é uma garantia que
+ * ninguém percebe quando a camada de cima apodrece.
+ *
+ * Isto **não reproduz a RLS** — a policy continua sendo o piso e a última
+ * palavra. Isto impede a regressão óbvia: o dia em que alguém aceitar o autor
+ * de fora, esta linha recusa antes de qualquer byte subir, e um teste cai.
+ */
+async function exigirAutoriaDaSessao(supabase: SupabaseClient, declarado: string): Promise<void> {
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error || !data?.user) {
+    throw new Error("Sessão não autenticada: nenhum documento é gravado sem autor real.");
+  }
+
+  if (data.user.id !== declarado) {
+    // Ninguém deposita "em nome de" outra pessoa. Nem por engano de código.
+    throw new Error("A autoria do documento não confere com a sessão autenticada.");
+  }
+}
+
 function mapRow(row: PatientDocumentRow): PatientDocument {
   return {
     id: row.id,
@@ -62,6 +87,10 @@ export async function uploadPatientDocument(
   file: File,
   contentType: string,
 ): Promise<PatientDocument> {
+  // Simétrico ao depósito da Aliviar: aqui `profileId` é dona E autora, e as
+  // duas coisas têm de ser a sessão.
+  await exigirAutoriaDaSessao(supabase, profileId);
+
   const filePath = `${profileId}/${Date.now()}-${nomeDeArquivoParaCaminho(file.name)}`;
 
   const { error: uploadError } = await supabase.storage
@@ -133,6 +162,9 @@ export async function providePatientDocument(
   },
 ): Promise<PatientDocument> {
   const { caseId, patientProfileId, curatorId, file, contentType } = params;
+
+  // Antes de qualquer byte subir: quem assina é quem está logado.
+  await exigirAutoriaDaSessao(supabase, curatorId);
 
   const filePath = `${patientProfileId}/received/${caseId}/${Date.now()}-${nomeDeArquivoParaCaminho(file.name)}`;
 

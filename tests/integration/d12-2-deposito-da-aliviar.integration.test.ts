@@ -224,6 +224,60 @@ describe("D-12.2 · o depósito da Aliviar", () => {
   });
 
   // -------------------------------------------------------------------------
+  /**
+   * T-AUTH · a aplicação também tem de recusar.
+   *
+   * O Verificador mostrou que uma mutação fazendo o autor vir do formulário
+   * não derrubava nada: o banco recusava, e **nada na aplicação recusava**.
+   * A RLS continua sendo o piso; o que se prova aqui é que a camada de cima
+   * deixou de ser omissa — e que essa recusa é falseável.
+   */
+  describe("T-AUTH · a autoria vem da sessão, não do parâmetro", () => {
+    it("depositar declarando outro autor é recusado ANTES de qualquer byte subir", async () => {
+      const cliente = await como(curador1);
+
+      await expect(
+        providePatientDocument(cliente, {
+          caseId: caseA1,
+          patientProfileId: pacienteA.id,
+          // A forja: quem está logado é o curador1.
+          curatorId: curador2.id,
+          file: pdf("forjado.pdf"),
+          contentType: "application/pdf",
+        }),
+      ).rejects.toThrow(/autoria/i);
+    });
+
+    it("e nada foi gravado — nem linha, nem objeto", async () => {
+      const cliente = await como(curador1);
+
+      await providePatientDocument(cliente, {
+        caseId: caseA1,
+        patientProfileId: pacienteA.id,
+        curatorId: curador2.id,
+        file: pdf("forjado-2.pdf"),
+        contentType: "application/pdf",
+      }).catch(() => undefined);
+
+      const { data } = await admin
+        .schema("curadoria")
+        .from("patient_documents")
+        .select("id")
+        .eq("uploaded_by", curador2.id);
+
+      expect(data ?? [], "documento forjado chegou ao banco").toHaveLength(0);
+    });
+
+    it("o upload da própria paciente segue a mesma regra", async () => {
+      const dela = await como(pacienteA);
+
+      await expect(
+        uploadPatientDocument(dela, pacienteB.id, pdf("nao-e-minha.pdf"), "application/pdf"),
+      ).rejects.toThrow(/autoria/i);
+    });
+  });
+
+  // -------------------------------------------------------------------------
   describe("a trilha — gravada pelo banco, não pelo writer", () => {
     it("depositar deixa exatamente uma entrada patient_document_provided", async () => {
       const doc = await depositar(curador1, caseA1, pacienteA);
@@ -353,6 +407,26 @@ describe("D-12.2 · o depósito da Aliviar", () => {
       const { data } = await cliente.storage.from(BUCKET).download(doc.filePath);
 
       expect(data, "o depositante não enxerga o próprio depósito").not.toBeNull();
+    });
+
+    /**
+     * T-V2 · a lacuna que o Verificador apontou.
+     *
+     * A D-12.2 provou que o Curador enxerga `received/` do Case que conduz.
+     * **Nada provava que ele NÃO enxerga o `received/` do outro Case da mesma
+     * paciente** — e é exatamente aí que "este Case" se distingue de "algum
+     * Case dela". Sem este teste, trocar o helper por autorização frouxa
+     * passaria despercebido no storage, ainda que a tabela o detectasse.
+     *
+     * Medido pelos BYTES: a prova é não conseguir baixar o conteúdo.
+     */
+    it("T-V2 · Curador de A1 NÃO lê os bytes de A2, mesmo sendo curador da mesma paciente", async () => {
+      const doDois = await depositar(curador2, caseA2, pacienteA, "laudo-do-outro-case.pdf");
+
+      const cliente = await como(curador1);
+      const { data } = await cliente.storage.from(BUCKET).download(doDois.filePath);
+
+      expect(data, "Curador 1 alcançou o objeto do Case do Curador 2").toBeNull();
     });
 
     it("NÃO enxerga os uploads da própria paciente — eles vivem fora de `received/`", async () => {

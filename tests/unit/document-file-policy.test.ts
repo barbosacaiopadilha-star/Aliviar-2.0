@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   ACCEPT_DE_DOCUMENTO,
   TAMANHO_MAXIMO_DOCUMENTO_BYTES,
+  TIPOS_DE_DOCUMENTO_ACEITOS,
   nomeDeArquivoParaCaminho,
   validarArquivoDeDocumento,
 } from "@/modules/profiles/document-file-policy";
@@ -49,14 +50,12 @@ function arquivo(bytes: number[], nome: string, tipo: string, tamanhoTotal?: num
 
 describe("D-12.2 · allowlist de documentos", () => {
   describe("o que entra", () => {
+    // Os quatro tipos da ADR-054 — T-ADR054-1 a T-ADR054-4.
     it.each([
       ["PDF", PDF, "exame.pdf", "application/pdf"],
       ["PNG", PNG, "exame.png", "image/png"],
       ["JPEG", JPEG, "exame.jpg", "image/jpeg"],
       ["WebP", WEBP, "exame.webp", "image/webp"],
-      // HEIC é o padrão do iPhone: sem ele, a foto que ela tira do exame é
-      // recusada e ela não tem como saber por quê.
-      ["HEIC", HEIC, "exame.heic", "image/heic"],
     ])("aceita %s e devolve o tipo conferido", async (_rotulo, bytes, nome, tipo) => {
       const resultado = await validarArquivoDeDocumento(arquivo(bytes, nome, tipo));
 
@@ -109,6 +108,29 @@ describe("D-12.2 · allowlist de documentos", () => {
       await expect(
         validarArquivoDeDocumento(arquivo(PDF, "arquivo", tipo)),
       ).resolves.toMatchObject({ aceito: false });
+    });
+
+    /**
+     * T-ADR054-5 · HEIC/HEIF fora.
+     *
+     * A ADR-054 vigente lista PDF, JPG, PNG e WEBP. HEIC chegou a existir aqui
+     * como ampliação de engenharia e foi removido: ampliar a allowlist é ato
+     * de revisitar a ADR. **HEIC/HEIF requer revisão futura da ADR-054.**
+     *
+     * O arquivo abaixo é um HEIC legítimo — assinatura ISO-BMFF de verdade.
+     * Ele é recusado pelo TIPO, não por parecer inválido.
+     */
+    it.each([
+      ["image/heic", "exame.heic"],
+      ["image/heif", "exame.heif"],
+    ])("T-ADR054-5 · recusa %s — não consta da ADR-054", async (tipo, nome) => {
+      const resultado = await validarArquivoDeDocumento(arquivo(HEIC, nome, tipo));
+
+      expect(resultado.aceito).toBe(false);
+      if (!resultado.aceito) {
+        // Recusado por não estar na lista — e a frase não oferece HEIC de volta.
+        expect(resultado.erro).not.toMatch(/heic/i);
+      }
     });
   });
 
@@ -174,9 +196,18 @@ describe("D-12.2 · allowlist de documentos", () => {
     });
   });
 
+  it("a lista é EXATAMENTE a da ADR-054 — nem um tipo a mais", () => {
+    expect([...TIPOS_DE_DOCUMENTO_ACEITOS].sort()).toEqual([
+      "application/pdf",
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ]);
+  });
+
   it("a UI lê a mesma lista — nenhuma cópia paralela", () => {
     expect(ACCEPT_DE_DOCUMENTO).toContain("application/pdf");
-    expect(ACCEPT_DE_DOCUMENTO).toContain("image/heic");
+    expect(ACCEPT_DE_DOCUMENTO).not.toContain("image/heic");
     expect(ACCEPT_DE_DOCUMENTO).not.toContain("text/plain");
   });
 });

@@ -65,14 +65,14 @@ test.describe("Portal do Paciente", () => {
     await page.goto("/paciente/documentos");
     await expect(page.getByRole("heading", { name: "Meus documentos" })).toBeVisible();
 
-    const filePath = path.resolve(__dirname, "../fixtures/sample-document.txt");
+    const filePath = path.resolve(__dirname, "../fixtures/sample-document.pdf");
     await page.locator('input[type="file"]').setInputFiles(filePath);
     await page.getByRole("button", { name: "Enviar documento" }).click();
 
-    await expect(page.getByText("sample-document.txt")).toBeVisible();
+    await expect(page.getByText("sample-document.pdf")).toBeVisible();
 
-    await page.getByRole("button", { name: "Remover sample-document.txt" }).click();
-    await expect(page.getByText("sample-document.txt")).toHaveCount(0);
+    await page.getByRole("button", { name: "Remover sample-document.pdf" }).click();
+    await expect(page.getByText("sample-document.pdf")).toHaveCount(0);
   });
 
   test("linha do tempo mostra ao menos a criação da conta", async ({ page }) => {
