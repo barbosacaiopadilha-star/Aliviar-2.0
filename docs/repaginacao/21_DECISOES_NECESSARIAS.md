@@ -95,6 +95,9 @@ Se sim, **C/D** e missão própria. Se não, o WhatsApp continua sendo o canal.
 | **D-12** | Central de Documentos — [25](25_D12_CENTRAL_DE_DOCUMENTOS.md) | **E, duas policies** | ✅ **APTO** — reutiliza tabela e bucket; origem derivada de `uploaded_by <> profile_id`, sem coluna nova |
 | **GAP-D12-2** | a paciente pode apagar documento que **recebeu** da Aliviar? | produto | ⚠️ **ABERTO** — a policy de DELETE atual permite, e isso só passa a importar quando existirem documentos da Aliviar |
 | **GAP-A6-Q1** | textos das perguntas de Sua História sem fonte única | refactor | ⚠️ **ABERTO** — impede versão **em branco** imprimível; a história **enviada** não depende disso |
+| **GAP-B3-2** | a decisão **persiste sem feedback** — [26](26_B3A_DECISAO_SEGUNDO_ENCONTRO_HANDOFF.md) §E | UX | ⚠️ **BLOQUEANTE de UX para B3** — verificar com a consulta do §E; se confirmar, **B2-1 se reclassifica** de "não persiste" para "persiste sem avisar" |
+| **GAP-B3-1** | decisão sem trilha de auditoria | C | ⚠️ **ABERTO** — assimetria com `profile_recognized`; recomendo fazer junto de B3 |
+| **GAP-B3-3** | `presentedAt` acumula *apresentação* e *encontro realizado* | domínio | ⚠️ **ABERTO, não bloqueante** — mesma classe da D-9, sem simetria artificial |
 | **GAP-A1** | `meeting_scheduled_at` continua sem writer | produto/UX | ⚠️ **ABERTO** — não reprova D-9 nem pertence a D-11A; volta ao planejamento como pendência de UX/operação do Primeiro Encontro |
 
 > **Os blocos 2, 3, 4 e 5 não dependem de nenhuma delas e podem começar hoje.**
