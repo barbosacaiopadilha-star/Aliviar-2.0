@@ -304,21 +304,15 @@ describe("B3 · §1 · a decisão persiste?", () => {
     });
 
     /**
-     * ⚠️ ACHADO — a recusa legítima NÃO leva ao Concierge.
+     * A recusa legítima também transfere — divergência RESOLVIDA.
      *
-     * O contrato B3-A diz "decision presente → Concierge responsável". O
-     * código faz outra coisa para `NONE_OF_THEM`: `inferPhaseFromCuradoria`
-     * devolve a fase `curadoria`, e o responsável permanece o **Curador**.
-     *
-     * E faz sentido: ninguém foi escolhido, então não há acompanhamento a
-     * conduzir — quem retoma é quem conduz a Curadoria. O contrato é que fala
-     * em "decisão" sem distinguir os dois desfechos.
-     *
-     * Fixo o comportamento REAL, e registro a divergência em vez de "corrigir"
-     * produção com base numa leitura minha do contrato. **Decisão do
-     * Arquiteto**, não do Engenheiro.
+     * O Arquiteto congelou: qualquer decisão canônica presente move o handoff,
+     * inclusive `NONE_OF_THEM`. A recusa encerra a etapa decisória; uma nova
+     * seleção curada, se vier, é outro processo — não a continuação deste sob
+     * o Curador. O comportamento anterior era defeito de produção, corrigido
+     * em `resolveCurrentResponsible` (ADR-066).
      */
-    it("a recusa legítima mantém o Curador — divergência registrada", () => {
+    it("T-B3-R11 · a recusa legítima também leva ao Concierge", () => {
       const responsavel = resolveCurrentResponsible({
         pipelineStage: null,
         curatorName: "Curadora do Case",
@@ -339,9 +333,10 @@ describe("B3 · §1 · a decisão persiste?", () => {
         } as never,
       });
 
-      // Comportamento vigente, fixado como está: ninguém escolhido, ninguém
-      // a acompanhar — o Curador permanece.
-      expect(responsavel.role).toBe("curador");
+      // Sem profissional escolhido e sem conexão, e ainda assim Concierge:
+      // o handoff depende do FATO existir, nunca de quem foi escolhido.
+      expect(responsavel.role).toBe("concierge");
+      expect(responsavel.name).toBe("Equipe Aliviar");
     });
 
     it("a fixture consegue nascer JÁ decidida, pelo writer real", async () => {
@@ -350,5 +345,51 @@ describe("B3 · §1 · a decisão persiste?", () => {
 
       expect(await decisoesDaSelecao(decidida.curatedSelectionId)).toBe(1);
     }, 300_000);
+  });
+  // ---------------------------------------------------------------------------
+  /**
+   * Os quatro cenários de responsabilidade, lado a lado. Antes estavam
+   * espalhados; juntos, a regra fica legível de uma vez: **só a decisão move**.
+   */
+  describe("os quatro cenários de responsabilidade", () => {
+    const base = {
+      historia: { understandingConfirmedAt: new Date().toISOString() },
+      validacao: null,
+      relatorio: { emittedAt: new Date().toISOString(), deliveredAt: new Date().toISOString() },
+    };
+
+    function responsavel(decision: unknown) {
+      return resolveCurrentResponsible({
+        pipelineStage: null,
+        curatorName: "Curadora do Case",
+        conciergeName: null,
+        curadoriaRecord: { ...base, devolutiva: { presentedAt: null, decision } } as never,
+      }).role;
+    }
+
+    const decidiu = (outcome: "CHOSEN" | "NONE_OF_THEM") => ({
+      outcome,
+      chosenProfessionalId: outcome === "CHOSEN" ? "prof-1" : null,
+      justification: null,
+      decidedAt: new Date().toISOString(),
+    });
+
+    it("sem decisão → Curador", () => {
+      expect(responsavel(null)).toBe("curador");
+    });
+
+    it("decisão positiva → Concierge", () => {
+      expect(responsavel(decidiu("CHOSEN"))).toBe("concierge");
+    });
+
+    it("NONE_OF_THEM → Concierge", () => {
+      expect(responsavel(decidiu("NONE_OF_THEM"))).toBe("concierge");
+    });
+
+    it("conexão sem decisão → Curador (a conexão não é lida pelo resolvedor)", () => {
+      // O resolvedor não recebe nem consulta `connection_records`. A ausência
+      // do parâmetro É a prova de que conexão não move responsabilidade.
+      expect(responsavel(null)).toBe("curador");
+    });
   });
 });

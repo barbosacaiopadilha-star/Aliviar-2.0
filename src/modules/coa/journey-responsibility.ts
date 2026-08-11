@@ -55,6 +55,27 @@ export function resolveCurrentResponsible(
     };
   }
 
+  /**
+   * **Qualquer decisão canônica encerra a etapa decisória — inclusive a recusa.**
+   *
+   * A guarda acima cobre a AUSÊNCIA de decisão. Faltava a simétrica: com
+   * `NONE_OF_THEM`, `inferPhaseFromCuradoria` devolvia a fase `curadoria` e a
+   * responsabilidade voltava ao Curador **para sempre**. Quem disse que
+   * nenhuma serviu decidiu, e decidir move o handoff — uma nova seleção
+   * curada, se vier, é outro processo, não a continuação deste sob o Curador.
+   *
+   * O handoff não depende de haver profissional escolhido, nem de existir
+   * `connection_record`: depende do fato canônico existir (ADR-066).
+   */
+  if (input.curadoriaRecord?.devolutiva.decision) {
+    return {
+      role: "concierge",
+      roleLabel: COA_RESPONSIBLE_LABELS.concierge,
+      name: input.conciergeName?.trim() || input.attendantName?.trim() || "Equipe Aliviar",
+      levelLabel: "Concierge",
+    };
+  }
+
   if (phase === "acompanhamento" || phase === "encerramento" || phase === "escolha") {
     return {
       role: "concierge",

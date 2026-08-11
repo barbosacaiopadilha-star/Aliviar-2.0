@@ -306,11 +306,14 @@ export async function seedDeliveredCase(
   // acompanha o produto: quem quiser o cenário pós-decisão pede `decidir`, e
   // o fato entra pelo writer real, nunca pelo DOM nem por connection_records.
   if (entregar && opcoes.decidir) {
-    const { data: opcoesDoRelatorio } = await cliente
-      .from("curadoria_report_options")
+    // A FK de `chosen_option_id` aponta para `curated_selection_options` — a
+    // seleção humana —, não para as opções do Relatório. O contrato 27 §F já
+    // dizia "chave: curated_selection_options.id"; usei a tabela errada e a
+    // FK recusou.
+    const { data: opcoesDaSelecao } = await cliente
+      .from("curated_selection_options")
       .select("id")
-      .eq("report_id", report!.id)
-      .order("position");
+      .eq("curated_selection_id", selection!.id);
 
     const pacienteCliente = createCuradoriaClient(url, anonKey);
     await pacienteCliente.auth.signInWithPassword({
@@ -323,7 +326,7 @@ export async function seedDeliveredCase(
         case_id: created.id,
         curated_selection_id: selection!.id,
         outcome: opcoes.decidir,
-        chosen_option_id: opcoes.decidir === "CHOSEN" ? opcoesDoRelatorio![0]!.id : null,
+        chosen_option_id: opcoes.decidir === "CHOSEN" ? opcoesDaSelecao![0]!.id : null,
       });
     if (erroDecisao) throw new Error(`Fixture: decisao nao registrada: ${erroDecisao.message}`);
   }
