@@ -196,6 +196,120 @@ describe("T-A4-6 · a navegação leva a UMA Jornada", () => {
   });
 });
 
+describe("A4.1 · nenhum submarco ausente é escrito no passado", () => {
+  /**
+   * O defeito que esta guarda existe para impedir apareceu na revisão visual:
+   * sob o título "ainda por vir", a tela dizia "A conversa aconteceu", "As
+   * opções foram apresentadas" e "Sua escolha foi registrada". A distinção
+   * ficava só no símbolo — e símbolo não sustenta verdade sozinho.
+   *
+   * A asserção é sobre a RELAÇÃO fato × tempo verbal, não sobre frases exatas:
+   * um marcador de passado num submarco não feito é o defeito, qualquer que
+   * seja a redação escolhida depois.
+   */
+  // Sem `\b` no fim: em JS, `\b` é ASCII, e depois de "á"/"ã" ele não casa —
+  // "acontecerá\b" nunca daria match. A fronteira à esquerda basta.
+  const PASSADO = /\b(aconteceu|foram|foi|ficaram|ficou|reconheceu|contou|confirmou)/i;
+  const FUTURO = /\b(vai|serão|será|acontecerá|quando|ficará)/i;
+
+  const CENARIOS: Array<[string, Partial<CuradoriaRecord>]> = [
+    ["nada aconteceu ainda", {}],
+    [
+      "tudo aconteceu",
+      (() => {
+        const base = MOCK_RECORDS[Object.keys(MOCK_RECORDS)[0]!]!;
+        return {
+          historia: {
+            ...base.historia,
+            registeredAt: "2026-01-01T00:00:00Z",
+            understandingConfirmedAt: "2026-01-02T00:00:00Z",
+          },
+          acolhimento: { ...base.acolhimento, meetingHeldAt: "2026-01-03T00:00:00Z" },
+          validacao: { validatedAt: "2026-01-04T00:00:00Z", validationNote: "", correctionsMade: [] },
+          relatorio: {
+            ...base.relatorio,
+            emittedAt: "2026-02-01T00:00:00Z",
+            deliveredAt: "2026-02-03T00:00:00Z",
+          },
+          devolutiva: {
+            ...base.devolutiva,
+            presentedAt: "2026-02-02T00:00:00Z",
+            decision: {
+              outcome: "CHOSEN" as const,
+              chosenProfessionalId: null,
+              justification: null,
+              decidedAt: "2026-02-04T00:00:00Z",
+            },
+          },
+        };
+      })(),
+    ],
+  ];
+
+  for (const [nome, ajustes] of CENARIOS) {
+    it(`${nome}: cada submarco fala no tempo do seu fato`, () => {
+      const narrativa = narrativaDe(ajustes);
+
+      for (const m of narrativa.marcos) {
+        for (const sub of m.submarcos) {
+          if (sub.feito) {
+            expect(sub.rotulo, `${m.id}: fato presente escrito como promessa — "${sub.rotulo}"`).toMatch(
+              PASSADO,
+            );
+          } else {
+            expect(
+              sub.rotulo,
+              `${m.id}: fato AUSENTE afirmado como ocorrido — "${sub.rotulo}"`,
+            ).toMatch(FUTURO);
+          }
+        }
+      }
+    });
+  }
+
+  it("um marco FUTURO nunca traz submarco afirmado como feito", () => {
+    const narrativa = narrativaDe();
+    for (const m of narrativa.marcos.filter((x) => x.status === "FUTURO")) {
+      for (const sub of m.submarcos) {
+        expect(sub.feito, `${m.id} é futuro mas tem submarco concluído: ${sub.rotulo}`).toBe(false);
+      }
+    }
+  });
+});
+
+describe("A4.1 · Home e Jornada mostram os mesmos seis marcos", () => {
+  it("a régua da Home é montada pela projeção, não pelas sete etapas internas", () => {
+    const codigo = readFileSync("src/app/paciente/page.tsx", "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\{\s*\/\*[\s\S]*?\*\/\s*\}/g, "")
+      .replace(/\/\/.*$/gm, "");
+
+    expect(codigo).toContain("projetarNarrativa");
+    expect(codigo).toContain("narrativa.marcos.map");
+    // O vocabulário interno saiu da régua da Home.
+    expect(codigo).not.toContain("WALK_LABELS");
+    expect(codigo).not.toContain("walkStatusOf");
+  });
+
+  it("todo marco tem nome curto, e ele cabe numa trilha de celular", () => {
+    for (const m of narrativaDe().marcos) {
+      expect(m.rotuloCurto, m.id).toBeTruthy();
+      expect(m.rotuloCurto.length, `${m.id}: "${m.rotuloCurto}" é longo demais`).toBeLessThanOrEqual(
+        16,
+      );
+    }
+  });
+
+  it("o nome curto não reintroduz os conceitos técnicos aposentados", () => {
+    const curtos = narrativaDe()
+      .marcos.map((m) => m.rotuloCurto.toLowerCase())
+      .join(" | ");
+    for (const tecnico of ["consulta", "relatório", "conversa", "escolha", "perfil"]) {
+      expect(curtos, `voltou o conceito técnico "${tecnico}"`).not.toContain(tecnico);
+    }
+  });
+});
+
 describe("A4 · a narrativa tem seis marcos, e nenhuma etapa fica órfã", () => {
   it("seis marcos, na ordem do percurso", () => {
     const esperada: MarcoId[] = [

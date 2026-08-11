@@ -377,6 +377,99 @@ teste protege é o par *cena escondida × descrição presente*, não a redaçã
 `landingAtrium` → `editorial-sections.tsx:151,205` (bandas "warm" da landing).
 O §3 da MASTER-0 proíbe tocar a landing. **Registrado, não alterado.**
 
+## 9 · A4 / A4.1 · a Jornada da paciente
+
+### 9.1 · O que a auditoria desfez
+
+A missão partia de "duas narrativas concorrentes". **Não havia.**
+`/paciente/linha-do-tempo` era um **log de conta** — conta criada, dados de
+contato, um item por documento, notificações — com nome de narrativa. Ele não
+consumia `buildJornada`, `meetingHeldAt`, `presentedAt`, `deliveredAt` nem
+`decision`; as duas ocorrências de "jornada" no arquivo eram prosa.
+
+Havia **um** motor de estado e **uma** superfície resumida. Não havia o que
+consolidar — havia o percurso a **construir**. A duplicação real era de nome:
+"Sua jornada" na Home × "Linha do tempo" no menu.
+
+### 9.2 · Seis marcos, uma projeção
+
+`projetarNarrativa` ([jornada-narrativa.ts](../../../src/modules/paciente/jornada-narrativa.ts))
+traduz as sete etapas internas em seis marcos. **Consumida pelas duas
+superfícies**: a Home resume, a rota detalha.
+
+| marco | conclui por | submarcos |
+|---|---|---|
+| Sua história | `historia.registeredAt` | relato · reconhecimento do Curador |
+| **Primeiro Encontro** | **`acolhimento.meetingHeldAt`** | a conversa |
+| Análise e Curadoria | `relatorio.emittedAt` | **Perfil** · análise da rede · **três caminhos** |
+| **Segundo Encontro** | **`devolutiva.presentedAt`** | apresentação · **entrega digital (`deliveredAt`)** |
+| Sua decisão | `devolutiva.decision` | escolha registrada |
+| Próximos passos | — (continuidade) | — |
+
+**Perfil e Relatório não sumiram**: deixaram de competir como etapas
+principais e viraram submarcos, onde o §17 os quer.
+
+### 9.3 · A4.1 · o defeito que a revisão pegou
+
+A primeira versão escrevia **todo submarco no passado**, independentemente do
+fato, e deixava a distinção por conta do símbolo. A tela dizia, sob o título
+*"ainda por vir"*: **"A conversa aconteceu"**, **"As opções foram
+apresentadas"**, **"Sua escolha foi registrada"**.
+
+Cor e ícone não sustentam verdade sozinhos. Agora **o texto também diz**:
+
+| fato | ausente | presente |
+|---|---|---|
+| `meetingHeldAt` | "A conversa com seu Curador acontecerá aqui" | "A conversa aconteceu" |
+| `presentedAt` | "As opções serão apresentadas a você por uma pessoa" | "As opções foram apresentadas por uma pessoa" |
+| `deliveredAt` | "Quando a entrega digital acontecer, o conteúdo ficará aqui para reler" | "O conteúdo ficou disponível para você reler" |
+| `decision` | "Quando você decidir, sua escolha ficará registrada aqui" | "Sua escolha foi registrada" |
+
+A guarda testa a **relação** fato × tempo verbal, não frases exatas: qualquer
+redação futura continua protegida.
+
+### 9.4 · A régua da Home
+
+| antes | depois |
+|---|---|
+| Consulta · Perfil · Curadoria · Relatório · Conversa · Escolha · Acompanhamento | História · 1º Encontro · Curadoria · 2º Encontro · Decisão · Próximos passos |
+| 7 etapas internas | **6 marcos, da mesma projeção** |
+
+Nomes curtos ≤ 16 caracteres, para caber em 390px sem espremer — mesma etapa,
+menos palavras, **nunca um sétimo conceito**. Guarda proíbe o retorno de
+"consulta/relatório/conversa/escolha/perfil" aos rótulos curtos.
+
+A Home aponta para o percurso inteiro: *"Ver sua Jornada inteira"*.
+
+### 9.5 · Navegação
+
+Rótulo **"Sua Jornada"**; href `/paciente/linha-do-tempo` **preservado** —
+trocá-lo só pelo nome custaria um redirect sem ganho.
+
+### 9.6 · Invariantes e provas de perda
+
+D-9 (`meetingHeldAt` isolado numa constante própria) · `presentedAt` ≠
+`deliveredAt` · handoff só por `decision` · cancelado ≠ concluído (sem marco
+atual, rótulo do contrato).
+
+**Seis mutações derrubam guarda**: as duas da A4 (D-9 e entrega inferida) e as
+quatro da A4.1 (copy factual com fato ausente, uma por fato).
+
+### 9.7 · Oráculos defasados corrigidos
+
+Quatro, todos por fixarem **redação** onde o contrato é outro: ordem da
+navegação → `href`; item da Jornada → `href`; guarda de governança da
+capability do nome do Curador → *caminho da paciente* em vez de lista literal;
+e a descrição de cena do `AmbientHero` → lida da projeção.
+
+### 9.8 · Gaps da A4
+
+- **J1–J6 provados por projeção, não por captura.** O Caso local está em
+  `CONSULTA_INICIAL`; alcançar os demais exige conduzir o caso pela Mesa.
+- **`WALK_LABELS` / `WALK_HREFS` / `walkStatusOf`** continuam em
+  `experiencia.ts` sem consumidor na Home. Não removidos: outras superfícies
+  podem precisar do vocabulário interno.
+
 ### 8.5 · Gaps registrados
 
 - **`ExpandableSection`** ("Como sua Curadoria é feita", "Conhecer meu Perfil")

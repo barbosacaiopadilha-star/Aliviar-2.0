@@ -8,18 +8,17 @@ import { CuradoriaCard } from "@/components/paciente/experiencia/curadoria-card"
 import { JourneyWalk, type WalkStage } from "@/components/paciente/experiencia/journey-walk";
 import { ProfileCard } from "@/components/paciente/experiencia/profile-card";
 import { ProximaAcao } from "@/components/paciente/experiencia/proxima-acao";
+import { projetarNarrativa, type MarcoId } from "@/modules/paciente/jornada-narrativa";
 import { QuemAcompanha } from "@/components/paciente/experiencia/quem-acompanha";
 import { PatientWelcome } from "@/components/paciente/dashboard/patient-primitives";
 import { derivePatientPending } from "@/modules/paciente/next-action";
 import { nomeDoCuradorDoCaso } from "@/modules/paciente/nome-do-curador";
 import { currentHourInBrazil, greetingFor } from "@/modules/paciente/ambiente";
-import {
-  mensagemPrincipal,
-  STAGE_EYEBROWS,
-  WALK_HREFS,
-  WALK_LABELS,
-  walkStatusOf,
-} from "@/modules/paciente/experiencia";
+// A4.1 · `WALK_LABELS`, `WALK_HREFS` e `walkStatusOf` saíram daqui: eles
+// traduziam as SETE etapas internas, e a régua passou a mostrar os seis marcos
+// da narrativa. Continuam existindo em `experiencia.ts` — outras superfícies
+// podem precisar do vocabulário interno; a Home é que não precisa mais.
+import { mensagemPrincipal, STAGE_EYEBROWS } from "@/modules/paciente/experiencia";
 import { loadComoQuerSerCuidada, loadPatientPerfil } from "@/modules/paciente/experiencia-loader";
 import { loadModeloDoReconhecimento } from "@/modules/paciente/reconhecimento-model";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -36,6 +35,17 @@ import { loadPatientCuradoria } from "@/modules/curadoria/patient-curadoria";
 export const metadata: Metadata = {
   title: "Minha Jornada",
   robots: { index: false, follow: false },
+};
+
+/**
+ * Para onde cada marco leva, quando existe onde chegar. Só destinos REAIS —
+ * marco sem superfície própria continua legível como texto, sem virar link
+ * para uma tela que não o explica.
+ */
+const MARCO_HREFS: Partial<Record<MarcoId, string>> = {
+  ANALISE: "/paciente/perfil",
+  SEGUNDO_ENCONTRO: "/paciente/curadoria",
+  DECISAO: "/paciente/curadoria",
 };
 
 /** Link de leitura: sublinhado fino, sem virar botão nem competir com a ação. */
@@ -112,7 +122,7 @@ export default async function PacienteHomePage() {
 
   // Sem Case ainda: a jornada não começou, e a home diz isso sem simular
   // uma trilha vazia.
-  if (!jornada) {
+  if (!record || !jornada) {
     return (
       <div className="mx-auto max-w-3xl space-y-8">
         <PatientWelcome name={displayName} subtitle={`${saudacao}. Estamos por aqui.`} />
@@ -137,16 +147,26 @@ export default async function PacienteHomePage() {
     );
   }
 
-  const walkStages: WalkStage[] = jornada.stages.map((stage) => ({
-    id: stage.id,
-    label: WALK_LABELS[stage.id],
-    status: walkStatusOf(stage.status),
+  // A4.1 · a régua da Home passa a mostrar os MESMOS SEIS MARCOS da Jornada
+  // detalhada, projetados pela mesma função. Ela mostrava as sete etapas
+  // internas — Consulta, Perfil, Curadoria, Relatório, Conversa, Escolha,
+  // Acompanhamento —, e quem saía daqui para a Jornada encontrava outros
+  // nomes: duas narrativas para um percurso só. Perfil e Relatório não
+  // sumiram; viraram submarcos, e a Jornada os mostra.
+  const narrativa = projetarNarrativa({ record, jornada, leitura });
+
+  const walkStages: WalkStage[] = narrativa.marcos.map((marco) => ({
+    id: marco.id,
+    // O nome curto: seis títulos inteiros não cabem em 390px sem virar
+    // tipografia ilegível. Mesma etapa, menos palavras.
+    label: marco.rotuloCurto,
+    status: marco.status === "CONCLUIDO" ? "done" : marco.status === "ATUAL" ? "current" : "ahead",
     // A RLS continua sendo a autoridade: o link leva a uma superfície dela,
     // e o que ela pode ver lá é decidido no servidor, não aqui.
-    href: WALK_HREFS[stage.id],
+    href: MARCO_HREFS[marco.id],
   }));
 
-  const currentStage = jornada.stages.find((stage) => stage.id === jornada.currentStage);
+  const marcoAtual = narrativa.marcos.find((marco) => marco.status === "ATUAL");
 
   // A ação principal do cartão da Curadoria: onde ela continua. Só existe
   // quando há de fato uma tela para continuar.
@@ -166,9 +186,9 @@ export default async function PacienteHomePage() {
   // topo responde "o que está acontecendo agora"; a régua responde "onde isso
   // fica no percurso". Quando as duas coincidem, quem cala é a régua.
   const detalheDaEtapa =
-    pending.kind === "nothing" && pending.whatHappensNext === currentStage?.description
+    pending.kind === "nothing" && pending.whatHappensNext === marcoAtual?.descricao
       ? undefined
-      : currentStage?.description;
+      : marcoAtual?.descricao;
 
   return (
     <div className="mx-auto max-w-3xl space-y-14">
