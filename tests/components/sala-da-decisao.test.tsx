@@ -72,7 +72,7 @@ function buildConnection(overrides: Partial<ConnectionRecord> = {}): ConnectionR
 async function atravessarOLimiar() {
   const user = userEvent.setup();
   render(
-    <ConnectionChoicePanel
+    <ConnectionChoicePanel modo="legado"
       caseId={CASE_ID}
       providerPresentations={PRESENTATIONS}
       connection={null}
@@ -188,7 +188,7 @@ describe("Sala da Decisão — um ato, sem pressão", () => {
 describe("Sala da Decisão — a janela de troca", () => {
   it("em DECISAO_REGISTRADA, a correção é dita pelo marco, não como promessa geral", () => {
     render(
-      <ConnectionChoicePanel
+      <ConnectionChoicePanel modo="legado"
         caseId={CASE_ID}
         providerPresentations={PRESENTATIONS}
         connection={buildConnection()}
@@ -204,7 +204,7 @@ describe("Sala da Decisão — a janela de troca", () => {
 
   it("depois de CONTATO_INICIADO a janela fecha — e ninguém a apresenta como erro", () => {
     render(
-      <ConnectionChoicePanel
+      <ConnectionChoicePanel modo="legado"
         caseId={CASE_ID}
         providerPresentations={PRESENTATIONS}
         connection={buildConnection({ status: "CONTATO_INICIADO" })}

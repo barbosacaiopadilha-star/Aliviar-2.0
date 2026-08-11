@@ -21,6 +21,7 @@ type ConnectionProgressPanelProps = {
   // Só é oferecida em DECISAO_REGISTRADA — o próprio ConnectionChoicePanel
   // decide isso e só passa esta prop quando a correção é permitida.
   onRequestEdit?: () => void;
+  modo?: "canonico" | "legado";
 };
 
 // Ação terminal (confirmar atendimento, encerrar) sempre exige uma etapa de
@@ -43,6 +44,7 @@ export function ConnectionProgressPanel({
   connection,
   providerPresentations,
   onRequestEdit,
+  modo = "legado",
 }: ConnectionProgressPanelProps) {
   const router = useRouter();
   const [reviewing, setReviewing] = useState<ReviewingOutcome>(null);
@@ -222,10 +224,12 @@ export function ConnectionProgressPanel({
   return (
     <PatientCard>
       <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
-          Sua escolha
+          {modo === "canonico" ? "Seu acompanhamento" : "Sua escolha"}
         </h2>
       <p className="text-sm text-ink">
-        Você escolheu seguir com {displayName}.
+        {modo === "canonico"
+          ? `Acompanhamento aberto com ${displayName}.`
+          : `Você escolheu seguir com ${displayName}.`}
       </p>
       {onRequestEdit ? (
         <>

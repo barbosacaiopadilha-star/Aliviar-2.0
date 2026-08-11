@@ -96,7 +96,7 @@ function buildConnection(
 describe("ConnectionChoicePanel — sem Connection", () => {
   it("renderiza os três profissionais sem ranking, nenhum pré-selecionado", () => {
     render(
-      <ConnectionChoicePanel
+      <ConnectionChoicePanel modo="legado"
         caseId={CASE_ID}
         providerPresentations={buildPresentations()}
         connection={null}
@@ -126,7 +126,7 @@ describe("ConnectionChoicePanel — sem Connection", () => {
 
   it("mantém o gesto do limiar desabilitado sem seleção", () => {
     render(
-      <ConnectionChoicePanel
+      <ConnectionChoicePanel modo="legado"
         caseId={CASE_ID}
         providerPresentations={buildPresentations()}
         connection={null}
@@ -140,7 +140,7 @@ describe("ConnectionChoicePanel — sem Connection", () => {
   it("permite selecionar e trocar localmente, sem chamar a action antes da confirmação", async () => {
     const user = userEvent.setup();
     render(
-      <ConnectionChoicePanel
+      <ConnectionChoicePanel modo="legado"
         caseId={CASE_ID}
         providerPresentations={buildPresentations()}
         connection={null}
@@ -167,7 +167,7 @@ describe("ConnectionChoicePanel — sem Connection", () => {
     createConnectionActionMock.mockResolvedValue({ success: true });
     const user = userEvent.setup();
     render(
-      <ConnectionChoicePanel
+      <ConnectionChoicePanel modo="legado"
         caseId={CASE_ID}
         providerPresentations={buildPresentations()}
         connection={null}
@@ -196,7 +196,7 @@ describe("ConnectionChoicePanel — sem Connection", () => {
   it("'Voltar aos caminhos' volta à seleção sem persistir", async () => {
     const user = userEvent.setup();
     render(
-      <ConnectionChoicePanel
+      <ConnectionChoicePanel modo="legado"
         caseId={CASE_ID}
         providerPresentations={buildPresentations()}
         connection={null}
@@ -219,7 +219,7 @@ describe("ConnectionChoicePanel — sem Connection", () => {
 describe("ConnectionChoicePanel — Connection em DECISAO_REGISTRADA", () => {
   it("exibe a escolha atual e oferece correção", () => {
     render(
-      <ConnectionChoicePanel
+      <ConnectionChoicePanel modo="legado"
         caseId={CASE_ID}
         providerPresentations={buildPresentations()}
         connection={buildConnection()}
@@ -237,7 +237,7 @@ describe("ConnectionChoicePanel — Connection em DECISAO_REGISTRADA", () => {
     correctChoiceActionMock.mockResolvedValue({ success: true });
     const user = userEvent.setup();
     render(
-      <ConnectionChoicePanel
+      <ConnectionChoicePanel modo="legado"
         caseId={CASE_ID}
         providerPresentations={buildPresentations()}
         connection={buildConnection()}
@@ -272,7 +272,7 @@ describe("ConnectionChoicePanel — estados além de DECISAO_REGISTRADA", () => 
   // profunda de conteúdo.
   it("CONTATO_INICIADO: delega para ConnectionProgressPanel, nenhum rádio/correção aqui", () => {
     render(
-      <ConnectionChoicePanel
+      <ConnectionChoicePanel modo="legado"
         caseId={CASE_ID}
         providerPresentations={buildPresentations()}
         connection={buildConnection({ status: "CONTATO_INICIADO" })}
@@ -290,7 +290,7 @@ describe("ConnectionChoicePanel — estados além de DECISAO_REGISTRADA", () => 
 
   it("PRIMEIRO_ATENDIMENTO_REALIZADO: delega para ConnectionProgressPanel, estado terminal", () => {
     render(
-      <ConnectionChoicePanel
+      <ConnectionChoicePanel modo="legado"
         caseId={CASE_ID}
         providerPresentations={buildPresentations()}
         connection={buildConnection({
@@ -313,7 +313,7 @@ describe("ConnectionChoicePanel — erros", () => {
     });
     const user = userEvent.setup();
     render(
-      <ConnectionChoicePanel
+      <ConnectionChoicePanel modo="legado"
         caseId={CASE_ID}
         providerPresentations={buildPresentations()}
         connection={null}
@@ -354,7 +354,7 @@ describe("ConnectionChoicePanel — erros", () => {
 describe("ConnectionChoicePanel — acessibilidade", () => {
   it("agrupa as opções em um fieldset com legend, e cada rádio tem nome acessível", () => {
     render(
-      <ConnectionChoicePanel
+      <ConnectionChoicePanel modo="legado"
         caseId={CASE_ID}
         providerPresentations={buildPresentations()}
         connection={null}
@@ -370,7 +370,7 @@ describe("ConnectionChoicePanel — acessibilidade", () => {
   it("permite navegação e seleção via teclado", async () => {
     const user = userEvent.setup();
     render(
-      <ConnectionChoicePanel
+      <ConnectionChoicePanel modo="legado"
         caseId={CASE_ID}
         providerPresentations={buildPresentations()}
         connection={null}

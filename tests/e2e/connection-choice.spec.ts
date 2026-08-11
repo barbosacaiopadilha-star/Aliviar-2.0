@@ -78,11 +78,33 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
       await page.goto("/paciente/curadoria");
 
       const [name] = f.professionalDisplayNames;
-      await page.getByRole("radio", { name }).check();
-      await page.getByRole("button", { name: `Quero seguir com ${name}` }).click();
-      await page
-        .getByRole("button", { name: `Seguir com ${name}` })
-        .click();
+
+      // CANÔNICO · a pessoa já foi decidida no fato canônico. Ela aparece como
+      // informação FIXA — não há rádio, não há o que escolher, e a linguagem
+      // trata de começar, não de escolher.
+      await expect(page.getByText(`Caminho escolhido: ${name}`)).toBeVisible();
+      await expect(page.getByRole("radio")).toHaveCount(0);
+      for (const legada of [
+        "Com quem você gostaria de seguir",
+        "um dos três",
+        "Os profissionais foram apresentados",
+      ]) {
+        await expect(page.getByText(legada, { exact: false })).toHaveCount(0);
+      }
+
+      await page.getByRole("button", { name: "Abrir meu acompanhamento" }).click();
+      await expect(
+        page.getByRole("heading", { name: "O que acontece ao abrir seu acompanhamento" }),
+      ).toBeVisible();
+      await page.getByRole("button", { name: "Abrir meu acompanhamento" }).click();
+
+      // Espera pelo ESTADO REAL, com teto explícito. Medido na B3-COPY-B2:
+      // ~840ms de forma estável, em build frio e quente. 10s é ~12x a folga —
+      // não mascara falha da action, que nunca renderiza este texto.
+      await expect(page.getByText(`Acompanhamento aberto com ${name}.`)).toBeVisible({
+        timeout: 10_000,
+      });
+      await expect(page.getByRole("button", { name: "Alterar minha escolha" })).toHaveCount(0);
 
       await expect(
         page.getByRole("button", { name: "Já iniciei o contato" }),
@@ -90,7 +112,7 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
       await page.getByRole("button", { name: "Já iniciei o contato" }).click();
       await expect(
         page.getByText(`Você registrou que iniciou o contato com ${name}.`),
-      ).toBeVisible();
+      ).toBeVisible({ timeout: 10_000 });
 
       await page.reload();
       await expect(
@@ -120,7 +142,7 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
       // botões da página inteira — o cabeçalho do paciente tem controles
       // legítimos, e exigir zero botões testava o layout, não o produto.
       for (const acao of [
-        `Seguir com ${name}`,
+        "Abrir meu acompanhamento",
         "Voltar aos caminhos",
         "Alterar minha escolha",
         "Já iniciei o contato",
@@ -142,11 +164,28 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
       await page.goto("/paciente/curadoria");
 
       const [name] = f.professionalDisplayNames;
-      await page.getByRole("radio", { name }).check();
-      await page.getByRole("button", { name: `Quero seguir com ${name}` }).click();
-      await page
-        .getByRole("button", { name: `Seguir com ${name}` })
-        .click();
+
+      // CANÔNICO · a pessoa já foi decidida no fato canônico. Ela aparece como
+      // informação FIXA — não há rádio, não há o que escolher, e a linguagem
+      // trata de começar, não de escolher.
+      await expect(page.getByText(`Caminho escolhido: ${name}`)).toBeVisible();
+      await expect(page.getByRole("radio")).toHaveCount(0);
+      for (const legada of [
+        "Com quem você gostaria de seguir",
+        "um dos três",
+        "Os profissionais foram apresentados",
+      ]) {
+        await expect(page.getByText(legada, { exact: false })).toHaveCount(0);
+      }
+
+      await page.getByRole("button", { name: "Abrir meu acompanhamento" }).click();
+      await expect(
+        page.getByRole("heading", { name: "O que acontece ao abrir seu acompanhamento" }),
+      ).toBeVisible();
+      await page.getByRole("button", { name: "Abrir meu acompanhamento" }).click();
+
+      await expect(page.getByText(`Acompanhamento aberto com ${name}.`)).toBeVisible();
+      await expect(page.getByRole("button", { name: "Alterar minha escolha" })).toHaveCount(0);
 
       await page.getByRole("button", { name: "O contato não avançou" }).click();
       await expect(
@@ -168,7 +207,7 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
       // botões da página inteira — o cabeçalho do paciente tem controles
       // legítimos, e exigir zero botões testava o layout, não o produto.
       for (const acao of [
-        `Seguir com ${name}`,
+        "Abrir meu acompanhamento",
         "Voltar aos caminhos",
         "Alterar minha escolha",
         "Já iniciei o contato",
@@ -190,12 +229,37 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
       await page.goto("/paciente/curadoria");
 
       const [name] = f.professionalDisplayNames;
-      await page.getByRole("radio", { name }).check();
-      await page.getByRole("button", { name: `Quero seguir com ${name}` }).click();
-      await page
-        .getByRole("button", { name: `Seguir com ${name}` })
-        .click();
+
+      // CANÔNICO · a pessoa já foi decidida no fato canônico. Ela aparece como
+      // informação FIXA — não há rádio, não há o que escolher, e a linguagem
+      // trata de começar, não de escolher.
+      await expect(page.getByText(`Caminho escolhido: ${name}`)).toBeVisible();
+      await expect(page.getByRole("radio")).toHaveCount(0);
+      for (const legada of [
+        "Com quem você gostaria de seguir",
+        "um dos três",
+        "Os profissionais foram apresentados",
+      ]) {
+        await expect(page.getByText(legada, { exact: false })).toHaveCount(0);
+      }
+
+      await page.getByRole("button", { name: "Abrir meu acompanhamento" }).click();
+      await expect(
+        page.getByRole("heading", { name: "O que acontece ao abrir seu acompanhamento" }),
+      ).toBeVisible();
+      await page.getByRole("button", { name: "Abrir meu acompanhamento" }).click();
+
+      await expect(page.getByText(`Acompanhamento aberto com ${name}.`)).toBeVisible();
+      await expect(page.getByRole("button", { name: "Alterar minha escolha" })).toHaveCount(0);
       await page.getByRole("button", { name: "Já iniciei o contato" }).click();
+      // Esperar o ESTADO REAL antes do gesto seguinte, nunca um sleep. O painel
+      // desabilita os próprios botões enquanto a action está em voo — clicar
+      // "O contato não avançou" no mesmo instante é o teste correndo contra o
+      // produto, e foi o que produziu a intermitência medida na B3-COPY-B2.
+      // Limite explícito: se a reprojeção não chegar em 10s, isto FALHA.
+      await expect(
+        page.getByText(`Você registrou que iniciou o contato com ${name}.`),
+      ).toBeVisible({ timeout: 10_000 });
 
       await page.getByRole("button", { name: "O contato não avançou" }).click();
       await page
@@ -230,11 +294,28 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
       await page.goto("/paciente/curadoria");
 
       const [name] = f.professionalDisplayNames;
-      await page.getByRole("radio", { name }).check();
-      await page.getByRole("button", { name: `Quero seguir com ${name}` }).click();
-      await page
-        .getByRole("button", { name: `Seguir com ${name}` })
-        .click();
+
+      // CANÔNICO · a pessoa já foi decidida no fato canônico. Ela aparece como
+      // informação FIXA — não há rádio, não há o que escolher, e a linguagem
+      // trata de começar, não de escolher.
+      await expect(page.getByText(`Caminho escolhido: ${name}`)).toBeVisible();
+      await expect(page.getByRole("radio")).toHaveCount(0);
+      for (const legada of [
+        "Com quem você gostaria de seguir",
+        "um dos três",
+        "Os profissionais foram apresentados",
+      ]) {
+        await expect(page.getByText(legada, { exact: false })).toHaveCount(0);
+      }
+
+      await page.getByRole("button", { name: "Abrir meu acompanhamento" }).click();
+      await expect(
+        page.getByRole("heading", { name: "O que acontece ao abrir seu acompanhamento" }),
+      ).toBeVisible();
+      await page.getByRole("button", { name: "Abrir meu acompanhamento" }).click();
+
+      await expect(page.getByText(`Acompanhamento aberto com ${name}.`)).toBeVisible();
+      await expect(page.getByRole("button", { name: "Alterar minha escolha" })).toHaveCount(0);
       await page.getByRole("button", { name: "Já iniciei o contato" }).click();
 
       // Nenhum caminho de UI para corrigir depois de CONTATO_INICIADO.
@@ -257,7 +338,7 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
       // botões da página inteira — o cabeçalho do paciente tem controles
       // legítimos, e exigir zero botões testava o layout, não o produto.
       for (const acao of [
-        `Seguir com ${name}`,
+        "Abrir meu acompanhamento",
         "Voltar aos caminhos",
         "Alterar minha escolha",
         "Já iniciei o contato",
@@ -285,22 +366,38 @@ test.describe("Connection — escolha do profissional (E2E autenticado)", () => 
         otherFixture.patientPassword,
       );
       await page.goto("/paciente/curadoria");
+
+      const [proprio] = otherFixture.professionalDisplayNames;
+
       // A entrega do OUTRO paciente é a única que ele pode ver — nunca a
-      // escolha registrada no teste anterior para fixture.caseId.
+      // escolha registrada no teste anterior para fixture.caseId. Ele também
+      // chega decidido: a conexão fala em COMEÇAR, com a pessoa dele como
+      // informação fixa, sem rádio e sem nenhuma frase do legado.
       await expect(
-        page.getByRole("heading", {
-          name: "Com quem você gostaria de seguir?",
-        }),
+        page.getByRole("heading", { name: "Começar seu acompanhamento" }),
       ).toBeVisible();
+      await expect(page.getByText(`Caminho escolhido: ${proprio}`)).toBeVisible();
+      await expect(page.getByRole("radio")).toHaveCount(0);
+      for (const legada of [
+        "Com quem você gostaria de seguir",
+        "um dos três",
+        "Os profissionais foram apresentados",
+      ]) {
+        await expect(page.getByText(legada, { exact: false })).toHaveCount(0);
+      }
+
       // O isolamento se prova pelo Case e pela Connection, NUNCA pelo nome do
       // profissional: o mesmo profissional pode legitimamente aparecer nas
       // Curadorias de dois pacientes, e usar o nome como sinal de vazamento
       // acusava o produto funcionando corretamente.
       //
-      // Este paciente está no passo de escolha — logo não carrega nenhuma
-      // decisão, muito menos a do outro.
+      // Este paciente decidiu, mas não abriu acompanhamento nenhum — logo não
+      // carrega estado de conexão, muito menos o do outro.
       await expect(
         page.getByText("Você escolheu seguir com", { exact: false }),
+      ).toHaveCount(0);
+      await expect(
+        page.getByText("Acompanhamento aberto com", { exact: false }),
       ).toHaveCount(0);
 
       // E o Case do outro paciente permanece fora do alcance da sessão dele.

@@ -150,6 +150,11 @@ export default async function PatientCuradoriaPage() {
               caseId={caseId}
               providerPresentations={opcoesDaConexao}
               connection={connection}
+              // B3-COPY · o modo é DITO, nunca inferido. A rota já sabe a
+              // resposta desde a linha 96 — inferir por
+              // `providerPresentations.length === 1` erraria no legado de um
+              // profissional e no estado R3, que é canônico com um só.
+              modo={legado ? "legado" : "canonico"}
             />
           ) : null}
 

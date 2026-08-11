@@ -49,10 +49,16 @@ vi.mock("@/modules/relationship", () => ({
 vi.mock("@/modules/curadoria/actions", () => ({
   registerDecisionAction: (input: unknown) => registerDecisionActionMock(input),
 }));
+// O caminho legado (H4) alcança painéis que o canônico nunca renderiza —
+// progresso da conexão e modo de contato —, e cada um importa as suas actions.
 vi.mock("@/modules/connection/actions", () => ({
   createConnectionAction: vi.fn(),
   correctChoiceAction: vi.fn(),
   setContactModeAction: vi.fn(),
+  defineContactModeAction: vi.fn(),
+  registerContactIntentAction: vi.fn(),
+  confirmFirstAppointmentAction: vi.fn(),
+  closeWithoutRelationshipAction: vi.fn(),
 }));
 
 // Importada DEPOIS dos mocks, e é a própria rota — não um componente solto.
@@ -83,6 +89,33 @@ function curadoria(decision: unknown = null) {
       dimensions: [],
     })),
     decision,
+  };
+}
+
+/**
+ * A entrega HISTÓRICA, no formato legado — sem Curadoria do Método. É o único
+ * estado em que `legado` é verdadeiro na rota (`!curadoria && delivery`), e
+ * portanto o único que ainda pergunta "com quem".
+ */
+function entregaLegada() {
+  return {
+    caseId: "case-legado",
+    deliveredAt: "2026-08-10T12:00:00.000Z",
+    decisionSummary: "Três caminhos possíveis para o seu caso.",
+    methodExplanation: "Como a curadoria chegou até aqui.",
+    clientContextSummary: "O que você contou.",
+    comparisonSummary: "Os três cobrem a área por caminhos diferentes.",
+    nextSteps: ["Escolher com quem começar."],
+    disclaimer: "Isto não é indicação médica.",
+    providerPresentations: OPCOES.map((o) => ({
+      providerId: `prof-${o.id}`,
+      displayName: o.professionalName,
+      professionalSummary: "Atende adultos.",
+      whyIncluded: `Entrou porque responde ao seu caso — ${o.professionalName}.`,
+      strengthsForThisCase: ["Formação específica."],
+      relevantLimitations: ["Agenda concorrida."],
+      practicalConsiderations: [],
+    })),
   };
 }
 
@@ -167,7 +200,88 @@ describe("T-B3-R1..R5 · a rota real compõe a decisão canônica", () => {
       await renderizarRota();
 
       expect(screen.getByText(/nenhuma das três serviu/i)).toBeInTheDocument();
+      // Nenhuma superfície de conexão — nem a pergunta legada, nem o convite
+      // canônico a começar. Quem disse que nenhuma serviu não tem com quem.
       expect(screen.queryByText(/Com quem você gostaria de seguir/i)).toBeNull();
+      expect(screen.queryByRole("heading", { name: "Começar seu acompanhamento" })).toBeNull();
+      expect(screen.queryByText(/Caminho escolhido:/)).toBeNull();
+      expect(screen.queryAllByRole("radio")).toHaveLength(0);
+    });
+  });
+
+  describe("B3-COPY · a rota DIZ o modo, e os dois modos falam línguas diferentes", () => {
+    // `modo` é prop, e prop não é observável de fora sem trocar o componente
+    // real por um dublê — o que destruiria justamente o que este arquivo
+    // existe para provar (composição, não render isolado). O que se prova
+    // aqui é o EFEITO do modo, que é a única coisa que a paciente vê.
+
+    it("T-B3-R4 · canônico: começar, com a pessoa já decidida como informação fixa", async () => {
+      loadPatientCuradoriaMock.mockResolvedValue(
+        curadoria({
+          outcome: "CHOSEN",
+          chosenName: "Dra. Helena Monteiro",
+          decidedAt: "2026-08-11T12:00:00.000Z",
+        }),
+      );
+
+      await renderizarRota();
+
+      expect(
+        screen.getByRole("heading", { name: "Começar seu acompanhamento" }),
+      ).toBeInTheDocument();
+      expect(screen.getByText("Caminho escolhido: Dra. Helena Monteiro")).toBeInTheDocument();
+
+      // Não há o que marcar, não há o que trocar, e nenhuma frase do legado
+      // sobrevive na rota canônica.
+      expect(screen.queryAllByRole("radio")).toHaveLength(0);
+      expect(screen.queryByRole("button", { name: "Alterar minha escolha" })).toBeNull();
+      expect(
+        screen.queryByRole("heading", { name: "Com quem você gostaria de seguir?" }),
+      ).toBeNull();
+      expect(screen.queryByText(/Os profissionais foram apresentados/)).toBeNull();
+
+      // E os três caminhos continuam consultáveis depois de decidir (R5).
+      expect(screen.getByRole("heading", { name: "Seus três caminhos" })).toBeInTheDocument();
+      for (const opcao of OPCOES) {
+        expect(screen.getByRole("article", { name: opcao.professionalName })).toBeInTheDocument();
+      }
+    });
+
+    it("T-B3-H4 · legado: a pergunta antiga e os três rádios permanecem", async () => {
+      loadPatientCuradoriaMock.mockResolvedValue(null);
+      getLatestFinalCuradoriaDeliveryMock.mockResolvedValue(entregaLegada());
+
+      await renderizarRota();
+
+      expect(
+        screen.getByRole("heading", { name: "Com quem você gostaria de seguir?" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/Os profissionais foram apresentados sem ordem de preferência/),
+      ).toBeInTheDocument();
+      expect(screen.getAllByRole("radio")).toHaveLength(3);
+
+      // A copy canônica não vaza para quem tem só o documento histórico.
+      expect(screen.queryByRole("heading", { name: "Começar seu acompanhamento" })).toBeNull();
+      expect(screen.queryByText(/Caminho escolhido:/)).toBeNull();
+    });
+
+    it("T-B3-H4 · legado: a correção continua alcançável depois da escolha", async () => {
+      loadPatientCuradoriaMock.mockResolvedValue(null);
+      getLatestFinalCuradoriaDeliveryMock.mockResolvedValue(entregaLegada());
+      findByCaseIdConnection.mockResolvedValue({
+        id: "conn-legado",
+        caseId: "case-legado",
+        professionalProfileId: "prof-op-a",
+        status: "DECISAO_REGISTRADA",
+        contactMode: null,
+      });
+
+      await renderizarRota();
+
+      expect(screen.getByText("Você escolheu seguir com Dra. Helena Monteiro.")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Alterar minha escolha" })).toBeInTheDocument();
+      expect(screen.queryByText(/Acompanhamento aberto com/)).toBeNull();
     });
   });
 });
