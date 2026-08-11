@@ -116,3 +116,4 @@ da Curadoria 2.0.
 | 22 | [Handoff](22_HANDOFF_ENGENHEIRO.md) | por bloco |
 | 23 | [Adendo — dois encontros](23_ADENDO_DOIS_ENCONTROS.md) | Encontro 1 e 2 como fatos; **uma coluna** |
 | 24 | [D-11 — ordem do Primeiro Encontro](24_D11_ORDEM_DO_PRIMEIRO_ENCONTRO.md) | preparado × validado; **colisão com a ADR-042** |
+| 25 | [D-12 — Central de Documentos](25_D12_CENTRAL_DE_DOCUMENTOS.md) | **duas policies**, sem tabela, sem coluna, sem bucket |

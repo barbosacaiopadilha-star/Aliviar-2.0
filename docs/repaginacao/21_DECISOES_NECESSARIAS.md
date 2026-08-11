@@ -92,6 +92,9 @@ Se sim, **C/D** e missão própria. Se não, o WhatsApp continua sendo o canal.
 | **D-10** | agendamento do Encontro 2 | E | ❌ **PENDENTE — fora de escopo desta sequência**; nenhum mecanismo novo criado. `devolutiva.presentedAt` permanece o fato de realização |
 | **D-11A** | eliminação do bypass de validação do Perfil | correção | ✅ **FORMALMENTE CERTIFICADA E ENCERRADA** (2026-08-10, HEAD `996f109`) — `validatePriorityProfile` saiu de `src/` (**0 chamadores de produção**); substituído por `tests/apoio/fixture-perfil.ts :: fixtureValidarPerfil`, fora do runtime; via oficial preservada (paciente → ReconhecerPerfil → `acknowledge_priority_profile`) |
 | **D-11** (residual) | orquestração UX do Primeiro Encontro — [24](24_D11_ORDEM_DO_PRIMEIRO_ENCONTRO.md) | produto/UX | ⚠️ **AINDA PENDENTE** — o bypass de fixture/seed está **resolvido** (D-11A); o que resta é orquestração de experiência, **não defeito técnico**. **ADR-042 intacta**: nenhum gate `meetingHeldAt != null` foi criado para a paciente reconhecer o Perfil |
+| **D-12** | Central de Documentos — [25](25_D12_CENTRAL_DE_DOCUMENTOS.md) | **E, duas policies** | ✅ **APTO** — reutiliza tabela e bucket; origem derivada de `uploaded_by <> profile_id`, sem coluna nova |
+| **GAP-D12-2** | a paciente pode apagar documento que **recebeu** da Aliviar? | produto | ⚠️ **ABERTO** — a policy de DELETE atual permite, e isso só passa a importar quando existirem documentos da Aliviar |
+| **GAP-A6-Q1** | textos das perguntas de Sua História sem fonte única | refactor | ⚠️ **ABERTO** — impede versão **em branco** imprimível; a história **enviada** não depende disso |
 | **GAP-A1** | `meeting_scheduled_at` continua sem writer | produto/UX | ⚠️ **ABERTO** — não reprova D-9 nem pertence a D-11A; volta ao planejamento como pendência de UX/operação do Primeiro Encontro |
 
 > **Os blocos 2, 3, 4 e 5 não dependem de nenhuma delas e podem começar hoje.**
