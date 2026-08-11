@@ -63,16 +63,20 @@ test.describe("Portal do Paciente", () => {
     await loginAs(page, paciente);
 
     await page.goto("/paciente/documentos");
-    await expect(page.getByRole("heading", { name: "Meus documentos" })).toBeVisible();
+    // A6: a tela virou a Central de Documentos — três áreas, e o título passou
+    // a falar com ela ("Seus"), não sobre o sistema ("Meus").
+    await expect(page.getByRole("heading", { name: "Seus documentos", level: 1 })).toBeVisible();
 
     const filePath = path.resolve(__dirname, "../fixtures/sample-document.pdf");
     await page.locator('input[type="file"]').setInputFiles(filePath);
-    await page.getByRole("button", { name: "Enviar documento" }).click();
+    await page.getByRole("button", { name: "Enviar", exact: true }).click();
 
-    await expect(page.getByText("sample-document.pdf")).toBeVisible();
+    // O nome aparece no título E nos rótulos acessíveis das ações — por isso a
+    // asserção é sobre a AÇÃO, que é única e prova que o item é utilizável.
+    await expect(page.getByRole("button", { name: "Baixar sample-document.pdf" })).toBeVisible();
 
     await page.getByRole("button", { name: "Remover sample-document.pdf" }).click();
-    await expect(page.getByText("sample-document.pdf")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Baixar sample-document.pdf" })).toHaveCount(0);
   });
 
   test("linha do tempo mostra ao menos a criação da conta", async ({ page }) => {

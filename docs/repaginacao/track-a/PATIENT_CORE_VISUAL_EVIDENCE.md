@@ -261,3 +261,47 @@ CAPTURA=1 CAPTURA_DIR=evidencias/repaginacao/a3a/after node scripts/with-local-s
 
 O Playwright exige build de produção local (`npm run build:local`) — ele sobe
 `next start -p 3001` e não reaproveita o servidor de desenvolvimento.
+
+---
+
+## A6 — a Central de Documentos da paciente
+
+**Base:** `15d98c0` · **Conta:** `paciente.teste@aliviar-conexao.local`
+(sintética, local) · **Harness:** `tests/e2e/a6-captura-documentos.spec.ts`
+**Diretório:** `evidencias/a6/` *(gitignored)*
+
+**Fatos idênticos nas quatro capturas** — semeados pelos **writers de
+produção**, nunca por SQL: dois documentos enviados por ela
+(`ressonancia-lombar.pdf`, `laudo-fisioterapia-2026.pdf`), um depositado pelo
+Curador do Case (`orientacoes-da-curadoria.pdf`) e Sua História em rascunho.
+
+| ID | rota | viewport | estado | arquivo |
+|---|---|---|---|---|
+| **EV-A6-001** | `/paciente/documentos` | 1440×900 | antes | `before/documentos-desktop.png` |
+| **EV-A6-002** | `/paciente/documentos` | 390×844 | antes | `before/documentos-mobile.png` |
+| **EV-A6-003** | `/paciente/documentos` | 1440×900 | depois | `after/documentos-desktop.png` |
+| **EV-A6-004** | `/paciente/documentos` | 390×844 | depois | `after/documentos-mobile.png` |
+
+**As imagens diferem** — MD5 distinto nos dois viewports:
+
+| | antes | depois |
+|---|---|---|
+| desktop 1440 | `b3a6d7d19525…` | `4458bbdd5b48…` |
+| mobile 390 | `0d7ede7b8374…` | `e53edb10b54a…` |
+
+**O que mudou, em uma linha:** de um card administrativo único — com seletor de
+arquivo em inglês, sem categorias, sem recebidos, sem História e sem download —
+para três áreas nomeadas, com o que ela recebeu no topo, ação por item e a
+regra de arquivo dita antes da escolha.
+
+### Medição de overflow (§22)
+
+`scrollWidth − clientWidth` medido no documento, não a olho, em **390 / 430 /
+768 / 1440**: `0` em todos. Nenhum alvo de ação abaixo de **44px** — verificado
+percorrendo `main a, main button` e medindo a altura de cada um.
+
+### Como reproduzir
+
+```bash
+A6_EMAIL=… A6_SENHA=… CAPTURA=1 CAPTURA_DIR=evidencias/a6/after node scripts/with-local-supabase.mjs npx playwright test tests/e2e/a6-captura-documentos.spec.ts --workers=1
+```

@@ -82,17 +82,21 @@ test.describe("ADR-054 · o limite de 20 MB é real no fluxo da paciente", () =>
     await entrarComo(page, paciente);
     await page.goto("/paciente/documentos");
 
-    await page.getByLabel("Selecionar documento").setInputFiles({
+    await page.getByLabel("Escolher arquivo").setInputFiles({
       name: `${MARCADOR}-2mb.pdf`,
       mimeType: "application/pdf",
       buffer: pdfDeTamanho(2 * 1024 * 1024),
     });
-    await page.getByRole("button", { name: "Enviar documento" }).click();
+    await page.getByRole("button", { name: "Enviar", exact: true }).click();
 
     // Com o default de 1 MB, a action nem era alcançada: a resposta vinha do
     // framework e esta mensagem nunca aparecia.
     await expect(page.getByText("Documento enviado")).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText(`${MARCADOR}-2mb.pdf`)).toBeVisible();
+    // O nome aparece no título e nos rótulos acessíveis das ações; a asserção
+    // vai na AÇÃO, que é única e prova que o item entrou utilizável.
+    await expect(
+      page.getByRole("button", { name: `Baixar ${MARCADOR}-2mb.pdf` }),
+    ).toBeVisible({ timeout: 30_000 });
   });
 
   /**
@@ -105,12 +109,12 @@ test.describe("ADR-054 · o limite de 20 MB é real no fluxo da paciente", () =>
     await entrarComo(page, paciente);
     await page.goto("/paciente/documentos");
 
-    await page.getByLabel("Selecionar documento").setInputFiles({
+    await page.getByLabel("Escolher arquivo").setInputFiles({
       name: `${MARCADOR}-quase-no-teto.pdf`,
       mimeType: "application/pdf",
       buffer: pdfDeTamanho(TAMANHO_MAXIMO_DOCUMENTO_BYTES - 512 * 1024),
     });
-    await page.getByRole("button", { name: "Enviar documento" }).click();
+    await page.getByRole("button", { name: "Enviar", exact: true }).click();
 
     await expect(page.getByText("Documento enviado")).toBeVisible({ timeout: 120_000 });
   });
@@ -123,12 +127,12 @@ test.describe("ADR-054 · o limite de 20 MB é real no fluxo da paciente", () =>
     await entrarComo(page, paciente);
     await page.goto("/paciente/documentos");
 
-    await page.getByLabel("Selecionar documento").setInputFiles({
+    await page.getByLabel("Escolher arquivo").setInputFiles({
       name: `${MARCADOR}-grande.pdf`,
       mimeType: "application/pdf",
       buffer: pdfDeTamanho(TAMANHO_MAXIMO_DOCUMENTO_BYTES + 512 * 1024),
     });
-    await page.getByRole("button", { name: "Enviar documento" }).click();
+    await page.getByRole("button", { name: "Enviar", exact: true }).click();
 
     // A frase é nossa. Um 413 do framework não diria "20 MB" nem o que fazer.
     await expect(page.getByText(/passa de 20 MB/i)).toBeVisible({ timeout: 120_000 });
@@ -139,7 +143,7 @@ test.describe("ADR-054 · o limite de 20 MB é real no fluxo da paciente", () =>
     await entrarComo(page, paciente);
     await page.goto("/paciente/documentos");
 
-    const accept = await page.getByLabel("Selecionar documento").getAttribute("accept");
+    const accept = await page.getByLabel("Escolher arquivo").getAttribute("accept");
 
     expect(accept).toBe("application/pdf,image/jpeg,image/png,image/webp");
     expect(accept).not.toContain("heic");
