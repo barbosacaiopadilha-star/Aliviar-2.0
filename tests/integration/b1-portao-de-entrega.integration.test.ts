@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { resolveCurrentResponsible } from "@/modules/coa/journey-responsibility";
 import { loadPatientCuradoria } from "@/modules/curadoria/patient-curadoria";
-import { registerDevolutiva } from "@/modules/curadoria/report-repository";
+import { markReportDelivered, registerDevolutiva } from "@/modules/curadoria/report-repository";
 
 import {
   cleanupFixture,
@@ -180,6 +180,40 @@ describe("B1 · o portão de entrega da Curadoria", () => {
      * continua valendo para o caso em que o Relatório simplesmente não existe,
      * e o §3 desta missão manda preservá-la.
      */
+    /**
+     * INVARIANTE B — o que o G4 realmente precisava provar.
+     *
+     * O teste anterior prova o INVARIANTE A: o carimbo não se reverte. Isso é
+     * imutabilidade, e não responde por que "entregue sem conteúdo" não pode
+     * existir. A autoridade do B é outra, e está no banco:
+     *
+     *   enforce_selection_has_three_trigger              seleção exige três
+     *   enforce_report_has_three_trigger                 Relatório exige três
+     *   enforce_delivery_requires_emitted_report_trigger entregar exige emitido
+     *   enforce_report_delivery_requires_delivered_selection_trigger
+     *                                                   Relatório entregue exige
+     *                                                   seleção entregue
+     *
+     * Encadeados: um Relatório entregue implica seleção entregue, que implica
+     * Relatório emitido, que implica três opções. **Não existe entrega sem
+     * conteúdo** — e a prova abaixo ataca o elo mais frágil da cadeia, o único
+     * pelo qual um Relatório poderia ser carimbado sozinho.
+     */
+    it("T-B1-4b · o Relatório não pode ser entregue sem a seleção entregue", async () => {
+      // A fixture não-entregue tem Relatório EMITIDO e seleção NÃO entregue —
+      // exatamente o estado em que um carimbo solto produziria "entregue sem
+      // conteúdo do ponto de vista da seleção".
+      await expect(markReportDelivered(admin, naoEntregue.reportId)).rejects.toThrow();
+
+      const { data } = await admin
+        .schema("curadoria")
+        .from("curadoria_reports")
+        .select("delivered_at")
+        .eq("id", naoEntregue.reportId)
+        .single();
+      expect(data?.delivered_at, "o Relatório foi entregue por fora da seleção").toBeNull();
+    });
+
     it("T-B1-4 · o carimbo de entrega é imutável — o estado divergente não existe", async () => {
       const { error } = await admin
         .schema("curadoria")
