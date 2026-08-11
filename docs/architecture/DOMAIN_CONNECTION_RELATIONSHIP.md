@@ -14,7 +14,7 @@ Cobrir o que acontece depois que a Curadoria é entregue: o momento pontual de c
 
 ## Responsabilidade
 
-- **Connection** (pontual): registrar a decisão final do paciente e o primeiro contato com o profissional escolhido.
+- **Connection** (pontual): registrar o INÍCIO da relação — nunca a decisão da paciente (ver correção B3-R ao fim) e o primeiro contato com o profissional escolhido.
 - **Relationship** (longitudinal): acompanhar o ciclo de vida do atendimento — continuidade, encerramento, reabertura (`REABERTA` já identificada como o sinal comportamental mais forte e menos invasivo, pois não exige nenhuma pergunta nova ao paciente).
 
 ## Fronteiras
@@ -66,3 +66,33 @@ Ver também os invariantes transversais em `ARCHITECTURAL_INVARIANTS.md`.
 ## Diagrama
 
 Ver diagrama mestre em `ARCHITECTURE_BLUEPRINT.md`. Neste domínio, o trecho relevante é: `CURADORIA ──▶ CONNECTION ──▶ RELATIONSHIP ──▶ (evidência) ──▶ COMPATIBILITY INTELLIGENCE`.
+
+---
+
+## Correção B3-R (2026-08-11) — a decisão nunca foi da Connection
+
+Este documento atribuía à **Connection** *"registrar a decisão final do
+paciente"*. **Está errado, e o erro tinha superfície em produção**: a rota
+`/paciente/curadoria` exibia o `ConnectionChoicePanel` sob um `Limiar` chamado
+**"A decisão"**, e o modelo de responsabilidade não se movia — a paciente
+executava o ato que a página chamava de decisão e continuava com o Curador
+para sempre.
+
+**A fronteira, agora explícita:**
+
+| | **decisão canônica** | **conexão** |
+|---|---|---|
+| fonte | `patient_curadoria_decisions` | `connection_records` |
+| o que registra | escolha de **uma** pessoa **ou** `NONE_OF_THEM` | começar: modo de contato, primeiro atendimento, continuidade |
+| writer | **a paciente** | a paciente |
+| append-only | **sim** — sem UPDATE, sem DELETE | não — corrigível até o contato |
+| controla o handoff | **sim, e é a única** | **não** |
+| escolhe a pessoa | **sim, uma vez** | **não**, no fluxo canônico |
+
+`resolveCurrentResponsible` **não lê `connection_records`** — e é por isso que
+conexão, modo de contato, primeiro atendimento e Relationship não movem
+ninguém.
+
+**Caminho legado preservado:** quem tem apenas o documento antigo
+(`!curadoria && delivery`) continua com as três opções e a correção completa
+no `ConnectionChoicePanel`. Nada do histórico é apagado.

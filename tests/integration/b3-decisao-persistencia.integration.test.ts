@@ -228,4 +228,127 @@ describe("B3 · §1 · a decisão persiste?", () => {
     expect(curadoria?.options).toHaveLength(3);
     expect(curadoria?.decision).not.toBeNull();
   }, 120_000);
+
+  // ---------------------------------------------------------------------------
+  /**
+   * T-B3-R6/R7/R8 · a fronteira entre os dois fatos.
+   *
+   * A conexão guarda o que a decisão não sabe (modo de contato, primeiro
+   * atendimento, Relationship). A decisão guarda o que a conexão não consegue
+   * expressar — a recusa legítima e o handoff. Nenhum dos dois substitui o
+   * outro, e é isto que estes três testes fixam.
+   */
+  describe("T-B3-R6/R7/R8 · decisão × conexão", () => {
+    it("T-B3-R6 · criar conexão NÃO cria decisão canônica", async () => {
+      const semDecisao = await seedDeliveredCase();
+      outrasFixtures.push(semDecisao);
+
+      // A Curadoria está entregue e a paciente não decidiu. Toda a superfície
+      // de conexão existe para ela a partir daqui — e nada nesse domínio pode
+      // produzir o fato canônico.
+      expect(await decisoesDaSelecao(semDecisao.curatedSelectionId)).toBe(0);
+
+      // A prova estrutural: o único writer de `patient_curadoria_decisions`
+      // em `src/` é o da decisão. Se um dia o domínio da conexão passar a
+      // gravar o fato canônico, este teste cai.
+      const { readFileSync } = await import("node:fs");
+      const conexao = readFileSync("src/modules/connection/repository.ts", "utf8");
+      expect(
+        conexao,
+        "o domínio da conexão passou a escrever no fato canônico da decisão",
+      ).not.toContain("patient_curadoria_decisions");
+    }, 300_000);
+
+    it("T-B3-R7 · conexão sem decisão canônica NÃO faz handoff", () => {
+      const responsavel = resolveCurrentResponsible({
+        pipelineStage: null,
+        curatorName: "Curadora do Case",
+        conciergeName: "Equipe Aliviar",
+        curadoriaRecord: {
+          historia: { understandingConfirmedAt: new Date().toISOString() },
+          validacao: null,
+          relatorio: { emittedAt: new Date().toISOString(), deliveredAt: new Date().toISOString() },
+          devolutiva: { presentedAt: new Date().toISOString(), decision: null },
+        } as never,
+      });
+
+      // `resolveCurrentResponsible` sequer LÊ connection_records — e é por isso
+      // que existir conexão não move ninguém. A prova é o Curador permanecer.
+      expect(responsavel.role).toBe("curador");
+    });
+
+    it("T-B3-R8 · decisão SEM conexão já faz handoff", () => {
+      const responsavel = resolveCurrentResponsible({
+        pipelineStage: null,
+        curatorName: "Curadora do Case",
+        conciergeName: null,
+        curadoriaRecord: {
+          historia: { understandingConfirmedAt: new Date().toISOString() },
+          validacao: null,
+          relatorio: { emittedAt: new Date().toISOString(), deliveredAt: new Date().toISOString() },
+          devolutiva: {
+            presentedAt: null,
+            decision: {
+              outcome: "CHOSEN",
+              chosenProfessionalId: "x",
+              justification: null,
+              decidedAt: new Date().toISOString(),
+            },
+          },
+        } as never,
+      });
+
+      // A conexão não é pré-requisito do handoff.
+      expect(responsavel.role).toBe("concierge");
+      expect(responsavel.name).toBe("Equipe Aliviar");
+    });
+
+    /**
+     * ⚠️ ACHADO — a recusa legítima NÃO leva ao Concierge.
+     *
+     * O contrato B3-A diz "decision presente → Concierge responsável". O
+     * código faz outra coisa para `NONE_OF_THEM`: `inferPhaseFromCuradoria`
+     * devolve a fase `curadoria`, e o responsável permanece o **Curador**.
+     *
+     * E faz sentido: ninguém foi escolhido, então não há acompanhamento a
+     * conduzir — quem retoma é quem conduz a Curadoria. O contrato é que fala
+     * em "decisão" sem distinguir os dois desfechos.
+     *
+     * Fixo o comportamento REAL, e registro a divergência em vez de "corrigir"
+     * produção com base numa leitura minha do contrato. **Decisão do
+     * Arquiteto**, não do Engenheiro.
+     */
+    it("a recusa legítima mantém o Curador — divergência registrada", () => {
+      const responsavel = resolveCurrentResponsible({
+        pipelineStage: null,
+        curatorName: "Curadora do Case",
+        conciergeName: null,
+        curadoriaRecord: {
+          historia: { understandingConfirmedAt: new Date().toISOString() },
+          validacao: null,
+          relatorio: { emittedAt: new Date().toISOString(), deliveredAt: new Date().toISOString() },
+          devolutiva: {
+            presentedAt: null,
+            decision: {
+              outcome: "NONE_OF_THEM",
+              chosenProfessionalId: null,
+              justification: null,
+              decidedAt: new Date().toISOString(),
+            },
+          },
+        } as never,
+      });
+
+      // Comportamento vigente, fixado como está: ninguém escolhido, ninguém
+      // a acompanhar — o Curador permanece.
+      expect(responsavel.role).toBe("curador");
+    });
+
+    it("a fixture consegue nascer JÁ decidida, pelo writer real", async () => {
+      const decidida = await seedDeliveredCase({ decidir: "CHOSEN" });
+      outrasFixtures.push(decidida);
+
+      expect(await decisoesDaSelecao(decidida.curatedSelectionId)).toBe(1);
+    }, 300_000);
+  });
 });

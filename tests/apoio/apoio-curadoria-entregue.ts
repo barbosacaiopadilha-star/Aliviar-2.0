@@ -86,7 +86,7 @@ async function seedPresentableProfessional(
  * e por isso o spec original não muda de comportamento.
  */
 export async function seedDeliveredCase(
-  opcoes: { entregar?: boolean } = {},
+  opcoes: { entregar?: boolean; decidir?: "CHOSEN" | "NONE_OF_THEM" } = {},
 ): Promise<DeliveredFixture> {
   const entregar = opcoes.entregar ?? true;
   const adminClient = createAdminSupabaseClient();
@@ -300,6 +300,32 @@ export async function seedDeliveredCase(
   if (entregar) {
     await curadoria.deliverSelection(cliente, selection!.id);
     await reports.markReportDelivered(cliente, report!.id);
+  }
+
+  // B3-RI · o fluxo canônico registra a decisão ANTES da conexão. A fixture
+  // acompanha o produto: quem quiser o cenário pós-decisão pede `decidir`, e
+  // o fato entra pelo writer real, nunca pelo DOM nem por connection_records.
+  if (entregar && opcoes.decidir) {
+    const { data: opcoesDoRelatorio } = await cliente
+      .from("curadoria_report_options")
+      .select("id")
+      .eq("report_id", report!.id)
+      .order("position");
+
+    const pacienteCliente = createCuradoriaClient(url, anonKey);
+    await pacienteCliente.auth.signInWithPassword({
+      email: patientEmail,
+      password: patientAccount.password,
+    });
+    const { error: erroDecisao } = await pacienteCliente
+      .from("patient_curadoria_decisions")
+      .insert({
+        case_id: created.id,
+        curated_selection_id: selection!.id,
+        outcome: opcoes.decidir,
+        chosen_option_id: opcoes.decidir === "CHOSEN" ? opcoesDoRelatorio![0]!.id : null,
+      });
+    if (erroDecisao) throw new Error(`Fixture: decisao nao registrada: ${erroDecisao.message}`);
   }
 
   return {
