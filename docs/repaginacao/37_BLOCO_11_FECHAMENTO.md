@@ -1,7 +1,7 @@
 # 37 · Bloco 11 — fechamento
 
-**Estado:** CONCLUÍDO. **Bloco 12 (Fila) permanece PENDENTE** — nada aqui o
-antecipa nem o autoriza.
+**Estado:** CONCLUÍDO, **medido na rota real**. **Bloco 12 (Fila) permanece
+PENDENTE** — nada aqui o antecipa nem o autoriza.
 
 Contrato de origem: [36](36_BLOCOS_11_12_D6_CASOS_REAIS.md). Este documento
 registra o que ficou provado, e por quê — não repete o contrato.
@@ -131,18 +131,86 @@ integração (atomicidade sobre o banco real).
   prazo ou urgência;
 - nenhuma migration: **ledger 121**, sem SQL, policy ou grant no delta;
 - nenhuma transição ou permissão nova — C8 apenas **lê** marcos que já existiam;
-- **medição mobile não executada** nesta passagem (ver §9).
+- **medição mobile executada** na rota real (ver §9) — os alvos de toque abaixo
+  de 44px encontrados são anteriores ao bloco e ficam registrados, não corrigidos.
 
-## 9 · Limite honesto desta entrega
+## 9 · Medição na rota real (B11-MOB)
 
-A medição de viewport em 1440/768/390 sobre a rota real **não foi executada**.
-Foi tentada e bloqueada por falta de cenário, não por decisão: o servidor local
-subiu, e a sondagem do banco devolveu **zero** `curated_selections` — sem Case
-com seleção não existe Mesa a medir. As contas presentes são resíduo sintético
-de e2e (`connection-e2e-admin-*`), sem senha conhecida. Chegar lá exige
-`seed:mesa:local` + `bootstrap:test-users:local` e um fluxo de login.
+Uma passagem anterior deixou este item como inferência. Foi medido.
 
-Não há defeito conhecido de layout introduzido pelo Bloco 11 — as mudanças são
-de estado `disabled`, de rótulo e de um painel adicional na etapa PERFIL —, mas
-isso é **inferência, não medição**, e fica registrado como tal para uma passagem
-própria, com o cenário semeado antes.
+**Cenário e acesso.** Case sintético de `seed:mesa:local` (`e6717782…`) — Perfil
+reconhecido pela paciente, quatro profissionais publicados — e, para o Relatório
+congelado, um Case nascido pelo writer real no corte **CR-07** (`be7e9772…`),
+com `emitted_at` e `delivered_at` gravados. Ator: `curador.teste`, criado por
+`bootstrap:test-users:local`.
+
+**Sobre o acesso:** a sessão foi obtida por **link de uso único** emitido pelo
+admin local (`generateLink`), convertido em cookie de sessão. Nenhuma senha foi
+digitada em campo, e nenhuma das contas históricas residuais foi usada.
+
+**Rotas percorridas:** `/portal-curador/casos/<id>/curadoria_tecnica` (PERFIL →
+REDE → CAMINHOS) e `/portal-curador/casos/<id>/relatorio`.
+
+### O que a medição encontrou
+
+| Viewport | `innerWidth`/`clientWidth`/`scrollWidth` | overflow | fora da viewport | truncamento | campos sem rótulo |
+|---|---|---|---|---|---|
+| **1440** | 1440 / 1425 / 1425 | não | 0 | 0 | 0 |
+| **768** | 768 / 753 / 753 | não | 0 | 0 | 0 |
+| **390** | 390 / 390 / 390 | não | 0 | 0 | 0 |
+
+**Exclusão declarada, pela regra objetiva das Tracks anteriores:** descendentes
+de scroller próprio não contam como "fora"; elementos `sr-only` (caixa de 1px ou
+`clip`) não contam como truncamento — ali `scrollWidth > clientWidth` **é** a
+técnica. Excluiu-se também um contêiner de toast vazio, `pointer-events: none` e
+sem texto, que a 390 encosta em −10px: não é alcançável nem visível, e não
+produz overflow (`scrollWidth == clientWidth`).
+
+**Ordem de foco:** 65 elementos focáveis, **zero inversões** em relação à ordem
+visual e **zero `tabindex` positivo**. O botão terminal desabilitado, corretamente,
+**não** entra na ordem — e o motivo continua ligado a ele por `aria-describedby`.
+
+### Interação, na rota, não em componente isolado
+
+- **PERFIL** — `MandatoryFilters` presente e legível, dentro da viewport nos três
+  tamanhos, com os três filtros obrigatórios do Perfil e **em leitura** (zero
+  controles), porque a paciente já reconheceu o Perfil;
+- **C6** — escolher *Incompatível* sem motivo deixa *Registrar declaração*
+  desabilitado, com o texto *"Eliminar exige justificativa…"* apontado por
+  `aria-describedby`; `Enter` no botão desabilitado não registra nada; escrever o
+  motivo libera;
+- **C7** — *"Encerrar e gerar o Relatório"* visível e desabilitado desde a Mesa
+  vazia, nomeando o que falta; a lista se atualiza sozinha conforme o rascunho
+  avança (de *"há 0 opções"* para *"falta 'quais prioridades atende melhor'"*);
+- **C8** — no Relatório congelado, as **19** áreas de texto estão indisponíveis,
+  o motivo é textual (*"A Curadoria já foi entregue…"*) e apontado pelos
+  controles; o campo **não é focável** e o valor permanece intacto sob teclado;
+- **D2-4** — uma única superfície para a justificativa do conjunto, com rótulo
+  *"Por que estas três, juntas"* e **nenhum** `aria-label` concorrente;
+- **D-6** — selecionar três, escrever parecer e justificativa, **trocar de etapa**
+  (com desmontagem verificada: o campo some do DOM), voltar → **tudo preservado**;
+  **recarregar** → rascunho ausente, seleção zerada, e **nada** em `localStorage`
+  ou cookie. A arquitetura em memória e o seu limite honesto, medidos.
+
+### Alvos de toque
+
+A 390, os controles do Bloco 11 medem: *Encerrar* **44px** (no mínimo), áreas de
+texto 86–109px. Ficam **abaixo de 44px** os botões de seleção
+(*Selecionar* / *Remover da seleção*, 40px) e os chips de navegação de etapa
+(32px). Ambos **precedem** este bloco e não foram tocados por C4/C6/C7/C8/D2-4
+nem por D-6 — ficam **registrados**, não corrigidos, porque corrigi-los seria
+mexer fora do escopo. Não é achado novo do Bloco 11; é dívida de toque da Mesa.
+
+### Cleanup
+
+Baseline antes de semear e comparação depois. Removidos: 2 Cases, 7 perfis
+profissionais, 2 Perfis de Prioridades, 4 filtros, 58 linhas de Mapa, 1 seleção
+com 3 opções, 1 Relatório com 3 opções, 2 histórias com versões, 3 contas com
+`profiles`/`user_roles`, e o `test-users.local.json`. **Resíduo: zero.** Só
+`audit_logs` cresceu (10 985 → 11 002, **+17**), que é o permitido: fatos
+legítimos não se apagam.
+
+Duas recusas do banco durante a limpeza merecem registro porque são **acerto**,
+não obstáculo: *"Relatório emitido é um documento congelado"* e *"Este Perfil já
+foi validado pelo paciente"*. O produto defendeu o congelamento até contra a
+limpeza — as linhas saíram depois, pela remoção do Case que as ancorava.
