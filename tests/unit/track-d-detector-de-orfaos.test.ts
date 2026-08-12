@@ -35,13 +35,12 @@ const COMPONENTS = path.join(SRC, "components");
  * Os dez órfãos autorizados, cada um com o motivo por extenso.
  *
  * Acrescentar uma linha aqui é um ato deliberado e revisável — nunca um efeito
- * colateral. Quando a Mesa der superfície ao `mandatory-filters` (Bloco 11),
+ * colateral. A Mesa deu superfície ao `mandatory-filters` no Bloco 11, ele saiu desta
+ * lista, e o GAP-D-1 fechou —
  * ele deixa de ser órfão, esta entrada fica obsoleta e o teste **exige** que
  * ela saia: é assim que o `GAP-D-1` fecha em voz alta.
  */
 const ORFAOS_AUTORIZADOS: Record<string, string> = {
-  "src/components/curadoria/mandatory-filters.tsx":
-    "GAP-D-1 · única superfície da fase Filtros do COS, sem substituto. Apagá-la mataria a etapa e faria actions-have-callers ficar verde por ausência. Destino: Bloco 11 (Mesa).",
   "src/components/profiles/patient-notifications-list.tsx":
     "GAP-D-2 · as notificações aparecem na linha do tempo, mas 'marcar como lida' não existe em nenhum outro lugar.",
   "src/components/ui/skeleton.tsx":
@@ -161,7 +160,7 @@ describe("T-D-2 · nenhum componente órfão fora da allowlist", () => {
     }
   });
 
-  it("são exatamente dez, e são os dez decididos pelo contrato 32", () => {
+  it("são exatamente nove — GAP-D-1 fechou e mandatory-filters saiu da lista", () => {
     expect(orfaos).toEqual(Object.keys(ORFAOS_AUTORIZADOS).sort());
   });
 });

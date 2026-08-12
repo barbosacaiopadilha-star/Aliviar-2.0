@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 
 import { CaseAlert } from "@/components/curadoria/case-alert";
 import { EligibilityPanel } from "@/components/curadoria/cruzamento-mesa";
+import { MandatoryFilters } from "@/components/curadoria/mandatory-filters";
 import { MapaPrioridadesPanel } from "@/components/curadoria/mesa/mapa-prioridades-panel";
 import { PainelInvestigacao } from "@/components/curadoria/mesa/painel-investigacao";
 import { ComparacaoPremium } from "@/components/curadoria/mesa/comparacao-premium";
@@ -29,6 +30,8 @@ import { MesaWorkspace } from "@/components/curadoria/mesa-workspace";
 import { StartPriorityProfile } from "@/components/curadoria/start-priority-profile";
 import { ProtocoloPessoaPanel } from "@/components/curadoria/protocolo-pessoa-panel";
 import { conduct } from "@/modules/curadoria/cos/conduction";
+import { MANDATORY_FILTER_LABELS, type MandatoryFilterKind } from "@/modules/curadoria/types";
+import { getActivePriorityProfile } from "@/modules/curadoria/repository";
 import { falhaParaUsuario } from "@/lib/observability/erros";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRole } from "@/modules/auth/guard";
@@ -162,6 +165,25 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
   // Os fatos que decidem onde está a próxima decisão — derivados, nunca
   // digitados. O módulo puro faz o resto.
   // ADR-042: a autoridade das prioridades é o Mapa, não o orçamento.
+  const perfilAtivo = record.priorityProfileId
+    ? await getActivePriorityProfile(supabase, record.caseId)
+    : null;
+
+  // Duas naturezas, um só registro no banco. O filtro obrigatório elimina da
+  // Rede; a preferência apenas inclina. Separá-las aqui é o que impede a
+  // interface de tratar "prefiro perto de casa" como se fosse veto.
+  const filtrosDoPerfil = (perfilAtivo?.mandatoryFilters ?? [])
+    .map((filtro) => ({
+      id: filtro.id,
+      kind: filtro.kind,
+      label: MANDATORY_FILTER_LABELS[filtro.kind as MandatoryFilterKind] ?? filtro.kind,
+      value: filtro.value,
+      reason: filtro.note ?? "",
+    }));
+
+  const preferenciasDoPerfil = (perfilAtivo?.preferences ?? [])
+    .map((filtro) => ({ id: filtro.id, value: filtro.value, reason: filtro.note ?? "" }));
+
   const [catalogo, mapa] = await Promise.all([
     listSubcriterionCatalog(supabase),
     loadCasePriorityMap(supabase, record.caseId),
@@ -412,6 +434,18 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
           caseId={record.caseId}
           groups={groupPriorityMap(mapa.items, catalogo)}
           completion={mapa.completion}
+        />
+        {/* GAP-D-1 · a fase Filtros existia inteira em código — componente,
+            três actions, validação — e nenhuma rota a renderizava. O lugar
+            dela é aqui: o filtro obrigatório é parte do critério da paciente,
+            e mora no mesmo Perfil que o Mapa. Depois do reconhecimento o
+            Perfil é imutável, e o painel entra em leitura. */}
+        <MandatoryFilters
+          priorityProfileId={record.priorityProfileId}
+          patientFirstName={record.patientFirstName}
+          readOnly={view.profileAcknowledged}
+          filters={filtrosDoPerfil}
+          preferences={preferenciasDoPerfil}
         />
       </div>
     ),

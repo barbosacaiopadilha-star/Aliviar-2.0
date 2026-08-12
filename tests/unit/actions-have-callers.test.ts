@@ -76,14 +76,16 @@ describe("toda action tem quem a chame", () => {
  *
  * Duas actions passavam por aqui sem ninguém alcançá-las:
  * `addMandatoryFilterAction` e `addPreferenceAction`, chamadas só por
- * `mandatory-filters.tsx`, que nenhuma rota renderiza. **A fase Filtros do COS
- * é inexecutável hoje** — e o teste dizia o contrário.
+ * `mandatory-filters.tsx`, que nenhuma rota renderizava.
  *
- * A régua passou a ser o grafo de imports a partir de `src/app`. E o que era
- * mentira virou fato nomeado: as duas ficam numa lista própria, `ENTERRADAS`,
- * afirmada nos DOIS sentidos — o arquivo existe (não pode ser apagado) e as
- * actions continuam inalcançáveis (o gap continua aberto). No dia em que a
- * Mesa der superfície ao componente, este teste falha e obriga a promoção.
+ * A régua passou a ser o grafo de imports a partir de `src/app`. **O GAP-D-1
+ * FECHOU no Bloco 11**: a Mesa renderiza o painel na etapa PERFIL, as duas
+ * subiram para `FLUXO_COMPLETO`, e a lista `ENTERRADAS` — que existia só para
+ * nomear o gap em voz alta — deixou de ter membros e saiu.
+ *
+ * Atenção de quem vier depois: alcance por grafo prova IMPORT, não RENDER. A
+ * prova de que o painel é de fato composto vive em `gap-d1-filtros-na-mesa`,
+ * que lê o slot PERFIL da rota e exige o JSX.
  */
 const alcancavelDeApp = (() => {
   const vistos = new Set<string>();
@@ -162,8 +164,6 @@ describe("a Curadoria é executável de ponta a ponta pela interface", () => {
   ];
 
   /** GAP-D-1 · a fase Filtros existe em código e não existe em jornada. */
-  const ENTERRADAS = ["addMandatoryFilterAction", "addPreferenceAction"];
-  const PORTA_ENTERRADA = "src/components/curadoria/mandatory-filters.tsx";
 
   it.each(FLUXO_COMPLETO)("%s é alcançada por alguma rota", (action) => {
     expect(
@@ -171,20 +171,6 @@ describe("a Curadoria é executável de ponta a ponta pela interface", () => {
       `${action} não é alcançada por nenhuma rota. Conter a chamada num arquivo ` +
         `órfão não conta — foi exatamente assim que a fase Filtros ficou invisível.`,
     ).toBe(true);
-  });
-
-  it.each(ENTERRADAS)("%s continua ENTERRADA — e isso é o GAP-D-1, não um acaso", (action) => {
-    // Sentido 1 · a porta existe e não pode ser apagada: apagá-la deixaria a
-    // action sem nenhum chamador, e a fase Filtros sem sequer código.
-    const porta = readFileSync(path.join(ROOT, PORTA_ENTERRADA), "utf8");
-    expect(porta, `${action} perdeu seu único chamador`).toContain(action);
-
-    // Sentido 2 · e continua inalcançável. No dia em que a Mesa a renderizar,
-    // este teste falha — e o correto é mover a action para FLUXO_COMPLETO.
-    expect(
-      superficiesAlcancaveis.includes(action),
-      `${action} passou a ser alcançável: o GAP-D-1 fechou. Mova-a para FLUXO_COMPLETO.`,
-    ).toBe(false);
   });
 
   it("nenhuma capacidade duplicada voltou a existir", () => {

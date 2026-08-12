@@ -417,13 +417,19 @@ export function MesaWorkspace({
         {selectedIds.length > 0 ? (
           <Card className="space-y-3">
             <CardHeader>
-              <CardTitle>Por que estas três, juntas</CardTitle>
+              {/* O título É o rótulo do campo. Antes ele era só um `CardTitle`
+                  solto: visualmente parecia um label e, para leitor de tela, o
+                  textarea era um campo sem nome. A copy não muda. */}
+              <CardTitle>
+                <label htmlFor="composicao-rationale">Por que estas três, juntas</label>
+              </CardTitle>
               <CardDescription>
                 A justificativa da composição — o que diferencia os caminhos entre si, para que{" "}
                 {patientFirstName} escolha qual troca faz sentido.
               </CardDescription>
             </CardHeader>
             <textarea
+              id="composicao-rationale"
               value={compositionRationale}
               disabled={closed}
               onChange={(event) => dispatch({ type: "SET_COMPOSITION", value: event.target.value })}
@@ -474,27 +480,42 @@ export function MesaWorkspace({
               )}
             </div>
           </div>
-        ) : missing.length > 0 ? (
-          <div>
-            <p className="text-sm text-ink">Para encerrar:</p>
-            <ul className="mt-1.5 space-y-1">
-              {missing.map((item) => (
-                <li key={item} className="text-sm text-ink-muted">
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
         ) : (
-          <div className="flex flex-wrap items-center gap-3">
-            <Button type="button" onClick={closeMesa} disabled={salvando} isLoading={salvando}>
-              {salvando ? "Gravando a seleção e o parecer…" : "Encerrar e gerar o Relatório"}
-            </Button>
-            {salvando ? (
-              <span role="status" className="text-sm text-ink-muted">
-                Gravando no caso — não feche esta aba.
-              </span>
+          /* C7 · O destino fica sempre à vista.
+             Antes, o botão de encerrar só NASCIA quando tudo já estava pronto:
+             quem chegava com dois pareceres via uma lista de pendências e
+             nenhum botão, e não tinha como saber que o caminho terminava ali.
+             Agora ele está sempre na tela — desabilitado enquanto falta algo,
+             dizendo o que falta, pelo mesmo `missing` que decide o clique. */
+          <div className="space-y-3">
+            {missing.length > 0 ? (
+              <div id="encerrar-pendencias">
+                <p className="text-sm text-ink">Para encerrar:</p>
+                <ul className="mt-1.5 space-y-1">
+                  {missing.map((item) => (
+                    <li key={item} className="text-sm text-ink-muted">
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ) : null}
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                onClick={closeMesa}
+                disabled={salvando || missing.length > 0}
+                isLoading={salvando}
+                aria-describedby={missing.length > 0 ? "encerrar-pendencias" : undefined}
+              >
+                {salvando ? "Gravando a seleção e o parecer…" : "Encerrar e gerar o Relatório"}
+              </Button>
+              {salvando ? (
+                <span role="status" className="text-sm text-ink-muted">
+                  Gravando no caso — não feche esta aba.
+                </span>
+              ) : null}
+            </div>
           </div>
         )}
 
