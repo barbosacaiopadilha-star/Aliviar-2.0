@@ -123,3 +123,4 @@ da Curadoria 2.0.
 | 29 | [B3 — fechamento da Track B](29_B3_FECHAMENTO_TRACK_B.md) | **Track B encerrada** — fato, feedback, handoff, auditoria e as duas correções de cleanup |
 | 30 | [Track C — Falar com a Aliviar](30_TRACK_C_FALAR_COM_A_ALIVIAR.md) | contrato da Track; D-3 já respondida pelo código, e a paciente só pede ajuda **depois** de decidir |
 | 31 | [**Track C — fechamento**](31_TRACK_C_FECHAMENTO.md) | **Track C FORMALMENTE ENCERRADA** (2026-08-11, HEAD `38cdaf3`) — contato oficial certificado nas **sete superfícies**, fonte única, tópicos fechados, zero migration; gaps `GAP-C-1/2/3` preservados |
+| 32 | [**Track D — limpeza e capacidade enterrada**](32_TRACK_D_LIMPEZA_E_CAPACIDADE_ENTERRADA.md) | **próxima Track**; 28 arquivos saem com substituto provado, **dez ficam com motivo escrito** — e nasce `T-D-2`, o detector de órfãos |
