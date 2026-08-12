@@ -11,7 +11,6 @@ import { PainelInvestigacao } from "@/components/curadoria/mesa/painel-investiga
 import { ComparacaoPremium } from "@/components/curadoria/mesa/comparacao-premium";
 import { HipoteseEmFoco } from "@/components/curadoria/mesa/hipotese-em-foco";
 import { MesaComEstado } from "@/components/curadoria/mesa/mesa-com-estado";
-import { MesaShell } from "@/components/curadoria/mesa/mesa-shell";
 import { MesaTimelineDupla, type CaseTimelineMark } from "@/components/curadoria/mesa/mesa-timeline";
 import {
   AvaliacaoSemElegiveis,

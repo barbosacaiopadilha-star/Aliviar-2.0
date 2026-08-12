@@ -25,6 +25,15 @@ export default async function CoaHubPage() {
     canAccessCoaLevel(auth.roles, level),
   );
 
+  // COA-H1 · FAIL-CLOSED. Havia ramo para "um nível" e ramo implícito para
+  // "vários", e nenhum para NENHUM: quem não resolve nível caía no render e
+  // recebia o hub com HTTP 200 e a grade vazia — paciente, profissional e
+  // atendente incluídos. A fronteira fecha antes de qualquer renderização,
+  // no mesmo destino que os layouts irmãos já usam.
+  if (accessibleLevels.length === 0) {
+    redirect("/acesso-negado");
+  }
+
   if (accessibleLevels.length === 1) {
     redirect(LEVEL_PATHS[accessibleLevels[0]!]);
   }

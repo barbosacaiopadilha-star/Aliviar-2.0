@@ -42,6 +42,20 @@ describe("COA — permissões", () => {
     expect(resolveCoaHomePath(["concierge"])).toBe("/acompanhamento");
     expect(resolveCoaHomePath(["curador_medico"])).toBe("/coa/curadoria");
   });
+
+  /**
+   * COA-H1 · o contrato puro sempre soube fechar — quem não resolve nível já
+   * recebia `/acesso-negado` aqui. O defeito nunca esteve nesta função: o
+   * índice `/coa` é que não consultava esta resposta antes de renderizar.
+   * Estes casos ficam como piso do contrato; a prova que importa é a da rota
+   * real, em `tests/e2e/coa-fronteira.spec.ts`.
+   */
+  it.each([[[]], [["paciente"]], [["profissional"]], [["atendente"]]])(
+    "quem não tem nível COA (%j) resolve /acesso-negado",
+    (papeis: string[]) => {
+      expect(resolveCoaHomePath(papeis)).toBe("/acesso-negado");
+    },
+  );
 });
 
 describe("COA — responsável da jornada", () => {
