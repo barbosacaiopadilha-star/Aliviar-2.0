@@ -81,7 +81,7 @@ Se sim, **C/D** e missão própria. Se não, o WhatsApp continua sendo o canal.
 | # | Trava | Custo se aprovada | Recomendo? |
 |---|---|---|---|
 | **D-3** | **Bloco 1** | **A** | ✅ **decidir primeiro** |
-| **D-1** | Bloco 7 | A | ✅ espinha visual |
+| **D-1** | Bloco 7 | A | ✅ **RESOLVIDA — espinha visual** ([34 §3.1](34_BLOCO_7_LANDING_D1.md)). A prova é um ato: a Track D apagou 23 arquivos de landing e **blindou `editorial/**` por escrito**, preservando os quatro blocos. Problema, Respiro, FAQ e Convite **ficam** |
 | **D-6** | parte do 11 | C | ✅ verificar antes |
 | **D-4** | Bloco 10 | C/D | — jurídico |
 | **D-7** | Bloco 13 | varia | — produto |
