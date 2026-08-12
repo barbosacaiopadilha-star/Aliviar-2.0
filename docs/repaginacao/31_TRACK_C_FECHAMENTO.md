@@ -160,7 +160,7 @@ Nenhuma mutação permaneceu: `git status src/` vazio ao fim de cada uma.
 | | |
 |---|---|
 | e2e da Track C (com captura) | **6/6** |
-| componente + composição da Track C | **27/27** |
+| unidade + componente da Track C | **28/28** — 9 (`track-c-contato-oficial`) + 3 (`track-c-alcancabilidade`) + 7 (`track-c-concierge-link`) + 9 (`track-c-composicao-das-rotas`); correção de contagem lavrada na certificação (antes: 27) |
 | suíte de componentes completa | **743/743** |
 | suíte unitária completa | 2687 passed · **1 pré-existente** |
 | alcançabilidade | 3/3 |
@@ -222,3 +222,43 @@ Nada foi apagado. Remover é ato do Bloco 3, com desenho próprio.
 
 **Zero migration, zero RLS, zero grant, zero action, zero tabela.** Um
 componente novo, dois tópicos, sete linhas em seis rotas — e o resto é prova.
+
+---
+
+## 16 · Certificação formal — `05 CERTIFICADOR`
+
+| Campo | Valor |
+|---|---|
+| **Estado** | **TRACK C FORMALMENTE ENCERRADA** |
+| **Data** | 2026-08-11 |
+| **HEAD certificado** | `38cdaf3` |
+| **Commits abrangidos** | `eed79ed` · `479ad51` · `38cdaf3` |
+| **Veredito independente** | `04 VERIFICADOR` — *TRACK C VERIFICADA — APROVADA PARA ENCERRAMENTO FORMAL* |
+| **Ledger** | 121/121, inalterado |
+| **Achados bloqueantes** | **nenhum** |
+
+**Escopo certificado:** sete superfícies com `Falar com a Aliviar` · fonte única
+`ALIVIAR_WHATSAPP` · tópicos fechados por `WhatsappTopic` · **sem telefone e sem
+mensagem livres** · **sem SLA** · **sem auditoria de clique** · acessibilidade com
+alvo mínimo de 44px · mobile sem overflow · quatro evidências previstas, incluída
+a variação **004b** · **WhatsApp nunca aberto durante a prova** · **zero migration,
+RLS ou domínio** · zero resíduo novo.
+
+**Correção documental lavrada nesta certificação:** a contagem de testes de
+unidade + componente passa de **27** para **28** — composição 9 + 3 + 7 + 9,
+confirmada por execução (§11). Nenhuma afirmação funcional foi alterada.
+
+**Achados NÃO bloqueantes, preservados — nenhum deles é dado por resolvido:**
+
+| # | Achado | Estado |
+|---|---|---|
+| `GAP-C-1` | `SemCuradoria` órfão | **ABERTO** — destinado ao Bloco 3 |
+| `GAP-C-2` | dois links no estado decidido, mesmo número, tópicos distintos e coerentes | **ABERTO** — gap visual, não bloqueante |
+| `GAP-C-3` | tópico `curador` não ligado | **ABERTO** |
+| `G-6` | falha unitária pré-existente, fora do delta (a Track C não tem um único arquivo SQL) | **ABERTO** — alheia |
+| `V-C-1` | intermitência pré-existente de `connection-choice.spec.ts`, demonstrada por A/B **sem** a Track C | **ABERTO** — alheia |
+| dívida histórica | 225 contas admin e 219 pacientes sintéticos de execuções anteriores | **ABERTA** — não é resíduo desta Track |
+| demais gaps do roadmap | `GAP-B3-COPY-ID` · D-10 · `GAP-D12-C1` · A3b/A4 | **ADIADOS**, intocados |
+
+**Próxima Track: ainda não escolhida** — a escolha e a arquitetura pertencem ao
+`02 ARQUITETO`, em missão própria. Esta certificação não a antecipa.
