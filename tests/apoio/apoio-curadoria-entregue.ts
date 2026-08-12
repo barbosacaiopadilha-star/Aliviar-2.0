@@ -912,3 +912,68 @@ export async function cleanupFixture(fixture: DeliveredFixture | undefined) {
   await removerProfissionais();
   await removerAdmin();
 }
+
+/**
+ * B11-FIX-B · A MATRIZ COEXISTENTE — CR-01 a CR-10 vivos na mesma leitura.
+ *
+ * "Simultâneos" aqui é **coexistência**, não paralelismo: os dez precisam
+ * existir ao mesmo tempo para a Fila classificá-los numa varredura só. Semear
+ * em paralelo não acrescentaria prova nenhuma e reintroduziria a corrida do
+ * pool global de profissionais que já custou duas depurações nesta base.
+ *
+ * A ordem de criação é **invertida de propósito** (CR-10 primeiro): se a
+ * classificação dependesse da ordem, ela apareceria aqui. Cada Case tem
+ * paciente próprio, e os profissionais são criados por execução com nome
+ * único — nenhum cenário toma emprestado o profissional de outro, que é o
+ * que fazia o cleanup de uma suíte quebrar a FK da vizinha.
+ */
+export type EstagioCoexistente = Extract<
+  EstagioCR,
+  "CR-01" | "CR-02" | "CR-03" | "CR-04" | "CR-05" | "CR-06" | "CR-07" | "CR-08" | "CR-09" | "CR-10"
+>;
+
+export const ESTAGIOS_COEXISTENTES: EstagioCoexistente[] = [
+  "CR-01", "CR-02", "CR-03", "CR-04", "CR-05",
+  "CR-06", "CR-07", "CR-08", "CR-09", "CR-10",
+];
+
+export type MatrizCoexistente = {
+  casos: Record<EstagioCoexistente, CasoSintetico>;
+  /** Os dez Cases, na ordem da matriz — nunca na ordem de criação. */
+  caseIds: string[];
+  /** Uma função só: quem semeia não precisa saber a topologia de FK. */
+  limpar: () => Promise<void>;
+};
+
+export async function semearMatrizCoexistente(): Promise<MatrizCoexistente> {
+  const casos = {} as Record<EstagioCoexistente, CasoSintetico>;
+  const criados: CasoSintetico[] = [];
+
+  const limpar = async () => {
+    // Ordem inversa da criação: o último a nascer é o primeiro a sair.
+    for (const caso of [...criados].reverse()) {
+      await cleanupFixture(caso as unknown as DeliveredFixture);
+    }
+  };
+
+  try {
+    // Invertida: CR-10 nasce primeiro, CR-01 por último.
+    for (const estagio of [...ESTAGIOS_COEXISTENTES].reverse()) {
+      const caso = await seedDeliveredCase({ estagio });
+      casos[estagio] = caso;
+      criados.push(caso);
+    }
+  } catch (erro) {
+    // Falha no meio da semeadura: o que já nasceu precisa sair, e o erro
+    // ORIGINAL precisa continuar visível — engoli-lo aqui trocaria a causa
+    // real por "cleanup falhou".
+    await limpar().catch(() => undefined);
+    throw erro;
+  }
+
+  return {
+    casos,
+    caseIds: ESTAGIOS_COEXISTENTES.map((e) => casos[e].caseId),
+    limpar,
+  };
+}
