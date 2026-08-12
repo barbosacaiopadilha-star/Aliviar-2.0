@@ -58,20 +58,11 @@ describe("nenhum fluxo termina fora da experiência", () => {
   // visitante. Enquanto a Jornada não tiver autenticação própria, o convite
   // aponta para /login — e o destino continua sendo interno, que é o que este
   // guarda de fato protege: nenhum convite leva para fora da experiência.
-  it("o convite à Jornada leva para dentro da experiência, nunca para fora", () => {
-    const permitidos = ["/portal-paciente", "/login"];
-    const files = ["hero-experience", "presenca-sections"].map((name) =>
-      read(`src/components/landing/v2/${name}.tsx`),
-    );
-
-    for (const file of files) {
-      if (!file.includes("Acessar minha Jornada")) continue;
-      const beforeCta = file.slice(0, file.indexOf("Acessar minha Jornada"));
-      const lastHref = beforeCta.lastIndexOf('href="');
-      const href = beforeCta.slice(lastHref + 6, beforeCta.indexOf('"', lastHref + 6));
-      expect(permitidos, `o convite aponta para ${href}`).toContain(href);
-    }
-  });
+  // TRACK D · o guarda do convite morreu com o alvo: `landing/v2/*` saiu
+  // inteira (código morto com substituto vivo em `landing/editorial/*`), e
+  // não existe mais arquivo com "Acessar minha Jornada" para conferir. O que
+  // ele protegia — nenhum convite leva para fora da experiência — segue
+  // coberto pelo teste abaixo, que confere TODO link interno dos Portais.
 
   it("todo link interno estático dos Portais aponta para uma rota que existe", () => {
     const routes = new Set(

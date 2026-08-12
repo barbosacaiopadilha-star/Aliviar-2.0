@@ -197,11 +197,11 @@ describe("Parte 3 — wizard desacoplado da Landing", () => {
     // código morto sem consumidor real — a variante "window" remanescente
     // nunca precisou desses primitivos. Ajuste do teste para refletir essa
     // arquitetura já decidida, não reconstrução dela.
-    const landingConsumers = [
-      "components/landing/faq-book-section.tsx",
-      "components/landing/public-footer.tsx",
-      "components/landing/final-cta-section.tsx",
-    ];
+    // TRACK D · `faq-book-section` e `final-cta-section` saíram com a landing
+    // morta (código morto com substituto vivo em `landing/editorial/*`). O que
+    // este guarda protege — a Landing consome os primitivos de `components/ui`,
+    // nunca o contrário — segue valendo no consumidor que sobreviveu.
+    const landingConsumers = ["components/landing/public-footer.tsx"];
     for (const file of landingConsumers) {
       const source = readSrc(file);
       expect(source).toMatch(
@@ -211,13 +211,9 @@ describe("Parte 3 — wizard desacoplado da Landing", () => {
   });
 
   it("a Landing não passou a importar o módulo story (sem dependência circular)", () => {
-    const landingFiles = [
-      "components/landing/portal-experience.tsx",
-      "components/landing/faq-book-section.tsx",
-      "components/landing/final-cta-section.tsx",
-      "components/landing/public-footer.tsx",
-      "components/landing/video-section.tsx",
-    ];
+    // TRACK D · quatro dos cinco saíram com a landing morta. A ausência de
+    // dependência circular continua afirmada sobre o que existe.
+    const landingFiles = ["components/landing/public-footer.tsx"];
     for (const file of landingFiles) {
       expect(readSrc(file)).not.toMatch(
         /from ["']@\/(modules|components)\/story/,

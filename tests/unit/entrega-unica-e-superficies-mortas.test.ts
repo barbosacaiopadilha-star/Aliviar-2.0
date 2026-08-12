@@ -133,3 +133,78 @@ describe("Histórico preservado (DP-2)", () => {
     expect(consumidor).toContain("AceExecutionsHistory");
   });
 });
+
+/**
+ * T-D-1 · TRACK D — o que saiu, e o substituto que o tornou removível.
+ *
+ * A regra que decidiu cada alvo: **uso zero com substituto vivo nomeado é
+ * código morto; uso zero SEM substituto é capacidade enterrada.** Por isso
+ * `mandatory-filters` ficou, e a landing morta saiu.
+ */
+describe("Track D · código morto removido, substituto vivo provado", () => {
+  const REMOVIDOS_COM_SUBSTITUTO: Array<[string, string]> = [
+    // R1 · o cluster da landing morta. O substituto é a editorial, viva.
+    ["src/components/landing/portal-experience.tsx", "landing/editorial"],
+    ["src/components/landing/faq-book-section.tsx", "landing/editorial"],
+    ["src/components/landing/final-cta-section.tsx", "landing/editorial"],
+    ["src/components/landing/v2/hero-experience.tsx", "landing/editorial"],
+    ["src/components/landing/v2/curadoria-sections.tsx", "landing/editorial"],
+    ["src/components/landing/v2/metodo-sections.tsx", "landing/editorial"],
+    ["src/components/landing/v2/presenca-sections.tsx", "landing/editorial"],
+    // Cascata recalculada, nunca lista decorada.
+    ["src/components/landing/golden-thread.tsx", "cascata de R1"],
+    ["src/components/landing/section-eyebrow.tsx", "cascata de R1"],
+    ["src/components/landing/video-section.tsx", "cascata de R1"],
+    ["src/components/landing/portal-frames.tsx", "cascata de R1"],
+    ["src/components/landing/portal-scenes.tsx", "cascata de R1"],
+    ["src/components/landing/faq-cards.ts", "cascata de R1"],
+    ["src/components/landing/faq-book-turn.ts", "cascata de R1"],
+    ["src/components/landing/final-actions.tsx", "cascata de R1"],
+    // R2..R5
+    ["src/components/index.ts", "arquivo sem exports"],
+    ["src/components/curadoria/sem-curadoria.tsx", "PatientEmptyState"],
+    ["src/components/ace/ace-health-check-card.tsx", "rota /admin/ace já removida"],
+    ["src/components/ace/ace-metrics-cards.tsx", "rota /admin/ace já removida"],
+    ["src/components/paciente/dashboard/patient-status-widget.tsx", "patient-home-state"],
+  ];
+
+  for (const [alvo, substituto] of REMOVIDOS_COM_SUBSTITUTO) {
+    it(`${alvo} saiu — substituto: ${substituto}`, () => {
+      expect(existsSync(path.join(RAIZ, alvo))).toBe(false);
+    });
+  }
+
+  it("o diretório v2 inteiro saiu", () => {
+    expect(existsSync(path.join(RAIZ, "src/components/landing/v2"))).toBe(false);
+  });
+
+  /**
+   * O contrário da remoção, e a parte que mais importa: o que NÃO podia sair.
+   * `mandatory-filters` é a única superfície da fase Filtros do COS. Apagá-lo
+   * mataria a etapa — e faria `actions-have-callers` ficar verde por ausência.
+   */
+  const CAPACIDADE_ENTERRADA = [
+    "src/components/curadoria/mandatory-filters.tsx",
+    "src/components/profiles/patient-notifications-list.tsx",
+    "src/components/ui/skeleton.tsx",
+    "src/components/ui/tabs.tsx",
+    "src/components/landing/link-button.tsx",
+  ];
+
+  for (const guardado of CAPACIDADE_ENTERRADA) {
+    it(`${guardado} PERMANECE — uso zero sem substituto não é lixo`, () => {
+      expect(existsSync(path.join(RAIZ, guardado))).toBe(true);
+    });
+  }
+
+  it("a landing viva não perdeu nada", () => {
+    for (const vivo of [
+      "src/components/landing/editorial",
+      "src/components/landing/public-header.tsx",
+      "src/components/landing/public-footer.tsx",
+      "src/components/landing/header-compaction.ts",
+    ]) {
+      expect(existsSync(path.join(RAIZ, vivo)), `${vivo} sumiu`).toBe(true);
+    }
+  });
+});

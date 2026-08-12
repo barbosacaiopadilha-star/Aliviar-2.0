@@ -25,53 +25,10 @@ const MOTORS: Record<
   string,
   { file: string; allowedMotorDeps: string[]; isHook: boolean }
 > = {
-  "@/components/landing/use-portal-motion-preference": {
-    file: "use-portal-motion-preference.ts",
-    allowedMotorDeps: [],
-    isHook: true,
-  },
-  "@/components/landing/use-portal-raw-progress": {
-    file: "use-portal-raw-progress.ts",
-    allowedMotorDeps: [],
-    isHook: true,
-  },
-  "@/components/landing/portal-narrative": {
-    file: "portal-narrative.ts",
-    allowedMotorDeps: [],
-    isHook: false,
-  },
-  "@/components/landing/portal-environment": {
-    file: "portal-environment.ts",
-    // Motor 3 (Ambiente) consome o Motor 2 (Narrativo) — única dependência
-    // motor-a-motor autorizada por toda a Landing.
-    allowedMotorDeps: ["@/components/landing/portal-narrative"],
-    isHook: false,
-  },
-  "@/components/landing/portal-photography": {
-    file: "portal-photography.ts",
-    allowedMotorDeps: [],
-    isHook: false,
-  },
-  "@/components/landing/portal-companion-video": {
-    file: "portal-companion-video.ts",
-    allowedMotorDeps: [],
-    isHook: false,
-  },
-  "@/components/landing/portal-continuous-presence": {
-    file: "portal-continuous-presence.ts",
-    allowedMotorDeps: [],
-    isHook: false,
-  },
-  "@/components/landing/portal-exit-transition": {
-    file: "portal-exit-transition.ts",
-    allowedMotorDeps: [],
-    isHook: false,
-  },
-  "@/components/landing/faq-book-turn": {
-    file: "faq-book-turn.ts",
-    allowedMotorDeps: [],
-    isHook: false,
-  },
+  // TRACK D · dos treze motores originais, doze pertenciam à landing morta
+  // (`portal-experience`, `faq-book-section`, `final-cta-section`, `v2/*`) e
+  // saíram com ela. Restou o único que a landing VIVA ainda usa. O guarda
+  // continua valendo: um motor novo entra aqui, e as regras se aplicam a ele.
   "@/components/landing/header-compaction": {
     file: "header-compaction.ts",
     allowedMotorDeps: [],
@@ -81,11 +38,7 @@ const MOTORS: Record<
 
 // Camada de Configuração (docs/LANDING_IMPLEMENTATION_ARCHITECTURE.md §1)
 // — qualquer motor pode ler, nenhum motor pode ser lido por ela.
-const CONFIG_MODULES = [
-  "@/components/landing/portal-frames",
-  "@/components/landing/portal-scenes",
-  "@/components/landing/faq-cards",
-];
+const CONFIG_MODULES: string[] = [];
 
 // Remove comentários antes de checar uso de window/document — vários
 // motores mencionam "window.scrollY" ou "window.matchMedia" em prosa
