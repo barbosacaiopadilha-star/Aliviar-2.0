@@ -38,10 +38,36 @@ function mensagens(): string[] {
   return [...fonte.matchAll(/message:\s*"([^"]*)"/g)].map((m) => m[1]!);
 }
 
+/**
+ * O conjunto FECHADO de mensagens aprovadas (contrato 30 §6).
+ *
+ * Esta é a guarda que a varredura por vocabulário não dá: acrescentar
+ * "Sou a Maria Silva" a uma mensagem não casa com termo proibido nenhum, e
+ * passaria batido — foi exatamente o que a mutação M-C3 mostrou. Nome próprio
+ * não tem lista. O que tem é o conjunto: as mensagens são CONSTANTES, e
+ * qualquer desvio — palavra a mais, tópico novo sem aprovação, interpolação —
+ * muda o conjunto e derruba este teste.
+ */
+const MENSAGENS_APROVADAS = [
+  "Oi! Tenho uma dúvida sobre a minha Curadoria.",
+  "Oi! Gostaria de ajuda com a minha jornada na Aliviar.",
+  "Oi! Gostaria de conversar sobre a minha Curadoria.",
+  "Oi! Quero enviar um documento para a minha Curadoria.",
+  "Oi! Gostaria de falar com meu Curador.",
+];
+
 describe("T-C-2 · a mensagem diz o assunto, nunca o conteúdo", () => {
   it("o mapa tem mensagens, e o parser não quebrou", () => {
     // Sem esta sanidade, um regex quebrado faria a guarda passar em falso.
     expect(mensagens().length, "nenhuma mensagem encontrada — o parser quebrou").toBeGreaterThanOrEqual(5);
+  });
+
+  it("o conjunto de mensagens é EXATAMENTE o aprovado — nada entra sem decisão", () => {
+    expect(
+      [...mensagens()].sort(),
+      "alguma mensagem mudou, nasceu ou ganhou conteúdo. Se for deliberado, " +
+        "a lista aprovada muda AQUI, e isso é um ato explícito — nunca um efeito colateral",
+    ).toEqual([...MENSAGENS_APROVADAS].sort());
   });
 
   it("nenhuma mensagem carrega dado clínico, identificador ou nome", () => {
