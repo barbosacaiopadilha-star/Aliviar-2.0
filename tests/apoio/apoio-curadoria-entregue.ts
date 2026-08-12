@@ -3,12 +3,13 @@ import path from "node:path";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { changeCaseStatus, createCase } from "@/modules/cases/repository";
+import { SupabaseConnectionRepository } from "@/modules/connection";
+import { createConnection } from "@/modules/connection/commands";
 import * as curadoria from "@/modules/curadoria/repository";
 import * as reports from "@/modules/curadoria/report-repository";
 import { createPatientAccount } from "@/modules/profiles/patient-account-repository";
 import { getOrCreateActiveStory, saveStoryDraft, submitStory } from "@/modules/story/repository";
 
-import { fixtureValidarPerfil } from "./fixture-perfil";
 import { createCuradoriaClient } from "../integration/curadoria-client";
 import { seedPublishedProfessional } from "../integration/rede-fixture";
 import { preencherMapaEBlocoRelacional } from "../e2e/apoio-mapa";
@@ -72,6 +73,174 @@ export type DeliveredFixture = {
   professionalDisplayNames: string[];
 };
 
+/**
+ * B11-FIX-A · OS DOZE CORTES DA MATRIZ CR (contrato 36 §10.1).
+ *
+ * Cada corte é um estado que o produto **de fato** produz, e nasce pelo writer
+ * real do seu ato. A fixture não inventa estágio: ela para onde o produto para.
+ */
+export const ESTAGIOS_CR = [
+  "CR-01", "CR-02", "CR-03", "CR-04", "CR-05", "CR-06",
+  "CR-07", "CR-08", "CR-09", "CR-10", "CR-11", "CR-12",
+] as const;
+
+export type EstagioCR = (typeof ESTAGIOS_CR)[number];
+
+/**
+ * A matriz nominal, declarada — não deduzida do código que a monta.
+ *
+ * `responsavel` e `grupoDaFila` são o que a B12-FILA vai verificar; ficam aqui
+ * porque quem define o estágio é o fato, e o fato é declarado neste lugar.
+ *
+ * ⚠️ **`CR-04` diz "reconhecido POR ELA".** A lista que originou esta matriz
+ * pedia "validação pelo Curador" — isso **não existe**: a ADR-042 removeu essa
+ * porta, e quem reconhece o Perfil é a paciente. Nomear o Curador aqui
+ * reintroduziria, em fixture, a autoridade que a ADR removeu.
+ */
+export const MATRIZ_CR: Record<
+  EstagioCR,
+  {
+    cenario: string;
+    ator: "paciente" | "curador";
+    fato: string;
+    atoDevido: string;
+    responsavel: string;
+    /** `null` = fora da Fila, por decisão do contrato §10.1. */
+    grupoDaFila: string | null;
+  }
+> = {
+  "CR-01": {
+    cenario: "antes da Curadoria",
+    ator: "curador",
+    fato: "Case sem understanding_confirmed_at",
+    atoDevido: "acolher",
+    responsavel: "Curador",
+    grupoDaFila: "Aguarda Acolhimento",
+  },
+  "CR-02": {
+    cenario: "preparação do 1º encontro",
+    ator: "curador",
+    fato: "Mapa preparado, meeting_held_at is null",
+    atoDevido: "realizar o primeiro encontro",
+    responsavel: "Curador",
+    grupoDaFila: "Aguarda o Primeiro Encontro",
+  },
+  "CR-03": {
+    cenario: "1º encontro realizado",
+    ator: "curador",
+    fato: "meeting_held_at presente, validated_at is null",
+    atoDevido: "aguardar o reconhecimento dela",
+    responsavel: "a paciente",
+    grupoDaFila: "Aguarda o reconhecimento dela",
+  },
+  "CR-04": {
+    cenario: "Perfil reconhecido por ela",
+    ator: "paciente",
+    fato: "validated_at pela via real (acknowledge_priority_profile)",
+    atoDevido: "analisar",
+    responsavel: "Curador",
+    grupoDaFila: "Curadoria em curso",
+  },
+  "CR-05": {
+    cenario: "análise entre encontros",
+    ator: "curador",
+    fato: "seleção salva, Relatório não emitido",
+    atoDevido: "concluir a análise",
+    responsavel: "Curador",
+    grupoDaFila: "Curadoria em curso",
+  },
+  "CR-06": {
+    cenario: "Relatório emitido, não entregue",
+    ator: "curador",
+    fato: "emitted_at presente, delivered_at is null",
+    atoDevido: "entregar",
+    responsavel: "Curador",
+    grupoDaFila: "Aguarda entrega",
+  },
+  "CR-07": {
+    cenario: "entregue, sem decisão",
+    ator: "curador",
+    fato: "seleção entregue e Relatório marcado como entregue",
+    atoDevido: "aguardar a decisão dela",
+    responsavel: "a paciente",
+    grupoDaFila: "Aguarda a decisão dela",
+  },
+  "CR-08": {
+    cenario: "decisão CHOSEN",
+    ator: "paciente",
+    fato: "patient_curadoria_decisions com chosen_option_id",
+    atoDevido: "acompanhar",
+    responsavel: "Equipe Aliviar",
+    grupoDaFila: "Com o Concierge",
+  },
+  "CR-09": {
+    cenario: "decisão NONE_OF_THEM",
+    ator: "paciente",
+    fato: "patient_curadoria_decisions com chosen_option_id null",
+    atoDevido: "acompanhar",
+    responsavel: "Equipe Aliviar",
+    grupoDaFila: "Com o Concierge",
+  },
+  "CR-10": {
+    cenario: "acompanhamento aberto",
+    ator: "paciente",
+    fato: "connection_records para o Case",
+    atoDevido: "acompanhar",
+    responsavel: "Equipe Aliviar",
+    grupoDaFila: "Com o Concierge",
+  },
+  "CR-11": {
+    cenario: "encerrado sem entrega",
+    ator: "curador",
+    fato: "cases.closed_at / status CANCELLED",
+    atoDevido: "nenhum",
+    responsavel: "ninguém",
+    grupoDaFila: null,
+  },
+  "CR-12": {
+    cenario: "compatibilidade legada",
+    ator: "curador",
+    fato: "entrega do motor antigo, sem Curadoria estruturada",
+    atoDevido: "nenhum",
+    responsavel: "ninguém",
+    grupoDaFila: null,
+  },
+};
+
+/** O que existe desde o primeiro corte. */
+type CasoBase = {
+  patientEmail: string;
+  patientPassword: string;
+  patientProfileId: string;
+  adminUserId: string;
+  caseId: string;
+  storyId: string;
+  createdProfessionalIds: string[];
+};
+
+type ComPerfil = CasoBase & { priorityProfileId: string };
+type ComSelecao = ComPerfil & {
+  curatedSelectionId: string;
+  selectedProfessionals: Array<{ id: string; name: string }>;
+  professionalDisplayNames: string[];
+};
+type ComRelatorio = ComSelecao & { reportId: string };
+type ComDecisao = ComRelatorio & { decisionId: string };
+
+/**
+ * A discriminação é do TIPO, não da disciplina: pedir `reportId` num caso de
+ * CR-04 não compila, e `decisionId` só existe de CR-08 em diante. Sem isto, um
+ * teste leria `undefined` e passaria comparando nada com nada.
+ */
+export type CasoSintetico =
+  | ({ estagio: "CR-01" | "CR-11" } & CasoBase)
+  | ({ estagio: "CR-02" | "CR-03" | "CR-04" } & ComPerfil)
+  | ({ estagio: "CR-05" } & ComSelecao)
+  | ({ estagio: "CR-06" | "CR-07" } & ComRelatorio)
+  | ({ estagio: "CR-08" | "CR-09" } & ComDecisao)
+  | ({ estagio: "CR-10" } & ComDecisao & { connectionId: string })
+  | ({ estagio: "CR-12" } & CasoBase & { legadoDeliveryId: string });
+
 async function seedPresentableProfessional(
   adminClient: ReturnType<typeof createAdminSupabaseClient>,
   adminUserId: string,
@@ -94,9 +263,40 @@ async function seedPresentableProfessional(
  * não um estado inventado para o teste passar. O padrão continua entregando,
  * e por isso o spec original não muda de comportamento.
  */
+/**
+ * B11-FIX-A · `estagio` é o parâmetro de corte da matriz CR.
+ *
+ * Sem ele, o comportamento é **exatamente** o de antes — cadeia completa até a
+ * entrega, com `entregar`/`decidir`. Os seis consumidores existentes não mudam
+ * de forma. Com ele, a montagem para no fato que define o estágio.
+ */
 export async function seedDeliveredCase(
-  opcoes: { entregar?: boolean; decidir?: "CHOSEN" | "NONE_OF_THEM" } = {},
-): Promise<DeliveredFixture> {
+  opcoes?: { entregar?: boolean; decidir?: "CHOSEN" | "NONE_OF_THEM" },
+): Promise<DeliveredFixture>;
+export async function seedDeliveredCase(
+  opcoes: { entregar?: boolean; decidir?: "CHOSEN" | "NONE_OF_THEM"; estagio: EstagioCR },
+): Promise<CasoSintetico>;
+export async function seedDeliveredCase(
+  opcoes: {
+    entregar?: boolean;
+    decidir?: "CHOSEN" | "NONE_OF_THEM";
+    estagio?: EstagioCR;
+  } = {},
+): Promise<DeliveredFixture | CasoSintetico> {
+  const estagio = opcoes.estagio;
+
+  // CR-12 não nasce aqui: a entrega legada tem helper mantido próprio
+  // (`legacy-ace-chain-fixture`), e duplicá-la nesta cadeia produziria uma
+  // segunda implementação do motor antigo.
+  if (estagio === "CR-12") {
+    throw new Error(
+      "CR-12 (compatibilidade legada) é montado por seedLegacyFinalCuradoriaDelivery — " +
+        "ver tests/integration/legacy-ace-chain-fixture.ts.",
+    );
+  }
+  /** Para antes de produzir o fato do próximo corte. */
+  const pararEm = (ate: EstagioCR) =>
+    estagio !== undefined && ESTAGIOS_CR.indexOf(estagio) <= ESTAGIOS_CR.indexOf(ate);
   const entregar = opcoes.entregar ?? true;
   const adminClient = createAdminSupabaseClient();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
@@ -206,6 +406,48 @@ export async function seedDeliveredCase(
   // emissão e entrega. Nenhum protocolo do ACE participa.
   const cliente = adminSessionClient;
 
+  const base = {
+    patientEmail,
+    patientPassword: patientAccount.password,
+    patientProfileId: patientAccount.profileId,
+    adminUserId,
+    caseId: created.id,
+    storyId: draft.id,
+    createdProfessionalIds,
+  };
+
+  // CR-01 · o Case existe e ninguém acolheu ainda. CR-11 encerra a partir daqui.
+  //
+  // `estagio === "CR-11"` precisa ser explícito: `pararEm` compara POSIÇÃO na
+  // lista, e CR-11 é o penúltimo — `pararEm("CR-01")` é `10 <= 0`, falso. Sem
+  // esta cláusula o ramo era inalcançável, a cadeia inteira rodava, e o Case
+  // nunca era encerrado. O teste mediu isso; o writer nunca chegou a ser
+  // chamado.
+  if (pararEm("CR-01") || estagio === "CR-11") {
+    if (estagio === "CR-11") {
+      // Pelo writer de transição, nunca por update direto: `changeCaseStatus`
+      // é quem conhece a máquina de estados e recusa salto inválido. O update
+      // que estava aqui simplesmente não pegou — o Case seguiu em
+      // READY_FOR_CURATION e o teste mediu isso.
+      //
+      // Encerrar NÃO é Curadoria concluída: é o Caso que parou antes de
+      // entregar, e por isso fica fora da Fila (contrato 36 §10.1).
+      await changeCaseStatus(adminSessionClient, created.id, "CANCELLED", adminUserId);
+
+      const { data, error } = await cliente
+        .from("cases")
+        .select("status, closed_at")
+        .eq("id", created.id)
+        .single();
+      if (error) throw new Error(`Fixture CR-11: releitura do Case falhou — ${error.message}`);
+      if (data?.status !== "CANCELLED") {
+        throw new Error(`Fixture CR-11: o Case ficou em "${data?.status}", não em CANCELLED.`);
+      }
+      return { estagio: "CR-11", ...base };
+    }
+    return { estagio: "CR-01", ...base };
+  }
+
   await cliente.from("consultation_records").insert({
     case_id: created.id,
     curator_id: adminUserId,
@@ -234,7 +476,66 @@ export async function seedDeliveredCase(
   // B-2 (ADR-065): o banco só valida Perfil com Mapa completo, e o
   // reconhecimento exige o bloco relacional — estado legítimo via factory.
   await preencherMapaEBlocoRelacional(cliente, created.id, adminUserId);
-  await fixtureValidarPerfil(cliente, priorityProfileId, "Li em voz alta e ela confirmou.");
+
+  // CR-02 · Mapa preparado, e o primeiro encontro ainda não aconteceu.
+  if (pararEm("CR-02")) return { estagio: "CR-02", ...base, priorityProfileId };
+
+  // O fato mínimo do encontro realizado — `meeting_held_at`, entregue na D-9.
+  // É do Curador, e é o único que ele registra nesta faixa.
+  {
+    const { data, error } = await cliente
+      .from("consultation_records")
+      .update({ meeting_held_at: new Date().toISOString() })
+      .eq("case_id", created.id)
+      .select("id");
+    if (error) throw new Error(`Fixture: registrar o encontro falhou — ${error.message}`);
+    if ((data ?? []).length === 0) {
+      throw new Error("Fixture: nenhum consultation_record recebeu meeting_held_at.");
+    }
+  }
+
+  // CR-03 · o Mapa está pronto e aguarda **o reconhecimento dela**. O Curador
+  // vê, e não age: a autoridade é dela.
+  if (pararEm("CR-03")) return { estagio: "CR-03", ...base, priorityProfileId };
+
+  // ────────────────────────────────────────────────────────────────────────
+  // O RECONHECIMENTO — ato DELA, pelo writer real.
+  //
+  // Aqui morava o defeito: `fixtureValidarPerfil` escrevia `VALIDATED` direto
+  // em `priority_profiles`, com a SESSÃO DO CURADOR. Isso reintroduzia, em
+  // fixture, a autoridade que a ADR-042 removeu — e produzia um Perfil
+  // reconhecido sem que ninguém tivesse reconhecido nada.
+  //
+  // A via oficial é `acknowledge_priority_profile`, com gate
+  // `is_patient_for_case`: só a paciente atravessa. O retorno é LIDO, e a
+  // releitura confirma o fato — RPC que devolve 'NAO_AUTORIZADO' sem erro
+  // passaria despercebida.
+  // ────────────────────────────────────────────────────────────────────────
+  {
+    const { data: desfecho, error } = await patientClient.rpc("acknowledge_priority_profile", {
+      _case_id: created.id,
+    });
+    if (error) throw new Error(`Fixture: o reconhecimento dela falhou — ${error.message}`);
+    // O RPC devolve RECONHECIDO no sucesso; VALIDATED é o status da TABELA.
+    // Confundir os dois faria o oráculo recusar o caminho certo.
+    if (desfecho !== "RECONHECIDO") {
+      throw new Error(
+        `Fixture: acknowledge_priority_profile devolveu "${desfecho}" — o Perfil não foi reconhecido por ela.`,
+      );
+    }
+
+    const { data: perfil } = await cliente
+      .from("priority_profiles")
+      .select("status, validated_at")
+      .eq("id", priorityProfileId)
+      .single();
+    if (perfil?.status !== "VALIDATED" || !perfil?.validated_at) {
+      throw new Error("Fixture: o Perfil não ficou reconhecido depois do ato dela.");
+    }
+  }
+
+  // CR-04 · Perfil reconhecido POR ELA. A análise pode começar.
+  if (pararEm("CR-04")) return { estagio: "CR-04", ...base, priorityProfileId };
 
   // B-2: os três são os que ESTA execução semeou e publicou. A versão
   // anterior tomava 3 publicados quaisquer da rede compartilhada — com
@@ -265,6 +566,20 @@ export async function seedDeliveredCase(
     })),
   );
   const selection = await curadoria.getSelection(cliente, priorityProfileId);
+
+  const comSelecao = {
+    ...base,
+    priorityProfileId,
+    curatedSelectionId: selection!.id,
+    selectedProfessionals: tres.map((a) => ({
+      id: a.professionalId,
+      name: nomeDe.get(a.professionalId) ?? "Profissional",
+    })),
+    professionalDisplayNames: tres.map((a) => nomeDe.get(a.professionalId) ?? "Profissional"),
+  };
+
+  // CR-05 · a seleção está salva e a análise ainda não virou Relatório emitido.
+  if (pararEm("CR-05")) return { estagio: "CR-05", ...comSelecao };
 
   await reports.saveReport(
     cliente,
@@ -306,15 +621,33 @@ export async function seedDeliveredCase(
   // Emitir exige aprovação prévia — o Curador assume a autoria da versão final.
     await reports.approveReport(cliente, report!.id, adminUserId);
     await reports.emitReport(cliente, report!.id);
+
+  const comRelatorio = { ...comSelecao, reportId: report!.id };
+
+  // CR-06 · emitido, e ainda não entregue.
+  if (pararEm("CR-06")) return { estagio: "CR-06", ...comRelatorio };
+
   if (entregar) {
     await curadoria.deliverSelection(cliente, selection!.id);
     await reports.markReportDelivered(cliente, report!.id);
   }
 
+  // CR-07 · entregue, e a decisão é dela — ainda não tomada.
+  if (pararEm("CR-07")) return { estagio: "CR-07", ...comRelatorio };
+
   // B3-RI · o fluxo canônico registra a decisão ANTES da conexão. A fixture
   // acompanha o produto: quem quiser o cenário pós-decisão pede `decidir`, e
   // o fato entra pelo writer real, nunca pelo DOM nem por connection_records.
-  if (entregar && opcoes.decidir) {
+  // CR-08/09/10 pedem a decisão pelo caminho dela; quem passou `decidir`
+  // continua mandando como antes.
+  const desfechoDoEstagio =
+    estagio === "CR-08" || estagio === "CR-10"
+      ? ("CHOSEN" as const)
+      : estagio === "CR-09"
+        ? ("NONE_OF_THEM" as const)
+        : opcoes.decidir;
+
+  if (entregar && desfechoDoEstagio) {
     // A FK de `chosen_option_id` aponta para `curated_selection_options` — a
     // seleção humana —, não para as opções do Relatório. O contrato 27 §F já
     // dizia "chave: curated_selection_options.id"; usei a tabela errada e a
@@ -340,15 +673,58 @@ export async function seedDeliveredCase(
       email: patientEmail,
       password: patientAccount.password,
     });
-    const { error: erroDecisao } = await pacienteCliente
+    // A decisão entra pela SESSÃO DELA, sob RLS — nunca por service role. Não
+    // há writer público invocável de teste (a action é Server Action do Next),
+    // e este é o precedente mantido mais próximo: o mesmo caminho que a tela
+    // percorre, com a mesma autoridade.
+    const { data: decisaoGravada, error: erroDecisao } = await pacienteCliente
       .from("patient_curadoria_decisions")
       .insert({
         case_id: created.id,
         curated_selection_id: selection!.id,
-        outcome: opcoes.decidir,
-        chosen_option_id: opcoes.decidir === "CHOSEN" ? opcaoDecidida.id : null,
-      });
+        outcome: desfechoDoEstagio,
+        chosen_option_id: desfechoDoEstagio === "CHOSEN" ? opcaoDecidida.id : null,
+      })
+      .select("id")
+      .single();
     if (erroDecisao) throw new Error(`Fixture: decisao nao registrada: ${erroDecisao.message}`);
+
+    if (estagio === "CR-08" || estagio === "CR-09") {
+      return { estagio, ...comRelatorio, decisionId: decisaoGravada!.id as string };
+    }
+
+    // CR-10 · o acompanhamento aberto. A Connection é continuidade, nunca o
+    // fato da decisão — e ela nasce DEPOIS, como no produto.
+    if (estagio === "CR-10") {
+      // Pelo caminho canônico: o comando puro monta o rascunho e o repositório
+      // chama `create_connection_from_report`, que deriva Case e paciente do
+      // PRÓPRIO Relatório e é idempotente. Inserir em `connection_records` à
+      // mão pularia a âncora e o evento — e foi o que a primeira tentativa
+      // fez, até `decided_at NOT NULL` recusar.
+      const agora = new Date().toISOString();
+      const { record, event } = createConnection(
+        {
+          caseId: created.id,
+          anchor: { source: "METODO", reportId: report!.id },
+          patientProfileId: patientAccount.profileId,
+          professionalProfileId: tres[0]!.professionalId,
+          actorId: patientAccount.profileId,
+          occurredAt: agora,
+          recordedAt: agora,
+        },
+        { eligibleProfessionalProfileIds: tres.map((a) => a.professionalId) },
+      );
+      const conexao = await new SupabaseConnectionRepository(pacienteCliente).create(
+        record,
+        event,
+      );
+      return {
+        estagio: "CR-10",
+        ...comRelatorio,
+        decisionId: decisaoGravada!.id as string,
+        connectionId: conexao.id,
+      };
+    }
   }
 
   return {
