@@ -1,13 +1,10 @@
-import Link from "next/link";
-
 import { AvailableCases } from "@/components/curadoria/available-cases";
+import { FilaPorAtoDevido } from "@/components/curadoria/fila-por-ato-devido";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRole } from "@/modules/auth/guard";
-import { conduct } from "@/modules/curadoria/cos/conduction";
-import { getPrimaryActionLabel, phaseHref } from "@/modules/curadoria/cos/conduction-ui";
 import { listAvailableCases, listCaseIds, loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
-import { buildCuratorJourney } from "@/modules/curadoria/cos/journey";
+import { fatosDoRegistro, montarFila } from "@/modules/curadoria/fila-por-ato-devido";
 import { resolveGreetingFirstName } from "@/modules/auth/display-identity";
 
 // MÓDULO 1 — PAINEL INICIAL, agora sobre o banco (MISSÃO 209, Fases 3 e 4).
@@ -36,31 +33,52 @@ export default async function PainelInicialPage() {
     await Promise.all(caseIds.map((id) => loadCuradoriaRecord(supabase, id)))
   ).filter((record): record is NonNullable<typeof record> => record !== null);
 
-  const conducted = records
-    .map((record) => ({ record, state: conduct(record) }))
-    // Bloqueio primeiro, depois alerta, depois ação, e por último o que está
-    // com o paciente — quem precisa de você antes de quem você acompanha.
-    .sort((a, b) => {
-      const rank = (entry: typeof a) =>
-        entry.state.alerts.some((alert) => alert.severity === "bloqueio")
-          ? 0
-          : entry.state.alerts.length > 0
-            ? 1
-            : entry.state.nextStep.kind === "acao"
-              ? 2
-              : 3;
-      return rank(a) - rank(b);
-    });
+  // BLOCO 12 · os dois fatos que a Fila precisa e que o `CuradoriaRecord` não
+  // carrega: o Caso encerrado sai da Fila, e a entrega legada do motor antigo
+  // não é Curadoria estruturada. Ambos são leitura — nada é escrito aqui.
+  const [statusPorCaso, legadoPorCaso] = await Promise.all([
+    supabase
+      .from("cases")
+      .select("id, status, closed_at")
+      .in("id", caseIds)
+      .then(({ data, error }) => {
+        if (error) throw error;
+        return new Map(
+          (data ?? []).map((linha) => [
+            linha.id as string,
+            { status: linha.status as string, closedAt: linha.closed_at as string | null },
+          ]),
+        );
+      }),
+    supabase
+      .from("final_curadoria_deliveries")
+      .select("case_id")
+      .in("case_id", caseIds)
+      .then(({ data, error }) => {
+        // A tabela legada pode não existir em ambientes novos: a ausência dela
+        // significa "nenhuma entrega legada", nunca falha da Fila.
+        if (error) return new Set<string>();
+        return new Set((data ?? []).map((linha) => linha.case_id as string));
+      }),
+  ]);
 
-  // A etapa da jornada de cada caso, para a fila falar a língua do Curador.
-  const journeys = new Map(
-    conducted.map(({ record, state }) => {
-      const journey = buildCuratorJourney(record, state);
-      return [record.caseId, journey.steps.find((step) => step.id === journey.currentStep)!] as const;
+  const fatosDaFila = records.map((record) =>
+    fatosDoRegistro(record, {
+      status: statusPorCaso.get(record.caseId)?.status ?? "NEW",
+      closedAt: statusPorCaso.get(record.caseId)?.closedAt ?? null,
+      // Legado é entrega antiga SEM Curadoria estruturada: havendo seleção
+      // curada, o Caso é do fluxo vigente e entra na Fila normalmente.
+      legadoSemCuradoria:
+        legadoPorCaso.has(record.caseId) && record.curadoriaTecnica.curatedSelectionId === null,
     }),
   );
 
-  const needsCurator = conducted.filter((entry) => entry.state.nextStep.kind === "acao").length;
+  // BLOCO 12 · a frase do cabeçalho DERIVA da mesma montagem que desenha os
+  // grupos — nunca de uma segunda contagem. É a lição do C4 aplicada aqui.
+  const { grupos: gruposDaFila, total: totalAtivo } = montarFila(fatosDaFila);
+  const esperamVoce = gruposDaFila
+    .filter((grupo) => grupo.definicao.temAcaoDoCurador)
+    .reduce((soma, grupo) => soma + grupo.contagem, 0);
   const firstName = resolveGreetingFirstName(auth);
 
   return (
@@ -68,15 +86,17 @@ export default async function PainelInicialPage() {
       <header className="max-w-reading space-y-2">
         <h1 className="font-serif text-3xl text-ink">Bom dia, {firstName}.</h1>
         <p className="text-base leading-relaxed text-ink-muted">
-          {conducted.length === 0
+          {totalAtivo === 0
             ? "Nenhuma Curadoria atribuída a você no momento."
-            : needsCurator === 1
-              ? "Uma pessoa espera um passo seu hoje."
-              : `${needsCurator} pessoas esperam um passo seu hoje.`}
+            : esperamVoce === 0
+              ? "Nenhum Caso espera um passo seu — os que estão aqui aguardam outra pessoa."
+              : esperamVoce === 1
+                ? "Uma pessoa espera um passo seu."
+                : `${esperamVoce} pessoas esperam um passo seu.`}
         </p>
       </header>
 
-      {conducted.length === 0 ? (
+      {totalAtivo === 0 ? (
         // Estado vazio real: o Portal acabou de ser ligado ao banco e a rede
         // ainda não foi cadastrada. Diz o que acontece a seguir em vez de
         // deixar uma tela muda.
@@ -94,65 +114,7 @@ export default async function PainelInicialPage() {
           </p>
         </Card>
       ) : (
-        <section aria-labelledby="casos-heading" className="space-y-4">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 id="casos-heading" className="font-sans text-xl font-semibold text-ink">
-              Suas Curadorias
-            </h2>
-            <p className="text-xs uppercase tracking-wide text-ink-muted">
-              Na ordem de quem precisa de você
-            </p>
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            {conducted.map(({ record, state }) => (
-              <Card key={record.caseId} className="space-y-4">
-                {/* A fila fala em ETAPAS DA JORNADA, não nas etapas do
-                    raciocínio. As duas eram sete e apareciam com as mesmas
-                    palavras ("etapa 3 de 7") significando coisas diferentes —
-                    e a que ajuda a escolher quem abrir é a da jornada. O
-                    raciocínio continua no Método, fora da fila. */}
-                <div>
-                  <h3 className="font-sans text-lg font-semibold text-ink">{record.patientName}</h3>
-                  <p className="mt-0.5 text-xs uppercase tracking-wide text-ink-muted">
-                    {journeys.get(record.caseId)!.label} · etapa{" "}
-                    {journeys.get(record.caseId)!.order} de 7
-                  </p>
-                </div>
-
-                <p className="text-sm leading-relaxed text-ink">{state.nextStep.description}</p>
-
-                {state.alerts.map((alert) => (
-                  <p key={alert.code} className="text-sm text-ink-muted">
-                    <span className="font-mono text-xs">{alert.code}</span> · {alert.title}
-                  </p>
-                ))}
-
-                <div className="border-t border-border pt-4">
-                  {state.nextStep.kind === "aguardando" ? (
-                    <p className="text-sm text-ink-muted">
-                      {state.nextStep.label}.{" "}
-                      <Link
-                        href={`/coa/curadoria/casos/${record.caseId}`}
-                        className="font-medium text-brand-primary underline-offset-4 hover:underline"
-                      >
-                        Abrir o caso
-                      </Link>
-                    </p>
-                  ) : (
-                    <Link
-                      href={phaseHref(record.caseId, state.nextStep.phase)}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors duration-fast ease-standard hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-                    >
-                      {getPrimaryActionLabel(state)}
-                      <span aria-hidden="true">→</span>
-                    </Link>
-                  )}
-                </div>
-              </Card>
-            ))}
-          </div>
-        </section>
+        <FilaPorAtoDevido casos={fatosDaFila} />
       )}
 
       {/* Depois das suas: o que ainda não é de ninguém. Vem por último de
