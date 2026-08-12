@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
+import { ConciergeLink } from "@/components/paciente/concierge-link";
 import { PatientHomeState } from "@/components/paciente/patient-home-state";
 import { AmbientHero } from "@/components/paciente/experiencia/ambient-hero";
 import { CuradoriaNaoIniciada } from "@/components/paciente/experiencia/estados-vazios";
@@ -143,6 +144,10 @@ export default async function PacienteHomePage() {
           relatorioEmitido={false}
         />
         <CuradoriaNaoIniciada />
+        {/* C3 · Track C — a porta existe desde o primeiro dia, inclusive
+            quando ainda não há Case. Linha discreta no fim: quem precisa
+            procura no rodapé, e quem não precisa não é interrompido. */}
+        <ConciergeLink topic="jornada" />
       </div>
     );
   }
@@ -257,6 +262,10 @@ export default async function PacienteHomePage() {
         action={curadoriaAction}
         peso={curadoriaAction ? "cartao" : "discreto"}
       />
+
+      {/* C3 · Track C — a mesma porta, no mesmo lugar, em qualquer estado da
+          Home. Nunca bolha flutuante, nunca badge: é texto no fim da página. */}
+      <ConciergeLink topic="jornada" />
     </div>
   );
 }

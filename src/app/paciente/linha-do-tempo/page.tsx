@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { ConciergeLink } from "@/components/paciente/concierge-link";
 import { PatientPageHeader } from "@/components/paciente/dashboard/patient-primitives";
 import { JornadaNarrativa } from "@/components/paciente/experiencia/jornada-narrativa";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -168,6 +169,11 @@ export default async function PatientJourneyPage() {
           </ul>
         )}
       </section>
+
+      {/* C4 · Track C — o percurso inteiro numa tela é onde a dúvida costuma
+          aparecer ("por que ainda estou aqui?"). A porta fica no fim, sem
+          competir com a leitura. */}
+      <ConciergeLink topic="jornada" />
     </div>
   );
 }

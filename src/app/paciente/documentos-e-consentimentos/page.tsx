@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { ListaDeAceites } from "@/components/governanca/lista-de-aceites";
+import { ConciergeLink } from "@/components/paciente/concierge-link";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import { carregarEstadoDeGovernanca, listarPedidosDoTitular } from "@/modules/governanca/repository";
@@ -103,6 +104,11 @@ export default async function DocumentosEConsentimentosPage() {
           </ul>
         )}
       </section>
+
+      {/* C7 · Track C — consentimento é exatamente onde a pessoa precisa poder
+          perguntar antes de aceitar, ou depois de revogar. A porta fica no
+          fim, e quem responde é a Aliviar. */}
+      <ConciergeLink topic="jornada" />
     </div>
   );
 }

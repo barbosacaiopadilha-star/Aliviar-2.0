@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import type { Metadata } from "next";
 
+import { ConciergeLink } from "@/components/paciente/concierge-link";
 import { PatientEmptyState } from "@/components/paciente/dashboard/patient-primitives";
 import { ConnectionChoicePanel } from "@/components/patient/connection-choice-panel";
 import { CuradoriaDecisionPanel } from "@/components/patient/curadoria-decision-panel";
@@ -39,6 +40,12 @@ export default async function PatientCuradoriaPage() {
       <PatientEmptyState
         title="Ainda não há relatórios aqui."
         description="Quando sua curadoria finalizar os três caminhos, eles aparecerão com calma neste espaço — para reler com a família ou levar à consulta."
+        /* C2 · Track C — esperar não pode ser esperar SOZINHA. O estado vazio
+           é justamente onde ela tem menos do que perguntar e menos a quem
+           perguntar; a `action` já existia e estava sem uso. Aqui a nota
+           institucional aparece: há espaço de bloco, e é o único ponto em que
+           a frase não seria ruído. */
+        action={<ConciergeLink topic="curadoria" nota />}
       />
     );
   }
@@ -184,6 +191,18 @@ export default async function PatientCuradoriaPage() {
         >
           Levar em PDF — para reler com a família ou na consulta
         </Link>
+      </p>
+
+      {/* C1 · Track C — a porta que faltava, e o momento em que ela mais
+          faz falta: aqui a paciente lê três caminhos MÉDICOS e escolhe.
+          Até agora só havia contato DEPOIS de decidir (contrato 30 §2.1).
+
+          Fica na faixa de material de consulta, ao lado do PDF e no mesmo
+          registro visual — nunca abaixo da decisão. `CaminhosPanel` reserva
+          o espaço sob a escolha como vazio deliberado, e preencher ali é
+          empurrar. */}
+      <p className="mt-3">
+        <ConciergeLink topic="curadoria" />
       </p>
     </>
   ) : null;

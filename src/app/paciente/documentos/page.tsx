@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { ConciergeLink } from "@/components/paciente/concierge-link";
 import { PatientCard, PatientPageHeader } from "@/components/paciente/dashboard/patient-primitives";
 import { CentralDeDocumentos } from "@/components/paciente/documentos/central-de-documentos";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -41,6 +42,11 @@ export default async function PatientDocumentsPage() {
       <PatientCard className="lg:p-12">
         <CentralDeDocumentos itens={itens} />
       </PatientCard>
+
+      {/* C5 · Track C — no rodapé da central. É aqui que a pergunta é quase
+          sempre a mesma: "como eu mando isso para vocês?". O tópico é
+          `documento`, e a mensagem já chega escrita com esse assunto. */}
+      <ConciergeLink topic="documento" />
     </div>
   );
 }
