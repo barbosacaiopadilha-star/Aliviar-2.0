@@ -53,12 +53,68 @@ function loadTestAccounts(): Array<{ role: string; email: string; password: stri
 
 const DESTINO = process.env.CAPTURA_DIR ?? path.resolve(__dirname, "../../evidencias/b3");
 
+/**
+ * V-B3-1 · O LOGIN ESPERA POR MARCO, NÃO POR NAVEGAÇÃO.
+ *
+ * `waitForURL` sozinho esperava a coisa errada. O formulário entra com
+ * `router.push` ([login-form.tsx:29](../../src/components/auth/login-form.tsx:29))
+ * — navegação do CLIENTE, e a URL só troca quando a rota de destino termina de
+ * renderizar no servidor. Com a máquina carregada isso passa dos 30s do
+ * `navigationTimeout`, e o erro dizia "waitForURL", que não se parece nem um
+ * pouco com "a home da paciente demorou a montar". Foi assim que a captura
+ * falhou no login numa execução e passou na seguinte.
+ *
+ * Agora são dois marcos, nesta ordem, cada um com teto próprio:
+ *
+ * 1 · **o servidor respondeu** — ou saiu de `/login`, ou recusou. A recusa é
+ *     `FormMessage role="alert"` e vira erro COM o texto inteiro do servidor.
+ *     Credencial errada precisa dizer o motivo, não esgotar um teto em
+ *     silêncio — e nada aqui reexecuta o login.
+ * 2 · **a área autenticada montou** — `nav[aria-label="Navegação principal"]`
+ *     só existe dentro do shell logado. Esperado `attached` e não `visible`
+ *     porque em 390px ele fica atrás do menu, e este helper serve os dois
+ *     viewports.
+ */
 async function entrar(page: Page, email: string, senha: string) {
   await page.goto("/login");
   await page.getByLabel("E-mail").fill(email);
   await page.getByLabel("Senha").fill(senha);
   await page.getByRole("button", { name: "Entrar" }).click();
-  await page.waitForURL((url) => !url.pathname.startsWith("/login"));
+
+  // Só alerta COM texto é recusa. `role="alert"` vazio existe na árvore da tela
+  // de destino, e a primeira versão desta correção o leu como "login recusado
+  // pelo servidor: " — mensagem vazia, teste vermelho, causa nenhuma.
+  const recusa = page.getByRole("alert").filter({ hasText: /\S/ });
+
+  // As duas esperas nunca rejeitam: quem perde a corrida ficaria pendente e
+  // rejeitaria sozinha ao esgotar o teto, e é o diagnóstico abaixo — não a
+  // corrida — que decide o que aconteceu.
+  await Promise.race([
+    page
+      .waitForURL((url) => !url.pathname.startsWith("/login"), { timeout: 60_000 })
+      .catch(() => undefined),
+    recusa
+      .first()
+      .waitFor({ state: "visible", timeout: 60_000 })
+      .catch(() => undefined),
+  ]);
+
+  // Quem manda é a URL: sair de `/login` é o desfecho, e um alerta qualquer na
+  // tela de destino não é recusa de autenticação.
+  if (new URL(page.url()).pathname.startsWith("/login")) {
+    const ditos = (await recusa.allInnerTexts()).map((t) => t.trim()).filter(Boolean);
+    throw new Error(
+      ditos.length > 0
+        ? `login recusado pelo servidor: ${ditos.join(" · ")}`
+        : "login não concluiu em 60s e o servidor não recusou — a transição do router não fechou. " +
+          "Investigar antes de mexer no teto.",
+    );
+  }
+
+  await page
+    .locator('nav[aria-label="Navegação principal"]')
+    .first()
+    .waitFor({ state: "attached", timeout: 15_000 });
 }
 
 /**
@@ -292,7 +348,10 @@ test.describe("B3 · evidências da decisão", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload();
 
-    await expect(page.getByText("Sua decisão está registrada.")).toBeVisible();
+    // V-B3-1 · mesma classe da correção do H4: depois de um reload, quem responde
+    // é o servidor, e o teto tem de ser dito. O card decidido já É o marco
+    // durável — ele nasce do fato persistido, não de estado da sessão anterior.
+    await expect(page.getByText("Sua decisão está registrada.")).toBeVisible({ timeout: 10_000 });
     await expect(page.getByRole("button", { name: "Registrar minha decisão" })).toHaveCount(0);
 
     // O mesmo canônico no tamanho em que o achado apareceu (EV-B3-004 é a
@@ -620,20 +679,66 @@ test.describe("B3 · fechamento (EV-C2)", () => {
 
       await page.getByRole("radio", { name: primeiro }).check();
       await page.getByRole("button", { name: `Quero seguir com ${primeiro}` }).click();
-      // Esperar a revisão antes de confirmar: o painel desabilita os próprios
-      // botões enquanto a etapa muda, e clicar no mesmo instante é o teste
-      // correndo contra o produto (achado da B3-COPY-B2).
-      await expect(page.getByText(`Você escolheu seguir com ${primeiro}.`)).toBeVisible();
+      /**
+       * V-B3-1 · A ESPERA ERA AMBÍGUA, E O TETO ERA SÓ O SINTOMA.
+       *
+       * `Você escolheu seguir com {nome}.` existe em DOIS estados: na revisão
+       * (`connection-choice-panel.tsx:256`) e no painel durável
+       * (`connection-progress-panel.tsx:232`). Esperar por ela depois de
+       * confirmar era esperar por algo **que já estava na tela** — a revisão. O
+       * teste seguia para o `reload()` antes de a Connection existir, e a página
+       * voltava em `choosing`: sem "Sua escolha" e sem "Alterar minha escolha".
+       *
+       * Cada etapa passa a ser reconhecida pelo cabeçalho que só ela tem. A
+       * espera pela revisão continua existindo pelo motivo de sempre: o painel
+       * desabilita os próprios botões enquanto a etapa muda, e clicar no mesmo
+       * instante é o teste correndo contra o produto (achado da B3-COPY-B2).
+       */
+      await expect(
+        page.getByRole("heading", { name: `O que acontece ao seguir com ${primeiro}` }),
+        "a revisão precisa estar montada antes de confirmar",
+      ).toBeVisible({ timeout: 10_000 });
       await page.getByRole("button", { name: `Seguir com ${primeiro}` }).click();
+
+      /**
+       * O marco que autoriza o reload é o FATO, não a tela.
+       *
+       * Ao confirmar, o painel faz `setStep("choosing")` e `router.refresh()`
+       * (`connection-choice-panel.tsx:125`): entre o fim da action e a chegada
+       * do render novo, o que está na tela é a pergunta legada de novo — não o
+       * estado durável. Esperar por UI aqui é esperar por uma troca que só o
+       * SERVIDOR faz, e era a ausência de qualquer espera que deixava o
+       * `reload()` acontecer antes de a Connection existir.
+       *
+       * `connection_records` é o fato que o reload vai ler. Esperar por ele é
+       * determinístico e não depende de nenhuma transição do cliente.
+       */
+      await expect
+        .poll(
+          async () => {
+            const { data } = await service
+              .from("connection_records")
+              .select("id")
+              .eq("case_id", caso.id);
+            return (data ?? []).length;
+          },
+          {
+            timeout: 15_000,
+            message: "a Connection precisa existir antes de recarregar",
+          },
+        )
+        .toBe(1);
 
       // A correção se prova onde ela importa: depois de recarregar. É o estado
       // DURÁVEL que precisa continuar oferecendo a troca — não um resto de
       // estado React da mesma sessão.
+      await page.reload();
+      await expect(page.getByRole("heading", { name: "Sua escolha" })).toBeVisible({
+        timeout: 10_000,
+      });
       await expect(page.getByText(`Você escolheu seguir com ${primeiro}.`)).toBeVisible({
         timeout: 10_000,
       });
-      await page.reload();
-      await expect(page.getByText(`Você escolheu seguir com ${primeiro}.`)).toBeVisible();
       await expect(
         page.getByRole("button", { name: "Alterar minha escolha" }),
         "a correção legada precisa continuar ofertada",
@@ -764,7 +869,8 @@ test.describe("B3 · fechamento (EV-C2)", () => {
       await page.reload();
 
       // A decisão é compreensível SEM COR: o texto diz tudo.
-      await expect(page.getByText("Sua decisão está registrada.")).toBeVisible();
+      // V-B3-1 · teto explícito, pelo mesmo motivo das outras duas.
+      await expect(page.getByText("Sua decisão está registrada.")).toBeVisible({ timeout: 10_000 });
       await expect(page.getByText(`Você escolheu ${escolhido}.`)).toBeVisible();
 
       // Identidade canônica é TEXTO, não controle — e não há o que marcar.

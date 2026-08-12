@@ -194,6 +194,16 @@ apenas `outcome`, `chosenName` e `decidedAt` — não há identificador. Ampliar
 loader está fora do microcontrato 28. Detalhe e critério de fechamento em
 [28 §11](28_B3COPY_MICROCONTRATO_DA_CONEXAO.md).
 
+**A condição estrutural, medida (V-B3-3):** `professional_profiles.display_name`
+**não tem índice único**. É isso que mantém o risco existindo — e é isso que o
+mantém pequeno: para o filtro ficar ambíguo seriam necessários dois
+profissionais com o **mesmo nome exibido dentro da mesma seleção curada**.
+Nenhuma colisão material foi observada. As duas pontas da comparação derivam do
+**mesmo** `professional_profiles.display_name`, lido de um único mapa em
+[patient-curadoria.ts:119](../../src/modules/curadoria/patient-curadoria.ts:119),
+então elas não divergem por caminho — só por homonímia. **Reclassificar só com
+evidência material de colisão ou associação incorreta.**
+
 ## 16 · Dívida histórica do banco local — **não é resíduo desta entrega**
 
 O Supabase local acumulou, **antes** das correções acima:
@@ -233,5 +243,16 @@ Nada disso afeta produção: é banco local de desenvolvimento.
 
 # B3 FECHADA — O CANÔNICO TRATA DE CONTINUIDADE; O LEGADO PRESERVA A ESCOLHA
 
-Nenhuma migration, nenhuma alteração de RLS, grants ou permissões. Uma prop
-nova na conexão, três arquivos de produção, e o resto é prova.
+**A B3 completa incluiu uma migration**, e ela é o §5 deste documento:
+`20260811120000_b3_decisao_da_paciente_auditada.sql`, entregue em **`bfeb66d`**.
+Ela acrescenta o valor `patient_curadoria_decided` ao enum de auditoria, cria
+`log_patient_curadoria_decided()` e o gatilho que a dispara, e revoga `execute`
+dessa função nova de `public`. É ela que torna a decisão auditável — sem ela o
+§5 não teria o que afirmar. Nenhuma policy de RLS foi criada, alterada ou
+removida, e nenhum grant sobre objeto pré-existente foi tocado.
+
+**As fatias seguintes não voltaram ao banco.** De `603c4f5` a `f70ddb2` — a
+correção do silêncio, a composição da rota (contrato 27), a copy (contrato 28),
+as evidências e as duas correções de cleanup — **nenhuma delas tocou migration,
+RLS, grants ou permissões**. Ali foram uma prop nova na conexão, três arquivos
+de produção, e o resto é prova.
