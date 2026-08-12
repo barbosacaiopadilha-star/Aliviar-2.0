@@ -178,6 +178,57 @@ recepção ao fundo — e essa cena traz o logotipo gravado na parede, que caía
 atrás do título. É o mesmo erro que o Hero já havia corrigido. A seção ficou
 sem fundo figurativo, no linho quente.
 
+## 11.1 · V-B7-1 — FECHADO: o portão de captura
+
+**O Verificador reproduziu o que a §11 só tinha contornado.** Eu movi a
+chamada e resolvi *aquele ponto*; o `capturar()` continuou aceitando qualquer
+tela, e a suíte seguia **6/6 com a evidência mentindo**. Mover a chamada não é
+portão — é lembrar de não errar.
+
+Agora `capturar()` **recusa antes de escrever** se qualquer condição divergir:
+
+| # | Exigência |
+|---|---|
+| 1 | `pathname` exatamente `/` — e a mensagem nomeia a rota encontrada |
+| 2 | marcador exclusivo da landing na página (`Capítulo Zero`) |
+| 3 | o `h1` da landing, conferido por texto |
+| 4 | **ausência** do `h1` do wizard (`Sua história merece ser contada…`) |
+| 5 | viewport igual ao declarado **no nome da evidência** |
+| 6 | estado esperado — para EV-7-004, drawer aberto com `aria-expanded="true"` |
+
+Nenhuma condição sozinha bastaria: `page.url()` não distingue uma landing
+quebrada de uma inteira, e conteúdo sozinho não distingue rota. **A verificação
+roda sempre**, com ou sem `CAPTURA=1` — a escrita é que depende do gate. Assim
+a guarda vale em execução normal, e não só quando alguém pede imagem.
+
+Toda evidência declara viewport, enquadramento e propósito num mapa; nome fora
+do mapa é erro.
+
+## 11.2 · V-B7-5 — evidências com finalidade própria
+
+EV-7-001 e EV-7-002 eram a mesma foto duas vezes, diferindo só no avanço das
+animações. Agora:
+
+| | Enquadramento | Prova |
+|---|---|---|
+| **EV-7-001** | página inteira, **reveals concluídos** | a ordem dos blocos, sem faixas vazias por conteúdo ainda oculto |
+| **EV-7-002** | **recorte do topo** — header + Hero | as duas colunas em desktop, com `Começar` e `Entrar` |
+
+A ordem dos blocos é provada **no DOM** antes da foto (posição vertical de cada
+`id`), e as duas colunas por `gridTemplateColumns`. Os reveals são concluídos
+marcando `data-inview` no teste — nunca alterando o produto.
+
+## 11.3 · Provas de perda do portão
+
+| | Mutação | Resultado |
+|---|---|---|
+| **H-B7-1** | capturar depois de navegar a `/sua-historia` | recusado; mensagem nomeia a rota; **PNG intacto** (tamanho e mtime idênticos) |
+| **H-B7-2** | marcador exclusivo neutralizado no oráculo | recusado |
+| **H-B7-3** | evidência de 390px pedida em 1280px | recusado |
+| **H-B7-4** | EV-7-004 com o drawer fechado | recusado; **PNG intacto** |
+
+Nenhuma mutação permaneceu, e nenhuma escreveu arquivo falso.
+
 ## 12 · Regressão
 
 | | |

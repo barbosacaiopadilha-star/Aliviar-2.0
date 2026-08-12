@@ -18,11 +18,191 @@ const CAPTURANDO = Boolean(process.env.CAPTURA);
 
 const ANCORAS = ["quem-somos", "para-quem", "como-funciona", "metodo", "concierge"] as const;
 
+/**
+ * V-B7-1 · O PORTÃO DE CAPTURA.
+ *
+ * O `capturar()` anterior fotografava o que estivesse na tela. Foi assim que
+ * `EV-7-001-landing-completa-1440.png` saiu contendo o **wizard**: a captura
+ * acontecia depois de clicar em `Começar`, e `/sua-historia` também tem um
+ * `h1` — a espera passou na página errada e a suíte ficou **6/6 mesmo com a
+ * evidência mentindo**.
+ *
+ * Mover a chamada resolveu aquele ponto e não resolveu o problema: qualquer
+ * chamada futura repetiria o erro. O que faltava era o portão.
+ *
+ * A verificação roda **sempre**, com ou sem `CAPTURA=1` — assim ela é uma
+ * guarda permanente da suíte, e não um cuidado que só existe quando alguém
+ * lembra de pedir imagem. A escrita, essa sim, só acontece com `CAPTURA=1`.
+ *
+ * Nenhuma condição sozinha basta: `page.url()` não distingue uma landing
+ * quebrada de uma landing inteira, e conteúdo sozinho não distingue rota. Por
+ * isso rota **e** conteúdo exclusivo **e** viewport **e** estado.
+ */
+const H1_DA_LANDING = "Uma decisão de saúde importante.Você não precisa tomá-la sozinho.";
+const MARCADOR_EXCLUSIVO = "Capítulo Zero";
+
+type Enquadramento = "pagina-inteira" | "hero";
+
+type EspecificacaoDeEvidencia = {
+  viewport: { width: number; height: number };
+  enquadramento: Enquadramento;
+  /** Quando presente, o drawer precisa estar aberto no momento da foto. */
+  drawerAberto?: true;
+  proposito: string;
+};
+
+/**
+ * V-B7-5 · cada evidência tem finalidade PRÓPRIA e falseável.
+ *
+ * EV-7-001 e EV-7-002 eram a mesma foto duas vezes, diferindo só no quanto as
+ * animações tinham avançado. Agora uma é a página inteira com os reveals
+ * concluídos (prova a ordem dos blocos), e a outra é só a região do Hero
+ * (prova as duas colunas e os dois CTAs). Enquadramentos diferentes, provas
+ * diferentes.
+ */
+const EVIDENCIAS: Record<string, EspecificacaoDeEvidencia> = {
+  "EV-7-001-landing-completa-1440": {
+    viewport: { width: 1440, height: 900 },
+    enquadramento: "pagina-inteira",
+    proposito: "a página inteira, com os blocos na ordem e nenhuma faixa vazia por reveal pendente",
+  },
+  "EV-7-002-hero-duas-colunas-1440": {
+    viewport: { width: 1440, height: 900 },
+    enquadramento: "hero",
+    proposito: "o Hero em duas colunas, com o header e os CTAs Começar e Entrar",
+  },
+  "EV-7-003-como-funciona-vertical-390": {
+    viewport: { width: 390, height: 844 },
+    enquadramento: "pagina-inteira",
+    proposito: "as cinco etapas verticais em mobile",
+  },
+  "EV-7-004-drawer-aberto-390": {
+    viewport: { width: 390, height: 844 },
+    enquadramento: "pagina-inteira",
+    drawerAberto: true,
+    proposito: "o drawer aberto, com o CTA Começar visível na barra",
+  },
+  "EV-7-005-nada-quebra-320": {
+    viewport: { width: 320, height: 568 },
+    enquadramento: "pagina-inteira",
+    proposito: "nada quebra na menor largura suportada",
+  },
+};
+
 async function capturar(page: Page, nome: string) {
+  const spec = EVIDENCIAS[nome];
+  if (!spec) {
+    throw new Error(
+      `evidência desconhecida: "${nome}". Toda captura declara viewport, ` +
+        `enquadramento e propósito em EVIDENCIAS — nome novo é ato deliberado.`,
+    );
+  }
+
+  // 1 · A ROTA. `/sua-historia` é o vizinho perigoso: foi ele que virou
+  // "landing completa" na primeira tentativa.
+  const url = new URL(page.url());
+  if (url.pathname !== "/") {
+    throw new Error(
+      `${nome}: a captura exige a landing pública em "/", e a página está em ` +
+        `"${url.pathname}". Nenhum arquivo foi escrito.`,
+    );
+  }
+
+  // 2 · O CONTEÚDO EXCLUSIVO. Rota sozinha não basta — uma landing quebrada
+  // também responde em "/".
+  const conferencia = await page.evaluate(
+    ({ h1Esperado, marcador }) => {
+      const h1s = [...document.querySelectorAll("h1")].map((h) =>
+        (h.textContent ?? "").replace(/\s+/g, " ").trim(),
+      );
+      return {
+        h1s,
+        temMarcador: (document.body.textContent ?? "").includes(marcador),
+        h1Bate: h1s.some(
+          (t) => t.replace(/\s+/g, "") === h1Esperado.replace(/\s+/g, ""),
+        ),
+        largura: window.innerWidth,
+        altura: window.innerHeight,
+        drawer: Boolean(document.querySelector("#landing-drawer")),
+        expandido:
+          document.querySelector('[aria-controls="landing-drawer"]')?.getAttribute("aria-expanded") ??
+          null,
+      };
+    },
+    { h1Esperado: H1_DA_LANDING, marcador: MARCADOR_EXCLUSIVO },
+  );
+
+  if (!conferencia.temMarcador) {
+    throw new Error(
+      `${nome}: o marcador exclusivo da landing ("${MARCADOR_EXCLUSIVO}") não está na página. ` +
+        `Nenhum arquivo foi escrito.`,
+    );
+  }
+  if (!conferencia.h1Bate) {
+    throw new Error(
+      `${nome}: o h1 da landing não confere. Encontrados: ${JSON.stringify(conferencia.h1s)}. ` +
+        `Nenhum arquivo foi escrito.`,
+    );
+  }
+  // O h1 do wizard é o sinal exato do defeito reproduzido pelo Verificador.
+  const h1DoWizard = conferencia.h1s.find((t) => t.startsWith("Sua história merece ser contada"));
+  if (h1DoWizard) {
+    throw new Error(`${nome}: isto é o wizard, não a landing ("${h1DoWizard}").`);
+  }
+
+  // 3 · O VIEWPORT precisa corresponder ao NOME. "…-390" fotografado em 1440
+  // é evidência que descreve outra coisa.
+  if (conferencia.largura !== spec.viewport.width) {
+    throw new Error(
+      `${nome}: declara viewport de ${spec.viewport.width}px e a página está em ` +
+        `${conferencia.largura}px. Nenhum arquivo foi escrito.`,
+    );
+  }
+
+  // 4 · O ESTADO, quando a evidência é de um estado.
+  if (spec.drawerAberto && (!conferencia.drawer || conferencia.expandido !== "true")) {
+    throw new Error(
+      `${nome}: exige o drawer ABERTO (presente=${conferencia.drawer}, ` +
+        `aria-expanded=${conferencia.expandido}). Nenhum arquivo foi escrito.`,
+    );
+  }
+
+  console.log(`[GATE] ${nome} · ${url.pathname} · ${conferencia.largura}px · ${spec.proposito}`);
   if (!CAPTURANDO) return;
+
   mkdirSync(DESTINO, { recursive: true });
-  await page.screenshot({ path: path.join(DESTINO, `${nome}.png`), fullPage: true });
+  const destino = path.join(DESTINO, `${nome}.png`);
+
+  if (spec.enquadramento === "hero") {
+    // Só a região do Hero, do topo da página até o fim da faixa — inclui o
+    // header, e com ele os dois CTAs. Recorte próprio: reaproveitar a foto de
+    // página inteira faria duas evidências dizerem a mesma coisa (V-B7-5).
+    const caixa = await page.locator("section.landing-hero-immersive").boundingBox();
+    if (!caixa) throw new Error(`${nome}: o Hero não foi encontrado para o recorte.`);
+    await page.screenshot({
+      path: destino,
+      clip: { x: 0, y: 0, width: spec.viewport.width, height: Math.ceil(caixa.y + caixa.height) },
+    });
+  } else {
+    await page.screenshot({ path: destino, fullPage: true });
+  }
   console.log(`capturado: ${nome}`);
+}
+
+/**
+ * Conclui os reveals antes da foto de página inteira.
+ *
+ * `RevealGroup` só marca `data-inview="true"` no que passou pelo
+ * IntersectionObserver. Numa captura `fullPage`, o que nunca entrou na
+ * viewport sai transparente — e a evidência vira faixas vazias que parecem
+ * seções faltando. Manipulação de DOM no teste, nunca no produto.
+ */
+async function concluirReveals(page: Page) {
+  await page.evaluate(() => {
+    for (const el of document.querySelectorAll(".landing-reveal")) {
+      el.setAttribute("data-inview", "true");
+    }
+  });
 }
 
 /** Mede a página inteira — nunca por classe CSS. */
@@ -89,10 +269,14 @@ test.describe("Bloco 7 · a Landing pública", () => {
         for (let i = 1; i < topos.length; i += 1) {
           expect(topos[i]!, "as etapas ficaram lado a lado em 390px").toBeGreaterThan(topos[i - 1]!);
         }
+        await concluirReveals(page);
         await capturar(page, "EV-7-003-como-funciona-vertical-390");
       }
 
-      if (largura === 320) await capturar(page, "EV-7-005-nada-quebra-320");
+      if (largura === 320) {
+        await concluirReveals(page);
+        await capturar(page, "EV-7-005-nada-quebra-320");
+      }
     }
   });
 
@@ -124,12 +308,36 @@ test.describe("Bloco 7 · a Landing pública", () => {
     const caixa = (await comecar.boundingBox())!;
     expect(Math.round(caixa.height), "alvo mínimo de 44px").toBeGreaterThanOrEqual(44);
 
-    // As capturas saem AQUI, com a Landing na tela. Fotografá-las depois do
-    // clique produziu a página do wizard: `/sua-historia` também tem um `h1`,
-    // então a espera passou na página errada e a evidência mentiu.
+    // As capturas saem AQUI, com a Landing na tela — e agora o portão de
+    // `capturar()` recusa qualquer outra rota, então a ordem deixou de ser o
+    // único cuidado.
     await page.evaluate(() => window.scrollTo(0, 0));
-    await capturar(page, "EV-7-001-landing-completa-1440");
+
+    // EV-7-002 · só o Hero, ANTES de concluir os reveals: o recorte é do topo
+    // da página, que já está visível, e os dois CTAs vivem no header.
+    await expect(page.getByRole("link", { name: "Começar", exact: true }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "Entrar" }).first()).toBeVisible();
+    const colunas = await page.evaluate(
+      () =>
+        getComputedStyle(document.querySelector(".landing-hero-grid")!).gridTemplateColumns.split(
+          " ",
+        ).length,
+    );
+    expect(colunas, "o Hero precisa estar em DUAS colunas em desktop").toBe(2);
     await capturar(page, "EV-7-002-hero-duas-colunas-1440");
+
+    // EV-7-001 · a página inteira, com os reveals concluídos e a ordem dos
+    // blocos provada no DOM antes da foto.
+    await concluirReveals(page);
+    const ordemNoDom = await page.evaluate(() =>
+      ["problema", "metodo", "para-quem", "concierge", "como-funciona", "quem-somos"].map((id) =>
+        Math.round(document.querySelector(`#${id}`)!.getBoundingClientRect().top + window.scrollY),
+      ),
+    );
+    for (let i = 1; i < ordemNoDom.length; i += 1) {
+      expect(ordemNoDom[i]!, "a ordem dos blocos mudou").toBeGreaterThan(ordemNoDom[i - 1]!);
+    }
+    await capturar(page, "EV-7-001-landing-completa-1440");
 
     // E só então: a rota de destino existe de verdade.
     await comecar.click();
