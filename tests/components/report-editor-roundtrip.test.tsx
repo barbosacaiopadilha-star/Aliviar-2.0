@@ -18,6 +18,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ReportEditor, type ReportOptionDraft } from "@/components/curadoria/report-editor";
+import { MesaEstadoProvider } from "@/components/curadoria/mesa/mesa-estado";
 import { MesaWorkspace } from "@/components/curadoria/mesa-workspace";
 
 const {
@@ -27,6 +28,8 @@ const {
   saveReportActionMock: vi.fn(),
   saveSelectionActionMock: vi.fn(),
 }));
+
+const CASE_ID = "00000000-0000-0000-0000-0000000000c2";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
@@ -279,20 +282,25 @@ describe("FRENTE D3 — a Mesa fala o mesmo contrato ao encerrar", () => {
     saveReportActionMock.mockResolvedValue({ success: true });
 
     render(
-      <MesaWorkspace
-        candidatos={IDS.map((id, i) => candidato(id, `Profissional ${i + 1}`))}
-        excluidos={[]}
-        curatorName="Dr. Curador"
-        patientFirstName="Maria"
-        priorityProfileId="00000000-0000-0000-0000-0000000000b1"
+      <MesaEstadoProvider
+        caseId={CASE_ID}
         persisted={{
           selectedIds: [...IDS],
           pareceres: IDS.map(parecer),
           compositionRationale: "Juntas, cobrem o que ela pediu de formas diferentes.",
           closed: false,
         }}
+      >
+      <MesaWorkspace
+        caseId={CASE_ID}
+        candidatos={IDS.map((id, i) => candidato(id, `Profissional ${i + 1}`))}
+        excluidos={[]}
+        curatorName="Dr. Curador"
+        patientFirstName="Maria"
+        priorityProfileId="00000000-0000-0000-0000-0000000000b1"
         reportHref="/relatorio"
-      />,
+      />
+      </MesaEstadoProvider>,
     );
 
     const user = userEvent.setup();

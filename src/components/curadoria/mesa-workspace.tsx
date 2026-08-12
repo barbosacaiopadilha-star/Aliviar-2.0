@@ -25,20 +25,18 @@
  * ou desabilitar o encerramento sem dizer ao lado exatamente o que falta.
  */
 
-import { useMemo, useReducer, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { ComparacaoPremium } from "@/components/curadoria/mesa/comparacao-premium";
+import { useMesaEstado } from "@/components/curadoria/mesa/mesa-estado";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { cn } from "@/components/ui/cn";
 import {
   PARECER_PROMPTS,
-  emptyParecer,
-  logEntry,
   validateMesaClosure,
-  type MesaLogEntry,
   type ParecerDraft,
 } from "@/modules/curadoria/mesa";
 import { saveReportAction, saveSelectionAction } from "@/modules/curadoria/actions";
@@ -47,6 +45,8 @@ import type { SelecaoCandidato, SelecaoExcluido } from "@/modules/curadoria/mesa
 
 type MesaWorkspaceProps = {
   /** Os elegíveis da Mesa, com a leitura do Motor — na ordem da Rede. */
+  /** Identidade do estado: rascunho de um Caso nunca atravessa para outro. */
+  caseId: string;
   candidatos: SelecaoCandidato[];
   /** Quem não participa, com o motivo da própria classificação da Mesa. */
   excluidos: SelecaoExcluido[];
@@ -54,200 +54,34 @@ type MesaWorkspaceProps = {
   patientFirstName: string;
   /** Onde a seleção e o parecer são gravados. */
   priorityProfileId: string;
-  /**
-   * O trabalho já persistido, para a Mesa reabrir onde parou.
-   *
-   * Antes, todo o estado da Mesa vivia só no reducer: fechar a aba jogava fora
-   * três pareceres escritos. Trabalho perdido em silêncio é a pior falha
-   * possível numa tela onde se escreve por vinte minutos.
-   */
-  persisted?: {
-    selectedIds: string[];
-    pareceres: ParecerDraft[];
-    compositionRationale: string;
-    /** Já gravado no banco — a Mesa abre encerrada, mas reabrível. */
-    closed: boolean;
-  };
+  // D-6 · `persisted` saiu daqui: quem inicializa o estado é
+  // `MesaEstadoProvider`, acima do Shell. Manter a prop faria o workspace
+  // ACEITAR um valor que ignora — o tipo de armadilha que esta base já pagou.
   /** Depois de entregue ao paciente, a seleção não muda mais. */
   locked?: boolean;
   /** A etapa seguinte — o Relatório deste caso. */
   reportHref: string;
 };
 
-/**
- * Estado da Mesa em um único átomo, com reducer puro.
- *
- * Por que reducer e não vários `useState`: a Memória precisa ser escrita na
- * mesma transição que a mudança que ela registra. Com setters separados, três
- * seleções no mesmo tick liam o mesmo valor de `selectedIds` e só a última
- * sobrevivia — e registrar a Memória de dentro de um updater duplicava a
- * entrada. Um reducer puro resolve os dois: correto sob batching, e sem efeito
- * colateral dentro de função de atualização.
- */
-type MesaState = {
-  comparisonIds: string[];
-  selectedIds: string[];
-  pareceres: ParecerDraft[];
-  compositionRationale: string;
-  log: MesaLogEntry[];
-  closed: boolean;
-};
-
-type MesaAction =
-  | { type: "TOGGLE_COMPARISON"; id: string; name: string; actor: string }
-  | { type: "TOGGLE_SELECTION"; id: string; name: string; actor: string }
-  | { type: "UPDATE_PARECER"; id: string; field: keyof Omit<ParecerDraft, "professionalId">; value: string }
-  | { type: "SET_COMPOSITION"; value: string }
-  | { type: "RECORD_JUSTIFICATION"; description: string; actor: string }
-  | { type: "MOVE_SELECTION"; id: string; direction: -1 | 1; name: string; actor: string }
-  | { type: "CLOSE"; actor: string }
-  | { type: "REOPEN" };
-
-const INITIAL_STATE: MesaState = {
-  comparisonIds: [],
-  selectedIds: [],
-  pareceres: [],
-  compositionRationale: "",
-  log: [],
-  closed: false,
-};
-
-function append(log: MesaLogEntry[], entry: MesaLogEntry): MesaLogEntry[] {
-  const last = log[0];
-  if (last?.kind === entry.kind && last.description === entry.description) return log;
-  return [entry, ...log];
-}
-
-function mesaReducer(state: MesaState, action: MesaAction): MesaState {
-  switch (action.type) {
-    case "TOGGLE_COMPARISON": {
-      const has = state.comparisonIds.includes(action.id);
-      return {
-        ...state,
-        comparisonIds: has
-          ? state.comparisonIds.filter((entry) => entry !== action.id)
-          : [...state.comparisonIds, action.id],
-        log: append(
-          state.log,
-          logEntry(
-            has ? "COMPARACAO_REMOVIDA" : "COMPARACAO_ADICIONADA",
-            `${action.name} ${has ? "saiu da" : "entrou na"} comparação.`,
-            action.actor,
-          ),
-        ),
-      };
-    }
-
-    case "TOGGLE_SELECTION": {
-      const has = state.selectedIds.includes(action.id);
-      // A Curadoria apresenta sempre exatamente três — nunca uma quarta.
-      if (!has && state.selectedIds.length >= 3) return state;
-
-      return {
-        ...state,
-        selectedIds: has
-          ? state.selectedIds.filter((entry) => entry !== action.id)
-          : [...state.selectedIds, action.id],
-        pareceres: has
-          ? state.pareceres.filter((draft) => draft.professionalId !== action.id)
-          : state.pareceres.some((draft) => draft.professionalId === action.id)
-            ? state.pareceres
-            : [...state.pareceres, emptyParecer(action.id)],
-        log: append(
-          state.log,
-          logEntry(
-            has ? "OPCAO_REMOVIDA" : "OPCAO_SELECIONADA",
-            `${action.name} ${has ? "saiu da" : "entrou na"} seleção.`,
-            action.actor,
-          ),
-        ),
-      };
-    }
-
-    case "UPDATE_PARECER":
-      return {
-        ...state,
-        pareceres: state.pareceres.map((draft) =>
-          draft.professionalId === action.id ? { ...draft, [action.field]: action.value } : draft,
-        ),
-      };
-
-    case "SET_COMPOSITION":
-      return { ...state, compositionRationale: action.value };
-
-    case "RECORD_JUSTIFICATION":
-      return {
-        ...state,
-        log: append(
-          state.log,
-          logEntry("JUSTIFICATIVA_REGISTRADA", action.description, action.actor),
-        ),
-      };
-
-    case "MOVE_SELECTION": {
-      // A ordem das três é ORDEM DE APRESENTAÇÃO, nunca colocação (Ontologia
-      // §3.13). Ela existe porque a conversa tem uma sequência que faz sentido
-      // — começar pelo caminho mais próximo do que ela pediu, por exemplo —
-      // e essa sequência é julgamento do Curador, não de resultado nenhum.
-      const from = state.selectedIds.indexOf(action.id);
-      const to = from + action.direction;
-      if (from < 0 || to < 0 || to >= state.selectedIds.length) return state;
-
-      const reordered = [...state.selectedIds];
-      [reordered[from], reordered[to]] = [reordered[to]!, reordered[from]!];
-
-      return {
-        ...state,
-        selectedIds: reordered,
-        log: append(
-          state.log,
-          logEntry(
-            "OPCAO_SELECIONADA",
-            `${action.name} passou a ser apresentada em ${to + 1}º na ordem da conversa.`,
-            action.actor,
-          ),
-        ),
-      };
-    }
-
-    case "REOPEN":
-      // Reabrir não apaga o que foi escrito — só devolve a edição.
-      return { ...state, closed: false };
-
-    case "CLOSE":
-      return {
-        ...state,
-        closed: true,
-        log: append(
-          state.log,
-          logEntry(
-            "SELECAO_FECHADA",
-            "Curadoria Técnica encerrada com três opções e pareceres completos.",
-            action.actor,
-          ),
-        ),
-      };
-  }
-}
+// D-6 · o estado da Mesa mudou de lugar: vive em `mesa/mesa-estado.tsx`,
+// ACIMA de `MesaShell`. Aqui ele morria ao trocar de etapa, porque este
+// componente mora dentro de `conteudo[etapaAtual]` e desmonta junto.
 
 export function MesaWorkspace({
+  caseId,
   candidatos,
   excluidos,
   curatorName,
   patientFirstName,
   priorityProfileId,
-  persisted,
   locked = false,
   reportHref,
 }: MesaWorkspaceProps) {
   const router = useRouter();
-  const [state, dispatch] = useReducer(mesaReducer, {
-    ...INITIAL_STATE,
-    selectedIds: persisted?.selectedIds ?? [],
-    pareceres: persisted?.pareceres ?? [],
-    compositionRationale: persisted?.compositionRationale ?? "",
-    closed: persisted?.closed ?? false,
-  });
+  // O estado vem de cima. `persisted` continua sendo a inicialização
+  // legítima do servidor — ela só passou a ser aplicada no provider, uma vez,
+  // em vez de a cada montagem deste componente.
+  const { state, dispatch } = useMesaEstado(caseId);
   const { comparisonIds, selectedIds, pareceres, compositionRationale, log, closed } = state;
 
   const [erro, setErro] = useState<string | null>(null);

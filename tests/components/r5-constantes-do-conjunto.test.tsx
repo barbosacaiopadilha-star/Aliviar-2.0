@@ -2,6 +2,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { MesaEstadoProvider } from "@/components/curadoria/mesa/mesa-estado";
 import { MesaWorkspace } from "@/components/curadoria/mesa-workspace";
 
 /**
@@ -42,18 +43,24 @@ function candidato(n: number) {
   };
 }
 
+const CASE_ID = "00000000-0000-0000-0000-0000000000c1";
+
 function montar(quantos: number) {
   const candidatos = Array.from({ length: quantos }, (_, i) => candidato(i + 1));
+  // D-6 · o estado vive ACIMA do Shell. Em teste isolado o provider é o
+  // ancestral estável equivalente.
   render(
+    <MesaEstadoProvider caseId={CASE_ID}>
     <MesaWorkspace
+      caseId={CASE_ID}
       candidatos={candidatos}
       excluidos={[]}
       curatorName="Dr. Curador"
       patientFirstName="Maria"
       priorityProfileId="00000000-0000-0000-0000-0000000000b1"
-      persisted={{ selectedIds: [], pareceres: [], compositionRationale: "", closed: false }}
       reportHref="/relatorio"
-    />,
+    />
+    </MesaEstadoProvider>,
   );
   return candidatos;
 }

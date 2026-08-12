@@ -9,6 +9,7 @@ import { MapaPrioridadesPanel } from "@/components/curadoria/mesa/mapa-prioridad
 import { PainelInvestigacao } from "@/components/curadoria/mesa/painel-investigacao";
 import { ComparacaoPremium } from "@/components/curadoria/mesa/comparacao-premium";
 import { HipoteseEmFoco } from "@/components/curadoria/mesa/hipotese-em-foco";
+import { MesaEstadoProvider } from "@/components/curadoria/mesa/mesa-estado";
 import { MesaShell } from "@/components/curadoria/mesa/mesa-shell";
 import { MesaTimelineDupla, type CaseTimelineMark } from "@/components/curadoria/mesa/mesa-timeline";
 import {
@@ -493,12 +494,12 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
         {record.priorityProfileId ? (
           view.comparison.length > 0 ? (
             <MesaWorkspace
+              caseId={record.caseId}
               candidatos={candidatosDaSelecao(view.comparison, nomeDe)}
               excluidos={foraDaSelecao(view.professionals)}
               curatorName={record.curatorName}
               patientFirstName={record.patientFirstName}
               priorityProfileId={record.priorityProfileId}
-              persisted={persisted}
               locked={entregue}
               reportHref={journeyStepHref(record.caseId, "RELATORIO")}
             />
@@ -550,6 +551,11 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
         </div>
       ) : null}
 
+      {/* D-6 · o provider fica ACIMA do Shell de propósito. O Shell monta
+          apenas `conteudo[etapaAtual]`, então tudo que viver lá dentro
+          desmonta ao trocar de etapa — foi assim que o rascunho da Mesa
+          evaporava. Aqui, trocar de etapa não alcança o estado. */}
+      <MesaEstadoProvider caseId={record.caseId} persisted={persisted}>
       <MesaShell
         patientName={record.patientName}
         areaRequirement={view.areaRequirement}
@@ -636,6 +642,7 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
           <MesaTimelineDupla paciente={linhaPaciente} investigacao={linhaInvestigacao} />
         }
       />
+      </MesaEstadoProvider>
 
       <p className="sr-only">
         Etapa da jornada do Case: {journey.steps.find((step) => step.status !== "CONCLUIDA")?.label ?? "concluída"}.
