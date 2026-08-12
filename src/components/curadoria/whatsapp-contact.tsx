@@ -27,12 +27,33 @@ import { cn } from "@/components/ui/cn";
 export const ALIVIAR_WHATSAPP = "5511979037133";
 export const ALIVIAR_WHATSAPP_DISPLAY = "(11) 97903-7133";
 
-export type WhatsappTopic = "duvida" | "documento" | "curador";
+export type WhatsappTopic = "duvida" | "documento" | "curador" | "jornada" | "curadoria";
 
+/**
+ * As mensagens são CONSTANTES, sem interpolação e sem exceção.
+ *
+ * Nenhuma delas carrega diagnóstico, condição, sintoma, nome de especialista,
+ * instituição, identificador de Caso, de seleção ou de perfil, nem o nome da
+ * paciente. A mensagem diz o ASSUNTO, nunca o conteúdo (contrato 30 §7) — e a
+ * garantia é de tipo: não há parâmetro de texto livre em `whatsappHref`.
+ *
+ * `duvida` está CONGELADA: já está no ar e aparece em EV-B3-003/004/005.
+ */
 const TOPICS: Record<WhatsappTopic, { label: string; message: string }> = {
   duvida: {
     label: "Dúvida sobre minha Curadoria",
     message: "Oi! Tenho uma dúvida sobre a minha Curadoria.",
+  },
+  // Track C · os dois tópicos que faltavam para a paciente ter porta ANTES de
+  // decidir. O rótulo aqui só serve a `WhatsappContact`; `ConciergeLink` usa
+  // sempre "Falar com a Aliviar", e é ele quem aparece nas sete superfícies.
+  jornada: {
+    label: "Ajuda com minha jornada",
+    message: "Oi! Gostaria de ajuda com a minha jornada na Aliviar.",
+  },
+  curadoria: {
+    label: "Conversar sobre minha Curadoria",
+    message: "Oi! Gostaria de conversar sobre a minha Curadoria.",
   },
   documento: {
     label: "Enviar um documento",
