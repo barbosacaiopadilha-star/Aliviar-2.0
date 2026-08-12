@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   HEADER_COMPACT_SCROLL_THRESHOLD,
@@ -16,8 +17,29 @@ type PublicHeaderProps = {
   portalCta?: AuthenticatedPortalCta | null;
 };
 
+/**
+ * BLOCO 7 · a navegação da Landing.
+ *
+ * Antes o header tinha logo e `Entrar`, e mais nada: quem chegava pela
+ * primeira vez só conseguia ler a página rolando-a inteira, e o único convite
+ * era `Entrar` — que fala com quem já é de casa.
+ *
+ * Cada `href` aponta para um `id` que existe na página. Nenhum link é
+ * decorativo, e T-7-2 confere a correspondência dos dois lados.
+ */
+const NAV_LINKS = [
+  { href: "#quem-somos", label: "Quem somos" },
+  { href: "#para-quem", label: "Para quem é" },
+  { href: "#como-funciona", label: "Como funciona" },
+  { href: "#metodo", label: "Nossa curadoria" },
+  { href: "#concierge", label: "Concierge" },
+] as const;
+
 export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
   const [scrolled, setScrolled] = useState(false);
+  const [drawerAberto, setDrawerAberto] = useState(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const botaoRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const onScroll = () =>
@@ -26,6 +48,46 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const fechar = useCallback(() => {
+    setDrawerAberto(false);
+    botaoRef.current?.focus();
+  }, []);
+
+  /**
+   * `Esc` fecha e o foco fica PRESO enquanto aberto. Sem isso, quem navega por
+   * teclado sai do drawer para trás dele e não encontra o caminho de volta —
+   * um menu que abre e some do alcance é pior do que menu nenhum.
+   */
+  useEffect(() => {
+    if (!drawerAberto) return;
+
+    const aoTeclar = (evento: KeyboardEvent) => {
+      if (evento.key === "Escape") {
+        evento.preventDefault();
+        fechar();
+        return;
+      }
+      if (evento.key !== "Tab") return;
+
+      const focaveis = drawerRef.current?.querySelectorAll<HTMLElement>("a[href], button");
+      if (!focaveis || focaveis.length === 0) return;
+      const primeiro = focaveis[0]!;
+      const ultimo = focaveis[focaveis.length - 1]!;
+
+      if (evento.shiftKey && document.activeElement === primeiro) {
+        evento.preventDefault();
+        ultimo.focus();
+      } else if (!evento.shiftKey && document.activeElement === ultimo) {
+        evento.preventDefault();
+        primeiro.focus();
+      }
+    };
+
+    document.addEventListener("keydown", aoTeclar);
+    drawerRef.current?.querySelector<HTMLElement>("a[href]")?.focus();
+    return () => document.removeEventListener("keydown", aoTeclar);
+  }, [drawerAberto, fechar]);
 
   return (
     <header
@@ -65,16 +127,84 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
           </span>
         </Link>
 
-        {portalCta ? (
-          <LinkButton href={portalCta.href} variant="secondary" className="min-h-10 px-5 py-2 text-sm">
-            {portalCta.label}
+        <nav aria-label="Seções da página" className="landing-nav">
+          {NAV_LINKS.map((link) => (
+            <a key={link.href} href={link.href} className="landing-nav-link">
+              {link.label}
+            </a>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-2 lg:gap-3">
+          {/* `Começar` é a porta pública, e `Entrar` continua sendo o
+              reconhecimento de quem já mora aqui. São gestos diferentes e
+              nunca se substituem — foi por confundir os dois que a Landing
+              ficou sem convite para quem chega. */}
+          <LinkButton href="/sua-historia" variant="primary" className="min-h-11 px-5 py-2 text-sm">
+            Começar
           </LinkButton>
-        ) : (
-          <LinkButton href="/login" variant="secondary" className="min-h-10 px-5 py-2 text-sm">
-            Entrar
-          </LinkButton>
-        )}
+
+          {portalCta ? (
+            <LinkButton
+              href={portalCta.href}
+              variant="secondary"
+              className="hidden min-h-11 px-5 py-2 text-sm sm:inline-flex"
+            >
+              {portalCta.label}
+            </LinkButton>
+          ) : (
+            <LinkButton
+              href="/login"
+              variant="secondary"
+              className="hidden min-h-11 px-5 py-2 text-sm sm:inline-flex"
+            >
+              Entrar
+            </LinkButton>
+          )}
+
+          <button
+            ref={botaoRef}
+            type="button"
+            aria-expanded={drawerAberto}
+            aria-controls="landing-drawer"
+            onClick={() => setDrawerAberto((aberto) => !aberto)}
+            className="landing-drawer-botao"
+          >
+            <span className="sr-only">
+              {drawerAberto ? "Fechar menu de seções" : "Abrir menu de seções"}
+            </span>
+            <span aria-hidden="true">{drawerAberto ? "✕" : "☰"}</span>
+          </button>
+        </div>
       </div>
+
+      {/* Mobile: os links vivem no drawer, e o CTA `Começar` NUNCA some — ele
+          fica na barra, ao lado do botão. */}
+      {drawerAberto ? (
+        <div ref={drawerRef} id="landing-drawer" className="landing-drawer">
+          <nav aria-label="Seções da página" className="landing-drawer-nav">
+            {NAV_LINKS.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="landing-drawer-link"
+                onClick={() => setDrawerAberto(false)}
+              >
+                {link.label}
+              </a>
+            ))}
+            {portalCta ? (
+              <a href={portalCta.href} className="landing-drawer-link" onClick={() => setDrawerAberto(false)}>
+                {portalCta.label}
+              </a>
+            ) : (
+              <a href="/login" className="landing-drawer-link" onClick={() => setDrawerAberto(false)}>
+                Entrar
+              </a>
+            )}
+          </nav>
+        </div>
+      ) : null}
     </header>
   );
 }

@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 
 import {
+  ConciergeSection,
   ConviteSection,
   MetodoSection,
+  NossoMetodoSection,
   PrioridadesSection,
   ProblemaSection,
   QuemSomosSection,
@@ -26,12 +28,23 @@ export default function HomePage() {
           3 Existe um caminho (Método denso) · 4 Você não fará isso sozinho
           (entrega → sala verde → dúvidas → convite). Os dois únicos CTAs
           reais: a porta do Hero e o convite final. */}
+      {/* BLOCO 7 / D-1 · a ordem do contrato 34 §6. Os quatro blocos que a
+          referência-mestra não mostra — Problema, Respiro, FAQ e Convite —
+          PERMANECEM: a D-1 foi resolvida como "a referência é a espinha
+          visual", e a prova não é um parecer, é o que a Track D fez ao
+          blindar `landing/editorial/**` por escrito enquanto apagava 23
+          arquivos de landing.
+
+          `ConciergeSection` vem DEPOIS de `PrioridadesSection` de propósito:
+          o Concierge entra quando já existe escolha a acompanhar (§4.1). */}
       <HeroEditorial />
       <RevealGroup>
         <ProblemaSection />
         <RespiroSection />
-        <MetodoSection />
+        <NossoMetodoSection />
         <PrioridadesSection />
+        <ConciergeSection />
+        <MetodoSection />
         <QuemSomosSection />
         <FaqCompactSection />
         <ConviteSection />

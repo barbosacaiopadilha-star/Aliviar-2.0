@@ -35,42 +35,59 @@ export function HeroEditorial({ videoSrc }: HeroEditorialProps = {}) {
           o master lhe deu. */}
       <ImmersiveBackdrop scene="transicao" variant="landing-hero" imageOpacity={62} priority />
 
+      {/* BLOCO 7 · duas colunas a partir de 1024px. Abaixo disso empilha
+          título → corpo → vídeo → CTA, com o vídeo em largura total: em
+          mobile o vídeo antes do gesto é o que dá contexto ao gesto. */}
       <div className="relative z-10 mx-auto w-full max-w-content px-5 lg:px-10">
-        <div className="landing-fade-in mx-auto max-w-3xl text-center">
-          <p className="landing-eyebrow">Curadoria médica independente</p>
-          <h1 className="landing-hero-title text-4xl sm:text-[2.75rem] lg:text-[3.5rem]">
-            Uma decisão de saúde importante.
-            <br />
-            Você não precisa tomá-la sozinho.
-          </h1>
-          {/* Sem "o médico certo para você": prometer o certo é prometer
-              resultado, e a Fachada nunca promete mais do que o interior
-              entrega (L14; Linguagem §6 — família de "ideal"). A decisão é
-              dela; a companhia é nossa. */}
-          <p className="landing-body mx-auto mt-8 max-w-2xl text-lg text-[var(--color-ink-muted)]">
-            Com você em cada etapa — da sua história até uma decisão que é sua.
-          </p>
-          {/* UMA porta (CRITICA_LANDING_2_2 §5): o primeiro gesto de quem
-              chegou com medo não pode ser descartar uma opção que não era
-              para ela. Quem já mora aqui entra pelo "Entrar" do cabeçalho —
-              reconhecimento mora na moldura, não no palco. A `landing-porta`
-              é o gesto da marca: a soleira dourada que se revela devagar. */}
-          <div className="mt-12 flex justify-center">
-            <LinkButton
-              href="/sua-historia"
-              variant="primary"
-              className="landing-porta w-full sm:w-auto"
-            >
-              Contar minha história
-            </LinkButton>
-          </div>
-        </div>
+        <div className="landing-hero-grid">
+          <div className="landing-fade-in landing-hero-col">
+            {/* A frase que estava aqui — "Curadoria médica independente" — não
+                se perdeu: virou o primeiro diferencial do bloco
+                institucional, onde é verificável em vez de decorativa. */}
+            <p className="landing-eyebrow">Capítulo Zero</p>
+            <h1 className="landing-hero-title text-4xl sm:text-[2.75rem] lg:text-[3.5rem]">
+              Uma decisão de saúde importante.
+              <br />
+              Você não precisa tomá-la sozinho.
+            </h1>
+            {/* Sem "o médico certo para você": prometer o certo é prometer
+                resultado, e a Fachada nunca promete mais do que o interior
+                entrega (L14; Linguagem §6 — família de "ideal"). A decisão é
+                dela; a companhia é nossa. */}
+            <p className="landing-body mt-8 max-w-2xl text-lg text-[var(--color-ink-muted)]">
+              Com você em cada etapa — da sua história até uma decisão que é sua.
+            </p>
 
-        {video.src ? (
-          <div className="landing-approach mx-auto mt-20 max-w-4xl" style={{ animationDelay: "160ms" }}>
-            <HeroVideo src={video.src} posterScene={ALIVIAR_SCENES.recepcao} />
+            {/* A porta continua sendo UMA (CRITICA_LANDING_2_2 §5): o segundo
+                botão não é outra porta, é o mesmo conteúdo que já estava na
+                página — o vídeo — agora alcançável por teclado em vez de só
+                por rolagem. A `landing-porta` é o gesto da marca. */}
+            <div className="landing-hero-ctas mt-12">
+              <LinkButton
+                href="/sua-historia"
+                variant="primary"
+                className="landing-porta w-full sm:w-auto"
+              >
+                Começar minha história
+              </LinkButton>
+              {video.src ? (
+                <a href="#video-institucional" className="landing-hero-cta-secundario">
+                  Assistir ao vídeo
+                </a>
+              ) : null}
+            </div>
           </div>
-        ) : null}
+
+          {video.src ? (
+            <div
+              id="video-institucional"
+              className="landing-approach landing-hero-col landing-hero-video"
+              style={{ animationDelay: "160ms" }}
+            >
+              <HeroVideo src={video.src} posterScene={ALIVIAR_SCENES.recepcao} />
+            </div>
+          ) : null}
+        </div>
       </div>
     </section>
   );

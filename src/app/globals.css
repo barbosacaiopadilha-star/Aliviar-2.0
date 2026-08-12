@@ -406,13 +406,10 @@
     animation: breathe 4s ease-in-out infinite;
   }
 
-  /* Traçado do fio dourado orgânico (GoldenThread) — sempre inteiramente
-     visível (nunca "se desenha" com o scroll — isso seria lido como
-     barra de progresso). A opacidade é a única coisa animada (respiração
-     muito lenta, via GSAP), nunca o comprimento do traço. */
-  .golden-thread-path {
-    opacity: 1;
-  }
+  /* O traçado do GoldenThread saiu no Bloco 7: o componente foi removido com
+     a landing morta na Track D, e a regra ficou órfã. Zero consumidores em
+     `.tsx` conferidos antes da remoção — achado registrado em 33 §11, e este
+     arquivo já seria aberto. */
 
   /* Calor ambiente (ADR-031, Experience Continuity v1.1) — o mesmo brilho
      morno e discreto da PortalExperience, estendido às telas de entrada

@@ -370,42 +370,11 @@
    FAQ — o livro da biblioteca: papel, lombada, virar de página
    ========================================================================== */
 
-.landing-editorial .landing-faq-book {
-  position: relative;
-  border-radius: var(--radius-card);
-  border: 1px solid var(--color-border);
-  background:
-    var(--texture-paper),
-    linear-gradient(180deg, color-mix(in srgb, var(--color-bg-surface) 98%, transparent) 0%, color-mix(in srgb, var(--color-bg-canvas) 95%, transparent) 100%);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--color-bg-surface) 90%, transparent),
-    inset 0 -3px 12px color-mix(in srgb, var(--color-ink) 4%, transparent),
-    var(--shadow-lg);
-  padding: 2.75rem 2.25rem;
-}
-
-@media (min-width: 640px) {
-  .landing-editorial .landing-faq-book {
-    padding: 3.5rem 3.25rem;
-  }
-}
-
-/* Lombada do livro */
-.landing-editorial .landing-faq-book::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 4px;
-  border-radius: var(--radius-card) 0 0 var(--radius-card);
-  background: linear-gradient(
-    180deg,
-    var(--color-brand-gold) 0%,
-    color-mix(in srgb, var(--color-brand-gold) 35%, transparent) 100%
-  );
-  opacity: 0.7;
-}
+/* A moldura de livro do FAQ antigo saiu no Bloco 7: o componente foi
+   removido com a landing morta na Track D, e as regras ficaram órfãs. Zero
+   consumidores em `.tsx` conferidos antes da remoção (achado registrado em
+   33 §11). O FAQ vivo é `editorial/faq-compact.tsx`, e usa as classes
+   abaixo. */
 
 .landing-editorial .landing-faq-item {
   border-bottom: 1px solid var(--color-border);
@@ -553,4 +522,235 @@
   .landing-editorial .landing-lift:hover {
     transform: none;
   }
+}
+
+/* ==========================================================================
+   BLOCO 7 / D-1 — navegação, Hero em duas colunas e os pilares
+
+   Acréscimos, nunca reescrita: o arquivo tinha 556 linhas em produção quando
+   este bloco começou, e o contrato 34 §7 proíbe reescrevê-lo.
+   ========================================================================== */
+
+/* As âncoras precisam parar ABAIXO do header fixo. Sem isto, clicar em
+   "Como funciona" esconde o título da seção atrás da barra — o link parece
+   quebrado sem estar. */
+.landing-section[id],
+.landing-hero-immersive [id] {
+  scroll-margin-top: 5.5rem;
+}
+
+/* --- Navegação do header ------------------------------------------------ */
+
+.landing-nav {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .landing-nav {
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+  }
+}
+
+.landing-nav-link {
+  font-size: 0.875rem;
+  color: var(--color-ink-muted);
+  text-underline-offset: 4px;
+  transition: color var(--duration-fast) var(--ease-natural);
+}
+
+.landing-nav-link:hover {
+  color: var(--color-ink);
+  text-decoration: underline;
+}
+
+.landing-nav-link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-focus);
+  border-radius: 4px;
+}
+
+/* --- Drawer mobile ------------------------------------------------------- */
+
+/* O botão só existe onde a nav não cabe. O CTA `Começar` fica FORA do drawer,
+   na barra: um convite que se esconde atrás de um menu não é convite. */
+.landing-drawer-botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  border-radius: var(--radius-md, 0.5rem);
+  color: var(--color-ink);
+  font-size: 1.125rem;
+}
+
+.landing-drawer-botao:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-focus);
+}
+
+@media (min-width: 1024px) {
+  .landing-drawer-botao {
+    display: none;
+  }
+}
+
+.landing-drawer {
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-canvas);
+}
+
+.landing-drawer-nav {
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  max-width: var(--max-content, 72rem);
+  padding: 0.5rem 1.25rem 1rem;
+}
+
+.landing-drawer-link {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-size: 1rem;
+  color: var(--color-ink);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.landing-drawer-link:last-child {
+  border-bottom: none;
+}
+
+.landing-drawer-link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-focus);
+  border-radius: 4px;
+}
+
+/* --- Hero em duas colunas ------------------------------------------------ */
+
+/* Abaixo de 1024px empilha na ordem que dá contexto ao gesto:
+   título → corpo → vídeo → CTA, com o vídeo em largura total. */
+.landing-hero-grid {
+  display: grid;
+  gap: 3rem;
+}
+
+.landing-hero-video {
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .landing-hero-grid {
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 4rem;
+  }
+}
+
+.landing-hero-ctas {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .landing-hero-ctas {
+    flex-direction: row;
+    align-items: center;
+    gap: 1.5rem;
+  }
+}
+
+/* O segundo CTA é um link de texto: não compete com a porta, e não depende de
+   cor para ser entendido — tem sublinhado no foco e no hover. */
+.landing-hero-cta-secundario {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-ink-muted);
+  text-underline-offset: 4px;
+}
+
+.landing-hero-cta-secundario:hover {
+  color: var(--color-ink);
+  text-decoration: underline;
+}
+
+.landing-hero-cta-secundario:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-focus);
+  border-radius: 4px;
+  text-decoration: underline;
+}
+
+/* --- Pilares (Nosso Método · Concierge) ---------------------------------- */
+
+/* Uma coluna em mobile com divisor horizontal — nunca cartões espremidos.
+   Duas colunas a partir de 768px; os três do Concierge viram três colunas em
+   desktop, e os quatro do Método ficam em 2×2. */
+.landing-pilares {
+  display: grid;
+  gap: 0;
+}
+
+.landing-pilar {
+  padding: 1.75rem 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.landing-pilares > .landing-pilar:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+@media (min-width: 768px) {
+  .landing-pilares {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 3rem;
+  }
+
+  .landing-pilares > .landing-pilar:nth-child(2) {
+    border-top: none;
+    padding-top: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .landing-pilares--tres {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .landing-pilares--tres > .landing-pilar:nth-child(3) {
+    border-top: none;
+    padding-top: 0;
+  }
+}
+
+/* --- Como funciona: as cinco etapas com conector ------------------------- */
+
+/* Em mobile as etapas ficam VERTICAIS com um fio ligando os números — nunca
+   espremidas lado a lado. O fio é decorativo e some para quem pediu menos
+   movimento não porque anima, mas porque é ornamento. */
+.landing-section .landing-etapa-conector {
+  position: relative;
+}
+
+.landing-section .landing-etapa-conector::after {
+  content: "";
+  position: absolute;
+  left: 0.6rem;
+  top: 2.25rem;
+  bottom: -0.5rem;
+  width: 1px;
+  background: color-mix(in srgb, var(--color-brand-gold) 40%, transparent);
+}
+
+.landing-section .landing-etapa-conector:last-child::after {
+  display: none;
 }
