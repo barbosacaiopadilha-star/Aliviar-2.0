@@ -82,7 +82,7 @@ Se sim, **C/D** e missão própria. Se não, o WhatsApp continua sendo o canal.
 |---|---|---|---|
 | **D-3** | **Bloco 1** | **A** | ✅ **decidir primeiro** |
 | **D-1** | Bloco 7 | A | ✅ **RESOLVIDA — espinha visual** ([34 §3.1](34_BLOCO_7_LANDING_D1.md)). A prova é um ato: a Track D apagou 23 arquivos de landing e **blindou `editorial/**` por escrito**, preservando os quatro blocos. Problema, Respiro, FAQ e Convite **ficam** |
-| **D-6** | parte do 11 | C | ✅ verificar antes |
+| **D-6** | parte do 11 | ~~C~~ → **A** | ✅ **RESOLVIDA — não é backend** ([36 §3](36_BLOCOS_11_12_D6_CASOS_REAIS.md)). `curated_selections` já existe e **deve continuar recusando rascunho** (exatamente três · rationale não-vazio · autoria nomeada). A perda vem de `mesa-shell.tsx:199`, que monta só a etapa corrente e **desmonta** o reducer. Correção: elevar o estado acima do que desmonta. ⛔ sem `localStorage` — os rascunhos são juízo clínico |
 | **D-4** | Bloco 10 | C/D | — jurídico |
 | **D-7** | Bloco 13 | varia | — produto |
 | **D-2** | decisão | A/C/D | — regra de negócio |
