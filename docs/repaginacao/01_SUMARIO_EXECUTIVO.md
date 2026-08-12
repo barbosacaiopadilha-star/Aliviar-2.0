@@ -119,3 +119,6 @@ da Curadoria 2.0.
 | 25 | [D-12 — Central de Documentos](25_D12_CENTRAL_DE_DOCUMENTOS.md) | **duas policies**, sem tabela, sem coluna, sem bucket |
 | 26 | [B3-A — decisão, 2º encontro, handoff](26_B3A_DECISAO_SEGUNDO_ENCONTRO_HANDOFF.md) | contrato **suficiente**; a decisão persiste — o defeito é **silêncio** |
 | 27 | [B3-R — superfície alcançável](27_B3R_SUPERFICIE_ALCANCAVEL.md) | o painel canônico é **órfão**; arquitetura **E**, um só arquivo de produção |
+| 28 | [B3-COPY — microcontrato da conexão](28_B3COPY_MICROCONTRATO_DA_CONEXAO.md) | o canônico trata de continuidade; o legado preserva a escolha |
+| 29 | [B3 — fechamento da Track B](29_B3_FECHAMENTO_TRACK_B.md) | **Track B encerrada** — fato, feedback, handoff, auditoria e as duas correções de cleanup |
+| 30 | [**Track C — Falar com a Aliviar**](30_TRACK_C_FALAR_COM_A_ALIVIAR.md) | **próxima Track**; D-3 já respondida pelo código, e a paciente só pede ajuda **depois** de decidir |
