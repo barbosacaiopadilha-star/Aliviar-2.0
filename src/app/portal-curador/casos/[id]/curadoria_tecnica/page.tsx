@@ -65,8 +65,8 @@ import { LeituraRelacionalPanel } from "@/components/curadoria/mesa/leitura-rela
 import { candidatosDaSelecao, foraDaSelecao } from "@/modules/curadoria/mesa-selecao";
 import {
   buildMesaEtapas,
-  mesaProgress,
-  proximaDecisao,
+  estadoDaMesa,
+  etapaConcluida,
   type MesaEtapaId,
 } from "@/modules/curadoria/mesa-etapas";
 import {
@@ -242,7 +242,8 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
     reportEmitted: Boolean(lifecycle?.emittedAt),
   });
 
-  const decisao = proximaDecisao(etapas, view.profileAcknowledged);
+  // C4 · uma derivação: contador e frase do cabeçalho saem daqui, juntos.
+  const estado = estadoDaMesa(etapas, view.profileAcknowledged);
 
   // ------------------------------------------------------------------
   // A leitura da investigação — tudo derivado do que já está na Mesa.
@@ -374,7 +375,7 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
     etapas.map((etapa) => ({
       id: etapa.id,
       label: rotuloDaInvestigacao[etapa.id] ?? etapa.label,
-      done: etapa.status === "PRONTA",
+      done: etapaConcluida(etapa),
     })),
   );
 
@@ -594,8 +595,7 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
         patientName={record.patientName}
         areaRequirement={view.areaRequirement}
         curatorName={record.curatorName}
-        progress={mesaProgress(etapas)}
-        decisao={decisao}
+        estado={estado}
         alerts={phaseAlerts.map((alert) => alert.title)}
         etapas={etapas}
         linha={linha}

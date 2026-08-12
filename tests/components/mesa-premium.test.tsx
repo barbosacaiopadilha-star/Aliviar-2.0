@@ -46,8 +46,7 @@ function montar(facts: MesaFacts = FATOS, alerts: string[] = []) {
       patientName="Maria Andrade"
       areaRequirement="Ortopedia de coluna"
       curatorName="Dra. Ana"
-      progress={mesaProgress(etapas)}
-      decisao={decisao}
+      estado={{ ...mesaProgress(etapas), decisao }}
       alerts={alerts}
       etapas={etapas}
       conteudo={conteudoFalso()}

@@ -13,21 +13,20 @@
  */
 
 import { cn } from "@/components/ui/cn";
-import type { ProximaDecisao } from "@/modules/curadoria/mesa-etapas";
+import type { EstadoDaMesa } from "@/modules/curadoria/mesa-etapas";
 
 export function MesaHeader({
   patientName,
   areaRequirement,
   curatorName,
-  progress,
-  decisao,
+  estado,
   alerts,
 }: {
   patientName: string;
   areaRequirement: string | null;
   curatorName: string;
-  progress: { done: number; total: number };
-  decisao: ProximaDecisao;
+  /** C4 · o estado da Mesa chega inteiro, de uma derivação só. */
+  estado: EstadoDaMesa;
   alerts: string[];
 }) {
   return (
@@ -38,7 +37,7 @@ export function MesaHeader({
         </h1>
         <p className="mesa-meta">
           {areaRequirement ?? "Área não definida"} · {curatorName} ·{" "}
-          {progress.done} de {progress.total} etapas
+          {estado.done} de {estado.total} etapas
         </p>
       </div>
 
@@ -48,10 +47,12 @@ export function MesaHeader({
         aria-live="polite"
         className={cn(
           "mt-1.5 text-sm",
-          decisao.blocked ? "text-ink-muted" : "font-medium text-ink",
+          estado.decisao.blocked ? "text-ink-muted" : "font-medium text-ink",
         )}
       >
-        {decisao.blocked ? decisao.label : `Sua vez: ${decisao.label.toLowerCase()}`}
+        {estado.decisao.blocked
+          ? estado.decisao.label
+          : `Sua vez: ${estado.decisao.label.toLowerCase()}`}
       </p>
 
       {alerts.length > 0 ? (

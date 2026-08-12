@@ -164,6 +164,17 @@ export function ReportEditor({
   const entregue = Boolean(deliveredAt);
   const emitido = Boolean(emittedAt);
 
+  /**
+   * C8 · CONGELADO — emitir já fechava o documento no servidor, e a tela
+   * continuava aceitando digitação e cliques que voltavam como erro. O produto
+   * recusava certo; faltava a interface dizer antes. Nenhuma transição nova:
+   * `congelado` só LÊ os dois marcos que já existiam.
+   */
+  const congelado = emitido || entregue;
+  const motivoCongelado = entregue
+    ? "A Curadoria já foi entregue — este documento é o que ela tem nas mãos, e não muda mais."
+    : "O Relatório foi emitido e está congelado. Para corrigir, gere uma nova versão.";
+
   const chaveDaLista = (id: string, field: CampoLista) => `${field}-${id}`;
 
   /** O array que será enviado: o carregado (campo intocado) ou o que se vê. */
@@ -308,6 +319,15 @@ export function ReportEditor({
           </CardDescription>
         </CardHeader>
 
+        {/* C8 · o motivo é texto, e é o mesmo texto que os controles apontam
+            por `aria-describedby`. Não é cor, não é só o cinza do desabilitado:
+            quem não distingue cor, e quem usa leitor de tela, recebe a razão. */}
+        {congelado ? (
+          <p id="relatorio-congelado" className="mt-2 text-sm text-ink-muted">
+            {motivoCongelado}
+          </p>
+        ) : null}
+
         {!emitido ? (
           <div className="mt-2">
             <Button
@@ -365,7 +385,7 @@ export function ReportEditor({
                     ? textoDaLista(option, campo.field)
                     : option[campo.field]
                 }
-                disabled={entregue || pending}
+                disabled={congelado || pending}
                 rows={3}
                 onChange={(event) =>
                   campo.kind === "lista"
@@ -388,16 +408,25 @@ export function ReportEditor({
 
       <Card className="space-y-3">
         <CardHeader>
-          <CardTitle>Por que estas três, juntas</CardTitle>
+          {/* D2-4 · a justificativa do conjunto era nomeada DUAS VEZES na mesma
+              tela: o título visível dizia "Por que estas três, juntas" e o
+              `aria-label` dizia "Justificativa da composição". Quem enxerga lia
+              um nome; quem usa leitor de tela ouvia outro — e o campo não tinha
+              rótulo de verdade, só dois textos concorrentes. Fica um: o título
+              É o rótulo. A copy visível não muda. */}
+          <CardTitle>
+            <label htmlFor="relatorio-composicao">Por que estas três, juntas</label>
+          </CardTitle>
           <CardDescription>
             O que diferencia os caminhos entre si, para que {patientFirstName} escolha qual troca faz
             sentido para ela.
           </CardDescription>
         </CardHeader>
         <textarea
-          aria-label="Justificativa da composição"
+          id="relatorio-composicao"
           value={composition}
-          disabled={entregue || pending}
+          disabled={congelado || pending}
+          aria-describedby={congelado ? "relatorio-congelado" : undefined}
           rows={4}
           onChange={(event) => setComposition(event.target.value)}
           className={cn(
@@ -447,7 +476,17 @@ export function ReportEditor({
               ))}
             </ul>
             <div className="mt-3">
-              <Button type="button" variant="secondary" onClick={salvar} disabled={pending} isLoading={pending}>
+              {/* C8 · o MESMO ato aparece em dois ramos desta tela. Congelar só
+                  um deixaria a porta aberta pelo outro: um Relatório emitido
+                  com pendência ainda listada caía aqui, e salvava. */}
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={salvar}
+                disabled={congelado || pending}
+                isLoading={pending}
+                aria-describedby={congelado ? "relatorio-congelado" : undefined}
+              >
                 {pending ? "Salvando…" : "Salvar rascunho"}
               </Button>
             </div>
@@ -474,7 +513,17 @@ export function ReportEditor({
           </div>
         ) : (
           <div className="flex flex-wrap items-center gap-3">
-            <Button type="button" variant="secondary" onClick={salvar} disabled={pending}>
+            {/* C8 · "Salvar rascunho" continua VISÍVEL depois de emitido — some
+                seria fingir que a ação nunca existiu. Fica indisponível, com o
+                motivo ao lado. "Entregar" segue habilitada de propósito: é o
+                ato seguinte do documento congelado, não uma edição dele. */}
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={salvar}
+              disabled={congelado || pending}
+              aria-describedby={congelado ? "relatorio-congelado" : undefined}
+            >
               Salvar rascunho
             </Button>
             {emitido ? (

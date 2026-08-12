@@ -76,7 +76,10 @@ function Pagina({
 }
 
 function campoComposicao(): HTMLTextAreaElement {
-  return screen.getByLabelText("Justificativa da composição");
+  // D2-4 (Bloco 11): o campo tinha DOIS nomes na mesma tela — o título visível
+  // "Por que estas três, juntas" e um `aria-label` divergente. Ficou um só, e
+  // é o visível: agora quem lê a tela e quem a ouve procuram a mesma coisa.
+  return screen.getByLabelText("Por que estas três, juntas");
 }
 
 describe("Editor do Relatório — sincronização com o servidor (Release Gate 2)", () => {

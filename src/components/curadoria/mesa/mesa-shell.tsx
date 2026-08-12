@@ -44,7 +44,7 @@ import {
   MESA_ETAPA_QUESTIONS,
   type MesaEtapaId,
   type MesaEtapaState,
-  type ProximaDecisao,
+  type EstadoDaMesa,
 } from "@/modules/curadoria/mesa-etapas";
 
 export const FILTROS_ID = "mesa-filtros-rapidos";
@@ -53,8 +53,7 @@ export type MesaShellProps = {
   patientName: string;
   areaRequirement: string | null;
   curatorName: string;
-  progress: { done: number; total: number };
-  decisao: ProximaDecisao;
+  estado: EstadoDaMesa;
   alerts: string[];
   etapas: MesaEtapaState[];
   /** O conteúdo de cada etapa. A Mesa monta o ambiente; o conteúdo é de fora. */
@@ -81,8 +80,7 @@ function MesaAmbiente({
   patientName,
   areaRequirement,
   curatorName,
-  progress,
-  decisao,
+  estado,
   alerts,
   etapas,
   conteudo,
@@ -92,7 +90,7 @@ function MesaAmbiente({
 }: MesaShellProps) {
   // A Mesa abre onde está a próxima decisão — mas a partir daí quem escolhe é
   // o Curador, e a escolha dele não é sobrescrita quando o estado muda.
-  const [etapaAtual, setEtapaAtual] = useState<MesaEtapaId>(decisao.etapa);
+  const [etapaAtual, setEtapaAtual] = useState<MesaEtapaId>(estado.decisao.etapa);
   const [ajuda, setAjuda] = useState(false);
   const foco = useMesaFoco();
 
@@ -172,15 +170,14 @@ function MesaAmbiente({
             patientName={patientName}
             areaRequirement={areaRequirement}
             curatorName={curatorName}
-            progress={progress}
-            decisao={decisao}
+            estado={estado}
             alerts={alerts}
           />
 
           <MesaSteps
             etapas={etapas}
             atual={etapaAtual}
-            proxima={decisao.etapa}
+            proxima={estado.decisao.etapa}
             onSelecionar={setEtapaAtual}
           />
         </div>

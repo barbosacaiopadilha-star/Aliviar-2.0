@@ -446,8 +446,7 @@ function montarMesa() {
       patientName="Maria Andrade"
       areaRequirement="Ortopedia de coluna"
       curatorName="Dra. Ana"
-      progress={mesaProgress(etapas)}
-      decisao={decisao}
+      estado={{ ...mesaProgress(etapas), decisao }}
       alerts={[]}
       etapas={etapas}
       totalProfissionais={2}

@@ -232,6 +232,38 @@ export function proximaDecisao(
 }
 
 /** Quantas etapas já responderam — o progresso da investigação. */
+/** C4 · "concluída" é definida UMA vez. Contador, frase e trilha leem daqui. */
+export function etapaConcluida(etapa: MesaEtapaState): boolean {
+  return etapa.status === "PRONTA";
+}
+
 export function mesaProgress(etapas: MesaEtapaState[]): { done: number; total: number } {
-  return { done: etapas.filter((entrada) => entrada.status === "PRONTA").length, total: etapas.length };
+  return { done: etapas.filter(etapaConcluida).length, total: etapas.length };
+}
+
+/**
+ * C4 · UMA ORIGEM, DUAS APRESENTAÇÕES.
+ *
+ * O cabeçalho dizia o mesmo estado em dois vocabulários — os contadores
+ * ("3 de 6 etapas") e a frase ("Sua vez: …") — e a rota os montava com duas
+ * chamadas independentes, passadas como duas props. Nada os obrigava a
+ * concordar: bastava alguém contar de novo em algum lugar, ou passar `etapas`
+ * diferentes para cada uma, e a Mesa afirmaria duas coisas sobre si mesma.
+ *
+ * Agora existe **uma** derivação. Contador e frase saem da mesma lista de
+ * etapas, na mesma chamada, e chegam à tela como um único fato. Duas
+ * apresentações do mesmo estado — nunca duas contagens.
+ */
+export type EstadoDaMesa = {
+  done: number;
+  total: number;
+  decisao: ProximaDecisao;
+};
+
+export function estadoDaMesa(
+  etapas: MesaEtapaState[],
+  profileAcknowledged: boolean,
+): EstadoDaMesa {
+  const { done, total } = mesaProgress(etapas);
+  return { done, total, decisao: proximaDecisao(etapas, profileAcknowledged) };
 }

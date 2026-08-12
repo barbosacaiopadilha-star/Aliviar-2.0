@@ -177,6 +177,8 @@ function AreaDeclarationForm({
   const [isPending, startTransition] = useTransition();
 
   const needsRationale = compatibility !== null && compatibility !== "COMPATIVEL";
+  /** C6 · a mesma condição do servidor, dita antes do envio — nunca no lugar dele. */
+  const faltaJustificativa = needsRationale && !rationale.trim();
 
   function submit() {
     if (!compatibility) return;
@@ -274,8 +276,31 @@ function AreaDeclarationForm({
         </p>
       ) : null}
 
+      {/* C6 · a exigência era só do servidor. O Curador escrevia a eliminação,
+          clicava, e recebia de volta um erro que a tela já sabia antes de
+          enviar. A guarda do servidor NÃO sai — ela é a que vale, e continua
+          recusando quem burlar o cliente. Esta aqui só antecipa a conversa. */}
+      {faltaJustificativa ? (
+        <p id={`falta-justificativa-${professional.professionalProfileId}`} className="text-sm text-ink-muted">
+          {compatibility === "INCOMPATIVEL"
+            ? "Eliminar exige justificativa — escreva por que a área não responde a este caso."
+            : compatibility === "INFORMACAO_INSUFICIENTE"
+              ? "Escreva o que falta verificar antes de registrar."
+              : "Compatibilidade parcial exige justificativa."}
+        </p>
+      ) : null}
+
       <div className="flex gap-2">
-        <Button type="button" onClick={submit} disabled={!compatibility || isPending}>
+        <Button
+          type="button"
+          onClick={submit}
+          disabled={!compatibility || faltaJustificativa || isPending}
+          aria-describedby={
+            faltaJustificativa
+              ? `falta-justificativa-${professional.professionalProfileId}`
+              : undefined
+          }
+        >
           Registrar declaração
         </Button>
         <Button type="button" variant="ghost" onClick={onDone}>
