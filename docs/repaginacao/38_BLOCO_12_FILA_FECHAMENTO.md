@@ -157,3 +157,88 @@ Fila **7/7** · typecheck · lint **zero erros** · build local íntegro · **le
   autoridade nova, seguindo o precedente que o próprio §6 cita (a Caixa de
   Continuidade, em `src/modules/connection`). A leitura está declarada no
   cabeçalho do arquivo; se a preferida for a literal, mover é uma renomeação.
+
+---
+
+## 11 · Adendo B11-12-H — hardening de falseabilidade
+
+Fecha os dois achados médios do Verificador. **Nenhuma regra, copy, grupo,
+precedência, autoridade, RLS ou linha de banco mudou.** Ledger segue **121**.
+
+### 11.1 · `V-B12-1` — a fronteira de privacidade virou conjunto fechado
+
+A guarda original procurava **vocabulário proibido** (`narrative`, `diagnosis`,
+`compositionRationale`) na fonte do módulo. Ela pega quem copia um campo com o
+nome antigo, e mais nada: `observacao`, `notaDaMesa` ou `resumoClinico`
+atravessariam calados. Procurar palavra é procurar o erro que já se conhece.
+
+[`h-b12-1-fronteira-de-privacidade`](../../tests/unit/h-b12-1-fronteira-de-privacidade.test.ts)
+inverte a régua:
+
+- declara o conjunto **fechado** das doze chaves aprovadas;
+- compara com `Object.keys()` dos objetos que `fatosDoRegistro` **produz de
+  fato**, para um representante de cada um dos sete grupos e dos dois excluídos;
+- reprova chave a mais **mesmo vazia, `undefined` ou nunca renderizada** — o que
+  sai do servidor sai, tenha pixel ou não;
+- alimenta a função com um registro **cheio** de narrativa, diagnóstico,
+  hipótese, parecer, rationale e nota de filtro, e exige que nenhum desses
+  valores apareça na saída, em nenhuma chave;
+- mantém `patientName` e `caseId` por decisão explícita, e afirma que são **só**
+  esses dois identificadores.
+
+A guarda estática (`SaoIguais<ChaveAprovada, keyof FatosDaFila>`) faz o tipo e a
+lista se cobrarem nos dois sentidos, sem `any`, cast largo ou index signature.
+
+**H-B12-1** — acrescentar `diagnostico: "exemplo"` ao tipo e ao objeto derivado
+derruba **10** asserções com o motivo escrito — *"chave não autorizada na
+fronteira de privacidade da Fila"* — e `tsc` reprova antes, em
+`h-b12-1…test.ts(53,7): Type 'true' is not assignable to type 'false'`.
+
+### 11.2 · `V-B12-2` — o D-6 provado pela composição real
+
+`d6-rascunho-da-mesa` monta `MesaEstadoProvider` por conta própria. Prova que o
+provider **funciona**, e é cega para a única coisa que pode dar errado de novo:
+o provider estar no **lugar errado**. Rebaixá-lo para dentro de
+`conteudo[etapaAtual]` reproduz a D-6 inteira, e aquela suíte segue verde.
+
+A relação "provider **acima** do Shell" vivia solta dentro de um Server
+Component, fora do alcance de teste. Agora tem nome:
+[`mesa-com-estado.tsx`](../../src/components/curadoria/mesa/mesa-com-estado.tsx)
+— o menor limite de composição cliente possível, **usado pela rota e pela
+prova**. É composição e só; se ganhar lógica, deixa de ser o limite que o teste
+exercita e vira harness disfarçado.
+
+[`h-b12-2-mesa-composicao-real`](../../tests/components/h-b12-2-mesa-composicao-real.test.tsx)
+atravessa esse limite com o `MesaShell` de verdade: escreve seleção, parecer e
+justificativa; troca de etapa; **verifica que o workspace saiu do DOM**; volta;
+encontra os três valores. Depois desmonta a Mesa inteira e remonta, provando o
+limite honesto (o rascunho some), e repete com um segundo Case, provando o
+isolamento.
+
+**H-B12-2** — rebaixar o provider para dentro do slot derruba a prova nova por
+*"a seleção evaporou ao trocar de etapa"* e *"o parecer evaporou ao trocar de
+etapa"*, **enquanto `d6-rascunho-da-mesa` permanece verde**. É a demonstração do
+próprio achado.
+
+### 11.3 · Exceção arquitetural sobre `src/modules/**` — aceita e delimitada
+
+O contrato [36](36_BLOCOS_11_12_D6_CASOS_REAIS.md) §12 proíbe **literalmente**
+`src/modules/**`. O contrato **não é reescrito**: ele permanece como registro da
+decisão original, e esta é a exceção, nomeada.
+
+**Dois arquivos** entram nela, não um:
+
+| Arquivo | O que é |
+|---|---|
+| [`fila-por-ato-devido.ts`](../../src/modules/curadoria/fila-por-ato-devido.ts) | projeção dos sete grupos |
+| [`mesa-etapas.ts`](../../src/modules/curadoria/mesa-etapas.ts) | `estadoDaMesa`/`etapaConcluida`, a origem única do C4 |
+
+Ambos são **derivações puras**: sem I/O, sem writer, sem action, sem acesso ao
+banco, sem migration, sem autoridade. A dependência aponta **do componente para
+o módulo** — mover a projeção para a camada de apresentação inverteria essa
+seta e aumentaria o acoplamento, fazendo a regra viajar junto com a tela.
+
+**O que a exceção NÃO autoriza:** nenhuma alteração futura de domínio neste
+caminho. Writer, persistência, migration, policy, grant ou qualquer regra de
+autoridade continuam **proibidos** aqui, e uma próxima track que precise deles
+precisa de decisão nova — não deste adendo.

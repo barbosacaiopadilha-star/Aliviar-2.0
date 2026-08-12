@@ -10,7 +10,7 @@ import { MapaPrioridadesPanel } from "@/components/curadoria/mesa/mapa-prioridad
 import { PainelInvestigacao } from "@/components/curadoria/mesa/painel-investigacao";
 import { ComparacaoPremium } from "@/components/curadoria/mesa/comparacao-premium";
 import { HipoteseEmFoco } from "@/components/curadoria/mesa/hipotese-em-foco";
-import { MesaEstadoProvider } from "@/components/curadoria/mesa/mesa-estado";
+import { MesaComEstado } from "@/components/curadoria/mesa/mesa-com-estado";
 import { MesaShell } from "@/components/curadoria/mesa/mesa-shell";
 import { MesaTimelineDupla, type CaseTimelineMark } from "@/components/curadoria/mesa/mesa-timeline";
 import {
@@ -589,9 +589,16 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
       {/* D-6 · o provider fica ACIMA do Shell de propósito. O Shell monta
           apenas `conteudo[etapaAtual]`, então tudo que viver lá dentro
           desmonta ao trocar de etapa — foi assim que o rascunho da Mesa
-          evaporava. Aqui, trocar de etapa não alcança o estado. */}
-      <MesaEstadoProvider caseId={record.caseId} persisted={persisted}>
-      <MesaShell
+          evaporava.
+
+          A relação "provider acima do Shell" agora tem nome e mora em
+          `MesaComEstado`. Antes ela vivia solta aqui, e por isso os testes do
+          D-6 montavam o provider por conta própria — continuavam verdes mesmo
+          se a rota o rebaixasse para dentro do slot. O limite é o mesmo para a
+          rota e para a prova: rebaixar o provider quebra os dois juntos. */}
+      <MesaComEstado
+        caseId={record.caseId}
+        persisted={persisted}
         patientName={record.patientName}
         areaRequirement={view.areaRequirement}
         curatorName={record.curatorName}
@@ -676,7 +683,6 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
           <MesaTimelineDupla paciente={linhaPaciente} investigacao={linhaInvestigacao} />
         }
       />
-      </MesaEstadoProvider>
 
       <p className="sr-only">
         Etapa da jornada do Case: {journey.steps.find((step) => step.status !== "CONCLUIDA")?.label ?? "concluída"}.
