@@ -38,6 +38,15 @@ const PUBLIC_PATHS = new Set([
   // aberta: o handler exige o segredo CRM_SITE_LEAD_SECRET em TODO ambiente
   // (src/app/api/crm/leads/route.ts).
   "/api/crm/leads",
+  // OPS-R3A1: a porta pública de solicitação de atendimento. Quem chega aqui
+  // não tem conta — mandá-la ao login seria pedir a chave a quem veio pedir a
+  // porta. A página não coleta nada de saúde, e o endpoint é o único caminho
+  // público para `crm_contacts`: valida conjunto fechado, verifica honeypot e
+  // grava por RPC de assinatura fechada, sem estado, dono, paciente ou Case
+  // vindos do cliente. O rate-limit por IP vive na borda (Vercel Firewall) —
+  // o aplicativo não guarda IP, nem bruto nem derivado.
+  "/solicitar-atendimento",
+  "/api/solicitacoes-atendimento",
 ]);
 
 // Os Portais SAÍRAM daqui na MISSÃO 209, Fase 4: agora leem o banco de
