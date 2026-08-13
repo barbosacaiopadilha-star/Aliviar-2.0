@@ -58,12 +58,22 @@ export function LoginForm() {
         // min-h-11: o alvo de toque media 17px — abaixo até do mínimo AA de
         // 24px (WCAG 2.5.8), num link crítico de recuperação de acesso.
         // Achado da auditoria de interação, 2026-07-24.
-        <Link
-          href="/recuperar-senha"
-          className="inline-flex min-h-11 items-center font-medium text-brand-primary transition-colors hover:text-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
-        >
-          Esqueci minha senha
-        </Link>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
+          {/* OPS-R3A1 · quem ainda não tem acesso não tem senha a recuperar. A
+              porta pública fica ao lado, com o mesmo CTA canônico das demais. */}
+          <Link
+            href="/solicitar-atendimento"
+            className="inline-flex min-h-11 items-center font-medium text-brand-primary transition-colors hover:text-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+          >
+            Solicitar atendimento
+          </Link>
+          <Link
+            href="/recuperar-senha"
+            className="inline-flex min-h-11 items-center font-medium text-brand-primary transition-colors hover:text-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+          >
+            Esqueci minha senha
+          </Link>
+        </div>
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>

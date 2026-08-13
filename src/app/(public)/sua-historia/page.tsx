@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { StoryStepLayout } from "@/components/story/story-step-layout";
@@ -36,10 +37,19 @@ export default async function BoasVindasPage() {
         </p>
       </div>
 
+      {/* OPS-R3A1 · a frase dizia "fale com a Aliviar" e não levava a lugar
+          nenhum. Quem ainda não tem conta agora tem caminho, com o mesmo CTA
+          canônico das outras superfícies públicas. */}
       <p className="mt-8 text-sm text-ink-muted">
-        Para contar sua história você precisa já ter uma conta na Aliviar — se ainda não tem,
-        fale com a Aliviar. Se já tem, ao clicar em &ldquo;Começar&rdquo; você entra com seu
-        login e continuamos de onde você parou.
+        Para contar sua história você precisa já ter uma conta na Aliviar. Se ainda não tem,{" "}
+        <Link
+          href="/solicitar-atendimento"
+          className="inline-flex min-h-11 items-center font-medium text-brand-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+        >
+          Solicitar atendimento
+        </Link>
+        . Se já tem, ao clicar em &ldquo;Começar&rdquo; você entra com seu login e continuamos de
+        onde você parou.
       </p>
     </StoryStepLayout>
   );

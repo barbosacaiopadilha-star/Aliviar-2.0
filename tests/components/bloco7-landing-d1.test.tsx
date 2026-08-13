@@ -129,11 +129,17 @@ describe("T-7-2 · cada link do header aponta para um id que existe", () => {
 });
 
 describe("T-7-3 · o convite anônimo, e o reconhecimento de quem já mora aqui", () => {
-  it("o header anônimo traz Começar → /sua-historia", () => {
+  // OPS-R3A1 · o convite anônimo continua sendo o que o Bloco 7 protegeu — o
+  // que mudou foi PARA ONDE ele leva. `Começar` apontava para `/sua-historia`,
+  // que exige conta: quem chegava sem conta batia em porta trancada. O destino
+  // público passou a ser `/solicitar-atendimento`. A regra do Bloco 7 (o
+  // header anônimo convida, e o portalCta autenticado não é tocado) segue
+  // intacta e é ela que estas asserções continuam guardando.
+  it("o header anônimo traz Solicitar atendimento → /solicitar-atendimento", () => {
     render(<PublicHeader />);
 
-    const comecar = screen.getByRole("link", { name: "Começar" });
-    expect(comecar).toHaveAttribute("href", "/sua-historia");
+    const comecar = screen.getByRole("link", { name: "Solicitar atendimento" });
+    expect(comecar).toHaveAttribute("href", "/solicitar-atendimento");
   });
 
   it("Entrar sobrevive, e é outro gesto — nunca o convite", () => {
@@ -153,7 +159,10 @@ describe("T-7-3 · o convite anônimo, e o reconhecimento de quem já mora aqui"
     );
     expect(screen.queryByRole("link", { name: "Entrar" })).toBeNull();
     // E o convite continua lá: quem já entrou também pode começar uma história.
-    expect(screen.getByRole("link", { name: "Começar" })).toHaveAttribute("href", "/sua-historia");
+    expect(screen.getByRole("link", { name: "Solicitar atendimento" })).toHaveAttribute(
+      "href",
+      "/solicitar-atendimento",
+    );
   });
 
   it("nenhum CTA aponta para placeholder", () => {

@@ -64,11 +64,11 @@ export function HeroEditorial({ videoSrc }: HeroEditorialProps = {}) {
                 por rolagem. A `landing-porta` é o gesto da marca. */}
             <div className="landing-hero-ctas mt-12">
               <LinkButton
-                href="/sua-historia"
+                href="/solicitar-atendimento"
                 variant="primary"
                 className="landing-porta w-full sm:w-auto"
               >
-                Começar minha história
+                Solicitar atendimento
               </LinkButton>
               {video.src ? (
                 <a href="#video-institucional" className="landing-hero-cta-secundario">

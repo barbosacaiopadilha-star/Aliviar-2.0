@@ -140,8 +140,8 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
               reconhecimento de quem já mora aqui. São gestos diferentes e
               nunca se substituem — foi por confundir os dois que a Landing
               ficou sem convite para quem chega. */}
-          <LinkButton href="/sua-historia" variant="primary" className="min-h-11 px-5 py-2 text-sm">
-            Começar
+          <LinkButton href="/solicitar-atendimento" variant="primary" className="min-h-11 px-5 py-2 text-sm">
+            Solicitar atendimento
           </LinkButton>
 
           {portalCta ? (
