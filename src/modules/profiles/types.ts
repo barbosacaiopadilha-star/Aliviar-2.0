@@ -4,6 +4,8 @@
 // docs/PRODUCT_ARCHITECTURE.md, seção 11).
 
 export type ProfileStatus = "ativo" | "inativo";
+import type { CicloDoProfissional } from "./ciclo-do-profissional";
+
 export type PublicationStatus = "publicado" | "nao_publicado";
 
 // Situação do registro conforme consulta ao conselho profissional. `null`
@@ -45,6 +47,8 @@ export type ProfessionalProfile = {
   // Perfil de demonstração: existe para exercitar o fluxo, nunca para ser
   // oferecido a um paciente. O banco impede que um deles seja publicado,
   // entre numa seleção ou vire conexão.
+  /** OPS-G5 C7: o estado real do profissional. Nulo = legado ainda não revisto. */
+  ciclo: CicloDoProfissional | null;
   isDemo: boolean;
   // Perfil sintético de certificação: percorre os contratos reais, mas só
   // dentro de um Case marcado como certificação. Nunca alcança paciente.

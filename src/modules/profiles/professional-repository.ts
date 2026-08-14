@@ -3,6 +3,7 @@ import { erroDeBanco } from "@/lib/observability/erros";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { CicloDoProfissional } from "./ciclo-do-profissional";
 import type { ProfessionalProfile, ProfileStatus, PublicationStatus, RegistrationStatus } from "./types";
 
 type ProfessionalProfileRow = {
@@ -10,6 +11,7 @@ type ProfessionalProfileRow = {
   profile_id: string | null;
   status: ProfileStatus;
   publication_status: PublicationStatus;
+  ciclo_de_vida: CicloDoProfissional | null;
   is_demo: boolean;
   is_test_fixture: boolean;
   display_name: string;
@@ -33,7 +35,7 @@ type ProfessionalProfileRow = {
 };
 
 const SELECT_COLUMNS =
-  "id, profile_id, status, publication_status, is_demo, is_test_fixture, display_name, professional_identifier, crm, crm_uf, registration_status, registration_source, registration_verified_at, registration_verified_by, professional_summary, institution_name, experience_level, intake_approach, offers_continuous_care, availability_window, created_by, updated_by, created_at, updated_at";
+  "id, profile_id, status, publication_status, ciclo_de_vida, is_demo, is_test_fixture, display_name, professional_identifier, crm, crm_uf, registration_status, registration_source, registration_verified_at, registration_verified_by, professional_summary, institution_name, experience_level, intake_approach, offers_continuous_care, availability_window, created_by, updated_by, created_at, updated_at";
 
 function mapRow(row: ProfessionalProfileRow): ProfessionalProfile {
   return {
@@ -41,6 +43,7 @@ function mapRow(row: ProfessionalProfileRow): ProfessionalProfile {
     profileId: row.profile_id,
     status: row.status,
     publicationStatus: row.publication_status,
+    ciclo: (row.ciclo_de_vida as CicloDoProfissional | null) ?? null,
     isDemo: row.is_demo,
     isTestFixture: row.is_test_fixture,
     displayName: row.display_name,

@@ -5,6 +5,7 @@ import { useCallback } from "react";
 
 import { usePaginatedFilter } from "@/components/admin/use-paginated-filter";
 import { Badge } from "@/components/ui/badge";
+import { elegibilidadeEfetiva } from "@/modules/profiles/ciclo-do-profissional";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Pagination } from "@/components/ui/pagination";
@@ -61,6 +62,7 @@ export function ProfessionalsTable({ professionals }: ProfessionalsTableProps) {
                 <TableHeaderCell>Identificação</TableHeaderCell>
                 <TableHeaderCell>Status</TableHeaderCell>
                 <TableHeaderCell>Publicação</TableHeaderCell>
+                <TableHeaderCell>Elegibilidade</TableHeaderCell>
                 <TableHeaderCell>
                   <span className="sr-only">Ações</span>
                 </TableHeaderCell>
@@ -82,6 +84,28 @@ export function ProfessionalsTable({ professionals }: ProfessionalsTableProps) {
                     <Badge variant={professional.publicationStatus === "publicado" ? "gold" : "default"}>
                       {professional.publicationStatus === "publicado" ? "Publicado" : "Não publicado"}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {/*
+                      "Ativo" e "Publicado" são dois eixos que, juntos, ainda não
+                      respondem a única pergunta que importa: esta pessoa pode
+                      ser apresentada a uma paciente AGORA? A elegibilidade
+                      efetiva responde — e, quando é não, diz por quê.
+                    */}
+                    {(() => {
+                      const elegibilidade = elegibilidadeEfetiva({
+                        ciclo: professional.ciclo,
+                        isDemo: professional.isDemo,
+                        isTestFixture: professional.isTestFixture,
+                      });
+                      if (elegibilidade.elegivel) return <Badge variant="sage">Elegível</Badge>;
+                      // `motivo` é sempre preenchido quando não é elegível; o
+                      // fallback existe só para o compilador, e diz a verdade.
+                      const porque = elegibilidade.motivo ?? "Motivo não informado";
+                      return (
+                        <Badge variant="default">{`Não elegível — ${porque}`}</Badge>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell>
                     <Link
