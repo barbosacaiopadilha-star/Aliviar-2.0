@@ -279,6 +279,24 @@ export async function limpar(admin: SupabaseClient, antes: Inventario): Promise<
 
     const removiveis = lote.filter((id) => !retidos.has(id));
     if (removiveis.length > 0) {
+      // OPS-G5 C7: `assert_exclusao_sem_historia` recusa apagar quem tem
+      // história operacional — "Retire da rede, o histórico permanece". A
+      // regra vale, e a limpeza obedece à mesma ordem que um humano seguiria:
+      // a história que a própria suíte criou sai antes do cadastro que ela
+      // criou. Não se contorna a guarda; desfaz-se o que foi feito, de trás
+      // para frente. Se um dia sobrar história que a suíte NÃO criou, o
+      // delete falha alto — e é isso que queremos ouvir.
+      for (const tabela of [
+        "connection_records",
+        "curated_selection_options",
+        "curadoria_report_options",
+        "professional_subcriterion_map",
+        "practice_evidence",
+      ] as const) {
+        const { error } = await admin.from(tabela).delete().in("professional_profile_id", removiveis);
+        if (error) throw new Error(`limpeza da história em ${tabela}: ${error.message}`);
+      }
+
       const { error } = await admin.from("professional_profiles").delete().in("id", removiveis);
       if (error) throw new Error(`limpeza de profissionais: ${error.message}`);
     }
