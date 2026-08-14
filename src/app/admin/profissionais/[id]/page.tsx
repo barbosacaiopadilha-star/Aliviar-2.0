@@ -20,6 +20,12 @@ import {
   getPracticeArea,
 } from "@/modules/profiles/professional-repository";
 import { listPublicationPendencies } from "@/modules/profiles/publication-pendencies";
+import { destinosPossiveis } from "@/modules/profiles/ciclo-do-profissional";
+import {
+  mudarCicloDoProfissionalAction,
+  preverImpactoDaTransicaoAction,
+} from "@/modules/profiles/ciclo-do-profissional-actions";
+import { CicloDoProfissionalPanel } from "@/components/profiles/ciclo-do-profissional-panel";
 import { PublicationPanel } from "@/components/profiles/publication-panel";
 import { ProtocoloPraticaForm } from "@/components/profissional/protocolo-pratica-form";
 import {
@@ -156,6 +162,22 @@ export default async function EditProfessionalPage({ params }: EditProfessionalP
           verifyRegistrationAction={verifyRegistrationAction.bind(null, id)}
           savePracticeAreaAction={savePracticeAreaAction.bind(null, id)}
           publishAction={publishProfessionalAction.bind(null, id, nextPublicationStatus)}
+        />
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <h2 className="font-sans text-lg font-semibold text-ink">Ciclo de vida</h2>
+          <p className="text-sm text-ink-muted">
+            Onde este profissional está na Rede, e por quê. Toda mudança de estado tem motivo, autor e
+            data — e o impacto aparece antes da confirmação, nunca depois.
+          </p>
+        </CardHeader>
+        <CicloDoProfissionalPanel
+          cicloAtual={professional.ciclo}
+          destinos={destinosPossiveis(professional.ciclo)}
+          preverImpacto={async (para) => preverImpactoDaTransicaoAction(id, para)}
+          mudarCiclo={async (pedido) => mudarCicloDoProfissionalAction({ profissionalId: id, ...pedido })}
         />
       </Card>
 

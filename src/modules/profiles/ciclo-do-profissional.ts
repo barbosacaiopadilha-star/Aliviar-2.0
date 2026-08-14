@@ -106,6 +106,16 @@ export function motivosDaTransicao(
   return TRANSICOES.find((t) => t.de === de && t.para === para)?.motivos ?? [];
 }
 
+/**
+ * Para onde dá para ir a partir daqui. A interface oferece exatamente isto —
+ * nem um destino a mais —, para que a recusa não seja uma surpresa depois do
+ * clique. Legado sem ciclo não vai a lugar nenhum: a revisão vem antes.
+ */
+export function destinosPossiveis(de: CicloDoProfissional | null): CicloDoProfissional[] {
+  if (de === null) return [];
+  return TRANSICOES.filter((t) => t.de === de).map((t) => t.para);
+}
+
 export function transicaoPermitida(de: CicloDoProfissional, para: CicloDoProfissional): boolean {
   return motivosDaTransicao(de, para).length > 0;
 }
