@@ -44,10 +44,15 @@ export function PublicationPanel({
   const [areaState, areaFormAction, areaPending] = useActionState(savePracticeAreaAction, undefined);
   const [publishState, publishFormAction, publishPending] = useActionState(publishAction, undefined);
 
+  // A régua é a mesma que a porta do banco usa (`assert_publication_requirements`,
+  // desde 20260727071000). Aqui ela não é reimplementada: as pendências chegam
+  // prontas de `listPublicationPendencies`, e a interface apenas obedece.
+  const publicacaoBloqueada = !isPublished && pendencies.length > 0;
+
   return (
     <div className="space-y-6">
       {pendencies.length > 0 && !isPublished ? (
-        <div className="rounded-md border border-border-strong bg-recessed p-4" role="status">
+        <div id="pendencias-de-publicacao" className="rounded-md border border-border-strong bg-recessed p-4" role="status">
           <p className="text-sm font-semibold text-ink">
             Pendências para publicação ({pendencies.length})
           </p>
@@ -134,9 +139,30 @@ export function PublicationPanel({
         {publishState?.success ? (
           <FormMessage variant="success">Estado de publicação atualizado.</FormMessage>
         ) : null}
-        <Button type="submit" isLoading={publishPending}>
+        {/*
+          Publicar com pendência não é um erro a ser explicado depois: é um ato
+          que não deveria ser oferecido. O botão fica indisponível de verdade —
+          não só apagado —, e `aria-describedby` aponta para a lista de
+          pendências, de modo que quem usa leitor de tela ouça POR QUE está
+          indisponível, em vez de encontrar um botão mudo.
+
+          Despublicar nunca é bloqueado: tirar da vitrine é sempre possível.
+        */}
+        <Button
+          type="submit"
+          isLoading={publishPending}
+          disabled={publicacaoBloqueada}
+          aria-describedby={publicacaoBloqueada ? "pendencias-de-publicacao" : undefined}
+        >
           {isPublished ? "Despublicar" : "Publicar"}
         </Button>
+        {publicacaoBloqueada ? (
+          <p className="text-sm text-ink-muted">
+            {pendencies.length === 1
+              ? "Falta uma condição para publicar. Ela está descrita acima."
+              : `Faltam ${pendencies.length} condições para publicar. Elas estão descritas acima.`}
+          </p>
+        ) : null}
       </form>
     </div>
   );
