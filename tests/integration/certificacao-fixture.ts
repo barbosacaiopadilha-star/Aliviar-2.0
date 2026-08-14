@@ -361,6 +361,26 @@ export async function cleanupCuradoriaCertificationFixture(admin: AdminClient): 
   if (ids.length > 0) {
     // Os blocos do dossiê caem por cascade junto com o perfil.
     await admin.from("professional_competency_areas").delete().in("professional_profile_id", ids);
-    await admin.from("professional_profiles").delete().in("id", ids);
+
+    // OPS-G5 C7: `assert_exclusao_sem_historia` roda BEFORE DELETE e conta as
+    // mesmas linhas que o cascade levaria — então o cascade não chega a
+    // acontecer, e a remoção é recusada com "Retire da rede". A história tem de
+    // sair antes do cadastro, explicitamente.
+    for (const tabela of [
+      "connection_records",
+      "curated_selection_options",
+      "curadoria_report_options",
+      "professional_subcriterion_map",
+      "practice_evidence",
+    ] as const) {
+      const { error } = await admin.from(tabela).delete().in("professional_profile_id", ids);
+      if (error) throw new Error(`fixture: limpeza de ${tabela} — ${error.message}`);
+    }
+
+    // E o erro deixa de ser engolido. Foi por isso que a recusa passou
+    // despercebida: as fixtures sobreviviam à rodada, e a suíte seguinte
+    // encontrava perfil de certificação de pé sem Case que o autorizasse.
+    const { error } = await admin.from("professional_profiles").delete().in("id", ids);
+    if (error) throw new Error(`fixture: remoção dos perfis de certificação — ${error.message}`);
   }
 }
