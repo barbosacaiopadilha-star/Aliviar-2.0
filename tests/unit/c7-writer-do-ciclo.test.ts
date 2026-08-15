@@ -144,10 +144,13 @@ describe("C7 · o que é recusado antes de tocar no banco", () => {
 });
 
 describe("C7 · a autoria vem da sessão", () => {
-  it("o autor e o instante são escritos pelo servidor, nunca recebidos", async () => {
+  it("a autoria vem da sessão, e o instante nem é enviado", async () => {
+    // C7R · o oráculo mudou com o contrato. O instante passou a ser do banco,
+    // que o sobrescreve de qualquer forma; continuar mandando-o daqui sugeriria
+    // que o relógio do cliente conta para alguma coisa. A ausência do campo é
+    // o que este teste protege.
     estadoAtual("PREPARACAO");
     const eq = bancoResponde(null);
-    const antes = Date.now();
 
     const r = await mudarCicloDoProfissionalAction({
       profissionalId: PROFISSIONAL,
@@ -159,7 +162,10 @@ describe("C7 · a autoria vem da sessão", () => {
     const escrito = mocks.update.mock.calls[0]![0] as Record<string, unknown>;
     expect(escrito.ciclo_alterado_por, "a autoria não veio da sessão").toBe(ADMIN);
     expect(escrito.ciclo_motivo).toBe("CADASTRO_VALIDADO");
-    expect(new Date(escrito.ciclo_alterado_em as string).getTime()).toBeGreaterThanOrEqual(antes);
+    expect(
+      Object.hasOwn(escrito, "ciclo_alterado_em"),
+      "o aplicativo voltou a mandar carimbo próprio",
+    ).toBe(false);
     expect(eq).toHaveBeenCalledTimes(1);
   });
 

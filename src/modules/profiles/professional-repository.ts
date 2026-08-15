@@ -226,9 +226,27 @@ export async function setProfessionalPublicationStatus(
     }
   }
 
+  // OPS-G5 C7R · ESTE WRITER FOI REDIRECIONADO.
+  //
+  // Ele escrevia `publication_status` direto, e era essa a segunda régua: cada
+  // publicação por aqui criava uma linha em que o ciclo dizia uma coisa e a
+  // vitrine dizia outra. A assinatura fica de pé — os dois chamadores e o botão
+  // continuam funcionando —, mas o que ele faz agora é a transição de ciclo
+  // correspondente. O banco também recusa a escrita direta; são duas camadas
+  // porque uma só já falhou.
+  //
+  // ⚠️ Despublicar leva a `PAUSADO`, não a `PREPARACAO`: quem já esteve na Rede
+  // e sai dela está pausado. Voltar para preparação seria dizer que o cadastro
+  // nunca foi publicado, e apagaria a diferença entre quem nunca entrou e quem
+  // saiu.
   const { error } = await supabase
     .from("professional_profiles")
-    .update({ publication_status: publicationStatus, updated_by: updatedBy })
+    .update({
+      ciclo_de_vida: publicationStatus === "publicado" ? "PUBLICADO_ATIVO" : "PAUSADO",
+      ciclo_motivo: publicationStatus === "publicado" ? "CADASTRO_VALIDADO" : "REVISAO_CADASTRAL",
+      ciclo_alterado_por: updatedBy,
+      updated_by: updatedBy,
+    })
     .eq("id", id);
 
   if (error) {

@@ -137,7 +137,9 @@ export async function mudarCicloDoProfissionalAction(
         ciclo_motivo: pedido.motivo,
         ciclo_nota: pedido.nota ?? null,
         ciclo_alterado_por: authState.user.id,
-        ciclo_alterado_em: new Date().toISOString(),
+        // OPS-G5 C7R: o instante é do banco. Mandá-lo daqui não faz diferença
+        // — o trigger o sobrescreve —, e mandar mesmo assim sugeriria que o
+        // relógio do cliente conta para alguma coisa. Não conta.
       })
       .eq("id", pedido.profissionalId);
 
