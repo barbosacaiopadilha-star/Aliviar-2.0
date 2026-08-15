@@ -16,6 +16,8 @@ import path from "node:path";
 
 import { expect, test, type Page } from "@playwright/test";
 
+import { backendEsperado } from "../apoio/stack-local";
+
 type TestAccount = { role: string; email: string; password: string };
 const TEST_USERS_PATH = path.resolve(__dirname, "../../test-users.local.json");
 
@@ -90,7 +92,7 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
     expect(resposta.ok()).toBe(true);
     const info = await resposta.json();
     expect(info.ambiente).toBe("local");
-    expect(info.backendHost).toBe("127.0.0.1:54321");
+    expect(info.backendHost).toBe(backendEsperado());
     expect(info.commit).toMatch(/^[0-9a-f]{40}$/);
     expect(info.buildTime).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });

@@ -26,3 +26,14 @@ export function containerDoBanco(): string {
 export function argumentosPsql(sql: string): string[] {
   return ["exec", containerDoBanco(), "psql", "-U", "postgres", "-t", "-A", "-c", sql];
 }
+
+/**
+ * O backend que o E2E espera encontrar no /api/info da aplicação. O porteiro
+ * comparava um literal — apontar o E2E para uma stack isolada era impossível
+ * sem editar teste. Mesmo contrato do contêiner: variável explícita, padrão
+ * retrocompatível.
+ */
+export function backendEsperado(): string {
+  const escolhido = process.env.E2E_SUPABASE_HOST?.trim();
+  return escolhido && escolhido.length > 0 ? escolhido : "127.0.0.1:54321";
+}

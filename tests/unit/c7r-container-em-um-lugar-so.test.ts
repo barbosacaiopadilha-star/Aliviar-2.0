@@ -82,6 +82,40 @@ describe("C7R · o contêiner do banco vem de um lugar só", () => {
     }
   });
 
+  it("o literal :54321 também mora num lugar só — o porteiro do E2E compara backendEsperado()", () => {
+    // Exceções nominais: o helper (é a definição), o teste do env-guard (testa
+    // o guard, não é porteiro) e verify-bundle-backend.mjs (protege o bundle de
+    // produção CONTRA backend local — flexibilizá-lo abriria a porta que ele
+    // fecha). Este próprio arquivo cita o literal para explicá-lo.
+    const PERMITIDOS_54321 = new Set([
+      "tests/apoio/stack-local.ts",
+      "tests/unit/env-guard.test.ts",
+      "tests/unit/c7r-container-em-um-lugar-so.test.ts",
+      "scripts/verify-bundle-backend.mjs",
+      "scripts/env-guard.mjs",
+      "scripts/with-local-supabase.mjs",
+    ]);
+    let saida = "";
+    try {
+      saida = execFileSync("git", ["grep", "-l", ":543" + "21", "--", "tests", "scripts"], {
+        cwd: RAIZ,
+        encoding: "utf8",
+      });
+    } catch (erro) {
+      const codigo = (erro as { status?: number }).status;
+      if (codigo !== 1) throw erro;
+    }
+    const infratores = saida
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .filter((arquivo) => !PERMITIDOS_54321.has(arquivo));
+    expect(
+      infratores,
+      `estes arquivos fixam o backend :54321; use backendEsperado():\n${infratores.join("\n")}`,
+    ).toEqual([]);
+  });
+
   it("variável vazia ou só espaços não derruba a suíte para um contêiner inexistente", () => {
     const antes = process.env.SUPABASE_DB_CONTAINER;
     process.env.SUPABASE_DB_CONTAINER = "   ";

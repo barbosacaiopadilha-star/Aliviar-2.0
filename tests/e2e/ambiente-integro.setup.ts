@@ -12,6 +12,8 @@
 // =============================================================================
 import { expect, test } from "@playwright/test";
 
+import { backendEsperado } from "../apoio/stack-local";
+
 test.describe("ambiente íntegro antes do fluxo", () => {
   test.describe.configure({ timeout: 60_000 });
 
@@ -22,7 +24,7 @@ test.describe("ambiente íntegro antes do fluxo", () => {
     const info = await resposta.json();
 
     expect(info.ambiente, "ambiente inesperado").toBe("local");
-    expect(info.backendHost, "backend inesperado").toBe("127.0.0.1:54321");
+    expect(info.backendHost, "backend inesperado").toBe(backendEsperado());
     expect(info.commit).toMatch(/^[0-9a-f]{40}$/);
     expect(info.buildTime).toMatch(/^\d{4}-\d{2}-\d{2}T/);
 
