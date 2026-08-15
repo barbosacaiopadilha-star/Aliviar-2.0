@@ -583,7 +583,12 @@ describe("G-5 · fronteira com o 2.C — nenhuma ativação operacional nasce aq
     const migrations = readdirSync(join(RAIZ, "supabase", "migrations")).filter((nome) =>
       nome.endsWith(".sql"),
     );
-    const doItem = migrations.filter((nome) => /1_a|derivacao_do_mapa|mapa_profissional_derivacao/i.test(nome));
+    // `/1_a/` solto casava com qualquer timestamp terminado em 1 seguido de
+    // `_a…` — p.ex. `…21141_autoria_…` (C7R). A âncora diz o que o oráculo
+    // sempre quis dizer: um marcador do ITEM 1.A no nome, não três caracteres.
+    const doItem = migrations.filter((nome) =>
+      /(^|_)1_a(_|$)|item_1a|derivacao_do_mapa|mapa_profissional_derivacao/i.test(nome),
+    );
     expect(doItem).toEqual([]);
   });
 });
