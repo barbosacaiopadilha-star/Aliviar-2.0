@@ -64,7 +64,17 @@ export function ProfessionalsTable({ professionals }: ProfessionalsTableProps) {
                 <TableHeaderCell>Publicação</TableHeaderCell>
                 <TableHeaderCell>Elegibilidade</TableHeaderCell>
                 <TableHeaderCell>
-                  <span className="sr-only">Ações</span>
+                  {/*
+                    C7R · `sr-only` é position:absolute. Sem um ancestral
+                    posicionado DENTRO do contêiner de rolagem, o span ancora
+                    na raiz e estica document.scrollWidth até a borda da tabela
+                    (663px em viewport 390): a página ganhava scroll horizontal
+                    mesmo com o wrapper contendo a tabela direitinho. A âncora
+                    relative prende o span aqui dentro — e o clip volta a valer.
+                  */}
+                  <span className="relative inline-block">
+                    <span className="sr-only">Ações</span>
+                  </span>
                 </TableHeaderCell>
               </TableRow>
             </TableHead>
