@@ -35,7 +35,15 @@ select (:'fase' = 'pre') as ehpre, (:'fase' = 'pos') as ehpos \gset
 \if :ehpre
 \elif :ehpos
 \else
+  -- A recusa é um ERRO SQL de verdade: `\echo` sozinho terminava com exit 0 e
+  -- um operador scriptado seguiria adiante achando que inventariou. O bloco DO
+  -- só levanta a exceção — não lê nem escreve nada — e, com ON_ERROR_STOP, o
+  -- psql termina com código diferente de zero.
   \echo RECUSADO: passe -v fase=pre ou -v fase=pos
+  do $$ begin
+    raise exception 'RECUSADO: passe -v fase=pre ou -v fase=pos'
+      using errcode = 'P0001';
+  end $$;
 \endif
 
 -- -----------------------------------------------------------------------------

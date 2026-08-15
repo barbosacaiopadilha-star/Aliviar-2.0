@@ -299,3 +299,73 @@ d("P-1 · rollback compatível — cenários determinísticos", () => {
     ).toBe("0");
   }, 600_000);
 });
+
+/**
+ * P-2 · O INVENTÁRIO, pelo caminho operacional real (stdin + contêiner).
+ *
+ * Roda DEPOIS dos cenários do P-1, que constroem os bancos certos: `p1_a121`
+ * (ledger 121 — a fase PRE não pode tocar `ciclo_de_vida`, e aqui a coluna nem
+ * existe) e `p1_c127` (ledger 127 pós-retorno — divergência zero). A recusa de
+ * fase tem de ser um ERRO de verdade: exit ≠ 0, não um `\echo` educado.
+ */
+d("P-2 · inventário pré/pós-publicação — fases, recusas e nenhuma escrita", () => {
+  const INVENTARIO = path.join(RAIZ, "scripts", "publicacao", "inventario-pre-publicacao.sql");
+
+  function inventariar(banco: string, vars: string[]): { status: number | null; saida: string } {
+    const r = spawnSync(
+      "docker",
+      ["exec", "-i", container(), "psql", "-U", "postgres", "-d", banco, ...vars],
+      { encoding: "utf8", input: readFileSync(INVENTARIO, "utf8") },
+    );
+    return { status: r.status, saida: String(r.stderr ?? "") + String(r.stdout ?? "") };
+  }
+
+  /** Impressão digital de escrita: contagens + maior id da trilha. */
+  function digital(banco: string): string {
+    return psqlEm(
+      banco,
+      `select (select count(*) from curadoria.professional_profiles)
+        || '|' || (select count(*) from curadoria.audit_logs)
+        || '|' || (select coalesce(max(id), 0) from curadoria.audit_logs);`,
+    );
+  }
+
+  it("fase ausente e fase inválida: exit ≠ 0, mensagem de recusa, nenhuma escrita", () => {
+    const antes = digital("p1_a121");
+    for (const vars of [[], ["-v", "fase=xyz"]]) {
+      const r = inventariar("p1_a121", vars);
+      expect(r.status, r.saida).not.toBe(0);
+      expect(r.saida).toContain("RECUSADO: passe -v fase=pre ou -v fase=pos");
+      // As consultas PRE/POS não podem ter rodado.
+      expect(r.saida).not.toContain("classificacao_prevista");
+      expect(r.saida).not.toContain("divergencias_da_previsao");
+    }
+    expect(digital("p1_a121"), "a recusa escreveu no banco").toBe(antes);
+  });
+
+  it("fase=pre no ledger 121: exit 0, inventário correto, nenhuma escrita", () => {
+    const antes = digital("p1_a121");
+    const r = inventariar("p1_a121", ["-v", "fase=pre"]);
+    expect(r.status, r.saida).toBe(0);
+    // O cenário A tem exatamente 1 profissional, publicado pelo writer antigo.
+    expect(r.saida).toContain("classificacao_prevista");
+    expect(r.saida).toContain("PUBLICADO_ATIVO");
+    expect(r.saida).toContain("backfill 123: ativo e publicado");
+    // Compatibilidade 121 de verdade: nada de `ciclo_de_vida` na fase PRE — e
+    // o banco nem tem a coluna, então qualquer referência teria explodido.
+    expect(r.saida).not.toContain("divergencias_da_previsao");
+    expect(digital("p1_a121"), "a fase PRE escreveu no banco").toBe(antes);
+  });
+
+  it("fase=pos no ledger 127: exit 0, divergência e desvio zero, nenhuma escrita", () => {
+    const antes = digital("p1_c127");
+    const r = inventariar("p1_c127", ["-v", "fase=pos"]);
+    expect(r.status, r.saida).toBe(0);
+    const semEspacos = r.saida.replace(/\s+/g, " ");
+    expect(semEspacos).toContain("divergencias_da_previsao");
+    expect(semEspacos).toMatch(/divergencias_da_previsao -+ 0/);
+    expect(semEspacos).toMatch(/desvio_ciclo_vs_legado -+ 0/);
+    expect(r.saida).not.toContain("classificacao_prevista");
+    expect(digital("p1_c127"), "a fase POS escreveu no banco").toBe(antes);
+  });
+});
