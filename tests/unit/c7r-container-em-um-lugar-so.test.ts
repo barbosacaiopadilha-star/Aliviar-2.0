@@ -18,6 +18,8 @@ const RAIZ = path.resolve(__dirname, "..", "..");
 
 /** Onde o literal é legítimo: a própria definição e os dois scripts de disco. */
 const PERMITIDOS = new Set([
+  // O seed cita o literal justamente para RECUSAR a stack original.
+  "tests/apoio/seed-ciclo-e2e.ts",
   "tests/apoio/stack-local.ts",
   "scripts/backup-local.mjs",
   "scripts/restore-local.mjs",

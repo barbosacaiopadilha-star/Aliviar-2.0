@@ -42,6 +42,8 @@ async function entrarComoAdmin(page: Page) {
     if (m.type() === "error") errosDeConsole.push(m.text());
   });
   await page.goto("/login");
+  // O formulário é controlado: preencher antes da hidratação submete vazio.
+  await page.waitForLoadState("networkidle");
   await page.getByLabel("E-mail").fill(admin.email);
   await page.getByLabel("Senha").fill(admin.password);
   await page.getByRole("button", { name: "Entrar" }).click();
@@ -134,7 +136,7 @@ for (const viewport of VIEWPORTS) {
         await page.goto(`/admin/profissionais/${seed.ids["04"]}`);
         await page.getByLabel("Mudar para").selectOption("PAUSADO");
         await page.getByLabel("Motivo").selectOption("REVISAO_CADASTRAL");
-        await page.getByRole("checkbox").check();
+        await page.getByRole("checkbox", { name: /Confirmo esta mudança/ }).check();
         await page.getByRole("button", { name: "Aplicar mudança" }).click();
         await expect(page.getByText("Estado do profissional atualizado.")).toBeVisible();
         await medirECapturar(page, "ev4-confirmacao", viewport);
@@ -163,26 +165,37 @@ for (const viewport of VIEWPORTS) {
         await medirECapturar(page, "ev7-legado", viewport);
       }
 
-      if (viewport.width === 1440) {
-        // EV-7b · o ato completo: sem justificativa recusa; com ela, aceita.
-        await page.goto(`/admin/profissionais/${seed.ids["07"]}`);
-        await page.getByLabel("Estado atual deste cadastro").selectOption("PREPARACAO");
-        const botao = page.getByRole("button", { name: "Classificar cadastro legado" });
-        await expect(botao).toBeDisabled();
-        await page
-          .getByLabel(/Justificativa da classificação/)
-          .fill("revisão documental do cadastro legado");
-        await botao.click();
-        await expect(page.getByText("Cadastro legado classificado.")).toBeVisible();
-        await medirECapturar(page, "ev7b-legado-classificado", viewport);
-      }
     });
   });
 }
 
+// EV-7b roda POR ÚLTIMO e num teste próprio: ele consome o estado nulo do
+// legado, e os viewports seguintes precisam dele intacto. Declará-lo depois do
+// laço garante a ordem com workers=1.
+test.describe("EV-7b · classificação do legado (por último)", () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+  test("sem justificativa recusa; com ela, aceita", async ({ page }) => {
+    await entrarComoAdmin(page);
+    await page.goto("/admin/profissionais/" + seed.ids["07"]);
+    await page.getByLabel("Estado atual deste cadastro").selectOption("PREPARACAO");
+    const botao = page.getByRole("button", { name: "Classificar cadastro legado" });
+    await expect(botao).toBeDisabled();
+    await page.getByLabel(/Justificativa da classificação/).fill("revisão documental do cadastro legado");
+    await botao.click();
+    await expect(page.getByText("Cadastro legado classificado.")).toBeVisible();
+    await page.screenshot({ path: path.join(DIR, "ev7b-legado-classificado-1440.png"), fullPage: true });
+  });
+});
+
 test.afterAll(() => {
   const proibidos = errosDeConsole.filter(
-    (erro) => !erro.includes("favicon") && !erro.includes("net::ERR_ABORTED"),
+    (erro) =>
+      !erro.includes("favicon") &&
+      !erro.includes("net::ERR_ABORTED") &&
+      // Ambiente local de next start: o script de analytics da Vercel não
+      // existe e o 404 vira ruído de console — não é erro do produto.
+      !erro.includes("_vercel/insights") &&
+      !erro.includes("404 (Not Found)"),
   );
   expect(proibidos, `erros de console durante as capturas:\n${proibidos.join("\n")}`).toEqual([]);
   expect(existsSync(path.join(DIR, "ev1-painel-390.png"))).toBe(true);

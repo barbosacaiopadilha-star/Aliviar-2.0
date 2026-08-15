@@ -66,8 +66,10 @@ export async function semearCicloE2E(): Promise<SeedCiclo> {
       .from("professional_profiles")
       .select("id")
       .eq("professional_identifier", identificador)
-      .maybeSingle();
-    if (existente) return existente.id as string;
+      .limit(1);
+    // Tentativas abortadas podem ter deixado duplicatas; a primeira vale, e o
+    // seed não multiplica.
+    if (existente && existente.length > 0) return existente[0]!.id as string;
 
     const completo = sobre.completo !== false;
     const { data, error } = await service
@@ -155,7 +157,7 @@ export async function semearCicloE2E(): Promise<SeedCiclo> {
   );
   const prova = psql(
     `select (select count(*) from pg_trigger t where t.tgrelid='curadoria.professional_profiles'::regclass and t.tgname in ('assert_ciclo_do_profissional','registrar_trilha_do_ciclo') and t.tgenabled = 'O')
-      || '|' || (select coalesce(ciclo_de_vida::text,'NULO') || coalesce(ciclo_motivo::text,'') || coalesce(ciclo_alterado_por::text,'') from curadoria.professional_profiles where professional_identifier='EV-C7-07');`,
+      || '|' || (select coalesce(ciclo_de_vida::text,'NULO') || coalesce(ciclo_motivo::text,'') || coalesce(ciclo_alterado_por::text,'') from curadoria.professional_profiles where professional_identifier='EV-C7-07' limit 1);`,
   );
   if (prova !== "2|NULO") {
     throw new Error(`legado 07 inconsistente ou trigger não restaurado: "${prova}"`);
