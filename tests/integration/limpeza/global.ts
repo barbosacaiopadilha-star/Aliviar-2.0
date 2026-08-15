@@ -16,7 +16,13 @@ import { contagens, snapshot } from "./inventario";
  * O arquivo de baseline vive fora do Git (`*.local.json`) e é apagado ao fim.
  */
 
-export const BASELINE_PATH = path.resolve(__dirname, "baseline.local.json");
+// C7R: a baseline é POR STACK, não por repositório. Com um arquivo único, uma
+// rodada apontada para a stack isolada e qualquer invocação paralela contra a
+// stack padrão compartilhavam o mesmo caminho — e o teardown de uma apagava a
+// baseline da outra no meio da rodada (a sentinela caía com ENOENT sem que
+// nenhum teste tivesse falhado). O sufixo pelo contêiner dá a cada stack o seu.
+const SUFIXO_DA_STACK = (process.env.SUPABASE_DB_CONTAINER ?? "padrao").replace(/[^a-z0-9-]/gi, "_");
+export const BASELINE_PATH = path.resolve(__dirname, `baseline.${SUFIXO_DA_STACK}.local.json`);
 
 function prepararAmbiente() {
   const raiz = path.resolve(__dirname, "../../..");
