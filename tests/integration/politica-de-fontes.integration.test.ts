@@ -11,6 +11,7 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { listApprovedProviders } from "@/modules/curadoria/repository";
+import { transicaoDespublicar, transicaoPublicar } from "../apoio/publicacao";
 
 const admin = createAdminSupabaseClient();
 
@@ -236,7 +237,7 @@ describe("política de fontes — o que o banco recusa (Supabase local)", () => 
 
       const { error } = await admin
         .from("professional_profiles")
-        .update({ publication_status: "publicado" })
+        .update(await transicaoPublicar(admin))
         .eq("id", prof);
 
       expect(error).toBeNull();
@@ -248,7 +249,7 @@ describe("política de fontes — o que o banco recusa (Supabase local)", () => 
 
       const { error } = await admin
         .from("professional_profiles")
-        .update({ publication_status: "publicado" })
+        .update(await transicaoPublicar(admin))
         .eq("id", prof);
 
       expect(error).not.toBeNull();
@@ -267,7 +268,7 @@ describe("política de fontes — o que o banco recusa (Supabase local)", () => 
 
       const { error } = await admin
         .from("professional_profiles")
-        .update({ publication_status: "publicado" })
+        .update(await transicaoPublicar(admin))
         .eq("id", prof);
 
       expect(error).not.toBeNull();
@@ -285,7 +286,7 @@ describe("política de fontes — o que o banco recusa (Supabase local)", () => 
 
       const { error } = await admin
         .from("professional_profiles")
-        .update({ publication_status: "publicado" })
+        .update(await transicaoPublicar(admin))
         .eq("id", prof);
 
       expect(error).not.toBeNull();
@@ -305,7 +306,7 @@ describe("política de fontes — o que o banco recusa (Supabase local)", () => 
 
       const { error } = await admin
         .from("professional_profiles")
-        .update({ publication_status: "publicado" })
+        .update(await transicaoPublicar(admin))
         .eq("id", prof);
 
       expect(error).not.toBeNull();
@@ -326,7 +327,7 @@ describe("política de fontes — o que o banco recusa (Supabase local)", () => 
 
       const { error } = await admin
         .from("professional_profiles")
-        .update({ publication_status: "publicado" })
+        .update(await transicaoPublicar(admin))
         .eq("id", prof);
 
       expect(error).toBeNull();
@@ -336,7 +337,7 @@ describe("política de fontes — o que o banco recusa (Supabase local)", () => 
   describe("a Rede que o Curador vê", () => {
     it("profissional real, publicado e sem divergência aparece", async () => {
       const prof = await criarPublicavel();
-      await admin.from("professional_profiles").update({ publication_status: "publicado" }).eq("id", prof);
+      await admin.from("professional_profiles").update(await transicaoPublicar(admin)).eq("id", prof);
 
       const rede = await listApprovedProviders(admin);
       expect(rede.map((p) => p.professionalProfileId)).toContain(prof);
@@ -351,7 +352,7 @@ describe("política de fontes — o que o banco recusa (Supabase local)", () => 
 
     it("publicado com divergência crítica aberta some da Rede sem precisar ser despublicado", async () => {
       const prof = await criarPublicavel();
-      await admin.from("professional_profiles").update({ publication_status: "publicado" }).eq("id", prof);
+      await admin.from("professional_profiles").update(await transicaoPublicar(admin)).eq("id", prof);
 
       expect((await listApprovedProviders(admin)).map((p) => p.professionalProfileId)).toContain(prof);
 
@@ -370,7 +371,7 @@ describe("política de fontes — o que o banco recusa (Supabase local)", () => 
 
     it("publicação não significa compatibilidade — quem entra na Rede ainda não foi avaliado para caso nenhum", async () => {
       const prof = await criarPublicavel();
-      await admin.from("professional_profiles").update({ publication_status: "publicado" }).eq("id", prof);
+      await admin.from("professional_profiles").update(await transicaoPublicar(admin)).eq("id", prof);
 
       const rede = await listApprovedProviders(admin);
       const entrada = rede.find((p) => p.professionalProfileId === prof)!;

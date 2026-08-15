@@ -17,6 +17,7 @@ import {
   serviceClient,
   type Sessao,
 } from "./apoio";
+import { transicaoDespublicar, transicaoPublicar } from "../apoio/publicacao";
 
 /**
  * =============================================================================
@@ -457,7 +458,7 @@ describe("GATE-C9 [Bloco C] atos sensíveis deixam rastro em audit_logs", () => 
     const alvo = profissionalPublicado;
     const { error: republicacao } = await service
       .from("professional_profiles")
-      .update({ publication_status: "publicado" })
+      .update(await transicaoPublicar(service))
       .eq("id", alvo);
     expect(republicacao, `pré-condição (publicar): ${republicacao?.message}`).toBeNull();
 
@@ -471,7 +472,7 @@ describe("GATE-C9 [Bloco C] atos sensíveis deixam rastro em audit_logs", () => 
     const linhasAntes = await contarAuditoria();
     const { error } = await admin.client
       .from("professional_profiles")
-      .update({ publication_status: "nao_publicado", updated_by: admin.userId })
+      .update(await transicaoDespublicar(service, admin.userId))
       .eq("id", alvo);
     expect(error, `a despublicação em si precisa funcionar: ${error?.message}`).toBeNull();
     const linhasDepois = await contarAuditoria();

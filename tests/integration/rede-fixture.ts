@@ -76,9 +76,18 @@ export async function seedPublishedProfessional(
 
   // Só agora. O gatilho de publicação confere tudo o que está acima, e é essa
   // conferência que a fixture existe para exercitar.
+  //
+  // OPS-G5 C7R: publicar deixou de ser uma escrita em `publication_status` e
+  // passou a ser uma transição de ciclo, com motivo e autoria — os campos
+  // antigos são espelho mantido pelo trigger. A fixture usa a mesma porta que o
+  // produto usa, que é o que a torna uma fixture e não uma encenação.
   const { error } = await adminClient
     .from("professional_profiles")
-    .update({ publication_status: "publicado" })
+    .update({
+      ciclo_de_vida: "PUBLICADO_ATIVO",
+      ciclo_motivo: "CADASTRO_VALIDADO",
+      ciclo_alterado_por: adminUserId,
+    })
     .eq("id", professional.id);
 
   if (error) {

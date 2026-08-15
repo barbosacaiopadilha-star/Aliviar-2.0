@@ -5,6 +5,7 @@ import { createCuradoriaClient } from "./curadoria-client";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import { transicaoDespublicar, transicaoPublicar } from "../apoio/publicacao";
 import {
   listCompetencyDomains,
   replaceCompetencyDomains,
@@ -216,7 +217,7 @@ describe("perfil profissional — RLS e fundação administrativa (Supabase loca
 
     const { data: published, error: publishError } = await client
       .from("professional_profiles")
-      .update({ publication_status: "publicado", updated_by: user!.id })
+      .update(await transicaoPublicar(client, user!.id))
       .eq("id", created!.id)
       .select("publication_status")
       .single();
@@ -224,15 +225,29 @@ describe("perfil profissional — RLS e fundação administrativa (Supabase loca
     expect(publishError).toBeNull();
     expect(published?.publication_status).toBe("publicado");
 
-    const { data: deactivated, error: statusError } = await client
+    // C7R · o contrato mudou, e o oráculo muda com ele. `status` virou espelho
+    // do ciclo: escrevê-lo direto é recusado pelo banco — este era o writer
+    // paralelo que fazia selo e Mesa divergirem. Medimos a recusa E o caminho
+    // certo: despublicar pela transição, que leva a PAUSADO e espelha
+    // `status = 'inativo'` na mesma instrução.
+    const { error: escritaDireta } = await client
       .from("professional_profiles")
       .update({ status: "inativo", updated_by: user!.id })
+      .eq("id", created!.id);
+    expect(escritaDireta, "o banco voltou a aceitar escrita direta em status").not.toBeNull();
+    expect(escritaDireta!.message).toContain("mudanças de ciclo");
+
+    const { data: deactivated, error: statusError } = await client
+      .from("professional_profiles")
+      .update(await transicaoDespublicar(client, user!.id))
       .eq("id", created!.id)
-      .select("status")
+      .select("status, publication_status, ciclo_de_vida")
       .single();
 
     expect(statusError).toBeNull();
-    expect(deactivated?.status).toBe("inativo");
+    expect(deactivated?.ciclo_de_vida).toBe("PAUSADO");
+    expect(deactivated?.status, "o espelho não acompanhou a pausa").toBe("inativo");
+    expect(deactivated?.publication_status).toBe("nao_publicado");
 
     await client.auth.signOut();
   });

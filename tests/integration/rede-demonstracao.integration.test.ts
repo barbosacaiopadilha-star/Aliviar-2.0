@@ -19,6 +19,7 @@ import { createPatientAccount } from "@/modules/profiles/patient-account-reposit
 import { getOrCreateActiveStory, submitStory } from "@/modules/story/repository";
 
 import { createCuradoriaClient } from "./curadoria-client";
+import { transicaoDespublicar, transicaoPublicar } from "../apoio/publicacao";
 
 const admin = createAdminSupabaseClient();
 
@@ -133,26 +134,41 @@ describe("rede de demonstração — o banco recusa, não a tela (Supabase local
 
     const { error } = await admin
       .from("professional_profiles")
-      .update({ publication_status: "publicado" })
+      .update(await transicaoPublicar(admin))
       .eq("id", id);
 
     expect(error).not.toBeNull();
-    // Duas guardas cobrem isto — o CHECK e o gatilho de requisitos de
-    // publicação. Qual delas responde primeiro é detalhe de ordenação; o que
-    // importa é a recusa dizer do que se trata.
-    expect(error!.message.toLowerCase()).toMatch(/demonstracao|demo_never_published/);
+    // Três guardas cobrem isto — o CHECK, o gatilho de requisitos e a guarda do
+    // ciclo (C7R), que acentua "demonstração". Qual delas responde primeiro é
+    // detalhe de ordenação; o que importa é a recusa dizer do que se trata.
+    expect(error!.message.toLowerCase()).toMatch(/demonstra[çc][ãa]o|demo_never_published/);
   });
 
-  it("perfil de demonstração não pode nascer publicado", async () => {
+  it("perfil de demonstração não nasce publicado — o espelho corrige o cadastro", async () => {
+    // C7R · o contrato mudou, e o oráculo muda com ele. Antes, nascer com
+    // `publication_status: "publicado"` era RECUSADO. Agora os campos antigos
+    // são espelho do ciclo: o INSERT passa, e o espelho do nascimento os
+    // sobrescreve — a linha nasce em PREPARACAO, não publicada. O que se mede é
+    // o RESULTADO: nenhum caminho produz uma demonstração publicada.
+    const identificador = `TESTE-DEMO-${Date.now()}`;
     const { error } = await admin.from("professional_profiles").insert({
       display_name: "Nasce publicado?",
-      professional_identifier: `TESTE-DEMO-${Date.now()}`,
+      professional_identifier: identificador,
       created_by: (await admin.from("profiles").select("id").limit(1).single()).data!.id,
       is_demo: true,
       publication_status: "publicado",
     });
+    expect(error, "o espelho do nascimento deixou de aceitar o INSERT").toBeNull();
 
-    expect(error).not.toBeNull();
+    const { data: linha } = await admin
+      .from("professional_profiles")
+      .select("publication_status, ciclo_de_vida")
+      .eq("professional_identifier", identificador)
+      .single();
+    expect(linha!.publication_status, "uma demonstração nasceu publicada").toBe("nao_publicado");
+    expect(linha!.ciclo_de_vida).toBe("PREPARACAO");
+
+    await admin.from("professional_profiles").delete().eq("professional_identifier", identificador);
   });
 
   it("profissional real que cumpre os requisitos pode ser publicado", async () => {
@@ -180,7 +196,7 @@ describe("rede de demonstração — o banco recusa, não a tela (Supabase local
 
     const { error } = await admin
       .from("professional_profiles")
-      .update({ publication_status: "publicado" })
+      .update(await transicaoPublicar(admin))
       .eq("id", id);
 
     expect(error).toBeNull();
@@ -191,7 +207,7 @@ describe("rede de demonstração — o banco recusa, não a tela (Supabase local
 
     const { error } = await admin
       .from("professional_profiles")
-      .update({ publication_status: "publicado" })
+      .update(await transicaoPublicar(admin))
       .eq("id", id);
 
     expect(error).not.toBeNull();

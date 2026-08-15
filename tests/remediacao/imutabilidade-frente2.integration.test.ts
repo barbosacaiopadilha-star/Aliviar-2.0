@@ -21,6 +21,7 @@ import {
   url,
   type Sessao,
 } from "./apoio";
+import { transicaoDespublicar, transicaoPublicar } from "../apoio/publicacao";
 
 /**
  * =============================================================================
@@ -577,15 +578,14 @@ describe("GATE-F2-TRI [Bloco C/Frente 2] as trilhas carregam o ato — nunca seg
     const alvo = profissionalPublicado;
     const { error: republicacao } = await service
       .from("professional_profiles")
-      .update({ publication_status: "publicado" })
+      .update(await transicaoPublicar(admin.client))
       .eq("id", alvo);
     expect(republicacao, `pré-condição (publicar): ${republicacao?.message}`).toBeNull();
 
     const { error } = await admin.client
       .from("professional_profiles")
       .update({
-        publication_status: "nao_publicado",
-        updated_by: admin.userId,
+        ...(await transicaoDespublicar(admin.client, admin.userId)),
         publication_change_reason: "Pausa combinada com o profissional.",
       })
       .eq("id", alvo);
@@ -675,7 +675,7 @@ describe("GATE-F2-COMP [Bloco C/Frente 2] esvaziamento de competências é ato e
     // menos uma competência (o mesmo formato que a fixture de certificação usa).
     await service
       .from("professional_profiles")
-      .update({ publication_status: "publicado" })
+      .update(await transicaoPublicar(admin.client))
       .eq("id", alvo);
     await service.from("professional_competency_areas").upsert(
       { professional_profile_id: alvo, domain: "saude_fisica", focus: "acompanhamento_continuo" },
