@@ -121,13 +121,19 @@ describe("A Mesa aplica a política na construção da Rede", () => {
   });
 
   it("os demais filtros da Rede permanecem exatamente iguais", () => {
+    // C7R · o oráculo acompanha o contrato: a Mesa deixou de ler o binário
+    // antigo (`status` ∧ `publication_status`) e passou a ler o ciclo — os
+    // campos antigos viraram espelho mantido pelo trigger, e duas réguas
+    // discordando foi o achado que reprovou o Corte 7.
     for (const filtro of [
-      'eq("status", "ativo")',
+      'eq("ciclo_de_vida", "PUBLICADO_ATIVO")',
       'eq("is_demo", false)',
       'eq("is_test_fixture", isCertification)',
-      'eq("publication_status", "publicado")',
     ]) {
       expect(mesa, filtro).toContain(filtro);
+    }
+    for (const antigo of ['eq("status", "ativo")', 'eq("publication_status", "publicado")']) {
+      expect(mesa, `a Mesa voltou a ler o eixo antigo: ${antigo}`).not.toContain(antigo);
     }
   });
 });
