@@ -177,11 +177,13 @@ export default async function EditProfessionalPage({ params }: EditProfessionalP
         <CicloDoProfissionalPanel
           cicloAtual={professional.ciclo}
           destinos={destinosPossiveis(professional.ciclo)}
-          preverImpacto={async (para) => preverImpactoDaTransicaoAction(id, para)}
-          mudarCiclo={async (pedido) => mudarCicloDoProfissionalAction({ profissionalId: id, ...pedido })}
-          classificarLegado={async (pedido) =>
-            classificarLegadoDoProfissionalAction({ profissionalId: id, ...pedido })
-          }
+          // C7R · Seta em linha aqui era closure do Server Component — não é
+          // Server Action, e o React recusa serializá-la na fronteira RSC: a
+          // rota inteira caía no error boundary, em todo render. O padrão é o
+          // dos outros quatro handlers desta página: bind — serializável.
+          preverImpacto={preverImpactoDaTransicaoAction.bind(null, id)}
+          mudarCiclo={mudarCicloDoProfissionalAction.bind(null, id)}
+          classificarLegado={classificarLegadoDoProfissionalAction.bind(null, id)}
         />
       </Card>
 

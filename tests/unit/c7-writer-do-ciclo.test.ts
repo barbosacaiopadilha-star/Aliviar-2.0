@@ -71,7 +71,8 @@ describe("C7 · o papel é exigido antes de tudo", () => {
     estadoAtual("PUBLICADO_ATIVO");
 
     await expect(
-      mudarCicloDoProfissionalAction({ profissionalId: PROFISSIONAL, para: "PAUSADO", motivo: "REVISAO_CADASTRAL" }),
+      mudarCicloDoProfissionalAction(PROFISSIONAL, {
+      para: "PAUSADO", motivo: "REVISAO_CADASTRAL" }),
     ).rejects.toThrow("não autorizado");
 
     expect(mocks.select, "leu o cadastro sem confirmar o papel").not.toHaveBeenCalled();
@@ -89,8 +90,7 @@ describe("C7 · o que é recusado antes de tocar no banco", () => {
     estadoAtual("RETIRADO_ARQUIVADO");
     const eq = bancoResponde(null);
 
-    const r = await mudarCicloDoProfissionalAction({
-      profissionalId: PROFISSIONAL,
+    const r = await mudarCicloDoProfissionalAction(PROFISSIONAL, {
       para: "PUBLICADO_ATIVO",
       motivo: "CADASTRO_VALIDADO",
     });
@@ -103,8 +103,7 @@ describe("C7 · o que é recusado antes de tocar no banco", () => {
     estadoAtual("PUBLICADO_ATIVO");
     const eq = bancoResponde(null);
 
-    const r = await mudarCicloDoProfissionalAction({
-      profissionalId: PROFISSIONAL,
+    const r = await mudarCicloDoProfissionalAction(PROFISSIONAL, {
       para: "PAUSADO",
       motivo: "ENCERRAMENTO_DA_ATUACAO",
     });
@@ -117,8 +116,7 @@ describe("C7 · o que é recusado antes de tocar no banco", () => {
     estadoAtual("PUBLICADO_ATIVO");
     const eq = bancoResponde(null);
 
-    const r = await mudarCicloDoProfissionalAction({
-      profissionalId: PROFISSIONAL,
+    const r = await mudarCicloDoProfissionalAction(PROFISSIONAL, {
       para: "PAUSADO",
       motivo: "OUTRO",
       nota: "curta",
@@ -132,8 +130,7 @@ describe("C7 · o que é recusado antes de tocar no banco", () => {
     estadoAtual(null);
     const eq = bancoResponde(null);
 
-    const r = await mudarCicloDoProfissionalAction({
-      profissionalId: PROFISSIONAL,
+    const r = await mudarCicloDoProfissionalAction(PROFISSIONAL, {
       para: "PUBLICADO_ATIVO",
       motivo: "CADASTRO_VALIDADO",
     });
@@ -152,8 +149,7 @@ describe("C7 · a autoria vem da sessão", () => {
     estadoAtual("PREPARACAO");
     const eq = bancoResponde(null);
 
-    const r = await mudarCicloDoProfissionalAction({
-      profissionalId: PROFISSIONAL,
+    const r = await mudarCicloDoProfissionalAction(PROFISSIONAL, {
       para: "PUBLICADO_ATIVO",
       motivo: "CADASTRO_VALIDADO",
     });
@@ -173,8 +169,7 @@ describe("C7 · a autoria vem da sessão", () => {
     estadoAtual("PREPARACAO");
     bancoResponde(null);
 
-    await mudarCicloDoProfissionalAction({
-      profissionalId: PROFISSIONAL,
+    await mudarCicloDoProfissionalAction(PROFISSIONAL, {
       para: "PUBLICADO_ATIVO",
       motivo: "CADASTRO_VALIDADO",
     });
@@ -194,8 +189,7 @@ describe("C7 · o que só o banco pode recusar", () => {
       message: "Este profissional tem acompanhamento em curso. Encerre ou substitua antes de retirar da rede.",
     });
 
-    const r = await mudarCicloDoProfissionalAction({
-      profissionalId: PROFISSIONAL,
+    const r = await mudarCicloDoProfissionalAction(PROFISSIONAL, {
       para: "RETIRADO_ARQUIVADO",
       motivo: "ENCERRAMENTO_DA_ATUACAO",
     });
@@ -208,8 +202,7 @@ describe("C7 · o que só o banco pode recusar", () => {
     estadoAtual("PUBLICADO_ATIVO");
     const eq = bancoResponde(null);
 
-    const r = await mudarCicloDoProfissionalAction({
-      profissionalId: PROFISSIONAL,
+    const r = await mudarCicloDoProfissionalAction(PROFISSIONAL, {
       para: "RETIRADO_ARQUIVADO",
       motivo: "ENCERRAMENTO_DA_ATUACAO",
     });

@@ -36,7 +36,6 @@ type Resultado<T> = { success: true; data: T } | { success: false; error: string
  */
 
 type PedidoDeTransicao = {
-  profissionalId: string;
   para: CicloDoProfissional;
   motivo: MotivoDoCiclo;
   nota?: string | null;
@@ -111,11 +110,10 @@ export async function preverImpactoDaTransicaoAction(
  * exclusivo, só com justificativa escrita, e com trilha de verbo próprio. ⛔ Não
  * serve para reclassificar quem já tem ciclo — para isso existe a matriz.
  */
-export async function classificarLegadoDoProfissionalAction(pedido: {
-  profissionalId: string;
-  para: CicloDoProfissional;
-  justificativa: string;
-}): Promise<Resultado<{ para: CicloDoProfissional }>> {
+export async function classificarLegadoDoProfissionalAction(
+  profissionalId: string,
+  pedido: { para: CicloDoProfissional; justificativa: string },
+): Promise<Resultado<{ para: CicloDoProfissional }>> {
   const authState = await requireRoleForAction("administrador");
   const supabase = await createServerSupabaseClient();
 
@@ -132,7 +130,7 @@ export async function classificarLegadoDoProfissionalAction(pedido: {
       .schema("curadoria")
       .from("professional_profiles")
       .select("ciclo_de_vida")
-      .eq("id", pedido.profissionalId)
+      .eq("id", profissionalId)
       .single();
     if (erroPerfil) throw erroPerfil;
 
@@ -152,19 +150,19 @@ export async function classificarLegadoDoProfissionalAction(pedido: {
         ciclo_nota: justificativa,
         ciclo_alterado_por: authState.user.id,
       })
-      .eq("id", pedido.profissionalId);
+      .eq("id", profissionalId);
 
     if (error) {
       return {
         success: false,
         error: falhaParaUsuario("profiles.classificacaoDeLegado", error, {
           mensagem: error.message,
-          contexto: { profissionalId: pedido.profissionalId, para: pedido.para },
+          contexto: { profissionalId: profissionalId, para: pedido.para },
         }),
       };
     }
 
-    revalidatePath(`/admin/profissionais/${pedido.profissionalId}`);
+    revalidatePath(`/admin/profissionais/${profissionalId}`);
     revalidatePath("/admin/profissionais");
     return { success: true, data: { para: pedido.para } };
   } catch (erro) {
@@ -172,13 +170,14 @@ export async function classificarLegadoDoProfissionalAction(pedido: {
       success: false,
       error: falhaParaUsuario("profiles.classificacaoDeLegado", erro, {
         mensagem: "Não foi possível classificar este cadastro legado.",
-        contexto: { profissionalId: pedido.profissionalId, para: pedido.para },
+        contexto: { profissionalId: profissionalId, para: pedido.para },
       }),
     };
   }
 }
 
 export async function mudarCicloDoProfissionalAction(
+  profissionalId: string,
   pedido: PedidoDeTransicao,
 ): Promise<Resultado<{ de: CicloDoProfissional; para: CicloDoProfissional }>> {
   const authState = await requireRoleForAction("administrador");
@@ -189,7 +188,7 @@ export async function mudarCicloDoProfissionalAction(
       .schema("curadoria")
       .from("professional_profiles")
       .select("ciclo_de_vida")
-      .eq("id", pedido.profissionalId)
+      .eq("id", profissionalId)
       .single();
     if (erroPerfil) throw erroPerfil;
 
@@ -221,7 +220,7 @@ export async function mudarCicloDoProfissionalAction(
         // — o trigger o sobrescreve —, e mandar mesmo assim sugeriria que o
         // relógio do cliente conta para alguma coisa. Não conta.
       })
-      .eq("id", pedido.profissionalId);
+      .eq("id", profissionalId);
 
     if (error) {
       // O trigger recusou. A mensagem dele já é escrita para gente — a guarda
@@ -231,12 +230,12 @@ export async function mudarCicloDoProfissionalAction(
         success: false,
         error: falhaParaUsuario("profiles.cicloDoProfissional", error, {
           mensagem: error.message,
-          contexto: { profissionalId: pedido.profissionalId, para: pedido.para },
+          contexto: { profissionalId: profissionalId, para: pedido.para },
         }),
       };
     }
 
-    revalidatePath(`/admin/profissionais/${pedido.profissionalId}`);
+    revalidatePath(`/admin/profissionais/${profissionalId}`);
     revalidatePath("/admin/profissionais");
     return { success: true, data: { de: de as CicloDoProfissional, para: pedido.para } };
   } catch (erro) {
@@ -244,7 +243,7 @@ export async function mudarCicloDoProfissionalAction(
       success: false,
       error: falhaParaUsuario("profiles.cicloDoProfissional", erro, {
         mensagem: "Não foi possível mudar o ciclo deste profissional.",
-        contexto: { profissionalId: pedido.profissionalId, para: pedido.para },
+        contexto: { profissionalId: profissionalId, para: pedido.para },
       }),
     };
   }
