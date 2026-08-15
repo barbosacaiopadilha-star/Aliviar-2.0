@@ -206,39 +206,93 @@ export function avaliarTransicao(pedido: PedidoDeTransicao): Veredito {
 }
 
 /**
- * ELEGIBILIDADE EFETIVA — o que a lista do Admin mostra.
+ * ELEGIBILIDADE EFETIVA — **espelho** de `curadoria.elegibilidade_do_profissional`.
  *
- * Só `PUBLICADO_ATIVO` entra em composição nova. `PREPARACAO`, `PAUSADO`,
- * `RETIRADO_ARQUIVADO` e **o legado ambíguo (nulo)** ficam de fora. DEMO e
- * fixture também, pelas mesmas razões de sempre.
+ * ⚠️ A autoridade é o SQL. Esta função existe para que a interface possa
+ * decidir sem uma ida ao banco por linha, e **nada mais**. Se as duas
+ * divergirem, o teste de paridade falha nomeando a combinação — foi exatamente
+ * uma divergência dessas (selo lendo o ciclo, Mesa lendo os campos antigos) que
+ * reprovou o Corte 7.
  *
- * ⛔ Isto **não substitui** a elegibilidade canônica da Mesa
- * (`mesa-cruzamento.ts`), que continua sendo a fonte de quem compõe. É a mesma
- * regra dita na lista, para que o Admin veja o efeito do ciclo — e não um badge
- * fixo que mente depois da primeira despublicação.
+ * A ordem dos motivos não é estética: primeiro o que é absoluto (demo, fixture),
+ * depois o estado, por último o que é corrigível. É a ordem em que a pessoa
+ * precisa ouvir.
  */
 export type FatosDeElegibilidade = {
   ciclo: CicloDoProfissional | null;
   isDemo: boolean;
   isTestFixture: boolean;
+  /** Divergências críticas em aberto. Ausente conta como zero. */
+  divergenciasCriticas?: number;
 };
+
+/** Os mesmos códigos que o predicado SQL devolve em `reason_code`. */
+export type CodigoDeElegibilidade =
+  | "ELEGIVEL"
+  | "DEMO"
+  | "FIXTURE"
+  | "LEGADO_NAO_CLASSIFICADO"
+  | "DIVERGENCIA_CRITICA"
+  | CicloDoProfissional;
 
 export type Elegibilidade = {
   elegivel: boolean;
-  /** Por que não. Vazio quando elegível. */
+  /** Por que não, em português. Vazio quando elegível. */
   motivo: string | null;
+  /** O mesmo código do SQL — é por ele que a paridade é comparada. */
+  codigo: CodigoDeElegibilidade;
+  /** Tudo o que bloqueia, não só o primeiro. */
+  bloqueios: string[];
 };
 
+export const ROTULO_DO_BLOQUEIO = {
+  DEMO: "Perfil de demonstração",
+  FIXTURE: "Perfil de teste",
+  LEGADO_NAO_CLASSIFICADO: "Legado sem ciclo classificado",
+  DIVERGENCIA_CRITICA: "Divergência crítica em aberto",
+} as const;
+
 export function elegibilidadeEfetiva(fatos: FatosDeElegibilidade): Elegibilidade {
-  if (fatos.isDemo) return { elegivel: false, motivo: "Perfil de demonstração" };
-  if (fatos.isTestFixture) return { elegivel: false, motivo: "Perfil de teste" };
+  const criticas = fatos.divergenciasCriticas ?? 0;
+
+  const bloqueios: string[] = [];
+  if (fatos.isDemo) bloqueios.push(ROTULO_DO_BLOQUEIO.DEMO);
+  if (fatos.isTestFixture) bloqueios.push(ROTULO_DO_BLOQUEIO.FIXTURE);
+  if (fatos.ciclo === null) bloqueios.push(ROTULO_DO_BLOQUEIO.LEGADO_NAO_CLASSIFICADO);
+  if (fatos.ciclo !== null && fatos.ciclo !== "PUBLICADO_ATIVO") {
+    bloqueios.push(`Ciclo em ${fatos.ciclo}`);
+  }
+  if (criticas > 0) bloqueios.push(ROTULO_DO_BLOQUEIO.DIVERGENCIA_CRITICA);
+
+  const elegivel =
+    !fatos.isDemo && !fatos.isTestFixture && fatos.ciclo === "PUBLICADO_ATIVO" && criticas === 0;
+
+  if (fatos.isDemo) {
+    return { elegivel, motivo: ROTULO_DO_BLOQUEIO.DEMO, codigo: "DEMO", bloqueios };
+  }
+  if (fatos.isTestFixture) {
+    return { elegivel, motivo: ROTULO_DO_BLOQUEIO.FIXTURE, codigo: "FIXTURE", bloqueios };
+  }
   if (fatos.ciclo === null) {
-    return { elegivel: false, motivo: "Legado sem ciclo classificado — pendente de revisão" };
+    return {
+      elegivel,
+      motivo: "Legado sem ciclo classificado — pendente de revisão",
+      codigo: "LEGADO_NAO_CLASSIFICADO",
+      bloqueios,
+    };
   }
   if (fatos.ciclo !== "PUBLICADO_ATIVO") {
-    return { elegivel: false, motivo: ROTULO_DO_CICLO[fatos.ciclo] };
+    return { elegivel, motivo: ROTULO_DO_CICLO[fatos.ciclo], codigo: fatos.ciclo, bloqueios };
   }
-  return { elegivel: true, motivo: null };
+  if (criticas > 0) {
+    return {
+      elegivel,
+      motivo: ROTULO_DO_BLOQUEIO.DIVERGENCIA_CRITICA,
+      codigo: "DIVERGENCIA_CRITICA",
+      bloqueios,
+    };
+  }
+  return { elegivel: true, motivo: null, codigo: "ELEGIVEL", bloqueios };
 }
 
 /**
