@@ -19,42 +19,45 @@
 
 begin;
 
--- Execução concorrente incompatível: uma segunda sessão espera/atropela. O
--- advisory lock transacional serializa; a transação única garante tudo-ou-nada.
+-- Execução concorrente incompatível: o advisory lock transacional serializa;
+-- a transação única garante tudo-ou-nada.
 select pg_advisory_xact_lock(hashtext('curadoria.rollback-compativel-c7'));
 
-do $$
-declare
-  v_fn text;
-  v_ledger integer;
-  v_seguro record;
-begin
-  -- G1 · Confirmação deliberada do operador e do banco alvo.
-  if current_setting('vars.confirmo', true) is null then
-    -- psql -v vira variável de sessão só via \set; lemos por placeholder abaixo.
-    null;
-  end if;
-end $$;
-
--- G1 (efetiva) · o operador declara intenção e nomeia o banco.
+-- G1 · CONFIRMAÇÃO DO OPERADOR — separada das verificações objetivas.
+--
+-- As variáveis psql são exigidas ANTES de qualquer alteração e entram na
+-- transação por set_config, fora de corpo dollar-quoted: a guarda PL/pgSQL
+-- as lê por current_setting e aborta com RAISE EXCEPTION nomeado — nunca por
+-- artifício aritmético. ⚠️ Estes valores vêm do operador e NÃO provam a
+-- identidade do banco: a prova objetiva são as guardas G2–G4 (ledger, a
+-- migration de autoria e a forma da função), metadados que o operador não
+-- controla por parâmetro.
+-- Variável ausente vira valor vazio — e cai na MESMA recusa nomeada da guarda,
+-- com código de saída de erro (⛔ `\quit` sai com 0 e mascararia a recusa).
 \if :{?confirmo}
 \else
-  \echo 'RECUSADO: passe -v confirmo=COMPENSAR-C7'
-  \quit 1
+  \set confirmo ''
 \endif
 \if :{?banco}
 \else
-  \echo 'RECUSADO: passe -v banco=<current_database esperado>'
-  \quit 1
+  \set banco ''
 \endif
 
-select case
-  when :'confirmo' <> 'COMPENSAR-C7'
-    then (select 1/0)  -- confirmação errada: aborta a transação
-  when current_database() <> :'banco'
-    then (select 1/0)  -- banco errado: aborta
-  else 0
-end as guarda_1;
+select set_config('rollback_c7.confirmo', :'confirmo', true);
+select set_config('rollback_c7.banco', :'banco', true);
+
+do $$
+begin
+  if current_setting('rollback_c7.confirmo', true) is distinct from 'COMPENSAR-C7' then
+    raise exception 'RECUSADO (G1): confirmação do operador ausente ou diferente de COMPENSAR-C7.'
+      using errcode = 'P0001';
+  end if;
+  if current_setting('rollback_c7.banco', true) is distinct from current_database() then
+    raise exception 'RECUSADO (G1): o banco declarado (%) não é o banco conectado (%).',
+      current_setting('rollback_c7.banco', true), current_database()
+      using errcode = 'P0001';
+  end if;
+end $$;
 
 do $$
 declare
