@@ -208,10 +208,15 @@ export async function loadMesaCruzamento(
     supabase
       .from("professional_profiles")
       .select("id, display_name")
-      .eq("status", "ativo")
+      // OPS-G5 C7R: quem compõe é quem está PUBLICADO_ATIVO, não quem tem os
+      // campos antigos numa certa combinação. Os dois eixos discordavam — foi o
+      // achado que reprovou o Corte 7 —, e agora `status` e `publication_status`
+      // são espelho mantido pelo trigger. Ler o ciclo é ler a fonte.
+      .eq("ciclo_de_vida", "PUBLICADO_ATIVO")
       .eq("is_demo", false)
-      .eq("is_test_fixture", isCertification)
-      .eq("publication_status", "publicado"),
+      // A certificação compõe com fixtures DE PROPÓSITO: é o arnês que prova o
+      // ciclo inteiro sem tocar em gente de verdade. Fora dela, fixture nunca.
+      .eq("is_test_fixture", isCertification),
     listCriticalDivergenceBlocklist(supabase),
   ]);
 

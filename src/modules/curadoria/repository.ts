@@ -217,10 +217,12 @@ export async function listApprovedProviders(
     .select(
       "id, display_name, status, experience_level, intake_approach, offers_continuous_care, availability_window, crm_uf",
     )
-    .eq("status", "ativo")
+    // OPS-G5 C7R: a mesma régua da Mesa, lida na mesma coluna. Enquanto este
+    // filtro e o selo liam eixos diferentes, um administrador via "não elegível"
+    // para quem a composição estava oferecendo.
+    .eq("ciclo_de_vida", "PUBLICADO_ATIVO")
     .eq("is_demo", false)
-    .eq("is_test_fixture", options?.certification === true)
-    .eq("publication_status", "publicado");
+    .eq("is_test_fixture", options?.certification === true);
 
   if (error) throw erroDeBanco("Não foi possível carregar os profissionais da Rede.", error);
 

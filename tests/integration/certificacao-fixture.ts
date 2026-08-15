@@ -209,7 +209,32 @@ async function ensureProfessional(
     .eq("professional_identifier", identifier)
     .maybeSingle();
 
-  if (existente) return existente.id as string;
+  if (existente) {
+    // OPS-G5 C7R: "ensure" passou a significar garantir o ESTADO, não só a
+    // existência. As fixtures que sobreviveram a rodadas anteriores estão em
+    // `PREPARACAO` desde a ressincronização, e a composição de certificação lê
+    // o ciclo. Publicá-las aqui é a porta da frente — com motivo e autoria —,
+    // e não uma limpeza: nenhuma linha é apagada.
+    const id = existente.id as string;
+    const { data: linha } = await admin
+      .from("professional_profiles")
+      .select("ciclo_de_vida")
+      .eq("id", id)
+      .single();
+
+    if (linha?.ciclo_de_vida !== "PUBLICADO_ATIVO") {
+      const { error } = await admin
+        .from("professional_profiles")
+        .update({
+          ciclo_de_vida: "PUBLICADO_ATIVO",
+          ciclo_motivo: "CADASTRO_VALIDADO",
+          ciclo_alterado_por: adminId,
+        })
+        .eq("id", id);
+      if (error) throw new Error(`fixture ${spec.key}: republicação — ${error.message}`);
+    }
+    return id;
+  }
 
   // 1. Rascunho. Nasce não publicado, como qualquer cadastro.
   const { data, error } = await admin
@@ -325,11 +350,18 @@ async function ensureProfessional(
     focus: "acompanhamento_continuo",
   });
 
-  // 5. Publicação pelo gatilho real. Se algum requisito acima faltasse, isto
-  //    falharia — e é essa falha que a fixture existe para poder provocar.
+  // 5. Publicação pela porta da frente. OPS-G5 C7R: publicar deixou de ser uma
+  //    escrita em `publication_status` e passou a ser uma transição de ciclo,
+  //    com motivo e autoria — os campos antigos são espelho mantido pelo
+  //    trigger. Se algum requisito acima faltasse, isto falharia, e é essa
+  //    falha que a fixture existe para poder provocar.
   const { error: pubError } = await admin
     .from("professional_profiles")
-    .update({ publication_status: "publicado" })
+    .update({
+      ciclo_de_vida: "PUBLICADO_ATIVO",
+      ciclo_motivo: "CADASTRO_VALIDADO",
+      ciclo_alterado_por: adminId,
+    })
     .eq("id", id);
   if (pubError) throw new Error(`fixture ${spec.key}: publicação — ${pubError.message}`);
 
