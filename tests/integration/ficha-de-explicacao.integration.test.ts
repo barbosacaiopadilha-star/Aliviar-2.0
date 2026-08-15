@@ -24,8 +24,9 @@ import { construirFicha, type EntradaDaFicha } from "@/modules/curadoria/ficha-d
 import { paraMesa, paraPaciente, paraRelatorio } from "@/modules/curadoria/ficha-de-explicacao-vocabulario";
 import { conceitosForaDoMotor } from "@/modules/curadoria/participacao-no-motor";
 import { violatesPatientVocabulary } from "@/modules/paciente/experiencia";
+import { containerDoBanco } from "../apoio/stack-local";
 
-const CONTAINER = "supabase_db_aliviar-conexao";
+const CONTAINER = containerDoBanco();
 
 function psql(sql: string): { ok: boolean; saida: string } {
   try {

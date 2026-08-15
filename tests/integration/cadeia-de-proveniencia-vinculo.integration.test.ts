@@ -19,8 +19,9 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { loadCadeiaDeProveniencia } from "@/modules/curadoria/cadeia-de-proveniencia-repository";
+import { containerDoBanco } from "../apoio/stack-local";
 
-const CONTAINER = "supabase_db_aliviar-conexao";
+const CONTAINER = containerDoBanco();
 
 function psql(sql: string): { ok: boolean; saida: string } {
   try {

@@ -18,6 +18,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
 import { createCuradoriaClient } from "./curadoria-client";
+import { containerDoBanco } from "../apoio/stack-local";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
@@ -26,7 +27,7 @@ const admin = createAdminSupabaseClient();
 function psql(query: string): string {
   return execFileSync(
     "docker",
-    ["exec", "supabase_db_aliviar-conexao", "psql", "-U", "postgres", "-t", "-A", "-c", query],
+    ["exec", containerDoBanco(), "psql", "-U", "postgres", "-t", "-A", "-c", query],
     { encoding: "utf-8" },
   ).trim();
 }

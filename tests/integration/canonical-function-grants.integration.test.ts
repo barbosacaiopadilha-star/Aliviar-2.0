@@ -25,8 +25,9 @@
 import { execFileSync } from "node:child_process";
 
 import { beforeAll, describe, expect, it } from "vitest";
+import { containerDoBanco } from "../apoio/stack-local";
 
-const CONTAINER = "supabase_db_aliviar-conexao";
+const CONTAINER = containerDoBanco();
 
 // Assinatura completa: `has_function_privilege` precisa dela para desambiguar
 // sobrecargas, e escrevê-la aqui documenta o contrato que o teste protege.

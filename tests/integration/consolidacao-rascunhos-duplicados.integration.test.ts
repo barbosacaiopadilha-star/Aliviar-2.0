@@ -20,6 +20,7 @@ import { randomUUID } from "node:crypto";
 import { afterEach, beforeAll, afterAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import { containerDoBanco } from "../apoio/stack-local";
 
 const supabase = createAdminSupabaseClient();
 let profileId: string;
@@ -73,7 +74,7 @@ async function sql(query: string, params: (string | null)[] = []): Promise<strin
 
   const saida = execFileSync(
     "docker",
-    ["exec", "supabase_db_aliviar-conexao", "psql", "-U", "postgres", "-t", "-A", "-c", substituido],
+    ["exec", containerDoBanco(), "psql", "-U", "postgres", "-t", "-A", "-c", substituido],
     { encoding: "utf-8" },
   );
 

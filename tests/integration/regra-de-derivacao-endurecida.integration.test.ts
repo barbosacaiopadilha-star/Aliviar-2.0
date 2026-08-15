@@ -17,8 +17,9 @@
 import { execFileSync } from "node:child_process";
 
 import { afterAll, describe, expect, it } from "vitest";
+import { containerDoBanco } from "../apoio/stack-local";
 
-const CONTAINER = "supabase_db_aliviar-conexao";
+const CONTAINER = containerDoBanco();
 const REGRAS = "curadoria.derivation_rules";
 const PROPOSTAS = "curadoria.derivation_proposals";
 

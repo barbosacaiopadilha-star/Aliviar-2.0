@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 
 import { afterAll, describe, expect, it } from "vitest";
+import { containerDoBanco } from "../apoio/stack-local";
 
 /**
  * =============================================================================
@@ -21,7 +22,7 @@ import { afterAll, describe, expect, it } from "vitest";
  * Fixtures sintéticas por UUID, tudo em transação revertida, resíduo zero.
  */
 
-const CONTAINER = "supabase_db_aliviar-conexao";
+const CONTAINER = containerDoBanco();
 
 function psql(script: string): string {
   return execFileSync(

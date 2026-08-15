@@ -20,10 +20,11 @@ import { execFile, execFileSync } from "node:child_process";
 import { promisify } from "node:util";
 
 import { afterAll, describe, expect, it } from "vitest";
+import { containerDoBanco } from "../apoio/stack-local";
 
 const execFileAsync = promisify(execFile);
 
-const CONTAINER = "supabase_db_aliviar-conexao";
+const CONTAINER = containerDoBanco();
 const REGRAS = "curadoria.derivation_rules";
 const TRANSICOES = "curadoria.derivation_rule_transitions";
 const PROPOSTAS = "curadoria.derivation_proposals";

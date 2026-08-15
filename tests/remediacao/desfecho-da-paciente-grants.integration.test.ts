@@ -21,8 +21,9 @@ import { createClient } from "@supabase/supabase-js";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { anonKey, url } from "./apoio";
+import { containerDoBanco } from "../apoio/stack-local";
 
-const CONTAINER = "supabase_db_aliviar-conexao";
+const CONTAINER = containerDoBanco();
 
 const ESCRITA_DA_PACIENTE = "curadoria.acknowledge_case_need(uuid, text, text, text)";
 /** O precedente obrigatório: a ACL da escrita dela tem de coincidir com a dele. */
