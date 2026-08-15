@@ -22,6 +22,7 @@ import {
 import { listPublicationPendencies } from "@/modules/profiles/publication-pendencies";
 import { destinosPossiveis } from "@/modules/profiles/ciclo-do-profissional";
 import {
+  classificarLegadoDoProfissionalAction,
   mudarCicloDoProfissionalAction,
   preverImpactoDaTransicaoAction,
 } from "@/modules/profiles/ciclo-do-profissional-actions";
@@ -178,6 +179,9 @@ export default async function EditProfessionalPage({ params }: EditProfessionalP
           destinos={destinosPossiveis(professional.ciclo)}
           preverImpacto={async (para) => preverImpactoDaTransicaoAction(id, para)}
           mudarCiclo={async (pedido) => mudarCicloDoProfissionalAction({ profissionalId: id, ...pedido })}
+          classificarLegado={async (pedido) =>
+            classificarLegadoDoProfissionalAction({ profissionalId: id, ...pedido })
+          }
         />
       </Card>
 

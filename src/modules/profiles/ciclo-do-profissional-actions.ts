@@ -7,6 +7,8 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRoleForAction } from "@/modules/auth/guard";
 
 import {
+  NOTA_MAXIMA,
+  NOTA_MINIMA,
   avaliarTransicao,
   preverImpacto,
   type CicloDoProfissional,
@@ -93,6 +95,84 @@ export async function preverImpactoDaTransicaoAction(
       error: falhaParaUsuario("profiles.impactoDoCiclo", erro, {
         mensagem: "Não foi possível calcular o impacto desta mudança.",
         contexto: { profissionalId, para },
+      }),
+    };
+  }
+}
+
+/**
+ * CLASSIFICAÇÃO DE LEGADO — ato próprio, não transição.
+ *
+ * Antes da remediação, o banco recusava qualquer saída de `NULL` — inclusive a
+ * revisão que a própria mensagem de erro prometia. A promessa e a guarda se
+ * contradiziam, e não havia caminho nenhum para classificar um cadastro legado.
+ *
+ * Agora há um, e ele é estreito de propósito: só de `NULL`, só com motivo
+ * exclusivo, só com justificativa escrita, e com trilha de verbo próprio. ⛔ Não
+ * serve para reclassificar quem já tem ciclo — para isso existe a matriz.
+ */
+export async function classificarLegadoDoProfissionalAction(pedido: {
+  profissionalId: string;
+  para: CicloDoProfissional;
+  justificativa: string;
+}): Promise<Resultado<{ para: CicloDoProfissional }>> {
+  const authState = await requireRoleForAction("administrador");
+  const supabase = await createServerSupabaseClient();
+
+  const justificativa = pedido.justificativa.trim();
+  if (justificativa.length < NOTA_MINIMA || justificativa.length > NOTA_MAXIMA) {
+    return {
+      success: false,
+      error: `A classificação exige uma justificativa de ${NOTA_MINIMA} a ${NOTA_MAXIMA} caracteres.`,
+    };
+  }
+
+  try {
+    const { data: profissional, error: erroPerfil } = await supabase
+      .schema("curadoria")
+      .from("professional_profiles")
+      .select("ciclo_de_vida")
+      .eq("id", pedido.profissionalId)
+      .single();
+    if (erroPerfil) throw erroPerfil;
+
+    if (profissional.ciclo_de_vida !== null) {
+      return {
+        success: false,
+        error: "Este cadastro já tem ciclo classificado. Use a mudança de estado correspondente.",
+      };
+    }
+
+    const { error } = await supabase
+      .schema("curadoria")
+      .from("professional_profiles")
+      .update({
+        ciclo_de_vida: pedido.para,
+        ciclo_motivo: "CLASSIFICACAO_DE_LEGADO",
+        ciclo_nota: justificativa,
+        ciclo_alterado_por: authState.user.id,
+      })
+      .eq("id", pedido.profissionalId);
+
+    if (error) {
+      return {
+        success: false,
+        error: falhaParaUsuario("profiles.classificacaoDeLegado", error, {
+          mensagem: error.message,
+          contexto: { profissionalId: pedido.profissionalId, para: pedido.para },
+        }),
+      };
+    }
+
+    revalidatePath(`/admin/profissionais/${pedido.profissionalId}`);
+    revalidatePath("/admin/profissionais");
+    return { success: true, data: { para: pedido.para } };
+  } catch (erro) {
+    return {
+      success: false,
+      error: falhaParaUsuario("profiles.classificacaoDeLegado", erro, {
+        mensagem: "Não foi possível classificar este cadastro legado.",
+        contexto: { profissionalId: pedido.profissionalId, para: pedido.para },
       }),
     };
   }

@@ -9,6 +9,7 @@ import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import {
+  CICLOS,
   NOTA_MAXIMA,
   NOTA_MINIMA,
   ROTULO_DO_CICLO,
@@ -42,9 +43,14 @@ type Props = {
     motivo: MotivoDoCiclo;
     nota: string | null;
   }) => Promise<{ success: true; data: unknown } | { success: false; error: string }>;
+  /** Só existe para legado sem ciclo. Ausente = a superfície não é oferecida. */
+  classificarLegado?: (pedido: {
+    para: CicloDoProfissional;
+    justificativa: string;
+  }) => Promise<{ success: true; data: unknown } | { success: false; error: string }>;
 };
 
-export function CicloDoProfissionalPanel({ cicloAtual, destinos, preverImpacto, mudarCiclo }: Props) {
+export function CicloDoProfissionalPanel({ cicloAtual, destinos, preverImpacto, mudarCiclo, classificarLegado }: Props) {
   const [para, setPara] = useState<CicloDoProfissional | "">("");
   const [motivo, setMotivo] = useState<MotivoDoCiclo | "">("");
   const [nota, setNota] = useState("");
@@ -52,6 +58,8 @@ export function CicloDoProfissionalPanel({ cicloAtual, destinos, preverImpacto, 
   const [confirmado, setConfirmado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [feito, setFeito] = useState(false);
+  const [legadoPara, setLegadoPara] = useState<CicloDoProfissional | "">("");
+  const [legadoNota, setLegadoNota] = useState("");
   const [pendente, iniciar] = useTransition();
 
   const motivosPossiveis = cicloAtual && para ? motivosDaTransicao(cicloAtual, para) : [];
@@ -103,7 +111,67 @@ export function CicloDoProfissionalPanel({ cicloAtual, destinos, preverImpacto, 
         </strong>
       </p>
 
-      {destinos.length === 0 ? (
+      {cicloAtual === null && classificarLegado ? (
+        <div className="space-y-4 rounded-md border border-border-strong bg-recessed p-4">
+          <p className="text-sm text-ink">
+            Este cadastro é legado e nunca teve o ciclo classificado. Registre em que estado ele está
+            hoje, com a sua justificativa — ⛔ nenhuma data ou autoria retroativa é inventada, e
+            enquanto não for classificado ele não é apresentado a paciente nenhuma.
+          </p>
+
+          <FormField label="Estado atual deste cadastro" htmlFor="legado-estado">
+            <Select
+              id="legado-estado"
+              value={legadoPara}
+              onChange={(evento) => setLegadoPara(evento.target.value as CicloDoProfissional | "")}
+            >
+              <option value="">— escolha o estado —</option>
+              {CICLOS.map((c) => (
+                <option key={c} value={c}>
+                  {ROTULO_DO_CICLO[c]}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+
+          <FormField
+            label={`Justificativa da classificação (${NOTA_MINIMA} a ${NOTA_MAXIMA} caracteres)`}
+            htmlFor="legado-justificativa"
+          >
+            <Input
+              id="legado-justificativa"
+              label="Justificativa da classificação"
+              hideLabel
+              value={legadoNota}
+              maxLength={NOTA_MAXIMA}
+              onChange={(evento) => setLegadoNota(evento.target.value)}
+            />
+          </FormField>
+
+          {erro ? <FormMessage variant="error">{erro}</FormMessage> : null}
+          {feito ? <FormMessage variant="success">Cadastro legado classificado.</FormMessage> : null}
+
+          <Button
+            type="button"
+            isLoading={pendente}
+            disabled={!legadoPara || legadoNota.trim().length < NOTA_MINIMA}
+            onClick={() => {
+              if (!legadoPara) return;
+              iniciar(async () => {
+                const r = await classificarLegado({ para: legadoPara, justificativa: legadoNota.trim() });
+                if (r.success) {
+                  setFeito(true);
+                  setErro(null);
+                } else {
+                  setErro(r.error);
+                }
+              });
+            }}
+          >
+            Classificar cadastro legado
+          </Button>
+        </div>
+      ) : destinos.length === 0 ? (
         <FormMessage variant="error">
           {cicloAtual
             ? "Não há mudança de estado possível a partir daqui."
