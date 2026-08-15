@@ -43,6 +43,37 @@ async function criarProfissional(ciclo: CicloDoProfissional | null) {
   if (error) throw new Error(`fixture: ${error.message}`);
   const id = data!.id as string;
 
+  // C7R: publicar pela transição do ciclo passa por `assert_publication_requirements`,
+  // como qualquer outra publicação — antes da remediação a guarda era pulada,
+  // porque o `UPDATE` da transição não menciona `publication_status` e o Postgres
+  // avalia a lista de colunas do gatilho contra o SET da instrução. A fixture
+  // agora satisfaz a porta de verdade, em vez de entrar por uma fresta.
+  const { error: eReg } = await service
+    .from("professional_profiles")
+    .update({
+      crm: "000000",
+      crm_uf: "SP",
+      registration_status: "regular",
+      // A proveniência é cobrada por CHECK: registro verificado sem quem e quando
+      // verificou não é verificação, é afirmação.
+      registration_source: "Fixture sintética C7",
+      registration_verified_at: new Date().toISOString(),
+      registration_verified_by: await autorSintetico(),
+    })
+    .eq("id", id);
+  if (eReg) throw new Error(`fixture do registro: ${eReg.message}`);
+  const { error: eArea } = await service
+    .from("professional_practice_areas")
+    .insert({
+      professional_profile_id: id,
+      raw_text: "Área sintética C7",
+      verification_status: "verificado",
+      source: "Fixture sintética C7",
+      verified_at: new Date().toISOString(),
+      verified_by: await autorSintetico(),
+    });
+  if (eArea) throw new Error(`fixture da área: ${eArea.message}`);
+
   // Ninguém nasce no meio do ciclo — nem a fixture. O ponto de partida é
   // alcançado caminhando pelas transições reais, que é também o único caminho
   // que a guarda de nascimento deixa aberto. Se um degrau quebrar, o teste que
@@ -347,10 +378,41 @@ describe("C7 · motivo, nota, autoria e instante", () => {
     expect(error?.message).toContain("tem autor");
   });
 
-  it("instante ausente é recusado", async () => {
+  it("o instante é do banco: o que o cliente manda é ignorado", async () => {
+    // C7R · o contrato mudou, e este oráculo muda com ele. Antes o carimbo vinha
+    // do aplicativo e o trigger só exigia que fosse diferente do anterior — o
+    // que aceitava retroceder para 2020. Agora o banco atribui o instante, e o
+    // valor do cliente não é consultado: mandar nulo, ou mandar 2020, dá no
+    // mesmo, porque nenhum dos dois é lido.
     const id = await criarProfissional("PUBLICADO_ATIVO");
-    const { error } = await transitar(id, "PAUSADO", { motivo: "REVISAO_CADASTRAL", quando: null });
-    expect(error?.message).toContain("data própria");
+    const antes = new Date();
+
+    expect((await transitar(id, "PAUSADO", { motivo: "REVISAO_CADASTRAL", quando: null })).error).toBeNull();
+
+    const { data } = await service
+      .from("professional_profiles")
+      .select("ciclo_alterado_em")
+      .eq("id", id)
+      .single();
+    const gravado = new Date(data!.ciclo_alterado_em as string);
+    expect(gravado.getTime(), "o banco não carimbou o instante").toBeGreaterThanOrEqual(antes.getTime() - 1000);
+  });
+
+  it("carimbo antigo do cliente não retrocede o histórico", async () => {
+    const id = await criarProfissional("PUBLICADO_ATIVO");
+    expect(
+      (await transitar(id, "PAUSADO", { motivo: "REVISAO_CADASTRAL", quando: "2020-01-01T00:00:00.000Z" })).error,
+    ).toBeNull();
+
+    const { data } = await service
+      .from("professional_profiles")
+      .select("ciclo_alterado_em")
+      .eq("id", id)
+      .single();
+    expect(
+      new Date(data!.ciclo_alterado_em as string).getFullYear(),
+      "o histórico retrocedeu para o ano que o cliente mandou",
+    ).toBeGreaterThan(2020);
   });
 });
 
@@ -395,18 +457,26 @@ describe("C7 · a trilha em audit_logs", () => {
     expect((await transitar(id, "PUBLICADO_ATIVO", { motivo: "CADASTRO_VALIDADO" })).error).toBeNull();
     expect((await transitar(id, "PAUSADO", { motivo: "SOLICITACAO_DO_PROFISSIONAL" })).error).toBeNull();
 
-    const { data } = await service
+    const { data: tudo } = await service
       .from("audit_logs")
       .select("action, actor_id, metadata")
       .eq("metadata->>professional_profile_id", id)
       .order("created_at");
 
-    expect(data, "a trilha não registrou as duas passagens").toHaveLength(2);
-    expect(data![0]!.action).toBe("professional_ciclo_publicado_ativo");
-    expect(data![1]!.action).toBe("professional_ciclo_pausado");
-    expect(data![1]!.actor_id).toBe(autor);
+    // C7R · agora são duas trilhas, e isso é o desenho funcionando. Como o
+    // espelho move `publication_status` junto com o ciclo,
+    // `log_professional_publication_transition` (20260802162000) também registra
+    // — a trilha de publicação seguiu viva, e passou a ser CONSEQUÊNCIA do
+    // ciclo em vez de um ato paralelo. Este teste é sobre a trilha do ciclo;
+    // a de publicação tem oráculo próprio, logo abaixo.
+    const data = (tudo ?? []).filter((l) => String(l.action).startsWith("professional_ciclo_"));
 
-    const meta = data![1]!.metadata as Record<string, unknown>;
+    expect(data, "a trilha do ciclo não registrou as duas passagens").toHaveLength(2);
+    expect(data[0]!.action).toBe("professional_ciclo_publicado_ativo");
+    expect(data[1]!.action).toBe("professional_ciclo_pausado");
+    expect(data[1]!.actor_id).toBe(autor);
+
+    const meta = data[1]!.metadata as Record<string, unknown>;
     expect(meta.de).toBe("PUBLICADO_ATIVO");
     expect(meta.para).toBe("PAUSADO");
     expect(meta.motivo).toBe("SOLICITACAO_DO_PROFISSIONAL");
