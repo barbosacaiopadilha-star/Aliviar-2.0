@@ -11,7 +11,7 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { listApprovedProviders } from "@/modules/curadoria/repository";
-import { transicaoDespublicar, transicaoPublicar } from "../apoio/publicacao";
+import { transicaoPublicar } from "../apoio/publicacao";
 
 const admin = createAdminSupabaseClient();
 

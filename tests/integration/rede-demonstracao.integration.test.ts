@@ -19,7 +19,7 @@ import { createPatientAccount } from "@/modules/profiles/patient-account-reposit
 import { getOrCreateActiveStory, submitStory } from "@/modules/story/repository";
 
 import { createCuradoriaClient } from "./curadoria-client";
-import { transicaoDespublicar, transicaoPublicar } from "../apoio/publicacao";
+import { transicaoPublicar } from "../apoio/publicacao";
 
 const admin = createAdminSupabaseClient();
 
