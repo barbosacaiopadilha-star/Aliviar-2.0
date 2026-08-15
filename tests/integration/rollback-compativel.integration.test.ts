@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { argumentosPsql, containerDoBanco } from "../apoio/stack-local";
+import { CONTAINER_PADRAO, argumentosPsql, containerDoBanco } from "../apoio/stack-local";
 
 /**
  * P-1 · OS SETE PASSOS DO ROLLBACK COMPATÍVEL — e os negativos.
@@ -31,7 +31,7 @@ const MIGRACOES = path.join(RAIZ, "supabase", "migrations");
 const SCRIPT = path.join(RAIZ, "scripts", "emergencia", "rollback-compativel-c7.sql");
 const CORTE_121 = "20260812210000"; // arquivo 122 (porta pública) — a Production parou antes dele
 
-const isolada = containerDoBanco() !== "supabase_db_aliviar-conexao";
+const isolada = containerDoBanco() !== CONTAINER_PADRAO;
 const container = () => argumentosPsql("")[1]!;
 
 function psqlEm(banco: string, sql: string): string {
