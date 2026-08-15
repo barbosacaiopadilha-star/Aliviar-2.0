@@ -223,14 +223,7 @@ async function ensureProfessional(
       .single();
 
     if (linha?.ciclo_de_vida !== "PUBLICADO_ATIVO") {
-      const { error } = await admin
-        .from("professional_profiles")
-        .update({
-          ciclo_de_vida: "PUBLICADO_ATIVO",
-          ciclo_motivo: "CADASTRO_VALIDADO",
-          ciclo_alterado_por: adminId,
-        })
-        .eq("id", id);
+      const { error } = await admin.schema("curadoria").rpc("transicionar_ciclo_como_servico", { p_profissional: id, p_para: "PUBLICADO_ATIVO", p_motivo: "CADASTRO_VALIDADO", p_ator: adminId });
       if (error) throw new Error(`fixture ${spec.key}: republicação — ${error.message}`);
     }
     return id;
@@ -355,14 +348,7 @@ async function ensureProfessional(
   //    com motivo e autoria — os campos antigos são espelho mantido pelo
   //    trigger. Se algum requisito acima faltasse, isto falharia, e é essa
   //    falha que a fixture existe para poder provocar.
-  const { error: pubError } = await admin
-    .from("professional_profiles")
-    .update({
-      ciclo_de_vida: "PUBLICADO_ATIVO",
-      ciclo_motivo: "CADASTRO_VALIDADO",
-      ciclo_alterado_por: adminId,
-    })
-    .eq("id", id);
+  const { error: pubError } = await admin.schema("curadoria").rpc("transicionar_ciclo_como_servico", { p_profissional: id, p_para: "PUBLICADO_ATIVO", p_motivo: "CADASTRO_VALIDADO", p_ator: adminId });
   if (pubError) throw new Error(`fixture ${spec.key}: publicação — ${pubError.message}`);
 
   return id;
@@ -409,10 +395,40 @@ export async function cleanupCuradoriaCertificationFixture(admin: AdminClient): 
       if (error) throw new Error(`fixture: limpeza de ${tabela} — ${error.message}`);
     }
 
+    // Retenção por governança (o mesmo desenho de `limpeza/inventario.ts`):
+    // fixture com aceite legal registrado NÃO é removível — `legal_acceptances`
+    // é append-only e a FK é `on delete restrict`, porque apagar o perfil
+    // apagaria a prova do aceite. Em vez de forçar, pausa pela porta da frente.
+    const { data: comAceite } = await admin
+      .from("legal_acceptances")
+      .select("professional_profile_id")
+      .in("professional_profile_id", ids);
+    const retidos = new Set((comAceite ?? []).map((l) => l.professional_profile_id as string));
+    const removiveis = ids.filter((id) => !retidos.has(id));
+
     // E o erro deixa de ser engolido. Foi por isso que a recusa passou
     // despercebida: as fixtures sobreviviam à rodada, e a suíte seguinte
     // encontrava perfil de certificação de pé sem Case que o autorizasse.
-    const { error } = await admin.from("professional_profiles").delete().in("id", ids);
-    if (error) throw new Error(`fixture: remoção dos perfis de certificação — ${error.message}`);
+    if (removiveis.length > 0) {
+      const { error } = await admin.from("professional_profiles").delete().in("id", removiveis);
+      if (error) throw new Error(`fixture: remoção dos perfis de certificação — ${error.message}`);
+    }
+
+    for (const id of retidos) {
+      const { data: linha } = await admin
+        .from("professional_profiles")
+        .select("ciclo_de_vida")
+        .eq("id", id)
+        .single();
+      if (linha?.ciclo_de_vida === "PUBLICADO_ATIVO") {
+        const { error } = await admin.schema("curadoria").rpc("transicionar_ciclo_como_servico", {
+          p_profissional: id,
+          p_para: "PAUSADO",
+          p_motivo: "REVISAO_CADASTRAL",
+          p_ator: (await admin.from("profiles").select("id").limit(1).single()).data!.id,
+        });
+        if (error) throw new Error(`fixture: pausa do perfil retido — ${error.message}`);
+      }
+    }
   }
 }

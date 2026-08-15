@@ -5,7 +5,7 @@ import { createCuradoriaClient } from "./curadoria-client";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
-import { transicaoDespublicar, transicaoPublicar } from "../apoio/publicacao";
+
 import {
   listCompetencyDomains,
   replaceCompetencyDomains,
@@ -217,7 +217,7 @@ describe("perfil profissional — RLS e fundação administrativa (Supabase loca
 
     const { data: published, error: publishError } = await client
       .from("professional_profiles")
-      .update(await transicaoPublicar(client, user!.id))
+      .update({ ciclo_de_vida: "PUBLICADO_ATIVO", ciclo_motivo: "CADASTRO_VALIDADO" })
       .eq("id", created!.id)
       .select("publication_status")
       .single();
@@ -239,7 +239,7 @@ describe("perfil profissional — RLS e fundação administrativa (Supabase loca
 
     const { data: deactivated, error: statusError } = await client
       .from("professional_profiles")
-      .update(await transicaoDespublicar(client, user!.id))
+      .update({ ciclo_de_vida: "PAUSADO", ciclo_motivo: "REVISAO_CADASTRAL" })
       .eq("id", created!.id)
       .select("status, publication_status, ciclo_de_vida")
       .single();

@@ -115,10 +115,16 @@ async function montar(c: Combinacao): Promise<string> {
             ];
 
     for (const [destino, motivo] of passos) {
-      await service
-        .from("professional_profiles")
-        .update({ ciclo_de_vida: destino, ciclo_motivo: motivo, ciclo_alterado_por: autor })
-        .eq("id", id);
+      const { error: ePasso } = await service.schema("curadoria").rpc("transicionar_ciclo_como_servico", { p_profissional: id, p_para: destino, p_motivo: motivo, p_ator: autor });
+      // Falha ALTA: um degrau engolido aqui fez a paridade medir menos estados
+      // sem avisar — combinações inteiras viraram PREPARACAO em silêncio.
+      // Demo é barrada no ESTADO publicado — a exclusão absoluta funcionando.
+      // Para ela, o degrau recusado é o resultado esperado: a linha fica onde
+      // o banco deixou, e a paridade mede o estado REALIZADO.
+      if (ePasso && c.isDemo) break;
+      if (ePasso) {
+        throw new Error("paridade (" + JSON.stringify(c) + ") degrau " + destino + ": " + ePasso.message);
+      }
     }
   }
 

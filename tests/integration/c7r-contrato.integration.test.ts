@@ -7,7 +7,7 @@ import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { listApprovedProviders } from "@/modules/curadoria/repository";
 
 import { argumentosPsql } from "../apoio/stack-local";
-import { transicaoDespublicar, transicaoPublicar } from "../apoio/publicacao";
+import { despublicarPeloCiclo, publicarPeloCiclo } from "../apoio/publicacao";
 
 /**
  * T-7R · OPS-G5 · CORTE 7 (remediação) — o contrato, formalizado.
@@ -123,7 +123,7 @@ describe("T-7R-5/6 · publicar é transição, e o espelho é atômico", () => {
     const id = await novoProfissionalPublicavel();
 
     expect(
-      (await service.from("professional_profiles").update(await transicaoPublicar(service, autor)).eq("id", id))
+      (await publicarPeloCiclo(service, id, autor))
         .error,
     ).toBeNull();
     let { data: linha } = await service
@@ -139,10 +139,7 @@ describe("T-7R-5/6 · publicar é transição, e o espelho é atômico", () => {
 
     expect(
       (
-        await service
-          .from("professional_profiles")
-          .update(await transicaoDespublicar(service, autor))
-          .eq("id", id)
+        await despublicarPeloCiclo(service, id, autor)
       ).error,
     ).toBeNull();
     ({ data: linha } = await service
@@ -244,38 +241,13 @@ describe("T-7R-13/14 · classificação de legado", () => {
   it("sai de NULL só com o motivo próprio, justificativa e autoria — e deixa trilha própria", async () => {
     const id = await legadoNulo();
 
-    const { error: semMotivo } = await service
-      .from("professional_profiles")
-      .update({
-        ciclo_de_vida: "PREPARACAO",
-        ciclo_motivo: "CADASTRO_VALIDADO",
-        ciclo_alterado_por: autor,
-        updated_by: autor,
-      })
-      .eq("id", id);
+    const { error: semMotivo } = await service.schema("curadoria").rpc("transicionar_ciclo_como_servico", { p_profissional: id, p_para: "PREPARACAO", p_motivo: "CADASTRO_VALIDADO", p_ator: autor });
     expect(semMotivo?.message).toContain("CLASSIFICACAO_DE_LEGADO");
 
-    const { error: semNota } = await service
-      .from("professional_profiles")
-      .update({
-        ciclo_de_vida: "PREPARACAO",
-        ciclo_motivo: "CLASSIFICACAO_DE_LEGADO",
-        ciclo_alterado_por: autor,
-        updated_by: autor,
-      })
-      .eq("id", id);
+    const { error: semNota } = await service.schema("curadoria").rpc("transicionar_ciclo_como_servico", { p_profissional: id, p_para: "PREPARACAO", p_motivo: "CLASSIFICACAO_DE_LEGADO", p_ator: autor });
     expect(semNota?.message).toContain("justificativa");
 
-    const { error } = await service
-      .from("professional_profiles")
-      .update({
-        ciclo_de_vida: "PREPARACAO",
-        ciclo_motivo: "CLASSIFICACAO_DE_LEGADO",
-        ciclo_nota: "revisão documental do cadastro legado",
-        ciclo_alterado_por: autor,
-        updated_by: autor,
-      })
-      .eq("id", id);
+    const { error } = await service.schema("curadoria").rpc("transicionar_ciclo_como_servico", { p_profissional: id, p_para: "PREPARACAO", p_motivo: "CLASSIFICACAO_DE_LEGADO", p_ator: autor, p_nota: "revisão documental do cadastro legado" });
     expect(error).toBeNull();
 
     const { data: trilha } = await service
@@ -287,16 +259,7 @@ describe("T-7R-13/14 · classificação de legado", () => {
 
   it("não reclassifica quem já tem ciclo", async () => {
     const id = await novoProfissionalPublicavel();
-    const { error } = await service
-      .from("professional_profiles")
-      .update({
-        ciclo_de_vida: "PAUSADO",
-        ciclo_motivo: "CLASSIFICACAO_DE_LEGADO",
-        ciclo_nota: "tentativa de usar o atalho do legado",
-        ciclo_alterado_por: autor,
-        updated_by: autor,
-      })
-      .eq("id", id);
+    const { error } = await service.schema("curadoria").rpc("transicionar_ciclo_como_servico", { p_profissional: id, p_para: "PAUSADO", p_motivo: "CLASSIFICACAO_DE_LEGADO", p_ator: autor, p_nota: "tentativa de usar o atalho do legado" });
     expect(error, "o atalho do legado reclassificou uma linha viva").not.toBeNull();
     expect(error!.message).toContain("já tem ciclo classificado");
   });
@@ -306,7 +269,7 @@ describe("T-7R-15/16 · a composição e o selo leem a mesma régua", () => {
   it("publicar entra na composição; despublicar sai — e o predicado concorda nos dois momentos", async () => {
     const id = await novoProfissionalPublicavel();
 
-    await service.from("professional_profiles").update(await transicaoPublicar(service, autor)).eq("id", id);
+    await publicarPeloCiclo(service, id, autor);
     let oferecidos = (await listApprovedProviders(service)).map((p) => p.professionalProfileId);
     expect(oferecidos, "publicado não entrou na composição").toContain(id);
     let { data: veredito } = await service
@@ -314,10 +277,7 @@ describe("T-7R-15/16 · a composição e o selo leem a mesma régua", () => {
       .rpc("elegibilidade_do_profissional", { p_id: id });
     expect((veredito as { eligible: boolean }[])[0]!.eligible, "composição e predicado divergem").toBe(true);
 
-    await service
-      .from("professional_profiles")
-      .update(await transicaoDespublicar(service, autor))
-      .eq("id", id);
+    await despublicarPeloCiclo(service, id, autor);
     oferecidos = (await listApprovedProviders(service)).map((p) => p.professionalProfileId);
     expect(oferecidos, "despublicado continuou na composição").not.toContain(id);
     ({ data: veredito } = await service

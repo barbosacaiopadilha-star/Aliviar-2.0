@@ -113,17 +113,19 @@ async function transitar(
   para: CicloDoProfissional,
   sobre: { motivo?: MotivoDoCiclo | null; nota?: string | null; autor?: string | null; quando?: string | null } = {},
 ) {
+  // C7R (20260815021141): service_role transita SOMENTE declarando o ator
+  // técnico na mesma transação — a RPC junta `set_config` e UPDATE. Passar
+  // `autor: null` exercita exatamente a recusa do serviço sem ator.
   const autor = sobre.autor === undefined ? await autorSintetico() : sobre.autor;
-  return service
-    .from("professional_profiles")
-    .update({
-      ciclo_de_vida: para,
-      ciclo_motivo: sobre.motivo === undefined ? "CADASTRO_VALIDADO" : sobre.motivo,
-      ciclo_nota: sobre.nota ?? null,
-      ciclo_alterado_por: autor,
-      ciclo_alterado_em: sobre.quando === undefined ? new Date().toISOString() : sobre.quando,
-    })
-    .eq("id", id);
+  const { error } = await service.schema("curadoria").rpc("transicionar_ciclo_como_servico", {
+    p_profissional: id,
+    p_para: para,
+    p_motivo: sobre.motivo === undefined ? "CADASTRO_VALIDADO" : sobre.motivo,
+    p_ator: autor,
+    p_nota: sobre.nota ?? null,
+    p_quando: sobre.quando === undefined ? new Date().toISOString() : sobre.quando,
+  });
+  return { error };
 }
 
 async function limpar() {
@@ -372,10 +374,12 @@ describe("C7 · motivo, nota, autoria e instante", () => {
     ).toBeNull();
   });
 
-  it("autoria ausente é recusada", async () => {
+  it("autoria ausente é recusada — serviço sem ator não transita", async () => {
+    // C7R: pelo caminho do serviço, autoria ausente significa ator técnico
+    // ausente, e a recusa mudou de frase junto com o contrato.
     const id = await criarProfissional("PUBLICADO_ATIVO");
     const { error } = await transitar(id, "PAUSADO", { motivo: "REVISAO_CADASTRAL", autor: null });
-    expect(error?.message).toContain("tem autor");
+    expect(error?.message).toContain("ator técnico");
   });
 
   it("o instante é do banco: o que o cliente manda é ignorado", async () => {

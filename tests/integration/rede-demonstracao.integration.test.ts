@@ -19,7 +19,7 @@ import { createPatientAccount } from "@/modules/profiles/patient-account-reposit
 import { getOrCreateActiveStory, submitStory } from "@/modules/story/repository";
 
 import { createCuradoriaClient } from "./curadoria-client";
-import { transicaoPublicar } from "../apoio/publicacao";
+import { publicarPeloCiclo } from "../apoio/publicacao";
 
 const admin = createAdminSupabaseClient();
 
@@ -132,10 +132,7 @@ describe("rede de demonstração — o banco recusa, não a tela (Supabase local
   it("perfil de demonstração não pode ser publicado", async () => {
     const id = await criarProfissional({ is_demo: true });
 
-    const { error } = await admin
-      .from("professional_profiles")
-      .update(await transicaoPublicar(admin))
-      .eq("id", id);
+    const { error } = await publicarPeloCiclo(admin, id);
 
     expect(error).not.toBeNull();
     // Três guardas cobrem isto — o CHECK, o gatilho de requisitos e a guarda do
@@ -194,10 +191,7 @@ describe("rede de demonstração — o banco recusa, não a tela (Supabase local
       verified_by: autor,
     });
 
-    const { error } = await admin
-      .from("professional_profiles")
-      .update(await transicaoPublicar(admin))
-      .eq("id", id);
+    const { error } = await publicarPeloCiclo(admin, id);
 
     expect(error).toBeNull();
   });
@@ -205,10 +199,7 @@ describe("rede de demonstração — o banco recusa, não a tela (Supabase local
   it("profissional real sem os requisitos não é publicado — ser real não basta", async () => {
     const id = await criarProfissional({ is_demo: false });
 
-    const { error } = await admin
-      .from("professional_profiles")
-      .update(await transicaoPublicar(admin))
-      .eq("id", id);
+    const { error } = await publicarPeloCiclo(admin, id);
 
     expect(error).not.toBeNull();
   });

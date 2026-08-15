@@ -3,15 +3,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 /**
  * OPS-G5 · CORTE 7 (remediação) — publicar é uma transição, não uma escrita.
  *
- * As fixtures publicavam gravando `publication_status` direto. Era essa a
- * segunda régua: cada publicação por ali criava uma linha em que o ciclo dizia
- * uma coisa e a vitrine dizia outra. O banco agora recusa esse caminho, e as
- * fixtures passam pela mesma porta que o produto usa — que é o que as torna
- * fixtures, e não encenação.
+ * Desde a migration 20260815021141, `service_role` transita SOMENTE declarando
+ * o ator técnico na mesma transação — e o PostgREST fecha a transação a cada
+ * chamada, então o caminho é a RPC `transicionar_ciclo_como_servico`, que faz
+ * `set_config` e UPDATE juntos. Sessão autenticada não passa por aqui: a
+ * autoria dela é `auth.uid()`, forçada pelo trigger.
  *
- * O autor é obrigatório no banco. Quando o chamador não tem um à mão, qualquer
- * perfil serve: o que a guarda cobra é que o ato **tenha** autor, não que seja
- * um autor específico. ⛔ Nenhuma guarda é afrouxada aqui.
+ * ⛔ Nenhuma guarda é afrouxada: a RPC só junta duas instruções; quem valida é
+ * o trigger, como sempre.
  */
 
 async function algumPerfil(client: SupabaseClient): Promise<string> {
@@ -21,35 +20,43 @@ async function algumPerfil(client: SupabaseClient): Promise<string> {
   return id;
 }
 
-/**
- * O `update` que publica. Use como `.update(await transicaoPublicar(client))`.
- *
- * `updated_by` vai junto porque a RLS da tabela exige `updated_by = auth.uid()`
- * em todo UPDATE — regra anterior ao Corte 7, que o writer de produção sempre
- * cumpriu. Sob sessão autenticada, o valor precisa ser o uid da própria sessão;
- * sob `service_role` (que ignora RLS), qualquer autor válido serve.
- */
-export async function transicaoPublicar(client: SupabaseClient, autorId?: string) {
-  const autor = autorId ?? (await algumPerfil(client));
-  return {
-    ciclo_de_vida: "PUBLICADO_ATIVO",
-    ciclo_motivo: "CADASTRO_VALIDADO",
-    ciclo_alterado_por: autor,
-    updated_by: autor,
-  };
+type Resultado = { error: { message: string } | null };
+
+async function transicionar(
+  client: SupabaseClient,
+  profissionalId: string,
+  para: "PUBLICADO_ATIVO" | "PAUSADO",
+  motivo: string,
+  autorId?: string,
+): Promise<Resultado> {
+  const ator = autorId ?? (await algumPerfil(client));
+  const { error } = await client.schema("curadoria").rpc("transicionar_ciclo_como_servico", {
+    p_profissional: profissionalId,
+    p_para: para,
+    p_motivo: motivo,
+    p_ator: ator,
+  });
+  return { error };
+}
+
+/** Publica pela porta da frente do serviço. */
+export async function publicarPeloCiclo(
+  client: SupabaseClient,
+  profissionalId: string,
+  autorId?: string,
+): Promise<Resultado> {
+  return transicionar(client, profissionalId, "PUBLICADO_ATIVO", "CADASTRO_VALIDADO", autorId);
 }
 
 /**
- * O `update` que despublica. Leva a `PAUSADO`, não a `PREPARACAO`: quem já
- * esteve na Rede e saiu está pausado, e voltar à preparação apagaria a
- * diferença entre quem nunca entrou e quem saiu.
+ * Despublica: leva a `PAUSADO`, não a `PREPARACAO` — quem já esteve na Rede e
+ * saiu está pausado, e voltar à preparação apagaria a diferença entre quem
+ * nunca entrou e quem saiu.
  */
-export async function transicaoDespublicar(client: SupabaseClient, autorId?: string) {
-  const autor = autorId ?? (await algumPerfil(client));
-  return {
-    ciclo_de_vida: "PAUSADO",
-    ciclo_motivo: "REVISAO_CADASTRAL",
-    ciclo_alterado_por: autor,
-    updated_by: autor,
-  };
+export async function despublicarPeloCiclo(
+  client: SupabaseClient,
+  profissionalId: string,
+  autorId?: string,
+): Promise<Resultado> {
+  return transicionar(client, profissionalId, "PAUSADO", "REVISAO_CADASTRAL", autorId);
 }

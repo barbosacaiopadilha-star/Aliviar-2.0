@@ -21,7 +21,7 @@ import {
   url,
   type Sessao,
 } from "./apoio";
-import { transicaoDespublicar, transicaoPublicar } from "../apoio/publicacao";
+
 
 /**
  * =============================================================================
@@ -576,16 +576,17 @@ describe("GATE-F2-TRI [Bloco C/Frente 2] as trilhas carregam o ato — nunca seg
     // Despublicação com sessão real de administrador (o C9b prova o rastro;
     // aqui se prova o CONTEÚDO do rastro).
     const alvo = profissionalPublicado;
-    const { error: republicacao } = await service
+    const { error: republicacao } = await admin.client
       .from("professional_profiles")
-      .update(await transicaoPublicar(admin.client))
+      .update({ ciclo_de_vida: "PUBLICADO_ATIVO", ciclo_motivo: "CADASTRO_VALIDADO" })
       .eq("id", alvo);
     expect(republicacao, `pré-condição (publicar): ${republicacao?.message}`).toBeNull();
 
     const { error } = await admin.client
       .from("professional_profiles")
       .update({
-        ...(await transicaoDespublicar(admin.client, admin.userId)),
+        ciclo_de_vida: "PAUSADO",
+        ciclo_motivo: "REVISAO_CADASTRAL",
         publication_change_reason: "Pausa combinada com o profissional.",
       })
       .eq("id", alvo);
@@ -673,9 +674,9 @@ describe("GATE-F2-COMP [Bloco C/Frente 2] esvaziamento de competências é ato e
 
     // Auto-suficiência com resíduo local: garante o perfil publicado e ao
     // menos uma competência (o mesmo formato que a fixture de certificação usa).
-    await service
+    await admin.client
       .from("professional_profiles")
-      .update(await transicaoPublicar(admin.client))
+      .update({ ciclo_de_vida: "PUBLICADO_ATIVO", ciclo_motivo: "CADASTRO_VALIDADO" })
       .eq("id", alvo);
     await service.from("professional_competency_areas").upsert(
       { professional_profile_id: alvo, domain: "saude_fisica", focus: "acompanhamento_continuo" },

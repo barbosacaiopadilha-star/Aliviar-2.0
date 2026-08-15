@@ -81,14 +81,7 @@ export async function seedPublishedProfessional(
   // passou a ser uma transição de ciclo, com motivo e autoria — os campos
   // antigos são espelho mantido pelo trigger. A fixture usa a mesma porta que o
   // produto usa, que é o que a torna uma fixture e não uma encenação.
-  const { error } = await adminClient
-    .from("professional_profiles")
-    .update({
-      ciclo_de_vida: "PUBLICADO_ATIVO",
-      ciclo_motivo: "CADASTRO_VALIDADO",
-      ciclo_alterado_por: adminUserId,
-    })
-    .eq("id", professional.id);
+  const { error } = await adminClient.schema("curadoria").rpc("transicionar_ciclo_como_servico", { p_profissional: professional.id, p_para: "PUBLICADO_ATIVO", p_motivo: "CADASTRO_VALIDADO", p_ator: adminUserId });
 
   if (error) {
     throw new Error(`fixture não conseguiu publicar o profissional: ${error.message}`);
