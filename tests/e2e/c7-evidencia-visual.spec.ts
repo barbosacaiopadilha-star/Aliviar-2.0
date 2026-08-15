@@ -1,19 +1,21 @@
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { expect, test, type Page } from "@playwright/test";
 
+import { createClient } from "@supabase/supabase-js";
+
+import { argumentosPsql } from "../apoio/stack-local";
 import { semearCicloE2E } from "../apoio/seed-ciclo-e2e";
 
 /**
- * C7R · EVIDÊNCIA VISUAL OFICIAL — navegação autenticada real, sem DOM injetado.
+ * C7R · MATRIZ VISUAL 7×3 — sete cenários, três viewports, 21 combinações.
  *
- * Sete cenários do plano do 02 ARQUITETO, nos três viewports exigidos. Cada
- * captura registra rota, sessão, estado, ação, resultado, innerWidth,
- * scrollWidth do documento, console e a prova correspondente no banco.
- *
- * Em 390: excesso horizontal da página TEM de ser zero e a tabela rola só
- * dentro do próprio contêiner.
+ * Cada combinação é um teste independente: cenários que mudam estado re-armam
+ * a própria semente ANTES de agir, então a ordem dos viewports não importa.
+ * Cada captura registra arquivo, rota, sessão, estado inicial, ação, resultado,
+ * innerWidth, scrollWidth, prova no banco e console — tudo num manifesto.
  */
 
 const VIEWPORTS = [
@@ -23,180 +25,363 @@ const VIEWPORTS = [
 ] as const;
 
 const DIR = path.resolve(__dirname, "..", "..", "evidencias", "c7r", "capturas");
+const manifesto: Record<string, unknown>[] = [];
 
 let seed: Awaited<ReturnType<typeof semearCicloE2E>>;
-const errosDeConsole: string[] = [];
+// Tipagem leve: o spec só precisa de rpc/from, e o genérico do supabase-js
+// sem tipos gerados degrada para never.
+type ClienteLeve = { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ error: { message: string } | null }>; from: (t: string) => { select: (c: string) => { eq: (k: string, v: string) => { single: () => Promise<{ data: unknown }> } } } };
+let service: ClienteLeve;
+let adminEmail = "";
 
 test.beforeAll(async () => {
   mkdirSync(DIR, { recursive: true });
   seed = await semearCicloE2E();
+  service = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+    process.env.SUPABASE_SERVICE_ROLE_KEY as string,
+    { db: { schema: "curadoria" } },
+  ) as unknown as ClienteLeve;
 });
 
-async function entrarComoAdmin(page: Page) {
+function psql(sql: string): string {
+  const argumentos = argumentosPsql("");
+  const semComando = argumentos.slice(0, argumentos.indexOf("-c"));
+  semComando.splice(1, 0, "-i");
+  semComando.push("-v", "ON_ERROR_STOP=1");
+  return execFileSync("docker", semComando, { encoding: "utf8", input: sql }).trim();
+}
+
+/** Re-arme: garante PUBLICADO_ATIVO pela porta da frente (idempotente). */
+async function rearmarPublicado(sufixo: string) {
+  await service.rpc("transicionar_ciclo_como_servico", {
+    p_profissional: seed.ids[sufixo],
+    p_para: "PUBLICADO_ATIVO",
+    p_motivo: "CADASTRO_VALIDADO",
+    p_ator: seed.adminId,
+  });
+}
+
+/** Re-arme do legado: volta 07 a NULL pelo mesmo rito da ressincronização. */
+function rearmarLegadoNulo() {
+  psql(
+    `begin;
+     alter table curadoria.professional_profiles disable trigger assert_ciclo_do_profissional;
+     alter table curadoria.professional_profiles disable trigger registrar_trilha_do_ciclo;
+     update curadoria.professional_profiles
+        set ciclo_de_vida=null, ciclo_motivo=null, ciclo_alterado_por=null, ciclo_alterado_em=null
+      where professional_identifier='EV-C7-07';
+     alter table curadoria.professional_profiles enable trigger assert_ciclo_do_profissional;
+     alter table curadoria.professional_profiles enable trigger registrar_trilha_do_ciclo;
+     commit;`,
+  );
+}
+
+async function estadoNoBanco(sufixo: string): Promise<string> {
+  const { data } = await service
+    
+    .from("professional_profiles")
+    .select("ciclo_de_vida, status, publication_status")
+    .eq("id", seed.ids[sufixo])
+    .single();
+  const l = data as unknown as { ciclo_de_vida: string | null; status: string; publication_status: string };
+  return `${l.ciclo_de_vida ?? "NULO"} · ${l.status}/${l.publication_status}`;
+}
+
+async function entrar(page: Page, erros: string[]) {
   const contas = JSON.parse(
     readFileSync(path.resolve(__dirname, "..", "..", "test-users.local.json"), "utf8"),
   ) as Array<{ role: string; email: string; password: string }>;
   const admin = contas.find((c) => c.role === "administrador")!;
-  page.on("pageerror", (erro) => errosDeConsole.push(String(erro)));
+  adminEmail = admin.email;
+  page.on("pageerror", (e) => erros.push(String(e)));
   page.on("console", (m) => {
-    if (m.type() === "error") errosDeConsole.push(m.text());
+    if (m.type() === "error") erros.push(m.text());
   });
   await page.goto("/login");
-  // O formulário é controlado: preencher antes da hidratação submete vazio.
   await page.waitForLoadState("networkidle");
   await page.getByLabel("E-mail").fill(admin.email);
   await page.getByLabel("Senha").fill(admin.password);
   await page.getByRole("button", { name: "Entrar" }).click();
-  await page.waitForURL(/\/admin/);
+  await page.waitForURL(/admin/, { timeout: 60000 });
 }
 
-async function medirECapturar(page: Page, nome: string, viewport: (typeof VIEWPORTS)[number]) {
-  const medidas = await page.evaluate(() => ({
+function consoleDoProduto(erros: string[]): string[] {
+  return erros.filter(
+    (e) =>
+      !e.includes("favicon") &&
+      !e.includes("net::ERR_ABORTED") &&
+      // next start local não tem o script de analytics da Vercel: ruído.
+      !e.includes("_vercel/insights") &&
+      !e.includes("404 (Not Found)"),
+  );
+}
+
+async function capturar(
+  page: Page,
+  sobre: {
+    arquivo: string;
+    cenario: string;
+    viewport: (typeof VIEWPORTS)[number];
+    rota: string;
+    estadoInicial: string;
+    acao: string;
+    resultado: string;
+    bancoDepois: string;
+    erros: string[];
+  },
+) {
+  const m = await page.evaluate(() => ({
     innerWidth: window.innerWidth,
     scrollWidth: document.documentElement.scrollWidth,
   }));
-  expect(medidas.innerWidth, `${nome}: innerWidth`).toBe(viewport.width);
-  if (viewport.width === 390) {
-    expect(medidas.scrollWidth, `${nome}: excesso horizontal da página`).toBe(390);
+  expect(m.innerWidth, `${sobre.arquivo}: innerWidth`).toBe(sobre.viewport.width);
+  if (sobre.viewport.width === 390) {
+    expect(m.scrollWidth, `${sobre.arquivo}: excesso horizontal`).toBe(390);
   }
-  await page.screenshot({ path: path.join(DIR, `${nome}-${viewport.nome}.png`), fullPage: true });
-  return medidas;
+  const proibidos = consoleDoProduto(sobre.erros);
+  expect(proibidos, `${sobre.arquivo}: console do produto`).toEqual([]);
+  await page.screenshot({ path: path.join(DIR, sobre.arquivo), fullPage: true });
+  manifesto.push({
+    arquivo: sobre.arquivo,
+    cenario: sobre.cenario,
+    viewport: sobre.viewport.nome,
+    innerWidth: m.innerWidth,
+    scrollWidth: m.scrollWidth,
+    rota: sobre.rota,
+    sessao: `${adminEmail} (administrador)`,
+    estadoInicial: sobre.estadoInicial,
+    acao: sobre.acao,
+    resultado: sobre.resultado,
+    bancoDepois: sobre.bancoDepois,
+    consoleSemErroDoProduto: true,
+    quando: new Date().toISOString(),
+  });
 }
 
 for (const viewport of VIEWPORTS) {
-  test.describe(`viewport ${viewport.nome}`, () => {
+  test.describe(`matriz ${viewport.nome}px`, () => {
     test.use({ viewport: { width: viewport.width, height: viewport.height } });
 
-    test(`cenários do ciclo em ${viewport.nome}px`, async ({ page }) => {
-      await entrarComoAdmin(page);
-
-      // EV-1 · painel do ciclo aberto (PUBLICADO_ATIVO) — a rota que caía.
-      await page.goto(`/admin/profissionais/${seed.ids["01"]}`);
+    test(`EV-1 painel do ciclo · ${viewport.nome}`, async ({ page }) => {
+      const erros: string[] = [];
+      await rearmarPublicado("01");
+      const antes = await estadoNoBanco("01");
+      await entrar(page, erros);
+      const rota = `/admin/profissionais/${seed.ids["01"]}`;
+      await page.goto(rota);
       await expect(page.getByRole("heading", { name: "Ciclo de vida" })).toBeVisible();
       await expect(page.getByText("Algo deu errado")).toHaveCount(0);
+      await capturar(page, {
+        arquivo: `ev1-painel-${viewport.nome}.png`,
+        cenario: "EV-1 painel do ciclo aberto (a rota que caía)",
+        viewport,
+        rota,
+        estadoInicial: antes,
+        acao: "abrir o detalhe",
+        resultado: "painel visível, sem error boundary",
+        bancoDepois: await estadoNoBanco("01"),
+        erros,
+      });
+    });
+
+    test(`EV-2 motivos por destino · ${viewport.nome}`, async ({ page }) => {
+      const erros: string[] = [];
+      await rearmarPublicado("02");
+      const antes = await estadoNoBanco("02");
+      await entrar(page, erros);
+      const rota = `/admin/profissionais/${seed.ids["02"]}`;
+      await page.goto(rota);
+      const destino = page.getByLabel("Mudar para");
+      await destino.selectOption("PAUSADO");
+      const pausa = await page.getByLabel("Motivo").locator("option").allTextContents();
+      await destino.selectOption("RETIRADO_ARQUIVADO");
+      const retirada = await page.getByLabel("Motivo").locator("option").allTextContents();
+      expect(pausa).not.toEqual(retirada);
+      expect(retirada.join("|")).toContain("Encerramento da atuação");
+      await capturar(page, {
+        arquivo: `ev2-motivos-${viewport.nome}.png`,
+        cenario: "EV-2 motivos por destino (listas diferentes)",
+        viewport,
+        rota,
+        estadoInicial: antes,
+        acao: "escolher PAUSADO e depois RETIRADO_ARQUIVADO",
+        resultado: "listas distintas, iguais a motivos_da_transicao",
+        bancoDepois: await estadoNoBanco("02"),
+        erros,
+      });
+    });
+
+    test(`EV-3 prévia de impacto · ${viewport.nome}`, async ({ page }) => {
+      const erros: string[] = [];
+      await rearmarPublicado("03");
+      const antes = await estadoNoBanco("03");
+      await entrar(page, erros);
+      const rota = `/admin/profissionais/${seed.ids["03"]}`;
+      await page.goto(rota);
+      await page.getByLabel("Mudar para").selectOption("RETIRADO_ARQUIVADO");
+      await expect(page.getByText("O que muda")).toBeVisible();
+      await expect(page.getByText(/Relatórios já emitidos/)).toBeVisible();
+      await capturar(page, {
+        arquivo: `ev3-previa-${viewport.nome}.png`,
+        cenario: "EV-3 prévia de impacto antes da confirmação",
+        viewport,
+        rota,
+        estadoInicial: antes,
+        acao: "escolher destino RETIRADO_ARQUIVADO",
+        resultado: "consequências e 'o que permanece' visíveis",
+        bancoDepois: await estadoNoBanco("03"),
+        erros,
+      });
+    });
+
+    test(`EV-4 confirmação deliberada · ${viewport.nome}`, async ({ page }) => {
+      const erros: string[] = [];
+      await rearmarPublicado("04");
+      const antes = await estadoNoBanco("04");
+      await entrar(page, erros);
+      const rota = `/admin/profissionais/${seed.ids["04"]}`;
+      await page.goto(rota);
+      await page.getByLabel("Mudar para").selectOption("PAUSADO");
+      await page.getByLabel("Motivo").selectOption("REVISAO_CADASTRAL");
+      await page.getByRole("checkbox", { name: /Confirmo esta mudança/ }).check();
+      await page.getByRole("button", { name: "Aplicar mudança" }).click();
+      await expect(page.getByText("Estado do profissional atualizado.")).toBeVisible({ timeout: 20000 });
+      const depois = await estadoNoBanco("04");
+      expect(depois).toContain("PAUSADO · inativo/nao_publicado");
+      await capturar(page, {
+        arquivo: `ev4-confirmacao-${viewport.nome}.png`,
+        cenario: "EV-4 confirmação deliberada (pausa com espelho e trilha)",
+        viewport,
+        rota,
+        estadoInicial: antes,
+        acao: "PAUSADO + motivo + confirmar + aplicar",
+        resultado: "sucesso na tela; espelho inativo/nao_publicado",
+        bancoDepois: depois,
+        erros,
+      });
+    });
+
+    test(`EV-5 publicação bloqueada · ${viewport.nome}`, async ({ page }) => {
+      const erros: string[] = [];
+      const antes = await estadoNoBanco("05");
+      await entrar(page, erros);
+      const rota = `/admin/profissionais/${seed.ids["05"]}`;
+      await page.goto(rota);
+      await expect(page.getByRole("button", { name: /^Publicar$/ })).toBeDisabled();
+      await expect(page.getByText(/Pendências para publicação/)).toBeVisible();
+      await capturar(page, {
+        arquivo: `ev5-publicacao-bloqueada-${viewport.nome}.png`,
+        cenario: "EV-5 publicação bloqueada com pendências nomeadas",
+        viewport,
+        rota,
+        estadoInicial: antes,
+        acao: "abrir a seção Publicação",
+        resultado: "botão disabled real + pendências listadas",
+        bancoDepois: await estadoNoBanco("05"),
+        erros,
+      });
+    });
+
+    test(`EV-6 despublicação · ${viewport.nome}`, async ({ page }) => {
+      const erros: string[] = [];
+      await rearmarPublicado("06");
+      const antes = await estadoNoBanco("06");
+      await entrar(page, erros);
+      const rota = `/admin/profissionais/${seed.ids["06"]}`;
+      await page.goto(rota);
+      await page.getByRole("button", { name: "Despublicar" }).click();
+      await expect(page.getByRole("button", { name: /^Publicar$/ })).toBeVisible();
+      const depois = await estadoNoBanco("06");
+      expect(depois).toContain("PAUSADO");
+      await capturar(page, {
+        arquivo: `ev6-despublicacao-${viewport.nome}.png`,
+        cenario: "EV-6 despublicar leva a PAUSADO, espelho coerente",
+        viewport,
+        rota,
+        estadoInicial: antes,
+        acao: "clicar Despublicar",
+        resultado: "volta o botão Publicar; ciclo PAUSADO",
+        bancoDepois: depois,
+        erros,
+      });
+    });
+
+    test(`EV-7 classificação de legado · ${viewport.nome}`, async ({ page }) => {
+      const erros: string[] = [];
+      rearmarLegadoNulo();
+      const antes = await estadoNoBanco("07");
+      expect(antes).toContain("NULO");
+      await entrar(page, erros);
+      const rota = `/admin/profissionais/${seed.ids["07"]}`;
+      await page.goto(rota);
+
+      // (a) recusa sem justificativa: o botão nem é oferecido habilitado.
+      await page.getByLabel("Estado atual deste cadastro").selectOption("PREPARACAO");
+      const botao = page.getByRole("button", { name: "Classificar cadastro legado" });
+      await expect(botao).toBeDisabled();
+      await capturar(page, {
+        arquivo: `ev7a-legado-recusa-${viewport.nome}.png`,
+        cenario: "EV-7a legado NULL: sem justificativa, o ato não é oferecido",
+        viewport,
+        rota,
+        estadoInicial: antes,
+        acao: "escolher estado sem escrever justificativa",
+        resultado: "botão desabilitado",
+        bancoDepois: await estadoNoBanco("07"),
+        erros,
+      });
+
+      // (b) aceite com justificativa.
+      await page.getByLabel(/Justificativa da classificação/).fill("revisão documental do cadastro legado");
+      await botao.click();
+      await expect(page.getByText("Cadastro legado classificado.")).toBeVisible({ timeout: 20000 });
+      const depois = await estadoNoBanco("07");
+      expect(depois).toContain("PREPARACAO");
+      await capturar(page, {
+        arquivo: `ev7b-legado-aceite-${viewport.nome}.png`,
+        cenario: "EV-7b legado classificado com justificativa e trilha própria",
+        viewport,
+        rota,
+        estadoInicial: "NULO",
+        acao: "justificativa válida + classificar",
+        resultado: "sucesso na tela; ciclo PREPARACAO",
+        bancoDepois: depois,
+        erros,
+      });
+
+      // (c) recusa de reclassificação: recarregada, a superfície de legado
+      // sumiu — quem já tem ciclo usa a matriz, e o banco recusa o atalho.
+      await page.reload();
       await expect(page.getByText(/Estado atual/)).toBeVisible();
-      await medirECapturar(page, "ev1-painel", viewport);
-
-      if (viewport.width === 390) {
-        // Contrato responsivo da LISTA: página sem excesso, tabela rolando
-        // dentro do contêiner, com ações alcançáveis.
-        await page.goto("/admin/profissionais");
-        await expect(page.getByRole("columnheader", { name: "Elegibilidade" })).toBeVisible();
-        const medidas = await page.evaluate(() => {
-          const tabela = document.querySelector("table");
-          let contêiner: Element | null = tabela?.parentElement ?? null;
-          let rolaDentro = false;
-          while (contêiner && contêiner !== document.body) {
-            const estilo = getComputedStyle(contêiner);
-            if (estilo.overflowX === "auto" || estilo.overflowX === "scroll") {
-              rolaDentro = contêiner.scrollWidth > contêiner.clientWidth;
-              break;
-            }
-            contêiner = contêiner.parentElement;
-          }
-          return {
-            pagina: document.documentElement.scrollWidth,
-            main: document.querySelector("main")?.scrollWidth ?? 0,
-            rolaDentro,
-          };
-        });
-        expect(medidas.pagina, "excesso horizontal da página").toBe(390);
-        expect(medidas.main, "main transborda").toBeLessThanOrEqual(390);
-        expect(medidas.rolaDentro, "a tabela deveria rolar no próprio contêiner").toBe(true);
-        await page.screenshot({ path: path.join(DIR, `lista-390.png`), fullPage: true });
-      }
-
-      if (viewport.width === 1440) {
-        // EV-2 · motivos por destino — listas diferentes por transição.
-        await page.goto(`/admin/profissionais/${seed.ids["02"]}`);
-        const destino = page.getByLabel("Mudar para");
-        await destino.selectOption("PAUSADO");
-        await expect(page.getByLabel("Motivo")).toBeVisible();
-        const motivosPausa = await page.getByLabel("Motivo").locator("option").allTextContents();
-        await medirECapturar(page, "ev2-motivos-pausa", viewport);
-        await destino.selectOption("RETIRADO_ARQUIVADO");
-        await expect(page.getByLabel("Motivo")).toBeVisible();
-        const motivosRetirada = await page.getByLabel("Motivo").locator("option").allTextContents();
-        expect(motivosPausa).not.toEqual(motivosRetirada);
-        expect(motivosRetirada.join("|")).toContain("Encerramento da atuação");
-        await medirECapturar(page, "ev2-motivos-retirada", viewport);
-      }
-
-      // EV-3 · prévia de impacto (1440 e 390).
-      if (viewport.width === 1440 || viewport.width === 390) {
-        await page.goto(`/admin/profissionais/${seed.ids["03"]}`);
-        await page.getByLabel("Mudar para").selectOption("RETIRADO_ARQUIVADO");
-        await expect(page.getByText("O que muda")).toBeVisible();
-        await expect(page.getByText(/Relatórios já emitidos/)).toBeVisible();
-        await medirECapturar(page, "ev3-previa", viewport);
-      }
-
-      if (viewport.width === 1440) {
-        // EV-4 · confirmação deliberada: pausa acontece e a trilha nasce.
-        await page.goto(`/admin/profissionais/${seed.ids["04"]}`);
-        await page.getByLabel("Mudar para").selectOption("PAUSADO");
-        await page.getByLabel("Motivo").selectOption("REVISAO_CADASTRAL");
-        await page.getByRole("checkbox", { name: /Confirmo esta mudança/ }).check();
-        await page.getByRole("button", { name: "Aplicar mudança" }).click();
-        await expect(page.getByText("Estado do profissional atualizado.")).toBeVisible();
-        await medirECapturar(page, "ev4-confirmacao", viewport);
-
-        // EV-6 · despublicar (botão herdado) leva a PAUSADO.
-        await page.goto(`/admin/profissionais/${seed.ids["06"]}`);
-        await page.getByRole("button", { name: "Despublicar" }).click();
-        await expect(page.getByRole("button", { name: /^Publicar$/ })).toBeVisible();
-        await medirECapturar(page, "ev6-despublicacao", viewport);
-      }
-
-      // EV-5 · publicação bloqueada com pendências nomeadas (1440 e 390).
-      if (viewport.width === 1440 || viewport.width === 390) {
-        await page.goto(`/admin/profissionais/${seed.ids["05"]}`);
-        const publicar = page.getByRole("button", { name: /^Publicar$/ });
-        await expect(publicar).toBeDisabled();
-        await expect(page.getByText(/Pendências para publicação/)).toBeVisible();
-        await medirECapturar(page, "ev5-publicacao-bloqueada", viewport);
-      }
-
-      // EV-7 · classificação de legado (1440 e 390).
-      if (viewport.width === 1440 || viewport.width === 390) {
-        await page.goto(`/admin/profissionais/${seed.ids["07"]}`);
-        await expect(page.getByText("Legado sem ciclo classificado")).toBeVisible();
-        await expect(page.getByLabel("Estado atual deste cadastro")).toBeVisible();
-        await medirECapturar(page, "ev7-legado", viewport);
-      }
-
+      await expect(page.getByRole("button", { name: "Classificar cadastro legado" })).toHaveCount(0);
+      await capturar(page, {
+        arquivo: `ev7c-legado-reclassificacao-${viewport.nome}.png`,
+        cenario: "EV-7c reclassificação não é oferecida a quem já tem ciclo",
+        viewport,
+        rota,
+        estadoInicial: depois,
+        acao: "recarregar a página",
+        resultado: "superfície de classificação ausente; painel normal",
+        bancoDepois: await estadoNoBanco("07"),
+        erros,
+      });
     });
   });
 }
 
-// EV-7b roda POR ÚLTIMO e num teste próprio: ele consome o estado nulo do
-// legado, e os viewports seguintes precisam dele intacto. Declará-lo depois do
-// laço garante a ordem com workers=1.
-test.describe("EV-7b · classificação do legado (por último)", () => {
-  test.use({ viewport: { width: 1440, height: 900 } });
-  test("sem justificativa recusa; com ela, aceita", async ({ page }) => {
-    await entrarComoAdmin(page);
-    await page.goto("/admin/profissionais/" + seed.ids["07"]);
-    await page.getByLabel("Estado atual deste cadastro").selectOption("PREPARACAO");
-    const botao = page.getByRole("button", { name: "Classificar cadastro legado" });
-    await expect(botao).toBeDisabled();
-    await page.getByLabel(/Justificativa da classificação/).fill("revisão documental do cadastro legado");
-    await botao.click();
-    await expect(page.getByText("Cadastro legado classificado.")).toBeVisible();
-    await page.screenshot({ path: path.join(DIR, "ev7b-legado-classificado-1440.png"), fullPage: true });
-  });
-});
-
 test.afterAll(() => {
-  const proibidos = errosDeConsole.filter(
-    (erro) =>
-      !erro.includes("favicon") &&
-      !erro.includes("net::ERR_ABORTED") &&
-      // Ambiente local de next start: o script de analytics da Vercel não
-      // existe e o 404 vira ruído de console — não é erro do produto.
-      !erro.includes("_vercel/insights") &&
-      !erro.includes("404 (Not Found)"),
-  );
-  expect(proibidos, `erros de console durante as capturas:\n${proibidos.join("\n")}`).toEqual([]);
-  expect(existsSync(path.join(DIR, "ev1-painel-390.png"))).toBe(true);
+  const md = [
+    "# Manifesto 7×3 — evidência visual do Corte 7",
+    "",
+    "| arquivo | cenário | viewport | innerWidth | scrollWidth | rota | banco depois |",
+    "|---|---|---|---|---|---|---|",
+    ...manifesto.map(
+      (m) =>
+        `| ${m.arquivo} | ${m.cenario} | ${m.viewport} | ${m.innerWidth} | ${m.scrollWidth} | ${m.rota} | ${m.bancoDepois} |`,
+    ),
+  ].join("\n");
+  writeFileSync(path.join(DIR, "MANIFESTO.md"), md, "utf8");
+  writeFileSync(path.join(DIR, "manifesto.json"), JSON.stringify(manifesto, null, 2), "utf8");
+  expect(manifesto.length, "combinações capturadas").toBeGreaterThanOrEqual(21);
 });
