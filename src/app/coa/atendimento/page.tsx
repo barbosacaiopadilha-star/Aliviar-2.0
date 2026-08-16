@@ -59,8 +59,18 @@ export default async function CoaAtendimentoDashboardPage() {
         </div>
       }
     >
+      {/*
+        `min-w-0` nas duas seções não é enfeite: item de grid nasce com
+        `min-width: auto`, e o rótulo de cada pessoa usa `truncate` — que é
+        `white-space: nowrap`, cuja largura mínima é o nome INTEIRO. Sem isto,
+        um nome real longo impede o cartão de encolher, a página passa a exigir
+        mais que a tela (405px medidos em 390) e o Chrome móvel responde
+        esticando o viewport de layout e reduzindo tudo ~6% — a Mesa chegava
+        menor que as outras telas, sem estourar na horizontal.
+      */}
       <div className="grid gap-6 lg:grid-cols-2">
         <DashboardSection
+          className="min-w-0"
           title="Chegaram agora"
           href="/admin/crm/contatos"
           isEmpty={dashboard.newContacts.length === 0}
@@ -77,6 +87,7 @@ export default async function CoaAtendimentoDashboardPage() {
         </DashboardSection>
 
         <DashboardSection
+          className="min-w-0"
           title="Comigo agora"
           href="/admin/crm/contatos"
           isEmpty={dashboard.myQueue.length === 0}
