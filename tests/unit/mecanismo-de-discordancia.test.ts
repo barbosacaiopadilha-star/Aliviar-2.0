@@ -17,7 +17,10 @@ import { describe, expect, it } from "vitest";
 const RAIZ = process.cwd();
 const MIGRATION_1_12 = "supabase/migrations/20260808150000_mecanismo_de_discordancia.sql";
 
-const sqlBruto = readFileSync(join(RAIZ, MIGRATION_1_12), "utf8");
+// G-6/CRLF: o Git em Windows materializa a migration com CRLF, e os oráculos
+// de assinatura comparam literais com `\n`. A normalização é SÓ em memória —
+// o arquivo aplicado (e seu checksum no ledger) permanece intocado.
+const sqlBruto = readFileSync(join(RAIZ, MIGRATION_1_12), "utf8").replace(/\r\n?/g, "\n");
 const sql = sqlBruto
   .split("\n")
   .filter((linha) => !linha.trimStart().startsWith("--"))

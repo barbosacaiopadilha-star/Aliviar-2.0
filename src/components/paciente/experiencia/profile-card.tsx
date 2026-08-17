@@ -69,7 +69,7 @@ export function ProfileCard({
 
       <dl className="mt-5 space-y-2.5">
         <div className="flex items-baseline justify-between gap-4">
-          <dt className="text-sm text-[var(--color-ink-muted)]">Fatores conversados</dt>
+          <dt className="text-sm text-[var(--color-ink-muted)]">Fatores declarados</dt>
           <dd className="text-sm font-medium text-[var(--patient-ink)]">
             {perfil.classificados === 0
               ? "Em conversa"

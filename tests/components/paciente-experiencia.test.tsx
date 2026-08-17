@@ -131,6 +131,20 @@ describe("ProfileCard — resumo primeiro, detalhe sob demanda", () => {
     expect(screen.getAllByText("Em conversa").length).toBeGreaterThan(0);
     expect(screen.getByText("Ainda com você")).toBeInTheDocument();
   });
+
+  it("D-03 · o contador se chama 'Fatores declarados' — e conta o que foi declarado", () => {
+    // O rótulo antigo ("Fatores conversados") prometia conversa; o número vem
+    // de `declarados.length` (via `classificados`). O nome agora diz a verdade.
+    const perfil = buildPerfilView(MAPA, true);
+    render(<ProfileCard perfil={perfil} />);
+
+    expect(screen.getByText("Fatores declarados")).toBeInTheDocument();
+    expect(screen.queryByText("Fatores conversados")).toBeNull();
+    // O valor exibido é exatamente a métrica `classificados de total` da view —
+    // mesma propriedade, nenhuma fonte nova.
+    expect(screen.getByText(`${perfil.classificados} de ${perfil.total}`)).toBeInTheDocument();
+    expect(perfil.classificados).toBe(MAPA.length);
+  });
 });
 
 describe("CuradoriaCard — uma frase, uma ação", () => {
