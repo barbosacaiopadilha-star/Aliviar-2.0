@@ -49,6 +49,7 @@ function opcao(id: string, nome: string, overrides: Partial<PatientCuradoriaOpti
     attentionPoints: ["Ainda não conseguimos confirmar como ocorre o acompanhamento."],
     suggestedQuestions: ["Como funciona o acompanhamento após a primeira consulta?"],
     dimensions: dimensoes(),
+    formacao: [],
     ...overrides,
   };
 }

@@ -7,6 +7,8 @@ import {
   PATIENT_DIMENSIONS,
   type PatientDimension,
 } from "@/modules/paciente/experiencia";
+import { listarFormacaoConfirmada } from "@/modules/profiles/formacao-academica-repository";
+import type { FormacaoPublica } from "@/modules/profiles/formacao-academica";
 
 /**
  * A Curadoria entregue, do ponto de vista do paciente.
@@ -49,6 +51,13 @@ export type PatientCuradoriaOption = {
    * confirmar", que é a verdade.
    */
   dimensions: PatientDimension[];
+  /**
+   * Formação acadêmica CONFIRMADA pela equipe — a RLS só entrega linhas
+   * `verificado` de Curadoria ENTREGUE ao titular do Case. Apresentação
+   * factual: nunca participa de pontuação, ordem ou recomendação, e a ordem
+   * das opções continua sendo a que o Curador escreveu (`position`).
+   */
+  formacao: FormacaoPublica[];
 };
 
 export type PatientCuradoria = {
@@ -124,6 +133,11 @@ export async function loadPatientCuradoria(
     (profiles ?? []).map((row) => [row.id as string, row.display_name as string]),
   );
 
+  // A formação confirmada de cada opção — mesma sessão do paciente, mesma
+  // autoridade (RLS). Vazio enquanto a equipe não confirmar nada: o bloco
+  // simplesmente não aparece, sem placeholder.
+  const formacaoPorProfissional = await listarFormacaoConfirmada(supabase, professionalIds);
+
   // A avaliação por dimensão vem da declaração do Curador. A RLS só a libera
   // depois da entrega — antes disso, a Curadoria ainda está sendo construída.
   const { data: criterionRows } = await supabase
@@ -176,6 +190,7 @@ export async function loadPatientCuradoria(
       attentionPoints: (row.attention_points as string[]) ?? [],
       dimensions: dimensionsFor(professionalProfileId),
       suggestedQuestions: (row.suggested_questions as string[]) ?? [],
+      formacao: formacaoPorProfissional.get(professionalProfileId) ?? [],
     };
   });
 

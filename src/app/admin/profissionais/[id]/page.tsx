@@ -38,8 +38,13 @@ import { loadProtocolDraft } from "@/modules/curadoria/protocolos-repository";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
+import { FormacaoAcademicaPanel } from "@/components/profiles/formacao-academica-panel";
 import { MapaProfissionalPanel } from "@/components/profiles/mapa-profissional-panel";
 import { ProfessionalDocumentsPanel } from "@/components/profiles/professional-documents-panel";
+import {
+  listarCurriculosComUltimaLeitura,
+  listarFormacaoParaRevisao,
+} from "@/modules/profiles/formacao-academica-repository";
 import { ProfessionalProfileForm } from "@/components/profiles/professional-profile-form";
 import { listProfessionalDocuments } from "@/modules/profiles/professional-document-repository";
 import { loadProfessionalMap } from "@/modules/curadoria/mapa-profissional-repository";
@@ -65,13 +70,16 @@ export default async function EditProfessionalPage({ params }: EditProfessionalP
     notFound();
   }
 
-  const [documents, mapa, practiceArea, criticalDivergences, protocolDraft] = await Promise.all([
-    listProfessionalDocuments(supabase, id),
-    loadProfessionalMap(supabase, id),
-    getPracticeArea(supabase, id),
-    countOpenCriticalDivergences(supabase, id),
-    loadProtocolDraft(supabase, id),
-  ]);
+  const [documents, mapa, practiceArea, criticalDivergences, protocolDraft, formacao, curriculos] =
+    await Promise.all([
+      listProfessionalDocuments(supabase, id),
+      loadProfessionalMap(supabase, id),
+      getPracticeArea(supabase, id),
+      countOpenCriticalDivergences(supabase, id),
+      loadProtocolDraft(supabase, id),
+      listarFormacaoParaRevisao(supabase, id),
+      listarCurriculosComUltimaLeitura(supabase, id),
+    ]);
 
   const pendencies = listPublicationPendencies({
     professional,
@@ -193,6 +201,12 @@ export default async function EditProfessionalPage({ params }: EditProfessionalP
         </CardHeader>
 
         <ProfessionalDocumentsPanel professionalProfileId={id} initialDocuments={documents} />
+
+        <FormacaoAcademicaPanel
+          professionalProfileId={id}
+          entradas={formacao}
+          curriculos={curriculos}
+        />
       </Card>
 
       {/* O Catálogo 1.0.0 no cadastro (ETAPA 5): o mesmo Protocolo da Prática

@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { BarraCompatibilidade } from "@/components/paciente/caminhos/barra-compatibilidade";
 import { Retrato } from "@/components/paciente/caminhos/retrato";
+import { FormacaoAcademicaBloco } from "@/components/patient/formacao-academica-bloco";
 import { cn } from "@/components/ui/cn";
 import type { PatientCuradoriaOption } from "@/modules/curadoria/patient-curadoria";
 
@@ -121,6 +122,11 @@ export function CartaCaminho({
                   ))}
                 </div>
               </section>
+
+              {/* Formação confirmada pela equipe — fato, não mérito: aparece
+                  depois do Perfil e sem qualquer elemento comparável entre
+                  cartas. Vazia, a seção simplesmente não existe. */}
+              <FormacaoAcademicaBloco formacao={option.formacao} />
 
               {/* ADR-065 — a leitura relacional, já validada pelo Curador na
                   emissão. Cada frase carrega o que ELA pediu e o que o

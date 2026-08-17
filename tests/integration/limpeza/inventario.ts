@@ -345,6 +345,9 @@ export async function limpar(admin: SupabaseClient, antes: Inventario): Promise<
     ["verification_divergences", "resolved_by"],
     ["professional_practice_areas", "verified_by"],
     ["professional_education_entries", "verified_by"],
+    // Formação acadêmica: o run de extração tem autoria NOT NULL; os vínculos
+    // saem por cascade do próprio run/entrada.
+    ["professional_education_extraction_runs", "created_by"],
     ["professional_career_entries", "verified_by"],
     ["professional_experience", "verified_by"],
     ["professional_care_model", "verified_by"],

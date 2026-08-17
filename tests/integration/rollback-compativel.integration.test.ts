@@ -30,6 +30,11 @@ const RAIZ = path.resolve(__dirname, "..", "..");
 const MIGRACOES = path.join(RAIZ, "supabase", "migrations");
 const SCRIPT = path.join(RAIZ, "scripts", "emergencia", "rollback-compativel-c7.sql");
 const CORTE_121 = "20260812210000"; // arquivo 122 (porta pública) — a Production parou antes dele
+// O contrato compensável do P-1 é EXATAMENTE 127 — o mundo que a Production
+// publicou. Migrations posteriores (128+) existem no repositório sem pertencer
+// a esse contrato; os cenários B/C nascem limitados a este corte para que a
+// guarda G2 do script (ledger = 127) siga medindo o que sempre mediu.
+const FIM_DO_CONTRATO_127 = "20260815021142"; // exclusivo: inclui 20260815021141
 
 const isolada = containerDoBanco() !== CONTAINER_PADRAO;
 const container = () => argumentosPsql("")[1]!;
@@ -139,7 +144,7 @@ d("P-1 · rollback compatível — cenários determinísticos", () => {
   }, 600_000);
 
   it("cenário B nasce da cadeia até 127; incompatível antes; compensação ativa e auditada; writer legado volta; nada se perde; desvio derivável; idempotente; negativos de confirmação e banco", () => {
-    const ledger = construirCenario("p1_b127", null);
+    const ledger = construirCenario("p1_b127", FIM_DO_CONTRATO_127);
     expect(ledger, "cadeia até 127").toBe("127");
 
     // Passo 3 · incompatibilidade ANTES: a escrita legada é recusada.
@@ -235,7 +240,7 @@ d("P-1 · rollback compatível — cenários determinísticos", () => {
   }, 600_000);
 
   it("cenário C (reconstrução limpa 127): compensar → retornar devolve o contrato, sem história fabricada, desvio zero", () => {
-    const ledger = construirCenario("p1_c127", null);
+    const ledger = construirCenario("p1_c127", FIM_DO_CONTRATO_127);
     expect(ledger).toBe("127");
 
     psqlEm(

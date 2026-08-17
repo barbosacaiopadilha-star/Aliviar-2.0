@@ -71,6 +71,7 @@ function opcao(id: string, nome: string, over: Partial<PatientCuradoriaOption> =
     attentionPoints: ["Ainda não conseguimos confirmar como ocorre o acompanhamento."],
     suggestedQuestions: ["Como funciona o acompanhamento após a primeira consulta?"],
     dimensions: dimensoes(),
+    formacao: [],
     ...over,
   };
 }
