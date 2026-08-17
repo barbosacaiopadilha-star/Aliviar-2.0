@@ -82,12 +82,49 @@ export type TarefaDePdf = {
   destroyed?: boolean;
 };
 
+/** O item de texto como o PDF.js o entrega — só o que a montagem usa. */
+export type ItemDeTexto = { str?: string | null; hasEOL?: boolean };
+
 type DocumentoDePdf = {
   numPages: number;
   getPage: (n: number) => Promise<{
-    getTextContent: () => Promise<{ items: Array<{ str?: string }> }>;
+    getTextContent: () => Promise<{ items: ItemDeTexto[] }>;
   }>;
 };
+
+/**
+ * R-1 · Monta o texto de UMA página com a MESMA semântica do `extractText`
+ * do unpdf@1.8.1 instalado (`getPageText`, node_modules/unpdf/dist/index.mjs):
+ * item sem `str` é ignorado; `hasEOL` vira quebra de linha; e o join é VAZIO —
+ * o espaçamento pertence ao próprio `str`. O `join(" ")` anterior injetava
+ * espaço entre TODOS os itens e apagava as quebras: título, instituição e
+ * período de linhas vizinhas se contaminavam.
+ *
+ * Fallback por coordenada Y: NÃO implementado, por decisão medida — a sonda
+ * da missão verificou `hasEOL` presente como boolean em TODOS os itens deste
+ * build (PDF.js 6.1.200). Fallback sem caso real seria caminho morto sem
+ * prova; se um build futuro deixar `hasEOL` indisponível, o oráculo de
+ * linhas desta suíte acusa antes de qualquer contaminação chegar à equipe.
+ */
+export function montarTextoDaPagina(itens: ReadonlyArray<ItemDeTexto>): string {
+  return itens
+    .filter((item) => item.str != null)
+    .map((item) => item.str + (item.hasEOL ? "\n" : ""))
+    .join("");
+}
+
+/**
+ * R-1 · Junta as páginas com a MESMA normalização do `normalizeMergedText`
+ * do unpdf@1.8.1: quebra entre páginas, espaço colapsado SEM destruir linha,
+ * e no máximo uma linha em branco consecutiva.
+ */
+export function normalizarTextoDasPaginas(paginas: ReadonlyArray<string>): string {
+  return paginas
+    .join("\n")
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/ ?\n ?/g, "\n")
+    .replace(/\n{3,}/g, "\n\n");
+}
 
 export type OpcoesDeExtracao = {
   prazoMs?: number;
@@ -164,19 +201,22 @@ export async function extrairTextoDePdf(
     const pdf = await tarefa.promise;
     if (pdf.numPages > LIMITES.MAX_PAGINAS) throw new Error(ERRO_PAGINAS);
 
-    let texto = "";
+    const textosDasPaginas: string[] = [];
+    let acumulado = 0;
     for (let i = 1; i <= pdf.numPages; i += 1) {
       if (estourou || Date.now() > limite) throw new Error(ERRO_PRAZO);
       const pagina = await pdf.getPage(i);
       const conteudo = await pagina.getTextContent();
-      texto += conteudo.items.map((item) => item.str ?? "").join(" ") + "\n";
-      if (texto.length > LIMITES.MAX_CHARS_TEXTO) throw new Error(ERRO_TEXTO_GRANDE);
+      const textoDaPagina = montarTextoDaPagina(conteudo.items);
+      textosDasPaginas.push(textoDaPagina);
+      acumulado += textoDaPagina.length;
+      if (acumulado > LIMITES.MAX_CHARS_TEXTO) throw new Error(ERRO_TEXTO_GRANDE);
       // O yield que torna o vigia capaz de disparar (ver medição no docstring).
       await new Promise<void>((resolver) => {
         setImmediate(resolver);
       });
     }
-    return { texto, paginas: pdf.numPages };
+    return { texto: normalizarTextoDasPaginas(textosDasPaginas), paginas: pdf.numPages };
   } catch (erro) {
     const mensagem = erro instanceof Error ? erro.message : "";
     const limiteProprio = mensagem === ERRO_PAGINAS || mensagem === ERRO_TEXTO_GRANDE;
