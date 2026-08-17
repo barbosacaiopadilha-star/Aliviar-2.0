@@ -66,38 +66,132 @@ export const ERRO_TEXTO_GRANDE = "texto_excede_limite";
 export const ERRO_PRAZO = "prazo_excedido";
 export const ERRO_DOCUMENTO_DE_OUTRO = "documento_de_outro_profissional";
 
-/**
- * Guarda de prazo. Ela limita a ESPERA, não a CPU: `unpdf`/PDF.js não é
- * cancelável sem worker próprio, e worker é dependência nova ou mudança
- * arquitetural — ambas proibidas neste corte. Documentado como limitação, não
- * como promessa: a requisição termina com erro nomeado no prazo; o parse pode
- * seguir até o próprio fim em segundo plano.
- */
-export async function comPrazo<T>(promessa: Promise<T>, prazoMs: number): Promise<T> {
-  let temporizador: ReturnType<typeof setTimeout> | undefined;
-  try {
-    return await Promise.race([
-      promessa,
-      new Promise<never>((_, rejeitar) => {
-        temporizador = setTimeout(() => rejeitar(new Error(ERRO_PRAZO)), prazoMs);
-      }),
-    ]);
-  } finally {
-    if (temporizador) clearTimeout(temporizador);
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Leitura do PDF — unpdf (PDF.js puro, empacotável no runtime Node da Vercel)
+// com CANCELAMENTO REAL por prazo (F-3, correção da auditoria)
 // ---------------------------------------------------------------------------
 
+/**
+ * O contrato mínimo da tarefa de carregamento do PDF.js que o cancelamento
+ * usa. `destroyed` é a evidência falseável: neutralizar o destroy deixa a
+ * flag em `false`, e a suíte derruba.
+ */
+export type TarefaDePdf = {
+  promise: Promise<DocumentoDePdf>;
+  destroy: () => Promise<void>;
+  destroyed?: boolean;
+};
+
+type DocumentoDePdf = {
+  numPages: number;
+  getPage: (n: number) => Promise<{
+    getTextContent: () => Promise<{ items: Array<{ str?: string }> }>;
+  }>;
+};
+
+export type OpcoesDeExtracao = {
+  prazoMs?: number;
+  /** Gancho de TESTE: recebe a tarefa para inspecionar `destroyed`. */
+  observarTarefa?: (tarefa: TarefaDePdf) => void;
+  /** Gancho de TESTE: substitui o `getDocument` real do build serverless. */
+  obterGetDocument?: () => Promise<(params: Record<string, unknown>) => TarefaDePdf>;
+};
+
+async function getDocumentDoBuildServerless(): Promise<
+  (params: Record<string, unknown>) => TarefaDePdf
+> {
+  const { getResolvedPDFJS } = await import("unpdf");
+  const pdfjs = await getResolvedPDFJS();
+  return pdfjs.getDocument as unknown as (params: Record<string, unknown>) => TarefaDePdf;
+}
+
+/**
+ * Extrai o texto página a página SOB CANCELAMENTO REAL.
+ *
+ * O que a medição empírica deste build ensinou, e o desenho obedece:
+ *
+ * 1. O parse roda numa cascata de microtasks que MONOPOLIZA o event loop — um
+ *    vigia de `setTimeout` sozinho nunca dispara antes do fim (medido:
+ *    destroy@100ms chegava com as 4000 páginas prontas). Por isso o laço CEDE
+ *    a vez (`setImmediate`) a cada página: o yield é parte do cancelamento,
+ *    não cosmética.
+ * 2. Com o yield, `loadingTask.destroy()` interrompe DE VERDADE: 0 páginas
+ *    avançam após o corte, e o fluxo fecha em ~100 ms contra 9 s de baseline
+ *    (sondas registradas na evidência da missão).
+ * 3. Granularidade residual DECLARADA: dentro de UMA página o build não cede o
+ *    loop, então uma página patológica corre inteira antes do corte (~2 s num
+ *    stream de 8,9 MiB; o teto de 20 MiB do bucket limita o pior caso). Não é
+ *    espera infinita: é o átomo do cancelamento neste runtime.
+ * 4. O build TRANSFERE o buffer de entrada (structuredClone com transfer): a
+ *    cópia `bytes.slice()` protege o chamador de ficar com ArrayBuffer
+ *    destacado.
+ *
+ * Garantias estruturais: `destroy()` é chamado NO MÁXIMO uma vez (trava),
+ * SEMPRE (sucesso, erro e prazo — `finally`), e é AGUARDADO antes de o fluxo
+ * concluir. Depois do prazo nada mais nasce: o transporte morto rejeita
+ * qualquer página seguinte, e o erro vira `ERRO_PRAZO` nomeado.
+ */
 export async function extrairTextoDePdf(
   bytes: Uint8Array,
+  opcoes: OpcoesDeExtracao = {},
 ): Promise<{ texto: string; paginas: number }> {
-  const { extractText, getDocumentProxy } = await import("unpdf");
-  const pdf = await getDocumentProxy(bytes);
-  const { totalPages, text } = await extractText(pdf, { mergePages: true });
-  return { texto: String(text ?? ""), paginas: totalPages ?? 0 };
+  const prazoMs = opcoes.prazoMs ?? LIMITES.PRAZO_MS;
+  const getDocument = await (opcoes.obterGetDocument ?? getDocumentDoBuildServerless)();
+
+  const tarefa = getDocument({
+    data: bytes.slice(),
+    useWorkerFetch: false,
+    isEvalSupported: false,
+  });
+  opcoes.observarTarefa?.(tarefa);
+
+  let destruicao: Promise<void> | null = null;
+  const destruir = (): Promise<void> => {
+    // Trava de unicidade: vigia e `finally` compartilham a MESMA promessa —
+    // destroy roda uma vez, e quem chegar depois aguarda a mesma destruição.
+    destruicao ??= tarefa.destroy().catch(() => {});
+    return destruicao;
+  };
+
+  const limite = Date.now() + prazoMs;
+  let estourou = false;
+  const vigia = setTimeout(() => {
+    estourou = true;
+    void destruir();
+  }, prazoMs);
+
+  try {
+    const pdf = await tarefa.promise;
+    if (pdf.numPages > LIMITES.MAX_PAGINAS) throw new Error(ERRO_PAGINAS);
+
+    let texto = "";
+    for (let i = 1; i <= pdf.numPages; i += 1) {
+      if (estourou || Date.now() > limite) throw new Error(ERRO_PRAZO);
+      const pagina = await pdf.getPage(i);
+      const conteudo = await pagina.getTextContent();
+      texto += conteudo.items.map((item) => item.str ?? "").join(" ") + "\n";
+      if (texto.length > LIMITES.MAX_CHARS_TEXTO) throw new Error(ERRO_TEXTO_GRANDE);
+      // O yield que torna o vigia capaz de disparar (ver medição no docstring).
+      await new Promise<void>((resolver) => {
+        setImmediate(resolver);
+      });
+    }
+    return { texto, paginas: pdf.numPages };
+  } catch (erro) {
+    const mensagem = erro instanceof Error ? erro.message : "";
+    const limiteProprio = mensagem === ERRO_PAGINAS || mensagem === ERRO_TEXTO_GRANDE;
+    if ((estourou || Date.now() > limite) && !limiteProprio) {
+      // Erro pós-corte (transporte destruído) É o prazo — com nome, nunca
+      // o detalhe interno do PDF.js.
+      throw new Error(ERRO_PRAZO);
+    }
+    throw erro;
+  } finally {
+    clearTimeout(vigia);
+    // Sucesso E erro liberam os recursos, e a destruição é AGUARDADA antes
+    // de o resultado sair daqui.
+    await destruir();
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -283,14 +377,14 @@ export async function processarCurriculo(deps: Deps): Promise<ResultadoDaExtraca
   }
 
   // 2 · texto — currículo visual é FALHA declarada, nunca invenção. A leitura
-  //     corre sob prazo: o que estoura vira erro NOMEADO, não 504 da plataforma.
+  //     corre sob CANCELAMENTO real: no prazo, o vigia destrói a tarefa do
+  //     PDF.js e o trabalho para (F-3) — erro NOMEADO, não 504 da plataforma.
   let texto = "";
   let paginas = 0;
   try {
-    ({ texto, paginas } = await comPrazo(
-      (deps.lerPdf ?? extrairTextoDePdf)(bytes),
-      Math.max(restante(), 1),
-    ));
+    ({ texto, paginas } = await (deps.lerPdf
+      ? deps.lerPdf(bytes)
+      : extrairTextoDePdf(bytes, { prazoMs: Math.max(restante(), 1) })));
   } catch (e) {
     const classe = (e as Error).message === ERRO_PRAZO ? ERRO_PRAZO : "pdf_ilegivel";
     const runId = await registrarRun("falha", { erro: classe });

@@ -7,7 +7,6 @@ import {
   ERRO_PRAZO,
   ERRO_TEXTO_GRANDE,
   LIMITES,
-  comPrazo,
   processarCurriculo,
 } from "@/modules/profiles/formacao-academica-extracao";
 
@@ -221,10 +220,9 @@ describe("F-3 · limites explícitos, medidos nos três pontos", () => {
     expect(escritas.filter((e) => e.tabela === "professional_education_entries")).toEqual([]);
   });
 
-  it("prazo: `comPrazo` interrompe a ESPERA com erro nomeado", async () => {
-    const nuncaResolve = new Promise<never>(() => {});
-    await expect(comPrazo(nuncaResolve, 5)).rejects.toThrow(ERRO_PRAZO);
-  });
+  // O antigo `comPrazo` (Promise.race que só limitava a ESPERA) foi removido
+  // pela correção do F-3: o prazo agora CANCELA a tarefa do PDF.js de verdade.
+  // As provas do cancelamento vivem em formacao-academica-cancelamento.test.ts.
 
   it("prazo estourado na leitura vira run 'falha' com `prazo_excedido`, sem formação", async () => {
     const { cliente, escritas } = fakeSupabase();
