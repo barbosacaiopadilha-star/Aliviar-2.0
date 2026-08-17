@@ -389,6 +389,69 @@ describe("confirmação · decisão vinculante 3", () => {
   });
 });
 
+/**
+ * F-1 · O VÍNCULO DOCUMENTO ↔ PROFISSIONAL, NO BANCO REAL.
+ *
+ * O ataque é o do administrador distraído (ou mal-intencionado): mandar o
+ * `documentId` do profissional A dizendo que é formação do profissional B. Antes
+ * da correção o pipeline obedecia — buscava o documento só por `id`. Agora a
+ * consulta exige as DUAS colunas, e a recusa é rejeição: nada é escrito.
+ */
+describe("F-1 · currículo de um não vira formação de outro", () => {
+  it("documento do profissional entregue NÃO é processado como formação de outro", async () => {
+    const antesEntradas = await contarEntradas(profissionalForaDaEntrega);
+    const { count: antesRuns } = await admin
+      .from("professional_education_extraction_runs")
+      .select("id", { count: "exact", head: true })
+      .eq("professional_profile_id", profissionalForaDaEntrega);
+    const { count: antesLinks } = await admin
+      .from("professional_education_extraction_links")
+      .select("entry_id", { count: "exact", head: true })
+      .eq("document_id", documentId);
+
+    // `documentId` pertence a `profissionalEntregue`; pedimos como se fosse do
+    // outro. Sem `baixarPdf`: é o caminho real, o único que confere o vínculo.
+    const r = await processarCurriculo({
+      supabase: admin,
+      professionalProfileId: profissionalForaDaEntrega,
+      documentId,
+      actorId: fx.adminUserId,
+      lerPdf: lerPdfFicticio,
+    });
+
+    expect(r.status).toBe("falha");
+    expect(r.erro).toBe("documento_de_outro_profissional");
+    expect(r.runId, "rejeição não registra execução").toBeNull();
+    expect(r.criadas).toBe(0);
+
+    // Nada nasceu: nem formação, nem run, nem vínculo.
+    expect(await contarEntradas(profissionalForaDaEntrega)).toBe(antesEntradas);
+    const { count: depoisRuns } = await admin
+      .from("professional_education_extraction_runs")
+      .select("id", { count: "exact", head: true })
+      .eq("professional_profile_id", profissionalForaDaEntrega);
+    const { count: depoisLinks } = await admin
+      .from("professional_education_extraction_links")
+      .select("entry_id", { count: "exact", head: true })
+      .eq("document_id", documentId);
+    expect(depoisRuns ?? 0).toBe(antesRuns ?? 0);
+    expect(depoisLinks ?? 0).toBe(antesLinks ?? 0);
+  });
+
+  it("o dono legítimo continua processando o próprio documento", async () => {
+    const r = await processarCurriculo({
+      supabase: admin,
+      professionalProfileId: profissionalEntregue,
+      documentId,
+      actorId: fx.adminUserId,
+      baixarPdf: baixarPdfFicticio,
+      lerPdf: lerPdfFicticio,
+    });
+    expect(r.status, "a correção não fechou a porta certa").toBe("concluida");
+    expect(r.runId).not.toBeNull();
+  });
+});
+
 describe("índice reverso · aprovado sob prova de plano", () => {
   it("com seqscan desligado, a busca por profissional usa curated_selection_options_professional_idx", () => {
     const [cmd, container] = ["docker", argumentosPsql("")[1]!];

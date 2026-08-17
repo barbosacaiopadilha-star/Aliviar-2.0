@@ -58,6 +58,12 @@ export type PatientCuradoriaOption = {
    * das opções continua sendo a que o Curador escreveu (`position`).
    */
   formacao: FormacaoPublica[];
+  /**
+   * F-2 · verdadeiro quando a LEITURA falhou (banco, RLS, rede) — nunca quando
+   * simplesmente não há formação confirmada. A carta então mostra estado neutro
+   * em vez de fingir ausência.
+   */
+  formacaoIndisponivel: boolean;
 };
 
 export type PatientCuradoria = {
@@ -135,8 +141,13 @@ export async function loadPatientCuradoria(
 
   // A formação confirmada de cada opção — mesma sessão do paciente, mesma
   // autoridade (RLS). Vazio enquanto a equipe não confirmar nada: o bloco
-  // simplesmente não aparece, sem placeholder.
-  const formacaoPorProfissional = await listarFormacaoConfirmada(supabase, professionalIds);
+  // simplesmente não aparece, sem placeholder. Falha de leitura é OUTRO estado
+  // (F-2): vira `formacaoIndisponivel`, nunca lista vazia.
+  const leituraDeFormacao = await listarFormacaoConfirmada(supabase, professionalIds);
+  const formacaoPorProfissional = leituraDeFormacao.ok
+    ? leituraDeFormacao.porProfissional
+    : new Map<string, FormacaoPublica[]>();
+  const formacaoIndisponivel = !leituraDeFormacao.ok;
 
   // A avaliação por dimensão vem da declaração do Curador. A RLS só a libera
   // depois da entrega — antes disso, a Curadoria ainda está sendo construída.
@@ -191,6 +202,7 @@ export async function loadPatientCuradoria(
       dimensions: dimensionsFor(professionalProfileId),
       suggestedQuestions: (row.suggested_questions as string[]) ?? [],
       formacao: formacaoPorProfissional.get(professionalProfileId) ?? [],
+      formacaoIndisponivel,
     };
   });
 

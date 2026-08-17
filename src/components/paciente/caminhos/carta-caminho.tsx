@@ -125,8 +125,12 @@ export function CartaCaminho({
 
               {/* Formação confirmada pela equipe — fato, não mérito: aparece
                   depois do Perfil e sem qualquer elemento comparável entre
-                  cartas. Vazia, a seção simplesmente não existe. */}
-              <FormacaoAcademicaBloco formacao={option.formacao} />
+                  cartas. Vazia, a seção simplesmente não existe; ilegível, ela
+                  diz que está indisponível (F-2) em vez de fingir ausência. */}
+              <FormacaoAcademicaBloco
+                formacao={option.formacao}
+                indisponivel={option.formacaoIndisponivel}
+              />
 
               {/* ADR-065 — a leitura relacional, já validada pelo Curador na
                   emissão. Cada frase carrega o que ELA pediu e o que o

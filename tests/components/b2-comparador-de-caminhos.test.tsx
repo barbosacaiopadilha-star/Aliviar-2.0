@@ -72,6 +72,7 @@ function opcao(id: string, nome: string, over: Partial<PatientCuradoriaOption> =
     suggestedQuestions: ["Como funciona o acompanhamento após a primeira consulta?"],
     dimensions: dimensoes(),
     formacao: [],
+    formacaoIndisponivel: false,
     ...over,
   };
 }

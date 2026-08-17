@@ -1,4 +1,5 @@
 import {
+  FORMACAO_INDISPONIVEL,
   FORMACAO_KIND_LABELS,
   SELO_FORMACAO_VERIFICADA,
   linhasPublicas,
@@ -15,8 +16,32 @@ import {
  * - dar à formação qualquer cor, número ou destaque comparável entre cartas
  *   (formação não é mérito, é fato);
  * - mostrar mais de UM selo — "Formação verificada pela equipe" é binário.
+ *
+ * F-2 · três estados, não dois: formação confirmada (lista), silêncio legítimo
+ * (nada confirmado ainda → o bloco não existe) e leitura indisponível (frase
+ * neutra). O terceiro nunca se disfarça de segundo.
  */
-export function FormacaoAcademicaBloco({ formacao }: { formacao: FormacaoPublica[] }) {
+export function FormacaoAcademicaBloco({
+  formacao,
+  indisponivel = false,
+}: {
+  formacao: FormacaoPublica[];
+  indisponivel?: boolean;
+}) {
+  if (indisponivel) {
+    return (
+      <section aria-label="Formação acadêmica">
+        <h4 className="patient-section-title">Formação</h4>
+        <p
+          role="status"
+          className="mt-2 max-w-prose text-sm leading-relaxed text-[var(--color-ink-muted)]"
+        >
+          {FORMACAO_INDISPONIVEL}
+        </p>
+      </section>
+    );
+  }
+
   if (formacao.length === 0) return null;
 
   return (

@@ -81,16 +81,26 @@ export async function listarFormacaoParaRevisao(
  * Visão pública: SÓ campos de apresentação. Fonte, notas, documento e execução
  * ficam de fora do SELECT — e as tabelas de rastro nem têm policy de paciente.
  */
+export type LeituraDeFormacao =
+  | { ok: true; porProfissional: Map<string, FormacaoPublica[]> }
+  | { ok: false; motivo: "indisponivel" };
+
 export async function listarFormacaoConfirmada(
   supabase: SupabaseClient,
   professionalProfileIds: readonly string[],
-): Promise<Map<string, FormacaoPublica[]>> {
-  if (professionalProfileIds.length === 0) return new Map();
-  const { data } = await supabase
+): Promise<LeituraDeFormacao> {
+  if (professionalProfileIds.length === 0) return { ok: true, porProfissional: new Map() };
+  const { data, error } = await supabase
     .from("professional_education_entries")
     .select("professional_profile_id, kind, title, institution, city, country, period_start, period_end")
     .in("professional_profile_id", [...professionalProfileIds])
     .eq("verification_status", "verificado");
+
+  // F-2 · erro de leitura NÃO é lista vazia. Ausência legítima e falha são
+  // estados diferentes: dizer "sem formação" quando a verdade é "não
+  // conseguimos ler" mentiria para a paciente. Nada do erro técnico atravessa
+  // esta fronteira — quem chama recebe um motivo fechado.
+  if (error) return { ok: false, motivo: "indisponivel" };
 
   const porProfissional = new Map<string, FormacaoPublica[]>();
   for (const l of data ?? []) {
@@ -109,7 +119,7 @@ export async function listarFormacaoConfirmada(
     porProfissional.set(l.professional_profile_id as string, lista);
   }
   for (const [id, lista] of porProfissional) porProfissional.set(id, ordenarParaApresentacao(lista));
-  return porProfissional;
+  return { ok: true, porProfissional };
 }
 
 export type CamposDeFormacao = {

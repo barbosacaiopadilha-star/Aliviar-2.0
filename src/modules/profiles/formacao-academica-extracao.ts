@@ -32,6 +32,61 @@ export const EXTRATOR_B1 = "b1-deterministico@1";
 /** Menos que isto por página = currículo visual — pedimos PDF textual/DOCX. */
 export const LIMIAR_CHARS_POR_PAGINA = 100;
 
+/**
+ * F-3 · LIMITES DE RECURSO, EM UM LUGAR SÓ.
+ *
+ * Por que cada número é este, e não um palpite redondo:
+ *
+ * - `MAX_BYTES` = 20 MiB, exatamente o teto do bucket `professional-documents`
+ *   (`file_size_limit = 20971520`, migration do bucket). Acima disso o arquivo
+ *   não existe legitimamente; recusar antes de ler é recusar o impossível.
+ * - `MAX_PAGINAS` = 60. Um currículo médico real cabe com folga; 60 páginas de
+ *   PDF textual já são ~10× o maior caso plausível.
+ * - `MAX_CHARS_TEXTO` = 400 000. Teto de memória do texto em trânsito: 60
+ *   páginas densas somam ~200 mil caracteres, e o dobro disso é margem.
+ * - `PRAZO_MS` = 9 000. Fica ABAIXO do menor teto de duração de função Node da
+ *   Vercel (10 s no padrão mais restritivo), para que a recusa seja NOSSA, com
+ *   erro nomeado e run registrado, em vez de um 504 mudo da plataforma.
+ *
+ * Honestidade sobre a página e o texto: só se conhecem DEPOIS de abrir o PDF.
+ * Por isso são conferidos imediatamente após a leitura, antes de qualquer
+ * candidato — e a recusa vale para os dois casos.
+ */
+export const LIMITES = {
+  MAX_BYTES: 20 * 1024 * 1024,
+  MAX_PAGINAS: 60,
+  MAX_CHARS_TEXTO: 400_000,
+  PRAZO_MS: 9_000,
+} as const;
+
+/** Erros de recurso — classe, nunca conteúdo. */
+export const ERRO_ARQUIVO_GRANDE = "arquivo_excede_limite";
+export const ERRO_PAGINAS = "paginas_excedem_limite";
+export const ERRO_TEXTO_GRANDE = "texto_excede_limite";
+export const ERRO_PRAZO = "prazo_excedido";
+export const ERRO_DOCUMENTO_DE_OUTRO = "documento_de_outro_profissional";
+
+/**
+ * Guarda de prazo. Ela limita a ESPERA, não a CPU: `unpdf`/PDF.js não é
+ * cancelável sem worker próprio, e worker é dependência nova ou mudança
+ * arquitetural — ambas proibidas neste corte. Documentado como limitação, não
+ * como promessa: a requisição termina com erro nomeado no prazo; o parse pode
+ * seguir até o próprio fim em segundo plano.
+ */
+export async function comPrazo<T>(promessa: Promise<T>, prazoMs: number): Promise<T> {
+  let temporizador: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promessa,
+      new Promise<never>((_, rejeitar) => {
+        temporizador = setTimeout(() => rejeitar(new Error(ERRO_PRAZO)), prazoMs);
+      }),
+    ]);
+  } finally {
+    if (temporizador) clearTimeout(temporizador);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Leitura do PDF — unpdf (PDF.js puro, empacotável no runtime Node da Vercel)
 // ---------------------------------------------------------------------------
@@ -174,6 +229,34 @@ export async function processarCurriculo(deps: Deps): Promise<ResultadoDaExtraca
     return (data?.id as string) ?? null;
   };
 
+  const inicio = Date.now();
+  const restante = () => LIMITES.PRAZO_MS - (Date.now() - inicio);
+
+  // 0 · F-1 · O DOCUMENTO É DESTE PROFISSIONAL? A pergunta vem ANTES de
+  //     qualquer escrita: pedir o currículo de B como formação de A é pedido
+  //     REJEITADO, não extração que falhou. Por isso não nasce run, não nasce
+  //     vínculo e não nasce formação — nem parcial.
+  if (!deps.baixarPdf) {
+    const { data: dono } = await supabase
+      .from("professional_documents")
+      .select("id")
+      .eq("id", documentId)
+      .eq("professional_profile_id", professionalProfileId)
+      .maybeSingle();
+    if (!dono) {
+      return {
+        runId: null,
+        status: "falha",
+        erro: ERRO_DOCUMENTO_DE_OUTRO,
+        criadas: 0,
+        descartadas: 0,
+        puladasPorDuplicidade: 0,
+        preservadasPorEdicaoHumana: 0,
+        requerPdfTextual: false,
+      };
+    }
+  }
+
   // 1 · bytes do currículo (nunca persistidos fora do storage de origem)
   let bytes: Uint8Array;
   try {
@@ -184,6 +267,7 @@ export async function processarCurriculo(deps: Deps): Promise<ResultadoDaExtraca
         .from("professional_documents")
         .select("file_path")
         .eq("id", documentId)
+        .eq("professional_profile_id", professionalProfileId)
         .single();
       if (!doc) throw new Error("documento_nao_encontrado");
       const { data: blob, error } = await supabase.storage
@@ -192,22 +276,44 @@ export async function processarCurriculo(deps: Deps): Promise<ResultadoDaExtraca
       if (error || !blob) throw new Error("download_falhou");
       bytes = new Uint8Array(await blob.arrayBuffer());
     }
+    if (bytes.byteLength > LIMITES.MAX_BYTES) throw new Error(ERRO_ARQUIVO_GRANDE);
   } catch (e) {
     const runId = await registrarRun("falha", { erro: (e as Error).message.slice(0, 80) });
     return { runId, status: "falha", erro: (e as Error).message.slice(0, 80), criadas: 0, descartadas: 0, puladasPorDuplicidade: 0, preservadasPorEdicaoHumana: 0, requerPdfTextual: false };
   }
 
-  // 2 · texto — currículo visual é FALHA declarada, nunca invenção
+  // 2 · texto — currículo visual é FALHA declarada, nunca invenção. A leitura
+  //     corre sob prazo: o que estoura vira erro NOMEADO, não 504 da plataforma.
   let texto = "";
   let paginas = 0;
   try {
-    ({ texto, paginas } = await (deps.lerPdf ?? extrairTextoDePdf)(bytes));
-  } catch {
-    const runId = await registrarRun("falha", { erro: "pdf_ilegivel" });
-    return { runId, status: "falha", erro: "pdf_ilegivel", criadas: 0, descartadas: 0, puladasPorDuplicidade: 0, preservadasPorEdicaoHumana: 0, requerPdfTextual: true };
+    ({ texto, paginas } = await comPrazo(
+      (deps.lerPdf ?? extrairTextoDePdf)(bytes),
+      Math.max(restante(), 1),
+    ));
+  } catch (e) {
+    const classe = (e as Error).message === ERRO_PRAZO ? ERRO_PRAZO : "pdf_ilegivel";
+    const runId = await registrarRun("falha", { erro: classe });
+    return { runId, status: "falha", erro: classe, criadas: 0, descartadas: 0, puladasPorDuplicidade: 0, preservadasPorEdicaoHumana: 0, requerPdfTextual: classe === "pdf_ilegivel" };
   }
+
+  // 2.1 · limites que só existem depois de abrir o PDF (F-3)
+  const textHashParcial = createHash("sha256").update(texto).digest("hex");
+  if (paginas > LIMITES.MAX_PAGINAS) {
+    const runId = await registrarRun("falha", { erro: ERRO_PAGINAS, text_hash: textHashParcial });
+    return { runId, status: "falha", erro: ERRO_PAGINAS, criadas: 0, descartadas: 0, puladasPorDuplicidade: 0, preservadasPorEdicaoHumana: 0, requerPdfTextual: false };
+  }
+  if (texto.length > LIMITES.MAX_CHARS_TEXTO) {
+    const runId = await registrarRun("falha", { erro: ERRO_TEXTO_GRANDE, text_hash: textHashParcial });
+    return { runId, status: "falha", erro: ERRO_TEXTO_GRANDE, criadas: 0, descartadas: 0, puladasPorDuplicidade: 0, preservadasPorEdicaoHumana: 0, requerPdfTextual: false };
+  }
+  if (restante() <= 0) {
+    const runId = await registrarRun("falha", { erro: ERRO_PRAZO, text_hash: textHashParcial });
+    return { runId, status: "falha", erro: ERRO_PRAZO, criadas: 0, descartadas: 0, puladasPorDuplicidade: 0, preservadasPorEdicaoHumana: 0, requerPdfTextual: false };
+  }
+
   const chars = texto.replace(/\s+/g, " ").trim().length;
-  const textHash = createHash("sha256").update(texto).digest("hex");
+  const textHash = textHashParcial;
   if (paginas === 0 || chars / Math.max(paginas, 1) < LIMIAR_CHARS_POR_PAGINA) {
     const runId = await registrarRun("falha", { erro: "requer_pdf_textual", text_hash: textHash });
     return { runId, status: "falha", erro: "requer_pdf_textual", criadas: 0, descartadas: 0, puladasPorDuplicidade: 0, preservadasPorEdicaoHumana: 0, requerPdfTextual: true };

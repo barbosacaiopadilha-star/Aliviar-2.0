@@ -42,6 +42,13 @@ export const FORMACAO_KIND_LABELS: Record<FormacaoKind, string> = {
 
 export const SELO_FORMACAO_VERIFICADA = "Formação verificada pela equipe";
 
+/**
+ * F-2 · A frase do estado indisponível — fonte única, neutra e sem técnica.
+ * Ela existe para NÃO confundir "ainda não há formação confirmada" (silêncio
+ * legítimo, o bloco não aparece) com "não conseguimos ler agora".
+ */
+export const FORMACAO_INDISPONIVEL = "Formação acadêmica temporariamente indisponível";
+
 export type FormacaoStatus = "nao_verificado" | "verificado" | "divergente";
 
 /** A entrada como a equipe a vê (administrativo). */

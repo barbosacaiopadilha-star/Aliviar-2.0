@@ -62,6 +62,55 @@ describe("FormacaoAcademicaBloco — o que o paciente vê", () => {
     const { container } = render(<FormacaoAcademicaBloco formacao={[]} />);
     expect(container.textContent).toBe("");
   });
+
+  /**
+   * F-2 · três estados, e o do meio nunca se disfarça do de baixo:
+   * lista → silêncio legítimo → indisponível.
+   */
+  describe("F-2 · falha de leitura não é ausência de formação", () => {
+    it("lista legitimamente vazia continua silêncio — nada na tela", () => {
+      const { container } = render(
+        <FormacaoAcademicaBloco formacao={[]} indisponivel={false} />,
+      );
+      expect(container.textContent).toBe("");
+    });
+
+    it("formação existente segue aparecendo, com o selo único", () => {
+      render(<FormacaoAcademicaBloco formacao={CONFIRMADAS} indisponivel={false} />);
+      expect(screen.getByText("Universidade Federal de Minas Gerais")).toBeInTheDocument();
+      expect(screen.getAllByText("Formação verificada pela equipe")).toHaveLength(1);
+      expect(screen.queryByText(/temporariamente indispon/i)).toBeNull();
+    });
+
+    it("erro de leitura diz que está indisponível — e NÃO finge lista vazia", () => {
+      render(<FormacaoAcademicaBloco formacao={[]} indisponivel />);
+      const estado = screen.getByRole("status");
+      expect(estado).toHaveTextContent("Formação acadêmica temporariamente indisponível");
+      // Não inventa formação, não mostra selo, não diz "não informado".
+      expect(screen.queryByText("Formação verificada pela equipe")).toBeNull();
+      expect(screen.queryByText(/não informado/i)).toBeNull();
+    });
+
+    it("o estado indisponível não vaza nada técnico", () => {
+      const { container } = render(<FormacaoAcademicaBloco formacao={[]} indisponivel />);
+      const texto = container.textContent ?? "";
+      for (const tecnico of [
+        "error",
+        "Error",
+        "PGRST",
+        "row-level",
+        "RLS",
+        "policy",
+        "supabase",
+        "professional_education_entries",
+        "stack",
+        "undefined",
+        "null",
+      ]) {
+        expect(texto, `vazou termo técnico: ${tecnico}`).not.toContain(tecnico);
+      }
+    });
+  });
 });
 
 const ENTRADA: FormacaoEntrada = {
