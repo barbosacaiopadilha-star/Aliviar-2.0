@@ -94,7 +94,7 @@ sem tocar na `main`, PR, produção ou Vercel.
 ### P2/P3 encerrados
 
 - T13, T15 e T19 não possuem mais retorno antecipado;
-- matriz versionada ampliada de 26 para 30 casos;
+- matriz atual versionada com 32 casos;
 - rollback executável em
   `supabase/rollback/g0_r1_regime_de_instrumentos.rollback.sql`;
 - ciclo apply → harness → rollback → sentinela → reapply → harness executado;
@@ -115,11 +115,36 @@ sem tocar na `main`, PR, produção ou Vercel.
 
 Hashes SHA-256 do conteúdo validado:
 
-- migration: `9a34057b4397db1a94aa7aad2299f41eb33738406c734c7f8042eb34366ca6ef`;
-- teste: `07586ab4f3f0261b3deb22e4deac1c05338936f9bc6350e19cb183fa26db0093`;
+- migration: `ad8f3f38ce5c4a61d8472773df6fe12e8df661182b5a57f699fb4b2ce005f967`;
+- teste: `c06a3d45066fb557be7a23cbb3fe6b991c6787c8b63e9459567a2aa49856301f`;
 - rollback: `d548aa67e2707fd3a506a7a679a47caf482e7e81a93d2c2e3f57d54806adf3fe`.
 
-Limite: os 30 casos TypeScript estão prontos para CI, mas não foram declarados
-como executados neste gate conectado; a prova executada é o harness SQL 10/10,
+Limite: os 32 casos TypeScript estão prontos para CI, mas não foram declarados
+como executados neste gate conectado; a prova executada é o harness SQL 12/12,
 a concorrência por duas conexões e o ciclo integral registrado em
 `docs/G0_R1_PROVAS_CORRECAO_REVALIDACAO.md`.
+
+
+## 8. Microrretificação final
+
+T27 foi corrigido para usar uma segunda sessão real de paciente. A expectativa
+de recusa do administrador foi removida, pois o administrador é legitimamente
+autorizado. A prova agora confirma IDs distintos, sessão real e ausência de
+retorno de dados no ataque cross-tenant.
+
+A validação dos contratos JSON agora rejeita ordem fracionária e UUIDs
+sintaticamente inválidos. T31 e T32 cobrem os dois casos. O preflight também
+detecta resíduos das funções, índices e constraints G0-R1; uma segunda
+aplicação foi recusada antes de mutar o schema.
+
+Ciclo final executado: 12/12 → rollback 4/4 → reapply → 12/12. Advisors:
+0 alerta de segurança G0, 0 FK G0 sem índice e 7 INFO de índices ainda não
+utilizados, resultado esperado após schema novo e sem carga representativa.
+
+O registro 26/26 é histórico da versão anterior. A suíte atual possui 32 casos
+versionados e deverá ser executada pelo CI; não se declara Vitest executado
+neste gate conectado.
+
+O commit `0b6fda0` foi uma gravação mecânica intermediária defeituosa,
+neutralizada integralmente por `527ab37`. Nenhuma reescrita de histórico foi
+feita, pois não houve autorização para rebase/force-push.
