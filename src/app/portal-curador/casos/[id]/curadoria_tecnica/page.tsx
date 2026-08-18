@@ -11,7 +11,10 @@ import { PainelInvestigacao } from "@/components/curadoria/mesa/painel-investiga
 import { ComparacaoPremium } from "@/components/curadoria/mesa/comparacao-premium";
 import { HipoteseEmFoco } from "@/components/curadoria/mesa/hipotese-em-foco";
 import { MesaComEstado } from "@/components/curadoria/mesa/mesa-com-estado";
-import { MesaTimelineDupla, type CaseTimelineMark } from "@/components/curadoria/mesa/mesa-timeline";
+import {
+  MesaTimelineDupla,
+  type CaseTimelineMark,
+} from "@/components/curadoria/mesa/mesa-timeline";
 import {
   AvaliacaoSemElegiveis,
   CompatibilidadeNaoIniciada,
@@ -20,7 +23,10 @@ import {
   RelatorioNaoGerado,
 } from "@/components/curadoria/mesa/mesa-vazios";
 import { PainelAtencao } from "@/components/curadoria/mesa/painel-atencao";
-import { PainelDeJuizo, type ConceitoDeJuizo } from "@/components/curadoria/mesa/painel-de-juizo";
+import {
+  PainelDeJuizo,
+  type ConceitoDeJuizo,
+} from "@/components/curadoria/mesa/painel-de-juizo";
 import { RedeFiltravel } from "@/components/curadoria/mesa/rede-filtravel";
 import { MesaContextPanel } from "@/components/curadoria/mesa-context-panel";
 import { MesaEvidenciasPanel } from "@/components/curadoria/mesa-evidencias-panel";
@@ -29,7 +35,10 @@ import { MesaWorkspace } from "@/components/curadoria/mesa-workspace";
 import { StartPriorityProfile } from "@/components/curadoria/start-priority-profile";
 import { ProtocoloPessoaPanel } from "@/components/curadoria/protocolo-pessoa-panel";
 import { conduct } from "@/modules/curadoria/cos/conduction";
-import { MANDATORY_FILTER_LABELS, type MandatoryFilterKind } from "@/modules/curadoria/types";
+import {
+  MANDATORY_FILTER_LABELS,
+  type MandatoryFilterKind,
+} from "@/modules/curadoria/types";
 import { getActivePriorityProfile } from "@/modules/curadoria/repository";
 import { falhaParaUsuario } from "@/lib/observability/erros";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -41,7 +50,10 @@ import {
   loadEvidenceDivergences,
 } from "@/modules/curadoria/evidencias-pratica-repository";
 import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
-import { buildCuratorJourney, journeyStepHref } from "@/modules/curadoria/cos/journey";
+import {
+  buildCuratorJourney,
+  journeyStepHref,
+} from "@/modules/curadoria/cos/journey";
 import { CRITERION_LABELS } from "@/modules/curadoria/cruzamento";
 import { loadMesaCruzamento } from "@/modules/curadoria/mesa-cruzamento";
 import { groupPriorityMap } from "@/modules/curadoria/mapa-prioridades";
@@ -61,7 +73,10 @@ import {
 import { loadJulgamentosDaAvaliacao } from "@/modules/curadoria/julgamentos-repository";
 import { AbasCompatibilidade } from "@/components/curadoria/mesa/abas-compatibilidade";
 import { LeituraRelacionalPanel } from "@/components/curadoria/mesa/leitura-relacional-panel";
-import { candidatosDaSelecao, foraDaSelecao } from "@/modules/curadoria/mesa-selecao";
+import {
+  candidatosDaSelecao,
+  foraDaSelecao,
+} from "@/modules/curadoria/mesa-selecao";
 import {
   buildMesaEtapas,
   estadoDaMesa,
@@ -98,7 +113,11 @@ export const metadata: Metadata = {
  * Nenhuma regra mudou: os mesmos painéis certificados, distribuídos, com
  * recorte de leitura, comparação em matriz e atalhos por cima.
  */
-export default async function MesaCuradoriaPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function MesaCuradoriaPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   await requireAnyRole(["curador_medico", "administrador"]);
   const supabase = await createServerSupabaseClient();
@@ -110,7 +129,9 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
 
   const state = conduct(record);
   const journey = buildCuratorJourney(record, state);
-  const phaseAlerts = state.alerts.filter((alert) => alert.phase === "CURADORIA_TECNICA");
+  const phaseAlerts = state.alerts.filter(
+    (alert) => alert.phase === "CURADORIA_TECNICA",
+  );
 
   // Bloco D (gate D17): a construção da Rede é fail-closed — blocklist
   // inacessível LANÇA, e a falha aparece aqui como erro dito, com referência
@@ -124,16 +145,23 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
       record.curadoriaTecnica.selectedProfessionalIds.length,
     );
   } catch (erro) {
-    const mensagem = falhaParaUsuario("mesa.curadoriaTecnica.cruzamento", erro, {
-      mensagem: "Não foi possível montar a Mesa deste Case agora.",
-      contexto: { caseId: record.caseId },
-    });
+    const mensagem = falhaParaUsuario(
+      "mesa.curadoriaTecnica.cruzamento",
+      erro,
+      {
+        mensagem: "Não foi possível montar a Mesa deste Case agora.",
+        contexto: { caseId: record.caseId },
+      },
+    );
     return (
       <main className="mx-auto max-w-reading px-6 py-10">
-        <h1 className="font-serif text-xl font-medium text-ink">Mesa de Curadoria</h1>
+        <h1 className="font-serif text-xl font-medium text-ink">
+          Mesa de Curadoria
+        </h1>
         <p role="alert" className="mt-4 text-sm leading-relaxed text-ink">
-          {mensagem} A Rede deste Case não pôde ser lida — nada foi decidido nem perdido.
-          Recarregue a página; se persistir, informe a referência acima.
+          {mensagem} A Rede deste Case não pôde ser lida — nada foi decidido nem
+          perdido. Recarregue a página; se persistir, informe a referência
+          acima.
         </p>
       </main>
     );
@@ -144,11 +172,12 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
   const authState = await getAuthState();
   const isAdmin = authState?.roles.includes("administrador") ?? false;
   const redeIds = view.professionals.map((p) => p.professionalProfileId);
-  const [evidenceRows, evidenceDivergences, evidenceUpdateRequests] = await Promise.all([
-    loadCurrentPracticeEvidence(supabase, redeIds),
-    loadEvidenceDivergences(supabase, redeIds),
-    listOpenUpdateRequests(supabase, redeIds),
-  ]);
+  const [evidenceRows, evidenceDivergences, evidenceUpdateRequests] =
+    await Promise.all([
+      loadCurrentPracticeEvidence(supabase, redeIds),
+      loadEvidenceDivergences(supabase, redeIds),
+      listOpenUpdateRequests(supabase, redeIds),
+    ]);
   const evidencePanelCan = {
     verify: isAdmin,
     openDivergence: true, // curador e admin — policy divergences_curator_open
@@ -158,7 +187,10 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
   };
 
   const lifecycle = record.curadoriaTecnica.curatedSelectionId
-    ? await getReportLifecycle(supabase, record.curadoriaTecnica.curatedSelectionId)
+    ? await getReportLifecycle(
+        supabase,
+        record.curadoriaTecnica.curatedSelectionId,
+      )
     : null;
 
   // Os fatos que decidem onde está a próxima decisão — derivados, nunca
@@ -171,17 +203,25 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
   // Duas naturezas, um só registro no banco. O filtro obrigatório elimina da
   // Rede; a preferência apenas inclina. Separá-las aqui é o que impede a
   // interface de tratar "prefiro perto de casa" como se fosse veto.
-  const filtrosDoPerfil = (perfilAtivo?.mandatoryFilters ?? [])
-    .map((filtro) => ({
+  const filtrosDoPerfil = (perfilAtivo?.mandatoryFilters ?? []).map(
+    (filtro) => ({
       id: filtro.id,
       kind: filtro.kind,
-      label: MANDATORY_FILTER_LABELS[filtro.kind as MandatoryFilterKind] ?? filtro.kind,
+      label:
+        MANDATORY_FILTER_LABELS[filtro.kind as MandatoryFilterKind] ??
+        filtro.kind,
       value: filtro.value,
       reason: filtro.note ?? "",
-    }));
+    }),
+  );
 
-  const preferenciasDoPerfil = (perfilAtivo?.preferences ?? [])
-    .map((filtro) => ({ id: filtro.id, value: filtro.value, reason: filtro.note ?? "" }));
+  const preferenciasDoPerfil = (perfilAtivo?.preferences ?? []).map(
+    (filtro) => ({
+      id: filtro.id,
+      value: filtro.value,
+      reason: filtro.note ?? "",
+    }),
+  );
 
   const [catalogo, mapa] = await Promise.all([
     listSubcriterionCatalog(supabase),
@@ -196,13 +236,22 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
   // ADR-065 — a quarta leitura, computada ANTES das etapas porque o Item 2.3
   // deriva dela os conceitos H11 exigidos: o Motor emite JUIZO_HUMANO
   // exatamente quando o Case declarou grau para o conceito relacional humano.
-  const idsElegiveis = view.comparison.map((coluna) => coluna.professionalProfileId);
+  const idsElegiveis = view.comparison.map(
+    (coluna) => coluna.professionalProfileId,
+  );
   const relacional =
     idsElegiveis.length > 0
-      ? await crossCaseRelationalForProfessionals(supabase, record.caseId, idsElegiveis)
+      ? await crossCaseRelationalForProfessionals(
+          supabase,
+          record.caseId,
+          idsElegiveis,
+        )
       : { byProfessional: [], relationalNeedsCount: 0 };
   const relacionalPorId = new Map(
-    relacional.byProfessional.map((leitura) => [leitura.professionalProfileId, leitura]),
+    relacional.byProfessional.map((leitura) => [
+      leitura.professionalProfileId,
+      leitura,
+    ]),
   );
 
   // Item 2.3 — a divisão da AVALIAÇÃO: o juízo humano por profissional
@@ -215,14 +264,17 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
         record.caseId,
         professionalProfileId,
       );
-      const declarados = (relacionalPorId.get(professionalProfileId)?.readings ?? [])
+      const declarados = (
+        relacionalPorId.get(professionalProfileId)?.readings ?? []
+      )
         .filter((reading) => reading.kind === "JUIZO_HUMANO")
         .map((reading) => reading.code);
       return { professionalProfileId, julgamentos, declarados };
     }),
   );
   const julgamentosAguardando = juizoPorProfissional.reduce(
-    (total, entrada) => total + lacunasDeJuizo(entrada.julgamentos, entrada.declarados).length,
+    (total, entrada) =>
+      total + lacunasDeJuizo(entrada.julgamentos, entrada.declarados).length,
     0,
   );
 
@@ -248,30 +300,38 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
   // A leitura da investigação — tudo derivado do que já está na Mesa.
   // ------------------------------------------------------------------
 
-  const colunaPorId = new Map(view.comparison.map((coluna) => [coluna.professionalProfileId, coluna]));
+  const colunaPorId = new Map(
+    view.comparison.map((coluna) => [coluna.professionalProfileId, coluna]),
+  );
 
-  const profissionais: InvestigacaoProfissional[] = view.professionals.map((profissional) => {
-    const coluna = colunaPorId.get(profissional.professionalProfileId);
-    return {
-      id: profissional.professionalProfileId,
-      nome: profissional.displayName,
-      estado: profissional.eligibility.state,
-      areaDeclarada: Boolean(profissional.declaration),
-      temDivergencia: profissional.areaVerificationStatus === "divergente",
-      filtrosSemInformacao: profissional.eligibility.filters.filter(
-        (filtro) => filtro.passes === null,
-      ).length,
-      criteriosPendentes:
-        view.awaitingDeclaration[profissional.professionalProfileId]?.length ?? 0,
-      // Lacuna do Motor: o que o Case declarou e o profissional não respondeu.
-      // ADR-065 §10.3: as lacunas relacionais entram na mesma contagem de
-      // atenção que as assistenciais — a linha de investigação não distingue
-      // a leitura de origem, só a pendência.
-      criteriosInsuficientes:
-        (coluna?.cells.filter((celula) => celula.result === "LACUNA_DE_INFORMACAO").length ?? 0) +
-        (relacionalPorId.get(profissional.professionalProfileId)?.summary.lacunas ?? 0),
-    };
-  });
+  const profissionais: InvestigacaoProfissional[] = view.professionals.map(
+    (profissional) => {
+      const coluna = colunaPorId.get(profissional.professionalProfileId);
+      return {
+        id: profissional.professionalProfileId,
+        nome: profissional.displayName,
+        estado: profissional.eligibility.state,
+        areaDeclarada: Boolean(profissional.declaration),
+        temDivergencia: profissional.areaVerificationStatus === "divergente",
+        filtrosSemInformacao: profissional.eligibility.filters.filter(
+          (filtro) => filtro.passes === null,
+        ).length,
+        criteriosPendentes:
+          view.awaitingDeclaration[profissional.professionalProfileId]
+            ?.length ?? 0,
+        // Lacuna do Motor: o que o Case declarou e o profissional não respondeu.
+        // ADR-065 §10.3: as lacunas relacionais entram na mesma contagem de
+        // atenção que as assistenciais — a linha de investigação não distingue
+        // a leitura de origem, só a pendência.
+        criteriosInsuficientes:
+          (coluna?.cells.filter(
+            (celula) => celula.result === "LACUNA_DE_INFORMACAO",
+          ).length ?? 0) +
+          (relacionalPorId.get(profissional.professionalProfileId)?.summary
+            .lacunas ?? 0),
+      };
+    },
+  );
 
   const criteriaTotal = Object.keys(view.awaitingDeclaration).length * 6;
 
@@ -286,8 +346,9 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
   const atencao = itensDeAtencao(profissionais);
 
   const nomeDe = (professionalProfileId: string) =>
-    view.professionals.find((p) => p.professionalProfileId === professionalProfileId)
-      ?.displayName ?? "Profissional";
+    view.professionals.find(
+      (p) => p.professionalProfileId === professionalProfileId,
+    )?.displayName ?? "Profissional";
 
   const colunas = view.comparison.map((coluna) => ({
     id: coluna.professionalProfileId,
@@ -305,15 +366,17 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
         importancia: celula.importance,
         resultado: celula.result,
       })),
-      pendentes: (view.awaitingDeclaration[coluna.professionalProfileId] ?? []).map(
-        (criterio) => CRITERION_LABELS[criterio],
-      ),
+      pendentes: (
+        view.awaitingDeclaration[coluna.professionalProfileId] ?? []
+      ).map((criterio) => CRITERION_LABELS[criterio]),
     }),
   );
 
   const entregue =
     Boolean(record.relatorio.emittedAt) ||
-    state.phases.some((phase) => phase.phase === "DEVOLUTIVA" && phase.status !== "BLOQUEADA");
+    state.phases.some(
+      (phase) => phase.phase === "DEVOLUTIVA" && phase.status !== "BLOQUEADA",
+    );
 
   const persisted =
     record.curadoriaTecnica.selectedProfessionalIds.length > 0
@@ -321,23 +384,25 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
           selectedIds: record.curadoriaTecnica.selectedProfessionalIds,
           compositionRationale: record.relatorio.compositionRationale ?? "",
           closed: true,
-          pareceres: record.curadoriaTecnica.selectedProfessionalIds.map((professionalId) => {
-            const option = record.relatorio.options.find(
-              (entry) => entry.professionalId === professionalId,
-            );
-            return {
-              professionalId,
-              whyIncluded: option?.justification ?? "",
-              prioritiesServed: option?.relationToWeights ?? "",
-              // FRENTE D3: o parecer da Mesa edita as coleções em textarea —
-              // um item por linha, a MESMA serialização (com inversa definida)
-              // do editor do Relatório. O `join(" ")` anterior fundia itens
-              // por espaço, sem volta, já na exibição.
-              limitations: itensParaTextarea(option?.attentionPoints ?? []),
-              questions: itensParaTextarea(option?.suggestedQuestions ?? []),
-              observations: option?.curatorObservations ?? "",
-            };
-          }),
+          pareceres: record.curadoriaTecnica.selectedProfessionalIds.map(
+            (professionalId) => {
+              const option = record.relatorio.options.find(
+                (entry) => entry.professionalId === professionalId,
+              );
+              return {
+                professionalId,
+                whyIncluded: option?.justification ?? "",
+                prioritiesServed: option?.relationToWeights ?? "",
+                // FRENTE D3: o parecer da Mesa edita as coleções em textarea —
+                // um item por linha, a MESMA serialização (com inversa definida)
+                // do editor do Relatório. O `join(" ")` anterior fundia itens
+                // por espaço, sem volta, já na exibição.
+                limitations: itensParaTextarea(option?.attentionPoints ?? []),
+                questions: itensParaTextarea(option?.suggestedQuestions ?? []),
+                observations: option?.curatorObservations ?? "",
+              };
+            },
+          ),
         }
       : undefined;
 
@@ -349,24 +414,44 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
   const fase = (nome: string) =>
     state.phases.find((phase) => phase.phase === nome)?.status === "CONCLUIDA";
 
-  const marcar = (marks: { id: string; label: string; done: boolean }[]): CaseTimelineMark[] => {
+  const marcar = (
+    marks: { id: string; label: string; done: boolean }[],
+  ): CaseTimelineMark[] => {
     const primeiraAberta = marks.findIndex((entrada) => !entrada.done);
     return marks.map((mark, index) => ({
       id: mark.id,
       label: mark.label,
-      status: mark.done ? "done" : index === primeiraAberta ? "current" : "ahead",
+      status: mark.done
+        ? "done"
+        : index === primeiraAberta
+          ? "current"
+          : "ahead",
     }));
   };
 
   const linhaPaciente = marcar([
-    { id: "CONSULTA", label: "Consulta", done: Boolean(record.historia.understandingConfirmedAt) },
-    { id: "PERFIL", label: "Perfil", done: Boolean(record.validacao?.validatedAt) },
+    {
+      id: "CONSULTA",
+      label: "Consulta",
+      done: Boolean(record.historia.understandingConfirmedAt),
+    },
+    {
+      id: "PERFIL",
+      label: "Perfil",
+      done: Boolean(record.validacao?.validatedAt),
+    },
     { id: "CURADORIA", label: "Curadoria", done: fase("CURADORIA_TECNICA") },
-    { id: "RELATORIO", label: "Relatório", done: Boolean(lifecycle?.emittedAt) },
+    {
+      id: "RELATORIO",
+      label: "Relatório",
+      done: Boolean(lifecycle?.emittedAt),
+    },
     { id: "ESCOLHA", label: "Escolha", done: fase("DEVOLUTIVA") },
   ]);
 
-  const rotuloDaInvestigacao: Partial<Record<MesaEtapaId, string>> = { CAMINHOS: "Seleção" };
+  const rotuloDaInvestigacao: Partial<Record<MesaEtapaId, string>> = {
+    CAMINHOS: "Seleção",
+  };
 
   // M4: nenhuma etapa precisa ser filtrada aqui — a duplicidade que exigia o
   // filtro (CRUZAMENTO repetindo COMPATIBILIDADE) deixou de existir.
@@ -419,15 +504,19 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
     // conversa → ela reconhecer no portal dela → a Curadoria Técnica abrir.
     PERFIL: !record.priorityProfileId ? (
       <div className="mesa-bloco">
-        <StartPriorityProfile caseId={record.caseId} patientFirstName={record.patientFirstName} />
+        <StartPriorityProfile
+          caseId={record.caseId}
+          patientFirstName={record.patientFirstName}
+        />
       </div>
     ) : (
       <div className="space-y-4">
         {!view.profileAcknowledged ? (
           <p className="max-w-reading text-sm leading-relaxed text-ink-muted">
-            O Mapa se preenche na conversa com {record.patientFirstName}. Quando estiver completo,
-            ela o reconhece no portal dela — e só então a Curadoria Técnica abre. Sem o critério
-            dela, qualquer análise seria a Aliviar decidindo com aparência de método.
+            O Mapa se preenche na conversa com {record.patientFirstName}. Quando
+            estiver completo, ela o reconhece no portal dela — e só então a
+            Curadoria Técnica abre. Sem o critério dela, qualquer análise seria
+            a Aliviar decidindo com aparência de método.
           </p>
         ) : null}
         <MapaPrioridadesPanel
@@ -440,13 +529,18 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
             dela é aqui: o filtro obrigatório é parte do critério da paciente,
             e mora no mesmo Perfil que o Mapa. Depois do reconhecimento o
             Perfil é imutável, e o painel entra em leitura. */}
-        <MandatoryFilters
-          priorityProfileId={record.priorityProfileId}
-          patientFirstName={record.patientFirstName}
-          readOnly={view.profileAcknowledged}
-          filters={filtrosDoPerfil}
-          preferences={preferenciasDoPerfil}
-        />
+        <div
+          id="filtros-do-perfil"
+          className="scroll-mt-[var(--mesa-topo,0px)]"
+        >
+          <MandatoryFilters
+            priorityProfileId={record.priorityProfileId}
+            patientFirstName={record.patientFirstName}
+            readOnly={view.profileAcknowledged}
+            filters={filtrosDoPerfil}
+            preferences={preferenciasDoPerfil}
+          />
+        </div>
       </div>
     ),
 
@@ -471,43 +565,60 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
             caseId={record.caseId}
             profissionais={juizoPorProfissional.map(
               ({ professionalProfileId, julgamentos, declarados }) => {
-                const evidencias = evidenceRows.get(professionalProfileId) ?? [];
+                const evidencias =
+                  evidenceRows.get(professionalProfileId) ?? [];
                 const lacunas = lacunasDeJuizo(julgamentos, declarados);
-                const lacunaPorCode = new Map(lacunas.map((l) => [l.subcriterionCode, l.motivo]));
+                const lacunaPorCode = new Map(
+                  lacunas.map((l) => [l.subcriterionCode, l.motivo]),
+                );
                 return {
                   professionalProfileId,
                   nome: nomeDe(professionalProfileId),
-                  conceitos: conceitosExigidos(declarados).map((exigido): ConceitoDeJuizo => {
-                    const cadeia = julgamentos
-                      .filter((j) => j.subcriterionCode === exigido.code)
-                      .sort((a, b) => a.versao - b.versao);
-                    const vigente = julgamentoVigente(julgamentos, exigido.code);
-                    const correntes = evidencias.filter((evidencia) =>
-                      exigido.natureza === "RELACIONAL"
-                        ? evidencia.subcriterionCode === exigido.code
-                        : evidencia.subcriterionCode.startsWith(`${exigido.code}_`),
-                    );
-                    return {
-                      code: exigido.code,
-                      label:
-                        exigido.natureza === "TECNICO"
-                          ? (CRITERION_LABELS[exigido.code as keyof typeof CRITERION_LABELS] ??
-                            exigido.code)
-                          : (RELATIONAL_CONCEPTS_BY_CODE.get(exigido.code)?.name ?? exigido.code),
-                      natureza: exigido.natureza,
-                      lacuna: vigente ? null : (lacunaPorCode.get(exigido.code) ?? "SEM_JUIZO"),
-                      vigente,
-                      historico: cadeia.filter((j) => j.state !== "VIGENTE"),
-                      evidenciasCorrentes: correntes.map((evidencia) => ({
-                        id: evidencia.id,
-                        version: evidencia.version,
-                        subcriterionCode: evidencia.subcriterionCode,
-                        status: evidencia.status,
-                        resumo: evidencia.subcriterionCode,
-                      })),
-                      versaoBaseId: cadeia.length > 0 ? cadeia[cadeia.length - 1].id : null,
-                    };
-                  }),
+                  conceitos: conceitosExigidos(declarados).map(
+                    (exigido): ConceitoDeJuizo => {
+                      const cadeia = julgamentos
+                        .filter((j) => j.subcriterionCode === exigido.code)
+                        .sort((a, b) => a.versao - b.versao);
+                      const vigente = julgamentoVigente(
+                        julgamentos,
+                        exigido.code,
+                      );
+                      const correntes = evidencias.filter((evidencia) =>
+                        exigido.natureza === "RELACIONAL"
+                          ? evidencia.subcriterionCode === exigido.code
+                          : evidencia.subcriterionCode.startsWith(
+                              `${exigido.code}_`,
+                            ),
+                      );
+                      return {
+                        code: exigido.code,
+                        label:
+                          exigido.natureza === "TECNICO"
+                            ? (CRITERION_LABELS[
+                                exigido.code as keyof typeof CRITERION_LABELS
+                              ] ?? exigido.code)
+                            : (RELATIONAL_CONCEPTS_BY_CODE.get(exigido.code)
+                                ?.name ?? exigido.code),
+                        natureza: exigido.natureza,
+                        lacuna: vigente
+                          ? null
+                          : (lacunaPorCode.get(exigido.code) ?? "SEM_JUIZO"),
+                        vigente,
+                        historico: cadeia.filter((j) => j.state !== "VIGENTE"),
+                        evidenciasCorrentes: correntes.map((evidencia) => ({
+                          id: evidencia.id,
+                          version: evidencia.version,
+                          subcriterionCode: evidencia.subcriterionCode,
+                          status: evidencia.status,
+                          resumo: evidencia.subcriterionCode,
+                        })),
+                        versaoBaseId:
+                          cadeia.length > 0
+                            ? cadeia[cadeia.length - 1].id
+                            : null,
+                      };
+                    },
+                  ),
                 };
               },
             )}
@@ -602,7 +713,14 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
         areaRequirement={view.areaRequirement}
         curatorName={record.curatorName}
         estado={estado}
-        alerts={phaseAlerts.map((alert) => alert.title)}
+        alerts={[
+          ...phaseAlerts.map((alert) => alert.title),
+          ...(!view.areaRequirement && !view.profileAcknowledged
+            ? [
+                "Antes de comparar a Rede, confirme com a pessoa se a área de atuação é um requisito inegociável. Se não for, zero filtros continua sendo uma resposta válida.",
+              ]
+            : []),
+        ]}
         etapas={etapas}
         linha={linha}
         totalProfissionais={colunas.length}
@@ -616,11 +734,14 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
                   <PainelInvestigacao
                     leitura={investigacao}
                     catalogo={catalogo}
-                    professionalName={nomeDe(investigacao.professionalProfileId)}
+                    professionalName={nomeDe(
+                      investigacao.professionalProfileId,
+                    )}
                   />
                 ) : (
                   <p className="text-sm text-ink-muted">
-                    A investigação abre quando houver ao menos um profissional elegível.
+                    A investigação abre quando houver ao menos um profissional
+                    elegível.
                   </p>
                 )}
               </div>
@@ -632,7 +753,9 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
               </div>
             </section>
             <section className="mesa-aside__section">
-              <h2 className="mesa-aside__title">O que suas declarações indicam</h2>
+              <h2 className="mesa-aside__title">
+                O que suas declarações indicam
+              </h2>
               <div className="mt-3">
                 <HipoteseEmFoco hipoteses={hipoteses} />
               </div>
@@ -656,11 +779,16 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
             <section className="mesa-aside__section">
               <h2 className="mesa-aside__title">Protocolo da Pessoa</h2>
               <div className="mt-3">
-                <ProtocoloPessoaPanel caseId={record.caseId} needs={view.necessidades} />
+                <ProtocoloPessoaPanel
+                  caseId={record.caseId}
+                  needs={view.necessidades}
+                />
               </div>
             </section>
             <section className="mesa-aside__section">
-              <h2 className="mesa-aside__title">Base de Evidências de Prática</h2>
+              <h2 className="mesa-aside__title">
+                Base de Evidências de Prática
+              </h2>
               <div className="mt-3">
                 <MesaEvidenciasPanel
                   caseId={record.caseId}
@@ -679,12 +807,18 @@ export default async function MesaCuradoriaPage({ params }: { params: Promise<{ 
           </>
         }
         timeline={
-          <MesaTimelineDupla paciente={linhaPaciente} investigacao={linhaInvestigacao} />
+          <MesaTimelineDupla
+            paciente={linhaPaciente}
+            investigacao={linhaInvestigacao}
+          />
         }
       />
 
       <p className="sr-only">
-        Etapa da jornada do Case: {journey.steps.find((step) => step.status !== "CONCLUIDA")?.label ?? "concluída"}.
+        Etapa da jornada do Case:{" "}
+        {journey.steps.find((step) => step.status !== "CONCLUIDA")?.label ??
+          "concluída"}
+        .
       </p>
     </div>
   );

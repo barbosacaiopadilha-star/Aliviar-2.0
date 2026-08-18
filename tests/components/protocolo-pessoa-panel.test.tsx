@@ -93,10 +93,24 @@ describe("ProtocoloPessoaPanel", () => {
 
   it("declaração clínica não oferece formulário de conversa", () => {
     render(<ProtocoloPessoaPanel caseId="case-1" needs={[]} />);
+
+    expect(screen.queryByRole("button", { name: "Registrar conversa" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Abrir protocolo completo (15 conversas)" }));
+
     const badges = screen.getAllByText("Declaração clínica do Curador");
     expect(badges).toHaveLength(2); // P8 e P9
-    // Os botões de registrar existem só para as 14 perguntas.
+    // Os botões de registrar existem só para as 15 conversas da pessoa.
     expect(screen.getAllByRole("button", { name: "Registrar conversa" })).toHaveLength(15);
+  });
+
+  it("recolhe fichas vazias por padrão, sem esconder conversas já registradas", () => {
+    render(<ProtocoloPessoaPanel caseId="case-1" needs={[need()]} />);
+
+    expect(
+      screen.getByRole("button", { name: "Abrir protocolo completo (15 conversas)" }),
+    ).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByText(/Leitura proposta: Pelo que você me contou/)).toBeInTheDocument();
+    expect(screen.queryAllByRole("button", { name: "Registrar conversa" })).toHaveLength(0);
   });
 
   it("a contagem é de conversas — sem percentual", () => {
@@ -306,6 +320,10 @@ describe("1.10C-A · o que ela respondeu, antes de qualquer outra coisa", () => 
         caseId="case-1"
         needs={[need({ subcriterionCode: "VIABILIDADE_CUSTO_E_PAGAMENTO", acknowledgment: "RECUSADA", correction: "nao" })]}
       />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Abrir protocolo completo (15 conversas)" }),
     );
 
     const itens = container.querySelectorAll("ul > li.rounded.border");

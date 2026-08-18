@@ -58,6 +58,7 @@ const ACK_LABELS: Record<CaseNeedRecord["acknowledgment"], string> = {
 export function ProtocoloPessoaPanel({ caseId, needs }: Props) {
   const byCode = new Map(needs.map((need) => [need.subcriterionCode, need]));
   const [openCode, setOpenCode] = useState<string | null>(null);
+  const [showAllQuestions, setShowAllQuestions] = useState(false);
 
   const respondidas = PERSON_PROTOCOL.filter(
     (p) => p.mode !== "DECLARACAO_CLINICA" && byCode.has(p.subcriterionCode),
@@ -69,6 +70,9 @@ export function ProtocoloPessoaPanel({ caseId, needs }: Props) {
   // chegavam, lidos por uma regra que mora fora da tela.
   const revisao = respostasQueExigemRevisao(needs);
   const perguntas = ordenarPelaRevisao(PERSON_PROTOCOL, needs);
+  const perguntasVisiveis = showAllQuestions
+    ? perguntas
+    : perguntas.filter((question) => byCode.has(question.subcriterionCode));
 
   return (
     <div className="space-y-3">
@@ -138,9 +142,30 @@ export function ProtocoloPessoaPanel({ caseId, needs }: Props) {
           </ul>
         )}
       </section>
+      {/* FIM DO BLOCO DE REVISAO — permanece somente leitura. */}
 
-      <ul className="space-y-2">
-        {perguntas.map((question) => {
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          aria-expanded={showAllQuestions}
+          onClick={() => setShowAllQuestions((current) => !current)}
+        >
+          {showAllQuestions
+            ? "Recolher protocolo completo"
+            : `Abrir protocolo completo (${totalPerguntas} conversas)`}
+        </Button>
+        {!showAllQuestions ? (
+          <span className="text-xs text-[var(--color-ink-muted)]">
+            As fichas sem registro ficam recolhidas até serem necessárias na conversa.
+          </span>
+        ) : null}
+      </div>
+
+      {perguntasVisiveis.length > 0 ? (
+        <ul className="space-y-2">
+          {perguntasVisiveis.map((question) => {
           const need = byCode.get(question.subcriterionCode) ?? null;
           return (
             <li key={question.id} className="rounded border p-2 text-sm">
@@ -155,8 +180,9 @@ export function ProtocoloPessoaPanel({ caseId, needs }: Props) {
               />
             </li>
           );
-        })}
-      </ul>
+          })}
+        </ul>
+      ) : null}
     </div>
   );
 }

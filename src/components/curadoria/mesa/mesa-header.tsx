@@ -36,7 +36,7 @@ export function MesaHeader({
           {patientName}
         </h1>
         <p className="mesa-meta">
-          {areaRequirement ?? "Área não definida"} · {curatorName} ·{" "}
+          {areaRequirement ?? "Área a confirmar na conversa"} · {curatorName} ·{" "}
           {estado.done} de {estado.total} etapas
         </p>
       </div>

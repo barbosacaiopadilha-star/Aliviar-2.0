@@ -10,7 +10,10 @@ import {
   type CandidatoDeFormacao,
   type Descarte,
 } from "@/modules/profiles/formacao-academica-extracao-validacao";
-import { isFormacaoKind, type FormacaoKind } from "@/modules/profiles/formacao-academica";
+import {
+  isFormacaoKind,
+  type FormacaoKind,
+} from "@/modules/profiles/formacao-academica";
 
 /**
  * EXTRAÇÃO ASSISTIDA DO CURRÍCULO — o caminho sem redigitação.
@@ -118,7 +121,9 @@ export function montarTextoDaPagina(itens: ReadonlyArray<ItemDeTexto>): string {
  * do unpdf@1.8.1: quebra entre páginas, espaço colapsado SEM destruir linha,
  * e no máximo uma linha em branco consecutiva.
  */
-export function normalizarTextoDasPaginas(paginas: ReadonlyArray<string>): string {
+export function normalizarTextoDasPaginas(
+  paginas: ReadonlyArray<string>,
+): string {
   return paginas
     .join("\n")
     .replace(/[^\S\n]+/g, " ")
@@ -131,7 +136,9 @@ export type OpcoesDeExtracao = {
   /** Gancho de TESTE: recebe a tarefa para inspecionar `destroyed`. */
   observarTarefa?: (tarefa: TarefaDePdf) => void;
   /** Gancho de TESTE: substitui o `getDocument` real do build serverless. */
-  obterGetDocument?: () => Promise<(params: Record<string, unknown>) => TarefaDePdf>;
+  obterGetDocument?: () => Promise<
+    (params: Record<string, unknown>) => TarefaDePdf
+  >;
 };
 
 async function getDocumentDoBuildServerless(): Promise<
@@ -139,7 +146,9 @@ async function getDocumentDoBuildServerless(): Promise<
 > {
   const { getResolvedPDFJS } = await import("unpdf");
   const pdfjs = await getResolvedPDFJS();
-  return pdfjs.getDocument as unknown as (params: Record<string, unknown>) => TarefaDePdf;
+  return pdfjs.getDocument as unknown as (
+    params: Record<string, unknown>,
+  ) => TarefaDePdf;
 }
 
 /**
@@ -173,7 +182,9 @@ export async function extrairTextoDePdf(
   opcoes: OpcoesDeExtracao = {},
 ): Promise<{ texto: string; paginas: number }> {
   const prazoMs = opcoes.prazoMs ?? LIMITES.PRAZO_MS;
-  const getDocument = await (opcoes.obterGetDocument ?? getDocumentDoBuildServerless)();
+  const getDocument = await (
+    opcoes.obterGetDocument ?? getDocumentDoBuildServerless
+  )();
 
   const tarefa = getDocument({
     data: bytes.slice(),
@@ -210,16 +221,21 @@ export async function extrairTextoDePdf(
       const textoDaPagina = montarTextoDaPagina(conteudo.items);
       textosDasPaginas.push(textoDaPagina);
       acumulado += textoDaPagina.length;
-      if (acumulado > LIMITES.MAX_CHARS_TEXTO) throw new Error(ERRO_TEXTO_GRANDE);
+      if (acumulado > LIMITES.MAX_CHARS_TEXTO)
+        throw new Error(ERRO_TEXTO_GRANDE);
       // O yield que torna o vigia capaz de disparar (ver medição no docstring).
       await new Promise<void>((resolver) => {
         setImmediate(resolver);
       });
     }
-    return { texto: normalizarTextoDasPaginas(textosDasPaginas), paginas: pdf.numPages };
+    return {
+      texto: normalizarTextoDasPaginas(textosDasPaginas),
+      paginas: pdf.numPages,
+    };
   } catch (erro) {
     const mensagem = erro instanceof Error ? erro.message : "";
-    const limiteProprio = mensagem === ERRO_PAGINAS || mensagem === ERRO_TEXTO_GRANDE;
+    const limiteProprio =
+      mensagem === ERRO_PAGINAS || mensagem === ERRO_TEXTO_GRANDE;
     if ((estourou || Date.now() > limite) && !limiteProprio) {
       // Erro pós-corte (transporte destruído) É o prazo — com nome, nunca
       // o detalhe interno do PDF.js.
@@ -238,18 +254,95 @@ export async function extrairTextoDePdf(
 // B1 · seccionador determinístico
 // ---------------------------------------------------------------------------
 
-const PALAVRAS_DE_TIPO: ReadonlyArray<{ kind: FormacaoKind; padrao: RegExp }> = [
-  { kind: "residencia", padrao: /resid[eê]ncia/i },
-  { kind: "fellowship", padrao: /fellow(ship)?/i },
-  { kind: "especializacao", padrao: /especializa[cç][aã]o|t[ií]tulo de especialista/i },
-  { kind: "pos_graduacao", padrao: /p[oó]s[- ]?gradua[cç][aã]o|mestrado|doutorado/i },
-  { kind: "graduacao", padrao: /gradua[cç][aã]o|medicina|bacharel/i },
-];
+const PALAVRAS_DE_TIPO: ReadonlyArray<{ kind: FormacaoKind; padrao: RegExp }> =
+  [
+    { kind: "residencia", padrao: /resid[eê]ncia/i },
+    { kind: "fellowship", padrao: /fellow(ship)?/i },
+    {
+      kind: "especializacao",
+      padrao: /especializa[cç][aã]o|t[ií]tulo de especialista/i,
+    },
+    {
+      kind: "pos_graduacao",
+      padrao: /p[oó]s[- ]?gradua[cç][aã]o|mestrado|doutorado/i,
+    },
+    { kind: "graduacao", padrao: /gradua[cç][aã]o|medicina|bacharel/i },
+    {
+      kind: "curso",
+      padrao:
+        /curso|aperfei[cç]oamento|atualiza[cç][aã]o|capacita[cç][aã]o|educa[cç][aã]o continuada/i,
+    },
+  ];
 
 const PADRAO_INSTITUICAO =
-  /(universidade|faculdade|hospital|instituto|funda[cç][aã]o|escola|santa casa|unifesp|usp|unicamp|ufmg|ufrj|puc)[^,;•\n]*/i;
+  /(universidade|faculdade|hospital|instituto|centro|funda[cç][aã]o|escola|santa casa|unifesp|usp|unicamp|ufmg|ufrj|puc)[^,;•\n]*/i;
 
-const PADRAO_ANOS = /(19[4-9]\d|20[0-4]\d)(?:\s*[–—-]\s*(19[4-9]\d|20[0-4]\d))?/;
+const PADRAO_ANOS =
+  /(19[4-9]\d|20[0-4]\d)(?:\s*[–—-]\s*(19[4-9]\d|20[0-4]\d))?/;
+
+const PADRAO_CABECALHO_FORMACAO = /^forma[cç][aã]o acad[eê]mica$/i;
+const PADRAO_PROXIMA_SECAO =
+  /^(experi[eê]ncia profissional|atua[cç][aã]o profissional|hist[oó]rico profissional|[aá]reas? de atua[cç][aã]o|limites? de atua[cç][aã]o|modelo de atendimento|publica[cç][oõ]es?|idiomas?|contato|refer[eê]ncias?)$/i;
+
+function tipoDaFormacao(texto: string) {
+  return PALAVRAS_DE_TIPO.find((tipo) => tipo.padrao.test(texto));
+}
+
+/**
+ * PDFs em tabela frequentemente entregam uma linha visual como três blocos:
+ * ano, título e instituição. Títulos quebrados ainda chegam em uma linha
+ * intermediária. Aqui reconstruímos somente esses blocos, delimitados por
+ * tipo acadêmico, instituição literal ou próxima seção — sem completar texto.
+ */
+function agruparRegistrosAcademicos(texto: string): string[] {
+  const todas = texto
+    .split(/\n|•|;/)
+    .map((linha) => linha.replace(/\s+/g, " ").trim())
+    .filter((linha) => linha.length >= 2);
+
+  const inicioFormacao = todas.findIndex((linha) =>
+    PADRAO_CABECALHO_FORMACAO.test(linha),
+  );
+  const linhas = inicioFormacao >= 0 ? todas.slice(inicioFormacao + 1) : todas;
+  const registros: string[] = [];
+  let atual: string[] = [];
+
+  const concluir = () => {
+    if (atual.length > 0) registros.push(atual.join(" "));
+    atual = [];
+  };
+
+  for (const linha of linhas) {
+    if (PADRAO_PROXIMA_SECAO.test(linha)) {
+      concluir();
+      if (inicioFormacao >= 0) break;
+      continue;
+    }
+
+    const temTipo = Boolean(tipoDaFormacao(linha));
+    if (temTipo) {
+      concluir();
+      atual.push(linha);
+      if (PADRAO_INSTITUICAO.test(linha)) concluir();
+      continue;
+    }
+
+    if (atual.length === 0) continue;
+
+    // Um novo ano sem tipo pertence a outro bloco (por exemplo, experiência),
+    // não à formação anterior.
+    if (/^(19[4-9]\d|20[0-4]\d)\b/.test(linha)) {
+      concluir();
+      continue;
+    }
+
+    atual.push(linha);
+    if (PADRAO_INSTITUICAO.test(linha)) concluir();
+  }
+
+  concluir();
+  return registros;
+}
 
 /**
  * Lê o texto por linhas e propõe candidatos APENAS do que está escrito:
@@ -259,23 +352,27 @@ const PADRAO_ANOS = /(19[4-9]\d|20[0-4]\d)(?:\s*[–—-]\s*(19[4-9]\d|20[0-4]\d
  */
 export function seccionarFormacao(texto: string): unknown[] {
   const candidatos: unknown[] = [];
-  const linhas = texto
-    .split(/\n|•|;/)
-    .map((l) => l.replace(/\s+/g, " ").trim())
-    .filter((l) => l.length >= 8);
+  const linhas = agruparRegistrosAcademicos(texto);
 
   for (const linha of linhas) {
-    const tipo = PALAVRAS_DE_TIPO.find((t) => t.padrao.test(linha));
+    const tipo = tipoDaFormacao(linha);
     if (!tipo) continue;
 
-    const instituicao = linha.match(PADRAO_INSTITUICAO)?.[0]?.trim() ?? null;
+    const semAnos = linha.replace(PADRAO_ANOS, "").replace(/\s+/g, " ").trim();
+    const trechoDaInstituicao = semAnos.match(PADRAO_INSTITUICAO);
+    const instituicao = trechoDaInstituicao?.[0]?.trim() ?? null;
     const anos = linha.match(PADRAO_ANOS);
     const inicio = anos ? Number(anos[1]) : null;
     const fim = anos?.[2] ? Number(anos[2]) : null;
 
-    // O título é a própria linha enxuta (sem o rabo de anos), truncado no teto
-    // do schema — literal do texto por construção.
-    const title = linha.replace(PADRAO_ANOS, "").replace(/\s+/g, " ").replace(/[,;·]\s*$/, "").trim().slice(0, 200);
+    // Em tabela, a instituição pode estar na mesma linha extraída. Ela é
+    // separada do título pelo ponto literal onde o padrão foi localizado.
+    const title = semAnos
+      .slice(0, trechoDaInstituicao?.index ?? semAnos.length)
+      .replace(/^[|,;·–—-]+\s*/, "")
+      .replace(/[|,;·–—-]+\s*$/, "")
+      .trim()
+      .slice(0, 200);
     if (title.length < 2) continue;
 
     candidatos.push({
@@ -303,7 +400,9 @@ export type ExtratorDeCandidatos = (texto: string) => Promise<unknown[]>;
  * existência da CLAUDE_API_KEY não é autorização de envio de currículo.
  * Desligado, recusa com erro claro antes de qualquer chamada de rede.
  */
-export function extratorB2({ chamarModelo }: { chamarModelo?: ExtratorDeCandidatos } = {}): ExtratorDeCandidatos {
+export function extratorB2({
+  chamarModelo,
+}: { chamarModelo?: ExtratorDeCandidatos } = {}): ExtratorDeCandidatos {
   return async (texto: string) => {
     if (process.env.FORMACAO_EXTRACAO_B2 !== "habilitada") {
       throw new Error("extracao_b2_desativada");
@@ -341,12 +440,19 @@ type Deps = {
   lerPdf?: (bytes: Uint8Array) => Promise<{ texto: string; paginas: number }>;
 };
 
-export async function processarCurriculo(deps: Deps): Promise<ResultadoDaExtracao> {
+export async function processarCurriculo(
+  deps: Deps,
+): Promise<ResultadoDaExtracao> {
   const { supabase, professionalProfileId, documentId, actorId } = deps;
 
   const registrarRun = async (
     status: "concluida" | "falha",
-    campos: Partial<{ text_hash: string; total_candidatos: number; descartados: number; erro: string }>,
+    campos: Partial<{
+      text_hash: string;
+      total_candidatos: number;
+      descartados: number;
+      erro: string;
+    }>,
   ) => {
     const { data } = await supabase
       .from("professional_education_extraction_runs")
@@ -410,10 +516,22 @@ export async function processarCurriculo(deps: Deps): Promise<ResultadoDaExtraca
       if (error || !blob) throw new Error("download_falhou");
       bytes = new Uint8Array(await blob.arrayBuffer());
     }
-    if (bytes.byteLength > LIMITES.MAX_BYTES) throw new Error(ERRO_ARQUIVO_GRANDE);
+    if (bytes.byteLength > LIMITES.MAX_BYTES)
+      throw new Error(ERRO_ARQUIVO_GRANDE);
   } catch (e) {
-    const runId = await registrarRun("falha", { erro: (e as Error).message.slice(0, 80) });
-    return { runId, status: "falha", erro: (e as Error).message.slice(0, 80), criadas: 0, descartadas: 0, puladasPorDuplicidade: 0, preservadasPorEdicaoHumana: 0, requerPdfTextual: false };
+    const runId = await registrarRun("falha", {
+      erro: (e as Error).message.slice(0, 80),
+    });
+    return {
+      runId,
+      status: "falha",
+      erro: (e as Error).message.slice(0, 80),
+      criadas: 0,
+      descartadas: 0,
+      puladasPorDuplicidade: 0,
+      preservadasPorEdicaoHumana: 0,
+      requerPdfTextual: false,
+    };
   }
 
   // 2 · texto — currículo visual é FALHA declarada, nunca invenção. A leitura
@@ -426,31 +544,89 @@ export async function processarCurriculo(deps: Deps): Promise<ResultadoDaExtraca
       ? deps.lerPdf(bytes)
       : extrairTextoDePdf(bytes, { prazoMs: Math.max(restante(), 1) })));
   } catch (e) {
-    const classe = (e as Error).message === ERRO_PRAZO ? ERRO_PRAZO : "pdf_ilegivel";
+    const classe =
+      (e as Error).message === ERRO_PRAZO ? ERRO_PRAZO : "pdf_ilegivel";
     const runId = await registrarRun("falha", { erro: classe });
-    return { runId, status: "falha", erro: classe, criadas: 0, descartadas: 0, puladasPorDuplicidade: 0, preservadasPorEdicaoHumana: 0, requerPdfTextual: classe === "pdf_ilegivel" };
+    return {
+      runId,
+      status: "falha",
+      erro: classe,
+      criadas: 0,
+      descartadas: 0,
+      puladasPorDuplicidade: 0,
+      preservadasPorEdicaoHumana: 0,
+      requerPdfTextual: classe === "pdf_ilegivel",
+    };
   }
 
   // 2.1 · limites que só existem depois de abrir o PDF (F-3)
   const textHashParcial = createHash("sha256").update(texto).digest("hex");
   if (paginas > LIMITES.MAX_PAGINAS) {
-    const runId = await registrarRun("falha", { erro: ERRO_PAGINAS, text_hash: textHashParcial });
-    return { runId, status: "falha", erro: ERRO_PAGINAS, criadas: 0, descartadas: 0, puladasPorDuplicidade: 0, preservadasPorEdicaoHumana: 0, requerPdfTextual: false };
+    const runId = await registrarRun("falha", {
+      erro: ERRO_PAGINAS,
+      text_hash: textHashParcial,
+    });
+    return {
+      runId,
+      status: "falha",
+      erro: ERRO_PAGINAS,
+      criadas: 0,
+      descartadas: 0,
+      puladasPorDuplicidade: 0,
+      preservadasPorEdicaoHumana: 0,
+      requerPdfTextual: false,
+    };
   }
   if (texto.length > LIMITES.MAX_CHARS_TEXTO) {
-    const runId = await registrarRun("falha", { erro: ERRO_TEXTO_GRANDE, text_hash: textHashParcial });
-    return { runId, status: "falha", erro: ERRO_TEXTO_GRANDE, criadas: 0, descartadas: 0, puladasPorDuplicidade: 0, preservadasPorEdicaoHumana: 0, requerPdfTextual: false };
+    const runId = await registrarRun("falha", {
+      erro: ERRO_TEXTO_GRANDE,
+      text_hash: textHashParcial,
+    });
+    return {
+      runId,
+      status: "falha",
+      erro: ERRO_TEXTO_GRANDE,
+      criadas: 0,
+      descartadas: 0,
+      puladasPorDuplicidade: 0,
+      preservadasPorEdicaoHumana: 0,
+      requerPdfTextual: false,
+    };
   }
   if (restante() <= 0) {
-    const runId = await registrarRun("falha", { erro: ERRO_PRAZO, text_hash: textHashParcial });
-    return { runId, status: "falha", erro: ERRO_PRAZO, criadas: 0, descartadas: 0, puladasPorDuplicidade: 0, preservadasPorEdicaoHumana: 0, requerPdfTextual: false };
+    const runId = await registrarRun("falha", {
+      erro: ERRO_PRAZO,
+      text_hash: textHashParcial,
+    });
+    return {
+      runId,
+      status: "falha",
+      erro: ERRO_PRAZO,
+      criadas: 0,
+      descartadas: 0,
+      puladasPorDuplicidade: 0,
+      preservadasPorEdicaoHumana: 0,
+      requerPdfTextual: false,
+    };
   }
 
   const chars = texto.replace(/\s+/g, " ").trim().length;
   const textHash = textHashParcial;
   if (paginas === 0 || chars / Math.max(paginas, 1) < LIMIAR_CHARS_POR_PAGINA) {
-    const runId = await registrarRun("falha", { erro: "requer_pdf_textual", text_hash: textHash });
-    return { runId, status: "falha", erro: "requer_pdf_textual", criadas: 0, descartadas: 0, puladasPorDuplicidade: 0, preservadasPorEdicaoHumana: 0, requerPdfTextual: true };
+    const runId = await registrarRun("falha", {
+      erro: "requer_pdf_textual",
+      text_hash: textHash,
+    });
+    return {
+      runId,
+      status: "falha",
+      erro: "requer_pdf_textual",
+      criadas: 0,
+      descartadas: 0,
+      puladasPorDuplicidade: 0,
+      preservadasPorEdicaoHumana: 0,
+      requerPdfTextual: true,
+    };
   }
 
   // 3 · candidatos pelos dois portões
@@ -459,8 +635,20 @@ export async function processarCurriculo(deps: Deps): Promise<ResultadoDaExtraca
   try {
     brutos = await extrator(texto);
   } catch (e) {
-    const runId = await registrarRun("falha", { erro: (e as Error).message.slice(0, 80), text_hash: textHash });
-    return { runId, status: "falha", erro: (e as Error).message.slice(0, 80), criadas: 0, descartadas: 0, puladasPorDuplicidade: 0, preservadasPorEdicaoHumana: 0, requerPdfTextual: false };
+    const runId = await registrarRun("falha", {
+      erro: (e as Error).message.slice(0, 80),
+      text_hash: textHash,
+    });
+    return {
+      runId,
+      status: "falha",
+      erro: (e as Error).message.slice(0, 80),
+      criadas: 0,
+      descartadas: 0,
+      puladasPorDuplicidade: 0,
+      preservadasPorEdicaoHumana: 0,
+      requerPdfTextual: false,
+    };
   }
 
   const validos: CandidatoDeFormacao[] = [];
@@ -474,13 +662,17 @@ export async function processarCurriculo(deps: Deps): Promise<ResultadoDaExtraca
   // 4 · estado atual — para dedup e para as travas do item 5
   const { data: existentes } = await supabase
     .from("professional_education_entries")
-    .select("id, kind, title, institution, period_start, period_end, verification_status")
+    .select(
+      "id, kind, title, institution, period_start, period_end, verification_status",
+    )
     .eq("professional_profile_id", professionalProfileId);
   const { data: vinculos } = await supabase
     .from("professional_education_extraction_links")
     .select("entry_id, document_id, human_edited");
 
-  const vinculoPorEntry = new Map((vinculos ?? []).map((v) => [v.entry_id as string, v]));
+  const vinculoPorEntry = new Map(
+    (vinculos ?? []).map((v) => [v.entry_id as string, v]),
+  );
   const chavesExistentes = new Set(
     (existentes ?? []).map((e) =>
       chaveDeDuplicidade({
@@ -525,7 +717,10 @@ export async function processarCurriculo(deps: Deps): Promise<ResultadoDaExtraca
     const chave = chaveDeDuplicidade(c);
     // Duplicata de algo que NÃO vamos substituir (confirmado, editado ou de
     // outro documento) — pula. Duplicata dentro do próprio lote — pula.
-    if ((chavesExistentes.has(chave) && !chavesSubstituiveis.has(chave)) || chavesNoLote.has(chave)) {
+    if (
+      (chavesExistentes.has(chave) && !chavesSubstituiveis.has(chave)) ||
+      chavesNoLote.has(chave)
+    ) {
       puladas += 1;
       continue;
     }
@@ -542,7 +737,10 @@ export async function processarCurriculo(deps: Deps): Promise<ResultadoDaExtraca
   try {
     if (substituiveis.length > 0) {
       const ids = substituiveis.map((e) => e.id as string);
-      await supabase.from("professional_education_entries").delete().in("id", ids);
+      await supabase
+        .from("professional_education_entries")
+        .delete()
+        .in("id", ids);
     }
 
     const runId = await registrarRun("concluida", {
@@ -575,7 +773,11 @@ export async function processarCurriculo(deps: Deps): Promise<ResultadoDaExtraca
       inseridas.push(linha.id as string);
       const { error: erroVinculo } = await supabase
         .from("professional_education_extraction_links")
-        .insert({ entry_id: linha.id as string, run_id: runId, document_id: documentId });
+        .insert({
+          entry_id: linha.id as string,
+          run_id: runId,
+          document_id: documentId,
+        });
       if (erroVinculo) throw new Error("vinculo_falhou");
     }
 
@@ -593,13 +795,25 @@ export async function processarCurriculo(deps: Deps): Promise<ResultadoDaExtraca
     };
   } catch (e) {
     if (inseridas.length > 0) {
-      await supabase.from("professional_education_entries").delete().in("id", inseridas);
+      await supabase
+        .from("professional_education_entries")
+        .delete()
+        .in("id", inseridas);
     }
     const runId = await registrarRun("falha", {
       erro: (e as Error).message.slice(0, 80),
       text_hash: textHash,
     });
-    return { runId, status: "falha", erro: (e as Error).message.slice(0, 80), criadas: 0, descartadas: descartes.length, puladasPorDuplicidade: puladas, preservadasPorEdicaoHumana: 0, requerPdfTextual: false };
+    return {
+      runId,
+      status: "falha",
+      erro: (e as Error).message.slice(0, 80),
+      criadas: 0,
+      descartadas: descartes.length,
+      puladasPorDuplicidade: puladas,
+      preservadasPorEdicaoHumana: 0,
+      requerPdfTextual: false,
+    };
   }
 }
 

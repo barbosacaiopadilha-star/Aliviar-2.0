@@ -6,12 +6,20 @@ import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import { getCase, listCaseEvents, listCaseNotes } from "@/modules/cases";
-import { listArtifactsForCase, listExecutionEventsForCase, listExecutionsForCase } from "@/modules/concierge";
+import {
+  listArtifactsForCase,
+  listExecutionEventsForCase,
+  listExecutionsForCase,
+} from "@/modules/concierge";
 import { listActiveP002FieldCorrections } from "@/modules/ace/p002-field-corrections-repository";
-import { getPatientAccount, getPatientProfile, getProfessionalDisplayNames } from "@/modules/profiles";
+import {
+  getPatientAccount,
+  getPatientProfile,
+  getProfessionalDisplayNames,
+} from "@/modules/profiles";
 import { listStoryAttachments } from "@/modules/story/attachment-repository";
 import { getStoryById } from "@/modules/story/repository";
-import { listTeamMembers } from "@/modules/team/repository";
+import { listCuratorOptions } from "@/modules/team/repository";
 import { CASE_STATUS_LABELS } from "@/modules/cases/types";
 
 import { AceExecutionsHistory } from "@/components/ace/ace-executions-history";
@@ -36,7 +44,9 @@ type AdminCaseDetailPageProps = {
   params: Promise<{ id: string }>;
 };
 
-export default async function AdminCaseDetailPage({ params }: AdminCaseDetailPageProps) {
+export default async function AdminCaseDetailPage({
+  params,
+}: AdminCaseDetailPageProps) {
   await requireRole("administrador");
   const { id } = await params;
 
@@ -48,49 +58,68 @@ export default async function AdminCaseDetailPage({ params }: AdminCaseDetailPag
     notFound();
   }
 
-  const [account, patientProfile, story, events, members, notes] = await Promise.all([
-    getPatientAccount(regularClient, adminClient, caseDetail.patientProfileId),
-    getPatientProfile(regularClient, caseDetail.patientProfileId),
-    getStoryById(regularClient, caseDetail.sourceStoryId),
-    listCaseEvents(regularClient, id),
-    listTeamMembers(regularClient, adminClient),
-    listCaseNotes(regularClient, id),
-  ]);
+  const [account, patientProfile, story, events, curators, notes] =
+    await Promise.all([
+      getPatientAccount(
+        regularClient,
+        adminClient,
+        caseDetail.patientProfileId,
+      ),
+      getPatientProfile(regularClient, caseDetail.patientProfileId),
+      getStoryById(regularClient, caseDetail.sourceStoryId),
+      listCaseEvents(regularClient, id),
+      listCuratorOptions(regularClient),
+      listCaseNotes(regularClient, id),
+    ]);
 
-  const attachments = story ? await listStoryAttachments(regularClient, story.id) : [];
-  const curators = members
-    .filter((member) => member.roles.includes("curador_medico"))
-    .map((member) => ({ id: member.profileId, name: member.displayName }));
+  const attachments = story
+    ? await listStoryAttachments(regularClient, story.id)
+    : [];
+  const [executions, executionEvents, artifacts, p002Corrections] =
+    await Promise.all([
+      listExecutionsForCase(regularClient, id),
+      listExecutionEventsForCase(regularClient, id),
+      listArtifactsForCase(regularClient, id),
+      listActiveP002FieldCorrections(regularClient, id),
+    ]);
 
-  const [executions, executionEvents, artifacts, p002Corrections] = await Promise.all([
-    listExecutionsForCase(regularClient, id),
-    listExecutionEventsForCase(regularClient, id),
-    listArtifactsForCase(regularClient, id),
-    listActiveP002FieldCorrections(regularClient, id),
-  ]);
-
-  const shortlistArtifact = artifacts.find((artifact) => artifact.artifactType === "Shortlist");
-  const shortlist = shortlistArtifact ? (shortlistArtifact.payload as Shortlist) : null;
+  const shortlistArtifact = artifacts.find(
+    (artifact) => artifact.artifactType === "Shortlist",
+  );
+  const shortlist = shortlistArtifact
+    ? (shortlistArtifact.payload as Shortlist)
+    : null;
   const shortlistProviderIds = shortlist
     ? shortlist.status === "COMPOSED"
       ? shortlist.selectedProviderIds
       : shortlist.candidateProviderIds
     : [];
-  const namesByProviderId = await getProfessionalDisplayNames(regularClient, shortlistProviderIds);
-
+  const namesByProviderId = await getProfessionalDisplayNames(
+    regularClient,
+    shortlistProviderIds,
+  );
 
   return (
     <div className="space-y-6">
       <div>
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="font-sans text-2xl font-semibold text-ink">Caso de {caseDetail.patientName}</h1>
-          <Badge variant={caseDetail.status === "DELIVERED" || caseDetail.status === "CLOSED" ? "sage" : "default"}>
+          <h1 className="font-sans text-2xl font-semibold text-ink">
+            Caso de {caseDetail.patientName}
+          </h1>
+          <Badge
+            variant={
+              caseDetail.status === "DELIVERED" ||
+              caseDetail.status === "CLOSED"
+                ? "sage"
+                : "default"
+            }
+          >
             {CASE_STATUS_LABELS[caseDetail.status]}
           </Badge>
         </div>
         <p className="text-sm text-ink-muted">
-          Criado em {new Date(caseDetail.createdAt).toLocaleDateString("pt-BR")} — a história original nunca é
-          alterada por este caso.
+          Criado em {new Date(caseDetail.createdAt).toLocaleDateString("pt-BR")}{" "}
+          — a história original nunca é alterada por este caso.
         </p>
       </div>
 
@@ -100,21 +129,31 @@ export default async function AdminCaseDetailPage({ params }: AdminCaseDetailPag
         </CardHeader>
         <dl className="grid gap-3 sm:grid-cols-2">
           <div>
-            <dt className="text-xs uppercase tracking-wide text-ink-muted">Nome</dt>
+            <dt className="text-xs uppercase tracking-wide text-ink-muted">
+              Nome
+            </dt>
             <dd className="text-sm text-ink">{caseDetail.patientName}</dd>
           </div>
           <div>
-            <dt className="text-xs uppercase tracking-wide text-ink-muted">E-mail</dt>
+            <dt className="text-xs uppercase tracking-wide text-ink-muted">
+              E-mail
+            </dt>
             <dd className="text-sm text-ink">{account?.email ?? "—"}</dd>
           </div>
           <div>
-            <dt className="text-xs uppercase tracking-wide text-ink-muted">Telefone</dt>
+            <dt className="text-xs uppercase tracking-wide text-ink-muted">
+              Telefone
+            </dt>
             <dd className="text-sm text-ink">{patientProfile?.phone ?? "—"}</dd>
           </div>
           <div>
-            <dt className="text-xs uppercase tracking-wide text-ink-muted">Cidade</dt>
+            <dt className="text-xs uppercase tracking-wide text-ink-muted">
+              Cidade
+            </dt>
             <dd className="text-sm text-ink">
-              {patientProfile?.city ? `${patientProfile.city}${patientProfile.state ? `/${patientProfile.state}` : ""}` : "—"}
+              {patientProfile?.city
+                ? `${patientProfile.city}${patientProfile.state ? `/${patientProfile.state}` : ""}`
+                : "—"}
             </dd>
           </div>
         </dl>
@@ -125,12 +164,17 @@ export default async function AdminCaseDetailPage({ params }: AdminCaseDetailPag
           <CardHeader>
             <h2 className="font-sans text-lg font-semibold text-ink">Status</h2>
           </CardHeader>
-          <CaseStatusControl caseId={caseDetail.id} currentStatus={caseDetail.status} />
+          <CaseStatusControl
+            caseId={caseDetail.id}
+            currentStatus={caseDetail.status}
+          />
         </Card>
 
         <Card>
           <CardHeader>
-            <h2 className="font-sans text-lg font-semibold text-ink">Curador médico</h2>
+            <h2 className="font-sans text-lg font-semibold text-ink">
+              Curador médico
+            </h2>
           </CardHeader>
           <CaseCuratorAssignment
             caseId={caseDetail.id}
@@ -143,10 +187,18 @@ export default async function AdminCaseDetailPage({ params }: AdminCaseDetailPag
 
       <Card>
         <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">História original</h2>
-          <p className="text-sm text-ink-muted">Somente leitura — o caso nunca altera a história do paciente.</p>
+          <h2 className="font-sans text-lg font-semibold text-ink">
+            História original
+          </h2>
+          <p className="text-sm text-ink-muted">
+            Somente leitura — o caso nunca altera a história do paciente.
+          </p>
         </CardHeader>
-        {story ? <StorySummary data={story.data} /> : <EmptyState title="História não encontrada." />}
+        {story ? (
+          <StorySummary data={story.data} />
+        ) : (
+          <EmptyState title="História não encontrada." />
+        )}
       </Card>
 
       <Card>
@@ -168,50 +220,77 @@ export default async function AdminCaseDetailPage({ params }: AdminCaseDetailPag
 
       <Card>
         <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">Execução do ACE</h2>
-          <p className="text-sm text-ink-muted">P001 a P008 apenas — nunca revisão humana (P009) ou entrega (P010).</p>
+          <h2 className="font-sans text-lg font-semibold text-ink">
+            Execução do ACE
+          </h2>
+          <p className="text-sm text-ink-muted">
+            P001 a P008 apenas — nunca revisão humana (P009) ou entrega (P010).
+          </p>
         </CardHeader>
       </Card>
 
       <Card>
         <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">Execuções anteriores</h2>
-          <p className="text-sm text-ink-muted">Todas as tentativas — nenhuma falha ou bloqueio desaparece do histórico.</p>
+          <h2 className="font-sans text-lg font-semibold text-ink">
+            Execuções anteriores
+          </h2>
+          <p className="text-sm text-ink-muted">
+            Todas as tentativas — nenhuma falha ou bloqueio desaparece do
+            histórico.
+          </p>
         </CardHeader>
         {/* Item 1.7 (DP-2): o histórico do ACE permanece inteiro e visível
             aqui — nenhuma execução, evento ou artefato foi apagado. O que saiu
             foi o link para `/admin/ace`, o dashboard de um motor que não
             executa mais. Sem `detailBasePath`, a lista não oferece o destino
             removido. */}
-        <AceExecutionsHistory executions={executions} events={executionEvents} />
+        <AceExecutionsHistory
+          executions={executions}
+          events={executionEvents}
+        />
       </Card>
 
       <Card>
         <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">Artefatos (P001-P008)</h2>
+          <h2 className="font-sans text-lg font-semibold text-ink">
+            Artefatos (P001-P008)
+          </h2>
         </CardHeader>
-        <AceArtifactsList artifacts={artifacts} caseId={caseDetail.id} p002Corrections={p002Corrections} />
+        <AceArtifactsList
+          artifacts={artifacts}
+          caseId={caseDetail.id}
+          p002Corrections={p002Corrections}
+        />
       </Card>
 
       {shortlist ? (
         <Card>
           <CardHeader>
-            <h2 className="font-sans text-lg font-semibold text-ink">Shortlist interna</h2>
+            <h2 className="font-sans text-lg font-semibold text-ink">
+              Shortlist interna
+            </h2>
           </CardHeader>
-          <AceShortlistViewer shortlist={shortlist} namesByProviderId={namesByProviderId} />
+          <AceShortlistViewer
+            shortlist={shortlist}
+            namesByProviderId={namesByProviderId}
+          />
         </Card>
       ) : null}
 
       <Card>
         <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">Notas internas</h2>
+          <h2 className="font-sans text-lg font-semibold text-ink">
+            Notas internas
+          </h2>
         </CardHeader>
         <CaseNotesLog caseId={caseDetail.id} initialNotes={notes} />
       </Card>
 
       <Card>
         <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">Linha do tempo</h2>
+          <h2 className="font-sans text-lg font-semibold text-ink">
+            Linha do tempo
+          </h2>
         </CardHeader>
         <CaseEventsTimeline events={events} />
       </Card>

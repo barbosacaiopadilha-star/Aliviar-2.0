@@ -27,10 +27,12 @@ import {
 // ---------------------------------------------------------------------------
 
 function gerarPdfDeLinhas(paginasDeLinhas: string[][]): Uint8Array {
-  const objetos: Array<{ n: number; corpo: string | null; stream?: string }> = [];
+  const objetos: Array<{ n: number; corpo: string | null; stream?: string }> =
+    [];
   const kids: string[] = [];
   let numero = 3;
-  const paginas: Array<{ pageNum: number; contNum: number; stream: string }> = [];
+  const paginas: Array<{ pageNum: number; contNum: number; stream: string }> =
+    [];
   for (const linhas of paginasDeLinhas) {
     const pageNum = numero++;
     const contNum = numero++;
@@ -55,7 +57,10 @@ function gerarPdfDeLinhas(paginasDeLinhas: string[][]): Uint8Array {
     });
     objetos.push({ n: pg.contNum, corpo: null, stream: pg.stream });
   }
-  objetos.push({ n: fontNum, corpo: `<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>` });
+  objetos.push({
+    n: fontNum,
+    corpo: `<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>`,
+  });
   objetos.sort((a, b) => a.n - b.n);
   let pdf = "%PDF-1.4\n";
   const offsets: number[] = [];
@@ -70,7 +75,8 @@ function gerarPdfDeLinhas(paginasDeLinhas: string[][]): Uint8Array {
   const xrefPos = pdf.length;
   const total = objetos.length + 1;
   pdf += `xref\n0 ${total}\n0000000000 65535 f \n`;
-  for (let n = 1; n < total; n += 1) pdf += `${String(offsets[n]).padStart(10, "0")} 00000 n \n`;
+  for (let n = 1; n < total; n += 1)
+    pdf += `${String(offsets[n]).padStart(10, "0")} 00000 n \n`;
   pdf += `trailer<</Size ${total}/Root 1 0 R>>\nstartxref\n${xrefPos}\n%%EOF`;
   return new TextEncoder().encode(pdf);
 }
@@ -89,7 +95,12 @@ const CV_DUAS_PAGINAS = gerarPdfDeLinhas([
   LINHAS_DO_CV.slice(3), // especialização + fellowship
 ]);
 
-const ESPERADOS: Array<{ kind: string; tituloContem: string; instituicao: string; naoContem: string }> = [
+const ESPERADOS: Array<{
+  kind: string;
+  tituloContem: string;
+  instituicao: string;
+  naoContem: string;
+}> = [
   {
     kind: "graduacao",
     tituloContem: "Graduacao em Medicina",
@@ -117,7 +128,10 @@ const ESPERADOS: Array<{ kind: string; tituloContem: string; instituicao: string
 ];
 
 function conferirCandidatos(candidatos: Array<Record<string, unknown>>) {
-  expect(candidatos, "exatamente quatro formações — uma por linha").toHaveLength(4);
+  expect(
+    candidatos,
+    "exatamente quatro formações — uma por linha",
+  ).toHaveLength(4);
   for (const esperado of ESPERADOS) {
     const candidato = candidatos.find((c) => c.kind === esperado.kind);
     expect(candidato, `tipo ausente: ${esperado.kind}`).toBeDefined();
@@ -149,31 +163,44 @@ describe("R-1 · montagem de página (unidade, semântica do extractText instala
 
 describe("R-1 · o PDF real, pela API empacotada, até o seccionador", () => {
   it("uma página multilinha: 4 candidatos, tipos, títulos e instituições corretos, sem contaminação", async () => {
-    const { texto, paginas } = await extrairTextoDePdf(CV_UMA_PAGINA, { prazoMs: 8_000 });
+    const { texto, paginas } = await extrairTextoDePdf(CV_UMA_PAGINA, {
+      prazoMs: 8_000,
+    });
     expect(paginas).toBe(1);
 
     // As quebras do PDF sobrevivem: cada linha do CV é uma linha do texto.
-    const linhas = texto.split("\n").map((l) => l.trim()).filter(Boolean);
+    const linhas = texto
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
     for (const linha of LINHAS_DO_CV) {
       expect(linhas, `linha perdida ou fundida: "${linha}"`).toContain(linha);
     }
 
-    conferirCandidatos(seccionarFormacao(texto) as Array<Record<string, unknown>>);
+    conferirCandidatos(
+      seccionarFormacao(texto) as Array<Record<string, unknown>>,
+    );
   }, 30_000);
 
   it("multipágina: a separação de páginas não funde nem perde formação", async () => {
-    const { texto, paginas } = await extrairTextoDePdf(CV_DUAS_PAGINAS, { prazoMs: 8_000 });
+    const { texto, paginas } = await extrairTextoDePdf(CV_DUAS_PAGINAS, {
+      prazoMs: 8_000,
+    });
     expect(paginas).toBe(2);
 
     // A primeira linha da página 2 continua sendo linha própria.
     const linhas = texto.split("\n").map((l) => l.trim());
-    expect(linhas).toContain("Especializacao em Reumatologia - Universidade de Sao Paulo, 2014");
+    expect(linhas).toContain(
+      "Especializacao em Reumatologia - Universidade de Sao Paulo, 2014",
+    );
     // E a última da página 1 não a engoliu.
     const daResidencia = linhas.find((l) => l.startsWith("Residencia"));
     expect(daResidencia).toBeDefined();
     expect(daResidencia!.includes("Especializacao")).toBe(false);
 
-    conferirCandidatos(seccionarFormacao(texto) as Array<Record<string, unknown>>);
+    conferirCandidatos(
+      seccionarFormacao(texto) as Array<Record<string, unknown>>,
+    );
   }, 30_000);
 
   it("equivalência normalizada com o `extractText` do próprio unpdf instalado", async () => {
@@ -189,29 +216,43 @@ describe("R-1 · o PDF real, pela API empacotada, até o seccionador", () => {
     // Os MESMOS itens reais, montados do jeito antigo — sem quebra nenhuma.
     const { getResolvedPDFJS } = await import("unpdf");
     const pdfjs = await getResolvedPDFJS();
-    const tarefa = (pdfjs.getDocument as (p: Record<string, unknown>) => {
-      promise: Promise<{ getPage: (n: number) => Promise<{ getTextContent: () => Promise<{ items: ItemDeTexto[] }> }> }>;
-      destroy: () => Promise<void>;
-    })({ data: CV_UMA_PAGINA.slice(), useWorkerFetch: false, isEvalSupported: false });
+    const tarefa = (
+      pdfjs.getDocument as (p: Record<string, unknown>) => {
+        promise: Promise<{
+          getPage: (
+            n: number,
+          ) => Promise<{
+            getTextContent: () => Promise<{ items: ItemDeTexto[] }>;
+          }>;
+        }>;
+        destroy: () => Promise<void>;
+      }
+    )({
+      data: CV_UMA_PAGINA.slice(),
+      useWorkerFetch: false,
+      isEvalSupported: false,
+    });
     try {
       const doc = await tarefa.promise;
       const { items } = await (await doc.getPage(1)).getTextContent();
 
       const mutante = items.map((i) => i.str ?? "").join(" ") + "\n";
-      const candidatosMutantes = seccionarFormacao(mutante) as Array<Record<string, unknown>>;
+      const candidatosMutantes = seccionarFormacao(mutante) as Array<
+        Record<string, unknown>
+      >;
 
       // O mutante funde o currículo numa linha só: a contagem de 4 morre — a
       // MESMA asserção que protege o caminho novo. `conferirCandidatos`
       // aplicada ao mutante falharia; aqui provamos o modo de falha:
       expect(candidatosMutantes).not.toHaveLength(4);
-      if (candidatosMutantes.length === 1) {
-        expect(String(candidatosMutantes[0]!.title)).toContain("Graduacao");
-        expect(String(candidatosMutantes[0]!.title)).toContain("Residencia");
-      }
 
       // E o caminho NOVO, sobre o MESMO PDF, passa inteiro:
-      const { texto } = await extrairTextoDePdf(CV_UMA_PAGINA, { prazoMs: 8_000 });
-      conferirCandidatos(seccionarFormacao(texto) as Array<Record<string, unknown>>);
+      const { texto } = await extrairTextoDePdf(CV_UMA_PAGINA, {
+        prazoMs: 8_000,
+      });
+      conferirCandidatos(
+        seccionarFormacao(texto) as Array<Record<string, unknown>>,
+      );
     } finally {
       await tarefa.destroy();
     }

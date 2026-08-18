@@ -1,7 +1,19 @@
 export type NavItem = {
   label: string;
   href: string;
-  icon?: "home" | "dashboard" | "contacts" | "funnel" | "tasks" | "agenda" | "patients" | "settings" | "cases" | "team" | "professionals" | "analytics";
+  icon?:
+    | "home"
+    | "dashboard"
+    | "contacts"
+    | "funnel"
+    | "tasks"
+    | "agenda"
+    | "patients"
+    | "settings"
+    | "cases"
+    | "team"
+    | "professionals"
+    | "analytics";
 };
 
 export type NavGroup = {
@@ -9,7 +21,11 @@ export type NavGroup = {
   items: NavItem[];
 };
 
-export function isNavItemActive(pathname: string, href: string, basePath: string): boolean {
+export function isNavItemActive(
+  pathname: string,
+  href: string,
+  basePath: string,
+): boolean {
   if (href === basePath) return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -34,10 +50,22 @@ export function getNavGroups(role: string, basePath: string): NavGroup[] {
       items: [{ label: "Visão geral", href: basePath, icon: "home" }],
     });
     groups.push({
-      label: "CRM",
+      label: "Centro de Operações",
       items: [
-        { label: "Painel Concierge", href: `${basePath}/crm`, icon: "dashboard" },
-        { label: "Contatos", href: `${basePath}/crm/contatos`, icon: "contacts" },
+        { label: "Visão operacional", href: "/coa", icon: "dashboard" },
+        { label: "Atendimento", href: "/coa/atendimento", icon: "contacts" },
+        { label: "Curadoria", href: "/coa/curadoria", icon: "cases" },
+        { label: "Concierge", href: "/coa/concierge", icon: "dashboard" },
+      ],
+    });
+    groups.push({
+      label: "Relacionamento",
+      items: [
+        {
+          label: "Contatos",
+          href: `${basePath}/crm/contatos`,
+          icon: "contacts",
+        },
         { label: "Funil", href: `${basePath}/crm/funil`, icon: "funnel" },
         { label: "Tarefas", href: `${basePath}/crm/tarefas`, icon: "tasks" },
         { label: "Agenda", href: `${basePath}/crm/agenda`, icon: "agenda" },
@@ -47,14 +75,24 @@ export function getNavGroups(role: string, basePath: string): NavGroup[] {
       label: "Administração",
       items: [
         { label: "Pacientes", href: `${basePath}/pacientes`, icon: "patients" },
-        { label: "Profissionais", href: `${basePath}/profissionais`, icon: "professionals" },
+        {
+          label: "Profissionais",
+          href: `${basePath}/profissionais`,
+          icon: "professionals",
+        },
         { label: "Equipe", href: `${basePath}/equipe`, icon: "team" },
         { label: "Casos", href: `${basePath}/casos`, icon: "cases" },
       ],
     });
     groups.push({
       label: "Analytics",
-      items: [{ label: "Observabilidade ACE", href: `${basePath}/ace`, icon: "analytics" }],
+      items: [
+        {
+          label: "Observabilidade da plataforma",
+          href: `${basePath}/ace`,
+          icon: "analytics",
+        },
+      ],
     });
     return groups;
   }
@@ -62,12 +100,22 @@ export function getNavGroups(role: string, basePath: string): NavGroup[] {
   if (role === "concierge") {
     groups.push({
       label: "Dashboard",
-      items: [{ label: "Painel Concierge", href: `${basePath}/crm`, icon: "dashboard" }],
+      items: [
+        {
+          label: "Painel Concierge",
+          href: `${basePath}/crm`,
+          icon: "dashboard",
+        },
+      ],
     });
     groups.push({
       label: "Concierge",
       items: [
-        { label: "Contatos", href: `${basePath}/crm/contatos`, icon: "contacts" },
+        {
+          label: "Contatos",
+          href: `${basePath}/crm/contatos`,
+          icon: "contacts",
+        },
         { label: "Funil", href: `${basePath}/crm/funil`, icon: "funnel" },
         { label: "Tarefas", href: `${basePath}/crm/tarefas`, icon: "tasks" },
         { label: "Agenda", href: `${basePath}/crm/agenda`, icon: "agenda" },
@@ -104,7 +152,9 @@ function getAtendimentoNavGroups(role: string): NavGroup[] {
   const groups: NavGroup[] = [
     {
       label: "COA · Atendimento",
-      items: [{ label: "Quem chegou", href: "/coa/atendimento", icon: "dashboard" }],
+      items: [
+        { label: "Quem chegou", href: "/coa/atendimento", icon: "dashboard" },
+      ],
     },
     {
       label: "Operação",
@@ -136,7 +186,9 @@ function getConciergeNavGroups(role: string): NavGroup[] {
       label: "COA · Concierge",
       // "Fila" é vocabulário de atendimento em massa: o Concierge acompanha
       // casos com nome, não despacha uma fila.
-      items: [{ label: "Continuidade", href: "/coa/concierge", icon: "dashboard" }],
+      items: [
+        { label: "Continuidade", href: "/coa/concierge", icon: "dashboard" },
+      ],
     },
     {
       label: "Operação",

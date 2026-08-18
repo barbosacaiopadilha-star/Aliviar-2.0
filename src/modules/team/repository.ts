@@ -4,7 +4,54 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { erroDeBanco } from "@/lib/observability/erros";
 
-import type { AuditAction, AuditLogEntry, ManageableRoleSlug, TeamMember } from "./types";
+import type {
+  AuditAction,
+  AuditLogEntry,
+  ManageableRoleSlug,
+  TeamMember,
+} from "./types";
+
+export type CuratorOption = { id: string; name: string };
+
+/**
+ * Lista nominal de quem pode receber um Case. Não consulta o Auth porque a
+ * atribuição precisa apenas do papel vigente e do nome; assim não herda o
+ * teto de 1.000 usuários nem transforma falha da Admin API em fila vazia.
+ */
+export async function listCuratorOptions(
+  regularClient: SupabaseClient,
+): Promise<CuratorOption[]> {
+  const { data, error } = await regularClient
+    .from("user_roles")
+    .select(
+      "profile_id, roles!inner(slug), profiles!user_roles_profile_id_fkey(display_name)",
+    )
+    .eq("roles.slug", "curador_medico");
+
+  if (error) {
+    throw erroDeBanco("Não foi possível carregar os Curadores Médicos.", error);
+  }
+
+  type EmbeddedProfile =
+    { display_name: string | null } | { display_name: string | null }[] | null;
+  const unicos = new Map<string, CuratorOption>();
+  for (const row of (data ?? []) as unknown as Array<{
+    profile_id: string;
+    profiles: EmbeddedProfile;
+  }>) {
+    const profile = Array.isArray(row.profiles)
+      ? row.profiles[0]
+      : row.profiles;
+    unicos.set(row.profile_id, {
+      id: row.profile_id,
+      name: profile?.display_name ?? "Curador",
+    });
+  }
+
+  return [...unicos.values()].sort((a, b) =>
+    a.name.localeCompare(b.name, "pt-BR"),
+  );
+}
 
 // Lista todas as pessoas (profiles) com seus papéis atuais + e-mail. A UI
 // decide o recorte (equipe interna vs. busca para conceder papel) — este
@@ -28,7 +75,11 @@ export async function listTeamMembers(
     profile_id: string;
     roles: { slug: string } | { slug: string }[] | null;
   }>) {
-    const slugs = Array.isArray(row.roles) ? row.roles : row.roles ? [row.roles] : [];
+    const slugs = Array.isArray(row.roles)
+      ? row.roles
+      : row.roles
+        ? [row.roles]
+        : [];
     const existing = rolesByProfileId.get(row.profile_id) ?? [];
     rolesByProfileId.set(
       row.profile_id,
@@ -36,8 +87,12 @@ export async function listTeamMembers(
     );
   }
 
-  const { data: usersData } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
-  const emailByProfileId = new Map((usersData?.users ?? []).map((user) => [user.id, user.email ?? ""]));
+  const { data: usersData } = await adminClient.auth.admin.listUsers({
+    perPage: 1000,
+  });
+  const emailByProfileId = new Map(
+    (usersData?.users ?? []).map((user) => [user.id, user.email ?? ""]),
+  );
 
   return (profileRows ?? []).map((profile) => ({
     profileId: profile.id,
@@ -65,7 +120,11 @@ export async function grantRole(
 
   const { error } = await regularClient
     .from("user_roles")
-    .insert({ profile_id: profileId, role_id: roleRow.id, granted_by: grantedBy });
+    .insert({
+      profile_id: profileId,
+      role_id: roleRow.id,
+      granted_by: grantedBy,
+    });
 
   if (error) {
     throw erroDeBanco("Não foi possível conceder o papel.", error);
@@ -112,28 +171,46 @@ async function mapAuditLogRows(
   rows: AuditLogRow[],
 ): Promise<AuditLogEntry[]> {
   const profileIds = Array.from(
-    new Set(rows.flatMap((row) => [row.actor_id, row.target_profile_id]).filter((id): id is string => Boolean(id))),
+    new Set(
+      rows
+        .flatMap((row) => [row.actor_id, row.target_profile_id])
+        .filter((id): id is string => Boolean(id)),
+    ),
   );
 
   const { data: profileRows } = profileIds.length
-    ? await regularClient.from("profiles").select("id, display_name").in("id", profileIds)
+    ? await regularClient
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", profileIds)
     : { data: [] as Array<{ id: string; display_name: string | null }> };
 
-  const { data: roleRows } = await regularClient.from("roles").select("id, name");
-  const nameByRoleId = new Map((roleRows ?? []).map((row) => [row.id as number, row.name as string]));
+  const { data: roleRows } = await regularClient
+    .from("roles")
+    .select("id, name");
+  const nameByRoleId = new Map(
+    (roleRows ?? []).map((row) => [row.id as number, row.name as string]),
+  );
 
-  const nameByProfileId = new Map((profileRows ?? []).map((row) => [row.id, row.display_name]));
+  const nameByProfileId = new Map(
+    (profileRows ?? []).map((row) => [row.id, row.display_name]),
+  );
 
   return rows.map((row) => {
     const roleId = row.metadata?.role_id;
     return {
       id: row.id,
       actorId: row.actor_id,
-      actorName: row.actor_id ? (nameByProfileId.get(row.actor_id) ?? "Sistema") : null,
+      actorName: row.actor_id
+        ? (nameByProfileId.get(row.actor_id) ?? "Sistema")
+        : null,
       action: row.action,
       targetProfileId: row.target_profile_id,
-      targetName: row.target_profile_id ? (nameByProfileId.get(row.target_profile_id) ?? null) : null,
-      roleName: typeof roleId === "number" ? (nameByRoleId.get(roleId) ?? null) : null,
+      targetName: row.target_profile_id
+        ? (nameByProfileId.get(row.target_profile_id) ?? null)
+        : null,
+      roleName:
+        typeof roleId === "number" ? (nameByRoleId.get(roleId) ?? null) : null,
       metadata: row.metadata,
       createdAt: row.created_at,
     };

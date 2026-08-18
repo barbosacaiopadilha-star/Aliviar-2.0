@@ -16,9 +16,9 @@
  * informação, nunca como porteiro.
  */
 
-import { useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
-import { savePriorityImportanceAction } from "@/modules/curadoria/mapa-prioridades-actions";
+import { savePriorityImportancesAction } from "@/modules/curadoria/mapa-prioridades-actions";
 import {
   IMPORTANCE_LABELS,
   IMPORTANCE_LEVELS,
@@ -27,6 +27,8 @@ import {
   type PriorityMapGroup,
 } from "@/modules/curadoria/mapa-prioridades";
 import { cn } from "@/components/ui/cn";
+import { Button } from "@/components/ui/button";
+import { FormMessage } from "@/components/ui/form-message";
 
 export function MapaPrioridadesPanel({
   caseId,
@@ -37,37 +39,63 @@ export function MapaPrioridadesPanel({
   groups: PriorityMapGroup[];
   completion: PriorityMapCompletion;
 }) {
-  const [local, setLocal] = useState<Record<string, ImportanceLevel | null>>(() =>
-    Object.fromEntries(
-      groups.flatMap((grupo) =>
-        grupo.entries.map((entrada) => [entrada.subcriterion.code, entrada.importance]),
-      ),
-    ),
+  const initial = useMemo(
+    () =>
+      Object.fromEntries(
+        groups.flatMap((grupo) =>
+          grupo.entries.map((entrada) => [
+            entrada.subcriterion.code,
+            entrada.importance,
+          ]),
+        ),
+      ) as Record<string, ImportanceLevel | null>,
+    [groups],
   );
-  const [salvando, setSalvando] = useState<string | null>(null);
-  const [erros, setErros] = useState<Record<string, string>>({});
-  const [, startTransition] = useTransition();
+  const [local, setLocal] =
+    useState<Record<string, ImportanceLevel | null>>(initial);
+  const [persistido, setPersistido] =
+    useState<Record<string, ImportanceLevel | null>>(initial);
+  const [erro, setErro] = useState<string | null>(null);
+  const [salvo, setSalvo] = useState(false);
+  const [pending, startTransition] = useTransition();
 
   const classificados = Object.values(local).filter(Boolean).length;
+  const alterados = Object.entries(local).filter(
+    ([code, importance]) =>
+      importance !== null && importance !== persistido[code],
+  );
+  const temAlteracoes = alterados.length > 0;
 
-  function gravar(code: string, importance: ImportanceLevel) {
+  useEffect(() => {
+    if (!temAlteracoes) return;
+    const avisar = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", avisar);
+    return () => window.removeEventListener("beforeunload", avisar);
+  }, [temAlteracoes]);
+
+  function escolher(code: string, importance: ImportanceLevel) {
     setLocal((atual) => ({ ...atual, [code]: importance }));
-    setSalvando(code);
-    setErros((atuais) =>
-      Object.fromEntries(Object.entries(atuais).filter(([chave]) => chave !== code)),
-    );
+    setErro(null);
+    setSalvo(false);
+  }
 
+  function gravarAlteracoes() {
+    if (!temAlteracoes) return;
     startTransition(async () => {
-      const resultado = await savePriorityImportanceAction({
+      const resultado = await savePriorityImportancesAction({
         caseId,
-        subcriterionCode: code,
-        importance,
+        entries: alterados.map(([subcriterionCode, importance]) => ({
+          subcriterionCode,
+          importance: importance!,
+        })),
       });
-      setSalvando(null);
       if (!resultado.success) {
-        // O rascunho local fica: trabalho registrado nunca é jogado fora.
-        setErros((atuais) => ({ ...atuais, [code]: resultado.error }));
+        // O rascunho local fica: trabalho digitado nunca é jogado fora.
+        setErro(resultado.error);
+        return;
       }
+      setPersistido(local);
+      setSalvo(true);
     });
   }
 
@@ -83,9 +111,35 @@ export function MapaPrioridadesPanel({
             : `${classificados} de ${completion.total} classificados · ${completion.total - classificados} ainda por conversar.`}
       </p>
       <p className="mt-1 max-w-reading text-xs text-ink-muted">
-        Estes são os subcritérios do Método. Você não cria nem renomeia nenhum — registra quanto
-        cada um importa para esta pessoa, com as palavras dela na conversa.
+        Estes são os subcritérios do Método. Você não cria nem renomeia nenhum —
+        registra quanto cada um importa para esta pessoa, com as palavras dela
+        na conversa.
       </p>
+
+      <div className="sticky top-[var(--mesa-topo,0px)] z-10 mt-4 flex flex-wrap items-center gap-3 rounded-md border border-border-strong bg-surface p-3">
+        <Button
+          type="button"
+          onClick={gravarAlteracoes}
+          disabled={!temAlteracoes || pending}
+          isLoading={pending}
+        >
+          {alterados.length === 0
+            ? "Mapa salvo"
+            : alterados.length === 1
+              ? "Salvar 1 alteração"
+              : `Salvar ${alterados.length} alterações`}
+        </Button>
+        <p className="text-xs text-ink-muted">
+          As escolhas ficam como rascunho nesta tela até você salvar o conjunto.
+        </p>
+      </div>
+
+      {erro ? <FormMessage variant="error">{erro}</FormMessage> : null}
+      {salvo && !temAlteracoes ? (
+        <FormMessage variant="success">
+          Mapa salvo em uma única gravação.
+        </FormMessage>
+      ) : null}
 
       <div className="mt-6 space-y-8">
         {groups.map((grupo) => (
@@ -96,16 +150,24 @@ export function MapaPrioridadesPanel({
               {grupo.entries.map((entrada) => {
                 const code = entrada.subcriterion.code;
                 const nivel = local[code] ?? null;
-                const erro = erros[code];
 
                 return (
-                  <li key={code} className="border-t border-line pt-3 first:border-t-0 first:pt-0">
+                  <li
+                    key={code}
+                    className="border-t border-line pt-3 first:border-t-0 first:pt-0"
+                  >
                     <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                      <p className="text-sm font-medium text-ink">{entrada.subcriterion.name}</p>
-                      {salvando === code ? (
-                        <span className="text-xs text-ink-muted">Salvando…</span>
-                      ) : nivel === null ? (
-                        <span className="text-xs text-ink-muted">Ainda por conversar</span>
+                      <p className="text-sm font-medium text-ink">
+                        {entrada.subcriterion.name}
+                      </p>
+                      {nivel === null ? (
+                        <span className="text-xs text-ink-muted">
+                          Ainda por conversar
+                        </span>
+                      ) : nivel !== persistido[code] ? (
+                        <span className="text-xs font-medium text-brand-primary">
+                          Alteração não salva
+                        </span>
                       ) : null}
                     </div>
 
@@ -121,14 +183,18 @@ export function MapaPrioridadesPanel({
                         {IMPORTANCE_LEVELS.map((level) => (
                           <label
                             key={level}
-                            className={cn("mesa-chip cursor-pointer", nivel === level && "mesa-chip--ativo")}
+                            className={cn(
+                              "mesa-chip cursor-pointer",
+                              nivel === level && "mesa-chip--ativo",
+                            )}
                           >
                             <input
                               type="radio"
                               name={`importancia-${code}`}
                               value={level}
                               checked={nivel === level}
-                              onChange={() => gravar(code, level)}
+                              onChange={() => escolher(code, level)}
+                              disabled={pending}
                               className="sr-only"
                             />
                             {IMPORTANCE_LABELS[level]}
@@ -136,12 +202,6 @@ export function MapaPrioridadesPanel({
                         ))}
                       </div>
                     </fieldset>
-
-                    {erro ? (
-                      <p role="alert" className="mt-2 text-sm text-red-700">
-                        {erro}
-                      </p>
-                    ) : null}
                   </li>
                 );
               })}

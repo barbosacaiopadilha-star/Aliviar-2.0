@@ -3,6 +3,7 @@ import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { DB_SCHEMA } from "./env";
+import { assertSupabaseCredential } from "./env-validation";
 
 // Cliente com a service role key — nunca importável de código de cliente
 // (o pacote `server-only` falha o build se isso acontecer). Usos legítimos
@@ -41,6 +42,8 @@ export function createAdminSupabaseClient(): SupabaseClient {
       "NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY são obrigatórias para operações administrativas.",
     );
   }
+
+  assertSupabaseCredential("SUPABASE_SERVICE_ROLE_KEY", serviceRoleKey);
 
   return createClient(url, serviceRoleKey, {
     db: { schema: DB_SCHEMA },
