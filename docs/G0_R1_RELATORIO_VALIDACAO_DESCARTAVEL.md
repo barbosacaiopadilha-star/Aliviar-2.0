@@ -75,3 +75,51 @@ Avisos preexistentes de outros domínios não foram alterados por este pacote.
 Nada foi integrado à `main`, aplicado em produção, implantado na Vercel ou mesclado no
 Supabase de produção. A branch e o banco temporário aguardam auditoria e autorização
 separadas.
+
+## 7. Correção e revalidação P1/P2/P3 — 2026-08-18
+
+A reauditoria independente reprovou a primeira versão. O pacote foi corrigido
+sem tocar na `main`, PR, produção ou Vercel.
+
+### P1 encerrados
+
+- idempotência escopada por ator e chave; autorização, titular, versão e
+  contrato integral são validados antes de qualquer retorno;
+- colisão da mesma chave com outro contrato é recusada;
+- o caminho público rejeita `_provedor` e `_evidencia_externa`: não existe
+  mais promoção autodeclarada a N3;
+- `nivel_exigido` é aplicado a cada assinante obrigatório. N1 não satisfaz
+  N2/N3 e o instrumento só fecha após todos cumprirem o nível.
+
+### P2/P3 encerrados
+
+- T13, T15 e T19 não possuem mais retorno antecipado;
+- matriz versionada ampliada de 26 para 30 casos;
+- rollback executável em
+  `supabase/rollback/g0_r1_regime_de_instrumentos.rollback.sql`;
+- ciclo apply → harness → rollback → sentinela → reapply → harness executado;
+- preflight cobre tipos, tabelas e todas as colunas aditivas;
+- contratos JSON rejeitam elementos malformados;
+- artefato exige tipo, referência-objeto, versão e hash SHA-256;
+- três FKs apontadas pelo advisor receberam índices de cobertura.
+
+### Evidência real
+
+- baseline: 128 migrations;
+- harness SQL de ataques/contratos: 10/10 em três rodadas;
+- concorrência real por duas conexões: 1 assinatura persistida, estado
+  `assinado`, segunda chamada recusada após serialização;
+- advisor de segurança: 0 alerta G0;
+- advisor de performance: 0 FK G0 sem índice; apenas 6 INFO `unused_index`
+  esperados em schema recém-criado.
+
+Hashes SHA-256 do conteúdo validado:
+
+- migration: `9a34057b4397db1a94aa7aad2299f41eb33738406c734c7f8042eb34366ca6ef`;
+- teste: `07586ab4f3f0261b3deb22e4deac1c05338936f9bc6350e19cb183fa26db0093`;
+- rollback: `d548aa67e2707fd3a506a7a679a47caf482e7e81a93d2c2e3f57d54806adf3fe`.
+
+Limite: os 30 casos TypeScript estão prontos para CI, mas não foram declarados
+como executados neste gate conectado; a prova executada é o harness SQL 10/10,
+a concorrência por duas conexões e o ciclo integral registrado em
+`docs/G0_R1_PROVAS_CORRECAO_REVALIDACAO.md`.
