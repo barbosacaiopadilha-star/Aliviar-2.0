@@ -62,7 +62,7 @@ alter table curadoria.legal_documents
   drop column if exists categoria,
   drop column if exists ordem_de_apresentacao;
 
-drop function curadoria.g0_r1_contratos_json_validos(jsonb, jsonb, jsonb);
+drop function if exists curadoria.g0_r1_contratos_json_validos(jsonb, jsonb, jsonb);
 drop type curadoria.legal_termination_cause;
 drop type curadoria.legal_signer_role;
 drop type curadoria.legal_signature_level;
