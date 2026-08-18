@@ -22,7 +22,7 @@ begin
        where table_schema = 'curadoria' and (
          (table_name = 'legal_documents' and column_name in ('regime','categoria','ordem_de_apresentacao'))
          or (table_name = 'legal_document_versions' and column_name in ('variaveis_requeridas','assinantes_exigidos','escopos_revogaveis','nivel_exigido','aprovado_por','aprovado_em','motivo_da_mudanca'))
-         or (table_name = 'legal_acceptances' and column_name in ('instance_id','signer_id','instancia_hash','natureza','registrado_por','forma_de_obtencao','nivel','provedor','evidencia_externa','declaracao_de_vontade'))
+         or (table_name = 'legal_acceptances' and column_name in ('instance_id','signer_id','instancia_hash','nivel','provedor','evidencia_externa','declaracao_de_vontade'))
          or (table_name = 'legal_acceptance_revocations' and column_name in ('escopo','escopo_rotulo'))
        )
      ) then
