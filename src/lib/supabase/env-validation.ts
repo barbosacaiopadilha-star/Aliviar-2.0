@@ -16,4 +16,3 @@ export function assertSupabaseCredential(name: string, value: string): void {
     );
   }
 }
-// preview-integration-trigger
