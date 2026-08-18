@@ -17,6 +17,35 @@ begin
      or to_regclass('curadoria.legal_document_instances') is not null
      or to_regclass('curadoria.legal_instance_signers') is not null
      or to_regclass('curadoria.legal_instrument_terminations') is not null
+     or to_regprocedure('curadoria.g0_r1_contratos_json_validos(jsonb,jsonb,jsonb)') is not null
+     or to_regprocedure('curadoria.criar_instancia_de_documento(uuid,uuid,uuid,jsonb,jsonb,uuid,timestamptz,jsonb,text)') is not null
+     or to_regprocedure('curadoria.assinar_instancia(uuid,uuid,text,text,text,text,jsonb,text,text)') is not null
+     or to_regprocedure('curadoria.revogar_por_escopo(uuid,text,text,text,text)') is not null
+     or to_regprocedure('curadoria.rescindir_instrumento(uuid,text,text,smallint,timestamptz,timestamptz,text)') is not null
+     or to_regprocedure('curadoria.enforce_legal_instance_insert()') is not null
+     or to_regprocedure('curadoria.enforce_legal_instance_congelada()') is not null
+     or to_regprocedure('curadoria.enforce_legal_signers_congelados()') is not null
+     or exists (
+       select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+       where n.nspname='curadoria' and c.relname in (
+         'legal_instances_titular_idx','legal_instances_profissional_idx','legal_instances_version_idx',
+         'legal_instances_case_idx','legal_instances_substituida_idx','legal_instances_idempotencia',
+         'legal_instance_signers_instance_idx','legal_instance_signers_profile_idx',
+         'legal_instance_signers_professional_idx','legal_acceptances_uma_assinatura_por_assinante',
+         'legal_acceptances_instance_idx','legal_terminations_uma_por_instrumento',
+         'legal_terminations_registrada_por_idx'
+       )
+     )
+     or exists (
+       select 1 from pg_constraint where conname in (
+         'legal_document_versions_contratos_validos','legal_instances_um_titular',
+         'legal_instances_assinatura_coerente','legal_instances_eficacia_coerente',
+         'legal_instances_artefato_coerente','legal_instances_idempotencia_nao_vazia',
+         'legal_instances_contexto_objeto','legal_instances_variaveis_objeto',
+         'legal_acceptances_instrumento_coerente','legal_acceptances_nivel_sustentado',
+         'legal_terminations_denuncia_exige_aviso'
+       )
+     )
      or exists (
        select 1 from information_schema.columns
        where table_schema = 'curadoria' and (
@@ -144,10 +173,20 @@ begin
   for _e in select value from jsonb_array_elements(_assinantes) loop
     if jsonb_typeof(_e) <> 'object' or jsonb_typeof(_e -> 'papel') <> 'string'
        or (_e ->> 'papel') not in ('titular','contratada','testemunha','representante_legal')
-       or (_e ? 'ordem' and (jsonb_typeof(_e -> 'ordem') <> 'number' or (_e ->> 'ordem')::numeric < 1))
+       or (_e ? 'ordem' and (
+         jsonb_typeof(_e -> 'ordem') <> 'number'
+         or (_e ->> 'ordem')::numeric < 1
+         or (_e ->> 'ordem')::numeric <> trunc((_e ->> 'ordem')::numeric)
+       ))
        or (_e ? 'obrigatorio' and jsonb_typeof(_e -> 'obrigatorio') <> 'boolean')
-       or (_e ? 'profile_id' and jsonb_typeof(_e -> 'profile_id') <> 'string')
-       or (_e ? 'professional_profile_id' and jsonb_typeof(_e -> 'professional_profile_id') <> 'string')
+       or (_e ? 'profile_id' and (
+         jsonb_typeof(_e -> 'profile_id') <> 'string'
+         or (_e ->> 'profile_id') !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+       ))
+       or (_e ? 'professional_profile_id' and (
+         jsonb_typeof(_e -> 'professional_profile_id') <> 'string'
+         or (_e ->> 'professional_profile_id') !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+       ))
        or (_e ? 'identificacao' and jsonb_typeof(_e -> 'identificacao') <> 'object')
        or (_e - 'papel' - 'ordem' - 'obrigatorio' - 'profile_id' - 'professional_profile_id' - 'identificacao') <> '{}'::jsonb
     then return false; end if;
