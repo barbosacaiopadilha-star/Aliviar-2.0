@@ -26,7 +26,12 @@ const TEST_ACCOUNTS = [
   { role: "profissional", email: "profissional.teste@aliviar-conexao.local", displayName: "Profissional Teste" },
   { role: "paciente", email: "paciente.teste@aliviar-conexao.local", displayName: "Paciente Teste" },
   // Segundo titular real para provas cross-tenant; permanece na baseline local.
-  { role: "paciente", email: "paciente2.teste@aliviar-conexao.local", displayName: "Paciente Teste 2" },
+  {
+    role: "paciente_g0_r1",
+    databaseRole: "paciente",
+    email: "paciente2.teste@aliviar-conexao.local",
+    displayName: "Paciente Teste 2",
+  },
   { role: "curador_medico", email: "curador.teste@aliviar-conexao.local", displayName: "Curador Teste" },
   // Acrescentados na captura do Briefing (ACE Missão 3): a RLS das tabelas de
   // alinhamento precisa ser provada contra TODOS os papéis humanos, não só os
@@ -150,9 +155,10 @@ async function main() {
 
     if (account.role === "administrador") adminUserId = userId;
 
-    const roleId = roleIdBySlug[account.role];
+    const databaseRole = account.databaseRole ?? account.role;
+    const roleId = roleIdBySlug[databaseRole];
     if (!roleId) {
-      console.error(`Papel "${account.role}" não encontrado no catálogo curadoria.roles.`);
+      console.error(`Papel "${databaseRole}" não encontrado no catálogo curadoria.roles.`);
       process.exit(1);
     }
 
@@ -161,7 +167,7 @@ async function main() {
       .upsert({ profile_id: userId, role_id: roleId }, { onConflict: "profile_id,role_id" });
 
     if (roleError) {
-      console.error(`Falha ao atribuir papel a "${account.role}":`, roleError.message);
+      console.error(`Falha ao atribuir papel a "${databaseRole}":`, roleError.message);
       process.exit(1);
     }
 
