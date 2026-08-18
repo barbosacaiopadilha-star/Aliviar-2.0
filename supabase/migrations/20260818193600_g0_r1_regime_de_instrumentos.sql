@@ -181,11 +181,11 @@ begin
        or (_e ? 'obrigatorio' and jsonb_typeof(_e -> 'obrigatorio') <> 'boolean')
        or (_e ? 'profile_id' and (
          jsonb_typeof(_e -> 'profile_id') <> 'string'
-         or (_e ->> 'profile_id') !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+         or (_e ->> 'profile_id')::uuid is null
        ))
        or (_e ? 'professional_profile_id' and (
          jsonb_typeof(_e -> 'professional_profile_id') <> 'string'
-         or (_e ->> 'professional_profile_id') !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+         or (_e ->> 'professional_profile_id')::uuid is null
        ))
        or (_e ? 'identificacao' and jsonb_typeof(_e -> 'identificacao') <> 'object')
        or (_e - 'papel' - 'ordem' - 'obrigatorio' - 'profile_id' - 'professional_profile_id' - 'identificacao') <> '{}'::jsonb
