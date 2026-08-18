@@ -62,6 +62,8 @@ describe("Governança — G0-R1 regime de Instrumentos", () => {
   let versaoFutura = "";
   let versaoLacuna = "";
   let versaoProfissional = "";
+  let versaoN2 = "";
+  let versaoN2Multipla = "";
 
   async function sessao(role: string) {
     const conta = contas.find((c) => c.role === role)!;
@@ -85,6 +87,7 @@ describe("Governança — G0-R1 regime de Instrumentos", () => {
     escoposRevogaveis?: unknown[];
     revogavel?: boolean;
     effectiveAt?: string;
+    nivelExigido?: "N1" | "N2" | "N3";
   }): Promise<{ documentId: string; versionId: string; hash: string }> {
     const { data: doc, error: docError } = await admin
       .from("legal_documents")
@@ -110,6 +113,7 @@ describe("Governança — G0-R1 regime de Instrumentos", () => {
         variaveis_requeridas: params.variaveisRequeridas ?? [],
         assinantes_exigidos: params.assinantesExigidos ?? [],
         escopos_revogaveis: params.escoposRevogaveis ?? [],
+        nivel_exigido: params.nivelExigido ?? null,
         ...(params.effectiveAt ? { effective_at: params.effectiveAt } : {}),
       })
       .select("id, conteudo_hash")
@@ -208,6 +212,30 @@ describe("Governança — G0-R1 regime de Instrumentos", () => {
         conteudo: MODELO_PROFISSIONAL,
         audiencia: ["profissional"],
         variaveisRequeridas: ["nome_completo"],
+      })
+    ).versionId;
+    versaoN2 = (
+      await publicar({
+        sufixo: "nivel-n2",
+        regime: "instrumento",
+        conteudo: MODELO_A,
+        audiencia: ["paciente"],
+        variaveisRequeridas: ["nome_completo", "valor", "vigencia_meses"],
+        nivelExigido: "N2",
+      })
+    ).versionId;
+    versaoN2Multipla = (
+      await publicar({
+        sufixo: "nivel-n2-multipla",
+        regime: "instrumento",
+        conteudo: MODELO_B,
+        audiencia: ["paciente"],
+        variaveisRequeridas: ["nome_completo"],
+        assinantesExigidos: [
+          { papel: "titular", ordem: 1, obrigatorio: true },
+          { papel: "contratada", ordem: 2, obrigatorio: true, profile_id: adminId },
+        ],
+        nivelExigido: "N2",
       })
     ).versionId;
   });
@@ -661,7 +689,7 @@ describe("Governança — G0-R1 regime de Instrumentos", () => {
   });
 
   it("T13 — o paciente não alcança instrumento de profissional; anon não alcança nenhum", async () => {
-    if (!professionalProfileId) return; // sem Rede local, nada a provar aqui
+    expect(professionalProfileId, "fixture profissional obrigatória para T13").not.toBe("")
 
     const curador = await sessao("curador_medico");
     const { data: instancia, error } = await curador
@@ -757,7 +785,7 @@ describe("Governança — G0-R1 regime de Instrumentos", () => {
       });
     expect((atoDivergente as Record<string, unknown>).nivel).toBe("N1");
 
-    if (nomeDoCadastro.trim() === "") return; // sem nome no cadastro, N2 é inatingível
+    expect(nomeDoCadastro.trim(), "display_name é fixture obrigatória para provar N2").not.toBe("")
 
     const instanciaB = await criarInstanciaDoPaciente(versaoA, {
       nome_completo: "Fulana Sintética de Teste",
@@ -886,7 +914,7 @@ describe("Governança — G0-R1 regime de Instrumentos", () => {
   });
 
   it("T19 — membro da equipe sem o papel apropriado é recusado", async () => {
-    if (!professionalProfileId) return;
+    expect(professionalProfileId, "fixture profissional obrigatória para T19").not.toBe("");
 
     const atendente = await sessao("atendente");
 
@@ -1176,5 +1204,100 @@ describe("Governança — G0-R1 regime de Instrumentos", () => {
       .single();
     expect(estado!.status).toBe("assinado");
     expect(estado!.assinada_em).not.toBeNull();
+  });
+
+  it("T27 — chave idempotente não atravessa titular nem contrato", async () => {
+    const paciente = await sessao("paciente");
+    const chave = `g0-r1-cross-tenant-${CARIMBO}`;
+    const payload = {
+      _version_id: versaoA,
+      _profile_id: pacienteId,
+      _variaveis: { nome_completo: "Fulana Sintética", valor: "10", vigencia_meses: "1" },
+      _idempotency_key: chave,
+    };
+    const primeira = await paciente.schema("curadoria").rpc("criar_instancia_de_documento", payload);
+    expect(primeira.error).toBeNull();
+
+    const administrador = await sessao("administrador");
+    const ataque = await administrador.schema("curadoria").rpc("criar_instancia_de_documento", payload);
+    expect(ataque.error?.message).toMatch(/não autorizado/i);
+
+    const colisao = await paciente.schema("curadoria").rpc("criar_instancia_de_documento", {
+      ...payload,
+      _variaveis: { nome_completo: "Outra Pessoa", valor: "999", vigencia_meses: "9" },
+    });
+    expect(colisao.error?.message).toMatch(/colisão de idempotência/i);
+  });
+
+  it("T28 — provedor ou evidência enviados pelo cliente não produzem N3", async () => {
+    const instancia = await criarInstanciaDoPaciente(versaoA, {
+      nome_completo: "Fulana Sintética", valor: "20", vigencia_meses: "1",
+    });
+    const { data: assinante } = await admin.from("legal_instance_signers").select("id").eq("instance_id", instancia.id as string).single();
+    const paciente = await sessao("paciente");
+    const fraude = await paciente.schema("curadoria").rpc("assinar_instancia", {
+      _instance_id: instancia.id,
+      _signer_id: assinante!.id,
+      _provedor: "provedor-forjado",
+      _evidencia_externa: { autenticado: true },
+    });
+    expect(fraude.error?.message).toMatch(/porta confiável|autodeclarada/i);
+    const { count } = await admin.from("legal_acceptances").select("id", { count: "exact", head: true }).eq("instance_id", instancia.id as string);
+    expect(count).toBe(0);
+  });
+
+  it("T29 — nivel_exigido N2 bloqueia N1 e aceita evidência N2", async () => {
+    const { data: perfil } = await admin.from("profiles").select("display_name").eq("id", pacienteId).single();
+    const nome = ((perfil?.display_name as string | null) ?? "").trim();
+    expect(nome, "display_name é obrigatório para provar N2").not.toBe("");
+    const instancia = await criarInstanciaDoPaciente(versaoN2, {
+      nome_completo: "Fulana Sintética", valor: "30", vigencia_meses: "1",
+    });
+    const { data: assinante } = await admin.from("legal_instance_signers").select("id").eq("instance_id", instancia.id as string).single();
+    const paciente = await sessao("paciente");
+    const fraco = await paciente.schema("curadoria").rpc("assinar_instancia", {
+      _instance_id: instancia.id, _signer_id: assinante!.id, _declaracao_de_vontade: "não confere",
+    });
+    expect(fraco.error?.message).toMatch(/inferior ao exigido/i);
+    const forte = await paciente.schema("curadoria").rpc("assinar_instancia", {
+      _instance_id: instancia.id, _signer_id: assinante!.id, _declaracao_de_vontade: nome,
+    });
+    expect(forte.error).toBeNull();
+    expect((forte.data as Record<string, unknown>).nivel).toBe("N2");
+  });
+
+  it("T30 — nível mínimo é aplicado a cada assinante obrigatório", async () => {
+    const { data: perfis } = await admin.from("profiles").select("id, display_name").in("id", [pacienteId, adminId]);
+    const nomePaciente = String(perfis?.find((p) => p.id === pacienteId)?.display_name ?? "").trim();
+    const nomeAdmin = String(perfis?.find((p) => p.id === adminId)?.display_name ?? "").trim();
+    expect(nomePaciente).not.toBe("");
+    expect(nomeAdmin).not.toBe("");
+
+    const paciente = await sessao("paciente");
+    const criada = await paciente.schema("curadoria").rpc("criar_instancia_de_documento", {
+      _version_id: versaoN2Multipla, _profile_id: pacienteId, _variaveis: { nome_completo: "Fulana Sintética" },
+    });
+    expect(criada.error).toBeNull();
+    const instanceId = (criada.data as Record<string, unknown>).id as string;
+    const { data: assinantes } = await admin.from("legal_instance_signers").select("id, papel").eq("instance_id", instanceId);
+    const titular = assinantes!.find((a) => a.papel === "titular")!;
+    const contratada = assinantes!.find((a) => a.papel === "contratada")!;
+
+    const atoTitular = await paciente.schema("curadoria").rpc("assinar_instancia", {
+      _instance_id: instanceId, _signer_id: titular.id, _declaracao_de_vontade: nomePaciente,
+    });
+    expect(atoTitular.error).toBeNull();
+
+    const administrador = await sessao("administrador");
+    const fraco = await administrador.schema("curadoria").rpc("assinar_instancia", {
+      _instance_id: instanceId, _signer_id: contratada.id,
+    });
+    expect(fraco.error?.message).toMatch(/inferior ao exigido/i);
+    const forte = await administrador.schema("curadoria").rpc("assinar_instancia", {
+      _instance_id: instanceId, _signer_id: contratada.id, _declaracao_de_vontade: nomeAdmin,
+    });
+    expect(forte.error).toBeNull();
+    const { data: estado } = await admin.from("legal_document_instances").select("status").eq("id", instanceId).single();
+    expect(estado!.status).toBe("assinado");
   });
 });
