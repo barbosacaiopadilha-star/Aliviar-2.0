@@ -26,7 +26,9 @@ const VIEWPORTS = [
 
 function conta(papel: string): ContaDeTeste {
   if (!existsSync(CONTAS_PATH)) {
-    throw new Error("test-users.local.json ausente. Rode `npm run bootstrap:test-users:local`.");
+    throw new Error(
+      "test-users.local.json ausente. Rode `npm run bootstrap:test-users:local`.",
+    );
   }
   const contas: ContaDeTeste[] = JSON.parse(readFileSync(CONTAS_PATH, "utf-8"));
   const encontrada = contas.find((c) => c.role === papel);
@@ -47,7 +49,9 @@ test.describe("Formação acadêmica — admin em 390/768/1440", () => {
   test.describe.configure({ mode: "serial" });
 
   for (const vp of VIEWPORTS) {
-    test(`a seção existe e o viewport permanece íntegro em ${vp.nome}`, async ({ browser }) => {
+    test(`a seção existe e o viewport permanece íntegro em ${vp.nome}`, async ({
+      browser,
+    }) => {
       const contexto = await browser.newContext({
         viewport: { width: vp.width, height: vp.height },
         deviceScaleFactor: 1,
@@ -60,11 +64,14 @@ test.describe("Formação acadêmica — admin em 390/768/1440", () => {
         await entrarComoAdmin(page);
 
         // Qualquer profissional serve: a lista administrativa leva ao primeiro.
-        await page.goto("/admin/profissionais", { waitUntil: "domcontentloaded" });
+        await page.goto("/admin/profissionais", {
+          waitUntil: "domcontentloaded",
+        });
         const primeira = page.locator("table tbody tr a").first();
         await primeira.waitFor({ timeout: 20_000 });
         await primeira.click();
         await page.waitForURL(/\/admin\/profissionais\/.+/);
+        await page.getByRole("link", { name: /Documentos e formação/ }).click();
 
         await expect(
           page.getByRole("heading", { name: "Formação acadêmica" }),
@@ -77,9 +84,17 @@ test.describe("Formação acadêmica — admin em 390/768/1440", () => {
           bodyScrollWidth: document.body.scrollWidth,
         }));
         expect(m.innerWidth, `viewport esticado em ${vp.nome}`).toBe(vp.width);
-        expect(m.innerHeight, `viewport esticado em ${vp.nome}`).toBe(vp.height);
-        expect(m.docScrollWidth, `documento estoura em ${vp.nome}`).toBeLessThanOrEqual(vp.width);
-        expect(m.bodyScrollWidth, `body estoura em ${vp.nome}`).toBeLessThanOrEqual(vp.width);
+        expect(m.innerHeight, `viewport esticado em ${vp.nome}`).toBe(
+          vp.height,
+        );
+        expect(
+          m.docScrollWidth,
+          `documento estoura em ${vp.nome}`,
+        ).toBeLessThanOrEqual(vp.width);
+        expect(
+          m.bodyScrollWidth,
+          `body estoura em ${vp.nome}`,
+        ).toBeLessThanOrEqual(vp.width);
       } finally {
         await contexto.close();
       }

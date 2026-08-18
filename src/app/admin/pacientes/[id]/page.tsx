@@ -14,7 +14,10 @@ import {
   updatePatientProfileByAdminAction,
 } from "@/modules/profiles";
 import { listStoriesForProfile } from "@/modules/story/repository";
-import { listAuditLogsForProfile } from "@/modules/team/repository";
+import {
+  listAuditLogsForProfile,
+  listCuratorOptions,
+} from "@/modules/team/repository";
 
 import { AdminPatientProfileForm } from "@/components/profiles/admin-patient-profile-form";
 import { AuditLogList } from "@/components/admin/audit-log-list";
@@ -34,18 +37,21 @@ type PatientDetailPageProps = {
   params: Promise<{ id: string }>;
 };
 
-export default async function PatientDetailPage({ params }: PatientDetailPageProps) {
+export default async function PatientDetailPage({
+  params,
+}: PatientDetailPageProps) {
   await requireRole("administrador");
   const { id } = await params;
 
   const regularClient = await createServerSupabaseClient();
   const adminClient = createAdminSupabaseClient();
 
-  const [account, profile, history, stories] = await Promise.all([
+  const [account, profile, history, stories, curators] = await Promise.all([
     getPatientAccount(regularClient, adminClient, id),
     getPatientProfile(regularClient, id),
     listAuditLogsForProfile(regularClient, id),
     listStoriesForProfile(regularClient, id),
+    listCuratorOptions(regularClient),
   ]);
 
   if (!account) {
@@ -60,7 +66,6 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
   );
 
   const nextActive = account.accountStatus !== "ativo";
-
   return (
     <div className="space-y-6">
       <Card>
@@ -72,15 +77,25 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
               </h1>
               <p className="text-sm text-ink-muted">{account.email}</p>
               <div className="mt-2">
-                <Badge variant={account.accountStatus === "ativo" ? "sage" : "default"}>
+                <Badge
+                  variant={
+                    account.accountStatus === "ativo" ? "sage" : "default"
+                  }
+                >
                   {account.accountStatus === "ativo" ? "Ativo" : "Inativo"}
                 </Badge>
               </div>
             </div>
 
             <form action={setPatientAccessAction.bind(null, id, nextActive)}>
-              <Button type="submit" variant="secondary" className="w-full sm:w-auto">
-                {account.accountStatus === "ativo" ? "Desativar acesso" : "Ativar acesso"}
+              <Button
+                type="submit"
+                variant="secondary"
+                className="w-full sm:w-auto"
+              >
+                {account.accountStatus === "ativo"
+                  ? "Desativar acesso"
+                  : "Ativar acesso"}
               </Button>
             </form>
           </div>
@@ -91,7 +106,9 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
 
       <Card>
         <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">Dados do paciente</h2>
+          <h2 className="font-sans text-lg font-semibold text-ink">
+            Dados do paciente
+          </h2>
         </CardHeader>
 
         <AdminPatientProfileForm
@@ -104,7 +121,9 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
 
       <Card>
         <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">Histórias e casos</h2>
+          <h2 className="font-sans text-lg font-semibold text-ink">
+            Histórias e casos
+          </h2>
         </CardHeader>
 
         {storiesWithCase.length === 0 ? (
@@ -115,9 +134,14 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
         ) : (
           <ul className="divide-y divide-border">
             {storiesWithCase.map(({ story, existingCase }) => (
-              <li key={story.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <li
+                key={story.id}
+                className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between"
+              >
                 <div>
-                  <Badge variant={story.status === "enviada" ? "sage" : "default"}>
+                  <Badge
+                    variant={story.status === "enviada" ? "sage" : "default"}
+                  >
                     {story.status === "enviada" ? "Enviada" : "Rascunho"}
                   </Badge>
                   <p className="mt-1 text-xs text-ink-muted">
@@ -132,7 +156,7 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
                     Ver caso
                   </Link>
                 ) : story.status === "enviada" ? (
-                  <StartCaseButton storyId={story.id} />
+                  <StartCaseButton storyId={story.id} curators={curators} />
                 ) : null}
               </li>
             ))}
@@ -142,10 +166,15 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
 
       <Card>
         <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">Histórico</h2>
+          <h2 className="font-sans text-lg font-semibold text-ink">
+            Histórico
+          </h2>
         </CardHeader>
 
-        <AuditLogList entries={history} emptyMessage="Ainda não há histórico para este paciente." />
+        <AuditLogList
+          entries={history}
+          emptyMessage="Ainda não há histórico para este paciente."
+        />
       </Card>
     </div>
   );

@@ -1,3 +1,5 @@
+import { assertSupabaseCredential } from "./env-validation";
+
 // Schema Postgres onde vive o app aliviar-conexao. No banco unificado
 // (aliviar-2-prod) o `public` pertence ao produto de jornadas; o
 // aliviar-conexao vive no schema `curadoria`. Todos os clientes Supabase
@@ -24,6 +26,8 @@ export function getSupabaseEnv(): SupabaseEnvConfig {
       "Variáveis NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY são obrigatórias.",
     );
   }
+
+  assertSupabaseCredential("NEXT_PUBLIC_SUPABASE_ANON_KEY", anonKey);
 
   return { url, anonKey };
 }

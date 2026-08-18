@@ -24,13 +24,33 @@ const VIEWPORTS = [
   { nome: "390", width: 390, height: 844 },
 ] as const;
 
-const DIR = path.resolve(__dirname, "..", "..", "evidencias", "c7r", "capturas");
+const DIR = path.resolve(
+  __dirname,
+  "..",
+  "..",
+  "evidencias",
+  "c7r",
+  "capturas",
+);
 const manifesto: Record<string, unknown>[] = [];
 
 let seed: Awaited<ReturnType<typeof semearCicloE2E>>;
 // Tipagem leve: o spec só precisa de rpc/from, e o genérico do supabase-js
 // sem tipos gerados degrada para never.
-type ClienteLeve = { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ error: { message: string } | null }>; from: (t: string) => { select: (c: string) => { eq: (k: string, v: string) => { single: () => Promise<{ data: unknown }> } } } };
+type ClienteLeve = {
+  rpc: (
+    fn: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ error: { message: string } | null }>;
+  from: (t: string) => {
+    select: (c: string) => {
+      eq: (
+        k: string,
+        v: string,
+      ) => { single: () => Promise<{ data: unknown }> };
+    };
+  };
+};
 let service: ClienteLeve;
 let adminEmail = "";
 
@@ -49,7 +69,10 @@ function psql(sql: string): string {
   const semComando = argumentos.slice(0, argumentos.indexOf("-c"));
   semComando.splice(1, 0, "-i");
   semComando.push("-v", "ON_ERROR_STOP=1");
-  return execFileSync("docker", semComando, { encoding: "utf8", input: sql }).trim();
+  return execFileSync("docker", semComando, {
+    encoding: "utf8",
+    input: sql,
+  }).trim();
 }
 
 /** Re-arme: garante PUBLICADO_ATIVO pela porta da frente (idempotente). */
@@ -79,18 +102,25 @@ function rearmarLegadoNulo() {
 
 async function estadoNoBanco(sufixo: string): Promise<string> {
   const { data } = await service
-    
+
     .from("professional_profiles")
     .select("ciclo_de_vida, status, publication_status")
     .eq("id", seed.ids[sufixo])
     .single();
-  const l = data as unknown as { ciclo_de_vida: string | null; status: string; publication_status: string };
+  const l = data as unknown as {
+    ciclo_de_vida: string | null;
+    status: string;
+    publication_status: string;
+  };
   return `${l.ciclo_de_vida ?? "NULO"} · ${l.status}/${l.publication_status}`;
 }
 
 async function entrar(page: Page, erros: string[]) {
   const contas = JSON.parse(
-    readFileSync(path.resolve(__dirname, "..", "..", "test-users.local.json"), "utf8"),
+    readFileSync(
+      path.resolve(__dirname, "..", "..", "test-users.local.json"),
+      "utf8",
+    ),
   ) as Array<{ role: string; email: string; password: string }>;
   const admin = contas.find((c) => c.role === "administrador")!;
   adminEmail = admin.email;
@@ -135,13 +165,18 @@ async function capturar(
     innerWidth: window.innerWidth,
     scrollWidth: document.documentElement.scrollWidth,
   }));
-  expect(m.innerWidth, `${sobre.arquivo}: innerWidth`).toBe(sobre.viewport.width);
+  expect(m.innerWidth, `${sobre.arquivo}: innerWidth`).toBe(
+    sobre.viewport.width,
+  );
   if (sobre.viewport.width === 390) {
     expect(m.scrollWidth, `${sobre.arquivo}: excesso horizontal`).toBe(390);
   }
   const proibidos = consoleDoProduto(sobre.erros);
   expect(proibidos, `${sobre.arquivo}: console do produto`).toEqual([]);
-  await page.screenshot({ path: path.join(DIR, sobre.arquivo), fullPage: true });
+  await page.screenshot({
+    path: path.join(DIR, sobre.arquivo),
+    fullPage: true,
+  });
   manifesto.push({
     arquivo: sobre.arquivo,
     cenario: sobre.cenario,
@@ -168,9 +203,11 @@ for (const viewport of VIEWPORTS) {
       await rearmarPublicado("01");
       const antes = await estadoNoBanco("01");
       await entrar(page, erros);
-      const rota = `/admin/profissionais/${seed.ids["01"]}`;
+      const rota = `/admin/profissionais/${seed.ids["01"]}?etapa=rede`;
       await page.goto(rota);
-      await expect(page.getByRole("heading", { name: "Ciclo de vida" })).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Ciclo de vida" }),
+      ).toBeVisible();
       await expect(page.getByText("Algo deu errado")).toHaveCount(0);
       await capturar(page, {
         arquivo: `ev1-painel-${viewport.nome}.png`,
@@ -190,13 +227,19 @@ for (const viewport of VIEWPORTS) {
       await rearmarPublicado("02");
       const antes = await estadoNoBanco("02");
       await entrar(page, erros);
-      const rota = `/admin/profissionais/${seed.ids["02"]}`;
+      const rota = `/admin/profissionais/${seed.ids["02"]}?etapa=rede`;
       await page.goto(rota);
       const destino = page.getByLabel("Mudar para");
       await destino.selectOption("PAUSADO");
-      const pausa = await page.getByLabel("Motivo").locator("option").allTextContents();
+      const pausa = await page
+        .getByLabel("Motivo")
+        .locator("option")
+        .allTextContents();
       await destino.selectOption("RETIRADO_ARQUIVADO");
-      const retirada = await page.getByLabel("Motivo").locator("option").allTextContents();
+      const retirada = await page
+        .getByLabel("Motivo")
+        .locator("option")
+        .allTextContents();
       expect(pausa).not.toEqual(retirada);
       expect(retirada.join("|")).toContain("Encerramento da atuação");
       await capturar(page, {
@@ -244,9 +287,13 @@ for (const viewport of VIEWPORTS) {
       await page.goto(rota);
       await page.getByLabel("Mudar para").selectOption("PAUSADO");
       await page.getByLabel("Motivo").selectOption("REVISAO_CADASTRAL");
-      await page.getByRole("checkbox", { name: /Confirmo esta mudança/ }).check();
+      await page
+        .getByRole("checkbox", { name: /Confirmo esta mudança/ })
+        .check();
       await page.getByRole("button", { name: "Aplicar mudança" }).click();
-      await expect(page.getByText("Estado do profissional atualizado.")).toBeVisible({ timeout: 20000 });
+      await expect(
+        page.getByText("Estado do profissional atualizado."),
+      ).toBeVisible({ timeout: 20000 });
       const depois = await estadoNoBanco("04");
       expect(depois).toContain("PAUSADO · inativo/nao_publicado");
       await capturar(page, {
@@ -266,9 +313,11 @@ for (const viewport of VIEWPORTS) {
       const erros: string[] = [];
       const antes = await estadoNoBanco("05");
       await entrar(page, erros);
-      const rota = `/admin/profissionais/${seed.ids["05"]}`;
+      const rota = `/admin/profissionais/${seed.ids["05"]}?etapa=publicacao`;
       await page.goto(rota);
-      await expect(page.getByRole("button", { name: /^Publicar$/ })).toBeDisabled();
+      await expect(
+        page.getByRole("button", { name: /^Publicar$/ }),
+      ).toBeDisabled();
       await expect(page.getByText(/Pendências para publicação/)).toBeVisible();
       await capturar(page, {
         arquivo: `ev5-publicacao-bloqueada-${viewport.nome}.png`,
@@ -288,10 +337,12 @@ for (const viewport of VIEWPORTS) {
       await rearmarPublicado("06");
       const antes = await estadoNoBanco("06");
       await entrar(page, erros);
-      const rota = `/admin/profissionais/${seed.ids["06"]}`;
+      const rota = `/admin/profissionais/${seed.ids["06"]}?etapa=publicacao`;
       await page.goto(rota);
       await page.getByRole("button", { name: "Despublicar" }).click();
-      await expect(page.getByRole("button", { name: /^Publicar$/ })).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: /^Publicar$/ }),
+      ).toBeVisible();
       const depois = await estadoNoBanco("06");
       expect(depois).toContain("PAUSADO");
       await capturar(page, {
@@ -307,7 +358,9 @@ for (const viewport of VIEWPORTS) {
       });
     });
 
-    test(`EV-7 classificação de legado · ${viewport.nome}`, async ({ page }) => {
+    test(`EV-7 classificação de legado · ${viewport.nome}`, async ({
+      page,
+    }) => {
       const erros: string[] = [];
       rearmarLegadoNulo();
       const antes = await estadoNoBanco("07");
@@ -317,8 +370,12 @@ for (const viewport of VIEWPORTS) {
       await page.goto(rota);
 
       // (a) recusa sem justificativa: o botão nem é oferecido habilitado.
-      await page.getByLabel("Estado atual deste cadastro").selectOption("PREPARACAO");
-      const botao = page.getByRole("button", { name: "Classificar cadastro legado" });
+      await page
+        .getByLabel("Estado atual deste cadastro")
+        .selectOption("PREPARACAO");
+      const botao = page.getByRole("button", {
+        name: "Classificar cadastro legado",
+      });
       await expect(botao).toBeDisabled();
       await capturar(page, {
         arquivo: `ev7a-legado-recusa-${viewport.nome}.png`,
@@ -333,9 +390,13 @@ for (const viewport of VIEWPORTS) {
       });
 
       // (b) aceite com justificativa.
-      await page.getByLabel(/Justificativa da classificação/).fill("revisão documental do cadastro legado");
+      await page
+        .getByLabel(/Justificativa da classificação/)
+        .fill("revisão documental do cadastro legado");
       await botao.click();
-      await expect(page.getByText("Cadastro legado classificado.")).toBeVisible({ timeout: 20000 });
+      await expect(page.getByText("Cadastro legado classificado.")).toBeVisible(
+        { timeout: 20000 },
+      );
       const depois = await estadoNoBanco("07");
       expect(depois).toContain("PREPARACAO");
       await capturar(page, {
@@ -354,7 +415,9 @@ for (const viewport of VIEWPORTS) {
       // sumiu — quem já tem ciclo usa a matriz, e o banco recusa o atalho.
       await page.reload();
       await expect(page.getByText(/Estado atual/)).toBeVisible();
-      await expect(page.getByRole("button", { name: "Classificar cadastro legado" })).toHaveCount(0);
+      await expect(
+        page.getByRole("button", { name: "Classificar cadastro legado" }),
+      ).toHaveCount(0);
       await capturar(page, {
         arquivo: `ev7c-legado-reclassificacao-${viewport.nome}.png`,
         cenario: "EV-7c reclassificação não é oferecida a quem já tem ciclo",
@@ -382,6 +445,10 @@ test.afterAll(() => {
     ),
   ].join("\n");
   writeFileSync(path.join(DIR, "MANIFESTO.md"), md, "utf8");
-  writeFileSync(path.join(DIR, "manifesto.json"), JSON.stringify(manifesto, null, 2), "utf8");
+  writeFileSync(
+    path.join(DIR, "manifesto.json"),
+    JSON.stringify(manifesto, null, 2),
+    "utf8",
+  );
   expect(manifesto.length, "combinações capturadas").toBeGreaterThanOrEqual(21);
 });
