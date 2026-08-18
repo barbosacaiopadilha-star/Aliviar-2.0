@@ -1216,7 +1216,9 @@ describe("Governança — G0-R1 regime de Instrumentos", () => {
     const primeira = await paciente.schema("curadoria").rpc("criar_instancia_de_documento", payload);
     expect(primeira.error).toBeNull();
 
-    const pacientes = contas.filter((conta) => conta.role === "paciente");
+    const pacientes = contas.filter((conta) =>
+      conta.role === "paciente" || conta.role === "paciente_g0_r1",
+    );
     expect(pacientes.length, "T27 exige duas contas reais de paciente").toBeGreaterThanOrEqual(2);
     const outroPaciente = createCuradoriaClient(url, anonKey);
     const login = await outroPaciente.auth.signInWithPassword({
