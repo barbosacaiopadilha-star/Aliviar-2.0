@@ -290,6 +290,9 @@ create index legal_instances_version_idx
   on curadoria.legal_document_instances (version_id);
 create index legal_instances_case_idx
   on curadoria.legal_document_instances (case_id) where case_id is not null;
+create index legal_instances_substituida_idx
+  on curadoria.legal_document_instances (instancia_substituida_id)
+  where instancia_substituida_id is not null;
 -- Idempotência só onde declarada.
 create unique index legal_instances_idempotencia
   on curadoria.legal_document_instances (gerada_por, idempotency_key)
@@ -326,6 +329,9 @@ create index legal_instance_signers_instance_idx
   on curadoria.legal_instance_signers (instance_id, ordem);
 create index legal_instance_signers_profile_idx
   on curadoria.legal_instance_signers (profile_id) where profile_id is not null;
+create index legal_instance_signers_professional_idx
+  on curadoria.legal_instance_signers (professional_profile_id)
+  where professional_profile_id is not null;
 
 comment on table curadoria.legal_instance_signers is
   'Quem PRECISA assinar uma instancia, com papel e ordem. E expectativa: o ato efetivamente ocorrido mora em legal_acceptances (livro unico), ligado por signer_id. Status do assinante e derivado da existencia do ato — nunca gravado aqui.';
@@ -429,6 +435,9 @@ create table curadoria.legal_instrument_terminations (
 -- Rescindir duas vezes o mesmo instrumento não significa nada.
 create unique index legal_terminations_uma_por_instrumento
   on curadoria.legal_instrument_terminations (instance_id);
+create index legal_terminations_registrada_por_idx
+  on curadoria.legal_instrument_terminations (registrada_por)
+  where registrada_por is not null;
 
 comment on table curadoria.legal_instrument_terminations is
   'Rescisao/encerramento do VINCULO. NAO e revogacao: nao apaga, nao invalida e nao revoga a assinatura historica — apenas encerra a eficacia dali para frente. Confundir os dois faria o sistema afirmar que o contrato nunca valeu, quando o que houve foi termino.';
