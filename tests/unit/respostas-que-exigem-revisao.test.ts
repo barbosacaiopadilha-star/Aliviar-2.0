@@ -234,7 +234,7 @@ describe("A6/A7 · fonte única, e nenhuma autoridade nova", () => {
   it("A7 · o bloco de revisão não oferece ação nenhuma", () => {
     const bloco = painel.slice(
       painel.indexOf("Respostas dela que exigem revisão"),
-      painel.indexOf("<ul className=\"space-y-2\">"),
+      painel.indexOf("FIM DO BLOCO DE REVISAO"),
     );
 
     expect(bloco.length).toBeGreaterThan(200);
