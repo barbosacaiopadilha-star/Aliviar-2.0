@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { createHash, randomBytes } from "node:crypto";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -54,7 +54,6 @@ describe("Governança — G0-R1 regime de Instrumentos", () => {
   let pacienteId = "";
   let adminId = "";
   let professionalProfileId = "";
-  let segundoPacienteId = "";
 
   let versaoA = "";
   let hashVersaoA = "";
@@ -136,54 +135,14 @@ describe("Governança — G0-R1 regime de Instrumentos", () => {
     const administrador = await sessao("administrador");
     adminId = (await administrador.auth.getUser()).data.user!.id;
 
-    // O CI nasce sem rede profissional. Reusar uma linha existente preserva
-    // a execução local; na stack efêmera, a suíte cria sua própria fixture.
-    const { data: profExistente } = await admin
+    // Profissional permanente criado pelo bootstrap antes da captura do
+    // baseline global: não depende de dados de produção e não vira resíduo.
+    const { data: prof } = await admin
       .from("professional_profiles")
       .select("id")
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    if (profExistente?.id) {
-      professionalProfileId = profExistente.id as string;
-    } else {
-      const { data: profCriado, error: profError } = await admin
-        .from("professional_profiles")
-        .insert({
-          display_name: "Profissional sintético G0-R1",
-          professional_identifier: `g0-r1-${CARIMBO}`,
-          created_by: adminId,
-        })
-        .select("id")
-        .single();
-      if (profError) throw new Error(`fixture profissional G0-R1: ${profError.message}`);
-      professionalProfileId = profCriado!.id as string;
-    }
-
-    // T27 precisa de um segundo titular real. A conta é exclusiva desta suíte,
-    // recebe apenas o papel paciente e é removida no afterAll; a tentativa
-    // cross-tenant é recusada antes de criar qualquer instância para ela.
-    const segundoPacienteEmail = `g0-r1-paciente-2-${CARIMBO}@aliviar-conexao.local`;
-    const segundoPacienteSenha = randomBytes(24).toString("base64url");
-    const { data: segundoPaciente, error: segundoPacienteError } = await admin.auth.admin.createUser({
-      email: segundoPacienteEmail,
-      password: segundoPacienteSenha,
-      email_confirm: true,
-      user_metadata: { display_name: "Paciente G0-R1 Dois" },
-    });
-    if (segundoPacienteError) throw new Error(`segunda conta paciente G0-R1: ${segundoPacienteError.message}`);
-    segundoPacienteId = segundoPaciente.user.id;
-    const { data: papelPaciente, error: papelError } = await admin
-      .from("roles")
-      .select("id")
-      .eq("slug", "paciente")
+      .eq("professional_identifier", "TESTE-PROFISSIONAL-PERMANENTE")
       .single();
-    if (papelError) throw new Error(`papel paciente G0-R1: ${papelError.message}`);
-    const { error: atribuicaoError } = await admin
-      .from("user_roles")
-      .insert({ profile_id: segundoPacienteId, role_id: papelPaciente!.id });
-    if (atribuicaoError) throw new Error(`papel da segunda conta G0-R1: ${atribuicaoError.message}`);
-    contas.push({ role: "paciente", email: segundoPacienteEmail, password: segundoPacienteSenha });
+    professionalProfileId = (prof?.id as string) ?? "";
 
     const a = await publicar({
       sufixo: "a",
@@ -285,10 +244,6 @@ describe("Governança — G0-R1 regime de Instrumentos", () => {
     // o documento sintético é o descarte honesto do que não se remove.
     for (const documentId of documentosCriados) {
       await admin.from("legal_documents").update({ ativo: false }).eq("id", documentId);
-    }
-    if (segundoPacienteId) {
-      const { error } = await admin.auth.admin.deleteUser(segundoPacienteId);
-      if (error) throw new Error(`limpeza da segunda conta G0-R1: ${error.message}`);
     }
   });
 
