@@ -1218,9 +1218,22 @@ describe("Governança — G0-R1 regime de Instrumentos", () => {
     const primeira = await paciente.schema("curadoria").rpc("criar_instancia_de_documento", payload);
     expect(primeira.error).toBeNull();
 
-    const administrador = await sessao("administrador");
-    const ataque = await administrador.schema("curadoria").rpc("criar_instancia_de_documento", payload);
+    const pacientes = contas.filter((conta) => conta.role === "paciente");
+    expect(pacientes.length, "T27 exige duas contas reais de paciente").toBeGreaterThanOrEqual(2);
+    const outroPaciente = createCuradoriaClient(url, anonKey);
+    const login = await outroPaciente.auth.signInWithPassword({
+      email: pacientes[1]!.email,
+      password: pacientes[1]!.password,
+    });
+    expect(login.error).toBeNull();
+    const outroPacienteId = (await outroPaciente.auth.getUser()).data.user!.id;
+    expect(outroPacienteId).not.toBe(pacienteId);
+
+    const ataque = await outroPaciente
+      .schema("curadoria")
+      .rpc("criar_instancia_de_documento", payload);
     expect(ataque.error?.message).toMatch(/não autorizado/i);
+    expect(ataque.data).toBeNull();
 
     const colisao = await paciente.schema("curadoria").rpc("criar_instancia_de_documento", {
       ...payload,
@@ -1300,4 +1313,36 @@ describe("Governança — G0-R1 regime de Instrumentos", () => {
     const { data: estado } = await admin.from("legal_document_instances").select("status").eq("id", instanceId).single();
     expect(estado!.status).toBe("assinado");
   });
+  it("T31 — contrato JSON rejeita ordem fracionária", async () => {
+    const { data: origem } = await admin
+      .from("legal_document_versions")
+      .select("document_id")
+      .eq("id", versaoA)
+      .single();
+    const { error } = await admin.from("legal_document_versions").insert({
+      document_id: origem!.document_id,
+      versao: `9.9.31-${CARIMBO}`,
+      conteudo: "fixture inválida de ordem",
+      assinantes_exigidos: [{ papel: "titular", ordem: 1.5, obrigatorio: true }],
+    });
+    expect(error?.message).toMatch(/legal_document_versions_contratos_validos|check constraint/i);
+  });
+
+  it("T32 — contrato JSON rejeita UUID sintaticamente inválido", async () => {
+    const { data: origem } = await admin
+      .from("legal_document_versions")
+      .select("document_id")
+      .eq("id", versaoA)
+      .single();
+    const { error } = await admin.from("legal_document_versions").insert({
+      document_id: origem!.document_id,
+      versao: `9.9.32-${CARIMBO}`,
+      conteudo: "fixture inválida de UUID",
+      assinantes_exigidos: [
+        { papel: "contratada", ordem: 1, obrigatorio: true, profile_id: "nao-e-uuid" },
+      ],
+    });
+    expect(error?.message).toMatch(/legal_document_versions_contratos_validos|check constraint/i);
+  });
+
 });
