@@ -1307,3 +1307,6 @@ revoke all on function curadoria.enforce_legal_instance_insert() from public, an
 revoke all on function curadoria.enforce_legal_instance_congelada() from public, anon, authenticated;
 revoke all on function curadoria.enforce_legal_signers_congelados() from public, anon, authenticated;
 revoke all on function curadoria.g0_r1_contratos_json_validos(jsonb, jsonb, jsonb) from public, anon, authenticated;
+-- O CHECK de legal_document_versions avalia esta função durante escritas
+-- administrativas pelo Data API; só o backend privilegiado precisa executá-la.
+grant execute on function curadoria.g0_r1_contratos_json_validos(jsonb, jsonb, jsonb) to service_role;
