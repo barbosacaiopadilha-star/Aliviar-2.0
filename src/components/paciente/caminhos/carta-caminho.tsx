@@ -7,6 +7,7 @@ import { Retrato } from "@/components/paciente/caminhos/retrato";
 import { FormacaoAcademicaBloco } from "@/components/patient/formacao-academica-bloco";
 import { cn } from "@/components/ui/cn";
 import type { PatientCuradoriaOption } from "@/modules/curadoria/patient-curadoria";
+import { dimensoesConhecidas, fraseDoQueNaoSabemos } from "@/modules/paciente/experiencia";
 
 /**
  * A carta de um caminho.
@@ -43,6 +44,8 @@ export function CartaCaminho({
   onAlternarComparacao: () => void;
 }) {
   const semMovimento = useReducedMotion();
+  const conhecidas = dimensoesConhecidas(option.dimensions);
+  const faltando = fraseDoQueNaoSabemos(option.dimensions);
 
   return (
     <motion.article
@@ -119,14 +122,22 @@ export function CartaCaminho({
             className="overflow-hidden"
           >
             <div className="mt-6 space-y-6 border-t border-[var(--color-border)] pt-6">
-              <section aria-label="Como este caminho responde ao seu Perfil">
-                <h4 className="patient-section-title">Como responde ao seu Perfil</h4>
-                <div className="mt-3 space-y-2.5">
-                  {option.dimensions.map((dimension) => (
-                    <BarraCompatibilidade key={dimension.criterion} dimension={dimension} />
-                  ))}
-                </div>
-              </section>
+              {/* Só o que se SABE vira linha. As dimensões ainda não
+                  confirmadas saem daqui e viram uma frase única no fim — três
+                  cartas × cinco ausências davam quinze repetições da mesma
+                  frase, e a página virava um inventário de vazios. Quando nada
+                  foi confirmado, a seção inteira não existe: cabeçalho sobre
+                  lista vazia é promessa não cumprida. */}
+              {conhecidas.length > 0 ? (
+                <section aria-label="Como este caminho responde ao seu Perfil">
+                  <h4 className="patient-section-title">Como responde ao seu Perfil</h4>
+                  <div className="mt-3 space-y-2.5">
+                    {conhecidas.map((dimension) => (
+                      <BarraCompatibilidade key={dimension.criterion} dimension={dimension} />
+                    ))}
+                  </div>
+                </section>
+              ) : null}
 
               {/* Formação confirmada pela equipe — fato, não mérito: aparece
                   depois do Perfil e sem qualquer elemento comparável entre
@@ -220,6 +231,19 @@ export function CartaCaminho({
                   <h4 className="patient-section-title">A leitura completa</h4>
                   <p className="mt-3 max-w-prose font-serif text-sm leading-[1.65] text-[var(--patient-ink)]">
                     {option.relationToWeights}
+                  </p>
+                </section>
+              ) : null}
+
+              {/* A ausência, dita uma vez e por último — depois de tudo que se
+                  sabe, nunca antes. Sem cor de alerta e sem marca lateral:
+                  falta de informação não é demérito do profissional, e a
+                  frase termina na saída (falar com a Curadora), não na falta. */}
+              {faltando ? (
+                <section aria-label="O que ainda não sabemos">
+                  <h4 className="patient-section-title">O que ainda não sabemos</h4>
+                  <p className="mt-3 max-w-prose font-serif text-sm leading-relaxed text-[var(--color-ink-muted)]">
+                    {faltando}
                   </p>
                 </section>
               ) : null}

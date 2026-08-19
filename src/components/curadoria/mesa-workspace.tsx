@@ -36,6 +36,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { cn } from "@/components/ui/cn";
 import {
   PARECER_PROMPTS,
+  ressalvasDaMesa,
   validateMesaClosure,
   type ParecerDraft,
 } from "@/modules/curadoria/mesa";
@@ -102,6 +103,31 @@ export function MesaWorkspace({
         namesById,
       }),
     [selectedIds, pareceres, compositionRationale, curatorName, namesById],
+  );
+
+  /**
+   * "Tem alguma confirmação" = ao menos uma célula da leitura do Motor que não
+   * seja lacuna nem irrelevante. `NAO_RELEVANTE` não conta como informação
+   * sobre o profissional: é o Caso dizendo que aquele ponto não pesa aqui.
+   */
+  const temAlgumaConfirmacao = useMemo(
+    () =>
+      Object.fromEntries(
+        candidatos.map((c) => [
+          c.professionalProfileId,
+          c.celulas.some(
+            (celula) =>
+              celula.result === "ALTA_COMPATIBILIDADE" ||
+              celula.result === "MEDIA_COMPATIBILIDADE",
+          ),
+        ]),
+      ),
+    [candidatos],
+  );
+
+  const ressalvas = useMemo(
+    () => ressalvasDaMesa({ selectedIds, pareceres, namesById, temAlgumaConfirmacao }),
+    [selectedIds, pareceres, namesById, temAlgumaConfirmacao],
   );
 
   function toggleComparison(id: string) {
@@ -500,6 +526,26 @@ export function MesaWorkspace({
                 </ul>
               </div>
             ) : null}
+
+            {/* RESSALVAS — observação, nunca impedimento. Ficam abaixo do que
+                falta e acima do botão, no caminho do olho de quem vai clicar,
+                e o botão continua habilitado: pode ser exatamente o que o
+                Curador quis, e ele é quem sabe. Se travassem, seriam
+                contornadas com texto de fachada e o sistema teria piorado o
+                trabalho em vez de ajudá-lo. */}
+            {ressalvas.length > 0 ? (
+              <div className="rounded-md border border-border p-3">
+                <p className="text-sm text-ink">Antes de encerrar, vale olhar:</p>
+                <ul className="mt-1.5 space-y-1.5">
+                  {ressalvas.map((r) => (
+                    <li key={r.kind + r.texto} className="max-w-prose text-sm text-ink-muted">
+                      {r.texto}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
             <div className="flex flex-wrap items-center gap-3">
               <Button
                 type="button"

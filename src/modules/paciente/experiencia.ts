@@ -234,6 +234,55 @@ export type PatientDimension = {
   level: CompatibilityLevel;
 };
 
+/**
+ * O QUE A CARTA MOSTRA, E O QUE ELA RESUME.
+ *
+ * Cinco dimensões por carta, três cartas: quando nada foi confirmado, a pessoa
+ * lia QUINZE vezes a mesma frase — "Ainda não foi possível confirmar" — e a
+ * página inteira virava um inventário de ausências. A ausência era verdadeira;
+ * repeti-la quinze vezes é que não era informação.
+ *
+ * A regra: o que se sabe aparece linha a linha; o que não se sabe é dito UMA
+ * vez, ao final, nomeando as dimensões e apontando a saída (falar com a
+ * Curadora). Nada é escondido — a mesma verdade, contada uma vez.
+ */
+export function dimensoesConhecidas(
+  dimensions: readonly PatientDimension[],
+): PatientDimension[] {
+  return dimensions.filter((d) => d.level !== "A_CONFIRMAR");
+}
+
+export function dimensoesAConfirmar(
+  dimensions: readonly PatientDimension[],
+): PatientDimension[] {
+  return dimensions.filter((d) => d.level === "A_CONFIRMAR");
+}
+
+/** "Continuidade", "Continuidade e Acesso", "A, B e C" — em minúscula corrente. */
+function enumerar(labels: readonly string[]): string {
+  const nomes = labels.map((l) => l.toLowerCase());
+  if (nomes.length === 1) return nomes[0];
+  return `${nomes.slice(0, -1).join(", ")} e ${nomes[nomes.length - 1]}`;
+}
+
+/**
+ * A frase única da ausência, ou `null` quando não há ausência alguma.
+ *
+ * DIZ "não pudemos confirmar", NUNCA "o profissional não declarou": os dois
+ * não são a mesma coisa. `A_CONFIRMAR` cobre tanto o que ele não respondeu
+ * quanto o que a equipe ainda não verificou, e afirmar o primeiro seria
+ * inventar sobre um médico real a partir do nosso próprio vazio (P-04).
+ *
+ * Termina na saída, não na falta: a pessoa fica sabendo o que PODE fazer.
+ */
+export function fraseDoQueNaoSabemos(
+  dimensions: readonly PatientDimension[],
+): string | null {
+  const ausentes = dimensoesAConfirmar(dimensions);
+  if (ausentes.length === 0) return null;
+  return `Ainda não pudemos confirmar ${enumerar(ausentes.map((d) => d.label))}. Sua Curadora pode buscar isso com ele antes da consulta — é só pedir.`;
+}
+
 /** Onde a jornada está, em duas palavras — o eyebrow do hero. */
 export const STAGE_EYEBROWS: Record<JornadaStageId, string> = {
   CONSULTA_INICIAL: "Sua jornada começa",
