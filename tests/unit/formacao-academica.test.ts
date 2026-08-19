@@ -28,6 +28,8 @@ const base: FormacaoPublica = {
   country: "Brasil",
   periodStart: 2010,
   periodEnd: 2013,
+  mecConceito: null,
+  mecConceitoAno: null,
 };
 
 describe("formatarPeriodo — anos sem enfeite", () => {
@@ -72,6 +74,50 @@ describe("linhasPublicas — campo ausente é OMITIDO", () => {
         expect(linha.toLowerCase()).not.toContain("não informado");
       }
     }
+  });
+});
+
+describe("conceito do MEC — dentro da linha da instituição, nunca solto", () => {
+  const graduacao: FormacaoPublica = {
+    ...base,
+    kind: "graduacao",
+    title: "Graduação em Medicina",
+    institution: "Universidade Federal de Pernambuco",
+  };
+
+  it("com conceito e ano: uma frase só, na linha da escola", () => {
+    const linhas = linhasPublicas({ ...graduacao, mecConceito: 4, mecConceitoAno: 2023 });
+    expect(linhas[0]).toBe(
+      "Universidade Federal de Pernambuco — curso com conceito 4 no MEC (2023)",
+    );
+    // A prova do que a decisão protege: o número NÃO é uma linha própria. Solto
+    // entre as três cartas ele viraria a única coisa comparável da página, e a
+    // paciente leria um ranking de notas em vez de três caminhos diferentes.
+    expect(linhas).toHaveLength(3);
+    expect(linhas).not.toContain("4");
+    expect(linhas).not.toContain("conceito 4 no MEC");
+  });
+
+  it("sem ano: a frase existe igual, sem parênteses vazio", () => {
+    const linhas = linhasPublicas({ ...graduacao, mecConceito: 5, mecConceitoAno: null });
+    expect(linhas[0]).toBe("Universidade Federal de Pernambuco — curso com conceito 5 no MEC");
+    expect(linhas[0]).not.toContain("()");
+  });
+
+  it("sem conceito: a linha é a instituição e nada mais — ausência é omissão", () => {
+    expect(linhasPublicas({ ...graduacao, mecConceito: null, mecConceitoAno: null })[0]).toBe(
+      "Universidade Federal de Pernambuco",
+    );
+  });
+
+  it("sem instituição não há onde imprimir o conceito — e ele não vira linha órfã", () => {
+    const linhas = linhasPublicas({
+      ...graduacao,
+      institution: null,
+      mecConceito: 4,
+      mecConceitoAno: 2023,
+    });
+    for (const linha of linhas) expect(linha).not.toContain("MEC");
   });
 });
 

@@ -65,6 +65,10 @@ export type FormacaoEntrada = {
   notes: string | null;
   verificationStatus: FormacaoStatus;
   verifiedAt: string | null;
+  /** Conceito do MEC do curso (1–5) — só graduação. Lançado pela equipe. */
+  mecConceito: number | null;
+  /** Ano do ciclo avaliativo, quando lançado. */
+  mecConceitoAno: number | null;
   /** Rastro interno de extração — jamais atravessa para o paciente. */
   origem: { documentId: string; humanEdited: boolean } | null;
 };
@@ -78,6 +82,8 @@ export type FormacaoPublica = {
   country: string | null;
   periodStart: number | null;
   periodEnd: number | null;
+  mecConceito: number | null;
+  mecConceitoAno: number | null;
 };
 
 /** "2010–2016", "2016" ou null — nunca string vazia, nunca traço solto. */
@@ -105,10 +111,31 @@ export function linhasPublicas(entrada: FormacaoPublica): string[] {
   const linhas: string[] = [];
   const local = formatarLocal(entrada.city, entrada.country);
   const periodo = formatarPeriodo(entrada.periodStart, entrada.periodEnd);
-  if (entrada.institution?.trim()) linhas.push(entrada.institution.trim());
+  const instituicao = entrada.institution?.trim();
+  if (instituicao) linhas.push(comConceitoDoMec(instituicao, entrada));
   if (local) linhas.push(local);
   if (periodo) linhas.push(periodo);
   return linhas;
+}
+
+/**
+ * O conceito do MEC entra DENTRO da frase da instituição — nunca como linha
+ * própria, selo ou número solto.
+ *
+ * A razão é de leitura, não de estilo: a carta é toda prosa, e um número
+ * isolado seria a única coisa comparável entre as três opções. O olho iria
+ * direto nele, e a paciente leria um ranking de três notas em vez de três
+ * caminhos diferentes — que é o oposto do que a Curadoria fez por ela. Na
+ * frase da escola, o conceito é o que de fato é: um fato sobre o curso, do
+ * mesmo peso que a cidade e o ano.
+ *
+ * Sem conceito lançado, a frase é a instituição e nada mais — ausência é
+ * omissão, como todo o resto deste módulo (regra 1).
+ */
+function comConceitoDoMec(instituicao: string, entrada: FormacaoPublica): string {
+  if (entrada.mecConceito === null) return instituicao;
+  const ano = entrada.mecConceitoAno === null ? "" : ` (${entrada.mecConceitoAno})`;
+  return `${instituicao} — curso com conceito ${entrada.mecConceito} no MEC${ano}`;
 }
 
 /** Ordem estável de apresentação por tipo — trajetória, nunca mérito. */

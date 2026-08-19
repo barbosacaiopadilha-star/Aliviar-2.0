@@ -16,11 +16,13 @@ vi.mock("@/modules/profiles/formacao-academica-actions", () => ({
 
 afterEach(cleanup);
 
+const SEM_MEC = { mecConceito: null, mecConceitoAno: null } as const;
+
 const CONFIRMADAS: FormacaoPublica[] = [
-  { kind: "graduacao", title: "Graduação em Medicina", institution: "Universidade Federal de Minas Gerais", city: "Belo Horizonte", country: "Brasil", periodStart: 2004, periodEnd: 2010 },
-  { kind: "residencia", title: "Residência em Clínica Médica", institution: "Hospital das Clínicas", city: null, country: null, periodStart: 2010, periodEnd: 2013 },
-  { kind: "especializacao", title: "Especialização em Reumatologia", institution: "USP", city: "São Paulo", country: null, periodStart: null, periodEnd: null },
-  { kind: "fellowship", title: "Fellowship em Doenças Autoimunes", institution: null, city: null, country: null, periodStart: 2016, periodEnd: 2017 },
+  { kind: "graduacao", title: "Graduação em Medicina", institution: "Universidade Federal de Minas Gerais", city: "Belo Horizonte", country: "Brasil", periodStart: 2004, periodEnd: 2010, ...SEM_MEC },
+  { kind: "residencia", title: "Residência em Clínica Médica", institution: "Hospital das Clínicas", city: null, country: null, periodStart: 2010, periodEnd: 2013, ...SEM_MEC },
+  { kind: "especializacao", title: "Especialização em Reumatologia", institution: "USP", city: "São Paulo", country: null, periodStart: null, periodEnd: null, ...SEM_MEC },
+  { kind: "fellowship", title: "Fellowship em Doenças Autoimunes", institution: null, city: null, country: null, periodStart: 2016, periodEnd: 2017, ...SEM_MEC },
 ];
 
 describe("FormacaoAcademicaBloco — o que o paciente vê", () => {
@@ -124,6 +126,7 @@ const ENTRADA: FormacaoEntrada = {
   periodStart: 2010,
   periodEnd: 2013,
   notes: null,
+  ...SEM_MEC,
   verificationStatus: "nao_verificado",
   verifiedAt: null,
   origem: { documentId: "doc-1", humanEdited: false },
