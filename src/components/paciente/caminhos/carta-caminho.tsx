@@ -159,9 +159,9 @@ export function CartaCaminho({
                     Como esse caminho conversa com a forma como você quer ser cuidada
                   </h4>
                   <ul className="mt-3 space-y-2">
-                    {option.relationalReading.split("\n").filter((linha) => linha.trim()).map((frase) => (
+                    {option.relationalReading.split("\n").filter((linha) => linha.trim()).map((frase, indice) => (
                       <li
-                        key={frase}
+                        key={`${indice}-${frase}`}
                         className="max-w-prose font-serif text-sm leading-relaxed text-[var(--patient-ink)]"
                       >
                         {frase}
@@ -178,9 +178,9 @@ export function CartaCaminho({
                 <section aria-label="O que você encontra neste caminho">
                   <h4 className="patient-section-title">O que você encontra neste caminho</h4>
                   <ul className="mt-3 space-y-2">
-                    {option.favorablePoints.map((ponto) => (
+                    {option.favorablePoints.map((ponto, indice) => (
                       <li
-                        key={ponto}
+                        key={`${indice}-${ponto}`}
                         className="max-w-prose font-serif text-sm leading-relaxed text-[var(--patient-ink)]"
                       >
                         {ponto}
@@ -198,9 +198,9 @@ export function CartaCaminho({
                 <section aria-label="Do que você abre mão neste caminho">
                   <h4 className="patient-section-title">Do que você abre mão neste caminho</h4>
                   <ul className="mt-3 space-y-2">
-                    {option.attentionPoints.map((ponto) => (
+                    {option.attentionPoints.map((ponto, indice) => (
                       <li
-                        key={ponto}
+                        key={`${indice}-${ponto}`}
                         className="max-w-prose font-serif text-sm leading-relaxed text-[var(--patient-ink)]"
                       >
                         {ponto}
@@ -214,9 +214,9 @@ export function CartaCaminho({
                 <section aria-label="Perguntas para a próxima conversa">
                   <h4 className="patient-section-title">Perguntas que podem ajudar na próxima conversa</h4>
                   <ul className="mt-3 space-y-2">
-                    {option.suggestedQuestions.map((pergunta) => (
+                    {option.suggestedQuestions.map((pergunta, indice) => (
                       <li
-                        key={pergunta}
+                        key={`${indice}-${pergunta}`}
                         className="max-w-prose font-serif text-sm leading-relaxed text-[var(--patient-ink)]"
                       >
                         {pergunta}

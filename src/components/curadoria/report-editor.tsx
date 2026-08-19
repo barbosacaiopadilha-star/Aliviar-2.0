@@ -469,8 +469,8 @@ export function ReportEditor({
           <div>
             <p className="text-sm text-ink">Antes de emitir:</p>
             <ul className="mt-1.5 space-y-1">
-              {faltando.map((item) => (
-                <li key={item} className="text-sm text-ink-muted">
+              {faltando.map((item, indice) => (
+                <li key={`${indice}-${item}`} className="text-sm text-ink-muted">
                   {item}
                 </li>
               ))}

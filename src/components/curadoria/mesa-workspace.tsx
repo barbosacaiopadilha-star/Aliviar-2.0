@@ -518,8 +518,8 @@ export function MesaWorkspace({
               <div id="encerrar-pendencias">
                 <p className="text-sm text-ink">Para encerrar:</p>
                 <ul className="mt-1.5 space-y-1">
-                  {missing.map((item) => (
-                    <li key={item} className="text-sm text-ink-muted">
+                  {missing.map((item, indice) => (
+                    <li key={`${indice}-${item}`} className="text-sm text-ink-muted">
                       {item}
                     </li>
                   ))}
