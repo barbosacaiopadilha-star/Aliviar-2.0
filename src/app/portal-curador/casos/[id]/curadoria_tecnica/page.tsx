@@ -559,7 +559,11 @@ export default async function MesaCuradoriaPage({
       <AvaliacaoSemElegiveis />
     ) : (
       <div className="space-y-6">
-        <EligibilityPanel view={view} />
+        {/* O recorte é o dos elegíveis, não a Rede inteira: nesta etapa o ato
+            devido é julgar quem já passou pela declaração de área. Sem ele, os
+            cartões de "aguardando declaração" — que pertencem à etapa REDE —
+            empurravam os julgamentos para baixo de toda a Rede. */}
+        <EligibilityPanel view={view} somente={idsElegiveis} />
         {regime === "JUIZO" ? (
           <PainelDeJuizo
             caseId={record.caseId}
