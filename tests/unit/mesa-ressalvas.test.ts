@@ -63,6 +63,17 @@ describe("pareceres repetidos", () => {
     expect(r[0].texto).not.toContain("Dra. Solange Vieira");
   });
 
+  it("com TRÊS repetidos, enumera 'A, B e C' — nunca 'A e B e C'", () => {
+    // Só apareceu ao ler a frase na tela com os três nomes: o teste anterior
+    // tinha dois, e `join(" e ")` passava. Ninguém escreve "A e B e C".
+    const r = ressalvasDaMesa(
+      entrada({ pareceres: ["a", "b", "c"].map((id) => parecer(id, "mesmo")) }),
+    );
+    const texto = r.find((x) => x.kind === "PARECERES_REPETIDOS")!.texto;
+    expect(texto).toContain("Dra. Beatriz Fontenelle, Dr. Ismael Cardoso e Dra. Solange Vieira");
+    expect(texto).not.toContain(" e Dr. Ismael Cardoso e ");
+  });
+
   it("espaço e caixa não disfarçam repetição", () => {
     const r = ressalvasDaMesa(
       entrada({
@@ -96,6 +107,9 @@ describe("nada confirmado", () => {
     const nada = r.filter((x) => x.kind === "NADA_CONFIRMADO");
     expect(nada).toHaveLength(1);
     expect(nada[0].texto).toContain("chegam");
+    expect(nada[0].texto).toContain(
+      "Dra. Beatriz Fontenelle, Dr. Ismael Cardoso e Dra. Solange Vieira",
+    );
   });
 
   it("desconhecido não é o mesmo que ausente: sem informação, sem aviso", () => {
