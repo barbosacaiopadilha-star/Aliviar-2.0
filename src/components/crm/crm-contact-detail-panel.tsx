@@ -27,6 +27,7 @@ import type {
 
 import { CrmStageBadge } from "./crm-stage-badge";
 import { CoaTransferPanel } from "@/components/coa/coa-transfer-panel";
+import { LeadAdminActions } from "@/components/crm/lead-admin-actions";
 
 function formatDateTime(iso: string | null): string {
   if (!iso) return "—";
@@ -43,6 +44,7 @@ type CrmContactDetailPanelProps = {
   allowedStages: PipelineStage[];
   curators: Array<{ id: string; name: string }>;
   concierges: Array<{ id: string; name: string }>;
+  isAdmin: boolean;
 };
 
 export function CrmContactDetailPanel({
@@ -54,6 +56,7 @@ export function CrmContactDetailPanel({
   allowedStages,
   curators,
   concierges,
+  isAdmin,
 }: CrmContactDetailPanelProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -105,6 +108,17 @@ export function CrmContactDetailPanel({
 
       {message ? (
         <StatusBanner variant={message.includes("sucesso") ? "success" : "error"}>{message}</StatusBanner>
+      ) : null}
+
+      {isAdmin ? (
+        <LeadAdminActions
+          leadId={contact.id}
+          fullName={contact.fullName}
+          archived={contact.status === "arquivado"}
+          hasPatient={Boolean(contact.patientProfileId)}
+          hasCase={Boolean(contact.activeCaseId)}
+          returnHref="/admin/crm/contatos"
+        />
       ) : null}
 
       <CoaTransferPanel
