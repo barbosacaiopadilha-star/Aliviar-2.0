@@ -63,6 +63,8 @@ desktop.ini
 # por *.local.json acima).
 .claude/*
 !.claude/launch.json
+!.claude/agents/
+!.claude/agents/*.md
 
 # Identidade de build local — gerada por scripts/new-build-id.mjs a cada
 # construção; versioná-la congelaria o id de uma máquina (Auditoria F9/GOV-04)
