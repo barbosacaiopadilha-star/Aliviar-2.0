@@ -1,6 +1,6 @@
 # Guia de Operação e Deploy
 
-Runbook operacional para ativar e manter o ambiente de produção da Aliviar Curadoria Médica (`www.aliviarcuradoriamedica.com.br`). Escrito originalmente na sprint GO LIVE (publicado como Artifact) e materializado aqui para ficar versionado junto do código. Nenhuma etapa aqui é executada por um agente de IA sem autorização explícita e separada do responsável pelo projeto (`docs/AGENTS.md`) — nenhum segredo deve ser colado em chat, sempre cadastrado diretamente no painel do Supabase/Vercel.
+Runbook operacional para ativar e manter o ambiente de produção da Aliviar Curadoria Médica. Escrito originalmente na sprint GO LIVE (publicado como Artifact) e materializado aqui para ficar versionado junto do código. Nenhuma etapa aqui é executada por um agente de IA sem autorização explícita e separada do responsável pelo projeto (`docs/AGENTS.md`) — nenhum segredo deve ser colado em chat, sempre cadastrado diretamente no painel do Supabase/Vercel.
 
 ## Ordem de execução
 
@@ -130,9 +130,22 @@ join public.roles r on r.id = ur.role_id;
 
 ## 10. Configuração do domínio
 
-1. **Settings → Domains** → adicione `www.aliviarcuradoriamedica.com.br`.
+> **2026-08-19 — a Aliviar não tem mais domínio próprio.** O serviço é
+> servido pelo endereço da própria hospedagem (`*.vercel.app`). Esta seção
+> fica como está para o dia em que houver domínio de novo; **hoje ela é
+> inteiramente pulada.** Seguir os passos abaixo agora significa tentar
+> apontar DNS de um domínio que não existe.
+
+**Quando houver domínio de novo:**
+
+1. **Settings → Domains** → adicione o domínio.
 2. Crie os registros DNS indicados pela Vercel no painel do registrador.
-3. Depois que o domínio resolver: no Supabase, **Authentication → URL Configuration** → **Site URL** = `https://www.aliviarcuradoriamedica.com.br`, e adicione essa URL + `/auth/callback` em **Redirect URLs**.
+3. Depois que o domínio resolver: no Supabase, **Authentication → URL
+   Configuration** → **Site URL** = a URL do domínio, e adicione essa URL +
+   `/auth/callback` em **Redirect URLs**.
+4. Defina `NEXT_PUBLIC_SITE_URL` nas variáveis da Vercel. Sem isso, o
+   `sitemap.xml`, o `robots.txt` e as URLs canônicas continuam apontando
+   para o endereço da hospedagem (ver `src/lib/site-url.ts`).
 
 ## 11. Deploy de produção
 
@@ -142,7 +155,7 @@ Cabeçalhos de segurança HTTP (`X-Content-Type-Options`, `X-Frame-Options`, `Re
 
 ## 12. Smoke tests de produção
 
-- [ ] `https://www.aliviarcuradoriamedica.com.br` carrega a Landing.
+- [ ] A URL de produção da Vercel (painel → Deployments → Production) carrega a Landing.
 - [ ] `/login` funciona com a conta Administrador da etapa 6.
 - [ ] Administrador acessa `/admin` e vê o dashboard.
 - [ ] Administrador cadastra profissionais de teste em `/admin/profissionais/novo` com experiência, abordagem de intake, resumo e ao menos uma área de competência — sem isso, a Shortlist fica bloqueada por falta de dado (o Método recusando inventar, não um bug).
