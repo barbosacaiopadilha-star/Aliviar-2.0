@@ -9,6 +9,7 @@ import type {
   DashboardSource,
   LeadRow,
   PatientRow,
+  StoryRow,
   TaskRow,
   TeamRow,
 } from "./dashboard-metrics";
@@ -48,14 +49,17 @@ async function safe<T>(
 export async function loadDashboardSource(client: SupabaseClient): Promise<DashboardSource> {
   const db = client.schema("curadoria");
 
-  const [leadRows, caseRows, handoffRows, taskRows, appointmentRows, patientRows, roleRows] = await Promise.all([
+  const [leadRows, caseRows, handoffRows, taskRows, appointmentRows, patientRows, roleRows, storyRows] =
+    await Promise.all([
     safe("admin.dashboard.leads", () =>
       db
         .from("crm_contacts")
         .select("id, source, created_at, qualified_at, converted_at, patient_profile_id, archived_at"),
     ),
     safe("admin.dashboard.cases", () =>
-      db.from("cases").select("id, status, responsible_role, responsible_id, created_at, started_at, closed_at"),
+      db
+        .from("cases")
+        .select("id, status, responsible_role, responsible_id, created_at, started_at, closed_at, source_story_id"),
     ),
     safe("admin.dashboard.handoffs", () =>
       db.from("case_responsibility_changes").select("case_id, new_role, changed_at").eq("new_role", "concierge"),
@@ -64,6 +68,9 @@ export async function loadDashboardSource(client: SupabaseClient): Promise<Dashb
     safe("admin.dashboard.appointments", () => db.from("crm_appointments").select("id, start_at")),
     safe("admin.dashboard.patients", () => db.from("patient_profiles").select("profile_id, status")),
     safe("admin.dashboard.team", () => db.from("user_roles").select("profile_id, roles(slug)")),
+    safe("admin.dashboard.stories", () =>
+      db.from("patient_stories").select("id, submitted_at").eq("status", "enviada"),
+    ),
   ]);
 
   // Primeira ida ao Concierge por Case — a passagem que interessa é a
@@ -115,6 +122,24 @@ export async function loadDashboardSource(client: SupabaseClient): Promise<Dashb
     ? (patientRows as Record<string, string>[]).map((r) => ({ id: r.profile_id, status: r.status }))
     : null;
 
+  // Uma história "já virou Case" quando algum Case a declara como origem.
+  // A checagem é por `source_story_id` — o vínculo real — e não por paciente:
+  // a mesma pessoa pode ter uma história antiga já atendida e outra recém
+  // enviada, e a nova não pode desaparecer atrás da antiga.
+  const historiasComCase = new Set(
+    ((caseRows ?? []) as Record<string, string | null>[])
+      .map((r) => r.source_story_id)
+      .filter((id): id is string => typeof id === "string"),
+  );
+
+  const stories: StoryRow[] | null = storyRows
+    ? (storyRows as Record<string, string | null>[]).map((r) => ({
+        id: r.id as string,
+        submittedAt: r.submitted_at,
+        hasCase: historiasComCase.has(r.id as string),
+      }))
+    : null;
+
   const team: TeamRow[] | null = roleRows
     ? Object.entries(
         (roleRows as { profile_id: string; roles: { slug: string } | { slug: string }[] | null }[]).reduce<
@@ -135,6 +160,7 @@ export async function loadDashboardSource(client: SupabaseClient): Promise<Dashb
     appointments,
     patients,
     team,
+    stories,
     // Deliberadamente null: `patient_documents` guarda documentos enviados,
     // não documentos *pendentes* — não existe no banco a noção de "faltando".
     // Derivar um número daqui seria inventar. O painel mostra indisponível

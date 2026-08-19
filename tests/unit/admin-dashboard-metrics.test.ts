@@ -53,6 +53,7 @@ const VAZIO: DashboardSource = {
   appointments: null,
   patients: null,
   team: null,
+  stories: null,
   pendingDocuments: null,
 };
 
@@ -240,5 +241,42 @@ describe("série temporal", () => {
     const serie = buildTimeSeries(source, "7d", NOW)!;
     expect(serie).toHaveLength(7);
     expect(serie[serie.length - 2].leads).toBe(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Histórias aguardando Case — a espera invisível
+// ---------------------------------------------------------------------------
+
+describe("histórias aguardando Case", () => {
+  // Medido em 2026-08-19: 26 histórias enviadas, 14 sem Case algum. Nenhum
+  // indicador do painel as alcançava — não são lead (já têm conta) nem Case.
+  it("conta apenas as histórias que ainda não viraram Case", () => {
+    const indicadores = computeIndicators(
+      {
+        ...VAZIO,
+        stories: [
+          { id: "s1", submittedAt: iso(2), hasCase: false },
+          { id: "s2", submittedAt: iso(1), hasCase: true },
+          { id: "s3", submittedAt: iso(5), hasCase: false },
+        ],
+      },
+      "30d",
+      new Date(),
+    );
+
+    expect(indicadores.historiasAguardandoCase).toBe(2);
+  });
+
+  it("não encolhe com o período — a espera não deixa de existir por ser antiga", () => {
+    const antiga = { id: "s1", submittedAt: iso(400), hasCase: false };
+
+    expect(
+      computeIndicators({ ...VAZIO, stories: [antiga] }, "7d", new Date()).historiasAguardandoCase,
+    ).toBe(1);
+  });
+
+  it("fonte indisponível continua null, nunca zero", () => {
+    expect(computeIndicators(VAZIO, "30d", new Date()).historiasAguardandoCase).toBeNull();
   });
 });

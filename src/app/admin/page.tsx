@@ -200,6 +200,15 @@ export default async function AdminDashboardPage({
           Onde agir agora
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Primeiro do bloco: quem já contou a própria história e ainda não
+              tem Case é a espera mais silenciosa da operação — a pessoa fez a
+              parte dela, e nenhum outro indicador desta tela a enxerga. */}
+          <StatCard
+            label="Histórias aguardando Case"
+            value={indicators.historiasAguardandoCase}
+            href="/admin/pacientes"
+            emphasis
+          />
           <StatCard label="Sem responsável" value={indicators.casesSemResponsavel} href="/admin/casos" emphasis />
           <StatCard label="Cases atrasados" value={indicators.casesAtrasados} emphasis />
           <StatCard label="Tarefas vencidas" value={indicators.tarefasVencidas} emphasis />

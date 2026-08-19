@@ -72,6 +72,13 @@ export type AppointmentRow = { id: string; startsAt: string };
 export type PatientRow = { id: string; status: string };
 export type TeamRow = { id: string; roles: readonly string[] };
 
+/**
+ * Uma história enviada pela paciente. Ao painel interessa o intervalo em que
+ * ela JÁ contou o que vive e ainda não existe Case aberto em nome dela — o
+ * único momento da jornada em que a espera é invisível para a operação.
+ */
+export type StoryRow = { id: string; submittedAt: string | null; hasCase: boolean };
+
 export type DashboardSource = {
   leads: readonly LeadRow[] | null;
   cases: readonly CaseRow[] | null;
@@ -79,6 +86,7 @@ export type DashboardSource = {
   appointments: readonly AppointmentRow[] | null;
   patients: readonly PatientRow[] | null;
   team: readonly TeamRow[] | null;
+  stories: readonly StoryRow[] | null;
   pendingDocuments: number | null;
 };
 
@@ -101,6 +109,7 @@ export type DashboardIndicators = {
   casesNoConcierge: Metric;
   casesConcluidos: Metric;
   casesAtrasados: Metric;
+  historiasAguardandoCase: Metric;
   tarefasVencidas: Metric;
   compromissosProximos: Metric;
   documentosPendentes: Metric;
@@ -150,6 +159,13 @@ export function computeIndicators(source: DashboardSource, period: PeriodKey, no
         const idle = hoursBetween(c.createdAt, now.toISOString());
         return idle !== null && idle > STALE_CASE_DAYS * 24;
       }).length ?? null,
+
+    // Uma história enviada sem Case é uma pessoa que já contou o que vive e
+    // não tem ninguém trabalhando por ela. Nenhum outro indicador a alcança:
+    // ela não é lead (já tem conta) e ainda não é Case. Fora do recorte de
+    // período de propósito — a espera não deixa de existir porque envelheceu.
+    historiasAguardandoCase:
+      source.stories?.filter((s) => !s.hasCase).length ?? null,
 
     tarefasVencidas:
       source.tasks?.filter((t) => t.completedAt === null && t.dueAt !== null && Date.parse(t.dueAt) < now.getTime())
