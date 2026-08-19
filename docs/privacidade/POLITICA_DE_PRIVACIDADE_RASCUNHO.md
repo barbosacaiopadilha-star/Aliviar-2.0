@@ -129,8 +129,13 @@ A lei te dá o direito de saber o que temos sobre você, corrigir o que está
 errado, pedir cópia, pedir exclusão, saber com quem compartilhamos, e retirar
 seu consentimento.
 
-**Como exercer:** escreva para o encarregado, no e-mail acima. Não existe
-botão para isso no sistema — é uma pessoa que lê e responde.
+**Como exercer:** na sua área, em **Documentos e consentimentos**, você abre um
+pedido — de acesso, correção, exclusão, portabilidade ou revogação — e acompanha
+o andamento dele ali mesmo. Se preferir, escreva para o encarregado no e-mail
+acima.
+
+Quem executa o pedido é uma pessoa da equipe, não um automatismo — por isso ele
+tem um andamento a acompanhar, e não um resultado imediato.
 
 Retirar o consentimento interrompe o serviço daí em diante: sem as
 informações do seu caso, não há Curadoria a fazer. Não apaga, sozinho, o que

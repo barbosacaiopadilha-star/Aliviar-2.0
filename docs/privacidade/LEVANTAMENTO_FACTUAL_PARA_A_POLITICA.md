@@ -91,9 +91,15 @@ Consequência factual: **nenhuma entidade tem prazo, base legal de descarte,
 tombstone ou anonimização.** Nada é apagado por rotina; não há expurgo
 automático de nada.
 
-**Também não há**, no código, fluxo de atendimento a pedido de exclusão ou de
-portabilidade pelo titular. Se alguém pedir hoje, o atendimento é manual e não
-está descrito em lugar nenhum.
+**CORREÇÃO (mesma data, mais tarde):** eu havia escrito aqui que não existia
+fluxo de pedido do titular. **Existe.** A tabela `data_subject_requests` e o
+painel `/paciente/documentos-e-consentimentos` permitem à pessoa abrir pedido de
+**acesso, correção, exclusão, portabilidade ou revogação** e acompanhar o
+andamento. O que não existe é execução automática — quem cumpre o pedido é uma
+pessoa — e o campo de PRAZO nasce nulo de propósito, porque o prazo é decisão
+jurídica (marcado no próprio código como PRIV-03).
+
+O que segue valendo: não há política de retenção nem descarte por rotina.
 
 Isto precisa de decisão sua antes de virar texto — uma política que promete
 prazo que o sistema não cumpre é pior que nenhuma política.
