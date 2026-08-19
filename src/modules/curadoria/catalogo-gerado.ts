@@ -83,7 +83,7 @@ export const CATALOGO_EIXOS = ["ACESSO_AO_CUIDADO","CONTINUIDADE_DO_CUIDADO","MO
 export const CATALOGO_VERSAO = "1.1.0";
 
 /** SHA-256 da carga (conceitos+opções, ordem canônica) — paridade executável. */
-export const CATALOGO_GERADO_HASH = "4b53a6b551d88a3617484a4d5d9ef5f289159a4d807d44c7f8ea1e0559f6e292";
+export const CATALOGO_GERADO_HASH = "6e6fe8995b071339cce3e704020289f7a2fa9be912b975cc1c14dd7a764529bb";
 
 /** Total de opções no banco na geração (ativas e inativas). */
 export const CATALOGO_TOTAL_OPCOES = 208;
@@ -2242,7 +2242,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "professionalQuestion": "Instituição e ano de graduação",
     "patientQuestion": null,
     "responseType": "estruturado",
-    "cruzamento": "humano",
+    "cruzamento": "automatico",
     "motorParticipation": "INDIRETO",
     "required": false,
     "conditionalRules": [],
@@ -2263,7 +2263,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "professionalQuestion": "Residências concluídas",
     "patientQuestion": null,
     "responseType": "estruturado",
-    "cruzamento": "humano",
+    "cruzamento": "automatico",
     "motorParticipation": "INDIRETO",
     "required": false,
     "conditionalRules": [],
@@ -2284,7 +2284,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "professionalQuestion": "Títulos de especialista",
     "patientQuestion": null,
     "responseType": "estruturado",
-    "cruzamento": "humano",
+    "cruzamento": "automatico",
     "motorParticipation": "INDIRETO",
     "required": false,
     "conditionalRules": [],
@@ -2305,7 +2305,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "professionalQuestion": "Fellowships realizados",
     "patientQuestion": null,
     "responseType": "estruturado",
-    "cruzamento": "humano",
+    "cruzamento": "automatico",
     "motorParticipation": "INDIRETO",
     "required": false,
     "conditionalRules": [],
@@ -2326,7 +2326,7 @@ export const CATALOGO_GERADO: readonly CatalogoConceito[] = [
     "professionalQuestion": "Outras formações relevantes",
     "patientQuestion": null,
     "responseType": "estruturado",
-    "cruzamento": "humano",
+    "cruzamento": "automatico",
     "motorParticipation": "INDIRETO",
     "required": false,
     "conditionalRules": [],

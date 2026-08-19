@@ -71,6 +71,19 @@ export type RegraResolvida = {
   subcriterionCode: string;
   ruleId: string;
   ruleVersion: number;
+  /**
+   * A FORMA MATERIAL, lavrada pela emenda do §10: qual estado a regra propõe
+   * quando existe evidência corrente para o conceito.
+   *
+   * Vem NO ARGUMENTO, nunca do código: é isso que mantém a semântica material
+   * fora deste módulo (G-4) e permite versionar, auditar e reverter uma regra
+   * sem deploy. A função não sabe o que cada estado significa — só repassa o
+   * que a regra resolvida declarou, com a proveniência junto.
+   *
+   * Ausência de evidência continua sendo LACUNA em qualquer regra: nenhuma
+   * regra pode afirmar a partir do vazio (P-04 / I-8, registro do §5).
+   */
+  estadoQuandoCorrente: SubcriterionStatus;
 };
 
 /** Todo contexto entra por argumento. Nada mais existe (§3.1). */
@@ -365,7 +378,11 @@ export function selecionarEvidenciaCorrente(
  * conceito recebido — dado do Catálogo, nunca lista paralela deste módulo
  * (o precedente do repositório: universo derivado do dado, não de cópia).
  */
-function classificarConceito(conceito: CatalogoConceito): DerivacaoDeConceito {
+function classificarConceito(
+  conceito: CatalogoConceito,
+  evidencias: readonly EvidenciaDeDerivacao[],
+  regras: readonly RegraResolvida[],
+): DerivacaoDeConceito {
   if (!conceito.active) {
     return { braco: "FORA_DA_DERIVACAO", code: conceito.code, motivo: "CONCEITO_INATIVO" };
   }
@@ -378,15 +395,46 @@ function classificarConceito(conceito: CatalogoConceito): DerivacaoDeConceito {
     return { braco: "FORA_DA_DERIVACAO", code: conceito.code, motivo: "CRUZAMENTO_MISTO" };
   }
 
-  // Conceito automático — o único candidato estrutural a regra futura. Na v1
-  // o conjunto de regras de correspondência APROVADAS é vazio por norma
-  // (§2, Opção B), e não existe intérprete de regra neste módulo: a forma
-  // material da regra ainda não foi lavrada (§10.2). Por isso este braço é
-  // incondicional — inclusive quando `regras` traz identidades resolvidas —
-  // e é exatamente aqui que a emenda do §10 ativará, com lavratura própria,
-  // o caminho coberto-por-regra (corrente → LACUNA/PROPOSTO com
-  // proveniência). Até lá: nenhuma evidência é lida, nenhum estado nasce.
-  return { braco: "NAO_SUPORTADO", code: conceito.code, motivo: "SEM_REGRA_APROVADA" };
+  // Conceito automático. Sem regra resolvida PARA ESTE conceito, nada muda:
+  // o braço segue NAO_SUPORTADO, exatamente como na v1. Quem não passa regra
+  // recebe o mesmo resultado de antes — a ativação é opt-in, por conceito.
+  const regra = regras.find((r) => r.subcriterionCode === conceito.code);
+  if (!regra) {
+    return { braco: "NAO_SUPORTADO", code: conceito.code, motivo: "SEM_REGRA_APROVADA" };
+  }
+
+  // Coberto por regra: a evidência corrente decide. P-04 / I-8 continua de pé
+  // e é o ponto inteiro deste bloco — do vazio nada se afirma. Ausência,
+  // insuficiência e conflito viram LACUNA COM NOME, nunca estado positivo,
+  // nunca NAO_INFORMADO (registro vinculante do §5).
+  const doConceito = evidencias.filter((e) => e.subcriterionCode === conceito.code);
+  const selecao = selecionarEvidenciaCorrente(doConceito);
+
+  if (selecao.situacao === "AUSENTE") {
+    return { braco: "LACUNA", code: conceito.code, motivo: "SEM_EVIDENCIA" };
+  }
+  if (selecao.situacao === "CONFLITO_DE_VERSAO") {
+    return { braco: "LACUNA", code: conceito.code, motivo: "EVIDENCIA_CONFLITANTE" };
+  }
+
+  // O estado vem DA REGRA, não daqui: este módulo não sabe o que cada estado
+  // significa e não escolhe nenhum. É o que mantém a semântica material fora
+  // do código (G-4) — trocar a regra troca o resultado, sem tocar nesta linha.
+  //
+  // PROPOSTO é proposta: o 2.C decide se persiste, e a proveniência viaja
+  // junto por ponteiro exato (regra + evidência, ambas versionadas), para que
+  // a Ficha de Explicação feche o ramo até a linha que sustentou o estado.
+  return {
+    braco: "PROPOSTO",
+    code: conceito.code,
+    estado: regra.estadoQuandoCorrente,
+    proveniencia: {
+      ruleId: regra.ruleId,
+      ruleVersion: regra.ruleVersion,
+      evidenciaId: selecao.evidencia.id,
+      evidenciaVersion: selecao.evidencia.version,
+    },
+  };
 }
 
 /**
@@ -395,10 +443,10 @@ function classificarConceito(conceito: CatalogoConceito): DerivacaoDeConceito {
  * tem semântica e não sobrevive (§9, invariância de ordenação).
  */
 export function derivarMapaDoProfissional(entrada: EntradaDaDerivacao): DerivacaoDoMapa {
-  const { conceitos } = validarEntrada(entrada);
+  const { conceitos, evidencias, regras } = validarEntrada(entrada);
 
   const resultados = conceitos
-    .map((conceito) => classificarConceito(conceito))
+    .map((conceito) => classificarConceito(conceito, evidencias, regras))
     .sort((a, b) => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0));
 
   return { resultados };

@@ -42,7 +42,15 @@ const fonte = fonteBruto
 // A matriz do §7, pinada — se o Catálogo mudar de classe, este oráculo acusa
 // ---------------------------------------------------------------------------
 
-/** Os nove automáticos, nominais (§7/§9 da missão) — únicos candidatos a regra futura. */
+/**
+ * Os automáticos, nominais (§7/§9 da missão) — únicos candidatos a regra.
+ *
+ * Os cinco de FORMACAO entraram em 2026-08-19, pela migration
+ * `20260819180000_formacao_deriva_de_documento_verificado`: a formação já é
+ * julgada uma vez pela equipe, sobre o diploma, e não precisa ser rejulgada a
+ * cada Case. Se esta lista mudar outra vez, que mude por migration com
+ * justificativa registrada — nunca editando este oráculo para calar o vermelho.
+ */
 const AUTOMATICOS = [
   "ACESSO_DISPONIBILIDADE",
   "ACESSO_MODALIDADE",
@@ -50,6 +58,11 @@ const AUTOMATICOS = [
   "CONTINUIDADE_CANAIS",
   "CONTINUIDADE_COORDENACAO",
   "CONTINUIDADE_EQUIPE_DE_APOIO",
+  "FORMACAO_COMPLEMENTAR",
+  "FORMACAO_ESPECIALIZACAO",
+  "FORMACAO_FELLOWSHIP",
+  "FORMACAO_GRADUACAO",
+  "FORMACAO_RESIDENCIA",
   "MODELO_ALTERNATIVAS",
   "MODELO_COMUNICACAO",
   "MODELO_PARTICIPACAO_FAMILIAR",
@@ -108,7 +121,7 @@ function cenariosDeEvidencia(code: string): readonly (readonly EvidenciaDeDeriva
 }
 
 describe("§7 · a matriz total — o Catálogo gerado ainda é o que o contrato lavrou", () => {
-  it("29 ativos: 9 automáticos, 2 mistos, 18 humanos — e 6 inativos do legado", () => {
+  it("29 ativos: 14 automáticos, 2 mistos, 13 humanos — e 6 inativos do legado", () => {
     expect(ATIVOS).toHaveLength(29);
     expect(ATIVOS.filter((c) => c.cruzamento === "automatico").map((c) => c.code).sort()).toEqual([
       ...AUTOMATICOS,
@@ -116,7 +129,7 @@ describe("§7 · a matriz total — o Catálogo gerado ainda é o que o contrato
     expect(ATIVOS.filter((c) => c.cruzamento === "misto").map((c) => c.code).sort()).toEqual([
       ...MISTOS,
     ]);
-    expect(HUMANOS).toHaveLength(18);
+    expect(HUMANOS).toHaveLength(13);
     expect(INATIVOS).toHaveLength(6);
   });
 
@@ -128,8 +141,8 @@ describe("§7 · a matriz total — o Catálogo gerado ainda é o que o contrato
     const contagem = { FORA_DA_DERIVACAO: 0, NAO_SUPORTADO: 0, LACUNA: 0, PROPOSTO: 0 };
     for (const resultado of resultados) contagem[resultado.braco] += 1;
     expect(contagem).toEqual({
-      NAO_SUPORTADO: 9,
-      FORA_DA_DERIVACAO: 2 + 18 + 6,
+      NAO_SUPORTADO: 14,
+      FORA_DA_DERIVACAO: 2 + 13 + 6,
       LACUNA: 0,
       PROPOSTO: 0,
     });
@@ -214,24 +227,35 @@ describe("G-3 · do vazio, nada se afirma — P-04/I-8, a propriedade permanente
     expect(resultados.some((r) => r.braco === "PROPOSTO")).toBe(false);
   });
 
-  it("exaustivo: todo conceito × todo cenário de evidência × com/sem regra — nunca PROPOSTO, nunca LACUNA, nunca estado", () => {
+  // A propriedade mudou de forma, não de conteúdo. Antes: os braços eram
+  // INALCANÇÁVEIS porque nenhuma regra tinha forma material. Agora a forma
+  // existe (`estadoQuandoCorrente`) e a emenda do §10 está ativa — então o
+  // que se prova é o que sempre importou: SEM REGRA, nada se afirma. Quem não
+  // passa regra recebe exatamente o resultado da v1.
+  it("exaustivo: todo conceito × todo cenário de evidência, SEM regra — nunca PROPOSTO, nunca LACUNA, nunca estado", () => {
     for (const entry of CATALOGO_GERADO) {
       for (const evidencias of cenariosDeEvidencia(entry.code)) {
-        for (const regras of [
-          undefined,
-          [{ subcriterionCode: entry.code, ruleId: "regra-nao-lavrada", ruleVersion: 1 }],
-        ]) {
-          const { resultados } = derivar([entry], evidencias, regras);
-          expect(resultados).toHaveLength(1);
-          expect(["FORA_DA_DERIVACAO", "NAO_SUPORTADO"]).toContain(resultados[0].braco);
-          // Nenhum braço da v1 carrega estado — nem campo `estado` existe
-          // na saída alcançável.
-          expect(JSON.stringify(resultados)).not.toMatch(
-            /"estado"|CONFIRMADO|NAO_CONFIRMADO|NAO_INFORMADO/,
-          );
-        }
+        const { resultados } = derivar([entry], evidencias, undefined);
+        expect(resultados).toHaveLength(1);
+        expect(["FORA_DA_DERIVACAO", "NAO_SUPORTADO"]).toContain(resultados[0].braco);
+        expect(JSON.stringify(resultados)).not.toMatch(
+          /"estado"|CONFIRMADO|NAO_CONFIRMADO|NAO_INFORMADO/,
+        );
       }
     }
+  });
+
+  // O núcleo de P-04 / I-8, agora sobre o caminho ATIVO: mesmo coberto por
+  // regra, o vazio não vira afirmação. Sem evidência corrente, a saída é
+  // LACUNA com motivo — jamais estado, jamais NAO_INFORMADO.
+  it("com regra e SEM evidência: LACUNA nomeada, nunca estado — do vazio nada se afirma", () => {
+    const code = "MODELO_COMUNICACAO";
+    const { resultados } = derivar([conceito(code)], [], [
+      { subcriterionCode: code, ruleId: "regra-de-teste", ruleVersion: 1, estadoQuandoCorrente: "CONFIRMADO" },
+    ]);
+
+    expect(resultados[0]).toEqual({ braco: "LACUNA", code, motivo: "SEM_EVIDENCIA" });
+    expect(JSON.stringify(resultados)).not.toContain("CONFIRMADO");
   });
 
   it("ausência não vira NAO_INFORMADO: a regra 'sem evidência → NAO_INFORMADO' está superada (PA-13)", () => {
@@ -255,13 +279,49 @@ describe("G-3 · do vazio, nada se afirma — P-04/I-8, a propriedade permanente
     }
   });
 
-  it("pseudo-regra passada por argumento não ativa braço: sem forma lavrada, não há intérprete", () => {
-    const code = "MODELO_COMUNICACAO";
-    const sem = derivar([conceito(code)], [evidencia(code)]);
-    const com = derivar([conceito(code)], [evidencia(code)], [
-      { subcriterionCode: code, ruleId: "tentativa-de-atalho", ruleVersion: 7 },
+  // A regra só alcança o conceito que ela nomeia. Passar regra de OUTRO
+  // conceito não abre porta nenhuma — o não-nomeado segue como sem regra.
+  it("regra de outro conceito não ativa este: a cobertura é nomeada, nunca por proximidade", () => {
+    const alvo = "MODELO_COMUNICACAO";
+    const outro = "MODELO_ALTERNATIVAS";
+    const conceitos = [conceito(alvo), conceito(outro)];
+
+    const { resultados } = derivar(conceitos, [evidencia(alvo)], [
+      {
+        subcriterionCode: outro,
+        ruleId: "regra-de-outro-conceito",
+        ruleVersion: 7,
+        estadoQuandoCorrente: "CONFIRMADO",
+      },
     ]);
-    expect(com).toEqual(sem);
+
+    // O alvo tem evidência mas NÃO tem regra: segue como antes da emenda.
+    const doAlvo = resultados.find((r) => r.code === alvo);
+    expect(doAlvo).toEqual({ braco: "NAO_SUPORTADO", code: alvo, motivo: "SEM_REGRA_APROVADA" });
+  });
+
+  // O caminho ativo, provado ponta a ponta: com regra E evidência corrente, o
+  // estado proposto é o QUE A REGRA DIZ — o módulo não escolhe — e a
+  // proveniência aponta para a linha exata que o sustentou.
+  it("com regra e evidência corrente: PROPOSTO com o estado da regra e proveniência exata", () => {
+    const code = "MODELO_COMUNICACAO";
+    const ev = evidencia(code, { id: "ev-corrente", version: 3 });
+    const { resultados } = derivar([conceito(code)], [ev], [
+      { subcriterionCode: code, ruleId: "regra-de-teste", ruleVersion: 2, estadoQuandoCorrente: "NAO_INFORMADO" },
+    ]);
+
+    // O estado é o da regra — se o módulo escolhesse, viria outro.
+    expect(resultados[0]).toEqual({
+      braco: "PROPOSTO",
+      code,
+      estado: "NAO_INFORMADO",
+      proveniencia: {
+        ruleId: "regra-de-teste",
+        ruleVersion: 2,
+        evidenciaId: "ev-corrente",
+        evidenciaVersion: 3,
+      },
+    });
   });
 });
 
@@ -409,22 +469,22 @@ describe("§6 · erro técnico — defeito do chamador é exceção, nunca lacun
       "regra sem identidade completa",
       () =>
         derivar([conceito("ACESSO_MODALIDADE")], [], [
-          { subcriterionCode: "ACESSO_MODALIDADE", ruleId: " ", ruleVersion: 1 },
+          { subcriterionCode: "ACESSO_MODALIDADE", ruleId: " ", ruleVersion: 1, estadoQuandoCorrente: "CONFIRMADO" },
         ]),
     ],
     [
       "duas regras para o mesmo conceito",
       () =>
         derivar([conceito("ACESSO_MODALIDADE")], [], [
-          { subcriterionCode: "ACESSO_MODALIDADE", ruleId: "r1", ruleVersion: 1 },
-          { subcriterionCode: "ACESSO_MODALIDADE", ruleId: "r2", ruleVersion: 1 },
+          { subcriterionCode: "ACESSO_MODALIDADE", ruleId: "r1", ruleVersion: 1, estadoQuandoCorrente: "CONFIRMADO" },
+          { subcriterionCode: "ACESSO_MODALIDADE", ruleId: "r2", ruleVersion: 1, estadoQuandoCorrente: "CONFIRMADO" },
         ]),
     ],
     [
       "regra de conceito fora da entrada",
       () =>
         derivar([conceito("ACESSO_MODALIDADE")], [], [
-          { subcriterionCode: "CONTINUIDADE_CANAIS", ruleId: "r1", ruleVersion: 1 },
+          { subcriterionCode: "CONTINUIDADE_CANAIS", ruleId: "r1", ruleVersion: 1, estadoQuandoCorrente: "CONFIRMADO" },
         ]),
     ],
   ];
@@ -535,12 +595,19 @@ describe("G-4 · nenhuma semântica material em código — conteúdo só por re
     }
   });
 
-  it("PROPOSTO e LACUNA existem SÓ como declaração de tipo — um literal cada, nenhum construtor", () => {
-    // A declaração do braço no union type usa o literal uma vez. Um segundo
-    // uso significaria um objeto sendo CONSTRUÍDO — o braço deixando de ser
-    // inalcançável por fora da emenda do §10.
-    expect(fonte.match(/braco: "PROPOSTO"/g)).toHaveLength(1);
-    expect(fonte.match(/braco: "LACUNA"/g)).toHaveLength(1);
+  // A emenda do §10 ativou os dois braços: eles DEIXARAM de ser inalcançáveis,
+  // que era o objetivo. O que a G-4 continua guardando é o essencial — o
+  // conteúdo material (qual estado) não mora aqui. O módulo constrói o braço;
+  // quem diz o estado é a regra recebida por argumento.
+  it("o estado proposto vem da regra, nunca de literal no fonte", () => {
+    // Um construtor de cada braço — o caminho ativo existe.
+    expect(fonte.match(/braco: "PROPOSTO"/g)!.length).toBeGreaterThan(1);
+    expect(fonte.match(/braco: "LACUNA"/g)!.length).toBeGreaterThan(1);
+
+    // E o estado é sempre repassado, nunca escolhido: nenhuma atribuição de
+    // `estado` com literal, só com o valor que veio da regra.
+    expect(fonte).toContain("estado: regra.estadoQuandoCorrente");
+    expect(fonte).not.toMatch(/estado: "(CONFIRMADO|NAO_CONFIRMADO|NAO_INFORMADO)"/);
   });
 
   it("nenhuma correspondência opção→estado: sem satisfied_by, sem matriz, sem switch material", () => {
