@@ -123,6 +123,23 @@ export const archiveContactInputSchema = z.object({
   reason: z.string().trim().optional(),
 });
 
+const administrativeLeadReasonSchema = z
+  .string()
+  .trim()
+  .min(3, "Informe um motivo com pelo menos 3 caracteres.")
+  .max(500, "O motivo deve ter no máximo 500 caracteres.");
+
+export const archiveLeadAdminInputSchema = z.object({
+  leadId: z.string().uuid(),
+  reason: administrativeLeadReasonSchema,
+});
+
+export const restoreLeadAdminInputSchema = archiveLeadAdminInputSchema;
+
+export const deleteLeadAdminInputSchema = archiveLeadAdminInputSchema.extend({
+  confirmation: z.string().min(1, "Digite o nome completo do lead para confirmar."),
+});
+
 export const siteLeadInputSchema = z
   .object({
     fullName: z.string().trim().min(2),

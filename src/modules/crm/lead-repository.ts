@@ -22,6 +22,8 @@ export type LeadListItem = Lead & {
   priority: string;
   assignedTo: string | null;
   activeCaseId: string | null;
+  status: "ativo" | "arquivado";
+  archivedAt: string | null;
   /** Case aberto a partir deste lead, se já existir. */
   caseId: string | null;
 };
@@ -50,12 +52,14 @@ function toLead(row: Row): LeadListItem {
     priority: (row.priority as string) ?? "media",
     assignedTo: row.assigned_to,
     activeCaseId: row.active_case_id,
+    status: row.status === "arquivado" ? "arquivado" : "ativo",
+    archivedAt: row.archived_at,
     caseId: null,
   };
 }
 
 const COLUNAS =
-  "id, full_name, preferred_name, phone, phone_normalized, email, email_normalized, city, state, source, source_detail, pipeline_stage, priority, initial_reason, assigned_to, active_case_id, qualified_at, patient_profile_id, converted_at, created_at, archived_at";
+  "id, full_name, preferred_name, phone, phone_normalized, email, email_normalized, city, state, source, source_detail, status, pipeline_stage, priority, initial_reason, assigned_to, active_case_id, qualified_at, patient_profile_id, converted_at, created_at, archived_at";
 
 export async function listLeadsForAtendente(client: SupabaseClient): Promise<LeadListItem[]> {
   const { data, error } = await client

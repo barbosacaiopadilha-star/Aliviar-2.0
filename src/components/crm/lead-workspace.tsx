@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { LEAD_SOURCE_LABELS, type DuplicateMatch } from "@/modules/crm/lead";
 import type { LeadListItem } from "@/modules/crm/lead-repository";
+import { LeadAdminActions } from "@/components/crm/lead-admin-actions";
 import { transferCaseResponsibilityAction } from "@/modules/cases/responsibility-actions";
 import {
   convertLeadToPatientAction,
@@ -365,6 +366,17 @@ export function LeadWorkspace({
         <p className="text-xs text-ink-muted">
           Case <span className="font-mono">{lead.caseId}</span> — o mesmo do início ao fim.
         </p>
+      ) : null}
+
+      {isAdmin ? (
+        <LeadAdminActions
+          leadId={lead.id}
+          fullName={lead.fullName}
+          archived={lead.status === "arquivado"}
+          hasPatient={Boolean(lead.patientProfileId)}
+          hasCase={Boolean(lead.caseId ?? lead.activeCaseId)}
+          returnHref="/atendimento"
+        />
       ) : null}
     </div>
   );

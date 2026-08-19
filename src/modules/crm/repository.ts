@@ -129,12 +129,17 @@ function mapContactDetail(row: ContactRow, names: Map<string, string>, caseTitle
   };
 }
 
-export async function listContacts(supabase: SupabaseClient): Promise<CrmContactSummary[]> {
-  const { data, error } = await supabase
+export async function listContacts(
+  supabase: SupabaseClient,
+  options: { status?: "ativo" | "arquivado" } = {},
+): Promise<CrmContactSummary[]> {
+  const query = supabase
     .from("crm_contacts")
     .select(CONTACT_COLUMNS)
-    .neq("status", "arquivado")
+    .eq("status", options.status ?? "ativo")
     .order("updated_at", { ascending: false });
+
+  const { data, error } = await query;
 
   if (error) throw new Error(error.message);
 
