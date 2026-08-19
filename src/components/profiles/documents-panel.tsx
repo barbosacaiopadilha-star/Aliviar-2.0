@@ -39,6 +39,11 @@ export function DocumentsPanel<T extends DocumentItem>({
   const [documents, setDocuments] = useState(initialDocuments);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  // O envio já dizia o que aconteceu; a remoção, não. Numa recusa o documento
+  // simplesmente continuava na lista, sem palavra alguma — e quem clicou não
+  // tinha como distinguir "não deu" de "não pegou o clique". Apagar documento
+  // é ato que a pessoa precisa saber se aconteceu.
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [uploadState, formAction, isUploading] = useActionState<UploadResult<T> | undefined, FormData>(
     uploadAction,
@@ -56,12 +61,20 @@ export function DocumentsPanel<T extends DocumentItem>({
 
   function handleDelete(documentId: string) {
     setRemovingId(documentId);
+    setDeleteError(null);
     startTransition(async () => {
-      const result = await onDelete(documentId);
-      if (result.success) {
-        setDocuments((current) => current.filter((doc) => doc.id !== documentId));
+      try {
+        const result = await onDelete(documentId);
+        if (result.success) {
+          setDocuments((current) => current.filter((doc) => doc.id !== documentId));
+        } else {
+          setDeleteError(result.error ?? "Não foi possível remover este documento.");
+        }
+      } catch {
+        setDeleteError("Não foi possível remover este documento.");
+      } finally {
+        setRemovingId(null);
       }
-      setRemovingId(null);
     });
   }
 
@@ -80,6 +93,7 @@ export function DocumentsPanel<T extends DocumentItem>({
         </Button>
       </form>
 
+      {deleteError ? <FormMessage variant="error">{deleteError}</FormMessage> : null}
       {uploadState && !uploadState.success ? (
         <FormMessage variant="error">{uploadState.error}</FormMessage>
       ) : null}

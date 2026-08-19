@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { ReactNode } from "react";
 
 type AuthCardProps = {
@@ -23,6 +24,18 @@ export function AuthCard({
       />
       <div className="animate-fade-up relative w-full max-w-md space-y-6 rounded-lg border border-border bg-surface p-6 shadow-sm sm:p-8">
         <header className="space-y-3 text-center">
+          {/* A entrada do produto exibia só o nome em texto — a marca chegava
+              à Landing e sumia na porta de quem entra. Mesma logo e mesmo alt
+              do header público (`public-header.tsx`): a identidade não muda
+              entre o site e o acesso. */}
+          <Image
+            src="/brand/logo-aliviar-icon.png"
+            alt="Aliviar — Curadoria Médica Independente"
+            width={363}
+            height={372}
+            priority
+            className="mx-auto h-12 w-auto"
+          />
           <p className="font-serif text-sm font-medium tracking-wide text-brand-primary">
             Aliviar Curadoria Médica
           </p>

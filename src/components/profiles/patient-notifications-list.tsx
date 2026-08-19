@@ -21,8 +21,25 @@ export function PatientNotificationsList({ notifications }: PatientNotifications
 
   function handleMarkRead(id: string) {
     setReadIds((current) => new Set(current).add(id));
-    startTransition(() => {
-      markPatientNotificationReadAction(id);
+    startTransition(async () => {
+      // A marcação é otimista — e o retorno era descartado. Numa recusa, a
+      // tela seguia dizendo "lida" e o banco discordava: bastava recarregar
+      // para a notificação reaparecer, sem explicação. A correção aqui é
+      // desfazer, não alarmar: esta é a superfície da paciente, e "voltou a
+      // aparecer" já é a verdade dita no tom certo. Falha de rede idem.
+      const desfazer = () =>
+        setReadIds((current) => {
+          const proximo = new Set(current);
+          proximo.delete(id);
+          return proximo;
+        });
+
+      try {
+        const resultado = await markPatientNotificationReadAction(id);
+        if (!resultado.success) desfazer();
+      } catch {
+        desfazer();
+      }
     });
   }
 

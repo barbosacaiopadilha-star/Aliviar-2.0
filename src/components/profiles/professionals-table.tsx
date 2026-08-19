@@ -118,12 +118,25 @@ export function ProfessionalsTable({ professionals }: ProfessionalsTableProps) {
                     })()}
                   </TableCell>
                   <TableCell>
-                    <Link
-                      href={`/admin/profissionais/${professional.id}`}
-                      className="font-medium text-brand-primary hover:text-brand-primary-deep"
-                    >
-                      Editar
-                    </Link>
+                    {/* Duas ações, não uma. "Editar" abre o cadastro; o ciclo
+                        de vida (pausar, arquivar, retomar) vive na aba Rede e
+                        não tinha caminho a partir daqui — quem administrava a
+                        Rede pela listagem não encontrava a única ação capaz de
+                        tirar alguém de circulação. */}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                      <Link
+                        href={`/admin/profissionais/${professional.id}`}
+                        className="font-medium text-brand-primary hover:text-brand-primary-deep"
+                      >
+                        Editar
+                      </Link>
+                      <Link
+                        href={`/admin/profissionais/${professional.id}?etapa=rede`}
+                        className="font-medium text-brand-primary hover:text-brand-primary-deep"
+                      >
+                        Ciclo de vida
+                      </Link>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

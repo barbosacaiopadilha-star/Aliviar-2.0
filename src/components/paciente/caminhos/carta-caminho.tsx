@@ -59,9 +59,14 @@ export function CartaCaminho({
         <Retrato nome={option.professionalName} />
 
         <div className="min-w-0 flex-1">
+          {/* `break-words`: um nome pode trazer token longo sem espaço —
+              sobrenome composto, registro profissional, identificador de
+              cadastro. Sem isso a palavra não quebra, empurra a coluna e
+              desalinha as três cartas entre si; e a pessoa lê "desarrumado"
+              como "descuidado" no momento em que mais precisa confiar. */}
           <h3
             id={`carta-${option.id}-nome`}
-            className="font-serif text-xl font-medium leading-snug text-[var(--patient-ink)] lg:text-2xl"
+            className="break-words font-serif text-xl font-medium leading-snug text-[var(--patient-ink)] lg:text-2xl"
           >
             {option.professionalName}
           </h3>

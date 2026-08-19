@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 
+import { StatusBanner } from "@/components/ads";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,10 @@ export function CrmTasksPanel({ tasks, currentUserId, isAdmin }: { tasks: CrmTas
   const [filter, setFilter] = useState<"mine" | "today" | "overdue" | "future" | "done" | "team">("mine");
   const [search, setSearch] = useState("");
   const [isPending, startTransition] = useTransition();
+  // A action já devolvia `{ success, error }` e o retorno era descartado: numa
+  // recusa, a tarefa continuava na tela como pendente e o operador só podia
+  // supor que o clique não pegou. O erro agora é dito.
+  const [erro, setErro] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const now = new Date();
@@ -55,6 +60,7 @@ export function CrmTasksPanel({ tasks, currentUserId, isAdmin }: { tasks: CrmTas
         ))}
       </div>
       <Input label="Buscar tarefas" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Título ou contato" />
+      {erro ? <StatusBanner variant="error">{erro}</StatusBanner> : null}
       <div className="space-y-3">
         {filtered.map((task) => (
           <Card key={task.id} padding="sm">
@@ -76,7 +82,14 @@ export function CrmTasksPanel({ tasks, currentUserId, isAdmin }: { tasks: CrmTas
                   disabled={isPending}
                   onClick={() =>
                     startTransition(async () => {
-                      await updateTaskStatusAction({ taskId: task.id, status: "concluida" });
+                      setErro(null);
+                      const resultado = await updateTaskStatusAction({
+                        taskId: task.id,
+                        status: "concluida",
+                      });
+                      if (!resultado.success) {
+                        setErro(resultado.error ?? "Não foi possível concluir a tarefa.");
+                      }
                     })
                   }
                 >

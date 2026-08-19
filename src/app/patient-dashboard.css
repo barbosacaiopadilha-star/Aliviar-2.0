@@ -400,6 +400,20 @@
   .patient-dashboard .patient-carta {
     flex: initial;
     padding: 1.75rem;
+    /* A grade já iguala a ALTURA das três cartas, mas não a posição do que
+       vem dentro: com nomes de tamanhos diferentes, "Conhecer este caminho"
+       parava em três alturas distintas e a fileira parecia torta. Coluna
+       flex + `margin-top: auto` no bloco de ações encosta os três botões na
+       mesma linha. Nada some nem é cortado — só desce até o rodapé. */
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* O bloco de ações é o último filho direto da carta FECHADA. Quando ela
+     abre, o detalhe passa a ser o último e o `auto` deixa de sobrar — que é
+     o desejado: aberta, a carta ocupa a linha e a ordem de leitura manda. */
+  .patient-dashboard .patient-carta:not(.patient-carta--aberta) > div:last-child {
+    margin-top: auto;
   }
 
   /* A carta aberta cresce e assume a linha — o resto continua visível ao

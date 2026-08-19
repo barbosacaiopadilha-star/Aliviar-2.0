@@ -15,13 +15,17 @@ function formatDate(iso: string): string {
 }
 
 function describeEntry(entry: AuditLogEntry, showTarget: boolean): string {
-  const roleLabel = entry.roleName ?? "papel";
   const actorLabel = entry.actorName ?? "Sistema";
   const targetLabel = showTarget && entry.targetName ? ` para ${entry.targetName}` : "";
+  const verbo = entry.action === "role_granted" ? "concedeu" : "revogou";
 
-  return entry.action === "role_granted"
-    ? `${actorLabel} concedeu o papel "${roleLabel}"${targetLabel}`
-    : `${actorLabel} revogou o papel "${roleLabel}"${targetLabel}`;
+  // Sem o nome do papel, a frase saía como `revogou o papel "papel"`: o rótulo
+  // genérico entre aspas, com a mesma aparência de um nome real. Ausência de
+  // nome é dita como ausência — o trecho entre aspas some e a frase continua
+  // verdadeira, em vez de inventar um papel chamado "papel".
+  const complemento = entry.roleName ? `o papel "${entry.roleName}"` : "um papel";
+
+  return `${actorLabel} ${verbo} ${complemento}${targetLabel}`;
 }
 
 export function AuditLogList({ entries, emptyMessage, showTarget = false }: AuditLogListProps) {

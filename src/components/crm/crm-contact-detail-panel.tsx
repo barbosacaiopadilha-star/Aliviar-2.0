@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 
 import { StatusBanner } from "@/components/ads";
@@ -79,7 +80,21 @@ export function CrmContactDetailPanel({
             <p className="text-sm text-ink-muted">Responsável: {contact.assignedToName ?? "Sem responsável"}</p>
             <p className="text-sm text-ink-muted">Consentimento: {contact.consentStatus}</p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Quem lê a ficha aqui não tinha caminho para o ato de converter
+                — ele mora no Atendimento. Sem esta ponte, o operador ia a
+                "Novo paciente" e criava uma conta SEM lead: o banco então
+                abre ficha própria de provisionamento (por desenho), e a
+                mesma pessoa passa a ter duas fichas. O link não converte
+                nada; leva a quem converte. */}
+            {!contact.patientProfileId ? (
+              <Link
+                href={`/atendimento/${contact.id}`}
+                className="inline-flex min-h-11 items-center rounded-sm border border-border px-3 text-sm font-medium text-brand-primary underline-offset-4 hover:underline"
+              >
+                Abrir no Atendimento
+              </Link>
+            ) : null}
             <Select
               aria-label="Mudar etapa"
               defaultValue=""
