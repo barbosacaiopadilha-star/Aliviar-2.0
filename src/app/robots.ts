@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const SITE_URL = "https://www.aliviarcuradoriamedica.com.br";
+import { SITE_URL } from "@/lib/site-url";
 
 // Áreas autenticadas nunca devem ser indexadas — a proteção real de acesso
 // é o RLS/guard.ts (docs/ENGINEERING_PLAN.md, seção 8); isto é só um sinal

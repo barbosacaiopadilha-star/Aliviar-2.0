@@ -182,18 +182,20 @@ que não está ali para consentir. Hoje não há qualquer validação de víncul
 autorização. Precisa de posição.
 
 **4. Nome empresarial × marca.** A empresa é "Aliviar Conecta Serviços de
-Assessoria e Gestão Ltda"; o serviço se apresenta como "Aliviar Curadoria
-Médica"; o domínio é `aliviarcuradoriamedica.com.br`. O rascunho declara a
-identidade entre eles — confirmar se a forma está adequada.
+Assessoria e Gestão Ltda" e o serviço se apresenta como "Aliviar Curadoria
+Médica". Não há domínio próprio: o serviço é servido pelo endereço da
+hospedagem (`.vercel.app`). O rascunho declara a identidade entre a marca e a
+razão social — confirmar se a forma está adequada.
 
 **5. Objeto social.** As atividades registradas no CNPJ (assessoria e gestão,
 promoção de vendas, cobrança, ensino) não incluem nada de saúde. Fica o
 apontamento; a avaliação é sua.
 
-**6. Encarregado.** Indicado: Caio Padilha, com e-mail pessoal. Duas
-observações técnicas: (a) o endereço informado ainda precisa de confirmação —
-há duas variantes possíveis do mesmo nome; (b) um endereço de função no
-domínio do serviço evitaria nova versão do documento se a pessoa mudar.
+**6. Encarregado.** Indicado: Caio Padilha, com e-mail pessoal. Uma
+observação técnica: o endereço informado ainda precisa de confirmação — há
+duas variantes possíveis do mesmo nome. (A alternativa de um endereço de
+função no domínio do serviço deixou de existir: a Aliviar não tem domínio
+próprio hoje.)
 
 **7. Região de processamento.** Dados em repouso confirmados no Brasil
 (Supabase `sa-east-1`). A região de execução da Vercel não estava declarada

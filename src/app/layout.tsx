@@ -6,8 +6,9 @@ import "./globals.css";
 
 import { AppProviders } from "@/components/providers/app-providers";
 
+import { SITE_URL } from "@/lib/site-url";
+
 const SITE_NAME = "Aliviar Curadoria Médica";
-const SITE_URL = "https://www.aliviarcuradoriamedica.com.br";
 
 const fraunces = Fraunces({
   subsets: ["latin"],

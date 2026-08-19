@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const SITE_URL = "https://www.aliviarcuradoriamedica.com.br";
+import { SITE_URL } from "@/lib/site-url";
 
 // Apenas rotas públicas e indexáveis. Áreas autenticadas (/admin,
 // /profissional, /paciente, /acesso-negado) nunca entram aqui — ver
