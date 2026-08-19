@@ -69,6 +69,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       allowedStages={allowedStages}
       curators={curators}
       concierges={concierges}
+      isAdmin={state.roles.includes("administrador")}
     />
     </div>
   );
