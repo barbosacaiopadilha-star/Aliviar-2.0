@@ -223,10 +223,10 @@ Todos os cinco documentos estão com estes campos em branco. **Sem eles, nenhum 
 
 | Campo | Valor definitivo |
 |---|---|
-| Razão social | |
-| Nome fantasia | |
-| CNPJ | |
-| Sede (endereço completo) | |
+| Razão social | ALIVIAR CONECTA SERVICOS DE ASSESSORIA E GESTAO LTDA |
+| Nome fantasia | ALIVIAR CONECTA |
+| CNPJ | 63.841.181/0001-07 |
+| Sede (endereço completo) | R. Severino Eleuterio, 158 — Centro — Areial/PB — CEP 58.140-000 |
 | Representante legal (nome) | |
 | CPF do representante | |
 | Cidade/UF dos instrumentos | |
@@ -236,8 +236,8 @@ Todos os cinco documentos estão com estes campos em branco. **Sem eles, nenhum 
 | Vigência do contrato | 12 meses ☐ confirmado |
 | Aviso prévio (denúncia imotivada) | ______ dias |
 | Prazo da procuração | ______ meses |
-| Encarregado (LGPD) | |
-| E-mail de privacidade | |
+| Encarregado (LGPD) | CAIO PADILHA |
+| E-mail de privacidade | padilhacaiobarbosa@gmail.com — CONFERIR a ordem do nome |
 | Canal de atendimento ao titular | |
 
 > **Não envie dados sensíveis, senhas ou credenciais neste documento.** Apenas os campos acima, que são de identificação pública da empresa e do contrato.
