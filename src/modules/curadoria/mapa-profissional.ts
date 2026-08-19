@@ -85,11 +85,15 @@ export type ProfessionalMapItem = {
    * regime de autoria**, nunca "autor desconhecido" e nunca ausência de
    * responsabilidade (I-8).
    *
-   * Infraestrutura: a coluna existe e é lida; **nenhuma escrita a preenche
-   * ainda**, e nenhum consumidor a usa. A RLS da ADR-040 item 6 permanece
-   * intocada (ADR-068 item 7).
+   * Desde `20260819230000_mapa_exige_autor`, toda gravação NOVA preenche este
+   * campo com o ator da sessão, e o banco recusa linha nova sem ele. Os `null`
+   * que restarem são anteriores a essa data — e ficam assim de propósito:
+   * escolher um assinante retroativo falsificaria autoria sobre um médico
+   * real.
    */
   declaredBy?: string | null;
+  /** Nome de quem declarou, quando resolvível. Só apresentação. */
+  declaredByName?: string | null;
   /** Etapa 1: `updated_at` — quando o registro foi gravado. Mesma semantica do lado do Case. */
   registradoEm?: string | null;
 };
@@ -163,6 +167,9 @@ export type ProfessionalMapGroup = {
     /** `null` = ninguém tratou ainda. Nunca confundir com `NAO_INFORMADO`. */
     status: SubcriterionStatus | null;
     note: string | null;
+    /** Quem assinou esta declaração, e quando — para a tela dizer QUEM. */
+    declaredByName: string | null;
+    registradoEm: string | null;
   }[];
 };
 
@@ -183,6 +190,8 @@ export function groupProfessionalMap(
           subcriterion,
           status: declarado?.status ?? null,
           note: declarado?.note ?? null,
+          declaredByName: declarado?.declaredByName ?? null,
+          registradoEm: declarado?.registradoEm ?? null,
         };
       }),
   }));

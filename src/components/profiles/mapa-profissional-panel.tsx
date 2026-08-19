@@ -201,6 +201,22 @@ export function MapaProfissionalPanel({
                       />
                     </div>
 
+                    {/* A ASSINATURA. O Mapa é o que a Aliviar afirma sobre um
+                        médico real, e até aqui toda declaração era anônima: a
+                        coluna existia, a tela lia, e nenhuma escrita
+                        preenchia. Sem autor resolvido, NÃO se escreve nada —
+                        "autor desconhecido" seria pior que o silêncio, porque
+                        sugere que alguém assinou. */}
+                    {entrada.declaredByName ? (
+                      <p className="mt-2 text-xs text-ink-muted">
+                        Declarado por {entrada.declaredByName}
+                        {entrada.registradoEm
+                          ? ` em ${new Date(entrada.registradoEm).toLocaleDateString("pt-BR")}`
+                          : ""}
+                        .
+                      </p>
+                    ) : null}
+
                     {erro ? (
                       <p role="alert" className="mt-2 text-sm text-red-700">
                         {erro}

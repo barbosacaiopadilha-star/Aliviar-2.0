@@ -102,7 +102,7 @@ describe("Motor de Compatibilidade (Supabase local)", () => {
       { subcriterionCode: "EXPERIENCIA_NO_TIPO_DE_CASO", status: "CONFIRMADO" },
       { subcriterionCode: "CONTINUIDADE_POS_PROCEDIMENTO", status: "NAO_INFORMADO" },
       { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", status: "CONFIRMADO" },
-    ]);
+    ], adminUserId);
 
     const leitura = await crossCaseWithProfessional(service, caseId, profissional);
 
@@ -142,7 +142,7 @@ describe("Motor de Compatibilidade (Supabase local)", () => {
 
     await saveProfessionalMapEntries(service, profissional, [
       { subcriterionCode: "MODELO_COMUNICACAO", status: "CONFIRMADO" },
-    ]);
+    ], adminUserId);
 
     const leitura = await crossCaseWithProfessional(service, caseId, profissional);
     expect(leitura.rows).toHaveLength(0);
@@ -166,7 +166,7 @@ describe("Motor de Compatibilidade (Supabase local)", () => {
     ]);
     await saveProfessionalMapEntries(service, profissional, [
       { subcriterionCode: "MODELO_COMUNICACAO", status: "CONFIRMADO" },
-    ]);
+    ], adminUserId);
 
     // Nenhum dos dois lados aceita o aposentado.
     await expect(
@@ -177,7 +177,7 @@ describe("Motor de Compatibilidade (Supabase local)", () => {
     await expect(
       saveProfessionalMapEntries(service, profissional, [
         { subcriterionCode: "HISTORICO_ENSINO_E_PESQUISA", status: "CONFIRMADO" },
-      ]),
+      ], adminUserId),
     ).rejects.toThrow(/saiu de circulação/);
 
     const leitura = await crossCaseWithProfessional(service, caseId, profissional);
@@ -198,10 +198,10 @@ describe("Motor de Compatibilidade (Supabase local)", () => {
     ]);
     await saveProfessionalMapEntries(service, forte, [
       { subcriterionCode: "FORMACAO_RESIDENCIA", status: "CONFIRMADO" },
-    ]);
+    ], adminUserId);
     await saveProfessionalMapEntries(service, fraco, [
       { subcriterionCode: "FORMACAO_RESIDENCIA", status: "NAO_CONFIRMADO" },
-    ]);
+    ], adminUserId);
 
     const leituras = await crossCaseWithProfessionals(service, caseId, [fraco, forte]);
 
@@ -220,7 +220,7 @@ describe("Motor de Compatibilidade (Supabase local)", () => {
     ]);
     await saveProfessionalMapEntries(service, profissional, [
       { subcriterionCode: "ACESSO_DISPONIBILIDADE", status: "NAO_CONFIRMADO" },
-    ]);
+    ], adminUserId);
 
     const primeira = await crossCaseWithProfessional(service, caseId, profissional);
     const segunda = await crossCaseWithProfessional(service, caseId, profissional);

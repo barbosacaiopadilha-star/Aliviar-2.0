@@ -25,8 +25,12 @@ export async function saveProfessionalSubcriterionAction(input: {
   status: string;
   note?: string | null;
 }): Promise<{ success: true } | { success: false; error: string }> {
+  let autor: string;
   try {
-    await requireRoleForAction("administrador");
+    // A autoria vem da SESSÃO, nunca do payload — a lição do Corte 7. Quem
+    // assina a declaração é quem está logado, e o cliente não opina nisso.
+    const state = await requireRoleForAction("administrador");
+    autor = state.user.id;
   } catch (erro) {
     return { success: false, error: falhaParaUsuario("curadoria.mapa-profissional-actions", erro, { mensagem: "Só quem edita profissionais pode registrar o Mapa." }) };
   }
@@ -59,7 +63,7 @@ export async function saveProfessionalSubcriterionAction(input: {
         status: input.status,
         note: input.note ?? null,
       },
-    ]);
+    ], autor);
   } catch (erro) {
     // A mensagem do domínio já é escrita para ser lida por gente.
     return { success: false, error: erro instanceof Error ? erro.message : "Não foi possível gravar." };

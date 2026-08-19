@@ -52,7 +52,6 @@ export async function loadProfessionalMap(
     const code = codigoPorId.get(row.subcriterion_id as string);
     const status = row.status as string;
     if (!code || !isSubcriterionStatus(status)) return [];
-    // PP-02: a autoria e lida; nenhuma escrita a preenche neste pacote.
     return [
       {
         subcriterionCode: code,
@@ -63,6 +62,23 @@ export async function loadProfessionalMap(
       },
     ];
   });
+
+  // O nome de quem declarou — a tela precisa dizer QUEM, não um UUID. Falha
+  // aqui não derruba o Mapa: sem nome, a autoria continua sendo o id, e a
+  // leitura do estado (que é o essencial) não depende disto.
+  const autores = [...new Set(items.map((i) => i.declaredBy).filter((id): id is string => !!id))];
+  if (autores.length > 0) {
+    const { data: perfis } = await supabase
+      .from("profiles")
+      .select("id, display_name")
+      .in("id", autores);
+    const nomePorId = new Map(
+      (perfis ?? []).map((p) => [p.id as string, (p.display_name as string | null) ?? null]),
+    );
+    for (const item of items) {
+      item.declaredByName = item.declaredBy ? (nomePorId.get(item.declaredBy) ?? null) : null;
+    }
+  }
 
   return {
     professionalProfileId,
@@ -85,13 +101,26 @@ export type ProfessionalMapEntry = {
  * O que NÃO faz: apagar o que não veio, nem preencher o resto como
  * `NAO_INFORMADO`. Item não trabalhado continua sem registro — é um fato
  * diferente de "analisado, sem informação", e o banco preserva a diferença.
+ *
+ * A AUTORIA É OBRIGATÓRIA, e vem de `declaredBy` — que o chamador tira da
+ * SESSÃO, nunca do payload. O Mapa é o que a Aliviar afirma sobre um médico
+ * real; declaração sem autor é afirmação que ninguém assinou, e foi
+ * exatamente esse o estado até aqui: a coluna existia, era lida na tela, e
+ * nenhuma escrita a preenchia.
  */
 export async function saveProfessionalMapEntries(
   supabase: SupabaseClient,
   professionalProfileId: string,
   entries: readonly ProfessionalMapEntry[],
+  declaredBy: string,
 ): Promise<ProfessionalMap> {
+  // Lista vazia é leitura, não escrita: não há declaração a assinar, e exigir
+  // autor aqui recusaria uma chamada que não afirma nada.
   if (entries.length === 0) return loadProfessionalMap(supabase, professionalProfileId);
+
+  if (!declaredBy) {
+    throw new Error("O Mapa do Profissional exige autor identificado — a declaração é de alguém.");
+  }
 
   const catalogo = await listSubcriterionCatalog(supabase, { includeInactive: true });
 
@@ -110,6 +139,7 @@ export async function saveProfessionalMapEntries(
       subcriterion_id: idPorCodigo.get(entry.subcriterionCode)!,
       status: entry.status,
       note: normalizeNote(entry.note),
+      declared_by: declaredBy,
       updated_at: new Date().toISOString(),
     })),
     { onConflict: "professional_profile_id,subcriterion_id" },

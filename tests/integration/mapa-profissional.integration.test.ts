@@ -62,7 +62,7 @@ describe("Mapa do Profissional (Supabase local)", () => {
       { subcriterionCode: "FORMACAO_RESIDENCIA", status: "CONFIRMADO" },
       { subcriterionCode: "ACESSO_MODALIDADE", status: "NAO_CONFIRMADO" },
       { subcriterionCode: "HISTORICO_ATIVIDADE_ACADEMICA", status: "NAO_INFORMADO" },
-    ]);
+    ], adminUserId);
 
     expect(mapa.items).toHaveLength(3);
     expect(mapa.items.find((i) => i.subcriterionCode === "FORMACAO_RESIDENCIA")?.status).toBe("CONFIRMADO");
@@ -78,6 +78,7 @@ describe("Mapa do Profissional (Supabase local)", () => {
       professional_profile_id: id,
       subcriterion_id: catalogo[0]!.id,
       status: "EXCELENTE",
+      declared_by: adminUserId
     });
     expect(error, "enum precisa recusar").not.toBeNull();
   });
@@ -88,6 +89,7 @@ describe("Mapa do Profissional (Supabase local)", () => {
       professional_profile_id: "00000000-0000-0000-0000-000000000000",
       subcriterion_id: catalogo[0]!.id,
       status: "CONFIRMADO",
+      declared_by: adminUserId
     });
     expect(error?.message ?? "").toMatch(/foreign key|violates/i);
   });
@@ -98,6 +100,7 @@ describe("Mapa do Profissional (Supabase local)", () => {
       professional_profile_id: id,
       subcriterion_id: "00000000-0000-0000-0000-000000000000",
       status: "CONFIRMADO",
+      declared_by: adminUserId
     });
     expect(error, "recusado pelo gatilho de circulação ou pela FK").not.toBeNull();
   });
@@ -115,11 +118,13 @@ describe("Mapa do Profissional (Supabase local)", () => {
       professional_profile_id: id,
       subcriterion_id: alvo.id,
       status: "CONFIRMADO",
+      declared_by: adminUserId
     });
     const { error } = await service.from("professional_subcriterion_map").insert({
       professional_profile_id: id,
       subcriterion_id: alvo.id,
       status: "NAO_CONFIRMADO",
+      declared_by: adminUserId
     });
     expect(error?.message ?? "").toMatch(/duplicate|unique/i);
   });
@@ -129,10 +134,10 @@ describe("Mapa do Profissional (Supabase local)", () => {
 
     await saveProfessionalMapEntries(service, id, [
       { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", status: "CONFIRMADO", note: "atende no centro" },
-    ]);
+    ], adminUserId);
     const depois = await saveProfessionalMapEntries(service, id, [
       { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", status: "NAO_CONFIRMADO" },
-    ]);
+    ], adminUserId);
 
     const doItem = depois.items.filter((i) => i.subcriterionCode === "ACESSO_LOCAL_DE_ATENDIMENTO");
     expect(doItem).toHaveLength(1);
@@ -154,6 +159,7 @@ describe("Mapa do Profissional (Supabase local)", () => {
       subcriterion_id: alvo.id,
       status: "CONFIRMADO",
       note: "   retorno em 30 dias   ",
+      declared_by: adminUserId
     });
 
     const { data } = await service
@@ -199,6 +205,7 @@ describe("Mapa do Profissional (Supabase local)", () => {
       professional_profile_id: id,
       subcriterion_id: alvo.id,
       status: "CONFIRMADO",
+      declared_by: adminUserId
     });
     expect(error?.message ?? "").toMatch(/fora de circulacao/i);
 
@@ -206,7 +213,7 @@ describe("Mapa do Profissional (Supabase local)", () => {
     await expect(
       saveProfessionalMapEntries(service, id, [
         { subcriterionCode: alvo.code, status: "CONFIRMADO" },
-      ]),
+      ], adminUserId),
     ).rejects.toThrow(/saiu de circulação/);
 
     // …e a completude, que não cobra o legado como pendência.
@@ -254,6 +261,7 @@ describe("Mapa do Profissional (Supabase local)", () => {
       professional_profile_id: id,
       subcriterion_id: alvo.id,
       status: "CONFIRMADO",
+      declared_by: adminUserId
     });
     expect(doAdmin, "quem edita profissional gerencia o Mapa").toBeNull();
 
@@ -315,7 +323,7 @@ describe("Mapa do Profissional (Supabase local)", () => {
     await saveProfessionalMapEntries(service, id, [
       { subcriterionCode: "MODELO_ALTERNATIVAS", status: "CONFIRMADO" },
       { subcriterionCode: "MODELO_PARTICIPACAO_FAMILIAR", status: "NAO_INFORMADO" },
-    ]);
+    ], adminUserId);
 
     const { data: depois } = await service
       .from("professional_profiles")
