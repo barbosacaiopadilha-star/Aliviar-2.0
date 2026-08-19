@@ -1624,3 +1624,22 @@ Novo agregado `approach_attempts` · nova estrutura `team_notifications` · proj
 - **Consequência:** a decisão canônica passa a ter porta na rota real; a responsabilidade muda no fato certo; a conexão para de fingir ser decisão.
 - **Divergência RESOLVIDA (2026-08-11, decisão de autoridade do Arquiteto):** `NONE_OF_THEM` **é decisão canônica legítima e também transfere a responsabilidade**. A recusa encerra a etapa decisória; uma nova seleção curada, se vier, é **outro processo** — não a continuação deste sob o Curador. O comportamento anterior (`inferPhaseFromCuradoria` devolvendo a fase `curadoria`, mantendo o Curador para sempre) era **defeito de produção**, corrigido em `resolveCurrentResponsible` por uma guarda simétrica à da ausência de decisão. O handoff **não** depende de haver profissional escolhido nem de existir `connection_record`: depende do fato canônico existir.
 - **Revisitar quando:** nada pendente neste ponto.
+## ADR-071 — O conceito do MEC na carta da paciente: fato sobre a escola, nunca nota do profissional
+
+- **Data:** 2026-08-19
+- **Status:** Aprovada pelo Fundador em 2026-08-19, em conversa direta, depois de apresentado o custo (abaixo) e recusada a alternativa de deixá-lo fora da carta. Implementada na mesma data: migration `20260819210000_conceito_do_mec_na_graduacao`.
+- **Dependências:** ADR-041 (nenhum score) · `formacao-academica.ts` (decisão vinculante: formação é fato, não mérito).
+- **Contexto:** o bloco de formação que a paciente lê carregava uma recusa explícita — *não dar à formação nenhuma cor, número ou destaque comparável entre cartas*. O conceito do MEC é exatamente um número comparável, e a carta é, fora ele, toda prosa. A ADR-041 proíbe score, nota, porcentagem e ranking **produzidos pelo sistema**; o conceito do MEC não é produzido aqui, mas passa a ser exibido aqui.
+- **A decisão de mérito, e o custo declarado:** um número no meio de três cartas de prosa vira a única coisa comparável da página, e a atenção vai nele mesmo sem cor e sem destaque. Há risco real de a pessoa ler um ranking de três notas onde a Curadoria montou três caminhos diferentes. Contra isso pesou que a informação é pública, ela pode buscá-la sozinha, e omitir para "proteger" é paternalismo. **O Fundador decidiu que entra.**
+- **Decisão:**
+  1. **O conceito entra DENTRO da frase da instituição**, nunca como linha própria, selo, chip ou número solto: `Universidade Federal de Pernambuco — curso com conceito 4 no MEC (2023)`. Assim ele tem o mesmo peso visual da cidade e do ano.
+  2. **Não ordena, não pontua, não entra em cálculo algum.** A ADR-041 permanece intacta: nenhum score é *produzido*. O que existe é um fato externo *exibido*.
+  3. **É fato sobre a ESCOLA, não sobre o profissional.** Um médico formado há vinte anos numa escola conceito 3 não é pior para esta paciente que um recém-formado de conceito 5 — e o conceito nada sabe sobre as prioridades dela.
+  4. **Somente `graduacao`.** Residência é credenciada pela CNRM; especialização, fellowship, pós e curso não têm conceito do MEC. O campo nem aparece fora da graduação: oferecê-lo convidaria a inventar um número que uma paciente vai ler. Quatro CHECK no banco recusam conceito fora de 1–5, conceito fora da graduação, ano sem conceito e ano implausível.
+  5. **Lançado pela equipe, e já revisado no ato.** Nada é importado de base externa nem casado por nome de instituição: casamento aproximado erraria sobre um médico real. O dado nasce onde o julgamento humano acontece.
+  6. **Lançar o conceito NÃO rebaixa a verificação** da entrada de formação, ao contrário das demais edições. A equipe verifica o *diploma* daquela pessoa; o conceito é fato sobre a *escola*. Rebaixar teria efeito perverso e silencioso: acrescentar a nota a uma formação já verificada a tiraria da carta.
+  7. **Ausência é omissão.** Sem conceito lançado, a linha é a instituição e nada mais — sem "não informado", sem traço.
+- **Consequência:** pela primeira vez a carta da paciente carrega um número comparável entre opções. É uma mudança de natureza, não de grau, e está registrada aqui como tal.
+- **Revisitar quando:** o Observatório da Experiência mostrar a escolha real das pacientes. **O sinal a procurar:** concentração das escolhas na opção de maior conceito, independentemente das prioridades declaradas por elas. Se aparecer, a resposta é revisitar esta ADR — não ajustar o layout.
+
+---
