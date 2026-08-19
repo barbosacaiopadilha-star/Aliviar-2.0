@@ -222,7 +222,7 @@ describe("Isolamento — rascunho não atravessa", () => {
 
     // Cada parecer carrega o próprio `professionalId`, e o reducer só mexe na
     // entrada cujo id bate — escrever num não pode aparecer no outro.
-    const campos = screen.getAllByLabelText("Por que esta opção está na Curadoria");
+    const campos = screen.getAllByLabelText("Por que esta opção está aqui");
     expect(campos.length).toBeGreaterThanOrEqual(2);
     await user.type(campos[0]!, "Motivo da primeira.");
 

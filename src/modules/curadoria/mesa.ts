@@ -45,6 +45,13 @@ export function emptyParecer(professionalId: string): ParecerDraft {
  * A orientação de cada campo ecoa os três testes do Momento 7
  * (Jornada §Momento 7): nomear o critério do paciente, dizer o que
  * custa, e poder ser lido em voz alta sem tradução.
+ *
+ * OS TÍTULOS SÃO OS MESMOS DO RELATÓRIO (`report-editor.tsx`), de propósito.
+ * O rascunho assistido copia estes campos para lá um a um — não há trabalho
+ * novo entre as duas telas, só o mesmo texto lapidado. Com nomes diferentes
+ * ("Quais limitações possui" aqui, "O que esta opção custa" lá), o Curador
+ * lia dois pedidos onde existe um, e a Mesa parecia rascunho descartável.
+ * Quem manda no vocabulário é o documento que a paciente lê.
  */
 export const PARECER_PROMPTS: ReadonlyArray<{
   field: keyof Omit<ParecerDraft, "professionalId">;
@@ -54,33 +61,33 @@ export const PARECER_PROMPTS: ReadonlyArray<{
 }> = [
   {
     field: "whyIncluded",
-    title: "Por que esta opção está na Curadoria",
+    title: "Por que esta opção está aqui",
     guidance:
       "Nomeie o critério do paciente que ela responde — nunca uma qualidade abstrata. Se você leria a frase em voz alta para ele sem mudar uma palavra, ela está pronta.",
     required: true,
   },
   {
     field: "prioritiesServed",
-    title: "Quais prioridades atende melhor",
+    title: "Relação com as prioridades dela",
     guidance: "Relacione com os pesos que o paciente validou, na ordem em que pesam para ele.",
     required: true,
   },
   {
     field: "limitations",
-    title: "Quais limitações possui",
+    title: "O que esta opção custa",
     guidance:
       "O que esta opção custa. Opção só com virtudes não é opção — é recomendação disfarçada.",
     required: true,
   },
   {
     field: "questions",
-    title: "Perguntas para a consulta",
+    title: "Perguntas para a primeira consulta",
     guidance: "O que vale o paciente perguntar no primeiro encontro com este profissional.",
     required: false,
   },
   {
     field: "observations",
-    title: "Observações relevantes",
+    title: "Suas observações",
     guidance: "O que mais você observou e quer que fique registrado, com sua autoria.",
     required: false,
   },

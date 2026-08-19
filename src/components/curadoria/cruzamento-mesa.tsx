@@ -160,6 +160,35 @@ function ProfessionalCard({ view, professional }: { view: MesaCruzamentoView; pr
   );
 }
 
+/**
+ * A proposta de leitura da área, a partir do que o cadastro já registrou.
+ *
+ * Conservadora de propósito: só propõe COMPATÍVEL quando a exigência do Case
+ * aparece, inteira, no texto ou nas tags que o Admin registrou. Qualquer
+ * dúvida — área não registrada, exigência ausente, correspondência parcial —
+ * devolve `null` e o Curador decide do zero, como antes.
+ *
+ * Nunca propõe INCOMPATÍVEL nem ELIMINADO: tirar alguém da Rede é ato que
+ * exige leitura humana, e uma sugestão errada nessa direção custaria à
+ * paciente um caminho legítimo. Propor só o lado que abre, nunca o que fecha.
+ */
+function sugerirCompatibilidade(
+  exigencia: string | null,
+  professional: MesaProfessional,
+): AreaCompatibility | null {
+  if (!exigencia) return null;
+
+  const alvo = exigencia.trim().toLowerCase();
+  if (!alvo) return null;
+
+  const declarado = [professional.areaRawText ?? "", ...professional.areaTags]
+    .join(" ")
+    .toLowerCase();
+  if (!declarado.trim()) return null;
+
+  return declarado.includes(alvo) ? "COMPATIVEL" : null;
+}
+
 function AreaDeclarationForm({
   view,
   professional,
@@ -170,7 +199,19 @@ function AreaDeclarationForm({
   onDone: () => void;
 }) {
   const router = useRouter();
-  const [compatibility, setCompatibility] = useState<AreaCompatibility | null>(null);
+  /**
+   * A área já foi declarada no cadastro, pelo Admin — e o Curador redigitava
+   * a mesma leitura, um profissional por vez, a cada Case. Com Rede pequena
+   * é incômodo; com dezenas, é o que faz a etapa parar de ser cumprida.
+   *
+   * Aqui o sistema PROPÕE a partir do que já está registrado, e o Curador
+   * confirma ou corrige. Ele continua sendo quem declara: nada é enviado sem
+   * o clique dele, a proposta aparece nomeada como proposta, e discordar
+   * custa um clique — igual a concordar. O que sai é a digitação repetida,
+   * não o juízo.
+   */
+  const sugestao = sugerirCompatibilidade(view.areaRequirement, professional);
+  const [compatibility, setCompatibility] = useState<AreaCompatibility | null>(sugestao);
   const [rationale, setRationale] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -227,6 +268,16 @@ function AreaDeclarationForm({
 
       <fieldset>
         <legend className="text-xs uppercase tracking-wide text-ink-muted">Sua declaração</legend>
+        {/* A proposta é dita como proposta. Sem esta linha, o botão já marcado
+            pareceria decisão tomada — e o Curador assinaria leitura que não
+            fez. Some assim que ele toca em qualquer opção: a partir daí a
+            escolha é dele, e o aviso vira ruído. */}
+        {sugestao && compatibility === sugestao ? (
+          <p className="mt-1 text-xs text-ink-muted">
+            Sugerido pelo cadastro — o que o Admin registrou responde ao que o caso exige.
+            Confirme ou corrija: a declaração é sua.
+          </p>
+        ) : null}
         <div className="mt-2 flex flex-wrap gap-2">
           {(Object.keys(AREA_COMPATIBILITY_LABELS) as AreaCompatibility[]).map((option) => (
             <Button

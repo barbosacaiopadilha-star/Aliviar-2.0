@@ -99,7 +99,11 @@ describe("encerramento da Curadoria Técnica (Barreira 4)", () => {
     const missing = validateMesaClosure(validInput({ pareceres }));
     expect(missing).toHaveLength(1);
     expect(missing[0]).toContain("Dr. Ismael Cardoso");
-    expect(missing[0]).toContain("limitações");
+    // O rótulo do campo passou a ser o mesmo do Relatório ("o que esta opção
+    // custa", antes "quais limitações possui") — a Mesa e o documento final
+    // deixaram de nomear diferente a mesma coisa. O que este teste prova não
+    // mudou: a falta é dita nomeando o campo, em linguagem de pessoa.
+    expect(missing[0]).toContain("o que esta opção custa");
     expect(missing[0]?.toLowerCase()).not.toContain("campo obrigatório");
   });
 
