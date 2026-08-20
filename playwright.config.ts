@@ -68,7 +68,30 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  /**
+   * UM WORKER, tanto em CI quanto na máquina de quem desenvolve.
+   *
+   * A suíte compartilha recursos que o banco trata como únicos: as contas de
+   * `test-users.local.json` (uma por papel, usada por 27 specs) e o pool de
+   * `professional_profiles`, que é global e não escopado por Caso. Há até um
+   * índice único — um rascunho de história por paciente — que dois specs
+   * concorrentes violam por construção, não por azar.
+   *
+   * Medido em 2026-08-20, mesmo commit, três execuções:
+   *   · em paralelo: 9 falhas, depois 8 — e o CONJUNTO mudou entre elas, com
+   *     quatro specs saindo da lista e três entrando. Várias morriam por
+   *     estouro de espera, aos ~31s.
+   *   · em série: 4 falhas, sempre as mesmas, todas reproduzíveis isoladas.
+   *
+   * Vermelho que troca de nome a cada execução não é rede de proteção: é ruído,
+   * e ruído ensina a equipe a ignorar vermelho. Três minutos a mais (6,3 contra
+   * 3,1) é o preço de uma suíte que quer dizer alguma coisa.
+   *
+   * Para recuperar o paralelismo é preciso primeiro dar a cada worker as suas
+   * próprias contas e o seu próprio pool de profissionais — trabalho que não
+   * cabia junto desta medição, e que este comentário existe para lembrar.
+   */
+  workers: 1,
   reporter: "list",
   use: {
     baseURL: "http://127.0.0.1:3001",
