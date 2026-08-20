@@ -184,7 +184,7 @@ export async function saveProtocolDraftForProfessionalAction(
     updatedBy: state.user.id,
   });
 
-  revalidatePath(`/admin/profissionais/${professionalProfileId}`);
+  revalidatePath(`/admin/profissionais/${professionalProfileId}`, "layout");
   return { success: true as const };
 }
 
@@ -214,7 +214,7 @@ export async function submitProtocolForProfessionalAction(professionalProfileId:
     };
   }
 
-  revalidatePath(`/admin/profissionais/${professionalProfileId}`);
+  revalidatePath(`/admin/profissionais/${professionalProfileId}`, "layout");
   return { success: true as const, registered: resultado.registered.length };
 }
 

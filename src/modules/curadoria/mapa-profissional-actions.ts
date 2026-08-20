@@ -69,6 +69,6 @@ export async function saveProfessionalSubcriterionAction(input: {
     return { success: false, error: erro instanceof Error ? erro.message : "Não foi possível gravar." };
   }
 
-  revalidatePath(`/admin/profissionais/${input.professionalProfileId}`);
+  revalidatePath(`/admin/profissionais/${input.professionalProfileId}`, "layout");
   return { success: true };
 }

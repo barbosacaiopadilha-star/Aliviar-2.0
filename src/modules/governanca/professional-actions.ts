@@ -64,6 +64,6 @@ export async function registrarAceitesDoProfissionalAction(
     return { success: false, error: (erro as Error).message };
   }
 
-  revalidatePath(`/admin/profissionais/${parsed.data.professionalProfileId}`);
+  revalidatePath(`/admin/profissionais/${parsed.data.professionalProfileId}`, "layout");
   return { success: true };
 }

@@ -62,7 +62,7 @@ export async function verifyRegistrationAction(
     };
   }
 
-  revalidatePath(`/admin/profissionais/${id}`);
+  revalidatePath(`/admin/profissionais/${id}`, "layout");
   return { success: true };
 }
 
@@ -115,7 +115,7 @@ export async function savePracticeAreaAction(
     };
   }
 
-  revalidatePath(`/admin/profissionais/${id}`);
+  revalidatePath(`/admin/profissionais/${id}`, "layout");
   return { success: true };
 }
 
@@ -161,7 +161,7 @@ export async function publishProfessionalAction(
     };
   }
 
-  revalidatePath(`/admin/profissionais/${id}`);
+  revalidatePath(`/admin/profissionais/${id}`, "layout");
   revalidatePath("/admin/profissionais");
   return { success: true };
 }
@@ -299,7 +299,7 @@ export async function updateProfessionalProfileAction(
     };
   }
 
-  revalidatePath(`/admin/profissionais/${id}`);
+  revalidatePath(`/admin/profissionais/${id}`, "layout");
   revalidatePath("/admin/profissionais");
   return { success: true };
 }
@@ -327,7 +327,7 @@ export async function setProfessionalStatusAction(
       { cause: erro },
     );
   }
-  revalidatePath(`/admin/profissionais/${id}`);
+  revalidatePath(`/admin/profissionais/${id}`, "layout");
   revalidatePath("/admin/profissionais");
 }
 
@@ -350,6 +350,6 @@ export async function setProfessionalPublicationStatusAction(
       { cause: erro },
     );
   }
-  revalidatePath(`/admin/profissionais/${id}`);
+  revalidatePath(`/admin/profissionais/${id}`, "layout");
   revalidatePath("/admin/profissionais");
 }

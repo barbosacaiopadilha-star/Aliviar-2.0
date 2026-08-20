@@ -34,7 +34,7 @@ export async function uploadProfessionalDocumentAction(
     return { success: false, error: falhaParaUsuario("profiles.professional-document-actions", erro, { mensagem: "Não foi possível enviar o documento agora. Tente novamente." }) };
   }
 
-  revalidatePath(`/admin/profissionais/${professionalProfileId}`);
+  revalidatePath(`/admin/profissionais/${professionalProfileId}`, "layout");
   return { success: true };
 }
 
@@ -56,6 +56,6 @@ export async function deleteProfessionalDocumentAction(
     return { success: false, error: falhaParaUsuario("profiles.professional-document-actions", erro, { mensagem: "Não foi possível remover o documento agora." }) };
   }
 
-  revalidatePath(`/admin/profissionais/${professionalProfileId}`);
+  revalidatePath(`/admin/profissionais/${professionalProfileId}`, "layout");
   return { success: true };
 }

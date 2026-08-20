@@ -54,7 +54,7 @@ export async function lerCurriculoAction(
     documentId,
     actorId: state.user.id,
   });
-  revalidatePath(`/admin/profissionais/${professionalProfileId}`);
+  revalidatePath(`/admin/profissionais/${professionalProfileId}`, "layout");
   return { success: true, data: resultado };
 }
 
@@ -67,7 +67,7 @@ export async function salvarFormacaoAction(
   const supabase = await createServerSupabaseClient();
   const r = await salvarEdicaoDeFormacao(supabase, entryId, campos);
   if (!r.ok) return { success: false, error: mensagem(r.motivo) };
-  revalidatePath(`/admin/profissionais/${professionalProfileId}`);
+  revalidatePath(`/admin/profissionais/${professionalProfileId}`, "layout");
   return { success: true, data: null };
 }
 
@@ -82,7 +82,7 @@ export async function confirmarFormacaoAction(
     justificativaSemInstituicao,
   });
   if (!r.ok) return { success: false, error: mensagem(r.motivo) };
-  revalidatePath(`/admin/profissionais/${professionalProfileId}`);
+  revalidatePath(`/admin/profissionais/${professionalProfileId}`, "layout");
   return { success: true, data: null };
 }
 
@@ -100,7 +100,7 @@ export async function registrarConceitoDoMecAction(
   const supabase = await createServerSupabaseClient();
   const r = await registrarConceitoDoMec(supabase, entryId, conceito, ano);
   if (!r.ok) return { success: false, error: mensagem(r.motivo) };
-  revalidatePath(`/admin/profissionais/${professionalProfileId}`);
+  revalidatePath(`/admin/profissionais/${professionalProfileId}`, "layout");
   return { success: true, data: null };
 }
 
@@ -112,7 +112,7 @@ export async function excluirFormacaoAction(
   const supabase = await createServerSupabaseClient();
   const r = await excluirFormacao(supabase, entryId);
   if (!r.ok) return { success: false, error: mensagem(r.motivo) };
-  revalidatePath(`/admin/profissionais/${professionalProfileId}`);
+  revalidatePath(`/admin/profissionais/${professionalProfileId}`, "layout");
   return { success: true, data: null };
 }
 
@@ -124,6 +124,6 @@ export async function criarFormacaoManualAction(
   const supabase = await createServerSupabaseClient();
   const r = await criarFormacaoManual(supabase, professionalProfileId, campos);
   if (!r.ok) return { success: false, error: mensagem(r.motivo) };
-  revalidatePath(`/admin/profissionais/${professionalProfileId}`);
+  revalidatePath(`/admin/profissionais/${professionalProfileId}`, "layout");
   return { success: true, data: null };
 }

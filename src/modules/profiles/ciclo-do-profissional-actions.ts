@@ -162,7 +162,7 @@ export async function classificarLegadoDoProfissionalAction(
       };
     }
 
-    revalidatePath(`/admin/profissionais/${profissionalId}`);
+    revalidatePath(`/admin/profissionais/${profissionalId}`, "layout");
     revalidatePath("/admin/profissionais");
     return { success: true, data: { para: pedido.para } };
   } catch (erro) {
@@ -235,7 +235,7 @@ export async function mudarCicloDoProfissionalAction(
       };
     }
 
-    revalidatePath(`/admin/profissionais/${profissionalId}`);
+    revalidatePath(`/admin/profissionais/${profissionalId}`, "layout");
     revalidatePath("/admin/profissionais");
     return { success: true, data: { de: de as CicloDoProfissional, para: pedido.para } };
   } catch (erro) {
