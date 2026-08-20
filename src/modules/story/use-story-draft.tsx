@@ -56,6 +56,8 @@ type StoryDraftContextValue = {
    */
   sessionExpired: boolean;
   dismissConflict: () => void;
+  /** Grava a etapa nova ANTES de navegar — ver a implementação no Provider. */
+  salvarAntesDeAvancar: (proximaEtapa: StoryStep) => Promise<void>;
   submit: () => Promise<{ success: boolean; error?: string }>;
 };
 
@@ -238,7 +240,28 @@ export function StoryDraftProvider({ story, children }: StoryDraftProviderProps)
       // antiga na janela entre o clique e o commit do React.
       currentRef.current = { ...currentRef.current, currentStep: step };
       setCurrent((prev) => ({ ...prev, currentStep: step }));
-      void enqueueSave();
+      /**
+       * ESTE É O CAMINHO DE EXCEÇÃO, e ele precisa existir com ressalva.
+       *
+       * Quem avança pelo "Continuar" já gravou antes de navegar
+       * (`salvarAntesDeAvancar`), e por isso nem chega aqui: a etapa já bate.
+       * Este ramo só roda para quem trocou de rota por fora do botão — "Voltar",
+       * link direto, histórico do navegador.
+       *
+       * A ressalva: uma gravação disparada no MEIO da troca de rota pode não
+       * despachar requisição alguma. Medido em 2026-08-20 com escuta de rede:
+       * a action era chamada, nenhum `POST` saía, e a promessa ficava pendente
+       * para sempre — prendendo a fila, que é encadeada, e com ela o envio da
+       * história, que a paciente disparava minutos depois. O botão girava em
+       * "Aguarde…" sem fim e a história ficava `rascunho`.
+       *
+       * O `setTimeout` de zero tira a chamada de dentro da transição. Não é
+       * garantia — é o que se pode fazer sem controlar a navegação, que nestes
+       * casos vem do navegador. Por isso o caminho principal deixou de depender
+       * daqui.
+       */
+      const idDaGravacao = setTimeout(() => void enqueueSave(), 0);
+      return () => clearTimeout(idDaGravacao);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
@@ -315,6 +338,28 @@ export function StoryDraftProvider({ story, children }: StoryDraftProviderProps)
     return { success: false, error: result.error };
   }, [cancelPendingDebounce, enqueueSave]);
 
+  /**
+   * Grava a etapa NOVA antes de a navegação começar.
+   *
+   * Quem avança pelo "Continuar" chama isto e só navega depois. Com a etapa já
+   * registrada aqui, o efeito de `pathname` — que roda depois, na rota nova —
+   * encontra `step === currentRef.current.currentStep` e não dispara gravação
+   * alguma. É essa gravação, a que nascia no meio da transição, que nunca
+   * despachava requisição e prendia a fila inteira (ver o comentário no efeito).
+   *
+   * A ordem importa e é o ponto todo: primeiro a escrita, com a página ainda
+   * viva; a troca de rota depois.
+   */
+  const salvarAntesDeAvancar = useCallback(
+    async (proximaEtapa: StoryStep) => {
+      cancelPendingDebounce();
+      currentRef.current = { ...currentRef.current, currentStep: proximaEtapa };
+      setCurrent((prev) => ({ ...prev, currentStep: proximaEtapa }));
+      await enqueueSave();
+    },
+    [cancelPendingDebounce, enqueueSave],
+  );
+
   const value: StoryDraftContextValue = {
     data: current.data,
     update,
@@ -325,10 +370,23 @@ export function StoryDraftProvider({ story, children }: StoryDraftProviderProps)
     saveError,
     sessionExpired,
     dismissConflict: () => setHasConflict(false),
+    salvarAntesDeAvancar,
     submit,
   };
 
   return <StoryDraftContext.Provider value={value}>{children}</StoryDraftContext.Provider>;
+}
+
+/**
+ * A mesma leitura, para quem PODE estar fora do Provider.
+ *
+ * `StoryStepLayout` é usado pelas seis etapas do assistente — todas dentro do
+ * Provider — e também pela recepção pública `/sua-historia`, que fica fora dele
+ * e existe para quem ainda não tem conta. Exigir o Provider ali derrubaria a
+ * porta de entrada. Devolve `null` fora, e quem chama decide o que fazer.
+ */
+export function useStoryDraftOpcional(): StoryDraftContextValue | null {
+  return useContext(StoryDraftContext);
 }
 
 export function useStoryDraft(): StoryDraftContextValue {

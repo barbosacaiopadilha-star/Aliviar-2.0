@@ -50,6 +50,31 @@ Destino: uma linha em `curadoria.crm_contacts`, gravada pela função
 enviados são de um terceiro que não está ali para consentir. É uma situação
 real do produto e a política precisa dizer algo sobre ela.
 
+### 2.1 · O que MUDA com a ADR-072 — ainda não implementado
+
+A decisão de 2026-08-20 acrescenta uma segunda porta pública, e ela é de outra
+natureza: **passa a coletar dado de saúde de quem não é paciente.**
+
+| campo | obrigatório | observação |
+|---|---|---|
+| nome | sim | |
+| telefone | sim | é a chave do vínculo — a conversa segue no WhatsApp |
+| a história | sim | **texto livre, com conteúdo de saúde** |
+
+**Não** pede e-mail, e isso é decisão, não esquecimento: o telefone é o canal, e
+um segundo identificador poderia divergir do primeiro.
+
+Três pontos que o jurídico precisa considerar, e que não existem no formulário
+de hoje:
+
+1. **É dado sensível (saúde) de pessoa sem vínculo.** O formulário atual não
+   coleta nada de saúde; este coleta, e de alguém que pode nunca virar paciente.
+2. **O conteúdo NUNCA é transmitido ao WhatsApp.** Quem é transferida para o
+   canal é a **pessoa**, para conversar; o relato permanece na base da Aliviar.
+   Nenhum dado de saúde atravessa para infraestrutura de terceiro. Este é o
+   ponto que sustenta juridicamente a decisão inteira.
+3. **A retenção é de 90 dias** e a promessa é feita na tela — ver §5.1.
+
 ---
 
 ## 3 · Quem consegue ler
@@ -103,6 +128,35 @@ O que segue valendo: não há política de retenção nem descarte por rotina.
 
 Isto precisa de decisão sua antes de virar texto — uma política que promete
 prazo que o sistema não cumpre é pior que nenhuma política.
+
+### 5.1 · A primeira retenção decidida (2026-08-20) — ADR-072
+
+O Fundador decidiu o prazo para **um** conjunto de dados, que ainda não existe
+no sistema: as histórias captadas de quem **não é paciente**, no fluxo novo da
+ADR-072.
+
+- **Prazo: 90 dias** a partir da captação.
+- **Depois:** o relato é apagado.
+- **Exceção:** se a pessoa virar paciente da Aliviar dentro dos 90 dias, a
+  história sai deste prazo — passa a ser histórico dela, sob a mesma regra das
+  demais histórias de paciente.
+- **Onde a promessa é feita:** **na própria tela, enquanto a pessoa escreve** —
+  não apenas na política. A decisão foi explícita neste ponto: quem se abre
+  precisa saber o destino do que vai contar *antes* de contar.
+
+Sentido a preservar na redação jurídica: *guardamos por 90 dias enquanto
+conversamos; depois apagamos; se você virar paciente nesse período, a história
+fica com você*.
+
+**Atenção — nada disso está implementado.** Não há captação anônima, não há
+expurgo automático e nenhuma rotina cumpre o prazo. A política **não pode
+afirmar que já acontece**. Pode declarar o compromisso, desde que a
+implementação seja publicada junto — e é assim que precisa ser tratado, sob pena
+de a política prometer o que o sistema não faz, que é justamente o erro que este
+levantamento existe para evitar.
+
+O restante do §5 continua valendo: para todas as **outras** entidades não há
+prazo nem descarte por rotina, e essa lacuna segue aberta.
 
 ---
 

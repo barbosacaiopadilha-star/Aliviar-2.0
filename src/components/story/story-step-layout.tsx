@@ -2,12 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { SectionContainer } from "@/components/ui/section-container";
 import { SectionReveal } from "@/components/ui/section-reveal";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
+import { useStoryDraftOpcional } from "@/modules/story/use-story-draft";
+import { STORY_STEPS, type StoryStep } from "@/modules/story/types";
 
 /**
  * O campo de resposta narrativa — papel, e do tamanho de uma fala.
@@ -67,6 +69,41 @@ export function StoryStepLayout({
 }: StoryStepLayoutProps) {
   const router = useRouter();
   const hasFooter = Boolean(backHref || nextHref || actionSlot);
+  // OPCIONAL de propósito: este layout também veste a recepção pública
+  // `/sua-historia`, que fica fora do Provider por existir para quem ainda não
+  // tem conta. Lá não há rascunho a gravar — só o convite para começar.
+  const rascunho = useStoryDraftOpcional();
+  const [avancando, setAvancando] = useState(false);
+
+  /**
+   * GRAVA, DEPOIS NAVEGA — nunca as duas ao mesmo tempo.
+   *
+   * Era `router.push(nextHref)` direto. A gravação da etapa acontecia então
+   * como efeito da troca de rota, no meio da transição — e ali a action podia
+   * ser chamada sem que requisição alguma fosse despachada, deixando a fila de
+   * gravações presa para sempre. O sintoma aparecia longe daqui: no fim do
+   * assistente, "Enviar minha história" girava sem fim e a história ficava
+   * `rascunho`. A paciente ia embora achando que tinha enviado.
+   *
+   * Gravando antes, com a página ainda viva, some a corrida — e o efeito de
+   * rota não precisa mais gravar nada, porque a etapa já está registrada.
+   *
+   * Se a gravação falhar, a navegação acontece do mesmo jeito: o texto está no
+   * cache local e o assistente já sabe mostrar a recusa. Prender a pessoa na
+   * etapa por causa de uma falha de rede seria pior que seguir.
+   */
+  async function avancar(destino: string) {
+    const proximaEtapa = destino.split("/").pop() ?? "";
+    setAvancando(true);
+    try {
+      if (rascunho && (STORY_STEPS as readonly string[]).includes(proximaEtapa)) {
+        await rascunho.salvarAntesDeAvancar(proximaEtapa as StoryStep);
+      }
+    } finally {
+      setAvancando(false);
+      router.push(destino);
+    }
+  }
 
   return (
     <SectionContainer className="py-16 lg:py-24">
@@ -130,8 +167,9 @@ export function StoryStepLayout({
               (nextHref ? (
                 <Button
                   type="button"
-                  onClick={() => router.push(nextHref)}
+                  onClick={() => void avancar(nextHref)}
                   disabled={nextDisabled}
+                  isLoading={avancando}
                   className={cn("sm:w-auto", nextIsPorta && "landing-porta")}
                 >
                   {nextLabel}
