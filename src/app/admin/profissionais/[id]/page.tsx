@@ -143,6 +143,7 @@ export default async function EditProfessionalPage({
               <li key={item.id}>
                 <Link
                   href={professionalWorkflowStepHref(id, item.id)}
+                  prefetch={false}
                   aria-current={ativa ? "step" : undefined}
                   className={`flex min-h-11 items-center gap-2 rounded px-3 py-2 text-sm font-medium transition-colors ${
                     ativa
@@ -177,6 +178,7 @@ export default async function EditProfessionalPage({
               id,
               PROFESSIONAL_WORKFLOW_STEPS[indiceEtapa - 1]!.id,
             )}
+            prefetch={false}
             className="inline-flex min-h-11 items-center rounded-md border border-border-strong px-4 py-2 text-sm font-medium text-ink hover:bg-recessed"
           >
             Voltar: {PROFESSIONAL_WORKFLOW_STEPS[indiceEtapa - 1]!.label}
@@ -190,6 +192,7 @@ export default async function EditProfessionalPage({
               id,
               PROFESSIONAL_WORKFLOW_STEPS[indiceEtapa + 1]!.id,
             )}
+            prefetch={false}
             className="inline-flex min-h-11 items-center rounded-md bg-brand-primary px-4 py-2 text-sm font-medium text-surface hover:bg-brand-primary-deep"
           >
             Continuar: {PROFESSIONAL_WORKFLOW_STEPS[indiceEtapa + 1]!.label}
