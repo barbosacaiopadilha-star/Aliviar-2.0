@@ -39,7 +39,16 @@ test.describe("Área do Curador Médico (ÉPICO 1/SPRINT 2)", () => {
 
     // Saudação e navegação existem com ou sem fila — nunca dependem de dado
     // deixado por outro spec.
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Bom dia,");
+    //
+    // A saudação era "Bom dia" fixo no código, a qualquer hora, e este oráculo
+    // cobrava a string. Desde 2026-08-20 ela segue o relógio, como a área da
+    // paciente sempre seguiu — às 3h da manhã a Mesa dizia "Bom dia" e a
+    // paciente dizia "Boa noite", no mesmo minuto. O teste passa a exigir o que
+    // sempre quis: que exista saudação com o nome, não qual delas. Cobrar uma
+    // faixa do dia aqui faria a suíte ficar vermelha por volta do meio-dia.
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      /^(Bom dia|Boa tarde|Boa noite), .+\.$/,
+    );
     await expect(
       page.getByRole("navigation").getByRole("link", { name: "Fila de Curadorias" }),
     ).toBeVisible();
