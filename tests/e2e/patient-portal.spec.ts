@@ -67,16 +67,34 @@ test.describe("Portal do Paciente", () => {
     // a falar com ela ("Seus"), não sobre o sistema ("Meus").
     await expect(page.getByRole("heading", { name: "Seus documentos", level: 1 })).toBeVisible();
 
+    // NOME ÚNICO POR EXECUÇÃO, com o mesmo conteúdo do fixture.
+    //
+    // O envio usava sempre "sample-document.pdf", e a asserção afirmava em
+    // comentário que a ação "é única". Só era numa base recém-criada: a conta de
+    // paciente é compartilhada por 27 specs, e nada apagava o arquivo quando o
+    // teste falhava antes do passo que remove. Cada execução deixava mais uma
+    // cópia — chegaram a SEIS no banco — até o seletor casar com cinco botões e
+    // o teste morrer por `strict mode violation`. Um teste que, ao falhar,
+    // sabotava a própria execução seguinte, e ficava mais difícil de diagnosticar
+    // a cada vez.
+    //
+    // Com nome único, a asserção volta a falar de UM item, independentemente do
+    // que sobrou de ontem — e o passo final continua provando a remoção.
+    const nomeDoArquivo = `sample-document-${Date.now()}.pdf`;
     const filePath = path.resolve(__dirname, "../fixtures/sample-document.pdf");
-    await page.locator('input[type="file"]').setInputFiles(filePath);
+    await page.locator('input[type="file"]').setInputFiles({
+      name: nomeDoArquivo,
+      mimeType: "application/pdf",
+      buffer: readFileSync(filePath),
+    });
     await page.getByRole("button", { name: "Enviar", exact: true }).click();
 
     // O nome aparece no título E nos rótulos acessíveis das ações — por isso a
-    // asserção é sobre a AÇÃO, que é única e prova que o item é utilizável.
-    await expect(page.getByRole("button", { name: "Baixar sample-document.pdf" })).toBeVisible();
+    // asserção é sobre a AÇÃO, que prova que o item é utilizável.
+    await expect(page.getByRole("button", { name: `Baixar ${nomeDoArquivo}` })).toBeVisible();
 
-    await page.getByRole("button", { name: "Remover sample-document.pdf" }).click();
-    await expect(page.getByRole("button", { name: "Baixar sample-document.pdf" })).toHaveCount(0);
+    await page.getByRole("button", { name: `Remover ${nomeDoArquivo}` }).click();
+    await expect(page.getByRole("button", { name: `Baixar ${nomeDoArquivo}` })).toHaveCount(0);
   });
 
   test("linha do tempo mostra ao menos a criação da conta", async ({ page }) => {
