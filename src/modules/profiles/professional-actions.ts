@@ -62,7 +62,7 @@ export async function verifyRegistrationAction(
     };
   }
 
-  revalidatePath(`/admin/profissionais/${id}`, "layout");
+  revalidatePath(`/admin/profissionais/${id}/publicacao`);
   return { success: true };
 }
 
@@ -115,7 +115,7 @@ export async function savePracticeAreaAction(
     };
   }
 
-  revalidatePath(`/admin/profissionais/${id}`, "layout");
+  revalidatePath(`/admin/profissionais/${id}/publicacao`);
   return { success: true };
 }
 
@@ -161,7 +161,7 @@ export async function publishProfessionalAction(
     };
   }
 
-  revalidatePath(`/admin/profissionais/${id}`, "layout");
+  revalidatePath(`/admin/profissionais/${id}/publicacao`);
   revalidatePath("/admin/profissionais");
   return { success: true };
 }
@@ -299,7 +299,7 @@ export async function updateProfessionalProfileAction(
     };
   }
 
-  revalidatePath(`/admin/profissionais/${id}`, "layout");
+  revalidatePath(`/admin/profissionais/${id}/cadastro`);
   revalidatePath("/admin/profissionais");
   return { success: true };
 }
@@ -327,6 +327,10 @@ export async function setProfessionalStatusAction(
       { cause: erro },
     );
   }
+  // Ativo/Inativo é BADGE DE CABEÇALHO: aparece nas seis etapas, então
+  // revalidar uma só deixaria as outras cinco mentindo. "layout" alcança
+  // todas — e aqui pode, porque este ato não tem mensagem na tela a
+  // preservar (é form de servidor puro, sem estado de `useActionState`).
   revalidatePath(`/admin/profissionais/${id}`, "layout");
   revalidatePath("/admin/profissionais");
 }
@@ -350,6 +354,6 @@ export async function setProfessionalPublicationStatusAction(
       { cause: erro },
     );
   }
-  revalidatePath(`/admin/profissionais/${id}`, "layout");
+  revalidatePath(`/admin/profissionais/${id}/publicacao`);
   revalidatePath("/admin/profissionais");
 }

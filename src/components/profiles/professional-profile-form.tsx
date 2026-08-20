@@ -61,11 +61,16 @@ export function ProfessionalProfileForm({
    *
    * Ações que só salvam (edição) não devolvem destino e seguem exibindo
    * "Salvo com sucesso." aqui mesmo, sem sair da tela.
+   *
+   * NAVEGAÇÃO CHEIA, não `router.push`: o destino é uma rota que este
+   * navegador nunca visitou, e navegação de cliente para rota fria logo
+   * depois de uma action não acontece — o payload chega, a URL não muda, e a
+   * tela fica parada. É o mesmo motivo pelo qual os links de etapa são `<a>`.
    */
   const destino = state?.success ? state.redirectTo : undefined;
   useEffect(() => {
-    if (destino) router.push(destino);
-  }, [destino, router]);
+    if (destino) window.location.assign(destino);
+  }, [destino]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

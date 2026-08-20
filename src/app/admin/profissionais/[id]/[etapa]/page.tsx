@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import type { Metadata } from "next";
@@ -139,7 +138,16 @@ export default async function EditProfessionalPage({
             const ativa = item.id === etapa;
             return (
               <li key={item.id}>
-                <Link
+                {/* NAVEGAÇÃO DE VERDADE (`<a>`), não `<Link>` — e de propósito.
+                    Medido: depois de uma action, clicar num `<Link>` para uma
+                    etapa AINDA NÃO VISITADA não navega. O payload chega, a URL
+                    não muda, e a tela fica parada até recarregar à mão. Visitar
+                    a etapa antes resolve; prefetch ligado ou desligado não muda
+                    nada — só uma visita real aquece a rota.
+                    Cada etapa busca dados próprios no servidor, então a
+                    navegação cheia custa pouco aqui. E custa muito menos que um
+                    fluxo de seis etapas que trava no meio do trabalho. */}
+                <a
                   href={professionalWorkflowStepHref(id, item.id)}
                   aria-current={ativa ? "step" : undefined}
                   className={`flex min-h-11 items-center gap-2 rounded px-3 py-2 text-sm font-medium transition-colors ${
@@ -150,7 +158,7 @@ export default async function EditProfessionalPage({
                 >
                   <span aria-hidden="true">{index + 1}</span>
                   <span>{item.label}</span>
-                </Link>
+                </a>
               </li>
             );
           })}
@@ -169,8 +177,9 @@ export default async function EditProfessionalPage({
         aria-label="Continuar cadastro profissional"
         className="flex flex-wrap justify-between gap-3"
       >
+        {/* `<a>` pelo mesmo motivo da barra de etapas — ver o comentário lá. */}
         {indiceEtapa > 0 ? (
-          <Link
+          <a
             href={professionalWorkflowStepHref(
               id,
               PROFESSIONAL_WORKFLOW_STEPS[indiceEtapa - 1]!.id,
@@ -178,12 +187,12 @@ export default async function EditProfessionalPage({
             className="inline-flex min-h-11 items-center rounded-md border border-border-strong px-4 py-2 text-sm font-medium text-ink hover:bg-recessed"
           >
             Voltar: {PROFESSIONAL_WORKFLOW_STEPS[indiceEtapa - 1]!.label}
-          </Link>
+          </a>
         ) : (
           <span />
         )}
         {indiceEtapa < PROFESSIONAL_WORKFLOW_STEPS.length - 1 ? (
-          <Link
+          <a
             href={professionalWorkflowStepHref(
               id,
               PROFESSIONAL_WORKFLOW_STEPS[indiceEtapa + 1]!.id,
@@ -191,7 +200,7 @@ export default async function EditProfessionalPage({
             className="inline-flex min-h-11 items-center rounded-md bg-brand-primary px-4 py-2 text-sm font-medium text-surface hover:bg-brand-primary-deep"
           >
             Continuar: {PROFESSIONAL_WORKFLOW_STEPS[indiceEtapa + 1]!.label}
-          </Link>
+          </a>
         ) : null}
       </nav>
     </div>
