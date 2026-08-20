@@ -26,6 +26,7 @@ import {
   mudarCicloDoProfissionalAction,
   preverImpactoDaTransicaoAction,
 } from "@/modules/profiles/ciclo-do-profissional-actions";
+import { BotaoCicloDoProfissional } from "@/components/profiles/botao-ciclo-do-profissional";
 import { CicloDoProfissionalPanel } from "@/components/profiles/ciclo-do-profissional-panel";
 import { PublicationPanel } from "@/components/profiles/publication-panel";
 import { ProtocoloPraticaForm } from "@/components/profissional/protocolo-pratica-form";
@@ -36,7 +37,6 @@ import {
 import { loadProtocolDraft } from "@/modules/curadoria/protocolos-repository";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { FormacaoAcademicaPanel } from "@/components/profiles/formacao-academica-panel";
 import { MapaProfissionalPanel } from "@/components/profiles/mapa-profissional-panel";
@@ -113,17 +113,10 @@ export default async function EditProfessionalPage({
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row">
-              <form
-                action={setProfessionalStatusAction.bind(null, id, nextStatus)}
-              >
-                <Button
-                  type="submit"
-                  variant="secondary"
-                  className="w-full sm:w-auto"
-                >
-                  {professional.status === "ativo" ? "Desativar" : "Ativar"}
-                </Button>
-              </form>
+              <BotaoCicloDoProfissional
+                acao={setProfessionalStatusAction.bind(null, id, nextStatus)}
+                rotulo={professional.status === "ativo" ? "Desativar" : "Ativar"}
+              />
             </div>
           </div>
         </CardHeader>

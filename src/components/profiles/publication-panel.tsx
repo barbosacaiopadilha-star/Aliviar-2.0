@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -79,6 +80,24 @@ export function PublicationPanel({
   const [registroState, registroFormAction, registroPending] = useActionState(verifyRegistrationAction, undefined);
   const [areaState, areaFormAction, areaPending] = useActionState(savePracticeAreaAction, undefined);
   const [publishState, publishFormAction, publishPending] = useActionState(publishAction, undefined);
+
+  /**
+   * O `revalidatePath` das actions limpa o cache do SERVIDOR — não obriga este
+   * cliente a rebuscar. Sem `router.refresh()`, a gravação acontecia e a tela
+   * continuava a anterior: selo ausente, botão parado em "Aguarde…", e quem
+   * operava concluía que tinha perdido o trabalho. Só recarregar a página
+   * revelava que estava tudo salvo.
+   *
+   * Comprovado por sonda que consultou o Postgres direto: registro e área de
+   * atuação gravados, tela intacta. E por instrumentação do middleware: o POST
+   * da action chega e volta, e nenhuma requisição RSC é feita em seguida.
+   */
+  const router = useRouter();
+  const houveSucesso =
+    registroState?.success === true || areaState?.success === true || publishState?.success === true;
+  useEffect(() => {
+    if (houveSucesso) router.refresh();
+  }, [houveSucesso, registroState, areaState, publishState, router]);
 
   // A régua é a mesma que a porta do banco usa (`assert_publication_requirements`,
   // desde 20260727071000). Aqui ela não é reimplementada: as pendências chegam

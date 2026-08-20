@@ -161,7 +161,12 @@ export async function publishProfessionalAction(
     };
   }
 
-  revalidatePath(`/admin/profissionais/${id}/publicacao`);
+  // "layout", pelo mesmo motivo que `setProfessionalStatusAction`: Publicado /
+  // Não publicado é BADGE DE CABEÇALHO e aparece nas seis etapas. Revalidar só
+  // `/publicacao` deixava as outras cinco mentindo — e, na própria etapa de
+  // publicação, o selo continuava "Não publicado" depois de publicar. Os dois
+  // selos ficam lado a lado e têm a mesma propriedade; agora têm a mesma regra.
+  revalidatePath(`/admin/profissionais/${id}`, "layout");
   revalidatePath("/admin/profissionais");
   return { success: true };
 }
