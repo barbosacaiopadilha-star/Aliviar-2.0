@@ -37,22 +37,36 @@ const PROBLEMA_ITENS = [
  * que o produto cumpre: entender, registrar, estudar, apresentar. Nenhum
  * promete resultado clínico, prazo ou escolha feita por nós.
  */
+/**
+ * Os quatro movimentos dizem POR QUE nesta ordem — nunca o que acontece.
+ *
+ * Esta seção nasceu para separar o MÉTODO das ETAPAS: "Como funciona" conta o
+ * que acontece, em que ordem; aqui se explica a lógica que sustenta a ordem.
+ * Os textos anteriores não faziam isso — descreviam os mesmos acontecimentos,
+ * invadindo o papel da outra seção. O resultado era uma página que explicava a
+ * mesma jornada duas vezes, com "três caminhos legítimos" repetido palavra por
+ * palavra, e que anunciava ao visitante duas contagens diferentes para o mesmo
+ * percurso: quatro movimentos aqui, cinco passos lá.
+ *
+ * A régua para escrever qualquer um destes textos: se a frase puder virar um
+ * passo numerado do "Como funciona", ela está no lugar errado.
+ */
 const PILARES_DO_METODO = [
   {
     title: "Consciência",
-    text: "Entender o que está em jogo antes de decidir qualquer coisa.",
+    text: "Ninguém escolhe bem o que ainda não entendeu. Antes de qualquer nome, o que está em jogo precisa ficar claro.",
   },
   {
     title: "Contexto",
-    text: "Sua história, suas prioridades e o que você não abre mão — nas suas palavras.",
+    text: "Não existe bom médico em abstrato — existe o certo para uma vida concreta. Por isso o critério vem de você, antes da busca.",
   },
   {
     title: "Análise",
-    text: "Um Curador estuda o seu caso e compara caminhos, pessoa a pessoa.",
+    text: "Comparar exige uma pessoa lendo, não um filtro. Quem compara assume o que escolheu, com nome.",
   },
   {
     title: "Direção",
-    text: "Três caminhos legítimos, com o que cada um oferece e o que cada um pede.",
+    text: "Três, nunca um. Uma indicação única esconde o que foi descartado; três mostram o que cada caminho cobra.",
   },
 ] as const;
 
