@@ -269,9 +269,27 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
     await expect(page.getByText(/A história, nas palavras de/)).toBeVisible();
     await expect(page.getByText(/Há dois anos convivo com dores na coluna/).first()).toBeVisible();
 
-    await page.getByLabel("Revisei o que já se sabe sobre o paciente").check();
-    await page.getByLabel("Revisei os documentos disponíveis").check();
-    await page.getByRole("button", { name: "Registrar revisão" }).click();
+    // O ACOLHIMENTO DEIXOU DE SER DUAS CAIXAS DE MARCAR.
+    //
+    // Este passo exigia marcar "Revisei o que já se sabe sobre o paciente" e
+    // "Revisei os documentos disponíveis", e clicar em "Registrar revisão".
+    // Nenhum desses três rótulos existe mais em `src/`: a tela foi redesenhada e
+    // agora pede que o Curador ESCREVA o que levou da leitura — "O que já se
+    // sabe" e "O que ficou em aberto" —, com "Registrar preparação".
+    //
+    // A exigência ficou MAIOR, não menor: marcar caixa prova intenção, escrever
+    // prova leitura. O oráculo é que estava velho — este teste falhava por
+    // cobrar uma tela que o produto não tem mais, não por defeito.
+    await page
+      .getByLabel("O que já se sabe")
+      .fill("Dores na coluna há dois anos.\nRessonância recente anexada pela paciente.");
+    await page.getByLabel("O que ficou em aberto").fill("Confirmar se já houve avaliação cirúrgica.");
+    await page.getByRole("button", { name: "Registrar preparação" }).click();
+    // A preparação registrada é o que abre a etapa seguinte — e quem decide é o
+    // servidor, não a tela: o link só nasce depois da confirmação.
+    await expect(page.getByRole("link", { name: "Prosseguir para a História" })).toBeVisible({
+      timeout: 30_000,
+    });
 
     // O registro da história nasce pré-preenchido com as palavras dela — sem redigitação.
     const historiaField = page.getByLabel("História organizada");
@@ -326,6 +344,17 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
     // proposta — por isso cada conversa seleciona uma opção canônica (a
     // neutra, quando a pergunta a oferece) e declara o grau "Não tenho
     // preferência", que a matriz relacional lê como NAO_RELEVANTE.
+    // AS FICHAS NASCEM RECOLHIDAS — e o laço abaixo não sabia disso.
+    //
+    // O painel passou a esconder as conversas sem registro atrás de "Abrir
+    // protocolo completo", com a razão dita na própria tela: "as fichas sem
+    // registro ficam recolhidas até serem necessárias na conversa". Sem
+    // expandir, nenhum botão "Registrar conversa" existe no documento — o laço
+    // encerrava na primeira volta e o teste morria no oráculo final com "0 de
+    // 15", parecendo defeito de gravação quando era só uma gaveta fechada.
+    const abrirProtocolo = page.getByRole("button", { name: /Abrir protocolo completo/ });
+    if ((await abrirProtocolo.count()) > 0) await abrirProtocolo.first().click();
+
     const badgeDeProgresso = page.getByText(/\d+ de 15 conversas registradas/);
     for (let volta = 0; volta < 16; volta += 1) {
       const registrar = page.getByRole("button", { name: "Registrar conversa" });
