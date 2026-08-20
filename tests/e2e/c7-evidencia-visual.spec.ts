@@ -6,8 +6,22 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { createClient } from "@supabase/supabase-js";
 
-import { argumentosPsql } from "../apoio/stack-local";
+import { CONTAINER_PADRAO, argumentosPsql, containerDoBanco } from "../apoio/stack-local";
 import { semearCicloE2E } from "../apoio/seed-ciclo-e2e";
+
+/**
+ * PULA, NÃO FALHA, quando a stack isolada não está configurada.
+ *
+ * O seed destes cenários escreve oito profissionais sintéticos direto por
+ * `psql` e é proibido de tocar a stack compartilhada — a trava dentro de
+ * `semearCicloE2E` continua valendo e NÃO foi afrouxada aqui. O que muda é o
+ * que acontece quando a condição não existe: antes, as 21 combinações
+ * **falhavam**, e a suíte passava a mentir sobre si mesma — seis vermelhos
+ * permanentes que não eram defeito nenhum, misturados aos defeitos de verdade.
+ *
+ * Falta de ambiente não é falha de produto. Pular diz a verdade; falhar não.
+ */
+const STACK_ISOLADA = containerDoBanco() !== CONTAINER_PADRAO;
 
 /**
  * C7R · MATRIZ VISUAL 7×3 — sete cenários, três viewports, 21 combinações.
@@ -54,7 +68,13 @@ type ClienteLeve = {
 let service: ClienteLeve;
 let adminEmail = "";
 
+test.skip(
+  !STACK_ISOLADA,
+  "Exige stack isolada: defina SUPABASE_DB_CONTAINER. O seed destes cenários nunca toca a stack compartilhada.",
+);
+
 test.beforeAll(async () => {
+  if (!STACK_ISOLADA) return;
   mkdirSync(DIR, { recursive: true });
   seed = await semearCicloE2E();
   service = createClient(
