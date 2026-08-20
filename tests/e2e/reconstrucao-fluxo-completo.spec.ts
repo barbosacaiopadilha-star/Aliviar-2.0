@@ -329,13 +329,28 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
     await expect(page.getByText("Mapa de Prioridades").first()).toBeVisible();
 
     // Classifica os 29 — escala fechada, um clique por conceito (Catálogo 1.1.0, ADR-065).
+    //
+    // O MAPA DEIXOU DE GRAVAR A CADA CLIQUE. As escolhas ficam pendentes na
+    // tela e só vão ao banco quando alguém aperta o botão do painel ("Salvar N
+    // alterações"). O laço abaixo marcava os 29 e esperava um "Salvando…" que
+    // não existe mais — a espera passava de imediato, o teste seguia adiante e
+    // NADA tinha sido gravado: `case_priority_map` ficava com zero linhas.
+    //
+    // O passo passava assim mesmo, porque sua única asserção final era sobre as
+    // 15 conversas. O estrago aparecia no passo 8: o reconhecimento exige Mapa
+    // completo, e a paciente encontrava "o seu Perfil ainda está sendo
+    // construído". Um oráculo fraco escondendo trabalho que não acontecia.
     const relevantes = page.getByRole("radio", { name: "Relevante", exact: true });
     await expect(relevantes).toHaveCount(29, { timeout: 20_000 });
     for (let i = 0; i < 29; i += 1) {
       await relevantes.nth(i).check({ force: true });
-      // Cada gravação é uma action — espera o "Salvando…" daquele item sumir.
-      await expect(page.getByText("Salvando…")).toHaveCount(0, { timeout: 15_000 });
     }
+
+    // Agora sim: uma gravação só, para as 29 escolhas.
+    await page.getByRole("button", { name: /Salvar \d+ alterações/ }).click();
+    // Persistência OBSERVADA, nunca presumida: o botão só vira "Mapa salvo"
+    // depois que o servidor confirmou — e é esse estado que o passo 8 exige.
+    await expect(page.getByRole("button", { name: "Mapa salvo" })).toBeVisible({ timeout: 30_000 });
 
     // ADR-065: o reconhecimento agora exige também o bloco relacional — toda
     // conversa do Protocolo da Pessoa registrada. O Curador registra pelo
@@ -514,9 +529,15 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
     await expect(page.getByText(/3 de 3 selecionados/)).toBeVisible();
 
     // Pareceres: os três campos obrigatórios de cada uma das três opções.
-    const porQue = page.getByLabel("Por que esta opção está na Curadoria");
-    const prioridades = page.getByLabel("Quais prioridades atende melhor");
-    const limitacoes = page.getByLabel("Quais limitações possui");
+    //
+    // Os rótulos mudaram, e por uma razão registrada em `mesa.ts`: a Mesa passou
+    // a usar o MESMO vocabulário do relatório que a paciente lê — "com nomes
+    // diferentes, o Curador lia dois pedidos onde existe um". Eram "Por que esta
+    // opção está na Curadoria", "Quais prioridades atende melhor" e "Quais
+    // limitações possui"; hoje são os de baixo.
+    const porQue = page.getByLabel("Por que esta opção está aqui");
+    const prioridades = page.getByLabel("Relação com as prioridades dela");
+    const limitacoes = page.getByLabel("O que esta opção custa");
     await expect(porQue).toHaveCount(3);
     for (let i = 0; i < 3; i += 1) {
       await porQue.nth(i).fill("Prática regular em coluna, com área verificada contra fonte institucional.");
@@ -573,7 +594,11 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
     // B-2 (ADR-064): regenerar substituiu a abertura que o Curador escreveu na
     // Mesa pelo texto de trabalho do gerador — o caminho exato pelo qual o
     // bastidor chegava à paciente. A emissão RECUSA primeiro por isso.
-    const composicao = page.getByLabel("Justificativa da composição");
+    // O campo tinha DOIS nomes: o título visível dizia "Por que estas três,
+    // juntas" e um `aria-label` dizia "Justificativa da composição" — quem
+    // enxerga lia um, quem usa leitor de tela ouvia outro. A correção D2-4
+    // deixou um só, e é o título. Este oráculo cobrava o nome que sumiu.
+    const composicao = page.getByLabel("Por que estas três, juntas");
     await expect(composicao).toHaveValue(/Revisão do Curador pendente/);
     await page.getByRole("button", { name: "Emitir o Relatório" }).click();
     await expect(page.getByText(/a abertura ainda é o texto do rascunho assistido/)).toBeVisible({
