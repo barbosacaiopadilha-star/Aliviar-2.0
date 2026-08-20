@@ -250,6 +250,10 @@ export function CommandPalette({ open, onClose, navGroups, role, basePath }: Com
           <kbd className="rounded border border-border bg-canvas px-1">↑</kbd>
           <kbd className="ml-0.5 rounded border border-border bg-canvas px-1">↓</kbd>
           <span className="mx-1">navegar</span>
+          {/* Enter sempre abriu o item destacado, mas a ajuda não dizia — quem
+              usa teclado não tinha como descobrir sozinho. */}
+          <kbd className="rounded border border-border bg-canvas px-1">Enter</kbd>
+          <span className="mx-1">abrir</span>
         </div>
       </div>
     </Dialog>

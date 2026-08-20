@@ -2,6 +2,8 @@ import { requireAnyRole } from "@/modules/auth/guard";
 import { WHATSAPP_ENV_VARS } from "@/modules/crm";
 import { Card, CardHeader } from "@/components/ui/card";
 
+export const metadata = { title: "Configurações do CRM" };
+
 export default async function CrmSettingsPage() {
   await requireAnyRole(["administrador"]);
 

@@ -177,17 +177,28 @@ export function SolicitarAtendimentoForm() {
             onChange={(e) => setConsentimento(e.target.checked)}
             className="mt-1 size-4"
           />
+          {/* A caixa pedia que a pessoa declarasse ter LIDO a política de
+              privacidade — e `/privacidade` responde "o documento ainda não foi
+              publicado". Era pedir uma declaração impossível, no único caminho
+              real de entrada. Enquanto o documento não existir, a caixa afirma
+              só o que é verdade e verificável: a autorização de contato. O
+              aviso abaixo fica fora da declaração, para não voltar a embutir
+              nela algo que a pessoa não tem como ter feito. */}
           <span>
-            Autorizo a Aliviar a entrar em contato comigo e li a{" "}
-            <Link
-              href="/privacidade"
-              className="font-medium text-brand-primary underline underline-offset-4"
-            >
-              política de privacidade
-            </Link>
-            .
+            Autorizo a Aliviar a entrar em contato comigo sobre este pedido — e
+            a usar os dados acima apenas para isso.
           </span>
         </label>
+        <p className="pl-6 text-xs leading-relaxed text-ink-muted">
+          A{" "}
+          <Link
+            href="/privacidade"
+            className="font-medium text-brand-primary underline underline-offset-4"
+          >
+            política de privacidade
+          </Link>{" "}
+          ainda não foi publicada. Quando for, ficará nesse endereço.
+        </p>
         {erroDe("consentimento") ? (
           <p role="alert" className="text-sm text-error">
             {erroDe("consentimento")}

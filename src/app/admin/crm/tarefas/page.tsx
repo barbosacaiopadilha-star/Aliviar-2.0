@@ -4,6 +4,8 @@ import { requireAnyRole } from "@/modules/auth/guard";
 import { listTasks } from "@/modules/crm/repository";
 import { CrmTasksPanel } from "@/components/crm/crm-tasks-panel";
 
+export const metadata = { title: "Tarefas" };
+
 export default async function CrmTasksPage() {
   const state = await requireAnyRole(["administrador", "concierge"]);
   const supabase = await createServerSupabaseClient();

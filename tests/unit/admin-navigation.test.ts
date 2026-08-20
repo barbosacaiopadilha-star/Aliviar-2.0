@@ -13,9 +13,24 @@ describe("navegação administrativa do Centro de Operações", () => {
     expect(labels).toContain("Centro de Operações");
     expect(labels).toContain("Visão operacional");
     expect(labels).toContain("Curadoria");
-    expect(labels).toContain("Observabilidade da plataforma");
     expect(labels).not.toContain("Painel Concierge");
     expect(labels).not.toContain("Observabilidade ACE");
+  });
+
+  it("não oferece destino que não existe", () => {
+    // Este teste exigia "Observabilidade da plataforma" no menu. O destino
+    // dela, `/admin/ace`, responde 404: era o painel de um motor que não
+    // executa mais, e o item 1.7 (DP-2) removeu o link da tela de caso sem
+    // remover o do menu. O item saiu; a garantia que fica é a inversa — nenhum
+    // caminho do menu pode apontar para fora das rotas que existem.
+    const hrefs = getNavGroups("administrador", "/admin").flatMap((group) =>
+      group.items.map((item) => item.href),
+    );
+
+    expect(hrefs).not.toContain("/admin/ace");
+    for (const href of hrefs) {
+      expect(href.startsWith("/admin") || href.startsWith("/coa")).toBe(true);
+    }
   });
 
   it("mantém os três níveis operacionais acessíveis ao administrador", () => {

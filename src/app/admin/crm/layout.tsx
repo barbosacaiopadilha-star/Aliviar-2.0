@@ -4,8 +4,12 @@ import { redirect } from "next/navigation";
 import { requireAnyRole } from "@/modules/auth/guard";
 import { canAccessCrm } from "@/modules/crm/permissions";
 
+// Este layout fixava `title: "CRM Aliviar"` e as telas filhas não sobrescreviam:
+// Contatos, Funil, Tarefas e Agenda ficavam com a MESMA aba, indistinguíveis no
+// histórico e nos favoritos. Sem título aqui, vale o template da raiz
+// (`%s — Aliviar Curadoria Médica`) e cada tela declara o seu, como Equipe e
+// Profissionais já faziam.
 export const metadata: Metadata = {
-  title: "CRM Aliviar",
   robots: { index: false, follow: false },
 };
 

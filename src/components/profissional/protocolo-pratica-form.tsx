@@ -281,11 +281,15 @@ export function ProtocoloPraticaForm({
         <>
           <nav className="flex flex-wrap gap-2" aria-label="Blocos do protocolo">
             {PARTS.map((p) => (
+              // O bloco ativo só se distinguia pela cor do botão: quem usa
+              // leitor de tela ouvia cinco botões iguais, sem saber em qual
+              // estava. `aria-current` diz o que a cor já dizia.
               <Button
                 key={p}
                 type="button"
                 variant={p === part ? "primary" : "secondary"}
                 size="sm"
+                aria-current={p === part ? "true" : undefined}
                 onClick={() => setPart(p)}
               >
                 {PROTOCOL_PARTS[p]}

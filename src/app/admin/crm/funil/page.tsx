@@ -4,6 +4,8 @@ import { requireAnyRole } from "@/modules/auth/guard";
 import { listContacts } from "@/modules/crm/repository";
 import { CrmFunnelBoard } from "@/components/crm/crm-funnel-board";
 
+export const metadata = { title: "Funil operacional" };
+
 export default async function CrmFunnelPage() {
   await requireAnyRole(["administrador", "concierge"]);
   const supabase = await createServerSupabaseClient();

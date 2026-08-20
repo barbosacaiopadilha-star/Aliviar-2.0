@@ -6,6 +6,10 @@ import { requireAnyRole } from "@/modules/auth/guard";
 import { listAvailableCases, listCaseIds, loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { fatosDoRegistro, montarFila } from "@/modules/curadoria/fila-por-ato-devido";
 import { resolveGreetingFirstName } from "@/modules/auth/display-identity";
+// A saudação por horário já existia, testada, do lado da paciente. Esta tela
+// escrevia "Bom dia" fixo no código — às 3h da manhã a Mesa dizia "Bom dia" e a
+// área da paciente dizia "Boa noite", no mesmo minuto. Uma regra só, e é esta.
+import { currentHourInBrazil, greetingFor } from "@/modules/paciente/ambiente";
 
 // MÓDULO 1 — PAINEL INICIAL, agora sobre o banco (MISSÃO 209, Fases 3 e 4).
 //
@@ -84,7 +88,9 @@ export default async function PainelInicialPage() {
   return (
     <div className="space-y-10">
       <header className="max-w-reading space-y-2">
-        <h1 className="font-serif text-3xl text-ink">Bom dia, {firstName}.</h1>
+        <h1 className="font-serif text-3xl text-ink">
+          {greetingFor(currentHourInBrazil())}, {firstName}.
+        </h1>
         <p className="text-base leading-relaxed text-ink-muted">
           {totalAtivo === 0
             ? "Nenhuma Curadoria atribuída a você no momento."

@@ -62,6 +62,18 @@ export function CrmTasksPanel({ tasks, currentUserId, isAdmin }: { tasks: CrmTas
       <Input label="Buscar tarefas" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Título ou contato" />
       {erro ? <StatusBanner variant="error">{erro}</StatusBanner> : null}
       <div className="space-y-3">
+        {/* Sem este ramo a tela terminava no campo de busca: filtros e busca
+            sobre o nada, sem dizer se não há tarefa alguma ou se o filtro
+            escondeu tudo. Funil e Agenda já falavam nessa hora; Tarefas, não. */}
+        {filtered.length === 0 ? (
+          <Card padding="sm">
+            <p className="text-sm text-ink-muted">
+              {tasks.length === 0
+                ? "Nenhuma tarefa ainda. Elas aparecem aqui quando alguém registra um retorno ou um acompanhamento."
+                : "Nenhuma tarefa neste filtro. Tente outro filtro acima ou limpe a busca."}
+            </p>
+          </Card>
+        ) : null}
         {filtered.map((task) => (
           <Card key={task.id} padding="sm">
             <div className="flex items-start justify-between gap-3">

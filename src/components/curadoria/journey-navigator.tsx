@@ -84,7 +84,20 @@ function StepRow({ step }: { step: StepView }) {
       {step.status === "BLOQUEADA" && step.blockedReason ? (
         <p className="pl-[2.125rem] text-xs text-ink-muted">Depende de: {step.blockedReason}</p>
       ) : step.missing.length > 0 && step.status !== "CONCLUIDA" ? (
-        <p className="pl-[2.125rem] text-xs text-ink-muted">Falta: {step.missing[0]}</p>
+        // `step.missing` traz o CRITÉRIO DE SAÍDA do COS, e o Método escreve
+        // alguns como condição já satisfeita ("O Curador registrou…") e outros
+        // no infinitivo ("Selecionar…"). Prefixar "Falta:" quebrava os
+        // primeiros: lia-se "Falta: O Curador registrou…", anunciando como
+        // pendência uma frase no passado. O texto do Método não se altera para
+        // acomodar a tela; a tela é que passa a apresentá-lo como item de
+        // checklist ainda não cumprido, o que serve às duas redações.
+        <p className="flex gap-1.5 pl-[2.125rem] text-xs text-ink-muted">
+          <span aria-hidden="true">○</span>
+          <span>
+            <span className="sr-only">Ainda não cumprido: </span>
+            {step.missing[0]}
+          </span>
+        </p>
       ) : null}
     </div>
   );

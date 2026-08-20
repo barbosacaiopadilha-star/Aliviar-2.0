@@ -6,6 +6,8 @@ import { requireAnyRole } from "@/modules/auth/guard";
 import { listContacts } from "@/modules/crm/repository";
 import { CrmContactsTable } from "@/components/crm/crm-contacts-table";
 
+export const metadata = { title: "Contatos" };
+
 export default async function CrmContactsPage({
   searchParams,
 }: {

@@ -1,5 +1,6 @@
 import type { HTMLAttributes, ReactNode } from "react";
 
+import { getInitials } from "@/components/ui/avatar";
 import { cn } from "@/components/ui/cn";
 
 export function PatientCard({
@@ -93,11 +94,9 @@ export function PatientEmptyState({
 }
 
 export function CuratorAvatar({ name, className }: { name: string; className?: string }) {
-  const initials = name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
+  // Uma conta só de iniciais, em `ui/avatar`: esta cópia também deixava entrar
+  // pedaço que não começa por letra.
+  const initials = getInitials(name);
 
   return (
     <div

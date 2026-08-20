@@ -56,10 +56,14 @@ export function CaseStatusControl({ caseId, currentStatus }: CaseStatusControlPr
               </option>
             ))}
           </Select>
+          {/* Espremido pelo Select ao lado, o rótulo quebrava em duas linhas e
+              o botão ficava com 64px de altura contra os 44px de todos os
+              outros da tela. Ele não encolhe nem quebra: mantém a altura de
+              alvo de toque e o ritmo da página. */}
           <Button
             type="button"
             variant="secondary"
-            className="w-full sm:w-auto"
+            className="w-full shrink-0 whitespace-nowrap sm:w-auto"
             isLoading={isPending}
             disabled={!nextStatus}
             onClick={handleChange}

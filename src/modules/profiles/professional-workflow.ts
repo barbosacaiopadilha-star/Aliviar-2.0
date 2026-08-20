@@ -1,7 +1,12 @@
 export const PROFESSIONAL_WORKFLOW_STEPS = [
   { id: "cadastro", label: "Cadastro" },
   { id: "publicacao", label: "Publicação" },
-  { id: "rede", label: "Rede" },
+  // A aba dizia "Rede", o painel dentro dela dizia "Ciclo de vida" e o link da
+  // lista também — três nomes para o mesmo passo. Quem manda é o conteúdo, que
+  // trata de estado na Rede, motivo e autoria: ciclo de vida. O `id` continua
+  // `rede` porque é identificador de rota, e endereço em uso não se troca por
+  // questão de nome.
+  { id: "rede", label: "Ciclo de vida" },
   { id: "documentos", label: "Documentos e formação" },
   { id: "protocolo", label: "Protocolo" },
   { id: "mapa", label: "Mapa" },

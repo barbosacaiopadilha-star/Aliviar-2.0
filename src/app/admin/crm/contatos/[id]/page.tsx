@@ -21,6 +21,8 @@ type PageProps = {
   params: Promise<{ id: string }>;
 };
 
+export const metadata = { title: "Contato" };
+
 export default async function CrmContactDetailPage({ params }: PageProps) {
   const state = await requireAnyRole(["administrador", "concierge"]);
   const { id } = await params;

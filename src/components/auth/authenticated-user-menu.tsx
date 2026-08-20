@@ -27,7 +27,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { createPortal } from "react-dom";
 
 import { LogoutButton } from "@/components/auth/logout-button";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, getInitials } from "@/components/ui/avatar";
 import { cn } from "@/components/ui/cn";
 
 type AuthenticatedUserMenuProps = {
@@ -86,11 +86,8 @@ export function AuthenticatedUserMenu({ displayName, roleLabel }: AuthenticatedU
     };
   }, []);
 
-  const initials = displayName
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
+  // Uma conta só de iniciais, em `ui/avatar`.
+  const initials = getInitials(displayName);
 
   return (
     <div className="relative">

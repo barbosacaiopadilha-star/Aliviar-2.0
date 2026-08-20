@@ -27,12 +27,17 @@ type PublicHeaderProps = {
  * Cada `href` aponta para um `id` que existe na página. Nenhum link é
  * decorativo, e T-7-2 confere a correspondência dos dois lados.
  */
+// A ordem aqui é a ordem em que as seções aparecem ao rolar. Antes não era:
+// os cinco itens caíam na 8ª, 5ª, 7ª, 4ª e 6ª seção da página, nessa sequência,
+// e percorrer o menu da esquerda para a direita fazia a página saltar para
+// trás e para frente. A ordem da página é contratada (contrato 34 §6) e não se
+// mexe; o menu é que passa a segui-la.
 const NAV_LINKS = [
-  { href: "#quem-somos", label: "Quem somos" },
-  { href: "#para-quem", label: "Para quem é" },
-  { href: "#como-funciona", label: "Como funciona" },
   { href: "#metodo", label: "Nossa curadoria" },
+  { href: "#para-quem", label: "Para quem é" },
   { href: "#concierge", label: "Concierge" },
+  { href: "#como-funciona", label: "Como funciona" },
+  { href: "#quem-somos", label: "Quem somos" },
 ] as const;
 
 export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
@@ -98,7 +103,10 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
     >
       <div
         className={cn(
-          "mx-auto flex w-full max-w-content items-center justify-between px-5 transition-[min-height] duration-[480ms] ease-[cubic-bezier(0.25,0.1,0.25,1)] lg:px-10",
+          // `gap-3`: a 375px o logotipo terminava em 113px e o botão começava
+          // em 113px — encostados, sem um pixel de respiro. `justify-between`
+          // não protege quando o conteúdo ocupa a linha inteira.
+          "mx-auto flex w-full max-w-content items-center justify-between gap-3 px-5 transition-[min-height] duration-[480ms] ease-[cubic-bezier(0.25,0.1,0.25,1)] lg:px-10",
           scrolled ? "min-h-[3.25rem]" : "min-h-[4.25rem]",
         )}
       >
@@ -140,7 +148,15 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
               reconhecimento de quem já mora aqui. São gestos diferentes e
               nunca se substituem — foi por confundir os dois que a Landing
               ficou sem convite para quem chega. */}
-          <LinkButton href="/solicitar-atendimento" variant="primary" className="min-h-11 px-5 py-2 text-sm">
+          {/* `px-3` no celular devolve os 16px que o respiro do logotipo
+              precisava; a partir de `sm` o botão volta ao peso original.
+              `whitespace-nowrap` impede que o rótulo quebre em duas linhas e
+              estique a altura do cabeçalho. */}
+          <LinkButton
+            href="/solicitar-atendimento"
+            variant="primary"
+            className="min-h-11 whitespace-nowrap px-3 py-2 text-sm sm:px-5"
+          >
             Solicitar atendimento
           </LinkButton>
 

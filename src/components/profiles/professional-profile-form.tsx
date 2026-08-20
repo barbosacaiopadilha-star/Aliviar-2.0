@@ -1,7 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { startTransition, useActionState, useEffect, useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
@@ -49,7 +48,6 @@ export function ProfessionalProfileForm({
     action,
     undefined,
   );
-  const router = useRouter();
 
   /**
    * A criação termina em outra tela — e é ESTE efeito que leva até lá.
@@ -72,6 +70,25 @@ export function ProfessionalProfileForm({
     if (destino) window.location.assign(destino);
   }, [destino]);
 
+  /**
+   * Validar antes de enviar, sem sair da transição — e sem perder o que foi
+   * digitado. Três versões erradas antecederam esta:
+   *
+   * 1. `startTransition` envolvendo a dispatch E o resto do fluxo: a transição
+   *    externa nunca fechava, `isPending` ficava `true` para sempre, o botão
+   *    girava sem parar embora a gravação já tivesse acontecido.
+   * 2. `onSubmit` chamando `formAction` direto: fora de qualquer transição. O
+   *    React passou a registrar erro a cada envio e `isPending` parou de
+   *    atualizar — o botão nunca mostrava "salvando" e dava para clicar duas
+   *    vezes sem retorno.
+   * 3. `action={handleSubmit}` no formulário: resolvia o erro, mas o React
+   *    limpa os campos não controlados depois de uma ação — numa recusa de
+   *    validação o formulário inteiro era apagado, resumo longo incluído.
+   *
+   * O que vale é o que está aqui: `onSubmit` para poder recusar antes de
+   * enviar (e preservar o que a pessoa escreveu), com `startTransition` em
+   * volta APENAS da dispatch — que é o que o próprio React manda fazer.
+   */
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -115,12 +132,7 @@ export function ProfessionalProfileForm({
 
     setFormError(null);
     setFieldErrors({});
-    // SEM `startTransition` em volta. A dispatch de `useActionState` já roda
-    // em transição própria; envolvê-la numa segunda deixava a transição
-    // externa pendente para sempre — `isPending` ficava `true` e o estado
-    // NUNCA era comitado. Na tela: o botão girava sem parar e nenhuma
-    // mensagem aparecia, embora a gravação tivesse acontecido.
-    formAction(formData);
+    startTransition(() => formAction(formData));
   }
 
   return (

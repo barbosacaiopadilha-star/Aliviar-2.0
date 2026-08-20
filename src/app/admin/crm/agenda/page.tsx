@@ -10,6 +10,8 @@ function formatDateTime(iso: string): string {
   return new Intl.DateTimeFormat("pt-BR", { dateStyle: "full", timeStyle: "short" }).format(new Date(iso));
 }
 
+export const metadata = { title: "Agenda operacional" };
+
 export default async function CrmAgendaPage() {
   await requireAnyRole(["administrador", "concierge"]);
   const supabase = await createServerSupabaseClient();

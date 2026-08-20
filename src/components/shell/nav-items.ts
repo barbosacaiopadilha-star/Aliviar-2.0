@@ -84,16 +84,11 @@ export function getNavGroups(role: string, basePath: string): NavGroup[] {
         { label: "Casos", href: `${basePath}/casos`, icon: "cases" },
       ],
     });
-    groups.push({
-      label: "Analytics",
-      items: [
-        {
-          label: "Observabilidade da plataforma",
-          href: `${basePath}/ace`,
-          icon: "analytics",
-        },
-      ],
-    });
+    // O grupo "Analytics" levava a `/admin/ace` — o painel de um motor que não
+    // executa mais. O item 1.7 (DP-2) tirou esse destino da tela de caso e
+    // esqueceu o menu: sobrava uma entrada que só dava 404, pela barra lateral
+    // e pela paleta de comandos, que lê esta mesma lista. Enquanto não houver
+    // observabilidade para mostrar, não há item.
     return groups;
   }
 

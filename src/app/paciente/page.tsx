@@ -33,8 +33,12 @@ import { lerEstado } from "@/foundation/contrato-de-estado";
 import { lerFatosDoCaso } from "@/modules/paciente/fatos-do-caso";
 import { loadPatientCuradoria } from "@/modules/curadoria/patient-curadoria";
 
+// A aba desta página dizia "Minha Jornada" — mas "Sua Jornada" é OUTRA página
+// (`/paciente/linha-do-tempo`, rótulo fixado na decisão A4). Com duas abas
+// chamadas "Jornada", o histórico do navegador não distinguia a home do
+// percurso. A aba passa a usar o mesmo nome que o menu já dá a esta página.
 export const metadata: Metadata = {
-  title: "Minha Jornada",
+  title: "Início",
   robots: { index: false, follow: false },
 };
 

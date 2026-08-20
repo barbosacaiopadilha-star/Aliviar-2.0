@@ -1,3 +1,4 @@
+import { getInitials } from "@/components/ui/avatar";
 import { cn } from "@/components/ui/cn";
 
 /**
@@ -16,15 +17,10 @@ import { cn } from "@/components/ui/cn";
 // Visual §3, regra de ouro) — a variação entre nomes fica no valor do verde.
 const TRATAMENTOS = ["bg-retrato-1", "bg-retrato-2", "bg-retrato-3"] as const;
 
-function iniciais(nome: string): string {
-  const partes = nome
-    .replace(/^(Dra?\.|Dr\.)\s*/i, "")
-    .split(/\s+/)
-    .filter(Boolean);
-  const primeira = partes[0]?.[0] ?? "";
-  const ultima = partes.length > 1 ? (partes[partes.length - 1]?.[0] ?? "") : "";
-  return (primeira + ultima).toUpperCase() || "?";
-}
+// Esta cópia tinha o mesmo defeito das outras: aceitava como inicial um pedaço
+// que não começa por letra. A conta agora é uma só, em `ui/avatar`, e já
+// descarta o tratamento — que era o único motivo de esta versão existir.
+const iniciais = getInitials;
 
 function tratamentoDe(nome: string): string {
   let soma = 0;

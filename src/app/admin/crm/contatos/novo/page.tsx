@@ -1,6 +1,8 @@
 import { CrmNewContactForm } from "@/components/crm/crm-new-contact-form";
 import { requireAnyRole } from "@/modules/auth/guard";
 
+export const metadata = { title: "Novo contato" };
+
 export default async function CrmNewContactPage() {
   await requireAnyRole(["administrador", "concierge"]);
 
