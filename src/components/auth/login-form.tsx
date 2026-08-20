@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { startTransition, useActionState, useEffect, useState, type FormEvent } from "react";
+import { useActionState, useEffect, useState, type FormEvent } from "react";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { Button } from "@/components/ui/button";
@@ -45,9 +45,11 @@ export function LoginForm() {
     }
 
     setFieldErrors({});
-    startTransition(() => {
-      formAction(formData);
-    });
+    // SEM `startTransition` em volta: a dispatch de `useActionState` já roda
+    // em transição própria, e a segunda ficava pendente para sempre —
+    // `isPending` travado em `true`, estado nunca comitado. Na tela: botão
+    // girando sem parar e nenhuma mensagem, com a escrita já feita.
+    formAction(formData);
   }
 
   return (

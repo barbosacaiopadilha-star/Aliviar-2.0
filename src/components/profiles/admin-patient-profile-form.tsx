@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useState, type FormEvent } from "react";
+import { useActionState, useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
@@ -47,9 +47,11 @@ export function AdminPatientProfileForm({
     }
 
     setFieldErrors({});
-    startTransition(() => {
-      formAction(formData);
-    });
+    // SEM `startTransition` em volta: a dispatch de `useActionState` já roda
+    // em transição própria, e a segunda ficava pendente para sempre —
+    // `isPending` travado em `true`, estado nunca comitado. Na tela: botão
+    // girando sem parar e nenhuma mensagem, com a escrita já feita.
+    formAction(formData);
   }
 
   return (

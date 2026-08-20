@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { startTransition, useActionState, useState, type FormEvent } from "react";
+import { useActionState, useState, type FormEvent } from "react";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { Button } from "@/components/ui/button";
@@ -34,9 +34,11 @@ export function RequestPasswordResetForm() {
     }
 
     setFieldErrors({});
-    startTransition(() => {
-      formAction(formData);
-    });
+    // SEM `startTransition` em volta: a dispatch de `useActionState` já roda
+    // em transição própria, e a segunda ficava pendente para sempre —
+    // `isPending` travado em `true`, estado nunca comitado. Na tela: botão
+    // girando sem parar e nenhuma mensagem, com a escrita já feita.
+    formAction(formData);
   }
 
   return (
