@@ -3,6 +3,8 @@ import path from "node:path";
 
 import { expect, test, type Page } from "@playwright/test";
 
+import { removerProfissionaisPorPrefixo } from "../apoio/limpar-profissionais";
+
 type TestAccount = { role: string; email: string; password: string };
 
 const TEST_USERS_PATH = path.resolve(__dirname, "../../test-users.local.json");
@@ -26,6 +28,12 @@ async function loginAs(page: Page, account: TestAccount) {
 
 test.describe("gestão administrativa de profissionais (Sprint Produto 2)", () => {
   test.describe.configure({ mode: "serial" });
+
+  // O pool de profissionais é global na stack local: o que este spec cria
+  // pela tela pesa na Shortlist de todos os outros. Sai no fim.
+  test.afterAll(async () => {
+    await removerProfissionaisPorPrefixo("E2E-");
+  });
 
   test("administrador cria, edita e alterna status/publicação de um profissional", async ({ page }) => {
     const account = loadTestAccounts().find((a) => a.role === "administrador")!;

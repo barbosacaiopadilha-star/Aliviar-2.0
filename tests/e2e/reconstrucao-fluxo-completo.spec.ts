@@ -17,6 +17,7 @@ import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 
 import { backendEsperado } from "../apoio/stack-local";
+import { removerProfissionaisPorPrefixo } from "../apoio/limpar-profissionais";
 
 type TestAccount = { role: string; email: string; password: string };
 const TEST_USERS_PATH = path.resolve(__dirname, "../../test-users.local.json");
@@ -82,6 +83,12 @@ async function criarProfissionalPublicado(
 
 test.describe("Release de Reconstrução — fluxo completo com dados novos", () => {
   test.describe.configure({ mode: "serial" });
+
+  // A rede nova é criada pela tela e vive no pool GLOBAL de profissionais.
+  // Sem esta remoção, ela pesa na Shortlist de todos os specs seguintes.
+  test.afterAll(async () => {
+    await removerProfissionaisPorPrefixo("FLX-");
+  });
   test.setTimeout(600_000);
 
   const stamp = Date.now();
