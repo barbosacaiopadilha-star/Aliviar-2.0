@@ -25,6 +25,10 @@ const PAGINA = path.resolve(
   "admin",
   "profissionais",
   "[id]",
+  // A etapa saiu da query e virou segmento de rota (2026-08-20): a página
+  // real mora em [etapa]/, e [id]/page.tsx passou a ser só o redirecionador
+  // da porta antiga. A guarda tem de ler a página, não a porta.
+  "[etapa]",
   "page.tsx",
 );
 

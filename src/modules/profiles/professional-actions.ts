@@ -242,7 +242,7 @@ export async function createProfessionalProfileAction(
 
   revalidatePath("/admin/profissionais");
   // Quem navega é a tela, não o framework — ver `ActionResult` em types.ts.
-  return { success: true, redirectTo: `/admin/profissionais/${created.id}` };
+  return { success: true, redirectTo: `/admin/profissionais/${created.id}/cadastro` };
 }
 
 export async function updateProfessionalProfileAction(

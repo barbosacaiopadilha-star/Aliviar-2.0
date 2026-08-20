@@ -223,7 +223,7 @@ for (const viewport of VIEWPORTS) {
       await rearmarPublicado("01");
       const antes = await estadoNoBanco("01");
       await entrar(page, erros);
-      const rota = `/admin/profissionais/${seed.ids["01"]}?etapa=rede`;
+      const rota = `/admin/profissionais/${seed.ids["01"]}/rede`;
       await page.goto(rota);
       await expect(
         page.getByRole("heading", { name: "Ciclo de vida" }),
@@ -247,7 +247,7 @@ for (const viewport of VIEWPORTS) {
       await rearmarPublicado("02");
       const antes = await estadoNoBanco("02");
       await entrar(page, erros);
-      const rota = `/admin/profissionais/${seed.ids["02"]}?etapa=rede`;
+      const rota = `/admin/profissionais/${seed.ids["02"]}/rede`;
       await page.goto(rota);
       const destino = page.getByLabel("Mudar para");
       await destino.selectOption("PAUSADO");
@@ -333,7 +333,7 @@ for (const viewport of VIEWPORTS) {
       const erros: string[] = [];
       const antes = await estadoNoBanco("05");
       await entrar(page, erros);
-      const rota = `/admin/profissionais/${seed.ids["05"]}?etapa=publicacao`;
+      const rota = `/admin/profissionais/${seed.ids["05"]}/publicacao`;
       await page.goto(rota);
       await expect(
         page.getByRole("button", { name: /^Publicar$/ }),
@@ -357,7 +357,7 @@ for (const viewport of VIEWPORTS) {
       await rearmarPublicado("06");
       const antes = await estadoNoBanco("06");
       await entrar(page, erros);
-      const rota = `/admin/profissionais/${seed.ids["06"]}?etapa=publicacao`;
+      const rota = `/admin/profissionais/${seed.ids["06"]}/publicacao`;
       await page.goto(rota);
       await page.getByRole("button", { name: "Despublicar" }).click();
       await expect(

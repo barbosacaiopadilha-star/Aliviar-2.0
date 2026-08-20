@@ -131,7 +131,7 @@ export function ProfessionalsTable({ professionals }: ProfessionalsTableProps) {
                         Editar
                       </Link>
                       <Link
-                        href={`/admin/profissionais/${professional.id}?etapa=rede`}
+                        href={`/admin/profissionais/${professional.id}/rede`}
                         className="font-medium text-brand-primary hover:text-brand-primary-deep"
                       >
                         Ciclo de vida

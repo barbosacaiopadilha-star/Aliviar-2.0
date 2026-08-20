@@ -52,7 +52,7 @@ async function criarProfissionalPublicado(
   await page.getByLabel("Nome de exibição").fill(nome);
   await page.getByLabel("Identificação profissional").fill(identificador);
   await page.getByRole("button", { name: "Criar profissional" }).click();
-  await page.waitForURL(/\/admin\/profissionais\/[0-9a-f-]+$/);
+  await page.waitForURL(/\/admin\/profissionais\/[0-9a-f-]+\/cadastro$/);
 
   await page.getByLabel("CRM (quando aplicável)").fill(String(100000 + Math.floor(Math.random() * 899999)));
   await page.getByLabel("UF do CRM").selectOption("SP");
@@ -63,7 +63,7 @@ async function criarProfissionalPublicado(
   // seis etapas. Verificação do registro, área de atuação e publicação moram
   // na etapa "Publicação"; os dados básicos, na "Cadastro".
   await page.getByRole("link", { name: "Publicação", exact: true }).click();
-  await page.waitForURL(/etapa=publicacao/);
+  await page.waitForURL(/\/publicacao$/);
 
   await page.getByLabel("Situação verificada").selectOption("regular");
   await page.getByLabel("Fonte da verificação").fill("Portal do CFM (fluxo completo E2E)");

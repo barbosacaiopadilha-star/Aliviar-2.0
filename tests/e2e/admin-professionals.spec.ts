@@ -52,7 +52,7 @@ test.describe("gestão administrativa de profissionais (Sprint Produto 2)", () =
     await page.getByLabel("Identificação profissional").fill(identifier);
     await page.getByRole("button", { name: "Criar profissional" }).click();
 
-    await page.waitForURL(/\/admin\/profissionais\/[0-9a-f-]+$/);
+    await page.waitForURL(/\/admin\/profissionais\/[0-9a-f-]+\/cadastro$/);
     await expect(page.getByRole("heading", { name: "Profissional E2E" })).toBeVisible();
     await expect(page.getByText("Ativo", { exact: true })).toBeVisible();
     await expect(page.getByText("Não publicado", { exact: true })).toBeVisible();
@@ -70,7 +70,7 @@ test.describe("gestão administrativa de profissionais (Sprint Produto 2)", () =
     // passa a navegar entre elas — o produto mudou de propósito, e o que este
     // teste prova continua o mesmo.
     await page.getByRole("link", { name: "Publicação", exact: true }).click();
-    await page.waitForURL(/etapa=publicacao/);
+    await page.waitForURL(/\/publicacao$/);
     await expect(page.getByText(/Pendências para publicação/)).toBeVisible();
     await expect(page.getByText("O CRM não foi informado.")).toBeVisible();
     await expect(page.getByText("O registro no conselho ainda não foi verificado.")).toBeVisible();
@@ -78,7 +78,7 @@ test.describe("gestão administrativa de profissionais (Sprint Produto 2)", () =
 
     // 1. CRM + UF no cadastro — de volta à primeira etapa.
     await page.getByRole("link", { name: "Cadastro", exact: true }).click();
-    await page.waitForURL(/etapa=cadastro/);
+    await page.waitForURL(/\/cadastro$/);
     await page.getByLabel("CRM (quando aplicável)").fill("123456");
     await page.getByLabel("UF do CRM").selectOption("SP");
     await page.getByRole("button", { name: "Salvar alterações" }).click();
@@ -86,7 +86,7 @@ test.describe("gestão administrativa de profissionais (Sprint Produto 2)", () =
 
     // 2. Verificação do registro, com fonte — na etapa de Publicação.
     await page.getByRole("link", { name: "Publicação", exact: true }).click();
-    await page.waitForURL(/etapa=publicacao/);
+    await page.waitForURL(/\/publicacao$/);
     await page.getByLabel("Situação verificada").selectOption("regular");
     await page.getByLabel("Fonte da verificação").fill("Portal do CFM, consulta E2E");
     await page.getByRole("button", { name: "Registrar verificação" }).click();
@@ -108,6 +108,11 @@ test.describe("gestão administrativa de profissionais (Sprint Produto 2)", () =
 
     // Catálogo 1.0.0 no cadastro (ETAPA 5): os cinco eixos, preenchimento,
     // rascunho, retomada e registro — uma única fonte, nenhuma lista paralela.
+    //
+    // ORÁCULO ATUALIZADO (2026-08-20): o Protocolo é a etapa 5 do fluxo, não
+    // mais um bloco da mesma página.
+    await page.getByRole("link", { name: "Protocolo", exact: true }).click();
+    await page.waitForURL(/\/protocolo$/);
     for (const eixo of [
       "Acesso ao cuidado",
       "Continuidade do cuidado",

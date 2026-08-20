@@ -22,5 +22,8 @@ export function professionalWorkflowStepHref(
   professionalId: string,
   step: ProfessionalWorkflowStepId,
 ) {
-  return `/admin/profissionais/${professionalId}?etapa=${step}`;
+  // A etapa vive no CAMINHO, não na query: com `?etapa=`, as seis eram a
+  // mesma rota e o roteador tratava a troca como navegação já satisfeita —
+  // a URL não mudava e a tela ficava parada.
+  return `/admin/profissionais/${professionalId}/${step}`;
 }
