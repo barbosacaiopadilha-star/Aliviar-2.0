@@ -1627,7 +1627,19 @@ Novo agregado `approach_attempts` · nova estrutura `team_notifications` · proj
 ## ADR-071 — O conceito do MEC na carta da paciente: fato sobre a escola, nunca nota do profissional
 
 - **Data:** 2026-08-19
-- **Status:** Aprovada pelo Fundador em 2026-08-19, em conversa direta, depois de apresentado o custo (abaixo) e recusada a alternativa de deixá-lo fora da carta. Implementada na mesma data: migration `20260819210000_conceito_do_mec_na_graduacao`.
+- **Status:** **A DECISÃO DE MÉRITO PERMANECE; A IMPLEMENTAÇÃO FOI REVERTIDA
+  em 2026-08-20.** Aprovada pelo Fundador em 2026-08-19, em conversa direta,
+  depois de apresentado o custo (abaixo) e recusada a alternativa de deixá-lo
+  fora da carta. A migration `20260819210000_conceito_do_mec_na_graduacao` e o
+  código correspondente foram revertidos ao se descobrir que **produção já
+  tinha implementação melhor da mesma coisa**: `professional_graduation_facts`
+  (migration `20260819040715`), que separa CC de Enamed, guarda o ano de cada
+  um, **exige fonte oficial `gov.br`** para qualquer indicador, e registra
+  autoria e instante. Duas fontes para o mesmo fato seria o defeito de origem
+  que este projeto mais combate — então a nossa saiu, e a de produção fica.
+  Por que ninguém viu antes: aquela migration **não está no repositório**;
+  existe só no banco. O que resta desta ADR é o *como exibir* (§1 da Decisão),
+  ainda não ligado ao `professional_graduation_facts`.
 - **Dependências:** ADR-041 (nenhum score) · `formacao-academica.ts` (decisão vinculante: formação é fato, não mérito).
 - **Contexto:** o bloco de formação que a paciente lê carregava uma recusa explícita — *não dar à formação nenhuma cor, número ou destaque comparável entre cartas*. O conceito do MEC é exatamente um número comparável, e a carta é, fora ele, toda prosa. A ADR-041 proíbe score, nota, porcentagem e ranking **produzidos pelo sistema**; o conceito do MEC não é produzido aqui, mas passa a ser exibido aqui.
 - **A decisão de mérito, e o custo declarado:** um número no meio de três cartas de prosa vira a única coisa comparável da página, e a atenção vai nele mesmo sem cor e sem destaque. Há risco real de a pessoa ler um ranking de três notas onde a Curadoria montou três caminhos diferentes. Contra isso pesou que a informação é pública, ela pode buscá-la sozinha, e omitir para "proteger" é paternalismo. **O Fundador decidiu que entra.**

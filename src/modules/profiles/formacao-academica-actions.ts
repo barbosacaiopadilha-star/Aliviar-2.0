@@ -9,7 +9,6 @@ import {
   confirmarFormacao,
   criarFormacaoManual,
   excluirFormacao,
-  registrarConceitoDoMec,
   salvarEdicaoDeFormacao,
   type CamposDeFormacao,
 } from "@/modules/profiles/formacao-academica-repository";
@@ -32,10 +31,6 @@ const MENSAGENS: Record<string, string> = {
   fonte_ausente:
     "Esta formação não tem fonte registrada. Releia o currículo ou registre-a manualmente antes de confirmar.",
   escrita_recusada: "O banco recusou a escrita.",
-  conceito_fora_da_escala: "O conceito do MEC vai de 1 a 5.",
-  ano_implausivel: "O ano do conceito não parece um ano de ciclo avaliativo.",
-  conceito_so_na_graduacao:
-    "Conceito do MEC existe para curso de graduação. Residência é credenciada pela CNRM, e os demais tipos não têm conceito.",
 };
 
 function mensagem(motivo: string): string {
@@ -81,24 +76,6 @@ export async function confirmarFormacaoAction(
   const r = await confirmarFormacao(supabase, entryId, state.user.id, {
     justificativaSemInstituicao,
   });
-  if (!r.ok) return { success: false, error: mensagem(r.motivo) };
-  revalidatePath(`/admin/profissionais/${professionalProfileId}`, "layout");
-  return { success: true, data: null };
-}
-
-/**
- * Lança (ou apaga) o conceito do MEC. Porta própria porque a escrita é própria:
- * não rebaixa a verificação da entrada — ver `registrarConceitoDoMec`.
- */
-export async function registrarConceitoDoMecAction(
-  professionalProfileId: string,
-  entryId: string,
-  conceito: number | null,
-  ano: number | null,
-): Promise<Resultado> {
-  await requireRoleForAction("administrador");
-  const supabase = await createServerSupabaseClient();
-  const r = await registrarConceitoDoMec(supabase, entryId, conceito, ano);
   if (!r.ok) return { success: false, error: mensagem(r.motivo) };
   revalidatePath(`/admin/profissionais/${professionalProfileId}`, "layout");
   return { success: true, data: null };

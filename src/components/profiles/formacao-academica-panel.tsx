@@ -15,7 +15,6 @@ import {
   criarFormacaoManualAction,
   excluirFormacaoAction,
   lerCurriculoAction,
-  registrarConceitoDoMecAction,
   salvarFormacaoAction,
 } from "@/modules/profiles/formacao-academica-actions";
 import type { CamposDeFormacao } from "@/modules/profiles/formacao-academica-repository";
@@ -79,8 +78,6 @@ export function FormacaoAcademicaPanel({
   const [aviso, setAviso] = useState<string | null>(null);
   const [emEdicao, setEmEdicao] = useState<Record<string, CamposDeFormacao>>({});
   const [justificativas, setJustificativas] = useState<Record<string, string>>({});
-  /** Rascunho do conceito do MEC por entrada — string para permitir campo vazio. */
-  const [mec, setMec] = useState<Record<string, { conceito: string; ano: string }>>({});
   const [novaManual, setNovaManual] = useState(false);
   const [camposManuais, setCamposManuais] = useState<CamposDeFormacao>(CAMPOS_VAZIOS);
 
@@ -239,95 +236,6 @@ export function FormacaoAcademicaPanel({
                       />
                     </label>
                   </div>
-
-                  {/* O conceito do MEC avalia CURSO DE GRADUAÇÃO. Residência é
-                      credenciada pela CNRM; os demais tipos não têm conceito.
-                      O campo nem aparece fora da graduação — não há número a
-                      lançar ali, e oferecer o campo convidaria a inventar um. */}
-                  {e.kind === "graduacao" ? (
-                    <div className="mt-3 rounded-md border border-border p-3">
-                      <p className="text-sm font-medium text-ink">Conceito do MEC</p>
-                      <p className="mt-1 max-w-prose text-xs text-ink-muted">
-                        Sai impresso dentro da linha da instituição, na carta da paciente. Lançado
-                        por você já vale como revisado: não rebaixa a verificação desta formação.
-                        Deixe em branco para não publicar conceito algum.
-                      </p>
-                      <div className="mt-2 grid gap-3 sm:grid-cols-3">
-                        <label className="text-sm text-ink">
-                          Conceito (1 a 5)
-                          <input
-                            type="number"
-                            min={1}
-                            max={5}
-                            className="mt-1 block w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
-                            value={mec[e.id]?.conceito ?? (e.mecConceito === null ? "" : String(e.mecConceito))}
-                            onChange={(ev) =>
-                              setMec((m) => ({
-                                ...m,
-                                [e.id]: {
-                                  conceito: ev.target.value,
-                                  ano:
-                                    m[e.id]?.ano ??
-                                    (e.mecConceitoAno === null ? "" : String(e.mecConceitoAno)),
-                                },
-                              }))
-                            }
-                          />
-                        </label>
-                        <label className="text-sm text-ink">
-                          {/* Rótulo curto de propósito: "Ano do ciclo (opcional)"
-                              quebrava em duas linhas na largura real do painel e
-                              desalinhava os dois campos. O opcional vive no
-                              placeholder, onde não empurra o layout. */}
-                          Ano do ciclo
-                          <input
-                            type="number"
-                            placeholder="opcional"
-                            className="mt-1 block w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
-                            value={mec[e.id]?.ano ?? (e.mecConceitoAno === null ? "" : String(e.mecConceitoAno))}
-                            onChange={(ev) =>
-                              setMec((m) => ({
-                                ...m,
-                                [e.id]: {
-                                  conceito:
-                                    m[e.id]?.conceito ??
-                                    (e.mecConceito === null ? "" : String(e.mecConceito)),
-                                  ano: ev.target.value,
-                                },
-                              }))
-                            }
-                          />
-                        </label>
-                        <div className="flex items-end">
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            disabled={pendente}
-                            onClick={() => {
-                              const rascunho = mec[e.id] ?? {
-                                conceito: e.mecConceito === null ? "" : String(e.mecConceito),
-                                ano: e.mecConceitoAno === null ? "" : String(e.mecConceitoAno),
-                              };
-                              const conceito = rascunho.conceito.trim()
-                                ? Number(rascunho.conceito)
-                                : null;
-                              const ano = rascunho.ano.trim() ? Number(rascunho.ano) : null;
-                              rodar(() =>
-                                registrarConceitoDoMecAction(
-                                  professionalProfileId,
-                                  e.id,
-                                  conceito,
-                                  ano,
-                                ),
-                              );
-                            }}
-                          >
-                            Lançar conceito
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
 
                   {semInstituicao && e.verificationStatus !== "verificado" ? (
                     <label className="mt-3 block text-sm text-ink">

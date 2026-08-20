@@ -30,11 +30,9 @@ type LinhaEntry = {
   notes: string | null;
   verification_status: string;
   verified_at: string | null;
-  mec_conceito: number | null;
-  mec_conceito_ano: number | null;
 };
 
-const CAMPOS = "id, professional_profile_id, kind, title, institution, city, country, period_start, period_end, notes, verification_status, verified_at, mec_conceito, mec_conceito_ano";
+const CAMPOS = "id, professional_profile_id, kind, title, institution, city, country, period_start, period_end, notes, verification_status, verified_at";
 
 function paraEntrada(l: LinhaEntry, origem: FormacaoEntrada["origem"]): FormacaoEntrada {
   return {
@@ -50,8 +48,6 @@ function paraEntrada(l: LinhaEntry, origem: FormacaoEntrada["origem"]): Formacao
     notes: l.notes,
     verificationStatus: l.verification_status as FormacaoStatus,
     verifiedAt: l.verified_at,
-    mecConceito: l.mec_conceito,
-    mecConceitoAno: l.mec_conceito_ano,
     origem,
   };
 }
@@ -96,9 +92,7 @@ export async function listarFormacaoConfirmada(
   if (professionalProfileIds.length === 0) return { ok: true, porProfissional: new Map() };
   const { data, error } = await supabase
     .from("professional_education_entries")
-    .select(
-      "professional_profile_id, kind, title, institution, city, country, period_start, period_end, mec_conceito, mec_conceito_ano",
-    )
+    .select("professional_profile_id, kind, title, institution, city, country, period_start, period_end")
     .in("professional_profile_id", [...professionalProfileIds])
     .eq("verification_status", "verificado");
 
@@ -121,8 +115,6 @@ export async function listarFormacaoConfirmada(
       country: (l.country as string | null) ?? null,
       periodStart: (l.period_start as number | null) ?? null,
       periodEnd: (l.period_end as number | null) ?? null,
-      mecConceito: (l.mec_conceito as number | null) ?? null,
-      mecConceitoAno: (l.mec_conceito_ano as number | null) ?? null,
     });
     porProfissional.set(l.professional_profile_id as string, lista);
   }
@@ -182,56 +174,6 @@ export async function salvarEdicaoDeFormacao(
     .eq("entry_id", entryId);
 
   return { ok: true };
-}
-
-/**
- * O conceito do MEC, lançado pela equipe.
- *
- * ESCRITA SEPARADA, E DE PROPÓSITO: ao contrário de `salvarEdicaoDeFormacao`,
- * esta função NÃO rebaixa a entrada para `nao_verificado`. A verificação da
- * equipe é sobre o DIPLOMA daquela pessoa; o conceito é um fato sobre a ESCOLA.
- * Lançar a nota não põe em dúvida o documento já conferido — e rebaixar aqui
- * teria um efeito perverso e silencioso: acrescentar o conceito a uma formação
- * já verificada a tiraria da carta da paciente.
- *
- * Passar `null` em `conceito` apaga o lançamento (e o ano junto, porque ano sem
- * conceito é ano sobre nada).
- */
-export async function registrarConceitoDoMec(
-  supabase: SupabaseClient,
-  entryId: string,
-  conceito: number | null,
-  ano: number | null,
-): Promise<ResultadoDeEscrita> {
-  if (conceito !== null && (!Number.isInteger(conceito) || conceito < 1 || conceito > 5)) {
-    return { ok: false, motivo: "conceito_fora_da_escala" };
-  }
-  if (ano !== null && (!Number.isInteger(ano) || ano < 1990 || ano > 2100)) {
-    return { ok: false, motivo: "ano_implausivel" };
-  }
-
-  const { data: atual } = await supabase
-    .from("professional_education_entries")
-    .select("kind")
-    .eq("id", entryId)
-    .single();
-  if (!atual) return { ok: false, motivo: "entrada_inexistente" };
-
-  // O CHECK do banco também recusa, mas a recusa ganha nome antes do Postgres:
-  // conceito do MEC avalia curso de graduação — residência é CNRM, e os demais
-  // tipos não têm conceito algum.
-  if (conceito !== null && (atual.kind as string) !== "graduacao") {
-    return { ok: false, motivo: "conceito_so_na_graduacao" };
-  }
-
-  const { error } = await supabase
-    .from("professional_education_entries")
-    .update({
-      mec_conceito: conceito,
-      mec_conceito_ano: conceito === null ? null : ano,
-    })
-    .eq("id", entryId);
-  return error ? { ok: false, motivo: "escrita_recusada" } : { ok: true };
 }
 
 /**
