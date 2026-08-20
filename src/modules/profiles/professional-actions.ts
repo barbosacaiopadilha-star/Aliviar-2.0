@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 import { falhaParaUsuario } from "@/lib/observability/erros";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -242,7 +241,8 @@ export async function createProfessionalProfileAction(
   }
 
   revalidatePath("/admin/profissionais");
-  redirect(`/admin/profissionais/${created.id}`);
+  // Quem navega é a tela, não o framework — ver `ActionResult` em types.ts.
+  return { success: true, redirectTo: `/admin/profissionais/${created.id}` };
 }
 
 export async function updateProfessionalProfileAction(

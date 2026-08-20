@@ -12,7 +12,22 @@ export type PublicationStatus = "publicado" | "nao_publicado";
 // significa que ninguém consultou — nunca "regular".
 export type RegistrationStatus = "regular" | "irregular" | "nao_localizado";
 
-export type ActionResult = { success: true } | { success: false; error: string };
+/**
+ * Resultado de uma action de perfil.
+ *
+ * `redirectTo` existe porque `redirect()` do Next, chamado dentro de uma action
+ * consumida por `useActionState`, responde 303 com `x-action-redirect` e SEM
+ * `Location` — e o cliente não navegava. O profissional era criado, a tela
+ * ficava parada no formulário sem mensagem nenhuma, e quem operava clicava de
+ * novo, criando duplicado. Reproduzido com clique real, banco limpo e
+ * credenciais válidas; a resposta do servidor foi lida na rede.
+ *
+ * Devolver o destino e navegar no cliente não depende desse trecho do
+ * framework: a ação responde um valor comum, e a tela decide o que fazer.
+ */
+export type ActionResult =
+  | { success: true; redirectTo?: string }
+  | { success: false; error: string };
 
 export type PatientProfile = {
   profileId: string;

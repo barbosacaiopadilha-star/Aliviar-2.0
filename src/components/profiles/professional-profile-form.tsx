@@ -1,6 +1,7 @@
 "use client";
 
-import { startTransition, useActionState, useState, type FormEvent } from "react";
+import { startTransition, useActionState, useEffect, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
@@ -48,6 +49,23 @@ export function ProfessionalProfileForm({
     action,
     undefined,
   );
+  const router = useRouter();
+
+  /**
+   * A criação termina em outra tela — e é ESTE efeito que leva até lá.
+   *
+   * Antes, quem navegava era o `redirect()` do Next dentro da action. Ele
+   * responde 303 com `x-action-redirect` e sem `Location`, e o cliente não
+   * navegava: o profissional era criado, a tela ficava parada no formulário
+   * sem mensagem nenhuma, e quem operava clicava de novo — criando duplicado.
+   *
+   * Ações que só salvam (edição) não devolvem destino e seguem exibindo
+   * "Salvo com sucesso." aqui mesmo, sem sair da tela.
+   */
+  const destino = state?.success ? state.redirectTo : undefined;
+  useEffect(() => {
+    if (destino) router.push(destino);
+  }, [destino, router]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
