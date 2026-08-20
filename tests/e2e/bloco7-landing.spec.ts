@@ -280,7 +280,7 @@ test.describe("Bloco 7 · a Landing pública", () => {
     }
   });
 
-  test("T-7-2/T-7-3 — a navegação leva às seções, e Começar leva a /sua-historia", async ({
+  test("T-7-2/T-7-3 — a navegação leva às seções, e o convite leva a /solicitar-atendimento", async ({
     page,
   }) => {
     test.setTimeout(180_000);
@@ -301,8 +301,16 @@ test.describe("Bloco 7 · a Landing pública", () => {
     await expect(page.locator("#metodo")).toBeInViewport({ timeout: 10_000 });
 
     // O convite anônimo: rótulo, destino, foco por teclado e alvo medido.
-    const comecar = page.getByRole("link", { name: "Começar", exact: true }).first();
-    await expect(comecar).toHaveAttribute("href", "/sua-historia");
+    //
+    // ORÁCULO ATUALIZADO (2026-08-19). O teste exigia `Começar` levando a
+    // `/sua-historia`. O commit 3c5b7bc (2026-08-12) desfez isso de
+    // propósito: havia dois convites concorrentes e ambos levavam a uma rota
+    // que EXIGE CONTA — "quem chegava sem conta batia numa porta trancada e
+    // ia embora". O convite passou a ser um só, `Solicitar atendimento`, e é
+    // público. O produto corrigiu um defeito; este teste ainda cobrava o
+    // defeito.
+    const comecar = page.getByRole("link", { name: "Solicitar atendimento", exact: true }).first();
+    await expect(comecar).toHaveAttribute("href", "/solicitar-atendimento");
     await comecar.focus();
     await expect(comecar).toBeFocused();
     const caixa = (await comecar.boundingBox())!;
@@ -315,7 +323,7 @@ test.describe("Bloco 7 · a Landing pública", () => {
 
     // EV-7-002 · só o Hero, ANTES de concluir os reveals: o recorte é do topo
     // da página, que já está visível, e os dois CTAs vivem no header.
-    await expect(page.getByRole("link", { name: "Começar", exact: true }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "Solicitar atendimento", exact: true }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: "Entrar" }).first()).toBeVisible();
     const colunas = await page.evaluate(
       () =>
@@ -341,7 +349,7 @@ test.describe("Bloco 7 · a Landing pública", () => {
 
     // E só então: a rota de destino existe de verdade.
     await comecar.click();
-    await page.waitForURL(/\/sua-historia/, { timeout: 30_000 });
+    await page.waitForURL(/\/solicitar-atendimento/, { timeout: 30_000 });
   });
 
   test("T-7-8 — o vídeo não carrega sozinho", async ({ page }) => {
@@ -377,7 +385,7 @@ test.describe("Bloco 7 · a Landing pública", () => {
     await expect(botao).toHaveAttribute("aria-expanded", "false");
 
     // O CTA nunca some — ele fica na barra, fora do drawer.
-    const comecar = page.getByRole("link", { name: "Começar", exact: true }).first();
+    const comecar = page.getByRole("link", { name: "Solicitar atendimento", exact: true }).first();
     await expect(comecar).toBeVisible();
 
     await botao.click();
