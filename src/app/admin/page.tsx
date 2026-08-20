@@ -56,11 +56,14 @@ function StatCard({
   suffix,
   href,
   emphasis,
+  detail,
 }: {
   label: string;
   value: Metric;
   suffix?: string;
   href?: string;
+  /** Uma linha de contexto sob o número — o denominador de uma taxa, por exemplo. */
+  detail?: string;
   /** Números que pedem ação quando existem — ênfase por peso, nunca por alarme. */
   emphasis?: boolean;
 }) {
@@ -96,7 +99,16 @@ function StatCard({
       >
         {formatMetric(value, suffix)}
       </p>
-      {unavailable ? <p className="mt-0.5 text-xs text-ink-muted">Informação indisponível</p> : null}
+      {/* Dizia "Informação indisponível", que soa a falha de sistema — e não
+          é: o indicador é nulo porque ainda não há o que contar no período.
+          Numa operação que ainda não curou, era o que o operador via em quatro
+          cartões ao abrir a tela. A própria página já sabe falar assim em
+          "Nenhuma pendência no momento". */}
+      {unavailable ? (
+        <p className="mt-0.5 text-xs text-ink-muted">Sem dados neste período</p>
+      ) : detail ? (
+        <p className="mt-0.5 text-xs text-ink-muted">{detail}</p>
+      ) : null}
     </Card>
   );
 
@@ -235,7 +247,16 @@ export default async function AdminDashboardPage({
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="Leads novos" value={indicators.leadsNovos} />
           <StatCard label="Em qualificação" value={indicators.leadsEmQualificacao} />
-          <StatCard label="Conversão lead → paciente" value={indicators.taxaConversaoLead} suffix="%" />
+          <StatCard
+            label="Conversão lead → paciente"
+            value={indicators.taxaConversaoLead}
+            suffix="%"
+            detail={
+              typeof indicators.leadsTotalNoPeriodo === "number"
+                ? `sobre ${indicators.leadsTotalNoPeriodo} ${indicators.leadsTotalNoPeriodo === 1 ? "lead" : "leads"}`
+                : undefined
+            }
+          />
           <StatCard label="Pacientes ativos" value={indicators.pacientesAtivos} href="/admin/pacientes" />
         </div>
       </section>

@@ -12,7 +12,9 @@ import {
   listarMigrationsDoRepositorio,
   lerLedgerAplicado,
   mensagemDeLedger,
+  mensagemDeLedgerRemoto,
   verificarLedgerLocal,
+  verificarLedgerRemoto,
 } from "../../scripts/migration-ledger.mjs";
 
 /**
@@ -236,5 +238,75 @@ describe("Ledger de migrations — o wrapper de linha de comando", () => {
     // O wrapper sequer sabe executar processo — quem consulta é o módulo.
     expect(wrapper).not.toContain("child_process");
     expect(COMANDO_PARA_APLICAR).toBe("npx supabase migration up --local");
+  });
+});
+
+/**
+ * A GUARDA REMOTA — produção tem migration que o repositório não descreve?
+ *
+ * Em 19/08/2026 a `20260819040715` foi encontrada aplicada em produção sem
+ * existir em nenhuma cópia do repositório, e o SQL teve de ser recuperado de um
+ * dump. A guarda que existia só olhava o banco local, e por isso não viu nada.
+ *
+ * O que se exige aqui é a assimetria: migration que falta publicar é rotina e
+ * não derruba nada; migration que só existe em produção derruba.
+ */
+describe("Ledger de migrations — guarda do projeto hospedado", () => {
+  it("acusa a migration que existe em produção e em nenhum arquivo", () => {
+    const dir = repositorioFalso(["20260101000000_uma.sql"]);
+    const check = verificarLedgerRemoto({
+      diretorioDeMigrations: dir,
+      executar: respostaDaCli([
+        { local: "20260101000000", remote: "20260101000000" },
+        { local: "", remote: "20260819040715" },
+      ]),
+    });
+
+    expect(check.unknownInLedger).toEqual(["20260819040715"]);
+    expect(check.synchronized).toBe(false);
+
+    const mensagem = mensagemDeLedgerRemoto(check);
+    expect(mensagem).toContain("20260819040715");
+    expect(mensagem).toContain("aplicou SQL direto");
+  });
+
+  it("migration ainda não publicada é dita, mas não é o mesmo problema", () => {
+    const dir = repositorioFalso(["20260101000000_uma.sql", "20260102000000_duas.sql"]);
+    const check = verificarLedgerRemoto({
+      diretorioDeMigrations: dir,
+      executar: respostaDaCli([{ local: "20260101000000", remote: "20260101000000" }]),
+    });
+
+    expect(check.pending).toEqual(["20260102000000"]);
+    expect(check.unknownInLedger).toEqual([]);
+    expect(mensagemDeLedgerRemoto(check)).toContain("esperado antes de publicar");
+  });
+
+  it("em acordo, diz o total e não inventa pendência", () => {
+    const dir = repositorioFalso(["20260101000000_uma.sql"]);
+    const check = verificarLedgerRemoto({
+      diretorioDeMigrations: dir,
+      executar: respostaDaCli([{ local: "20260101000000", remote: "20260101000000" }]),
+    });
+
+    expect(check.synchronized).toBe(true);
+    expect(mensagemDeLedgerRemoto(check)).toContain("Produção e repositório em acordo");
+  });
+
+  it("falha de leitura é erro claro — nunca se confunde com acordo", () => {
+    const dir = repositorioFalso(["20260101000000_uma.sql"]);
+    expect(() =>
+      verificarLedgerRemoto({
+        diretorioDeMigrations: dir,
+        executar: () => ({ status: 1, stdout: "", stderr: "Access token not provided" }),
+      }),
+    ).toThrow(/SUPABASE_ACCESS_TOKEN/);
+  });
+
+  it("a guarda remota também nunca aplica nada", () => {
+    const wrapper = readFileSync(join(RAIZ, "scripts/check-migration-ledger-remoto.mjs"), "utf8");
+    expect(wrapper).not.toMatch(/(spawnSync|execSync|exec)\(/);
+    expect(wrapper).not.toContain("child_process");
+    expect(wrapper).not.toMatch(/migration up|db\s+(reset|push)/);
   });
 });

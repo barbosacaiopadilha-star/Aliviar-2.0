@@ -196,3 +196,107 @@ export function verificarLedgerLocal({
 
   return { ...compararLedger({ repositorio: versoes, aplicadas }), ignorados };
 }
+
+/**
+ * O MESMO confronto, contra o projeto HOSPEDADO.
+ *
+ * Por que passou a existir: em 19/08/2026 a migration `20260819040715` foi
+ * encontrada aplicada em produção sem existir em nenhuma cópia do repositório —
+ * nem na base oficial, nem na congelada, que não tinha commit algum desde 17/08.
+ * O SQL teve de ser recuperado de um dump para voltar a ser versionado.
+ *
+ * O caminho que permite isso é aplicar SQL direto no projeto hospedado (a CLI
+ * com `--linked`, ou o `apply_migration` do MCP): o ledger remoto passa a
+ * registrar uma versão que nenhum arquivo descreve. A guarda local não via nada,
+ * porque só olhava o banco da máquina.
+ *
+ * Esta função é SOMENTE LEITURA — `migration list` não altera coisa alguma — e
+ * por isso é a única do módulo que aponta de propósito para fora do local.
+ * Exige `SUPABASE_ACCESS_TOKEN` no ambiente; o valor nunca é lido nem impresso
+ * aqui, só repassado à CLI.
+ *
+ * @param {{ cwd?: string, diretorioDeMigrations?: string, executar?: () => SaidaDeComando }} [opcoes]
+ */
+export function verificarLedgerRemoto({
+  cwd = process.cwd(),
+  diretorioDeMigrations = join(cwd, "supabase", "migrations"),
+  executar,
+} = {}) {
+  const { versoes, ignorados } = listarMigrationsDoRepositorio(diretorioDeMigrations);
+
+  const rodar =
+    executar ??
+    (() =>
+      spawnSync("npx supabase migration list --linked --output-format json", {
+        cwd,
+        encoding: "utf-8",
+        shell: true,
+      }));
+
+  const resultado = rodar();
+
+  if (resultado.status !== 0) {
+    throw new AmbienteBloqueadoError(
+      "Não foi possível ler o ledger do projeto hospedado.\n" +
+        "Confira se `SUPABASE_ACCESS_TOKEN` está no ambiente e se o projeto está vinculado.\n" +
+        (resultado.stderr?.trim() || "(sem detalhes adicionais)"),
+    );
+  }
+
+  const linhaJson = (resultado.stdout ?? "")
+    .split(/\r?\n/)
+    .map((linha) => linha.trim())
+    .filter((linha) => linha.startsWith("{"))
+    .pop();
+
+  if (!linhaJson) {
+    throw new AmbienteBloqueadoError(
+      "A CLI do Supabase não devolveu o ledger remoto em formato reconhecível.",
+    );
+  }
+
+  let dados;
+  try {
+    dados = JSON.parse(linhaJson);
+  } catch {
+    throw new AmbienteBloqueadoError("A CLI do Supabase devolveu um ledger remoto ilegível.");
+  }
+
+  const aplicadas = (dados.migrations ?? [])
+    .filter((entrada) => Boolean(entrada.remote))
+    .map((entrada) => entrada.remote)
+    .sort();
+
+  return { ...compararLedger({ repositorio: versoes, aplicadas }), ignorados };
+}
+
+/** A mensagem da guarda remota — fala de produção, não da máquina de ninguém. */
+export function mensagemDeLedgerRemoto(check) {
+  if (check.synchronized) {
+    return `Produção e repositório em acordo: ${check.applied.length} de ${check.repository.length} migrations aplicadas.`;
+  }
+
+  const partes = [];
+
+  if (check.unknownInLedger.length > 0) {
+    partes.push(
+      `PRODUÇÃO TEM ${check.unknownInLedger.length} MIGRATION(S) QUE ESTE REPOSITÓRIO NÃO DESCREVE:`,
+      ...check.unknownInLedger.map((versao) => `- ${versao}`),
+      "",
+      "Alguém aplicou SQL direto no projeto hospedado. O arquivo precisa voltar ao",
+      "repositório antes de qualquer outra coisa — sem ele, ninguém consegue",
+      "recriar produção do zero nem revisar o que foi aplicado.",
+    );
+  }
+
+  if (check.pending.length > 0) {
+    if (partes.length > 0) partes.push("");
+    partes.push(
+      `O repositório tem ${check.pending.length} migration(s) que produção ainda não recebeu:`,
+      ...check.pending.map((versao) => `- ${versao}`),
+      "Isto é esperado antes de publicar; vira problema se persistir depois.",
+    );
+  }
+
+  return partes.join("\n");
+}

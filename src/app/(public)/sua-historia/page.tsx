@@ -6,6 +6,11 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getAuthState } from "@/modules/auth/session";
 import { listStoriesForProfile } from "@/modules/story/repository";
 
+// Esta era a única tela pública sem título próprio: a aba dizia só "Aliviar
+// Curadoria Médica", enquanto Landing, Fale com a Aliviar, Privacidade e Termos
+// se identificavam. No histórico do navegador ela não se distinguia de nada.
+export const metadata = { title: "Sua história" };
+
 export default async function BoasVindasPage() {
   // ETAPA 9: quem já é paciente e já tem história não recomeça — retoma.
   // A recepção é para o primeiro contato; voltar a ela reiniciava a conversa.

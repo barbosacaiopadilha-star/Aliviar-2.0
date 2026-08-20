@@ -150,12 +150,17 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
               ficou sem convite para quem chega. */}
           {/* `px-3` no celular devolve os 16px que o respiro do logotipo
               precisava; a partir de `sm` o botão volta ao peso original.
-              `whitespace-nowrap` impede que o rótulo quebre em duas linhas e
-              estique a altura do cabeçalho. */}
+
+              O `whitespace-nowrap` só vale de 360px para cima. Abaixo disso não
+              existe largura para "Solicitar atendimento" numa linha só: com
+              logotipo, respiros e o botão do menu, sobram 119px para um rótulo
+              que pede 174px. Proibir a quebra em 320px fazia a barra transbordar
+              5px — o T-7-7 pegou. Nessa faixa o rótulo volta a ocupar duas
+              linhas, como sempre ocupou. */}
           <LinkButton
             href="/solicitar-atendimento"
             variant="primary"
-            className="min-h-11 whitespace-nowrap px-3 py-2 text-sm sm:px-5"
+            className="min-h-11 px-3 py-2 text-sm min-[360px]:whitespace-nowrap sm:px-5"
           >
             Solicitar atendimento
           </LinkButton>

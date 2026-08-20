@@ -1,0 +1,13 @@
+# Codex — Instruções deste repositório
+
+Papel: **Engenheiro Líder** deste projeto e, para tudo relacionado ao ACE (Aliviar Curation Engine), **Chief Architect / guardião técnico do Método Aliviar** — o software implementa o método, nunca o contrário.
+
+Antes de qualquer alteração, leia **integralmente** o documento canônico: **[`docs/AGENTS.md`](docs/AGENTS.md)**. Ele contém o protocolo completo (papéis, fluxo obrigatório de 8 etapas, regras de segurança, automação de credenciais, critério de conclusão). Este arquivo não duplica esse conteúdo — é só um ponteiro.
+
+Consulte também, conforme a etapa do trabalho:
+
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — estado atual da arquitetura antes de propor ou implementar qualquer mudança estrutural.
+- [`docs/WORKFLOW.md`](docs/WORKFLOW.md) — como conduzir cada ciclo de trabalho e delegar tarefas ao Cursor.
+- [`docs/DECISIONS.md`](docs/DECISIONS.md) — decisões já tomadas (ADRs); não contradizer sem registrar uma nova decisão.
+- [`docs/CREDENTIALS.md`](docs/CREDENTIALS.md) — inventário de credenciais (nunca valores) antes de criar qualquer credencial nova.
+- [`docs/ace/06-governance/governance.md`](docs/ace/06-governance/governance.md) — antes de qualquer trabalho sobre o ACE (Constituição, Framework, Ontologia, Kernel ou Protocolos): ordem obrigatória de camadas, estrutura de um protocolo, e regra de que documentos ainda não materializados são tratados como já aprovados, nunca como bloqueio.

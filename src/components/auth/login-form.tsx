@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { startTransition, useActionState, useEffect, useState, type FormEvent } from "react";
+import { useActionState, useEffect, useState, type FormEvent } from "react";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { Button } from "@/components/ui/button";
@@ -31,25 +31,6 @@ export function LoginForm() {
     }
   }, [state, next, router]);
 
-  /**
-   * Validar antes de enviar, sem sair da transição e sem perder o que foi
-   * digitado. Três versões erradas antecederam esta:
-   *
-   * 1. `startTransition` envolvendo a dispatch E o resto do fluxo: a transição
-   *    externa nunca fechava — `isPending` travado em `true`, botão girando
-   *    para sempre com a escrita já feita.
-   * 2. `onSubmit` chamando `formAction` direto, fora de qualquer transição: o
-   *    giro sumiu, mas o React passou a registrar um erro a cada envio e o
-   *    `isPending` deixou de atualizar. O botão nunca mostrava "entrando", e
-   *    dava para clicar duas vezes sem retorno nenhum.
-   * 3. `action={handleSubmit}` no formulário: resolvia o erro, mas o React
-   *    limpa campos não controlados depois da ação — numa senha errada a
-   *    pessoa perdia o e-mail junto e redigitava os dois.
-   *
-   * O que vale é isto: `onSubmit` para poder recusar antes de enviar (e
-   * preservar o que foi escrito), com `startTransition` em volta APENAS da
-   * dispatch — que é o que o próprio React manda fazer.
-   */
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -64,7 +45,11 @@ export function LoginForm() {
     }
 
     setFieldErrors({});
-    startTransition(() => formAction(formData));
+    // SEM `startTransition` em volta: a dispatch de `useActionState` já roda
+    // em transição própria, e a segunda ficava pendente para sempre —
+    // `isPending` travado em `true`, estado nunca comitado. Na tela: botão
+    // girando sem parar e nenhuma mensagem, com a escrita já feita.
+    formAction(formData);
   }
 
   return (

@@ -103,6 +103,14 @@ export type DashboardIndicators = {
   leadsNovos: Metric;
   leadsEmQualificacao: Metric;
   taxaConversaoLead: Metric;
+  /**
+   * Quantos leads sustentam a taxa acima.
+   *
+   * A taxa sozinha mente por omissão: com um único lead convertido, o cartão
+   * anunciava "100%" — verdade aritmética que se lê como afirmação sobre a
+   * operação. O denominador vai junto para que 100% seja lido como "1 de 1".
+   */
+  leadsTotalNoPeriodo: Metric;
   pacientesAtivos: Metric;
   casesAbertos: Metric;
   casesSemResponsavel: Metric;
@@ -145,6 +153,8 @@ export function computeIndicators(source: DashboardSource, period: PeriodKey, no
     // "convertemos nada" quando a verdade é "não chegou ninguém".
     taxaConversaoLead:
       leads === null || convertidos === null ? null : leads.length === 0 ? null : (convertidos / leads.length) * 100,
+
+    leadsTotalNoPeriodo: leads?.length ?? null,
 
     pacientesAtivos: source.patients?.filter((p) => p.status === "ativo").length ?? null,
 

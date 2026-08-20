@@ -159,6 +159,12 @@ const nextConfig: NextConfig = {
       { source: "/curador", destination: "/coa/curadoria", permanent: false },
       { source: "/curador/:path*", destination: "/coa/curadoria/:path*", permanent: false },
       { source: "/admin/crm", destination: "/coa/atendimento", permanent: false },
+      // `/admin/ace` era o painel de um motor que não executa mais. O item 1.7
+      // (DP-2) removeu a tela; os links saíram do menu e da paleta depois. Quem
+      // ainda tiver o endereço salvo cairia num 404 — vai para a visão geral,
+      // que é onde a observabilidade que sobrou de fato está.
+      { source: "/admin/ace", destination: "/admin", permanent: false },
+      { source: "/admin/ace/:path*", destination: "/admin", permanent: false },
       // DECISÃO A (ONE ALIVIAR, 2026-07-25): existe UMA home do paciente —
       // /paciente. /portal-paciente vira compatibilidade permanente.
       { source: "/portal-paciente", destination: "/paciente", permanent: true },
