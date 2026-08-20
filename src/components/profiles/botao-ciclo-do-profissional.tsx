@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -28,7 +27,6 @@ export function BotaoCicloDoProfissional({
   acao: (formData: FormData) => Promise<void>;
   rotulo: string;
 }) {
-  const router = useRouter();
   const [pendente, iniciar] = useTransition();
 
   return (
@@ -36,7 +34,14 @@ export function BotaoCicloDoProfissional({
       action={(formData) => {
         iniciar(async () => {
           await acao(formData);
-          router.refresh();
+          // RECARGA INTEIRA, não `router.refresh()`: o que muda aqui é o selo
+          // "Ativo / Inativo" do CABEÇALHO, e para ele o rebusco ficou
+          // intermitente — apareceu numa execução e faltou na seguinte, com o
+          // servidor certo nas duas. Ativar e desativar acontecem raramente e
+          // decidem se a pessoa é vista por pacientes; um selo que mente aqui
+          // custa mais que um piscar de tela. Pelo mesmo motivo, publicar
+          // também recarrega (ver `publication-panel.tsx`).
+          window.location.reload();
         });
       }}
     >

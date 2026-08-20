@@ -323,10 +323,26 @@ export async function setProfessionalStatusAction(
   try {
     await setProfessionalStatus(supabase, id, status, authState.user.id);
   } catch (erro) {
-    // Propaga para o error.tsx do segmento, mas nunca sem deixar rastro.
+    // A FRASE DO BANCO É A EXPLICAÇÃO CERTA — mesma regra que
+    // `publishProfessionalAction` já seguia.
+    //
+    // Antes, qualquer recusa virava "Não foi possível atualizar o status" e
+    // subia para o error.tsx do segmento: a tela inteira trocada por "Algo não
+    // saiu como esperado", sem dizer o que fazer. E a recusa mais comum aqui é
+    // justamente a que traz a melhor instrução: "Publicar e despublicar são
+    // mudanças de ciclo. Use a transição do ciclo de vida." Perder essa frase é
+    // perder a única coisa que ajudava.
+    const causa = erro instanceof Error && erro.cause ? erro.cause : erro;
+    const fraseDoBanco =
+      typeof causa === "object" && causa !== null && "message" in causa
+        ? String((causa as { message: unknown }).message)
+        : null;
     throw new Error(
       falhaParaUsuario("profiles.statusProfissional", erro, {
-        mensagem: "Não foi possível atualizar o status do profissional.",
+        mensagem:
+          fraseDoBanco && /ciclo|publica|transi/i.test(fraseDoBanco)
+            ? fraseDoBanco
+            : "Não foi possível atualizar o status do profissional.",
         contexto: { profissionalId: id, status },
       }),
       { cause: erro },

@@ -79,6 +79,20 @@ export default async function EditProfessionalPage({
   }
 
   const nextStatus = professional.status === "ativo" ? "inativo" : "ativo";
+
+  /**
+   * Publicado não se desativa por aqui — e o botão para de fingir que sim.
+   *
+   * O banco recusa, com a frase certa: "Publicar e despublicar são mudanças de
+   * ciclo. Use a transição do ciclo de vida — `status` e `publication_status`
+   * apenas a espelham." Enquanto o botão continuou visível, quem operava clicava
+   * num ato impossível e recebia de volta um "Algo não saiu como esperado" — a
+   * tela oferecendo o que o modelo proíbe, e escondendo o porquê.
+   *
+   * A saída legítima existe e é melhor: a etapa Ciclo de vida pede motivo e
+   * registra autoria. É para lá que este cabeçalho aponta agora.
+   */
+  const publicado = professional.publicationStatus === "publicado";
   const indiceEtapa = PROFESSIONAL_WORKFLOW_STEPS.findIndex(
     (item) => item.id === etapa,
   );
@@ -113,10 +127,23 @@ export default async function EditProfessionalPage({
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row">
-              <BotaoCicloDoProfissional
-                acao={setProfessionalStatusAction.bind(null, id, nextStatus)}
-                rotulo={professional.status === "ativo" ? "Desativar" : "Ativar"}
-              />
+              {publicado ? (
+                <p className="max-w-reading text-sm text-ink-muted">
+                  Publicado. Para tirar da Rede, use{" "}
+                  <a
+                    href={professionalWorkflowStepHref(id, "rede")}
+                    className="font-medium text-brand-primary underline underline-offset-4"
+                  >
+                    Ciclo de vida
+                  </a>{" "}
+                  — lá a mudança pede motivo e fica com autoria.
+                </p>
+              ) : (
+                <BotaoCicloDoProfissional
+                  acao={setProfessionalStatusAction.bind(null, id, nextStatus)}
+                  rotulo={professional.status === "ativo" ? "Desativar" : "Ativar"}
+                />
+              )}
             </div>
           </div>
         </CardHeader>

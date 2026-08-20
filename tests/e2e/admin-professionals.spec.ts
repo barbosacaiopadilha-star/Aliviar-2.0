@@ -149,8 +149,27 @@ test.describe("gestão administrativa de profissionais (Sprint Produto 2)", () =
     await page.getByRole("button", { name: "Registrar pelo cadastro" }).click();
     await expect(page.getByText(/respostas registradas pela equipe/)).toBeVisible();
 
-    await page.getByRole("button", { name: "Desativar" }).click();
-    await expect(page.getByText("Inativo", { exact: true })).toBeVisible();
+    // TIRAR DA REDE PELO CAMINHO QUE O MODELO PERMITE.
+    //
+    // Este passo clicava em "Desativar" no cabeçalho e esperava "Inativo".
+    // Nunca poderia passar depois de publicar: o banco recusa, com a frase
+    // "Publicar e despublicar são mudanças de ciclo. Use a transição do ciclo
+    // de vida — `status` e `publication_status` apenas a espelham." O teste
+    // cobrava um ato que o Método proíbe, e a falha era legítima.
+    //
+    // O cabeçalho deixou de oferecer o botão quando o profissional está
+    // publicado, e passou a apontar para o Ciclo de vida. É por lá que se sai
+    // da Rede — com motivo declarado e autoria registrada, que é justamente o
+    // que a mudança de ciclo existe para garantir.
+    // O que este spec guarda é o CABEÇALHO: publicado, ele não oferece mais um
+    // ato que o banco recusa, e diz para onde ir. Percorrer a transição de
+    // ciclo inteira aqui seria duplicar — ela já é coberta, e melhor, por
+    // `tests/integration/c7-ciclo-do-profissional.integration.test.ts` e pelos
+    // testes de unidade do mesmo módulo, que exercitam destino, motivo e
+    // autoria sem depender de tela.
+    await expect(page.getByRole("button", { name: "Desativar" })).toHaveCount(0);
+    await expect(page.getByText(/Para tirar da Rede, use/)).toBeVisible();
+    await expect(page.getByRole("link", { name: "Ciclo de vida" }).first()).toBeVisible();
   });
 
   test("paciente e profissional não acessam /admin/profissionais", async ({ page }) => {

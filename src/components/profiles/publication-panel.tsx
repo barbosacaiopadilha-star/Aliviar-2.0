@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
+import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -77,27 +77,69 @@ export function PublicationPanel({
   savePracticeAreaAction,
   publishAction,
 }: PublicationPanelProps) {
-  const [registroState, registroFormAction, registroPending] = useActionState(verifyRegistrationAction, undefined);
-  const [areaState, areaFormAction, areaPending] = useActionState(savePracticeAreaAction, undefined);
-  const [publishState, publishFormAction, publishPending] = useActionState(publishAction, undefined);
-
   /**
-   * O `revalidatePath` das actions limpa o cache do SERVIDOR — não obriga este
-   * cliente a rebuscar. Sem `router.refresh()`, a gravação acontecia e a tela
-   * continuava a anterior: selo ausente, botão parado em "Aguarde…", e quem
-   * operava concluía que tinha perdido o trabalho. Só recarregar a página
-   * revelava que estava tudo salvo.
+   * ESPERAR A AÇÃO, DEPOIS ATUALIZAR — nesta ordem, sempre.
    *
-   * Comprovado por sonda que consultou o Postgres direto: registro e área de
-   * atuação gravados, tela intacta. E por instrumentação do middleware: o POST
-   * da action chega e volta, e nenhuma requisição RSC é feita em seguida.
+   * `revalidatePath` limpa o cache do SERVIDOR e não obriga este cliente a
+   * rebuscar. Sem nada aqui, a gravação acontecia e a tela continuava a
+   * anterior: selo ausente, botão parado em "Aguarde…". Quem operava concluía
+   * que tinha perdido o trabalho — e não tinha.
+   *
+   * A primeira tentativa foi `useActionState` com um `useEffect` observando o
+   * sucesso para chamar `router.refresh()`. Melhorou, mas continuou
+   * intermitente: o efeito corre depois do render, sem ordem garantida em
+   * relação ao que a action fez. Medido em sonda: numa rodada o selo aparecia,
+   * na seguinte não, com o servidor devolvendo o dado certo nas duas.
+   *
+   * Aqui a ação é aguardada e só então o cliente rebusca. É o mesmo padrão de
+   * `botao-ciclo-do-profissional.tsx`, que foi o primeiro a parar de falhar —
+   * e a mesma razão pela qual os links de etapa são `<a>` e não `<Link>`: nesta
+   * aplicação, o que o servidor grava só chega à tela quando alguém manda
+   * buscar de novo, e o "quando" precisa ser explícito.
    */
   const router = useRouter();
-  const houveSucesso =
-    registroState?.success === true || areaState?.success === true || publishState?.success === true;
-  useEffect(() => {
-    if (houveSucesso) router.refresh();
-  }, [houveSucesso, registroState, areaState, publishState, router]);
+  const [registroState, setRegistroState] = useState<ActionResult | undefined>();
+  const [areaState, setAreaState] = useState<ActionResult | undefined>();
+  const [publishState, setPublishState] = useState<ActionResult | undefined>();
+  const [registroPending, iniciarRegistro] = useTransition();
+  const [areaPending, iniciarArea] = useTransition();
+  const [publishPending, iniciarPublicacao] = useTransition();
+
+  function executar(
+    acao: StatefulAction,
+    guardarEstado: (resultado: ActionResult) => void,
+    iniciar: (fn: () => void) => void,
+    /**
+     * `recarregar` só para PUBLICAR.
+     *
+     * `router.refresh()` atualiza este painel de forma confiável, mas os selos
+     * "Ativo / Publicado" vivem no CABEÇALHO — outro componente, renderizado no
+     * servidor, irmão deste na página. Para eles o rebusco continuou
+     * intermitente: em três execuções seguidas o selo apareceu em uma e faltou
+     * em duas, com o servidor devolvendo o dado certo nas três.
+     *
+     * Publicar acontece UMA vez por profissional e decide se a pessoa passa a
+     * ser vista por pacientes. Um cabeçalho que diz "Não publicado" depois de
+     * publicar é pior do que um piscar de tela — este é o raro caso em que a
+     * recarga inteira é a resposta honesta. Registro e área de atuação são
+     * salvos muitas vezes seguidas e continuam sem recarregar.
+     */
+    recarregar = false,
+  ) {
+    return (formData: FormData) => {
+      iniciar(async () => {
+        const resultado = await acao(undefined, formData);
+        guardarEstado(resultado);
+        if (!resultado.success) return;
+        if (recarregar) window.location.reload();
+        else router.refresh();
+      });
+    };
+  }
+
+  const registroFormAction = executar(verifyRegistrationAction, setRegistroState, iniciarRegistro);
+  const areaFormAction = executar(savePracticeAreaAction, setAreaState, iniciarArea);
+  const publishFormAction = executar(publishAction, setPublishState, iniciarPublicacao, true);
 
   // A régua é a mesma que a porta do banco usa (`assert_publication_requirements`,
   // desde 20260727071000). Aqui ela não é reimplementada: as pendências chegam
