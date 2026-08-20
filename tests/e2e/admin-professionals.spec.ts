@@ -55,18 +55,30 @@ test.describe("gestão administrativa de profissionais (Sprint Produto 2)", () =
 
     // A porta de publicação (política de fontes): o painel diz o que falta —
     // e cada condição é cumprida pela interface, nunca por SQL manual.
+    //
+    // ORÁCULO ATUALIZADO (2026-08-19): a ficha do profissional deixou de ser
+    // página única e virou fluxo de SEIS ETAPAS. A porta de publicação mora
+    // na etapa "Publicação"; os dados básicos, na etapa "Cadastro". O teste
+    // passa a navegar entre elas — o produto mudou de propósito, e o que este
+    // teste prova continua o mesmo.
+    await page.getByRole("link", { name: "Publicação", exact: true }).click();
+    await page.waitForURL(/etapa=publicacao/);
     await expect(page.getByText(/Pendências para publicação/)).toBeVisible();
     await expect(page.getByText("O CRM não foi informado.")).toBeVisible();
     await expect(page.getByText("O registro no conselho ainda não foi verificado.")).toBeVisible();
     await expect(page.getByText("A Área de Atuação não foi definida.")).toBeVisible();
 
-    // 1. CRM + UF no cadastro.
+    // 1. CRM + UF no cadastro — de volta à primeira etapa.
+    await page.getByRole("link", { name: "Cadastro", exact: true }).click();
+    await page.waitForURL(/etapa=cadastro/);
     await page.getByLabel("CRM (quando aplicável)").fill("123456");
     await page.getByLabel("UF do CRM").selectOption("SP");
     await page.getByRole("button", { name: "Salvar alterações" }).click();
     await expect(page.getByText("Salvo com sucesso.")).toBeVisible();
 
-    // 2. Verificação do registro, com fonte.
+    // 2. Verificação do registro, com fonte — na etapa de Publicação.
+    await page.getByRole("link", { name: "Publicação", exact: true }).click();
+    await page.waitForURL(/etapa=publicacao/);
     await page.getByLabel("Situação verificada").selectOption("regular");
     await page.getByLabel("Fonte da verificação").fill("Portal do CFM, consulta E2E");
     await page.getByRole("button", { name: "Registrar verificação" }).click();

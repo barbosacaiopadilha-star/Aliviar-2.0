@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useState, type FormEvent } from "react";
+import { useActionState, useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -110,9 +110,12 @@ export function ProfessionalProfileForm({
 
     setFormError(null);
     setFieldErrors({});
-    startTransition(() => {
-      formAction(formData);
-    });
+    // SEM `startTransition` em volta. A dispatch de `useActionState` já roda
+    // em transição própria; envolvê-la numa segunda deixava a transição
+    // externa pendente para sempre — `isPending` ficava `true` e o estado
+    // NUNCA era comitado. Na tela: o botão girava sem parar e nenhuma
+    // mensagem aparecia, embora a gravação tivesse acontecido.
+    formAction(formData);
   }
 
   return (
