@@ -90,7 +90,9 @@ test.describe("gestão administrativa de profissionais (Sprint Produto 2)", () =
     await page.getByLabel("Situação verificada").selectOption("regular");
     await page.getByLabel("Fonte da verificação").fill("Portal do CFM, consulta E2E");
     await page.getByRole("button", { name: "Registrar verificação" }).click();
-    await expect(page.getByText("Verificação registrada.")).toBeVisible();
+    // A confirmação é o SELO vindo do servidor, com a data do registro — não
+    // um aviso que vive na memória da tela e some quando ela se atualiza.
+    await expect(page.getByText(/Verificação registrada em \d{2}\/\d{2}\/\d{4}/)).toBeVisible();
 
     // 3. Área de Atuação verificada, com fonte.
     await page.getByLabel("Descrição (texto original, sempre preservado)").fill("Ortopedia — coluna e dor crônica");
@@ -98,7 +100,7 @@ test.describe("gestão administrativa de profissionais (Sprint Produto 2)", () =
     await page.getByLabel("Fonte", { exact: true }).fill("Site institucional (E2E)");
     await page.getByLabel("Marcar como verificada (exige fonte)").check();
     await page.getByRole("button", { name: "Salvar área de atuação" }).click();
-    await expect(page.getByText("Área de atuação salva.")).toBeVisible();
+    await expect(page.getByText(/Área de atuação salva/)).toBeVisible();
 
     // Sem pendências, a porta abre.
     await expect(page.getByText(/Pendências para publicação/)).toHaveCount(0);

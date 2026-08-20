@@ -32,7 +32,7 @@ function montar(sobre: { isPublished: boolean; pendencies: PublicationPendency[]
     <PublicationPanel
       isPublished={sobre.isPublished}
       pendencies={sobre.pendencies}
-      registration={{ status: null, source: null }}
+      registration={{ status: null, source: null, verifiedAt: null }}
       practiceArea={null}
       verifyRegistrationAction={NADA}
       savePracticeAreaAction={NADA}

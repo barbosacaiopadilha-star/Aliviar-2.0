@@ -292,6 +292,7 @@ async function renderEtapa({
           registration={{
             status: professional.registrationStatus,
             source: professional.registrationSource,
+            verifiedAt: professional.registrationVerifiedAt,
           }}
           practiceArea={
             practiceArea
@@ -300,6 +301,7 @@ async function renderEtapa({
                   tags: practiceArea.tags,
                   source: practiceArea.source,
                   verified: practiceArea.verificationStatus === "verificado",
+                  verifiedAt: practiceArea.verifiedAt,
                 }
               : null
           }

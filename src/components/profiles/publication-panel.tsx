@@ -13,11 +13,47 @@ import type { PublicationPendency } from "@/modules/profiles/publication-pendenc
 
 type StatefulAction = (prevState: ActionResult | undefined, formData: FormData) => Promise<ActionResult>;
 
+/**
+ * A CONFIRMAÇÃO É O ESTADO, NÃO UM AVISO.
+ *
+ * Antes, cada gravação respondia com uma frase ("Verificação registrada.")
+ * guardada na memória da tela. Quando a página se atualizava — e ela precisa
+ * se atualizar, senão a lista de pendências continua mentindo —, a frase
+ * sumia junto. Ficamos entre dado velho e confirmação que evapora.
+ *
+ * O selo desfaz o dilema: ele vem do servidor, com a data do próprio registro.
+ * Se está na tela, está no banco. Não é uma afirmação sobre o passado que
+ * ninguém pode conferir — é o dado, e ele sobrevive a qualquer atualização.
+ */
+function SeloDeVerificacao({
+  rotulo,
+  feito,
+  em,
+}: {
+  rotulo: string;
+  feito: boolean;
+  em: string | null;
+}) {
+  if (!feito) return null;
+  return (
+    <p className="text-sm text-ink-muted" role="status">
+      {rotulo}
+      {em ? ` em ${new Date(em).toLocaleDateString("pt-BR")}` : ""}.
+    </p>
+  );
+}
+
 type PublicationPanelProps = {
   isPublished: boolean;
   pendencies: PublicationPendency[];
-  registration: { status: string | null; source: string | null };
-  practiceArea: { rawText: string; tags: string[]; source: string | null; verified: boolean } | null;
+  registration: { status: string | null; source: string | null; verifiedAt: string | null };
+  practiceArea: {
+    rawText: string;
+    tags: string[];
+    source: string | null;
+    verified: boolean;
+    verifiedAt: string | null;
+  } | null;
   verifyRegistrationAction: StatefulAction;
   savePracticeAreaAction: StatefulAction;
   publishAction: StatefulAction;
@@ -89,7 +125,11 @@ export function PublicationPanel({
         {registroState && !registroState.success ? (
           <FormMessage variant="error">{registroState.error}</FormMessage>
         ) : null}
-        {registroState?.success ? <FormMessage variant="success">Verificação registrada.</FormMessage> : null}
+        <SeloDeVerificacao
+          rotulo="Verificação registrada"
+          feito={Boolean(registration.status) && Boolean(registration.source)}
+          em={registration.verifiedAt}
+        />
         <Button type="submit" variant="secondary" isLoading={registroPending}>
           Registrar verificação
         </Button>
@@ -126,7 +166,11 @@ export function PublicationPanel({
           defaultChecked={practiceArea?.verified ?? false}
         />
         {areaState && !areaState.success ? <FormMessage variant="error">{areaState.error}</FormMessage> : null}
-        {areaState?.success ? <FormMessage variant="success">Área de atuação salva.</FormMessage> : null}
+        <SeloDeVerificacao
+          rotulo="Área de atuação salva"
+          feito={Boolean(practiceArea?.rawText)}
+          em={practiceArea?.verifiedAt ?? null}
+        />
         <Button type="submit" variant="secondary" isLoading={areaPending}>
           Salvar área de atuação
         </Button>
@@ -136,9 +180,9 @@ export function PublicationPanel({
         {publishState && !publishState.success ? (
           <FormMessage variant="error">{publishState.error}</FormMessage>
         ) : null}
-        {publishState?.success ? (
-          <FormMessage variant="success">Estado de publicação atualizado.</FormMessage>
-        ) : null}
+        {/* O estado de publicação já é dito pelo badge do cabeçalho e pelo
+            rótulo do próprio botão ("Publicar" vira "Despublicar"). Uma frase
+            a mais só repetia — e era a frase que sumia. */}
         {/*
           Publicar com pendência não é um erro a ser explicado depois: é um ato
           que não deveria ser oferecido. O botão fica indisponível de verdade —

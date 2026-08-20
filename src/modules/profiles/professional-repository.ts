@@ -364,6 +364,12 @@ export type PracticeAreaRow = {
   tags: string[];
   source: string | null;
   verificationStatus: "nao_verificado" | "em_verificacao" | "verificado" | "divergente";
+  /**
+   * Data da verificação. Sobe até a tela porque é ELA a confirmação de que a
+   * gravação aconteceu — não um aviso passageiro. Aviso vive na memória da
+   * tela e some quando a página se atualiza; data e autor ficam.
+   */
+  verifiedAt: string | null;
 };
 
 export async function getPracticeArea(
@@ -372,7 +378,7 @@ export async function getPracticeArea(
 ): Promise<PracticeAreaRow | null> {
   const { data, error } = await supabase
     .from("professional_practice_areas")
-    .select("raw_text, tags, source, verification_status")
+    .select("raw_text, tags, source, verification_status, verified_at")
     .eq("professional_profile_id", professionalProfileId)
     .maybeSingle();
 
@@ -384,6 +390,7 @@ export async function getPracticeArea(
     tags: (data.tags as string[]) ?? [],
     source: (data.source as string | null) ?? null,
     verificationStatus: data.verification_status as PracticeAreaRow["verificationStatus"],
+    verifiedAt: (data.verified_at as string | null) ?? null,
   };
 }
 

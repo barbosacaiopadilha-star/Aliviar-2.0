@@ -68,14 +68,16 @@ async function criarProfissionalPublicado(
   await page.getByLabel("Situação verificada").selectOption("regular");
   await page.getByLabel("Fonte da verificação").fill("Portal do CFM (fluxo completo E2E)");
   await page.getByRole("button", { name: "Registrar verificação" }).click();
-  await expect(page.getByText("Verificação registrada.")).toBeVisible();
+  // A confirmação é o SELO vindo do servidor, com data — não um aviso que
+  // vive na memória da tela e some quando ela se atualiza.
+  await expect(page.getByText(/Verificação registrada em \d{2}\/\d{2}\/\d{4}/)).toBeVisible();
 
   await page.getByLabel("Descrição (texto original, sempre preservado)").fill(area.texto);
   await page.getByLabel("Tags normalizadas (separadas por vírgula)").fill(area.tags);
   await page.getByLabel("Fonte", { exact: true }).fill("Site institucional (fluxo completo E2E)");
   await page.getByLabel("Marcar como verificada (exige fonte)").check();
   await page.getByRole("button", { name: "Salvar área de atuação" }).click();
-  await expect(page.getByText("Área de atuação salva.")).toBeVisible();
+  await expect(page.getByText(/Área de atuação salva/)).toBeVisible();
 
   await page.getByRole("button", { name: "Publicar" }).click();
   await expect(page.getByText("Publicado", { exact: true })).toBeVisible();
