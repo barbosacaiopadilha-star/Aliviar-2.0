@@ -216,12 +216,24 @@ describe("§7 · emitir_proposta_de_estado — todas as recusas nominais, zero e
     expect(saida).toContain("E2=CONCEITO_INEXISTENTE");
   });
 
-  it("conceito humano e conceito NUNCA → CONCEITO_SEM_PONTE (o validador do Catálogo)", () => {
+  it("conceito humano → CONCEITO_SEM_PONTE; conceito NUNCA → CONCEITO_INEXISTENTE (o validador do Catálogo)", () => {
+    // ORÁCULO ATUALIZADO (2026-08-21) — o Catálogo mudou debaixo do teste,
+    // duas vezes:
+    //  1. o exemplo "humano" era FORMACAO_GRADUACAO, e o Catálogo vigente o
+    //     tornou AUTOMÁTICO (a formação deriva do diploma verificado — a
+    //     família B). O emissor passou, corretamente, a não devolver
+    //     SEM_PONTE para ele.
+    //  2. TODO conceito de cruzamento nulo ("NUNCA") está INATIVO no 1.1.0 —
+    //     e conceito inativo é, para o emissor, INEXISTENTE. Não há mais
+    //     conceito ativo sem ponte por ser NUNCA; o caso vivo de SEM_PONTE é
+    //     o humano.
+    // O teste passa a afirmar exatamente essa realidade, e acusa se um NUNCA
+    // voltar à circulação ativa sem decisão.
     const saida = emTransacaoRevertida(
-      FIXTURE + EMITIR("FORMACAO_GRADUACAO") + `select 'SEP';` + EMITIR("MODELO_PREFERENCIAS_E_RESTRICOES"),
+      FIXTURE + EMITIR("HISTORICO_REGULARIDADE") + `select 'SEP';` + EMITIR("MODELO_PREFERENCIAS_E_RESTRICOES"),
     );
-    // FORMACAO_GRADUACAO é humano (cruzamento) — fora da derivação (1.A).
-    expect(saida.match(/E=CONCEITO_SEM_PONTE/g)).toHaveLength(2);
+    expect(saida.match(/E=CONCEITO_INEXISTENTE/g)).toHaveLength(1);
+    expect(saida.match(/E=CONCEITO_SEM_PONTE/g)).toHaveLength(1);
   });
 
   it("automático sem evidência → SEM_EVIDENCIA; com evidência → SEM_REGRA_VIGENTE — o vazio-honesto", () => {
@@ -245,8 +257,8 @@ values ('${PERFIL}', 'CONTINUIDADE_CANAIS', 1, (select array[o.value] from curad
     const saida = emTransacaoRevertida(
       FIXTURE +
         `
-insert into curadoria.professional_subcriterion_map (professional_profile_id, subcriterion_id, status)
-select '${PERFIL}', s.id, 'CONFIRMADO' from curadoria.method_subcriteria s where s.code = 'MODELO_COMUNICACAO';` +
+insert into curadoria.professional_subcriterion_map (professional_profile_id, subcriterion_id, status, declared_by)
+select '${PERFIL}', s.id, 'CONFIRMADO', '${ADMIN}' from curadoria.method_subcriteria s where s.code = 'MODELO_COMUNICACAO';` +
         EMITIR("MODELO_COMUNICACAO"),
     );
     expect(saida).toContain("E=DECLARACAO_MANUAL_VIGENTE");
@@ -351,8 +363,8 @@ values ('${PERFIL}', 'MODELO_COMUNICACAO', 2, '{ADAPTA_A_LINGUAGEM_AO_INTERLOCUT
       FIXTURE +
         PROPOSTA_PROFISSIONAL +
         `
-insert into curadoria.professional_subcriterion_map (professional_profile_id, subcriterion_id, status)
-select '${PERFIL}', s.id, 'NAO_CONFIRMADO' from curadoria.method_subcriteria s where s.code = 'MODELO_COMUNICACAO';` +
+insert into curadoria.professional_subcriterion_map (professional_profile_id, subcriterion_id, status, declared_by)
+select '${PERFIL}', s.id, 'NAO_CONFIRMADO', '${ADMIN}' from curadoria.method_subcriteria s where s.code = 'MODELO_COMUNICACAO';` +
         COMO(ADMIN) +
         DECIDIR("CONFIRMACAO") +
         `

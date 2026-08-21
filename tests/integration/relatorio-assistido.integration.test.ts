@@ -218,6 +218,9 @@ describe("Relatório assistido — geração, ciclo de vida e congelamento (Supa
         professional_profile_id: professionalIds[key]!,
         subcriterion_id: idPorCodigo.get(code)!,
         status,
+        // Autor obrigatório em linha nova desde a migration 20260819230000
+        // (mapa_exige_autor): quem declara o Mapa nesta fixture é o admin.
+        declared_by: admin.userId,
       }));
       const { error } = await service.from("professional_subcriterion_map").upsert(linhas, {
         onConflict: "professional_profile_id,subcriterion_id",

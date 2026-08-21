@@ -326,11 +326,15 @@ describe("C7 · o trigger aceita as seis passagens", () => {
 });
 
 describe("C7 · o trigger recusa cada transição proibida", () => {
+  // ORÁCULO ATUALIZADO (2026-08-21): PREPARACAO → RETIRADO_ARQUIVADO saiu da
+  // lista porque a migration 20260819040715 a LIBEROU de propósito —
+  // "arquivamento direto também para cadastro ainda em preparação", com os
+  // mesmos motivos do arquivamento normal. A transição legítima é coberta no
+  // describe das permitidas; aqui ficam só as que o banco segue recusando.
   it.each([
     ["RETIRADO_ARQUIVADO", "PUBLICADO_ATIVO"],
     ["RETIRADO_ARQUIVADO", "PAUSADO"],
     ["PREPARACAO", "PAUSADO"],
-    ["PREPARACAO", "RETIRADO_ARQUIVADO"],
     ["PUBLICADO_ATIVO", "PREPARACAO"],
     ["PAUSADO", "PREPARACAO"],
   ] as const)("%s → %s é recusada", async (de, para) => {
@@ -487,8 +491,12 @@ describe("C7 · a trilha em audit_logs", () => {
   });
 
   it("transição recusada não deixa trilha", async () => {
+    // O exemplo de recusa era PREPARACAO → RETIRADO_ARQUIVADO — liberada pela
+    // migration 20260819040715 (arquivamento direto do cadastro em
+    // preparação). O exemplo passa a ser uma transição que o banco SEGUE
+    // recusando: PREPARACAO → PAUSADO (pausar o que nunca esteve no ar).
     const id = await criarProfissional("PREPARACAO");
-    await transitar(id, "RETIRADO_ARQUIVADO", { motivo: "OUTRO", nota: "tentativa de transição proibida" });
+    await transitar(id, "PAUSADO", { motivo: "OUTRO", nota: "tentativa de transição proibida" });
 
     const { data } = await service.from("audit_logs").select("id").eq("metadata->>professional_profile_id", id);
     expect(data ?? [], "houve trilha de um ato que não aconteceu").toHaveLength(0);

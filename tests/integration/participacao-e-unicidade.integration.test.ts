@@ -110,7 +110,10 @@ afterAll(() => {
             -- EMENDA DR3: a ocupação LAVRADA da Regra 001 não é resíduo desta
             -- suíte — sai por nome. Qualquer OUTRA ocupação sobrevivente derruba.
             (select count(*) from ${OCUPACAO} where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA') || '|' ||
-            (select count(*) from ${PROPOSTAS}) || '|' || (select count(*) from curadoria.cases)`,
+            -- O Case da sentinela é o DESTA suíte (por ${PESSOA}): exigir a
+            -- tabela inteira zerada derrubava a suíte por Cases legítimos do
+            -- E2E ou de seed — resíduo que nunca foi dela.
+            (select count(*) from ${PROPOSTAS}) || '|' || (select count(*) from curadoria.cases where patient_profile_id = ${PESSOA})`,
   );
   if (saida !== "0|0|0|0|0|0") {
     throw new Error(`2.2C-R1 deixou resíduo: regras|transicoes|mapa|ocupacao|propostas|cases = ${saida}`);

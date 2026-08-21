@@ -120,10 +120,13 @@ afterAll(() => {
     delete from curadoria.patient_stories where profile_id = ${PESSOA};
     delete from auth.users where id = ${PESSOA};
   `);
+  // A sentinela conta O QUE ESTE TESTE CRIOU — nunca a tabela inteira. Exigir
+  // `cases` zerada no banco todo derrubava a suíte por Cases legítimos do E2E
+  // ou de seed (a lição da fixture não-autossuficiente).
   const { saida } = psql(
-    `select (select count(*) from curadoria.derivation_proposals) || '|' ||
-            (select count(*) from curadoria.derivation_rules where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA') || '|' ||
-            (select count(*) from curadoria.cases)`,
+    `select (select count(*) from curadoria.derivation_proposals where rule_id in ('REGRA-X','REGRA-Y')) || '|' ||
+            (select count(*) from curadoria.derivation_rules where rule_id in ('REGRA-X','REGRA-Y')) || '|' ||
+            (select count(*) from curadoria.cases where patient_profile_id = ${PESSOA})`,
   );
   if (saida !== "0|0|0") throw new Error(`1.11 deixou resíduo: propostas|regras|cases = ${saida}`);
 });

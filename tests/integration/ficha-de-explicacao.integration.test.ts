@@ -90,10 +90,12 @@ beforeAll(() => {
     insert into curadoria.professional_subcriterion_map
       (professional_profile_id, subcriterion_id, status, declared_by, evidence_id)
     values (${PROF}, '${idDoConceito(DERIVADO)}'::uuid, 'CONFIRMADO', ${PESSOA}, ${V1});
-    -- O legado: mesmo conceito, outro profissional, SEM vínculo.
+    -- O legado: mesmo conceito, outro profissional, SEM vínculo (evidence_id).
+    -- 'Legado' é ausência de VÍNCULO, não de autor: desde a migration
+    -- 20260819230000 (mapa_exige_autor), linha nova sem declared_by é recusada.
     insert into curadoria.professional_subcriterion_map
-      (professional_profile_id, subcriterion_id, status)
-    values (${OUTRO_PROF}, '${idDoConceito(DERIVADO)}'::uuid, 'CONFIRMADO');
+      (professional_profile_id, subcriterion_id, status, declared_by)
+    values (${OUTRO_PROF}, '${idDoConceito(DERIVADO)}'::uuid, 'CONFIRMADO', ${PESSOA});
 
     insert into curadoria.case_needs (case_id, subcriterion_code, catalog_version, options, degree, origin, declared_by)
     values (${CASO}, '${DERIVADO}', '1.1.0', '{A}', 'ESSENCIAL', 'DIRETO', ${PESSOA}),
@@ -151,12 +153,17 @@ afterAll(() => {
     alter table curadoria.derivation_rule_degree_map enable trigger derivation_rule_degree_map_append_only;
     alter table curadoria.derivation_rules enable trigger derivation_rules_append_only;
   `);
+  // A sentinela conta O QUE ESTE TESTE CRIOU — nunca a tabela inteira. A
+  // versão anterior exigia as cinco tabelas zeradas no banco todo, o que só
+  // era verdade num banco recém-nascido: qualquer seed ou resto legítimo de
+  // outra suíte a derrubava com "resíduo" que não era dela (a mesma lição da
+  // fixture não-autossuficiente já registrada no projeto).
   const { saida } = psql(
-    `select (select count(*) from curadoria.derivation_proposals) || '|' ||
-            (select count(*) from curadoria.derivation_rules where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA') || '|' ||
-            (select count(*) from curadoria.practice_evidence) || '|' ||
-            (select count(*) from curadoria.professional_subcriterion_map) || '|' ||
-            (select count(*) from curadoria.cases)`,
+    `select (select count(*) from curadoria.derivation_proposals where case_id = ${CASO}) || '|' ||
+            (select count(*) from curadoria.derivation_rules where rule_id like 'a2f-%') || '|' ||
+            (select count(*) from curadoria.practice_evidence where professional_profile_id in (${PROF}, ${OUTRO_PROF})) || '|' ||
+            (select count(*) from curadoria.professional_subcriterion_map where professional_profile_id in (${PROF}, ${OUTRO_PROF})) || '|' ||
+            (select count(*) from curadoria.cases where id = ${CASO})`,
   );
   if (saida !== "0|0|0|0|0") {
     throw new Error(`A2 deixou resíduo: propostas|regras|evidencias|map|cases = ${saida}`);

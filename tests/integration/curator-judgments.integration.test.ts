@@ -592,7 +592,11 @@ where n.nspname = 'curadoria' and p.prosrc ilike '%curator_judgment%'
       // + `decidir_proposta` (ABERTURA 2.C — PA-17): a incompatibilidade da
       // ADR-068 §13.2 virou verificação executável — a decisora LÊ o juízo do
       // ator para recusar o confirmador-que-julga; jamais escreve na entidade.
-      "decidir_proposta,js3_evidencia_nova_supersede_juizo,julgamento_tem_mesmo_conteudo,ler_julgamentos_para_avaliacao,registrar_julgamento,retirar_julgamento",
+      // + `professional_profile_admin_impact` (migration 20260819040715): a
+      // prévia de impacto da exclusão definitiva CONTA os juízos do
+      // profissional para avisar o administrador do que se perderia — um
+      // count(*), leitura pura; jamais escreve na entidade.
+      "decidir_proposta,js3_evidencia_nova_supersede_juizo,julgamento_tem_mesmo_conteudo,ler_julgamentos_para_avaliacao,professional_profile_admin_impact,registrar_julgamento,retirar_julgamento",
     );
   });
 

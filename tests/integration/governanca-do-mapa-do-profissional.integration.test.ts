@@ -106,11 +106,14 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '${quem}', true);
 do $mapa$
 begin
-  insert into curadoria.professional_subcriterion_map (professional_profile_id, subcriterion_id, status)
+  -- declared_by = quem escreve: obrigatorio desde a migration 20260819230000
+  -- (mapa_exige_autor). O que se testa aqui continua sendo a RLS por papel.
+  insert into curadoria.professional_subcriterion_map (professional_profile_id, subcriterion_id, status, declared_by)
   values (
     '${professionalProfileId}',
     (select id from curadoria.method_subcriteria where code = 'MODELO_COMUNICACAO' and active limit 1),
-    'CONFIRMADO'
+    'CONFIRMADO',
+    '${quem}'
   );
   perform set_config('t.escrita', 'ESCREVEU', true);
 exception

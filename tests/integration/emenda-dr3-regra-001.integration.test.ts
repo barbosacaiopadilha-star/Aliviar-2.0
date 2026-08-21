@@ -243,8 +243,8 @@ from curadoria.derivation_proposals;`,
       FIXTURE +
         EVIDENCIA([POSITIVA]) +
         `
-insert into curadoria.professional_subcriterion_map (professional_profile_id, subcriterion_id, status)
-select ${PERFIL}, s.id, 'NAO_CONFIRMADO' from curadoria.method_subcriteria s where s.code = '${CONCEITO}';` +
+insert into curadoria.professional_subcriterion_map (professional_profile_id, subcriterion_id, status, declared_by)
+select ${PERFIL}, s.id, 'NAO_CONFIRMADO', ${ATOR} from curadoria.method_subcriteria s where s.code = '${CONCEITO}';` +
         EMITIR() +
         RAIO_X,
     );

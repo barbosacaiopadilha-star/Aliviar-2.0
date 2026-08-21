@@ -159,16 +159,19 @@ afterAll(() => {
     alter table curadoria.derivation_rules enable trigger derivation_rules_append_only;
   `);
 
+  // A sentinela conta O QUE ESTE TESTE CRIOU — nunca a tabela inteira. Exigir
+  // o banco todo zerado só era verdade num banco recém-nascido: Cases legítimos
+  // do E2E ou de seed derrubavam a suíte com "resíduo" que nunca foi dela (a
+  // lição da fixture não-autossuficiente). Regras e vigência seguem por nome
+  // ('a11-%' desta suíte), porque id é o escopo que elas têm.
   const { saida } = psql(
-    `select (select count(*) from curadoria.practice_evidence) || '|' ||
-            (select count(*) from curadoria.professional_subcriterion_map) || '|' ||
-            (select count(*) from curadoria.cases) || '|' ||
-            (select count(*) from curadoria.case_priority_map) || '|' ||
-            (select count(*) from curadoria.derivation_proposals) || '|' ||
-            (select count(*) from curadoria.derivation_rules where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA') || '|' ||
-            -- EMENDA DR3: a ocupacao LAVRADA da Regra 001 nao e residuo nem
--- cenario desta suite — sai da conta POR NOME. Qualquer OUTRA derruba.
-            (select count(*) from curadoria.derivation_concept_vigencia where rule_id <> 'CONTINUIDADE_COORDENACAO_CONDUTA_DECLARADA')`,
+    `select (select count(*) from curadoria.practice_evidence where professional_profile_id in (${PROF}, ${OUTRO_PROF})) || '|' ||
+            (select count(*) from curadoria.professional_subcriterion_map where professional_profile_id in (${PROF}, ${OUTRO_PROF})) || '|' ||
+            (select count(*) from curadoria.cases where id = ${CASO}) || '|' ||
+            (select count(*) from curadoria.case_priority_map where case_id = ${CASO}) || '|' ||
+            (select count(*) from curadoria.derivation_proposals where case_id = ${CASO}) || '|' ||
+            (select count(*) from curadoria.derivation_rules where rule_id like 'a11-%') || '|' ||
+            (select count(*) from curadoria.derivation_concept_vigencia where rule_id like 'a11-%')`,
   );
   if (saida !== "0|0|0|0|0|0|0") {
     throw new Error(
@@ -305,10 +308,12 @@ describe("A1.1 · o ramo estado usa o vínculo, nunca a evidência mais recente"
 
   it("legado sem vínculo fica AUSENTE, mesmo com duas evidências compatíveis no banco", async () => {
     // O outro profissional não tem linha de Mapa; criamos uma SEM vínculo.
+    // "Legado" é ausência de VÍNCULO (evidence_id) — autor é obrigatório em
+    // linha nova desde a migration 20260819230000 (mapa_exige_autor).
     const criada = psql(`
       insert into curadoria.professional_subcriterion_map
-        (professional_profile_id, subcriterion_id, status)
-      values (${OUTRO_PROF}, '${idDoConceito(CONCEITO)}'::uuid, 'CONFIRMADO');
+        (professional_profile_id, subcriterion_id, status, declared_by)
+      values (${OUTRO_PROF}, '${idDoConceito(CONCEITO)}'::uuid, 'CONFIRMADO', ${PESSOA});
       select 'COMPATIVEIS:' || count(*) from curadoria.practice_evidence where subcriterion_code='${CONCEITO}';
     `);
     expect(criada.ok, criada.saida).toBe(true);
@@ -333,18 +338,21 @@ describe("A1.1 · a migration segue arbitrando o vínculo", () => {
   it("evidência de outro profissional, de outro conceito e inexistente são recusadas", () => {
     const outroConceito = idDoConceito(OUTRO_CONCEITO);
 
+    // Os três inserts levam `declared_by` para que a recusa TESTADA seja a do
+    // vínculo (evidencia_fk) — sem autor, quem recusaria primeiro seria
+    // mapa_exige_autor, e o teste passaria pelo motivo errado.
     const deOutroProfissional = psql(`
       begin;
-      insert into curadoria.professional_subcriterion_map (professional_profile_id, subcriterion_id, status, evidence_id)
-      values (${OUTRO_PROF}, '${outroConceito}'::uuid, 'CONFIRMADO', ${V1});
+      insert into curadoria.professional_subcriterion_map (professional_profile_id, subcriterion_id, status, declared_by, evidence_id)
+      values (${OUTRO_PROF}, '${outroConceito}'::uuid, 'CONFIRMADO', ${PESSOA}, ${V1});
       rollback;`);
     expect(deOutroProfissional.ok, "evidência de outro profissional passou").toBe(false);
     expect(deOutroProfissional.saida).toContain("professional_subcriterion_map_evidencia_fk");
 
     const deOutroConceito = psql(`
       begin;
-      insert into curadoria.professional_subcriterion_map (professional_profile_id, subcriterion_id, status, evidence_id)
-      values (${PROF}, '${outroConceito}'::uuid, 'CONFIRMADO', ${V1});
+      insert into curadoria.professional_subcriterion_map (professional_profile_id, subcriterion_id, status, declared_by, evidence_id)
+      values (${PROF}, '${outroConceito}'::uuid, 'CONFIRMADO', ${PESSOA}, ${V1});
       set constraints all immediate;
       rollback;`);
     expect(deOutroConceito.ok, "evidência de outro conceito passou").toBe(false);
@@ -352,8 +360,8 @@ describe("A1.1 · a migration segue arbitrando o vínculo", () => {
 
     const inexistente = psql(`
       begin;
-      insert into curadoria.professional_subcriterion_map (professional_profile_id, subcriterion_id, status, evidence_id)
-      values (${PROF}, '${outroConceito}'::uuid, 'CONFIRMADO', ${U("0eff")});
+      insert into curadoria.professional_subcriterion_map (professional_profile_id, subcriterion_id, status, declared_by, evidence_id)
+      values (${PROF}, '${outroConceito}'::uuid, 'CONFIRMADO', ${PESSOA}, ${U("0eff")});
       rollback;`);
     expect(inexistente.ok, "evidência inexistente passou").toBe(false);
     expect(inexistente.saida).toContain("professional_subcriterion_map_evidencia_fk");

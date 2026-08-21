@@ -99,10 +99,12 @@ beforeAll(() => {
     insert into curadoria.professional_subcriterion_map
       (professional_profile_id, subcriterion_id, status, declared_by, evidence_id)
     values (${PROF}, '${idDoConceito(CONCEITO)}'::uuid, 'CONFIRMADO', ${PESSOA}, ${EV0});
-    -- Linha LEGADA: sem vínculo, de antes do regime.
+    -- Linha LEGADA: sem vínculo (evidence_id), de antes do regime. Autor é
+    -- obrigatório em linha nova desde a migration 20260819230000
+    -- (mapa_exige_autor) — o legado que este arquivo estuda é o do VÍNCULO.
     insert into curadoria.professional_subcriterion_map
-      (professional_profile_id, subcriterion_id, status)
-    values (${OUTRO_PROF}, '${idDoConceito(CONCEITO)}'::uuid, 'CONFIRMADO');
+      (professional_profile_id, subcriterion_id, status, declared_by)
+    values (${OUTRO_PROF}, '${idDoConceito(CONCEITO)}'::uuid, 'CONFIRMADO', ${PESSOA});
   `);
   if (!r.ok) throw new Error(`fixture falhou:\n${r.saida}`);
 }, 60_000);
@@ -116,9 +118,12 @@ afterAll(() => {
     delete from auth.users where id = ${PESSOA};
     alter table curadoria.practice_evidence enable trigger practice_evidence_no_update;
   `);
+  // A sentinela conta O QUE ESTE TESTE CRIOU — nunca a tabela inteira. Exigir
+  // o banco todo zerado só era verdade num banco recém-nascido (a lição da
+  // fixture não-autossuficiente).
   const { saida } = psql(
-    `select (select count(*) from curadoria.professional_subcriterion_map) || '|' ||
-            (select count(*) from curadoria.practice_evidence)`,
+    `select (select count(*) from curadoria.professional_subcriterion_map where professional_profile_id in (${PROF}, ${OUTRO_PROF})) || '|' ||
+            (select count(*) from curadoria.practice_evidence where professional_profile_id in (${PROF}, ${OUTRO_PROF}))`,
   );
   if (saida !== "0|0") throw new Error(`MR1 deixou resíduo: map|evidencias = ${saida}`);
 });
