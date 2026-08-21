@@ -1,8 +1,16 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { PublicationPanel } from "@/components/profiles/publication-panel";
 import type { PublicationPendency } from "@/modules/profiles/publication-pendencies";
+
+// O painel passou a chamar `useRouter()` quando a publicação trocou o reload
+// de página inteira por `router.refresh()` — e este arquivo, que renderiza o
+// componente fora do App Router, quebrou inteiro sem que nada de C7 tivesse
+// mudado. O mock existe só para montar; nenhum teste daqui afirma navegação.
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
+}));
 
 /**
  * OPS-G5 · CORTE 7 — a porta de publicação, do lado de quem opera.

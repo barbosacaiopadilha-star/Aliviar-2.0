@@ -201,11 +201,15 @@ describe("T-7-6 · hierarquia de cabeçalhos", () => {
 
 describe("Bloco 7 · a copy é a do contrato, palavra por palavra", () => {
   const COPY_EXATA = [
-    // Nosso Método
-    "Entender o que está em jogo antes de decidir qualquer coisa.",
-    "Sua história, suas prioridades e o que você não abre mão — nas suas palavras.",
-    "Um Curador estuda o seu caso e compara caminhos, pessoa a pessoa.",
-    "Três caminhos legítimos, com o que cada um oferece e o que cada um pede.",
+    // Nosso Método — reescrito na auditoria visual de 2026-08-20: os quatro
+    // movimentos passaram a dizer POR QUE nesta ordem, nunca o que acontece
+    // (o "o que acontece" é papel do "Como funciona", e a página explicava a
+    // mesma jornada duas vezes). O oráculo congela a copy NOVA; a antiga
+    // descrevia etapas, e é exatamente o que não pode voltar.
+    "Ninguém escolhe bem o que ainda não entendeu. Antes de qualquer nome, o que está em jogo precisa ficar claro.",
+    "Não existe bom médico em abstrato — existe o certo para uma vida concreta. Por isso o critério vem de você, antes da busca.",
+    "Comparar exige uma pessoa lendo, não um filtro. Quem compara assume o que escolheu, com nome.",
+    "Três, nunca um. Uma indicação única esconde o que foi descartado; três mostram o que cada caminho cobra.",
     // Concierge
     "Documentos, etapas e informações reunidos num lugar só — você não precisa guardar nada de cabeça.",
     "Quando surge uma dúvida, há alguém da Aliviar para responder. Você nunca fica diante de uma decisão sem ter a quem perguntar.",
