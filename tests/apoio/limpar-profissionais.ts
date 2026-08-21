@@ -43,9 +43,64 @@ export async function removerProfissionaisPorPrefixo(prefixo: string): Promise<n
 
   const { error } = await admin.from("professional_profiles").delete().in("id", ids);
   if (error) {
-    // Não silencia: um profissional que não saiu continua poluindo o pool, e
-    // o próximo spec pagaria a conta sem saber de onde veio.
-    throw new Error(`Falha ao remover profissionais "${prefixo}": ${error.message}`);
+    /**
+     * QUEM PARTICIPOU DE UMA CURADORIA NÃO SE APAGA — RETIRA-SE DA REDE.
+     *
+     * O banco recusa a exclusão de profissional com histórico operacional, e a
+     * frase dele já diz o caminho: "Retire da rede — o histórico permanece."
+     * A regra está certa: `connection_records`, `curated_selection_options` e
+     * `curadoria_report_options` são a memória de Curadorias reais, e apagá-las
+     * para limpar um teste seria destruir o registro que o Método existe para
+     * guardar.
+     *
+     * Enquanto esta limpeza só sabia excluir, ela QUEBRAVA no fim da jornada
+     * ponta a ponta — e, pior, deixava os profissionais no pool elegível. Foi
+     * assim que a Base de Evidências acumulou dezenas de "E2E run-…" de
+     * execuções antigas, cada um pesando na Shortlist dos outros specs.
+     *
+     * A retirada usa a MESMA transição de ciclo que a interface usa, com motivo
+     * declarado — nada de `update` cru por fora do domínio.
+     */
+    // O ATOR É UMA PESSOA, nunca o próprio profissional: a transição recusa
+    // com "actor_id não corresponde a nenhum perfil conhecido", e está certa —
+    // toda mudança de ciclo carrega quem a fez. Aqui é um administrador, que é
+    // quem faria isso na operação real.
+    const { data: papel } = await admin.from("roles").select("id").eq("slug", "administrador").single();
+    const { data: atores } = await admin
+      .from("user_roles")
+      .select("profile_id")
+      .eq("role_id", papel?.id ?? "")
+      .limit(1);
+    const ator = atores?.[0]?.profile_id as string | undefined;
+
+    const falhas: string[] = [];
+    for (const id of ids) {
+      if (!ator) {
+        falhas.push(`${id}: nenhum administrador encontrado para assinar a retirada`);
+        continue;
+      }
+      const { error: erroRetirada } = await admin.rpc("transicionar_ciclo_como_servico", {
+        p_profissional: id,
+        p_para: "RETIRADO_ARQUIVADO",
+        p_motivo: "ENCERRAMENTO_DA_ATUACAO",
+        p_ator: ator,
+        p_nota: "Retirado pela limpeza da suíte E2E — o histórico da Curadoria permanece.",
+      });
+      // Já retirado não é falha: a limpeza é idempotente, e o que importa é o
+      // profissional estar fora do pool elegível ao fim.
+      if (erroRetirada && !/RETIRADO_ARQUIVADO/.test(erroRetirada.message)) {
+        falhas.push(`${id}: ${erroRetirada.message}`);
+      }
+    }
+
+    if (falhas.length === ids.length) {
+      // Nenhum saiu, nem por exclusão nem por retirada: aí sim é problema, e o
+      // próximo spec pagaria a conta sem saber de onde veio.
+      throw new Error(
+        `Falha ao remover profissionais "${prefixo}": ${error.message}\n` +
+          `E a retirada da rede também falhou: ${falhas.join("; ")}`,
+      );
+    }
   }
   return ids.length;
 }

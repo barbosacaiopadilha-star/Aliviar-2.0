@@ -568,7 +568,9 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
     await expect(page.getByRole("heading", { name: "Curadoria Técnica encerrada" })).toBeVisible();
   });
 
-  test("11. Relatório: recusa bastidor (B-1 e B-2); resolvido, emite e entrega", async ({ page }) => {
+  test("11. Relatório: a abertura do Curador sobrevive; recusa juízo pendente (B-1); emite e entrega", async ({
+    page,
+  }) => {
     const curador = loadTestAccounts().find((a) => a.role === "curador_medico")!;
     await loginAs(page, curador.email, curador.password);
     const caseId = caseUrl.match(/casos\/([0-9a-f-]+)/)![1];
@@ -591,25 +593,29 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
       timeout: 20_000,
     });
 
-    // B-2 (ADR-064): regenerar substituiu a abertura que o Curador escreveu na
-    // Mesa pelo texto de trabalho do gerador — o caminho exato pelo qual o
-    // bastidor chegava à paciente. A emissão RECUSA primeiro por isso.
-    // O campo tinha DOIS nomes: o título visível dizia "Por que estas três,
-    // juntas" e um `aria-label` dizia "Justificativa da composição" — quem
-    // enxerga lia um, quem usa leitor de tela ouvia outro. A correção D2-4
-    // deixou um só, e é o título. Este oráculo cobrava o nome que sumiu.
+    // A ABERTURA DO CURADOR SOBREVIVE À REGENERAÇÃO — esta é a garantia hoje.
+    //
+    // Este trecho afirmava o contrário: que regenerar SUBSTITUÍA a abertura
+    // escrita na Mesa pelo texto de trabalho do gerador ("Revisão do Curador
+    // pendente"), e que a emissão então recusava por B-2. Era verdade quando o
+    // teste foi escrito. Deixou de ser: a auditoria P12/RI7 mostrou que "pedir
+    // o rascunho de novo destruía trabalho humano sem aviso", e desde então
+    // `generateAndSaveAssistedDraft` PRESERVA a composição do Curador — mesmo
+    // com `force`, que só alcança os pareceres das opções.
+    //
+    // O oráculo passou a cobrar um estado que o produto impede por desenho. Em
+    // vez de forjá-lo por outro caminho — deixando a abertura vazia de
+    // propósito, só para ver a recusa —, o teste passa a guardar o que de fato
+    // protege a paciente e o Curador: o texto dele continua ali depois de uma
+    // regeneração explícita. Nenhuma cobertura se perde; B-1, logo abaixo,
+    // segue provando que a emissão recusa enquanto houver juízo pendente.
+    //
+    // (O campo também tinha DOIS nomes — título visível "Por que estas três,
+    // juntas" e `aria-label` "Justificativa da composição". A correção D2-4
+    // deixou um só, e é o título.)
     const composicao = page.getByLabel("Por que estas três, juntas");
-    await expect(composicao).toHaveValue(/Revisão do Curador pendente/);
-    await page.getByRole("button", { name: "Emitir o Relatório" }).click();
-    await expect(page.getByText(/a abertura ainda é o texto do rascunho assistido/)).toBeVisible({
-      timeout: 20_000,
-    });
-    await expect(page.getByText("Relatório emitido — pronto para entregar")).toBeHidden();
-
-    // A frase do Curador no lugar do bastidor.
-    await composicao.fill(
-      "Três caminhos de coluna com abordagens distintas: cirúrgica, conservadora e reabilitadora — a troca entre eles é legível para você.",
-    );
+    await expect(composicao).toHaveValue(/Três caminhos de coluna com abordagens distintas/);
+    await expect(composicao).not.toHaveValue(/Revisão do Curador pendente/);
 
     // B-1 (ADR-064/065): resolvida a abertura, a emissão passa a recusar pelo
     // que ainda falta — a frase-sentinela dos conceitos de juízo humano
