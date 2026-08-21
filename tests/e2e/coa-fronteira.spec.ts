@@ -108,9 +108,18 @@ test.describe("COA-H1 · o índice /coa fecha para quem não tem nível", () => 
 
   test("T7 · paciente continua bloqueada nas rotas filhas", async ({ page }) => {
     await entrarComo(page, "paciente");
-    for (const filha of ["/coa/atendimento", "/coa/concierge", "/coa/curadoria"]) {
-      await page.goto(filha);
-      await expect(page, `${filha} deixou a paciente passar`).toHaveURL(/\/acesso-negado$/);
+    // A única rota filha viva é a Curadoria — e ela nega por papel.
+    await page.goto("/coa/curadoria");
+    await expect(page, "/coa/curadoria deixou a paciente passar").toHaveURL(/\/acesso-negado$/);
+
+    // /coa/atendimento e /coa/concierge SAÍRAM (auditoria operacional F-3):
+    // eram dashboards sobre os mesmos dados das jornadas. Para a paciente o
+    // destino agora é 404 — bloqueio igual, por inexistência. O que este
+    // teste segue garantindo é o essencial: nenhum conteúdo operacional
+    // vaza para ela por esses endereços.
+    for (const removida of ["/coa/atendimento", "/coa/concierge"]) {
+      const resposta = await page.goto(removida);
+      expect(resposta?.status(), `${removida} voltou a existir`).toBe(404);
     }
   });
 
