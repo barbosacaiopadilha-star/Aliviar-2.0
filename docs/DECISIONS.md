@@ -1697,3 +1697,22 @@ Novo agregado `approach_attempts` · nova estrutura `team_notifications` · proj
 - **Revisitar quando:** a primeira Curadoria real for entregue e a observação estiver registrada. **O sinal de que esta ADR falhou:** a primeira Curadoria acontecer e o descongelamento seguir a ordem do plano original, ignorando o que foi observado — seria repetir, com mais dados, o mesmo erro que a motivou.
 
 ---
+
+## ADR-074 — A entrevista é o canal do profissional; a Mesa é simétrica por conversa
+
+- **Data:** 2026-08-21
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data.
+- **Dependências:** complementa a ADR-073 (nada aqui autoriza construção antes do descongelamento — esta ADR registra decisões de fluxo e de método) · alinha-se à tese da Curadoria 2.0 (`ARQUITETURA_CURADORIA_2_0.md`) resolvendo, para o lado do profissional, o problema da transcrição sem fonte · não altera o Catálogo Canônico.
+- **Contexto — a assimetria da Mesa:** o lado da paciente chega rico (história nas palavras dela, 29 conceitos com grau, reconhecimento próprio); o lado do profissional chega vazio (publicar exige 2 de 6 etapas; Mapa e Protocolo sem preenchimento em produção). O Método compara uma pessoa bem escutada contra profissionais mal descritos, e a comparação vira coluna de lacuna. O gargalo não é escutar a paciente — é o custo de descrever um médico honestamente.
+- **O fato operacional que decide a forma:** **o médico não tem acesso à plataforma.** A Aliviar o entrevista, com questionário, e o administrador transcreve. Esse é o modelo — não uma limitação temporária a "corrigir" com login de médico.
+- **Decisões:**
+  1. **A entrevista é o canal oficial do profissional.** Os dois lados da Mesa são a mesma coisa: uma conversa conduzida pela Aliviar e registrada com autoria. A paciente é entrevistada e o Curador registra; o médico é entrevistado e o administrador registra. A simetria do Método está na conversa, não no login.
+  2. **A entrevista é FONTE, com nome e data.** Cada resposta transcrita registra proveniência: *fonte = entrevista de DD/MM, coletada por quem conduziu* (`practice_evidence` já tem os campos). Com isso a transcrição deixa de ser o defeito que a 2.0 aponta: a declaração original do profissional **é a entrevista**, e ela passa a existir como registro rastreável.
+  3. **O Mapa vira roteiro de entrevista, não formulário.** A tela do lado do profissional deve servir a quem está AO TELEFONE com o médico — pergunta por extenso, opções à mão, lugar para a frase que ele disse — como o lado da paciente já faz ("registre durante a conversa, na ordem que ela acontecer"). Mesmos dados, forma do momento real. *(Execução: descongelamento.)*
+  4. **Núcleo mínimo para entrar no pool elegível** — a primeira metade do roteiro: área, modalidade, disponibilidade e prazo, local, convênio, limites de atuação. Precisa estar **tratado** (tratado inclui "não informado" honesto; o que não pode é ninguém ter olhado) antes de o perfil entrar na Mesa. O aviso de lacunas da publicação (21/08) vira porta para esse núcleo — e só para ele. *(Execução: descongelamento.)*
+  5. **O portal do profissional fica DORMANTE.** `/profissional`, o protocolo próprio por RLS e os termos do profissional pressupõem um médico que faz login — que não existe no modelo. Nada é apagado: fica registrado que o canal é a entrevista, e que ninguém deve "terminar" o portal sem revisitar esta decisão.
+  6. **Os 35 subcritérios não mudam agora — deliberadamente.** Mexer no Catálogo antes das primeiras Curadorias reais seria especulação; é a regra do Observatório. O Catálogo emagrece (ou não) por evidência de uso, nunca por palpite.
+- **Consequência para a primeira Curadoria real (ADR-073):** a observação anotada deve incluir a entrevista do profissional — quanto tempo leva, o que o médico responde com facilidade, onde a conversa não cabe no questionário. É esse material que calibra o roteiro (decisão 3) e o núcleo (decisão 4) antes de qualquer tela mudar.
+- **Revisitar quando:** houver médicos reais entrevistados e o Observatório mostrar o custo e as lacunas do roteiro; ou se o modelo operacional passar a prever acesso do profissional (aí a decisão 5 reabre inteira).
+
+---
