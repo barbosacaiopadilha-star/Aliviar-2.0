@@ -47,9 +47,15 @@ describe("ConductionPanel — workflow guiado", () => {
     }
   });
 
-  it("conta etapas da jornada, nunca fases internas", () => {
+  /**
+   * A contagem "N de M etapas" SAIU deste painel (auditoria F-5): ela já mora
+   * no mapa da jornada, ao lado, e a mesma página dizia o mesmo número duas
+   * vezes. A guarda contra vocabulário interno ("9 fases") permanece — e
+   * ganha a inversa: nenhuma contagem aqui, de nenhum vocabulário.
+   */
+  it("não conta etapas — o mapa da jornada é quem conta; e fase interna segue proibida", () => {
     render(<ConductionPanel state={state} caseId={marina.caseId} journey={journey} />);
-    expect(screen.getByText(/de 4 etapas concluídas/)).toBeInTheDocument();
+    expect(screen.queryByText(/etapas concluídas/)).not.toBeInTheDocument();
     expect(screen.queryByText(/de 9 fases/)).not.toBeInTheDocument();
   });
 });

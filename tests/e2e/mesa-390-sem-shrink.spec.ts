@@ -104,8 +104,9 @@ test.describe("MESA-390 · a Mesa não encolhe sozinha", () => {
 
       try {
         await entrarComo(page, "administrador");
-        await page.goto("/coa/atendimento", { waitUntil: "domcontentloaded" });
-        await expect(page.getByRole("heading", { name: "Atendimento" })).toBeVisible();
+        // /coa/atendimento saiu (auditoria operacional F-3): a medição muda para a fila viva do Atendente.
+        await page.goto("/atendimento", { waitUntil: "domcontentloaded" });
+        await expect(page.getByRole("heading", { name: "Quem chegou" })).toBeVisible();
 
         const m = await medirComNomeLongo(page, NOME_LONGO);
 

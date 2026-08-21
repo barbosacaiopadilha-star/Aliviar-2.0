@@ -563,7 +563,11 @@ export const COS_PHASE_DEFINITIONS: Record<CosPhaseId, CosPhaseDefinition> = {
     exitCriteria: [
       {
         id: "decisao-registrada",
-        description: "Registrar a decisão do paciente — inclusive “nenhuma destas”.",
+        // A decisão é ato DELA, gravado por ela no Portal (RLS de
+        // patient_curadoria_decisions só aceita a própria pessoa) e apenas
+        // PROJETADO aqui. A frase antiga — "Registrar a decisão do paciente"
+        // — prometia ao Curador um ato que a RLS proíbe (auditoria F-4).
+        description: "A decisão dela — inclusive “nenhuma destas” — registrada por ela no Portal.",
         isMet: (record) => Boolean(record.devolutiva.decision),
       },
     ],

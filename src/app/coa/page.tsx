@@ -8,9 +8,10 @@ import Link from "next/link";
 
 // ONE ALIVIAR (Problemas 3 e 4): o hub aponta para as JORNADAS auditadas de
 // cada nível — a mesma filosofia de experiência em toda a plataforma. As
-// telas de pipeline (/coa/atendimento, /coa/concierge) seguem montadas como
-// ferramenta da plataforma CRM, alcançáveis pelo painel administrativo, mas
-// deixam de competir como porta de entrada do trabalho diário.
+// telas de pipeline (/coa/atendimento, /coa/concierge) primeiro "deixaram de
+// competir como porta de entrada", e na auditoria operacional de 21/08 (F-3)
+// saíram de vez: eram dashboards sobre os mesmos dados das jornadas, e
+// vitrine sem porta é tela que só cobra manutenção.
 const LEVEL_PATHS: Record<CoaLevel, string> = {
   ATENDIMENTO: "/atendimento",
   CURADORIA: "/coa/curadoria",

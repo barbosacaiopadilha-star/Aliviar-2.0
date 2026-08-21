@@ -166,6 +166,18 @@ export async function loadBriefing(
     );
   }
 
+  // UM FATO, UM CARTÃO (auditoria F-7). As sugestões nascem por profissional,
+  // mas as que falam da PACIENTE (id fixo, ex.: "L1") e as observações do
+  // Curador (id "OBS-…") são o mesmo fato em todas as passadas — e chegavam à
+  // tela três vezes, palavra por palavra, uma por profissional. O id já diz
+  // quem é único: dedupe por id preserva a primeira ocorrência e a ordem.
+  const vistos = new Set<string>();
+  const unicas = suggestions.filter((s) => {
+    if (vistos.has(s.id)) return false;
+    vistos.add(s.id);
+    return true;
+  });
+
   return {
     caseId,
     patientFirstName,
@@ -174,6 +186,6 @@ export async function loadBriefing(
     professionalNames,
     observations,
     // Guard final: sugestão sem as duas pontas não chega à tela.
-    suggestions: suggestions.filter(hasBothSides),
+    suggestions: unicas.filter(hasBothSides),
   };
 }

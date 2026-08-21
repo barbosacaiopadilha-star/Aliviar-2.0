@@ -280,5 +280,7 @@ export const JOURNEY_ACTION_LABELS: Record<CuratorJourneyStepId, string> = {
   ACOLHER: "Registrar o que entendi",
   COMPARAR: "Abrir a Mesa de Curadoria",
   RELATORIO: "Escrever o Relatório",
-  FINALIZAR: "Registrar a decisão dela",
+  // Não "Registrar a decisão dela": a decisão é dela e é ela quem grava
+  // (F-4). O ato do Curador aqui é a apresentação.
+  FINALIZAR: "Registrar a apresentação",
 };

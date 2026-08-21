@@ -29,20 +29,29 @@ describe("navegação administrativa do Centro de Operações", () => {
 
     expect(hrefs).not.toContain("/admin/ace");
     for (const href of hrefs) {
-      expect(href.startsWith("/admin") || href.startsWith("/coa")).toBe(true);
+      expect(
+        href.startsWith("/admin") ||
+          href.startsWith("/coa") ||
+          href === "/atendimento" ||
+          href === "/acompanhamento",
+      ).toBe(true);
     }
   });
 
-  it("mantém os três níveis operacionais acessíveis ao administrador", () => {
+  it("os três níveis apontam para onde o trabalho acontece — não para vitrines", () => {
+    // /coa/atendimento e /coa/concierge saíram (auditoria operacional de
+    // 21/08, F-3): eram dashboards sobre os mesmos dados das jornadas, e o
+    // próprio hub COA já dizia que tinham deixado de ser porta de entrada.
+    // O menu leva às jornadas.
     const coa = getNavGroups("administrador", "/admin").find(
       (group) => group.label === "Centro de Operações",
     );
 
     expect(coa?.items.map((item) => item.href)).toEqual([
       "/coa",
-      "/coa/atendimento",
+      "/atendimento",
       "/coa/curadoria",
-      "/coa/concierge",
+      "/acompanhamento",
     ]);
   });
 });

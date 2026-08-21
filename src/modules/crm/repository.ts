@@ -152,9 +152,81 @@ export async function listContacts(
   const caseIds = rows.map((row) => row.active_case_id).filter((id): id is string => Boolean(id));
   const caseTitles = await caseTitlesByIds(supabase, caseIds);
 
-  return rows.map((row) =>
-    mapContactSummary(row, names, row.active_case_id ? caseTitles.get(row.active_case_id) : null),
+  /**
+   * A FRESTA QUE FAZIA O FUNIL MENTIR (Convergência B2, fechada de vez).
+   *
+   * A escrita já era cercada: `changePipelineStage` recusa etapa de Case
+   * desde 25/07, porque da entrega ao Curador em diante a etapa é PROJETADA
+   * dos fatos canônicos. Mas esta lista — que alimenta o Funil, a tabela de
+   * Contatos e os painéis — devolvia `pipeline_stage` cru. Um contato cujo
+   * Case avançou continuava na coluna em que o Atendente o deixou, e o
+   * dashboard somava sobre esse passado ("Em Curadoria: −100%" com Curadoria
+   * andando).
+   *
+   * Agora a mesma projeção que já governava `getCaseById` governa a lista:
+   * onde há Case, a etapa exibida vem dele; onde não há (ou a projeção diz
+   * que a fase ainda é de lead), vale o último estado declarado por um
+   * humano — nunca inventamos um.
+   */
+  const stageByCase = await projectedStagesByCaseIds(supabase, caseIds);
+
+  return rows.map((row) => {
+    const projected = row.active_case_id ? (stageByCase.get(row.active_case_id) ?? null) : null;
+    const summary = mapContactSummary(
+      row,
+      names,
+      row.active_case_id ? caseTitles.get(row.active_case_id) : null,
+    );
+    return projected ? { ...summary, pipelineStage: projected } : summary;
+  });
+}
+
+/**
+ * Projeta a etapa de funil de vários Cases de uma vez — a MESMA regra de
+ * `pipeline-projection.ts`, nunca uma segunda. Devolve só os Cases cuja
+ * projeção é da fase de CASE; fase de lead e indeterminações ficam de fora,
+ * e o chamador mantém a etapa declarada do contato.
+ */
+async function projectedStagesByCaseIds(
+  supabase: SupabaseClient,
+  caseIds: string[],
+): Promise<Map<string, PipelineStage>> {
+  const unique = Array.from(new Set(caseIds));
+  if (unique.length === 0) return new Map();
+
+  const { data } = await supabase
+    .from("cases")
+    .select("id, status, responsible_role, started_at, closed_at")
+    .in("id", unique);
+  const rows = (data ?? []) as Array<{
+    id: string;
+    status: string;
+    responsible_role: string | null;
+    started_at: string | null;
+    closed_at: string | null;
+  }>;
+
+  const delivered = new Map(
+    await Promise.all(
+      rows.map(
+        async (row) => [row.id, await hasDeliveredCuradoria(supabase, row.id)] as const,
+      ),
+    ),
   );
+
+  const result = new Map<string, PipelineStage>();
+  for (const row of rows) {
+    const projection = projectPipelineStage({
+      status: row.status,
+      responsibleRole:
+        (row.responsible_role as "atendente" | "curador_medico" | "concierge" | null) ?? null,
+      startedAt: row.started_at,
+      closedAt: row.closed_at,
+      delivered: delivered.get(row.id) ?? false,
+    });
+    if (projection.kind === "case") result.set(row.id, projection.stage);
+  }
+  return result;
 }
 
 // CONVERGÊNCIA B3: título derivado do Case canônico (curadoria.cases não tem
@@ -178,11 +250,18 @@ export async function getContactById(supabase: SupabaseClient, contactId: string
   const row = data as ContactRow;
   const names = await namesByProfileIds(supabase, [row.assigned_to ?? ""]);
   let caseTitle: string | null = null;
+  let projected: PipelineStage | null = null;
   if (row.active_case_id) {
-    const titles = await caseTitlesByIds(supabase, [row.active_case_id]);
+    const [titles, stages] = await Promise.all([
+      caseTitlesByIds(supabase, [row.active_case_id]),
+      projectedStagesByCaseIds(supabase, [row.active_case_id]),
+    ]);
     caseTitle = titles.get(row.active_case_id) ?? null;
+    projected = stages.get(row.active_case_id) ?? null;
   }
-  return mapContactDetail(row, names, caseTitle);
+  const detail = mapContactDetail(row, names, caseTitle);
+  // A ficha vê a mesma etapa que o Funil: projetada do Case quando ele existe.
+  return projected ? { ...detail, pipelineStage: projected } : detail;
 }
 
 export async function writeCrmAudit(

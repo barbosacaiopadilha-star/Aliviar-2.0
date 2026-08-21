@@ -1,3 +1,5 @@
+import { notFound } from "next/navigation";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -118,6 +120,13 @@ function Bloco({ id, titulo, nota, children }: { id: string; titulo: string; not
 }
 
 export default function FoundationShowcasePage() {
+  // Superfície de PROVA, não de produto (auditoria F-10): visível em
+  // desenvolvimento, onde a Fundação é conferida — e inexistente no ar.
+  // Produção não carrega bancada de teste.
+  if (process.env.NODE_ENV === "production" && process.env.NEXT_PUBLIC_FOUNDATION_PREVIEW !== "1") {
+    notFound();
+  }
+
   return (
     <main className="mx-auto max-w-5xl space-y-8 px-4 py-10">
       <header className="space-y-2">

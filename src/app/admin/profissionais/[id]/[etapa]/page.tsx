@@ -275,10 +275,18 @@ async function renderEtapa({
   }
 
   if (etapa === "publicacao") {
-    const [practiceArea, criticalDivergences] = await Promise.all([
+    const [practiceArea, criticalDivergences, mapaDoProfissional] = await Promise.all([
       getPracticeArea(supabase, id),
       countOpenCriticalDivergences(supabase, id),
+      loadProfessionalMap(supabase, id),
     ]);
+    // F-9 · a porta diz o custo. Publicar sem Mapa continua permitido — mas
+    // quem publica fica sabendo com quantas lacunas este perfil chega à Mesa,
+    // em vez de o Curador descobrir na hora da Curadoria.
+    const mapaAviso =
+      mapaDoProfissional.completion.pending > 0
+        ? `Este perfil entra na Mesa com ${mapaDoProfissional.completion.pending} de ${mapaDoProfissional.completion.total} subcritérios sem tratamento no Mapa — cada um vira lacuna na comparação. Dá para publicar assim; a etapa "Mapa" é onde isso se resolve.`
+        : null;
     const pendencies = listPublicationPendencies({
       professional,
       practiceArea: practiceArea
@@ -309,6 +317,7 @@ async function renderEtapa({
         <PublicationPanel
           isPublished={professional.publicationStatus === "publicado"}
           pendencies={pendencies}
+          mapaAviso={mapaAviso}
           registration={{
             status: professional.registrationStatus,
             source: professional.registrationSource,

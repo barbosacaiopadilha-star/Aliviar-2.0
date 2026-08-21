@@ -35,13 +35,6 @@ export function isNavItemActive(
  * Um link só entra quando a página de destino existe.
  */
 export function getNavGroups(role: string, basePath: string): NavGroup[] {
-  if (basePath === "/coa/atendimento") {
-    return getAtendimentoNavGroups(role);
-  }
-  if (basePath === "/coa/concierge") {
-    return getConciergeNavGroups(role);
-  }
-
   const groups: NavGroup[] = [];
 
   if (role === "administrador") {
@@ -49,13 +42,17 @@ export function getNavGroups(role: string, basePath: string): NavGroup[] {
       label: "Dashboard",
       items: [{ label: "Visão geral", href: basePath, icon: "home" }],
     });
+    // Os DASHBOARDS /coa/atendimento e /coa/concierge saíram (auditoria
+    // operacional de 21/08, F-3): eram vitrines sobre os mesmos dados das
+    // jornadas, e o próprio hub já dizia que "deixam de competir como porta
+    // de entrada". O menu passa a apontar para onde o trabalho acontece.
     groups.push({
       label: "Centro de Operações",
       items: [
         { label: "Visão operacional", href: "/coa", icon: "dashboard" },
-        { label: "Atendimento", href: "/coa/atendimento", icon: "contacts" },
+        { label: "Atendimento", href: "/atendimento", icon: "contacts" },
         { label: "Curadoria", href: "/coa/curadoria", icon: "cases" },
-        { label: "Concierge", href: "/coa/concierge", icon: "dashboard" },
+        { label: "Concierge", href: "/acompanhamento", icon: "dashboard" },
       ],
     });
     groups.push({
@@ -141,69 +138,4 @@ export function getNavGroups(role: string, basePath: string): NavGroup[] {
 /** @deprecated Use getNavGroups — mantido para compatibilidade temporária. */
 export function getDefaultNavItems(role: string, basePath: string): NavItem[] {
   return getNavGroups(role, basePath).flatMap((group) => group.items);
-}
-
-function getAtendimentoNavGroups(role: string): NavGroup[] {
-  const groups: NavGroup[] = [
-    {
-      label: "COA · Atendimento",
-      items: [
-        { label: "Quem chegou", href: "/coa/atendimento", icon: "dashboard" },
-      ],
-    },
-    {
-      label: "Operação",
-      items: [
-        { label: "Contatos", href: "/admin/crm/contatos", icon: "contacts" },
-        { label: "Funil", href: "/admin/crm/funil", icon: "funnel" },
-        { label: "Tarefas", href: "/admin/crm/tarefas", icon: "tasks" },
-        { label: "Agenda", href: "/admin/crm/agenda", icon: "agenda" },
-      ],
-    },
-  ];
-
-  if (role === "administrador") {
-    groups.push({
-      label: "COA",
-      items: [
-        { label: "Curadoria", href: "/coa/curadoria", icon: "cases" },
-        { label: "Concierge", href: "/coa/concierge", icon: "dashboard" },
-      ],
-    });
-  }
-
-  return groups;
-}
-
-function getConciergeNavGroups(role: string): NavGroup[] {
-  const groups: NavGroup[] = [
-    {
-      label: "COA · Concierge",
-      // "Fila" é vocabulário de atendimento em massa: o Concierge acompanha
-      // casos com nome, não despacha uma fila.
-      items: [
-        { label: "Continuidade", href: "/coa/concierge", icon: "dashboard" },
-      ],
-    },
-    {
-      label: "Operação",
-      items: [
-        { label: "Contatos", href: "/admin/crm/contatos", icon: "contacts" },
-        { label: "Tarefas", href: "/admin/crm/tarefas", icon: "tasks" },
-        { label: "Agenda", href: "/admin/crm/agenda", icon: "agenda" },
-      ],
-    },
-  ];
-
-  if (role === "administrador") {
-    groups.push({
-      label: "COA",
-      items: [
-        { label: "Atendimento", href: "/coa/atendimento", icon: "contacts" },
-        { label: "Curadoria", href: "/coa/curadoria", icon: "cases" },
-      ],
-    });
-  }
-
-  return groups;
 }

@@ -343,7 +343,14 @@ export default async function MesaCuradoriaPage({
     selected: view.counts.selected,
   });
 
-  const atencao = itensDeAtencao(profissionais);
+  // "MERECE ATENÇÃO" É RADAR, NÃO ESPELHO (auditoria F-6). O painel lateral
+  // repetia, item a item, o trabalho que a etapa em foco já lista no centro
+  // da tela — seis profissionais sem declaração de área apareciam duas vezes
+  // na mesma página, palavra por palavra. O radar passa a mostrar só o que
+  // está FORA da etapa da vez; o que é da vez já é a própria tela.
+  const atencao = itensDeAtencao(profissionais).filter(
+    (item) => item.etapa !== estado.decisao.etapa,
+  );
 
   const nomeDe = (professionalProfileId: string) =>
     view.professionals.find(

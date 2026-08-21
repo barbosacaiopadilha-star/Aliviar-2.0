@@ -14,13 +14,33 @@ type CaseStatusControlProps = {
   currentStatus: CaseStatus;
 };
 
+/**
+ * ESTADOS QUE O DROPDOWN DEIXA DE OFERECER — eram do motor, não de gente.
+ *
+ * `IN_CURATION`, `HUMAN_REVIEW` e `DELIVERED` eram movidos pelo orquestrador
+ * do motor ACE, removido em 21/08/2026. Desde então, oferecer esses estados
+ * aqui é convidar um humano a DECLARAR onde a Curadoria está — e o lugar
+ * verdadeiro dela já é derivado de fatos (responsável, entrega registrada),
+ * nunca de um select. Dois relógios para a mesma hora: um deles mente.
+ *
+ * A máquina completa continua intacta no banco (trigger da migration
+ * 20260712100000, ADR-019) — nada aqui a contradiz. O que muda é o convite:
+ * o Administrador segue operando a fase que é dele (revisão, aguardo de
+ * informação, pronto para curadoria, cancelamento), e a fase da Curadoria
+ * deixa de ter um botão que a simule. Encolher a máquina no banco fica para
+ * o descongelamento (ADR-073).
+ */
+const ESTADOS_DO_MOTOR_EXTINTO: readonly CaseStatus[] = ["IN_CURATION", "HUMAN_REVIEW", "DELIVERED"];
+
 export function CaseStatusControl({ caseId, currentStatus }: CaseStatusControlProps) {
   const [status, setStatus] = useState(currentStatus);
   const [nextStatus, setNextStatus] = useState<CaseStatus | "">("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const options = allowedNextStatuses(status);
+  const options = allowedNextStatuses(status).filter(
+    (option) => !ESTADOS_DO_MOTOR_EXTINTO.includes(option),
+  );
 
   function handleChange() {
     if (!nextStatus) return;

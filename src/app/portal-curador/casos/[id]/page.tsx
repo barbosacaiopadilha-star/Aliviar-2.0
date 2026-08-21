@@ -140,14 +140,27 @@ export default async function CasoWorkspacePage({ params }: { params: Promise<{ 
             <MemoryTimeline entries={memory} />
           </Card>
 
+          {/* AUDITORIA, NÃO TRABALHO (F-5). O Teste de reconstrução é um
+              instrumento de QA — as nove perguntas que o registro precisa
+              responder meses depois. Ele ficava aberto na tela de trabalho de
+              TODO caso, cobrando atenção diária por um ato que é ocasional.
+              Continua aqui, calculado e a um clique — mas fechado: quem audita
+              abre; quem opera passa. */}
           <Card>
-            <CardHeader>
-              <CardTitle>Teste de reconstrução</CardTitle>
-              <CardDescription>
-                As nove perguntas que o registro precisa responder meses depois.
-              </CardDescription>
-            </CardHeader>
-            <ReconstructionReport answers={reconstruction} />
+            <details>
+              <summary className="cursor-pointer list-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus [&::-webkit-details-marker]:hidden">
+                <CardHeader>
+                  <CardTitle>Teste de reconstrução</CardTitle>
+                  <CardDescription>
+                    As nove perguntas que o registro precisa responder meses depois. Abra
+                    para conferir — isto é auditoria, não etapa.
+                  </CardDescription>
+                </CardHeader>
+              </summary>
+              <div className="mt-4">
+                <ReconstructionReport answers={reconstruction} />
+              </div>
+            </details>
           </Card>
         </div>
 

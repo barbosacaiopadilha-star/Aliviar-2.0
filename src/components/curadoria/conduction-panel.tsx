@@ -56,10 +56,12 @@ export function ConductionPanel({
         <CardDescription>
           {/* A etapa da jornada, no vocabulário do Curador — não a fase interna.
               A etapa do raciocínio saiu do cabeçalho: é vocabulário do Método
-              que ele já carrega, e disputava atenção com o próximo passo. */}
+              que ele já carrega, e disputava atenção com o próximo passo.
+              A contagem "N de M etapas" também saiu (auditoria F-5): ela já
+              mora no mapa da jornada, ao lado — a mesma página dizia o mesmo
+              número duas vezes. Este painel responde "o que eu faço agora";
+              o mapa responde "quanto já anda feito". */}
           {CURATOR_JOURNEY_DEFINITIONS[journey.currentStep].label}
-          <span aria-hidden="true"> · </span>
-          {journey.completedCount} de {journey.totalCount} etapas concluídas
         </CardDescription>
       </CardHeader>
 

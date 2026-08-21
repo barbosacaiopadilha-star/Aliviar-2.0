@@ -30,8 +30,11 @@ export type ContactStatus = (typeof CONTACT_STATUSES)[number];
 export const CONSENT_STATUSES = ["pendente", "concedido", "negado", "revogado"] as const;
 export type ConsentStatus = (typeof CONSENT_STATUSES)[number];
 
-export const CASE_STATUSES = ["aberto", "fechado", "arquivado"] as const;
-export type CrmCaseStatus = (typeof CASE_STATUSES)[number];
+// Renomeado de CASE_STATUSES (auditoria F-10): colidia com o CASE_STATUSES
+// canônico de modules/cases — mesmo nome, vocabulários diferentes. O tipo já
+// se chamava CrmCaseStatus; a constante acompanha.
+export const CRM_CASE_STATUSES = ["aberto", "fechado", "arquivado"] as const;
+export type CrmCaseStatus = (typeof CRM_CASE_STATUSES)[number];
 
 export const PRIORITIES = ["baixa", "media", "alta", "urgente"] as const;
 export type Priority = (typeof PRIORITIES)[number];

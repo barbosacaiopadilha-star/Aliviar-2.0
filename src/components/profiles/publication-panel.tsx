@@ -55,6 +55,14 @@ type PublicationPanelProps = {
     verified: boolean;
     verifiedAt: string | null;
   } | null;
+  /**
+   * Auditoria F-9 · o custo que a porta não dizia. Publicar com o Mapa vazio
+   * é permitido — mas até aqui o custo só aparecia DEPOIS, na Mesa: colunas
+   * inteiras de lacuna, avaliação travada, o Curador descobrindo na hora o
+   * que o cadastro não colheu. Informação, nunca trava: a frase avisa e o
+   * botão continua disponível.
+   */
+  mapaAviso: string | null;
   verifyRegistrationAction: StatefulAction;
   savePracticeAreaAction: StatefulAction;
   publishAction: StatefulAction;
@@ -73,6 +81,7 @@ export function PublicationPanel({
   pendencies,
   registration,
   practiceArea,
+  mapaAviso,
   verifyRegistrationAction,
   savePracticeAreaAction,
   publishAction,
@@ -253,6 +262,11 @@ export function PublicationPanel({
 
           Despublicar nunca é bloqueado: tirar da vitrine é sempre possível.
         */}
+        {mapaAviso && !isPublished ? (
+          <p className="rounded-md border border-[color-mix(in_srgb,var(--color-brand-gold)_45%,transparent)] bg-[color-mix(in_srgb,var(--color-brand-gold)_8%,transparent)] px-3 py-2 text-sm text-ink">
+            {mapaAviso}
+          </p>
+        ) : null}
         <Button
           type="submit"
           isLoading={publishPending}
