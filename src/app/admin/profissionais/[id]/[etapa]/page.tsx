@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import type { Metadata } from "next";
 
@@ -71,6 +71,13 @@ export default async function EditProfessionalPage({
   const { id, etapa: etapaBruta } = await params;
   const etapa = resolveProfessionalWorkflowStep(etapaBruta);
 
+  // Endereço de etapa extinta (fusão 6→4 de 21/08) redireciona para o novo:
+  // a barra de etapas, o aria-current e o "Etapa N de 4" leem a URL — servir
+  // conteúdo novo sob endereço velho deixaria a tela discordando de si mesma.
+  if (etapaBruta !== etapa) {
+    redirect(professionalWorkflowStepHref(id, etapa));
+  }
+
   const supabase = await createServerSupabaseClient();
   const professional = await getProfessionalProfile(supabase, id);
 
@@ -129,12 +136,12 @@ export default async function EditProfessionalPage({
             <div className="flex flex-col gap-2 sm:flex-row">
               {publicado ? (
                 <p className="max-w-reading text-sm text-ink-muted">
-                  Publicado. Para tirar da Rede, use{" "}
+                  Publicado. Para tirar da Rede, use a etapa{" "}
                   <a
                     href={professionalWorkflowStepHref(id, "rede")}
                     className="font-medium text-brand-primary underline underline-offset-4"
                   >
-                    Ciclo de vida
+                    Rede
                   </a>{" "}
                   — lá a mudança pede motivo e fica com autoria.
                 </p>
@@ -153,7 +160,7 @@ export default async function EditProfessionalPage({
         aria-label="Etapas do cadastro profissional"
         className="rounded-md border border-border bg-surface p-2"
       >
-        <ol className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
+        <ol className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
           {PROFESSIONAL_WORKFLOW_STEPS.map((item, index) => {
             const ativa = item.id === etapa;
             return (
@@ -243,38 +250,71 @@ async function renderEtapa({
   professional: Professional;
   supabase: SupabaseClient;
 }) {
+  // FUSÃO 6→4 (21/08): "Cadastro" e "Documentos e formação" eram o mesmo
+  // assunto em duas etapas — quem ele é, e as provas de quem ele é. Uma etapa,
+  // duas seções.
   if (etapa === "cadastro") {
-    const competencyDomains = await listCompetencyDomains(supabase, id);
+    const [competencyDomains, documents, formacao, curriculos] = await Promise.all([
+      listCompetencyDomains(supabase, id),
+      listProfessionalDocuments(supabase, id),
+      listarFormacaoParaRevisao(supabase, id),
+      listarCurriculosComUltimaLeitura(supabase, id),
+    ]);
     return (
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">
-            Dados do profissional
-          </h2>
-          <p className="text-sm text-ink-muted">
-            Identificação e informações básicas da Rede.
-          </p>
-        </CardHeader>
-        <ProfessionalProfileForm
-          action={updateProfessionalProfileAction.bind(null, id)}
-          submitLabel="Salvar alterações"
-          initialDisplayName={professional.displayName}
-          initialProfessionalIdentifier={professional.professionalIdentifier}
-          initialCrm={professional.crm ?? ""}
-          initialCrmUf={professional.crmUf ?? ""}
-          initialProfessionalSummary={professional.professionalSummary ?? ""}
-          initialInstitutionName={professional.institutionName ?? ""}
-          initialExperienceLevel={professional.experienceLevel ?? ""}
-          initialIntakeApproach={professional.intakeApproach ?? ""}
-          initialOffersContinuousCare={professional.offersContinuousCare}
-          initialAvailabilityWindow={professional.availabilityWindow ?? ""}
-          initialCompetencyDomains={competencyDomains}
-        />
-      </Card>
+      <>
+        <Card>
+          <CardHeader>
+            <h2 className="font-sans text-lg font-semibold text-ink">
+              Dados do profissional
+            </h2>
+            <p className="text-sm text-ink-muted">
+              Identificação e informações básicas da Rede.
+            </p>
+          </CardHeader>
+          <ProfessionalProfileForm
+            action={updateProfessionalProfileAction.bind(null, id)}
+            submitLabel="Salvar alterações"
+            initialDisplayName={professional.displayName}
+            initialProfessionalIdentifier={professional.professionalIdentifier}
+            initialCrm={professional.crm ?? ""}
+            initialCrmUf={professional.crmUf ?? ""}
+            initialProfessionalSummary={professional.professionalSummary ?? ""}
+            initialInstitutionName={professional.institutionName ?? ""}
+            initialExperienceLevel={professional.experienceLevel ?? ""}
+            initialIntakeApproach={professional.intakeApproach ?? ""}
+            initialOffersContinuousCare={professional.offersContinuousCare}
+            initialAvailabilityWindow={professional.availabilityWindow ?? ""}
+            initialCompetencyDomains={competencyDomains}
+          />
+        </Card>
+        <Card>
+          <CardHeader>
+            <h2 className="font-sans text-lg font-semibold text-ink">
+              Documentos e formação
+            </h2>
+            <p className="text-sm text-ink-muted">
+              As provas do que o cadastro afirma.
+            </p>
+          </CardHeader>
+          <ProfessionalDocumentsPanel
+            professionalProfileId={id}
+            initialDocuments={documents}
+          />
+          <FormacaoAcademicaPanel
+            professionalProfileId={id}
+            entradas={formacao}
+            curriculos={curriculos}
+          />
+        </Card>
+      </>
     );
   }
 
-  if (etapa === "publicacao") {
+  // FUSÃO 6→4 (21/08): "Publicação" e "Ciclo de vida" eram duas telas para
+  // UMA máquina — o banco diz que publicar/despublicar É mudança de ciclo
+  // ("status e publication_status apenas a espelham"). A etapa "Rede" junta
+  // as verificações da porta e a máquina que a move.
+  if (etapa === "rede") {
     const [practiceArea, criticalDivergences, mapaDoProfissional] = await Promise.all([
       getPracticeArea(supabase, id),
       countOpenCriticalDivergences(supabase, id),
@@ -304,93 +344,64 @@ async function renderEtapa({
         : "publicado";
 
     return (
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">
-            Publicação
-          </h2>
-          <p className="text-sm text-ink-muted">
-            Registro, área de atuação e divergências críticas são conferidos
-            antes da publicação.
-          </p>
-        </CardHeader>
-        <PublicationPanel
-          isPublished={professional.publicationStatus === "publicado"}
-          pendencies={pendencies}
-          mapaAviso={mapaAviso}
-          registration={{
-            status: professional.registrationStatus,
-            source: professional.registrationSource,
-            verifiedAt: professional.registrationVerifiedAt,
-          }}
-          practiceArea={
-            practiceArea
-              ? {
-                  rawText: practiceArea.rawText,
-                  tags: practiceArea.tags,
-                  source: practiceArea.source,
-                  verified: practiceArea.verificationStatus === "verificado",
-                  verifiedAt: practiceArea.verifiedAt,
-                }
-              : null
-          }
-          verifyRegistrationAction={verifyRegistrationAction.bind(null, id)}
-          savePracticeAreaAction={savePracticeAreaAction.bind(null, id)}
-          publishAction={publishProfessionalAction.bind(
-            null,
-            id,
-            nextPublicationStatus,
-          )}
-        />
-      </Card>
-    );
-  }
-
-  if (etapa === "rede") {
-    return (
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">
-            Ciclo de vida
-          </h2>
-          <p className="text-sm text-ink-muted">
-            Estado na Rede, motivo, autoria e impacto de cada mudança.
-          </p>
-        </CardHeader>
-        <CicloDoProfissionalPanel
-          cicloAtual={professional.ciclo}
-          destinos={destinosPossiveis(professional.ciclo)}
-          preverImpacto={preverImpactoDaTransicaoAction.bind(null, id)}
-          mudarCiclo={mudarCicloDoProfissionalAction.bind(null, id)}
-          classificarLegado={classificarLegadoAction.bind(null, id)}
-        />
-      </Card>
-    );
-  }
-
-  if (etapa === "documentos") {
-    const [documents, formacao, curriculos] = await Promise.all([
-      listProfessionalDocuments(supabase, id),
-      listarFormacaoParaRevisao(supabase, id),
-      listarCurriculosComUltimaLeitura(supabase, id),
-    ]);
-    return (
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">
-            Documentos
-          </h2>
-        </CardHeader>
-        <ProfessionalDocumentsPanel
-          professionalProfileId={id}
-          initialDocuments={documents}
-        />
-        <FormacaoAcademicaPanel
-          professionalProfileId={id}
-          entradas={formacao}
-          curriculos={curriculos}
-        />
-      </Card>
+      <>
+        <Card>
+          <CardHeader>
+            <h2 className="font-sans text-lg font-semibold text-ink">
+              Publicação
+            </h2>
+            <p className="text-sm text-ink-muted">
+              Registro, área de atuação e divergências críticas são conferidos
+              antes da publicação.
+            </p>
+          </CardHeader>
+          <PublicationPanel
+            isPublished={professional.publicationStatus === "publicado"}
+            pendencies={pendencies}
+            mapaAviso={mapaAviso}
+            registration={{
+              status: professional.registrationStatus,
+              source: professional.registrationSource,
+              verifiedAt: professional.registrationVerifiedAt,
+            }}
+            practiceArea={
+              practiceArea
+                ? {
+                    rawText: practiceArea.rawText,
+                    tags: practiceArea.tags,
+                    source: practiceArea.source,
+                    verified: practiceArea.verificationStatus === "verificado",
+                    verifiedAt: practiceArea.verifiedAt,
+                  }
+                : null
+            }
+            verifyRegistrationAction={verifyRegistrationAction.bind(null, id)}
+            savePracticeAreaAction={savePracticeAreaAction.bind(null, id)}
+            publishAction={publishProfessionalAction.bind(
+              null,
+              id,
+              nextPublicationStatus,
+            )}
+          />
+        </Card>
+        <Card>
+          <CardHeader>
+            <h2 className="font-sans text-lg font-semibold text-ink">
+              Ciclo de vida
+            </h2>
+            <p className="text-sm text-ink-muted">
+              Estado na Rede, motivo, autoria e impacto de cada mudança.
+            </p>
+          </CardHeader>
+          <CicloDoProfissionalPanel
+            cicloAtual={professional.ciclo}
+            destinos={destinosPossiveis(professional.ciclo)}
+            preverImpacto={preverImpactoDaTransicaoAction.bind(null, id)}
+            mudarCiclo={mudarCicloDoProfissionalAction.bind(null, id)}
+            classificarLegado={classificarLegadoAction.bind(null, id)}
+          />
+        </Card>
+      </>
     );
   }
 

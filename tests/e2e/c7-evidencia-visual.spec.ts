@@ -333,7 +333,7 @@ for (const viewport of VIEWPORTS) {
       const erros: string[] = [];
       const antes = await estadoNoBanco("05");
       await entrar(page, erros);
-      const rota = `/admin/profissionais/${seed.ids["05"]}/publicacao`;
+      const rota = `/admin/profissionais/${seed.ids["05"]}/rede`;
       await page.goto(rota);
       await expect(
         page.getByRole("button", { name: /^Publicar$/ }),
@@ -357,7 +357,7 @@ for (const viewport of VIEWPORTS) {
       await rearmarPublicado("06");
       const antes = await estadoNoBanco("06");
       await entrar(page, erros);
-      const rota = `/admin/profissionais/${seed.ids["06"]}/publicacao`;
+      const rota = `/admin/profissionais/${seed.ids["06"]}/rede`;
       await page.goto(rota);
       await page.getByRole("button", { name: "Despublicar" }).click();
       await expect(

@@ -62,7 +62,7 @@ export async function verifyRegistrationAction(
     };
   }
 
-  revalidatePath(`/admin/profissionais/${id}/publicacao`);
+  revalidatePath(`/admin/profissionais/${id}/rede`);
   return { success: true };
 }
 
@@ -115,7 +115,7 @@ export async function savePracticeAreaAction(
     };
   }
 
-  revalidatePath(`/admin/profissionais/${id}/publicacao`);
+  revalidatePath(`/admin/profissionais/${id}/rede`);
   return { success: true };
 }
 
@@ -162,7 +162,7 @@ export async function publishProfessionalAction(
   }
 
   // "layout", pelo mesmo motivo que `setProfessionalStatusAction`: Publicado /
-  // Não publicado é BADGE DE CABEÇALHO e aparece nas seis etapas. Revalidar só
+  // Não publicado é BADGE DE CABEÇALHO e aparece em todas as etapas. Revalidar só
   // `/publicacao` deixava as outras cinco mentindo — e, na própria etapa de
   // publicação, o selo continuava "Não publicado" depois de publicar. Os dois
   // selos ficam lado a lado e têm a mesma propriedade; agora têm a mesma regra.
@@ -348,7 +348,7 @@ export async function setProfessionalStatusAction(
       { cause: erro },
     );
   }
-  // Ativo/Inativo é BADGE DE CABEÇALHO: aparece nas seis etapas, então
+  // Ativo/Inativo é BADGE DE CABEÇALHO: aparece em todas as etapas, então
   // revalidar uma só deixaria as outras cinco mentindo. "layout" alcança
   // todas — e aqui pode, porque este ato não tem mensagem na tela a
   // preservar (é form de servidor puro, sem estado de `useActionState`).
@@ -375,6 +375,6 @@ export async function setProfessionalPublicationStatusAction(
       { cause: erro },
     );
   }
-  revalidatePath(`/admin/profissionais/${id}/publicacao`);
+  revalidatePath(`/admin/profissionais/${id}/rede`);
   revalidatePath("/admin/profissionais");
 }

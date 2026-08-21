@@ -59,11 +59,11 @@ async function criarProfissionalPublicado(
   await page.getByRole("button", { name: "Salvar alterações" }).click();
   await expect(page.getByText("Salvo com sucesso.")).toBeVisible();
 
-  // ORÁCULO ATUALIZADO (2026-08-19): a ficha do profissional virou fluxo de
-  // seis etapas. Verificação do registro, área de atuação e publicação moram
-  // na etapa "Publicação"; os dados básicos, na "Cadastro".
-  await page.getByRole("link", { name: "Publicação", exact: true }).click();
-  await page.waitForURL(/\/publicacao$/);
+  // ORÁCULO ATUALIZADO (2026-08-21): a ficha do profissional é fluxo de
+  // quatro etapas (fusão 6→4). Verificação, área e publicação moram na etapa
+  // "Rede"; os dados básicos, na "Cadastro".
+  await page.getByRole("link", { name: "Rede", exact: true }).click();
+  await page.waitForURL(/\/rede$/);
 
   await page.getByLabel("Situação verificada").selectOption("regular");
   await page.getByLabel("Fonte da verificação").fill("Portal do CFM (fluxo completo E2E)");

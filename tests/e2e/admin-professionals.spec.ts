@@ -65,12 +65,12 @@ test.describe("gestão administrativa de profissionais (Sprint Produto 2)", () =
     // e cada condição é cumprida pela interface, nunca por SQL manual.
     //
     // ORÁCULO ATUALIZADO (2026-08-19): a ficha do profissional deixou de ser
-    // página única e virou fluxo de SEIS ETAPAS. A porta de publicação mora
-    // na etapa "Publicação"; os dados básicos, na etapa "Cadastro". O teste
+    // página única e virou fluxo por etapas (hoje quatro — fusão de 21/08). A porta de publicação mora
+    // na etapa "Rede"; os dados básicos, na etapa "Cadastro". O teste
     // passa a navegar entre elas — o produto mudou de propósito, e o que este
     // teste prova continua o mesmo.
-    await page.getByRole("link", { name: "Publicação", exact: true }).click();
-    await page.waitForURL(/\/publicacao$/);
+    await page.getByRole("link", { name: "Rede", exact: true }).click();
+    await page.waitForURL(/\/rede$/);
     await expect(page.getByText(/Pendências para publicação/)).toBeVisible();
     await expect(page.getByText("O CRM não foi informado.")).toBeVisible();
     await expect(page.getByText("O registro no conselho ainda não foi verificado.")).toBeVisible();
@@ -85,8 +85,8 @@ test.describe("gestão administrativa de profissionais (Sprint Produto 2)", () =
     await expect(page.getByText("Salvo com sucesso.")).toBeVisible();
 
     // 2. Verificação do registro, com fonte — na etapa de Publicação.
-    await page.getByRole("link", { name: "Publicação", exact: true }).click();
-    await page.waitForURL(/\/publicacao$/);
+    await page.getByRole("link", { name: "Rede", exact: true }).click();
+    await page.waitForURL(/\/rede$/);
     await page.getByLabel("Situação verificada").selectOption("regular");
     await page.getByLabel("Fonte da verificação").fill("Portal do CFM, consulta E2E");
     await page.getByRole("button", { name: "Registrar verificação" }).click();

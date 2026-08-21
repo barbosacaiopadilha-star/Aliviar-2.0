@@ -134,7 +134,7 @@ export function ProfessionalsTable({ professionals }: ProfessionalsTableProps) {
                         href={`/admin/profissionais/${professional.id}/rede`}
                         className="font-medium text-brand-primary hover:text-brand-primary-deep"
                       >
-                        Ciclo de vida
+                        Rede
                       </Link>
                     </div>
                   </TableCell>
