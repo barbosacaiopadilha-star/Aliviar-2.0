@@ -6,25 +6,12 @@ import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import { getCase, listCaseEvents, listCaseNotes } from "@/modules/cases";
-import {
-  listArtifactsForCase,
-  listExecutionEventsForCase,
-  listExecutionsForCase,
-} from "@/modules/concierge";
-import { listActiveP002FieldCorrections } from "@/modules/ace/p002-field-corrections-repository";
-import {
-  getPatientAccount,
-  getPatientProfile,
-  getProfessionalDisplayNames,
-} from "@/modules/profiles";
+import { getPatientAccount, getPatientProfile } from "@/modules/profiles";
 import { listStoryAttachments } from "@/modules/story/attachment-repository";
 import { getStoryById } from "@/modules/story/repository";
 import { listCuratorOptions } from "@/modules/team/repository";
 import { CASE_STATUS_LABELS } from "@/modules/cases/types";
 
-import { AceExecutionsHistory } from "@/components/ace/ace-executions-history";
-import { AceArtifactsList } from "@/components/cases/ace-artifacts-list";
-import { AceShortlistViewer } from "@/components/cases/ace-shortlist-viewer";
 import { CaseCuratorAssignment } from "@/components/cases/case-curator-assignment";
 import { CaseEventsTimeline } from "@/components/cases/case-events-timeline";
 import { CaseNotesLog } from "@/components/cases/case-notes-log";
@@ -33,7 +20,6 @@ import { StorySummary } from "@/components/story/story-summary";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import type { Shortlist } from "@/modules/ace/artifacts/shortlist";
 
 export const metadata: Metadata = {
   title: "Detalhe do caso",
@@ -75,29 +61,6 @@ export default async function AdminCaseDetailPage({
   const attachments = story
     ? await listStoryAttachments(regularClient, story.id)
     : [];
-  const [executions, executionEvents, artifacts, p002Corrections] =
-    await Promise.all([
-      listExecutionsForCase(regularClient, id),
-      listExecutionEventsForCase(regularClient, id),
-      listArtifactsForCase(regularClient, id),
-      listActiveP002FieldCorrections(regularClient, id),
-    ]);
-
-  const shortlistArtifact = artifacts.find(
-    (artifact) => artifact.artifactType === "Shortlist",
-  );
-  const shortlist = shortlistArtifact
-    ? (shortlistArtifact.payload as Shortlist)
-    : null;
-  const shortlistProviderIds = shortlist
-    ? shortlist.status === "COMPOSED"
-      ? shortlist.selectedProviderIds
-      : shortlist.candidateProviderIds
-    : [];
-  const namesByProviderId = await getProfessionalDisplayNames(
-    regularClient,
-    shortlistProviderIds,
-  );
 
   return (
     <div className="space-y-6">
@@ -218,64 +181,18 @@ export default async function AdminCaseDetailPage({
         )}
       </Card>
 
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">
-            Execução do ACE
-          </h2>
-          <p className="text-sm text-ink-muted">
-            P001 a P008 apenas — nunca revisão humana (P009) ou entrega (P010).
-          </p>
-        </CardHeader>
-      </Card>
+      {/* AQUI VIVIAM QUATRO CARDS DO ACE — execução, execuções anteriores,
+          artefatos (P001-P008) e shortlist interna.
 
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">
-            Execuções anteriores
-          </h2>
-          <p className="text-sm text-ink-muted">
-            Todas as tentativas — nenhuma falha ou bloqueio desaparece do
-            histórico.
-          </p>
-        </CardHeader>
-        {/* Item 1.7 (DP-2): o histórico do ACE permanece inteiro e visível
-            aqui — nenhuma execução, evento ou artefato foi apagado. O que saiu
-            foi o link para `/admin/ace`, o dashboard de um motor que não
-            executa mais. Sem `detailBasePath`, a lista não oferece o destino
-            removido. */}
-        <AceExecutionsHistory
-          executions={executions}
-          events={executionEvents}
-        />
-      </Card>
+          Eles mostravam a saída de um motor que não roda: `runAceExecution`
+          não era chamado por nenhuma linha do produto, e as duas execuções e
+          onze artefatos que existem em produção são de 23–24/07, do tempo em
+          que ele rodava. Telas que só sabem exibir o passado de um mecanismo
+          extinto cobram atenção de quem lê o caso e não devolvem nada.
 
-      <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">
-            Artefatos (P001-P008)
-          </h2>
-        </CardHeader>
-        <AceArtifactsList
-          artifacts={artifacts}
-          caseId={caseDetail.id}
-          p002Corrections={p002Corrections}
-        />
-      </Card>
-
-      {shortlist ? (
-        <Card>
-          <CardHeader>
-            <h2 className="font-sans text-lg font-semibold text-ink">
-              Shortlist interna
-            </h2>
-          </CardHeader>
-          <AceShortlistViewer
-            shortlist={shortlist}
-            namesByProviderId={namesByProviderId}
-          />
-        </Card>
-      ) : null}
+          O histórico NÃO foi apagado do banco (DP-2 segue valendo): as tabelas
+          `ace_executions`, `ace_execution_events` e `ace_artifacts` continuam
+          lá, íntegras. O que saiu foi a vitrine. */}
 
       <Card>
         <CardHeader>

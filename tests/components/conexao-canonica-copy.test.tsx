@@ -5,15 +5,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ConnectionChoicePanel } from "@/components/patient/connection-choice-panel";
 
 /**
- * B3-COPY · o canônico e o legado falam línguas diferentes, de propósito.
+ * A LÍNGUA DA CONEXÃO — a que sobrou depois que o legado saiu.
  *
- * A Arquitetura E já filtrava os DADOS — `opcoesDaConexao` entrega uma pessoa.
- * A linguagem é que ficou para trás: um rádio não marcado, com uma opção, sob
- * um botão que falava em três (achado da EV-B3-004).
+ * Este arquivo comparava dois modos: o canônico e o da entrega do motor ACE.
+ * O motor foi removido, e com ele o prop `modo` e todo o ramo legado do painel
+ * — a lista de rádios, "Quero seguir com um dos três", "pode trocar aqui
+ * mesmo". Sobrou a metade que continua no ar.
  *
- * O modo é DITO pela rota. Inferir por `providerPresentations.length === 1`
- * erraria nas duas pontas: entrega legada pode ter um só, e o estado R3
- * também chega com um sendo canônico.
+ * Cada teste aqui guarda uma frase que a paciente lê. A asserção "o canônico
+ * nunca corrige" permanece de propósito: hoje ela é verdadeira por construção,
+ * e é exatamente o tipo de verdade que se perde sem ninguém notar.
  */
 
 const createConnectionActionMock = vi.fn();
@@ -39,11 +40,6 @@ const DECIDIDA = {
   practicalConsiderations: [],
 };
 
-const TRES = [
-  DECIDIDA,
-  { ...DECIDIDA, providerId: "prof-b", displayName: "Dr. Rafael Nogueira" },
-  { ...DECIDIDA, providerId: "prof-c", displayName: "Dra. Marina Azevedo" },
-];
 
 const ABERTA = {
   id: "c1",
@@ -63,7 +59,6 @@ afterEach(cleanup);
 function canonico(connection: unknown = null, pessoas = [DECIDIDA]) {
   return render(
     <ConnectionChoicePanel
-      modo="canonico"
       caseId="case-1"
       providerPresentations={pessoas}
       connection={connection as never}
@@ -71,18 +66,7 @@ function canonico(connection: unknown = null, pessoas = [DECIDIDA]) {
   );
 }
 
-function legado(connection: unknown = null) {
-  return render(
-    <ConnectionChoicePanel
-      modo="legado"
-      caseId="case-1"
-      providerPresentations={TRES}
-      connection={connection as never}
-    />,
-  );
-}
-
-describe("B3-COPY · modo canônico", () => {
+describe("A conexão canônica — a única que existe", () => {
   it("abertura fala de começar, não de escolher", () => {
     canonico();
 
@@ -130,10 +114,32 @@ describe("B3-COPY · modo canônico", () => {
       "a quinta verdade substitui a promessa legada de trocar depois",
     ).toBeInTheDocument();
 
+    expect(screen.getByText(/Os outros dois caminhos continuam na Mesa/)).toBeInTheDocument();
+
     // E não promete o que a Aliviar ainda não faz.
     expect(screen.queryByText(/pode trocar aqui mesmo/)).toBeNull();
     expect(screen.getByRole("button", { name: "Voltar" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Voltar aos caminhos" })).toBeNull();
+  });
+
+  /**
+   * A_SALA_DA_DECISAO §5.1 (SD-O1) — as verdades vêm ANTES do gesto.
+   *
+   * Esta guarda morava em `sala-da-decisao.test.tsx`, que exercitava a Sala do
+   * formato legado e saiu com ele. A doutrina não é do formato: é do Método, e
+   * por isso a asserção mudou de casa em vez de morrer junto.
+   */
+  it("as verdades vêm ANTES do gesto, nunca depois dele", async () => {
+    canonico();
+    await userEvent.click(screen.getByRole("button", { name: "Abrir meu acompanhamento" }));
+
+    const texto = document.body.textContent ?? "";
+    const alcance = texto.indexOf("Não há consulta marcada");
+    const gesto = texto.lastIndexOf("Abrir meu acompanhamento");
+
+    expect(alcance).toBeGreaterThan(-1);
+    expect(gesto).toBeGreaterThan(-1);
+    expect(alcance, "o alcance precede o ato").toBeLessThan(gesto);
   });
 
   it("confirmar chama a action com a pessoa decidida, e nunca a correção", async () => {
@@ -160,43 +166,5 @@ describe("B3-COPY · modo canônico", () => {
     const { container } = canonico(null, []);
 
     expect(container).toBeEmptyDOMElement();
-  });
-});
-
-describe("B3-COPY · modo legado, congelado", () => {
-  it("a copy da escolha permanece palavra por palavra", () => {
-    legado();
-
-    expect(
-      screen.getByRole("heading", { name: "Com quem você gostaria de seguir?" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Os profissionais foram apresentados sem ordem de preferência/),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Quero seguir com um dos três" })).toBeInTheDocument();
-  });
-
-  it("os três rádios continuam lá", () => {
-    legado();
-
-    expect(screen.getAllByRole("radio")).toHaveLength(3);
-  });
-
-  it("a revisão legada mantém a promessa de trocar — que só vale aqui", async () => {
-    legado();
-    await userEvent.click(screen.getByRole("radio", { name: "Dr. Rafael Nogueira" }));
-    await userEvent.click(
-      screen.getByRole("button", { name: "Quero seguir com Dr. Rafael Nogueira" }),
-    );
-
-    expect(screen.getByText(/pode trocar aqui mesmo, sem precisar explicar nada/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Voltar aos caminhos" })).toBeInTheDocument();
-  });
-
-  it("alterar a escolha sobrevive no legado", () => {
-    legado(ABERTA);
-
-    expect(screen.getByRole("button", { name: "Alterar minha escolha" })).toBeInTheDocument();
-    expect(screen.getByText("Você escolheu seguir com Dra. Helena Monteiro.")).toBeInTheDocument();
   });
 });

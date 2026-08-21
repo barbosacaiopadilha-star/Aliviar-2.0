@@ -81,7 +81,7 @@ export type DeliveredFixture = {
  */
 export const ESTAGIOS_CR = [
   "CR-01", "CR-02", "CR-03", "CR-04", "CR-05", "CR-06",
-  "CR-07", "CR-08", "CR-09", "CR-10", "CR-11", "CR-12",
+  "CR-07", "CR-08", "CR-09", "CR-10", "CR-11",
 ] as const;
 
 export type EstagioCR = (typeof ESTAGIOS_CR)[number];
@@ -197,14 +197,6 @@ export const MATRIZ_CR: Record<
     responsavel: "ninguém",
     grupoDaFila: null,
   },
-  "CR-12": {
-    cenario: "compatibilidade legada",
-    ator: "curador",
-    fato: "entrega do motor antigo, sem Curadoria estruturada",
-    atoDevido: "nenhum",
-    responsavel: "ninguém",
-    grupoDaFila: null,
-  },
 };
 
 /** O que existe desde o primeiro corte. */
@@ -238,8 +230,7 @@ export type CasoSintetico =
   | ({ estagio: "CR-05" } & ComSelecao)
   | ({ estagio: "CR-06" | "CR-07" } & ComRelatorio)
   | ({ estagio: "CR-08" | "CR-09" } & ComDecisao)
-  | ({ estagio: "CR-10" } & ComDecisao & { connectionId: string })
-  | ({ estagio: "CR-12" } & CasoBase & { legadoDeliveryId: string });
+  | ({ estagio: "CR-10" } & ComDecisao & { connectionId: string });
 
 async function seedPresentableProfessional(
   adminClient: ReturnType<typeof createAdminSupabaseClient>,
@@ -284,16 +275,6 @@ export async function seedDeliveredCase(
   } = {},
 ): Promise<DeliveredFixture | CasoSintetico> {
   const estagio = opcoes.estagio;
-
-  // CR-12 não nasce aqui: a entrega legada tem helper mantido próprio
-  // (`legacy-ace-chain-fixture`), e duplicá-la nesta cadeia produziria uma
-  // segunda implementação do motor antigo.
-  if (estagio === "CR-12") {
-    throw new Error(
-      "CR-12 (compatibilidade legada) é montado por seedLegacyFinalCuradoriaDelivery — " +
-        "ver tests/integration/legacy-ace-chain-fixture.ts.",
-    );
-  }
   /** Para antes de produzir o fato do próximo corte. */
   const pararEm = (ate: EstagioCR) =>
     estagio !== undefined && ESTAGIOS_CR.indexOf(estagio) <= ESTAGIOS_CR.indexOf(ate);

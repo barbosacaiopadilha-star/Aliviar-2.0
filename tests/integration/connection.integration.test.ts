@@ -945,9 +945,6 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     const before = await (
       await import("@/modules/cases/repository")
     ).getCase(admin.client, caseId);
-    const deliveryBefore = await (
-      await import("@/modules/concierge/delivery-repository")
-    ).getFinalCuradoriaDeliveryForCase(admin.client, caseId);
 
     const created0 = createConnection(
       {
@@ -973,15 +970,12 @@ describe("Connection Engine — MVP — PR3 (repository, RPC, RLS — Supabase l
     const after = await (
       await import("@/modules/cases/repository")
     ).getCase(admin.client, caseId);
-    const deliveryAfter = await (
-      await import("@/modules/concierge/delivery-repository")
-    ).getFinalCuradoriaDeliveryForCase(admin.client, caseId);
 
     // O que este teste protege é que nenhuma ação de Connection mexe no Case
-    // nem na entrega — por isso a comparação é com o estado anterior, e não
-    // com um valor fixo. A entrega canônica não altera o status do Case.
+    // — por isso a comparação é com o estado anterior, e não com um valor
+    // fixo. A entrega canônica não altera o status do Case. (A metade que
+    // olhava a entrega do motor ACE saiu com ele.)
     expect(after?.status).toBe(before?.status);
-    expect(deliveryAfter).toEqual(deliveryBefore);
   });
 
   // Fase 4 — os testes acima cobrem concorrência na CRIAÇÃO (23505, via

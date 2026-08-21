@@ -125,13 +125,13 @@ describe("T-11-9 · os filtros são alcançáveis PELA ROTA", () => {
     }
   });
 
-  it("GAP-D-1 saiu da allowlist de órfãos, e restaram NOVE", () => {
+  it("GAP-D-1 saiu da allowlist de órfãos, e restaram OITO", () => {
     const detector = readFileSync(
       path.join(RAIZ, "tests/unit/track-d-detector-de-orfaos.test.ts"),
       "utf8",
     );
     const entradas = [...detector.matchAll(/^  "src\/components\/[^"]+":$/gm)];
-    expect(entradas, "a allowlist mudou de tamanho sem decisão").toHaveLength(9);
+    expect(entradas, "a allowlist mudou de tamanho sem decisão").toHaveLength(8);
     // Só as CHAVES. A prosa do arquivo cita `mandatory-filters` de propósito,
     // contando por que ele esteve enterrado — memória não é reincidência.
     expect(

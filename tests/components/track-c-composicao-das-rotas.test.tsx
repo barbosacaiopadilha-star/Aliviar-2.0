@@ -18,7 +18,6 @@ const NUMERO_OFICIAL = "5511979037133";
 const listCaseIds = vi.fn();
 const loadCuradoriaRecord = vi.fn();
 const loadPatientCuradoriaMock = vi.fn();
-const getLatestFinalCuradoriaDeliveryMock = vi.fn();
 const carregarCentralDeDocumentosMock = vi.fn();
 const carregarEstadoDeGovernancaMock = vi.fn();
 const listarPedidosDoTitularMock = vi.fn();
@@ -42,9 +41,6 @@ vi.mock("@/lib/supabase/server", () => ({
 // ---- Curadoria (C1 e C2) ---------------------------------------------------
 vi.mock("@/modules/curadoria/patient-curadoria", () => ({
   loadPatientCuradoria: () => loadPatientCuradoriaMock(),
-}));
-vi.mock("@/modules/concierge", () => ({
-  getLatestFinalCuradoriaDeliveryForPatient: () => getLatestFinalCuradoriaDeliveryMock(),
 }));
 vi.mock("@/modules/connection", () => ({
   SupabaseConnectionRepository: class {
@@ -172,7 +168,6 @@ beforeEach(() => {
   listCaseIds.mockResolvedValue([]);
   loadCuradoriaRecord.mockResolvedValue(null);
   loadPatientCuradoriaMock.mockResolvedValue(null);
-  getLatestFinalCuradoriaDeliveryMock.mockResolvedValue(null);
   carregarCentralDeDocumentosMock.mockResolvedValue([]);
   carregarEstadoDeGovernancaMock.mockResolvedValue({
     documentos: [],

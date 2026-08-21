@@ -9,10 +9,6 @@ import {
   seedDeliveredCase,
   semearMatrizCoexistente,
 } from "../apoio/apoio-curadoria-entregue";
-import {
-  cleanupLegacyAceChain,
-  seedLegacyFinalCuradoriaDelivery,
-} from "./legacy-ace-chain-fixture";
 
 /**
  * T-12-5 · A BASELINE VOLTA — e é medida por FAMÍLIA, não por total.
@@ -214,53 +210,4 @@ describe("B11-FIX-B · dez casos coexistentes, e a baseline de volta", () => {
     }
     exigirBaseline(antes, await medir(), "CR-11");
   });
-
-  it(
-    "CR-12 · a entrega legada é real, e não cria Curadoria estruturada",
-    { timeout: 300_000 },
-    async () => {
-      const antes = await medir();
-
-      // O Case e os três profissionais vêm da fixture mantida (CR-01), e a
-      // cadeia histórica é montada pelo helper legado — nunca duplicada aqui.
-      const caso = await seedDeliveredCase({ estagio: "CR-01" });
-      let legada: Awaited<ReturnType<typeof seedLegacyFinalCuradoriaDelivery>> | null = null;
-      try {
-        legada = await seedLegacyFinalCuradoriaDelivery({
-          service,
-          caseId: caso.caseId,
-          patientProfileId: caso.patientProfileId,
-          actorId: caso.adminUserId,
-          providerProfileIds: caso.createdProfessionalIds,
-          patientGoal: "Buscando apoio para dores recorrentes.",
-        });
-
-        const { data: entregas } = await service
-          .from("final_curadoria_deliveries")
-          .select("id")
-          .eq("case_id", caso.caseId);
-        expect(entregas ?? [], "a entrega histórica precisa existir").toHaveLength(1);
-
-        const { data: selecoes } = await service
-          .from("curated_selections")
-          .select("id")
-          .eq("case_id", caso.caseId);
-        expect(selecoes ?? [], "o legado NÃO cria Curadoria estruturada").toHaveLength(0);
-
-        const { data: decisoes } = await service
-          .from("patient_curadoria_decisions")
-          .select("id")
-          .eq("case_id", caso.caseId);
-        expect(decisoes ?? [], "o legado não ganha decisão canônica").toHaveLength(0);
-
-        expect(legada.providerIds ?? [], "três profissionais na entrega").toHaveLength(3);
-        expect(MATRIZ_CR["CR-12"].grupoDaFila, "o legado fica fora da Fila").toBeNull();
-      } finally {
-        if (legada) await cleanupLegacyAceChain(service, legada);
-        await cleanupFixture(caso as never);
-      }
-
-      exigirBaseline(antes, await medir(), "CR-12");
-    },
-  );
 });

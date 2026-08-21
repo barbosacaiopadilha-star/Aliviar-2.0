@@ -21,7 +21,6 @@ const registerDecisionActionMock = vi.fn().mockResolvedValue({ success: true });
 const findByCaseIdConnection = vi.fn();
 const findByCaseIdRelationship = vi.fn();
 const loadPatientCuradoriaMock = vi.fn();
-const getLatestFinalCuradoriaDeliveryMock = vi.fn();
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("@/modules/auth/guard", () => ({
@@ -32,9 +31,6 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 vi.mock("@/modules/curadoria/patient-curadoria", () => ({
   loadPatientCuradoria: () => loadPatientCuradoriaMock(),
-}));
-vi.mock("@/modules/concierge", () => ({
-  getLatestFinalCuradoriaDeliveryForPatient: () => getLatestFinalCuradoriaDeliveryMock(),
 }));
 vi.mock("@/modules/connection", () => ({
   SupabaseConnectionRepository: class {
@@ -92,40 +88,12 @@ function curadoria(decision: unknown = null) {
   };
 }
 
-/**
- * A entrega HISTÓRICA, no formato legado — sem Curadoria do Método. É o único
- * estado em que `legado` é verdadeiro na rota (`!curadoria && delivery`), e
- * portanto o único que ainda pergunta "com quem".
- */
-function entregaLegada() {
-  return {
-    caseId: "case-legado",
-    deliveredAt: "2026-08-10T12:00:00.000Z",
-    decisionSummary: "Três caminhos possíveis para o seu caso.",
-    methodExplanation: "Como a curadoria chegou até aqui.",
-    clientContextSummary: "O que você contou.",
-    comparisonSummary: "Os três cobrem a área por caminhos diferentes.",
-    nextSteps: ["Escolher com quem começar."],
-    disclaimer: "Isto não é indicação médica.",
-    providerPresentations: OPCOES.map((o) => ({
-      providerId: `prof-${o.id}`,
-      displayName: o.professionalName,
-      professionalSummary: "Atende adultos.",
-      whyIncluded: `Entrou porque responde ao seu caso — ${o.professionalName}.`,
-      strengthsForThisCase: ["Formação específica."],
-      relevantLimitations: ["Agenda concorrida."],
-      practicalConsiderations: [],
-    })),
-  };
-}
-
 async function renderizarRota() {
   render(await PatientCuradoriaPage());
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
-  getLatestFinalCuradoriaDeliveryMock.mockResolvedValue(null);
   findByCaseIdConnection.mockResolvedValue(null);
   findByCaseIdRelationship.mockResolvedValue(null);
 });
@@ -247,41 +215,5 @@ describe("T-B3-R1..R5 · a rota real compõe a decisão canônica", () => {
       }
     });
 
-    it("T-B3-H4 · legado: a pergunta antiga e os três rádios permanecem", async () => {
-      loadPatientCuradoriaMock.mockResolvedValue(null);
-      getLatestFinalCuradoriaDeliveryMock.mockResolvedValue(entregaLegada());
-
-      await renderizarRota();
-
-      expect(
-        screen.getByRole("heading", { name: "Com quem você gostaria de seguir?" }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(/Os profissionais foram apresentados sem ordem de preferência/),
-      ).toBeInTheDocument();
-      expect(screen.getAllByRole("radio")).toHaveLength(3);
-
-      // A copy canônica não vaza para quem tem só o documento histórico.
-      expect(screen.queryByRole("heading", { name: "Começar seu acompanhamento" })).toBeNull();
-      expect(screen.queryByText(/Caminho escolhido:/)).toBeNull();
-    });
-
-    it("T-B3-H4 · legado: a correção continua alcançável depois da escolha", async () => {
-      loadPatientCuradoriaMock.mockResolvedValue(null);
-      getLatestFinalCuradoriaDeliveryMock.mockResolvedValue(entregaLegada());
-      findByCaseIdConnection.mockResolvedValue({
-        id: "conn-legado",
-        caseId: "case-legado",
-        professionalProfileId: "prof-op-a",
-        status: "DECISAO_REGISTRADA",
-        contactMode: null,
-      });
-
-      await renderizarRota();
-
-      expect(screen.getByText("Você escolheu seguir com Dra. Helena Monteiro.")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Alterar minha escolha" })).toBeInTheDocument();
-      expect(screen.queryByText(/Acompanhamento aberto com/)).toBeNull();
-    });
   });
 });

@@ -6,7 +6,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { PatientCard } from "@/components/paciente/dashboard/patient-primitives";
 import { FormMessage } from "@/components/ui/form-message";
-import type { ProviderPresentation } from "@/modules/ace/artifacts/final-curadoria";
+import type { ProviderPresentation } from "@/modules/curadoria/opcao-apresentada";
 import {
   declarePlannedRelationshipClosureAction,
   declareRelationshipInterruptionAction,

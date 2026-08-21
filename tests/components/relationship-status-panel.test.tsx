@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { RelationshipStatusPanel } from "@/components/patient/relationship-status-panel";
-import type { ProviderPresentation } from "@/modules/ace/artifacts/final-curadoria";
+import type { ProviderPresentation } from "@/modules/curadoria/opcao-apresentada";
 import type { RelationshipRecord } from "@/modules/relationship";
 
 // [CORRIGIDO — Fase 6.1] declareRelationshipPauseAction/

@@ -33,10 +33,6 @@ import {
   type DeliveredFixture,
 } from "../apoio/apoio-curadoria-entregue";
 import { createCuradoriaClient } from "../integration/curadoria-client";
-import {
-  cleanupLegacyAceChain,
-  seedLegacyFinalCuradoriaDelivery,
-} from "../integration/legacy-ace-chain-fixture";
 import { seedPublishedProfessional } from "../integration/rede-fixture";
 
 const URL_LOCAL = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
@@ -554,224 +550,18 @@ test.describe("B3 · evidências da decisão", () => {
 });
 
 /**
- * B3-EV-C2 · O FECHAMENTO — o outro caminho, a outra decisão, e a leitura.
+ * B3-EV-C2 · O FECHAMENTO — a outra decisão, e a leitura.
  *
- * Três coisas que o pacote ainda não tinha: o LEGADO visto de perto (é ele
- * que justifica a existência de dois modos), a recusa legítima
- * (`NONE_OF_THEM`, que nenhuma captura precisa mas toda auditoria precisa), e
- * a acessibilidade medida no fluxo REAL — nunca em render isolado.
+ * Eram três coisas aqui. A primeira era o LEGADO visto de perto, "o que
+ * justifica a existência de dois modos" — e os dois modos deixaram de existir
+ * junto com o motor ACE, então o caso saiu com eles.
+ *
+ * Restam as duas que não dependiam dele: a recusa legítima (`NONE_OF_THEM`,
+ * que nenhuma captura precisa mas toda auditoria precisa) e a acessibilidade
+ * medida no fluxo REAL — nunca em render isolado.
  */
 test.describe("B3 · fechamento (EV-C2)", () => {
   const service = createAdminSupabaseClient();
-
-  test("EV-B3-006 — a conexão legada (H4), desktop", async ({ page }) => {
-    test.setTimeout(240_000);
-    await page.setViewportSize({ width: 1440, height: 900 });
-
-    const admin = loadTestAccounts().find((c) => c.role === "administrador")!;
-    const adminSession = createCuradoriaClient(URL_LOCAL, ANON_LOCAL);
-    const { data: sessaoAdmin } = await adminSession.auth.signInWithPassword({
-      email: admin.email,
-      password: admin.password,
-    });
-    const adminId = sessaoAdmin!.user!.id;
-
-    const email = `h4-legado-${Date.now()}@aliviar-conexao.local`;
-    const paciente = await createPatientAccount(
-      service,
-      adminSession,
-      { email, displayName: "Paciente H4 Legado" },
-      adminId,
-    );
-
-    const pacienteClient = createCuradoriaClient(URL_LOCAL, ANON_LOCAL);
-    await pacienteClient.auth.signInWithPassword({ email, password: paciente.password });
-    const rascunho = await getOrCreateActiveStory(pacienteClient, paciente.profileId);
-    await saveStoryDraft(
-      pacienteClient,
-      rascunho.id,
-      rascunho.revision,
-      { motivo: "Buscando apoio para dores recorrentes." },
-      "motivo",
-    );
-    const atualizado = await getOrCreateActiveStory(pacienteClient, paciente.profileId);
-    await submitStory(pacienteClient, rascunho.id, atualizado.revision);
-
-    const caso = await createCase(adminSession, rascunho.id, adminId, adminId);
-    await changeCaseStatus(adminSession, caso.id, "IN_REVIEW", adminId);
-    await changeCaseStatus(adminSession, caso.id, "READY_FOR_CURATION", adminId);
-
-    const providerProfileIds = [
-      await seedPublishedProfessional(service, adminId, `H4 EV Um ${Date.now()}`),
-      await seedPublishedProfessional(service, adminId, `H4 EV Dois ${Date.now()}`),
-      await seedPublishedProfessional(service, adminId, `H4 EV Tres ${Date.now()}`),
-    ];
-
-    const legada = await seedLegacyFinalCuradoriaDelivery({
-      service,
-      caseId: caso.id,
-      patientProfileId: paciente.profileId,
-      actorId: adminId,
-      providerProfileIds,
-      patientGoal: "Buscando apoio para dores recorrentes.",
-    });
-
-    try {
-      // O estado H4, dito pelo banco antes de ser dito pela tela.
-      const { data: entregas } = await service
-        .from("final_curadoria_deliveries")
-        .select("id")
-        .eq("case_id", caso.id);
-      expect(entregas ?? [], "a entrega histórica precisa existir").toHaveLength(1);
-
-      const { data: selecoes } = await service
-        .from("curated_selections")
-        .select("id")
-        .eq("case_id", caso.id);
-      expect(selecoes ?? [], "H4 exige AUSÊNCIA de Curadoria estruturada").toHaveLength(0);
-
-      const { data: caseRow } = await service
-        .from("cases")
-        .select("assigned_curator_id")
-        .eq("id", caso.id)
-        .single();
-      expect(
-        caseRow?.assigned_curator_id,
-        "no legado o responsável é o Curador do Case, não a Equipe",
-      ).toBe(adminId);
-
-      await entrar(page, email, paciente.password);
-      await page.goto("/paciente/curadoria", { waitUntil: "domcontentloaded" });
-
-      // A pergunta que só o legado faz, e os três que ela oferece.
-      await expect(
-        page.getByRole("heading", { name: "Com quem você gostaria de seguir?" }),
-      ).toBeVisible();
-      await expect(
-        page.getByText(/Os profissionais foram apresentados sem ordem de preferência/),
-      ).toBeVisible();
-      await expect(page.getByRole("radio")).toHaveCount(3);
-      await expect(
-        page.getByRole("button", { name: "Quero seguir com um dos três" }),
-      ).toBeVisible();
-
-      // E a copy canônica não vaza para cá.
-      await expect(
-        page.getByRole("heading", { name: "Começar seu acompanhamento" }),
-      ).toHaveCount(0);
-      await expect(page.getByText("Caminho escolhido:", { exact: false })).toHaveCount(0);
-
-      const { data: decisoes } = await service
-        .from("patient_curadoria_decisions")
-        .select("id")
-        .eq("case_id", caso.id);
-      expect(decisoes ?? [], "o legado nunca cria decisão canônica").toHaveLength(0);
-
-      await capturar(page, "EV-B3-006-conexao-legada-h4-desktop");
-
-      // Depois da captura: a correção que SÓ o legado preserva, e as âncoras.
-      const { data: perfis } = await service
-        .from("professional_profiles")
-        .select("id, display_name")
-        .in("id", legada.providerIds!);
-      const primeiro = (perfis ?? []).find((p) => p.id === legada.providerIds![0])!
-        .display_name as string;
-
-      await page.getByRole("radio", { name: primeiro }).check();
-      await page.getByRole("button", { name: `Quero seguir com ${primeiro}` }).click();
-      /**
-       * V-B3-1 · A ESPERA ERA AMBÍGUA, E O TETO ERA SÓ O SINTOMA.
-       *
-       * `Você escolheu seguir com {nome}.` existe em DOIS estados: na revisão
-       * (`connection-choice-panel.tsx:256`) e no painel durável
-       * (`connection-progress-panel.tsx:232`). Esperar por ela depois de
-       * confirmar era esperar por algo **que já estava na tela** — a revisão. O
-       * teste seguia para o `reload()` antes de a Connection existir, e a página
-       * voltava em `choosing`: sem "Sua escolha" e sem "Alterar minha escolha".
-       *
-       * Cada etapa passa a ser reconhecida pelo cabeçalho que só ela tem. A
-       * espera pela revisão continua existindo pelo motivo de sempre: o painel
-       * desabilita os próprios botões enquanto a etapa muda, e clicar no mesmo
-       * instante é o teste correndo contra o produto (achado da B3-COPY-B2).
-       */
-      await expect(
-        page.getByRole("heading", { name: `O que acontece ao seguir com ${primeiro}` }),
-        "a revisão precisa estar montada antes de confirmar",
-      ).toBeVisible({ timeout: 10_000 });
-      await page.getByRole("button", { name: `Seguir com ${primeiro}` }).click();
-
-      /**
-       * O marco que autoriza o reload é o FATO, não a tela.
-       *
-       * Ao confirmar, o painel faz `setStep("choosing")` e `router.refresh()`
-       * (`connection-choice-panel.tsx:125`): entre o fim da action e a chegada
-       * do render novo, o que está na tela é a pergunta legada de novo — não o
-       * estado durável. Esperar por UI aqui é esperar por uma troca que só o
-       * SERVIDOR faz, e era a ausência de qualquer espera que deixava o
-       * `reload()` acontecer antes de a Connection existir.
-       *
-       * `connection_records` é o fato que o reload vai ler. Esperar por ele é
-       * determinístico e não depende de nenhuma transição do cliente.
-       */
-      await expect
-        .poll(
-          async () => {
-            const { data } = await service
-              .from("connection_records")
-              .select("id")
-              .eq("case_id", caso.id);
-            return (data ?? []).length;
-          },
-          {
-            timeout: 15_000,
-            message: "a Connection precisa existir antes de recarregar",
-          },
-        )
-        .toBe(1);
-
-      // A correção se prova onde ela importa: depois de recarregar. É o estado
-      // DURÁVEL que precisa continuar oferecendo a troca — não um resto de
-      // estado React da mesma sessão.
-      await page.reload();
-      await expect(page.getByRole("heading", { name: "Sua escolha" })).toBeVisible({
-        timeout: 10_000,
-      });
-      await expect(page.getByText(`Você escolheu seguir com ${primeiro}.`)).toBeVisible({
-        timeout: 10_000,
-      });
-      await expect(
-        page.getByRole("button", { name: "Alterar minha escolha" }),
-        "a correção legada precisa continuar ofertada",
-      ).toBeVisible({ timeout: 10_000 });
-
-      const { data: conexoes } = await service
-        .from("connection_records")
-        .select("final_curadoria_delivery_id, curadoria_report_id")
-        .eq("case_id", caso.id);
-      expect(conexoes ?? [], "exatamente uma Connection").toHaveLength(1);
-      expect(
-        conexoes![0]!.final_curadoria_delivery_id,
-        "a âncora do legado é a entrega histórica",
-      ).toBe(legada.finalDeliveryId);
-      expect(conexoes![0]!.curadoria_report_id, "H4 não ancora em Relatório").toBeNull();
-    } finally {
-      const { data: doCaso } = await service
-        .from("connection_records")
-        .select("id")
-        .eq("case_id", caso.id);
-      for (const conexao of doCaso ?? []) {
-        await service.from("connection_events").delete().eq("connection_id", conexao.id);
-      }
-      await service.from("connection_records").delete().eq("case_id", caso.id);
-      await cleanupLegacyAceChain(service, legada);
-      await removerPacienteSintetico(service, paciente.profileId, caso.id);
-      await service
-        .from("professional_competency_areas")
-        .delete()
-        .in("professional_profile_id", providerProfileIds);
-      await service.from("professional_profiles").delete().in("id", providerProfileIds);
-    }
-  });
 
   test("NONE_OF_THEM — a recusa legítima, pelo navegador", async ({ page }) => {
     test.setTimeout(240_000);

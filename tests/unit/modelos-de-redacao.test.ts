@@ -1,4 +1,5 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
@@ -420,12 +421,37 @@ describe("§9/§12 · o caminho generativo não existe mais", () => {
     }
   });
 
-  it("a porta do Concierge voltou a exigir protocolo — sem generalidade morta", () => {
-    const porta = readFileSync("src/modules/concierge/language-model.ts", "utf8");
-    expect(porta).toContain("protocolId: ProtocolId;");
-    expect(porta).toContain("protocolVersion: string;");
-    expect(porta.includes("usageId")).toBe(false);
-    expect(porta.includes("timeoutMs")).toBe(false);
+  /**
+   * A PORTA GENERATIVA NÃO EXISTE MAIS — nem estreita.
+   *
+   * Esta guarda exigia que a porta do Concierge só aceitasse chamada com
+   * protocolo declarado: era o modo de impedir uma entrada de LLM de uso geral
+   * enquanto a porta existia. Ela saiu junto com o motor anterior.
+   *
+   * A asserção passa a ser a forte: nenhum arquivo de `src/` fala com modelo
+   * de linguagem nenhum. O Método não gera texto — organiza o que alguém
+   * declarou.
+   */
+  it("nenhuma porta de modelo de linguagem existe em src/", () => {
+    expect(existsSync("src/modules/concierge/language-model.ts")).toBe(false);
+
+    const proibidos = /\b(anthropic|openai|LanguageModel|generateText|createCompletion)\b/i;
+    const arquivos: string[] = [];
+    const varrer = (dir: string) => {
+      for (const entrada of readdirSync(dir, { withFileTypes: true })) {
+        const caminho = path.join(dir, entrada.name);
+        if (entrada.isDirectory()) varrer(caminho);
+        else if (/\.tsx?$/.test(entrada.name)) arquivos.push(caminho);
+      }
+    };
+    varrer("src");
+
+    for (const arquivo of arquivos) {
+      expect(
+        proibidos.test(readFileSync(arquivo, "utf8")),
+        `${arquivo} fala com modelo de linguagem — o Método não gera texto`,
+      ).toBe(false);
+    }
   });
 });
 

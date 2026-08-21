@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -26,22 +26,30 @@ describe("Uma entrega por vez (X4)", () => {
     expect(pagina).not.toContain("Seu relatório anterior");
   });
 
-  it("o formato legado só é renderizado quando NÃO existe a Curadoria do Método", () => {
-    // Todas as renderizações do documento legado são condicionadas a `!curadoria`.
-    const renderizacoes = [...pagina.matchAll(/<FinalCuradoriaView/g)];
-    expect(renderizacoes.length).toBeGreaterThan(0);
-
-    for (const ocorrencia of renderizacoes) {
-      const antes = pagina.slice(Math.max(0, ocorrencia.index! - 120), ocorrencia.index!);
-      expect(
-        antes.includes("!curadoria"),
-        "há uma renderização do formato legado que não exige a ausência da Curadoria do Método",
-      ).toBe(true);
-    }
+  /**
+   * A REGRA FICOU MAIS FORTE, NÃO MAIS FRACA.
+   *
+   * Estas duas asserções exigiam que o formato legado só aparecesse na
+   * ausência da Curadoria do Método — a formulação possível enquanto o motor
+   * anterior ainda produzia entrega. O motor saiu, e com ele o segundo
+   * formato: agora não há o que condicionar, porque não há segunda entrega.
+   *
+   * "Uma entrega por vez" vira "uma entrega, ponto".
+   */
+  it("não existe segundo formato de entrega — nem componente, nem renderização", () => {
+    expect(pagina).not.toContain("FinalCuradoriaView");
+    expect(pagina, "a rota não pode voltar a ler a entrega do motor anterior").not.toContain(
+      "getLatestFinalCuradoriaDeliveryForPatient",
+    );
+    expect(
+      existsSync(path.join(RAIZ, "src/components/patient/final-curadoria-view.tsx")),
+      "o componente do formato legado voltou ao repositório",
+    ).toBe(false);
   });
 
-  it("quem tem apenas o documento legado continua vendo o seu — nada foi apagado", () => {
-    expect(pagina).toContain("{!curadoria && delivery ? <FinalCuradoriaView delivery={delivery} />");
+  it("a entrega que existe é a da Curadoria do Método, e ela é a única", () => {
+    expect(pagina).toContain("loadPatientCuradoria");
+    expect(pagina).toContain("<CaminhosPanel");
   });
 });
 
@@ -49,20 +57,21 @@ describe("O PDF não depende mais do motor anterior (A5)", () => {
   const impressao = ler("src/app/paciente/curadoria/imprimir/page.tsx");
   const pagina = ler("src/app/paciente/curadoria/page.tsx");
 
-  it("a impressão tenta primeiro a Curadoria do Método", () => {
+  it("a impressão só conhece a Curadoria do Método", () => {
     // Só o corpo da função — a ordem dos imports não diz nada sobre execução.
-    const corpo = impressao.slice(impressao.indexOf('export default async function'));
-    const posCuradoria = corpo.indexOf("loadPatientCuradoria(");
-    const posLegado = corpo.indexOf("getLatestFinalCuradoriaDeliveryForPatient(");
-    expect(posCuradoria).toBeGreaterThan(-1);
-    expect(posLegado).toBeGreaterThan(-1);
-    expect(posCuradoria, "a entrega canônica precisa ser tentada antes da legada").toBeLessThan(
-      posLegado,
-    );
+    const corpo = impressao.slice(impressao.indexOf("export default async function"));
+    expect(corpo).toContain("loadPatientCuradoria(");
+    expect(
+      corpo,
+      "a impressão voltou a procurar a entrega do motor anterior",
+    ).not.toContain("getLatestFinalCuradoriaDeliveryForPatient(");
   });
 
-  it("o formato legado permanece imprimível para quem só tem ele", () => {
-    expect(impressao).toContain("FinalCuradoriaView");
+  it("sem Curadoria não há folha inventada — a rota devolve 404", () => {
+    const corpo = impressao.slice(impressao.indexOf("export default async function"));
+    expect(corpo).toContain("if (!curadoria)");
+    expect(corpo).toContain("notFound()");
+    expect(impressao, "o formato legado saiu da impressão").not.toContain("FinalCuradoriaView");
   });
 
   it("o link do PDF deixou de exigir a entrega legada", () => {
@@ -99,6 +108,11 @@ describe("Superfícies mortas removidas (P20)", () => {
     "src/app/portal-paciente",
     "src/app/admin/ace",
     "src/components/ace/ace-executions-table.tsx",
+    "src/modules/ace",
+    "src/modules/concierge",
+    "src/components/ace",
+    "src/components/cases/ace-artifacts-list.tsx",
+    "src/components/cases/ace-shortlist-viewer.tsx",
   ]) {
     it(`${superficie} não existe mais`, () => {
       expect(existsSync(path.join(RAIZ, superficie))).toBe(false);
@@ -118,19 +132,39 @@ describe("Superfícies mortas removidas (P20)", () => {
 });
 
 describe("Histórico preservado (DP-2)", () => {
-  it("o dado histórico continua legível — nenhuma tabela saiu do código", () => {
-    // O histórico do motor anterior vive no banco; este pacote não o toca.
-    expect(existsSync(path.join(RAIZ, "supabase/migrations"))).toBe(true);
+  /**
+   * DP-2 MUDOU DE FORMA, NÃO DE CONTEÚDO.
+   *
+   * A promessa era: nenhuma operação nova pelo motor anterior, histórico
+   * preservado integralmente. Enquanto havia leitor e tela, a prova era que
+   * ambos continuavam existindo. O leitor e a tela saíram — o histórico, não.
+   *
+   * A promessa passa a ser provada onde ela de fato vive: no banco. Nenhuma
+   * migration pode derrubar as tabelas do motor anterior. Apagar o registro é
+   * que seria a violação; parar de exibi-lo nunca foi.
+   */
+  it("nenhuma migration derruba as tabelas do histórico", () => {
+    const dir = path.join(RAIZ, "supabase/migrations");
+    expect(existsSync(dir)).toBe(true);
 
-    const leitor = ler("src/modules/concierge/execution-repository.ts");
-    for (const tabela of ["ace_executions", "ace_execution_events"]) {
-      expect(leitor.includes(tabela), `${tabela} deixou de ser legível`).toBe(true);
+    const migrations = readdirSync(dir).filter((nome) => nome.endsWith(".sql"));
+    expect(migrations.length).toBeGreaterThan(0);
+
+    for (const nome of migrations) {
+      const sql = readFileSync(path.join(dir, nome), "utf8").toLowerCase();
+      for (const tabela of ["ace_executions", "ace_execution_events", "ace_artifacts"]) {
+        expect(
+          new RegExp(`drop\\s+table\\s+(if\\s+exists\\s+)?(curadoria\\.)?${tabela}\\b`).test(sql),
+          `${nome} apaga ${tabela} — o histórico do motor anterior não pode ser destruído`,
+        ).toBe(false);
+      }
     }
   });
 
-  it("o histórico de execuções continua visível no Case", () => {
+  it("nenhuma superfície voltou a exibir o histórico do motor anterior", () => {
     const consumidor = ler("src/app/admin/casos/[id]/page.tsx");
-    expect(consumidor).toContain("AceExecutionsHistory");
+    expect(consumidor).not.toContain("AceExecutionsHistory");
+    expect(consumidor).not.toContain("AceArtifactsList");
   });
 });
 

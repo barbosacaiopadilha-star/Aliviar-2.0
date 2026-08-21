@@ -32,7 +32,7 @@ const SRC = path.join(RAIZ, "src");
 const COMPONENTS = path.join(SRC, "components");
 
 /**
- * Os dez órfãos autorizados, cada um com o motivo por extenso.
+ * Os oito órfãos autorizados, cada um com o motivo por extenso.
  *
  * Acrescentar uma linha aqui é um ato deliberado e revisável — nunca um efeito
  * colateral. A Mesa deu superfície ao `mandatory-filters` no Bloco 11, ele saiu desta
@@ -47,8 +47,6 @@ const ORFAOS_AUTORIZADOS: Record<string, string> = {
     "Biblioteca canônica da Fundação (D-2, FOUNDATION_PRIMITIVES). Dicionário sem consumidor é vocabulário, não lixo.",
   "src/components/ui/tabs.tsx":
     "Biblioteca canônica da Fundação (D-2, FOUNDATION_PRIMITIVES). Dicionário sem consumidor é vocabulário, não lixo.",
-  "src/components/ace/human-review-history.tsx":
-    "GAP-D-3 · uso zero sem substituto integral provado.",
   "src/components/curadoria/activity-feed.tsx":
     "GAP-D-3 · uso zero sem substituto integral provado.",
   "src/components/curadoria/evidence-card.tsx":
@@ -160,7 +158,7 @@ describe("T-D-2 · nenhum componente órfão fora da allowlist", () => {
     }
   });
 
-  it("são exatamente nove — GAP-D-1 fechou e mandatory-filters saiu da lista", () => {
+  it("são exatamente oito — o órfão do motor anterior saiu com ele", () => {
     expect(orfaos).toEqual(Object.keys(ORFAOS_AUTORIZADOS).sort());
   });
 });

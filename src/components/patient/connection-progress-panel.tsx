@@ -6,7 +6,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { PatientCard } from "@/components/paciente/dashboard/patient-primitives";
 import { FormMessage } from "@/components/ui/form-message";
-import type { ProviderPresentation } from "@/modules/ace/artifacts/final-curadoria";
+import type { ProviderPresentation } from "@/modules/curadoria/opcao-apresentada";
 import {
   closeWithoutRelationshipAction,
   confirmFirstAppointmentAction,
@@ -18,10 +18,6 @@ type ConnectionProgressPanelProps = {
   caseId: string;
   connection: ConnectionRecord;
   providerPresentations: ProviderPresentation[];
-  // Só é oferecida em DECISAO_REGISTRADA — o próprio ConnectionChoicePanel
-  // decide isso e só passa esta prop quando a correção é permitida.
-  onRequestEdit?: () => void;
-  modo?: "canonico" | "legado";
 };
 
 // Ação terminal (confirmar atendimento, encerrar) sempre exige uma etapa de
@@ -43,8 +39,6 @@ export function ConnectionProgressPanel({
   caseId,
   connection,
   providerPresentations,
-  onRequestEdit,
-  modo = "legado",
 }: ConnectionProgressPanelProps) {
   const router = useRouter();
   const [reviewing, setReviewing] = useState<ReviewingOutcome>(null);
@@ -220,38 +214,15 @@ export function ConnectionProgressPanel({
     );
   }
 
-  // DECISAO_REGISTRADA: escolha + correção (se permitida) + as três ações.
+  // DECISAO_REGISTRADA: o acompanhamento aberto e as três ações.
   return (
     <PatientCard>
       <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
-          {modo === "canonico" ? "Seu acompanhamento" : "Sua escolha"}
+          Seu acompanhamento
         </h2>
       <p className="text-sm text-ink">
-        {modo === "canonico"
-          ? `Acompanhamento aberto com ${displayName}.`
-          : `Você escolheu seguir com ${displayName}.`}
+        {`Acompanhamento aberto com ${displayName}.`}
       </p>
-      {onRequestEdit ? (
-        <>
-          {/* A janela dita pelo marco, nunca por relógio nem como promessa
-              geral — é a única formulação de reversibilidade autorizada
-              (A_SALA_DA_DECISAO §6.4; garantida por trigger). */}
-          <p className="mt-2 text-sm text-ink-muted">
-            Enquanto você não tiver falado com {displayName}, pode trocar aqui mesmo, sem
-            precisar explicar nada.
-          </p>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="mt-2 w-auto"
-            onClick={onRequestEdit}
-          >
-            Alterar minha escolha
-          </Button>
-        </>
-      ) : null}
-
       <div className="mt-4 space-y-2">
         <p className="text-sm text-ink-muted">
           Quando você decidir dar o próximo passo, pode registrar por aqui.

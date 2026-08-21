@@ -33,11 +33,11 @@ async function contar(tabela: string, coluna: string, valor: string) {
 }
 
 describe("T-CR-1 · a matriz CR, corte a corte", () => {
-  it("a matriz declara os doze casos, com grupo e responsável", () => {
-    expect(Object.keys(MATRIZ_CR)).toHaveLength(12);
-    // CR-11 e CR-12 ficam FORA da Fila, por decisão do contrato §10.1.
+  it("a matriz declara os onze casos, com grupo e responsável", () => {
+    expect(Object.keys(MATRIZ_CR)).toHaveLength(11);
+    // CR-11 fica FORA da Fila, por decisão do contrato §10.1. CR-12 — a
+    // entrega do motor ACE — saiu com o motor.
     expect(MATRIZ_CR["CR-11"].grupoDaFila).toBeNull();
-    expect(MATRIZ_CR["CR-12"].grupoDaFila).toBeNull();
     // E o corte do reconhecimento é dela, não do Curador.
     expect(MATRIZ_CR["CR-04"].ator).toBe("paciente");
     expect(MATRIZ_CR["CR-04"].fato).toContain("acknowledge_priority_profile");
@@ -261,11 +261,6 @@ describe("T-CR-1 · a matriz CR, corte a corte", () => {
     }
   });
 
-  it("CR-12 · a entrega legada tem helper próprio, e não se duplica aqui", async () => {
-    await expect(seedDeliveredCase({ estagio: "CR-12" })).rejects.toThrow(
-      /seedLegacyFinalCuradoriaDelivery/,
-    );
-  });
 });
 
 /**
@@ -296,9 +291,6 @@ describe("T-CR-1 · a união discriminada não deixa ler fato de estágio poster
     }
     if (caso.estagio === "CR-10") {
       void caso.connectionId;
-    }
-    if (caso.estagio === "CR-12") {
-      void caso.legadoDeliveryId;
     }
     if (caso.estagio === "CR-01") {
       // @ts-expect-error · CR-01 não tem Perfil de Prioridades

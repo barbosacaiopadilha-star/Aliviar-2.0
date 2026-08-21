@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ConnectionProgressPanel } from "@/components/patient/connection-progress-panel";
-import type { ProviderPresentation } from "@/modules/ace/artifacts/final-curadoria";
+import type { ProviderPresentation } from "@/modules/curadoria/opcao-apresentada";
 import type { ConnectionRecord } from "@/modules/connection/types";
 
 const {
@@ -74,32 +74,31 @@ function buildConnection(
 }
 
 describe("ConnectionProgressPanel — DECISAO_REGISTRADA", () => {
-  it("mostra a escolha atual e o botão de correção quando onRequestEdit é fornecido", () => {
-    const onRequestEdit = vi.fn();
+  /**
+   * `onRequestEdit` SAIU junto com o motor ACE.
+   *
+   * Ele só era passado no formato legado — o canônico nunca o passava, por
+   * decisão explícita (§5). Sem o legado, o painel não tem como reabrir a
+   * escolha, e "Alterar minha escolha" não existe em lugar nenhum. Os dois
+   * testes que exercitavam o prop saíram; sobra esta guarda, que é a que
+   * continua tendo o que provar.
+   */
+  it("nomeia o acompanhamento aberto, e não oferece alterar a escolha", () => {
     render(
       <ConnectionProgressPanel
         caseId={CASE_ID}
         connection={buildConnection()}
         providerPresentations={buildPresentations()}
-        onRequestEdit={onRequestEdit}
       />,
     );
 
     expect(
-      screen.getByText(/Você escolheu seguir com Ana Profissional/),
+      screen.getByText("Acompanhamento aberto com Ana Profissional."),
     ).toBeInTheDocument();
-    screen.getByRole("button", { name: "Alterar minha escolha" }).click();
-    expect(onRequestEdit).toHaveBeenCalledTimes(1);
-  });
-
-  it("não mostra correção quando onRequestEdit não é fornecido", () => {
-    render(
-      <ConnectionProgressPanel
-        caseId={CASE_ID}
-        connection={buildConnection()}
-        providerPresentations={buildPresentations()}
-      />,
-    );
+    expect(
+      screen.queryByText(/Você escolheu seguir com/),
+      "a frase do legado não pode ressurgir",
+    ).toBeNull();
     expect(
       screen.queryByRole("button", { name: "Alterar minha escolha" }),
     ).not.toBeInTheDocument();

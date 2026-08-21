@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectionProgressPanel } from "@/components/patient/connection-progress-panel";
 import { ContactModePanel } from "@/components/patient/contact-mode-panel";
 import { RelationshipStatusPanel } from "@/components/patient/relationship-status-panel";
-import type { ProviderPresentation } from "@/modules/ace/artifacts/final-curadoria";
+import type { ProviderPresentation } from "@/modules/curadoria/opcao-apresentada";
 import type { ConnectionRecord } from "@/modules/connection/types";
 import type { RelationshipRecord } from "@/modules/relationship";
 
