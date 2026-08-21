@@ -158,8 +158,9 @@ test.describe("gestão administrativa de profissionais (Sprint Produto 2)", () =
     // cobrava um ato que o Método proíbe, e a falha era legítima.
     //
     // O cabeçalho deixou de oferecer o botão quando o profissional está
-    // publicado, e passou a apontar para o Ciclo de vida. É por lá que se sai
-    // da Rede — com motivo declarado e autoria registrada, que é justamente o
+    // publicado, e passou a apontar para a etapa "Rede" (fusão 6→4 de 21/08:
+    // Publicação + Ciclo de vida viraram uma etapa). É por lá que se sai da
+    // Rede — com motivo declarado e autoria registrada, que é justamente o
     // que a mudança de ciclo existe para garantir.
     // O que este spec guarda é o CABEÇALHO: publicado, ele não oferece mais um
     // ato que o banco recusa, e diz para onde ir. Percorrer a transição de
@@ -169,7 +170,7 @@ test.describe("gestão administrativa de profissionais (Sprint Produto 2)", () =
     // autoria sem depender de tela.
     await expect(page.getByRole("button", { name: "Desativar" })).toHaveCount(0);
     await expect(page.getByText(/Para tirar da Rede, use/)).toBeVisible();
-    await expect(page.getByRole("link", { name: "Ciclo de vida" }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "Rede", exact: true }).first()).toBeVisible();
   });
 
   test("paciente e profissional não acessam /admin/profissionais", async ({ page }) => {
