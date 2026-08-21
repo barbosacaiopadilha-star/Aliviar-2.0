@@ -1675,3 +1675,25 @@ Novo agregado `approach_attempts` · nova estrutura `team_notifications` · proj
 - **Revisitar quando:** o Observatório da Experiência mostrar quantas histórias captadas viram Curadoria de verdade. **O sinal a procurar:** volume grande de relatos guardados e conversão baixa — significaria que a Landing está colhendo confidência sem entregar cuidado, e a resposta seria rever o convite, não aumentar o prazo de retenção.
 
 ---
+
+## ADR-073 — Congelamento de construção até a primeira Curadoria real
+
+- **Data:** 2026-08-21
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data.
+- **Dependências:** suspende a implementação da **ADR-072** (captação na Landing) e da **Curadoria 2.0** (`docs/curadoria/ARQUITETURA_CURADORIA_2_0.md`) · não altera nenhuma decisão de Método · nada do que já está no ar é revertido.
+- **Contexto — os números que motivaram a decisão:** 87 mil linhas em `src/`, 93 tabelas, 60 telas, 132 migrations, 73 ADRs. **Zero Curadorias reais.** Nenhuma paciente de verdade percorreu o produto até hoje.
+- **A prova de que o problema não é falta de projeto, e sim excesso dele:** três construções corretas, prontas e não ligadas a nada.
+  1. A **ponte grau→importância** está no banco desde 2026-08-06 (`20260806180000_ponte_grau_importancia`). Nenhuma linha de `src/` a usa.
+  2. A **camada de derivação** existe, tem uma regra material VIGENTE (ADR-070) — e, por seus próprios termos, ainda não emite proposta alguma.
+  3. Das **nove transcrições** que a Curadoria 2.0 manda desaparecer (§2.5), **duas** desapareceram em quatro meses: o segundo motor e os checkboxes do Acolhimento.
+- **O raciocínio:** a arquitetura da 2.0 foi revisada nesta data e está **certa** — a tese, as quatro camadas com regra de corte, os dois pipelines fisicamente separados, o P12 como proibição estrutural. Não há proposta melhor a fazer. O que falta não é desenho: é uso. Construir a 2.0 antes da primeira Curadoria real produziria, no melhor caso, uma ponte maior — correta, completa e desligada, como as três acima.
+- **Decisão:**
+  1. **Nenhuma construção nova entra** até que uma Curadoria real aconteça de ponta a ponta: paciente real, Curador real, Rede real, relatório entregue.
+  2. **Continua permitido, e é obrigação:** corrigir defeito encontrado no uso real, e o que a lei exigir (política de privacidade e termos).
+  3. **Fica suspenso:** a captação da ADR-072, a derivação do Mapa (O1), a ponte grau→importância (O3), e as sete transcrições restantes do §2.5.
+  4. **A ordem depois do descongelamento é a dor, não o plano.** As fatias da 2.0 entram na sequência que a operação real apontar — e a primeira candidata é a formação derivada do diploma verificado, por não depender de Rede.
+- **O que a primeira Curadoria real precisa produzir — e é por isto que ela existe:** não um caso entregue, e sim **observação anotada**. Especificamente: quais das nove transcrições de fato machucam e quais eram teoria; quanto tempo cada ato leva de verdade; onde o Curador improvisa por fora do sistema (papel, planilha, WhatsApp) — porque é ali que o produto não existe; onde a paciente hesita, relê ou pergunta; e o que a equipe precisou explicar por fora da tela.
+- **Consequência:** o projeto para de crescer por um período, de propósito. É desconfortável e é o ponto. Toda decisão adiada aqui será tomada depois com evidência, e não com suposição — que é a regra que o Observatório da Experiência já estabelecia e que não vinha sendo cumprida por falta de operação.
+- **Revisitar quando:** a primeira Curadoria real for entregue e a observação estiver registrada. **O sinal de que esta ADR falhou:** a primeira Curadoria acontecer e o descongelamento seguir a ordem do plano original, ignorando o que foi observado — seria repetir, com mais dados, o mesmo erro que a motivou.
+
+---
