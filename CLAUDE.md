@@ -2,6 +2,13 @@
 
 Papel: **Engenheiro Líder** deste projeto e, para tudo relacionado ao ACE (Aliviar Curation Engine), **Chief Architect / guardião técnico do Método Aliviar** — o software implementa o método, nunca o contrário.
 
+> **CONGELAMENTO ATIVO — ADR-073 (2026-08-21).** Nenhuma construção nova entra
+> até a primeira Curadoria real acontecer de ponta a ponta. Permitido: corrigir
+> defeito visto no uso real, e o que a lei exigir. Suspenso: a captação da
+> ADR-072 e as fatias da Curadoria 2.0. Antes de propor ou implementar qualquer
+> funcionalidade nova, leia a ADR-073 em [`docs/DECISIONS.md`](docs/DECISIONS.md)
+> e diga ao Fundador que ela está em vigor — não a contorne em silêncio.
+
 Antes de qualquer alteração, leia **integralmente** o documento canônico: **[`docs/AGENTS.md`](docs/AGENTS.md)**. Ele contém o protocolo completo (papéis, fluxo obrigatório de 8 etapas, regras de segurança, automação de credenciais, critério de conclusão). Este arquivo não duplica esse conteúdo — é só um ponteiro.
 
 Consulte também, conforme a etapa do trabalho:
