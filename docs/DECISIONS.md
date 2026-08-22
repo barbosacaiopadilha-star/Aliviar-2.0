@@ -1716,3 +1716,21 @@ Novo agregado `approach_attempts` · nova estrutura `team_notifications` · proj
 - **Revisitar quando:** houver médicos reais entrevistados e o Observatório mostrar o custo e as lacunas do roteiro; ou se o modelo operacional passar a prever acesso do profissional (aí a decisão 5 reabre inteira).
 
 ---
+
+## ADR-075 — A operação essencial da primeira rodada: conversa na entrada, papel no meio, cartório no fim
+
+- **Data:** 2026-08-21
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data.
+- **Dependências:** aplica a régua do essencial (quatro atos, três folhas — entendimento selado nesta data, kit em `docs/rede/`) à operação · espelha a ADR-074 para o lado da paciente · nada aqui constrói (ADR-073 intacta): são decisões de **não usar** e de sequência.
+- **A régua:** toda superfície e todo ato operacional responde primeiro — *"qual dos quatro atos você serve?"* (1 ouvir até ela reconhecer · 2 conhecer o profissional pela declaração assinada · 3 cruzar e escolher três com nome · 4 apresentar, e a decisão é dela). O que não serve a nenhum, não entra na primeira rodada.
+- **Decisões — a entrada da paciente:**
+  1. **O canal dela, na entrada, é a conversa** — a simetria da ADR-074: os dois lados da Mesa começam falando com a Aliviar, nunca com um formulário logado. A cadeia essencial tem dois degraus: Landing → "quero conversar" (nome + telefone) → **Consulta Inicial marcada**. Qualificar É marcar a conversa.
+  2. **A conta da paciente nasce na entrega, não na entrada.** Criar login e senha antes de ela ser ouvida não serve a ato nenhum; a conta ganha sentido quando existe uma Curadoria para ela ver e uma decisão para ela registrar (Ato 4).
+  3. **Adormecem** (existem, ninguém é obrigado a alimentá-los; mesma figura do portal do profissional na ADR-074): o wizard da história (auto-serviço para escala futura, junto da captação ADR-072 já suspensa), o funil de 18 estágios, tarefas, agenda e a conversão-com-conta como pré-requisito. A Landing editorial **não perde nada** — o corte é atrás dela.
+- **Decisões — a burocracia interna:**
+  4. **Papel no meio, cartório no fim.** Durante a Curadoria, o instrumento é o kit de papel; o sistema não interrompe conversa nenhuma. Depois da entrega, **uma sessão de transcrição — a "ata da Curadoria"** — registra as três folhas de uma vez, com proveniência (*"Ficha da Consulta de DD/MM"*, *"Formulário assinado de DD/MM"*, *"Mesa de DD/MM"*). Os ~13 atos de tela em tempo real viram um ato de registro.
+  5. **O que nunca se corta**, por ser essência e não burocracia: a proveniência na transcrição (fonte, data, quem); a decisão como fato DELA (assinatura na Folha, transcrita como ato dela); o reconhecimento dela assinado na Ficha; e o histórico que a transcrição produz.
+- **Consequência para o descongelamento:** o software se reconstrói à imagem do papel que funcionar — e a primeira candidata de tela passa a ser **a própria ata**: a superfície de transcrição das três folhas, que hoje não existe como ato único. As margens anotadas do kit são a especificação.
+- **Revisitar quando:** o volume tornar o papel gargalo (aí o wizard e o funil acordam, por evidência); ou a primeira rodada mostrar que algum dos atos "adormecidos" fazia falta real.
+
+---
