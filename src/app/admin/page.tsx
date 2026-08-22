@@ -21,6 +21,7 @@ import { listProfessionalProfiles } from "@/modules/profiles";
 import { listRecentAuditLogs, listTeamMembers } from "@/modules/team/repository";
 
 import { AuditLogList } from "@/components/admin/audit-log-list";
+import { KitDaCuradoriaCard } from "@/components/admin/kit-da-curadoria-card";
 import { BarsChart, FunnelChart, TrendChart } from "@/components/admin/charts";
 import { Card, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -356,6 +357,8 @@ export default async function AdminDashboardPage({
           <AuditLogList entries={recentActivity} emptyMessage="Ainda não há atividade registrada." showTarget />
         </Card>
       </div>
+
+      <KitDaCuradoriaCard />
     </div>
   );
 }
