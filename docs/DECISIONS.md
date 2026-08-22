@@ -1776,3 +1776,18 @@ Novo agregado `approach_attempts` · nova estrutura `team_notifications` · proj
 - **Revisitar quando:** a primeira paciente real autorizar um depoimento; ou a Rede tiver números reais que mereçam a faixa do mockup.
 
 ---
+
+## ADR-079 — Mão humana é verificação: o lançamento carimba
+
+- **Data:** 2026-08-22
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data.
+- **Dependências:** ajusta o fluxo da Formação Acadêmica v1 · preserva a Política de Fontes (proveniência obrigatória) e a decisão vinculante 3 (instituição obrigatória) · coerente com a ADR-076 (o admin valida ANTES).
+- **O princípio:** nada entra no sistema sem conferência humana prévia — principalmente sobre médicos. Logo, **o ato de lançar é o ato de verificar**: exigir um segundo clique de "confirmar" sobre o que a própria equipe digitou era burocracia duplicando a mesma conferência.
+- **Decisões:**
+  1. **Digitação manual de formação nasce `verificado`**, com autoria e data de quem lançou.
+  2. **Edição pela equipe carimba, nunca rebaixa** — mão humana no conteúdo é conferência; a fonte original do documento permanece na proveniência.
+  3. **Exceções que ficam de pé:** sem instituição não há carimbo (vinculante 3 — o caminho é a confirmação com justificativa); e o que o **robô extrai** de currículo continua nascendo `nao_verificado` até o olhar humano — ali a conferência ainda não aconteceu, e é ela que protege a paciente.
+- **Efeito:** o que a equipe lança aparece de imediato nas superfícies da paciente (card fechado e coluna acadêmica da carta), com o selo "Formação verificada pela equipe" dizendo a verdade: gente conferiu.
+- **Revisitar quando:** o volume exigir separação entre quem digita e quem confere (aí o segundo par de olhos volta como decisão, não como resíduo).
+
+---
