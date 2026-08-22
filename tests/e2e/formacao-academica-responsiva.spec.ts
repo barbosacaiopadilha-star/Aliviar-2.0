@@ -71,7 +71,10 @@ test.describe("Formação acadêmica — admin em 390/768/1440", () => {
         await primeira.waitFor({ timeout: 20_000 });
         await primeira.click();
         await page.waitForURL(/\/admin\/profissionais\/.+/);
-        await page.getByRole("link", { name: /Documentos e formação/ }).click();
+        // A aba "Documentos e formação" entrou no Cadastro na fusão 6→4
+        // (21/08) — a seção vive na primeira etapa, onde a lista já pousa.
+        await page.getByRole("link", { name: "Cadastro", exact: true }).click();
+        await page.waitForURL(/\/cadastro$/);
 
         await expect(
           page.getByRole("heading", { name: "Formação acadêmica" }),
