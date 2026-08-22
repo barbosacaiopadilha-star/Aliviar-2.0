@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<title>Folha da Mesa — Curadoria Aliviar</title>
+<style>
+  @page { size: A4; margin: 15mm 13mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Georgia, "Times New Roman", serif; color: #1E2A32; font-size: 10.5pt; line-height: 1.45; margin: 0; }
+  header.doc { border-bottom: 2.5pt solid #A8813F; padding-bottom: 8pt; margin-bottom: 12pt; }
+  .marca { font-size: 15pt; font-weight: bold; color: #24466B; }
+  .marca small { color: #A8813F; font-weight: normal; font-style: italic; }
+  h1 { font-size: 15pt; margin: 6pt 0 2pt; }
+  .sub { color: #5A6670; font-size: 9pt; margin: 0; }
+  h2 { font-size: 12.5pt; color: #24466B; border-bottom: 1pt solid #D8CFC0; padding-bottom: 3pt; margin: 16pt 0 8pt; page-break-after: avoid; }
+  h3.grupo { font-size: 10.5pt; color: #A8813F; text-transform: uppercase; letter-spacing: .08em; margin: 12pt 0 4pt; page-break-after: avoid; }
+  .bloco { page-break-inside: avoid; margin: 0 0 9pt; padding: 6pt 9pt; border: .75pt solid #D8CFC0; border-radius: 4pt; }
+  .bloco h4 { margin: 0 0 2pt; font-size: 10.5pt; color: #24466B; }
+  .num { display: inline-block; min-width: 16pt; color: #A8813F; }
+  .pergunta { margin: 1pt 0 3pt; font-style: italic; }
+  ul.opcoes { list-style: none; margin: 0 0 3pt; padding: 0; columns: 2; column-gap: 14pt; }
+  ul.opcoes li { margin: 0 0 3pt; break-inside: avoid; }
+  .caixa { display: inline-block; width: 9pt; height: 9pt; border: 1pt solid #1E2A32; border-radius: 1.5pt; vertical-align: -1pt; margin-right: 4pt; }
+  .detalhe { color: #5A6670; font-size: 9pt; }
+  .linha { display: inline-block; border-bottom: .8pt solid #7A8791; width: 88%; height: 10pt; }
+  .linha-media { display: inline-block; border-bottom: .8pt solid #7A8791; width: 55%; height: 10pt; }
+  .linha-curta { display: inline-block; border-bottom: .8pt solid #7A8791; width: 30mm; height: 9pt; }
+  .campo { margin: 6pt 0; }
+  .palavras { margin: 4pt 0 0; font-size: 9pt; color: #5A6670; }
+  .instrucoes { background: #F6F1E7; border: .75pt solid #E4D9C2; border-radius: 4pt; padding: 8pt 10pt; font-size: 9.5pt; }
+  .grau { font-size: 8.5pt; color: #5A6670; margin: 3pt 0 0; }
+  .grau b { color: #1E2A32; }
+  .escala { display: inline-block; margin-left: 4pt; }
+  .escala span { display: inline-block; border: .8pt solid #7A8791; border-radius: 8pt; padding: 0 6pt; margin-right: 3pt; font-size: 8pt; color: #1E2A32; }
+  table.mesa { border-collapse: collapse; width: 100%; font-size: 8.4pt; }
+  table.mesa th, table.mesa td { border: .7pt solid #B9AE9B; padding: 2.2pt 4pt; text-align: left; vertical-align: middle; }
+  table.mesa th { background: #F6F1E7; font-size: 8pt; }
+  table.mesa td.c { width: 15mm; text-align: center; }
+  table.mesa td.imp { width: 21mm; font-size: 7.5pt; color: #5A6670; }
+  tr.grupo-linha td { background: #EFE7D7; color: #A8813F; font-weight: bold; letter-spacing: .06em; font-size: 7.5pt; text-transform: uppercase; }
+  .legenda { font-size: 8.5pt; color: #5A6670; margin: 5pt 0 8pt; }
+  .legenda b { color: #1E2A32; }
+  .caminho { border: 1pt solid #24466B; border-radius: 4pt; padding: 7pt 9pt; margin: 0 0 8pt; page-break-inside: avoid; }
+  .caminho h4 { margin: 0 0 4pt; color: #24466B; font-size: 10.5pt; }
+  .assinaturas { display: flex; gap: 24pt; margin-top: 20pt; }
+  .assinaturas > div { flex: 1; text-align: center; font-size: 9pt; color: #5A6670; }
+  .assinaturas .tra { border-top: .9pt solid #1E2A32; padding-top: 3pt; }
+  .termo { border: 1.2pt solid #24466B; border-radius: 4pt; padding: 9pt 11pt; page-break-inside: avoid; margin-top: 10pt; }
+  .termo p { margin: 0 0 6pt; text-align: justify; }
+  .duas { display: flex; gap: 16pt; } .duas > p { flex: 1; }
+  footer.doc { margin-top: 14pt; padding-top: 6pt; border-top: .75pt solid #D8CFC0; font-size: 8pt; color: #7A8791; }
+  .quebra { page-break-before: always; }
+</style></head><body>
+
+<header class="doc">
+  <div class="marca">Aliviar <small>· Curadoria Médica Independente</small></div>
+  <h1>Folha da Mesa — o cruzamento e os três caminhos</h1>
+  <p class="sub">Catálogo Canônico 1.1.0 · Uma Curadoria numa folha: a importância que ela declarou, o que cada profissional respondeu no formulário assinado, e o juízo do Curador — que escolhe os três, com nome.</p>
+</header>
+
+<div class="instrucoes">
+  <strong>Como usar:</strong> copie da Ficha da Paciente a importância de cada conceito. Para cada médico (do formulário assinado dele), marque em cada linha: <b>A</b> = atende bem · <b>M</b> = atende em parte · <b>L</b> = lacuna (ele não informou — nunca conte lacuna como defeito) · <b>—</b> = não relevante para ela. Nada aqui soma pontos: a folha organiza a evidência para VOCÊ decidir. Área incompatível elimina antes de qualquer linha.
+</div>
+
+<h2>1 · Quem está na Mesa</h2>
+<div class="duas"><p class="campo">Paciente: <span class="linha-media"></span></p><p class="campo">Data: <span class="linha-media"></span></p></div>
+<div class="duas"><p class="campo">Médico A (nome + CRM): <span class="linha-media"></span></p><p class="campo">Área compatível com o caso? (sim / parcial / não): <span class="linha-media"></span></p></div>
+<div class="duas"><p class="campo">Médico B (nome + CRM): <span class="linha-media"></span></p><p class="campo">Área compatível com o caso? (sim / parcial / não): <span class="linha-media"></span></p></div>
+<div class="duas"><p class="campo">Médico C (nome + CRM): <span class="linha-media"></span></p><p class="campo">Área compatível com o caso? (sim / parcial / não): <span class="linha-media"></span></p></div>
+
+<h2>2 · O cruzamento</h2>
+<p class="legenda"><b>A</b> atende bem · <b>M</b> em parte · <b>L</b> lacuna de informação · <b>—</b> não relevante. Coluna "Importância": copie da Ficha dela (MI · I · R · PI · NI).</p>
+<table class="mesa">
+  <tr><th>Conceito</th><th>Importância (dela)</th><th>Médico A</th><th>Médico B</th><th>Médico C</th></tr>
+<tr class="grupo-linha"><td colspan="5">Formação</td></tr><tr><td>Graduação</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Residência médica</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Especialização</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Fellowship</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Formação complementar</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+<tr class="grupo-linha"><td colspan="5">Experiência</td></tr><tr><td>Tempo de prática</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Volume de atuação</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Experiência no tipo de caso</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Limites de atuação</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+<tr class="grupo-linha"><td colspan="5">Histórico e trajetória</td></tr><tr><td>Trajetória institucional</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Atividade acadêmica</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Áreas de atuação</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+<tr class="grupo-linha"><td colspan="5">Modelo de atendimento</td></tr><tr><td>Como explica</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Como conduz decisões</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Participação de acompanhantes</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Explicação de alternativas</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Respeito a recusas e restrições</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Condução de notícias difíceis</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+<tr class="grupo-linha"><td colspan="5">Acesso</td></tr><tr><td>Modalidade de atendimento</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Disponibilidade</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Prazo para a primeira consulta</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Local de atendimento</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+<tr class="grupo-linha"><td colspan="5">Continuidade do cuidado</td></tr><tr><td>Retornos</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Acompanhamento pós-procedimento</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Equipe de apoio</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Coordenação com outros profissionais</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Canais entre consultas</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+<tr class="grupo-linha"><td colspan="5">Viabilidade</td></tr><tr><td>Cobertura e convênio</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr><tr><td>Custo e pagamento</td><td class="imp"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+</table>
+
+<h2 class="quebra">3 · Os três caminhos — o juízo do Curador</h2>
+<p class="sub" style="margin-bottom:8pt">Três, nunca um. Sem ordem de preferência, sem nota: o que cada um oferece e o que cada um pede — para ela decidir.</p>
+
+<div class="caminho">
+  <h4>Caminho 1 — &nbsp;&nbsp;&nbsp;&nbsp;<span class="linha-media"></span></h4>
+  <p class="campo">O que este caminho oferece a ela: <span class="linha"></span></p>
+  <p class="campo"><span class="linha"></span></p>
+  <p class="campo">O que este caminho pede ou custa: <span class="linha"></span></p>
+  <p class="campo"><span class="linha"></span></p>
+</div>
+<div class="caminho">
+  <h4>Caminho 2 — &nbsp;&nbsp;&nbsp;&nbsp;<span class="linha-media"></span></h4>
+  <p class="campo">O que este caminho oferece a ela: <span class="linha"></span></p>
+  <p class="campo"><span class="linha"></span></p>
+  <p class="campo">O que este caminho pede ou custa: <span class="linha"></span></p>
+  <p class="campo"><span class="linha"></span></p>
+</div>
+<div class="caminho">
+  <h4>Caminho 3 — &nbsp;&nbsp;&nbsp;&nbsp;<span class="linha-media"></span></h4>
+  <p class="campo">O que este caminho oferece a ela: <span class="linha"></span></p>
+  <p class="campo"><span class="linha"></span></p>
+  <p class="campo">O que este caminho pede ou custa: <span class="linha"></span></p>
+  <p class="campo"><span class="linha"></span></p>
+</div>
+
+<h2>4 · Fechamento</h2>
+<p class="campo">O que ainda ficou sem resposta e será dito a ela com honestidade: <span class="linha"></span></p>
+<p class="campo"><span class="linha"></span></p>
+<div class="assinaturas">
+  <div><div class="tra">Curador(a) — assinatura e data</div></div>
+  <div><div class="tra">Apresentado à paciente em (data)</div></div>
+  <div><div class="tra">Decisão dela (nome escolhido ou "nenhuma destas"), registrada por ELA em (data)</div></div>
+</div>
+
+<footer class="doc">
+  Aliviar Curadoria Médica · Folha da Mesa · Catálogo Canônico 1.1.0 · Gerada em 21/08/2026. Protótipo em papel da primeira Curadoria real (ADR-073). A decisão pertence à paciente e é registrada por ela; esta folha registra o juízo do Curador e a apresentação. Após o uso, transcrever para o sistema com fonte "Mesa de ____/____/______".
+</footer>
+</body></html>
