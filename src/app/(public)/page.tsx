@@ -10,6 +10,7 @@ import {
   ProblemaSection,
   QuemSomosSection,
   RespiroSection,
+  VideoSection,
 } from "@/components/landing/editorial/editorial-sections";
 import { FaqCompactSection } from "@/components/landing/editorial/faq-compact";
 import { HeroEditorial } from "@/components/landing/editorial/hero-editorial";
@@ -40,9 +41,11 @@ export default function HomePage() {
           o Concierge entra quando já existe escolha a acompanhar (§4.1). */}
       <HeroEditorial />
       <RevealGroup>
-        {/* ADR-078 · a faixa de confiança do mockup do Fundador — soma-se
-            ENTRE o Hero e o Problema; nenhuma seção do contrato 34 sai, e a
+        {/* ADR-078 (imagens do Fundador) · o Hero virou fotografia e o vídeo
+            desceu para o cartão próprio — mesma ordem do mockup. A faixa de
+            confiança vem em seguida; nenhuma seção do contrato 34 sai, e a
             ordem relativa delas permanece intacta. */}
+        <VideoSection />
         <ConfiancaStripSection />
         <ProblemaSection />
         <RespiroSection />

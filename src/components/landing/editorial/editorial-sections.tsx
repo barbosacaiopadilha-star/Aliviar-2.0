@@ -1,5 +1,9 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
+
 import { Compass, HeartHandshake, Headset, ShieldCheck, UserCheck } from "lucide-react";
 
+import { HeroVideo } from "@/components/landing/editorial/hero-video";
 import {
   LandingCard,
   LandingEyebrow,
@@ -134,27 +138,27 @@ const PASSOS = [
   {
     title: "Você conta sua história",
     text: "Uma conversa real, humana, no seu ritmo. Nunca um formulário frio.",
-    foto: "/scenes/cena-2-recepcao-proxima.jpg",
+    foto: "/landing/jornada-01-acolhimento.jpg",
   },
   {
     title: "Vocês definem o que importa",
     text: "Suas prioridades registradas com as suas próprias palavras.",
-    foto: "/scenes/cena-5-quadro-planta.jpg",
+    foto: "/landing/jornada-02-compreensao.jpg",
   },
   {
     title: "A equipe analisa",
     text: "Seu Curador estuda os especialistas à luz dos seus critérios.",
-    foto: "/scenes/cena-6-detalhe.jpg",
+    foto: "/landing/jornada-03-curadoria.jpg",
   },
   {
     title: "Você recebe três opções",
     text: "Três caminhos legítimos, explicados — nunca um ranking.",
-    foto: "/scenes/cena-3-corredor.jpg",
+    foto: "/landing/jornada-04-encontro.jpg",
   },
   {
     title: "A decisão é sua",
     text: "No seu tempo, com acompanhamento contínuo antes e depois.",
-    foto: "/scenes/cena-4-transicao.jpg",
+    foto: "/landing/jornada-05-continuidade.jpg",
   },
 ] as const;
 
@@ -270,6 +274,39 @@ export function ProblemaSection() {
             <p className="landing-body mt-2 text-[var(--color-ink-muted)]">{item.text}</p>
           </div>
         ))}
+      </div>
+    </LandingSection>
+  );
+}
+
+/**
+ * ADR-078 (imagens do Fundador) · O CARTÃO DO VÍDEO — logo abaixo do Hero,
+ * como no mockup. O vídeo saiu da coluna do Hero (que agora é a fotografia
+ * da conversa) e ganhou o próprio momento: poster da sala de espera à
+ * esquerda, o convite à direita. O id continua `video-institucional` — o
+ * link do Hero pousa aqui.
+ */
+export function VideoSection() {
+  const videoPath = path.join(process.cwd(), "public", "/videos/video-institucional-aliviar.webm");
+  if (!existsSync(videoPath)) return null;
+
+  return (
+    <LandingSection spacing="densa" aria-label="Vídeo institucional">
+      <div
+        id="video-institucional"
+        className="mx-auto grid max-w-5xl items-center gap-8 overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-surface)_92%,transparent)] p-6 lg:grid-cols-2 lg:gap-12 lg:p-10"
+      >
+        <div className="landing-reveal">
+          <HeroVideo src="/videos/video-institucional-aliviar.webm" posterScene="/landing/sala-de-espera.jpg" />
+        </div>
+        <div className="landing-reveal" style={revealDelay(1)}>
+          <LandingEyebrow>Vídeo institucional</LandingEyebrow>
+          <h2 className="landing-heading text-2xl lg:text-3xl">Conheça a Aliviar</h2>
+          <p className="landing-body mt-4 text-[var(--color-ink-muted)]">
+            Uma outra forma de cuidar da sua saúde — independente, humana e completa. Dois minutos
+            para conhecer a casa antes de entrar.
+          </p>
+        </div>
       </div>
     </LandingSection>
   );
@@ -396,8 +433,8 @@ export function ConciergeSection() {
           {/* eslint-disable-next-line @next/next/no-img-element -- cena
               estática de public/scenes, mesmo uso do HeroVideo. */}
           <img
-            src="/scenes/recepcao-bright.jpg"
-            alt="Recepção da Aliviar — a casa que acompanha você"
+            src="/landing/concierge-atendimento.jpg"
+            alt="Uma pessoa da Aliviar em atendimento, de headset, diante do computador"
             className="aspect-[4/3] w-full object-cover"
           />
         </div>
@@ -559,7 +596,19 @@ export function PrioridadesSection() {
 export function ConviteSection() {
   return (
     <LandingSection spacing="media" aria-label="Convite">
-      <div className="landing-reveal mx-auto max-w-2xl text-center">
+      {/* ADR-078 (imagens do Fundador) · a fotografia do caminho em frente
+          abre o convite: a vida que segue é o que tudo isto serve. Fato
+          visual, sem depoimento — o depoimento espera gente real (ADR-078). */}
+      <div className="landing-reveal mx-auto max-w-3xl overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)]">
+        {/* eslint-disable-next-line @next/next/no-img-element -- cena
+            estática de public/landing, mesmo uso das demais. */}
+        <img
+          src="/landing/caminho-em-frente.jpg"
+          alt="Um homem caminha tranquilo à beira-mar — a vida seguindo em frente"
+          className="aspect-[21/9] w-full object-cover"
+        />
+      </div>
+      <div className="landing-reveal mx-auto mt-12 max-w-2xl text-center">
         <p className="font-serif text-2xl leading-[1.5] text-[var(--color-ink)] lg:text-3xl">
           Quando você quiser começar, o primeiro passo é contar a sua história — no seu ritmo.
         </p>

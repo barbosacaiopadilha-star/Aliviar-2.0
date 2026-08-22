@@ -1,10 +1,8 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 
-import { HeroVideo } from "@/components/landing/editorial/hero-video";
 import { LinkButton } from "@/components/landing/link-button";
 import { ImmersiveBackdrop } from "@/components/shared/immersive-backdrop";
-import { ALIVIAR_SCENES } from "@/lib/aliviar-environments";
 
 const VIDEO_SRC = "/videos/video-institucional-aliviar.webm";
 
@@ -78,15 +76,22 @@ export function HeroEditorial({ videoSrc }: HeroEditorialProps = {}) {
             </div>
           </div>
 
-          {video.src ? (
-            <div
-              id="video-institucional"
-              className="landing-approach landing-hero-col landing-hero-video"
-              style={{ animationDelay: "160ms" }}
-            >
-              <HeroVideo src={video.src} posterScene={ALIVIAR_SCENES.recepcao} />
-            </div>
-          ) : null}
+          {/* ADR-078 (imagens do Fundador) · a coluna direita do Hero é a
+              FOTOGRAFIA principal — a conversa na recepção, que é a tese da
+              casa. O vídeo desceu para o cartão próprio logo abaixo (como no
+              mockup); o link "Assistir ao vídeo" continua levando até ele. */}
+          <div
+            className="landing-approach landing-hero-col overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] shadow-lg"
+            style={{ animationDelay: "160ms" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- cena
+                estática de public/landing, mesmo uso das demais. */}
+            <img
+              src="/landing/hero-conversa-recepcao.jpg"
+              alt="Uma conversa na recepção da Aliviar — duas pessoas sentadas, uma escuta a outra"
+              className="h-full w-full object-cover"
+            />
+          </div>
         </div>
       </div>
     </section>
