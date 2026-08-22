@@ -292,9 +292,11 @@ export function VideoSection() {
 
   return (
     <LandingSection spacing="densa" aria-label="Vídeo institucional">
+      {/* Efeito do mockup: o lado do texto assenta num painel verde-suave em
+          degradê — a assinatura visual do cartão do vídeo. */}
       <div
         id="video-institucional"
-        className="mx-auto grid max-w-5xl items-center gap-8 overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-surface)_92%,transparent)] p-6 lg:grid-cols-2 lg:gap-12 lg:p-10"
+        className="mx-auto grid max-w-5xl items-center gap-8 overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] bg-gradient-to-br from-[color-mix(in_srgb,var(--color-brand-sage)_14%,var(--color-bg-surface))] via-[color-mix(in_srgb,var(--color-brand-sage)_22%,var(--color-bg-surface))] to-[color-mix(in_srgb,var(--color-brand-sage)_34%,var(--color-bg-surface))] p-6 lg:grid-cols-2 lg:gap-12 lg:p-10"
       >
         <div className="landing-reveal">
           <HeroVideo src="/videos/video-institucional-aliviar.webm" posterScene="/landing/sala-de-espera.jpg" />
@@ -305,6 +307,9 @@ export function VideoSection() {
           <p className="landing-body mt-4 text-[var(--color-ink-muted)]">
             Uma outra forma de cuidar da sua saúde — independente, humana e completa. Dois minutos
             para conhecer a casa antes de entrar.
+          </p>
+          <p className="mt-6 text-sm font-semibold uppercase tracking-[0.12em] text-[var(--color-brand-gold)]">
+            Assistir agora →
           </p>
         </div>
       </div>
@@ -487,17 +492,22 @@ export function MetodoSection() {
             dourado permanece: é a assinatura da contagem. */}
       </div>
 
-      <ol className="mx-auto mt-12 grid max-w-6xl grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
+      {/* O letreiro do mockup, centrado sobre a fileira de cartões. */}
+      <p className="landing-reveal mt-14 text-center text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+        Sua jornada, com a Aliviar
+      </p>
+
+      <ol className="mx-auto mt-6 grid max-w-6xl grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
         {PASSOS.map((passo, index) => (
           <li
             key={passo.title}
-            className="landing-reveal overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-surface)_92%,transparent)]"
+            className="landing-reveal landing-etapa-seta relative overflow-visible rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-surface)_92%,transparent)]"
             style={revealDelay(index % 3)}
           >
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element -- cena
                   estática de public/scenes, mesmo uso do HeroVideo. */}
-              <img src={passo.foto} alt="" className="aspect-[4/3] w-full object-cover" />
+              <img src={passo.foto} alt="" className="aspect-[4/3] w-full rounded-t-[var(--radius-card)] object-cover" />
               <span
                 aria-hidden="true"
                 className="absolute left-3 top-3 flex size-9 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--color-brand-primary-darkest)_78%,transparent)] font-serif text-sm text-on-dark"
@@ -596,35 +606,36 @@ export function PrioridadesSection() {
 export function ConviteSection() {
   return (
     <LandingSection spacing="media" aria-label="Convite">
-      {/* ADR-078 (imagens do Fundador) · a fotografia do caminho em frente
-          abre o convite: a vida que segue é o que tudo isto serve. Fato
-          visual, sem depoimento — o depoimento espera gente real (ADR-078). */}
-      <div className="landing-reveal mx-auto max-w-3xl overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)]">
+      {/* Fidelidade ao mockup (2ª rodada, 22/08): a banda final é foto +
+          painel verde lado a lado — a vida seguindo à esquerda, o convite à
+          direita. Sem depoimento até haver gente real (ADR-078). */}
+      <div className="landing-reveal mx-auto grid max-w-5xl overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] lg:grid-cols-2">
         {/* eslint-disable-next-line @next/next/no-img-element -- cena
             estática de public/landing, mesmo uso das demais. */}
         <img
           src="/landing/caminho-em-frente.jpg"
           alt="Um homem caminha tranquilo à beira-mar — a vida seguindo em frente"
-          className="aspect-[21/9] w-full object-cover"
+          className="h-full min-h-[16rem] w-full object-cover"
         />
+        <div className="landing-forest-band flex flex-col justify-center p-8 lg:p-12">
+          <p className="font-serif text-2xl leading-[1.4] text-[var(--landing-linen)] lg:text-3xl">
+            Cuidar é um caminho. E você <em className="text-[var(--color-brand-gold)]">não precisa</em>{" "}
+            fazer isso sozinho.
+          </p>
+          <div className="mt-8">
+            <LinkButton href="/solicitar-atendimento" variant="primary" className="landing-porta">
+              Solicitar atendimento
+            </LinkButton>
+          </div>
+        </div>
       </div>
       <div className="landing-reveal mx-auto mt-12 max-w-2xl text-center">
         <p className="font-serif text-2xl leading-[1.5] text-[var(--color-ink)] lg:text-3xl">
           Quando você quiser começar, o primeiro passo é contar a sua história — no seu ritmo.
         </p>
-        {/* C1 (auditoria 22/08) · a porta volta a ser UMA: a mesma do Hero.
-            A ADR-075 fixou a entrada na CONVERSA (nome + telefone → Consulta
-            Inicial) e pôs o wizard para dormir — mas este convite ainda abria
-            o wizard. A história continua sendo o primeiro passo; ela é
-            contada NA conversa, que é onde a ADR-075 a colocou. */}
-        {/* O rótulo é o MESMO do Hero — "Falar com a Aliviar" é o canal da
-            paciente autenticada (Track C §6.7) e a guarda T-7-5 o proíbe
-            aqui, com razão: uma porta, um nome. */}
-        <div className="mt-10 flex justify-center">
-          <LinkButton href="/solicitar-atendimento" variant="primary" className="landing-porta">
-            Solicitar atendimento
-          </LinkButton>
-        </div>
+        {/* O botão saiu daqui: o CTA do convite vive no painel verde acima
+            (mockup, 2ª rodada) — mesma porta do Hero (C1/ADR-075), sem
+            repetir o gesto duas vezes na mesma dobra. */}
       </div>
     </LandingSection>
   );

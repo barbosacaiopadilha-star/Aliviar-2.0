@@ -19,20 +19,10 @@ export function HeroEditorial({ videoSrc }: HeroEditorialProps = {}) {
 
   return (
     <section className="landing-hero-immersive">
-      {/* Decisão do Fundador (22/08, anotada sobre a tela): a FOTOGRAFIA da
-          conversa É o fundo do Hero inteiro — não um cartão. O logotipo da
-          parede fica na metade direita, longe do título; a legibilidade do
-          texto vem do véu de linho que clareia a metade esquerda. */}
-      <div aria-hidden="true" className="absolute inset-0">
-        {/* eslint-disable-next-line @next/next/no-img-element -- cena
-            estática de public/landing, fundo decorativo do Hero. */}
-        <img
-          src="/landing/hero-conversa-recepcao.jpg"
-          alt=""
-          className="h-full w-full object-cover object-[70%_center]"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-[var(--landing-linen)] via-[color-mix(in_srgb,var(--landing-linen)_72%,transparent)] to-[color-mix(in_srgb,var(--landing-linen)_12%,transparent)]" />
-      </div>
+      {/* Fidelidade ao mockup do Fundador (2ª rodada de anotações, 22/08):
+          o Hero é chão de linho LIMPO, título à esquerda, e a fotografia da
+          conversa como peça GRANDE à direita — não fundo, não cartão
+          pequeno. É a distribuição do mockup, pixel a pixel. */}
 
       {/* BLOCO 7 · duas colunas a partir de 1024px. Abaixo disso empilha
           título → corpo → vídeo → CTA, com o vídeo em largura total: em
@@ -77,9 +67,18 @@ export function HeroEditorial({ videoSrc }: HeroEditorialProps = {}) {
             </div>
           </div>
 
-          {/* A coluna direita ficou VAZIA de propósito: a fotografia agora é
-              o fundo da faixa inteira, e é ali — na metade direita limpa —
-              que a conversa da cena respira sem texto por cima. */}
+          <div
+            className="landing-approach landing-hero-col overflow-hidden rounded-3xl shadow-xl"
+            style={{ animationDelay: "160ms" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- cena
+                estática de public/landing, mesmo uso das demais. */}
+            <img
+              src="/landing/hero-conversa-recepcao.jpg"
+              alt="Uma conversa na recepção da Aliviar — duas pessoas sentadas, uma escuta a outra"
+              className="aspect-[4/3] h-full w-full object-cover lg:aspect-auto lg:min-h-[30rem]"
+            />
+          </div>
         </div>
       </div>
     </section>

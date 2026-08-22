@@ -754,3 +754,27 @@
 .landing-section .landing-etapa-conector:last-child::after {
   display: none;
 }
+
+/* Mockup do Fundador (22/08) · a seta entre os cartões da jornada — o
+   conector "›" que o mockup desenha entre os cinco passos. Só no desktop,
+   onde os cartões ficam lado a lado. */
+@media (min-width: 1024px) {
+  .landing-editorial .landing-etapa-seta:not(:last-child)::after {
+    content: "›";
+    position: absolute;
+    right: -1rem;
+    top: 5rem;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 9999px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-ink-muted);
+    font-size: 1rem;
+    line-height: 1;
+  }
+}
