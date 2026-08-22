@@ -2,7 +2,6 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 
 import { LinkButton } from "@/components/landing/link-button";
-import { ImmersiveBackdrop } from "@/components/shared/immersive-backdrop";
 
 const VIDEO_SRC = "/videos/video-institucional-aliviar.webm";
 
@@ -20,18 +19,20 @@ export function HeroEditorial({ videoSrc }: HeroEditorialProps = {}) {
 
   return (
     <section className="landing-hero-immersive">
-      {/* MASTER-1 · o fundo da faixa é o corredor; a recepção é o cartaz do
-          vídeo, logo abaixo.
-
-          A recepção (01) entrou aqui primeiro, por ser a âncora da Landing —
-          e o logotipo gravado na parede dela caiu bem atrás do título, dois
-          logotipos disputando a mesma linha. A própria referência oficial não
-          faz isso: nela a recepção aparece DENTRO do cartão do vídeo, e o
-          fundo da faixa é um ambiente sem nada escrito.
-
-          Então a âncora continua sendo a recepção — ela só volta ao lugar que
-          o master lhe deu. */}
-      <ImmersiveBackdrop scene="transicao" variant="landing-hero" imageOpacity={62} priority />
+      {/* Decisão do Fundador (22/08, anotada sobre a tela): a FOTOGRAFIA da
+          conversa É o fundo do Hero inteiro — não um cartão. O logotipo da
+          parede fica na metade direita, longe do título; a legibilidade do
+          texto vem do véu de linho que clareia a metade esquerda. */}
+      <div aria-hidden="true" className="absolute inset-0">
+        {/* eslint-disable-next-line @next/next/no-img-element -- cena
+            estática de public/landing, fundo decorativo do Hero. */}
+        <img
+          src="/landing/hero-conversa-recepcao.jpg"
+          alt=""
+          className="h-full w-full object-cover object-[70%_center]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--landing-linen)] via-[color-mix(in_srgb,var(--landing-linen)_72%,transparent)] to-[color-mix(in_srgb,var(--landing-linen)_12%,transparent)]" />
+      </div>
 
       {/* BLOCO 7 · duas colunas a partir de 1024px. Abaixo disso empilha
           título → corpo → vídeo → CTA, com o vídeo em largura total: em
@@ -76,22 +77,9 @@ export function HeroEditorial({ videoSrc }: HeroEditorialProps = {}) {
             </div>
           </div>
 
-          {/* ADR-078 (imagens do Fundador) · a coluna direita do Hero é a
-              FOTOGRAFIA principal — a conversa na recepção, que é a tese da
-              casa. O vídeo desceu para o cartão próprio logo abaixo (como no
-              mockup); o link "Assistir ao vídeo" continua levando até ele. */}
-          <div
-            className="landing-approach landing-hero-col overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] shadow-lg"
-            style={{ animationDelay: "160ms" }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element -- cena
-                estática de public/landing, mesmo uso das demais. */}
-            <img
-              src="/landing/hero-conversa-recepcao.jpg"
-              alt="Uma conversa na recepção da Aliviar — duas pessoas sentadas, uma escuta a outra"
-              className="h-full w-full object-cover"
-            />
-          </div>
+          {/* A coluna direita ficou VAZIA de propósito: a fotografia agora é
+              o fundo da faixa inteira, e é ali — na metade direita limpa —
+              que a conversa da cena respira sem texto por cima. */}
         </div>
       </div>
     </section>

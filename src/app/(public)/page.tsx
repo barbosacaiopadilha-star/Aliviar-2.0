@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 
 import {
   ConciergeSection,
-  ConfiancaStripSection,
   ConviteSection,
   MetodoSection,
   NossoMetodoSection,
@@ -41,18 +40,18 @@ export default function HomePage() {
           o Concierge entra quando já existe escolha a acompanhar (§4.1). */}
       <HeroEditorial />
       <RevealGroup>
-        {/* ADR-078 (imagens do Fundador) · o Hero virou fotografia e o vídeo
-            desceu para o cartão próprio — mesma ordem do mockup. A faixa de
-            confiança vem em seguida; nenhuma seção do contrato 34 sai, e a
-            ordem relativa delas permanece intacta. */}
+        {/* Decisão do Fundador (22/08, sobre a tela): o "Como funciona" — a
+            jornada em cartões com as fotografias — assume o lugar da faixa
+            de pilares, logo após o vídeo. A faixa saiu da página (o
+            componente fica, se um dia voltar); as demais seções do contrato
+            34 mantêm a ordem relativa entre si. */}
         <VideoSection />
-        <ConfiancaStripSection />
+        <MetodoSection />
         <ProblemaSection />
         <RespiroSection />
         <NossoMetodoSection />
         <PrioridadesSection />
         <ConciergeSection />
-        <MetodoSection />
         <QuemSomosSection />
         <FaqCompactSection />
         <ConviteSection />

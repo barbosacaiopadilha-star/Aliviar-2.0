@@ -337,8 +337,12 @@ test.describe("Bloco 7 · a Landing pública", () => {
     // EV-7-001 · a página inteira, com os reveals concluídos e a ordem dos
     // blocos provada no DOM antes da foto.
     await concluirReveals(page);
+    // Ordem decidida pelo Fundador em 22/08 (sobre a tela): o "Como
+    // funciona" — a jornada em cartões com fotografias — sobe para logo
+    // após o vídeo, antes do Espelho. As demais seções mantêm a ordem
+    // relativa do contrato 34 entre si.
     const ordemNoDom = await page.evaluate(() =>
-      ["problema", "metodo", "para-quem", "concierge", "como-funciona", "quem-somos"].map((id) =>
+      ["como-funciona", "problema", "metodo", "para-quem", "concierge", "quem-somos"].map((id) =>
         Math.round(document.querySelector(`#${id}`)!.getBoundingClientRect().top + window.scrollY),
       ),
     );
