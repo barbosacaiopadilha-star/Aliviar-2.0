@@ -30,7 +30,9 @@ type CaseStatusControlProps = {
  * deixa de ter um botão que a simule. Encolher a máquina no banco fica para
  * o descongelamento (ADR-073).
  */
-const ESTADOS_DO_MOTOR_EXTINTO: readonly CaseStatus[] = ["IN_CURATION", "HUMAN_REVIEW", "DELIVERED"];
+// Exportado (C3, auditoria 22/08): o filtro da listagem bebe da MESMA fonte
+// — oferecer esses estados no filtro só produzia resultado vazio.
+export const ESTADOS_DO_MOTOR_EXTINTO: readonly CaseStatus[] = ["IN_CURATION", "HUMAN_REVIEW", "DELIVERED"];
 
 export function CaseStatusControl({ caseId, currentStatus }: CaseStatusControlProps) {
   const [status, setStatus] = useState(currentStatus);

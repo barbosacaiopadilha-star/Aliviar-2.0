@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { createMiddlewareSupabaseClient } from "@/lib/supabase/middleware";
-import { isPublicPath } from "@/modules/auth/public-paths";
+import { isProtectedPath, isPublicPath } from "@/modules/auth/public-paths";
 
 // Responsabilidade do middleware: só a checagem OTIMISTA (existe sessão?) e a
 // renovação do cookie de sessão a cada request. A checagem AUTORITATIVA de
@@ -23,7 +23,10 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   // Agora leem o banco real e exigem sessão + papel (requireRole em cada rota,
   // RLS no banco) — a proteção mudou de "esconder" para "autorizar".
 
-  if (!user && !isPublicPath(pathname)) {
+  // D2 (auditoria 22/08): o login é oferecido só a quem bateu numa porta que
+  // EXISTE e exige sessão. Rota desconhecida atravessa e recebe o 404 amável
+  // — pedir senha por uma página inexistente confunde e insinua conteúdo.
+  if (!user && !isPublicPath(pathname) && isProtectedPath(pathname)) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);

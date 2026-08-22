@@ -531,9 +531,12 @@ export function PrioridadesSection() {
                 <span className="text-[var(--color-ink-muted)]">Responsável</span>
                 <span className="font-medium">Ana Curadora</span>
               </div>
+              {/* V4 (auditoria 22/08): data absoluta no cartão-exemplo
+                  envelhece — um mês depois, prometia atualização no passado.
+                  A forma relativa é verdadeira para sempre. */}
               <div className="flex justify-between gap-4">
                 <span className="text-[var(--color-ink-muted)]">Próxima atualização</span>
-                <span className="font-medium">24 de julho de 2026</span>
+                <span className="font-medium">em poucos dias</span>
               </div>
             </div>
           </div>
@@ -560,9 +563,17 @@ export function ConviteSection() {
         <p className="font-serif text-2xl leading-[1.5] text-[var(--color-ink)] lg:text-3xl">
           Quando você quiser começar, o primeiro passo é contar a sua história — no seu ritmo.
         </p>
+        {/* C1 (auditoria 22/08) · a porta volta a ser UMA: a mesma do Hero.
+            A ADR-075 fixou a entrada na CONVERSA (nome + telefone → Consulta
+            Inicial) e pôs o wizard para dormir — mas este convite ainda abria
+            o wizard. A história continua sendo o primeiro passo; ela é
+            contada NA conversa, que é onde a ADR-075 a colocou. */}
+        {/* O rótulo é o MESMO do Hero — "Falar com a Aliviar" é o canal da
+            paciente autenticada (Track C §6.7) e a guarda T-7-5 o proíbe
+            aqui, com razão: uma porta, um nome. */}
         <div className="mt-10 flex justify-center">
-          <LinkButton href="/sua-historia" variant="primary" className="landing-porta">
-            Contar minha história
+          <LinkButton href="/solicitar-atendimento" variant="primary" className="landing-porta">
+            Solicitar atendimento
           </LinkButton>
         </div>
       </div>

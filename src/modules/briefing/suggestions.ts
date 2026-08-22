@@ -194,10 +194,14 @@ export function buildSuggestions(inputs: Inputs): BriefingSuggestion[] {
   }
 
   if (professionalAnswers.length === 0) {
+    // D3 (auditoria 22/08): com o nome vazio, a frase abria sem sujeito
+    // ("␣ainda não declarou…") — texto quebrado na superfície que existe
+    // para dar segurança. Sem nome resolvido, a frase muda de forma.
+    const sujeito = professionalName.trim() || "O profissional deste caminho";
     out.push({
       id: `L2-${professionalName}`,
       kind: "LACUNA",
-      suggestion: `${professionalName} ainda não declarou como conduz seus pacientes. Vale considerar o que dizer sobre isso na apresentação.`,
+      suggestion: `${sujeito} ainda não declarou como conduz seus pacientes. Vale considerar o que dizer sobre isso na apresentação.`,
       because: "O profissional não preencheu as declarações de condução — ausência de informação, jamais sinal de qualidade menor.",
       evidence: [{ origin: "SISTEMA", dataClass: "LACUNA", statement: "Sem declarações de condução deste profissional.", at: null }],
     });

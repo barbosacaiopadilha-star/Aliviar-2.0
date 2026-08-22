@@ -11,6 +11,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { SearchField } from "@/components/ui/search-field";
 import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from "@/components/ui/table";
+import { ESTADOS_DO_MOTOR_EXTINTO } from "@/components/cases/case-status-control";
 import { CASE_STATUS_LABELS, CASE_STATUSES, type CaseStatus, type CaseSummary } from "@/modules/cases/types";
 
 const PAGE_SIZE = 10;
@@ -74,7 +75,11 @@ export function CasesTable({ cases, curators, basePath }: CasesTableProps) {
           }}
         >
           <option value="">Todos os status</option>
-          {CASE_STATUSES.map((status) => (
+          {/* C3 (auditoria 22/08): os estados do motor extinto saem do
+              filtro — nenhum Case pode alcançá-los, e oferecê-los só
+              produzia lista vazia. A máquina no banco encolhe no
+              descongelamento; aqui é só a vitrine do filtro. */}
+          {CASE_STATUSES.filter((status) => !ESTADOS_DO_MOTOR_EXTINTO.includes(status)).map((status) => (
             <option key={status} value={status}>
               {CASE_STATUS_LABELS[status]}
             </option>

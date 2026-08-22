@@ -40,15 +40,20 @@ test("home page carrega sem erro de console ou de página", async ({
   expect(consoleErrors, consoleErrors.join("\n")).toHaveLength(0);
 });
 
-test("CTA principal navega de fato para /sua-historia", async ({ page }) => {
+test("o convite final navega para a MESMA porta do Hero — a conversa", async ({ page }) => {
+  // C1 (auditoria 22/08): a porta voltou a ser UMA. O convite abria o wizard
+  // (/sua-historia) que a ADR-075 pôs para dormir; agora Hero, convite e
+  // rodapé apontam todos para /solicitar-atendimento.
   await page.goto("/");
 
+  // O último link "Solicitar atendimento" da página é o convite final — o
+  // primeiro é o do Hero; os dois (e o rodapé) apontam para a mesma porta.
   await page
-    .getByRole("link", { name: "Contar minha história" })
-    .first()
+    .getByRole("link", { name: "Solicitar atendimento" })
+    .last()
     .click();
 
-  await expect(page).toHaveURL(/\/sua-historia/);
+  await expect(page).toHaveURL(/\/solicitar-atendimento/);
 });
 
 // Terceira encarnação desta superfície, e a propriedade evoluiu com o

@@ -42,9 +42,12 @@ export async function listCuratorOptions(
     const profile = Array.isArray(row.profiles)
       ? row.profiles[0]
       : row.profiles;
+    // V2 (auditoria 22/08): perfis sem nome caíam todos no rótulo "Curador"
+    // e o filtro virava seis opções idênticas. O id curto distingue sem
+    // inventar nome — e denuncia o cadastro incompleto, que é o defeito real.
     unicos.set(row.profile_id, {
       id: row.profile_id,
-      name: profile?.display_name ?? "Curador",
+      name: profile?.display_name ?? `Curador sem nome (${row.profile_id.slice(0, 8)})`,
     });
   }
 

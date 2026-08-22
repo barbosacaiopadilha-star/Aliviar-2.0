@@ -19,11 +19,15 @@ const MANAGEABLE_ROLES: { slug: ManageableRoleSlug; label: string }[] = [
   { slug: "curador_medico", label: "Curador Médico" },
 ];
 
+// V1 (auditoria 22/08): atendente e concierge apareciam em slug cru — todo
+// papel que pode aparecer na coluna tem rótulo digno.
 const ROLE_LABELS: Record<string, string> = {
   administrador: "Administrador",
   curador_medico: "Curador Médico",
   profissional: "Profissional",
   paciente: "Paciente",
+  atendente: "Atendente",
+  concierge: "Concierge",
 };
 
 type TeamTableProps = {
@@ -165,11 +169,9 @@ export function TeamTable({ members, currentProfileId }: TeamTableProps) {
                           );
                         })}
                       </div>
-                      {otherRoles.length > 0 ? (
-                        <p className="mt-1 text-xs text-ink-muted">
-                          Também: {otherRoles.map((role) => ROLE_LABELS[role] ?? role).join(", ")}
-                        </p>
-                      ) : null}
+                      {/* O "Também: {papéis}" saiu (V1, auditoria 22/08):
+                          repetia, em texto cru, papéis que a coluna Papéis
+                          já mostra — a mesma informação duas vezes. */}
                     </TableCell>
                   </TableRow>
                 );

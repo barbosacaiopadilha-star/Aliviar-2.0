@@ -65,8 +65,10 @@ test.describe("autenticação (E2E)", () => {
 
     await expect(page).toHaveURL(/\/login$/);
 
-    await page.goto("/area-restrita");
-    await expect(page).toHaveURL(/\/login\?next=%2Farea-restrita$/);
+    // D2 (auditoria 22/08): rota inventada agora dá 404, não login — a prova
+    // de que a sessão morreu usa uma rota REAL protegida.
+    await page.goto("/profissional");
+    await expect(page).toHaveURL(/\/login\?next=%2Fprofissional$/);
   });
 
   test("recuperação de senha exibe mensagem genérica de sucesso", async ({ page }) => {
@@ -100,9 +102,20 @@ test.describe("autenticação (E2E)", () => {
   });
 
   test("rota protegida sem sessão redireciona para /login", async ({ page }) => {
+    // D2 (auditoria 22/08): o login é oferecido só por portas que EXISTEM.
+    await page.goto("/admin");
+
+    await expect(page).toHaveURL(/\/login\?next=%2Fadmin$/);
+    await expect(page.getByRole("heading", { name: "Entrar" })).toBeVisible();
+  });
+
+  test("rota que não existe dá o 404 amável — nunca a tela de login", async ({ page }) => {
+    // D2 (auditoria 22/08): antes, QUALQUER rota desconhecida mandava o
+    // anônimo ao login, insinuando conteúdo atrás de senha. Agora atravessa
+    // o middleware e recebe o 404 — a resposta honesta.
     await page.goto("/area-restrita");
 
-    await expect(page).toHaveURL(/\/login\?next=%2Farea-restrita$/);
-    await expect(page.getByRole("heading", { name: "Entrar" })).toBeVisible();
+    await expect(page).toHaveURL(/\/area-restrita$/);
+    await expect(page.getByRole("heading", { name: "Não encontramos esta página" })).toBeVisible();
   });
 });

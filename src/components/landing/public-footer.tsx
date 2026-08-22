@@ -17,7 +17,8 @@ import { SectionReveal } from "@/components/ui/section-reveal";
 const FOOTER_LINKS = [
   { label: "Início", href: "/" },
   { label: "Dúvidas frequentes", href: "#duvidas" },
-  { label: "Contar minha história", href: "/sua-historia" },
+  // C1 (auditoria 22/08): a mesma porta do Hero e do convite — a conversa.
+  { label: "Solicitar atendimento", href: "/solicitar-atendimento" },
   { label: "Entrar", href: "/login" },
 ] as const;
 

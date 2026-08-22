@@ -83,16 +83,17 @@ test.describe("gestão administrativa de pacientes (correção de regra de negó
   });
 
   test("não existe rota de cadastro público", async ({ page }) => {
-    // Sem sessão, /cadastro e /signup nem chegam a ser resolvidas pelo App
-    // Router: o middleware barra qualquer rota fora da lista pública antes
-    // disso e redireciona para /login — o que já prova que não são rotas
-    // públicas. A prova de que elas não existem *de verdade* (não é só
-    // "protegida", é ausente) vem a seguir, autenticado.
+    // D2 (auditoria 22/08): rota desconhecida agora atravessa o middleware e
+    // recebe o 404 direto — que é a prova MAIS forte do que este teste sempre
+    // quis: /cadastro e /signup não são "protegidas", são AUSENTES, e o
+    // visitante vê isso sem ser convidado a entrar.
     await page.goto("/cadastro");
-    await expect(page).toHaveURL("/login?next=%2Fcadastro");
+    await expect(page).toHaveURL(/\/cadastro$/);
+    await expect(page.getByRole("heading", { name: "Não encontramos esta página" })).toBeVisible();
 
     await page.goto("/signup");
-    await expect(page).toHaveURL("/login?next=%2Fsignup");
+    await expect(page).toHaveURL(/\/signup$/);
+    await expect(page.getByRole("heading", { name: "Não encontramos esta página" })).toBeVisible();
 
     await page.goto("/login");
     await expect(page.getByRole("link", { name: /cadastr/i })).toHaveCount(0);

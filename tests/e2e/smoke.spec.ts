@@ -22,8 +22,8 @@ test("home page loads and shows the landing journey", async ({ page }) => {
   // Encerramento — a última seção montada.
   await expect(page.getByRole("heading", { name: "Dúvidas frequentes" })).toBeVisible();
 
-  // Ação principal disponível — "Contar minha história" se repete de propósito
-  // (Chegada, rodapé); .first() desambigua texto igual repetido por design,
-  // não é dependência de posição estrutural frágil.
-  await expect(page.getByRole("link", { name: "Contar minha história" }).first()).toBeVisible();
+  // Ação principal disponível — "Solicitar atendimento" se repete de propósito
+  // (Hero, convite final, rodapé): é a porta ÚNICA desde a C1 da auditoria de
+  // 22/08 — o convite deixou de abrir o wizard adormecido (ADR-075).
+  await expect(page.getByRole("link", { name: "Solicitar atendimento" }).first()).toBeVisible();
 });

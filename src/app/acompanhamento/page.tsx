@@ -28,16 +28,30 @@ export const metadata: Metadata = {
  * defeito em vez de revelá-lo.
  */
 export default async function AcompanhamentoPage() {
-  await requireAnyRole(["concierge", "administrador"]);
+  const state = await requireAnyRole(["concierge", "administrador"]);
   const supabase = await createServerSupabaseClient();
 
   const { data } = await supabase
     .schema("curadoria")
     .from("cases")
-    .select("id, status, responsible_role, created_at")
+    .select("id, status, responsible_role, created_at, patient_profile_id")
     .order("created_at", { ascending: false });
 
-  const cases = (data ?? []) as { id: string; status: string; responsible_role: string | null; created_at: string }[];
+  const cases = (data ?? []) as { id: string; status: string; responsible_role: string | null; created_at: string; patient_profile_id: string }[];
+
+  // V3 (auditoria 22/08): o Concierge acompanha PESSOAS — o rótulo é o nome
+  // da paciente, nunca o UUID truncado do Case.
+  const patientIds = [...new Set(cases.map((c) => c.patient_profile_id).filter(Boolean))];
+  const { data: perfis } = patientIds.length
+    ? await supabase.schema("curadoria").from("profiles").select("id, display_name").in("id", patientIds)
+    : { data: [] as { id: string; display_name: string | null }[] };
+  const nomePorPaciente = new Map((perfis ?? []).map((p) => [p.id as string, (p.display_name as string | null) ?? null]));
+
+  // D4 (auditoria 22/08): a RLS dá ao administrador a visão GLOBAL — todos
+  // os Cases, em qualquer etapa. A descrição da tela dizia a promessa do
+  // Concierge ("já passaram pela Curadoria") em cima de uma lista que não a
+  // cumpre. Quem olha como supervisor lê a verdade da visão que tem.
+  const supervisor = state.roles.includes("administrador") && !state.roles.includes("concierge");
 
   return (
     <PortalShellContainer
@@ -50,8 +64,12 @@ export default async function AcompanhamentoPage() {
         {/* Sem "o mais frio primeiro": a ordem é a de chegada, e apresentá-la
             como fila de urgência seria inventar uma régua que não existe. */}
         <JourneyHeader
-          moment="Meus acompanhamentos"
-          context="Cases que já passaram pela Curadoria e seguem com você até o encerramento."
+          moment={supervisor ? "Acompanhamentos" : "Meus acompanhamentos"}
+          context={
+            supervisor
+              ? "Visão de supervisão: todos os Cases, em qualquer etapa — quem responde por cada um está ao lado."
+              : "Cases que já passaram pela Curadoria e seguem com você até o encerramento."
+          }
           nothingPendingLabel={
             cases.length === 0
               ? undefined
@@ -74,7 +92,7 @@ export default async function AcompanhamentoPage() {
               >
                 <span className="min-w-0">
                   <span className="text-sm text-ink">
-                    Case {c.id.slice(0, 8)}
+                    {nomePorPaciente.get(c.patient_profile_id) ?? `Case ${c.id.slice(0, 8)}`}
                     <span className="ml-2 text-ink-muted">
                       {CASE_STATUS_LABELS[c.status as CaseStatus] ?? c.status}
                     </span>

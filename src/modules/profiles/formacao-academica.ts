@@ -142,7 +142,10 @@ export function temSeloDeVerificacao(confirmadas: readonly FormacaoPublica[]): b
  * cartas. Vazio → null: o card fechado nunca imprime ausência (mesma regra
  * do bloco aberto).
  */
-export function resumoDaFormacao(confirmadas: readonly FormacaoPublica[]): string | null {
+export function resumoDaFormacao(
+  confirmadas: readonly FormacaoPublica[] | null | undefined,
+): string | null {
+  if (!confirmadas || confirmadas.length === 0) return null;
   const titulos = ordenarParaApresentacao([...confirmadas])
     .map((entrada) => entrada.title.trim())
     .filter((titulo) => titulo !== "");

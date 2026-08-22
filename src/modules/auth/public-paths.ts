@@ -67,3 +67,28 @@ export function isPublicPath(pathname: string): boolean {
 
   return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
+
+// D2 (auditoria 22/08): o middleware tratava QUALQUER rota desconhecida como
+// protegida — um anônimo digitando um endereço errado caía no login, como se
+// a página existisse atrás de senha, em vez do 404 amável que já existe.
+// Estes são os territórios que DE FATO exigem sessão; o que não é público
+// nem protegido simplesmente não existe, e 404 é a resposta honesta.
+const PROTECTED_PREFIXES = [
+  "/admin",
+  "/paciente",
+  "/portal-paciente",
+  "/coa",
+  "/portal-curador",
+  "/curador",
+  "/atendimento",
+  "/acompanhamento",
+  "/profissional",
+  "/sua-historia", // a raiz exata é pública (lista acima); as etapas exigem sessão
+  "/api", // rotas de API cuidam da própria autorização; as conhecidas mantêm o comportamento vigente
+];
+
+export function isProtectedPath(pathname: string): boolean {
+  return PROTECTED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}

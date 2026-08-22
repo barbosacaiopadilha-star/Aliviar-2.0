@@ -143,7 +143,8 @@ export default async function PacienteHomePage() {
         {/* O resumo do que já é dela vale desde o primeiro dia — antes de
             existir Case, ele diz com honestidade o que ainda não existe. */}
         <MeuResumo
-          historia={stories[0]?.data.historia ?? null}
+          storyStatus={stories[0]?.status ?? null}
+          historia={textoDaHistoria(stories[0]?.data)}
           documentos={documentos.length}
           relatorioEmitido={false}
         />
@@ -234,7 +235,8 @@ export default async function PacienteHomePage() {
 
       {/* NÍVEL 5 · o que já é dela. */}
       <MeuResumo
-        historia={stories[0]?.data.historia ?? null}
+        storyStatus={stories[0]?.status ?? null}
+        historia={textoDaHistoria(stories[0]?.data)}
         documentos={documentos.length}
         relatorioEmitido={Boolean(record?.relatorio.emittedAt)}
       />
@@ -275,15 +277,36 @@ export default async function PacienteHomePage() {
 }
 
 /**
+ * O texto da história, venha do campo que vier. A história real grava em
+ * `data.historia`, mas fluxos legítimos começam por outros campos (`motivo`,
+ * na Consulta Inicial). Ler UM campo era o defeito D1 da auditoria de 22/08:
+ * história enviada e a Home dizendo "você ainda não contou".
+ */
+function textoDaHistoria(data: Record<string, unknown> | null | undefined): string | null {
+  if (!data) return null;
+  for (const campo of ["historia", "motivo"]) {
+    const valor = data[campo];
+    if (typeof valor === "string" && valor.trim()) return valor;
+  }
+  return null;
+}
+
+/**
  * O resumo do que já é da pessoa (ETAPA 9): a história dela, os documentos
  * dela, e o estado do Relatório — sempre dados reais, nunca texto fictício.
  * O que não existe ainda simplesmente não aparece como se existisse.
+ *
+ * D1 (auditoria 22/08) · quem decide a frase é o STATUS da história, nunca a
+ * presença de um campo de texto — a regra do contrato de estado da Fundação:
+ * nenhuma tela deduz; toda tela lê. "Enviada" é enviada mesmo sem resumo.
  */
 function MeuResumo({
+  storyStatus,
   historia,
   documentos,
   relatorioEmitido,
 }: {
+  storyStatus: "rascunho" | "enviada" | null;
   historia: string | null;
   documentos: number;
   relatorioEmitido: boolean;
@@ -310,7 +333,24 @@ function MeuResumo({
         <div className="sm:pr-6">
           <dt className="text-sm font-medium text-[var(--patient-ink)]">Sua história</dt>
           <dd className="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">
-            {resumoDaHistoria ?? (
+            {storyStatus === "enviada" ? (
+              <>
+                {/* O texto DELA continua visível quando existe — o estado
+                    soma-se a ele, nunca o esconde. */}
+                {resumoDaHistoria ? <>{resumoDaHistoria} </> : null}
+                Enviada — está com a equipe da Aliviar.{" "}
+                <Link href="/sua-historia/continuar" className={LINK_DISCRETO}>
+                  Rever
+                </Link>
+              </>
+            ) : resumoDaHistoria ? (
+              <>
+                {resumoDaHistoria}{" "}
+                <Link href="/sua-historia/continuar" className={LINK_DISCRETO}>
+                  Continuar
+                </Link>
+              </>
+            ) : (
               <>
                 Você ainda não contou sua história.{" "}
                 <Link href="/sua-historia/continuar" className={LINK_DISCRETO}>
