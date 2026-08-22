@@ -58,9 +58,9 @@ export async function salvarFormacaoAction(
   entryId: string,
   campos: CamposDeFormacao,
 ): Promise<Resultado> {
-  await requireRoleForAction("administrador");
+  const state = await requireRoleForAction("administrador");
   const supabase = await createServerSupabaseClient();
-  const r = await salvarEdicaoDeFormacao(supabase, entryId, campos);
+  const r = await salvarEdicaoDeFormacao(supabase, entryId, campos, state.user.id);
   if (!r.ok) return { success: false, error: mensagem(r.motivo) };
   revalidatePath(`/admin/profissionais/${professionalProfileId}`, "layout");
   return { success: true, data: null };
@@ -97,9 +97,9 @@ export async function criarFormacaoManualAction(
   professionalProfileId: string,
   campos: CamposDeFormacao,
 ): Promise<Resultado> {
-  await requireRoleForAction("administrador");
+  const state = await requireRoleForAction("administrador");
   const supabase = await createServerSupabaseClient();
-  const r = await criarFormacaoManual(supabase, professionalProfileId, campos);
+  const r = await criarFormacaoManual(supabase, professionalProfileId, campos, state.user.id);
   if (!r.ok) return { success: false, error: mensagem(r.motivo) };
   revalidatePath(`/admin/profissionais/${professionalProfileId}`, "layout");
   return { success: true, data: null };

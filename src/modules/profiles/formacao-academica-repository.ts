@@ -136,19 +136,42 @@ export type CamposDeFormacao = {
 export type ResultadoDeEscrita = { ok: true } | { ok: false; motivo: string };
 
 /**
- * Edição pela equipe. Duas consequências deliberadas:
+ * Edição pela equipe. Consequências deliberadas:
  * - o vínculo de extração (se houver) vira `human_edited` — reprocessamento
  *   nunca mais substitui esta linha;
- * - editar uma entrada `verificado` a REBAIXA para `nao_verificado`: mudou o
- *   conteúdo, a verificação anterior não fala mais por ele.
+ * - MÃO HUMANA É VERIFICAÇÃO (decisão do Fundador, 22/08): a equipe só
+ *   digita o que já conferiu — a edição carimba `verificado` com autoria,
+ *   em vez de rebaixar. A exceção honesta é a decisão vinculante 3:
+ *   sem instituição não há carimbo — a entrada fica `nao_verificado` e o
+ *   caminho da justificativa continua sendo a confirmação individual.
  */
 export async function salvarEdicaoDeFormacao(
   supabase: SupabaseClient,
   entryId: string,
   campos: CamposDeFormacao,
+  actorId: string,
 ): Promise<ResultadoDeEscrita> {
   if (!isFormacaoKind(campos.kind)) return { ok: false, motivo: "tipo_invalido" };
   if (!campos.title.trim()) return { ok: false, motivo: "titulo_obrigatorio" };
+
+  const { data: atual } = await supabase
+    .from("professional_education_entries")
+    .select("source")
+    .eq("id", entryId)
+    .single();
+  if (!atual) return { ok: false, motivo: "entrada_inexistente" };
+
+  const temInstituicao = Boolean(campos.institution?.trim());
+  const carimbo = temInstituicao
+    ? {
+        // O CHECK `verificado_exige_proveniencia` pede fonte: a original do
+        // documento quando existe; a digitação da equipe quando não.
+        source: ((atual.source as string | null) ?? "").trim() || "digitacao_manual",
+        verification_status: "verificado",
+        verified_at: new Date().toISOString(),
+        verified_by: actorId,
+      }
+    : { verification_status: "nao_verificado", verified_at: null, verified_by: null };
 
   const { error } = await supabase
     .from("professional_education_entries")
@@ -161,9 +184,7 @@ export async function salvarEdicaoDeFormacao(
       period_start: campos.periodStart,
       period_end: campos.periodEnd,
       notes: campos.notes?.trim() || null,
-      verification_status: "nao_verificado",
-      verified_at: null,
-      verified_by: null,
+      ...carimbo,
     })
     .eq("id", entryId);
   if (error) return { ok: false, motivo: "escrita_recusada" };
@@ -238,13 +259,23 @@ export async function excluirFormacao(
  * Entrada manual — contingência administrativa (currículo visual, formação
  * fora do documento). Existe, mas não conta como preenchimento automático.
  */
+/**
+ * MÃO HUMANA É VERIFICAÇÃO (decisão do Fundador, 22/08): a equipe só lança
+ * o que já conferiu — a digitação manual nasce `verificado`, com autoria e
+ * data. A exceção é a decisão vinculante 3: sem instituição, nasce
+ * `nao_verificado` e o carimbo espera a confirmação com justificativa.
+ * O que o ROBÔ extrai do currículo continua nascendo `nao_verificado` —
+ * ali o olhar humano ainda não aconteceu, e é ele que protege a paciente.
+ */
 export async function criarFormacaoManual(
   supabase: SupabaseClient,
   professionalProfileId: string,
   campos: CamposDeFormacao,
+  actorId: string,
 ): Promise<ResultadoDeEscrita> {
   if (!isFormacaoKind(campos.kind)) return { ok: false, motivo: "tipo_invalido" };
   if (!campos.title.trim()) return { ok: false, motivo: "titulo_obrigatorio" };
+  const temInstituicao = Boolean(campos.institution?.trim());
   const { error } = await supabase.from("professional_education_entries").insert({
     professional_profile_id: professionalProfileId,
     kind: campos.kind,
@@ -256,6 +287,13 @@ export async function criarFormacaoManual(
     period_end: campos.periodEnd,
     notes: campos.notes?.trim() || null,
     source: "digitacao_manual",
+    ...(temInstituicao
+      ? {
+          verification_status: "verificado",
+          verified_at: new Date().toISOString(),
+          verified_by: actorId,
+        }
+      : {}),
   });
   return error ? { ok: false, motivo: "escrita_recusada" } : { ok: true };
 }

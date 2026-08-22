@@ -231,7 +231,7 @@ describe("pipeline · idempotência, travas humanas e falha sem meia-formação"
     expect(await contarEntradas(profissionalEntregue)).toBe(antes);
   });
 
-  it("candidato EDITADO por gente sobrevive ao reprocessamento, mesmo nao_verificado", async () => {
+  it("candidato EDITADO por gente sobrevive ao reprocessamento — e mão humana carimba verificado (decisão de 22/08)", async () => {
     const { data: candidata } = await admin
       .from("professional_education_entries")
       .select("id")
@@ -250,8 +250,19 @@ describe("pipeline · idempotência, travas humanas e falha sem meia-formação"
       periodStart: 2004,
       periodEnd: 2010,
       notes: null,
-    });
+    }, fx.adminUserId);
     expect(edicao.ok).toBe(true);
+
+    // Mão humana é verificação (decisão do Fundador, 22/08): a edição com
+    // instituição carimba `verificado` com autoria — a equipe só digita o
+    // que já conferiu.
+    const { data: carimbada } = await admin
+      .from("professional_education_entries")
+      .select("verification_status, verified_by")
+      .eq("id", editada)
+      .single();
+    expect(carimbada?.verification_status).toBe("verificado");
+    expect(carimbada?.verified_by).toBe(fx.adminUserId);
 
     const r = await processarCurriculo({
       supabase: admin,
