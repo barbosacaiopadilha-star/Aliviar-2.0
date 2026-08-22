@@ -164,6 +164,33 @@ describe("CartaCaminho — abertura no lugar, com memória", () => {
     expect(screen.getAllByRole("button", { name: "Recolher" })).toHaveLength(1);
   });
 
+  it("a formação verificada aparece no card FECHADO — e sai quando a carta abre (ADR-077)", async () => {
+    const user = userEvent.setup();
+    const comFormacao: PatientCuradoria = {
+      ...CURADORIA,
+      options: [
+        opcao("a", "Dra. Helena Monteiro", {
+          formacao: [
+            { kind: "graduacao", title: "Medicina", institution: "Universidade X", city: null, country: null, periodStart: 1998, periodEnd: 2004 },
+            { kind: "residencia", title: "Residência em Psiquiatria", institution: null, city: null, country: null, periodStart: 2005, periodEnd: 2008 },
+          ],
+        }),
+        opcao("b", "Dr. Rafael Nogueira"),
+        opcao("c", "Dra. Marina Azevedo"),
+      ],
+    };
+    render(<CaminhosPanel curadoria={comFormacao} />);
+
+    // Fechado: a linha compacta existe SÓ onde há formação confirmada.
+    expect(screen.getByText("Medicina · Residência em Psiquiatria")).toBeInTheDocument();
+    expect(screen.getAllByText(/Formação verificada pela equipe:/)).toHaveLength(1);
+
+    // Aberta: a linha compacta sai; o bloco completo (com instituição) assume.
+    await user.click(screen.getAllByRole("button", { name: "Conhecer este caminho" })[0]!);
+    expect(screen.queryByText("Medicina · Residência em Psiquiatria")).not.toBeInTheDocument();
+    expect(screen.getByText("Universidade X")).toBeInTheDocument();
+  });
+
   it("guarda a memória de navegação entre visitas", async () => {
     const user = userEvent.setup();
     const { unmount } = render(<CaminhosPanel curadoria={CURADORIA} />);

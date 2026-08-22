@@ -135,3 +135,17 @@ export function ordenarParaApresentacao<T extends { kind: FormacaoKind; periodSt
 export function temSeloDeVerificacao(confirmadas: readonly FormacaoPublica[]): boolean {
   return confirmadas.length > 0;
 }
+
+/**
+ * O resumo de UMA linha para o card fechado (ADR-077): os títulos na ordem
+ * da trajetória, separados por "·" — fato compacto, nada comparável entre
+ * cartas. Vazio → null: o card fechado nunca imprime ausência (mesma regra
+ * do bloco aberto).
+ */
+export function resumoDaFormacao(confirmadas: readonly FormacaoPublica[]): string | null {
+  const titulos = ordenarParaApresentacao([...confirmadas])
+    .map((entrada) => entrada.title.trim())
+    .filter((titulo) => titulo !== "");
+  if (titulos.length === 0) return null;
+  return titulos.join(" · ");
+}

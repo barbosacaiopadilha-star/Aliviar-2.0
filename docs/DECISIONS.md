@@ -1748,3 +1748,15 @@ Novo agregado `approach_attempts` · nova estrutura `team_notifications` · proj
 - **Revisitar quando:** o ensaio acontecer (as anotações do Diário calibram o kit); o termo revisado chegar; ou o descongelamento abrir a escrita do Mapa ao Curador (aí a decisão 2 vira permissão de verdade, não fluxo de papel).
 
 ---
+
+## ADR-077 — A formação verificada aparece no card fechado do caminho
+
+- **Data:** 2026-08-22
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data.
+- **Dependências:** abertura pontual e mínima da **ADR-073** (uma linha de apresentação; zero mecânica nova) · usa a Formação Acadêmica v1 e o selo já existentes · não altera a doutrina anti-ranking (ADR-042, gramática do Sistema Visual).
+- **Contexto:** a demonstração com dados reais (fixture local vestida, 22/08) mostrou que a carta aberta já apresenta formação verificada com selo, dimensões por extenso e leitura relacional — mas o **card fechado** trazia só nome e justificativa, e a formação, que é o fato que mais enche os olhos, só aparecia depois do clique.
+- **Decisão:** o card fechado ganha UMA linha — *"Formação verificada pela equipe: {títulos na ordem da trajetória}"* — regida pelas mesmas regras do bloco aberto: fato, não mérito; mesmo tratamento nas três cartas; nada comparável ou somável; ausência nunca vira linha (sem formação confirmada, a linha não existe). No estado aberto a linha some — o bloco completo, com instituição e período, assume.
+- **O que segue proibido:** régua, gráfico ou barra de compatibilidade por magnitude — foi pedido, avaliado e recusado nesta mesma conversa: é nota com outra roupa, e pune a lacuna honesta. O brilho vem da especificidade (formação como fato + correspondências nas palavras dela), nunca de quantidade.
+- **Revisitar quando:** o ensaio/primeira rodada mostrar como a paciente lê os cards — o Diário pergunta o que impressionou e o que faltou.
+
+---

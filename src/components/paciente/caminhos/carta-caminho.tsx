@@ -8,6 +8,7 @@ import { FormacaoAcademicaBloco } from "@/components/patient/formacao-academica-
 import { cn } from "@/components/ui/cn";
 import type { PatientCuradoriaOption } from "@/modules/curadoria/patient-curadoria";
 import { dimensoesConhecidas, fraseDoQueNaoSabemos } from "@/modules/paciente/experiencia";
+import { SELO_FORMACAO_VERIFICADA, resumoDaFormacao } from "@/modules/profiles/formacao-academica";
 
 /**
  * A carta de um caminho.
@@ -79,6 +80,20 @@ export function CartaCaminho({
           <p className="mt-2 max-w-prose font-serif text-sm leading-relaxed text-[var(--patient-ink)]">
             {option.justification}
           </p>
+
+          {/* ADR-077 — a formação verificada aparece ANTES de abrir a carta:
+              fato compacto na ordem da trajetória, mesmo tratamento nas três
+              cartas, nada comparável. Só no estado fechado (aberta, a carta
+              tem o bloco completo com instituição e período) e só quando há
+              formação confirmada — ausência nunca vira linha. */}
+          {!aberta && resumoDaFormacao(option.formacao) ? (
+            <p className="mt-2 max-w-prose text-sm leading-relaxed text-[var(--color-ink-muted)]">
+              <span className="font-medium text-[var(--patient-ink)]">
+                {SELO_FORMACAO_VERIFICADA}:
+              </span>{" "}
+              {resumoDaFormacao(option.formacao)}
+            </p>
+          ) : null}
 
           {jaConhecida && !aberta ? (
             <p className="mt-3 text-xs font-medium text-[var(--color-brand-sage)]">
