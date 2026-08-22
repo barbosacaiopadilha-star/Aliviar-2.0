@@ -136,7 +136,20 @@ export function CartaCaminho({
             transition={{ duration: semMovimento ? 0 : 0.35, ease: [0.4, 0, 0.2, 1] }}
             className="overflow-hidden"
           >
-            <div className="mt-6 space-y-6 border-t border-[var(--color-border)] pt-6">
+            {/* Decisão do Fundador (22/08, risco na tela): a carta aberta em
+                DUAS colunas no desktop — a narrativa à esquerda, e o PERFIL
+                ACADÊMICO na coluna direita, que ficava vazia. Sem formação
+                confirmada, a coluna não existe e a narrativa ocupa tudo:
+                ausência nunca vira espaço em branco reservado. */}
+            <div
+              className={cn(
+                "mt-6 border-t border-[var(--color-border)] pt-6",
+                option.formacao.length > 0 || option.formacaoIndisponivel
+                  ? "grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-12"
+                  : "space-y-6",
+              )}
+            >
+              <div className="space-y-6">
               {/* Só o que se SABE vira linha. As dimensões ainda não
                   confirmadas saem daqui e viram uma frase única no fim — três
                   cartas × cinco ausências davam quinze repetições da mesma
@@ -153,15 +166,6 @@ export function CartaCaminho({
                   </div>
                 </section>
               ) : null}
-
-              {/* Formação confirmada pela equipe — fato, não mérito: aparece
-                  depois do Perfil e sem qualquer elemento comparável entre
-                  cartas. Vazia, a seção simplesmente não existe; ilegível, ela
-                  diz que está indisponível (F-2) em vez de fingir ausência. */}
-              <FormacaoAcademicaBloco
-                formacao={option.formacao}
-                indisponivel={option.formacaoIndisponivel}
-              />
 
               {/* ADR-065 — a leitura relacional, já validada pelo Curador na
                   emissão. Cada frase carrega o que ELA pediu e o que o
@@ -261,6 +265,19 @@ export function CartaCaminho({
                     {faltando}
                   </p>
                 </section>
+              ) : null}
+              </div>
+
+              {/* A coluna direita — o perfil acadêmico. Fato confirmado pela
+                  equipe, com selo; mesmas regras de sempre (F-2): vazia não
+                  existe, ilegível declara-se indisponível. */}
+              {option.formacao.length > 0 || option.formacaoIndisponivel ? (
+                <aside className="lg:border-l lg:border-[var(--color-border)] lg:pl-8">
+                  <FormacaoAcademicaBloco
+                    formacao={option.formacao}
+                    indisponivel={option.formacaoIndisponivel}
+                  />
+                </aside>
               ) : null}
             </div>
           </motion.div>
