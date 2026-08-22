@@ -39,7 +39,8 @@
     "seed:mesa:local": "npm run supabase:ledger:check && node scripts/with-local-supabase.mjs --env SEED_MESA=1 vitest run --config vitest.integration.config.ts tests/integration/seed-validacao-mesa.integration.test.ts && node scripts/with-local-supabase.mjs node scripts/verificar-seed-mesa.mjs",
     "build:local": "node scripts/stop-stale-server.mjs && node scripts/clean-next-output.mjs && node scripts/new-build-id.mjs && node scripts/with-local-supabase.mjs npx next build && node scripts/verify-build-id.mjs && npm run verify:backend:local",
     "verify:backend:local": "node scripts/with-local-supabase.mjs node scripts/verify-bundle-backend.mjs",
-    "verify:backend": "node scripts/verify-bundle-backend.mjs"
+    "verify:backend": "node scripts/verify-bundle-backend.mjs",
+    "start:local": "node scripts/with-local-supabase.mjs next start -p 3001"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.111.0",

@@ -148,6 +148,18 @@ test.describe("COA-H1 · a matriz legítima permanece intacta", () => {
     await semHub(page);
   });
 
+  test("T3b · o endereço antigo da discordância não vira 404", async ({ page }) => {
+    // Auditoria visual de 22/08: o redirect específico ficava DEPOIS do
+    // coringa /portal-curador/:path* — o coringa engolia primeiro e mandava
+    // para /coa/curadoria/discordancia, que é 404 desde a redução de 21/08.
+    // A regra subiu para antes do coringa; este teste prende a ordem.
+    await entrarComo(page, "curador_medico");
+    for (const antigo of ["/portal-curador/discordancia", "/coa/curadoria/discordancia"]) {
+      await page.goto(antigo);
+      await expect(page, `${antigo} deixou de pousar na Curadoria`).toHaveURL(/\/coa\/curadoria$/);
+    }
+  });
+
   test("T4 · administrador é levado direto ao Atendimento — o hub não renderiza", async ({ page }) => {
     await entrarComo(page, "administrador");
     await page.goto("/coa");

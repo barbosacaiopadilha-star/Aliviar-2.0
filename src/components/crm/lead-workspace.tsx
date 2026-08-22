@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { LEAD_SOURCE_LABELS, type DuplicateMatch } from "@/modules/crm/lead";
+import { PRIORITY_LABELS, type Priority } from "@/modules/crm/types";
 import type { LeadListItem } from "@/modules/crm/lead-repository";
 import { LeadAdminActions } from "@/components/crm/lead-admin-actions";
 import { transferCaseResponsibilityAction } from "@/modules/cases/responsibility-actions";
@@ -121,7 +122,7 @@ export function LeadWorkspace({
           <Campo rotulo="Telefone" valor={lead.phone} />
           <Campo rotulo="E-mail" valor={lead.email} />
           <Campo rotulo="Cidade" valor={[lead.city, lead.state].filter(Boolean).join(" / ") || null} />
-          <Campo rotulo="Prioridade" valor={lead.priority} />
+          <Campo rotulo="Prioridade" valor={PRIORITY_LABELS[lead.priority as Priority] ?? lead.priority} />
         </dl>
         {lead.initialReason ? (
           <p className="mt-3 max-w-reading text-sm leading-relaxed text-ink">

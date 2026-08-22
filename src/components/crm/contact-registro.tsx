@@ -12,10 +12,12 @@ import {
   createTaskAction,
   updateTaskStatusAction,
 } from "@/modules/crm/actions";
-import type {
-  CrmAppointmentSummary,
-  CrmTaskSummary,
-  CrmTimelineEntry,
+import {
+  INTERACTION_TYPE_LABELS,
+  TASK_STATUS_LABELS,
+  type CrmAppointmentSummary,
+  type CrmTaskSummary,
+  type CrmTimelineEntry,
 } from "@/modules/crm/types";
 
 /**
@@ -82,7 +84,7 @@ export function ContactRegistro({ contactId, caseId, tasks, appointments, timeli
               <li key={task.id} className="flex items-center justify-between gap-3 py-3 text-sm">
                 <div>
                   <p className="font-medium text-ink">{task.title}</p>
-                  <p className="text-ink-muted">{task.status} · {formatDateTime(task.dueAt)}</p>
+                  <p className="text-ink-muted">{TASK_STATUS_LABELS[task.status] ?? task.status} · {formatDateTime(task.dueAt)}</p>
                 </div>
                 {task.status !== "concluida" ? (
                   <Button
@@ -130,7 +132,7 @@ export function ContactRegistro({ contactId, caseId, tasks, appointments, timeli
               <li key={`${entry.kind}-${index}`} className="rounded-sm border border-border p-3 text-sm">
                 {entry.kind === "interaction" ? (
                   <>
-                    <p className="font-medium text-ink">{entry.interaction.type}</p>
+                    <p className="font-medium text-ink">{INTERACTION_TYPE_LABELS[entry.interaction.type] ?? entry.interaction.type}</p>
                     <p className="text-ink-muted">{entry.interaction.content}</p>
                   </>
                 ) : entry.kind === "task_completed" ? (

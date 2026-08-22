@@ -154,6 +154,12 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // ANTES do coringa /portal-curador/:path*, senão ele engole primeiro e
+      // manda para /coa/curadoria/discordancia — que é 404 desde a redução
+      // de 21/08 (achado da auditoria visual de 22/08: endereço salvo caía
+      // em 404, exatamente o que a regra de baixo prometia evitar).
+      { source: "/portal-curador/discordancia", destination: "/coa/curadoria", permanent: false },
+      { source: "/coa/curadoria/discordancia", destination: "/coa/curadoria", permanent: false },
       { source: "/portal-curador", destination: "/coa/curadoria", permanent: false },
       { source: "/portal-curador/:path*", destination: "/coa/curadoria/:path*", permanent: false },
       { source: "/curador", destination: "/coa/curadoria", permanent: false },
@@ -162,13 +168,18 @@ const nextConfig: NextConfig = {
       // saíram — ferramentas de volume com volume zero. Endereço salvo não
       // vira 404: cai no registro (Contatos), que é o que restou e basta.
       { source: "/admin/crm", destination: "/admin/crm/contatos", permanent: false },
+      // Auditoria visual de 22/08: "Configurações do CRM" era vitrine órfã —
+      // nenhum menu chegava nela, e o conteúdo era a descrição de duas
+      // integrações que não existem. A mecânica (adapter WhatsApp, endpoint
+      // de leads) fica no módulo; a tela sai, endereço salvo cai no registro.
+      { source: "/admin/crm/configuracoes", destination: "/admin/crm/contatos", permanent: false },
       { source: "/admin/crm/funil", destination: "/admin/crm/contatos", permanent: false },
       { source: "/admin/crm/tarefas", destination: "/admin/crm/contatos", permanent: false },
       { source: "/admin/crm/agenda", destination: "/admin/crm/contatos", permanent: false },
       // Painéis da camada 2.0 congelada, órfãos de link (zero entradas no
       // produto): a mecânica e os testes dela ficam; as telas voltam — se
-      // voltarem — na forma que o descongelamento pedir.
-      { source: "/portal-curador/discordancia", destination: "/coa/curadoria", permanent: false },
+      // voltarem — na forma que o descongelamento pedir. (A regra da
+      // discordância vive no TOPO da lista, antes do coringa.)
       { source: "/admin/fronteira-do-mapa", destination: "/admin", permanent: false },
       // `/admin/ace` era o painel de um motor que não executa mais. O item 1.7
       // (DP-2) removeu a tela; os links saíram do menu e da paleta depois. Quem

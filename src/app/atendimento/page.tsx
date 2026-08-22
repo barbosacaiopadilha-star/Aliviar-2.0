@@ -34,7 +34,11 @@ export default async function AtendimentoPage() {
   const leads = await listLeadsForAtendente(supabase);
 
   const ordenados = sortLeadQueue(leads);
-  const aguardando = leads.filter((l) => !l.patientProfileId).length;
+  // Auditoria visual de 22/08: a contagem somava só quem não tinha conta
+  // (!patientProfileId) e dizia "aguardam um gesto seu" — mas a lista mostra
+  // TODO MUNDO com gesto pendente (converter, abrir, encaminhar). A frase
+  // passa a contar exatamente o que promete: quem ainda espera um gesto.
+  const aguardando = leads.filter((l) => nextStepForLead(l).key !== "concluido").length;
 
   return (
     <div className="space-y-6">
@@ -44,7 +48,7 @@ export default async function AtendimentoPage() {
           leads.length === 0
             ? undefined
             : aguardando === 0
-              ? "Todas as pessoas que chegaram já têm acesso à Aliviar."
+              ? "Ninguém aguarda um gesto seu agora."
               : `${aguardando} ${aguardando === 1 ? "pessoa aguarda" : "pessoas aguardam"} um gesto seu. A ordem é a do que falta fazer.`
         }
         nothingPendingLabel={

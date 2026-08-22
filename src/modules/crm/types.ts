@@ -94,6 +94,15 @@ export type InteractionVisibility = (typeof INTERACTION_VISIBILITIES)[number];
 export const TASK_STATUSES = ["pendente", "em_andamento", "concluida", "cancelada"] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 
+// Auditoria visual de 22/08: a ficha única mostrava o valor cru do banco
+// ("pendente", "concluida"). O mapa segue o padrão dos irmãos acima.
+export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
+  pendente: "Pendente",
+  em_andamento: "Em andamento",
+  concluida: "Concluída",
+  cancelada: "Cancelada",
+};
+
 export const TASK_TYPES = [
   "retorno",
   "confirmacao",

@@ -27,7 +27,9 @@ export default async function CrmContactsPage({
         title="Contatos"
         description="Lista operacional de contatos e pessoas em acompanhamento."
         breadcrumbs={[
-          { label: "CRM" },
+          // "CRM" como área morreu na ADR-075; o que sobrou vive no grupo
+          // "Relacionamento" do menu — o breadcrumb diz o mesmo nome.
+          { label: "Relacionamento" },
           { label: "Contatos" },
         ]}
         primaryAction={
