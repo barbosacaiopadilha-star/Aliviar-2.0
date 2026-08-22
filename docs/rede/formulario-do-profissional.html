@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Formulário do Profissional — Rede Aliviar</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Georgia, "Times New Roman", serif; color: #1E2A32; font-size: 10.5pt; line-height: 1.45; margin: 0; }
+  header.doc { border-bottom: 2.5pt solid #A8813F; padding-bottom: 8pt; margin-bottom: 12pt; }
+  .marca { font-size: 15pt; font-weight: bold; color: #24466B; letter-spacing: .02em; }
+  .marca small { color: #A8813F; font-weight: normal; font-style: italic; }
+  h1 { font-size: 15pt; margin: 6pt 0 2pt; color: #1E2A32; }
+  .sub { color: #5A6670; font-size: 9pt; margin: 0; }
+  h2 { font-size: 12.5pt; color: #24466B; border-bottom: 1pt solid #D8CFC0; padding-bottom: 3pt; margin: 16pt 0 8pt; page-break-after: avoid; }
+  h3.grupo { font-size: 11pt; color: #A8813F; text-transform: uppercase; letter-spacing: .08em; margin: 14pt 0 4pt; page-break-after: avoid; }
+  .bloco { page-break-inside: avoid; margin: 0 0 10pt; padding: 7pt 9pt; border: .75pt solid #D8CFC0; border-radius: 4pt; }
+  .bloco h4 { margin: 0 0 2pt; font-size: 10.5pt; color: #24466B; }
+  .num { display: inline-block; min-width: 16pt; color: #A8813F; }
+  .pergunta { margin: 1pt 0 2pt; font-style: italic; }
+  .dica { margin: 0 0 4pt; font-size: 8.5pt; color: #5A6670; }
+  ul.opcoes { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 14pt; }
+  ul.opcoes li { margin: 0 0 3pt; break-inside: avoid; }
+  .caixa { display: inline-block; width: 9pt; height: 9pt; border: 1pt solid #1E2A32; border-radius: 1.5pt; vertical-align: -1pt; margin-right: 4pt; }
+  .detalhe { color: #5A6670; font-size: 9pt; }
+  .extra-titulo { margin: 4pt 0 2pt; font-size: 9pt; color: #5A6670; }
+  .linha { display: inline-block; border-bottom: .8pt solid #7A8791; width: 88%; height: 10pt; }
+  .linha-media { display: inline-block; border-bottom: .8pt solid #7A8791; width: 55%; height: 10pt; }
+  .linha-curta { display: inline-block; border-bottom: .8pt solid #7A8791; width: 30mm; height: 9pt; }
+  .campo { margin: 6pt 0; }
+  .palavras { margin: 5pt 0 0; font-size: 9pt; color: #5A6670; }
+  .instrucoes { background: #F6F1E7; border: .75pt solid #E4D9C2; border-radius: 4pt; padding: 8pt 10pt; font-size: 9.5pt; }
+  .termo { border: 1.2pt solid #24466B; border-radius: 4pt; padding: 10pt 12pt; page-break-inside: avoid; margin-top: 10pt; }
+  .termo p { margin: 0 0 6pt; text-align: justify; }
+  .assinaturas { display: flex; gap: 24pt; margin-top: 22pt; }
+  .assinaturas > div { flex: 1; text-align: center; font-size: 9pt; color: #5A6670; }
+  .assinaturas .tra { border-top: .9pt solid #1E2A32; padding-top: 3pt; }
+  .duas { display: flex; gap: 16pt; } .duas > p { flex: 1; }
+  footer.doc { margin-top: 14pt; padding-top: 6pt; border-top: .75pt solid #D8CFC0; font-size: 8pt; color: #7A8791; }
+  .quebra { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<header class="doc">
+  <div class="marca">Aliviar <small>· Curadoria Médica Independente</small></div>
+  <h1>Formulário do Profissional — Rede Aliviar</h1>
+  <p class="sub">Catálogo Canônico 1.1.0 · Este documento é a sua declaração — é ela que a Curadoria usa para apresentar você a pacientes, sempre com a origem indicada. Preencha à mão, com calma; nenhuma resposta é obrigatória, e "não se aplica" é sempre uma resposta válida.</p>
+</header>
+
+<div class="instrucoes">
+  <strong>Como preencher:</strong> marque as opções que descrevem a sua prática hoje — não a ideal, não a de antes. Onde houver linha, você pode dizer nas suas palavras; a sua frase vale mais que a opção marcada. O que você não souber ou preferir não responder, deixe em branco: ausência de resposta nunca é interpretada como ponto negativo. Ao final, o Termo de Veracidade transforma este preenchimento na sua declaração formal à Aliviar.
+</div>
+
+<h2>Parte 1 — Identificação</h2>
+<p class="campo">Nome completo: <span class="linha"></span></p>
+<div class="duas"><p class="campo">Nome de exibição (como quer aparecer): <span class="linha-media"></span></p><p class="campo">CRM e UF: <span class="linha-media"></span></p></div>
+<div class="duas"><p class="campo">E-mail de contato: <span class="linha-media"></span></p><p class="campo">Telefone / WhatsApp: <span class="linha-media"></span></p></div>
+<p class="campo">Instituição principal (quando aplicável): <span class="linha"></span></p>
+<p class="campo">Área de atuação, nas suas palavras (ex.: Ortopedia — cirurgia de coluna e dor crônica): <span class="linha"></span></p>
+<p class="campo">Palavras-chave da sua área (até 5, separadas por vírgula): <span class="linha"></span></p>
+<p class="campo">Resumo profissional em até 3 linhas — como você descreveria sua prática a um paciente: <span class="linha"></span></p>
+<p class="campo"><span class="linha"></span></p>
+<p class="campo"><span class="linha"></span></p>
+
+<h2>Parte 2 — O essencial para entrar na Rede</h2>
+<p class="sub" style="margin-bottom:8pt">Estas são as perguntas que toda Curadoria consulta primeiro. São as únicas que pedimos que você não deixe em branco — mesmo que a resposta seja "não se aplica".</p>
+
+  <section class="bloco">
+    <h4><span class="num">1</span> Modalidade de atendimento</h4>
+    <p class="pergunta">Em quais formatos você atende hoje?</p>
+    <p class="dica">Marque todas as opções que valem para você.</p>
+    <ul class="opcoes">
+<li><span class="caixa"></span> Presencial</li>
+<li><span class="caixa"></span> Remoto</li>
+<li><span class="caixa"></span> Primeira presencial, retornos remotos</li>
+<li><span class="caixa"></span> Primeira remota, sob condição <span class="detalhe">— qual? <span class="linha-curta"></span></span></li>
+<li><span class="caixa"></span> Híbrido, conforme o caso <span class="detalhe">— qual? <span class="linha-curta"></span></span></li>
+    </ul>
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">2</span> Disponibilidade</h4>
+    <p class="pergunta">Em quais janelas você atende habitualmente?</p>
+    <p class="dica">Marque todas as opções que valem para você.</p>
+    <ul class="opcoes">
+<li><span class="caixa"></span> Manhã, dias úteis</li>
+<li><span class="caixa"></span> Tarde, dias úteis</li>
+<li><span class="caixa"></span> Noite, após 18h</li>
+<li><span class="caixa"></span> Sábado</li>
+<li><span class="caixa"></span> Domingo ou feriado</li>
+<li><span class="caixa"></span> Sob agendamento específico</li>
+    </ul>
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">3</span> Prazo para a primeira consulta</h4>
+    <p class="pergunta">Qual o prazo habitual para a primeira consulta?</p>
+    <p class="dica">Marque a opção que melhor descreve a sua prática.</p>
+    <ul class="opcoes">
+<li><span class="caixa"></span> Até 7 dias</li>
+<li><span class="caixa"></span> De 8 a 15 dias</li>
+<li><span class="caixa"></span> De 16 a 30 dias</li>
+<li><span class="caixa"></span> De 31 a 60 dias</li>
+<li><span class="caixa"></span> Mais de 60 dias</li>
+<li><span class="caixa"></span> Varia conforme o caso <span class="detalhe">— qual? <span class="linha-curta"></span></span></li>
+    </ul>
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">4</span> Local de atendimento</h4>
+    <p class="pergunta">Em quais endereços você atende presencialmente?</p>
+    
+    <p class="extra-titulo">Tipo de local:</p><ul class="opcoes"><li><span class="caixa"></span> Consultório</li><li><span class="caixa"></span> Hospital</li><li><span class="caixa"></span> Clínica</li><li><span class="caixa"></span> Ambulatório</li></ul>
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">5</span> Limites de atuação</h4>
+    <p class="pergunta">Quais situações você não atende e encaminha?</p>
+    
+    <p class="extra-titulo">Encaminhamento:</p><ul class="opcoes"><li><span class="caixa"></span> Encaminha com indicação</li><li><span class="caixa"></span> Encaminha sem indicação</li></ul>
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">6</span> Cobertura e convênio</h4>
+    <p class="pergunta">Por quais formas de cobertura você atende hoje?</p>
+    <p class="dica">Marque todas as opções que valem para você.</p>
+    <ul class="opcoes">
+<li><span class="caixa"></span> Exclusivamente particular</li>
+<li><span class="caixa"></span> Convênios selecionados <span class="detalhe">— qual? <span class="linha-curta"></span></span></li>
+<li><span class="caixa"></span> Emite documentação para reembolso</li>
+<li><span class="caixa"></span> Não emite documentação para reembolso</li>
+<li><span class="caixa"></span> Sujeito a confirmação administrativa <span class="detalhe">— qual? <span class="linha-curta"></span></span></li>
+<li><span class="caixa"></span> Não informado</li>
+    </ul>
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+<h2 class="quebra">Parte 3 — A sua prática, por inteiro</h2>
+<p class="sub" style="margin-bottom:8pt">O restante do Catálogo. Quanto mais completo, mais fielmente a Curadoria consegue apresentar você — mas nada aqui é obrigatório.</p>
+
+  <h3 class="grupo">Formação</h3>
+  
+  <section class="bloco">
+    <h4><span class="num">7</span> Graduação</h4>
+    <p class="pergunta">Instituição e ano de graduação</p>
+    
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">8</span> Residência médica</h4>
+    <p class="pergunta">Residências concluídas</p>
+    
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">9</span> Especialização</h4>
+    <p class="pergunta">Títulos de especialista</p>
+    
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">10</span> Fellowship</h4>
+    <p class="pergunta">Fellowships realizados</p>
+    
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">11</span> Formação complementar</h4>
+    <p class="pergunta">Outras formações relevantes</p>
+    
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <h3 class="grupo">Experiência</h3>
+  
+  <section class="bloco">
+    <h4><span class="num">12</span> Tempo de prática</h4>
+    <p class="pergunta">Há quanto tempo atua na especialidade?</p>
+    <p class="dica">Marque a opção que melhor descreve a sua prática.</p>
+    <ul class="opcoes">
+<li><span class="caixa"></span> Até 2 anos</li>
+<li><span class="caixa"></span> De 3 a 5 anos</li>
+<li><span class="caixa"></span> De 6 a 10 anos</li>
+<li><span class="caixa"></span> De 11 a 20 anos</li>
+<li><span class="caixa"></span> Mais de 20 anos</li>
+    </ul>
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">13</span> Volume de atuação</h4>
+    <p class="pergunta">Com que frequência atende esse tipo de caso?</p>
+    <p class="dica">Marque a opção que melhor descreve a sua prática.</p>
+    <ul class="opcoes">
+<li><span class="caixa"></span> Semanalmente</li>
+<li><span class="caixa"></span> Mensalmente</li>
+<li><span class="caixa"></span> Algumas vezes ao ano</li>
+<li><span class="caixa"></span> Raramente</li>
+    </ul>
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">14</span> Experiência no tipo de caso</h4>
+    <p class="pergunta">Com quais condições e procedimentos você tem prática regular?</p>
+    
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <h3 class="grupo">Histórico e trajetória</h3>
+  
+  <section class="bloco">
+    <h4><span class="num">15</span> Trajetória institucional</h4>
+    <p class="pergunta">Vínculos institucionais atuais e anteriores</p>
+    
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">16</span> Atividade acadêmica</h4>
+    <p class="pergunta">Atividade acadêmica</p>
+    <p class="dica">Marque todas as opções que valem para você.</p>
+    <ul class="opcoes">
+<li><span class="caixa"></span> Publica regularmente</li>
+<li><span class="caixa"></span> Publicou no passado</li>
+<li><span class="caixa"></span> Leciona</li>
+<li><span class="caixa"></span> Orienta residentes</li>
+<li><span class="caixa"></span> Sem atividade acadêmica</li>
+    </ul>
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">17</span> Áreas de atuação</h4>
+    <p class="pergunta">Áreas em que atua hoje</p>
+    
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <h3 class="grupo">Modelo de atendimento</h3>
+  
+  <section class="bloco">
+    <h4><span class="num">18</span> Como explica</h4>
+    <p class="pergunta">Ao explicar um diagnóstico ou tratamento, quais dessas ações você costuma realizar?</p>
+    <p class="dica">Marque todas as opções que valem para você.</p>
+    <ul class="opcoes">
+<li><span class="caixa"></span> Adapta a linguagem ao interlocutor</li>
+<li><span class="caixa"></span> Verifica se a pessoa compreendeu</li>
+<li><span class="caixa"></span> Reexplica de outra forma quando necessário</li>
+<li><span class="caixa"></span> Usa apoio visual ou desenho</li>
+<li><span class="caixa"></span> Envia resumo escrito</li>
+<li><span class="caixa"></span> Reserva tempo para perguntas</li>
+<li><span class="caixa"></span> Autoriza gravação da consulta</li>
+    </ul>
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">19</span> Como conduz decisões</h4>
+    <p class="pergunta">Quando existem duas ou mais opções clinicamente adequadas, quais ações você costuma realizar antes da decisão?</p>
+    <p class="dica">Marque todas as opções que valem para você.</p>
+    <ul class="opcoes">
+<li><span class="caixa"></span> Apresenta todas as opções adequadas</li>
+<li><span class="caixa"></span> Explica riscos e benefícios de cada uma</li>
+<li><span class="caixa"></span> Pergunta o que importa para a pessoa</li>
+<li><span class="caixa"></span> Oferece tempo para decidir</li>
+<li><span class="caixa"></span> Sugere segunda opinião quando pertinente</li>
+<li><span class="caixa"></span> Recomenda uma opção e explica o porquê</li>
+<li><span class="caixa"></span> Decide e comunica a conduta</li>
+    </ul>
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">20</span> Participação de acompanhantes</h4>
+    <p class="pergunta">Como você conduz a presença de acompanhantes?</p>
+    <p class="dica">Marque todas as opções que valem para você.</p>
+    <ul class="opcoes">
+<li><span class="caixa"></span> Acompanhante bem-vindo sempre</li>
+<li><span class="caixa"></span> Acompanhante mediante autorização da pessoa</li>
+<li><span class="caixa"></span> Parte da consulta a sós</li>
+<li><span class="caixa"></span> Contato com a família entre consultas, se autorizado</li>
+<li><span class="caixa"></span> Atendimento apenas individual</li>
+    </ul>
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">21</span> Explicação de alternativas</h4>
+    <p class="pergunta">Ao propor uma conduta, quais dessas você costuma apresentar?</p>
+    <p class="dica">Marque todas as opções que valem para você.</p>
+    <ul class="opcoes">
+<li><span class="caixa"></span> Opções de tratamento disponíveis</li>
+<li><span class="caixa"></span> Opção de acompanhar sem intervir</li>
+<li><span class="caixa"></span> Riscos de cada caminho</li>
+<li><span class="caixa"></span> O que acontece se nada for feito</li>
+<li><span class="caixa"></span> Limites do que se sabe hoje</li>
+<li><span class="caixa"></span> Custo e cobertura de cada opção</li>
+    </ul>
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">22</span> Respeito a recusas e restrições</h4>
+    <p class="pergunta">Quando a pessoa recusa uma conduta ou tem restrição pessoal, religiosa ou cultural, o que você costuma fazer?</p>
+    <p class="dica">Marque todas as opções que valem para você.</p>
+    <ul class="opcoes">
+<li><span class="caixa"></span> Registra a restrição no prontuário</li>
+<li><span class="caixa"></span> Busca alternativa compatível</li>
+<li><span class="caixa"></span> Explica consequências e mantém o acompanhamento</li>
+<li><span class="caixa"></span> Encaminha quando não pode atender à restrição</li>
+<li><span class="caixa"></span> Não acompanha quem recusa a conduta indicada</li>
+    </ul>
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">23</span> Condução de notícias difíceis</h4>
+    <p class="pergunta">Ao comunicar um diagnóstico grave ou uma notícia difícil, quais dessas condutas você costuma adotar?</p>
+    <p class="dica">Marque todas as opções que valem para você.</p>
+    <ul class="opcoes">
+<li><span class="caixa"></span> Reserva tempo dedicado para a conversa</li>
+<li><span class="caixa"></span> Pergunta o quanto a pessoa quer saber</li>
+<li><span class="caixa"></span> Comunica junto com os próximos passos</li>
+<li><span class="caixa"></span> Oferece a presença de um acompanhante</li>
+<li><span class="caixa"></span> Programa recontato próximo após a notícia</li>
+    </ul>
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <h3 class="grupo">Continuidade do cuidado</h3>
+  
+  <section class="bloco">
+    <h4><span class="num">24</span> Retornos</h4>
+    <p class="pergunta">Após a primeira consulta, quais dessas condutas você costuma adotar?</p>
+    <p class="dica">Marque todas as opções que valem para você.</p>
+    <ul class="opcoes">
+<li><span class="caixa"></span> Retorno programado na própria consulta</li>
+<li><span class="caixa"></span> Retorno conforme a evolução</li>
+<li><span class="caixa"></span> Retorno apenas se solicitado</li>
+<li><span class="caixa"></span> Envia orientação escrita</li>
+<li><span class="caixa"></span> Reavalia exames entre consultas</li>
+    </ul>
+    <p class="extra-titulo">Frequencia habitual:</p><ul class="opcoes"><li><span class="caixa"></span> Até 30 dias</li><li><span class="caixa"></span> De 1 a 3 meses</li><li><span class="caixa"></span> De 3 a 6 meses</li><li><span class="caixa"></span> Acima de 6 meses</li><li><span class="caixa"></span> Depende da evolução <span class="detalhe">— qual? <span class="linha-curta"></span></span></li></ul>
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">25</span> Acompanhamento pós-procedimento</h4>
+    <p class="pergunta">Após um procedimento que você realiza, quais condutas são habituais?</p>
+    <p class="dica">Marque todas as opções que valem para você.</p>
+    <ul class="opcoes">
+<li><span class="caixa"></span> Acompanha pessoalmente todo o pós</li>
+<li><span class="caixa"></span> Acompanha com equipe</li>
+<li><span class="caixa"></span> Acompanha até a alta e encaminha</li>
+<li><span class="caixa"></span> Encaminha para outro profissional</li>
+<li><span class="caixa"></span> Não realiza procedimentos</li>
+    </ul>
+    <p class="extra-titulo">Duracao habitual:</p><ul class="opcoes"><li><span class="caixa"></span> Até 30 dias</li><li><span class="caixa"></span> Até 90 dias</li><li><span class="caixa"></span> Até 6 meses</li><li><span class="caixa"></span> Acima de 6 meses</li><li><span class="caixa"></span> Conforme o procedimento</li></ul>
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">26</span> Equipe de apoio</h4>
+    <p class="pergunta">Quem mais acompanha as pessoas que você atende?</p>
+    <p class="dica">Marque todas as opções que valem para você.</p>
+    <ul class="opcoes">
+<li><span class="caixa"></span> Enfermagem</li>
+<li><span class="caixa"></span> Secretaria clínica</li>
+<li><span class="caixa"></span> Nutrição</li>
+<li><span class="caixa"></span> Psicologia</li>
+<li><span class="caixa"></span> Fisioterapia</li>
+<li><span class="caixa"></span> Serviço social</li>
+<li><span class="caixa"></span> Outro profissional da equipe</li>
+<li><span class="caixa"></span> Atua sem equipe fixa</li>
+    </ul>
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">27</span> Coordenação com outros profissionais</h4>
+    <p class="pergunta">Quando a pessoa já é acompanhada por outros profissionais, o que você costuma fazer?</p>
+    <p class="dica">Marque todas as opções que valem para você.</p>
+    <ul class="opcoes">
+<li><span class="caixa"></span> Contata diretamente o outro profissional</li>
+<li><span class="caixa"></span> Envia relatório escrito</li>
+<li><span class="caixa"></span> Participa de discussão de caso</li>
+<li><span class="caixa"></span> Orienta a pessoa a levar a informação</li>
+<li><span class="caixa"></span> Atua de forma independente</li>
+    </ul>
+    
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <section class="bloco">
+    <h4><span class="num">28</span> Canais entre consultas</h4>
+    <p class="pergunta">Entre uma consulta e outra, como a pessoa consegue contato?</p>
+    <p class="dica">Marque todas as opções que valem para você.</p>
+    <ul class="opcoes">
+<li><span class="caixa"></span> Mensagem direta com o profissional</li>
+<li><span class="caixa"></span> Mensagem com a equipe ou secretaria</li>
+<li><span class="caixa"></span> Telefone em horário comercial</li>
+<li><span class="caixa"></span> Portal ou aplicativo</li>
+<li><span class="caixa"></span> Contato de urgência fora do horário</li>
+<li><span class="caixa"></span> Apenas reagendamento</li>
+<li><span class="caixa"></span> Não há canal entre consultas</li>
+    </ul>
+    <p class="extra-titulo">Prazo habitual de resposta:</p><ul class="opcoes"><li><span class="caixa"></span> Mesmo dia</li><li><span class="caixa"></span> Até 48h</li><li><span class="caixa"></span> Até 5 dias úteis</li><li><span class="caixa"></span> Sem prazo definido</li></ul>
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+  <h3 class="grupo">Viabilidade</h3>
+  
+  <section class="bloco">
+    <h4><span class="num">29</span> Custo e pagamento</h4>
+    <p class="pergunta">Qual o custo da primeira consulta e como pode ser pago?</p>
+    
+    <p class="extra-titulo">Custos adicionais:</p><ul class="opcoes"><li><span class="caixa"></span> Exames não inclusos</li><li><span class="caixa"></span> Retorno cobrado à parte</li><li><span class="caixa"></span> Taxa de procedimento</li><li><span class="caixa"></span> Sem custos adicionais conhecidos</li><li><span class="caixa"></span> Não informado</li></ul><p class="extra-titulo">Faixa de valor da primeira consulta:</p><ul class="opcoes"><li><span class="caixa"></span> Até R$ 300</li><li><span class="caixa"></span> De R$ 301 a R$ 600</li><li><span class="caixa"></span> De R$ 601 a R$ 1.000</li><li><span class="caixa"></span> De R$ 1.001 a R$ 2.000</li><li><span class="caixa"></span> Acima de R$ 2.000</li><li><span class="caixa"></span> Sujeito a confirmação <span class="detalhe">— qual? <span class="linha-curta"></span></span></li><li><span class="caixa"></span> Não informado</li></ul><p class="extra-titulo">Formas de pagamento aceitas:</p><ul class="opcoes"><li><span class="caixa"></span> Dinheiro ou Pix</li><li><span class="caixa"></span> Cartão à vista</li><li><span class="caixa"></span> Cartão parcelado <span class="detalhe">— qual? <span class="linha-curta"></span></span></li><li><span class="caixa"></span> Transferência</li><li><span class="caixa"></span> Boleto</li></ul>
+    <p class="palavras">Nas suas palavras (opcional): <span class="linha"></span></p>
+  </section>
+
+<h2 class="quebra">Parte 4 — Termo de Veracidade e Autorização</h2>
+<div class="termo">
+  <p>Declaro, para os devidos fins, que as informações prestadas neste formulário são verdadeiras, completas e refletem a minha prática profissional atual, e que sou o titular do registro profissional aqui informado.</p>
+  <p>Autorizo a Aliviar Curadoria Médica a: (i) verificar as informações aqui declaradas junto a fontes oficiais e públicas (conselhos profissionais, plataformas governamentais e institucionais); (ii) registrar estas declarações em seus sistemas, com indicação de data, origem e autoria; e (iii) utilizá-las exclusivamente para fins de curadoria — a apresentação do meu perfil profissional a pacientes, sempre acompanhada da origem de cada informação, sem notas, notas de corte ou rankings.</p>
+  <p>Estou ciente de que: a Aliviar não intermedeia, não recomenda de forma exclusiva e não remunera indicação; a inclusão na Rede não garante apresentação em Curadorias; posso solicitar a atualização ou a retirada do meu perfil da Rede a qualquer momento, permanecendo o histórico das Curadorias já realizadas, na forma da lei; e que declaração inverídica é causa de retirada da Rede.</p>
+  <p>Este documento foi preenchido de próprio punho ou conferido linha a linha por mim antes da assinatura.</p>
+  <div class="assinaturas">
+    <div><div class="tra">Assinatura do profissional</div></div>
+    <div><div class="tra">Nome legível e CRM/UF</div></div>
+    <div><div class="tra">Local e data</div></div>
+  </div>
+  <div class="assinaturas">
+    <div><div class="tra">Recebido por (Aliviar) — nome e data</div></div>
+    <div><div class="tra">Entrevista realizada em (data), quando houver</div></div>
+  </div>
+</div>
+
+<footer class="doc">
+  Aliviar Curadoria Médica · Formulário do Profissional · Catálogo Canônico 1.1.0 · Gerado em 21/08/2026 a partir do Catálogo vigente (29 subcritérios ativos). Uso interno da Rede Aliviar. Após o recebimento, o administrador transcreve estas declarações para o sistema com a fonte "formulário assinado de ____/____/______", conforme ADR-074.
+</footer>
+
+</body>
+</html>
