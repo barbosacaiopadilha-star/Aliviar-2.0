@@ -1,3 +1,5 @@
+import { Compass, HeartHandshake, Headset, ShieldCheck, UserCheck } from "lucide-react";
+
 import {
   LandingCard,
   LandingEyebrow,
@@ -123,27 +125,83 @@ const DIFERENCIAIS = [
   "Você decide, e a Aliviar continua com você depois.",
 ] as const;
 
+/**
+ * ADR-078 · os cinco passos ganham fotografia da casa (base visual do
+ * Fundador). A COPY é a mesma, palavra por palavra — o layout a veste.
+ * As fotos são as cenas reais de public/scenes, nunca banco de imagem.
+ */
 const PASSOS = [
   {
     title: "Você conta sua história",
     text: "Uma conversa real, humana, no seu ritmo. Nunca um formulário frio.",
+    foto: "/scenes/cena-2-recepcao-proxima.jpg",
   },
   {
     title: "Vocês definem o que importa",
     text: "Suas prioridades registradas com as suas próprias palavras.",
+    foto: "/scenes/cena-5-quadro-planta.jpg",
   },
   {
     title: "A equipe analisa",
     text: "Seu Curador estuda os especialistas à luz dos seus critérios.",
+    foto: "/scenes/cena-6-detalhe.jpg",
   },
   {
     title: "Você recebe três opções",
     text: "Três caminhos legítimos, explicados — nunca um ranking.",
+    foto: "/scenes/cena-3-corredor.jpg",
   },
   {
     title: "A decisão é sua",
     text: "No seu tempo, com acompanhamento contínuo antes e depois.",
+    foto: "/scenes/cena-4-transicao.jpg",
   },
+] as const;
+
+/**
+ * ADR-078 · a faixa de confiança logo após o Hero — os cinco pilares com
+ * ícone, na gramática do mockup do Fundador. Cada frase é verificável
+ * contra o produto no ar; nenhuma diz "melhores", nenhuma promete
+ * agendamento (§4.1), nenhuma inventa número.
+ */
+const PILARES_DE_CONFIANCA = [
+  {
+    icon: ShieldCheck,
+    title: "Independente",
+    text: "Sem vínculos com operadoras ou hospitais.",
+  },
+  {
+    icon: UserCheck,
+    title: "Compatíveis com você",
+    text: "Médicos aprovados pelo nosso rigor, lidos à luz do seu caso.",
+  },
+  {
+    icon: Compass,
+    title: "Decisões conscientes",
+    text: "Informações claras, explicadas — nunca um ranking.",
+  },
+  {
+    icon: HeartHandshake,
+    title: "Acompanhamento",
+    text: "Antes, durante e depois. Uma pessoa ao seu lado.",
+  },
+  {
+    icon: Headset,
+    title: "Concierge",
+    text: "Alguém da Aliviar respondendo pelo seu caso.",
+  },
+] as const;
+
+/**
+ * ADR-078 · os fatos da faixa institucional — o lugar onde o mockup punha
+ * "+200 especialistas" e "98% de satisfação". Métrica não medida é promessa
+ * (contrato 34 §6.5); estes quatro são verificáveis contra o produto hoje.
+ */
+const FATOS = [
+  { numero: "3", label: "caminhos com nome — nunca um só" },
+  { numero: "29", label: "dimensões do Método, lidas por gente" },
+  { numero: "1", label: "Curador com nome respondendo pelo seu caso" },
+  { numero: "0", label: "algoritmos decidindo por você" },
 ] as const;
 
 /**
@@ -217,6 +275,37 @@ export function ProblemaSection() {
   );
 }
 
+/**
+ * ADR-078 · A FAIXA DE CONFIANÇA — entre o Hero e o Espelho.
+ *
+ * O primeiro relance do mockup do Fundador: cinco pilares com ícone, num
+ * fôlego só, antes de a narrativa começar. Não substitui seção nenhuma do
+ * contrato 34 — soma-se entre o Hero e o Problema, e cada frase já vivia na
+ * página (diferenciais, concierge, método) em forma longa.
+ */
+export function ConfiancaStripSection() {
+  return (
+    <LandingSection spacing="densa" variant="white" aria-label="O que nos define">
+      <div className="landing-reveal mx-auto grid max-w-5xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-5 lg:gap-6">
+        {PILARES_DE_CONFIANCA.map((pilar, index) => {
+          const Icone = pilar.icon;
+          return (
+            <div
+              key={pilar.title}
+              className="landing-reveal flex flex-col items-center text-center sm:border-l sm:border-[var(--color-border)] sm:first:border-l-0 sm:px-4"
+              style={revealDelay(index)}
+            >
+              <Icone aria-hidden="true" className="size-7 text-[var(--color-brand-primary)]" strokeWidth={1.5} />
+              <h3 className="landing-heading mt-3 text-sm font-semibold">{pilar.title}</h3>
+              <p className="landing-body mt-1.5 text-sm text-[var(--color-ink-muted)]">{pilar.text}</p>
+            </div>
+          );
+        })}
+      </div>
+    </LandingSection>
+  );
+}
+
 /** Ato III — RESPIRO: o único grande vazio da página. Por ser único, significa. */
 export function RespiroSection() {
   return (
@@ -278,18 +367,40 @@ export function ConciergeSection() {
        linha, o mesmo erro que o Hero já tinha corrigido. A seção fica no
        linho quente, sem fundo figurativo competindo com a leitura. */
     <LandingSection id="concierge" variant="warm" spacing="media">
-      <div className="landing-reveal mx-auto max-w-2xl">
-        <LandingEyebrow>Concierge Aliviar</LandingEyebrow>
-        <h2 className="landing-heading text-3xl lg:text-[2.625rem]">Você não faz isso sozinha.</h2>
-      </div>
-
-      <div className="landing-pilares landing-pilares--tres mx-auto mt-16 max-w-4xl">
-        {PILARES_DO_CONCIERGE.map((pilar, index) => (
-          <div key={pilar.title} className="landing-reveal landing-pilar" style={revealDelay(index)}>
-            <h3 className="landing-heading text-xl">{pilar.title}</h3>
-            <p className="landing-body mt-2 text-[var(--color-ink-muted)]">{pilar.text}</p>
+      {/* ADR-078 · duas colunas na gramática do mockup: a promessa e os três
+          pilares à esquerda, a fotografia REAL da casa à direita — dentro de
+          um cartão, nunca atrás do título (o logotipo gravado na parede da
+          recepção já disputou linha com o Hero uma vez; não de novo). */}
+      <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+        <div>
+          <div className="landing-reveal">
+            <LandingEyebrow>Concierge Aliviar</LandingEyebrow>
+            <h2 className="landing-heading text-3xl lg:text-[2.625rem]">Você não faz isso sozinha.</h2>
           </div>
-        ))}
+
+          <div className="mt-10 space-y-8">
+            {PILARES_DO_CONCIERGE.map((pilar, index) => (
+              <div
+                key={pilar.title}
+                className="landing-reveal border-l-2 border-[var(--color-brand-gold)] pl-6"
+                style={revealDelay(index)}
+              >
+                <h3 className="landing-heading text-xl">{pilar.title}</h3>
+                <p className="landing-body mt-2 text-[var(--color-ink-muted)]">{pilar.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="landing-reveal overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)]" style={revealDelay(1)}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- cena
+              estática de public/scenes, mesmo uso do HeroVideo. */}
+          <img
+            src="/scenes/recepcao-bright.jpg"
+            alt="Recepção da Aliviar — a casa que acompanha você"
+            className="aspect-[4/3] w-full object-cover"
+          />
+        </div>
       </div>
     </LandingSection>
   );
@@ -334,27 +445,36 @@ export function MetodoSection() {
           </p>
         </div>
 
-        <ol className="mt-12">
-          {PASSOS.map((passo, index) => (
-            <li
-              key={passo.title}
-              className="landing-reveal landing-etapa-conector flex gap-6 border-t border-[var(--color-border)] py-6 first:border-t-0 lg:gap-8"
-              style={revealDelay(index % 2)}
-            >
+        {/* ADR-078 · os cinco passos em cartões com a fotografia da casa —
+            a "jornada" do mockup do Fundador, com a copy intocada. O número
+            dourado permanece: é a assinatura da contagem. */}
+      </div>
+
+      <ol className="mx-auto mt-12 grid max-w-6xl grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
+        {PASSOS.map((passo, index) => (
+          <li
+            key={passo.title}
+            className="landing-reveal overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-surface)_92%,transparent)]"
+            style={revealDelay(index % 3)}
+          >
+            <div className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element -- cena
+                  estática de public/scenes, mesmo uso do HeroVideo. */}
+              <img src={passo.foto} alt="" className="aspect-[4/3] w-full object-cover" />
               <span
                 aria-hidden="true"
-                className="font-serif text-2xl font-normal leading-none text-[var(--color-brand-gold)] lg:text-3xl"
+                className="absolute left-3 top-3 flex size-9 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--color-brand-primary-darkest)_78%,transparent)] font-serif text-sm text-on-dark"
               >
                 {String(index + 1).padStart(2, "0")}
               </span>
-              <div>
-                <h3 className="landing-heading text-lg">{passo.title}</h3>
-                <p className="landing-body mt-1.5 text-[var(--color-ink-muted)]">{passo.text}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </div>
+            </div>
+            <div className="p-5">
+              <h3 className="landing-heading text-base">{passo.title}</h3>
+              <p className="landing-body mt-1.5 text-sm text-[var(--color-ink-muted)]">{passo.text}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
     </LandingSection>
   );
 }
@@ -493,6 +613,20 @@ export function QuemSomosSection() {
             </li>
           ))}
         </ul>
+
+        {/* ADR-078 · a faixa de fatos — onde o mockup punha números
+            inventados ("+200 especialistas", "98%"), entram os quatro que o
+            produto PROVA hoje. Métrica não medida é promessa (§6.5). */}
+        <div className="landing-reveal mt-14 grid grid-cols-2 gap-8 lg:grid-cols-4" style={revealDelay(3)}>
+          {FATOS.map((fato) => (
+            <div key={fato.label}>
+              <p className="font-serif text-4xl leading-none text-[var(--color-brand-gold)] lg:text-5xl">
+                {fato.numero}
+              </p>
+              <p className="landing-body mt-2 text-sm text-on-dark-muted">{fato.label}</p>
+            </div>
+          ))}
+        </div>
 
         <div className="mt-14 rounded-[var(--radius-card)] border border-on-dark-line bg-[color-mix(in_srgb,var(--color-on-dark)_6%,transparent)] p-8 lg:p-12">
           <h3 className="text-xs font-medium uppercase tracking-[0.18em] text-on-dark-faint">

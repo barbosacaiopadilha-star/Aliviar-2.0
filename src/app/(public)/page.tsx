@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import {
   ConciergeSection,
+  ConfiancaStripSection,
   ConviteSection,
   MetodoSection,
   NossoMetodoSection,
@@ -39,6 +40,10 @@ export default function HomePage() {
           o Concierge entra quando já existe escolha a acompanhar (§4.1). */}
       <HeroEditorial />
       <RevealGroup>
+        {/* ADR-078 · a faixa de confiança do mockup do Fundador — soma-se
+            ENTRE o Hero e o Problema; nenhuma seção do contrato 34 sai, e a
+            ordem relativa delas permanece intacta. */}
+        <ConfiancaStripSection />
         <ProblemaSection />
         <RespiroSection />
         <NossoMetodoSection />

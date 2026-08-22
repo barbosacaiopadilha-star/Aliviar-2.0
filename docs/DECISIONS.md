@@ -1760,3 +1760,19 @@ Novo agregado `approach_attempts` · nova estrutura `team_notifications` · proj
 - **Revisitar quando:** o ensaio/primeira rodada mostrar como a paciente lê os cards — o Diário pergunta o que impressionou e o que faltou.
 
 ---
+
+## ADR-078 — A Landing veste a base visual do Fundador; a copy canônica fica
+
+- **Data:** 2026-08-22
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data (mockup fornecido por ele como base).
+- **Dependências:** abertura dirigida da **ADR-073** (a Landing é vitrine editorial — nenhuma mecânica de produto muda) · preserva a copy canônica das 12 seções (corpus de julho) e o contrato 34 §6 · a área da paciente recebe só a pele visual, em etapa posterior.
+- **Decisões:**
+  1. **A base visual é o mockup do Fundador:** faixa de pilares com ícones, jornada em cartões com fotografia, faixa institucional com fatos, Concierge com foto — sobre as cenas reais da casa (`public/scenes`).
+  2. **A copy canônica não se reescreve** — as seções, a ordem relativa e as frases auditadas permanecem; o novo layout as veste.
+  3. **Só verdades:** os números do mockup ("+200 especialistas", "98% de satisfação") **não entram** — a Rede real ainda não existe, e métrica não medida é promessa (contrato 34 §6.5). Entram apenas fatos verificáveis contra o produto (3 caminhos, 29 dimensões do Método, 1 Curador com nome, 0 algoritmos decidindo).
+  4. **Depoimento só de gente real, com autorização** — a faixa de depoimento fica fora até existir paciente real que autorize por escrito.
+  5. **"Os melhores médicos" não entra em superfície nenhuma** — a linguagem é a do Método: compatíveis com o seu caso. E o Concierge segue sem prometer agendamento ou intermediação (§4.1).
+  6. Telefone, redes sociais e canais só entram quando existirem de verdade.
+- **Revisitar quando:** a primeira paciente real autorizar um depoimento; ou a Rede tiver números reais que mereçam a faixa do mockup.
+
+---
