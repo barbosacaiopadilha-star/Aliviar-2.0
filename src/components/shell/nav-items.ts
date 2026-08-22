@@ -55,6 +55,11 @@ export function getNavGroups(role: string, basePath: string): NavGroup[] {
         { label: "Concierge", href: "/acompanhamento", icon: "dashboard" },
       ],
     });
+    // Funil, Tarefas, Agenda e o dashboard do CRM SAÍRAM (ADR-075 executada):
+    // eram ferramentas de volume com volume zero, e o funil era a terceira
+    // máquina de estados. O que fica é o registro — a lista de contatos. Os
+    // atos comerciais (tarefas, agendamentos, interações) continuam vivos
+    // DENTRO da ficha de cada contato, que é onde acontecem de verdade.
     groups.push({
       label: "Relacionamento",
       items: [
@@ -63,9 +68,6 @@ export function getNavGroups(role: string, basePath: string): NavGroup[] {
           href: `${basePath}/crm/contatos`,
           icon: "contacts",
         },
-        { label: "Funil", href: `${basePath}/crm/funil`, icon: "funnel" },
-        { label: "Tarefas", href: `${basePath}/crm/tarefas`, icon: "tasks" },
-        { label: "Agenda", href: `${basePath}/crm/agenda`, icon: "agenda" },
       ],
     });
     groups.push({
@@ -90,15 +92,12 @@ export function getNavGroups(role: string, basePath: string): NavGroup[] {
   }
 
   if (role === "concierge") {
+    // O Painel Concierge, o Funil, Tarefas e Agenda saíram (ADR-075): o
+    // trabalho do Concierge vive em /acompanhamento (a home do papel, por
+    // role-home.ts) e os atos comerciais vivem na ficha de cada contato.
     groups.push({
       label: "Dashboard",
-      items: [
-        {
-          label: "Painel Concierge",
-          href: `${basePath}/crm`,
-          icon: "dashboard",
-        },
-      ],
+      items: [{ label: "Acompanhamento", href: "/acompanhamento", icon: "dashboard" }],
     });
     groups.push({
       label: "Concierge",
@@ -108,9 +107,6 @@ export function getNavGroups(role: string, basePath: string): NavGroup[] {
           href: `${basePath}/crm/contatos`,
           icon: "contacts",
         },
-        { label: "Funil", href: `${basePath}/crm/funil`, icon: "funnel" },
-        { label: "Tarefas", href: `${basePath}/crm/tarefas`, icon: "tasks" },
-        { label: "Agenda", href: `${basePath}/crm/agenda`, icon: "agenda" },
       ],
     });
     return groups;

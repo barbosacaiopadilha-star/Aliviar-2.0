@@ -56,7 +56,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
         title={contact.fullName}
         description="Ficha operacional do contato."
         breadcrumbs={[
-          { label: "CRM", href: "/admin/crm" },
+          { label: "CRM" },
           { label: "Contatos", href: "/admin/crm/contatos" },
           { label: contact.fullName },
         ]}

@@ -27,7 +27,7 @@ export default async function CrmContactsPage({
         title="Contatos"
         description="Lista operacional de contatos e pessoas em acompanhamento."
         breadcrumbs={[
-          { label: "CRM", href: "/admin/crm" },
+          { label: "CRM" },
           { label: "Contatos" },
         ]}
         primaryAction={

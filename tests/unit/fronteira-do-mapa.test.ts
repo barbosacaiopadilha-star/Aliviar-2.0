@@ -28,10 +28,11 @@ const repository = readFileSync(
   join(RAIZ, "src/modules/curadoria/fronteira-do-mapa-repository.ts"),
   "utf8",
 );
-const painel = readFileSync(
-  join(RAIZ, "src/components/curadoria/fronteira/painel-da-fronteira.tsx"),
-  "utf8",
-);
+// A TELA da Fronteira saiu na redução operacional de 21/08 (era órfã — zero
+// links no produto; a camada de derivação está congelada e não emite nada
+// para decidir). A MECÂNICA fica inteira: migration, actions e repository
+// seguem guardados abaixo. Quando a tela renascer no descongelamento, as
+// guardas de apresentação renascem com ela.
 
 describe("G-2.C-2 (estática) · a migration abre EXATAMENTE um EXECUTE — e nada mais", () => {
   it("um único GRANT, à decisora, para authenticated", () => {
@@ -121,13 +122,9 @@ describe("G-2.C-3/7 (estática) · item a item — nenhum regime de bloco em cam
     }
   });
 
-  it("o painel não tem seleção múltipla nem ato em massa", () => {
-    for (const proibido of ["confirmar todos", "recusar todos", "selecionados", "checkbox", "selectAll", "em massa"]) {
-      expect(painel.toLowerCase().includes(proibido.toLowerCase()), `o painel ganhou massa: ${proibido}`).toBe(
-        false,
-      );
-    }
-  });
+  // A guarda "o painel não tem seleção múltipla nem ato em massa" saiu junto
+  // com a tela — o que ela protegia era apresentação. A proteção estrutural
+  // permanece nas actions (acima): uma proposta por ato, nunca regime de bloco.
 });
 
 describe("G-2.C-5 (estática) · autoria pela sessão — nunca payload", () => {
@@ -176,9 +173,10 @@ describe("consumo · a superfície do 2.C é UMA — o painel interno do admin",
     });
   }
 
-  it("os únicos consumidores das actions/leitura da Fronteira são o painel e a página do admin", () => {
-    // Exclui só os PRÓPRIOS módulos da Fronteira — não o diretório da página,
-    // que é justamente um dos consumidores esperados.
+  it("ninguém consome as actions/leitura da Fronteira enquanto a tela não renascer", () => {
+    // A tela saiu (redução de 21/08). A guarda vira a inversa: até a decisão
+    // de descongelamento, consumidor NENHUM — uma tela nova por engano, um
+    // import solto, qualquer coisa, derruba aqui e exige decisão em voz alta.
     const MODULOS_DA_FRONTEIRA = [
       "src/modules/curadoria/fronteira-do-mapa-actions.ts",
       "src/modules/curadoria/fronteira-do-mapa-repository.ts",
@@ -190,10 +188,7 @@ describe("consumo · a superfície do 2.C é UMA — o painel interno do admin",
         return codigo.includes("fronteira-do-mapa-actions") || codigo.includes("fronteira-do-mapa-repository");
       })
       .sort();
-    expect(consumidores).toEqual([
-      "src/app/admin/fronteira-do-mapa/page.tsx",
-      "src/components/curadoria/fronteira/painel-da-fronteira.tsx",
-    ]);
+    expect(consumidores).toEqual([]);
   });
 
   it("nenhuma superfície da paciente alcança a Fronteira", () => {

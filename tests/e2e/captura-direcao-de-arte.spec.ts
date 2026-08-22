@@ -102,7 +102,8 @@ test("captura — administração", async ({ page }) => {
   await loginAs(page, conta("administrador"));
   await capturar(page, "/admin", "14-admin-painel");
   await capturar(page, "/admin/pacientes", "15-admin-pacientes");
-  await capturar(page, "/admin/crm", "16-admin-crm");
+  // /admin/crm virou redirect para Contatos (redução ADR-075) — captura-se o destino.
+  await capturar(page, "/admin/crm/contatos", "16-admin-crm-contatos");
 });
 
 test("captura — profissional", async ({ page }) => {

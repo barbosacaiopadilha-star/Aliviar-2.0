@@ -158,7 +158,18 @@ const nextConfig: NextConfig = {
       { source: "/portal-curador/:path*", destination: "/coa/curadoria/:path*", permanent: false },
       { source: "/curador", destination: "/coa/curadoria", permanent: false },
       { source: "/curador/:path*", destination: "/coa/curadoria/:path*", permanent: false },
-      { source: "/admin/crm", destination: "/coa/atendimento", permanent: false },
+      // ADR-075 executada: o dashboard do CRM, o Funil, Tarefas e Agenda
+      // saíram — ferramentas de volume com volume zero. Endereço salvo não
+      // vira 404: cai no registro (Contatos), que é o que restou e basta.
+      { source: "/admin/crm", destination: "/admin/crm/contatos", permanent: false },
+      { source: "/admin/crm/funil", destination: "/admin/crm/contatos", permanent: false },
+      { source: "/admin/crm/tarefas", destination: "/admin/crm/contatos", permanent: false },
+      { source: "/admin/crm/agenda", destination: "/admin/crm/contatos", permanent: false },
+      // Painéis da camada 2.0 congelada, órfãos de link (zero entradas no
+      // produto): a mecânica e os testes dela ficam; as telas voltam — se
+      // voltarem — na forma que o descongelamento pedir.
+      { source: "/portal-curador/discordancia", destination: "/coa/curadoria", permanent: false },
+      { source: "/admin/fronteira-do-mapa", destination: "/admin", permanent: false },
       // `/admin/ace` era o painel de um motor que não executa mais. O item 1.7
       // (DP-2) removeu a tela; os links saíram do menu e da paleta depois. Quem
       // ainda tiver o endereço salvo cairia num 404 — vai para a visão geral,

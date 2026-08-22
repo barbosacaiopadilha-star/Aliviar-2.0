@@ -555,10 +555,14 @@ describe("C-01 · Nenhuma proposta persistida existe", () => {
     const RADICAIS_DE_MERITO = /taxa|discordancia|recusad|contagem|merito/i;
 
     it("o painel não ordena por taxa, não agrupa por pessoa, não vaza individual", () => {
+      // A TELA do painel saiu na redução operacional de 21/08 (era órfã —
+      // zero links no produto). A MECÂNICA fica: módulo e repositório são a
+      // calibração de Método da 2.0 congelada, e a guarda continua valendo
+      // para eles — quando a tela renascer no descongelamento, nasce sob a
+      // mesma regra.
       const ARQUIVOS_DO_PAINEL = [
         "src/modules/curadoria/painel-de-discordancia.ts",
         "src/modules/curadoria/painel-de-discordancia-repository.ts",
-        "src/components/curadoria/painel-de-discordancia.tsx",
       ];
       for (const caminho of ARQUIVOS_DO_PAINEL) {
         const arquivo = FONTES_COM_CONTEUDO.find(
@@ -627,23 +631,22 @@ describe("C-01 · Nenhuma proposta persistida existe", () => {
       ).toBe(false);
     });
 
-    it("o painel vive na Mesa, e só nela", () => {
-      // Quem importa o componente ou o repositório do painel tem de morar em
-      // `app/portal-curador/` — paciente, público e qualquer outra superfície
-      // continuam sem acesso (CONTRATO_1_11 §9.3).
+    it("a mecânica do painel não vaza para superfície nenhuma", () => {
+      // A tela saiu (redução de 21/08 — era órfã de link). O que a guarda
+      // protege agora é a INVERSA: enquanto não houver decisão de
+      // descongelamento, NINGUÉM importa a mecânica do painel — nem
+      // paciente, nem público, nem uma tela nova por engano. Se um dia a
+      // Mesa religar o painel (CONTRATO_1_11 §9.3), esta guarda volta a
+      // exigir que seja em `app/portal-curador/` e só ali.
       const importadores = FONTES_COM_CONTEUDO.filter(({ caminho, conteudo }) => {
         const normalizado = caminho.split("\\").join("/");
         if (normalizado.includes("modules/curadoria/painel-de-discordancia")) return false;
-        if (normalizado.includes("components/curadoria/painel-de-discordancia")) return false;
         return /painel-de-discordancia/.test(conteudo);
       }).map(({ caminho }) => caminho.split("\\").join("/"));
-      for (const importador of importadores) {
-        expect(
-          importador.startsWith("src/app/portal-curador/"),
-          `o painel vazou para fora da Mesa: ${importador}`,
-        ).toBe(true);
-      }
-      expect(importadores.length, "ninguém liga o painel — a Mesa perdeu a tela").toBeGreaterThan(0);
+      expect(
+        importadores,
+        `a mecânica do painel ganhou importador sem decisão de descongelamento: ${importadores.join(", ")}`,
+      ).toHaveLength(0);
     });
   });
 
