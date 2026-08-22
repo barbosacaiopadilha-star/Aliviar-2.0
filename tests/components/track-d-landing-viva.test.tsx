@@ -43,8 +43,11 @@ beforeAll(() => {
 afterEach(cleanup);
 
 /** As sete seções editoriais, na ordem em que a página as compõe. */
+// "Problema" (O cenário atual) e "NossoMetodo" saíram da composição por
+// decisão direta do Fundador em 22/08 — o rito em voz alta que a guarda
+// D-1 exigia (ver bloco7-landing-d1.test.tsx, onde a copy de ambos segue
+// congelada no componente para um eventual retorno).
 const SECOES = [
-  "Problema",
   "Respiro",
   "Metodo",
   "Prioridades",
@@ -65,7 +68,7 @@ describe("T-D-4 · a landing pública, depois da limpeza", () => {
     expect(screen.getAllByRole("heading", { level: 1 }).length).toBeGreaterThan(0);
   });
 
-  it("as sete seções editoriais continuam na composição", () => {
+  it("as seções editoriais vigentes continuam na composição", () => {
     const fonte = readFonteDaRota();
     for (const secao of SECOES) {
       expect(fonte, `a seção ${secao} saiu da composição`).toContain(`<${secao}Section`);

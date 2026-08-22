@@ -344,7 +344,7 @@ test.describe("Bloco 7 · a Landing pública", () => {
     // após o vídeo, antes do Espelho. As demais seções mantêm a ordem
     // relativa do contrato 34 entre si.
     const ordemNoDom = await page.evaluate(() =>
-      ["como-funciona", "problema", "para-quem", "concierge", "quem-somos"].map((id) =>
+      ["como-funciona", "para-quem", "concierge", "quem-somos"].map((id) =>
         Math.round(document.querySelector(`#${id}`)!.getBoundingClientRect().top + window.scrollY),
       ),
     );

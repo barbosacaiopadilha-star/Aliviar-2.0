@@ -6,7 +6,6 @@ import {
   ConviteSection,
   MetodoSection,
   PrioridadesSection,
-  ProblemaSection,
   QuemSomosSection,
   RespiroSection,
   VideoSection,
@@ -46,7 +45,10 @@ export default function HomePage() {
         <VideoSection />
         <ConfiancaStripSection />
         <MetodoSection />
-        <ProblemaSection />
+        {/* "O cenário atual" (ProblemaSection) SAIU por decisão do Fundador
+            (22/08) — reabrindo, em voz alta, a D-1 que a protegia. A copy
+            segue congelada no componente. O Respiro fica: agora é a pausa
+            entre a jornada e as prioridades. */}
         <RespiroSection />
         {/* "Nosso Método" (os quatro movimentos) SAIU por decisão do
             Fundador (22/08): com a jornada fotografada logo no topo, os

@@ -62,7 +62,6 @@ describe("T-7-1 · os blocos, e a ordem", () => {
     "VideoSection",
     "ConfiancaStripSection",
     "MetodoSection",
-    "ProblemaSection",
     "RespiroSection",
     "PrioridadesSection",
     "ConciergeSection",
@@ -71,7 +70,7 @@ describe("T-7-1 · os blocos, e a ordem", () => {
     "ConviteSection",
   ];
 
-  it("a rota compõe os onze blocos, na ordem prescrita", () => {
+  it("a rota compõe os dez blocos, na ordem prescrita", () => {
     const fonte = ler(FONTE_DA_ROTA);
     const posicoes = ORDEM.map((bloco) => ({ bloco, at: fonte.indexOf(`<${bloco}`) }));
 
@@ -87,10 +86,13 @@ describe("T-7-1 · os blocos, e a ordem", () => {
   });
 
   /**
-   * A guarda da D-1. Remover qualquer um destes quatro é reabrir uma decisão
-   * fechada — e é a mutação M-7-1.
+   * A guarda da D-1 — REABERTA EM VOZ ALTA para uma das quatro:
+   * `ProblemaSection` ("O cenário atual") saiu por decisão direta do
+   * Fundador em 22/08, exatamente pelo rito que esta guarda existia para
+   * forçar. A copy dela segue congelada no componente (describe ao final).
+   * As três restantes continuam intocáveis sem novo rito.
    */
-  it.each(["ProblemaSection", "RespiroSection", "FaqCompactSection", "ConviteSection"])(
+  it.each(["RespiroSection", "FaqCompactSection", "ConviteSection"])(
     "%s permanece — é a decisão da D-1, e não se reabre",
     (bloco) => {
       expect(ler(FONTE_DA_ROTA)).toContain(`<${bloco}`);
@@ -100,11 +102,10 @@ describe("T-7-1 · os blocos, e a ordem", () => {
   it("a página monta, e traz o conteúdo protegido", () => {
     render(<PaginaPublica />);
 
-    // "Quatro movimentos" saiu da página (decisão de 22/08) — o que a D-1
-    // protege continua, e é isso que se afirma aqui.
+    // "Quatro movimentos" e "O cenário atual" saíram da página (decisões de
+    // 22/08) — o que segue protegido continua na tela, e é isso que se
+    // afirma aqui.
     expect(screen.getByText("Você não faz isso sozinha.")).toBeInTheDocument();
-    // E o que a D-1 protege continua na tela.
-    expect(screen.getByText(/Escolher um médico virou um problema de navegação/)).toBeInTheDocument();
     expect(screen.getByText("Você não precisa decidir sozinho.")).toBeInTheDocument();
   });
 });
@@ -275,6 +276,23 @@ describe("Nosso Método fora da página — a copy segue congelada no componente
   it.each(MOVIMENTOS)("está no componente: %s", async (frase) => {
     const { NossoMetodoSection } = await import("@/components/landing/editorial/editorial-sections");
     render(<NossoMetodoSection />);
+    expect(screen.getByText(frase)).toBeInTheDocument();
+  });
+});
+
+describe("O cenário atual fora da página — a copy segue congelada no componente", () => {
+  // D-1 reaberta em voz alta pelo Fundador (22/08): a seção sai da página,
+  // mas a copy permanece canônica no componente para um eventual retorno.
+  const CENARIO = [
+    "Escolher um médico virou um problema de navegação.",
+    "Existem bons médicos e informação de sobra. O que falta é alguém do seu lado na hora de decidir.",
+    "Listas e anúncios não dizem o que importa para a sua situação.",
+    "Medo e pressa são maus conselheiros. E é exatamente aí que a decisão é exigida.",
+  ];
+
+  it.each(CENARIO)("está no componente: %s", async (frase) => {
+    const { ProblemaSection } = await import("@/components/landing/editorial/editorial-sections");
+    render(<ProblemaSection />);
     expect(screen.getByText(frase)).toBeInTheDocument();
   });
 });
