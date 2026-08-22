@@ -26,7 +26,10 @@ export const metadata: Metadata = {
 export default async function AtendimentoLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   // Administrador entra como supervisor (acesso global, §1 da Correção do
   // Administrador) — mas o ator padrão do fluxo continua sendo o Atendente.
-  await requireAnyRole(["atendente", "administrador"]);
+  // O Concierge entra desde a fusão fila×contatos (21/08): a ficha única do
+  // contato vive aqui, ele sempre teve `coa.view_atendimento`, e a ficha CRM
+  // que ele usava virou redirecionamento para cá.
+  await requireAnyRole(["atendente", "administrador", "concierge"]);
 
   return (
     <PortalShellContainer

@@ -1,78 +1,14 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 
-import { createAdminSupabaseClient } from "@/lib/supabase/admin";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { requireAnyRole } from "@/modules/auth/guard";
-import {
-  buildContactTimeline,
-  getAllowedStagesForContact,
-  getCaseById,
-  getContactById,
-  listAppointmentsForContact,
-  listCasesForContact,
-  listInteractionsForContact,
-  listTasksForContact,
-} from "@/modules/crm/repository";
-import { listTeamMembers } from "@/modules/team/repository";
-import { PageHeader } from "@/components/ads";
-import { CrmContactDetailPanel } from "@/components/crm/crm-contact-detail-panel";
-
-type PageProps = {
-  params: Promise<{ id: string }>;
-};
-
-export const metadata = { title: "Contato" };
-
-export default async function CrmContactDetailPage({ params }: PageProps) {
-  const state = await requireAnyRole(["administrador", "concierge"]);
+/**
+ * A ficha CRM do contato FUNDIU com a ficha do Atendimento (21/08): a mesma
+ * pessoa tinha duas fichas, e a que sobrou é a da jornada — que absorveu o
+ * registro (interações, tarefas, agenda, linha do tempo). Endereço salvo não
+ * vira 404: cai na ficha única. O arquivo existe (em vez de um redirect no
+ * next.config) porque `/admin/crm/contatos/novo` é rota irmã e um redirect de
+ * `:id` no config a engoliria.
+ */
+export default async function CrmContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = await createServerSupabaseClient();
-
-  const contact = await getContactById(supabase, id);
-  if (!contact) notFound();
-
-  const [cases, interactions, tasks, appointments, timeline, teamMembers] = await Promise.all([
-    listCasesForContact(supabase, id),
-    listInteractionsForContact(supabase, id),
-    listTasksForContact(supabase, id),
-    listAppointmentsForContact(supabase, id),
-    buildContactTimeline(supabase, id),
-    listTeamMembers(supabase, createAdminSupabaseClient()),
-  ]);
-
-  const curators = teamMembers
-    .filter((member) => member.roles.includes("curador_medico"))
-    .map((member) => ({ id: member.profileId, name: member.displayName }));
-  const concierges = teamMembers
-    .filter((member) => member.roles.includes("concierge") || member.roles.includes("administrador"))
-    .map((member) => ({ id: member.profileId, name: member.displayName }));
-
-  const activeCase = contact.activeCaseId ? await getCaseById(supabase, contact.activeCaseId) : null;
-  const allowedStages = getAllowedStagesForContact(contact, activeCase, appointments, state.roles);
-
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title={contact.fullName}
-        description="Ficha operacional do contato."
-        breadcrumbs={[
-          { label: "CRM" },
-          { label: "Contatos", href: "/admin/crm/contatos" },
-          { label: contact.fullName },
-        ]}
-      />
-      <CrmContactDetailPanel
-      contact={contact}
-      cases={cases}
-      interactions={interactions}
-      tasks={tasks}
-      appointments={appointments}
-      timeline={timeline}
-      allowedStages={allowedStages}
-      curators={curators}
-      concierges={concierges}
-      isAdmin={state.roles.includes("administrador")}
-    />
-    </div>
-  );
+  redirect(`/atendimento/${id}`);
 }

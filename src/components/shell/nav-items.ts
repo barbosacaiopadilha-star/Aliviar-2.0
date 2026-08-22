@@ -46,10 +46,12 @@ export function getNavGroups(role: string, basePath: string): NavGroup[] {
     // operacional de 21/08, F-3): eram vitrines sobre os mesmos dados das
     // jornadas, e o próprio hub já dizia que "deixam de competir como porta
     // de entrada". O menu passa a apontar para onde o trabalho acontece.
+    // "Visão operacional" (/coa) saiu do menu junto com a tela: o hub virou
+    // redirecionamento puro para a casa do papel. O menu já leva direto às
+    // três jornadas — um item que só roteava seria porta para um corredor.
     groups.push({
       label: "Centro de Operações",
       items: [
-        { label: "Visão operacional", href: "/coa", icon: "dashboard" },
         { label: "Atendimento", href: "/atendimento", icon: "contacts" },
         { label: "Curadoria", href: "/coa/curadoria", icon: "cases" },
         { label: "Concierge", href: "/acompanhamento", icon: "dashboard" },

@@ -11,7 +11,9 @@ describe("navegação administrativa do Centro de Operações", () => {
     ]);
 
     expect(labels).toContain("Centro de Operações");
-    expect(labels).toContain("Visão operacional");
+    // "Visão operacional" saiu: /coa virou redirecionamento puro (fusão de
+    // 21/08) e item de menu que só roteia é porta para um corredor.
+    expect(labels).not.toContain("Visão operacional");
     expect(labels).toContain("Curadoria");
     expect(labels).not.toContain("Painel Concierge");
     expect(labels).not.toContain("Observabilidade ACE");
@@ -48,7 +50,6 @@ describe("navegação administrativa do Centro de Operações", () => {
     );
 
     expect(coa?.items.map((item) => item.href)).toEqual([
-      "/coa",
       "/atendimento",
       "/coa/curadoria",
       "/acompanhamento",

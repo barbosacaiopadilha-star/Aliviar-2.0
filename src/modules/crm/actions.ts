@@ -49,14 +49,12 @@ async function assertContactAccess(
 }
 
 function revalidateCrm(contactId?: string) {
-  revalidatePath("/admin/crm");
+  // O funil, tarefas, agenda e os dashboards COA saíram (ADR-075); a ficha
+  // CRM fundiu com a do Atendimento (21/08). Sobram a lista, a fila e a
+  // ficha única — revalidar rota que não existe era ruído.
   revalidatePath("/admin/crm/contatos");
-  revalidatePath("/admin/crm/funil");
-  revalidatePath("/admin/crm/tarefas");
-  revalidatePath("/admin/crm/agenda");
-  revalidatePath("/coa/atendimento");
-  revalidatePath("/coa/concierge");
-  if (contactId) revalidatePath(`/admin/crm/contatos/${contactId}`);
+  revalidatePath("/atendimento");
+  if (contactId) revalidatePath(`/atendimento/${contactId}`);
 }
 
 async function requireCrmAction(permission?: Parameters<typeof hasCrmPermission>[1]) {

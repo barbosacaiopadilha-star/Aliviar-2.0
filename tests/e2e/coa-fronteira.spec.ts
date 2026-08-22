@@ -136,28 +136,30 @@ test.describe("COA-H1 · o índice /coa fecha para quem não tem nível", () => 
 test.describe("COA-H1 · a matriz legítima permanece intacta", () => {
   test.describe.configure({ mode: "serial" });
 
+  // O hub deixou de existir como tela (fusão de 21/08): /coa virou
+  // redirecionamento puro para a casa do papel, via resolveCoaHomePath.
+  // A matriz agora é: cada papel legítimo termina na PRÓPRIA jornada — e o
+  // hub não aparece para NINGUÉM, nem num flash (semHub em todos).
+
   test("T3 · Curador médico continua sendo levado à Curadoria", async ({ page }) => {
     await entrarComo(page, "curador_medico");
     await page.goto("/coa");
     await expect(page).toHaveURL(/\/coa\/curadoria$/);
+    await semHub(page);
   });
 
-  test("T4 · administrador continua vendo o hub com os três níveis", async ({ page }) => {
+  test("T4 · administrador é levado direto ao Atendimento — o hub não renderiza", async ({ page }) => {
     await entrarComo(page, "administrador");
     await page.goto("/coa");
-    await expect(page).toHaveURL(/\/coa$/);
-    await expect(page.getByRole("heading", { name: "Escolha sua área operacional" })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Nível/ })).toHaveCount(3);
+    await expect(page).toHaveURL(/\/atendimento$/);
+    await semHub(page);
   });
 
-  test("T5 · concierge vê só os níveis dele, e Curadoria não está entre eles", async ({ page }) => {
+  test("T5 · concierge é levado direto ao Acompanhamento — e Curadoria não aparece", async ({ page }) => {
     await entrarComo(page, "concierge");
     await page.goto("/coa");
-    // Dois níveis ⇒ hub; se um dia virar um só, o produto redireciona e este
-    // teste falha dizendo exatamente isso, em vez de passar por acidente.
-    await expect(page).toHaveURL(/\/coa$/);
-    const niveis = page.getByRole("link", { name: /Nível/ });
-    await expect(niveis).toHaveCount(2);
+    await expect(page).toHaveURL(/\/acompanhamento$/);
+    await semHub(page);
     await expect(page.locator("body")).not.toContainText("Curadoria Médica");
   });
 });

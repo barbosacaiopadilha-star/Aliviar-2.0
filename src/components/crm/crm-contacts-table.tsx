@@ -62,7 +62,7 @@ export function CrmContactsTable({ contacts }: CrmContactsTableProps) {
             {filtered.map((contact) => (
               <TableRow key={contact.id}>
                 <TableCell>
-                  <Link href={`/admin/crm/contatos/${contact.id}`} className="font-medium text-brand-primary hover:text-brand-primary-deep">
+                  <Link href={`/atendimento/${contact.id}`} className="font-medium text-brand-primary hover:text-brand-primary-deep">
                     {contact.fullName}
                   </Link>
                 </TableCell>
@@ -82,7 +82,7 @@ export function CrmContactsTable({ contacts }: CrmContactsTableProps) {
         {filtered.map((contact) => (
           <Card key={contact.id} padding="sm">
             <div className="space-y-2">
-              <Link href={`/admin/crm/contatos/${contact.id}`} className="font-medium text-brand-primary">
+              <Link href={`/atendimento/${contact.id}`} className="font-medium text-brand-primary">
                 {contact.fullName}
               </Link>
               <p className="text-sm text-ink-muted">{formatPhoneDisplay(contact.phoneNormalized)}</p>

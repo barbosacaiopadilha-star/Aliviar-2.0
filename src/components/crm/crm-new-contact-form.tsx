@@ -43,7 +43,7 @@ export function CrmNewContactForm() {
         setError(result.error);
         return;
       }
-      router.push(`/admin/crm/contatos/${result.contactId}`);
+      router.push(`/atendimento/${result.contactId}`);
     });
   }
 
