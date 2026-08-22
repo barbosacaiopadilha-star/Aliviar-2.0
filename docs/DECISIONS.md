@@ -1734,3 +1734,17 @@ Novo agregado `approach_attempts` · nova estrutura `team_notifications` · proj
 - **Revisitar quando:** o volume tornar o papel gargalo (aí o wizard e o funil acordam, por evidência); ou a primeira rodada mostrar que algum dos atos "adormecidos" fazia falta real.
 
 ---
+
+## ADR-076 — Ensaio geral antes da estreia; o Curador coleta e inscreve, o administrador valida
+
+- **Data:** 2026-08-21
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data.
+- **Dependências:** emenda a decisão 1 da **ADR-074** (papéis da entrevista do profissional) · não altera a **ADR-073** — o ensaio não descongela nada · usa o kit de `docs/rede/` como instrumento.
+- **Contexto:** os nomes citados no planejamento da primeira rodada (médicos e paciente) eram **exemplos**, não pessoas recrutadas. Isso muda o nome do primeiro passo: antes de haver gente real, há um ensaio.
+- **Decisões:**
+  1. **A primeira rodada é um ensaio geral.** Médicos e paciente de exemplo, kit no papel, e — se houver transcrição — ambiente local. **Produção não recebe pessoa fictícia**: o pool de produção fica limpo (a guarda de perfil de demonstração continua valendo, e perfil demo não publica). O ensaio serve para calibrar o kit, os tempos e o Diário de Observação. **O ensaio NÃO encerra a ADR-073** — o congelamento só termina com paciente real, Curador real, Rede real e relatório entregue.
+  2. **O Curador entrevista e inscreve o profissional na Rede; o administrador valida** (registro profissional, área, fontes). Emenda a decisão 1 da ADR-074, que dizia "o administrador registra": quem colhe a informação passa a ser quem vai usá-la na Mesa, e o administrador vira verificador — papel de quem confere, não de quem escuta. **Consequência técnica registrada, não executada:** hoje a RLS só permite ao administrador escrever o Mapa do profissional; dar essa escrita ao Curador é trabalho do descongelamento. Até lá, na ata digital, o administrador transcreve o que o Curador colheu — e a autoria da coleta fica lavrada na proveniência (*entrevista de DD/MM, conduzida pelo Curador*).
+  3. **O Termo de Veracidade atual vale para o piloto sem revisão jurídica prévia.** O Fundador aceita o risco; o advogado revisa em paralelo, e a versão revisada substitui a folha nas rodadas seguintes. Termos já assinados na versão anterior não são reassinados retroativamente, salvo orientação jurídica em contrário.
+- **Revisitar quando:** o ensaio acontecer (as anotações do Diário calibram o kit); o termo revisado chegar; ou o descongelamento abrir a escrita do Mapa ao Curador (aí a decisão 2 vira permissão de verdade, não fluxo de papel).
+
+---
