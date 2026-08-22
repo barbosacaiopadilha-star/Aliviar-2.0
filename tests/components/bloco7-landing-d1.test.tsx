@@ -50,20 +50,28 @@ describe("T-7-1 · os blocos, e a ordem", () => {
    * — os quatro movimentos — é seção nova. Sem essa reconciliação, dois
    * eyebrows diriam "Método" na mesma página.
    */
+  /**
+   * Ordem decidida pelo Fundador em 22/08 (fidelidade ao mockup dele):
+   * vídeo e faixa de confiança logo após o Hero; a jornada ("Como
+   * funciona") sobe; e "Nosso Método" (os quatro movimentos) SAI da página
+   * — redundante com a jornada fotografada. O componente permanece
+   * exportado, com a copy congelada mais abaixo, fora da página.
+   */
   const ORDEM = [
     "HeroEditorial",
+    "VideoSection",
+    "ConfiancaStripSection",
+    "MetodoSection",
     "ProblemaSection",
     "RespiroSection",
-    "NossoMetodoSection",
     "PrioridadesSection",
     "ConciergeSection",
-    "MetodoSection",
     "QuemSomosSection",
     "FaqCompactSection",
     "ConviteSection",
   ];
 
-  it("a rota compõe os dez blocos, na ordem prescrita", () => {
+  it("a rota compõe os onze blocos, na ordem prescrita", () => {
     const fonte = ler(FONTE_DA_ROTA);
     const posicoes = ORDEM.map((bloco) => ({ bloco, at: fonte.indexOf(`<${bloco}`) }));
 
@@ -89,10 +97,11 @@ describe("T-7-1 · os blocos, e a ordem", () => {
     },
   );
 
-  it("a página monta, e traz o conteúdo das duas seções novas", () => {
+  it("a página monta, e traz o conteúdo protegido", () => {
     render(<PaginaPublica />);
 
-    expect(screen.getByText("Quatro movimentos, sempre nesta ordem.")).toBeInTheDocument();
+    // "Quatro movimentos" saiu da página (decisão de 22/08) — o que a D-1
+    // protege continua, e é isso que se afirma aqui.
     expect(screen.getByText("Você não faz isso sozinha.")).toBeInTheDocument();
     // E o que a D-1 protege continua na tela.
     expect(screen.getByText(/Escolher um médico virou um problema de navegação/)).toBeInTheDocument();
@@ -101,9 +110,9 @@ describe("T-7-1 · os blocos, e a ordem", () => {
 });
 
 describe("T-7-2 · cada link do header aponta para um id que existe", () => {
-  const ANCORAS = ["quem-somos", "para-quem", "como-funciona", "metodo", "concierge"];
+  const ANCORAS = ["quem-somos", "para-quem", "como-funciona", "concierge"];
 
-  it("os cinco id existem na página renderizada", () => {
+  it("os quatro id existem na página renderizada", () => {
     const { container } = render(<PaginaPublica />);
     for (const id of ANCORAS) {
       expect(container.querySelector(`#${id}`), `o id #${id} não existe`).not.toBeNull();
@@ -121,7 +130,7 @@ describe("T-7-2 · cada link do header aponta para um id que existe", () => {
       .map((a) => a.getAttribute("href") ?? "")
       .filter((href) => href.startsWith("#"));
 
-    expect(ancoras.length, "o header ficou sem navegação").toBeGreaterThanOrEqual(5);
+    expect(ancoras.length, "o header ficou sem navegação").toBeGreaterThanOrEqual(4);
     for (const href of ancoras) {
       expect(ids, `${href} não corresponde a nenhum id da página`).toContain(href.slice(1));
     }
@@ -181,14 +190,11 @@ describe("T-7-6 · hierarquia de cabeçalhos", () => {
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
 
     const h2 = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
-    expect(h2, "as seções novas precisam ser h2").toEqual(
-      expect.arrayContaining(["Quatro movimentos, sempre nesta ordem.", "Você não faz isso sozinha."]),
+    expect(h2, "as seções precisam ser h2").toEqual(
+      expect.arrayContaining(["Você não faz isso sozinha."]),
     );
 
     const h3 = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
-    expect(h3, "os pilares precisam ser h3").toEqual(
-      expect.arrayContaining(["Consciência", "Contexto", "Análise", "Direção"]),
-    );
     expect(h3).toEqual(
       expect.arrayContaining([
         "Organização que simplifica",
@@ -201,15 +207,8 @@ describe("T-7-6 · hierarquia de cabeçalhos", () => {
 
 describe("Bloco 7 · a copy é a do contrato, palavra por palavra", () => {
   const COPY_EXATA = [
-    // Nosso Método — reescrito na auditoria visual de 2026-08-20: os quatro
-    // movimentos passaram a dizer POR QUE nesta ordem, nunca o que acontece
-    // (o "o que acontece" é papel do "Como funciona", e a página explicava a
-    // mesma jornada duas vezes). O oráculo congela a copy NOVA; a antiga
-    // descrevia etapas, e é exatamente o que não pode voltar.
-    "Ninguém escolhe bem o que ainda não entendeu. Antes de qualquer nome, o que está em jogo precisa ficar claro.",
-    "Não existe bom médico em abstrato — existe o certo para uma vida concreta. Por isso o critério vem de você, antes da busca.",
-    "Comparar exige uma pessoa lendo, não um filtro. Quem compara assume o que escolheu, com nome.",
-    "Três, nunca um. Uma indicação única esconde o que foi descartado; três mostram o que cada caminho cobra.",
+    // Os quatro movimentos SAÍRAM da página (decisão do Fundador, 22/08) —
+    // a copy deles segue congelada no componente, no describe ao final.
     // Concierge
     "Documentos, etapas e informações reunidos num lugar só — você não precisa guardar nada de cabeça.",
     "Quando surge uma dúvida, há alguém da Aliviar para responder. Você nunca fica diante de uma decisão sem ter a quem perguntar.",
@@ -258,5 +257,24 @@ describe("Bloco 7 · a copy é a do contrato, palavra por palavra", () => {
     render(<PaginaPublica />);
     expect(screen.getByText("E a decisão continua sendo sua.")).toBeInTheDocument();
     expect(screen.getByText(/nenhum algoritmo escolhe por você/)).toBeInTheDocument();
+  });
+});
+
+describe("Nosso Método fora da página — a copy segue congelada no componente", () => {
+  // Os quatro movimentos saíram da página por decisão do Fundador (22/08),
+  // mas a reescrita de 20/08 (POR QUE, nunca o que acontece) continua sendo
+  // a versão canônica. Se a seção um dia voltar, volta com ESTA copy — e a
+  // antiga, que descrevia etapas, continua sendo o que não pode voltar.
+  const MOVIMENTOS = [
+    "Ninguém escolhe bem o que ainda não entendeu. Antes de qualquer nome, o que está em jogo precisa ficar claro.",
+    "Não existe bom médico em abstrato — existe o certo para uma vida concreta. Por isso o critério vem de você, antes da busca.",
+    "Comparar exige uma pessoa lendo, não um filtro. Quem compara assume o que escolheu, com nome.",
+    "Três, nunca um. Uma indicação única esconde o que foi descartado; três mostram o que cada caminho cobra.",
+  ];
+
+  it.each(MOVIMENTOS)("está no componente: %s", async (frase) => {
+    const { NossoMetodoSection } = await import("@/components/landing/editorial/editorial-sections");
+    render(<NossoMetodoSection />);
+    expect(screen.getByText(frase)).toBeInTheDocument();
   });
 });

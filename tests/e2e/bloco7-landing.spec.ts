@@ -16,7 +16,9 @@ import { expect, test, type Page } from "@playwright/test";
 const DESTINO = process.env.CAPTURA_DIR ?? path.resolve(__dirname, "../../evidencias/bloco7");
 const CAPTURANDO = Boolean(process.env.CAPTURA);
 
-const ANCORAS = ["quem-somos", "para-quem", "como-funciona", "metodo", "concierge"] as const;
+// "metodo" saiu das âncoras: os quatro movimentos deixaram a página por
+// decisão do Fundador (22/08) — redundantes com a jornada fotografada.
+const ANCORAS = ["quem-somos", "para-quem", "como-funciona", "concierge"] as const;
 
 /**
  * V-B7-1 · O PORTÃO DE CAPTURA.
@@ -298,7 +300,7 @@ test.describe("Bloco 7 · a Landing pública", () => {
     await expect(page.getByRole("heading", { name: "Você não faz isso sozinha." })).toBeVisible();
 
     await page.getByRole("link", { name: "Nossa curadoria" }).first().click();
-    await expect(page.locator("#metodo")).toBeInViewport({ timeout: 10_000 });
+    await expect(page.locator("#como-funciona")).toBeInViewport({ timeout: 10_000 });
 
     // O convite anônimo: rótulo, destino, foco por teclado e alvo medido.
     //
@@ -342,7 +344,7 @@ test.describe("Bloco 7 · a Landing pública", () => {
     // após o vídeo, antes do Espelho. As demais seções mantêm a ordem
     // relativa do contrato 34 entre si.
     const ordemNoDom = await page.evaluate(() =>
-      ["como-funciona", "problema", "metodo", "para-quem", "concierge", "quem-somos"].map((id) =>
+      ["como-funciona", "problema", "para-quem", "concierge", "quem-somos"].map((id) =>
         Math.round(document.querySelector(`#${id}`)!.getBoundingClientRect().top + window.scrollY),
       ),
     );

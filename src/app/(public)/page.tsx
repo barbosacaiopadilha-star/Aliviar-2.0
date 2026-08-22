@@ -5,7 +5,6 @@ import {
   ConfiancaStripSection,
   ConviteSection,
   MetodoSection,
-  NossoMetodoSection,
   PrioridadesSection,
   ProblemaSection,
   QuemSomosSection,
@@ -49,7 +48,11 @@ export default function HomePage() {
         <MetodoSection />
         <ProblemaSection />
         <RespiroSection />
-        <NossoMetodoSection />
+        {/* "Nosso Método" (os quatro movimentos) SAIU por decisão do
+            Fundador (22/08): com a jornada fotografada logo no topo, os
+            movimentos contavam a mesma história duas vezes. O componente
+            fica exportado — e a copy congelada pelo teste — para o dia em
+            que a página precisar dele de volta. */}
         <PrioridadesSection />
         <ConciergeSection />
         <QuemSomosSection />

@@ -33,10 +33,13 @@ type PublicHeaderProps = {
 // trás e para frente. A ordem da página é contratada (contrato 34 §6) e não se
 // mexe; o menu é que passa a segui-la.
 const NAV_LINKS = [
-  { href: "#metodo", label: "Nossa curadoria" },
+  // "Nossa curadoria" aponta para a jornada desde que os quatro movimentos
+  // saíram da página (decisão do Fundador, 22/08) — a jornada É a curadoria
+  // contada em cartões. O item "Como funciona" separado saiu junto: dois
+  // links para a mesma âncora seriam ruído.
+  { href: "#como-funciona", label: "Nossa curadoria" },
   { href: "#para-quem", label: "Para quem é" },
   { href: "#concierge", label: "Concierge" },
-  { href: "#como-funciona", label: "Como funciona" },
   { href: "#quem-somos", label: "Quem somos" },
 ] as const;
 
