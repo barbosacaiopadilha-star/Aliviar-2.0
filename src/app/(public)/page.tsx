@@ -15,8 +15,11 @@ import { VidroDinamico } from "@/components/landing/editorial/vidro-dinamico";
 
 export const metadata: Metadata = {
   title: { absolute: "Aliviar Curadoria Médica — Uma decisão de saúde importante" },
-  description:
-    "Com você em cada etapa — da sua história até a escolha do médico certo para você.",
+  // A descrição (o que o Google mostra) prometia "o médico certo para
+  // você" — a promessa de resultado que a L14/Linguagem §6 proíbe e que o
+  // Hero já tinha corrigido em julho. A vitrine passa a dizer a mesma
+  // verdade dentro e fora da tela.
+  description: "Com você em cada etapa. Da sua história até uma decisão que é sua.",
 };
 
 export default function HomePage() {

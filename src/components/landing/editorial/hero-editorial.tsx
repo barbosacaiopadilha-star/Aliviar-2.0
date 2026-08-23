@@ -30,8 +30,12 @@ export function HeroEditorial() {
                 resultado, e a Fachada nunca promete mais do que o interior
                 entrega (L14; Linguagem §6 — família de "ideal"). A decisão é
                 dela; a companhia é nossa. */}
+            {/* Revisão de cadência (23/08): a página fechava oito frases com
+                a mesma virada de travessão. Aqui e no 2º parágrafo do card
+                do Curador o movimento se desfaz; os demais travessões ficam,
+                porque cada um carrega a virada que define a casa. */}
             <p className="landing-body mt-8 max-w-2xl text-lg text-[var(--color-ink-muted)]">
-              Com você em cada etapa — da sua história até uma decisão que é sua.
+              Com você em cada etapa. Da sua história até uma decisão que é sua.
             </p>
 
             {/* A porta é UMA (CRITICA_LANDING_2_2 §5; C1/ADR-075). */}

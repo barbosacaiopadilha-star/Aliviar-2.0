@@ -512,7 +512,7 @@ export function MetodoSection() {
             benefício do processo, nunca promessa de resultado (§6.5). */}
         <p className="landing-body mt-4 text-lg text-[var(--color-ink)]">
           Ao contratar a Aliviar, você recebe um processo inteiro dedicado ao seu caso: escuta, análise criteriosa,
-          três opções sérias e acompanhamento — tudo com nome e data.
+          três opções sérias e acompanhamento, tudo com nome e data.
         </p>
 
         <div className="mt-10 grid grid-cols-2 gap-8 lg:grid-cols-4">
