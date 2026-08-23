@@ -8,7 +8,13 @@ import { FormacaoAcademicaBloco } from "@/components/patient/formacao-academica-
 import { cn } from "@/components/ui/cn";
 import type { PatientCuradoriaOption } from "@/modules/curadoria/patient-curadoria";
 import { dimensoesConhecidas, fraseDoQueNaoSabemos } from "@/modules/paciente/experiencia";
-import { SELO_FORMACAO_VERIFICADA, resumoDaFormacao } from "@/modules/profiles/formacao-academica";
+import {
+  SELO_FORMACAO_VERIFICADA,
+  linhasPublicas,
+  ordenarParaApresentacao,
+  resumoDaFormacao,
+  temSeloDeVerificacao,
+} from "@/modules/profiles/formacao-academica";
 
 /**
  * A carta de um caminho.
@@ -136,20 +142,12 @@ export function CartaCaminho({
             transition={{ duration: semMovimento ? 0 : 0.35, ease: [0.4, 0, 0.2, 1] }}
             className="overflow-hidden"
           >
-            {/* Decisão do Fundador (22/08, risco na tela): a carta aberta em
-                DUAS colunas no desktop — a narrativa à esquerda, e o PERFIL
-                ACADÊMICO na coluna direita, que ficava vazia. Sem formação
-                confirmada, a coluna não existe e a narrativa ocupa tudo:
-                ausência nunca vira espaço em branco reservado. */}
-            <div
-              className={cn(
-                "mt-6 border-t border-[var(--color-border)] pt-6",
-                option.formacao.length > 0 || option.formacaoIndisponivel
-                  ? "grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-12"
-                  : "space-y-6",
-              )}
-            >
-              <div className="space-y-6">
+            {/* Decisão do Fundador (22/08, 2º risco): o estado e a PROVA
+                andam juntos — os fatos da formação aninham logo abaixo da
+                linha "Formação" do Perfil, com o selo. As outras dimensões
+                seguem só com o estado (a prova delas é a leitura relacional,
+                abaixo). A carta volta a UMA coluna. */}
+            <div className="mt-6 space-y-6 border-t border-[var(--color-border)] pt-6">
               {/* Só o que se SABE vira linha. As dimensões ainda não
                   confirmadas saem daqui e viram uma frase única no fim — três
                   cartas × cinco ausências davam quinze repetições da mesma
@@ -161,10 +159,44 @@ export function CartaCaminho({
                   <h4 className="patient-section-title">Como responde ao seu Perfil</h4>
                   <div className="mt-3 space-y-2.5">
                     {conhecidas.map((dimension) => (
-                      <BarraCompatibilidade key={dimension.criterion} dimension={dimension} />
+                      <div key={dimension.criterion}>
+                        <BarraCompatibilidade dimension={dimension} />
+                        {dimension.criterion === "FORMACAO" && option.formacao.length > 0 ? (
+                          <div className="mb-2 mt-2 space-y-2 border-l-2 border-[var(--color-border)] pl-4">
+                            {temSeloDeVerificacao(option.formacao) ? (
+                              <span className="inline-flex items-center rounded-full border border-[var(--color-border)] bg-white/70 px-3 py-1 text-xs font-medium text-[var(--patient-ink)]">
+                                {SELO_FORMACAO_VERIFICADA}
+                              </span>
+                            ) : null}
+                            {ordenarParaApresentacao([...option.formacao]).map((entrada, indice) => (
+                              <div key={`${entrada.kind}-${entrada.title}-${indice}`}>
+                                <p className="font-serif text-sm leading-relaxed text-[var(--patient-ink)]">
+                                  {entrada.title}
+                                </p>
+                                {linhasPublicas(entrada).map((linha) => (
+                                  <p key={linha} className="text-xs leading-relaxed text-[var(--color-ink-muted)]">
+                                    {linha}
+                                  </p>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
                     ))}
                   </div>
                 </section>
+              ) : null}
+
+              {/* Os casos que o aninhamento não cobre continuam honestos: a
+                  leitura indisponível declara-se, e formação confirmada SEM a
+                  dimensão declarada pelo Curador aparece como bloco próprio. */}
+              {option.formacaoIndisponivel ||
+              (option.formacao.length > 0 && !conhecidas.some((d) => d.criterion === "FORMACAO")) ? (
+                <FormacaoAcademicaBloco
+                  formacao={conhecidas.some((d) => d.criterion === "FORMACAO") ? [] : option.formacao}
+                  indisponivel={option.formacaoIndisponivel}
+                />
               ) : null}
 
               {/* ADR-065 — a leitura relacional, já validada pelo Curador na
@@ -265,19 +297,6 @@ export function CartaCaminho({
                     {faltando}
                   </p>
                 </section>
-              ) : null}
-              </div>
-
-              {/* A coluna direita — o perfil acadêmico. Fato confirmado pela
-                  equipe, com selo; mesmas regras de sempre (F-2): vazia não
-                  existe, ilegível declara-se indisponível. */}
-              {option.formacao.length > 0 || option.formacaoIndisponivel ? (
-                <aside className="lg:border-l lg:border-[var(--color-border)] lg:pl-8">
-                  <FormacaoAcademicaBloco
-                    formacao={option.formacao}
-                    indisponivel={option.formacaoIndisponivel}
-                  />
-                </aside>
               ) : null}
             </div>
           </motion.div>
