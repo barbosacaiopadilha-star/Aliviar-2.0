@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
 
+import { CapituloDoEdificio } from "@/components/landing/editorial/capitulo-do-edificio";
 import {
-  ConciergeSection,
-  ConfiancaStripSection,
   ConviteSection,
+  EscolhaSection,
   MetodoSection,
-  PrioridadesSection,
-  QuemSomosSection,
   RespiroSection,
   VideoSection,
 } from "@/components/landing/editorial/editorial-sections";
 import { FaqCompactSection } from "@/components/landing/editorial/faq-compact";
 import { HeroEditorial } from "@/components/landing/editorial/hero-editorial";
 import { RevealGroup } from "@/components/landing/editorial/reveal";
+import { VidroDinamico } from "@/components/landing/editorial/vidro-dinamico";
 
 export const metadata: Metadata = {
   title: { absolute: "Aliviar Curadoria Médica — Uma decisão de saúde importante" },
@@ -37,30 +36,53 @@ export default function HomePage() {
 
           `ConciergeSection` vem DEPOIS de `PrioridadesSection` de propósito:
           o Concierge entra quando já existe escolha a acompanhar (§4.1). */}
-      <HeroEditorial />
-      <RevealGroup>
-        {/* Fidelidade ao mockup (2ª rodada, 22/08): vídeo → faixa de
-            pilares → jornada ("Como funciona") → seções editoriais. A ordem
-            relativa do contrato 34 entre as seções canônicas permanece. */}
+      {/* ADR-080 · 3ª rodada (23/08, decisão do Fundador): a página são
+          QUATRO capítulos do Edifício — todo o conteúdo dentro deles, na
+          ordem canônica intocada (contrato 34 / ADR-078 §2). A dosagem
+          aprovada: cada capítulo abre com a cena forte e amansa por dentro;
+          o Respiro é a única pausa de linho — por ser única, significa.
+          "O cenário atual" e "Nosso Método" seguem fora (decisões de 22/08,
+          copy congelada nos componentes). */}
+      {/* ADR-082 · O ROTEIRO DOS QUATRO ATOS (decisão do Fundador, 23/08):
+          tudo na página existe para explicar Recepção → Curadoria →
+          Escolha → Concierge — um ato por capítulo do Edifício.
+          - RECEPÇÃO: o hero e o vídeo de apresentação (apresentação é
+            chegada — ordem expressa do Fundador).
+          - CURADORIA: o manifesto, a apresentação do Curador (copy dele) e
+            os passos 01–03. O futuro vídeo do "como funciona" entra aqui.
+          - ESCOLHA: os passos 04–05, no corredor dos três retratos.
+          - CONCIERGE: dúvidas e a porta, na mesa de trabalho.
+          A numeração da jornada atravessa os atos de propósito: a
+          travessia É a jornada. Cortes anteriores (ADR-081 e emenda)
+          seguem valendo — copies congeladas nos componentes. */}
+      <CapituloDoEdificio
+        scene="entrada"
+        imagePosition="right center"
+        backdropClassName="landing-hero-cenario"
+      >
+        {/* Ordem expressa do Fundador (23/08): o vídeo de apresentação é a
+            PRIMEIRA coisa da Recepção — acima do Capítulo Zero. */}
         <VideoSection />
-        <ConfiancaStripSection />
-        <MetodoSection />
-        {/* "O cenário atual" (ProblemaSection) SAIU por decisão do Fundador
-            (22/08) — reabrindo, em voz alta, a D-1 que a protegia. A copy
-            segue congelada no componente. O Respiro fica: agora é a pausa
-            entre a jornada e as prioridades. */}
+        <HeroEditorial />
+      </CapituloDoEdificio>
+      <RevealGroup>
+        <CapituloDoEdificio scene="curadoria">
+          <MetodoSection />
+        </CapituloDoEdificio>
+        {/* Capítulo curto pede cena NÍTIDA: o corredor dos três retratos é
+            o ato da Escolha encenado — o gradiente de amansar não entra. */}
+        <CapituloDoEdificio scene="corredor" variant="edificio-nitido">
+          <EscolhaSection />
+        </CapituloDoEdificio>
         <RespiroSection />
-        {/* "Nosso Método" (os quatro movimentos) SAIU por decisão do
-            Fundador (22/08): com a jornada fotografada logo no topo, os
-            movimentos contavam a mesma história duas vezes. O componente
-            fica exportado — e a copy congelada pelo teste — para o dia em
-            que a página precisar dele de volta. */}
-        <PrioridadesSection />
-        <ConciergeSection />
-        <QuemSomosSection />
-        <FaqCompactSection />
-        <ConviteSection />
+        <CapituloDoEdificio scene="mesa">
+          <FaqCompactSection />
+          <ConviteSection />
+        </CapituloDoEdificio>
       </RevealGroup>
+      {/* O motor do vidro dinâmico: os cards solidificam na zona de leitura
+          e voltam a vidro ao sair (decisão do Fundador, 23/08). */}
+      <VidroDinamico />
     </>
   );
 }

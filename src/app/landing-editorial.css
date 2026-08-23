@@ -788,10 +788,197 @@
 
 .landing-editorial .landing-veu {
   position: relative;
-  background: color-mix(in srgb, var(--landing-linen) 80%, transparent);
-  backdrop-filter: blur(14px) saturate(1.05);
-  -webkit-backdrop-filter: blur(14px) saturate(1.05);
+  /* Decisão do Fundador (23/08): os cards são VIDRO — transparentes de
+     verdade, mas perceptíveis. A presença vem das BORDAS (fio claro +
+     brilho de topo), não da tinta; o desfoque é leve o bastante para a
+     cena continuar reconhecível atrás do texto. Tudo em token — a paleta
+     única não admite cor literal. */
+  /* Repouso QUASE INCOLOR (ajuste do Fundador, 23/08): o vidro parado mal
+     tinge — todo o realce vem da transição para o sólido. O card se
+     percebe pela borda e pelo brilho, não pela tinta. */
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--color-bg-surface) 9%, transparent) 0%,
+    color-mix(in srgb, var(--landing-linen) 4%, transparent) 60%
+  );
+  /* Vidro LISO (3ª rodada): o Fundador tirou o "escovado" — desfoque quase
+     zero; a cena fica reconhecível através do card. A dosagem do capítulo é
+     quem protege a leitura, não o embaçado. */
+  backdrop-filter: blur(2px) saturate(1.12);
+  -webkit-backdrop-filter: blur(2px) saturate(1.12);
   border-radius: var(--radius-card);
-  border: 1px solid color-mix(in srgb, var(--color-bg-surface) 55%, transparent);
-  box-shadow: var(--shadow-lg);
+  border: 1px solid color-mix(in srgb, var(--color-bg-surface) 78%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-bg-surface) 85%, transparent),
+    inset 0 0 32px color-mix(in srgb, var(--color-bg-surface) 12%, transparent),
+    var(--shadow-lg);
+}
+
+/* Auditoria 23/08 (achado A2): o cinza do corpo (--color-ink-muted) foi
+   calibrado para o chão de linho — sobre vidro ele apaga. Dentro de um
+   véu, o corpo de texto usa a tinta plena. */
+.landing-editorial .landing-veu .landing-body {
+  color: var(--landing-ink);
+}
+
+/* A banda floresta é a exceção do vidro claro: texto claro sobre verde —
+   a regra acima não entra lá (o dourado e o on-dark mandam). */
+.landing-editorial .landing-veu--floresta .landing-body {
+  color: var(--color-on-dark);
+}
+
+/* No celular o ambiente ocupa a TELA INTEIRA (spec ADR-080: "cada
+   ambiente pode ocupar quase toda a tela") e o enquadramento vai para a
+   família no balcão — não para um pedaço de parede. O !important vence o
+   object-position inline do desktop (right center). */
+/* Celular — decisão do Fundador (23/08, 3ª rodada): o ambiente em TELA
+   CHEIA (recorte aceito) e o card do Capítulo Zero em VIDRO — quase
+   transparente, desfoque leve, letras menores. A cena atravessa o texto. */
+@media (max-width: 1023px) {
+  /* Risco do Fundador (23/08): com o vídeo abrindo a Recepção, o Capítulo
+     Zero deixa de reservar uma tela inteira — ele cola logo abaixo do card
+     do vídeo, sem vão. */
+  .landing-editorial .landing-hero-immersive {
+    min-height: 0;
+    padding-top: 0;
+    padding-bottom: 1.5rem;
+  }
+  .landing-editorial .landing-hero-cenario img {
+    object-position: 66% center !important;
+  }
+  .landing-editorial .landing-hero-cenario img.img-retrato {
+    object-position: center top !important;
+  }
+  .landing-editorial .landing-hero-immersive .landing-hero-title {
+    font-size: 1.8rem;
+    line-height: 1.25;
+  }
+  /* Card compacto no celular: quanto menor o card, mais Edifício aparece —
+     o letreiro e a família ficam visíveis acima dele. */
+  .landing-editorial .landing-hero-immersive .landing-veu {
+    padding: 1.5rem 1.375rem 1.625rem;
+  }
+  .landing-editorial .landing-hero-immersive .landing-veu .landing-body {
+    margin-top: 1rem;
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+  .landing-editorial .landing-hero-immersive .landing-veu .landing-hero-ctas {
+    margin-top: 1.25rem;
+  }
+}
+
+/* ==========================================================================
+   O capítulo do Edifício (ADR-080, 3ª rodada) — vale nas DUAS telas
+   A cena NUNCA estica para cobrir o capítulo inteiro (era o zoom que o
+   Fundador apontou): o img fica na altura de UMA tela, sticky, e acompanha
+   a rolagem. Sem background-attachment: fixed (quebra no iOS).
+   ========================================================================== */
+
+.landing-editorial .landing-capitulo .immersive-backdrop {
+  /* clip recorta como hidden, mas NÃO vira contêiner de rolagem — sem
+     isso o sticky do img não engata. */
+  overflow: clip;
+}
+
+.landing-editorial .landing-capitulo .immersive-backdrop img {
+  position: sticky !important;
+  top: 0 !important;
+  /* o fill do next/image também crava bottom:0 inline — com top E bottom,
+     o sticky não engata; o bottom sai do jogo. */
+  bottom: auto !important;
+  height: 100vh !important;
+  height: 100svh !important;
+}
+
+/* Vidro DENSO (dosagem da 3ª rodada): onde o texto é corrido — dúvidas,
+   retrato de prioridades, frase final — o vidro ganha um véu a mais. Ainda
+   se vê o ambiente; a leitura deixa de disputar com o monitor da cena. */
+.landing-editorial .landing-veu--denso {
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--color-bg-surface) 62%, transparent) 0%,
+    color-mix(in srgb, var(--landing-linen) 48%, transparent) 65%
+  );
+  backdrop-filter: blur(8px) saturate(1.08);
+  -webkit-backdrop-filter: blur(8px) saturate(1.08);
+}
+
+/* As emendas da travessia: cada capítulo nasce e se dissolve no linho —
+   a cena nunca é cortada seca na fronteira com o vizinho. */
+.landing-editorial .landing-capitulo::before,
+.landing-editorial .landing-capitulo::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+.landing-editorial .landing-capitulo::before {
+  top: 0;
+  height: 4rem;
+  background: linear-gradient(to bottom, var(--landing-linen), transparent);
+}
+.landing-editorial .landing-capitulo::after {
+  bottom: 0;
+  height: 7rem;
+  background: linear-gradient(to top, var(--landing-linen), transparent);
+}
+
+/* ==========================================================================
+   O vidro dinâmico (decisão do Fundador, 23/08)
+   O card nasce vidro, SOLIDIFICA no centro da tela (zona de leitura) e
+   volta a vidro ao sair. Só a opacidade anima — barato e suave. A camada
+   sólida é o linho; a variante floresta solidifica para o verde escuro,
+   preservando o único descanso de cor da página.
+   ========================================================================== */
+
+.landing-editorial .landing-veu::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  /* Ajuste do Fundador (23/08, 2ª calibragem): o sólido para em 84% — dez
+     por cento abaixo do nível antigo (93%). O realce das letras vem do
+     CONTRASTE com o repouso quase incolor, não do branco absoluto. */
+  /* 3ª geração do efeito (por ESTADO): a cristalização acontece no TEMPO,
+     não no pixel do scroll. Calibragem do Fundador ("mais suave", 23/08):
+     o clarear anda no tempo da caminhada da casa — 1,1s, curva humana. */
+  /* De volta à versão aprovada: o clarear acompanha a rolagem (a transição
+     curta só amacia os frames); o branco para em 84%. */
+  background: var(--landing-linen);
+  opacity: calc(var(--veu-solidez, 0) * 0.84);
+  transition: opacity 140ms linear;
+  pointer-events: none;
+}
+
+.landing-editorial .landing-veu > * {
+  position: relative;
+  z-index: 1;
+}
+
+.landing-editorial .landing-veu--floresta {
+  border-color: color-mix(in srgb, var(--landing-forest) 55%, transparent);
+}
+
+.landing-editorial .landing-veu--floresta::before {
+  /* Escuro sobre cena clara exige base ALTA: meio-vidro verde deixa os
+     retratos vazarem e apaga o dourado. O dinamismo aqui é um respiro
+     (0.88 → 0.98), não uma revelação. */
+  background: var(--landing-forest);
+  opacity: calc(0.88 + var(--veu-solidez, 0) * 0.1);
+}
+
+/* O vídeo na Recepção (risco do Fundador, 23/08): no celular a cena da
+   chegada abre a tela limpa — o card do vídeo pousa no vão do piso, logo
+   acima do Capítulo Zero. */
+@media (max-width: 1023px) {
+  .landing-editorial .landing-video-recepcao {
+    /* 2º risco do Fundador: o card desce mais um degrau — o cachorrinho da
+       família aparece inteiro antes do vídeo. */
+    padding-top: 60svh;
+    padding-bottom: 1rem;
+  }
 }

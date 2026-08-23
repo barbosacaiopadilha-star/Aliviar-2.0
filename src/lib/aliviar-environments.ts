@@ -42,6 +42,21 @@ export const ALIVIAR_SCENES = {
   curadoria: "/scenes/edificio/sala-curadoria.jpg",
   /** Corredor dos caminhos — três retratos (crânio·coluna·joelho), portas, luz contínua. */
   corredor: "/scenes/edificio/corredor.jpg",
+  /** Mesa de trabalho — a curadora e a agenda do caso: o acompanhamento que continua. */
+  mesa: "/scenes/edificio/mesa.jpg",
 } as const;
+
+/**
+ * ADR-080 (2ª rodada, 23/08) · direção de arte por tela: cada ambiente do
+ * Edifício existe em DUAS proporções geradas pelo Fundador — paisagem 16:9
+ * (computador) e retrato 9:16 (celular), cada uma com a área livre para
+ * texto planejada no próprio quadro. Quem tem retrato aqui, troca sozinho.
+ */
+export const ALIVIAR_SCENES_RETRATO: Partial<Record<AliviarSceneKey, string>> = {
+  entrada: "/scenes/edificio/entrada-retrato.jpg",
+  curadoria: "/scenes/edificio/sala-curadoria-retrato.jpg",
+  corredor: "/scenes/edificio/corredor-retrato.jpg",
+  mesa: "/scenes/edificio/mesa-retrato.jpg",
+};
 
 export type AliviarSceneKey = keyof typeof ALIVIAR_SCENES;

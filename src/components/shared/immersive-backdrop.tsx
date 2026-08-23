@@ -1,6 +1,10 @@
 import Image from "next/image";
 
-import { ALIVIAR_SCENES, type AliviarSceneKey } from "@/lib/aliviar-environments";
+import {
+  ALIVIAR_SCENES,
+  ALIVIAR_SCENES_RETRATO,
+  type AliviarSceneKey,
+} from "@/lib/aliviar-environments";
 import { cn } from "@/components/ui/cn";
 
 type ImmersiveBackdropProps = {
@@ -16,7 +20,8 @@ type ImmersiveBackdropProps = {
     | "patient-intimate"
     | "patient-warm"
     | "edificio-nitido"
-    | "edificio-suave";
+    | "edificio-suave"
+    | "edificio-capitulo";
   className?: string;
   priority?: boolean;
 };
@@ -37,6 +42,12 @@ const overlayClasses: Record<NonNullable<ImmersiveBackdropProps["variant"]>, str
     "bg-gradient-to-r from-[var(--color-bg-canvas)]/45 via-[var(--color-bg-canvas)]/10 to-transparent",
   "edificio-suave":
     "bg-gradient-to-b from-[var(--color-bg-canvas)]/72 via-[var(--color-bg-canvas)]/55 to-[var(--color-bg-canvas)]/78",
+  /* ADR-080/082 · com o VIDRO DINÂMICO protegendo a leitura (o card
+     branqueia na zona de leitura), o véu do capítulo ficou leve: a cena
+     permanece viva do início ao fim — era o véu pesado antigo que fazia o
+     card "parecer que já começa sólido" (diagnóstico de 23/08). */
+  "edificio-capitulo":
+    "bg-gradient-to-b from-[var(--color-bg-canvas)]/12 via-[var(--color-bg-canvas)]/25 to-[var(--color-bg-canvas)]/35",
 };
 
 export function ImmersiveBackdrop({
@@ -50,18 +61,33 @@ export function ImmersiveBackdrop({
 }: ImmersiveBackdropProps) {
   const imageSrc = src ?? (scene ? ALIVIAR_SCENES[scene] : undefined);
   if (!imageSrc) return null;
+  /* ADR-080 · direção de arte por tela: quando o ambiente tem versão
+     retrato gerada (9:16), o celular a recebe no lugar do recorte da
+     paisagem — cada proporção com sua área livre planejada no quadro. */
+  const retratoSrc = scene ? ALIVIAR_SCENES_RETRATO[scene] : undefined;
 
   return (
-    <div aria-hidden="true" className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)}>
+    <div aria-hidden="true" className={cn("immersive-backdrop pointer-events-none absolute inset-0 overflow-hidden", className)}>
       <Image
         src={imageSrc}
         alt=""
         fill
         priority={priority}
         sizes="100vw"
-        className="object-cover"
+        className={cn("object-cover", retratoSrc && "hidden lg:block")}
         style={{ opacity: imageOpacity / 100, ...(imagePosition ? { objectPosition: imagePosition } : {}) }}
       />
+      {retratoSrc ? (
+        <Image
+          src={retratoSrc}
+          alt=""
+          fill
+          priority={priority}
+          sizes="100vw"
+          className="img-retrato object-cover lg:hidden"
+          style={{ opacity: imageOpacity / 100 }}
+        />
+      ) : null}
       <div className={cn("absolute inset-0", overlayClasses[variant])} />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,color-mix(in_srgb,var(--color-bg-canvas)_45%,transparent)_100%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_75%_15%,rgba(183,154,91,0.04)_0%,transparent_70%)]" />

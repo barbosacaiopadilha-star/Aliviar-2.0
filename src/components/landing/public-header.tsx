@@ -37,9 +37,10 @@ const NAV_LINKS = [
   // saíram da página (decisão do Fundador, 22/08) — a jornada É a curadoria
   // contada em cartões. O item "Como funciona" separado saiu junto: dois
   // links para a mesma âncora seriam ruído.
+  // ADR-081 (23/08): "Para quem é" e "Concierge" saíram junto com as seções
+  // que apontavam — Prioridades e Concierge deixaram a composição na vitrine
+  // enxuta (uma ideia por bloco). Link sem destino é porta pintada.
   { href: "#como-funciona", label: "Nossa curadoria" },
-  { href: "#para-quem", label: "Para quem é" },
-  { href: "#concierge", label: "Concierge" },
   { href: "#quem-somos", label: "Quem somos" },
 ] as const;
 

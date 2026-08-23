@@ -18,7 +18,9 @@ const CAPTURANDO = Boolean(process.env.CAPTURA);
 
 // "metodo" saiu das âncoras: os quatro movimentos deixaram a página por
 // decisão do Fundador (22/08) — redundantes com a jornada fotografada.
-const ANCORAS = ["quem-somos", "para-quem", "como-funciona", "concierge"] as const;
+// ADR-081 (23/08): "para-quem" e "concierge" saíram junto com as seções —
+// a vitrine enxuta tem duas âncoras, e nenhuma porta pintada.
+const ANCORAS = ["quem-somos", "como-funciona"] as const;
 
 /**
  * V-B7-1 · O PORTÃO DE CAPTURA.
@@ -41,7 +43,8 @@ const ANCORAS = ["quem-somos", "para-quem", "como-funciona", "concierge"] as con
  * isso rota **e** conteúdo exclusivo **e** viewport **e** estado.
  */
 const H1_DA_LANDING = "Uma decisão de saúde importante.Você não precisa tomá-la sozinho.";
-const MARCADOR_EXCLUSIVO = "Capítulo Zero";
+// "Capítulo Zero" → "Seja bem-vindo" (pedido do Fundador, 23/08).
+const MARCADOR_EXCLUSIVO = "Seja bem-vindo";
 
 type Enquadramento = "pagina-inteira" | "hero";
 
@@ -261,10 +264,18 @@ test.describe("Bloco 7 · a Landing pública", () => {
 
       if (largura === 390) {
         // As cinco etapas VERTICAIS: cada uma começa abaixo da anterior.
+        // ADR-082 (23/08): a jornada atravessa dois atos — 01–03 na
+        // Curadoria (#como-funciona) e 04–05 na Escolha. A prova soma as
+        // duas listas, na ordem da página.
         const topos = await page.evaluate(() => {
-          const secao = document.querySelector("#como-funciona");
-          return [...(secao?.querySelectorAll("ol > li") ?? [])].map((li) =>
-            Math.round(li.getBoundingClientRect().top),
+          const listas = [
+            document.querySelector("#como-funciona"),
+            document.querySelector("section[aria-label='A escolha']"),
+          ];
+          return listas.flatMap((secao) =>
+            [...(secao?.querySelectorAll("ol > li") ?? [])].map((li) =>
+              Math.round(li.getBoundingClientRect().top + window.scrollY),
+            ),
           );
         });
         expect(topos, "as cinco etapas precisam existir").toHaveLength(5);
@@ -295,9 +306,14 @@ test.describe("Bloco 7 · a Landing pública", () => {
     }
 
     // Navegar de verdade: clicar leva a seção para dentro da viewport.
-    await page.getByRole("link", { name: "Concierge" }).first().click();
-    await expect(page.locator("#concierge")).toBeInViewport({ timeout: 10_000 });
-    await expect(page.getByRole("heading", { name: "Você não faz isso sozinha." })).toBeVisible();
+    // ADR-081: o item "Concierge" saiu do menu com a seção; a sala verde
+    // ("Quem somos") vira a prova de navegação profunda.
+    await page.getByRole("link", { name: "Quem somos" }).first().click();
+    await expect(page.locator("#quem-somos")).toBeInViewport({ timeout: 10_000 });
+    // ADR-082: o destino de "Quem somos" é a apresentação do Curador.
+    await expect(
+      page.getByRole("heading", { name: "Você não precisa escolher sozinho." }),
+    ).toBeVisible();
 
     await page.getByRole("link", { name: "Nossa curadoria" }).first().click();
     await expect(page.locator("#como-funciona")).toBeInViewport({ timeout: 10_000 });
@@ -344,7 +360,8 @@ test.describe("Bloco 7 · a Landing pública", () => {
     // após o vídeo, antes do Espelho. As demais seções mantêm a ordem
     // relativa do contrato 34 entre si.
     const ordemNoDom = await page.evaluate(() =>
-      ["como-funciona", "para-quem", "concierge", "quem-somos"].map((id) =>
+      // ADR-081: sobraram duas âncoras — jornada antes da sala verde.
+      ["como-funciona", "quem-somos"].map((id) =>
         Math.round(document.querySelector(`#${id}`)!.getBoundingClientRect().top + window.scrollY),
       ),
     );

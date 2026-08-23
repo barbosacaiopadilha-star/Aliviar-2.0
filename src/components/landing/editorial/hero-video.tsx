@@ -68,7 +68,10 @@ export function HeroVideo({ src, posterScene }: HeroVideoProps) {
             <Play className="ml-0.5 size-6" aria-hidden="true" />
           </span>
           <span className="rounded-pill bg-[color-mix(in_srgb,var(--color-brand-primary-darkest)_72%,transparent)] px-4 py-1.5 text-sm font-medium tracking-[0.02em] text-on-dark">
-            Conheça a Aliviar — 2 min
+            {/* Revisão de conteúdo (23/08): o selo repetia o título da
+                seção lado a lado ("Conheça a Aliviar" duas vezes). O selo
+                diz só a duração; o convite é do título. */}
+            Assistir — 2 min
           </span>
         </span>
       </button>

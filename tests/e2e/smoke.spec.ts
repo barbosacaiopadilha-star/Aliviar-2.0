@@ -16,8 +16,11 @@ test("home page loads and shows the landing journey", async ({ page }) => {
     page.getByRole("heading", { name: /Você não precisa tomá-la sozinho/ }),
   ).toBeVisible();
 
-  // Meio da jornada — quem conduz a Curadoria.
-  await expect(page.getByRole("heading", { name: "Curadores independentes." })).toBeVisible();
+  // Meio da jornada — quem conduz a Curadoria. ADR-082 (23/08): a sala
+  // verde deu lugar à apresentação do Curador, no ato da Curadoria.
+  await expect(
+    page.getByRole("heading", { name: "Você não precisa escolher sozinho." }),
+  ).toBeVisible();
 
   // Encerramento — a última seção montada.
   await expect(page.getByRole("heading", { name: "Dúvidas frequentes" })).toBeVisible();

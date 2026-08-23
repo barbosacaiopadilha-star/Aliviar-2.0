@@ -77,7 +77,9 @@ test("Dúvidas frequentes estão todas abertas — nada atrás de clique", async
 
   // As quatro perguntas e as quatro respostas, visíveis sem interação —
   // incluindo a mais sensível.
-  await expect(duvidas.getByText("Quanto custa?", { exact: false })).toBeVisible();
+  // Revisão de conteúdo (23/08): a pergunta perdeu a barra de rascunho —
+  // "Quanto custa e como funciona?".
+  await expect(duvidas.getByText("Quanto custa", { exact: false })).toBeVisible();
   await expect(
     duvidas.getByText("O cuidado clínico é do médico", { exact: false }),
   ).toBeVisible();

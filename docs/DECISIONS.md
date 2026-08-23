@@ -1806,3 +1806,37 @@ Novo agregado `approach_attempts` · nova estrutura `team_notifications` · proj
 - **Revisitar quando:** as imagens dos seis ambientes forem geradas e testadas localmente (aprovação visual do Fundador antes de qualquer publicação); ou quando existir um endereço físico real — aí a cláusula B se reavalia por inteiro.
 
 ---
+
+## ADR-081 — A vitrine enxuta: uma ideia por bloco
+
+- **Data:** 2026-08-23
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data ("pode cortar!").
+- **Dependências:** emenda a aplicação da **ADR-078** (a composição encolhe; a copy canônica dos blocos removidos permanece CONGELADA nos componentes) · apoia-se na **ADR-080** (4 capítulos — menos vidro por cena era o antídoto declarado à poluição) · reabre em voz alta, pela segunda vez, o perímetro do contrato 34 §6 na Landing.
+- **Contexto:** a operação é simples — contar a história → definir o que importa → análise → três opções → decisão acompanhada — e a página a explicava em ~9 blocos que repetiam as mesmas quatro ideias 4–5 vezes ("você não está sozinha", "acompanhamento", "sem ranking", "independente"). Camadas boas, empilhadas, explicavam o simples como se fosse complexo.
+- **Decisão:** saem da composição (componentes exportados, copy congelada): **ConfiancaStripSection** (pilares — resumo do que jornada e sala verde já dizem), **PrioridadesSection** (o passo 2 re-explicado: detalhe de produto, não de vitrine) e **ConciergeSection** (a sala verde já carrega "Concierge é tranquilidade"). Os itens de navegação "Para quem é" e "Concierge" saem junto — link sem destino é porta pintada.
+- **O que fica, por decisão explícita:** a pergunta-manifesto ("nunca perguntamos qual é o melhor médico"), os fatos verificáveis 3/29/1/0, o "o que não fazemos", o Respiro (única pausa) e os dois CTAs da porta única.
+- **Resultado:** 6 blocos, uma ideia por bloco, dentro dos 4 capítulos do Edifício.
+- **Revisitar quando:** o Observatório mostrar visitantes procurando o que os blocos removidos respondiam (ex.: dúvida recorrente sobre preço/quem-é no primeiro contato).
+
+---
+
+### Emenda à ADR-081 — a 2ª passada do bisturi (mesma data)
+
+O Fundador perguntou "dá pra resumir mais?" e aprovou os três cortes finais: **(1)** a sala verde perde as linhas editoriais e os diferenciais — dentro da própria seção repetiam os fatos ("independente" 3×, "a decisão é sua" 2×, "sem ranking" 2×); ficam título, abertura, os fatos 3/29/1/0 e "o que não fazemos". **(2)** O convite fica com UMA frase ("Quando você quiser começar…", a que diz o que acontece ao clicar) + o botão; "Cuidar é um caminho…" congela. **(3)** A introdução da jornada perde "São cinco passos…" — os cartões numerados já mostram. Todas as copies congeladas em constantes exportadas com guarda de teste. O osso declarado (não cortar sem nova decisão): Hero, os 5 passos, FAQ, "o que não fazemos" e o Respiro.
+
+---
+
+## ADR-082 — O roteiro dos quatro atos: Recepção, Curadoria, Escolha, Concierge
+
+- **Data:** 2026-08-23
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data.
+- **Dependências:** reorganiza a aplicação das **ADR-080/081** (os 4 capítulos ganham papel narrativo fixo) · coerente com "O essencial da Curadoria" (docs/rede/ — os quatro atos como régua) · emenda a ordem interna da composição (ADR-078 §2) pelo rito em voz alta.
+- **Decisões:**
+  1. **Todo o roteiro da Landing existe para explicar os quatro atos**, um por capítulo/ambiente: RECEPÇÃO (chegada) → CURADORIA (sala) → ESCOLHA (corredor dos três retratos) → CONCIERGE (mesa de trabalho).
+  2. **O vídeo de apresentação sobe para a Recepção** — apresentação é chegada. Quando existir o vídeo do "como funciona", ele entra no ato da Curadoria.
+  3. **O Curador ganha apresentação conceitual própria** no ato da Curadoria, com a copy do Fundador ("Você não precisa escolher sozinho. O Curador Aliviar escuta a sua história…"), fatos 3/29/1/0 e "o que não fazemos" dentro dela. Uma única adaptação de linguagem: "encontrar o cuidado certo" → "para você decidir com segurança e confiança" (L14/§6 — a Fachada não promete resultado). A copy antiga ("Curadores independentes…") segue congelada no componente QuemSomosSection.
+  4. **A jornada atravessa os atos:** passos 01–03 na Curadoria, 04–05 na Escolha, com numeração contínua — a travessia É a jornada. Supera, em voz alta, a regra anterior da "jornada de um olhar".
+  5. **O card do Curador é vidro branco como os demais** — a banda verde fugia da linguagem única do vidro dinâmico; o destaque vem de tamanho e posição, e os números falam o azul-marinho da marca.
+- **Revisitar quando:** o vídeo do "como funciona" existir; ou o Observatório mostrar que a divisão 01–03/04–05 confunde a leitura da jornada.
+
+---

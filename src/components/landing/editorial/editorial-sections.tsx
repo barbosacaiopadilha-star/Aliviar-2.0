@@ -109,7 +109,10 @@ const PILARES_DO_CONCIERGE = [
  * devolve a autonomia: tudo o que veio antes existe para que a decisão
  * continue sendo dela.
  */
-const LINHAS_EDITORIAIS = [
+/* 2ª passada da ADR-081 (23/08): as linhas SAÍRAM da tela — dentro da
+   própria sala verde elas repetiam o que os fatos dizem. Permanecem
+   exportadas como copy CONGELADA (guarda em bloco7-landing-d1). */
+export const LINHAS_EDITORIAIS = [
   "Curadoria é método.",
   "Concierge é tranquilidade.",
   "Independência é o que torna as duas possíveis.",
@@ -122,7 +125,10 @@ const LINHAS_EDITORIAIS = [
  * seção de independência do plano §B.2 não é criada: repeti-la alongaria a
  * página sem dizer nada novo.
  */
-const DIFERENCIAIS = [
+/* 2ª passada da ADR-081 (23/08): os diferenciais SAÍRAM da tela — os quatro
+   fatos (3/29/1/0) dizem o mesmo com número e menos palavras. Permanecem
+   exportados como copy CONGELADA (guarda em bloco7-landing-d1). */
+export const DIFERENCIAIS = [
   "Curadoria médica independente — sem vínculo com operadoras ou hospitais.",
   "Um Curador humano estuda cada caso — nenhum algoritmo escolhe por você.",
   "Sem ranking, sem nota, sem “melhor opção”.",
@@ -130,35 +136,30 @@ const DIFERENCIAIS = [
 ] as const;
 
 /**
- * ADR-078 · os cinco passos ganham fotografia da casa (base visual do
- * Fundador). A COPY é a mesma, palavra por palavra — o layout a veste.
- * As fotos são as cenas reais de public/scenes, nunca banco de imagem.
+ * ADR-078/080 · os cinco passos. A COPY é a mesma, palavra por palavra.
+ * Sem fotografia nos cartões por decisão do Fundador (23/08): a imagem da
+ * jornada é o AMBIENTE da seção — o corredor dos três quadros ao fundo.
  */
 const PASSOS = [
   {
     title: "Você conta sua história",
     text: "Uma conversa real, humana, no seu ritmo. Nunca um formulário frio.",
-    foto: "/landing/jornada-01-acolhimento.jpg",
   },
   {
     title: "Vocês definem o que importa",
     text: "Suas prioridades registradas com as suas próprias palavras.",
-    foto: "/scenes/edificio/sala-curadoria.jpg",
   },
   {
     title: "A equipe analisa",
     text: "Seu Curador estuda os especialistas à luz dos seus critérios.",
-    foto: "/landing/jornada-03-curadoria.jpg",
   },
   {
     title: "Você recebe três opções",
     text: "Três caminhos legítimos, explicados — nunca um ranking.",
-    foto: "/scenes/edificio/corredor.jpg",
   },
   {
     title: "A decisão é sua",
     text: "No seu tempo, com acompanhamento contínuo antes e depois.",
-    foto: "/landing/jornada-05-continuidade.jpg",
   },
 ] as const;
 
@@ -294,30 +295,20 @@ export function VideoSection() {
     <LandingSection
       spacing="densa"
       aria-label="Vídeo institucional"
-      /* ADR-080 · curva de intensidade: depois da entrada nítida do hero, o
-         corredor entra SUAVE — conduz o olhar para o conteúdo principal. */
-      atmosphere="corredor"
-      atmosphereVariant="edificio-suave"
-      atmosphereOpacity={100}
+      /* ADR-082: abre a RECEPÇÃO, acima do Capítulo Zero. A classe própria
+         posiciona o card no vão do piso no celular (risco do Fundador,
+         23/08): a chegada da família abre a tela LIMPA, e o vídeo pousa
+         logo acima do Capítulo Zero. */
+      variant="transparente"
+      className="landing-video-recepcao"
     >
-      {/* Efeito do mockup: o lado do texto assenta num painel verde-suave em
-          degradê — a assinatura visual do cartão do vídeo. */}
-      <div
-        id="video-institucional"
-        className="mx-auto grid max-w-5xl items-center gap-8 overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] bg-gradient-to-br from-[color-mix(in_srgb,var(--color-brand-sage)_14%,var(--color-bg-surface))] via-[color-mix(in_srgb,var(--color-brand-sage)_22%,var(--color-bg-surface))] to-[color-mix(in_srgb,var(--color-brand-sage)_34%,var(--color-bg-surface))] p-6 lg:grid-cols-2 lg:gap-12 lg:p-10"
-      >
+      {/* A pedido do Fundador (23/08), o card virou SÓ o player: o eyebrow,
+          o "Assistir agora →" (fusão F3), a linha "Independente, humana e
+          completa…" e por fim o título "Conheça a Aliviar" saíram — o selo
+          "Assistir — 2 min" do próprio player diz tudo. */}
+      <div id="video-institucional" className="landing-veu mx-auto max-w-3xl p-5 lg:p-8">
         <div className="landing-reveal">
           <HeroVideo src="/videos/video-institucional-aliviar.webm" posterScene="/landing/sala-de-espera.jpg" />
-        </div>
-        <div className="landing-reveal" style={revealDelay(1)}>
-          <LandingEyebrow>Vídeo institucional</LandingEyebrow>
-          <h2 className="landing-heading text-2xl lg:text-3xl">Conheça a Aliviar</h2>
-          <p className="landing-body mt-4 text-[var(--color-ink-muted)]">
-            Independente, humana e completa — dois minutos para conhecer a casa.
-          </p>
-          <p className="mt-6 text-sm font-semibold uppercase tracking-[0.12em] text-[var(--color-brand-gold)]">
-            Assistir agora →
-          </p>
         </div>
       </div>
     </LandingSection>
@@ -334,8 +325,10 @@ export function VideoSection() {
  */
 export function ConfiancaStripSection() {
   return (
-    <LandingSection spacing="densa" variant="white" aria-label="O que nos define">
-      <div className="landing-reveal mx-auto grid max-w-5xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-5 lg:gap-6">
+    <LandingSection spacing="densa" variant="transparente" aria-label="O que nos define">
+      {/* ADR-080 · 3ª rodada: os cinco pilares num único vidro largo — um
+          card só faz menos ruído que cinco sobre a cena. */}
+      <div className="landing-veu landing-reveal mx-auto grid max-w-5xl grid-cols-1 gap-8 p-6 sm:grid-cols-2 lg:grid-cols-5 lg:gap-6 lg:p-8">
         {PILARES_DE_CONFIANCA.map((pilar, index) => {
           const Icone = pilar.icon;
           return (
@@ -362,8 +355,11 @@ export function RespiroSection() {
       {/* Eco deliberado da última voz da página (rodapé) — nenhuma copy
           nova: a mesma promessa, dita no meio do caminho, como ponte entre
           "o problema é esse" e "existe um jeito". */}
+      {/* MARCADOR PROVISÓRIO do Fundador (23/08, "uma brincadeira antes de
+          lançar o produto — depois eu troco"): a frase canônica do Respiro
+          ("Você não precisa decidir sozinho.") volta quando ele trocar. */}
       <p className="landing-reveal mx-auto max-w-2xl text-center font-serif text-2xl leading-[1.5] text-[var(--color-ink)] lg:text-3xl">
-        Você não precisa decidir sozinho.
+        Curisco
       </p>
     </LandingSection>
   );
@@ -411,75 +407,78 @@ export function NossoMetodoSection() {
  */
 export function ConciergeSection() {
   return (
-    /* Sem `atmosphere`: a cena da recepção traz o logotipo gravado na parede,
-       e ele caía bem atrás do título — dois logotipos disputando a mesma
-       linha, o mesmo erro que o Hero já tinha corrigido. A seção fica no
-       linho quente, sem fundo figurativo competindo com a leitura. */
-    <LandingSection id="concierge" variant="warm" spacing="media">
-      {/* ADR-078 · duas colunas na gramática do mockup: a promessa e os três
-          pilares à esquerda, a fotografia REAL da casa à direita — dentro de
-          um cartão, nunca atrás do título (o logotipo gravado na parede da
-          recepção já disputou linha com o Hero uma vez; não de novo). */}
-      <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
-        <div>
-          <div className="landing-reveal">
-            <LandingEyebrow>Concierge Aliviar</LandingEyebrow>
-            <h2 className="landing-heading text-3xl lg:text-[2.625rem]">Você não faz isso sozinha.</h2>
-          </div>
-
-          <div className="mt-10 space-y-8">
-            {PILARES_DO_CONCIERGE.map((pilar, index) => (
-              <div
-                key={pilar.title}
-                className="landing-reveal border-l-2 border-[var(--color-brand-gold)] pl-6"
-                style={revealDelay(index)}
-              >
-                <h3 className="landing-heading text-xl">{pilar.title}</h3>
-                <p className="landing-body mt-2 text-[var(--color-ink-muted)]">{pilar.text}</p>
-              </div>
-            ))}
-          </div>
+    /* ADR-080 · 3ª rodada: vive no Capítulo 4 (a Mesa de trabalho) — a
+       fotografia interna saiu (o ambiente do capítulo JÁ é a Aliviar
+       trabalhando; duas fotos empilhadas era a poluição que o Fundador
+       temia). O conteúdo mora num vidro só. */
+    <LandingSection id="concierge" variant="transparente" spacing="media">
+      <div className="landing-veu mx-auto max-w-2xl p-6 lg:p-10">
+        <div className="landing-reveal">
+          <LandingEyebrow>Concierge Aliviar</LandingEyebrow>
+          <h2 className="landing-heading text-3xl lg:text-[2.625rem]">Você não faz isso sozinha.</h2>
         </div>
 
-        <div className="landing-reveal overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)]" style={revealDelay(1)}>
-          {/* eslint-disable-next-line @next/next/no-img-element -- cena
-              estática de public/scenes, mesmo uso do HeroVideo. */}
-          <img
-            src="/landing/concierge-atendimento.jpg"
-            alt="Uma pessoa da Aliviar em atendimento, de headset, diante do computador"
-            className="aspect-[4/3] w-full object-cover"
-          />
+        <div className="mt-10 space-y-8">
+          {PILARES_DO_CONCIERGE.map((pilar, index) => (
+            <div
+              key={pilar.title}
+              className="landing-reveal border-l-2 border-[var(--color-brand-gold)] pl-6"
+              style={revealDelay(index)}
+            >
+              <h3 className="landing-heading text-xl">{pilar.title}</h3>
+              <p className="landing-body mt-2 text-[var(--color-ink-muted)]">{pilar.text}</p>
+            </div>
+          ))}
         </div>
       </div>
     </LandingSection>
   );
 }
 
+/** O cartão de um passo da jornada — a numeração atravessa os atos. */
+function PassoDaJornada({
+  passo,
+  numero,
+  delayIndex,
+}: {
+  passo: (typeof PASSOS)[number];
+  numero: number;
+  delayIndex: number;
+}) {
+  return (
+    <li
+      className="landing-veu landing-reveal landing-etapa-seta relative overflow-visible"
+      style={revealDelay(delayIndex)}
+    >
+      <div className="p-5">
+        <span
+          aria-hidden="true"
+          className="flex size-9 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--color-brand-primary-darkest)_78%,transparent)] font-serif text-sm text-on-dark"
+        >
+          {String(numero).padStart(2, "0")}
+        </span>
+        <h3 className="landing-heading mt-4 text-base">{passo.title}</h3>
+        <p className="landing-body mt-1.5 text-sm text-[var(--color-ink-muted)]">{passo.text}</p>
+      </div>
+    </li>
+  );
+}
+
 /**
- * Ato IV — O MÉTODO: a passagem densa que a página não tinha.
- *
- * Fusão de "O Método" + "Caminho claro": quem quer entender, entende aqui,
- * num lugar só, em coluna estreita e leitura de verdade. Confiança nasce de
- * entender — uma página só de blocos rasos diz "não se preocupe com os
- * detalhes", que é exatamente o que gera desconfiança em saúde.
+ * ATO 2 · A CURADORIA (ADR-082, roteiro do Fundador, 23/08): a página
+ * inteira explica quatro atos — Recepção, Curadoria, Escolha, Concierge —
+ * e este é o coração. Na cena da sala de curadoria: o manifesto, a
+ * apresentação conceitual do CURADOR (copy do Fundador) e os passos 01–03.
+ * Os passos 04–05 vivem no ato seguinte (a Escolha, no corredor) — a
+ * numeração atravessa os ambientes de propósito: a travessia É a jornada.
+ * Quando existir o vídeo do "como funciona", ele entra neste ato.
  */
 export function MetodoSection() {
   return (
-    <LandingSection
-      id="como-funciona"
-      variant="warm"
-      /* ADR-080: fundo DISCRETO — a Sala de Curadoria como contexto, na
-         opacidade histórica (16), servindo só de textura atrás dos cartões. */
-      atmosphere="curadoria"
-      spacing="densa"
-    >
-      <div className="mx-auto max-w-2xl">
+    <LandingSection id="como-funciona" variant="transparente" spacing="densa">
+      <div className="landing-veu mx-auto max-w-2xl p-6 lg:p-8">
         <div className="landing-reveal">
-          {/* BLOCO 7 · o eyebrow passa a nomear o que a seção É — as cinco
-              etapas. "Nosso Método" virou seção própria, com os quatro
-              movimentos, e dois eyebrows dizendo "Método" na mesma página
-              confundiriam o que já estava claro. */}
-          <LandingEyebrow>Como funciona</LandingEyebrow>
+          <LandingEyebrow>A Curadoria</LandingEyebrow>
           <h2 className="landing-heading text-3xl lg:text-[2.625rem]">
             Nós nunca perguntamos &ldquo;qual é o melhor médico?&rdquo;
           </h2>
@@ -487,47 +486,78 @@ export function MetodoSection() {
             Perguntamos algo mais útil: entre os médicos aprovados pelo nosso rigor técnico, quais combinam com o que{" "}
             <em>você</em> definiu como importante?
           </p>
-          {/* "O caminho que vamos percorrer juntos" — acompanhamento, não
-              processo (NOTA 2.3, copy registrada). Nenhuma promessa nova:
-              a companhia em cada passo já era o texto anterior. */}
-          <p className="landing-body mt-5 text-lg text-[var(--color-ink-muted)]">
-            São cinco passos — e uma pessoa ao seu lado em todos eles.
-          </p>
         </div>
-
-        {/* ADR-078 · os cinco passos em cartões com a fotografia da casa —
-            a "jornada" do mockup do Fundador, com a copy intocada. O número
-            dourado permanece: é a assinatura da contagem. */}
       </div>
 
-      {/* O letreiro do mockup, centrado sobre a fileira de cartões. */}
-      <p className="landing-reveal mt-14 text-center text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
-        Sua jornada, com a Aliviar
-      </p>
+      {/* A apresentação do CURADOR — copy do Fundador (ADR-082), com uma
+          única adaptação: "encontrar o cuidado certo" viraria promessa de
+          resultado (L14; Linguagem §6 — família de "ideal"); o fecho diz o
+          que a casa pode prometer: a decisão dela, com segurança.
+          VIDRO BRANCO como os irmãos (decisão do Fundador, 23/08): a banda
+          verde fugia da linguagem única — o destaque vem do tamanho e da
+          posição, não da cor. Os números falam azul-marinho da marca. */}
+      <div
+        id="quem-somos"
+        className="landing-veu landing-reveal mx-auto mt-14 max-w-4xl scroll-mt-24 p-7 lg:p-12"
+      >
+        <h2 className="landing-heading text-3xl lg:text-[2.625rem]">
+          Você não precisa escolher sozinho.
+        </h2>
+        <p className="landing-body mt-5 text-lg text-[var(--color-ink-muted)]">
+          O Curador Aliviar escuta a sua história, compreende as suas necessidades e avalia cada possibilidade com
+          cuidado e independência. Sem indicações automáticas, sem pressão e sem interesses escondidos — uma
+          orientação humana, criteriosa e transparente, para você decidir com segurança e confiança.
+        </p>
+        {/* O ganho POSITIVO de contratar (pedido do Fundador, 23/08) —
+            benefício do processo, nunca promessa de resultado (§6.5). */}
+        <p className="landing-body mt-4 text-lg text-[var(--color-ink)]">
+          Ao contratar a Aliviar, você recebe um processo inteiro dedicado ao seu caso: escuta, análise criteriosa,
+          três opções sérias e acompanhamento — tudo com nome e data.
+        </p>
 
-      <ol className="mx-auto mt-6 grid max-w-6xl grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
-        {PASSOS.map((passo, index) => (
-          <li
-            key={passo.title}
-            className="landing-reveal landing-etapa-seta relative overflow-visible rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-surface)_92%,transparent)]"
-            style={revealDelay(index % 3)}
-          >
-            <div className="relative">
-              {/* eslint-disable-next-line @next/next/no-img-element -- cena
-                  estática de public/scenes, mesmo uso do HeroVideo. */}
-              <img src={passo.foto} alt="" className="aspect-[4/3] w-full rounded-t-[var(--radius-card)] object-cover" />
-              <span
-                aria-hidden="true"
-                className="absolute left-3 top-3 flex size-9 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--color-brand-primary-darkest)_78%,transparent)] font-serif text-sm text-on-dark"
-              >
-                {String(index + 1).padStart(2, "0")}
-              </span>
+        <div className="mt-10 grid grid-cols-2 gap-8 lg:grid-cols-4">
+          {FATOS.map((fato) => (
+            <div key={fato.label}>
+              <p className="font-serif text-4xl leading-none text-[var(--color-brand-primary)] lg:text-5xl">
+                {fato.numero}
+              </p>
+              <p className="landing-body mt-2 text-sm text-[var(--color-ink-muted)]">{fato.label}</p>
             </div>
-            <div className="p-5">
-              <h3 className="landing-heading text-base">{passo.title}</h3>
-              <p className="landing-body mt-1.5 text-sm text-[var(--color-ink-muted)]">{passo.text}</p>
-            </div>
-          </li>
+          ))}
+        </div>
+
+        <div className="mt-10 border-t border-[var(--color-border)] pt-7">
+          <h3 className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+            O que não fazemos
+          </h3>
+          <p className="landing-body mt-4 text-[var(--color-ink)]">
+            Não damos diagnóstico, não escolhemos por você, não vendemos posição em ranking e não prometemos milagres
+            — prometemos um processo sério.
+          </p>
+        </div>
+      </div>
+
+      {/* Os três primeiros passos — o trabalho da Curadoria. */}
+      <ol className="mx-auto mt-14 grid max-w-4xl grid-cols-1 gap-5 sm:grid-cols-3">
+        {PASSOS.slice(0, 3).map((passo, index) => (
+          <PassoDaJornada key={passo.title} passo={passo} numero={index + 1} delayIndex={index} />
+        ))}
+      </ol>
+    </LandingSection>
+  );
+}
+
+/**
+ * ATO 3 · A ESCOLHA (ADR-082): no corredor dos três retratos — a cena que
+ * encena literalmente as três opções. Só os passos 04–05, continuando a
+ * numeração do ato anterior; os cartões dizem tudo, nenhum título novo.
+ */
+export function EscolhaSection() {
+  return (
+    <LandingSection variant="transparente" spacing="densa" aria-label="A escolha">
+      <ol className="mx-auto grid max-w-3xl grid-cols-1 gap-5 sm:grid-cols-2">
+        {PASSOS.slice(3).map((passo, index) => (
+          <PassoDaJornada key={passo.title} passo={passo} numero={index + 4} delayIndex={index} />
         ))}
       </ol>
     </LandingSection>
@@ -542,10 +572,13 @@ export function MetodoSection() {
  * moldura da Jornada com nome e data.
  */
 export function PrioridadesSection() {
+  // Auditoria 23/08 (crítica 3, aceita pela arquitetura dos 4 capítulos):
+  // as cenas do conjunto antigo saem da Landing — este interlúdio fica em
+  // linho limpo entre os capítulos do Edifício.
   return (
-    <LandingSection id="para-quem" variant="warm" atmosphere="despedida" spacing="media">
+    <LandingSection id="para-quem" variant="transparente" spacing="media">
       <div className="grid gap-14 lg:grid-cols-2 lg:gap-24">
-        <div className="landing-reveal">
+        <div className="landing-veu landing-reveal p-6 lg:p-8">
           <h2 className="landing-heading text-3xl lg:text-[2.625rem]">Suas prioridades, nas suas palavras.</h2>
           {/* "Você distribui pesos" saiu junto com os pontos: era a
               linguagem do orçamento abolido pela ADR-042. */}
@@ -558,7 +591,7 @@ export function PrioridadesSection() {
           </p>
         </div>
 
-        <LandingCard className="landing-reveal" style={revealDelay(1)}>
+        <LandingCard className="landing-veu landing-veu--denso landing-reveal" style={revealDelay(1)}>
           <div className="space-y-6">
             {PRIORIDADES.map((item) => (
               <div key={item.label} className="border-b border-[var(--color-border)] pb-6 last:border-0 last:pb-0">
@@ -615,49 +648,35 @@ export function ConviteSection() {
     <LandingSection
       spacing="media"
       aria-label="Convite"
-      /* ADR-080 · encerramento: o ambiente volta a ganhar presença — a
-         entrada de novo, agora como saída iluminada (a linha de luz
-         continua: acompanhamento antes, durante e depois). */
-      atmosphere="entrada"
-      atmosphereVariant="edificio-suave"
-      atmosphereOpacity={100}
+      /* ADR-080 · 3ª rodada: o encerramento vive no Capítulo 4 (a Mesa) —
+         a foto interna e o painel verde saíram (a crítica 1 da auditoria:
+         duas fotografias empilhadas). O convite é UM vidro liso sobre a
+         cena da Aliviar trabalhando. Copy intocada. */
+      variant="transparente"
     >
-      {/* Fidelidade ao mockup (2ª rodada, 22/08): a banda final é foto +
-          painel verde lado a lado — a vida seguindo à esquerda, o convite à
-          direita. Sem depoimento até haver gente real (ADR-078). */}
-      <div className="landing-reveal mx-auto grid max-w-5xl overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] lg:grid-cols-2">
-        {/* eslint-disable-next-line @next/next/no-img-element -- cena
-            estática de public/landing, mesmo uso das demais. */}
-        <img
-          src="/landing/caminho-em-frente.jpg"
-          alt="Um homem caminha tranquilo à beira-mar — a vida seguindo em frente"
-          className="h-full min-h-[16rem] w-full object-cover"
-        />
-        <div className="landing-forest-band flex flex-col justify-center p-8 lg:p-12">
-          <p className="font-serif text-2xl leading-[1.4] text-[var(--landing-linen)] lg:text-3xl">
-            Cuidar é um caminho. E você <em className="text-[var(--color-brand-gold)]">não precisa</em>{" "}
-            fazer isso sozinho.
-          </p>
-          <div className="mt-8">
-            <LinkButton href="/solicitar-atendimento" variant="primary" className="landing-porta">
-              Solicitar atendimento
-            </LinkButton>
-          </div>
-        </div>
-      </div>
-      {/* ADR-080: a frase final ganha o véu — a camada de contraste protege
-          a região do texto sobre o ambiente. Copy intocada. */}
-      <div className="landing-reveal landing-veu mx-auto mt-12 max-w-2xl px-6 py-8 text-center lg:px-10">
+      {/* 2ª passada da ADR-081 (23/08): das duas frases do convite, fica a
+          que diz o que acontece ao clicar; "Cuidar é um caminho..." segue
+          congelada na constante exportada abaixo. UM vidro, UMA frase, UM
+          botão — a porta única (C1/ADR-075). */}
+      <div className="landing-veu landing-reveal mx-auto max-w-2xl px-6 py-10 text-center lg:px-12">
         <p className="font-serif text-2xl leading-[1.5] text-[var(--color-ink)] lg:text-3xl">
           Quando você quiser começar, o primeiro passo é contar a sua história — no seu ritmo.
         </p>
-        {/* O botão saiu daqui: o CTA do convite vive no painel verde acima
-            (mockup, 2ª rodada) — mesma porta do Hero (C1/ADR-075), sem
-            repetir o gesto duas vezes na mesma dobra. */}
+        <div className="mt-8">
+          <LinkButton href="/solicitar-atendimento" variant="primary" className="landing-porta">
+            Solicitar atendimento
+          </LinkButton>
+        </div>
       </div>
     </LandingSection>
   );
 }
+
+/* 2ª passada da ADR-081 (23/08): a frase de abertura do convite saiu da
+   tela — dizia o mesmo que o Hero e o Respiro. Congelada aqui; se voltar,
+   volta exatamente assim (guarda em bloco7-landing-d1). */
+export const FRASE_CUIDAR_CONGELADA =
+  "Cuidar é um caminho. E você não precisa fazer isso sozinho." as const;
 
 /** Ato VI — A SALA VERDE: o corte. Intocada — já era o melhor momento. */
 export function QuemSomosSection() {
@@ -671,37 +690,12 @@ export function QuemSomosSection() {
           Os médicos que apresentamos passam por aprovação própria e prévia. Nenhum profissional paga para estar aqui.
         </p>
 
-        {/* BLOCO 7 · as quatro linhas editoriais. A quarta é dourada porque é
-            a que fecha o argumento inteiro: método e tranquilidade existem
-            para que a decisão continue sendo DELA. */}
-        <div className="landing-reveal mt-14 space-y-2" style={revealDelay(1)}>
-          {LINHAS_EDITORIAIS.map((linha, index) => (
-            <p
-              key={linha}
-              className={
-                index === LINHAS_EDITORIAIS.length - 1
-                  ? "font-serif text-2xl leading-[1.5] text-[var(--color-brand-gold)] lg:text-3xl"
-                  : "font-serif text-2xl leading-[1.5] text-[var(--landing-linen)] lg:text-3xl"
-              }
-            >
-              {linha}
-            </p>
-          ))}
-        </div>
-
-        {/* Quatro diferenciais — cada um verificável contra o produto no ar.
-            Nenhum número de médicos, cidades ou casos: métrica não medida é
-            promessa, e a §6.5 do contrato 34 as proíbe todas. */}
-        <ul className="landing-reveal mt-14 space-y-4" style={revealDelay(2)}>
-          {DIFERENCIAIS.map((item) => (
-            <li key={item} className="flex gap-3 text-on-dark">
-              <span aria-hidden="true" className="text-[var(--color-brand-gold)]">
-                ·
-              </span>
-              <span className="landing-body">{item}</span>
-            </li>
-          ))}
-        </ul>
+        {/* 2ª passada da ADR-081 (23/08): as linhas editoriais e os
+            diferenciais SAÍRAM da tela — dentro da mesma seção, repetiam os
+            fatos ("independente" 3×, "a decisão é sua" 2×, "sem ranking"
+            2×). As copies seguem congeladas nas constantes exportadas
+            acima. A sala verde fica: título, abertura, fatos e "o que não
+            fazemos". */}
 
         {/* ADR-078 · a faixa de fatos — onde o mockup punha números
             inventados ("+200 especialistas", "98%"), entram os quatro que o

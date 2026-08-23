@@ -6,7 +6,7 @@ import { cn } from "@/components/ui/cn";
 
 type LandingSectionProps = HTMLAttributes<HTMLElement> & {
   children: ReactNode;
-  variant?: "linen" | "warm" | "white" | "forest";
+  variant?: "linen" | "warm" | "white" | "forest" | "transparente";
   atmosphere?: AliviarSceneKey | null;
   /**
    * ADR-080 · curva de intensidade do Edifício: quando presentes, controlam
@@ -30,6 +30,9 @@ const variantClasses = {
   warm: "bg-[var(--landing-linen-warm)] text-[var(--landing-ink)]",
   white: "bg-[color-mix(in_srgb,var(--color-bg-surface)_90%,transparent)] text-[var(--landing-ink)]",
   forest: "landing-forest-band",
+  /* ADR-080 · 3ª rodada: seção que vive DENTRO de um capítulo do Edifício
+     não pinta o próprio chão — o ambiente do capítulo atravessa. */
+  transparente: "text-[var(--landing-ink)]",
 };
 
 const spacingClasses = {

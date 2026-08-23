@@ -47,11 +47,17 @@ afterEach(cleanup);
 // decisão direta do Fundador em 22/08 — o rito em voz alta que a guarda
 // D-1 exigia (ver bloco7-landing-d1.test.tsx, onde a copy de ambos segue
 // congelada no componente para um eventual retorno).
+// ADR-081 (23/08, "pode cortar!"): Prioridades saiu da composição junto de
+// Pilares e Concierge — a vitrine enxuta, uma ideia por bloco. As copies
+// seguem congeladas nos componentes (bloco7-landing-d1.test.tsx).
+// Fusão F1 (23/08): QuemSomos deixou de ser seção própria — vive como card
+// floresta dentro do Metodo (a copy é provada lá pelo bloco7).
+// ADR-082 (23/08): a Escolha nasce como seção própria — os passos 04–05 no
+// corredor dos três retratos, continuando a numeração da Curadoria.
 const SECOES = [
   "Respiro",
   "Metodo",
-  "Prioridades",
-  "QuemSomos",
+  "Escolha",
   "FaqCompact",
   "Convite",
 ] as const;

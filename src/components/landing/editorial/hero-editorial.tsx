@@ -1,46 +1,26 @@
-import { existsSync } from "node:fs";
-import path from "node:path";
-
 import { LinkButton } from "@/components/landing/link-button";
-import { ImmersiveBackdrop } from "@/components/shared/immersive-backdrop";
 
-const VIDEO_SRC = "/videos/video-institucional-aliviar.webm";
+/* Auditoria de fusão F7 (23/08): o link "Assistir ao vídeo" saiu — o vídeo
+   é a dobra seguinte, e o link prometia o que a rolagem já entrega. Com
+   ele foi a máquina de detectar o arquivo do vídeo, que só existia para
+   decidir se o link aparecia. */
 
-function resolveVideo(): { src?: string } {
-  const videoPath = path.join(process.cwd(), "public", VIDEO_SRC);
-  return existsSync(videoPath) ? { src: VIDEO_SRC } : {};
-}
-
-type HeroEditorialProps = {
-  videoSrc?: string;
-};
-
-export function HeroEditorial({ videoSrc }: HeroEditorialProps = {}) {
-  const video = videoSrc !== undefined ? { src: videoSrc } : resolveVideo();
-
+export function HeroEditorial() {
   return (
     <section className="landing-hero-immersive">
-      {/* ADR-080 · O Edifício Aliviar: o hero é a ENTRADA — o ambiente mais
-          nítido e expressivo da página, em tela cheia. A família chega, a
-          curadora recebe (sem jaleco), o letreiro "Curadoria Médica
-          Independente" está gravado na cena. O texto senta num véu marfim
-          translúcido à esquerda — a camada de contraste protege só a região
-          do texto, nunca a foto inteira (spec do Fundador, 22/08). */}
-      <ImmersiveBackdrop
-        scene="entrada"
-        variant="edificio-nitido"
-        imageOpacity={100}
-        imagePosition="right center"
-        priority
-      />
-
+      {/* ADR-080 · 3ª rodada: o hero vive DENTRO do Capítulo 1 (a Entrada)
+          — o cenário vem do CapituloDoEdificio, não daqui. O card de vidro
+          liso pousa na área livre da cena; no celular, sobre o piso do
+          retrato 9:16. */}
       <div className="relative z-10 mx-auto w-full max-w-content px-5 lg:px-10">
         <div className="landing-hero-grid">
           <div className="landing-fade-in landing-hero-col landing-veu p-7 sm:p-10 lg:p-12">
             {/* A frase que estava aqui — "Curadoria médica independente" — não
-                se perdeu: virou o primeiro diferencial do bloco
-                institucional, onde é verificável em vez de decorativa. */}
-            <p className="landing-eyebrow">Capítulo Zero</p>
+                se perdeu: hoje está gravada na própria cena da recepção e nos
+                fatos da banda dos Curadores. */}
+            {/* "Capítulo Zero" → "Seja bem-vindo" (pedido do Fundador,
+                23/08): a Recepção recebe, não numera. */}
+            <p className="landing-eyebrow">Seja bem-vindo</p>
             <h1 className="landing-hero-title text-4xl sm:text-[2.75rem] lg:text-[3.5rem]">
               Uma decisão de saúde importante.
               <br />
@@ -54,10 +34,7 @@ export function HeroEditorial({ videoSrc }: HeroEditorialProps = {}) {
               Com você em cada etapa — da sua história até uma decisão que é sua.
             </p>
 
-            {/* A porta continua sendo UMA (CRITICA_LANDING_2_2 §5): o segundo
-                botão não é outra porta, é o mesmo conteúdo que já estava na
-                página — o vídeo — agora alcançável por teclado em vez de só
-                por rolagem. A `landing-porta` é o gesto da marca. */}
+            {/* A porta é UMA (CRITICA_LANDING_2_2 §5; C1/ADR-075). */}
             <div className="landing-hero-ctas mt-12">
               <LinkButton
                 href="/solicitar-atendimento"
@@ -66,11 +43,6 @@ export function HeroEditorial({ videoSrc }: HeroEditorialProps = {}) {
               >
                 Solicitar atendimento
               </LinkButton>
-              {video.src ? (
-                <a href="#video-institucional" className="landing-hero-cta-secundario">
-                  Assistir ao vídeo
-                </a>
-              ) : null}
             </div>
           </div>
 

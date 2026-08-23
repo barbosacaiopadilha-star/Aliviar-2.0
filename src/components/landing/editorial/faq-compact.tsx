@@ -26,7 +26,9 @@ const FAQ_ITEMS = [
     answer: "Uso estritamente restrito ao seu atendimento e com consentimento.",
   },
   {
-    question: "Quanto custa? / Como funciona?",
+    // Revisão de conteúdo (23/08): a barra "/" no meio da pergunta era
+    // resíduo de rascunho — ninguém pergunta com barra.
+    question: "Quanto custa e como funciona?",
     answer: "Transparência total apresentada no primeiro contato, sem custos ocultos.",
   },
 ] as const;
@@ -35,19 +37,16 @@ export function FaqCompactSection() {
   return (
     <LandingSection
       id="duvidas"
-      variant="warm"
+      /* ADR-080 · 3ª rodada: vive no fim do Capítulo 4, onde a dosagem do
+         capítulo já amansou a cena — e o bloco inteiro mora num vidro. */
+      variant="transparente"
       spacing="media"
-      /* ADR-080: texto longo pede arquitetura QUASE ABSTRATA — o corredor
-         em opacidade mínima vira só luz, textura e profundidade. */
-      atmosphere="corredor"
-      atmosphereOpacity={12}
     >
-      <div className="mx-auto max-w-4xl">
+      <div className="landing-veu mx-auto max-w-4xl p-6 lg:p-10">
         <div className="landing-reveal text-center">
           <h2 className="landing-heading text-3xl lg:text-[2.625rem]">Dúvidas frequentes</h2>
-          <p className="landing-body mx-auto mt-6 max-w-lg text-[var(--color-ink-muted)]">
-            Respostas diretas, no seu ritmo.
-          </p>
+          {/* Auditoria de fusão F5 (23/08): "Respostas diretas, no seu
+              ritmo." saiu — as respostas de uma linha provam sozinhas. */}
         </div>
 
         <dl className="landing-reveal mt-16 grid gap-x-16 gap-y-10 md:grid-cols-2">
