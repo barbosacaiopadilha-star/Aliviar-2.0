@@ -118,6 +118,14 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
           href="/"
           className="flex items-center gap-3 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-bg-canvas)]"
         >
+          {/* BLOQUEIO RELATADO (dossiê, 23/08): o arquivo entregue como
+              "logo-oficial.png" é uma PEÇA de apresentação de marca — o
+              símbolo, a assinatura, três ícones com slogans e um rodapé
+              azul, sobre fundo creme opaco. Não é um logotipo de
+              cabeçalho, e um dos slogans ("o médico certo para você") é
+              justamente a promessa de resultado que a casa proíbe. Fica a
+              marca real do projeto, com transparência, até chegar o
+              arquivo do logotipo isolado. */}
           <Image
             src="/brand/logo-aliviar-icon.png"
             alt="Aliviar — Curadoria Médica Independente"
@@ -161,12 +169,16 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
               que pede 174px. Proibir a quebra em 320px fazia a barra transbordar
               5px — o T-7-7 pegou. Nessa faixa o rótulo volta a ocupar duas
               linhas, como sempre ocupou. */}
+          {/* Dossiê (23/08): no CELULAR o botão do cabeçalho é só "Começar"
+              — o rótulo longo comia a barra inteira. No computador o
+              convite continua por extenso. Mesmo destino, mesma porta. */}
           <LinkButton
             href="/solicitar-atendimento"
             variant="primary"
-            className="min-h-11 px-3 py-2 text-sm min-[360px]:whitespace-nowrap sm:px-5"
+            className="min-h-11 whitespace-nowrap px-4 py-2 text-sm sm:px-5"
           >
-            Solicitar atendimento
+            <span className="sm:hidden">Começar</span>
+            <span className="hidden sm:inline">Solicitar atendimento</span>
           </LinkButton>
 
           {portalCta ? (

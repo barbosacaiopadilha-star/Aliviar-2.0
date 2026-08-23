@@ -46,47 +46,49 @@ test("o convite final navega para a MESMA porta do Hero — a conversa", async (
   // rodapé apontam todos para /solicitar-atendimento.
   await page.goto("/");
 
-  // O último link "Solicitar atendimento" da página é o convite final — o
-  // primeiro é o do Hero; os dois (e o rodapé) apontam para a mesma porta.
+  // Dossiê (23/08): na página os dois convites dizem "Quero conversar com
+  // a Aliviar" — o da Recepção e o do Concierge. Mesma porta.
   await page
-    .getByRole("link", { name: "Solicitar atendimento" })
+    .getByRole("link", { name: "Quero conversar com a Aliviar" })
     .last()
     .click();
 
   await expect(page).toHaveURL(/\/solicitar-atendimento/);
 });
 
-// Terceira encarnação desta superfície, e a propriedade evoluiu com o
-// cânone: o FaqBookSection (livro com setas) virou acordeão, e o acordeão
-// era um dos cinco elementos banidos pelo Sistema Visual §12 ("esconder o
-// que importa é confessar que não importa") — escondia justamente "Quanto
-// custa?". O redesenho 2.2 abriu tudo: a propriedade protegida agora é que
-// TODAS as dúvidas e TODAS as respostas estão visíveis sem nenhuma
-// interação, e nenhum mecanismo de esconder voltou.
-test("Dúvidas frequentes estão todas abertas — nada atrás de clique", async ({
-  page,
-}) => {
+/**
+ * O FAQ SAIU DA PÁGINA (Dossiê da Landing Responsiva, 23/08) — a terceira
+ * e última reabertura da D-1, decidida pelo Fundador com a consequência
+ * dita em voz alta: as dúvidas de preço e de dados deixam de ser
+ * respondidas na vitrine e passam a viver na conversa.
+ *
+ * A propriedade que este arquivo protegia — nenhum mecanismo de esconder,
+ * nada atrás de clique — continua guardada onde a copy vive: o teste de
+ * componente do FaqCompactSection. O que se prova AQUI, agora, é o que a
+ * página nova promete no lugar: a porta única e o vídeo que não toca
+ * sozinho.
+ */
+test("o vídeo só toca a pedido, cresce no lugar e gruda no topo ao rolar", async ({ page }) => {
   await page.goto("/");
 
-  const duvidas = page.locator("#duvidas");
-  await duvidas.scrollIntoViewIfNeeded();
+  // Nenhum player montado antes do gesto — a capa é só uma chamada.
+  await expect(page.locator("video")).toHaveCount(0);
 
-  // Nenhum acordeão: zero botões, zero aria-expanded.
-  await expect(duvidas.getByRole("button")).toHaveCount(0);
-  await expect(duvidas.locator("[aria-expanded]")).toHaveCount(0);
+  const capa = page.getByRole("button", { name: /Veja a Aliviar por dentro/ });
+  await capa.scrollIntoViewIfNeeded();
+  await capa.click();
 
-  // As quatro perguntas e as quatro respostas, visíveis sem interação —
-  // incluindo a mais sensível.
-  // Revisão de conteúdo (23/08): a pergunta perdeu a barra de rascunho —
-  // "Quanto custa e como funciona?".
-  await expect(duvidas.getByText("Quanto custa", { exact: false })).toBeVisible();
-  await expect(
-    duvidas.getByText("O cuidado clínico é do médico", { exact: false }),
-  ).toBeVisible();
-  await expect(
-    duvidas.getByText("Transparência total", { exact: false }),
-  ).toBeVisible();
-  await expect(
-    duvidas.getByText("seu Curador organiza", { exact: false }),
-  ).toBeVisible();
+  // O player nasce no lugar do card, sem autoplay declarado.
+  const player = page.locator("video.landing-video-player");
+  await expect(player).toBeVisible();
+  await expect(player).toHaveAttribute("preload", "none");
+  await expect(page.locator("video[autoplay]")).toHaveCount(0);
+
+  // Rolando adiante, ele gruda no topo em vez de sumir.
+  await page.evaluate(() => window.scrollBy(0, window.innerHeight * 2));
+  await expect(page.locator(".landing-video-quadro--fixo")).toBeVisible({ timeout: 10_000 });
+
+  // E some quando ela fecha — o gesto de saída existe e é alcançável.
+  await page.getByRole("button", { name: "Fechar o vídeo" }).click();
+  await expect(page.locator("video")).toHaveCount(0);
 });

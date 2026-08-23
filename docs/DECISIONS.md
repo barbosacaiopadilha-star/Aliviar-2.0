@@ -1840,3 +1840,21 @@ O Fundador perguntou "dá pra resumir mais?" e aprovou os três cortes finais: *
 - **Revisitar quando:** o vídeo do "como funciona" existir; ou o Observatório mostrar que a divisão 01–03/04–05 confunde a leitura da jornada.
 
 ---
+
+## ADR-083 — A Landing Responsiva: quatro ambientes, mobile first
+
+- **Data:** 2026-08-23
+- **Status:** Decidida pelo Fundador, que forneceu o dossiê (`DOSSIE-ALIVIAR-LANDING-RESPONSIVA.pdf` + `PROMPT-PARA-CLAUDE.md` + oito ativos responsivos) como direção vinculante.
+- **Dependências:** substitui a aplicação das **ADR-080/081/082** na Landing (o Edifício em capítulos, a vitrine enxuta e os quatro atos) · **terceira e última reabertura da D-1** · preserva o contrato 34 §6.5 (nada de métrica inventada) e §4.1 (fronteira do Concierge).
+- **Decisões:**
+  1. **Quatro ambientes fotográficos e nenhum a mais:** Recepção → Curadoria → Escolha médica → Concierge, cada um ocupando uma tela, com o conteúdo num card de vidro sobre a área livre planejada da cena.
+  2. **Mobile first de verdade:** cada cena existe em duas versões geradas (alta 852×1846 para o celular, 16:9 para o computador) e o `<picture>` faz o aparelho baixar SÓ a que vai usar — antes as duas desciam. WebP com JPEG de reserva; só a Recepção carrega antecipadamente.
+  3. **O EFEITO TRANSLÚCIDO PERMANECE** (escolha explícita do Fundador entre a spec e o efeito): o card nasce vidro quase incolor e clareia até branco na zona de leitura, em vez do vidro fixo de 88–94% que o dossiê propunha.
+  4. **O vídeo sai da página e vira ação secundária**, em modal acessível (foco preso, Esc, clique fora, sem autoplay, `preload="none"`).
+  5. **O Fio de Cuidado** costura as passagens em SVG: muitos caminhos se organizam em três, os três seguem paralelos, e convergem em um quando a decisão é tomada.
+  6. **Saem da página, com copy CONGELADA e guarda de teste:** as Dúvidas frequentes, o Respiro, o card do Curador com os fatos 3/29/1/0 e "o que não fazemos", e os cinco passos da jornada. **Consequência dita em voz alta:** preço e proteção de dados deixam de ser respondidos na vitrine e passam a viver na conversa — o Fundador aceitou ao decidir "o restante segue o documento".
+- **Ressalva do arquiteto, mantida contra a letra do dossiê:** o Card 4 pedia *"A Aliviar organiza consultas"* e o marcador *"Agenda e confirmações"*. **Não foi implementado assim.** O domínio registra que *a aproximação intermediada não existe* (F9): nenhum contato é feito pela Aliviar, e a decisão sobre intermediação segue aberta. O card fala do que a casa faz — documentos, etapas, alguém para responder e acompanhamento —, e uma guarda automática impede que a promessa volte por descuido.
+- **Bloqueio relatado, como o dossiê manda:** o arquivo entregue como `logo-oficial.png` **não é um logotipo** — é uma peça de apresentação de marca (símbolo, assinatura, três ícones com slogans e rodapé azul, sobre fundo creme opaco), e um dos slogans ("o médico certo para você") é a promessa de resultado que a casa proíbe. O cabeçalho segue com a marca real do projeto até chegar o logotipo isolado com transparência.
+- **Revisitar quando:** o logotipo isolado chegar; a política de privacidade for publicada (o dossiê acerta ao exigi-la antes de promover o formulário); ou o preço for definido, o que devolve à vitrine a resposta que o FAQ dava.
+
+---

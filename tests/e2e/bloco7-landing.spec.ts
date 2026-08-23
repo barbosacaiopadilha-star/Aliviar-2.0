@@ -43,8 +43,9 @@ const ANCORAS = ["quem-somos", "como-funciona"] as const;
  * isso rota **e** conteúdo exclusivo **e** viewport **e** estado.
  */
 const H1_DA_LANDING = "Uma decisão de saúde importante.Você não precisa tomá-la sozinho.";
-// "Capítulo Zero" → "Seja bem-vindo" (pedido do Fundador, 23/08).
-const MARCADOR_EXCLUSIVO = "Seja bem-vindo";
+// Dossiê da Landing Responsiva (23/08): o marcador exclusivo passa a ser a
+// promessa da Recepção — a frase que só existe nesta página.
+const MARCADOR_EXCLUSIVO = "A Aliviar organiza sua escolha:";
 
 type Enquadramento = "pagina-inteira" | "hero";
 
@@ -263,25 +264,33 @@ test.describe("Bloco 7 · a Landing pública", () => {
       expect(m.excedem, `${largura}: elemento fora da viewport`).toEqual([]);
 
       if (largura === 390) {
-        // As cinco etapas VERTICAIS: cada uma começa abaixo da anterior.
-        // ADR-082 (23/08): a jornada atravessa dois atos — 01–03 na
-        // Curadoria (#como-funciona) e 04–05 na Escolha. A prova soma as
-        // duas listas, na ordem da página.
-        const topos = await page.evaluate(() => {
-          const listas = [
-            document.querySelector("#como-funciona"),
-            document.querySelector("section[aria-label='A escolha']"),
-          ];
-          return listas.flatMap((secao) =>
-            [...(secao?.querySelectorAll("ol > li") ?? [])].map((li) =>
-              Math.round(li.getBoundingClientRect().top + window.scrollY),
-            ),
-          );
+        // Dossiê da Landing Responsiva (23/08): a prova de celular mudou de
+        // objeto — em vez das cinco etapas verticais, o que se garante é o
+        // essencial da nova página: a PROPOSTA e o CONVITE cabem na
+        // primeira tela, sem rolar, e o card não encobre a cena inteira.
+        const primeiraTela = await page.evaluate(() => {
+          const cta = document.querySelector(".landing-porta")!.getBoundingClientRect();
+          const micro = document.querySelector(".landing-microtexto")!.getBoundingClientRect();
+          // Fusão de 23/08: a Recepção tem DOIS cards — o do vídeo no topo
+          // e o da proposta no pé. A cena precisa respirar entre eles, e é
+          // o card de CONTEÚDO que não pode subir demais.
+          const card = document
+            .querySelector(".landing-card-vidro:not(.landing-card-video)")!
+            .getBoundingClientRect();
+          return {
+            ctaDentro: cta.bottom <= window.innerHeight,
+            microDentro: micro.bottom <= window.innerHeight,
+            // A cena precisa respirar acima do card (as pessoas ficam lá).
+            cenaVisivelAcima: Math.round(card.top),
+          };
         });
-        expect(topos, "as cinco etapas precisam existir").toHaveLength(5);
-        for (let i = 1; i < topos.length; i += 1) {
-          expect(topos[i]!, "as etapas ficaram lado a lado em 390px").toBeGreaterThan(topos[i - 1]!);
-        }
+        expect(primeiraTela.ctaDentro, "o convite ficou abaixo da dobra").toBe(true);
+        expect(primeiraTela.microDentro, "o microtexto ficou abaixo da dobra").toBe(true);
+        expect(
+          primeiraTela.cenaVisivelAcima,
+          "o card comeu a cena inteira — as pessoas precisam aparecer",
+        ).toBeGreaterThan(200);
+
         await concluirReveals(page);
         await capturar(page, "EV-7-003-como-funciona-vertical-390");
       }
@@ -306,13 +315,12 @@ test.describe("Bloco 7 · a Landing pública", () => {
     }
 
     // Navegar de verdade: clicar leva a seção para dentro da viewport.
-    // ADR-081: o item "Concierge" saiu do menu com a seção; a sala verde
-    // ("Quem somos") vira a prova de navegação profunda.
+    // Dossiê (23/08): "Quem somos" leva ao ambiente da Escolha — os três
+    // médicos e a frase que devolve a decisão a ela.
     await page.getByRole("link", { name: "Quem somos" }).first().click();
     await expect(page.locator("#quem-somos")).toBeInViewport({ timeout: 10_000 });
-    // ADR-082: o destino de "Quem somos" é a apresentação do Curador.
     await expect(
-      page.getByRole("heading", { name: "Você não precisa escolher sozinho." }),
+      page.getByRole("heading", { name: "Três médicos selecionados. A escolha continua sendo sua." }),
     ).toBeVisible();
 
     await page.getByRole("link", { name: "Nossa curadoria" }).first().click();
@@ -327,7 +335,9 @@ test.describe("Bloco 7 · a Landing pública", () => {
     // ia embora". O convite passou a ser um só, `Solicitar atendimento`, e é
     // público. O produto corrigiu um defeito; este teste ainda cobrava o
     // defeito.
-    const comecar = page.getByRole("link", { name: "Solicitar atendimento", exact: true }).first();
+    // Dossiê (23/08): no computador o rótulo do cabeçalho segue por
+    // extenso; no celular ele encolhe para "Começar", mesma porta.
+    const comecar = page.getByRole("link", { name: /Solicitar atendimento/ }).first();
     await expect(comecar).toHaveAttribute("href", "/solicitar-atendimento");
     await comecar.focus();
     await expect(comecar).toBeFocused();
@@ -341,15 +351,18 @@ test.describe("Bloco 7 · a Landing pública", () => {
 
     // EV-7-002 · só o Hero, ANTES de concluir os reveals: o recorte é do topo
     // da página, que já está visível, e os dois CTAs vivem no header.
-    await expect(page.getByRole("link", { name: "Solicitar atendimento", exact: true }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: /Solicitar atendimento/ }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: "Entrar" }).first()).toBeVisible();
-    const colunas = await page.evaluate(
-      () =>
-        getComputedStyle(document.querySelector(".landing-hero-grid")!).gridTemplateColumns.split(
-          " ",
-        ).length,
-    );
-    expect(colunas, "o Hero precisa estar em DUAS colunas em desktop").toBe(2);
+    // Dossiê (23/08): no computador o card vive na lateral ESQUERDA livre
+    // da fotografia — a cena fica inteira à direita, sem ninguém coberto.
+    const larguraDoCard = await page.evaluate(() => {
+      const card = document
+        .querySelector(".landing-card-vidro:not(.landing-card-video)")!
+        .getBoundingClientRect();
+      return { esquerda: Math.round(card.left), fracao: card.width / window.innerWidth };
+    });
+    expect(larguraDoCard.esquerda, "o card saiu da lateral esquerda").toBeLessThan(200);
+    expect(larguraDoCard.fracao, "o card não pode cobrir a cena inteira").toBeLessThan(0.55);
     await capturar(page, "EV-7-002-hero-duas-colunas-1440");
 
     // EV-7-001 · a página inteira, com os reveals concluídos e a ordem dos

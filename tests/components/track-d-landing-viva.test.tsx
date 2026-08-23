@@ -52,15 +52,11 @@ afterEach(cleanup);
 // seguem congeladas nos componentes (bloco7-landing-d1.test.tsx).
 // Fusão F1 (23/08): QuemSomos deixou de ser seção própria — vive como card
 // floresta dentro do Metodo (a copy é provada lá pelo bloco7).
-// ADR-082 (23/08): a Escolha nasce como seção própria — os passos 04–05 no
-// corredor dos três retratos, continuando a numeração da Curadoria.
-const SECOES = [
-  "Respiro",
-  "Metodo",
-  "Escolha",
-  "FaqCompact",
-  "Convite",
-] as const;
+// Dossiê da Landing Responsiva (23/08): a página passa a ser QUATRO
+// AMBIENTES fotográficos; as seções editoriais anteriores saíram com a
+// copy congelada nos componentes. O que esta guarda protege é o mesmo de
+// sempre: a rota compõe a landing VIVA e nunca volta à landing morta.
+const SECOES = ["Recepcao", "Curadoria", "Escolha", "Concierge"] as const;
 
 describe("T-D-4 · a landing pública, depois da limpeza", () => {
   it("renderiza sem quebrar — nenhum import ficou pendurado na cascata", () => {
@@ -74,12 +70,11 @@ describe("T-D-4 · a landing pública, depois da limpeza", () => {
     expect(screen.getAllByRole("heading", { level: 1 }).length).toBeGreaterThan(0);
   });
 
-  it("as seções editoriais vigentes continuam na composição", () => {
+  it("os ambientes vigentes continuam na composição", () => {
     const fonte = readFonteDaRota();
     for (const secao of SECOES) {
-      expect(fonte, `a seção ${secao} saiu da composição`).toContain(`<${secao}Section`);
+      expect(fonte, `o ambiente ${secao} saiu da composição`).toContain(`<Ambiente${secao}`);
     }
-    expect(fonte, "o herói saiu da composição").toContain("<HeroEditorial");
   });
 
   it("a rota pública não voltou a importar a landing morta", () => {

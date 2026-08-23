@@ -18,15 +18,16 @@ import { useEffect } from "react";
  */
 export function VidroDinamico() {
   useEffect(() => {
-    const cards = Array.from(
-      document.querySelectorAll<HTMLElement>(".landing-editorial .landing-veu"),
-    );
-    if (cards.length === 0) return;
-
     let agendado = false;
 
     const atualizar = () => {
       agendado = false;
+      // A lista é relida a cada quadro: capturá-la uma vez só deixava de
+      // fora qualquer card cujo nó o React tivesse trocado na hidratação —
+      // foi assim que o card do Curador ficou sem o efeito (23/08).
+      const cards = Array.from(
+        document.querySelectorAll<HTMLElement>(".landing-editorial .landing-veu"),
+      );
       const alturaDaTela = window.innerHeight;
       const centroDaTela = alturaDaTela / 2;
       for (const card of cards) {
