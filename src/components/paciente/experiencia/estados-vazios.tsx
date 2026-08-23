@@ -65,8 +65,7 @@ export function ComparacaoNaoIniciada() {
     <div className="max-w-prose">
       <h2 className="patient-section-title">Comparar caminhos</h2>
       <p className="mt-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">
-        Marque dois ou três caminhos acima e eles aparecem aqui lado a lado, um aspecto de cada
-        vez. Comparar é opcional — muita gente prefere ler um por um.
+        Marque dois ou três caminhos acima para vê-los lado a lado. Comparar é opcional.
       </p>
     </div>
   );

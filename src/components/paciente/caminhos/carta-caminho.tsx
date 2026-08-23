@@ -205,9 +205,9 @@ export function CartaCaminho({
                   nenhuma carta se compara às outras. `null` = Relatório sem a
                   seção (anterior à ADR); ausência é ausência. */}
               {option.relationalReading ? (
-                <section aria-label="Como esse caminho conversa com a forma como você quer ser cuidada">
+                <section aria-label="No jeito como você quer ser cuidada">
                   <h4 className="patient-section-title">
-                    Como esse caminho conversa com a forma como você quer ser cuidada
+                    No jeito como você quer ser cuidada
                   </h4>
                   <ul className="mt-3 space-y-2">
                     {option.relationalReading.split("\n").filter((linha) => linha.trim()).map((frase, indice) => (
@@ -226,8 +226,8 @@ export function CartaCaminho({
                   chips: nada repetido, contável ou empilhável representa
                   qualidade (R5), e frases não se somam num relance. */}
               {option.favorablePoints.length > 0 ? (
-                <section aria-label="O que você encontra neste caminho">
-                  <h4 className="patient-section-title">O que você encontra neste caminho</h4>
+                <section aria-label="O que você encontra">
+                  <h4 className="patient-section-title">O que você encontra</h4>
                   <ul className="mt-3 space-y-2">
                     {option.favorablePoints.map((ponto, indice) => (
                       <li
@@ -246,8 +246,8 @@ export function CartaCaminho({
                   palavra "atenção" (A_MESA §5 a proíbe: severidade visual é
                   hierarquia). Assimetria de entusiasmo é indução. */}
               {option.attentionPoints.length > 0 ? (
-                <section aria-label="Do que você abre mão neste caminho">
-                  <h4 className="patient-section-title">Do que você abre mão neste caminho</h4>
+                <section aria-label="Do que você abre mão">
+                  <h4 className="patient-section-title">Do que você abre mão</h4>
                   <ul className="mt-3 space-y-2">
                     {option.attentionPoints.map((ponto, indice) => (
                       <li
@@ -263,7 +263,7 @@ export function CartaCaminho({
 
               {option.suggestedQuestions.length > 0 ? (
                 <section aria-label="Perguntas para a próxima conversa">
-                  <h4 className="patient-section-title">Perguntas que podem ajudar na próxima conversa</h4>
+                  <h4 className="patient-section-title">Para perguntar na consulta</h4>
                   <ul className="mt-3 space-y-2">
                     {option.suggestedQuestions.map((pergunta, indice) => (
                       <li

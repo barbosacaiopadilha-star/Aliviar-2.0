@@ -19,13 +19,13 @@ export function FaixaDoComum({ curatorName }: { curatorName?: string | null }) {
 
   return (
     <div className="rounded-md bg-[rgb(90_125_106_/_0.08)] px-6 py-5 lg:px-8">
+      {/* Bisturi de 22/08 (decisão do Fundador): uma frase no lugar de duas
+          — os três fatos aprovados intactos: mesmo processo, o que muda, e a
+          ordem como apresentação. */}
       <p className="max-w-prose font-serif text-base leading-[1.65] text-[var(--patient-ink)]">
-        Os três caminhos foram preparados para o seu caso por {quem}, e chegaram até aqui pelo
-        mesmo processo — nenhum entrou por atalho.
-      </p>
-      <p className="mt-3 max-w-prose font-serif text-base leading-[1.65] text-[var(--patient-ink)]">
-        O que muda entre eles é onde a forma de trabalhar de cada um encontra o que você disse
-        importar. Não existe uma coluna melhor — e a ordem é apenas a da apresentação.
+        Os três foram preparados para o seu caso por {quem}, pelo mesmo processo — o que muda é
+        onde o jeito de cada um encontra o que você disse importar. A ordem é só a da
+        apresentação.
       </p>
     </div>
   );

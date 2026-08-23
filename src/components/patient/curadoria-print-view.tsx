@@ -55,7 +55,7 @@ export function CuradoriaPrintView({ curadoria }: { curadoria: PatientCuradoria 
           {option.relationalReading ? (
             <div className="space-y-1">
               <h3 className="text-sm font-medium">
-                Como este caminho conversa com a forma como você quer ser cuidada
+                No jeito como você quer ser cuidada
               </h3>
               <p className="whitespace-pre-line text-sm leading-relaxed">
                 {option.relationalReading}

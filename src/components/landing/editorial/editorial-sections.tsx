@@ -305,8 +305,7 @@ export function VideoSection() {
           <LandingEyebrow>Vídeo institucional</LandingEyebrow>
           <h2 className="landing-heading text-2xl lg:text-3xl">Conheça a Aliviar</h2>
           <p className="landing-body mt-4 text-[var(--color-ink-muted)]">
-            Uma outra forma de cuidar da sua saúde — independente, humana e completa. Dois minutos
-            para conhecer a casa antes de entrar.
+            Independente, humana e completa — dois minutos para conhecer a casa.
           </p>
           <p className="mt-6 text-sm font-semibold uppercase tracking-[0.12em] text-[var(--color-brand-gold)]">
             Assistir agora →
@@ -482,8 +481,7 @@ export function MetodoSection() {
               processo (NOTA 2.3, copy registrada). Nenhuma promessa nova:
               a companhia em cada passo já era o texto anterior. */}
           <p className="landing-body mt-5 text-lg text-[var(--color-ink-muted)]">
-            O caminho que vamos percorrer juntos tem cinco passos — do primeiro contato à escolha, com uma pessoa ao
-            seu lado em todos eles.
+            São cinco passos — e uma pessoa ao seu lado em todos eles.
           </p>
         </div>
 
@@ -546,8 +544,7 @@ export function PrioridadesSection() {
             toda a análise.
           </p>
           <p className="landing-body mt-5 text-lg text-[var(--color-ink-muted)]">
-            No fim, um documento para reler com calma: suas prioridades, as três opções, o que cada caminho oferece e
-            o que custa — em linguagem simples. Para reler com a família ou levar à consulta.
+            No fim, tudo vira um documento em linguagem simples — para reler com calma, com a família ou na consulta.
           </p>
         </div>
 

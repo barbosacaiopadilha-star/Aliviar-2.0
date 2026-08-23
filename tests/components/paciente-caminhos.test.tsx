@@ -135,10 +135,10 @@ describe("CartaCaminho — abertura no lugar, com memória", () => {
     await user.click(screen.getAllByRole("button", { name: "Conhecer este caminho" })[0]!);
 
     expect(screen.getByText("Como responde ao seu Perfil")).toBeInTheDocument();
-    expect(screen.getByText("O que você encontra neste caminho")).toBeInTheDocument();
-    expect(screen.getByText("Do que você abre mão neste caminho")).toBeInTheDocument();
+    expect(screen.getByText("O que você encontra")).toBeInTheDocument();
+    expect(screen.getByText("Do que você abre mão")).toBeInTheDocument();
     expect(
-      screen.getByText("Perguntas que podem ajudar na próxima conversa"),
+      screen.getByText("Para perguntar na consulta"),
     ).toBeInTheDocument();
     expect(screen.getByText("A leitura completa")).toBeInTheDocument();
   });
@@ -285,7 +285,7 @@ describe("A Mesa — terreno comum, conversa consigo e saídas", () => {
     const { container } = render(<CaminhosPanel curadoria={CURADORIA} />);
     const html = container.innerHTML;
 
-    const comum = html.indexOf("nenhum entrou por atalho");
+    const comum = html.indexOf("pelo mesmo processo");
     const primeiraCarta = html.indexOf("Conhecer este caminho");
     expect(comum).toBeGreaterThan(-1);
     expect(primeiraCarta).toBeGreaterThan(-1);
