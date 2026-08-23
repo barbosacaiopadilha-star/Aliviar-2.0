@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 
 import { LinkButton } from "@/components/landing/link-button";
+import { ImmersiveBackdrop } from "@/components/shared/immersive-backdrop";
 
 const VIDEO_SRC = "/videos/video-institucional-aliviar.webm";
 
@@ -19,17 +20,23 @@ export function HeroEditorial({ videoSrc }: HeroEditorialProps = {}) {
 
   return (
     <section className="landing-hero-immersive">
-      {/* Fidelidade ao mockup do Fundador (2ª rodada de anotações, 22/08):
-          o Hero é chão de linho LIMPO, título à esquerda, e a fotografia da
-          conversa como peça GRANDE à direita — não fundo, não cartão
-          pequeno. É a distribuição do mockup, pixel a pixel. */}
+      {/* ADR-080 · O Edifício Aliviar: o hero é a ENTRADA — o ambiente mais
+          nítido e expressivo da página, em tela cheia. A família chega, a
+          curadora recebe (sem jaleco), o letreiro "Curadoria Médica
+          Independente" está gravado na cena. O texto senta num véu marfim
+          translúcido à esquerda — a camada de contraste protege só a região
+          do texto, nunca a foto inteira (spec do Fundador, 22/08). */}
+      <ImmersiveBackdrop
+        scene="entrada"
+        variant="edificio-nitido"
+        imageOpacity={100}
+        imagePosition="right center"
+        priority
+      />
 
-      {/* BLOCO 7 · duas colunas a partir de 1024px. Abaixo disso empilha
-          título → corpo → vídeo → CTA, com o vídeo em largura total: em
-          mobile o vídeo antes do gesto é o que dá contexto ao gesto. */}
       <div className="relative z-10 mx-auto w-full max-w-content px-5 lg:px-10">
         <div className="landing-hero-grid">
-          <div className="landing-fade-in landing-hero-col">
+          <div className="landing-fade-in landing-hero-col landing-veu p-7 sm:p-10 lg:p-12">
             {/* A frase que estava aqui — "Curadoria médica independente" — não
                 se perdeu: virou o primeiro diferencial do bloco
                 institucional, onde é verificável em vez de decorativa. */}
@@ -67,18 +74,9 @@ export function HeroEditorial({ videoSrc }: HeroEditorialProps = {}) {
             </div>
           </div>
 
-          <div
-            className="landing-approach landing-hero-col overflow-hidden rounded-3xl shadow-xl"
-            style={{ animationDelay: "160ms" }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element -- cena
-                estática de public/landing, mesmo uso das demais. */}
-            <img
-              src="/landing/hero-conversa-recepcao.jpg"
-              alt="Uma conversa na recepção da Aliviar — duas pessoas sentadas, uma escuta a outra"
-              className="aspect-[4/3] h-full w-full object-cover lg:aspect-auto lg:min-h-[30rem]"
-            />
-          </div>
+          {/* ADR-080: a coluna direita fica LIVRE de propósito — é onde a
+              cena mostra a família no balcão. A foto deixou de ser cartão
+              para ser o próprio ambiente da seção. */}
         </div>
       </div>
     </section>

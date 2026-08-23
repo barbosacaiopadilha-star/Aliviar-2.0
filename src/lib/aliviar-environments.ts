@@ -30,6 +30,18 @@ export const ALIVIAR_SCENES = {
   transicao: "/scenes/master/aliviar-03-corredor-transicao.jpg",
   /** 04 · Despedida — encerramento de etapa e continuidade do acompanhamento. */
   despedida: "/scenes/master/aliviar-04-despedida.jpg",
+
+  /* —— O Edifício Aliviar (ADR-080) — geração de 22/08, do Fundador. ——
+     Três ambientes gerados JÁ com áreas livres planejadas para receber
+     texto (a salvaguarda da ADR-080: o espaço negativo nasce no prompt,
+     não se improvisa no CSS). Letreiro "Curadoria Médica Independente"
+     gravado na própria cena — identidade médica sem jaleco. */
+  /** Entrada — o acolhimento: família recebida por uma curadora, sem jaleco. */
+  entrada: "/scenes/edificio/entrada.jpg",
+  /** Sala de Curadoria — mesas de análise, pastas verdes; parede esquerda livre. */
+  curadoria: "/scenes/edificio/sala-curadoria.jpg",
+  /** Corredor dos caminhos — três retratos (crânio·coluna·joelho), portas, luz contínua. */
+  corredor: "/scenes/edificio/corredor.jpg",
 } as const;
 
 export type AliviarSceneKey = keyof typeof ALIVIAR_SCENES;

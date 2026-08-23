@@ -1,4 +1,4 @@
-import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
+import type { CSSProperties, ComponentProps, HTMLAttributes, ReactNode } from "react";
 
 import { ImmersiveBackdrop } from "@/components/shared/immersive-backdrop";
 import type { AliviarSceneKey } from "@/lib/aliviar-environments";
@@ -8,6 +8,13 @@ type LandingSectionProps = HTMLAttributes<HTMLElement> & {
   children: ReactNode;
   variant?: "linen" | "warm" | "white" | "forest";
   atmosphere?: AliviarSceneKey | null;
+  /**
+   * ADR-080 · curva de intensidade do Edifício: quando presentes, controlam
+   * o quão expressivo o ambiente fica atrás do conteúdo. Sem eles, vale o
+   * comportamento histórico (landing-soft, opacidade 16/10).
+   */
+  atmosphereVariant?: ComponentProps<typeof ImmersiveBackdrop>["variant"];
+  atmosphereOpacity?: number;
   /**
    * A batida da seção no ritmo da página (CRITICA_LANDING_2_2 §3): antes
    * todas as seções tinham o MESMO respiro (8,5–12rem), e respiro uniforme
@@ -37,6 +44,8 @@ export function LandingSection({
   className,
   variant = "linen",
   atmosphere = null,
+  atmosphereVariant,
+  atmosphereOpacity,
   spacing = "ampla",
   ...props
 }: LandingSectionProps) {
@@ -48,8 +57,8 @@ export function LandingSection({
       {atmosphere ? (
         <ImmersiveBackdrop
           scene={atmosphere}
-          variant="landing-soft"
-          imageOpacity={variant === "forest" ? 10 : 16}
+          variant={atmosphereVariant ?? "landing-soft"}
+          imageOpacity={atmosphereOpacity ?? (variant === "forest" ? 10 : 16)}
         />
       ) : null}
       <div className="relative z-10 mx-auto max-w-content px-5 lg:px-10">{children}</div>

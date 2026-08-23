@@ -33,7 +33,15 @@ const FAQ_ITEMS = [
 
 export function FaqCompactSection() {
   return (
-    <LandingSection id="duvidas" variant="warm" spacing="media">
+    <LandingSection
+      id="duvidas"
+      variant="warm"
+      spacing="media"
+      /* ADR-080: texto longo pede arquitetura QUASE ABSTRATA — o corredor
+         em opacidade mínima vira só luz, textura e profundidade. */
+      atmosphere="corredor"
+      atmosphereOpacity={12}
+    >
       <div className="mx-auto max-w-4xl">
         <div className="landing-reveal text-center">
           <h2 className="landing-heading text-3xl lg:text-[2.625rem]">Dúvidas frequentes</h2>

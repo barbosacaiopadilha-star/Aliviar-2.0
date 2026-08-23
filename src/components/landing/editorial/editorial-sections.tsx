@@ -143,7 +143,7 @@ const PASSOS = [
   {
     title: "Vocês definem o que importa",
     text: "Suas prioridades registradas com as suas próprias palavras.",
-    foto: "/landing/jornada-02-compreensao.jpg",
+    foto: "/scenes/edificio/sala-curadoria.jpg",
   },
   {
     title: "A equipe analisa",
@@ -153,7 +153,7 @@ const PASSOS = [
   {
     title: "Você recebe três opções",
     text: "Três caminhos legítimos, explicados — nunca um ranking.",
-    foto: "/landing/jornada-04-encontro.jpg",
+    foto: "/scenes/edificio/corredor.jpg",
   },
   {
     title: "A decisão é sua",
@@ -291,7 +291,15 @@ export function VideoSection() {
   if (!existsSync(videoPath)) return null;
 
   return (
-    <LandingSection spacing="densa" aria-label="Vídeo institucional">
+    <LandingSection
+      spacing="densa"
+      aria-label="Vídeo institucional"
+      /* ADR-080 · curva de intensidade: depois da entrada nítida do hero, o
+         corredor entra SUAVE — conduz o olhar para o conteúdo principal. */
+      atmosphere="corredor"
+      atmosphereVariant="edificio-suave"
+      atmosphereOpacity={100}
+    >
       {/* Efeito do mockup: o lado do texto assenta num painel verde-suave em
           degradê — a assinatura visual do cartão do vídeo. */}
       <div
@@ -460,7 +468,9 @@ export function MetodoSection() {
     <LandingSection
       id="como-funciona"
       variant="warm"
-      atmosphere="consultas"
+      /* ADR-080: fundo DISCRETO — a Sala de Curadoria como contexto, na
+         opacidade histórica (16), servindo só de textura atrás dos cartões. */
+      atmosphere="curadoria"
       spacing="densa"
     >
       <div className="mx-auto max-w-2xl">
@@ -602,7 +612,16 @@ export function PrioridadesSection() {
  */
 export function ConviteSection() {
   return (
-    <LandingSection spacing="media" aria-label="Convite">
+    <LandingSection
+      spacing="media"
+      aria-label="Convite"
+      /* ADR-080 · encerramento: o ambiente volta a ganhar presença — a
+         entrada de novo, agora como saída iluminada (a linha de luz
+         continua: acompanhamento antes, durante e depois). */
+      atmosphere="entrada"
+      atmosphereVariant="edificio-suave"
+      atmosphereOpacity={100}
+    >
       {/* Fidelidade ao mockup (2ª rodada, 22/08): a banda final é foto +
           painel verde lado a lado — a vida seguindo à esquerda, o convite à
           direita. Sem depoimento até haver gente real (ADR-078). */}
@@ -626,7 +645,9 @@ export function ConviteSection() {
           </div>
         </div>
       </div>
-      <div className="landing-reveal mx-auto mt-12 max-w-2xl text-center">
+      {/* ADR-080: a frase final ganha o véu — a camada de contraste protege
+          a região do texto sobre o ambiente. Copy intocada. */}
+      <div className="landing-reveal landing-veu mx-auto mt-12 max-w-2xl px-6 py-8 text-center lg:px-10">
         <p className="font-serif text-2xl leading-[1.5] text-[var(--color-ink)] lg:text-3xl">
           Quando você quiser começar, o primeiro passo é contar a sua história — no seu ritmo.
         </p>

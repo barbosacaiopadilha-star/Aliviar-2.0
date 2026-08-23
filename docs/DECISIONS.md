@@ -1791,3 +1791,18 @@ Novo agregado `approach_attempts` · nova estrutura `team_notifications` · proj
 - **Revisitar quando:** o volume exigir separação entre quem digita e quem confere (aí o segundo par de olhos volta como decisão, não como resíduo).
 
 ---
+
+## ADR-080 — O Edifício Aliviar: a curadoria como percurso arquitetônico
+
+- **Data:** 2026-08-22
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data (conceito redigido por ele; adaptações A e B propostas pelo arquiteto e aceitas).
+- **Dependências:** estende a **ADR-078** (a base visual da Landing) · sujeita ao contrato 34 §6 e à regra "só verdades" (ADR-078 §3) · não altera copy canônica nem mecânica de produto.
+- **O conceito:** o Edifício Aliviar é a representação visual do serviço — não uma sede física real. A pessoa entra cercada de dúvidas e sai com clareza: **Entrada** (acolhimento por um Curador, nunca por médico de jaleco) → **Escuta** (compreensão estruturada — nem consulta, nem terapia) → **Corredores** (análise independente de caminhos, linhas contínuas de luz) → **Sala de curadoria** (mesas de análise — a Mesa ganha sala) → **Espaço de decisão** (autonomia da pessoa) → **Saída iluminada** (a linha de luz continua: acompanhamento antes, durante e depois).
+- **Linguagem visual vinculante:** marfim, madeira clara e luz natural; azul-marinho para estrutura; verde-sálvia para cuidado; **champagne restrito às linhas de luz e detalhes** (se vazar para painéis inteiros, vira spa). Seriedade médica sem aparência hospitalar; acolhimento sem parecer terapia, spa ou ioga; Curadores com roupa profissional, **sem jaleco nem símbolos médicos** — jaleco na Landing prometeria atendimento médico que não é o serviço. Hierarquia: mensagem → pessoa → ambiente → detalhes.
+- **Aplicação na Landing (especificação do Fundador, mesma data — substitui a adaptação "fundo só nas pontas" proposta pelo arquiteto):** o ambiente ocupa 100% da largura e altura da seção, como cenário contínuo; o texto vai direto sobre ele, protegido por camada translúcida (marfim, azul ou verde) **apenas na região do texto**, nunca escurecendo a foto inteira; pessoas e mobiliário posicionados longe do conteúdo; as fotografias nascem com **áreas livres planejadas** para títulos, textos e botões. **Curva de intensidade ao longo da página:** hero nítido e expressivo → vídeo mais suave → método discreto → FAQ e textos longos com arquitetura quase abstrata (luz, textura, profundidade) → encerramento volta a ganhar presença. **Dois ou três ambientes reutilizados** com enquadramentos, recortes e intensidades distintas — não uma imagem nova por seção. No celular, cada ambiente pode ocupar quase a tela inteira; as linhas de luz costuram a continuidade entre seções.
+- **Salvaguardas técnicas aceitas junto:** as áreas livres entram nos **prompts de geração** (espaço negativo pedido na imagem, não improvisado no CSS); a camada translúcida garante contraste mínimo **AA verificável por teste**, em qualquer recorte; a travessia se implementa com a imagem rolando junto da seção — `background-attachment: fixed` não entra (quebra no iOS).
+- **(B) Cláusula de honestidade:** o edifício é metáfora — nunca ganha endereço, fachada, mapa ou copy que convide à visita física. Nada na Landing pode fazer alguém procurar o prédio.
+- **Mapa nos passos publicados:** Entrada→passo 1 · Escuta→passo 2 · Corredores→passo 3 · Sala de curadoria→passo 4 (as três opções nascem ali) · Espaço de decisão→passo 5 · Saída iluminada→convite final da página (não é passo).
+- **Revisitar quando:** as imagens dos seis ambientes forem geradas e testadas localmente (aprovação visual do Fundador antes de qualquer publicação); ou quando existir um endereço físico real — aí a cláusula B se reavalia por inteiro.
+
+---

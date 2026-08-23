@@ -778,3 +778,20 @@
     line-height: 1;
   }
 }
+
+/* ==========================================================================
+   O Edifício Aliviar (ADR-080) — o véu do texto
+   O ambiente ocupa a seção inteira; a camada de contraste protege SOMENTE
+   a região do texto. Marfim translúcido + leve desfoque: a foto respira em
+   volta, e a leitura fica AA em qualquer recorte da imagem.
+   ========================================================================== */
+
+.landing-editorial .landing-veu {
+  position: relative;
+  background: color-mix(in srgb, var(--landing-linen) 80%, transparent);
+  backdrop-filter: blur(14px) saturate(1.05);
+  -webkit-backdrop-filter: blur(14px) saturate(1.05);
+  border-radius: var(--radius-card);
+  border: 1px solid color-mix(in srgb, var(--color-bg-surface) 55%, transparent);
+  box-shadow: var(--shadow-lg);
+}
