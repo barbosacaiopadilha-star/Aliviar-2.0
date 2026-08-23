@@ -16,7 +16,11 @@ import { SectionReveal } from "@/components/ui/section-reveal";
 // tinha nenhum tratamento de entrada.
 const FOOTER_LINKS = [
   { label: "Início", href: "/" },
-  { label: "Dúvidas frequentes", href: "#duvidas" },
+  // "Dúvidas frequentes" (#duvidas) SAIU: a seção deixou a página com a
+  // landing responsiva (ADR-083) e o link virou porta pintada — a
+  // conferência do deploy de 23/08 o pegou apontando para o vazio. As
+  // dúvidas passam a viver na conversa, que é o destino abaixo.
+  { label: "Nossa curadoria", href: "#como-funciona" },
   // C1 (auditoria 22/08): a mesma porta do Hero e do convite — a conversa.
   { label: "Solicitar atendimento", href: "/solicitar-atendimento" },
   { label: "Entrar", href: "/login" },
