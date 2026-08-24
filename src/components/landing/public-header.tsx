@@ -118,19 +118,18 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
           href="/"
           className="flex items-center gap-3 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-bg-canvas)]"
         >
-          {/* BLOQUEIO RELATADO (dossiê, 23/08): o arquivo entregue como
-              "logo-oficial.png" é uma PEÇA de apresentação de marca — o
-              símbolo, a assinatura, três ícones com slogans e um rodapé
-              azul, sobre fundo creme opaco. Não é um logotipo de
-              cabeçalho, e um dos slogans ("o médico certo para você") é
-              justamente a promessa de resultado que a casa proíbe. Fica a
-              marca real do projeto, com transparência, até chegar o
-              arquivo do logotipo isolado. */}
+          {/* BLOQUEIO RESOLVIDO (23/08): o Fundador enviou o logotipo
+              isolado. Dele saiu o SÍMBOLO com fundo transparente — o
+              cabeçalho tem ~40px de altura, onde a assinatura "Curadoria
+              Médica Independente" viraria um borrão; ela já aparece
+              legível na parede da cena da recepção e no rodapé. O nome
+              segue em texto real ao lado: mais nítido que qualquer
+              imagem, e escala sozinho. */}
           <Image
-            src="/brand/logo-aliviar-icon.png"
+            src="/brand/aliviar-simbolo.png"
             alt="Aliviar — Curadoria Médica Independente"
-            width={363}
-            height={372}
+            width={256}
+            height={266}
             priority
             className={cn(
               "w-auto transition-[height] duration-[480ms] ease-[cubic-bezier(0.25,0.1,0.25,1)]",

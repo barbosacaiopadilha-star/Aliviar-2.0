@@ -43,22 +43,28 @@ export function PublicFooter() {
 
       <SectionReveal
         delayMs={100}
-        className="mx-auto grid w-full max-w-content gap-10 px-4 pb-14 pt-10 lg:grid-cols-[1.3fr_1fr] lg:px-8"
+        className="mx-auto grid w-full max-w-content gap-12 px-4 pb-14 pt-12 lg:grid-cols-[1.3fr_1fr] lg:gap-16 lg:px-8"
       >
-        <div className="space-y-3">
+        <div className="space-y-5">
+          {/* A MARCA COMPLETA, na variante clara (23/08): antes o rodapé
+              espremia o logotipo inteiro num quadrado de 80px sobre azul —
+              o nome e a assinatura ficavam ilegíveis. Agora a marca vem na
+              proporção real, monocromática no linho da casa: mesma forma,
+              uma cor só, como todo manual de identidade prevê para fundo
+              escuro. */}
           <Link
             href="/"
             className="inline-block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-brand-primary)]"
           >
             <Image
-              src="/brand/logo-aliviar-transparent.png"
+              src="/brand/aliviar-logo-clara.png"
               alt="Aliviar — Curadoria Médica Independente"
-              width={1254}
-              height={1254}
-              className="h-20 w-20 lg:h-24 lg:w-24"
+              width={520}
+              height={492}
+              className="h-auto w-40 lg:w-48"
             />
           </Link>
-          <p className="max-w-reading text-sm text-on-dark-muted">
+          <p className="max-w-reading text-sm leading-relaxed text-on-dark-muted">
             Curadoria médica independente — com você em cada etapa da decisão.
           </p>
         </div>
@@ -67,7 +73,7 @@ export function PublicFooter() {
           <span className="text-xs font-medium uppercase tracking-[0.14em] text-on-dark-faint">
             Navegação
           </span>
-          <ul className="mt-3 space-y-1">
+          <ul className="mt-4 space-y-1">
             {FOOTER_LINKS.map((link) => (
               <li key={link.href}>
                 {/* py-1 (Fase 2 — Hardening, Etapa 4): alvo de toque media
