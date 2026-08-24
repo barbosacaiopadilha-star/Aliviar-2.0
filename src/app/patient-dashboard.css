@@ -16,6 +16,11 @@
   --patient-evolucao: var(--scale-sage-700);
   --patient-evolucao-soft: var(--scale-sage-100);
 
+  /* A TINTA DESTA CASA É MAIS ESCURA QUE A DE FORA (24/08).
+     Ela NÃO é declarada aqui: uma folha de ambiente escolhe atmosfera, nunca
+     paleta — é a guarda da paleta única, e ela está certa. A decisão vive na
+     fundação (`globals.css`, bloco ".patient-dashboard"), com o porquê. */
+
   /* Aliases da casa — nomes preservados, valores agora vindos da fundação.
      `--patient-acento` chamava-se `--patient-forest`: o nome deixou de ser verdade
      quando a atmosfera desta casa passou a ser azul, e um token que mente
@@ -181,11 +186,27 @@
   }
 }
 
-.patient-dashboard > header,
+/* O conteúdo empilha acima da camada da fotografia, que é `fixed`. */
 .patient-dashboard > main,
 .patient-dashboard > footer {
   position: relative;
   z-index: 1;
+}
+
+/* O CABEÇALHO GRUDA NO TOPO (24/08 · "cadê o acesso do Concierge no topo?").
+
+   Ele já declarava `sticky top-0` no shell — e esta mesma regra, quando
+   incluía `header`, virava `position: relative` por especificidade
+   (`.patient-dashboard > header` vence `.sticky`) e desgrudava o topo em
+   silêncio. A 2ª emenda da ADR-085 é explícita: a porta do Concierge é
+   "botão fixo no cabeçalho do shell, PRESENTE EM TODA TELA". Um cabeçalho
+   que sobe junto com a rolagem não cumpre isso — e o defeito ficou óbvio
+   quando a leitura passou a começar abaixo da dobra da cena, porque aí
+   rolar deixou de ser opcional. */
+.patient-dashboard > header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
 
 .patient-dashboard .patient-body {

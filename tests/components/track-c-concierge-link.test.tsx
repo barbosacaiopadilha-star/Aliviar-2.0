@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -104,5 +106,51 @@ describe("T-C-1 · ConciergeLink", () => {
 
     const { container: com } = render(<ConciergeLink topic="curadoria" nota />);
     expect(com.textContent).toContain("Sem pressa — responderemos.");
+  });
+});
+
+/**
+ * A PORTA NO TOPO NÃO PODE SUBIR JUNTO COM A ROLAGEM.
+ *
+ * A 2ª emenda da ADR-085 (24/08) tirou o card do Concierge do pé da página
+ * — *"eu não quero Concierge lá embaixo"* — e o pôs como **botão fixo no
+ * cabeçalho do shell, presente em TODA TELA**.
+ *
+ * O defeito que este oráculo existe para impedir: o shell declarava
+ * `sticky top-0`, e a regra de empilhamento da folha da casa — a que põe o
+ * conteúdo acima da camada da fotografia — incluía `header` e o rebaixava a
+ * `position: relative` por especificidade (`.patient-dashboard > header`
+ * vence `.sticky`). Em silêncio: nenhum teste falhava, a classe continuava
+ * escrita no TSX, e a porta saía da tela na primeira rolagem.
+ *
+ * Ficou visível quando a leitura passou a começar abaixo da dobra da cena,
+ * porque aí rolar deixou de ser opcional — mas o defeito já estava lá desde
+ * que a fotografia entrou.
+ */
+describe("T-C-8 · a porta do Concierge fica no topo, sempre", () => {
+  const CSS = readFileSync("src/app/patient-dashboard.css", "utf8");
+  const SHELL = readFileSync("src/components/paciente/patient-shell.tsx", "utf8");
+
+  it("o cabeçalho da casa é grudado — declarado na folha, não só no TSX", () => {
+    const regra = CSS.slice(CSS.indexOf(".patient-dashboard > header {"));
+    expect(regra.slice(0, 120)).toContain("position: sticky");
+    expect(regra.slice(0, 120)).toContain("top: 0");
+  });
+
+  it("e a regra de empilhamento não volta a atropelar o cabeçalho", () => {
+    // Era esta a lista que continha `header` e o rebaixava a `relative`.
+    const empilha = CSS.slice(CSS.indexOf(".patient-dashboard > main,"));
+    expect(empilha.slice(0, 160)).not.toContain("> header");
+  });
+
+  it("o botão continua no cabeçalho, com o rótulo único e o assunto tipado", () => {
+    const cabecalho = SHELL.slice(SHELL.indexOf("<header"), SHELL.indexOf("</header>"));
+
+    // O cabeçalho monta a porta em linha, não pelo ConciergeLink — o que a
+    // torna a MESMA porta é o contrato, não o componente: rótulo único e
+    // destino por assunto tipado, sem texto livre (contrato 30 §3 e §7).
+    expect(cabecalho).toContain("Falar com a Aliviar");
+    expect(cabecalho).toContain(String.raw`whatsappHref("jornada")`);
+    expect(cabecalho).toContain("(abre o WhatsApp em nova aba)");
   });
 });

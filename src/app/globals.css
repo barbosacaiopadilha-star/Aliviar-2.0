@@ -257,6 +257,31 @@
     --color-ambient-accent: var(--scale-indigo-700);
     --color-ambient-accent-soft: var(--scale-indigo-50);
     --color-ambient-accent-deep: var(--scale-indigo-800);
+
+    /* E A TINTA DESTA SALA É MAIS FUNDA — porque o SUBSTRATO é outro
+       (24/08 · achado do Fundador no telefone: "tem algumas quase
+       invisíveis"). Em todo o resto do produto o texto pousa em papel
+       opaco; aqui pousa em vidro translúcido sobre uma cena noturna (2ª
+       emenda da ADR-085). Medido no celular, na zona de leitura, com o
+       cartão CRISTALIZADO NO TETO (0,84) — o melhor caso do material:
+
+         "Sua Jornada" (sálvia de marca, 14px) ......... 2,07:1
+         "Precisa de você" (tinta apagada, 11px) ....... 3,52:1
+         "Depois disso: ..." (tinta apagada, 14px) ..... 3,81:1
+         "Bom dia. Estamos por aqui." (18px) ........... 3,94:1
+
+       O mínimo da WCAG AA para texto normal é 4,5:1. Como nenhum desses
+       casos está no vidro em REPOUSO, não é a dinâmica da ADR-084 que
+       falha — é a tinta. Por isso o material que o Fundador calibrou
+       ("igual à vitrine, piso ZERO") fica intacto, e quem desce um degrau
+       é a cor: mesma matiz, passo mais fundo da MESMA escala. A sálvia vai
+       para o degrau que a escala já chamava de "o verde legível", e um
+       adiante. Depois: nada abaixo de 4,5:1 nas quatro telas; pior 4,55:1.
+
+       Mora AQUI, e não em `patient-dashboard.css`, porque a fundação é a
+       única origem de cor — um ambiente escolhe atmosfera, nunca paleta. */
+    --color-ink-muted: var(--scale-neutro-700);
+    --color-brand-sage: var(--scale-sage-800);
   }
 
   /* A Curadoria — verde: é onde o cuidado é efetivamente trabalhado. O
@@ -325,6 +350,7 @@
     }
   }
 }
+
 
 @layer utilities {
   .focus-ring {

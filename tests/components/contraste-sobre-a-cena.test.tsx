@@ -12,30 +12,55 @@ import { lerEstado, type FatosDoCaso } from "@/foundation/contrato-de-estado";
 import { derivePatientPending } from "@/modules/paciente/next-action";
 
 /**
- * TEXTO SOLTO SOBRE A FOTOGRAFIA NÃO VOLTA.
+ * A LEITURA SOBRE A CENA — DUAS CAUSAS, DUAS CORREÇÕES.
  *
  * A 2ª emenda da ADR-085 (24/08) pôs a cena da casa em força total atrás de
  * TODA a área autenticada e decidiu, na mesma frase, que "texto solto sobre a
  * fotografia morreu como recurso: tudo é card ou está dentro de card".
  *
- * A regra foi aplicada ao hero e aos cards do Início — e não às superfícies
- * que já eram "papel" antes da foto existir. O resultado, medido na aba local
- * no celular sobre a cena noturna:
+ * PRIMEIRA CAUSA — a regra não foi aplicada às superfícies que já eram
+ * "papel" antes da foto existir. Medido no celular, sobre a cena noturna:
  *
  * - "Precisa de você" (faixa quente a 50%) ................ 1,11:1
  * - a porta para "Seus documentos", em Meus dados ......... 1,53:1
  * - o percurso, em Sua Jornada ............................ 1,62:1
  * - "Sua história está salva pela metade" ................. 2,78:1
  *
- * O mínimo da WCAG AA para texto normal é 4,5:1. Não era calibragem de gosto:
- * era texto ilegível para quem lê no telefone, que é o foco declarado.
+ * SEGUNDA CAUSA, achada pelo Fundador no telefone ("tem algumas quase
+ * invisíveis") — o texto DENTRO do card. Aqui o vidro não tinha culpa: com o
+ * cartão CRISTALIZADO NO TETO (0,84) e na zona de leitura, a tinta apagada
+ * entregava 3,5 a 4,0:1 e a sálvia de marca, 2,07:1. Lá fora essas cores
+ * pousam em papel opaco; nesta casa pousam em vidro sobre uma sala escura.
  *
- * O que estes oráculos guardam é a REGRA, não a aparência: toda superfície de
- * bloco da casa dela nasce sobre vidro (`patient-veu`), porque é o vidro que
- * cristaliza na zona de leitura e devolve o fundo ao texto. A única exceção
- * legítima é a LINHA discreta da porta do Concierge — para ela, quem responde
- * é o véu de marfim, mais denso no celular.
+ * O mínimo da WCAG AA para texto normal é 4,5:1. Nenhuma das duas era
+ * calibragem de gosto: era texto ilegível para quem lê no telefone.
+ *
+ * O que estes oráculos guardam é a REGRA, nunca a aparência: superfície de
+ * bloco nasce sobre vidro; a tinta desta casa é a legível; e o material que o
+ * Fundador calibrou (ADR-084 — "igual à vitrine, piso ZERO") não se mexe.
  */
+
+const CSS = readFileSync("src/app/patient-dashboard.css", "utf8");
+const GLOBAIS = readFileSync("src/app/globals.css", "utf8");
+
+/**
+ * Um bloco `.patient-dashboard { ... }`, recortado pela chave que FECHA ele —
+ * não pela primeira chave que aparecer. Em `globals.css` a regra vive dentro
+ * de uma `@layer` e fecha indentada; recortar por `"\n}"` engoliria meio
+ * arquivo e faria um `toContain` passar por acidente.
+ */
+function blocoDaCasa(css: string) {
+  const inicio = css.indexOf(".patient-dashboard {");
+  if (inicio === -1) return "";
+  const indent = css.slice(css.lastIndexOf("\n", inicio) + 1, inicio);
+  const fim = css.indexOf(`\n${indent}}`, inicio);
+  return css.slice(inicio, fim === -1 ? undefined : fim);
+}
+
+/** Os apelidos que a folha de ambiente declara — atmosfera, nunca paleta. */
+const CASA = blocoDaCasa(CSS);
+/** O escopo que a FUNDAÇÃO abre para esta sala — onde a tinta é decidida. */
+const ESCOPO_DA_CASA = blocoDaCasa(GLOBAIS);
 
 afterEach(cleanup);
 
@@ -120,9 +145,35 @@ describe("A Próxima Ação é card nos dois estados", () => {
   });
 });
 
-describe("O véu de marfim responde pelo que não é card", () => {
-  const CSS = readFileSync("src/app/patient-dashboard.css", "utf8");
+describe("Dentro do card, a tinta desta casa é a legível", () => {
+  it("a tinta apagada e a sálvia descem para o degrau legível da escala", () => {
+    expect(ESCOPO_DA_CASA).toContain("--color-ink-muted: var(--scale-neutro-700)");
+    expect(ESCOPO_DA_CASA).toContain("--color-brand-sage: var(--scale-sage-800)");
+  });
 
+  it("a decisão mora na FUNDAÇÃO, não na folha de ambiente", () => {
+    // Um ambiente escolhe atmosfera, nunca paleta — é a guarda da paleta
+    // única (`paleta-unica.test.ts`), e ela está certa. O que muda aqui não é
+    // a paleta: é o SUBSTRATO (vidro sobre cena, em vez de papel opaco).
+    expect(CASA).not.toContain("--color-ink-muted:");
+    expect(CASA).not.toContain("--color-brand-sage:");
+  });
+
+  it("e vale SÓ nesta sala — o padrão da fundação continua de pé", () => {
+    // O Curador e o Administrador seguem com a tinta de fora, porque lá não
+    // há fotografia atrás do texto.
+    expect(GLOBAIS).toContain("--color-ink-muted: var(--scale-neutro-600)");
+    expect(GLOBAIS).toContain("--color-brand-sage: var(--scale-sage-500)");
+  });
+
+  it("o teto do vidro continua em 0,84 — o material não foi mexido", () => {
+    // A correção foi de TINTA. A dinâmica que o Fundador calibrou na ADR-084
+    // ("igual à vitrine, piso ZERO") fica exatamente como está.
+    expect(CSS).toContain("var(--veu-solidez, 0) * 0.84");
+  });
+});
+
+describe("O véu de marfim responde pelo que não é card", () => {
   it("no celular o véu ganha corpo na base, e o topo continua respirando", () => {
     const movel = CSS.slice(CSS.indexOf("@media (max-width: 1023px)"));
     const veu = movel.slice(0, movel.indexOf("}", movel.indexOf("linear-gradient")));
