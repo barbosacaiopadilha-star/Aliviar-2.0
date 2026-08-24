@@ -65,15 +65,50 @@ export function VidroDinamico() {
       }
     };
 
-    // A primeira pintura espera o quadro seguinte: escrever a variável no
-    // `style` durante a hidratação fazia o React comparar um atributo que o
-    // servidor não tinha e acusar árvore inconsistente (achado de 23/08 na
-    // casa da paciente, onde o cartão também é `motion` do framer).
-    const primeira = requestAnimationFrame(atualizar);
+    // QUANDO A PRIMEIRA PINTURA ACONTECE (conserto de 24/08).
+    //
+    // Esperar um quadro NÃO bastava. A página chega em pedaços: este efeito
+    // roda quando o SHELL hidrata, e nesse instante o conteúdo da página já
+    // está no HTML mas ainda não foi adotado pelo React. Pintar ali escrevia
+    // `--veu-solidez` num nó que o React ia hidratar depois — e ele acusava
+    // árvore inconsistente, porque o servidor não mandou esse atributo.
+    //
+    // Agora a primeira pintura espera a página terminar de carregar e o
+    // navegador ficar ocioso. Não é elegância: é a única janela em que dá
+    // para garantir que não existe pedaço a caminho.
+    let ocioso = 0;
+    let quadro = 0;
+    const primeiraPintura = () => {
+      const agendarOcioso = window.requestIdleCallback
+        ? window.requestIdleCallback
+        : (fn: () => void) => window.setTimeout(fn, 1);
+      ocioso = agendarOcioso(() => {
+        quadro = requestAnimationFrame(atualizar);
+      }) as unknown as number;
+    };
+
+    if (document.readyState === "complete") {
+      primeiraPintura();
+    } else {
+      window.addEventListener("load", primeiraPintura, { once: true });
+    }
+
+    // E CARTÃO QUE CHEGA DEPOIS NÃO ESPERA ROLAGEM (a segunda cara do mesmo
+    // defeito). Antes, um cartão que aparecesse por streaming ou por
+    // navegação client-side ficava sem pintura até alguém rolar — parado em
+    // solidez 0, que é o estado MAIS TRANSPARENTE. Sobre a cena noturna,
+    // isso é texto sem fundo. O observador repinta assim que a árvore muda.
+    const observador = new MutationObserver(aoRolar);
+    observador.observe(document.body, { childList: true, subtree: true });
+
     window.addEventListener("scroll", aoRolar, { passive: true });
     window.addEventListener("resize", aoRolar, { passive: true });
     return () => {
-      cancelAnimationFrame(primeira);
+      window.removeEventListener("load", primeiraPintura);
+      if (ocioso && window.cancelIdleCallback) window.cancelIdleCallback(ocioso);
+      else if (ocioso) window.clearTimeout(ocioso);
+      if (quadro) cancelAnimationFrame(quadro);
+      observador.disconnect();
       window.removeEventListener("scroll", aoRolar);
       window.removeEventListener("resize", aoRolar);
     };
