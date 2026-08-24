@@ -1907,3 +1907,24 @@ A varredura de coerência que acompanhou a troca corrigiu outros dois pontos que
 O Fundador, sobre o print do cartão do acompanhamento: *"o Concierge não teria que ter mais destaque? Ele deve funcionar como uma ferramenta e aqui ele está escondido."* A porta "Falar com a Aliviar" deixa de ser só a linha discreta do Track C e ganha duas formas com destaque: **(1)** o card **"Seu Concierge"** fecha o Início em qualquer estado da jornada — vidro, uma frase do que ele faz e botão de verdade; na Mesa ele vive ABAIXO da decisão, nunca no meio da leitura (a doutrina de não empurrar permanece). **(2)** Dentro do cartão do acompanhamento, o botão entra ao lado das ações de registro. As regras do canal seguem intactas: rótulo único, quem responde é a Aliviar, assunto tipado sem texto livre, nenhum horário/SLA, clique não registrado. A linha discreta continua legítima nos pontos de leitura (a guarda de alcançabilidade aceita as duas formas).
 
 ---
+
+## ADR-086 — A mesa essencial do Curador: um medidor por tela, a fila leva ao ato
+
+- **Data:** 2026-08-24
+- **Status:** Decidida pelo Fundador em duas passadas, na mesma conversa: "o que dá pra cortar e resumir… ver se está intuitivo, se está fácil executar a curadoria" — e, sobre a primeira lista, "tem certeza que não dá pra enxugar mais?".
+- **Dependências:** mesma régua da ADR-085 aplicada ao outro lado do balcão · preserva o COS intacto (nenhuma fase, projeção ou domínio mudou — mudaram superfícies) · a doutrina da Fila (contrato 36 §6: grupo não some) e a do copiloto (Experience §3) permanecem.
+- **Contexto:** o caminho de executar uma Curadoria era bom no esqueleto (Painel → Caso → Acolher → Mesa → Relatório → Finalizar) e pesado nas paradas: **cinco sistemas de progresso simultâneos** (ConductionPanel + JourneyNavigator no hub; régua de etapas + timeline dupla + linha de investigação na Mesa), um aside de sete seções com duas duplicatas da própria tela, um hub de oito blocos abertos e uma etapa da Mesa que era só um aviso apontando para outra tela.
+- **Decisões (1ª passada):**
+  1. **Um progresso por tela.** O JourneyNavigator saiu do hub (o ConductionPanel responde "onde estou, o que falta, próximo passo"); o mapa completo segue no aside das etapas. A timeline dupla saiu da Mesa.
+  2. **Aside da Mesa: 7 → 4.** "O caso" e "Prioridades do Case" saíram (duplicavam o briefing do hub e a etapa Mapa da própria Mesa — componentes apagados pela régua do substituto vivo); "Investigação" + "Hipóteses" fundiram em **"Leitura do Motor"**.
+  3. **O beco do Relatório morreu.** A etapa na Mesa deixou de ser três frases apontando para outra tela e virou o botão "Abrir o Relatório". O estado dela segue na régua, vindo do domínio.
+  4. **Hub enxuto.** A história inteira saiu (vive no Acolhimento; o Briefing resume); coluna única.
+  5. **A Fila leva ao ato.** "Abrir o caso" virou "Continuar" e aterrissa na etapa devida (Acolhimento, Mesa ou Relatório, conforme o grupo — mapa na camada de tela, nunca no contrato). O hub fica a um "← voltar". Grupos sem ato do Curador seguem levando ao caso, só para ler.
+- **Decisões (2ª passada):**
+  6. **A "Linha de investigação" saiu** — era o quinto medidor, sem clique, derivado dos mesmos fatos das abas. O vocabulário (hipótese → evidências → conferência → conclusão) segue no domínio, com testes próprios.
+  7. **Grupo vazio da Fila vira UMA linha** (título + "0"). A doutrina de não sumir fica; o que saiu foram as três linhas de texto de vazio × 7 grupos.
+  8. **O hub recolhe o ocasional:** "Registrar alinhamento", "Registrar observação" e a "Memória da Curadoria" viram dobras fechadas, como o teste de reconstrução já era. Aberto fica o que é leitura de toda visita: condução e briefing.
+- **O limite declarado:** o que sobrou é trabalho, não moldura — o juízo por conceito, a comparação do Motor, o Protocolo da Pessoa, as evidências e o editor do Relatório não encolhem sem nova decisão.
+- **Revisitar quando:** a primeira Curadoria real mostrar o Curador procurando algo que recolheu (a Memória, um grupo vazio da Fila) — aí abre-se por padrão o que a operação provar que consulta sempre.
+
+---

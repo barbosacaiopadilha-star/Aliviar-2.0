@@ -12,10 +12,6 @@ import { ComparacaoPremium } from "@/components/curadoria/mesa/comparacao-premiu
 import { HipoteseEmFoco } from "@/components/curadoria/mesa/hipotese-em-foco";
 import { MesaComEstado } from "@/components/curadoria/mesa/mesa-com-estado";
 import {
-  MesaTimelineDupla,
-  type CaseTimelineMark,
-} from "@/components/curadoria/mesa/mesa-timeline";
-import {
   AvaliacaoSemElegiveis,
   CompatibilidadeNaoIniciada,
   MesaVazio,
@@ -28,9 +24,7 @@ import {
   type ConceitoDeJuizo,
 } from "@/components/curadoria/mesa/painel-de-juizo";
 import { RedeFiltravel } from "@/components/curadoria/mesa/rede-filtravel";
-import { MesaContextPanel } from "@/components/curadoria/mesa-context-panel";
 import { MesaEvidenciasPanel } from "@/components/curadoria/mesa-evidencias-panel";
-import { MesaPriorityPanel } from "@/components/curadoria/mesa-priority-panel";
 import { MesaWorkspace } from "@/components/curadoria/mesa-workspace";
 import { StartPriorityProfile } from "@/components/curadoria/start-priority-profile";
 import { ProtocoloPessoaPanel } from "@/components/curadoria/protocolo-pessoa-panel";
@@ -86,7 +80,6 @@ import {
 import {
   hipoteseDe,
   itensDeAtencao,
-  linhaDeInvestigacao,
   type InvestigacaoProfissional,
 } from "@/modules/curadoria/mesa-investigacao";
 import { itensParaTextarea } from "@/modules/curadoria/relatorio-itens";
@@ -333,15 +326,11 @@ export default async function MesaCuradoriaPage({
     },
   );
 
-  const criteriaTotal = Object.keys(view.awaitingDeclaration).length * 6;
-
-  const linha = linhaDeInvestigacao({
-    mapaCompleto: view.mapaPendentes === 0,
-    eligible: view.counts.eligible,
-    criteriaDeclared: criteriaTotal - criteriaAwaiting,
-    criteriaTotal,
-    selected: view.counts.selected,
-  });
+  /* CORTE DE 24/08 (2ª passada do Fundador: "tem certeza que não dá pra
+     enxugar mais?"): a Linha de investigação saiu da tela — era o QUINTO
+     medidor de progresso da área, derivado dos mesmos fatos que as abas de
+     etapas já mostram. O vocabulário (hipótese → evidências → conferência →
+     conclusão) segue no domínio, com os próprios testes. */
 
   // "MERECE ATENÇÃO" É RADAR, NÃO ESPELHO (auditoria F-6). O painel lateral
   // repetia, item a item, o trabalho que a etapa em foco já lista no centro
@@ -413,62 +402,10 @@ export default async function MesaCuradoriaPage({
         }
       : undefined;
 
-  // ------------------------------------------------------------------
-  // As duas linhas do tempo — orientação, nunca navegação: um clique
-  // acidental perderia o trabalho em curso.
-  // ------------------------------------------------------------------
-
-  const fase = (nome: string) =>
-    state.phases.find((phase) => phase.phase === nome)?.status === "CONCLUIDA";
-
-  const marcar = (
-    marks: { id: string; label: string; done: boolean }[],
-  ): CaseTimelineMark[] => {
-    const primeiraAberta = marks.findIndex((entrada) => !entrada.done);
-    return marks.map((mark, index) => ({
-      id: mark.id,
-      label: mark.label,
-      status: mark.done
-        ? "done"
-        : index === primeiraAberta
-          ? "current"
-          : "ahead",
-    }));
-  };
-
-  const linhaPaciente = marcar([
-    {
-      id: "CONSULTA",
-      label: "Consulta",
-      done: Boolean(record.historia.understandingConfirmedAt),
-    },
-    {
-      id: "PERFIL",
-      label: "Perfil",
-      done: Boolean(record.validacao?.validatedAt),
-    },
-    { id: "CURADORIA", label: "Curadoria", done: fase("CURADORIA_TECNICA") },
-    {
-      id: "RELATORIO",
-      label: "Relatório",
-      done: Boolean(lifecycle?.emittedAt),
-    },
-    { id: "ESCOLHA", label: "Escolha", done: fase("DEVOLUTIVA") },
-  ]);
-
-  const rotuloDaInvestigacao: Partial<Record<MesaEtapaId, string>> = {
-    CAMINHOS: "Seleção",
-  };
-
-  // M4: nenhuma etapa precisa ser filtrada aqui — a duplicidade que exigia o
-  // filtro (CRUZAMENTO repetindo COMPATIBILIDADE) deixou de existir.
-  const linhaInvestigacao = marcar(
-    etapas.map((etapa) => ({
-      id: etapa.id,
-      label: rotuloDaInvestigacao[etapa.id] ?? etapa.label,
-      done: etapaConcluida(etapa),
-    })),
-  );
+  /* CORTE DE 24/08 · as DUAS linhas do tempo saíram (e a montagem delas,
+     junto): a da investigação repetia a régua de etapas que a própria Mesa
+     mostra no topo, e a da paciente repetia o que o hub e a Fila contam.
+     Era o quarto sistema de progresso da mesma área. */
 
   const semElegiveis = view.counts.eligible === 0;
 
@@ -678,13 +615,22 @@ export default async function MesaCuradoriaPage({
       </div>
     ),
 
+    // CORTE DE 24/08 (decisão do Fundador, "está fácil executar?"): esta
+    // etapa era um BECO — três frases explicando que o Relatório abre em
+    // outro lugar, e mais um clique para chegar lá. Vira a porta em si: um
+    // botão. O estado da etapa (escrever/revisar/emitir) continua vindo do
+    // domínio e aparecendo na régua da Mesa.
     RELATORIO:
       view.counts.selected === 3 ? (
-        <MesaVazio
-          titulo="O Relatório abre na etapa própria."
-          corpo="Ele é um documento, não um painel: tem estados próprios — rascunho, revisão, aprovação, emissão — e congela quando emitido."
-          proximoPasso="Abra o Relatório para escrever, gerar o rascunho assistido, aprovar e emitir."
-        />
+        <div className="mesa-bloco">
+          <Link
+            href={journeyStepHref(record.caseId, "RELATORIO")}
+            className="inline-flex min-h-11 items-center gap-2 rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors duration-fast ease-standard hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+          >
+            Abrir o Relatório
+            <span aria-hidden="true">→</span>
+          </Link>
+        </div>
       ) : (
         <RelatorioNaoGerado />
       ),
@@ -733,14 +679,19 @@ export default async function MesaCuradoriaPage({
             : []),
         ]}
         etapas={etapas}
-        linha={linha}
         totalProfissionais={colunas.length}
         conteudo={conteudo}
+        /* CORTE DE 24/08 (decisão do Fundador): o aside tinha SETE seções, e
+           duas eram duplicatas na MESMA tela — "O caso" repetia o briefing do
+           hub e "Prioridades do Case" repetia a etapa Mapa de Prioridades da
+           própria Mesa. Saíram. "Investigação" e "O que suas declarações
+           indicam" eram duas seções da mesma coisa (a leitura do Motor) e
+           viraram uma. De 7 para 4. */
         contexto={
           <>
             <section className="mesa-aside__section">
-              <h2 className="mesa-aside__title">Investigação</h2>
-              <div className="mt-3">
+              <h2 className="mesa-aside__title">Leitura do Motor</h2>
+              <div className="mt-3 space-y-4">
                 {investigacao ? (
                   <PainelInvestigacao
                     leitura={investigacao}
@@ -755,36 +706,13 @@ export default async function MesaCuradoriaPage({
                     elegível.
                   </p>
                 )}
+                <HipoteseEmFoco hipoteses={hipoteses} />
               </div>
             </section>
             <section className="mesa-aside__section">
               <h2 className="mesa-aside__title">Merece atenção</h2>
               <div className="mt-3">
                 <PainelAtencao itens={atencao} />
-              </div>
-            </section>
-            <section className="mesa-aside__section">
-              <h2 className="mesa-aside__title">
-                O que suas declarações indicam
-              </h2>
-              <div className="mt-3">
-                <HipoteseEmFoco hipoteses={hipoteses} />
-              </div>
-            </section>
-            <section className="mesa-aside__section">
-              <h2 className="mesa-aside__title">O caso</h2>
-              <div className="mt-3">
-                <MesaContextPanel record={record} />
-              </div>
-            </section>
-            <section className="mesa-aside__section">
-              <h2 className="mesa-aside__title">Prioridades do Case</h2>
-              <div className="mt-3">
-                <MesaPriorityPanel
-                  patientFirstName={record.patientFirstName}
-                  validatedAt={record.validacao?.validatedAt ?? null}
-                  groups={groupPriorityMap(mapa.items, catalogo)}
-                />
               </div>
             </section>
             <section className="mesa-aside__section">
@@ -817,12 +745,10 @@ export default async function MesaCuradoriaPage({
             </section>
           </>
         }
-        timeline={
-          <MesaTimelineDupla
-            paciente={linhaPaciente}
-            investigacao={linhaInvestigacao}
-          />
-        }
+        /* CORTE DE 24/08 · a timeline DUPLA saiu: a linha da investigação
+           repetia a régua de etapas que a própria Mesa mostra no topo, e a
+           linha da paciente repetia o que o hub e a Fila já contam. Quarto
+           sistema de progresso na mesma área — era o que sobrava. */
       />
 
       <p className="sr-only">

@@ -4,8 +4,28 @@ import { Card } from "@/components/ui/card";
 import {
   montarFila,
   type FatosDaFila,
+  type GrupoDaFila,
   type GrupoMontado,
 } from "@/modules/curadoria/fila-por-ato-devido";
+import { journeyStepHref, type CuratorJourneyStepId } from "@/modules/curadoria/cos/journey";
+
+/**
+ * A FILA LEVA AO ATO, NÃO AO SAGUÃO (decisão do Fundador, 24/08 — "ver se
+ * está fácil executar a curadoria"). A fila já sabe qual é o ato devido de
+ * cada grupo; fazer o Curador aterrissar no hub do caso para clicar de novo
+ * era uma parada intermediária em TODA entrada. O botão passa a abrir a
+ * etapa do ato; o hub continua a um "← voltar" de distância.
+ *
+ * O mapa vive AQUI (camada de tela), não no módulo: o contrato 36 define os
+ * grupos e a precedência — para onde o clique leva é decisão de interface.
+ * Grupo sem ato do Curador não tem destino de trabalho: segue no caso.
+ */
+const ETAPA_DEVIDA: Partial<Record<GrupoDaFila, CuratorJourneyStepId>> = {
+  AGUARDA_ACOLHIMENTO: "ACOLHER",
+  AGUARDA_PRIMEIRO_ENCONTRO: "ACOLHER",
+  CURADORIA_EM_CURSO: "COMPARAR",
+  AGUARDA_ENTREGA: "RELATORIO",
+};
 
 /**
  * A FILA DO CURADOR — agrupada pelo ato devido.
@@ -67,6 +87,24 @@ function GrupoDaFilaSecao({ grupo }: { grupo: GrupoMontado }) {
   const { definicao, casos, contagem } = grupo;
   const idDoTitulo = `fila-grupo-${definicao.id.toLowerCase()}`;
 
+  /* CORTE DE 24/08 (2ª passada do Fundador): grupo VAZIO vira UMA linha —
+     título e "0", e só. Antes cada vazio gastava três linhas (título + ato
+     devido + frase de vazio) × 7 grupos, e com a operação de hoje o painel
+     era quase todo texto de nada. A doutrina de não sumir fica: o grupo
+     continua visível, no lugar de sempre. */
+  if (contagem === 0) {
+    return (
+      <section aria-labelledby={idDoTitulo}>
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border pb-2">
+          <h3 id={idDoTitulo} className="font-sans text-base font-medium text-ink-muted">
+            {definicao.titulo}
+          </h3>
+          <span className="text-sm text-ink-muted">0</span>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section aria-labelledby={idDoTitulo} className="space-y-3">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border pb-2">
@@ -82,9 +120,7 @@ function GrupoDaFilaSecao({ grupo }: { grupo: GrupoMontado }) {
 
       <p className="max-w-reading text-sm leading-relaxed text-ink-muted">{definicao.atoDevido}</p>
 
-      {contagem === 0 ? (
-        <p className="text-sm text-ink-muted">{definicao.vazio}</p>
-      ) : (
+      {(
         <ul className="grid gap-3 lg:grid-cols-2">
           {casos.map((caso) => (
             <li key={caso.caseId}>
@@ -95,10 +131,14 @@ function GrupoDaFilaSecao({ grupo }: { grupo: GrupoMontado }) {
 
                 {definicao.temAcaoDoCurador ? (
                   <Link
-                    href={`/coa/curadoria/casos/${caso.caseId}`}
+                    href={
+                      ETAPA_DEVIDA[definicao.id]
+                        ? journeyStepHref(caso.caseId, ETAPA_DEVIDA[definicao.id]!)
+                        : `/coa/curadoria/casos/${caso.caseId}`
+                    }
                     className="inline-flex min-h-11 items-center gap-2 rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors duration-fast ease-standard hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
                   >
-                    Abrir o caso
+                    Continuar
                     <span aria-hidden="true">→</span>
                   </Link>
                 ) : (

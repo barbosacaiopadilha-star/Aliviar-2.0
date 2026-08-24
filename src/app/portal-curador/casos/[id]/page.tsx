@@ -9,7 +9,6 @@ import { CuradoriaBriefing } from "@/components/curadoria/curadoria-briefing";
 import { ObservationCapture } from "@/components/curadoria/observation-capture";
 import { loadBriefing } from "@/modules/briefing/repository";
 import { MemoryTimeline, ReconstructionReport } from "@/components/curadoria/memory-timeline";
-import { JourneyNavigator } from "@/components/curadoria/journey-navigator";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { conduct } from "@/modules/curadoria/cos/conduction";
 import { buildMemory, runReconstructionTest } from "@/modules/curadoria/cos/memory";
@@ -31,6 +30,23 @@ export const metadata: Metadata = {
 // É a superfície do Motor de Condução: as cinco respostas em cima, as nove
 // fases no meio, a Memória embaixo. O Curador nunca precisa lembrar do Método —
 // o Portal conduz o Método para que ele possa conduzir o paciente.
+
+/**
+ * A DOBRA DO HUB (24/08) — `<details>` nativo, mesma mecânica do teste de
+ * reconstrução: título sempre à vista, conteúdo a um clique, zero estado.
+ * Para o que é ocasional (registrar, auditar), não para o que é leitura
+ * de toda visita (condução, briefing).
+ */
+function Recolhido({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+  return (
+    <details className="rounded-md border border-border bg-surface">
+      <summary className="cursor-pointer list-none px-6 py-4 font-sans text-base font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus [&::-webkit-details-marker]:hidden">
+        {titulo}
+      </summary>
+      <div className="px-2 pb-2">{children}</div>
+    </details>
+  );
+}
 
 export default async function CasoWorkspacePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -99,7 +115,12 @@ export default async function CasoWorkspacePage({ params }: { params: Promise<{ 
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      {/* CORTE DE 24/08 · UM sistema de progresso. O JourneyNavigator saía
+          daqui: ele repetia, em lista, o que o ConductionPanel já responde
+          melhor ("onde estou, o que falta, próximo passo"). O mapa completo
+          continua no aside das ETAPAS — onde navegar entre etapas é o
+          assunto. Sem o aside, a coluna volta a ser uma só. */}
+      <div className="mx-auto max-w-3xl">
         <div className="space-y-6">
           <ConductionPanel state={state} caseId={record.caseId} journey={journey} />
 
@@ -108,49 +129,46 @@ export default async function CasoWorkspacePage({ params }: { params: Promise<{ 
               consulta quando vai conversar com a pessoa. */}
           <CuradoriaBriefing data={briefing} />
 
-          {/* As duas superfícies de captura ficam DEPOIS do Briefing: o Curador
-              primeiro vê o contexto que já existe, e só então registra o que
-              acabou de escutar. Registrar nunca é etapa obrigatória. */}
-          <AlignmentCapture
-            caseId={record.caseId}
-            patientFirstName={record.patientFirstName}
-            answers={briefing.patientAnswers}
-          />
+          {/* CORTE DE 24/08 (2ª passada do Fundador): as duas superfícies de
+              captura abriam INTEIRAS em toda visita — e registrar é ato
+              ocasional, não leitura do dia. Viram dobras: o título à vista,
+              o formulário a um clique. Nada saiu; recolheu. */}
+          <Recolhido titulo="Registrar alinhamento da conversa">
+            <AlignmentCapture
+              caseId={record.caseId}
+              patientFirstName={record.patientFirstName}
+              answers={briefing.patientAnswers}
+            />
+          </Recolhido>
 
-          <ObservationCapture
-            caseId={record.caseId}
-            observations={briefing.observations}
-            viewerId={authState.user.id}
-          />
+          <Recolhido titulo="Registrar observação">
+            <ObservationCapture
+              caseId={record.caseId}
+              observations={briefing.observations}
+              viewerId={authState.user.id}
+            />
+          </Recolhido>
 
-          {record.historia.narrative ? (
+          {/* CORTE DE 24/08 (decisão do Fundador, "o que dá pra cortar e
+              resumir"): a história inteira saiu do hub — ela já vive no
+              Acolhimento, que é onde se trabalha nela, e aqui era a mesma
+              parede de texto numa segunda tela. O Briefing acima segue
+              resumindo o essencial para a conversa. */}
+
+          {/* CORTE DE 24/08 · a Memória recolhe: é registro reconstruível
+              (auditoria), não trabalho do dia — mesma régua do teste de
+              reconstrução logo abaixo. */}
+          <Recolhido titulo="Memória da Curadoria">
             <Card>
               <CardHeader>
-                <CardTitle>A história de {record.patientFirstName}</CardTitle>
                 <CardDescription>
-                  Como o Curador a compreendeu — nunca um questionário preenchido.
+                  Tudo o que aconteceu, com autor e instante. Toda decisão precisa ser
+                  reconstruível.
                 </CardDescription>
               </CardHeader>
-              <p className="max-w-reading text-sm leading-relaxed text-ink">
-                {record.historia.narrative}
-              </p>
-              {record.historia.motivation ? (
-                <p className="mt-3 max-w-reading border-l-2 border-[color-mix(in_srgb,var(--color-brand-gold)_50%,transparent)] pl-3 text-sm italic leading-relaxed text-ink-muted">
-                  {record.historia.motivation}
-                </p>
-              ) : null}
+              <MemoryTimeline entries={memory} />
             </Card>
-          ) : null}
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Memória da Curadoria</CardTitle>
-              <CardDescription>
-                Tudo o que aconteceu, com autor e instante. Toda decisão precisa ser reconstruível.
-              </CardDescription>
-            </CardHeader>
-            <MemoryTimeline entries={memory} />
-          </Card>
+          </Recolhido>
 
           {/* AUDITORIA, NÃO TRABALHO (F-5). O Teste de reconstrução é um
               instrumento de QA — as nove perguntas que o registro precisa
@@ -175,11 +193,6 @@ export default async function CasoWorkspacePage({ params }: { params: Promise<{ 
             </details>
           </Card>
         </div>
-
-        <aside className="space-y-3">
-          <h2 className="text-xs uppercase tracking-wide text-ink-muted">A Curadoria inteira</h2>
-          <JourneyNavigator journey={journey} caseId={record.caseId} />
-        </aside>
       </div>
     </div>
   );

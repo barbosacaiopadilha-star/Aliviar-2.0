@@ -14,10 +14,6 @@
  * tela, a navegação (B) troca só a área de trabalho (C), e a Mesa diz o tempo
  * todo qual é a próxima decisão.
  *
- * Sobre a área de trabalho corre a linha de investigação — hipótese,
- * evidências, conferência, conclusão. Ela não é o workflow: é onde o
- * raciocínio está, e por isso não tem botão.
- *
  * O que nunca faz: trocar de página entre etapas, esconder o contexto ao
  * abrir um painel, impedir o Curador de entrar numa etapa, ou executar ato
  * irreversível por tecla.
@@ -31,14 +27,12 @@ import { MesaFocoProvider, useMesaFoco } from "@/components/curadoria/mesa/mesa-
 import { MesaHeader } from "@/components/curadoria/mesa/mesa-header";
 import { MesaNavegacaoProvider } from "@/components/curadoria/mesa/mesa-navegacao";
 import { MesaSteps } from "@/components/curadoria/mesa/mesa-steps";
-import { LinhaInvestigacao } from "@/components/curadoria/mesa/linha-investigacao";
 import {
   AjudaRapida,
   AtalhosDica,
   useAtalhosDaMesa,
 } from "@/components/curadoria/mesa/mesa-atalhos";
 import { ATALHO_DESTINO, type MesaAcao } from "@/modules/curadoria/mesa-atalhos";
-import type { LinhaEtapaState } from "@/modules/curadoria/mesa-investigacao";
 import {
   MESA_ETAPAS,
   MESA_ETAPA_QUESTIONS,
@@ -60,10 +54,8 @@ export type MesaShellProps = {
   conteudo: Record<MesaEtapaId, ReactNode>;
   /** Painel D — contexto persistente. */
   contexto: ReactNode;
-  /** Linha do tempo do Case, sempre visível. */
-  timeline: ReactNode;
-  /** Onde o raciocínio está — faixa acima da área de trabalho. */
-  linha?: LinhaEtapaState[];
+  /** Linha do tempo do Case — opcional desde 24/08 (a rota deixou de usá-la). */
+  timeline?: ReactNode;
   /** Quantos profissionais o teclado percorre com J/K. */
   totalProfissionais?: number;
 };
@@ -86,7 +78,6 @@ function MesaAmbiente({
   conteudo,
   contexto,
   timeline,
-  linha,
 }: MesaShellProps) {
   // A Mesa abre onde está a próxima decisão — mas a partir daí quem escolhe é
   // o Curador, e a escolha dele não é sobrescrita quando o estado muda.
@@ -184,8 +175,10 @@ function MesaAmbiente({
 
         <div className="mesa-layout">
           <main className="mesa-work" aria-live="polite">
-            {linha && linha.length > 0 ? <LinhaInvestigacao etapas={linha} /> : null}
-
+            {/* CORTE DE 24/08 · a Linha de investigação saiu daqui: quinto
+                medidor de progresso da área, sem clique, derivado dos mesmos
+                fatos das abas acima. A pergunta da etapa é quem abre o
+                trabalho. */}
             {/* A-1 · o rótulo da etapa saiu daqui. Ele era a terceira
                 ocorrência simultânea da mesma constante — a trilha já diz onde
                 estou (`mesa-step--ativa` + `aria-current="step"`) e a faixa de
@@ -204,10 +197,16 @@ function MesaAmbiente({
           <aside className="mesa-aside" aria-label="Contexto do Case">
             {contexto}
 
-            <section className="mesa-aside__section">
-              <h2 className="mesa-aside__title">Linha do tempo</h2>
-              <div className="mt-3">{timeline}</div>
-            </section>
+            {/* CORTE DE 24/08 · a "Linha do tempo" só entra se alguém a
+                passar. A dupla (paciente + investigação) saiu da rota: era o
+                quarto sistema de progresso da área, repetindo a régua do
+                topo da própria Mesa. */}
+            {timeline ? (
+              <section className="mesa-aside__section">
+                <h2 className="mesa-aside__title">Linha do tempo</h2>
+                <div className="mt-3">{timeline}</div>
+              </section>
+            ) : null}
 
             <div className="mesa-aside__section">
               <AtalhosDica onAbrir={() => setAjuda(true)} />

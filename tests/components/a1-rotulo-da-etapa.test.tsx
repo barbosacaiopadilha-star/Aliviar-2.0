@@ -3,7 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { MesaShell } from "@/components/curadoria/mesa/mesa-shell";
-import { linhaDeInvestigacao } from "@/modules/curadoria/mesa-investigacao";
 import {
   buildMesaEtapas,
   mesaProgress,
@@ -59,13 +58,6 @@ function montarMesa() {
       alerts={[]}
       etapas={etapas}
       totalProfissionais={2}
-      linha={linhaDeInvestigacao({
-        mapaCompleto: true,
-        eligible: 3,
-        criteriaDeclared: 12,
-        criteriaTotal: 18,
-        selected: 0,
-      })}
       conteudo={
         Object.fromEntries(
           MESA_ETAPAS.map((etapa) => [etapa, <p key={etapa}>Trabalho de {etapa}</p>]),

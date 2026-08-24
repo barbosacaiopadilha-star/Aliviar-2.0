@@ -122,12 +122,14 @@ describe("A Memória não carrega o modelo aposentado", () => {
 });
 
 describe("Superfícies do Curador sem o legado", () => {
-  it("MesaPriorityPanel não lê nem exibe pesos", () => {
-    const painel = ler("src/components/curadoria/mesa-priority-panel.tsx");
+  // CORTE DE 24/08 · o MesaPriorityPanel saiu com substituto vivo: ele
+  // duplicava, no aside, a etapa Mapa de Prioridades da própria Mesa. A
+  // guarda contra pesos passa a valer sobre quem ficou com o papel.
+  it("MapaPrioridadesPanel não lê nem exibe pesos", () => {
+    const painel = ler("src/components/curadoria/mesa/mapa-prioridades-panel.tsx");
     for (const proibido of ["weight", "priority_weights", "PesoRecord", "pontos"]) {
       expect(painel.includes(proibido), proibido).toBe(false);
     }
-    expect(painel).toContain("IMPORTANCE_LEVELS");
   });
 
   it("as páginas do Case não usam analyses para nomes", () => {

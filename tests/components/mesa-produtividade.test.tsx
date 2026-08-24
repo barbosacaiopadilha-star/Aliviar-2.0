@@ -8,16 +8,13 @@ import {
 } from "@/components/curadoria/mesa/comparacao-premium";
 import { EvidenciaChips } from "@/components/curadoria/mesa/evidencia-chips";
 import { FiltrosRapidos } from "@/components/curadoria/mesa/filtros-rapidos";
-import { LinhaInvestigacao } from "@/components/curadoria/mesa/linha-investigacao";
 import { MesaShell } from "@/components/curadoria/mesa/mesa-shell";
-import { MesaTimelineDupla } from "@/components/curadoria/mesa/mesa-timeline";
 import { PainelAtencao } from "@/components/curadoria/mesa/painel-atencao";
 import { PainelHipoteses } from "@/components/curadoria/mesa/painel-hipoteses";
 import {
   filtrosDisponiveis,
   hipoteseDe,
-  itensDeAtencao,
-  linhaDeInvestigacao,
+  itensDeAtencao,
   recorteSentence,
   type InvestigacaoProfissional,
 } from "@/modules/curadoria/mesa-investigacao";
@@ -371,53 +368,11 @@ describe("Painel de hipóteses", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Linha de investigação e linha do tempo dupla
-// ---------------------------------------------------------------------------
-
-describe("Linha de investigação", () => {
-  it("marca onde o raciocínio está, sem virar navegação", () => {
-    render(
-      <LinhaInvestigacao
-        etapas={linhaDeInvestigacao({
-          mapaCompleto: true,
-          eligible: 2,
-          criteriaDeclared: 4,
-          criteriaTotal: 12,
-          selected: 0,
-        })}
-      />,
-    );
-
-    expect(screen.queryByRole("button")).toBeNull();
-    expect(screen.queryByRole("link")).toBeNull();
-    expect(screen.getByText("Evidências").closest("li")).toHaveAttribute("aria-current", "step");
-  });
-});
-
-describe("Linha do tempo dupla", () => {
-  it("mostra as duas ao mesmo tempo, cada uma com o próprio nome", () => {
-    render(
-      <MesaTimelineDupla
-        paciente={[
-          { id: "CONSULTA", label: "Consulta", status: "done" },
-          { id: "CURADORIA", label: "Curadoria", status: "current" },
-        ]}
-        investigacao={[
-          { id: "PERFIL", label: "Perfil", status: "done" },
-          { id: "REDE", label: "Rede elegível", status: "current" },
-        ]}
-      />,
-    );
-
-    const doPaciente = screen.getByRole("list", { name: "Jornada do paciente" });
-    const daInvestigacao = screen.getByRole("list", { name: "Investigação do Curador" });
-
-    expect(within(doPaciente).getByText("Curadoria")).toBeInTheDocument();
-    expect(within(daInvestigacao).getByText("Rede elegível")).toBeInTheDocument();
-    expect(screen.queryByRole("button")).toBeNull();
-  });
-});
+/* CORTE DE 24/08 · a Linha de investigação e a MesaTimelineDupla saíram com
+   os componentes (2ª passada do Fundador): eram o quarto e o quinto sistemas
+   de progresso da mesma área, repetindo a régua de etapas do topo da Mesa.
+   O vocabulário `linhaDeInvestigacao` segue no domínio, com testes próprios
+   em tests/unit/mesa-investigacao.test.ts. */
 
 // ---------------------------------------------------------------------------
 // Atalhos — dentro da Mesa inteira
@@ -450,13 +405,6 @@ function montarMesa() {
       alerts={[]}
       etapas={etapas}
       totalProfissionais={2}
-      linha={linhaDeInvestigacao({
-        mapaCompleto: true,
-        eligible: 3,
-        criteriaDeclared: 12,
-        criteriaTotal: 18,
-        selected: 0,
-      })}
       conteudo={
         Object.fromEntries(
           MESA_ETAPAS.map((etapa) => [etapa, <p key={etapa}>Trabalho de {etapa}</p>]),

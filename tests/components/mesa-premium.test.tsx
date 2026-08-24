@@ -4,7 +4,6 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { EvidenciaChips } from "@/components/curadoria/mesa/evidencia-chips";
 import { MesaShell } from "@/components/curadoria/mesa/mesa-shell";
-import { MesaTimeline } from "@/components/curadoria/mesa/mesa-timeline";
 import { RedeVazia, RelatorioNaoGerado } from "@/components/curadoria/mesa/mesa-vazios";
 import {
   buildMesaEtapas,
@@ -51,16 +50,6 @@ function montar(facts: MesaFacts = FATOS, alerts: string[] = []) {
       etapas={etapas}
       conteudo={conteudoFalso()}
       contexto={<p>Contexto do caso</p>}
-      timeline={
-        <MesaTimeline
-          marks={[
-            { id: "CONSULTA", label: "Consulta", status: "done" },
-            { id: "PERFIL", label: "Perfil", status: "done" },
-            { id: "CURADORIA", label: "Curadoria", status: "current" },
-            { id: "ENTREGA", label: "Entrega", status: "ahead" },
-          ]}
-        />
-      }
     />,
   );
 }
@@ -152,30 +141,24 @@ describe("Painel B — as sete etapas, no mesmo ambiente", () => {
   });
 });
 
-describe("Painel D — contexto e linha do tempo persistentes", () => {
-  it("a linha do tempo do Case fica visível em qualquer etapa", async () => {
+describe("Painel D — contexto persistente", () => {
+  /**
+   * CORTE DE 24/08 (decisão do Fundador): a linha do tempo saiu da Mesa —
+   * era o quarto sistema de progresso da área, repetindo a régua de etapas
+   * do topo da própria Mesa. O que este describe segue guardando é o
+   * CONTEXTO: ele fica visível em qualquer etapa, sem virar seção fantasma
+   * de "Linha do tempo" vazia.
+   */
+  it("o contexto do Case fica visível em qualquer etapa — e sem seção de linha do tempo", async () => {
     const user = userEvent.setup();
     montar();
 
     const aside = screen.getByRole("complementary", { name: "Contexto do Case" });
-    expect(within(aside).getByText("Consulta")).toBeInTheDocument();
+    expect(within(aside).getByText("Contexto do caso")).toBeInTheDocument();
+    expect(within(aside).queryByText("Linha do tempo")).toBeNull();
 
     await user.click(screen.getByRole("button", { name: /Relatório/ }));
-    expect(within(aside).getByText("Consulta")).toBeInTheDocument();
-  });
-
-  it("a linha do tempo orienta, não navega — nenhum link nela", () => {
-    render(
-      <MesaTimeline
-        marks={[
-          { id: "CONSULTA", label: "Consulta", status: "done" },
-          { id: "CURADORIA", label: "Curadoria", status: "current" },
-        ]}
-      />,
-    );
-    expect(screen.queryByRole("link")).toBeNull();
-    expect(screen.queryByRole("button")).toBeNull();
-    expect(screen.getByText("Curadoria").closest("li")).toHaveAttribute("aria-current", "step");
+    expect(within(aside).getByText("Contexto do caso")).toBeInTheDocument();
   });
 });
 
