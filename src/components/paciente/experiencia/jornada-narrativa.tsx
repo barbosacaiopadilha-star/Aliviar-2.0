@@ -19,7 +19,15 @@ export function JornadaNarrativa({ narrativa }: { narrativa: NarrativaDaJornada 
   const { marcos, responsavel, encerramento } = narrativa;
 
   return (
-    <section aria-labelledby="jornada-titulo" className="max-w-2xl">
+    // UM card para o percurso inteiro (2ª emenda da ADR-085): com a cena
+    // atrás da casa, esta seção era texto solto sobre a fotografia — no
+    // celular, contraste medido de 1,62:1 contra os 4,5:1 que a leitura
+    // pede. O que a doutrina proíbe é CAIXA POR MARCO; os marcos seguem
+    // separados só pelo fio e pelo espaço, agora DENTRO de um card.
+    <section
+      aria-labelledby="jornada-titulo"
+      className="patient-card patient-veu max-w-2xl p-6 lg:p-8"
+    >
       <h2
         id="jornada-titulo"
         className="text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]"

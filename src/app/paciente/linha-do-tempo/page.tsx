@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { ConciergeLink } from "@/components/paciente/concierge-link";
-import { PatientPageHeader } from "@/components/paciente/dashboard/patient-primitives";
+import { PatientCard, PatientPageHeader } from "@/components/paciente/dashboard/patient-primitives";
 import { JornadaNarrativa } from "@/components/paciente/experiencia/jornada-narrativa";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { lerEstado } from "@/foundation/contrato-de-estado";
@@ -131,18 +131,23 @@ export default async function PatientJourneyPage() {
       {narrativa ? (
         <JornadaNarrativa narrativa={narrativa} />
       ) : (
-        <p className="max-w-xl text-sm leading-relaxed text-[var(--color-ink-muted)]">
-          Seu percurso começa quando sua história chega até um Curador. Assim que isso acontecer,
-          cada etapa aparece aqui — com nome, e sem pressa.
-        </p>
+        <PatientCard>
+          <p className="max-w-xl text-sm leading-relaxed text-[var(--color-ink-muted)]">
+            Seu percurso começa quando sua história chega até um Curador. Assim que isso
+            acontecer, cada etapa aparece aqui — com nome, e sem pressa.
+          </p>
+        </PatientCard>
       )}
 
       {/* O registro de conta continua existindo, agora onde ele pertence: um
           apêndice do percurso, não a página inteira. Perder isso seria apagar
           a memória do que ela guardou aqui. */}
+      {/* O fio de separação deu lugar ao card: sobre a fotografia, uma
+          borda superior não separa nada — só deixava o texto solto. O
+          apêndice continua sendo apêndice pelo lugar e pelo peso. */}
       <section
         aria-labelledby="registro-titulo"
-        className="max-w-2xl border-t border-[var(--color-border)] pt-8"
+        className="patient-card patient-veu max-w-2xl p-6 lg:p-8"
       >
         <h2
           id="registro-titulo"

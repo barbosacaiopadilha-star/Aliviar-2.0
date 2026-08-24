@@ -38,7 +38,13 @@ export function PatientWelcome({
   subtitle?: string;
 }) {
   return (
-    <header className="patient-fade-in space-y-3">
+    // TEXTO SOLTO SOBRE A FOTOGRAFIA NÃO EXISTE MAIS (2ª emenda da ADR-085,
+    // 24/08): com a cena em força total atrás da casa inteira, este
+    // cabeçalho ficava direto sobre a foto — só o véu de marfim entre a
+    // tinta e a luz da cena, e no celular a saudação caía justamente na
+    // parte clara. Ele passa a ser vidro como todo o resto: na zona de
+    // leitura o card cristaliza e o texto ganha o fundo que precisa.
+    <header className="patient-card patient-veu patient-fade-in space-y-3 p-6 lg:p-8">
       <p className="text-sm font-medium uppercase tracking-[0.14em] text-[var(--color-brand-sage)]">
         Sua Jornada
       </p>
@@ -60,7 +66,11 @@ export function PatientPageHeader({
   eyebrow?: string;
 }) {
   return (
-    <header className="patient-fade-in max-w-2xl space-y-3">
+    // Mesma correção do PatientWelcome: a cena está atrás de TODA a área
+    // autenticada, então o cabeçalho das outras telas era texto solto
+    // igual. O limite de leitura sai da moldura e vive na descrição — o
+    // card acompanha a coluna, como o AmbientHero já fazia.
+    <header className="patient-card patient-veu patient-fade-in space-y-3 p-6 lg:p-8">
       {eyebrow ? (
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-brand-sage)]">
           {eyebrow}
@@ -70,7 +80,7 @@ export function PatientPageHeader({
         {title}
       </h1>
       {description ? (
-        <p className="patient-body text-lg text-[var(--color-ink-muted)]">{description}</p>
+        <p className="patient-body max-w-2xl text-lg text-[var(--color-ink-muted)]">{description}</p>
       ) : null}
     </header>
   );

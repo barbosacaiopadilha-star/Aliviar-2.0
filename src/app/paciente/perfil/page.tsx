@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { ConciergeLink } from "@/components/paciente/concierge-link";
+import { PatientCard } from "@/components/paciente/dashboard/patient-primitives";
 import { PerfilPanel } from "@/components/paciente/perfil-panel";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
@@ -78,16 +79,18 @@ export default async function PatientProfilePage() {
           dela. A rota continua inteira — nada foi removido, só reendereçado.
           A porta é explícita, não escondida: é direito dela ver o que enviou
           e o que recebeu. */}
-      <p className="max-w-prose text-sm leading-relaxed text-[var(--color-ink-muted)]">
-        Tudo o que você enviou e recebeu da Aliviar fica em{" "}
+      <PatientCard>
+        <p className="max-w-prose text-sm leading-relaxed text-[var(--color-ink-muted)]">
+          Tudo o que você enviou e recebeu da Aliviar fica em{" "}
         <Link
           href="/paciente/documentos"
           className="font-medium text-[var(--patient-acento)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
         >
-          Seus documentos
-        </Link>
-        .
-      </p>
+            Seus documentos
+          </Link>
+          .
+        </p>
+      </PatientCard>
 
       {/* C6 · Track C — corrigir um dado próprio é um dos motivos mais comuns
           de querer falar com alguém. A porta fica no fim, fora do formulário:

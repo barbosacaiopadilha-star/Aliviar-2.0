@@ -108,9 +108,11 @@ export function ProximaAcao({
 }) {
   if (pending.kind === "nothing") {
     return (
+      // O fio de separação virou card (2ª emenda da ADR-085): sobre a
+      // fotografia, borda superior não separa — deixa texto solto.
       <section
         aria-labelledby="proxima-acao-titulo"
-        className="patient-fade-in border-t border-[var(--color-border)] pt-8"
+        className="patient-card patient-veu patient-fade-in p-6 lg:p-8"
       >
         <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
           <StateMark papel="neutro">Em andamento</StateMark>
@@ -133,10 +135,14 @@ export function ProximaAcao({
   return (
     <section
       aria-labelledby="proxima-acao-titulo"
-      /* Faixa quente com fio de dourado à esquerda — sem sombra, sem
-         flutuação. É o que distingue "isto depende de você" na mesma
-         gramática que a Aliviar já usa lá fora: material, não efeito. */
-      className="patient-fade-in border-l-2 border-l-[var(--color-brand-gold)] bg-[color-mix(in_srgb,var(--color-bg-canvas-warm)_50%,transparent)] py-8 pl-6 pr-5 lg:pl-8"
+      /* O fio de dourado à esquerda continua sendo o que distingue "isto
+         depende de você" — material, não efeito. O que mudou: a faixa
+         quente a 50% era papel translúcido pensado para fundo claro e,
+         com a cena da casa atrás, entregava 1,11:1 de contraste no
+         celular. A superfície passa a ser a mesma dos outros cards; o
+         dourado vem por `patient-card--acao`, que a folha da casa aplica
+         depois da borda do vidro. */
+      className="patient-card patient-veu patient-card--acao patient-fade-in p-6 lg:p-8"
     >
       <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
         <StateMark papel="atencao">Precisa de você</StateMark>

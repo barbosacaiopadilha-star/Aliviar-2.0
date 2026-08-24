@@ -140,6 +140,23 @@
   );
 }
 
+/* NO CELULAR O VÉU GANHA CORPO NA BASE (24/08 · correção de contraste).
+   A cena é um retrato noturno em força total: no computador o corte 16:9
+   deixa as linhas soltas sobre área clara, no telefone elas caem sobre a
+   parte escura da sala. O que sobrou de texto solto — por decisão, não
+   por descuido — é a linha discreta da porta do Concierge, e era ela que
+   media 3,89:1. O topo NÃO muda: é onde a cena precisa respirar. */
+@media (max-width: 1023px) {
+  .patient-dashboard .patient-ambient-layer__veu {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-bg-canvas-warm) 34%, transparent) 0%,
+      color-mix(in srgb, var(--color-bg-canvas-warm) 50%, transparent) 55%,
+      color-mix(in srgb, var(--color-bg-canvas-warm) 74%, transparent) 100%
+    );
+  }
+}
+
 .patient-dashboard > header,
 .patient-dashboard > main,
 .patient-dashboard > footer {
@@ -541,6 +558,15 @@
     inset 0 1px 0 color-mix(in srgb, var(--color-bg-surface) 85%, transparent),
     inset 0 0 32px color-mix(in srgb, var(--color-bg-surface) 12%, transparent),
     var(--shadow-lg);
+}
+
+/* O FIO DE DOURADO DE "PRECISA DE VOCÊ" (24/08 · correção de contraste).
+   O bloco virou card de vidro, e o vidro desenha 1px de borda em todo o
+   contorno — mais específico que a utilitária do Tailwind. Esta regra vem
+   depois para o lado esquerdo voltar a ser o dourado que distingue "isto
+   depende de você". Material, não efeito: nada de sombra ou flutuação. */
+.patient-dashboard .patient-card.patient-veu.patient-card--acao {
+  border-left: 2px solid var(--color-brand-gold);
 }
 
 /* A carta já conhecida continua mais serena: cristaliza um pouco menos. */
