@@ -157,6 +157,30 @@
   }
 }
 
+/* ONDE A LEITURA COMEÇA NO CELULAR (24/08 · 2ª calibragem do Fundador, no
+   telefone dele: "ainda está tampando, tem que aparecer pelo menos as
+   agendas no colo dela").
+
+   A régua deixou de ser uma fração da tela e passou a ser um PONTO DA
+   FOTOGRAFIA: a agenda no colo — a pasta da Aliviar, que é o motivo de a
+   cena existir — termina a 77,5% da altura do retrato (941x1672). O card
+   pousa 24px abaixo dela, em qualquer formato de aparelho.
+
+   Como: a cena é `object-fit: cover` numa camada fixa, então sua altura
+   desenhada é max(altura da tela, largura / 0,5628) e ela fica centrada.
+   Logo o ponto da agenda está em 50svh + 0,275 x essa altura — a conta
+   abaixo, menos a altura do cabeçalho. Uma fração fixa acertava só no
+   aparelho em que foi medida; esta acerta em todos.
+
+   `svh` de propósito: é a viewport com a barra do navegador ABERTA, a
+   menor — quando ela some, sobra mais cena, nunca menos. O piso de 18rem
+   protege o celular deitado, onde a conta encolheria demais. */
+@media (max-width: 767px) {
+  .patient-dashboard #patient-main {
+    padding-top: max(18rem, calc(50svh + 0.275 * max(100svh, 177.68vw) - 3rem));
+  }
+}
+
 .patient-dashboard > header,
 .patient-dashboard > main,
 .patient-dashboard > footer {

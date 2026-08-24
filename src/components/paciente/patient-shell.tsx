@@ -216,16 +216,25 @@ export function PatientShell({ children, userMenu }: PatientShellProps) {
           opaco. Com o header translúcido e mais folga acima, a leitura começa
           num espaço, não numa borda. Largura e gutters permanecem — mexer
           neles moveria o conteúdo, e A2 é sobre a moldura. */}
-      {/* A CENA RESPIRA ANTES DOS CARDS (calibragem do Fundador, 24/08 —
-          "os cards podem começar dessa linha pra baixo"): o conteúdo começa
-          abaixo da dobra da fotografia, para quem chega VER o ambiente —
-          ela ao telefone, a casa — antes de qualquer leitura. No celular a
-          linha fica a ~metade da tela; no computador a cena é 16:9 e o
-          recuo é menor. Mesma gramática da landing: a área livre da foto é
-          planejada, o card pousa nela. */}
+      {/* A CENA INTEIRA ANTES DOS CARDS (calibragem do Fundador, 24/08, em
+          duas passadas: "os cards podem começar dessa linha pra baixo" e,
+          vendo no telefone dele, "ainda está tampando, tem que aparecer
+          pelo menos as agendas no colo dela").
+
+          A régua deixou de ser "metade da tela" e passou a ser um ponto da
+          FOTOGRAFIA: a agenda no colo — a pasta da Aliviar, que é o motivo
+          da cena existir — termina a 77,5% da altura do retrato, e o card
+          pousa 24px abaixo dela. A conta que faz isso valer em qualquer
+          formato de aparelho vive na folha da casa (`patient-dashboard.css`,
+          bloco "onde a leitura começa no celular"), porque depende da
+          geometria do `cover` da cena — e não de uma fração chutada.
+
+          O recuo do computador entra em `md` (768px), o MESMO ponto em que
+          o <picture> troca para a cena 16:9. Antes ele entrava em `lg` e o
+          tablet ficava com a foto deitada e o recuo do celular. */}
       <main
         id="patient-main"
-        className="mx-auto w-full max-w-content px-4 pb-16 pt-[clamp(16rem,50svh,34rem)] lg:px-8 lg:pb-24 lg:pt-[clamp(9rem,26vh,18rem)]"
+        className="mx-auto w-full max-w-content px-4 pb-16 md:pt-[clamp(9rem,26vh,18rem)] lg:px-8 lg:pb-24"
       >
         {children}
       </main>
