@@ -171,7 +171,9 @@ function curadoriaEntregue() {
 
 /** O link oficial, achado pelo NOME ACESSÍVEL — nunca pelo componente. */
 function porta(container: HTMLElement = document.body) {
-  return within(container).getAllByRole("link", { name: /Falar com a Aliviar/ });
+  // `queryAll` (não `getAll`): desde 24/08 a porta da casa mora no shell, e
+  // uma PÁGINA sem porta própria é estado legítimo — zero não é erro.
+  return within(container).queryAllByRole("link", { name: /Falar com a Aliviar/ });
 }
 
 /** A mensagem que o `href` carrega, decodificada. */
@@ -224,12 +226,19 @@ describe("T-C-5 · as sete inserções, provadas pela rota", () => {
     expect(() => RotaCuradoria()).toThrow("NEXT_REDIRECT:/paciente");
   });
 
-  it("C3 · /paciente — tópico `jornada`", async () => {
+  /**
+   * 2ª emenda de 24/08 ("não quero Concierge lá embaixo") · a porta da casa
+   * mora no CABEÇALHO do PatientShell, presente em toda tela — o Início
+   * deixou de carregar porta própria fora da Mesa. O que este oráculo
+   * guarda: sem Curadoria, a página não inventa porta solta (a do shell é
+   * provada em `track-c-alcancabilidade`).
+   */
+  it("C3 · /paciente sem Curadoria — nenhuma porta solta; a do shell cobre", async () => {
     render(await RotaHome());
 
-    const links = porta();
-    expect(links).toHaveLength(1);
-    expect(assuntoDe(links[0]!)).toContain("Oi! Gostaria de ajuda com a minha jornada na Aliviar.");
+    expect(
+      within(document.body).queryAllByRole("link", { name: /Falar com a Aliviar/ }),
+    ).toHaveLength(0);
   });
 
   it("C4 · /paciente/linha-do-tempo — tópico `jornada`", async () => {

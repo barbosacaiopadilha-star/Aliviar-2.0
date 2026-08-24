@@ -151,9 +151,11 @@ describe("Motion budget — calma, nunca espetáculo", () => {
 });
 
 describe("Motion reduzido — a informação continua inteira", () => {
-  it("cena, pulso e shimmer param", () => {
+  it("pulso e shimmer param", () => {
+    // 24/08 · a cena saiu do hero (a fotografia é a casa inteira, estática):
+    // `patient-hero__scene` não existe mais — sobra o que ainda anima.
     const bloco = CSS.slice(CSS.indexOf("@media (prefers-reduced-motion: reduce)"));
-    expect(bloco).toContain("patient-hero__scene");
+    expect(bloco).not.toContain("patient-hero__scene");
     expect(bloco).toContain("patient-walk__step--current .patient-walk__dot");
     expect(bloco).toContain("p-skeleton");
     expect(bloco).toContain("animation: none");

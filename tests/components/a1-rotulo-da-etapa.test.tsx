@@ -119,10 +119,10 @@ describe("A-1 · o rótulo saiu do trabalho, não da Mesa", () => {
     expect(screen.getByText(`Trabalho de ${etapa}`)).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Maria Andrade");
     expect(screen.getByLabelText("Anotação do caso")).toBeInTheDocument();
-    // A Mesa entrega a timeline em mais de um slot (contexto e painel).
     expect(screen.getAllByText("Linha do tempo").length).toBeGreaterThan(0);
-    // A linha de investigação, que fica logo acima da pergunta, continua lá.
-    expect(document.querySelector(".mesa-raciocinio")).toBeTruthy();
+    // CORTE DE 24/08 · a Linha de investigação saiu (quinto medidor de
+    // progresso da área) — e não pode voltar por descuido.
+    expect(document.querySelector(".mesa-raciocinio")).toBeNull();
   });
 
   it("T-A1-5 · `pending` e `waitingOn` intactos — faixa visual E `sr-only`", () => {

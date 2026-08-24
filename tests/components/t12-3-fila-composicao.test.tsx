@@ -93,11 +93,15 @@ describe("T-12-3 · a Fila desenha os sete grupos", () => {
     }
   });
 
-  it("grupo vazio não some: ele diz que está vazio", () => {
+  it("grupo vazio não some: vira UMA linha, com o zero à vista", () => {
+    // 2ª passada de 24/08 · o vazio deixou de gastar três linhas (título +
+    // ato + frase) e virou título esmaecido + "0". A doutrina que este
+    // oráculo guarda é a MESMA: os sete grupos sempre visíveis.
     render(<FilaPorAtoDevido casos={[caso("c1", "Ana Sintética")]} />);
     expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(7);
-    expect(screen.getByText("Nenhuma Curadoria em curso.")).toBeTruthy();
-    expect(screen.getByText("Nenhum Caso com o Concierge.")).toBeTruthy();
+    const vazio = screen.getByRole("heading", { name: "Curadoria em curso" }).closest("section")!;
+    expect(within(vazio).getByText("0")).toBeTruthy();
+    expect(within(vazio).queryByText(/Nenhuma Curadoria/)).toBeNull();
   });
 
   it("Fila inteiramente vazia continua com os sete grupos", () => {
@@ -147,11 +151,20 @@ describe("T-12-3 · a Fila não cria autoridade que não existe", () => {
     expect(secao.textContent).toMatch(/A escolha é dela, no tempo dela\./);
   });
 
-  it("os grupos do Curador oferecem abrir o caso", () => {
+  it("os grupos do Curador oferecem continuar — direto na etapa devida", () => {
+    // ADR-086 §5 · "Abrir o caso" virou "Continuar", aterrissando na etapa
+    // do ato (Acolhimento, Mesa ou Relatório) em vez do saguão.
     render(<FilaPorAtoDevido casos={DEZ} />);
-    for (const titulo of ["Aguarda Acolhimento", "Curadoria em curso", "Aguarda entrega"]) {
+    const destinos: Record<string, string> = {
+      "Aguarda Acolhimento": "/acolhimento",
+      "Curadoria em curso": "/curadoria_tecnica",
+      "Aguarda entrega": "/relatorio",
+    };
+    for (const [titulo, destino] of Object.entries(destinos)) {
       const secao = screen.getByRole("heading", { name: titulo }).closest("section")!;
-      expect(within(secao).getAllByRole("link")[0]!.textContent, titulo).toMatch(/Abrir o caso/);
+      const link = within(secao).getAllByRole("link")[0]!;
+      expect(link.textContent, titulo).toMatch(/Continuar/);
+      expect(link.getAttribute("href"), titulo).toContain(destino);
     }
   });
 });
