@@ -8,6 +8,7 @@ import { useState, type ReactNode } from "react";
 import "@/app/patient-dashboard.css";
 
 import { LogoutButton } from "@/components/auth/logout-button";
+import { whatsappHref } from "@/components/curadoria/whatsapp-contact";
 import { VidroDinamico } from "@/components/landing/editorial/vidro-dinamico";
 import { PatientAmbientLayer } from "@/components/paciente/dashboard/patient-ambient-layer";
 import { Drawer } from "@/components/ui/drawer";
@@ -158,6 +159,21 @@ export function PatientShell({ children, userMenu }: PatientShellProps) {
               }
             />
           </nav>
+
+          {/* O CONCIERGE NO TOPO (decisão do Fundador, 24/08: "não quero
+              Concierge lá embaixo"): a ferramenta mora onde ferramenta mora —
+              sempre à mão, em qualquer tela da casa. Fora do <nav> de
+              propósito: é canal, não navegação. Mesmas regras de sempre:
+              rótulo único, assunto tipado, sem SLA, clique não registrado. */}
+          <a
+            href={whatsappHref("jornada")}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-9 items-center rounded-full bg-[var(--patient-acento)] px-3 text-xs font-medium text-[var(--patient-linen)] shadow-sm transition-all duration-300 ease-standard hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 lg:min-h-10 lg:px-4 lg:text-sm"
+          >
+            Falar com a Aliviar{" "}
+            <span className="sr-only">(abre o WhatsApp em nova aba)</span>
+          </a>
 
           <div className="hidden lg:block">{userMenu ?? <LogoutButton className="w-auto" />}</div>
 

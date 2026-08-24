@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { BlocoCuradoria } from "@/components/paciente/bloco-curadoria";
-import { ConciergeCard } from "@/components/paciente/concierge-card";
 import { PatientHomeState } from "@/components/paciente/patient-home-state";
 import { AmbientHero } from "@/components/paciente/experiencia/ambient-hero";
 import { CuradoriaNaoIniciada } from "@/components/paciente/experiencia/estados-vazios";
@@ -126,15 +125,10 @@ export default async function PacienteHomePage() {
           acaoEmOutroLugar
         />
         <ProximaAcao pending={pending} />
-        {/* CORTE FUNDO DE 23/08 · "Suas coisas" saiu também daqui. Antes de
-            existir Case ele dizia três vezes que nada existe ainda — e
-            `CuradoriaNaoIniciada`, logo abaixo, já diz isso uma vez, com
-            acolhimento em vez de inventário. */}
         <CuradoriaNaoIniciada />
-        {/* C3 · Track C, emendada em 24/08 (decisão do Fundador): a porta
-            existe desde o primeiro dia — e deixou de ser linha escondida
-            para ser ferramenta com card e botão. */}
-        <ConciergeCard topic="jornada" />
+        {/* C3 · Track C, 2ª emenda (24/08, "não quero Concierge lá
+            embaixo"): a porta existe desde o primeiro dia — e mora no botão
+            fixo do cabeçalho da casa (PatientShell), nunca no rodapé. */}
       </div>
     );
   }
@@ -168,25 +162,26 @@ export default async function PacienteHomePage() {
           <div className="space-y-5">
             {acaoNoHero}
             <PorqueEDepois pending={pending} curatorName={jornada.curatorName} />
+            {/* 24/08 · a linha de quem está com você e a porta da Jornada
+                entraram NO hero: com a cena em força total atrás da casa,
+                texto solto sobre a fotografia morreu como recurso — tudo é
+                card ou está dentro de card, como na landing. */}
+            <p className="border-t border-[var(--color-border)] pt-4 text-sm text-[var(--color-ink-muted)]">
+              {jornada.currentResponsible?.name ? (
+                <>
+                  <span className="font-medium text-[var(--patient-ink)]">
+                    {jornada.currentResponsible.name}
+                  </span>{" "}
+                  está com você agora ·{" "}
+                </>
+              ) : null}
+              <Link href="/paciente/linha-do-tempo" className={LINK_DISCRETO}>
+                Ver sua Jornada inteira
+              </Link>
+            </p>
           </div>
         }
       />
-
-      {/* Uma linha: quem está com você agora (reconhecimento, não canal) e a
-          porta do percurso inteiro, para quem quiser o histórico. */}
-      <p className="text-sm text-[var(--color-ink-muted)]">
-        {jornada.currentResponsible?.name ? (
-          <>
-            <span className="font-medium text-[var(--patient-ink)]">
-              {jornada.currentResponsible.name}
-            </span>{" "}
-            está com você agora ·{" "}
-          </>
-        ) : null}
-        <Link href="/paciente/linha-do-tempo" className={LINK_DISCRETO}>
-          Ver sua Jornada inteira
-        </Link>
-      </p>
 
       {/* A CURADORIA — a operação em si, na mesma página que o estado.
           `loadPatientCuradoria` só devolve com `delivered_at`: antes da
@@ -195,13 +190,10 @@ export default async function PacienteHomePage() {
       {/* Invocado como função (não como JSX): componente-servidor async
           aninhado quebra o renderer dos testes de composição, e aqui dentro
           já estamos no servidor — o resultado é o mesmo JSX. */}
+      {/* 24/08 · o card do Concierge saiu do fim ("eu não quero Concierge lá
+          embaixo"): a ferramenta virou o botão fixo no CABEÇALHO da casa
+          (PatientShell) — à mão em qualquer tela, nunca no rodapé. */}
       {curadoriaEntregue ? await BlocoCuradoria({ supabase, curadoria: curadoriaEntregue }) : null}
-
-      {/* O CONCIERGE COMO FERRAMENTA (decisão do Fundador, 24/08): o quarto
-          ato fecha a página em QUALQUER estado, como card com botão — abaixo
-          de tudo que é leitura e decisão, nunca no meio delas. O tópico é o
-          da jornada; a linha da Mesa (tópico curadoria) continua onde está. */}
-      <ConciergeCard topic={curadoriaEntregue ? "curadoria" : "jornada"} />
     </div>
   );
 }

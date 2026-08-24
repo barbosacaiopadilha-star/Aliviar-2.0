@@ -112,12 +112,33 @@
   pointer-events: none;
 }
 
-/* A3b (adendo) · as três camadas feitas à mão saíram daqui.
-   Imagem a 22% sob um véu de 90–96% é arquitetura que existe no DOM e não
-   existe na tela. Quem compõe a atmosfera agora é `ImmersiveBackdrop` — o
-   MESMO componente do hero e das bandas da landing, com a variante
-   `patient-intimate` que ele já trazia e que esta casa nunca tinha usado.
-   Uma linguagem de ambiente só, para a marca inteira. */
+/* A CENA DA CASA (24/08, "as configurações visuais da landing"): fotografia
+   em força total como cenário contínuo — a mesma gramática da vitrine. O
+   `ImmersiveBackdrop` a 16% saiu; quem protege a leitura agora é o vidro
+   dinâmico dos cards e o véu leve abaixo. */
+.patient-dashboard .patient-ambient-layer picture,
+.patient-dashboard .patient-ambient-layer__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* O véu de marfim sobre a cena: a landing não tem texto solto sobre a foto,
+   esta casa tem (limiares, linhas, links) — o véu garante a leitura deles
+   sem apagar o ambiente. Mais denso no rodapé, onde o texto corre longo. */
+.patient-dashboard .patient-ambient-layer__veu {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-bg-canvas-warm) 34%, transparent) 0%,
+    color-mix(in srgb, var(--color-bg-canvas-warm) 46%, transparent) 55%,
+    color-mix(in srgb, var(--color-bg-canvas-warm) 58%, transparent) 100%
+  );
+}
 
 .patient-dashboard > header,
 .patient-dashboard > main,
@@ -168,84 +189,10 @@
   );
 }
 
-/* ---------------------------------------------------------------------------
-   Hero ambiental — a cena da etapa atual, não uma faixa decorativa.
-   A foto é lavada até virar atmosfera: o texto precisa continuar legível com
-   folga, então o véu garante o contraste em vez de depender da imagem.
---------------------------------------------------------------------------- */
-.patient-dashboard .patient-hero {
-  position: relative;
-  overflow: hidden;
-  border-radius: var(--p-radius-lg);
-  padding: 2.5rem 1.5rem;
-  isolation: isolate;
-}
-
-@media (min-width: 1024px) {
-  .patient-dashboard .patient-hero {
-    padding: 4rem 3.5rem;
-  }
-
-}
-
-/* A cena respira: 14s por ciclo, deslocamento de menos de 1% e variação de
-   luz quase imperceptível. Lento o bastante para não ser lido como movimento
-   — a pessoa sente o ambiente vivo sem nunca olhar para a animação. */
-.patient-dashboard .patient-hero__scene {
-  position: absolute;
-  inset: -2%;
-  z-index: -2;
-  background-size: cover;
-  /* Padrão das cenas SEM texto — os corredores e a sala de saída. A recepção
-     tem o logotipo gravado na parede e declara o próprio enquadramento em
-     `STAGE_AMBIENCES`, porque uma regra aqui valeria para as seis. */
-  background-position: center 35%;
-  /* A3b (adendo) · 0.4 sob um véu de 88–96% apagava o ambiente. A landing
-     mostra a MESMA fotografia a 62% (`imageOpacity={62}` no hero editorial),
-     e é esse o alvo: quem entra tem de reconhecer o lugar onde estava. */
-  opacity: 0.62;
-  filter: saturate(0.9);
-  transform: scale(1.02);
-  animation: patient-breathe var(--p-motion-ambient) var(--p-ease) infinite alternate;
-  will-change: transform, filter;
-}
-
-@keyframes patient-breathe {
-  from {
-    transform: scale(1.02) translate3d(0, 0, 0);
-    filter: saturate(0.9) brightness(1);
-  }
-  to {
-    transform: scale(1.045) translate3d(0, -0.6%, 0);
-    filter: saturate(0.95) brightness(1.03);
-  }
-}
-
-
-.patient-dashboard .patient-hero__veil {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  /* MASTER-1 · o véu protege a METADE ESQUERDA, que é onde o texto mora.
-     A curva anterior abria aos 38% e o logotipo da parede da recepção — o
-     ambiente 01 do pacote oficial — caía bem atrás do título. Dois logotipos
-     disputando a mesma linha: o da marca, na parede, e o nome de quem chegou.
-
-     Agora o véu só abre depois dos 58%, onde o hero já não tem texto. O que
-     aparece à direita é a luminária, a oliveira e o balcão — arquitetura, sem
-     nada para ler. */
-  background: linear-gradient(
-    100deg,
-    color-mix(in srgb, var(--color-bg-canvas) 95%, transparent) 0%,
-    color-mix(in srgb, var(--color-bg-canvas) 90%, transparent) 40%,
-    color-mix(in srgb, var(--color-bg-canvas) 62%, transparent) 58%,
-    color-mix(in srgb, var(--color-bg-canvas-warm) 40%, transparent) 100%
-  );
-}
-
-.patient-dashboard .patient-hero__content {
-  position: relative;
-}
+/* 24/08 ("as configurações visuais da landing") · o HERO AMBIENTAL saiu —
+   cena, véu, respiração e enquadramentos. A fotografia deixou de morar
+   dentro do hero: ela é a casa inteira (`.patient-ambient-layer`), e o hero
+   virou card de vidro (`patient-card patient-veu`) como todos os outros. */
 
 .patient-dashboard .patient-section-title {
   font-size: 0.6875rem;
@@ -469,9 +416,8 @@
     animation: none;
   }
 
-  /* O ambiente para de respirar, o pulso para, o brilho para. A informação
-     continua inteira: nada aqui era animação carregando significado. */
-  .patient-dashboard .patient-hero__scene,
+  /* O pulso para, o brilho para. A informação continua inteira: nada aqui
+     era animação carregando significado. */
   .patient-dashboard .patient-walk__step--current .patient-walk__dot,
   .patient-dashboard .p-skeleton {
     animation: none;
@@ -489,11 +435,6 @@
 
   /* Sem elevação no hover: movimento por apontar é o primeiro a incomodar. */
   .patient-dashboard .patient-carta:hover {
-    transform: none;
-  }
-
-  /* A cena continua, sem o zoom que sugere movimento. */
-  .patient-dashboard .patient-hero__scene {
     transform: none;
   }
 }

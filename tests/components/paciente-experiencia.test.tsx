@@ -19,36 +19,33 @@ describe("AmbientHero — responde visualmente antes de textualmente", () => {
     ).toBeInTheDocument();
   });
 
-  it("a cena é decorativa para quem vê e descrita para quem não vê", () => {
+  /**
+   * 24/08 ("as configurações visuais da landing") · a cena saiu de DENTRO do
+   * hero — a fotografia é a casa inteira agora (PatientAmbientLayer) e o
+   * hero é card de vidro. O que estes oráculos passam a guardar: nenhuma
+   * foto própria volta ao hero por descuido, e a MENSAGEM continua sendo a
+   * linguagem que muda com a etapa (Storytelling Ambiental).
+   */
+  it("o hero é vidro sobre a cena da casa — sem foto própria", () => {
     const { container } = render(
       <AmbientHero firstName="Maria" stage="DOSSIE" eyebrow="Sua Curadoria está pronta" />,
     );
 
-    // A imagem de fundo não é anunciada como conteúdo…
-    expect(container.querySelector(".patient-hero__scene")).toHaveAttribute("aria-hidden", "true");
-    // …mas a informação que ela carrega chega em texto.
-    //
-    // MASTER-0B · a asserção lê a projeção, não um literal. A frase estava
-    // escrita à mão aqui ("ambiente amplo e aberto") e virou oráculo defasado
-    // no instante em que a cena do DOSSIE mudou — descrevendo para leitor de
-    // tela uma foto que a etapa não usa mais. O que este teste protege é o
-    // PAR: cena escondida, descrição presente.
-    expect(screen.getByText(ambienceFor("DOSSIE").sceneDescription)).toBeInTheDocument();
+    expect(container.querySelector(".patient-hero__scene")).toBeNull();
+    expect(container.querySelector("section")?.className).toContain("patient-veu");
+    // A mensagem da etapa continua chegando — é ela que carrega o ambiente.
+    expect(screen.getByText(ambienceFor("DOSSIE").message)).toBeInTheDocument();
   });
 
   it("o ambiente muda com a etapa — é linguagem, não decoração fixa", () => {
-    const { container: consulta } = render(
-      <AmbientHero firstName="Ana" stage="CONSULTA_INICIAL" eyebrow="Sua jornada começa" />,
-    );
-    const cenaConsulta = consulta.querySelector(".patient-hero__scene")?.getAttribute("style");
+    render(<AmbientHero firstName="Ana" stage="CONSULTA_INICIAL" eyebrow="Sua jornada começa" />);
+    const mensagemConsulta = ambienceFor("CONSULTA_INICIAL").message;
+    expect(screen.getByText(mensagemConsulta)).toBeInTheDocument();
     cleanup();
 
-    const { container: acompanhamento } = render(
-      <AmbientHero firstName="Ana" stage="ACOMPANHAMENTO" eyebrow="Seguimos com você" />,
-    );
-    const cenaAcompanhamento = acompanhamento.querySelector(".patient-hero__scene")?.getAttribute("style");
-
-    expect(cenaConsulta).not.toBe(cenaAcompanhamento);
+    render(<AmbientHero firstName="Ana" stage="ACOMPANHAMENTO" eyebrow="Seguimos com você" />);
+    expect(screen.getByText(ambienceFor("ACOMPANHAMENTO").message)).toBeInTheDocument();
+    expect(ambienceFor("ACOMPANHAMENTO").message).not.toBe(mensagemConsulta);
   });
 });
 

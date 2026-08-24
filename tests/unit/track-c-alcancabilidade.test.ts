@@ -90,9 +90,20 @@ describe("T-C-10 · alcançabilidade a partir da rota", () => {
 
   // MERGE DE 23/08 · curadoria e consentimentos viraram redirects; a porta
   // delas mora nas rotas que as abrigam (Início e Documentos).
-  it("as quatro rotas da paciente alcançam a porta, uma a uma", () => {
+  // 24/08 ("não quero Concierge lá embaixo") · a porta da CASA INTEIRA
+  // passou a ser o botão fixo no cabeçalho do PatientShell — a moldura que
+  // toda rota da paciente veste. A guarda muda de forma, não de garantia.
+  it("o cabeçalho da casa carrega a porta — para toda rota da paciente", () => {
+    const shell = readFileSync(
+      path.join(RAIZ, "src/components/paciente/patient-shell.tsx"),
+      "utf8",
+    );
+    expect(shell).toContain("whatsappHref");
+    expect(shell).toContain("Falar com a Aliviar");
+  });
+
+  it("as rotas com porta própria continuam com ela, uma a uma", () => {
     const rotas = [
-      "src/app/paciente/page.tsx",
       "src/app/paciente/linha-do-tempo/page.tsx",
       "src/app/paciente/documentos/page.tsx",
       "src/app/paciente/perfil/page.tsx",

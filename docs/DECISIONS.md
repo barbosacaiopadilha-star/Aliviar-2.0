@@ -1928,3 +1928,9 @@ O Fundador, sobre o print do cartão do acompanhamento: *"o Concierge não teria
 - **Revisitar quando:** a primeira Curadoria real mostrar o Curador procurando algo que recolheu (a Memória, um grupo vazio da Fila) — aí abre-se por padrão o que a operação provar que consulta sempre.
 
 ---
+
+### 2ª emenda à ADR-085 — a cena da casa, e o Concierge no cabeçalho (2026-08-24)
+
+O Fundador entregou a fotografia do Início (ela em casa, à noite, ao telefone com a pasta da Aliviar — em duas proporções geradas) e pediu "as configurações visuais da landing" na casa da paciente. Três consequências: **(1)** a cena entra em força total como cenário contínuo atrás de toda a área autenticada, servida por `<picture>` responsivo (retrato no celular, 16:9 no computador; WebP+JPEG) — o corredor a 16% de opacidade e a cena-por-etapa do hero saem; o hero vira card de vidro como os demais, e a mensagem da etapa segue carregando o Storytelling Ambiental. **(2)** Com foto em força total, **texto solto sobre a fotografia morreu como recurso**: tudo é card ou está dentro de card — a linha da Jornada entrou no hero; o selo, a data e o PDF entraram na carta do escolhido; o eco da Sala, o material de consulta e a frase final viraram vidro. Um véu de marfim leve (34→58%) protege o que o card não cobre. **(3)** O Concierge muda de casa pela segunda vez, agora em definitivo: *"eu não quero Concierge lá embaixo"* — o card do fim (1ª emenda) dá lugar ao **botão fixo no cabeçalho** do shell, presente em toda tela; o botão que ficava dentro do cartão do acompanhamento sai por redundância ("acho que isso não precisa"). As regras do canal seguem intactas.
+
+---

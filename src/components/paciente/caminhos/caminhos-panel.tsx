@@ -92,9 +92,10 @@ export function CaminhosPanel({ curadoria }: { curadoria: PatientCuradoria }) {
 
   return (
     <section>
-      {/* O eco da Sala Particular: prosa com ar, nenhuma moldura de painel.
-          O que uma pessoa escreveu é serifa (R3); nada aqui é clicável. */}
-      <div className="max-w-[40rem] space-y-4">
+      {/* 24/08 ("tudo é card ou está dentro de card"): o eco da Sala deixou
+          de ser prosa solta — sobre a cena em força total, texto sem card
+          sofre. Vira vidro, como tudo na casa; a serifa da fala dela fica. */}
+      <div className="patient-card patient-veu max-w-[40rem] space-y-4 p-6 lg:p-8">
         <h2 className="font-serif text-2xl font-normal text-[var(--patient-ink)]">
           Seus três caminhos
         </h2>
@@ -145,7 +146,7 @@ export function CaminhosPanel({ curadoria }: { curadoria: PatientCuradoria }) {
           não pré-escolhe. Depois dela, o maior vazio da página: o espaço
           abaixo de uma escolha fica vazio, porque preencher ali é empurrar. */}
       {todasConhecidas && !curadoria.decision ? (
-        <div className="mt-16 max-w-prose lg:mt-24">
+        <div className="patient-card patient-veu mt-16 max-w-prose p-6 lg:mt-24">
           <p className="font-serif text-base leading-[1.65] text-[var(--patient-ink)]">
             Daqui em diante o trabalho é seu, sem pressa — reler e comparar fazem parte, e a
             escolha está logo adiante quando você quiser.

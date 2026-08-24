@@ -79,16 +79,16 @@ describe("O PDF não depende mais do motor anterior (A5)", () => {
   });
 
   it("o link do PDF deixou de exigir a entrega legada", () => {
-    // Antes: `{delivery ? (<p>…Levar em PDF…</p>) : null}` dentro do bloco da Mesa.
-    const bloco = pagina.slice(
-      pagina.indexOf("const blocoMesa"),
-      pagina.indexOf("  return (", pagina.indexOf("const blocoMesa")),
-    );
-    expect(bloco).toContain("Levar em PDF");
+    // Antes: `{delivery ? (<p>…Levar em PDF…</p>) : null}` dentro do bloco da
+    // Mesa. 24/08: o link vive no card de material de consulta, e a única
+    // condição legítima é a DECISÃO (depois de escolher, o PDF mora dentro
+    // da carta do escolhido — nunca a entrega do motor aposentado).
+    expect(pagina).toContain("Levar em PDF");
     expect(
-      /\{delivery \? \(\s*<p/.test(bloco),
+      /\{delivery \? \(\s*<p/.test(pagina),
       "o link do PDF voltou a depender da entrega legada",
     ).toBe(false);
+    expect(pagina).not.toContain("getLatestFinalCuradoriaDeliveryForPatient");
   });
 
   it("a view de impressão da Curadoria existe e não inventa conteúdo", () => {

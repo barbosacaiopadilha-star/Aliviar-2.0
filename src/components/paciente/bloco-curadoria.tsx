@@ -109,25 +109,38 @@ export async function BlocoCuradoria({
       </>
     ) : null;
 
+  /* 24/08 ("tudo é card ou está dentro de card"): o PDF e a porta da Mesa
+     flutuavam sobre a fotografia da casa. Viram um card de vidro — e o PDF
+     só aparece aqui ANTES da escolha: depois dela, ele vive dentro da carta
+     do caminho escolhido, e repetir seria a duplicata de sempre. */
+  const materialDeConsulta = (
+    <section
+      aria-label="Material de consulta"
+      className="patient-card patient-veu mt-10 space-y-3 p-6"
+    >
+      {curadoria.decision?.outcome !== "CHOSEN" ? (
+        <p>
+          <Link
+            href="/paciente/curadoria/imprimir"
+            className="text-sm font-medium text-[var(--patient-acento)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+          >
+            Levar em PDF — para reler com a família ou na consulta
+          </Link>
+        </p>
+      ) : null}
+
+      {/* C1 · Track C — a porta no momento em que ela mais faz falta. */}
+      <p>
+        <ConciergeLink topic="curadoria" />
+      </p>
+    </section>
+  );
+
   const blocoMesa = (
     <>
       {varandaPrimeiro ? <Limiar nome="A Mesa — para reler quando quiser" /> : null}
       <CaminhosPanel curadoria={curadoria} />
-
-      {/* O PDF pertence à Mesa: material de consulta, nunca ação principal. */}
-      <p className="mt-10">
-        <Link
-          href="/paciente/curadoria/imprimir"
-          className="text-sm font-medium text-[var(--patient-acento)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
-        >
-          Levar em PDF — para reler com a família ou na consulta
-        </Link>
-      </p>
-
-      {/* C1 · Track C — a porta no momento em que ela mais faz falta. */}
-      <p className="mt-3">
-        <ConciergeLink topic="curadoria" />
-      </p>
+      {materialDeConsulta}
     </>
   );
 

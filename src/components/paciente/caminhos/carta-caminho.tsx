@@ -40,6 +40,8 @@ export function CartaCaminho({
   onAbrir,
   onFechar,
   semGestos = false,
+  cabecalho,
+  rodape,
 }: {
   option: PatientCuradoriaOption;
   aberta: boolean;
@@ -53,6 +55,13 @@ export function CartaCaminho({
    * informação muda por causa da escolha.
    */
   semGestos?: boolean;
+  /**
+   * 24/08 ("tudo é card ou está dentro de card"): com a cena em força total
+   * atrás da casa, o selo "Seu caminho" e o "Levar em PDF" — que flutuavam
+   * sobre a fotografia — entram NA carta. Só o escolhido os usa.
+   */
+  cabecalho?: React.ReactNode;
+  rodape?: React.ReactNode;
 }) {
   const semMovimento = useReducedMotion();
   const conhecidas = dimensoesConhecidas(option.dimensions);
@@ -74,6 +83,8 @@ export function CartaCaminho({
          loop reescreve a cada quadro — e `suppressHydrationWarning` não cala
          o log agrupado do React 19 para style (tentado e revertido em 23/08). */
     >
+      {cabecalho ? <div className="mb-5">{cabecalho}</div> : null}
+
       <div className="flex items-start gap-4">
         <Retrato nome={option.professionalName} />
 
@@ -322,6 +333,8 @@ export function CartaCaminho({
           </motion.div>
         ) : null}
       </AnimatePresence>
+
+      {rodape ? <div className="mt-6">{rodape}</div> : null}
     </motion.article>
   );
 }

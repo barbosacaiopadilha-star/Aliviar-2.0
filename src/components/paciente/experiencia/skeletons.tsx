@@ -15,14 +15,17 @@ function Bloco({ className }: { className?: string }) {
 }
 
 export function HeroSkeleton() {
+  // 24/08 · o hero virou card de vidro sobre a cena da casa; o esqueleto
+  // acompanha a forma nova — mesma moldura, sem véu próprio.
   return (
-    <section aria-busy="true" aria-label="Carregando sua jornada" className="patient-hero">
-      <div className="patient-hero__veil" aria-hidden="true" />
-      <div className="patient-hero__content space-y-3">
-        <Bloco className="h-3 w-32" />
-        <Bloco className="h-9 w-56" />
-        <Bloco className="h-4 w-full max-w-md" />
-      </div>
+    <section
+      aria-busy="true"
+      aria-label="Carregando sua jornada"
+      className="patient-card patient-veu space-y-3 p-6 lg:p-10"
+    >
+      <Bloco className="h-3 w-32" />
+      <Bloco className="h-9 w-56" />
+      <Bloco className="h-4 w-full max-w-md" />
     </section>
   );
 }

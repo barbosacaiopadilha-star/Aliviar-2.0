@@ -6,16 +6,17 @@ import { ambienceFor } from "@/modules/paciente/ambiente";
 import type { JornadaStageId } from "@/modules/curadoria/jornada";
 
 /**
- * AmbientHero — a primeira coisa que a pessoa vê, e ela responde visualmente.
+ * AmbientHero — a primeira coisa que a pessoa vê, agora na gramática da
+ * vitrine (24/08, "as configurações visuais da landing").
  *
- * Hierarquia da tela: imagem → título → resumo → ação. Aqui ficam os três
- * primeiros; a ação vive nos cartões abaixo, para que o hero tenha uma ideia
- * só. O ambiente muda com a etapa (Storytelling Ambiental) — quem volta
- * semanas depois percebe que algo andou antes de ler qualquer palavra.
+ * A cena deixou de morar DENTRO do hero: ela é a casa inteira — a fotografia
+ * em força total atrás de tudo (PatientAmbientLayer), como na landing. O
+ * hero vira o que os cards da vitrine são: VIDRO sobre o ambiente, que
+ * cristaliza na zona de leitura pelo mesmo motor (`patient-veu`).
  *
- * A cena é `aria-hidden` e a descrição vai para leitor de tela em texto
- * próprio: quem não vê a foto recebe a informação que ela carrega, sem ouvir
- * um nome de arquivo.
+ * O que fica do desenho anterior: a hierarquia (estado → saudação → mensagem
+ * → ação) e a mensagem que muda com a etapa (Storytelling Ambiental) — quem
+ * volta semanas depois percebe que algo andou antes de ler qualquer palavra.
  */
 export function AmbientHero({
   firstName,
@@ -32,63 +33,37 @@ export function AmbientHero({
   /** "Bom dia" / "Boa tarde" / "Boa noite" — resolvido no servidor, sem flash. */
   greeting?: string;
   /**
-   * A3b · o macroestado do contrato congelado, já projetado.
-   *
-   * A sobrescrita do `eyebrow` é deliberada. O eyebrow deriva da ETAPA — e a
-   * etapa já é dita, com mais precisão, pela régua logo abaixo: o topo repetia
-   * a jornada em vez de responder "o que está acontecendo agora?".
-   *
-   * O rótulo canônico responde essa pergunta e, até aqui, **não aparecia em
-   * nenhum lugar do caminho com Caso** — a Home lia o contrato e não mostrava
-   * o que ele dizia. Nada é decidido aqui: o texto e o papel chegam prontos.
+   * A3b · o macroestado do contrato congelado, já projetado. O rótulo
+   * canônico responde "o que está acontecendo agora?" — nada é decidido
+   * aqui: o texto e o papel chegam prontos.
    */
   estado?: { texto: string; papel: PapelVisual };
   /**
    * A AÇÃO ENTRA NO HERO (decisão do Fundador, 23/08 — "o foco é o
-   * celular"). Antes o topo dizia "Sua Curadoria está pronta" no selo e o
-   * cartão seguinte repetia a MESMA frase com o botão: duas telas de
-   * telefone para uma informação só. Agora é uma tela: onde você está, e o
-   * que fazer com isso.
+   * celular"): uma tela responde onde você está e o que fazer com isso.
    */
   acao?: ReactNode;
 }) {
   const ambience = ambienceFor(stage);
 
   return (
-    <section className="patient-hero patient-fade-in" aria-labelledby="patient-hero-title">
-      <div
-        className="patient-hero__scene"
-        style={{
-          backgroundImage: `url(${ambience.scene})`,
-          // Cena com enquadramento próprio sobrescreve o padrão do CSS. Hoje
-          // só a recepção tem: é a única com texto na parede.
-          ...(ambience.enquadramento
-            ? {
-                backgroundSize: ambience.enquadramento.size,
-                backgroundPosition: ambience.enquadramento.position,
-              }
-            : null),
-        }}
-        aria-hidden="true"
-      />
-      <div className="patient-hero__veil" aria-hidden="true" />
-
-      <div className="patient-hero__content">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-brand-sage)]">
-          {estado ? <StateMark papel={estado.papel}>{estado.texto}</StateMark> : eyebrow}
-        </p>
-        <h1
-          id="patient-hero-title"
-          className="mt-3 font-serif text-3xl font-medium leading-snug tracking-tight text-[var(--patient-ink)] lg:text-[2.6rem]"
-        >
-          {greeting ? `${greeting}, ${firstName}.` : `Olá, ${firstName}.`}
-        </h1>
-        <p className="p-read-mid mt-3 max-w-xl text-lg text-[var(--color-ink-muted)]">
-          {ambience.message}
-        </p>
-        <p className="sr-only">{ambience.sceneDescription}</p>
-        {acao ? <div className="mt-6">{acao}</div> : null}
-      </div>
+    <section
+      className="patient-card patient-veu patient-fade-in p-6 lg:p-10"
+      aria-labelledby="patient-hero-title"
+    >
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-brand-sage)]">
+        {estado ? <StateMark papel={estado.papel}>{estado.texto}</StateMark> : eyebrow}
+      </p>
+      <h1
+        id="patient-hero-title"
+        className="mt-3 font-serif text-3xl font-medium leading-snug tracking-tight text-[var(--patient-ink)] lg:text-[2.6rem]"
+      >
+        {greeting ? `${greeting}, ${firstName}.` : `Olá, ${firstName}.`}
+      </h1>
+      <p className="p-read-mid mt-3 max-w-xl text-lg text-[var(--color-ink-muted)]">
+        {ambience.message}
+      </p>
+      {acao ? <div className="mt-6">{acao}</div> : null}
     </section>
   );
 }
