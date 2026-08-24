@@ -96,7 +96,9 @@ describe("A5 · o campo narrativo é papel, não caixa de sistema", () => {
   const layout = readFileSync("src/components/story/story-step-layout.tsx", "utf8");
 
   it("as três perguntas abertas usam o mesmo tratamento", () => {
-    for (const passo of ["motivo", "historia", "informacoes"]) {
+    // CORTE DE 23/08 · o motivo mudou de casa (fundido em para-quem), mas a
+    // regra é a mesma: toda pergunta aberta escreve no campo narrativo.
+    for (const passo of ["para-quem", "historia", "informacoes"]) {
       const fonte = readFileSync(`src/app/(public)/sua-historia/(wizard)/${passo}/page.tsx`, "utf8");
       expect(fonte, `${passo} não usa o campo narrativo`).toContain("CAMPO_NARRATIVO");
     }

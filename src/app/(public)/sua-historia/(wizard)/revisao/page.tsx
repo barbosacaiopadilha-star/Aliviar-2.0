@@ -52,11 +52,11 @@ export default function RevisaoPage() {
 
   return (
     <StoryStepLayout
-      step={7}
-      totalSteps={7}
+      step={5}
+      totalSteps={5}
       title="Esta é a sua história."
       description="Confira o que você compartilhou. Você pode ajustar qualquer resposta antes de enviar."
-      backHref="/sua-historia/preferencias"
+      backHref="/sua-historia/informacoes"
       actionSlot={
         <Button
           type="button"

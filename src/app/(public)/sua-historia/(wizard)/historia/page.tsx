@@ -12,11 +12,11 @@ export default function HistoriaPage() {
 
   return (
     <StoryStepLayout
-      step={4}
-      totalSteps={7}
+      step={3}
+      totalSteps={5}
       title="Conte sua história"
       description="Fale um pouco mais sobre o seu momento, do seu jeito e no seu tempo."
-      backHref="/sua-historia/motivo"
+      backHref="/sua-historia/para-quem"
       nextHref="/sua-historia/informacoes"
       nextDisabled={!hasContent}
       footerSlot={<AutosaveIndicator />}

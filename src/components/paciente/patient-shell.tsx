@@ -8,6 +8,7 @@ import { useState, type ReactNode } from "react";
 import "@/app/patient-dashboard.css";
 
 import { LogoutButton } from "@/components/auth/logout-button";
+import { VidroDinamico } from "@/components/landing/editorial/vidro-dinamico";
 import { PatientAmbientLayer } from "@/components/paciente/dashboard/patient-ambient-layer";
 import { Drawer } from "@/components/ui/drawer";
 import { cn } from "@/components/ui/cn";
@@ -93,6 +94,14 @@ export function PatientShell({ children, userMenu }: PatientShellProps) {
   return (
     <div className="patient-dashboard min-h-screen">
       <PatientAmbientLayer />
+
+      {/* O EFEITO TRANSLÚCIDO também aqui (decisão do Fundador, 23/08): a
+          casa da paciente é a continuação da Landing, e os cartões dela
+          respondem à rolagem do mesmo jeito — vidro ao chegar, sólidos na
+          zona de leitura. O motor é o mesmo componente da vitrine; o que
+          muda é o piso de opacidade, mais alto aqui, porque nesta casa se
+          lê texto longo e a leitura não pode depender da rolagem. */}
+      <VidroDinamico />
 
       <a
         href="#patient-main"

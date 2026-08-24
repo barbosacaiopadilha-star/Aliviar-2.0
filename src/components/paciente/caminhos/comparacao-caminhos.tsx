@@ -27,7 +27,9 @@ export function ComparacaoCaminhos({ options }: { options: PatientCuradoriaOptio
   const dimensao = PATIENT_DIMENSIONS[dimensaoAtiva]!;
 
   return (
-    <section aria-labelledby="comparacao-titulo" className="patient-card p-6 lg:p-8">
+    /* CAPRICHO DE 23/08 · `patient-veu`: o comparador entra na mesma
+       dinâmica de vidro dos demais — clareia na leitura, translúcido fora. */
+    <section aria-labelledby="comparacao-titulo" className="patient-card patient-veu p-6 lg:p-8">
       <h2 id="comparacao-titulo" className="patient-section-title">
         Comparar caminhos
       </h2>

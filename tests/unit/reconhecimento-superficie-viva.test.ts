@@ -18,8 +18,11 @@ const CONTRATO = "src/modules/paciente/reconhecimento-contrato.ts";
 const MODELO = "src/modules/paciente/reconhecimento-model.ts";
 const COMPONENTE = "src/components/paciente/reconhecimento-duas-colunas.tsx";
 const PAINEL = "src/components/paciente/perfil-panel.tsx";
-const CARTAO = "src/components/paciente/experiencia/profile-card.tsx";
-const ROTA = "src/app/paciente/page.tsx";
+// CORTE FUNDO DE 23/08 · o cartão-resumo da Home deixou de abrir o painel
+// (virou porta para /paciente/perfil), e a ROTA VIVA do reconhecimento
+// passou a ser a página "Meus dados" — é ela que carrega o modelo no
+// servidor e o entrega ao painel.
+const ROTA = "src/app/paciente/perfil/page.tsx";
 
 describe("B1 · a direção da dependência", () => {
   it("o contrato dos tipos existe fora do componente", () => {
@@ -52,28 +55,28 @@ describe("B1 · a direção da dependência", () => {
     expect(contrato).not.toMatch(/^\s*import\s+["']server-only["']/m);
   });
 
-  it("o cartão tipa o modelo pelo contrato, não pelo loader `server-only`", () => {
-    const cartao = ler(CARTAO);
-    expect(cartao).toContain("@/modules/paciente/reconhecimento-contrato");
-    expect(cartao.includes("reconhecimento-model")).toBe(false);
-  });
+  // CORTE DE 23/08 · o cartão-resumo (profile-card) saiu com substituto vivo:
+  // quem tipa e repassa o modelo agora é a rota de Meus dados, e é ela que a
+  // guarda B5 abaixo audita.
 });
 
 describe("B5 · o modelo é a fonte única da tela", () => {
   it("a rota viva carrega o modelo no servidor", () => {
     const rota = ler(ROTA);
     expect(rota).toContain("loadModeloDoReconhecimento");
-    expect(rota).toContain("modelo={modeloDoReconhecimento");
+    // A rota de Meus dados entrega o modelo direto ao painel (o cartão-resumo
+    // intermediário saiu em 23/08).
+    expect(rota).toContain("linhas={modelo?.linhas}");
   });
 
-  it("o cartão repassa linhas e tecnicos ao painel, sem tocar em nenhum dos dois", () => {
-    const cartao = ler(CARTAO);
-    expect(cartao).toContain("linhas={modelo?.linhas}");
-    expect(cartao).toContain("tecnicos={modelo?.tecnicos}");
+  it("a rota repassa linhas e tecnicos ao painel, sem tocar em nenhum dos dois", () => {
+    const rota = ler(ROTA);
+    expect(rota).toContain("linhas={modelo?.linhas}");
+    expect(rota).toContain("tecnicos={modelo?.tecnicos}");
   });
 
   it("nenhuma das três superfícies consulta o banco", () => {
-    for (const arquivo of [COMPONENTE, PAINEL, CARTAO]) {
+    for (const arquivo of [COMPONENTE, PAINEL]) {
       const fonte = ler(arquivo);
       for (const proibido of ["createServerSupabaseClient", "supabase", ".from(", "select("]) {
         expect(fonte.includes(proibido), `${arquivo} → ${proibido}`).toBe(false);
@@ -82,7 +85,7 @@ describe("B5 · o modelo é a fonte única da tela", () => {
   });
 
   it("nenhuma superfície remonta a cadeia nem refaz a partição", () => {
-    for (const arquivo of [COMPONENTE, PAINEL, CARTAO]) {
+    for (const arquivo of [COMPONENTE, PAINEL]) {
       const fonte = ler(arquivo);
       expect(fonte.includes("montarCadeiaDeProveniencia"), arquivo).toBe(false);
       expect(fonte.includes("PERSON_QUESTIONS_BY_CODE"), arquivo).toBe(false);

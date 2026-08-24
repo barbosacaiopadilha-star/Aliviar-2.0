@@ -30,6 +30,11 @@ import type { PendenciaDeAceite } from "./documentos";
 /** Prefixos que o gate nunca bloqueia. Ver as duas exceções acima. */
 export const ROTAS_LIVRES_DO_GATE: readonly string[] = [
   "/aceites",
+  // MERGE DE 23/08 · os consentimentos moram dentro da central de Documentos
+  // — a liberdade do gate segue o conteúdo: bloquear o exercício de direitos
+  // (ou o acesso dela ao que é dela) por falta de aceite seria coagir
+  // consentimento. A rota antiga fica livre também: ela redireciona para cá.
+  "/paciente/documentos",
   "/paciente/documentos-e-consentimentos",
   "/profissional/documentos-e-consentimentos",
   "/conta/meus-dados",

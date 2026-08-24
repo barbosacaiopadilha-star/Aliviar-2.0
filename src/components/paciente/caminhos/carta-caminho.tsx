@@ -3,6 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { BarraCompatibilidade } from "@/components/paciente/caminhos/barra-compatibilidade";
+import { Dobra } from "@/components/paciente/experiencia/dobra";
 import { Retrato } from "@/components/paciente/caminhos/retrato";
 import { FormacaoAcademicaBloco } from "@/components/patient/formacao-academica-bloco";
 import { cn } from "@/components/ui/cn";
@@ -38,8 +39,7 @@ export function CartaCaminho({
   jaConhecida,
   onAbrir,
   onFechar,
-  selecionadaParaComparar,
-  onAlternarComparacao,
+  semGestos = false,
 }: {
   option: PatientCuradoriaOption;
   aberta: boolean;
@@ -47,8 +47,12 @@ export function CartaCaminho({
   jaConhecida: boolean;
   onAbrir: () => void;
   onFechar: () => void;
-  selecionadaParaComparar: boolean;
-  onAlternarComparacao: () => void;
+  /**
+   * No caminho JÁ ESCOLHIDO não há o que abrir ou decidir: os gestos somem
+   * e a carta vira leitura (23/08). O conteúdo é o mesmo — nenhuma
+   * informação muda por causa da escolha.
+   */
+  semGestos?: boolean;
 }) {
   const semMovimento = useReducedMotion();
   const conhecidas = dimensoesConhecidas(option.dimensions);
@@ -59,11 +63,16 @@ export function CartaCaminho({
       layout={!semMovimento}
       transition={semMovimento ? { duration: 0 } : { type: "spring", stiffness: 260, damping: 30 }}
       className={cn(
-        "patient-carta",
+        "patient-carta patient-veu",
         aberta && "patient-carta--aberta",
         jaConhecida && !aberta && "patient-carta--conhecida",
       )}
       aria-labelledby={`carta-${option.id}-nome`}
+      /* AVISO CONHECIDO (dev-only): a hidratação seletiva chega aqui DEPOIS
+         de o VidroDinamico (no shell) já ter escrito `--veu-solidez`, e o
+         React loga a diferença de `style`. Sem efeito para a paciente — o
+         loop reescreve a cada quadro — e `suppressHydrationWarning` não cala
+         o log agrupado do React 19 para style (tentado e revertido em 23/08). */
     >
       <div className="flex items-start gap-4">
         <Retrato nome={option.professionalName} />
@@ -109,7 +118,7 @@ export function CartaCaminho({
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
+      <div className={cn("mt-5 flex flex-wrap items-center gap-3", semGestos && "hidden")}>
         <button
           type="button"
           onClick={aberta ? onFechar : onAbrir}
@@ -119,16 +128,9 @@ export function CartaCaminho({
         >
           {aberta ? "Recolher" : "Conhecer este caminho"}
         </button>
-
-        <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-[var(--color-border)] bg-white/70 px-4 text-sm text-[var(--patient-ink)] transition-colors hover:bg-white focus-within:ring-2 focus-within:ring-focus focus-within:ring-offset-2">
-          <input
-            type="checkbox"
-            checked={selecionadaParaComparar}
-            onChange={onAlternarComparacao}
-            className="size-4 accent-[var(--patient-acento)]"
-          />
-          Comparar
-        </label>
+        {/* CORTE DE 23/08 · o checkbox "Comparar" morava aqui. A comparação
+            deixou de ser ferramenta com gesto: o painel abaixo da Mesa já
+            mostra os três, uma dimensão por vez, sem seleção. */}
       </div>
 
       <AnimatePresence initial={false}>
@@ -155,46 +157,66 @@ export function CartaCaminho({
                   foi confirmado, a seção inteira não existe: cabeçalho sobre
                   lista vazia é promessa não cumprida. */}
               {conhecidas.length > 0 ? (
-                <section aria-label="Como este caminho responde ao seu Perfil">
-                  <h4 className="patient-section-title">Como responde ao seu Perfil</h4>
-                  <div className="mt-3 space-y-2.5">
+                /* A única dobra que nasce aberta: é a resposta ao que ELA
+                   declarou importar — o coração da entrega. */
+                <Dobra
+                  titulo="Como responde ao seu Perfil"
+                  rotulo="Como este caminho responde ao seu Perfil"
+                  abertaInicial
+                >
+                  <div className="space-y-2.5">
                     {conhecidas.map((dimension) => (
                       <div key={dimension.criterion}>
                         <BarraCompatibilidade dimension={dimension} />
-                        {dimension.criterion === "FORMACAO" && option.formacao.length > 0 ? (
-                          <div className="mb-2 mt-2 space-y-2 border-l-2 border-[var(--color-border)] pl-4">
+                        {dimension.criterion === "FORMACAO" &&
+                        (option.formacao?.length ?? 0) > 0 ? (
+                          <div className="mb-2 mt-2 space-y-1.5 border-l-2 border-[var(--color-border)] pl-4">
                             {temSeloDeVerificacao(option.formacao) ? (
                               <span className="inline-flex items-center rounded-full border border-[var(--color-border)] bg-white/70 px-3 py-1 text-xs font-medium text-[var(--patient-ink)]">
                                 {SELO_FORMACAO_VERIFICADA}
                               </span>
                             ) : null}
-                            {ordenarParaApresentacao([...option.formacao]).map((entrada, indice) => (
-                              <div key={`${entrada.kind}-${entrada.title}-${indice}`}>
-                                <p className="font-serif text-sm leading-relaxed text-[var(--patient-ink)]">
+                            {/* 23/08 · fato em UMA linha, não em parágrafo:
+                                título e, na mesma respiração, instituição,
+                                lugar e período separados por " · ". Quatro
+                                linhas por item viravam um currículo; uma
+                                linha por item é uma trajetória. */}
+                            {ordenarParaApresentacao([...(option.formacao ?? [])]).map((entrada, indice) => (
+                              <p
+                                key={`${entrada.kind}-${entrada.title}-${indice}`}
+                                className="text-sm leading-relaxed text-[var(--color-ink-muted)]"
+                              >
+                                <span className="font-serif text-[var(--patient-ink)]">
                                   {entrada.title}
-                                </p>
-                                {linhasPublicas(entrada).map((linha) => (
-                                  <p key={linha} className="text-xs leading-relaxed text-[var(--color-ink-muted)]">
-                                    {linha}
-                                  </p>
-                                ))}
-                              </div>
+                                </span>
+                                {linhasPublicas(entrada).length > 0
+                                  ? ` — ${linhasPublicas(entrada).join(" · ")}`
+                                  : null}
+                              </p>
                             ))}
                           </div>
                         ) : null}
                       </div>
                     ))}
                   </div>
-                </section>
+                </Dobra>
               ) : null}
 
               {/* Os casos que o aninhamento não cobre continuam honestos: a
                   leitura indisponível declara-se, e formação confirmada SEM a
                   dimensão declarada pelo Curador aparece como bloco próprio. */}
+              {/* `formacao` pode não vir (Relatório anterior à Formação
+                  Acadêmica v1, ou fixture sem o campo): ausência é ausência,
+                  nunca quebra de página. O defeito era latente — só aparecia
+                  com a carta ABERTA, e ficou visível quando o caminho
+                  escolhido passou a nascer aberto (23/08). */}
               {option.formacaoIndisponivel ||
-              (option.formacao.length > 0 && !conhecidas.some((d) => d.criterion === "FORMACAO")) ? (
+              ((option.formacao?.length ?? 0) > 0 &&
+                !conhecidas.some((d) => d.criterion === "FORMACAO")) ? (
                 <FormacaoAcademicaBloco
-                  formacao={conhecidas.some((d) => d.criterion === "FORMACAO") ? [] : option.formacao}
+                  formacao={
+                    conhecidas.some((d) => d.criterion === "FORMACAO") ? [] : (option.formacao ?? [])
+                  }
                   indisponivel={option.formacaoIndisponivel}
                 />
               ) : null}
@@ -205,11 +227,11 @@ export function CartaCaminho({
                   nenhuma carta se compara às outras. `null` = Relatório sem a
                   seção (anterior à ADR); ausência é ausência. */}
               {option.relationalReading ? (
-                <section aria-label="No jeito como você quer ser cuidada">
-                  <h4 className="patient-section-title">
-                    No jeito como você quer ser cuidada
-                  </h4>
-                  <ul className="mt-3 space-y-2">
+                <Dobra
+                  titulo="No jeito como você quer ser cuidada"
+                  rotulo="No jeito como você quer ser cuidada"
+                >
+                  <ul className="space-y-2">
                     {option.relationalReading.split("\n").filter((linha) => linha.trim()).map((frase, indice) => (
                       <li
                         key={`${indice}-${frase}`}
@@ -219,16 +241,15 @@ export function CartaCaminho({
                       </li>
                     ))}
                   </ul>
-                </section>
+                </Dobra>
               ) : null}
 
               {/* O que o Curador encontrou, em frases com ar — nunca em
                   chips: nada repetido, contável ou empilhável representa
                   qualidade (R5), e frases não se somam num relance. */}
               {option.favorablePoints.length > 0 ? (
-                <section aria-label="O que você encontra">
-                  <h4 className="patient-section-title">O que você encontra</h4>
-                  <ul className="mt-3 space-y-2">
+                <Dobra titulo="O que você encontra" rotulo="O que você encontra">
+                  <ul className="space-y-2">
                     {option.favorablePoints.map((ponto, indice) => (
                       <li
                         key={`${indice}-${ponto}`}
@@ -238,7 +259,7 @@ export function CartaCaminho({
                       </li>
                     ))}
                   </ul>
-                </section>
+                </Dobra>
               ) : null}
 
               {/* A outra metade da frase de prontidão: o custo, com o MESMO
@@ -246,9 +267,8 @@ export function CartaCaminho({
                   palavra "atenção" (A_MESA §5 a proíbe: severidade visual é
                   hierarquia). Assimetria de entusiasmo é indução. */}
               {option.attentionPoints.length > 0 ? (
-                <section aria-label="Do que você abre mão">
-                  <h4 className="patient-section-title">Do que você abre mão</h4>
-                  <ul className="mt-3 space-y-2">
+                <Dobra titulo="Do que você abre mão" rotulo="Do que você abre mão">
+                  <ul className="space-y-2">
                     {option.attentionPoints.map((ponto, indice) => (
                       <li
                         key={`${indice}-${ponto}`}
@@ -258,13 +278,15 @@ export function CartaCaminho({
                       </li>
                     ))}
                   </ul>
-                </section>
+                </Dobra>
               ) : null}
 
               {option.suggestedQuestions.length > 0 ? (
-                <section aria-label="Perguntas para a próxima conversa">
-                  <h4 className="patient-section-title">Para perguntar na consulta</h4>
-                  <ul className="mt-3 space-y-2">
+                <Dobra
+                  titulo="Para perguntar na consulta"
+                  rotulo="Perguntas para a próxima conversa"
+                >
+                  <ul className="space-y-2">
                     {option.suggestedQuestions.map((pergunta, indice) => (
                       <li
                         key={`${indice}-${pergunta}`}
@@ -274,16 +296,15 @@ export function CartaCaminho({
                       </li>
                     ))}
                   </ul>
-                </section>
+                </Dobra>
               ) : null}
 
               {option.relationToWeights ? (
-                <section aria-label="A leitura completa">
-                  <h4 className="patient-section-title">A leitura completa</h4>
-                  <p className="mt-3 max-w-prose font-serif text-sm leading-[1.65] text-[var(--patient-ink)]">
+                <Dobra titulo="A leitura completa" rotulo="A leitura completa">
+                  <p className="max-w-prose font-serif text-sm leading-[1.65] text-[var(--patient-ink)]">
                     {option.relationToWeights}
                   </p>
-                </section>
+                </Dobra>
               ) : null}
 
               {/* A ausência, dita uma vez e por último — depois de tudo que se
@@ -291,12 +312,11 @@ export function CartaCaminho({
                   falta de informação não é demérito do profissional, e a
                   frase termina na saída (falar com a Curadora), não na falta. */}
               {faltando ? (
-                <section aria-label="O que ainda não sabemos">
-                  <h4 className="patient-section-title">O que ainda não sabemos</h4>
-                  <p className="mt-3 max-w-prose font-serif text-sm leading-relaxed text-[var(--color-ink-muted)]">
+                <Dobra titulo="O que ainda não sabemos" rotulo="O que ainda não sabemos">
+                  <p className="max-w-prose font-serif text-sm leading-relaxed text-[var(--color-ink-muted)]">
                     {faltando}
                   </p>
-                </section>
+                </Dobra>
               ) : null}
             </div>
           </motion.div>

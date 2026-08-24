@@ -31,7 +31,7 @@ export function StorySummary({ data, editable = false }: StorySummaryProps) {
       <ReviewItem
         label="O que motivou esta busca?"
         value={data.motivo ?? ""}
-        editHref={editable ? "/sua-historia/motivo" : undefined}
+        editHref={editable ? "/sua-historia/para-quem" : undefined}
       />
       <ReviewItem
         label="História"
@@ -46,7 +46,7 @@ export function StorySummary({ data, editable = false }: StorySummaryProps) {
       <ReviewItem
         label="Preferência de conexão"
         value={data.preferenciaModalidade ? MODALIDADE_LABELS[data.preferenciaModalidade] : ""}
-        editHref={editable ? "/sua-historia/preferencias" : undefined}
+        editHref={editable ? "/sua-historia/informacoes" : undefined}
       />
     </div>
   );

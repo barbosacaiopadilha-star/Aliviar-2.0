@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { PatientCard } from "@/components/paciente/dashboard/patient-primitives";
 import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
 import { defineContactModeAction } from "@/modules/connection/actions";
@@ -45,9 +44,13 @@ const OPTIONS: ReadonlyArray<{
   },
   {
     value: "APROXIMACAO_INTERMEDIADA",
-    label: "Quero que a Aliviar faça a aproximação.",
+    // O limite entra no RÓTULO, não só no detalhe (23/08): a pessoa lê o
+    // rótulo, marca, e só depois descobria que a casa ainda não faz isso.
+    // A opção continua — registrar a intenção é o que vai dizer, um dia, se
+    // vale existir —, mas ninguém mais escolhe achando que já acontece.
+    label: "Prefiro que a Aliviar faça a aproximação (ainda não disponível).",
     detail:
-      "Alguém da Aliviar procura a pessoa que você escolheu, em vez de você.",
+      "Alguém da Aliviar procuraria a pessoa que você escolheu, em vez de você.",
     pendingCapability:
       "Ainda não conseguimos fazer essa aproximação por você. Sua escolha fica registrada, e quem cuida do seu caso vai falar com você sobre isso.",
   },
@@ -75,11 +78,18 @@ export function ContactModePanel({ caseId, connection }: ContactModePanelProps) 
     });
   }
 
+  // CORTE DE 23/08 · deixou de ser um cartão próprio: vive como seção no pé
+  // do cartão do acompanhamento (via `rodape` do ConnectionProgressPanel).
+  // Um fio separa; as regras continuam as mesmas — nenhum modo pré-marcado,
+  // nenhuma promessa de execução.
   return (
-    <PatientCard>
-      <h2 className="font-serif text-xl font-medium text-[var(--patient-ink)]">
+    <section
+      aria-label="Como você quer começar"
+      className="mt-8 border-t border-[var(--color-border)] pt-6"
+    >
+      <h3 className="font-serif text-lg font-medium text-[var(--patient-ink)]">
         Como você quer começar
-      </h2>
+      </h3>
       <p className="mt-2 text-sm text-ink">
         {connection.contactMode === null
           ? "Você ainda não disse como prefere começar. Não há pressa — e dá para mudar depois."
@@ -131,6 +141,6 @@ export function ContactModePanel({ caseId, connection }: ContactModePanelProps) 
       </div>
 
       {error ? <FormMessage variant="error">{error}</FormMessage> : null}
-    </PatientCard>
+    </section>
   );
 }

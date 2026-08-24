@@ -57,9 +57,8 @@ const PASSOS = [
 describe("A2C · cada rota acende o item certo", () => {
   const casos: Array<[string, string]> = [
     [INICIO, INICIO],
-    ["/paciente/documentos", "/paciente/documentos"],
-    ["/paciente/curadoria", "/paciente/curadoria"],
-    ["/paciente/linha-do-tempo", "/paciente/linha-do-tempo"],
+    // A Jornada saiu do MENU em 23/08 (a régua vive na Home) — a rota
+    // continua de pé, mas não há item para acender.
     ["/paciente/perfil", "/paciente/perfil"],
     [HISTORIA, HISTORIA],
   ];
@@ -99,6 +98,18 @@ describe("A2C · defeito 2 — exatamente UM item ativo, em toda rota privada", 
   it("e `/paciente` não contamina as rotas irmãs — o Início é exato", () => {
     montarEm("/paciente/documentos");
     expect([...new Set(ativos())]).not.toContain(INICIO);
+  });
+
+  /**
+   * CORTE FUNDO DE 23/08 · "Documentos" saiu do menu (quatro itens, um por
+   * ato da casa) e é encontrado em "Meus dados". A rota continua inteira —
+   * é direito dela ver o que enviou e recebeu —, e o que se prova aqui é que
+   * ficar sem item no menu não acende o item errado: nem o Início por prefixo,
+   * nem "Meus dados" por vizinhança.
+   */
+  it("uma rota fora do menu não acende item nenhum", () => {
+    montarEm("/paciente/documentos");
+    expect([...new Set(ativos())]).toEqual([]);
   });
 });
 

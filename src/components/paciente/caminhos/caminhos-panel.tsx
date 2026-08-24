@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+import { CaminhoEscolhido } from "@/components/paciente/caminhos/caminho-escolhido";
 import { CartaCaminho } from "@/components/paciente/caminhos/carta-caminho";
 import { ComparacaoCaminhos } from "@/components/paciente/caminhos/comparacao-caminhos";
-import { ComparacaoNaoIniciada } from "@/components/paciente/experiencia/estados-vazios";
 import { FaixaDoComum } from "@/components/paciente/caminhos/faixa-do-comum";
 import { Limiar } from "@/components/paciente/experiencia/limiar";
 import type { PatientCuradoria } from "@/modules/curadoria/patient-curadoria";
@@ -25,7 +25,6 @@ export function CaminhosPanel({ curadoria }: { curadoria: PatientCuradoria }) {
 
   const [aberta, setAberta] = useState<string | null>(null);
   const [conhecidas, setConhecidas] = useState<string[]>([]);
-  const [comparando, setComparando] = useState<string[]>([]);
 
   // A memória só é lida no cliente: o servidor não sabe (nem precisa saber)
   // o que esta pessoa já leu.
@@ -53,14 +52,43 @@ export function CaminhosPanel({ curadoria }: { curadoria: PatientCuradoria }) {
     });
   }
 
-  function alternarComparacao(id: string) {
-    setComparando((atual) =>
-      atual.includes(id) ? atual.filter((entrada) => entrada !== id) : [...atual, id],
+  const todasConhecidas = curadoria.options.every((option) => conhecidas.includes(option.id));
+
+  /* Decisão do Fundador (23/08): escolhido o caminho, ELE vira a tela — a
+     entrega inteira num objeto só — e os outros dois recuam para consulta.
+     Antes os três continuavam lado a lado, iguais, e o que ela escolheu
+     virava só um nome numa linha de texto mais abaixo. */
+  const escolhido =
+    curadoria.decision?.outcome === "CHOSEN" && curadoria.decision.chosenName
+      ? (curadoria.options.find(
+          (opcao) => opcao.professionalName === curadoria.decision!.chosenName,
+        ) ?? null)
+      : null;
+
+  if (escolhido) {
+    const outros = curadoria.options.filter((opcao) => opcao.id !== escolhido.id);
+    return (
+      <section>
+        <CaminhoEscolhido option={escolhido} decidedAt={curadoria.decision?.decidedAt} />
+
+        {/* Os outros dois continuam disponíveis, sem competir: a Mesa não
+            desaparece porque ela decidiu — só deixa de ser o assunto. */}
+        <Limiar nome="Os outros dois caminhos que você considerou" />
+        <div className="patient-cartas mt-6">
+          {outros.map((option) => (
+            <CartaCaminho
+              key={option.id}
+              option={option}
+              aberta={aberta === option.id}
+              jaConhecida={conhecidas.includes(option.id)}
+              onAbrir={() => abrir(option.id)}
+              onFechar={() => setAberta(null)}
+            />
+          ))}
+        </div>
+      </section>
     );
   }
-
-  const selecionadas = curadoria.options.filter((option) => comparando.includes(option.id));
-  const todasConhecidas = curadoria.options.every((option) => conhecidas.includes(option.id));
 
   return (
     <section>
@@ -97,47 +125,30 @@ export function CaminhosPanel({ curadoria }: { curadoria: PatientCuradoria }) {
             jaConhecida={conhecidas.includes(option.id)}
             onAbrir={() => abrir(option.id)}
             onFechar={() => setAberta(null)}
-            selecionadaParaComparar={comparando.includes(option.id)}
-            onAlternarComparacao={() => alternarComparacao(option.id)}
           />
         ))}
       </div>
 
+      {/* CORTE DE 23/08 (decisão do Fundador, "aplique todos os cortes"): a
+          comparação deixou de exigir gesto. Antes eram quatro passos — marcar
+          checkbox em duas cartas, rolar, achar o painel, escolher a aba — para
+          reagrupar estados que as cartas já mostram. Agora o painel está
+          simplesmente ali, com os três, uma dimensão por vez como sempre.
+          O checkbox e o estado vazio saíram; nenhuma informação saiu. */}
       <div className="mt-8">
-        {selecionadas.length >= 2 ? (
-          <ComparacaoCaminhos options={selecionadas} />
-        ) : (
-          <ComparacaoNaoIniciada />
-        )}
+        <ComparacaoCaminhos options={curadoria.options} />
       </div>
 
-      {/* A Conversa Consigo (A_MESA §3.4): um lugar, não uma ferramenta.
-          Perguntas breves que nada exigem, espaço, releitura. Nada aqui
-          coleta, armazena ou dispara coisa alguma. (A saída "nenhum dos
-          três" pertence ao domínio e está registrada como candidata à v1.1 —
-          nenhuma superfície nova nesta fase.) */}
+      {/* A Conversa Consigo (A_MESA §3.4), agora numa frase só — corte de
+          23/08: eram três parágrafos dizendo "não há pressa" três vezes.
+          O que fica não apressa, não declara suficiência (Linguagem §6) e
+          não pré-escolhe. Depois dela, o maior vazio da página: o espaço
+          abaixo de uma escolha fica vazio, porque preencher ali é empurrar. */}
       {todasConhecidas && !curadoria.decision ? (
-        <div className="mt-16 max-w-prose space-y-4 lg:mt-24">
-          <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">
-            Daqui em diante o trabalho é seu, e ninguém o apressa. Se ajudar a pesar: do que você
-            não abre mão? Com qual deles você se imaginou conversando?
-          </p>
-          <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">
-            Reler qualquer carta, quantas vezes precisar, faz parte — comparar de novo também.
-          </p>
-        </div>
-      ) : null}
-
-      {/* A porta da Decisão só aparece depois que ela conheceu os três —
-          convidar antes seria apressar. E o convite não declara suficiência:
-          quem percebe que já viu o bastante é ela (A Mesa §7; Linguagem §6).
-          Depois dele, o maior vazio da página: o espaço abaixo de uma escolha
-          fica vazio, porque preencher ali é empurrar. */}
-      {todasConhecidas && !curadoria.decision ? (
-        <div className="mt-10 max-w-prose">
+        <div className="mt-16 max-w-prose lg:mt-24">
           <p className="font-serif text-base leading-[1.65] text-[var(--patient-ink)]">
-            Não há pressa, e nenhum deles está pré-escolhido. Quando você quiser, a escolha está
-            logo adiante — e voltar aqui continua possível a qualquer momento.
+            Daqui em diante o trabalho é seu, sem pressa — reler e comparar fazem parte, e a
+            escolha está logo adiante quando você quiser.
           </p>
         </div>
       ) : null}

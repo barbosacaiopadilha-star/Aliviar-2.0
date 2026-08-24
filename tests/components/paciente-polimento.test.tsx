@@ -7,7 +7,6 @@ import { AmbientHero } from "@/components/paciente/experiencia/ambient-hero";
 import {
   AguardandoAtualizacao,
   CaminhosAindaNaoProntos,
-  ComparacaoNaoIniciada,
   CuradoriaNaoIniciada,
 } from "@/components/paciente/experiencia/estados-vazios";
 import {
@@ -66,7 +65,8 @@ describe("Estados vazios — acolhimento, nunca erro", () => {
     { nome: "Curadoria não iniciada", ui: <CuradoriaNaoIniciada curatorName="Dra. Ana" /> },
     { nome: "Aguardando atualização", ui: <AguardandoAtualizacao /> },
     { nome: "Caminhos ainda não prontos", ui: <CaminhosAindaNaoProntos /> },
-    { nome: "Comparação não iniciada", ui: <ComparacaoNaoIniciada /> },
+    // CORTE DE 23/08 · ComparacaoNaoIniciada saiu: a comparação deixou de
+    // ter estado vazio porque deixou de ter gesto.
   ];
 
   it.each(casos)("$nome explica o que acontece e o que vem depois", ({ ui }) => {
@@ -86,10 +86,8 @@ describe("Estados vazios — acolhimento, nunca erro", () => {
     expect(container.textContent).not.toMatch(/faltam?\s+\d|\d\s+de\s+3/i);
   });
 
-  it("a comparação vazia diz que comparar é opcional", () => {
-    render(<ComparacaoNaoIniciada />);
-    expect(screen.getByText(/Comparar é opcional/)).toBeInTheDocument();
-  });
+  // CORTE DE 23/08 · "a comparação vazia diz que comparar é opcional" saiu
+  // com a ComparacaoNaoIniciada: não existe mais comparação vazia.
 });
 
 describe("Skeletons — a forma do que vem", () => {

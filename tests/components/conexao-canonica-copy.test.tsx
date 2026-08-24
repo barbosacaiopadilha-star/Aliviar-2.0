@@ -72,9 +72,9 @@ describe("A conexão canônica — a única que existe", () => {
 
     expect(screen.getByRole("heading", { name: "Começar seu acompanhamento" })).toBeInTheDocument();
     expect(screen.getByText("Caminho escolhido: Dra. Helena Monteiro")).toBeInTheDocument();
-    expect(
-      screen.getByText(/Sua decisão já está registrada\. Abrir o acompanhamento é o passo seguinte/),
-    ).toBeInTheDocument();
+    // CORTE DE 23/08 · a frase "o passo seguinte" morava no primeiro dos DOIS
+    // cartões; com a fusão, o que a abertura afirma é o não-apressamento.
+    expect(screen.getByText(/Não há pressa/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Abrir meu acompanhamento" })).toBeInTheDocument();
   });
 
@@ -99,27 +99,29 @@ describe("A conexão canônica — a única que existe", () => {
     }
   });
 
-  it("revisão traz as cinco verdades, e a quinta é a que o append-only exige", async () => {
+  /**
+   * CORTE DE 23/08 · eram DOIS cartões — abertura e revisão — com dois
+   * cliques de mesmo nome para um gesto que a doutrina define como único
+   * (SD-O2). Fundidos: as verdades agora estão no cartão de abertura, antes
+   * do único botão. O que este oráculo guarda não mudou: TODAS as verdades
+   * ditas, a do append-only incluída, e nenhuma promessa que a casa não
+   * cumpre.
+   */
+  it("as verdades estão no cartão, e a do append-only entre elas", () => {
     canonico();
-    await userEvent.click(screen.getByRole("button", { name: "Abrir meu acompanhamento" }));
 
-    expect(
-      screen.getByRole("heading", { name: "O que acontece ao abrir seu acompanhamento" }),
-    ).toBeInTheDocument();
     expect(screen.getByText(/passa a ser visível para quem cuida do seu caso/)).toBeInTheDocument();
     expect(screen.getByText(/ainda não foi procurado/)).toBeInTheDocument();
-    expect(screen.getByText(/nunca fica sem alguém respondendo por ele/)).toBeInTheDocument();
+    expect(screen.getByText(/continua sob responsabilidade da Aliviar/)).toBeInTheDocument();
     expect(
-      screen.getByText(/Sua decisão continua registrada do jeito que está/),
-      "a quinta verdade substitui a promessa legada de trocar depois",
+      screen.getByText(/sua decisão continua registrada do jeito que está/),
+      "a verdade do append-only substitui a promessa legada de trocar depois",
     ).toBeInTheDocument();
 
-    expect(screen.getByText(/Os outros dois caminhos continuam na Mesa/)).toBeInTheDocument();
+    expect(screen.getByText(/os outros dois caminhos continuam na Mesa/)).toBeInTheDocument();
 
     // E não promete o que a Aliviar ainda não faz.
     expect(screen.queryByText(/pode trocar aqui mesmo/)).toBeNull();
-    expect(screen.getByRole("button", { name: "Voltar" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Voltar aos caminhos" })).toBeNull();
   });
 
   /**
@@ -129,9 +131,10 @@ describe("A conexão canônica — a única que existe", () => {
    * formato legado e saiu com ele. A doutrina não é do formato: é do Método, e
    * por isso a asserção mudou de casa em vez de morrer junto.
    */
-  it("as verdades vêm ANTES do gesto, nunca depois dele", async () => {
+  it("as verdades vêm ANTES do gesto, nunca depois dele", () => {
+    // CORTE DE 23/08 · sem clique: com a fusão, verdades e gesto estão no
+    // mesmo cartão desde o primeiro render — e a ordem continua guardada.
     canonico();
-    await userEvent.click(screen.getByRole("button", { name: "Abrir meu acompanhamento" }));
 
     const texto = document.body.textContent ?? "";
     const alcance = texto.indexOf("Não há consulta marcada");
@@ -144,7 +147,8 @@ describe("A conexão canônica — a única que existe", () => {
 
   it("confirmar chama a action com a pessoa decidida, e nunca a correção", async () => {
     canonico();
-    await userEvent.click(screen.getByRole("button", { name: "Abrir meu acompanhamento" }));
+    // CORTE DE 23/08 · UM clique — o gesto é único (SD-O2), e o segundo
+    // cartão de confirmação saiu.
     await userEvent.click(screen.getByRole("button", { name: "Abrir meu acompanhamento" }));
 
     expect(createConnectionActionMock).toHaveBeenCalledWith({

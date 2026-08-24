@@ -186,9 +186,11 @@ describe("CartaCaminho — abertura no lugar, com memória", () => {
     expect(screen.getAllByText(/Formação verificada pela equipe:/)).toHaveLength(1);
 
     // Aberta: a linha compacta sai; o bloco completo (com instituição) assume.
+    // 23/08 · o fato virou UMA linha ("título — instituição · período"), então
+    // a instituição aparece no mesmo nó do resto — o oráculo casa por regex.
     await user.click(screen.getAllByRole("button", { name: "Conhecer este caminho" })[0]!);
     expect(screen.queryByText("Medicina · Residência em Psiquiatria")).not.toBeInTheDocument();
-    expect(screen.getByText("Universidade X")).toBeInTheDocument();
+    expect(screen.getByText(/Universidade X/)).toBeInTheDocument();
   });
 
   it("guarda a memória de navegação entre visitas", async () => {
@@ -223,9 +225,10 @@ describe("CartaCaminho — abertura no lugar, com memória", () => {
     const user = userEvent.setup();
     render(<CaminhosPanel curadoria={CURADORIA} />);
 
-    // A porta da Decisão nunca declara suficiência ("agora você já tem o que
-    // precisa") — quem percebe que viu o bastante é ela (Linguagem §6/§10.3).
-    const frase = /nenhum deles está pré-escolhido/;
+    // CORTE DE 23/08 · a frase virou uma só ("o trabalho é seu, sem pressa")
+    // — mas a regra que este oráculo guarda é a MESMA: ela só aparece depois
+    // dos três conhecidos, e nunca declara suficiência (Linguagem §6/§10.3).
+    const frase = /o trabalho é seu, sem pressa/;
     expect(screen.queryByText(frase)).not.toBeInTheDocument();
 
     // Uma carta por vez, cada uma pelo próprio nome: a lista de botões se
@@ -265,18 +268,18 @@ describe("Comparação — uma dimensão por vez", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("comparar é escolha da pessoa — nasce vazia e aparece ao marcar dois", async () => {
-    const user = userEvent.setup();
+  /**
+   * CORTE DE 23/08 (decisão do Fundador): a comparação deixou de exigir
+   * gesto. O oráculo antigo travava o contrário — checkbox por carta e
+   * painel que só nascia ao marcar dois. Agora o painel está simplesmente
+   * ali, com os três, e o que se guarda é o que NÃO voltou: nenhum
+   * checkbox, nenhuma seleção.
+   */
+  it("a comparação está ali, com os três — sem checkbox, sem gesto", () => {
     render(<CaminhosPanel curadoria={CURADORIA} />);
 
-    expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
-
-    const marcar = screen.getAllByRole("checkbox", { name: "Comparar" });
-    await user.click(marcar[0]!);
-    expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
-
-    await user.click(marcar[1]!);
     expect(screen.getByRole("tablist", { name: "Aspectos" })).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
   });
 });
 
@@ -303,11 +306,12 @@ describe("A Mesa — terreno comum, conversa consigo e saídas", () => {
       await user.click(within(carta).getByRole("button", { name: "Conhecer este caminho" }));
     }
 
-    expect(screen.getByText(/do que você não abre mão/i)).toBeInTheDocument();
-    // Nenhum formulário de reflexão: sem campo de texto, sem checklist novo
-    // (as únicas caixas são as de "Comparar", que já existiam).
+    // CORTE DE 23/08 · a frase mudou (uma só, sem repetir "não há pressa"
+    // três vezes) e o checkbox de comparar saiu. A regra continua: lugar,
+    // não ferramenta — nenhum campo, nenhuma caixa, nada a preencher.
+    expect(screen.getByText(/reler e comparar fazem parte/i)).toBeInTheDocument();
     expect(screen.queryByRole("textbox")).toBeNull();
-    expect(screen.getAllByRole("checkbox")).toHaveLength(3);
+    expect(screen.queryByRole("checkbox")).toBeNull();
   });
 
   it("nenhuma barra, medidor ou progressbar em toda a Mesa (N6)", async () => {

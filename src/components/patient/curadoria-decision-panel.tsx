@@ -4,7 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+// CAPRICHO DE 23/08 · o painel usava o `Card` genérico — o único cartão
+// SÓLIDO numa casa onde tudo virou vidro que clareia na leitura. Passa ao
+// `PatientCard`, que já carrega o véu (`patient-veu`); os Header/Title/
+// Description continuam, são só tipografia.
+import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { PatientCard } from "@/components/paciente/dashboard/patient-primitives";
 import { Radio } from "@/components/ui/radio";
 import { Textarea } from "@/components/ui/textarea";
 import { whatsappHref } from "@/components/curadoria/whatsapp-contact";
@@ -58,11 +63,15 @@ export function CuradoriaDecisionPanel({
   // projeção da página é quem o alimenta.
   if (decided) {
     return (
-      <Card className="space-y-4">
+      <PatientCard className="space-y-4">
         <CardHeader>
           <CardTitle>Sua decisão está registrada.</CardTitle>
           <CardDescription>
-            {new Date(decided.decidedAt).toLocaleDateString("pt-BR")}
+            {new Date(decided.decidedAt).toLocaleDateString("pt-BR", {
+              // Fuso fixo — regra da casa desde o achado de 23/08: servidor
+              // em UTC e navegador local davam datas diferentes.
+              timeZone: "America/Sao_Paulo",
+            })}
           </CardDescription>
         </CardHeader>
 
@@ -95,7 +104,7 @@ export function CuradoriaDecisionPanel({
             Falar com a Aliviar
           </a>
         </p>
-      </Card>
+      </PatientCard>
     );
   }
 
@@ -105,14 +114,14 @@ export function CuradoriaDecisionPanel({
   // formulário voltar ao início como se nada tivesse acontecido.
   if (registrado) {
     return (
-      <Card className="space-y-3">
+      <PatientCard className="space-y-3">
         <div ref={focoDaConfirmacao} tabIndex={-1} role="status" aria-live="polite">
           <CardTitle>Sua decisão foi registrada.</CardTitle>
           <p className="mt-2 max-w-reading text-sm leading-relaxed text-ink">
             Agora a Aliviar pode seguir com os próximos passos.
           </p>
         </div>
-      </Card>
+      </PatientCard>
     );
   }
 
@@ -154,7 +163,7 @@ export function CuradoriaDecisionPanel({
   }
 
   return (
-    <Card className="space-y-5">
+    <PatientCard className="space-y-5">
       <CardHeader>
         <CardTitle>Sua decisão</CardTitle>
         <CardDescription>
@@ -213,6 +222,6 @@ export function CuradoriaDecisionPanel({
           </span>
         ) : null}
       </div>
-    </Card>
+    </PatientCard>
   );
 }

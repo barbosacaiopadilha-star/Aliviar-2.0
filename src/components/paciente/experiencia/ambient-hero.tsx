@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { StateMark } from "@/components/ui/state-mark";
 import type { PapelVisual } from "@/foundation/estado-visual";
 import { ambienceFor } from "@/modules/paciente/ambiente";
@@ -21,6 +23,7 @@ export function AmbientHero({
   eyebrow,
   greeting,
   estado,
+  acao,
 }: {
   firstName: string;
   stage: JornadaStageId;
@@ -40,6 +43,14 @@ export function AmbientHero({
    * o que ele dizia. Nada é decidido aqui: o texto e o papel chegam prontos.
    */
   estado?: { texto: string; papel: PapelVisual };
+  /**
+   * A AÇÃO ENTRA NO HERO (decisão do Fundador, 23/08 — "o foco é o
+   * celular"). Antes o topo dizia "Sua Curadoria está pronta" no selo e o
+   * cartão seguinte repetia a MESMA frase com o botão: duas telas de
+   * telefone para uma informação só. Agora é uma tela: onde você está, e o
+   * que fazer com isso.
+   */
+  acao?: ReactNode;
 }) {
   const ambience = ambienceFor(stage);
 
@@ -76,6 +87,7 @@ export function AmbientHero({
           {ambience.message}
         </p>
         <p className="sr-only">{ambience.sceneDescription}</p>
+        {acao ? <div className="mt-6">{acao}</div> : null}
       </div>
     </section>
   );

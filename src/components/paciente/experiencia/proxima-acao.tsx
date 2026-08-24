@@ -33,13 +33,78 @@ import type { PatientPendingState } from "@/modules/paciente/next-action";
  * com versalete acima e serifa no título. Aqui é a mesma gramática — o que
  * distingue este bloco não é sombra, é a faixa quente e o fio de dourado.
  */
-export function ProximaAcao({
+/**
+ * O botão da ação, sozinho — para o Hero mostrar sem repetir o bloco
+ * inteiro (fusão de 23/08: no celular, o topo dizia o estado e o cartão
+ * seguinte repetia a MESMA frase com o botão, gastando duas telas).
+ */
+export function AcaoPrincipal({ pending }: { pending: PatientPendingState }) {
+  if (pending.kind === "nothing" || !pending.action.cta) return null;
+  return (
+    <LinkButton href={pending.action.cta.href} variant="primary">
+      {pending.action.cta.label}
+    </LinkButton>
+  );
+}
+
+/**
+ * CORTE FUNDO DE 23/08 (decisão do Fundador: "vamos manter apenas o que for
+ * essencial"). A Home passou a ser UM cartão, e este é o miolo dele: o porquê
+ * e o "depois disso" — sem faixa, sem fio, sem título próprio, porque já
+ * estão dentro do cartão do estado.
+ *
+ * A projeção continua intocada: mesmo `derivePatientPending`, mesmas frases.
+ * O que mudou foi a moldura, não a verdade. Quando o ato acontece na conversa
+ * e não em tela, isso é dito aqui também — Fundamentos §10.
+ */
+export function PorqueEDepois({
   pending,
   curatorName,
 }: {
   pending: PatientPendingState;
+  curatorName?: string;
+}) {
+  if (pending.kind === "nothing") {
+    return (
+      <p className="patient-body max-w-xl text-sm text-[var(--color-ink-muted)]">
+        {pending.whatHappensNext}
+      </p>
+    );
+  }
+
+  const { why, whatHappensNext, cta, happensInConversation } = pending.action;
+
+  return (
+    <div className="max-w-xl space-y-3">
+      <p className="patient-body text-sm text-[var(--patient-ink)]">{why}</p>
+      {!cta && happensInConversation ? (
+        <p className="patient-body text-sm text-[var(--color-ink-muted)]">
+          Isso acontece na conversa com {curatorName ?? "seu Curador"} — não há nada para preencher
+          aqui.
+        </p>
+      ) : null}
+      <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">
+        <span className="font-medium text-[var(--patient-ink)]">Depois disso:</span>{" "}
+        {whatHappensNext}
+      </p>
+    </div>
+  );
+}
+
+export function ProximaAcao({
+  pending,
+  curatorName,
+  semTituloEBotao = false,
+}: {
+  pending: PatientPendingState;
   /** Só usado quando o ato acontece numa conversa — nunca para inferir estado. */
   curatorName?: string;
+  /**
+   * Quando o Hero já mostra o estado e o botão, este bloco fica com o que
+   * ele tem de próprio: o porquê e o "depois disso". Nada se perde — o que
+   * some é a repetição.
+   */
+  semTituloEBotao?: boolean;
 }) {
   if (pending.kind === "nothing") {
     return (
@@ -77,16 +142,18 @@ export function ProximaAcao({
         <StateMark papel="atencao">Precisa de você</StateMark>
       </p>
 
-      <h2
-        id="proxima-acao-titulo"
-        className="mt-4 max-w-2xl font-serif text-2xl font-medium leading-snug text-[var(--patient-ink)] lg:text-[1.75rem]"
-      >
-        {title}
-      </h2>
+      {semTituloEBotao ? null : (
+        <h2
+          id="proxima-acao-titulo"
+          className="mt-4 max-w-2xl font-serif text-2xl font-medium leading-snug text-[var(--patient-ink)] lg:text-[1.75rem]"
+        >
+          {title}
+        </h2>
+      )}
 
       <p className="patient-body mt-4 max-w-2xl text-[var(--patient-ink)]">{why}</p>
 
-      {cta ? (
+      {cta && !semTituloEBotao ? (
         // O botão é o MESMO da Aliviar pública (`LinkButton`), não um primo
         // parecido: a paciente autenticada não deveria sentir que entrou em
         // outro software. E o destino vem da projeção — remontá-lo aqui

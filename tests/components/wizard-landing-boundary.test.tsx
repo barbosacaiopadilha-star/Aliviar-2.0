@@ -67,11 +67,13 @@ describe("As seis etapas do wizard continuam renderizando (copy idêntica)", () 
     expect(screen.getByLabelText("Para mim")).toBeInTheDocument();
   });
 
-  it("motivo", async () => {
-    const { default: MotivoPage } =
-      await import("@/app/(public)/sua-historia/(wizard)/motivo/page");
-    render(withProvider(<MotivoPage />));
-    expect(screen.getByText("O que motivou esta busca?")).toBeInTheDocument();
+  // CORTE DE 23/08 · o motivo fundiu-se ao passo para-quem (7 → 5 passos);
+  // a pergunta continua existindo — na mesma tela.
+  it("motivo (fundido em para-quem)", async () => {
+    const { default: ParaQuemPage } =
+      await import("@/app/(public)/sua-historia/(wizard)/para-quem/page");
+    render(withProvider(<ParaQuemPage />));
+    expect(screen.getByText("E o que motivou esta busca?")).toBeInTheDocument();
   });
 
   it("historia", async () => {
@@ -90,10 +92,11 @@ describe("As seis etapas do wizard continuam renderizando (copy idêntica)", () 
     ).toBeInTheDocument();
   });
 
-  it("preferencias", async () => {
-    const { default: PreferenciasPage } =
-      await import("@/app/(public)/sua-historia/(wizard)/preferencias/page");
-    render(withProvider(<PreferenciasPage />));
+  // CORTE DE 23/08 · a preferência fundiu-se ao passo informacoes.
+  it("preferencias (fundida em informacoes)", async () => {
+    const { default: InformacoesPage } =
+      await import("@/app/(public)/sua-historia/(wizard)/informacoes/page");
+    render(withProvider(<InformacoesPage />));
     expect(
       screen.getByRole("heading", { name: "Como você prefere se conectar?" }),
     ).toBeInTheDocument();

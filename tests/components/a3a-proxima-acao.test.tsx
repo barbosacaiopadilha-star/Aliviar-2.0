@@ -253,9 +253,21 @@ describe("A3a · a Home consome a pendência — e não volta a descartá-la", (
     .replace(/\{\s*\/\*[\s\S]*?\*\/\s*\}/g, "")
     .replace(/\/\/.*$/gm, "");
 
+  /**
+   * A guarda continua sendo a mesma: NENHUM caminho de render da Home pode
+   * descartar a pendência. O que mudou em 23/08 (corte fundo) foi a forma —
+   * no caminho COM Case a Home virou um cartão só, e `ProximaAcao` deu lugar
+   * a `AcaoPrincipal` + `PorqueEDepois`, que são a mesma projeção sem a
+   * moldura própria. Por isso o oráculo conta CONSUMIDORES de `pending`, não
+   * aparições de um componente: amarrar no nome do componente foi o que
+   * defasou oráculos desta casa antes.
+   */
   it("os DOIS caminhos de render entregam `pending` ao bloco de ação", () => {
-    const usos = codigo.match(/<ProximaAcao\b[^>]*pending=\{pending\}/g) ?? [];
-    expect(usos.length, "a Home tem dois caminhos: sem Case e com Case").toBe(2);
+    const semCase = codigo.match(/<ProximaAcao\b[^>]*pending=\{pending\}/g) ?? [];
+    expect(semCase.length, "o caminho sem Case").toBe(1);
+
+    const comCase = codigo.match(/<(AcaoPrincipal|PorqueEDepois)\b[^>]*pending=\{pending\}/g) ?? [];
+    expect(comCase.length, "o caminho com Case: a ação e o porquê").toBe(2);
   });
 
   it("a pendência não volta a ser consumida só quando NÃO tem destino", () => {

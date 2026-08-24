@@ -22,7 +22,14 @@ const carregarCentralDeDocumentosMock = vi.fn();
 const carregarEstadoDeGovernancaMock = vi.fn();
 const listarPedidosDoTitularMock = vi.fn();
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+  // MERGE DE 23/08 · duas rotas viraram redirect (curadoria → início;
+  // consentimentos → documentos). O mock lança como o Next real lança.
+  redirect: (destino: string) => {
+    throw new Error(`NEXT_REDIRECT:${destino}`);
+  },
+}));
 vi.mock("@/modules/auth/guard", () => ({
   requireRole: vi.fn().mockResolvedValue({
     user: { id: "paciente-1" },
@@ -88,6 +95,15 @@ vi.mock("@/modules/paciente/next-action", () => ({
 }));
 vi.mock("@/modules/paciente/nome-do-curador", () => ({
   nomeDoCuradorDoCaso: vi.fn().mockResolvedValue(null),
+}));
+// MERGE DE 23/08 · o Início carrega a jornada antes da Mesa; para a C1 (home
+// com Curadoria entregue) basta uma jornada mínima e estável.
+vi.mock("@/modules/curadoria/jornada", () => ({
+  buildJornada: () => ({
+    currentStage: "DOSSIE",
+    curatorName: "Curadora do Case",
+    currentResponsible: { name: "Equipe Aliviar" },
+  }),
 }));
 vi.mock("@/modules/paciente/experiencia-loader", () => ({
   loadPatientPerfil: vi.fn().mockResolvedValue(null),
@@ -184,10 +200,19 @@ afterEach(() => {
 });
 
 describe("T-C-5 · as sete inserções, provadas pela rota", () => {
-  it("C1 · /paciente/curadoria com Curadoria entregue — tópico `curadoria`", async () => {
+  /**
+   * MERGE DE 23/08 · a Curadoria vive no Início. C1 é provada em `/paciente`:
+   * com Curadoria entregue, a porta da Mesa (tópico `curadoria`) está lá — e
+   * a porta genérica da jornada sai de cena, para não haver duas portas
+   * idênticas na mesma página. Os mocks do Início (record + jornada) entram
+   * porque a rota agora carrega o estado antes da Mesa.
+   */
+  it("C1 · /paciente com Curadoria entregue — tópico `curadoria`", async () => {
+    listCaseIds.mockResolvedValue(["case-1"]);
+    loadCuradoriaRecord.mockResolvedValue({ caseId: "case-1" });
     loadPatientCuradoriaMock.mockResolvedValue(curadoriaEntregue());
 
-    render(await RotaCuradoria());
+    render(await RotaHome());
 
     const links = porta();
     expect(links.length, "a Mesa precisa oferecer a porta").toBeGreaterThanOrEqual(1);
@@ -195,15 +220,8 @@ describe("T-C-5 · as sete inserções, provadas pela rota", () => {
     expect(assuntoDe(links[0]!)).toContain(`wa.me/${NUMERO_OFICIAL}`);
   });
 
-  it("C2 · /paciente/curadoria vazia — a porta vive na `action` do estado vazio", async () => {
-    // Sem Curadoria e sem entrega legada: é o estado de espera.
-    render(await RotaCuradoria());
-
-    expect(screen.getByText("Ainda não há relatórios aqui.")).toBeInTheDocument();
-    const links = porta();
-    expect(links, "esperar não pode ser esperar sozinha").toHaveLength(1);
-    expect(assuntoDe(links[0]!)).toContain("Oi! Gostaria de conversar sobre a minha Curadoria.");
-    expect(screen.getByText("Sem pressa — responderemos.")).toBeInTheDocument();
+  it("C2 · /paciente/curadoria redireciona — nenhuma tela morta", () => {
+    expect(() => RotaCuradoria()).toThrow("NEXT_REDIRECT:/paciente");
   });
 
   it("C3 · /paciente — tópico `jornada`", async () => {
@@ -238,24 +256,30 @@ describe("T-C-5 · as sete inserções, provadas pela rota", () => {
     expect(assuntoDe(links[0]!)).toContain("Oi! Gostaria de ajuda com a minha jornada na Aliviar.");
   });
 
-  it("C7 · /paciente/documentos-e-consentimentos — tópico `jornada`", async () => {
-    render(await RotaConsentimentos());
+  /**
+   * MERGE DE 23/08 · os consentimentos vivem dentro da central de Documentos
+   * (dobra "Seus consentimentos"), e a rota antiga redireciona — o direito
+   * do titular não muda de natureza por mudar de endereço.
+   */
+  it("C7 · consentimentos em /paciente/documentos; a rota antiga redireciona", async () => {
+    render(await RotaDocumentos());
+    expect(screen.getByText("Seus consentimentos")).toBeInTheDocument();
+    expect(screen.getByText("Seu histórico")).toBeInTheDocument();
 
-    const links = porta();
-    expect(links).toHaveLength(1);
-    expect(assuntoDe(links[0]!)).toContain("Oi! Gostaria de ajuda com a minha jornada na Aliviar.");
+    expect(() => RotaConsentimentos()).toThrow("NEXT_REDIRECT:/paciente/documentos");
   });
 });
 
 describe("T-C-5 · o que a porta NUNCA carrega", () => {
   it("nenhuma rota escreve o número fora da fonte única, e nenhuma promete prazo", async () => {
+    // MERGE DE 23/08 · curadoria e consentimentos viraram redirects e saem
+    // da varredura — o conteúdo delas é varrido nas rotas que o abrigam
+    // (home e documentos).
     const rotas = [
-      ["curadoria", RotaCuradoria],
       ["home", RotaHome],
       ["jornada", RotaJornada],
       ["documentos", RotaDocumentos],
       ["perfil", RotaPerfil],
-      ["consentimentos", RotaConsentimentos],
     ] as const;
 
     for (const [nome, montar] of rotas) {
@@ -290,9 +314,12 @@ describe("T-C-5 · o que a porta NUNCA carrega", () => {
 
 describe("T-C-6 · a porta da Mesa fica ACIMA da decisão", () => {
   it("na ordem do documento, o contato precede a superfície de decisão", async () => {
+    // MERGE DE 23/08 · a composição vive no Início.
+    listCaseIds.mockResolvedValue(["case-1"]);
+    loadCuradoriaRecord.mockResolvedValue({ caseId: "case-1" });
     loadPatientCuradoriaMock.mockResolvedValue(curadoriaEntregue());
 
-    const { container } = render(await RotaCuradoria());
+    const { container } = render(await RotaHome());
 
     const link = porta(container)[0]!;
     const decisao = within(container).getByText("A decisão");

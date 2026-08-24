@@ -57,16 +57,6 @@ export function CaminhosAindaNaoProntos() {
   );
 }
 
-/** Na tela de comparação, antes de a pessoa escolher o que comparar. */
-export function ComparacaoNaoIniciada() {
-  // Uma frase com ar, sem moldura de cartão: estado vazio é frase curta com
-  // muito espaço, nunca um painel pedindo preenchimento (Sistema Visual §10).
-  return (
-    <div className="max-w-prose">
-      <h2 className="patient-section-title">Comparar caminhos</h2>
-      <p className="mt-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">
-        Marque dois ou três caminhos acima para vê-los lado a lado. Comparar é opcional.
-      </p>
-    </div>
-  );
-}
+/* CORTE DE 23/08 · `ComparacaoNaoIniciada` morava aqui. A comparação deixou
+   de ter estado vazio porque deixou de ter gesto: o painel mostra os três
+   caminhos direto, uma dimensão por vez. */

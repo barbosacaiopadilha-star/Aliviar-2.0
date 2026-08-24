@@ -50,8 +50,11 @@ describe("Parte 1 — código morto removido", () => {
 });
 
 describe("Parte 2 — fonte única de navegação do paciente", () => {
-  it("existe exatamente uma configuração canônica, com seis itens", () => {
-    expect(PATIENT_NAV_ITEMS).toHaveLength(6);
+  // CORTE FUNDO + MERGE DE 23/08 (decisão do Fundador): 6 → 4 → TRÊS itens,
+  // um por ato. Documentos vive em Meus dados; a Curadoria vive no Início;
+  // a Jornada é alcançada pela linha do Início.
+  it("existe exatamente uma configuração canônica, com três itens", () => {
+    expect(PATIENT_NAV_ITEMS).toHaveLength(3);
   });
 
   it("PatientShell consome a configuração canônica (import real, não uma lista própria)", () => {
@@ -95,15 +98,20 @@ describe("Parte 2 — fonte única de navegação do paciente", () => {
     }
   });
 
-  it("Linha do tempo está presente porque a rota é real, autenticada e implementada", () => {
-    const linhaDoTempo = PATIENT_NAV_ITEMS.find(
-      (item) => item.href === "/paciente/linha-do-tempo",
-    );
-    expect(linhaDoTempo).toBeDefined();
+  // CORTE DE 23/08 · a Jornada saiu do MENU (a porta é a linha "Ver sua
+  // Jornada inteira" no Início) — a ROTA continua real, autenticada e
+  // implementada, e é isso que esta guarda continua provando.
+  it("a rota da Jornada segue real, autenticada e implementada (fora do menu)", () => {
+    expect(
+      PATIENT_NAV_ITEMS.find((item) => item.href === "/paciente/linha-do-tempo"),
+    ).toBeUndefined();
 
     const pageSource = readSrc("app/paciente/linha-do-tempo/page.tsx");
     expect(pageSource).toMatch(/requireRole\("paciente"\)/);
     expect(pageSource).not.toMatch(/em breve|placeholder|TODO/i);
+
+    // E a porta existe onde a paciente está: o Início linka a Jornada.
+    expect(readSrc("app/paciente/page.tsx")).toContain("/paciente/linha-do-tempo");
   });
 
   // A4 · a ordem é ancorada nos DESTINOS, não na redação. O rótulo da Jornada
@@ -111,13 +119,10 @@ describe("Parte 2 — fonte única de navegação do paciente", () => {
   // fixava as seis palavras à mão. O que esta guarda existe para proteger é a
   // sequência da navegação e a fonte única — não o texto de cada item, que é
   // copy e muda quando a experiência muda.
-  it("ordem preservada: Início, história, Documentos, Curadoria, Jornada, Perfil", () => {
+  it("ordem preservada: Início, história, Meus dados", () => {
     expect(PATIENT_NAV_ITEMS.map((item) => item.href)).toEqual([
       "/paciente",
       "/sua-historia/continuar",
-      "/paciente/documentos",
-      "/paciente/curadoria",
-      "/paciente/linha-do-tempo",
       "/paciente/perfil",
     ]);
     // E nenhum item fica sem nome.
@@ -221,32 +226,28 @@ describe("Parte 3 — wizard desacoplado da Landing", () => {
     }
   });
 
-  it("as seis etapas do wizard continuam com a mesma ordem e destinos (backHref/nextHref)", () => {
+  // CORTE DE 23/08 (decisão do Fundador): o wizard foi de 7 para 5 passos —
+  // para-quem absorveu o motivo, informacoes absorveu as preferencias, e as
+  // rotas antigas viraram redirects (rascunho parado nelas retoma sem tela
+  // morta). A cadeia continua fechada, agora com quatro elos.
+  it("as etapas do wizard continuam com a mesma ordem e destinos (backHref/nextHref)", () => {
     const expected: Record<string, { back?: string; next?: string }> = {
       // G1/suíte-estável: a release certificada mudou o back do primeiro passo
       // para /paciente (a paciente logada volta ao painel, não à landing).
       "app/(public)/sua-historia/(wizard)/para-quem/page.tsx": {
         back: "/paciente",
-        next: "/sua-historia/motivo",
-      },
-      "app/(public)/sua-historia/(wizard)/motivo/page.tsx": {
-        back: "/sua-historia/para-quem",
         next: "/sua-historia/historia",
       },
       "app/(public)/sua-historia/(wizard)/historia/page.tsx": {
-        back: "/sua-historia/motivo",
+        back: "/sua-historia/para-quem",
         next: "/sua-historia/informacoes",
       },
       "app/(public)/sua-historia/(wizard)/informacoes/page.tsx": {
         back: "/sua-historia/historia",
-        next: "/sua-historia/preferencias",
-      },
-      "app/(public)/sua-historia/(wizard)/preferencias/page.tsx": {
-        back: "/sua-historia/informacoes",
         next: "/sua-historia/revisao",
       },
       "app/(public)/sua-historia/(wizard)/revisao/page.tsx": {
-        back: "/sua-historia/preferencias",
+        back: "/sua-historia/informacoes",
       },
     };
 
@@ -255,6 +256,14 @@ describe("Parte 3 — wizard desacoplado da Landing", () => {
       if (hrefs.back) expect(source).toContain(`backHref="${hrefs.back}"`);
       if (hrefs.next) expect(source).toContain(`nextHref="${hrefs.next}"`);
     }
+
+    // E as rotas fundidas seguem vivas como redirect — nunca tela morta.
+    expect(readSrc("app/(public)/sua-historia/(wizard)/motivo/page.tsx")).toContain(
+      'redirect("/sua-historia/para-quem")',
+    );
+    expect(readSrc("app/(public)/sua-historia/(wizard)/preferencias/page.tsx")).toContain(
+      'redirect("/sua-historia/informacoes")',
+    );
   });
 });
 

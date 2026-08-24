@@ -27,7 +27,7 @@ export default async function BoasVindasPage() {
   return (
     <StoryStepLayout
       step={1}
-      totalSteps={7}
+      totalSteps={5}
       title="Sua história merece ser contada com calma."
       backHref={ehPaciente ? "/paciente" : "/"}
       nextHref="/sua-historia/continuar"

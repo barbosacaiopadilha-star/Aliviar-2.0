@@ -131,7 +131,9 @@ describe("T-11-9 · os filtros são alcançáveis PELA ROTA", () => {
       "utf8",
     );
     const entradas = [...detector.matchAll(/^  "src\/components\/[^"]+":$/gm)];
-    expect(entradas, "a allowlist mudou de tamanho sem decisão").toHaveLength(8);
+    // 23/08 · 8 → 13: a copy congelada do dossiê entrou (cinco entradas, cada
+    // uma com motivo, ver o detector) — decisão registrada, não deriva.
+    expect(entradas, "a allowlist mudou de tamanho sem decisão").toHaveLength(13);
     // Só as CHAVES. A prosa do arquivo cita `mandatory-filters` de propósito,
     // contando por que ele esteve enterrado — memória não é reincidência.
     expect(

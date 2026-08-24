@@ -38,7 +38,7 @@ describe("PatientShell — navegação com fonte única", () => {
     }
   });
 
-  it("inclui Minha Curadoria, Linha do tempo e Perfil — os três que faltavam nas duas fontes divergentes antes desta fase", () => {
+  it("três itens, um por ato — o menu enxuto de 23/08", () => {
     render(
       <PatientShell>
         <p>conteúdo</p>
@@ -52,17 +52,28 @@ describe("PatientShell — navegação com fonte única", () => {
     const [desktopNav] = screen.getAllByRole("navigation", {
       name: "Navegação principal",
     });
-    // A4 · a asserção passou a ancorar no DESTINO, não na redação. O rótulo
-    // estava escrito à mão aqui ("Linha do tempo") e virou oráculo defasado no
-    // instante em que ele mudou para "Sua Jornada" — e o que este teste
-    // protege é que o item exista e leve ao lugar certo, não como ele se
-    // chama neste mês.
-    const jornada = within(desktopNav)
+    // A asserção ancora no DESTINO, nunca na redação (lição da A4: o rótulo
+    // muda e o oráculo defasa). SIMPLIFICAÇÃO DE 23/08 (decisão do
+    // Fundador): "Sua Jornada" saiu do menu — a régua dos seis marcos já
+    // vive na Home, com o link para o histórico —, e "Perfil" virou "Meus
+    // dados" porque disputava nome com o Mapa de Prioridades. A rota da
+    // Jornada continua existindo; o que saiu foi a repetição no menu.
+    const destinos = within(desktopNav)
       .getAllByRole("link")
-      .find((link) => link.getAttribute("href") === "/paciente/linha-do-tempo");
+      .map((link) => link.getAttribute("href"));
 
-    expect(jornada, "o item da Jornada sumiu da navegação").toBeDefined();
-    expect(jornada?.textContent?.trim()).toBeTruthy();
+    // CORTE FUNDO + MERGE DE 23/08 (decisão do Fundador): o menu foi a
+    // quatro itens e depois a TRÊS — o Início passou a SER a Curadoria
+    // (`/paciente/curadoria` redireciona), e "Documentos" é encontrado em
+    // "Meus dados". Nenhuma rota caiu; caíram os endereços duplicados.
+    expect(destinos).toEqual([
+      "/paciente",
+      "/sua-historia/continuar",
+      "/paciente/perfil",
+    ]);
+    expect(destinos, "a Jornada voltou a repetir no menu").not.toContain(
+      "/paciente/linha-do-tempo",
+    );
   });
 
   it("navegação desktop e mobile (Drawer) mostram exatamente os mesmos itens, na mesma ordem", async () => {
@@ -111,7 +122,7 @@ describe("PatientShell — navegação com fonte única", () => {
       within(desktopNav).getByRole("link", { name: "Início" }),
     ).toHaveAttribute("aria-current", "page");
     expect(
-      within(desktopNav).getByRole("link", { name: "Perfil" }),
+      within(desktopNav).getByRole("link", { name: "Meus dados" }),
     ).not.toHaveAttribute("aria-current");
   });
 });

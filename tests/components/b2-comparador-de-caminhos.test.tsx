@@ -94,13 +94,18 @@ const CURADORIA: PatientCuradoria = {
 
 describe("B2 · o comparador de caminhos", () => {
   // -------------------------------------------------------------------------
-  describe("T-B2-1 / T-B2-2 · a comparação é ato dela", () => {
-    it("T-B2-1 · nasce vazia, e o convite não trata o vazio como pendência", () => {
+  describe("T-B2-1 / T-B2-2 · a comparação sem gesto (corte de 23/08)", () => {
+    /**
+     * O oráculo antigo travava o mecanismo de seleção (nascia vazia, checkbox
+     * por carta). O Fundador cortou o gesto: o painel está sempre ali, com os
+     * três. O que continua guardado é o que importava naquele oráculo — o
+     * vazio nunca vira pendência nem cobrança, porque vazio não existe mais.
+     */
+    it("T-B2-1 · está ali com os três, sem seleção e sem cobrança", () => {
       render(<CaminhosPanel curadoria={CURADORIA} />);
 
-      // Nenhuma dimensão está sendo comparada antes de ela marcar algo.
-      expect(screen.queryByRole("tablist", { name: "Aspectos" })).toBeNull();
-      expect(screen.getByText(/Comparar é opcional/)).toBeInTheDocument();
+      expect(screen.getByRole("tablist", { name: "Aspectos" })).toBeInTheDocument();
+      expect(screen.queryByRole("checkbox")).toBeNull();
 
       const texto = document.body.textContent ?? "";
       for (const proibido of ["0 selecionados", "Selecione itens", "Comparação vazia"]) {
@@ -195,18 +200,16 @@ describe("B2 · o comparador de caminhos", () => {
 
   // -------------------------------------------------------------------------
   describe("§8 · explorar e comparar são intenções distintas", () => {
-    it("cada carta oferece as duas ações, com verbos diferentes", () => {
+    it("a carta oferece só o conhecer; comparar não é mais gesto dela", () => {
       render(<CaminhosPanel curadoria={CURADORIA} />);
       const carta = screen.getByRole("article", { name: A.professionalName });
 
       // Conhecer é BOTÃO — um ato que abre a carta ali mesmo.
       expect(within(carta).getByRole("button", { name: "Conhecer este caminho" })).toBeInTheDocument();
 
-      // Comparar é CHECKBOX — seleção reversível, não um ato. A diferença de
-      // controle é o que mantém as duas intenções separadas: marcar não abre
-      // nada, e abrir não marca nada.
-      const marcar = within(carta).getByRole("checkbox", { name: /comparar/i });
-      expect(marcar).not.toBeChecked();
+      // CORTE DE 23/08 · o checkbox saiu: comparar deixou de ser seleção e
+      // virou leitura — o painel abaixo da Mesa já mostra os três.
+      expect(within(carta).queryByRole("checkbox")).toBeNull();
     });
   });
 });

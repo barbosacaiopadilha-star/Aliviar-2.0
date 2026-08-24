@@ -64,8 +64,8 @@ function abrir(option: PatientCuradoriaOption) {
       jaConhecida={false}
       onAbrir={() => {}}
       onFechar={() => {}}
-      selecionadaParaComparar={false}
-      onAlternarComparacao={() => {}}
+
+
     />,
   );
 }
@@ -90,8 +90,8 @@ describe("carta com NADA confirmado", () => {
         jaConhecida={false}
         onAbrir={() => {}}
         onFechar={() => {}}
-        selecionadaParaComparar={false}
-        onAlternarComparacao={() => {}}
+
+
       />,
     );
     expect(screen.queryAllByText(COMPATIBILITY_LABELS.A_CONFIRMAR)).toHaveLength(0);
@@ -105,8 +105,8 @@ describe("carta com NADA confirmado", () => {
         jaConhecida={false}
         onAbrir={() => {}}
         onFechar={() => {}}
-        selecionadaParaComparar={false}
-        onAlternarComparacao={() => {}}
+
+
       />,
     );
     expect(screen.queryByText("Como responde ao seu Perfil")).not.toBeInTheDocument();
@@ -121,8 +121,8 @@ describe("carta com NADA confirmado", () => {
         jaConhecida={false}
         onAbrir={() => {}}
         onFechar={() => {}}
-        selecionadaParaComparar={false}
-        onAlternarComparacao={() => {}}
+
+
       />,
     );
     const frase = screen.getByText(/Ainda não pudemos confirmar/).textContent ?? "";

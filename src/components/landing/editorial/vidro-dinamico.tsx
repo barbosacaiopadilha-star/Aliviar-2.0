@@ -25,8 +25,14 @@ export function VidroDinamico() {
       // A lista é relida a cada quadro: capturá-la uma vez só deixava de
       // fora qualquer card cujo nó o React tivesse trocado na hidratação —
       // foi assim que o card do Curador ficou sem o efeito (23/08).
+      // Duas casas, uma linguagem (decisão do Fundador, 23/08): o efeito
+      // deixou de ser da vitrine e passou a ser da marca — a área da
+      // paciente é a continuação da Landing, e os cards dela respondem à
+      // rolagem do mesmo jeito.
       const cards = Array.from(
-        document.querySelectorAll<HTMLElement>(".landing-editorial .landing-veu"),
+        document.querySelectorAll<HTMLElement>(
+          ".landing-editorial .landing-veu, .patient-dashboard .patient-veu",
+        ),
       );
       const alturaDaTela = window.innerHeight;
       const centroDaTela = alturaDaTela / 2;
@@ -59,10 +65,15 @@ export function VidroDinamico() {
       }
     };
 
-    atualizar();
+    // A primeira pintura espera o quadro seguinte: escrever a variável no
+    // `style` durante a hidratação fazia o React comparar um atributo que o
+    // servidor não tinha e acusar árvore inconsistente (achado de 23/08 na
+    // casa da paciente, onde o cartão também é `motion` do framer).
+    const primeira = requestAnimationFrame(atualizar);
     window.addEventListener("scroll", aoRolar, { passive: true });
     window.addEventListener("resize", aoRolar, { passive: true });
     return () => {
+      cancelAnimationFrame(primeira);
       window.removeEventListener("scroll", aoRolar);
       window.removeEventListener("resize", aoRolar);
     };

@@ -76,7 +76,7 @@ export function StoryNarrative({ data }: StoryNarrativeProps) {
       <NarrativePassage
         question="O que motivou esta busca"
         answer={data.motivo ?? ""}
-        editHref="/sua-historia/motivo"
+        editHref="/sua-historia/para-quem"
       />
       <NarrativePassage
         question="Sua história"

@@ -88,14 +88,14 @@ describe("T-C-10 · alcançabilidade a partir da rota", () => {
     ).toBe(true);
   });
 
-  it("as seis rotas da paciente alcançam a porta, uma a uma", () => {
+  // MERGE DE 23/08 · curadoria e consentimentos viraram redirects; a porta
+  // delas mora nas rotas que as abrigam (Início e Documentos).
+  it("as quatro rotas da paciente alcançam a porta, uma a uma", () => {
     const rotas = [
       "src/app/paciente/page.tsx",
-      "src/app/paciente/curadoria/page.tsx",
       "src/app/paciente/linha-do-tempo/page.tsx",
       "src/app/paciente/documentos/page.tsx",
       "src/app/paciente/perfil/page.tsx",
-      "src/app/paciente/documentos-e-consentimentos/page.tsx",
     ];
 
     for (const rota of rotas) {

@@ -20,7 +20,10 @@ const RAIZ = process.cwd();
 const ler = (relativo: string) => readFileSync(path.join(RAIZ, relativo), "utf8");
 
 describe("Uma entrega por vez (X4)", () => {
-  const pagina = ler("src/app/paciente/curadoria/page.tsx");
+  // MERGE DE 23/08 · a Curadoria vive no Início; a composição mora no
+  // BlocoCuradoria e é ele (mais a rota que o abriga) que se audita.
+  const pagina =
+    ler("src/components/paciente/bloco-curadoria.tsx") + ler("src/app/paciente/page.tsx");
 
   it("a segunda entrega saiu — nenhum 'relatório anterior' ao lado da Curadoria", () => {
     expect(pagina).not.toContain("Seu relatório anterior");
@@ -55,7 +58,8 @@ describe("Uma entrega por vez (X4)", () => {
 
 describe("O PDF não depende mais do motor anterior (A5)", () => {
   const impressao = ler("src/app/paciente/curadoria/imprimir/page.tsx");
-  const pagina = ler("src/app/paciente/curadoria/page.tsx");
+  // MERGE DE 23/08 · o bloco da Mesa mora no BlocoCuradoria.
+  const pagina = ler("src/components/paciente/bloco-curadoria.tsx");
 
   it("a impressão só conhece a Curadoria do Método", () => {
     // Só o corpo da função — a ordem dos imports não diz nada sobre execução.

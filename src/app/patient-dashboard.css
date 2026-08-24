@@ -497,3 +497,209 @@
     transform: none;
   }
 }
+
+/* ==========================================================================
+   O CAMINHO ESCOLHIDO (decisão do Fundador, 23/08)
+   Depois da escolha, a entrega vira UM objeto: a carta dele, aberta, com
+   tudo o que a Curadoria preparou. O destaque vem de presença — largura
+   inteira, fio dourado no alto, elevação —, nunca de cor nova ou selo de
+   mérito: a decisão é dela, e a casa não aplaude escolha.
+   ========================================================================== */
+
+.patient-dashboard .patient-escolhido {
+  position: relative;
+}
+
+.patient-dashboard .patient-escolhido-selo {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-brand-gold);
+}
+
+/* A carta escolhida deixa de ser uma das três: ocupa a largura inteira,
+   sai do carrossel e ganha um fio de luz no topo. */
+.patient-dashboard .patient-escolhido-carta .patient-carta {
+  position: relative;
+  overflow: hidden;
+  flex: 1 1 auto;
+  width: 100%;
+  background: var(--color-bg-surface);
+  box-shadow: var(--p-elev-2);
+  border-color: color-mix(in srgb, var(--color-brand-gold) 28%, transparent);
+}
+
+.patient-dashboard .patient-escolhido-carta .patient-carta::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 1.5rem;
+  right: 1.5rem;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-brand-gold) 70%, transparent),
+    color-mix(in srgb, var(--color-brand-gold) 18%, transparent)
+  );
+}
+
+/* Sem hover de convite: não há mais nada a abrir aqui. */
+.patient-dashboard .patient-escolhido-carta .patient-carta:hover {
+  transform: none;
+  box-shadow: var(--p-elev-2);
+  border-color: color-mix(in srgb, var(--color-brand-gold) 28%, transparent);
+}
+
+/* ==========================================================================
+   O VIDRO NA CASA DA PACIENTE (decisão do Fundador, 23/08)
+   "A área do paciente tem cards de vidro também, mesma dinâmica." É a
+   reabertura, em voz alta, do Sistema Visual §3 — que proibia vidro como
+   material aqui dentro. A razão da proibição continua de pé e vira o
+   limite desta aplicação: aqui se LÊ, muitas vezes ansiosa, então o card
+   fica SÓLIDO na zona de leitura (é lá que o texto acontece) e só volta a
+   vidro quando sai dela. O motor é o mesmo da Landing.
+   ========================================================================== */
+
+.patient-dashboard .patient-veu {
+  position: relative;
+  isolation: isolate;
+}
+
+/* CAPRICHO DE 23/08 ("não tá parecida com a landing"): a receita passa a ser
+   A MESMA da vitrine, sem adaptação — repouso quase incolor (piso ZERO), e a
+   camada sólida cristaliza até 84% na zona de leitura. O piso de 0,55 que
+   existia aqui deixava tudo com cara de papel o tempo todo; quem protege a
+   leitura agora é a própria dinâmica — o card diante dos olhos É o sólido. */
+.patient-dashboard .patient-veu::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--color-bg-surface);
+  opacity: calc(var(--veu-solidez, 0) * 0.84);
+  transition: opacity 140ms linear;
+}
+
+/* O VIDRO da landing nos cartões (não nos subcards, que têm moldura leve
+   própria): quase incolor, brilho de borda, desfoque leve — a presença vem
+   das bordas, não da tinta. Tudo em token. */
+.patient-dashboard .patient-card.patient-veu,
+.patient-dashboard .patient-carta.patient-veu {
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--color-bg-surface) 9%, transparent) 0%,
+    color-mix(in srgb, var(--color-bg-surface) 4%, transparent) 60%
+  );
+  backdrop-filter: blur(2px) saturate(1.12);
+  -webkit-backdrop-filter: blur(2px) saturate(1.12);
+  border: 1px solid color-mix(in srgb, var(--color-bg-surface) 78%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-bg-surface) 85%, transparent),
+    inset 0 0 32px color-mix(in srgb, var(--color-bg-surface) 12%, transparent),
+    var(--shadow-lg);
+}
+
+/* A carta já conhecida continua mais serena: cristaliza um pouco menos. */
+.patient-dashboard .patient-carta--conhecida.patient-veu::before {
+  opacity: calc(var(--veu-solidez, 0) * 0.7);
+}
+
+/* CAPRICHO DE 23/08 · o pino de 0,97 do caminho escolhido SAIU: ele deixava
+   o documento sólido sempre — era exatamente o "não tá parecida com a
+   landing". O escolhido entra na mesma dinâmica de todos. */
+
+/* ==========================================================================
+   SUBCARDS (decisão do Fundador, 23/08 — "o foco é o celular")
+   A carta aberta era um paredão: sete assuntos empilhados num bloco só, e
+   no telefone isso vira rolagem sem fim. Cada assunto passa a ser um
+   OBJETO — e, com o vidro dinâmico, o que está diante dos olhos clareia
+   enquanto os outros ficam translúcidos. Um assunto por vez em foco, sem
+   esconder nada de ninguém.
+   ========================================================================== */
+
+.patient-dashboard .patient-subcard {
+  position: relative;
+  isolation: isolate;
+  border-radius: var(--p-radius-md);
+  border: 1px solid color-mix(in srgb, var(--color-bg-surface) 55%, transparent);
+  padding: 1rem 1.125rem 1.125rem;
+}
+
+.patient-dashboard .patient-subcard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--color-bg-surface);
+  /* CAPRICHO DE 23/08 · mesmo piso zero da landing; teto um pouco abaixo do
+     cartão-mãe para o assunto em leitura ganhar corpo sem virar parede. */
+  opacity: calc(var(--veu-solidez, 0) * 0.7);
+  transition: opacity 140ms linear;
+}
+
+/* Dentro do cartão-mãe os subcards respiram; a moldura de fora some para
+   não empilhar duas bordas na mesma leitura. */
+.patient-dashboard .patient-carta--aberta .patient-subcard + .patient-subcard {
+  margin-top: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .patient-dashboard .patient-subcard {
+    padding: 1.25rem 1.5rem 1.375rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   A DOBRA (23/08 — "explicando demais em vez de mostrar visualmente").
+   Sete assuntos abertos de uma vez eram seis telas de rolagem no celular.
+   Cada assunto agora é um `<details>`: o título sempre à vista, o conteúdo
+   a um toque, e só a resposta ao Perfil nasce aberta. A seta é desenhada
+   (borda rotacionada), nunca o marcador nativo — e gira quando abre.
+-------------------------------------------------------------------------- */
+
+.patient-dashboard .patient-dobra > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  /* Alvo de toque honesto sem inflar o subcard fechado. */
+  min-height: 1.75rem;
+}
+
+.patient-dashboard .patient-dobra > summary::-webkit-details-marker {
+  display: none;
+}
+
+.patient-dashboard .patient-dobra > summary::after {
+  content: "";
+  flex: none;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  margin-right: 0.125rem;
+  border-right: 1.5px solid var(--color-ink-muted);
+  border-bottom: 1.5px solid var(--color-ink-muted);
+  transform: rotate(45deg);
+  transition: transform 180ms var(--p-ease);
+}
+
+.patient-dashboard .patient-dobra[open] > summary::after {
+  transform: rotate(-135deg);
+}
+
+.patient-dashboard .patient-dobra > summary:focus-visible {
+  outline: none;
+  border-radius: var(--p-radius-sm);
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .patient-dashboard .patient-dobra > summary::after {
+    transition: none;
+  }
+}

@@ -183,16 +183,19 @@ describe("T-A4-5 · cancelado não aparece como concluído", () => {
 });
 
 describe("T-A4-6 · a navegação leva a UMA Jornada", () => {
-  it("existe exatamente um item apontando para a rota da Jornada", () => {
+  /**
+   * CORTE DE 23/08 · a Jornada saiu do MENU (o Início é quem a linka, na
+   * linha "Ver sua Jornada inteira"). A regra desta guarda continua a mesma
+   * — UMA Jornada, nunca duas superfícies competindo —, o que mudou foi
+   * onde a porta mora.
+   */
+  it("o menu não tem item da Jornada; a porta única é a linha do Início", () => {
     const jornada = PATIENT_NAV_ITEMS.filter((item) => item.href === "/paciente/linha-do-tempo");
-    expect(jornada).toHaveLength(1);
-  });
+    expect(jornada).toHaveLength(0);
 
-  it("e o rótulo dele fala de jornada — não de uma segunda superfície", () => {
-    const item = PATIENT_NAV_ITEMS.find((i) => i.href === "/paciente/linha-do-tempo");
-    expect(item?.label.toLowerCase()).toContain("jornada");
-    // "Linha do tempo" era o nome que competia com "Sua jornada" da Home.
-    expect(item?.label.toLowerCase()).not.toContain("linha do tempo");
+    const inicio = readFileSync("src/app/paciente/page.tsx", "utf8");
+    expect(inicio).toContain("/paciente/linha-do-tempo");
+    expect(inicio).toContain("Ver sua Jornada inteira");
   });
 });
 
@@ -278,17 +281,26 @@ describe("A4.1 · nenhum submarco ausente é escrito no passado", () => {
 });
 
 describe("A4.1 · Home e Jornada mostram os mesmos seis marcos", () => {
-  it("a régua da Home é montada pela projeção, não pelas sete etapas internas", () => {
+  /**
+   * CORTE DE 23/08 · a régua saiu da Home (foco no celular): o percurso vive
+   * só em Sua Jornada. A regra que resta guardar é a de sempre — o
+   * vocabulário interno das sete etapas NUNCA volta à Home, e a narrativa é
+   * projetada por UM projetor, onde quer que apareça.
+   */
+  it("a Home não remonta o percurso — nem pela projeção, nem por vocabulário interno", () => {
     const codigo = readFileSync("src/app/paciente/page.tsx", "utf8")
       .replace(/\/\*[\s\S]*?\*\//g, "")
       .replace(/\{\s*\/\*[\s\S]*?\*\/\s*\}/g, "")
       .replace(/\/\/.*$/gm, "");
 
-    expect(codigo).toContain("projetarNarrativa");
-    expect(codigo).toContain("narrativa.marcos.map");
-    // O vocabulário interno saiu da régua da Home.
+    // O vocabulário interno continua fora da Home.
     expect(codigo).not.toContain("WALK_LABELS");
     expect(codigo).not.toContain("walkStatusOf");
+    // E a Home não desenha marcos por conta própria: quem projeta é a Jornada.
+    expect(codigo).not.toContain("narrativa.marcos");
+    expect(
+      readFileSync("src/app/paciente/linha-do-tempo/page.tsx", "utf8"),
+    ).toContain("projetarNarrativa");
   });
 
   it("todo marco tem nome curto, e ele cabe numa trilha de celular", () => {

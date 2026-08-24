@@ -57,8 +57,42 @@ vi.mock("@/modules/connection/actions", () => ({
   closeWithoutRelationshipAction: vi.fn(),
 }));
 
+// MERGE DE 23/08 · a Curadoria vive no Início — a rota que compõe a decisão
+// passou a ser `/paciente`, e é ELA que este arquivo renderiza. Os mocks
+// abaixo cobrem o que o Início carrega além da Curadoria (estado, jornada,
+// história); a decisão continua provada pela composição real da rota.
+vi.mock("@/modules/curadoria/cos/repository", () => ({
+  listCaseIds: vi.fn().mockResolvedValue(["case-1"]),
+  loadCuradoriaRecord: vi.fn().mockResolvedValue({ caseId: "case-1" }),
+}));
+vi.mock("@/modules/story/repository", () => ({
+  listStoriesForProfile: vi.fn().mockResolvedValue([]),
+}));
+vi.mock("@/modules/cases", () => ({
+  getPatientCaseOverview: vi.fn().mockResolvedValue({ caseId: "case-1", statusLabel: null }),
+}));
+vi.mock("@/modules/paciente/fatos-do-caso", () => ({
+  lerFatosDoCaso: vi.fn().mockResolvedValue({}),
+}));
+vi.mock("@/foundation/contrato-de-estado", () => ({
+  lerEstado: () => ({ rotuloPaciente: "Sua Curadoria está pronta.", tom: "neutro" }),
+}));
+vi.mock("@/modules/paciente/next-action", () => ({
+  derivePatientPending: () => ({ kind: "nothing", whatHappensNext: "Nada por enquanto." }),
+}));
+vi.mock("@/modules/paciente/nome-do-curador", () => ({
+  nomeDoCuradorDoCaso: vi.fn().mockResolvedValue("Curadora do Case"),
+}));
+vi.mock("@/modules/curadoria/jornada", () => ({
+  buildJornada: () => ({
+    currentStage: "DOSSIE",
+    curatorName: "Curadora do Case",
+    currentResponsible: { name: "Equipe Aliviar" },
+  }),
+}));
+
 // Importada DEPOIS dos mocks, e é a própria rota — não um componente solto.
-const { default: PatientCuradoriaPage } = await import("@/app/paciente/curadoria/page");
+const { default: PatientCuradoriaPage } = await import("@/app/paciente/page");
 
 const OPCOES = [
   { id: "op-a", professionalName: "Dra. Helena Monteiro" },
@@ -147,8 +181,13 @@ describe("T-B3-R1..R5 · a rota real compõe a decisão canônica", () => {
     expect(screen.queryByRole("button", { name: /Registrar minha decisão/ })).toBeNull();
     expect(screen.queryByRole("radio", { name: "Nenhuma destas serviu para mim" })).toBeNull();
 
-    // E os três caminhos seguem consultáveis depois de decidir (R5).
-    expect(screen.getByRole("heading", { name: "Seus três caminhos" })).toBeInTheDocument();
+    // R5 · os três seguem consultáveis depois de decidir — mas a Mesa
+    // mudou de forma em 23/08 (decisão do Fundador): o escolhido vira a
+    // tela, com a entrega inteira, e os outros dois recuam para consulta
+    // sob o próprio Limiar. O que se prova é a PERMANÊNCIA dos três.
+    expect(
+      screen.getByRole("heading", { name: "Os outros dois caminhos que você considerou" }),
+    ).toBeInTheDocument();
   });
 
   describe("H2/H3 · a conexão deixa de perguntar 'com quem'", () => {
@@ -208,8 +247,13 @@ describe("T-B3-R1..R5 · a rota real compõe a decisão canônica", () => {
       ).toBeNull();
       expect(screen.queryByText(/Os profissionais foram apresentados/)).toBeNull();
 
-      // E os três caminhos continuam consultáveis depois de decidir (R5).
-      expect(screen.getByRole("heading", { name: "Seus três caminhos" })).toBeInTheDocument();
+      // R5 · os três continuam consultáveis depois de decidir. Desde 23/08 a
+      // Mesa muda de forma quando há decisão: o escolhido vira a tela (a
+      // entrega inteira, aberta) e os outros dois recuam sob o próprio
+      // Limiar — nenhum deles some.
+      expect(
+        screen.getByRole("heading", { name: "Os outros dois caminhos que você considerou" }),
+      ).toBeInTheDocument();
       for (const opcao of OPCOES) {
         expect(screen.getByRole("article", { name: opcao.professionalName })).toBeInTheDocument();
       }

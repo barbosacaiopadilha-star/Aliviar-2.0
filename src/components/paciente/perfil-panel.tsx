@@ -1,5 +1,6 @@
 import { ReconhecerPerfil } from "@/components/paciente/reconhecer-perfil";
 import { ReconhecimentoDuasColunas } from "@/components/paciente/reconhecimento-duas-colunas";
+import { Dobra } from "@/components/paciente/experiencia/dobra";
 import { PatientCard } from "@/components/paciente/dashboard/patient-primitives";
 import type { PerfilView } from "@/modules/paciente/experiencia";
 import type { ComoQuerSerCuidadaItem } from "@/modules/paciente/experiencia-loader";
@@ -94,18 +95,28 @@ export function PerfilPanel({
           para o seu caso. Isso nasce da conversa com seu Curador, com as suas palavras.
         </p>
       ) : (
-        <div className="mt-5 space-y-5">
-          {perfil.prioridades.map((nivel) => (
-            <div key={nivel.level}>
-              <h3 className="text-xs uppercase tracking-wide text-ink-muted">{nivel.label}</h3>
-              <ul className="mt-2 space-y-1">
+        /* CORTE DE 23/08 (decisão do Fundador, "aplique todos os cortes"): o
+           Mapa listava TODOS os fatores abertos de uma vez — a mesma doença
+           que a carta do caminho tinha. Mesma cura: cada nível vira uma
+           dobra, só o mais importante nasce aberto. Nenhum nível some — nem
+           os que ela declarou pouco importantes, porque esconder o que ela
+           escolheu deixar de fora seria editar as palavras dela. */
+        <div className="mt-5 space-y-3">
+          {perfil.prioridades.map((nivel, indice) => (
+            <Dobra
+              key={nivel.level}
+              titulo={nivel.label}
+              rotulo={nivel.label}
+              abertaInicial={indice === 0}
+            >
+              <ul className="space-y-1">
                 {nivel.itens.map((item) => (
                   <li key={item} className="text-sm text-ink">
                     {item}
                   </li>
                 ))}
               </ul>
-            </div>
+            </Dobra>
           ))}
         </div>
       )}
@@ -114,37 +125,37 @@ export function PerfilPanel({
           forma de ser cuidada, com o peso que ela deu. Eco, nunca cruzamento:
           nenhum resultado, nenhuma célula, nenhum profissional aqui. */}
       {(comoQuerSerCuidada?.length ?? 0) > 0 ? (
-        <div className="mt-6 border-t border-[var(--color-border)] pt-5">
-          <h3 className="text-xs uppercase tracking-wide text-ink-muted">
-            Como você quer ser cuidada
-          </h3>
-          <ul className="mt-2 space-y-3">
-            {comoQuerSerCuidada!.map((item) => (
-              <li key={item.code} className="text-sm leading-relaxed text-ink">
-                <span className="block text-xs text-ink-muted">
-                  {item.conceptName} — {item.degreeLabel}
-                </span>
-                {item.texto ? (
-                  <span className="mt-0.5 block max-w-prose font-serif">{item.texto}</span>
-                ) : item.escolhas.length > 0 ? (
-                  <span className="mt-0.5 block max-w-prose">{item.escolhas.join("; ")}</span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
+        <div className="mt-3">
+          <Dobra titulo="Como você quer ser cuidada" rotulo="Como você quer ser cuidada">
+            <ul className="space-y-3">
+              {comoQuerSerCuidada!.map((item) => (
+                <li key={item.code} className="text-sm leading-relaxed text-ink">
+                  <span className="block text-xs text-ink-muted">
+                    {item.conceptName} — {item.degreeLabel}
+                  </span>
+                  {item.texto ? (
+                    <span className="mt-0.5 block max-w-prose font-serif">{item.texto}</span>
+                  ) : item.escolhas.length > 0 ? (
+                    <span className="mt-0.5 block max-w-prose">{item.escolhas.join("; ")}</span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </Dobra>
         </div>
       ) : null}
 
       {observations.length > 0 ? (
-        <div className="mt-6 border-t border-[var(--color-border)] pt-5">
-          <h3 className="text-xs uppercase tracking-wide text-ink-muted">Também registramos</h3>
-          <ul className="mt-2 space-y-2">
-            {observations.map((observation) => (
-              <li key={observation} className="text-sm leading-relaxed text-ink">
-                {observation}
-              </li>
-            ))}
-          </ul>
+        <div className="mt-3">
+          <Dobra titulo="Também registramos" rotulo="Também registramos">
+            <ul className="space-y-2">
+              {observations.map((observation) => (
+                <li key={observation} className="text-sm leading-relaxed text-ink">
+                  {observation}
+                </li>
+              ))}
+            </ul>
+          </Dobra>
         </div>
       ) : null}
 
@@ -165,6 +176,9 @@ export function PerfilPanel({
             day: "2-digit",
             month: "long",
             year: "numeric",
+            // Fuso fixo — mesma regra do achado de 23/08: servidor em UTC e
+            // navegador local davam datas diferentes para o mesmo instante.
+            timeZone: "America/Sao_Paulo",
           })}
           {curatorName ? `, junto com ${curatorName}` : ""}. A partir daí ele passou a orientar
           toda a Curadoria.

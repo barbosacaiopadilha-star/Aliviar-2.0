@@ -14,10 +14,19 @@ import {
 } from "@/modules/connection/actions";
 import type { ConnectionRecord } from "@/modules/connection/types";
 
+import type { ReactNode } from "react";
+
 type ConnectionProgressPanelProps = {
   caseId: string;
   connection: ConnectionRecord;
   providerPresentations: ProviderPresentation[];
+  /**
+   * CORTE DE 23/08 · a declaração do modo de contato, que era um segundo
+   * cartão. Renderizada dentro do cartão do acompanhamento no único estado
+   * em que ela cabe (DECISAO_REGISTRADA) — o componente repassado tem a
+   * própria guarda de status e some sozinho nos demais.
+   */
+  rodape?: ReactNode;
 };
 
 // Ação terminal (confirmar atendimento, encerrar) sempre exige uma etapa de
@@ -39,6 +48,7 @@ export function ConnectionProgressPanel({
   caseId,
   connection,
   providerPresentations,
+  rodape,
 }: ConnectionProgressPanelProps) {
   const router = useRouter();
   const [reviewing, setReviewing] = useState<ReviewingOutcome>(null);
@@ -258,6 +268,8 @@ export function ConnectionProgressPanel({
           O contato não avançou
         </Button>
       </div>
+
+      {rodape}
     </PatientCard>
   );
 }

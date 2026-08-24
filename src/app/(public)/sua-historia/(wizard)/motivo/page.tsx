@@ -1,35 +1,10 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { AutosaveIndicator } from "@/components/story/autosave-indicator";
-import { CAMPO_NARRATIVO, StoryStepLayout } from "@/components/story/story-step-layout";
-import { FormField } from "@/components/ui/form-field";
-import { Textarea } from "@/components/ui/textarea";
-import { useStoryDraft } from "@/modules/story/use-story-draft";
-
+// CORTE DE 23/08 · o motivo fundiu-se ao passo "Para quem é esta busca?".
+// A rota permanece como redirect: rascunhos antigos gravaram
+// `currentStep = "motivo"` e o `/sua-historia/continuar` os manda para cá —
+// tela morta seria perder a pessoa no meio da própria história. O campo, o
+// dado e o passo lógico continuam existindo; só o endereço se fundiu.
 export default function MotivoPage() {
-  const { data, update } = useStoryDraft();
-
-  return (
-    <StoryStepLayout
-      step={3}
-      totalSteps={7}
-      title="O que motivou esta busca?"
-      description="Pode ser em poucas palavras — o que fizer sentido para você agora."
-      backHref="/sua-historia/para-quem"
-      nextHref="/sua-historia/historia"
-      footerSlot={<AutosaveIndicator />}
-    >
-      <FormField label="Sua resposta" hideLabel htmlFor="motivo" hint="Você pode deixar em branco se preferir.">
-        <Textarea
-          id="motivo"
-          name="motivo"
-          rows={5}
-          placeholder="Ex.: tenho sentido muita ansiedade nas últimas semanas..."
-          className={CAMPO_NARRATIVO}
-          value={data.motivo ?? ""}
-          onChange={(event) => update({ motivo: event.target.value })}
-        />
-      </FormField>
-    </StoryStepLayout>
-  );
+  redirect("/sua-historia/para-quem");
 }

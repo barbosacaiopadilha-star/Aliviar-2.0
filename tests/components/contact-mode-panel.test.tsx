@@ -57,7 +57,9 @@ describe("ContactModePanel", () => {
       screen.getByText(/prefiro entrar em contato diretamente/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/quero que a aliviar faça a aproximação/i),
+      // 23/08: o limite entrou no RÓTULO — antes a pessoa marcava e só
+      // depois lia que a casa ainda não faz isso.
+      screen.getByText(/prefiro que a aliviar faça a aproximação \(ainda não disponível\)/i),
     ).toBeInTheDocument();
   });
 

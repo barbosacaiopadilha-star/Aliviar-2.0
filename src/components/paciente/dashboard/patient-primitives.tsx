@@ -15,7 +15,10 @@ export function PatientCard({
   return (
     <div
       className={cn(
-        "patient-card p-6 lg:p-8",
+        // `patient-veu`: a área da paciente passa a ser a continuação da
+        // Landing (decisão do Fundador, 23/08) — o cartão é vidro e clareia
+        // ao entrar na leitura, na mesma dinâmica da vitrine.
+        "patient-card patient-veu p-6 lg:p-8",
         variant === "note" && "patient-card--note",
         variant === "forest" && "bg-[var(--patient-acento)] text-[var(--patient-linen)]",
         className,

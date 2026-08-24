@@ -57,6 +57,22 @@ const ORFAOS_AUTORIZADOS: Record<string, string> = {
     "GAP-D-3 · uso zero sem substituto integral provado.",
   "src/components/curadoria/scroll-action-link.tsx":
     "GAP-D-3 · uso zero sem substituto integral provado.",
+  // A COPY CONGELADA DO DOSSIÊ (23/08, ADR-081/082/083) — a landing
+  // responsiva substituiu a composição, mas o conteúdo cortado segue
+  // canônico NESTES componentes, palavra por palavra, provado pela suíte
+  // bloco7: se algum bloco voltar por decisão do Fundador, volta exatamente
+  // assim. Arquivo vivo, não lixo — e sem substituto, porque o texto não
+  // existe em nenhum outro lugar do repositório.
+  "src/components/landing/editorial/capitulo-do-edificio.tsx":
+    "Copy congelada do dossiê (23/08) · a composição saiu da página; o conteúdo aguarda decisão do Fundador.",
+  "src/components/landing/editorial/editorial-sections.tsx":
+    "Copy congelada do dossiê (23/08) · Método, Escolha, Concierge, Respiro e Problema — texto canônico dos cortes da ADR-081.",
+  "src/components/landing/editorial/faq-compact.tsx":
+    "Copy congelada do dossiê (23/08) · as quatro dúvidas frequentes cortadas da vitrine.",
+  "src/components/landing/editorial/hero-editorial.tsx":
+    "Copy congelada do dossiê (23/08) · o hero anterior ao responsivo; referência de CTA auditada pela A1.",
+  "src/components/landing/editorial/reveal.tsx":
+    "Primitivo usado só pela copy congelada acima — sai quando ela sair.",
 };
 
 function arquivos(dir: string): string[] {
@@ -158,7 +174,13 @@ describe("T-D-2 · nenhum componente órfão fora da allowlist", () => {
     }
   });
 
-  it("são exatamente oito — o órfão do motor anterior saiu com ele", () => {
+  // 23/08 · de oito para TREZE: a landing responsiva aposentou a composição
+  // editorial e a copy congelada dos cortes (ADR-081/082/083) ficou nos
+  // componentes — cinco entradas novas, cada uma com motivo. No mesmo dia,
+  // quatro órfãos da área da paciente SAÍRAM (ProfileCard, CuradoriaCard,
+  // JourneyWalk, QuemAcompanha, e o primitivo ExpandableSection): todos com
+  // substituto vivo nomeado — a régua do contrato 32 §4 nas duas direções.
+  it("a lista fecha exata — nenhum órfão fora dela, nenhuma entrada sobrando", () => {
     expect(orfaos).toEqual(Object.keys(ORFAOS_AUTORIZADOS).sort());
   });
 });

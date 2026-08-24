@@ -1,34 +1,31 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
+import { BlocoCuradoria } from "@/components/paciente/bloco-curadoria";
 import { ConciergeLink } from "@/components/paciente/concierge-link";
 import { PatientHomeState } from "@/components/paciente/patient-home-state";
 import { AmbientHero } from "@/components/paciente/experiencia/ambient-hero";
 import { CuradoriaNaoIniciada } from "@/components/paciente/experiencia/estados-vazios";
-import { CuradoriaCard } from "@/components/paciente/experiencia/curadoria-card";
-import { JourneyWalk, type WalkStage } from "@/components/paciente/experiencia/journey-walk";
-import { ProfileCard } from "@/components/paciente/experiencia/profile-card";
-import { ProximaAcao } from "@/components/paciente/experiencia/proxima-acao";
-import { projetarNarrativa, type MarcoId } from "@/modules/paciente/jornada-narrativa";
-import { QuemAcompanha } from "@/components/paciente/experiencia/quem-acompanha";
+import {
+  AcaoPrincipal,
+  PorqueEDepois,
+  ProximaAcao,
+} from "@/components/paciente/experiencia/proxima-acao";
 import { PatientWelcome } from "@/components/paciente/dashboard/patient-primitives";
 import { derivePatientPending } from "@/modules/paciente/next-action";
 import { nomeDoCuradorDoCaso } from "@/modules/paciente/nome-do-curador";
 import { currentHourInBrazil, greetingFor } from "@/modules/paciente/ambiente";
-// A4.1 · `WALK_LABELS`, `WALK_HREFS` e `walkStatusOf` saíram daqui: eles
-// traduziam as SETE etapas internas, e a régua passou a mostrar os seis marcos
-// da narrativa. Continuam existindo em `experiencia.ts` — outras superfícies
-// podem precisar do vocabulário interno; a Home é que não precisa mais.
-import { mensagemPrincipal, STAGE_EYEBROWS } from "@/modules/paciente/experiencia";
-import { loadComoQuerSerCuidada, loadPatientPerfil } from "@/modules/paciente/experiencia-loader";
-import { loadModeloDoReconhecimento } from "@/modules/paciente/reconhecimento-model";
+// CORTE FUNDO DE 23/08 · com a Home reduzida a um cartão, os carregadores do
+// Perfil, do modelo do reconhecimento e da lista de documentos saíram daqui:
+// nada nesta tela os consome mais. Eles seguem em uso — o Mapa de Prioridades
+// em "Meus dados", a lista em "Documentos" —, cada um na tela que o mostra.
+import { STAGE_EYEBROWS } from "@/modules/paciente/experiencia";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/modules/auth/guard";
 import { getPatientCaseOverview } from "@/modules/cases";
 import { buildJornada } from "@/modules/curadoria/jornada";
 import { listCaseIds, loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { listStoriesForProfile } from "@/modules/story/repository";
-import { listPatientDocuments } from "@/modules/profiles/patient-document-repository";
 import { lerEstado } from "@/foundation/contrato-de-estado";
 import { lerFatosDoCaso } from "@/modules/paciente/fatos-do-caso";
 import { loadPatientCuradoria } from "@/modules/curadoria/patient-curadoria";
@@ -42,50 +39,47 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/**
- * Para onde cada marco leva, quando existe onde chegar. Só destinos REAIS —
- * marco sem superfície própria continua legível como texto, sem virar link
- * para uma tela que não o explica.
- */
-const MARCO_HREFS: Partial<Record<MarcoId, string>> = {
-  ANALISE: "/paciente/perfil",
-  SEGUNDO_ENCONTRO: "/paciente/curadoria",
-  DECISAO: "/paciente/curadoria",
-};
+/* ENXUGAMENTO DE 23/08 · `MARCO_HREFS` saiu com a régua. Ele existia para
+   dar destino aos seis marcos, e os marcos agora só aparecem em "Sua
+   Jornada". Os destinos em si continuam de pé — inclusive `/paciente/perfil`,
+   que passou a ser a casa do Mapa de Prioridades. */
 
 /** Link de leitura: sublinhado fino, sem virar botão nem competir com a ação. */
 const LINK_DISCRETO =
   "text-[var(--patient-acento)] underline underline-offset-4 decoration-[color-mix(in_srgb,var(--patient-acento)_35%,transparent)] hover:decoration-[var(--patient-acento)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2";
 
 /**
- * A home da paciente — cinco níveis, em uma coluna.
+ * A HOME DA PACIENTE — UM CARTÃO E UMA LINHA (corte fundo de 23/08).
  *
- * 1 estado atual · 2 próxima ação · 3 quem acompanha · 4 jornada resumida ·
- * 5 suas coisas. A hierarquia é feita por **espaço, versalete, serifa e fio**
- * — não por cartões empilhados.
+ * Decisão do Fundador: "vamos manter apenas o que for essencial". A Home
+ * responde três perguntas de quem abre o telefone — onde eu estou, o que eu
+ * faço agora, e por quê — e nada mais. Tudo o que ela mostrava além disso já
+ * tem casa própria nos quatro itens do menu, e repetir cada uma aqui em bloco
+ * próprio gastava cinco telas de telefone para uma operação de quatro atos.
  *
- * A3b · o que saiu, e por quê:
+ * O que saiu daqui e para onde foi:
  *
- * - **`QuickLinks`** era uma segunda barra de navegação dentro da página. Seus
- *   quatro destinos já estão no menu do `PatientShell`, que acompanha a
- *   paciente em toda a casa; repeti-los no rodapé da Home não dava acesso
- *   novo, só somava peso. Nenhum destino foi perdido.
- * - **os cartões** — `MeuResumo`, `ProfileCard` e o cartão da Curadoria eram
- *   quatro superfícies com fundo, borda e sombra disputando o mesmo olhar. A
- *   referência visual da Aliviar não tem cartão flutuante em lugar nenhum: ela
- *   separa assuntos por faixa e fio. A Home passa a falar essa língua.
- * - **o eyebrow de etapa no topo** repetia o que a régua já dizia melhor. No
- *   lugar dele entrou o macroestado do contrato — que a Home lia e não exibia.
+ * - **`MeuResumo` ("Suas coisas")** — história, documentos e relatório são
+ *   itens do menu; o estado de cada coisa é dito na tela dela.
+ * - **`ProfileCard`** — o Mapa de Prioridades passou a morar em "Meus dados",
+ *   para onde a régua dos marcos já apontava.
+ * - **`CuradoriaCard`** — "Minha Curadoria" é um item do menu, e é lá que
+ *   vive o cartão do caminho escolhido, que é a entrega.
+ * - **`JourneyWalk` e `QuemAcompanha`** — a régua dos seis marcos virou o
+ *   link "Ver sua Jornada inteira"; quem cuida virou uma linha ao lado dele.
+ * - **`QuickLinks`** (A3b, antes) — era uma segunda barra de navegação.
+ *
+ * Nenhum componente foi apagado e nenhuma rota caiu: o que saiu foi a
+ * repetição, não a informação.
  */
 export default async function PacienteHomePage() {
   const authState = await requireRole("paciente");
   const supabase = await createServerSupabaseClient();
 
-  const [stories, caseOverview, caseIds, documentos] = await Promise.all([
+  const [stories, caseOverview, caseIds] = await Promise.all([
     listStoriesForProfile(supabase, authState.user.id),
     getPatientCaseOverview(supabase, authState.user.id),
     listCaseIds(supabase),
-    listPatientDocuments(supabase, authState.user.id),
   ]);
 
   const record = caseIds.length > 0 ? await loadCuradoriaRecord(supabase, caseIds[0]) : null;
@@ -95,14 +89,6 @@ export default async function PacienteHomePage() {
   const nomeDoCurador = record ? await nomeDoCuradorDoCaso(supabase, record.caseId) : null;
   const jornada = record
     ? buildJornada(nomeDoCurador ? { ...record, curatorName: nomeDoCurador } : record)
-    : null;
-  const perfil = record ? await loadPatientPerfil(supabase, record.caseId) : null;
-  // ADR-065 — o bloco relacional do Perfil: as respostas dela, nada inferido.
-  const comoQuerSerCuidada = record ? await loadComoQuerSerCuidada(supabase, record.caseId) : [];
-  // Etapa 2B — a comparação que ela vê ao reconhecer o Perfil é montada AQUI,
-  // no servidor, e desce pronta. Nenhuma tela abaixo volta ao banco.
-  const modeloDoReconhecimento = record
-    ? await loadModeloDoReconhecimento(supabase, record.caseId)
     : null;
 
   // FATOS → CONTRATO CONGELADO → PROJEÇÃO. A Home deixou de decidir
@@ -140,14 +126,10 @@ export default async function PacienteHomePage() {
           acaoEmOutroLugar
         />
         <ProximaAcao pending={pending} />
-        {/* O resumo do que já é dela vale desde o primeiro dia — antes de
-            existir Case, ele diz com honestidade o que ainda não existe. */}
-        <MeuResumo
-          storyStatus={stories[0]?.status ?? null}
-          historia={textoDaHistoria(stories[0]?.data)}
-          documentos={documentos.length}
-          relatorioEmitido={false}
-        />
+        {/* CORTE FUNDO DE 23/08 · "Suas coisas" saiu também daqui. Antes de
+            existir Case ele dizia três vezes que nada existe ainda — e
+            `CuradoriaNaoIniciada`, logo abaixo, já diz isso uma vez, com
+            acolhimento em vez de inventário. */}
         <CuradoriaNaoIniciada />
         {/* C3 · Track C — a porta existe desde o primeiro dia, inclusive
             quando ainda não há Case. Linha discreta no fim: quem precisa
@@ -157,236 +139,76 @@ export default async function PacienteHomePage() {
     );
   }
 
-  // A4.1 · a régua da Home passa a mostrar os MESMOS SEIS MARCOS da Jornada
-  // detalhada, projetados pela mesma função. Ela mostrava as sete etapas
-  // internas — Consulta, Perfil, Curadoria, Relatório, Conversa, Escolha,
-  // Acompanhamento —, e quem saía daqui para a Jornada encontrava outros
-  // nomes: duas narrativas para um percurso só. Perfil e Relatório não
-  // sumiram; viraram submarcos, e a Jornada os mostra.
-  const narrativa = projetarNarrativa({ record, jornada, leitura });
-
-  const walkStages: WalkStage[] = narrativa.marcos.map((marco) => ({
-    id: marco.id,
-    // O nome curto: seis títulos inteiros não cabem em 390px sem virar
-    // tipografia ilegível. Mesma etapa, menos palavras.
-    label: marco.rotuloCurto,
-    status: marco.status === "CONCLUIDO" ? "done" : marco.status === "ATUAL" ? "current" : "ahead",
-    // A RLS continua sendo a autoridade: o link leva a uma superfície dela,
-    // e o que ela pode ver lá é decidido no servidor, não aqui.
-    href: MARCO_HREFS[marco.id],
-  }));
-
-  const marcoAtual = narrativa.marcos.find((marco) => marco.status === "ATUAL");
-
-  // A ação principal do cartão da Curadoria: onde ela continua. Só existe
-  // quando há de fato uma tela para continuar.
-  const curadoriaAction =
-    jornada.currentStage === "DOSSIE" ||
-    jornada.currentStage === "REUNIAO" ||
-    jornada.currentStage === "ESCOLHA" ||
-    jornada.currentStage === "ACOMPANHAMENTO"
-      ? { label: "Acompanhar", href: "/paciente/curadoria" }
-      : undefined;
-
-  // A3b · a régua não repete a frase que a próxima ação já disse.
-  //
-  // `derivePatientPending`, quando nada aguarda a paciente, usa a DESCRIÇÃO DA
-  // ETAPA ATUAL como "o que acontece depois". É literalmente a mesma string que
-  // a régua exibia logo abaixo — a mesma frase, dois blocos de distância. O
-  // topo responde "o que está acontecendo agora"; a régua responde "onde isso
-  // fica no percurso". Quando as duas coincidem, quem cala é a régua.
-  const detalheDaEtapa =
-    pending.kind === "nothing" && pending.whatHappensNext === marcoAtual?.descricao
-      ? undefined
-      : marcoAtual?.descricao;
+  // MERGE DE 23/08 (decisão do Fundador: "às vezes tem muita página"): o
+  // botão do hero apontava para /paciente/curadoria — que agora É esta
+  // página. Um botão que leva para onde a pessoa já está é ruído; quando o
+  // destino é aqui, o conteúdo logo abaixo é a resposta e o botão some. As
+  // outras ações (continuar a história, por exemplo) continuam com botão.
+  const cta = pending.kind === "nothing" ? null : pending.action.cta;
+  const acaoNoHero =
+    cta && cta.href !== "/paciente/curadoria" ? <AcaoPrincipal pending={pending} /> : null;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-14">
-      {/* NÍVEL 1 · o que está acontecendo agora. */}
+    <div className="mx-auto max-w-3xl space-y-10">
+      {/* CORTE FUNDO + MERGE DE 23/08. O topo responde as três perguntas de
+          quem abre o telefone — onde eu estou, o que eu faço agora, e por
+          quê — e logo abaixo vem a operação inteira: a Curadoria. Duas
+          telas viraram uma; a rota antiga redireciona para cá.
+
+          O que saiu da Home em cortes anteriores continua onde foi parar:
+          "Suas coisas" → menu; Mapa de Prioridades → Meus dados; régua dos
+          seis marcos → Sua Jornada, pelo link abaixo. */}
       <AmbientHero
         firstName={firstName}
         stage={jornada.currentStage}
         eyebrow={STAGE_EYEBROWS[jornada.currentStage]}
         greeting={saudacao}
         estado={{ texto: leitura.rotuloPaciente, papel: leitura.tom }}
+        acao={
+          <div className="space-y-5">
+            {acaoNoHero}
+            <PorqueEDepois pending={pending} curatorName={jornada.curatorName} />
+          </div>
+        }
       />
 
-      {/* NÍVEL 2 · a próxima ação (A3a — comportamento intocado). */}
-      <ProximaAcao pending={pending} curatorName={jornada.curatorName} />
-
-      {/* NÍVEL 3 · quem acompanha. Uma linha: a pessoa quer reconhecer um
-          nome, não abrir um canal de atendimento. */}
-      <QuemAcompanha responsavel={jornada.currentResponsible} />
-
-      {/* NÍVEL 4 · a jornada resumida — orientação, não cobrança.
-          A4 · o resumo para aqui e aponta para o percurso inteiro. A Home
-          responde "onde estou"; a Jornada responde "como é o caminho". Uma
-          narrativa, dois níveis de detalhe — nunca duas histórias. */}
-      <div>
-        <JourneyWalk
-          stages={walkStages}
-          currentDetail={detalheDaEtapa}
-          curatorName={jornada.curatorName}
-        />
-        <Link href="/paciente/linha-do-tempo" className={`${LINK_DISCRETO} mt-6 inline-block text-sm`}>
+      {/* Uma linha: quem está com você agora (reconhecimento, não canal) e a
+          porta do percurso inteiro, para quem quiser o histórico. */}
+      <p className="text-sm text-[var(--color-ink-muted)]">
+        {jornada.currentResponsible?.name ? (
+          <>
+            <span className="font-medium text-[var(--patient-ink)]">
+              {jornada.currentResponsible.name}
+            </span>{" "}
+            está com você agora ·{" "}
+          </>
+        ) : null}
+        <Link href="/paciente/linha-do-tempo" className={LINK_DISCRETO}>
           Ver sua Jornada inteira
         </Link>
-      </div>
+      </p>
 
-      {/* NÍVEL 5 · o que já é dela. */}
-      <MeuResumo
-        storyStatus={stories[0]?.status ?? null}
-        historia={textoDaHistoria(stories[0]?.data)}
-        documentos={documentos.length}
-        relatorioEmitido={Boolean(record?.relatorio.emittedAt)}
-      />
-
-      {/* A grade de duas colunas saiu: ela dava a MESMA importância ao Perfil
-          e à Curadoria, lado a lado, com o mesmo peso do estado e da ação. Em
-          fluxo, cada um recebe o peso que tem. */}
-      {perfil && record ? (
-        <ProfileCard
-          perfil={perfil}
-          caseId={record.caseId}
-          observations={record.prioridades.observations}
-          validatedAt={record.validacao?.validatedAt ?? null}
-          curatorName={jornada.curatorName}
-          comoQuerSerCuidada={comoQuerSerCuidada}
-          modelo={modeloDoReconhecimento ?? undefined}
-        />
-      ) : null}
-
-      {/* A3a · o `aside` saiu daqui. Ele dizia "isso acontece na conversa com
-          X" — a MESMA frase que `ProximaAcao` agora diz no nível 2, e dizia-a
-          no nível 4, onde ninguém procura o que precisa fazer.
-
-          A3b · e o cartão só continua cartão quando há para onde ir. Sem ação,
-          ele era uma superfície grande com uma frase curta no meio — o "card
-          vazio" que dominava o fim da página. */}
-      <CuradoriaCard
-        message={mensagemPrincipal(jornada.currentStage)}
-        action={curadoriaAction}
-        peso={curadoriaAction ? "cartao" : "discreto"}
-      />
-
-      {/* C3 · Track C — a mesma porta, no mesmo lugar, em qualquer estado da
-          Home. Nunca bolha flutuante, nunca badge: é texto no fim da página. */}
-      <ConciergeLink topic="jornada" />
+      {/* A CURADORIA — a operação em si, na mesma página que o estado.
+          `loadPatientCuradoria` só devolve com `delivered_at`: antes da
+          entrega este bloco simplesmente não existe, e o topo já diz onde
+          o caso está. */}
+      {/* Invocado como função (não como JSX): componente-servidor async
+          aninhado quebra o renderer dos testes de composição, e aqui dentro
+          já estamos no servidor — o resultado é o mesmo JSX. */}
+      {curadoriaEntregue ? (
+        await BlocoCuradoria({ supabase, curadoria: curadoriaEntregue })
+      ) : (
+        /* C3 · Track C — a porta em qualquer estado. Quando a Curadoria está
+           na página, quem a oferece é a própria Mesa (C1, tópico certo);
+           duas portas idênticas lado a lado seriam ruído. */
+        <ConciergeLink topic="jornada" />
+      )}
     </div>
   );
 }
 
-/**
- * O texto da história, venha do campo que vier. A história real grava em
- * `data.historia`, mas fluxos legítimos começam por outros campos (`motivo`,
- * na Consulta Inicial). Ler UM campo era o defeito D1 da auditoria de 22/08:
- * história enviada e a Home dizendo "você ainda não contou".
- */
-function textoDaHistoria(data: Record<string, unknown> | null | undefined): string | null {
-  if (!data) return null;
-  for (const campo of ["historia", "motivo"]) {
-    const valor = data[campo];
-    if (typeof valor === "string" && valor.trim()) return valor;
-  }
-  return null;
-}
-
-/**
- * O resumo do que já é da pessoa (ETAPA 9): a história dela, os documentos
- * dela, e o estado do Relatório — sempre dados reais, nunca texto fictício.
- * O que não existe ainda simplesmente não aparece como se existisse.
- *
- * D1 (auditoria 22/08) · quem decide a frase é o STATUS da história, nunca a
- * presença de um campo de texto — a regra do contrato de estado da Fundação:
- * nenhuma tela deduz; toda tela lê. "Enviada" é enviada mesmo sem resumo.
- */
-function MeuResumo({
-  storyStatus,
-  historia,
-  documentos,
-  relatorioEmitido,
-}: {
-  storyStatus: "rascunho" | "enviada" | null;
-  historia: string | null;
-  documentos: number;
-  relatorioEmitido: boolean;
-}) {
-  const resumoDaHistoria = historia?.trim()
-    ? historia.trim().length > 220
-      ? `${historia.trim().slice(0, 220)}…`
-      : historia.trim()
-    : null;
-
-  return (
-    <section aria-labelledby="meu-resumo-titulo" className="border-t border-[var(--color-border)] pt-8">
-      <h2
-        id="meu-resumo-titulo"
-        className="text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]"
-      >
-        Suas coisas
-      </h2>
-
-      {/* A3b · o padrão de colunas da Aliviar pública: fio vertical entre os
-          assuntos, nunca caixa em volta de cada um. O `divide-*` só desenha
-          nas divisas internas, e some no empilhamento do mobile. */}
-      <dl className="mt-6 grid gap-6 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-[var(--color-border)]">
-        <div className="sm:pr-6">
-          <dt className="text-sm font-medium text-[var(--patient-ink)]">Sua história</dt>
-          <dd className="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">
-            {storyStatus === "enviada" ? (
-              <>
-                {/* O texto DELA continua visível quando existe — o estado
-                    soma-se a ele, nunca o esconde. */}
-                {resumoDaHistoria ? <>{resumoDaHistoria} </> : null}
-                Enviada — está com a equipe da Aliviar.{" "}
-                <Link href="/sua-historia/continuar" className={LINK_DISCRETO}>
-                  Rever
-                </Link>
-              </>
-            ) : resumoDaHistoria ? (
-              <>
-                {resumoDaHistoria}{" "}
-                <Link href="/sua-historia/continuar" className={LINK_DISCRETO}>
-                  Continuar
-                </Link>
-              </>
-            ) : (
-              <>
-                Você ainda não contou sua história.{" "}
-                <Link href="/sua-historia/continuar" className={LINK_DISCRETO}>
-                  Começar agora
-                </Link>
-              </>
-            )}
-          </dd>
-        </div>
-
-        <div className="sm:px-6">
-          <dt className="text-sm font-medium text-[var(--patient-ink)]">Documentos</dt>
-          <dd className="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">
-            {documentos === 0 ? "Nenhum documento enviado." : `${documentos} documento(s) enviado(s).`}{" "}
-            <Link href="/paciente/documentos" className={LINK_DISCRETO}>
-              Ver
-            </Link>
-          </dd>
-        </div>
-
-        <div className="sm:pl-6">
-          <dt className="text-sm font-medium text-[var(--patient-ink)]">Relatório</dt>
-          <dd className="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">
-            {relatorioEmitido ? (
-              <>
-                Pronto para você.{" "}
-                <Link href="/paciente/curadoria" className={LINK_DISCRETO}>
-                  Abrir
-                </Link>
-              </>
-            ) : (
-              "Em preparação pela sua Curadoria."
-            )}
-          </dd>
-        </div>
-      </dl>
-    </section>
-  );
-}
+/* CORTE FUNDO DE 23/08 · as auxiliares textoDaHistoria e MeuResumo viviam
+   aqui, no pé desta página, e só serviam ao bloco "Suas coisas". Saíram com
+   ele: o estado da história é dito na tela da história, o dos documentos na
+   central de documentos, e o do Relatório em Minha Curadoria — cada um onde a
+   pessoa já foi para vê-lo, sem uma quarta cópia na Home. */
