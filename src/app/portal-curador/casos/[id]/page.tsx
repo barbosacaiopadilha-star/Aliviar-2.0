@@ -85,6 +85,18 @@ export default async function CasoWorkspacePage({ params }: { params: Promise<{ 
             ? ` · retorno combinado para ${new Date(record.promisedReturn).toLocaleDateString("pt-BR")}`
             : ""}
         </p>
+
+        {/* A papelada do caso (23/08): o Curador gera as peças já com os
+            dados dela, salva em PDF e manda pelo WhatsApp — que é por onde
+            o papel vai e volta. */}
+        <p className="mt-3">
+          <Link
+            href={`/portal-curador/casos/${record.caseId}/documentos`}
+            className="text-sm font-medium text-brand-primary underline-offset-4 hover:underline"
+          >
+            Documentos para enviar
+          </Link>
+        </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">

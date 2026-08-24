@@ -604,3 +604,124 @@
 .mesa-estado--neutro {
   color: color-mix(in srgb, var(--color-ink) 50%, transparent);
 }
+
+/* ==========================================================================
+   DOCUMENTOS DO CASO (23/08) — o papel que o Curador manda pelo WhatsApp
+   Feito para imprimir: uma peça por página, campos em branco com pauta
+   para escrever à mão, e nada de interface no PDF.
+   ========================================================================== */
+
+.documento-do-caso {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
+  padding: 2rem 1.75rem 2.25rem;
+}
+
+.documento-cabecalho {
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 1rem;
+}
+
+.documento-marca {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-brand-gold);
+}
+
+.documento-titulo {
+  margin-top: 0.5rem;
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+.documento-campos {
+  display: grid;
+  gap: 0.875rem 2rem;
+  margin-top: 1.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.documento-campos dt {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.documento-campos dd {
+  margin-top: 0.125rem;
+  font-size: 1rem;
+  color: var(--color-ink);
+}
+
+.documento-vazio {
+  border-bottom: 1px solid var(--color-border-strong);
+}
+
+.documento-corpo {
+  margin-top: 1.75rem;
+  display: grid;
+  gap: 1rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--color-ink);
+}
+
+.documento-nota {
+  font-size: 0.8125rem;
+  color: var(--color-ink-muted);
+}
+
+/* Campo aberto: título e pautas para escrever à mão. */
+.documento-campo-aberto h3 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.documento-pauta {
+  display: block;
+  height: 1.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.documento-assinaturas {
+  display: grid;
+  gap: 2rem;
+  margin-top: 2.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.documento-linha {
+  display: block;
+  height: 2.5rem;
+  border-bottom: 1px solid var(--color-ink);
+}
+
+.documento-assinaturas p {
+  margin-top: 0.375rem;
+  font-size: 0.875rem;
+  color: var(--color-ink);
+}
+
+.documento-legenda {
+  font-size: 0.75rem;
+  color: var(--color-ink-muted);
+}
+
+@media print {
+  /* Uma peça por folha, sem moldura de tela e sem interface. */
+  .documento-do-caso {
+    border: 0;
+    padding: 0;
+    break-after: page;
+  }
+  .documento-do-caso:last-child {
+    break-after: auto;
+  }
+}
