@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { BlocoCuradoria } from "@/components/paciente/bloco-curadoria";
-import { ConciergeLink } from "@/components/paciente/concierge-link";
+import { ConciergeCard } from "@/components/paciente/concierge-card";
 import { PatientHomeState } from "@/components/paciente/patient-home-state";
 import { AmbientHero } from "@/components/paciente/experiencia/ambient-hero";
 import { CuradoriaNaoIniciada } from "@/components/paciente/experiencia/estados-vazios";
@@ -131,10 +131,10 @@ export default async function PacienteHomePage() {
             `CuradoriaNaoIniciada`, logo abaixo, já diz isso uma vez, com
             acolhimento em vez de inventário. */}
         <CuradoriaNaoIniciada />
-        {/* C3 · Track C — a porta existe desde o primeiro dia, inclusive
-            quando ainda não há Case. Linha discreta no fim: quem precisa
-            procura no rodapé, e quem não precisa não é interrompido. */}
-        <ConciergeLink topic="jornada" />
+        {/* C3 · Track C, emendada em 24/08 (decisão do Fundador): a porta
+            existe desde o primeiro dia — e deixou de ser linha escondida
+            para ser ferramenta com card e botão. */}
+        <ConciergeCard topic="jornada" />
       </div>
     );
   }
@@ -195,14 +195,13 @@ export default async function PacienteHomePage() {
       {/* Invocado como função (não como JSX): componente-servidor async
           aninhado quebra o renderer dos testes de composição, e aqui dentro
           já estamos no servidor — o resultado é o mesmo JSX. */}
-      {curadoriaEntregue ? (
-        await BlocoCuradoria({ supabase, curadoria: curadoriaEntregue })
-      ) : (
-        /* C3 · Track C — a porta em qualquer estado. Quando a Curadoria está
-           na página, quem a oferece é a própria Mesa (C1, tópico certo);
-           duas portas idênticas lado a lado seriam ruído. */
-        <ConciergeLink topic="jornada" />
-      )}
+      {curadoriaEntregue ? await BlocoCuradoria({ supabase, curadoria: curadoriaEntregue }) : null}
+
+      {/* O CONCIERGE COMO FERRAMENTA (decisão do Fundador, 24/08): o quarto
+          ato fecha a página em QUALQUER estado, como card com botão — abaixo
+          de tudo que é leitura e decisão, nunca no meio delas. O tópico é o
+          da jornada; a linha da Mesa (tópico curadoria) continua onde está. */}
+      <ConciergeCard topic={curadoriaEntregue ? "curadoria" : "jornada"} />
     </div>
   );
 }

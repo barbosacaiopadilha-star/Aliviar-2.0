@@ -1901,3 +1901,9 @@ A varredura de coerência que acompanhou a troca corrigiu outros dois pontos que
 - **Revisitar quando:** a primeira Curadoria real mostrar alguém procurando o que saiu de vista (ex.: a régua dos marcos, o item de Documentos no menu); ou quando a aproximação intermediada existir, o que reabre o desenho do pós-decisão.
 
 ---
+
+### Emenda à ADR-085 — o Concierge com presença de ferramenta (2026-08-24)
+
+O Fundador, sobre o print do cartão do acompanhamento: *"o Concierge não teria que ter mais destaque? Ele deve funcionar como uma ferramenta e aqui ele está escondido."* A porta "Falar com a Aliviar" deixa de ser só a linha discreta do Track C e ganha duas formas com destaque: **(1)** o card **"Seu Concierge"** fecha o Início em qualquer estado da jornada — vidro, uma frase do que ele faz e botão de verdade; na Mesa ele vive ABAIXO da decisão, nunca no meio da leitura (a doutrina de não empurrar permanece). **(2)** Dentro do cartão do acompanhamento, o botão entra ao lado das ações de registro. As regras do canal seguem intactas: rótulo único, quem responde é a Aliviar, assunto tipado sem texto livre, nenhum horário/SLA, clique não registrado. A linha discreta continua legítima nos pontos de leitura (a guarda de alcançabilidade aceita as duas formas).
+
+---

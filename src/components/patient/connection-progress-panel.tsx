@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { PatientCard } from "@/components/paciente/dashboard/patient-primitives";
 import { FormMessage } from "@/components/ui/form-message";
+import { whatsappHref } from "@/components/curadoria/whatsapp-contact";
 import type { ProviderPresentation } from "@/modules/curadoria/opcao-apresentada";
 import {
   closeWithoutRelationshipAction,
@@ -83,6 +84,22 @@ export function ConnectionProgressPanel({
       {error}
     </FormMessage>
   ) : null;
+
+  /* O CONCIERGE DENTRO DA FERRAMENTA (decisão do Fundador, 24/08): quem está
+     prestes a registrar um passo é exatamente quem pode ter uma dúvida antes
+     de registrá-lo. Botão de verdade, ao lado das ações — mesmas regras de
+     sempre: rótulo único, assunto tipado, nenhum SLA, clique não registrado. */
+  const falarComAliviar = (
+    <a
+      href={whatsappHref("duvida")}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex min-h-11 items-center justify-center rounded-full border border-[var(--color-border)] bg-white/70 px-5 text-sm font-medium text-[var(--patient-acento)] transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+    >
+      Falar com a Aliviar{" "}
+      <span className="sr-only">(abre o WhatsApp em nova aba)</span>
+    </a>
+  );
 
   // Estado terminal positivo — nenhum CTA, nenhuma avaliação, nenhum
   // Relationship real criado (apenas o marco de nascimento é identificado
@@ -210,6 +227,7 @@ export function ConnectionProgressPanel({
           >
             Confirmar primeiro atendimento
           </Button>
+          {falarComAliviar}
           <Button
             type="button"
             variant="ghost"
@@ -257,6 +275,7 @@ export function ConnectionProgressPanel({
             O primeiro atendimento já aconteceu
           </Button>
         </div>
+        <div className="pt-1">{falarComAliviar}</div>
         <Button
           type="button"
           variant="ghost"

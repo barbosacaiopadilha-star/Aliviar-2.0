@@ -101,12 +101,16 @@ describe("T-C-10 · alcançabilidade a partir da rota", () => {
     for (const rota of rotas) {
       const arquivo = path.join(RAIZ, rota);
       const codigo = readFileSync(arquivo, "utf8");
-      expect(codigo, `${rota} não importa a porta`).toContain(
-        '@/components/paciente/concierge-link',
-      );
-      // Import é condição necessária e NÃO suficiente — quem prova o render é
-      // `track-c-composicao-das-rotas`. Aqui só se afirma o alcance.
-      expect(codigo, `${rota} importa e não usa`).toContain("<ConciergeLink");
+      // 24/08 (decisão do Fundador): a porta tem DUAS formas legítimas — a
+      // linha discreta (ConciergeLink) e o card-ferramenta (ConciergeCard).
+      // O que esta guarda afirma continua o mesmo: toda rota da paciente
+      // alcança a porta por uma delas.
+      const temPorta =
+        (codigo.includes("@/components/paciente/concierge-link") &&
+          codigo.includes("<ConciergeLink")) ||
+        (codigo.includes("@/components/paciente/concierge-card") &&
+          codigo.includes("<ConciergeCard"));
+      expect(temPorta, `${rota} não importa (ou importa e não usa) a porta`).toBe(true);
     }
   });
 });
