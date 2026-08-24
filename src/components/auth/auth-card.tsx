@@ -28,11 +28,15 @@ export function AuthCard({
               à Landing e sumia na porta de quem entra. Mesma logo e mesmo alt
               do header público (`public-header.tsx`): a identidade não muda
               entre o site e o acesso. */}
+          {/* Mesmo símbolo do cabeçalho público (23/08): quando o logotipo
+              isolado entrou no site, esta tela ficou com a versão anterior
+              da marca — duas identidades no mesmo produto, exatamente o
+              que o comentário acima promete que não acontece. */}
           <Image
-            src="/brand/logo-aliviar-icon.png"
+            src="/brand/aliviar-simbolo.png"
             alt="Aliviar — Curadoria Médica Independente"
-            width={363}
-            height={372}
+            width={256}
+            height={266}
             priority
             className="mx-auto h-12 w-auto"
           />

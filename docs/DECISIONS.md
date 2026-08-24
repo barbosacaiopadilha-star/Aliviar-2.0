@@ -1858,3 +1858,13 @@ O Fundador perguntou "dá pra resumir mais?" e aprovou os três cortes finais: *
 - **Revisitar quando:** o logotipo isolado chegar; a política de privacidade for publicada (o dossiê acerta ao exigi-la antes de promover o formulário); ou o preço for definido, o que devolve à vitrine a resposta que o FAQ dava.
 
 ---
+
+### Emenda à ADR-083 — o bloqueio do logotipo, resolvido (mesma data)
+
+O Fundador enviou o **logotipo isolado** (`LOGO.zip`), e o bloqueio relatado nesta ADR está encerrado. Do JPEG saíram três variantes, com o fundo creme convertido em transparência por luminância (o antialias das curvas é preservado): `aliviar-simbolo.png` (o coração com as mãos — cabeçalho, tela de acesso e ícone do site), `aliviar-logo.png` (marca completa, para materiais) e `aliviar-logo-clara.png` (a mesma forma em uma cor só, para fundo escuro — o rodapé).
+
+**Regra de aplicação:** onde a marca tem menos de ~48px de altura, entra só o **símbolo** e o nome vem em texto real — a assinatura "Curadoria Médica Independente" vira borrão nessa escala, e ela já aparece legível na parede da cena da recepção e no rodapé.
+
+A varredura de coerência que acompanhou a troca corrigiu outros dois pontos que ninguém tinha visto: a **tela de acesso** ainda exibia a versão anterior da marca (duas identidades no mesmo produto, contra o que o próprio comentário do arquivo promete), e o **ícone do site** era um placeholder — um quadrado verde-azulado com as letras "AC" na aba de todo visitante. Ambos passam a usar o símbolo oficial.
+
+---

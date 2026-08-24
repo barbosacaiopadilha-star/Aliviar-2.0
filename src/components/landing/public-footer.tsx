@@ -5,8 +5,9 @@ import { SectionReveal } from "@/components/ui/section-reveal";
 
 // Multi-coluna (Landing V2) — nenhum canal de contato inventado (sem
 // telefone/e-mail/endereço fictício): só navegação interna já existente
-// no site. Logo oficial em public/brand/logo-aliviar-transparent.png
-// (fundo removido, ver public-header.tsx). Fundo navy escuro (não mais
+// no site. A marca vem do logotipo isolado enviado pelo Fundador (23/08):
+// `aliviar-logo-clara.png`, a variante monocromática para fundo escuro —
+// as demais versões vivem em public/brand. Fundo navy escuro (não mais
 // branco) — fecha a Landing no mesmo tom do Hero/CTA final, reduzindo o
 // branco geral da página.
 //
