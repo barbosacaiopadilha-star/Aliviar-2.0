@@ -1934,3 +1934,21 @@ O Fundador, sobre o print do cartão do acompanhamento: *"o Concierge não teria
 O Fundador entregou a fotografia do Início (ela em casa, à noite, ao telefone com a pasta da Aliviar — em duas proporções geradas) e pediu "as configurações visuais da landing" na casa da paciente. Três consequências: **(1)** a cena entra em força total como cenário contínuo atrás de toda a área autenticada, servida por `<picture>` responsivo (retrato no celular, 16:9 no computador; WebP+JPEG) — o corredor a 16% de opacidade e a cena-por-etapa do hero saem; o hero vira card de vidro como os demais, e a mensagem da etapa segue carregando o Storytelling Ambiental. **(2)** Com foto em força total, **texto solto sobre a fotografia morreu como recurso**: tudo é card ou está dentro de card — a linha da Jornada entrou no hero; o selo, a data e o PDF entraram na carta do escolhido; o eco da Sala, o material de consulta e a frase final viraram vidro. Um véu de marfim leve (34→58%) protege o que o card não cobre. **(3)** O Concierge muda de casa pela segunda vez, agora em definitivo: *"eu não quero Concierge lá embaixo"* — o card do fim (1ª emenda) dá lugar ao **botão fixo no cabeçalho** do shell, presente em toda tela; o botão que ficava dentro do cartão do acompanhamento sai por redundância ("acho que isso não precisa"). As regras do canal seguem intactas.
 
 ---
+
+## ADR-087 — A visão essencial do Administrador: uma pergunta, seis números
+
+- **Data:** 2026-08-24
+- **Status:** Decidida pelo Fundador em duas passadas, na mesma conversa da ADR-086 ("agora vamos fazer outra auditoria de corte e resumo, dessa vez no administrador… sem card e arte" — e, sobre a primeira lista, "quer ver se dá pra enxugar mais?").
+- **Dependências:** mesma régua das ADR-085/086 aplicada ao terceiro papel · executa no dashboard a lógica que a **ADR-075** já tinha executado no CRM (ferramenta de volume sem volume sai) · preserva o contrato 34 §6.5 (métrica só quando medida — e média com n=1 é ruído vestido de gestão) · o módulo de métricas (`dashboard-metrics`) fica INTEIRO no domínio, pronto para quando o Observatório tiver volume para desenhar.
+- **Contexto:** a Visão geral era um cockpit de frota para uma operação de poucos casos — 16 números em 4 seções, 5 gráficos (funil, tendência, três de barras), pessoas por papel, log de auditoria, pendências e o Kit. As listas do admin já eram magras e o wizard do profissional já tinha ido de 6 a 4 etapas; o excesso morava numa tela só.
+- **Decisões (1ª passada):**
+  1. **Os 5 gráficos saem** — componentes apagados pela régua do substituto vivo (308 linhas); com volume ~zero, gráfico é decoração.
+  2. **Aquisição e Tempos médios saem** (leads novos, em qualificação, conversão, e as duas médias de horas). O **seletor de período** sai junto: os números que ficaram são fotografias do agora, não séries.
+  3. **"Pessoas por papel" (+ o aviso de acúmulo de níveis) e "Atividade recente" mudam para /admin/equipe** — papéis vivem onde papéis se concedem.
+- **Decisões (2ª passada):**
+  4. **A seção "Operação" some:** "Cases abertos" e "Pacientes ativos" eram as listas do menu disfarçadas de indicador; **"Documentos pendentes" sobe** para "Onde agir agora", com ênfase, porque é pendência de verdade.
+  5. **Na ficha do contato (CRM), Tarefas e Agenda recolhem** em dobras fechadas com contador no título. A garantia da ADR-075 fica intacta — os atos comerciais vivem na ficha; deixam apenas de gritar em toda visita. Registro e Linha do tempo seguem abertos.
+- **Resultado:** a Visão geral responde UMA pergunta — "o que precisa de alguém agora?" — com seis números (histórias aguardando Case, sem responsável, atrasados, tarefas vencidas, compromissos em 7 dias, documentos pendentes), a lista de publicações pendentes e o Kit da Curadoria.
+- **Revisitar quando:** o Observatório tiver série real para desenhar (os gráficos voltam pelo módulo que ficou); ou o volume de leads fizer falta às métricas de aquisição.
+
+---

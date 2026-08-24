@@ -72,11 +72,19 @@ export function ContactRegistro({ contactId, caseId, tasks, appointments, timeli
         </div>
       </Card>
 
+      {/* 2ª passada de 24/08 (auditoria do Fundador) · Tarefas e Agenda
+          recolhem: a ADR-075 garantiu que os atos comerciais VIVEM na ficha,
+          e continuam vivendo — mas numa operação que combina tudo pelo
+          WhatsApp, duas listas abertas em toda visita eram o mesmo cockpit
+          vazio que saiu do dashboard. Título à vista, conteúdo a um clique. */}
       <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">Tarefas</h2>
-        </CardHeader>
-        <ul className="divide-y divide-border">
+        <details>
+          <summary className="cursor-pointer list-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus [&::-webkit-details-marker]:hidden">
+            <h2 className="font-sans text-lg font-semibold text-ink">
+              Tarefas{tasks.length > 0 ? ` · ${tasks.length}` : ""}
+            </h2>
+          </summary>
+        <ul className="mt-3 divide-y divide-border">
           {tasks.length === 0 ? (
             <li className="py-3 text-sm text-ink-muted">Nenhuma tarefa registrada.</li>
           ) : (
@@ -100,24 +108,29 @@ export function ContactRegistro({ contactId, caseId, tasks, appointments, timeli
             ))
           )}
         </ul>
+        </details>
       </Card>
 
       <Card>
-        <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">Agenda</h2>
-        </CardHeader>
-        <ul className="divide-y divide-border">
-          {appointments.length === 0 ? (
-            <li className="py-3 text-sm text-ink-muted">Nenhum compromisso agendado.</li>
-          ) : (
-            appointments.map((appointment) => (
-              <li key={appointment.id} className="py-3 text-sm">
-                <p className="font-medium text-ink">{appointment.title}</p>
-                <p className="text-ink-muted">{formatDateTime(appointment.startAt)} · {appointment.status}</p>
-              </li>
-            ))
-          )}
-        </ul>
+        <details>
+          <summary className="cursor-pointer list-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus [&::-webkit-details-marker]:hidden">
+            <h2 className="font-sans text-lg font-semibold text-ink">
+              Agenda{appointments.length > 0 ? ` · ${appointments.length}` : ""}
+            </h2>
+          </summary>
+          <ul className="mt-3 divide-y divide-border">
+            {appointments.length === 0 ? (
+              <li className="py-3 text-sm text-ink-muted">Nenhum compromisso agendado.</li>
+            ) : (
+              appointments.map((appointment) => (
+                <li key={appointment.id} className="py-3 text-sm">
+                  <p className="font-medium text-ink">{appointment.title}</p>
+                  <p className="text-ink-muted">{formatDateTime(appointment.startAt)} · {appointment.status}</p>
+                </li>
+              ))
+            )}
+          </ul>
+        </details>
       </Card>
 
       <Card>

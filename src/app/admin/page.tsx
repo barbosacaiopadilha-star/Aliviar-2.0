@@ -18,14 +18,10 @@ import {
 import { loadDashboardSource } from "@/modules/admin/dashboard-repository";
 import { requireRole } from "@/modules/auth/guard";
 import { listProfessionalProfiles } from "@/modules/profiles";
-import { listRecentAuditLogs, listTeamMembers } from "@/modules/team/repository";
 
-import { AuditLogList } from "@/components/admin/audit-log-list";
 import { KitDaCuradoriaCard } from "@/components/admin/kit-da-curadoria-card";
-import { BarsChart, FunnelChart, TrendChart } from "@/components/admin/charts";
 import { Card, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { CASE_STATUS_LABELS, type CaseStatus } from "@/modules/cases/types";
 
 // noindex: área autenticada — nunca deve ser indexada (ver também robots.ts).
 export const metadata: Metadata = {
@@ -122,35 +118,23 @@ function StatCard({
   );
 }
 
-export default async function AdminDashboardPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ periodo?: string }>;
-}) {
+export default async function AdminDashboardPage() {
   const state = await requireRole("administrador");
-  const { periodo } = await searchParams;
-  const period: PeriodKey = (PERIODS.find((p) => p.key === periodo)?.key ?? "30d") as PeriodKey;
 
   const regularClient = await createServerSupabaseClient();
-  const adminClient = createAdminSupabaseClient();
   const now = new Date();
 
-  const [source, professionals, teamMembers, recentActivity] = await Promise.all([
+  const [source, professionals] = await Promise.all([
     loadDashboardSource(regularClient),
     listProfessionalProfiles(regularClient),
-    listTeamMembers(regularClient, adminClient),
-    listRecentAuditLogs(regularClient, 8),
   ]);
 
-  const indicators = computeIndicators(source, period, now);
-  const funnel = buildFunnel(source, period, now);
-  const porResponsavel = casesByRole(source);
-  const porEtapa = casesByStatus(source)?.map((s) => ({
-    ...s,
-    label: CASE_STATUS_LABELS[s.label as CaseStatus] ?? s.label,
-  }));
-  const porOrigem = leadsBySource(source, period, now);
-  const serie = buildTimeSeries(source, period, now);
+  // CORTE DE 24/08 (auditoria do Fundador) · o seletor de período saiu com
+  // a aquisição, os tempos médios e os gráficos: os números que ficaram são
+  // fotografias do agora, não séries. "30d" segue como janela interna do
+  // cálculo — nada muda no módulo de métricas, que fica inteiro para quando
+  // o Observatório tiver volume para desenhar.
+  const indicators = computeIndicators(source, "30d", now);
 
   // Indicador é sobre a Rede real. Demonstração e fixture de certificação
   // existem para exercitar telas e contratos; contá-las aqui faria o
@@ -164,20 +148,6 @@ export default async function AdminDashboardPage({
       !professional.isTestFixture,
   );
 
-  // Papéis contados por PESSOA, não por concessão. Alguém que acumula
-  // Curador e Concierge aparece nos dois — e é justamente isso que o
-  // Administrador precisa enxergar para corrigir.
-  const porPapel = (["atendente", "curador_medico", "concierge", "administrador"] as const).map((slug) => ({
-    slug,
-    label: { atendente: "Atendente", curador_medico: "Curador", concierge: "Concierge", administrador: "Administrador" }[
-      slug
-    ],
-    count: teamMembers.filter((m) => m.roles.includes(slug)).length,
-  }));
-  const acumulamNiveis = teamMembers.filter(
-    (m) => ["atendente", "curador_medico", "concierge"].filter((r) => m.roles.includes(r)).length > 1,
-  );
-
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -188,22 +158,6 @@ export default async function AdminDashboardPage({
           <p className="text-sm text-ink-muted">Visão executiva da operação da Aliviar.</p>
         </div>
 
-        <nav aria-label="Período dos indicadores" className="flex flex-wrap gap-1">
-          {PERIODS.map((p) => (
-            <Link
-              key={p.key}
-              href={`/admin?periodo=${p.key}`}
-              aria-current={p.key === period ? "page" : undefined}
-              className={`min-h-11 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                p.key === period
-                  ? "bg-brand-primary text-white"
-                  : "border border-border text-ink-muted hover:text-ink"
-              }`}
-            >
-              {p.label}
-            </Link>
-          ))}
-        </nav>
       </div>
 
       {/* ONE ALIVIAR, Problema 5: a Home responde "onde preciso agir agora?"
@@ -226,98 +180,27 @@ export default async function AdminDashboardPage({
           <StatCard label="Cases atrasados" value={indicators.casesAtrasados} emphasis />
           <StatCard label="Tarefas vencidas" value={indicators.tarefasVencidas} emphasis />
           <StatCard label="Compromissos em 7 dias" value={indicators.compromissosProximos} />
+          <StatCard label="Documentos pendentes" value={indicators.documentosPendentes} emphasis />
         </div>
       </section>
 
-      <section aria-labelledby="operacao">
-        <h2 id="operacao" className="mb-2 text-sm font-semibold text-ink-muted">
-          Operação
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Cases abertos" value={indicators.casesAbertos} href="/admin/casos" />
-          <StatCard label="Com o Concierge" value={indicators.casesNoConcierge} />
-          <StatCard label="Concluídos" value={indicators.casesConcluidos} />
-          <StatCard label="Documentos pendentes" value={indicators.documentosPendentes} />
-        </div>
-      </section>
+      {/* CORTE DE 24/08 (auditoria do Fundador, "sem card e arte"): a Visão
+          geral era um cockpit de frota para uma operação de poucos casos —
+          16 números em 4 seções + 5 gráficos + pessoas por papel + log de
+          auditoria. Ficou UMA pergunta: "o que precisa de alguém agora?".
 
-      <section aria-labelledby="aquisicao">
-        <h2 id="aquisicao" className="mb-2 text-sm font-semibold text-ink-muted">
-          Aquisição
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Leads novos" value={indicators.leadsNovos} />
-          <StatCard label="Em qualificação" value={indicators.leadsEmQualificacao} />
-          <StatCard
-            label="Conversão lead → paciente"
-            value={indicators.taxaConversaoLead}
-            suffix="%"
-            detail={
-              typeof indicators.leadsTotalNoPeriodo === "number"
-                ? `sobre ${indicators.leadsTotalNoPeriodo} ${indicators.leadsTotalNoPeriodo === 1 ? "lead" : "leads"}`
-                : undefined
-            }
-          />
-          <StatCard label="Pacientes ativos" value={indicators.pacientesAtivos} href="/admin/pacientes" />
-        </div>
-      </section>
-
-      <section aria-labelledby="tempos">
-        <h2 id="tempos" className="mb-2 text-sm font-semibold text-ink-muted">
-          Tempo médio
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <StatCard label="Do lead até virar paciente" value={indicators.tempoMedioAteAberturaHoras} suffix=" h" />
-          <StatCard label="De Curadoria até o Concierge" value={indicators.tempoMedioCuradoriaHoras} suffix=" h" />
-        </div>
-      </section>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <FunnelChart steps={funnel} />
-        <TrendChart points={serie} />
-        <BarsChart
-          title="Cases por responsável"
-          question="A carga está distribuída entre os três níveis, ou concentrada em alguém?"
-          unit="Cases abertos"
-          slices={porResponsavel}
-        />
-        <BarsChart
-          title="Cases por etapa"
-          question="Em que etapa os Cases estão empilhando?"
-          unit="Cases"
-          slices={porEtapa ?? null}
-        />
-        <BarsChart
-          title="Origem dos leads"
-          question="Qual canal traz gente de verdade?"
-          unit="leads"
-          slices={porOrigem}
-        />
-
-        <section className="min-w-0 rounded-lg border border-border bg-surface p-4" aria-labelledby="papeis-titulo">
-          <h3 id="papeis-titulo" className="text-sm font-semibold text-ink">
-            Pessoas por papel
-          </h3>
-          <p className="mt-0.5 text-xs text-ink-muted">A operação tem gente em cada nível?</p>
-
-          <ul className="mt-3 space-y-1.5">
-            {porPapel.map((papel) => (
-              <li key={papel.slug} className="flex items-center justify-between gap-3 text-sm">
-                <span className="text-ink-muted">{papel.label}</span>
-                <span className={`tabular-nums ${papel.count === 0 ? "text-brand-gold" : "text-ink"}`}>{papel.count}</span>
-              </li>
-            ))}
-          </ul>
-
-          {acumulamNiveis.length > 0 ? (
-            <p className="mt-3 rounded-md border border-warning bg-warning-surface px-3 py-2 text-xs text-ink">
-              {acumulamNiveis.length === 1 ? "Uma pessoa acumula" : `${acumulamNiveis.length} pessoas acumulam`} mais de
-              um nível operacional. O Case passa de nível sem trocar de gente — a separação entre Atendente, Curador e
-              Concierge existe no sistema, mas não na prática.
-            </p>
-          ) : null}
-        </section>
-      </div>
+          O que saiu, e para onde foi:
+           · os 5 gráficos (funil, tendência, 3 barras) — apagados com a
+             régua do substituto vivo; o módulo de métricas fica inteiro
+             para quando o Observatório tiver volume para desenhar;
+           · Aquisição e Tempos médios — média com n=1 é ruído estatístico
+             vestido de gestão (contrato 34 §6.5 na prática);
+           · Pessoas por papel (+ aviso de acúmulo) e Atividade recente →
+             /admin/equipe, que é onde papéis se concedem. */}
+      {/* 2ª passada de 24/08 · a seção "Operação" saiu: "Cases abertos" e
+          "Pacientes ativos" eram contagens das listas que o menu já abre —
+          lista disfarçada de indicador. "Documentos pendentes", que é
+          pendência de verdade, subiu para "Onde agir agora". */}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -348,17 +231,8 @@ export default async function AdminDashboardPage({
           )}
         </Card>
 
-        <Card>
-          <CardHeader>
-            <h2 className="font-sans text-lg font-semibold text-ink">Atividade recente</h2>
-            <p className="text-sm text-ink-muted">Últimas concessões e revogações de papel.</p>
-          </CardHeader>
-
-          <AuditLogList entries={recentActivity} emptyMessage="Ainda não há atividade registrada." showTarget />
-        </Card>
+        <KitDaCuradoriaCard />
       </div>
-
-      <KitDaCuradoriaCard />
     </div>
   );
 }
