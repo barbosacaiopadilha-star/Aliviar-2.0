@@ -30,6 +30,7 @@ Novo no projeto? Vá direto para **[ONBOARDING.md](ONBOARDING.md)**, que já tra
 | [`PRODUCT_VISION.md`](PRODUCT_VISION.md)                             | Missão, visão, valores, posicionamento.                                                                                                                                     |
 | [`PRODUCT_PRINCIPLES.md`](PRODUCT_PRINCIPLES.md)                     | Princípios permanentes de decisão de produto.                                                                                                                               |
 | [`DISCOVERY_ENGINE.md`](DISCOVERY_ENGINE.md)                         | Desenho do motor de busca/descoberta (porta "Busca Direta" — ver `PRODUCT_ARCHITECTURE.md` §1; ainda não implementada).                                                     |
+| [`PROPOSTA_PAINEL_DO_CONCIERGE.md`](PROPOSTA_PAINEL_DO_CONCIERGE.md) | Inventário do que o Concierge já tem em domínio, o limite de Método sobre "agenda de quem", e o que a primeira Curadoria real precisa devolver — **Proposta**, sob o congelamento da ADR-073; não é o plano. |
 
 ## Arquitetura de domínio
 
