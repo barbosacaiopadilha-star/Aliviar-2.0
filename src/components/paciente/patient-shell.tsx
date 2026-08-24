@@ -216,7 +216,17 @@ export function PatientShell({ children, userMenu }: PatientShellProps) {
           opaco. Com o header translúcido e mais folga acima, a leitura começa
           num espaço, não numa borda. Largura e gutters permanecem — mexer
           neles moveria o conteúdo, e A2 é sobre a moldura. */}
-      <main id="patient-main" className="mx-auto w-full max-w-content px-4 pb-16 pt-14 lg:px-8 lg:pb-24 lg:pt-20">
+      {/* A CENA RESPIRA ANTES DOS CARDS (calibragem do Fundador, 24/08 —
+          "os cards podem começar dessa linha pra baixo"): o conteúdo começa
+          abaixo da dobra da fotografia, para quem chega VER o ambiente —
+          ela ao telefone, a casa — antes de qualquer leitura. No celular a
+          linha fica a ~metade da tela; no computador a cena é 16:9 e o
+          recuo é menor. Mesma gramática da landing: a área livre da foto é
+          planejada, o card pousa nela. */}
+      <main
+        id="patient-main"
+        className="mx-auto w-full max-w-content px-4 pb-16 pt-[clamp(16rem,50svh,34rem)] lg:px-8 lg:pb-24 lg:pt-[clamp(9rem,26vh,18rem)]"
+      >
         {children}
       </main>
     </div>
