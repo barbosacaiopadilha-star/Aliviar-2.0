@@ -1868,3 +1868,36 @@ O Fundador enviou o **logotipo isolado** (`LOGO.zip`), e o bloqueio relatado nes
 A varredura de coerência que acompanhou a troca corrigiu outros dois pontos que ninguém tinha visto: a **tela de acesso** ainda exibia a versão anterior da marca (duas identidades no mesmo produto, contra o que o próprio comentário do arquivo promete), e o **ícone do site** era um placeholder — um quadrado verde-azulado com as letras "AC" na aba de todo visitante. Ambos passam a usar o símbolo oficial.
 
 ---
+
+## ADR-084 — O vidro entra na casa da paciente: a reabertura do Sistema Visual §3
+
+- **Data:** 2026-08-23
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data ("a área do paciente tem cards de vidro também, mesma dinâmica") — e calibrada por ele em segunda passada ("não tá parecida com a landing").
+- **Dependências:** reabre, em voz alta, o **Sistema Visual §3** ("papel, não vidro" na área autenticada) · estende a mecânica da **ADR-083 §3** (o efeito translúcido da vitrine) · não altera contrato de estado nem projeção alguma — é material, não informação.
+- **Contexto:** com a Landing inteira falando a língua do vidro que clareia na leitura, a área da paciente — "a continuação da landing", nas palavras do Fundador — ficava de papel opaco: a pessoa atravessava a porta e entrava em outro software.
+- **Decisão:** os cartões da casa da paciente usam **a mesma receita da vitrine, sem adaptação**: repouso quase incolor (piso ZERO — a primeira aplicação usou piso 0,55 "para proteger a leitura" e ficou com cara de papel; foi o Fundador quem apontou), camada sólida que cristaliza até **84%** na zona de leitura, brilho de borda e desfoque leve. O motor é o mesmo `VidroDinamico` da Landing, montado no shell, lendo os cards a cada quadro — superfícies novas entram sozinhas pela classe `patient-veu`.
+- **O limite que fica da regra antiga:** quem protege a leitura não é um piso de opacidade — é a própria dinâmica: o card diante dos olhos É o sólido. Subcartões cristalizam um pouco menos (0,7) para o assunto em foco ganhar corpo sem virar parede; a carta já conhecida idem (serenidade por material, não por cor).
+- **O que a segunda passada derrubou:** o "pino" de 0,97 que deixava o cartão do caminho escolhido sempre sólido — era exatamente o que descolava a casa da vitrine. O escolhido respira como todos.
+- **Revisitar quando:** a primeira Curadoria real mostrar leitura difícil em algum estado do vidro (aí calibra-se o teto, nunca se volta ao piso alto sem decisão).
+
+---
+
+## ADR-085 — A casa essencial da paciente: um Início, três itens, cinco passos
+
+- **Data:** 2026-08-23 (publicada em 2026-08-24, `main 6f2516a`)
+- **Status:** Decidida pelo Fundador em série, na mesma conversa: "vamos manter apenas o que for essencial" → "corte fundo!" → "se for possível aplique todos os cortes" → "dá pra cortar mais se mexer na arquitetura, às vezes tem muita página".
+- **Dependências:** aplica à área autenticada a régua de "O essencial da Curadoria" (docs/rede/ — toda tela responde a um dos quatro atos) · coerente com ADR-081/082 (a mesma cirurgia que a vitrine recebeu) · preserva o contrato de estado da Fundação (nenhuma projeção mudou — mudaram endereços) · mantém a doutrina da Sala da Decisão (SD-O1/SD-O2: as verdades antes do gesto, e o gesto é único — a implementação com duas confirmações é que a contrariava).
+- **Contexto:** a operação tem quatro atos; a casa da paciente tinha oito páginas, seis itens de menu e seis blocos só na Home — que repetiam o que outras telas já diziam. No celular, cinco telas de rolagem para uma pergunta ("onde estou e o que faço agora?").
+- **Decisões:**
+  1. **O Início É a Curadoria.** O estado (saudação + macroestado + porquê) abre a página e a travessia inteira vem embaixo. `/paciente/curadoria` vira redirect; `/paciente/curadoria/imprimir` segue rota própria. O botão do hero some quando apontaria para a própria página.
+  2. **Menu de 6 → 3:** Início · Minha história · Meus dados. Documentos é encontrado em Meus dados; os consentimentos viram dobra DENTRO de Documentos (rota antiga redireciona). **Consequência de governança dita em voz alta:** `/paciente/documentos` entra em `ROTAS_LIVRES_DO_GATE` — a superfície de consentimento não pode ficar atrás do próprio gate, e o acesso dela ao que é dela vai junto.
+  3. **O Mapa de Prioridades sai da Home** (era o painel mais longo do produto abrindo dentro da primeira tela) e mora em Meus dados, com dobras — só o nível mais importante nasce aberto; nenhum nível some.
+  4. **A carta do caminho vira dobras** (`<details>` nativo, o novo primitivo de Progressive Disclosure): só "Como responde ao seu Perfil" nasce aberta; a formação vira uma linha por item; o cabeçalho que repetia o nome do profissional saiu — e com ele o estouro de tela que nomes longos causavam.
+  5. **A comparação perde o gesto:** sem checkbox, sem estado vazio — o painel mostra os três direto, uma dimensão por vez como sempre. O princípio (sem tabela, sem vencedor) fica; o mecanismo de quatro passos morre.
+  6. **Pós-decisão sem cerimônia:** abrir o acompanhamento é UM cartão (as verdades antes do único botão) e o modo de contato vive no pé do mesmo cartão, separado por fio.
+  7. **O wizard da história vai de 7 a 5 passos:** "para quem?" absorve o motivo; "há algo importante?" absorve a preferência de modalidade. As rotas antigas redirecionam — rascunho parado nelas retoma sem tela morta, zero migração.
+  8. **Os documentos do caso vão pelo WhatsApp do Curador** (decisão do Fundador na mesma série): a casa não pede upload à paciente — o Curador ganha a tela que gera as peças preenchidas (consentimento e ficha da consulta inicial) para salvar em PDF e mandar na conversa; ela devolve pelo mesmo canal e ele anexa.
+- **A régua dos cortes, registrada:** uso zero COM substituto vivo nomeado → o componente SAI (cinco saíram); sem substituto → allowlist do detector de órfãos COM motivo (a copy congelada do dossiê está lá). Nenhuma rota caiu: viraram redirects; nenhuma informação sumiu: mudou de endereço.
+- **Revisitar quando:** a primeira Curadoria real mostrar alguém procurando o que saiu de vista (ex.: a régua dos marcos, o item de Documentos no menu); ou quando a aproximação intermediada existir, o que reabre o desenho do pós-decisão.
+
+---
