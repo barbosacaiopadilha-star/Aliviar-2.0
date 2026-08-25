@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import type { Metadata } from "next";
 
+import { ClassificarImportancia } from "@/components/curadoria/mesa-preocupacoes/classificar-importancia";
 import { ComparacaoPorPreocupacoes } from "@/components/curadoria/mesa-preocupacoes/comparacao-por-preocupacoes";
 import { ComporOsTres } from "@/components/curadoria/mesa-preocupacoes/compor-os-tres";
 import { EmitirEEntregar } from "@/components/curadoria/mesa-preocupacoes/emitir-e-entregar";
@@ -111,6 +113,23 @@ export default async function MesaPorPreocupacoesPage({
   const nomeDaPaciente =
     (Array.isArray(perfilDela) ? perfilDela[0]?.display_name : perfilDela?.display_name) ?? "ela";
 
+  // Os itens a classificar saem da própria Mesa, com o título que a linha já
+  // tem: a frase DELA quando existe, a pergunta quando ela ainda não
+  // respondeu. Na Mesa antiga este painel mostrava o código do subcritério, e
+  // o Curador classificava "MODELO_COMUNICACAO" sem a frase por perto.
+  const paraClassificar = [
+    ...mesa.linhas.map((linha) => ({
+      subcriterionCode: linha.subcriterionCode,
+      titulo: linha.resposta ?? linha.pergunta,
+      atual: linha.importancia,
+    })),
+    ...mesa.orfaos.map((orfao) => ({
+      subcriterionCode: orfao.subcriterionCode,
+      titulo: orfao.subcriterionCode.replace(/_/g, " ").toLowerCase(),
+      atual: orfao.importancia,
+    })),
+  ];
+
   const nomes = new Map(mesa.profissionais.map((p) => [p.id, p.nome]));
   const escolhidos = [...(composta?.curated_selection_options ?? [])]
     .sort((a, b) => a.position - b.position)
@@ -128,10 +147,31 @@ export default async function MesaPorPreocupacoesPage({
         </p>
         <h1 className="text-2xl font-medium text-ink">A Mesa pelas preocupações dela</h1>
         <p className="max-w-3xl text-sm text-ink-muted">
-          Em construção. Já dá para registrar o que ela disse, julgar e compor os três
-          caminhos; a emissão do relatório e a entrega continuam na Mesa atual.
+          Em construção. Aqui já dá para registrar o que ela disse, julgar, compor os três
+          caminhos, escrever o relatório e entregar.
+        </p>
+
+        {/* O que AINDA não mora aqui, dito por nome — e não como "algumas
+            funções". Quem chega e não acha o que procura precisa saber onde
+            está, e não desconfiar que quebrou. */}
+        <p className="max-w-3xl text-sm text-ink-muted">
+          Cinco coisas continuam só na Mesa atual: classificar a importância dos 29, declarar
+          a área de cada profissional, os filtros obrigatórios, a Base de Evidências e o
+          painel de atenção.{" "}
+          <Link
+            href={`/coa/curadoria/casos/${id}/curadoria_tecnica`}
+            className="text-ink underline underline-offset-2"
+          >
+            Ir para a Mesa atual
+          </Link>
+          .
         </p>
       </header>
+
+      {/* A classificação vem ANTES da comparação, porque sem ela o Motor não
+          cruza nada — e a tabela abaixo mostraria "falta você declarar" em
+          cada célula. A ordem da tela é a ordem do trabalho. */}
+      <ClassificarImportancia caseId={id} itens={paraClassificar} />
 
       <ComparacaoPorPreocupacoes caseId={id} {...mesa} />
 

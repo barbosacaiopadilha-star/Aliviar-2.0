@@ -638,12 +638,26 @@ export default async function MesaCuradoriaPage({
 
   return (
     <div className="space-y-2">
-      <Link
-        href={`/coa/curadoria/casos/${record.caseId}`}
-        className="text-sm text-brand-primary underline-offset-4 hover:underline"
-      >
-        ← Voltar ao Case
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link
+          href={`/coa/curadoria/casos/${record.caseId}`}
+          className="text-sm text-brand-primary underline-offset-4 hover:underline"
+        >
+          ← Voltar ao Case
+        </Link>
+
+        {/* A PORTA PARA A MESA NOVA — enquanto as duas convivem.
+            Ela existia sem caminho até aqui: só abria por URL digitada, e foi
+            assim que o Fundador tentou olhar e disse "não tô vendo". Tela sem
+            porta é tela que ninguém usa, e que por isso ninguém testa.
+            Some junto com esta página, quando a ADR-093 fechar. */}
+        <Link
+          href={`/coa/curadoria/casos/${record.caseId}/mesa`}
+          className="rounded-md border border-border px-3 py-1.5 text-xs text-ink-muted transition-colors hover:text-ink"
+        >
+          Ver na Mesa nova (em construção) →
+        </Link>
+      </div>
 
       {phaseAlerts.length > 0 ? (
         <div className="space-y-2 pt-2">
