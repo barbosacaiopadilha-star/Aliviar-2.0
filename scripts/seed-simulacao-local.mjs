@@ -55,6 +55,17 @@ const REDE = [
       { title: "Clínica Médica", kind: "residencia", institution: "Hospital das Clínicas da FMUSP", period_start: 2007, period_end: 2009 },
       { title: "Dor e Cuidados Paliativos", kind: "especializacao", institution: "Universidade Federal de São Paulo", period_start: 2010, period_end: 2012 },
     ],
+    atendimento: {
+      serves_in_person: true,
+      serves_online: true,
+      cities: ["São Paulo"],
+      states: ["SP"],
+      offers_continuous_care: true,
+      offers_return_visits: true,
+      multidisciplinary_team: true,
+      availability_window: "flexible",
+      avg_days_to_first_appointment: 10,
+    },
     experiencia: {
       years_of_practice: 18,
       main_areas: ["dor persistente", "reabilitação", "segunda opinião"],
@@ -84,6 +95,17 @@ const REDE = [
       { title: "Psiquiatria", kind: "residencia", institution: "Instituto de Psiquiatria da USP", period_start: 2011, period_end: 2014 },
       { title: "Terapia Cognitivo-Comportamental", kind: "pos_graduacao", institution: "Universidade Federal do Rio Grande do Sul", period_start: 2015, period_end: 2016 },
     ],
+    atendimento: {
+      serves_in_person: true,
+      serves_online: true,
+      cities: ["São Paulo"],
+      states: ["SP"],
+      offers_continuous_care: true,
+      offers_return_visits: true,
+      multidisciplinary_team: false,
+      availability_window: "limited",
+      avg_days_to_first_appointment: 25,
+    },
     experiencia: {
       years_of_practice: 14,
       main_areas: ["ansiedade", "sofrimento persistente", "acompanhamento longo"],
@@ -113,6 +135,17 @@ const REDE = [
       { title: "Neurologia", kind: "residencia", institution: "Hospital das Clínicas da UFMG", period_start: 2010, period_end: 2013 },
       { title: "Cefaleias", kind: "fellowship", institution: "Universidade Federal de São Paulo", period_start: 2014, period_end: 2015 },
     ],
+    atendimento: {
+      serves_in_person: true,
+      serves_online: false,
+      cities: ["São Paulo"],
+      states: ["SP"],
+      offers_continuous_care: false,
+      offers_return_visits: true,
+      multidisciplinary_team: false,
+      availability_window: "flexible",
+      avg_days_to_first_appointment: 12,
+    },
     experiencia: {
       years_of_practice: 15,
       main_areas: ["cefaleias", "investigação diagnóstica", "revisão de exames"],
@@ -157,6 +190,7 @@ async function remover() {
   // efeito visível em vez de implícito.
   await supabase.from("professional_education_entries").delete().in("professional_profile_id", ids);
   await supabase.from("professional_experience").delete().in("professional_profile_id", ids);
+  await supabase.from("professional_care_model").delete().in("professional_profile_id", ids);
   await supabase.from("professional_competency_areas").delete().in("professional_profile_id", ids);
   const { error } = await supabase.from("professional_profiles").delete().in("id", ids);
   if (error) throw new Error(error.message);
@@ -183,7 +217,7 @@ async function inserir() {
   const agora = new Date().toISOString();
 
   for (const perfil of REDE) {
-    const { competencias, formacao, experiencia, resumo, ...campos } = perfil;
+    const { competencias, formacao, experiencia, atendimento, resumo, ...campos } = perfil;
 
     const { data, error } = await supabase
       .from("professional_profiles")
@@ -225,6 +259,20 @@ async function inserir() {
     );
     if (erroFormacao) falhas.push(`formação: ${erroFormacao.message}`);
 
+    // O MODELO DE ATENDIMENTO — a tabela que a MESA lê nos filtros
+    // obrigatórios (UF e cuidado contínuo). `professional_profiles` tem uma
+    // coluna de nome parecido que NÃO é esta: preencher só lá deixa o
+    // profissional preso em "informação não localizada" na Rede elegível.
+    const { error: erroAtendimento } = await supabase.from("professional_care_model").insert({
+      professional_profile_id: data.id,
+      ...atendimento,
+      source: "digitacao_manual",
+      verification_status: "verificado",
+      verified_at: agora,
+      verified_by: adminId,
+    });
+    if (erroAtendimento) falhas.push(`atendimento: ${erroAtendimento.message}`);
+
     const { error: erroExperiencia } = await supabase.from("professional_experience").insert({
       professional_profile_id: data.id,
       ...experiencia,
@@ -240,7 +288,7 @@ async function inserir() {
     } else {
       console.log(
         `  ✓ ${perfil.display_name} — ${competencias.length} competências, ` +
-          `${formacao.length} formações verificadas, experiência preenchida`,
+          `${formacao.length} formações verificadas, experiência e atendimento preenchidos`,
       );
     }
   }
