@@ -75,17 +75,50 @@ const MOTIVO_DO_AGUARDO: Record<NonNullable<ConceitoDeJuizo["lacuna"]>, string> 
  * `VERSAO_JA_GRAVADA` é **sucesso idempotente** e não pode parecer falha; e
  * o aguardo por evidência nova é **atualidade**, nunca erro.
  */
-function MarcaDoDesfecho({ desfecho }: { desfecho: DesfechoDoJulgamento["desfecho"] }) {
+function MarcaDoDesfecho({
+  desfecho,
+  detalhe,
+}: {
+  desfecho: DesfechoDoJulgamento["desfecho"];
+  /**
+   * O MOTIVO TÉCNICO, quando existe — achado da travessia do Curador (25/08).
+   *
+   * `registrarJulgamentoAction` já devolvia `detalhe` com a causa sanitizada
+   * (o próprio tipo o descreve como "nunca conteúdo clínico"), e esta tela o
+   * DESCARTAVA. O Curador escrevia uma conclusão, clicava, lia "não foi
+   * possível concluir o ato agora" e não tinha nenhum caminho: nem o que
+   * corrigir, nem a quem recorrer.
+   *
+   * É a família FS-07 — controle e comunicação por mensagem genérica — que a
+   * auditoria de agosto varreu do produto e que sobreviveu aqui. O motivo
+   * aparece só no erro: nos desfechos que não são falha, a frase legível já
+   * basta e um detalhe técnico seria ruído.
+   */
+  detalhe?: string;
+}) {
   const marca = MARCA_DO_DESFECHO[desfecho];
+  const mostrarDetalhe = desfecho === "ERRO_TECNICO" && Boolean(detalhe?.trim());
   return (
-    <span className="inline-flex items-baseline gap-1 text-xs text-ink-muted">
-      <span aria-hidden="true" className={classeDoPapel(marca.papel)}>
-        {marca.sinal}
+    <span className="inline-flex flex-col gap-0.5 text-xs text-ink-muted">
+      <span className="inline-flex items-baseline gap-1">
+        <span aria-hidden="true" className={classeDoPapel(marca.papel)}>
+          {marca.sinal}
+        </span>
+        {DESFECHO_LEGIVEL[desfecho]}
       </span>
-      {DESFECHO_LEGIVEL[desfecho]}
+      {mostrarDetalhe ? <span className="text-ink">Motivo: {detalhe}</span> : null}
     </span>
   );
 }
+
+/**
+ * O limite do Método para uma conclusão, imposto também pelo banco.
+ *
+ * Vive aqui como constante para que o campo, o contador e a mensagem digam o
+ * MESMO número: três lugares com o mesmo `280` escrito à mão viram três
+ * números diferentes na primeira vez que alguém mudar um deles.
+ */
+const LIMITE_DA_CONCLUSAO = 280;
 
 const DESFECHO_LEGIVEL: Record<DesfechoDoJulgamento["desfecho"], string> = {
   JUIZO_REGISTRADO: "Juízo registrado.",
@@ -115,7 +148,7 @@ function FormularioDeJuizo({
   const [conclusao, setConclusao] = useState("");
   const [motivo, setMotivo] = useState("");
   const [selecionadas, setSelecionadas] = useState<Record<string, boolean>>({});
-  const [resultado, setResultado] = useState<DesfechoDoJulgamento["desfecho"] | null>(null);
+  const [resultado, setResultado] = useState<DesfechoDoJulgamento | null>(null);
   // Abrir/fechar a lista é estado puramente local. Não há geração, não há
   // espera, não há falha: os textos são constantes do build.
   const [modelosAbertos, setModelosAbertos] = useState(false);
@@ -157,7 +190,7 @@ function FormularioDeJuizo({
         motivo: motivo || null,
         versaoBaseId: conceito.versaoBaseId,
       });
-      setResultado(desfecho.desfecho);
+      setResultado(desfecho);
       if (desfecho.desfecho === "JUIZO_REGISTRADO") {
         setConclusao("");
         setMotivo("");
@@ -199,11 +232,36 @@ function FormularioDeJuizo({
         aria-label={`Conclusão sobre ${conceito.label}`}
         className="w-full rounded-md border border-edge bg-transparent p-2 text-sm"
         rows={3}
-        maxLength={280}
+        maxLength={LIMITE_DA_CONCLUSAO}
         placeholder="A sua conclusão — expressa, curta, sua."
         value={conclusao}
         onChange={(evento) => setConclusao(evento.target.value)}
       />
+
+      {/*
+        O LIMITE PRECISA SER VISÍVEL — achado da travessia do Curador (25/08).
+
+        O `maxLength` já existia e funciona: quem digita é parado em 280. O que
+        não existia era o AVISO. Uma pessoa escrevendo uma conclusão pensada
+        batia numa parede muda — o campo simplesmente parava de aceitar letra,
+        sem contador e sem explicação, e a impressão é de teclado travado.
+        A regra é do Método (a conclusão É o juízo: expressa, curta), e uma
+        tela que tem regra e não a conta faz a regra parecer defeito.
+
+        A contagem aparece o tempo todo, e não só perto do fim: saber quanto
+        cabe MUDA o que se escreve, e essa informação chega tarde demais no
+        caractere 260.
+      */}
+      <p
+        className={`text-right text-xs ${
+          conclusao.length >= LIMITE_DA_CONCLUSAO ? "font-medium text-ink" : "text-ink-muted"
+        }`}
+        aria-live="polite"
+      >
+        {conclusao.length >= LIMITE_DA_CONCLUSAO
+          ? `${LIMITE_DA_CONCLUSAO} de ${LIMITE_DA_CONCLUSAO} — o limite do Método para uma conclusão.`
+          : `${conclusao.length} de ${LIMITE_DA_CONCLUSAO}`}
+      </p>
 
       {/* Escrever do zero é o PADRÃO, não a opção secundária: o botão fica
           ABAIXO do campo, nunca acima, e o campo funciona sem ele. Abrir a
@@ -271,7 +329,7 @@ function FormularioDeJuizo({
         >
           Registrar juízo
         </button>
-        {resultado ? <MarcaDoDesfecho desfecho={resultado} /> : null}
+        {resultado ? <MarcaDoDesfecho desfecho={resultado.desfecho} detalhe={resultado.detalhe} /> : null}
       </div>
     </div>
   );
@@ -288,12 +346,12 @@ function BlocoDoConceito({
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [resultado, setResultado] = useState<DesfechoDoJulgamento["desfecho"] | null>(null);
+  const [resultado, setResultado] = useState<DesfechoDoJulgamento | null>(null);
 
   const retirar = (versaoVigenteId: string) => {
     startTransition(async () => {
       const desfecho = await retirarJulgamentoAction({ versaoVigenteId, motivo: null });
-      setResultado(desfecho.desfecho);
+      setResultado(desfecho);
       if (desfecho.desfecho === "JUIZO_RETIRADO") router.refresh();
     });
   };
@@ -323,7 +381,7 @@ function BlocoDoConceito({
             >
               Retirar (só o autor)
             </button>
-            {resultado ? <MarcaDoDesfecho desfecho={resultado} /> : null}
+            {resultado ? <MarcaDoDesfecho desfecho={resultado.desfecho} detalhe={resultado.detalhe} /> : null}
           </div>
         </div>
       ) : (

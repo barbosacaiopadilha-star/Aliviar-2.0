@@ -107,3 +107,90 @@ describe("G-2.3-5 · a conclusão nasce vazia — inclusive pós-JS3", () => {
     expect(screen.getByRole("button", { name: "Retirar (só o autor)" })).toBeTruthy();
   });
 });
+
+// ---------------------------------------------------------------------------
+// A travessia do Curador de 25/08 — o limite invisível e o beco sem saída
+// ---------------------------------------------------------------------------
+//
+// Dois defeitos encontrados percorrendo uma Curadoria de verdade pela tela:
+//
+// 1. O `maxLength` de 280 já existia e funcionava — mas a parede era MUDA.
+//    Quem escrevia uma conclusão pensada via o campo simplesmente parar de
+//    aceitar letra, sem contador e sem explicação. A regra é do Método (a
+//    conclusão É o juízo: expressa, curta); uma tela que tem regra e não a
+//    conta faz a regra parecer defeito de teclado.
+//
+// 2. `registrarJulgamentoAction` devolve `detalhe` com a causa técnica
+//    sanitizada — e a tela o DESCARTAVA. Toda falha virava "não foi possível
+//    concluir o ato agora", sem caminho nenhum. É a família FS-07, que a
+//    auditoria de agosto varreu do produto e que sobreviveu aqui.
+
+describe("Travessia de 25/08 · o limite do Método é dito, não adivinhado", () => {
+  it("o contador aparece desde o campo vazio — saber quanto cabe muda o que se escreve", () => {
+    montar(CONCEITO_POS_JS3);
+    expect(screen.getByText("0 de 280")).toBeTruthy();
+  });
+
+  it("o campo continua limitado em 280 — o contador não substitui a trava", () => {
+    montar(CONCEITO_POS_JS3);
+    const campo = screen.getByLabelText("Conclusão sobre Formação Profissional") as HTMLTextAreaElement;
+    expect(campo.maxLength).toBe(280);
+  });
+
+  it("no limite, a frase explica de quem é a regra — não é o teclado que travou", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    const usuario = userEvent.setup();
+    montar(CONCEITO_POS_JS3);
+    const campo = screen.getByLabelText("Conclusão sobre Formação Profissional");
+
+    await usuario.type(campo, "x".repeat(285));
+
+    expect((campo as HTMLTextAreaElement).value.length).toBe(280);
+    expect(screen.getByText(/280 de 280 — o limite do Método/)).toBeTruthy();
+  });
+});
+
+describe("Travessia de 25/08 · o erro deixa de ser beco sem saída", () => {
+  it("com ERRO_TECNICO, o motivo técnico aparece — não só a frase genérica", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    const actions = await import("@/modules/curadoria/julgamento-actions");
+    const espia = vi.spyOn(actions, "registrarJulgamentoAction").mockResolvedValue({
+      desfecho: "ERRO_TECNICO",
+      versaoId: null,
+      detalhe: "a conclusão excede o limite de 280 caracteres",
+    });
+
+    const usuario = userEvent.setup();
+    montar(CONCEITO_POS_JS3);
+
+    await usuario.type(screen.getByLabelText("Conclusão sobre Formação Profissional"), "Minha conclusão.");
+    await usuario.click(screen.getByRole("button", { name: "Registrar juízo" }));
+
+    expect(await screen.findByText(/Não foi possível concluir o ato agora/)).toBeTruthy();
+    // O que faltava: o CAMINHO. Sem isto, o Curador perde o ato sem saber por quê.
+    expect(await screen.findByText(/Motivo: a conclusão excede o limite/)).toBeTruthy();
+
+    espia.mockRestore();
+  });
+
+  it("num desfecho que NÃO é falha, nenhum detalhe técnico polui a tela", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    const actions = await import("@/modules/curadoria/julgamento-actions");
+    const espia = vi.spyOn(actions, "registrarJulgamentoAction").mockResolvedValue({
+      desfecho: "VERSAO_JA_GRAVADA",
+      versaoId: "j-2",
+      detalhe: "ruido tecnico que nao deve aparecer",
+    });
+
+    const usuario = userEvent.setup();
+    montar(CONCEITO_POS_JS3);
+
+    await usuario.type(screen.getByLabelText("Conclusão sobre Formação Profissional"), "Minha conclusão.");
+    await usuario.click(screen.getByRole("button", { name: "Registrar juízo" }));
+
+    expect(await screen.findByText(/já estava gravado/)).toBeTruthy();
+    expect(screen.queryByText(/ruido tecnico/)).toBeNull();
+
+    espia.mockRestore();
+  });
+});
