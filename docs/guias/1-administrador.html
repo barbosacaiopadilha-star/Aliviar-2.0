@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Guia do Administrador — Aliviar</title>
+<link rel="stylesheet" href="_estilo.css">
+</head>
+<body>
+
+<div class="capa">
+  <p class="marca">Aliviar<small>Curadoria Médica Independente</small></p>
+  <h1>Guia do Administrador</h1>
+  <p class="subtitulo">Formar a Rede, dar acesso a quem trabalha, e responder uma pergunta por dia: o que precisa de alguém agora?</p>
+  <p class="carimbo">Escrito a partir da operação percorrida no sistema em 25/08/2026 — os três primeiros médicos e os papéis da equipe foram criados por estas telas.</p>
+</div>
+
+<h2>A sua tela inicial responde uma pergunta só</h2>
+
+<p>A Visão geral tem <strong>seis números</strong> sob o título "Onde agir agora": histórias aguardando Case, sem responsável, Cases atrasados, tarefas vencidas, compromissos em 7 dias e documentos pendentes. Não há gráfico, e isso é deliberado — com o volume de hoje, gráfico é decoração.</p>
+
+<h2>1 · Cadastrar um profissional</h2>
+
+<p>O cadastro é <strong>administrativo</strong>: criado e mantido pela equipe, nunca por autocadastro. Um profissional passa por um ciclo de quatro etapas antes de existir para a Curadoria.</p>
+
+<ol class="passos">
+  <li><strong>Profissionais → Novo profissional.</strong> Seis campos: nome de exibição, identificação profissional, CRM, UF do CRM, instituição e resumo profissional.
+    <span class="onde">/admin/profissionais/novo</span></li>
+  <li><strong>Etapa 2 — Rede.</strong> Aqui a tela lista as <em>Pendências para publicação</em> e diz onde resolver cada uma. Duas coisas travam a publicação:
+    <ul>
+      <li><strong>Verificação do registro no conselho</strong> — consulte a fonte oficial (ex.: portal do CFM), escolha a situação e registre <em>com a fonte</em>. Sem fonte, não conta.</li>
+      <li><strong>Área de Atuação</strong> — descrição no texto original (sempre preservado), tags normalizadas, fonte, e a marcação de verificada.</li>
+    </ul>
+  </li>
+  <li><strong>Etapa 3 — Protocolo da Prática Profissional.</strong> 29 perguntas sobre a prática dele: modalidade, turnos, prazo até a primeira consulta, local. É autodeclaração, e é o que alimenta a comparação do Motor.</li>
+  <li><strong>Publicar.</strong> Só habilita com as pendências zeradas. Publicar é um ato com motivo e autoria — o banco recusa quem tentar contornar.</li>
+</ol>
+
+<div class="aviso">
+  <span class="rotulo">O passo que parece opcional e não é</span>
+  <p>Um profissional <strong>publicado mas sem o Protocolo respondido</strong> chega à Mesa como uma ficha vazia: o Curador vê "25 lacunas de informação" e não consegue comparar nada. Publicar sem Protocolo entrega à Curadoria um nome, não um profissional.</p>
+</div>
+
+<div class="aviso">
+  <span class="rotulo">Campo que ainda não existe</span>
+  <p>O cadastro <strong>não coleta "onde a pessoa atende"</strong> (cidades e estados). O <code>UF do CRM</code> é o estado do registro no conselho, que é outro fato. Enquanto esse campo não existir, um Case que exija atendimento numa UF específica não consegue avançar. É decisão pendente do Fundador.</p>
+</div>
+
+<h2>2 · Dar acesso a quem trabalha</h2>
+
+<p>Em <strong>Equipe</strong> você concede e revoga os quatro papéis internos: Administrador, Curador Médico, Atendente e Concierge. Paciente e profissional não entram aqui — têm fluxo próprio de criação.</p>
+
+<div class="doutrina">
+  <span class="rotulo">A operação tem gente em cada nível?</span>
+  <p>A própria tela mostra o contador por papel. <strong>Se Curador ou Concierge estiverem em zero, a operação trava</strong> — o Atendente não terá a quem encaminhar, e o Curador não terá para quem entregar no fim. Confira isso antes do primeiro caso.</p>
+</div>
+
+<h2>3 · A ficha do contato (CRM)</h2>
+
+<p>Os atos comerciais vivem na ficha de cada contato: registro de interação, tarefas e agenda. Tarefas e Agenda ficam recolhidas em dobras com contador — abrem quando você precisa, não gritam a cada visita.</p>
+
+<h2>Antes do primeiro dia real</h2>
+
+<table>
+  <tr><th>O que fazer</th><th>Por quê</th></tr>
+  <tr><td>Conceder <strong>Curador</strong> e <strong>Concierge</strong> a alguém</td><td>Sem os dois, a Curadoria não atravessa: falta a quem encaminhar na entrada e na saída.</td></tr>
+  <tr><td>Responder o <strong>Protocolo</strong> de cada profissional publicado</td><td>É o que transforma um nome cadastrado em alguém comparável pelo Motor.</td></tr>
+  <tr><td>Publicar <strong>política de privacidade e termos</strong></td><td>As páginas estão no ar dizendo "o documento ainda não foi publicado". Os textos estão com o advogado desde 03/08.</td></tr>
+  <tr><td>Definir <strong>backup</strong> do banco</td><td>Não há backup automático no plano atual. Hoje o único ponto de recuperação é um dump manual.</td></tr>
+</table>
+
+<div class="aviso">
+  <span class="rotulo">Fricções conhecidas, ainda não corrigidas</span>
+  <p><strong>Formulário enviado vazio não avisa.</strong> Nos blocos da etapa Rede, salvar sem preencher não gera erro — só não salva. Confira se o dado apareceu na tela.</p>
+  <p><strong>"Documentos pendentes" mostra um traço</strong> onde os outros cinco indicadores mostram zero. É o mesmo estado, dito de dois jeitos.</p>
+</div>
+
+<p class="rodape-doc">Este guia descreve o sistema como ele está em 25/08/2026. Se algo não bater com a tela, a tela está certa e este documento está velho — avise para ser corrigido.</p>
+
+</body>
+</html>

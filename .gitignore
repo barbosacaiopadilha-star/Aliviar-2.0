@@ -95,3 +95,8 @@ scripts/local/.tmp-password-update.sql
 # execucao local, regenerada pelo proprio spec. Nao versionada — binario que
 # muda a cada rodada e nao se le em diff.
 evidencias/
+
+# Guias operacionais: o FONTE é o HTML em docs/guias/, versionado e revisável.
+# O PDF é produto — regenerável por `node scripts/gerar-guias-pdf.mjs`, e por
+# isso fora do Git: binário que muda a cada regeração polui o histórico.
+docs/guias/pdf/
