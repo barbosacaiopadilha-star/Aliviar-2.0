@@ -2242,3 +2242,68 @@ Os quatro conceitos com `MOTOR_PARTICIPATION = NUNCA` (convênio, custo, prefer�
 A Camada de Derivação (`SIM-32`) passar a propor estados a partir de `practice_evidence`. Aí o Mapa deixa de ser 25 juízos digitados e passa a ser 25 confirmações informadas — e o custo desta decisão cai por um caminho que a ADR-068 já previu.
 
 ---
+
+## ADR-093 — A Mesa se organiza pelas frases dela, não pela taxonomia do Método
+
+- **Data:** 2026-08-25
+- **Status:** **Decidida pelo Fundador** — "eu concordo em mudar pra sua ideia, pode executar da maneira que preferir". Proposta pelo Engenheiro Líder a partir da simulação do primeiro dia.
+- **Congelamento:** **a ADR-073 fica suspensa para esta obra, por decisão expressa do Fundador em 25/08.** Ela permanece em vigor para todo o resto. Esta linha existe para que a suspensão tenha data, autor e escopo — e não vire precedente para contornar o congelamento em silêncio.
+- **Dependências:** **ADR-041** (a matriz do Motor — intocada) · **ADR-068** ("28 digitações em 28 confirmações informadas") · **ADR-039/040** (as duas declarações que o Motor cruza) · responde ao desconforto que a travessia de 25/08 tornou visível.
+
+### Contexto
+
+A Mesa foi percorrida duas vezes. Da segunda, com os três Mapas do Profissional preenchidos antes — o que nunca havia acontecido.
+
+O problema que apareceu não é defeito: é **ordem**. O trabalho do Curador tem cinco partes — entender o que importa para ela, saber o que é verdade sobre cada profissional, ver onde isso se encontra, escolher três, e escrever de modo que ela consiga decidir. **A terceira parte é a única mecânica, e é justamente a que o Motor faz sozinho.**
+
+Mas a tela é dominada pela *entrada de dados* dessa parte mecânica: 29 classificações de importância, 29 estados por profissional, 18 juízos — quase oitenta atos, quase todos dentro de uma grade. O juízo humano, que é o produto, aparece depois, embaixo, em caixas de texto.
+
+**A Mesa põe em primeiro plano a única coisa que não precisava de gente.**
+
+E há uma perda concreta nisso. Ela escreveu, com as palavras dela: *"queria alguém que me explicasse as opções e que continuasse comigo depois, não só no dia da consulta"*. Alguém precisa decidir que essa frase significa `MODELO_ALTERNATIVAS` e `CONTINUIDADE_RETORNOS` como muito importantes. **Essa tradução é o ato mais valioso da etapa, e hoje ela não deixa rastro nenhum** — a grade guarda o resultado e perde o raciocínio. Ninguém consegue auditar, aprender, nem explicar a ela por que a coordenação entre profissionais ficou como relevante.
+
+### Decisão
+
+**A Mesa deixa de ser uma bancada e passa a ser o documento que ela vai ler, sendo escrito.**
+
+**Colunas:** os candidatos. **Linhas: as preocupações dela, nas palavras dela** — vindas do Protocolo da Pessoa e da história, não da taxonomia.
+
+Cada célula mostra o que se sabe, com procedência e com a lacuna visível. O Motor preenche o que alcança; o Curador escreve o juízo onde o Motor não alcança.
+
+**Os 29 subcritérios não somem: viram o vocabulário atrás de cada linha.** "Que me expliquem as opções" é `MODELO_COMUNICACAO` + `MODELO_ALTERNATIVAS` + `MODELO_DECISAO_COMPARTILHADA`. O Curador trabalha na frase dela; o Método continua rodando embaixo.
+
+**Quatro consequências:**
+
+1. O Curador nunca perde a pessoa de vista — tudo o que ele faz está debaixo de algo que ela disse.
+2. **A comparação que ela vai ler é literalmente o que está sendo construído.** Hoje existe uma tradução no fim, da matriz para os três caminhos, e é aí que o sentido se perde.
+3. O tamanho passa a ser o do caso, não o da taxonomia. Ela trouxe quatro ou cinco preocupações — são quatro ou cinco linhas, não 29 das quais metade não a toca.
+4. **As lacunas viram tarefa.** Em vez de *"23 lacunas de informação"*, a tela diz *"não sabemos se a Cecília acompanha depois — e é o que ela mais pediu"*. A primeira frase não é acionável; a segunda é.
+
+### A objeção, e a resposta
+
+**Os 29 subcritérios existem exatamente para o Curador não olhar só onde ele já pensaria em olhar.** Ela não sabe pedir "limites de atuação"; nenhuma paciente sabe. Linhas tiradas só das frases dela transformariam a Curadoria num espelho das preocupações dela — o oposto de curadoria, e um jeito novo de a Aliviar decidir com aparência de método.
+
+Isso seria fatal se não fosse resolvido, e resolve-se sem inventar nada:
+
+**Os 29 continuam rodando atrás, como conferência de completude.** Ao fim da etapa, a Mesa pergunta: *"estes oito subcritérios não correspondem a nada que ela disse. Confirma que não influenciam este caso?"* — que é precisamente a função de `NAO_INFLUENCIA`, já existente no Método e já no Motor.
+
+A cobertura continua total. **O que muda é a ordem:** começa-se pela pessoa e termina-se pela conferência, em vez de começar pela taxonomia e terminar tentando lembrar dela.
+
+### O que NÃO muda
+
+Nada do Método. O Motor continua cruzando `Importância × Estado` com as mesmas quinze células e os mesmos quatro resultados. Continua devolvendo contagens e nunca notas. A conclusão continua sendo do Curador, registrada, versionada e auditável. `NAO_INFORMADO` continua significando "olhamos e não sabemos", e `null` continua sendo regime anterior à autoria.
+
+**Esta ADR muda a superfície, não a doutrina.**
+
+### O que fecha esta ADR
+
+1. As linhas derivadas do Protocolo da Pessoa, com a frase dela visível em cada uma;
+2. A conferência final de `NAO_INFLUENCIA` sobre os subcritérios órfãos, com teste que prove que nenhum dos 29 escapa da cobertura;
+3. A Mesa antiga removida — não mantida em paralelo: duas superfícies para o mesmo ato é a segunda fonte que a ADR-066/11-08 proíbe;
+4. Uma travessia completa na Mesa nova, com o resultado comparado ao que a Mesa velha produziria.
+
+### Revisitar quando
+
+Uma Curadoria real mostrar que as preocupações dela não cabem em linhas — que a pessoa não trouxe frases, e sim silêncio. Aí a pergunta muda: **o que a Mesa mostra quando ela não sabe o que pedir?**
+
+---
