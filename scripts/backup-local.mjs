@@ -40,10 +40,10 @@ import { mkdirSync, writeFileSync, statSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { AmbienteBloqueadoError, resolverAlvoLocal } from "./env-guard.mjs";
+import { AmbienteBloqueadoError, containerDoBanco, resolverAlvoLocal } from "./env-guard.mjs";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const CONTAINER = (process.env.SUPABASE_DB_CONTAINER ?? "supabase_db_aliviar-conexao");
+const CONTAINER = containerDoBanco();
 
 // Git Bash no Windows reescreve `/mnt` como `C:/Program Files/Git/mnt` antes
 // de o argumento chegar ao container — e o `tar` falha procurando um caminho

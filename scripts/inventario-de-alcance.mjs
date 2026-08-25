@@ -34,8 +34,10 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, resolve, dirname, extname } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { containerDoBanco } from "./env-guard.mjs";
+
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const CONTAINER = process.env.SUPABASE_DB_CONTAINER ?? "supabase_db_aliviar-conexao";
+const CONTAINER = containerDoBanco();
 
 function psql(sql) {
   return execFileSync(

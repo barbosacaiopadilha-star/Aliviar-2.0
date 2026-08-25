@@ -21,8 +21,11 @@ const PERMITIDOS = new Set([
   // O seed cita o literal justamente para RECUSAR a stack original.
   "tests/apoio/seed-ciclo-e2e.ts",
   "tests/apoio/stack-local.ts",
-  "scripts/backup-local.mjs",
-  "scripts/restore-local.mjs",
+  // 25/08: os scripts .mjs deixaram de escrever o literal. A fonte deles é
+  // `containerDoBanco()` em `scripts/env-guard.mjs`, que passa a ser a única
+  // exceção desse lado — a lista ENCOLHEU em vez de crescer quando um script
+  // novo (o inventário de alcance) fez esta guarda falhar.
+  "scripts/env-guard.mjs",
   "tests/unit/c7r-container-em-um-lugar-so.test.ts",
 ]);
 

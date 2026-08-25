@@ -42,6 +42,30 @@ import { existsSync, readFileSync } from "node:fs";
 export const HOSTS_LOCAIS = ["127.0.0.1", "localhost", "[::1]", "::1"];
 
 /**
+ * O CONTÊINER DO BANCO LOCAL — um lugar só, também para os scripts.
+ *
+ * A guarda C7R (`tests/unit/c7r-container-em-um-lugar-so.test.ts`) exige que
+ * o nome venha de uma fonte única. Do lado dos TESTES essa fonte é
+ * `tests/apoio/stack-local.ts`; os scripts `.mjs` não a importam, e por isso
+ * `backup-local` e `restore-local` viviam na lista de exceções, cada um com o
+ * literal escrito à mão.
+ *
+ * Duas cópias já eram frágeis; a terceira (o inventário de alcance, 25/08)
+ * fez a guarda falhar — corretamente. Em vez de virar a terceira exceção, o
+ * nome passa a morar AQUI, nesta biblioteca que os scripts já importam, e a
+ * lista de exceções encolhe em vez de crescer.
+ *
+ * A regra é idêntica à do lado dos testes: a variável manda; sem ela, a stack
+ * de sempre. Nada muda para quem não a define.
+ */
+export const CONTAINER_DO_BANCO_PADRAO = "supabase_db_" + "aliviar-conexao";
+
+export function containerDoBanco() {
+  const escolhido = process.env.SUPABASE_DB_CONTAINER?.trim();
+  return escolhido && escolhido.length > 0 ? escolhido : CONTAINER_DO_BANCO_PADRAO;
+}
+
+/**
  * Projetos hospedados que NENHUM comando local pode tocar.
  *
  * A lista é explícita e por identificador de projeto — o ref que aparece em
