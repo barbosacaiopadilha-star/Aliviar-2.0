@@ -23,6 +23,9 @@ import { useMemo, useState, useTransition } from "react";
 import { saveReportAction } from "@/modules/curadoria/actions";
 import { resumirCandidatos } from "@/modules/curadoria/composicao-dos-tres";
 import type { Linha } from "@/modules/curadoria/mesa-por-preocupacoes";
+import { MESA_ETAPA_QUESTIONS } from "@/modules/curadoria/mesa-etapas";
+
+import { MomentoDaMesa } from "./momento-da-mesa";
 import { rascunharRelatorio } from "@/modules/curadoria/rascunho-do-relatorio";
 
 type Props = {
@@ -176,14 +179,13 @@ export function EscreverORelatorio({
 
   return (
     <section className="flex flex-col gap-5 border-t border-border pt-6">
-      <header className="flex flex-col gap-1">
-        <h3 className="text-base font-medium text-ink">O relatório</h3>
+      <MomentoDaMesa pergunta={MESA_ETAPA_QUESTIONS.RELATORIO} titulo="O relatório">
         <p className="max-w-3xl text-sm text-ink-muted">
           {entregue
             ? "Este é o texto que ela recebeu. Depois da entrega o Relatório não muda — corrigir exige compor uma nova Curadoria, e ela ficaria sabendo."
             : "O texto que ela vai ler. Cada opção precisa dizer por que está aqui, como conversa com o que ela declarou, e o que custa — o contrato não aceita opção sem custo."}
         </p>
-      </header>
+      </MomentoDaMesa>
 
       {escolhidos.map((escolhido) => {
         const dele = ler(escolhido.id);

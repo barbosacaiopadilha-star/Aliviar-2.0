@@ -28,6 +28,9 @@ import {
   IMPORTANCE_LEVELS,
   type ImportanceLevel,
 } from "@/modules/curadoria/mapa-prioridades";
+import { MESA_ETAPA_QUESTIONS } from "@/modules/curadoria/mesa-etapas";
+
+import { MomentoDaMesa } from "./momento-da-mesa";
 import { savePriorityImportancesAction } from "@/modules/curadoria/mapa-prioridades-actions";
 
 export type ItemParaClassificar = {
@@ -86,13 +89,15 @@ export function ClassificarImportancia({ caseId, itens }: Props) {
 
   return (
     <section className="flex flex-col gap-4 rounded-md border border-border p-4">
-      <header className="flex flex-col gap-1">
-        <h3 className="text-base font-medium text-ink">Quanto cada coisa importa para ela</h3>
+      <MomentoDaMesa
+        pergunta={MESA_ETAPA_QUESTIONS.PERFIL}
+        titulo="Quanto cada coisa importa para ela"
+      >
         <p className="max-w-3xl text-sm text-ink-muted">
           O Motor não cruza nada sem isto. Classificar não é opinar sobre ela: é registrar o
           que você entendeu da conversa, e ela reconhece depois, no portal dela.
         </p>
-      </header>
+      </MomentoDaMesa>
 
       <div className="flex flex-col divide-y divide-border">
         {itens.map((item) => (

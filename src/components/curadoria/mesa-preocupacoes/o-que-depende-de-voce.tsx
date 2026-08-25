@@ -35,6 +35,7 @@
  */
 
 import { PainelAtencao } from "@/components/curadoria/mesa/painel-atencao";
+import { MomentoDaMesa } from "./momento-da-mesa";
 import type { AtencaoItem } from "@/modules/curadoria/mesa-investigacao";
 import type { MesaEtapaId } from "@/modules/curadoria/mesa-etapas";
 
@@ -57,13 +58,17 @@ const DESTINO: Record<MesaEtapaId, { ancora: string; nome: string }> = {
 export function OQueDependeDeVoce({ itens }: { itens: AtencaoItem[] }) {
   return (
     <section className="flex flex-col gap-3 rounded-md border border-border px-4 py-4">
-      <header className="flex flex-col gap-1">
-        <h2 className="text-lg font-medium text-ink">O que ainda depende de você</h2>
+      <MomentoDaMesa
+        // Este momento não tem etapa no Método — ele é o índice de uma página
+        // que não cabe na tela. A pergunta é dele mesmo.
+        pergunta="O que ainda falta, e onde se resolve?"
+        titulo="O que ainda depende de você"
+      >
         <p className="max-w-3xl text-sm text-ink-muted">
           Esta página é longa. Aqui está o que continua aberto, com um salto para o lugar onde
           cada coisa se resolve — nada aqui é ranking, e a ordem é a de quem atrapalha primeiro.
         </p>
-      </header>
+      </MomentoDaMesa>
 
       <PainelAtencao
         itens={itens}

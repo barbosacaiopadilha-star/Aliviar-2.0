@@ -28,6 +28,9 @@ import {
   resumirCandidatos,
   type ResumoDoCandidato,
 } from "@/modules/curadoria/composicao-dos-tres";
+import { MESA_ETAPA_QUESTIONS } from "@/modules/curadoria/mesa-etapas";
+
+import { MomentoDaMesa } from "./momento-da-mesa";
 import type { Linha } from "@/modules/curadoria/mesa-por-preocupacoes";
 
 type Props = {
@@ -161,8 +164,7 @@ export function ComporOsTres({
 
   return (
     <section className="flex flex-col gap-5 border-t border-border pt-6">
-      <header className="flex flex-col gap-1">
-        <h3 className="text-base font-medium text-ink">Os três caminhos</h3>
+      <MomentoDaMesa pergunta={MESA_ETAPA_QUESTIONS.CAMINHOS} titulo="Os três caminhos">
         <p className="max-w-3xl text-sm text-ink-muted">
           {jaComposta?.entregue
             ? "Esta Curadoria já foi entregue — o que está abaixo é o que ela recebeu, e não muda mais. Corrigir depois da entrega exige compor uma nova."
@@ -170,7 +172,7 @@ export function ComporOsTres({
               ? "Estes três já foram compostos. O que está escrito é o seu, e você pode revisar antes de emitir."
               : "Escolha três e escreva por que cada um está aqui. Nenhuma ordem é sugerida — os cartões saem na ordem em que os profissionais entraram na Rede deste Case."}
         </p>
-      </header>
+      </MomentoDaMesa>
 
       <div className="flex flex-col gap-4">
         {resumos.map((resumo) => {

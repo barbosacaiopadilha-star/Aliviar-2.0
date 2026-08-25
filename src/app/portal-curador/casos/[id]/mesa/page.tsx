@@ -13,6 +13,7 @@ import { ComporOsTres } from "@/components/curadoria/mesa-preocupacoes/compor-os
 import { EmitirEEntregar } from "@/components/curadoria/mesa-preocupacoes/emitir-e-entregar";
 import { EscreverORelatorio } from "@/components/curadoria/mesa-preocupacoes/escrever-o-relatorio";
 import { OQueDependeDeVoce } from "@/components/curadoria/mesa-preocupacoes/o-que-depende-de-voce";
+import { MomentoDaMesa } from "@/components/curadoria/mesa-preocupacoes/momento-da-mesa";
 import { requireAnyRole } from "@/modules/auth/guard";
 import { getAuthState } from "@/modules/auth/session";
 import { falhaParaUsuario } from "@/lib/observability/erros";
@@ -26,6 +27,7 @@ import { loadJulgamentosDaAvaliacao } from "@/modules/curadoria/julgamentos-repo
 import { getActivePriorityProfile } from "@/modules/curadoria/repository";
 import { MANDATORY_FILTER_LABELS, type MandatoryFilterKind } from "@/modules/curadoria/types";
 import { loadMesaCruzamento } from "@/modules/curadoria/mesa-cruzamento";
+import { MESA_ETAPA_QUESTIONS } from "@/modules/curadoria/mesa-etapas";
 import { itensDeAtencao, type InvestigacaoProfissional } from "@/modules/curadoria/mesa-investigacao";
 import { crossCaseRelationalForProfessionals } from "@/modules/curadoria/motor-relacional-repository";
 import { carregarMesaPorPreocupacoes } from "@/modules/curadoria/mesa-por-preocupacoes-repository";
@@ -413,6 +415,38 @@ export default async function MesaPorPreocupacoesPage({
           se julga o que ela não tem como pedir, se compõem os três caminhos e se escreve o
           que ela vai reler sozinha.
         </p>
+
+        {/* O ARCO DO TRABALHO, EM UMA LINHA.
+            Numa página de doze telas, ninguém segura o percurso na cabeça — e
+            o índice de pendências responde "o que falta", não "onde isto vai
+            dar". Aqui o olho vê o começo e o FIM antes de rolar: a Mesa acaba
+            num documento que ela lê sozinha, e é isso que dá sentido a cada
+            painel do meio.
+
+            É recurso visual e não texto novo: a mesma informação que a frase
+            acima já dá, na forma que se lê sem ler. E não é régua de etapas —
+            não marca onde você está nem bloqueia nada. A Mesa antiga tinha
+            navegação por etapas, e a ADR-093 a desfez de propósito. */}
+        <ol className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-muted">
+          {[
+            "o que ela disse",
+            "quem pode participar",
+            "o que cada um responde",
+            "os três caminhos",
+            "o que ela vai ler",
+          ].map((momento, indice, todos) => (
+            <li key={momento} className="flex items-center gap-2">
+              <span className={indice === todos.length - 1 ? "text-ink" : undefined}>
+                {momento}
+              </span>
+              {indice < todos.length - 1 ? (
+                <span aria-hidden="true" className="text-border-strong">
+                  ·
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ol>
       </header>
 
       {/* QUEM PODE PARTICIPAR — a porta, antes de tudo o que vem depois.
@@ -450,10 +484,12 @@ export default async function MesaPorPreocupacoesPage({
       ) : null}
 
       <section id="quem-pode-participar" className="flex flex-col gap-4">
-        <header className="flex flex-col gap-1">
-          <h2 className="text-lg font-medium text-ink">Quem pode participar desta Curadoria</h2>
+        <MomentoDaMesa
+          pergunta={MESA_ETAPA_QUESTIONS.REDE}
+          titulo="Quem pode participar desta Curadoria"
+        >
           <p className="max-w-3xl text-sm text-ink-muted">{view.nextStep}</p>
-        </header>
+        </MomentoDaMesa>
 
         {/* O QUE ELIMINA vem ANTES de quem sobrou, porque é o que produz o
             "quem sobrou". Na Mesa antiga ele morava na etapa do Perfil, longe
@@ -496,14 +532,17 @@ export default async function MesaPorPreocupacoesPage({
           atende" — estado da informação e correspondência não se confundem
           (GRAMATICA_DAS_PERGUNTAS §6), e o juízo mora na célula, lá em cima. */}
       <section className="flex flex-col gap-4 border-t border-border pt-6">
-        <header className="flex flex-col gap-1">
-          <h2 className="text-lg font-medium text-ink">Base de Evidências de Prática</h2>
+        <MomentoDaMesa
+          // Sem etapa no Método: a verificação atravessa todas elas.
+          pergunta="O que se sabe sobre cada um, e com que fonte?"
+          titulo="Base de Evidências de Prática"
+        >
           <p className="max-w-3xl text-sm text-ink-muted">
             O que se sabe sobre cada profissional, com a fonte e a idade do fato. É por aqui
             que uma autodeclaração vira informação verificada — e a Rede inteira aparece, não
             só quem já é elegível: às vezes é a verificação que abre a porta.
           </p>
-        </header>
+        </MomentoDaMesa>
         <MesaEvidenciasPanel
           caseId={id}
           professionals={view.professionals.map((p) => ({

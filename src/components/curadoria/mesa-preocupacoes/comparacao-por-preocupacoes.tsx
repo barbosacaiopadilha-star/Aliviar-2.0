@@ -25,6 +25,9 @@ import type {
 } from "@/modules/curadoria/mesa-por-preocupacoes";
 import { COMPATIBILITY_LABELS } from "@/modules/curadoria/motor-compatibilidade";
 import { IMPORTANCE_LABELS } from "@/modules/curadoria/mapa-prioridades";
+import { MESA_ETAPA_QUESTIONS } from "@/modules/curadoria/mesa-etapas";
+
+import { MomentoDaMesa } from "./momento-da-mesa";
 import { NEED_DEGREE_LABELS } from "@/modules/curadoria/protocolos";
 import { SUBCRITERION_STATUS_LABELS } from "@/modules/curadoria/mapa-profissional";
 
@@ -358,6 +361,20 @@ function CabecalhoDaLinha({ linha, caseId }: { linha: Linha; caseId: string }) {
   // útil a dizer é o que falta perguntar.
   const semResposta = linha.resposta === null;
 
+  /**
+   * P8 E P9 NÃO SÃO CONVERSAS — `SIM-55`.
+   *
+   * São 17 perguntas e 15 conversas: `CONTINUIDADE_POS_PROCEDIMENTO` e
+   * `MODELO_ALTERNATIVAS` são declarações clínicas DELE, e o Protocolo diz
+   * isso no próprio texto ("a pessoa não é perguntada antes do diagnóstico").
+   *
+   * A tela dizia "Ainda não perguntado a ela" nas duas — uma pendência que
+   * jamais poderá ser cumprida, e que o `SIM-40` já tinha verificado como
+   * fato sem ninguém levar à tela. É a mesma doutrina do `SIM-44`: a Mesa não
+   * pode cobrar ato que o Método não pede.
+   */
+  const declaracaoClinica = linha.origem === "DECLARACAO_CLINICA";
+
   return (
     <th scope="row" className="border-b border-border px-4 py-3 text-left align-top">
       <span
@@ -367,10 +384,14 @@ function CabecalhoDaLinha({ linha, caseId }: { linha: Linha; caseId: string }) {
             : "block text-sm font-medium text-ink"
         }
       >
-        {linha.resposta ?? linha.pergunta}
+        {declaracaoClinica ? "Leitura clínica sua" : (linha.resposta ?? linha.pergunta)}
       </span>
       <span className="mt-1 block text-xs text-ink-muted">
-        {semResposta ? "Ainda não perguntado a ela." : linha.pergunta}
+        {declaracaoClinica
+          ? "Não se pergunta isto a ela — é a sua projeção sobre o quadro, e quem declara é você."
+          : semResposta
+            ? "Ainda não perguntado a ela."
+            : linha.pergunta}
       </span>
       <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-muted">
         <span className="font-mono">{linha.questionId}</span>
@@ -448,12 +469,14 @@ export function ComparacaoPorPreocupacoes({
 
   return (
     <section className="flex flex-col gap-6">
-      <header className="flex flex-col gap-1">
-        <h2 className="text-lg font-medium text-ink">O que ela pediu, e quem responde</h2>
+      <MomentoDaMesa
+        pergunta={MESA_ETAPA_QUESTIONS.COMPATIBILIDADE}
+        titulo="O que ela pediu, e quem responde"
+      >
         <p className="text-sm text-ink-muted">
           Cada linha é uma coisa que ela disse. O Motor lê e sinaliza; a conclusão é sua.
         </p>
-      </header>
+      </MomentoDaMesa>
 
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-md border border-border px-4 py-3 text-xs text-ink-muted">
         <span className="font-medium text-ink">Como ler:</span>

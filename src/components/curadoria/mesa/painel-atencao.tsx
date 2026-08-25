@@ -68,10 +68,28 @@ export function PainelAtencao({
   }
 
   return (
-    <ul className="mesa-atencao">
+    /* AS CLASSES `mesa-atencao*` NÃO FAZIAM NADA — `SIM-50`.
+     *
+     * Elas moram em `src/app/mesa-curador.css`, que **nunca foi importado por
+     * lugar nenhum**: sem `@import` no `globals.css` e sem importador em
+     * `src/`. Verificado também no commit anterior à remoção da Mesa antiga,
+     * para não confundir com regressão daquela remoção — não é.
+     *
+     * O efeito era visível e ninguém tinha olhado: a marca do item ficava
+     * numa linha sozinha, acima do nome, em vez de ao lado. Passou
+     * despercebido enquanto o painel vivia no aside da Mesa antiga; ficou
+     * evidente quando ele subiu para o topo da Mesa nova.
+     *
+     * A intenção original está preservada aqui, em utilitários: lista com
+     * respiro, marca fora do fluxo do texto, ação sublinhada embaixo.
+     */
+    <ul className="grid gap-3 text-xs leading-relaxed">
       {itens.map((item) => (
-        <li key={item.id} className="mesa-atencao__item">
-          <span aria-hidden="true" className="mesa-atencao__marca">
+        <li key={item.id} className="flex gap-2">
+          <span
+            aria-hidden="true"
+            className="mt-0.5 flex-none text-[0.6875rem] text-[var(--color-ambient-accent)]"
+          >
             {MARCA[item.tipo]}
           </span>
           <div className="min-w-0">
@@ -84,7 +102,7 @@ export function PainelAtencao({
                 nesta etapa" virava ruído idêntico e não dizia se o próximo
                 clique trocava de assunto. */}
             {ir ? (
-              <button type="button" className="mesa-atencao__ir" onClick={() => ir(item.etapa)}>
+              <button type="button" className="mt-1 text-[0.6875rem] text-[var(--color-brand-primary)] underline underline-offset-[3px]" onClick={() => ir(item.etapa)}>
                 Resolver em {nomeDoDestino(item.etapa)}
               </button>
             ) : null}
