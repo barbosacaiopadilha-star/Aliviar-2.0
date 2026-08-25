@@ -1,5 +1,17 @@
 # Backup, Restore e Saúde — procedimento operacional
 
+> **ACHADO DE 2026-08-25 — leia antes do resto.** A premissa que este documento
+> e o `backup-local.mjs` carregavam — *"o backup de produção é responsabilidade
+> do provedor (PITR gerenciado)"* — foi verificada e é **falsa**. A organização
+> `aliviar-alpha` está no plano **free** do Supabase, que não oferece backup
+> automático nem PITR. No instante da verificação, produção tinha **47 contas,
+> 6 histórias enviadas, 3 profissionais reais publicados e 28 arquivos** — e
+> nenhum ponto de recuperação, de nenhum tipo.
+>
+> Enquanto o plano não mudar, `npm run backup:producao` é o **único** ponto de
+> recuperação que existe — e ele só existe nas datas em que alguém o rodar.
+> Ver a seção 3-bis.
+
 **Bloco I.** Este documento descreve o que foi **executado e medido**, não o que se pretende fazer. Onde algo não foi provado, está dito.
 
 ---
@@ -60,6 +72,68 @@ Numa execução anterior do ciclo, a restauração dos **bytes** foi provada por
 
 **RPO:** não definido. Depende do PITR do provedor e é decisão de contrato/plano — não há como um script local respondê-la.
 
+## 3-bis. Backup de PRODUÇÃO (REC-01) — o que existe e o que não existe
+
+### O estado verificado em 2026-08-25
+
+| Fato | Valor | Como foi verificado |
+|---|---|---|
+| Organização | `aliviar-alpha` | API do Supabase |
+| **Plano** | **free** | API do Supabase (`get_organization`) |
+| Backup automático | **nenhum** | consequência do plano free |
+| PITR | **nenhum** | consequência do plano free |
+| Projeto | `aliviar-2-prod` (`sa-east-1`, PostgreSQL 17.6) | API do Supabase |
+| Dado em risco | 47 contas · 6 histórias enviadas · 3 profissionais reais publicados · 28 arquivos · 3 Cases | contagem lida do próprio banco |
+
+Os 3 profissionais reais não são cadastro trivial: cada um passou por verificação de registro no conselho **com fonte**, área de atuação verificada e formação com selo. É trabalho humano que não se refaz por script.
+
+### O comando
+
+```
+npm run backup:producao
+```
+
+Produz, numa pasta datada em `.backups/` (fora do Git): `curadoria.sql` (com GRANTs), `auth.sql`, `storage-index.sql`, os bytes em `storage/`, e `manifesto.json` com as contagens da captura.
+
+**Credenciais.** Vêm de `.env.backup.local`, na raiz, ignorado pelo Git. O script recusa rodar sem ele e imprime exatamente o que falta e onde encontrar no painel. Nunca por argumento de linha de comando: argumento vaza para o histórico do shell e para a lista de processos.
+
+**PostgreSQL 17.** O servidor hospedado é 17.6 e o `pg_dump` da stack local é 15.8 — e `pg_dump` recusa servidor mais novo que ele. Por isso o dump roda numa imagem `postgres:17-alpine` descartável. Se um dia produção subir de versão, é esta linha que muda.
+
+**Guarda invertida.** O `backup-local.mjs` recusa apontar para produção; este recusa apontar para o local. Um "backup de produção" que copiou a máquina de desenvolvimento gera pasta com tamanho e manifesto e não protege nada — falso sucesso é pior que falha. Ambos os caminhos foram exercitados: sem credencial o script instrui e sai; com alvo local, recusa.
+
+### O que foi provado e o que não foi
+
+| Parte | Estado |
+|---|---|
+| Guarda de credencial ausente | **provada** (25/08) |
+| Guarda invertida contra alvo local | **provada** (25/08) |
+| `pg_dump 17` em container alcançando banco real | **provado** (25/08 — 1,5 MB de um banco de verdade, credencial só em variável de ambiente) |
+| `psql` em container: contagens e listagem de objetos | **provado** (25/08, no caminho de código real) |
+| Execução completa contra **produção** | **NÃO EXECUTADA** — depende de credencial que não existe nesta máquina |
+| Restore de um backup de produção | **NUNCA EXECUTADO** |
+
+A distinção importa: o mecanismo está provado, a operação não. Um backup que ninguém restaurou continua sendo esperança, e essa frase vale igualmente para este script.
+
+### O que um script não resolve, e é decisão do responsável
+
+`npm run backup:producao` é **manual**. Ele protege contra perda catastrófica na data em que for rodado, e contra mais nada: um dado criado depois do último backup está a descoberto. Isso é aceitável para um produto sem paciente real; deixa de ser no dia em que houver.
+
+O que o plano pago resolve e o script não:
+
+- **Backup diário automático**, sem depender de alguém lembrar;
+- **Retenção**, que dá janela para perceber o erro antes de o ponto de recuperação sumir;
+- **PITR** (add-on separado), que é o que responde "voltar ao instante anterior ao acidente" em vez de "voltar ao último dump".
+
+Há ainda um risco do plano free que não é sobre backup: projetos gratuitos são **pausados por inatividade**. Um projeto pausado não perde dado, mas fica fora do ar até alguém reativá-lo — e descobrir isso pela paciente é diferente de descobrir pelo painel.
+
+### O que fecha o REC-01
+
+1. Decisão do responsável sobre o plano (é compra — não é ato de agente);
+2. Backup automático confirmado no painel, cobrindo `curadoria`, `auth` e `storage`;
+3. **Um restore executado de verdade**, com RTO e RPO medidos — não o RTO local de 3,9 s, que mede outra coisa.
+
+Enquanto os três não acontecerem, o REC-01 continua **P0 aberto**, e este documento não deve dizer o contrário.
+
 ## 4. Saúde (`/api/health`)
 
 `/api/build-info` **não** é health check: lê arquivo local e responde 200 com o banco caído. `/api/health` toca as dependências:
@@ -88,7 +162,7 @@ Provado nos dois estados, derrubando o container do banco de verdade: 200 → **
 
 Este documento cobre o **procedimento**. Continuam pendentes, e nenhum deles é resolvível sem acesso à produção ou decisão do responsável:
 
-- Confirmar cobertura e retenção do backup **de produção** (PITR, `auth`, `storage`) — REC-01
+- **REC-01 — respondido em parte, e a parte que falta é a que protege.** Cobertura e retenção do provedor: **verificadas em 25/08 e inexistentes** (plano free). Existe agora um backup manual de produção (`npm run backup:producao`, §3-bis) com o mecanismo provado, mas **nunca executado contra produção** e **nunca restaurado**. Fecha com: decisão de plano, backup automático confirmado no painel, e um restore real medido.
 - Definir **RPO** e RTO aceitáveis
 - Executar um restore em **produção ou staging**, não só local
 - Rollback de deploy e a matriz código × schema — REC-02

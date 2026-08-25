@@ -21,9 +21,18 @@
  * projeto Supabase (plano, PITR, políticas de rede).
  *
  * Contra PRODUÇÃO este script não roda: o alvo é resolvido pelo `env-guard`,
- * que recusa qualquer host que não seja o local. O backup de produção é
- * responsabilidade do provedor (PITR gerenciado) — o que este script entrega
- * é o PROCEDIMENTO de restauração, exercitável e medido.
+ * que recusa qualquer host que não seja o local. O que ele entrega é o
+ * PROCEDIMENTO de restauração, exercitável e medido.
+ *
+ * CORREÇÃO DE 2026-08-25. Este cabeçalho dizia que "o backup de produção é
+ * responsabilidade do provedor (PITR gerenciado)". A frase foi verificada e é
+ * FALSA: a organização está no plano free do Supabase, que não oferece backup
+ * automático nem PITR. Ela sobreviveu três semanas porque ninguém a conferiu —
+ * e enquanto durou, dava a sensação de proteção sem a proteção, que é
+ * exatamente o defeito que este script foi escrito para combater.
+ *
+ * O backup de produção agora tem script próprio: `scripts/backup-producao.mjs`
+ * (`npm run backup:producao`). Ver `docs/OPERACAO_BACKUP_RESTORE.md` §3-bis.
  */
 
 import { execFileSync, execSync } from "node:child_process";
