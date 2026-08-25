@@ -100,9 +100,17 @@ function lerCelula(
   return "SEM_INFORMACAO";
 }
 
-/** A frase que dá nome à linha — a dela quando existe, a pergunta quando não. */
+/**
+ * A frase que dá nome à linha — a dela quando existe, a pergunta quando não.
+ *
+ * O ponto médio some. Quando ela marca várias opções, a resposta é montada
+ * como "sair com o retorno já marcado · quero orientação escrita": serve de
+ * rótulo numa célula, e quebra dentro de uma frase — "apesar de não responder
+ * a X · Y" não é português. Aqui o separador vira vírgula, porque este texto
+ * vai para dentro de uma razão que alguém vai ler.
+ */
 function fraseDaLinha(linha: Linha): string {
-  return linha.resposta ?? linha.pergunta;
+  return (linha.resposta ?? linha.pergunta).replace(/\s+·\s+/g, ", ");
 }
 
 const PESOS_ESSENCIAIS: readonly NeedDegree[] = ["ESSENCIAL"];

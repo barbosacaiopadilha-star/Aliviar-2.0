@@ -184,3 +184,37 @@ describe("As razões sugeridas — resumem fato, não emitem opinião", () => {
     expect(razoesSugeridas(vazio)).toEqual([]);
   });
 });
+
+// ---------------------------------------------------------------------------
+
+// Visto na tela, com o caso real: a razão sugerida saía "apesar de não
+// responder a sair com o retorno já marcado · quero orientação escrita", e o
+// ponto médio serve de rótulo numa célula mas não é português dentro de frase.
+describe("A frase entra na prosa, não como rótulo", () => {
+  it("o separador de múltipla escolha vira vírgula na razão", () => {
+    const mesa = {
+      profissionais: [{ id: "helena", nome: "Dra. Helena" }],
+      linhas: [
+        linha({
+          resposta: "Sair com o retorno já marcado · Quero orientação escrita após a consulta",
+          celulas: [
+            {
+              profissionalId: "helena",
+              estado: "CONFIRMADO",
+              compatibilidade: "ALTA_COMPATIBILIDADE",
+              motivo: "CRUZADO",
+            },
+          ],
+        }),
+      ],
+    };
+
+    const [resumo] = resumirCandidatos(mesa);
+    const [primeira] = razoesSugeridas(resumo);
+
+    expect(primeira.texto).toContain(
+      "sair com o retorno já marcado, quero orientação escrita após a consulta",
+    );
+    expect(primeira.texto).not.toContain("·");
+  });
+});

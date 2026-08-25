@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { ComparacaoPorPreocupacoes } from "@/components/curadoria/mesa-preocupacoes/comparacao-por-preocupacoes";
+import { ComporOsTres } from "@/components/curadoria/mesa-preocupacoes/compor-os-tres";
 import { requireAnyRole } from "@/modules/auth/guard";
 import { carregarMesaPorPreocupacoes } from "@/modules/curadoria/mesa-por-preocupacoes-repository";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -49,6 +50,15 @@ export default async function MesaPorPreocupacoesPage({
     .eq("publication_status", "publicado")
     .order("display_name");
 
+  // A seleção pende do Perfil de Prioridades: é ele que carrega a autoridade
+  // do que ela declarou, e sem ele a Curadoria seria a Aliviar decidindo com
+  // aparência de método.
+  const { data: perfil } = await supabase
+    .from("priority_profiles")
+    .select("id")
+    .eq("case_id", id)
+    .maybeSingle();
+
   const mesa = await carregarMesaPorPreocupacoes(
     supabase,
     id,
@@ -66,13 +76,18 @@ export default async function MesaPorPreocupacoesPage({
         </p>
         <h1 className="text-2xl font-medium text-ink">A Mesa pelas preocupações dela</h1>
         <p className="max-w-3xl text-sm text-ink-muted">
-          Só leitura. Registrar juízo, compor os três caminhos e emitir o relatório continuam
-          na Mesa atual — esta tela existe para responder se a comparação organizada pelas
-          frases dela ajuda mais do que a organizada pela taxonomia do Método.
+          Em construção. Já dá para registrar o que ela disse, julgar e compor os três
+          caminhos; a emissão do relatório e a entrega continuam na Mesa atual.
         </p>
       </header>
 
       <ComparacaoPorPreocupacoes caseId={id} {...mesa} />
+
+      <ComporOsTres
+        priorityProfileId={(perfil as { id: string } | null)?.id ?? null}
+        linhas={mesa.linhas}
+        profissionais={mesa.profissionais}
+      />
     </main>
   );
 }

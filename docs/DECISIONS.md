@@ -2315,7 +2315,8 @@ aquilo já é a casa dela, e a ADR-084 vale inteira ali.
 2. A conferência final de `NAO_INFLUENCIA` sobre os subcritérios órfãos, com teste que prove que nenhum dos 29 escapa da cobertura;
 3. A Mesa antiga removida — não mantida em paralelo: duas superfícies para o mesmo ato é a segunda fonte que a ADR-066/11-08 proíbe;
 4. Os três caminhos que ela lê saindo em vidro (ADR-084), com a Mesa em papel;
-5. Uma travessia completa na Mesa nova, com o resultado comparado ao que a Mesa velha produziria.
+5. **Os cinco guias operacionais reescritos** — eles ensinam a Mesa antiga passo a passo, e um guia que descreve uma tela que não existe mais é pior que guia nenhum: quem o segue conclui que o software quebrou. A revisão de 25/08 já achou um erro anterior a esta ADR (`SIM-40`);
+6. Uma travessia completa na Mesa nova, com o resultado comparado ao que a Mesa velha produziria.
 
 ### Revisitar quando
 
