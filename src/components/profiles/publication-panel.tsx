@@ -131,6 +131,29 @@ export function PublicationPanel({
   const [registroState, setRegistroState] = useState<ActionResult | undefined>();
   const [areaState, setAreaState] = useState<ActionResult | undefined>();
   const [localState, setLocalState] = useState<ActionResult | undefined>();
+
+  /**
+   * ONDE ATENDE — CAMPOS CONTROLADOS, e o motivo é um defeito medido.
+   *
+   * `<form action={…}>` do React 19 RESETA os campos não-controlados depois
+   * da ação — dê certo ou dê errado. Medido na tela em 25/08:
+   *
+   *   antes do envio:   careStates="SP, RJ" · careCities="Sao Paulo"
+   *   depois da recusa: careStates=""       · careCities=""
+   *
+   * Ou seja: quem digita as UFs, as cidades e a fonte, esquece de marcar uma
+   * coisa e leva o aviso, PERDE TUDO. Redigita, erra de novo, desiste — e a
+   * ficha do profissional segue sem o dado que trava Case com exigência de
+   * estado.
+   *
+   * O projeto já tem essa doutrina escrita em outro lugar ("erro preserva o
+   * contexto: a escolha e a nota dela ficam onde estão"); aqui ela não valia.
+   * Campo controlado sobrevive ao re-render, e é o que a corrige.
+   */
+  const [careStates, setCareStates] = useState(careLocation?.states.join(", ") ?? "");
+  const [careCities, setCareCities] = useState(careLocation?.cities.join(", ") ?? "");
+  const [careSource, setCareSource] = useState(careLocation?.source ?? "");
+  const [careVerify, setCareVerify] = useState(careLocation?.verified ?? false);
   const [publishState, setPublishState] = useState<ActionResult | undefined>();
   const [registroPending, iniciarRegistro] = useTransition();
   const [areaPending, iniciarArea] = useTransition();
@@ -289,14 +312,16 @@ export function PublicationPanel({
             name="careStates"
             type="text"
             label="UFs de atendimento (siglas separadas por vírgula)"
-            defaultValue={careLocation?.states.join(", ") ?? ""}
+            value={careStates}
+            onChange={(evento) => setCareStates(evento.target.value)}
             placeholder="ex.: SP, RJ"
           />
           <Input
             name="careCities"
             type="text"
             label="Cidades (opcional, separadas por vírgula)"
-            defaultValue={careLocation?.cities.join(", ") ?? ""}
+            value={careCities}
+            onChange={(evento) => setCareCities(evento.target.value)}
             placeholder="ex.: São Paulo, Campinas"
           />
         </div>
@@ -304,13 +329,15 @@ export function PublicationPanel({
           name="careSource"
           type="text"
           label="Fonte"
-          defaultValue={careLocation?.source ?? ""}
+          value={careSource}
+          onChange={(evento) => setCareSource(evento.target.value)}
           placeholder="ex.: site institucional, entrevista"
         />
         <Checkbox
           name="careVerify"
           label="Marcar como verificada (exige fonte)"
-          defaultChecked={careLocation?.verified ?? false}
+          checked={careVerify}
+          onChange={(evento) => setCareVerify(evento.target.checked)}
         />
         <p className="text-xs text-ink-muted">
           Sem verificação, o fato entra na Mesa como declaração do próprio profissional: aparece
