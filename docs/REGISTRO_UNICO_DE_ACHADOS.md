@@ -315,6 +315,8 @@ Vale registrar o que isso significa. A arquitetura **barrou o engenheiro cinco v
 
 A Curadoria completa exige da ordem de **50 atos de juízo** do Curador (29 subcritérios do Mapa + 15 conversas do Protocolo da Pessoa + 3 declarações de área + 9 juízos técnicos + 3 justificativas de caminho + a composição). Isso não é defeito de software e não tem ID acima: é **carga operacional não medida**. O que os primeiros casos reais precisam produzir é o tempo de relógio de cada etapa — sem esse número, qualquer decisão sobre simplificar o Método é opinião, não medição.
 
+**Atualização de 2026-08-25 — o instrumento passou a existir (ADR-089).** O Fundador mandou medir, e a medição não exigiu instrumentar nada: cada ato da Curadoria já datava a si mesmo. `/admin/medicao` lê esses carimbos e devolve, por etapa, o tempo de relógio, a janela de registro e a contagem de atos — com as ressalvas de leitura na própria tela, porque um relatório de tempo que se apresenta como exato autoriza cortar o Método com falsa confiança. **O risco continua aberto**: existir instrumento não é o mesmo que ter medida. Ele fecha quando houver Curadorias reais medidas — e é aí que a análise de sobreposição entre os 29 do Mapa e as 15 conversas deixa de ser suspeita e vira evidência.
+
 
 ### Encerrados em 2026-08-25 — as duas decisões de Método (ADR-088)
 
