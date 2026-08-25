@@ -2188,3 +2188,57 @@ Por isso a execução foi adiada mesmo com a decisão tomada e autorizada: ela e
 Aparecer um estado administrativo que os atos não expliquem — e a pergunta a fazer será a mesma: *isto é fato próprio, ou é a segunda cópia de algo que já existe?*
 
 ---
+
+## ADR-092 — O Mapa do Profissional pertence à publicação: quem oferece já olhou
+
+- **Data:** 2026-08-25
+- **Status:** **Proposta pelo Engenheiro Líder, aguardando ratificação do Fundador.** A decisão é de Método; a execução da guarda fica para o descongelamento.
+- **Dependências:** responde `SIM-31` · **ADR-040 item 6** (escrita do Mapa é do Administrador) · **ADR-041** (a matriz do Motor) · **ADR-060** ("quem avalia não atesta") · **ADR-068 item 6** (quem confirma o Mapa não julga o profissional no mesmo Case) · **ADR-073** (congelamento — por isso decide-se agora e constrói-se depois).
+
+### Contexto
+
+A Curadoria percorrida em 25/08 devolveu, para os três profissionais, a mesma leitura: *"0 altas · 0 médias · 23 lacunas de informação"*. A paciente abriu a comparação dos três caminhos e leu uma comparação que não comparava nada.
+
+A investigação mostrou que **o Motor não estava quebrado — estava sem alimento**. `professional_subcriterion_map` estava vazia. Preenchido o Mapa de uma profissional pela tela que já existe, a leitura virou **7 altas · 3 médias · 13 lacunas**, com os outros dois inalterados ao lado. Nenhuma linha de código precisou mudar.
+
+Restava a pergunta que nenhum dos cinco guias operacionais responde: **quem preenche o Mapa do Profissional, e quando?**
+
+O "quem" já estava decidido e ninguém tinha percebido: a RLS `professional_subcriterion_map_write_admin` dá a escrita ao **Administrador**, e a ADR-040 item 6 diz o mesmo por extenso. O que faltava era o **quando** — e a ausência tinha uma consequência exata, encontrada no gatilho `assert_publication_requirements`:
+
+> A publicação exige CRM e UF, registro regular no conselho, e área de atuação verificada. **Não exige o Mapa.**
+
+Um profissional entra na Rede — torna-se oferecível a uma paciente real — com o Mapa em branco.
+
+### Decisão
+
+**O Mapa do Profissional é parte do que torna um profissional publicável.** Ele pertence ao mesmo momento das outras verificações: antes de a Rede poder oferecê-lo, não depois de um Case precisar dele.
+
+A razão é o que a publicação significa. Publicar é declarar *"este profissional pode ser oferecido a alguém que está decidindo sobre a própria saúde"*. Oferecer sem Mapa não é oferecer com menos informação — é oferecer **um nome que o Método não consegue comparar com nada**, e deixar a paciente diante de uma tabela de lacunas assinada pela Aliviar.
+
+**A exigência NÃO é completude.** A tela do Mapa já diz, e está certa: *"a completude é informação, não etapa obrigatória"*. Ela distingue duas coisas que não são a mesma:
+
+- **"Ainda não avaliado"** — ninguém tratou o subcritério;
+- **"Não informado"** — alguém tratou, e não havia informação suficiente.
+
+**O que a publicação passa a exigir é que nenhum subcritério lido pelo Motor esteja em "ainda não avaliado".** `NAO_INFORMADO` é resposta legítima e continua sendo — ela diz "olhamos e não sabemos", que é informação verdadeira e útil ao Curador. O que deixa de ser aceitável é "ninguém olhou", disfarçado de lacuna.
+
+Os quatro conceitos com `MOTOR_PARTICIPATION = NUNCA` (convênio, custo, preferências e restrições dela, condução de notícias difíceis) ficam fora da exigência, pela mesma razão que ficam fora do Motor.
+
+### Consequências
+
+1. **Trabalho de operação, dimensionado:** 25 juízos por profissional, feitos por quem verificou — não digitação. Para os profissionais já publicados, é dívida a pagar antes da primeira Curadoria real.
+2. **A separação de papéis já está de pé:** o Administrador escreve o Mapa, o Curador julga e seleciona. É o que a ADR-068 item 6 exige, e a arquitetura já cumpre — o que ainda não se cumpre é a segunda conta da ADR-060, e essa exceção segue datada e visível.
+3. **A guarda não entra agora.** Sob a ADR-073, esta ADR decide e não constrói. Acrescentar a exigência a `assert_publication_requirements` exige migration em produção e despublicaria profissionais já publicados — decisão de operação, não de código.
+
+### O que fecha esta ADR
+
+1. Ratificação do Fundador;
+2. Os Mapas dos profissionais **já publicados** preenchidos à mão, com `SIM-31` encerrado;
+3. No descongelamento, a exigência acrescentada a `assert_publication_requirements`, com teste que prove que um perfil sem Mapa tratado não publica;
+4. Os cinco guias operacionais atualizados — hoje nenhum menciona o Mapa.
+
+### Revisitar quando
+
+A Camada de Derivação (`SIM-32`) passar a propor estados a partir de `practice_evidence`. Aí o Mapa deixa de ser 25 juízos digitados e passa a ser 25 confirmações informadas — e o custo desta decisão cai por um caminho que a ADR-068 já previu.
+
+---
