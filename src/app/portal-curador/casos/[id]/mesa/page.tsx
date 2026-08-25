@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 
 import { ComparacaoPorPreocupacoes } from "@/components/curadoria/mesa-preocupacoes/comparacao-por-preocupacoes";
 import { ComporOsTres } from "@/components/curadoria/mesa-preocupacoes/compor-os-tres";
+import { EscreverORelatorio } from "@/components/curadoria/mesa-preocupacoes/escrever-o-relatorio";
 import { requireAnyRole } from "@/modules/auth/guard";
 import { carregarMesaPorPreocupacoes } from "@/modules/curadoria/mesa-por-preocupacoes-repository";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -59,6 +60,16 @@ export default async function MesaPorPreocupacoesPage({
     .eq("case_id", id)
     .maybeSingle();
 
+  // A seleção já composta, se houver: o relatório escreve SOBRE ela, e a
+  // ordem em que ela lê é a que o Curador decidiu ao compor.
+  const { data: selecao } = await supabase
+    .from("curated_selections")
+    .select("id, composition_rationale, curated_selection_options(professional_profile_id, rationale, position)")
+    .eq("case_id", id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   const mesa = await carregarMesaPorPreocupacoes(
     supabase,
     id,
@@ -67,6 +78,26 @@ export default async function MesaPorPreocupacoesPage({
       nome: p.display_name,
     })),
   );
+
+  const composta = selecao as
+    | {
+        composition_rationale: string | null;
+        curated_selection_options: {
+          professional_profile_id: string;
+          rationale: string;
+          position: number;
+        }[];
+      }
+    | null;
+
+  const nomes = new Map(mesa.profissionais.map((p) => [p.id, p.nome]));
+  const escolhidos = [...(composta?.curated_selection_options ?? [])]
+    .sort((a, b) => a.position - b.position)
+    .map((opcao) => ({
+      id: opcao.professional_profile_id,
+      nome: nomes.get(opcao.professional_profile_id) ?? "profissional",
+      rationale: opcao.rationale,
+    }));
 
   return (
     <main className="mx-auto flex max-w-[80rem] flex-col gap-8 px-6 py-10">
@@ -87,6 +118,14 @@ export default async function MesaPorPreocupacoesPage({
         priorityProfileId={(perfil as { id: string } | null)?.id ?? null}
         linhas={mesa.linhas}
         profissionais={mesa.profissionais}
+      />
+
+      <EscreverORelatorio
+        priorityProfileId={(perfil as { id: string } | null)?.id ?? null}
+        linhas={mesa.linhas}
+        profissionais={mesa.profissionais}
+        escolhidos={escolhidos}
+        composicaoJaEscrita={composta?.composition_rationale ?? ""}
       />
     </main>
   );
