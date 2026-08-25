@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 // Módulo operacional em .mjs. A função é pura e mora em arquivo próprio
 // justamente para poder ser importada aqui: o configurador é um roteiro que
 // roda ao ser carregado, e importá-lo executaria o roteiro.
-import { conferirCredenciais, instalarOcultacao } from "../../scripts/backup-credenciais.mjs";
+import { conferirCredenciais, descreverFormato, instalarOcultacao } from "../../scripts/backup-credenciais.mjs";
 
 // REC-01 · as conferências do configurador de backup de produção.
 //
@@ -187,5 +187,59 @@ describe("Service role key opcional — o banco não espera pelos anexos", () =>
     expect(
       conferirCredenciais({ dbUrl: "", serviceKey: "", ref: REF, chaveOpcional: true }).join(" "),
     ).toContain("connection string veio vazia");
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+// O diagnóstico que faltava, escrito a partir de um travamento real (25/08):
+// o Fundador colou algo com 32 caracteres no campo da connection string e
+// recebeu apenas "não é uma URL válida". A conferência sabia o comprimento e
+// sabia que o prefixo estava errado, e calou as duas coisas — então ele não
+// tinha como saber se havia colado o campo errado, se a colagem truncara, ou
+// se o programa estava quebrado. O backup de produção não aconteceu naquele
+// dia, e esta é a razão.
+//
+// A regra que estes testes guardam tem duas metades, e as duas importam:
+// a mensagem precisa AJUDAR, e precisa poder ser lida em voz alta numa tela
+// compartilhada sem entregar o segredo.
+describe("Diagnóstico da colagem — diz a forma do que chegou, nunca o conteúdo", () => {
+  it("conta o comprimento e aponta o prefixo errado — o caso que travou o Fundador", () => {
+    const senhaCrua = "Xk9pQ2mW7vR4tY6uI8oP1aS3dF5gH0jK"; // 32, inventada
+
+    const [problema] = conferirCredenciais({
+      dbUrl: senhaCrua,
+      serviceKey: CHAVE_BOA,
+      ref: REF,
+    });
+
+    expect(problema).toContain("32 caracteres");
+    expect(problema).toContain("postgresql://");
+  });
+
+  it("reconhece um JWT colado no campo errado e diz que é uma chave", () => {
+    expect(descreverFormato("eyJhbGciOiJIUzI1NiJ9.cargaQualquer.assinatura")).toContain("CHAVE");
+  });
+
+  it("reconhece a chave nova do painel pelo prefixo sb_", () => {
+    expect(descreverFormato("sb_secret_umValorInventadoParaOTeste")).toContain("chave do painel");
+  });
+
+  it("avisa quando a colagem trouxe quebra de linha junto", () => {
+    expect(descreverFormato(`${URL_BOA}\nsobra`)).toContain("quebra de linha");
+  });
+
+  // A metade que protege: a mensagem vai para a tela, e a tela pode estar
+  // sendo compartilhada. Nenhum pedaço reconhecível do segredo pode sair
+  // junto com a ajuda — se um dia alguém acrescentar um "recebi algo como
+  // 'Xk9p…'" para ser prestativo, é aqui que isso para.
+  it("não devolve nenhum trecho do valor recebido", () => {
+    const segredo = "postgresql://postgres:SenhaSuperSecreta123@db.exemplo.supabase.co:5432/x";
+    const mensagem = descreverFormato(segredo);
+
+    const janelas = Array.from({ length: segredo.length - 5 }, (_, i) => segredo.slice(i, i + 6));
+    const vazadas = janelas.filter((janela) => mensagem.includes(janela));
+
+    expect(vazadas).toEqual([]);
   });
 });

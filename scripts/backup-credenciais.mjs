@@ -47,6 +47,41 @@ export function instalarOcultacao(rl, escreverNaTela) {
   };
 }
 
+/**
+ * O QUE CHEGOU, SEM DIZER O QUE É — diagnóstico que não vaza.
+ *
+ * Nasceu de um travamento real (25/08): o Fundador colou algo com 32
+ * caracteres e recebeu só "a connection string não é uma URL válida". A
+ * conferência SABIA que eram 32 caracteres e que não começavam com
+ * `postgresql://`, e não contou nenhuma das duas coisas. Ele ficou sem saber
+ * se tinha colado o campo errado, se a colagem havia truncado, ou se o
+ * programa estava quebrado — e um backup de produção não aconteceu.
+ *
+ * Cada observação daqui é ESTRUTURAL: um comprimento, um prefixo conhecido,
+ * a presença de um caractere separador. Nenhuma devolve trecho do valor, e é
+ * por isso que elas podem ser impressas numa tela que alguém pode estar
+ * compartilhando. O que a mensagem diz é a FORMA do que chegou, nunca o
+ * conteúdo.
+ */
+export function descreverFormato(valor) {
+  const pistas = [`recebi ${valor.length} caracteres`];
+
+  if (/\s/.test(valor)) {
+    pistas.push("com espaço ou quebra de linha no meio — a colagem provavelmente trouxe mais do que a string");
+  }
+  if (valor.startsWith("eyJ")) {
+    pistas.push("e eles têm o formato de um token JWT — isso é uma CHAVE, não a connection string");
+  } else if (valor.startsWith("sb_")) {
+    pistas.push("e eles começam com `sb_` — isso é uma chave do painel, não a connection string");
+  } else if (!/^postgres(ql)?:\/\//.test(valor)) {
+    pistas.push("e eles não começam com `postgresql://` — o campo certo do painel é Connection string → URI");
+  } else if (!valor.includes("@")) {
+    pistas.push("e não há `@` separando a senha do endereço");
+  }
+
+  return pistas.join(", ");
+}
+
 export function conferirCredenciais({ dbUrl, serviceKey, ref, chaveOpcional = false }) {
   const problemas = [];
 
@@ -57,7 +92,9 @@ export function conferirCredenciais({ dbUrl, serviceKey, ref, chaveOpcional = fa
     try {
       u = new URL(dbUrl);
     } catch {
-      problemas.push("a connection string não é uma URL válida");
+      problemas.push(
+        `a connection string não é uma URL válida — ${descreverFormato(dbUrl)}`,
+      );
     }
     if (u) {
       if (!u.protocol.startsWith("postgres")) {
