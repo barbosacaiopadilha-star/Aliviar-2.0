@@ -4,13 +4,20 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { EligibilityPanel } from "@/components/curadoria/cruzamento-mesa";
+import { MesaEvidenciasPanel } from "@/components/curadoria/mesa-evidencias-panel";
 import { ClassificarImportancia } from "@/components/curadoria/mesa-preocupacoes/classificar-importancia";
 import { ComparacaoPorPreocupacoes } from "@/components/curadoria/mesa-preocupacoes/comparacao-por-preocupacoes";
 import { ComporOsTres } from "@/components/curadoria/mesa-preocupacoes/compor-os-tres";
 import { EmitirEEntregar } from "@/components/curadoria/mesa-preocupacoes/emitir-e-entregar";
 import { EscreverORelatorio } from "@/components/curadoria/mesa-preocupacoes/escrever-o-relatorio";
 import { requireAnyRole } from "@/modules/auth/guard";
+import { getAuthState } from "@/modules/auth/session";
 import { falhaParaUsuario } from "@/lib/observability/erros";
+import {
+  listOpenUpdateRequests,
+  loadCurrentPracticeEvidence,
+  loadEvidenceDivergences,
+} from "@/modules/curadoria/evidencias-pratica-repository";
 import { loadMesaCruzamento } from "@/modules/curadoria/mesa-cruzamento";
 import { carregarMesaPorPreocupacoes } from "@/modules/curadoria/mesa-por-preocupacoes-repository";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -108,6 +115,29 @@ export default async function MesaPorPreocupacoesPage({
       id: profissional.professionalProfileId,
       display_name: profissional.displayName,
     }));
+
+  // ------------------------------------------------------------------
+  // A BASE DE EVIDÊNCIAS — sobre a REDE INTEIRA, não só sobre os elegíveis.
+  //
+  // A diferença de recorte é de propósito e não é detalhe: a comparação é
+  // sobre quem já passou pela porta, mas a VERIFICAÇÃO é o que às vezes
+  // permite abrir a porta. Um profissional aguardando declaração de área pode
+  // estar esperando exatamente uma fonte conferida — restringi-la aos
+  // elegíveis esconderia o trabalho de quem ainda não é um.
+  //
+  // A RLS decide o alcance; o papel decide as ações. O Curador lê, abre
+  // divergência e pede atualização; assinar verificação e resolver
+  // divergência são do Administrador — é a ADR-060 ("quem avalia não atesta")
+  // com superfície.
+  // ------------------------------------------------------------------
+  const authState = await getAuthState();
+  const ehAdministrador = authState?.roles.includes("administrador") ?? false;
+  const idsDaRede = view.professionals.map((p) => p.professionalProfileId);
+  const [evidencias, divergencias, pedidosDeAtualizacao] = await Promise.all([
+    loadCurrentPracticeEvidence(supabase, idsDaRede),
+    loadEvidenceDivergences(supabase, idsDaRede),
+    listOpenUpdateRequests(supabase, idsDaRede),
+  ]);
 
   // A seleção pende do Perfil de Prioridades: é ele que carrega a autoridade
   // do que ela declarou, e sem ele a Curadoria seria a Aliviar decidindo com
@@ -210,8 +240,7 @@ export default async function MesaPorPreocupacoesPage({
             funções". Quem chega e não acha o que procura precisa saber onde
             está, e não desconfiar que quebrou. */}
         <p className="max-w-3xl text-sm text-ink-muted">
-          Duas coisas continuam só na Mesa atual: a Base de Evidências de Prática e o painel
-          de atenção.{" "}
+          Uma coisa continua só na Mesa atual: o painel de atenção.{" "}
           <Link
             href={`/coa/curadoria/casos/${id}/curadoria_tecnica`}
             className="text-ink underline underline-offset-2"
@@ -246,6 +275,51 @@ export default async function MesaPorPreocupacoesPage({
       <ClassificarImportancia caseId={id} itens={paraClassificar} />
 
       <ComparacaoPorPreocupacoes caseId={id} {...mesa} />
+
+      {/* A BASE DE EVIDÊNCIAS vem DEPOIS da comparação, e a ordem é o
+          raciocínio: é a comparação que revela as lacunas — as células que
+          dizem "Falta descobrir", cuja cor aponta a operação — e é aqui que
+          se vai descobrir. Antes da comparação, ela seria um arquivo; depois,
+          é a resposta a uma pergunta que acabou de aparecer.
+
+          E vem ANTES de compor os três: não se escolhe um caminho para
+          alguém sem ter fechado o que dava para fechar.
+
+          O painel é o MESMO da Mesa antiga. Ele nunca diz "atende" ou "não
+          atende" — estado da informação e correspondência não se confundem
+          (GRAMATICA_DAS_PERGUNTAS §6), e o juízo mora na célula, lá em cima. */}
+      <section className="flex flex-col gap-4 border-t border-border pt-6">
+        <header className="flex flex-col gap-1">
+          <h2 className="text-lg font-medium text-ink">Base de Evidências de Prática</h2>
+          <p className="max-w-3xl text-sm text-ink-muted">
+            O que se sabe sobre cada profissional, com a fonte e a idade do fato. É por aqui
+            que uma autodeclaração vira informação verificada — e a Rede inteira aparece, não
+            só quem já é elegível: às vezes é a verificação que abre a porta.
+          </p>
+        </header>
+        <MesaEvidenciasPanel
+          caseId={id}
+          professionals={view.professionals.map((p) => ({
+            professionalProfileId: p.professionalProfileId,
+            displayName: p.displayName,
+          }))}
+          rows={Object.fromEntries(evidencias)}
+          divergences={divergencias}
+          updateRequests={pedidosDeAtualizacao}
+          can={{
+            // ADR-060 — quem avalia não atesta. Assinar verificação, resolver
+            // divergência e marcar desatualização são do Administrador.
+            verify: ehAdministrador,
+            resolveDivergence: ehAdministrador,
+            markOutdated: ehAdministrador,
+            // Apontar que as fontes discordam e pedir atualização são atos de
+            // quem está investigando — o Curador precisa deles para trabalhar.
+            openDivergence: true,
+            requestUpdate: true,
+          }}
+          nowIso={new Date().toISOString()}
+        />
+      </section>
 
       <ComporOsTres
         priorityProfileId={(perfil as { id: string } | null)?.id ?? null}
