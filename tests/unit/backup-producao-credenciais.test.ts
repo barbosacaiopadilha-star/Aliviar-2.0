@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 // Módulo operacional em .mjs. A função é pura e mora em arquivo próprio
 // justamente para poder ser importada aqui: o configurador é um roteiro que
 // roda ao ser carregado, e importá-lo executaria o roteiro.
-import { conferirCredenciais } from "../../scripts/backup-credenciais.mjs";
+import { conferirCredenciais, instalarOcultacao } from "../../scripts/backup-credenciais.mjs";
 
 // REC-01 · as conferências do configurador de backup de produção.
 //
@@ -85,5 +85,60 @@ describe("Conferência das credenciais de backup — o que não pode passar", ()
         ref: null,
       }).join(" "),
     ).toContain("LOCAL");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// A ocultação da digitação — o defeito de 25/08
+// ---------------------------------------------------------------------------
+//
+// A primeira versão tinha a condição INVERTIDA: escondia o rótulo do prompt e
+// ecoava o que era digitado. Fazia o oposto do que prometia, e só apareceu
+// quando o Fundador rodou e viu o texto na tela. Naquele dia nada vazou por
+// SORTE — ele havia colado comandos, não segredos.
+//
+// Estes testes existem para que não dependa de sorte de novo.
+
+describe("Ocultação da digitação — nada do que é digitado chega à tela", () => {
+  function palco() {
+    const tela: string[] = [];
+    const rl = {} as { _writeToOutput: (t: string) => void };
+    const controle = instalarOcultacao(rl, (t: string) => tela.push(t));
+    return { tela, rl, controle };
+  }
+
+  it("com a ocultação ligada, NADA é escrito na tela", () => {
+    const { tela, rl, controle } = palco();
+    controle.ocultar();
+
+    rl._writeToOutput("s");
+    rl._writeToOutput("e");
+    rl._writeToOutput("nha-inteira-colada-de-uma-vez");
+
+    expect(tela).toEqual([]);
+  });
+
+  it("desligada, escreve normalmente — senão o prompt sumiria", () => {
+    const { tela, rl, controle } = palco();
+
+    rl._writeToOutput("Cole aqui: ");
+    controle.ocultar();
+    rl._writeToOutput("segredo");
+    controle.revelar();
+    rl._writeToOutput("\n(recebido)");
+
+    // Exatamente o que a pessoa deve ver: o rótulo e a confirmação. Nunca o
+    // valor no meio.
+    expect(tela).toEqual(["Cole aqui: ", "\n(recebido)"]);
+    expect(tela.join("")).not.toContain("segredo");
+  });
+
+  it("o estado é consultável, e começa revelado", () => {
+    const { controle } = palco();
+    expect(controle.estaOculto()).toBe(false);
+    controle.ocultar();
+    expect(controle.estaOculto()).toBe(true);
+    controle.revelar();
+    expect(controle.estaOculto()).toBe(false);
   });
 });

@@ -103,6 +103,10 @@ npm run backup:producao:configurar
 
 Pede a connection string do banco e a service role key, **com a digitação oculta**, e escreve `.env.backup.local` (permissão 600, ignorado pelo Git). O endereço do projeto ele descobre sozinho, do `project-ref` que a CLI já gravou — um campo a menos é uma chance a menos de erro de digitação num arquivo que ninguém relê.
 
+A digitação não aparece na tela, e isso é proposital — tela é onde screenshot acontece. Como sem eco não há sinal de que o valor entrou, o programa confirma **quantos caracteres recebeu**: retorno suficiente, sem revelar nada.
+
+> **Defeito corrigido em 25/08, no mesmo dia em que nasceu.** A primeira versão tinha a condição invertida: escondia o rótulo do prompt e **ecoava o que era digitado** — o oposto do que prometia. Apareceu quando o Fundador rodou e viu o texto na tela. Nada vazou, porque ele havia colado comandos e não segredos, e a validação recusou escrever o arquivo. A ocultação virou função própria (`instalarOcultacao`) com teste que prova, por mutação, que a condição invertida falha.
+
 O configurador **recusa rodar fora de um terminal de verdade**. Aceitar entrada redirecionada convidaria `echo "$SENHA" | npm run …`, que joga o segredo no histórico do shell — exatamente o que ele existe para evitar.
 
 E confere antes de escrever, porque erro de colagem aqui falha em silêncio: marcador `[YOUR-PASSWORD]` do painel, connection string sem senha, alvo local, host de outro projeto, chave publishable no lugar da service_role. As conferências são função pura em `scripts/backup-credenciais.mjs`, com teste próprio — a lógica não podia viver dentro de um roteiro que roda ao ser carregado.

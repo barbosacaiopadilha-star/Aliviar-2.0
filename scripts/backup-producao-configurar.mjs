@@ -21,7 +21,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { conferirCredenciais } from "./backup-credenciais.mjs";
+import { conferirCredenciais, instalarOcultacao } from "./backup-credenciais.mjs";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DESTINO = join(projectRoot, ".env.backup.local");
@@ -40,22 +40,23 @@ function perguntarOculto(pergunta) {
   return new Promise((resolvePromise) => {
     const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: true });
     const saida = process.stdout;
-    let escrevendo = true;
 
-    // Enquanto o valor é digitado, o `_writeToOutput` engole os caracteres.
-    rl._writeToOutput = function (texto) {
-      if (escrevendo && texto.includes(pergunta)) saida.write(texto);
-      else if (!escrevendo) saida.write(texto);
-    };
-
+    // O rótulo é escrito ANTES de ligar a ocultação — senão some da tela, que
+    // foi o defeito de 25/08: sem o rótulo à vista, não dá para saber que o
+    // programa está esperando um valor, e a pessoa cola outra coisa.
     saida.write(pergunta);
-    escrevendo = false;
+
+    const oculto = instalarOcultacao(rl, (texto) => saida.write(texto));
+    oculto.ocultar();
 
     rl.question("", (resposta) => {
-      escrevendo = true;
-      saida.write("\n");
+      oculto.revelar();
+      const valor = resposta.trim();
+      // Sem eco, a pessoa não tem NENHUM sinal de que o valor entrou. O
+      // tamanho é o retorno possível sem revelar nada.
+      saida.write(`(recebido: ${valor.length} caracteres)\n`);
       rl.close();
-      resolvePromise(resposta.trim());
+      resolvePromise(valor);
     });
   });
 }
@@ -89,7 +90,10 @@ console.log(
     "",
     ref ? `Projeto vinculado: ${ref}` : "Projeto não vinculado — informe a URL manualmente depois.",
     "",
-    "Dois valores, ambos no painel do Supabase. A digitação NÃO aparece na tela.",
+    "Dois valores, ambos no painel do Supabase.",
+    "",
+    "A digitação NAO aparece na tela — isso e proposital. Cole e tecle Enter;",
+    "o programa confirma quantos caracteres recebeu.",
     "",
   ].join("\n"),
 );
@@ -106,11 +110,11 @@ if (existsSync(DESTINO)) {
 
 console.log("1) Connection string do banco — Project Settings → Database → Connection string → URI");
 console.log("   Formato: postgresql://postgres:SENHA@db.<ref>.supabase.co:5432/postgres\n");
-const dbUrl = await perguntarOculto("   Cole aqui: ");
+const dbUrl = await perguntarOculto("   >>> COLE A CONNECTION STRING AQUI e tecle Enter: ");
 
 console.log("\n2) Service role key — Project Settings → API → service_role");
 console.log("   (é a chave secreta, não a anon/publishable)\n");
-const serviceKey = await perguntarOculto("   Cole aqui: ");
+const serviceKey = await perguntarOculto("   >>> COLE A SERVICE ROLE KEY AQUI e tecle Enter: ");
 
 const problemas = conferirCredenciais({ dbUrl, serviceKey, ref });
 

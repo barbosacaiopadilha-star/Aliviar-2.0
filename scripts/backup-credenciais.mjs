@@ -13,6 +13,40 @@
  * para consertar.
  */
 
+/**
+ * OCULTAR A DIGITAÇÃO — e por que isto virou função própria, com teste.
+ *
+ * A primeira versão morava dentro do configurador e tinha a condição
+ * INVERTIDA: escondia o rótulo do prompt e ecoava o que era digitado. Ou
+ * seja, fazia exatamente o oposto do que prometia, e só se descobriu quando
+ * o Fundador rodou e viu o texto na tela (25/08).
+ *
+ * Nenhuma credencial foi exposta naquele dia por sorte — ele colou comandos,
+ * não segredos. Não se deixa uma coisa dessas dependendo de sorte duas vezes.
+ *
+ * Recebe o `rl` e a função que escreve na tela em vez de tocar
+ * `process.stdout` direto: é isso que permite um teste provar que, com a
+ * ocultação ligada, NADA chega à tela.
+ */
+export function instalarOcultacao(rl, escreverNaTela) {
+  let oculto = false;
+
+  rl._writeToOutput = (texto) => {
+    if (oculto) return;
+    escreverNaTela(texto);
+  };
+
+  return {
+    ocultar: () => {
+      oculto = true;
+    },
+    revelar: () => {
+      oculto = false;
+    },
+    estaOculto: () => oculto,
+  };
+}
+
 export function conferirCredenciais({ dbUrl, serviceKey, ref }) {
   const problemas = [];
 
