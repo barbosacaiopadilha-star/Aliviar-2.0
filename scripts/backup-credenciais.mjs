@@ -48,6 +48,29 @@ export function instalarOcultacao(rl, escreverNaTela) {
 }
 
 /**
+ * MONTAR A CONNECTION STRING — o passo que dava errado, feito pelo programa.
+ *
+ * O painel entrega a URI com o literal `[YOUR-PASSWORD]` no lugar da senha, e
+ * a versão anterior deste configurador esperava que a pessoa substituísse o
+ * marcador à mão ANTES de colar, num campo cujo eco estava desligado. Editar
+ * texto no escuro e colar sem conferir foi exatamente o que falhou em 25/08.
+ *
+ * A senha vai ESCAPADA. Senhas do Supabase podem trazer @ : / ? #, e todos
+ * esses caracteres têm significado dentro de uma URI: colados crus, produzem
+ * um "não é uma URL válida" cuja culpa seria nossa, não de quem digitou.
+ *
+ * Devolve `null` quando não há marcador — quem chama decide o que fazer com
+ * isso, porque uma URI que já traz senha é um caso diferente (apareceu na
+ * tela) e merece um aviso, não um remendo silencioso.
+ */
+export const MARCADOR_DE_SENHA = "[YOUR-PASSWORD]";
+
+export function montarConnectionString(uriCrua, senha) {
+  if (!uriCrua.includes(MARCADOR_DE_SENHA)) return null;
+  return uriCrua.replace(MARCADOR_DE_SENHA, encodeURIComponent(senha));
+}
+
+/**
  * O QUE CHEGOU, SEM DIZER O QUE É — diagnóstico que não vaza.
  *
  * Nasceu de um travamento real (25/08): o Fundador colou algo com 32

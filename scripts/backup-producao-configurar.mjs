@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * CONFIGURA O BACKUP DE PRODUÇÃO — dois valores, digitados uma vez.
+ * CONFIGURA O BACKUP DE PRODUÇÃO — o endereço à vista, o segredo escondido.
  *
  * Por que este script existe: a única coisa que separa a produção de ter um
  * ponto de recuperação são duas credenciais que precisam sair do painel do
@@ -9,8 +9,17 @@
  * configuração à mão, com nomes de variável exatos, é um convite a errar em
  * silêncio e descobrir só no dia do desastre.
  *
- * Aqui a digitação é OCULTA (não ecoa, não fica no histórico do shell), o
- * arquivo é escrito com as chaves certas, e o que dá para conferir sem
+ * O que é segredo — a senha do banco, a service role key — é digitado sem eco
+ * e não passa pelo histórico do shell. O que NÃO é segredo — a URI que o
+ * painel entrega com `[YOUR-PASSWORD]` no lugar da senha — aparece na tela de
+ * propósito, para quem cola poder ver o que colou.
+ *
+ * Essa distinção nasceu de um travamento (25/08): com tudo oculto, uma colagem
+ * errada de 32 caracteres passou por connection string e o único retorno foi
+ * "não é uma URL válida". Esconder o que não é segredo não deixou nada mais
+ * seguro — deixou só mais cego, e a produção passou mais um dia sem backup.
+ *
+ * O arquivo é escrito com as chaves certas, e o que dá para conferir sem
  * conectar é conferido na hora.
  *
  *   npm run backup:producao:configurar
@@ -21,7 +30,12 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { conferirCredenciais, instalarOcultacao } from "./backup-credenciais.mjs";
+import {
+  conferirCredenciais,
+  instalarOcultacao,
+  MARCADOR_DE_SENHA,
+  montarConnectionString,
+} from "./backup-credenciais.mjs";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DESTINO = join(projectRoot, ".env.backup.local");
@@ -31,6 +45,27 @@ function refDoProjeto() {
   return existsSync(caminho) ? readFileSync(caminho, "utf8").trim() : null;
 }
 
+
+/**
+ * Leitura COM eco — para o que não é segredo, e por que isso importa.
+ *
+ * A URI que o painel oferece traz o marcador `[YOUR-PASSWORD]` no lugar da
+ * senha: ela não é segredo, é endereço. Esconder a digitação dela foi o que
+ * travou o Fundador em 25/08 — ele colou algo errado, não teve como ver, e o
+ * programa só soube dizer "não é uma URL válida".
+ *
+ * O que é segredo se esconde; o que não é, se mostra. Esconder tudo não é mais
+ * seguro: é só mais cego.
+ */
+function perguntarVisivel(pergunta) {
+  return new Promise((resolvePromise) => {
+    const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: true });
+    rl.question(pergunta, (resposta) => {
+      rl.close();
+      resolvePromise(resposta.trim());
+    });
+  });
+}
 
 /**
  * Leitura sem eco. O `readline` normal ecoaria a senha na tela, e tela é
@@ -90,10 +125,10 @@ console.log(
     "",
     ref ? `Projeto vinculado: ${ref}` : "Projeto não vinculado — informe a URL manualmente depois.",
     "",
-    "Dois valores, ambos no painel do Supabase.",
+    "Tudo vem do painel do Supabase, em três passos.",
     "",
-    "A digitação NAO aparece na tela — isso e proposital. Cole e tecle Enter;",
-    "o programa confirma quantos caracteres recebeu.",
+    "O endereço aparece na tela; a senha e a chave, não. O que é segredo se",
+    "esconde, o que não é se mostra — para você poder ver o que colou.",
     "",
   ].join("\n"),
 );
@@ -108,17 +143,51 @@ if (existsSync(DESTINO)) {
   }
 }
 
-console.log("1) Connection string do banco — Project Settings → Database → Connection string → URI");
-console.log("   Formato: postgresql://postgres:SENHA@db.<ref>.supabase.co:5432/postgres\n");
-const dbUrl = await perguntarOculto("   >>> COLE A CONNECTION STRING AQUI e tecle Enter: ");
+// PASSO 1 — o endereço, à vista.
+//
+// A URI do painel vem com o marcador `[YOUR-PASSWORD]` no lugar da senha.
+// Pedir que a pessoa substitua o marcador À MÃO antes de colar era o passo
+// que dava errado: é edição de texto num campo escuro, sem conferência.
+// Aqui ela cola a URI exatamente como o painel deu, vendo o que colou, e
+// quem substitui é o programa.
+console.log("1) Connection string — no painel do projeto, botão Connect → URI.");
+console.log("   Cole EXATAMENTE como o painel deu, com o [YOUR-PASSWORD] no meio.");
+console.log("   Este valor aparece na tela: ele é endereço, não segredo.");
+console.log("");
+const uriCrua = await perguntarVisivel("   >>> COLE A URI AQUI e tecle Enter: ");
 
-console.log("\n2) Service role key — Project Settings → API → service_role");
+let dbUrl = uriCrua;
+
+if (uriCrua.includes(MARCADOR_DE_SENHA)) {
+  // PASSO 2 — a senha, oculta, e só ela.
+  //
+  // Um campo curto: se a colagem falhar, a contagem de caracteres denuncia na
+  // hora, porque a pessoa sabe o tamanho da própria senha. Era impossível
+  // saber isso olhando "recebido: 32" para uma URI de 110.
+  console.log("");
+  console.log("2) Senha do banco — Project Settings → Database → Database password.");
+  console.log("   Se você não a tem, dá para redefinir ali mesmo (Reset).");
+  console.log("   Esta NÃO aparece na tela.");
+  console.log("");
+  const senha = await perguntarOculto("   >>> COLE A SENHA DO BANCO e tecle Enter: ");
+
+  dbUrl = montarConnectionString(uriCrua, senha);
+} else {
+  console.log("");
+  console.log("   A URI colada já vinha com senha — não vou pedir de novo.");
+  console.log("   Atenção: ela apareceu na sua tela. Se alguém estava vendo,");
+  console.log("   troque a senha do banco no painel depois de terminar.");
+}
+
+console.log("");
+console.log("3) Service role key — Project Settings → API → service_role");
 console.log("   (é a chave secreta, não a anon/publishable)");
 console.log("");
 console.log("   Ela serve a UMA coisa: baixar os arquivos do storage.");
 console.log("   DÁ PARA PULAR — tecle Enter vazio. O backup sai com o banco inteiro,");
 console.log("   sem os anexos, e o manifesto declara que é parcial. Banco sem anexo");
-console.log("   protege muito; esperar pelos dois segredos costuma virar backup nenhum.\n");
+console.log("   protege muito; esperar pelos dois segredos costuma virar backup nenhum.");
+console.log("");
 const serviceKey = await perguntarOculto("   >>> COLE A SERVICE ROLE KEY (ou Enter para pular): ");
 
 const problemas = conferirCredenciais({ dbUrl, serviceKey, ref, chaveOpcional: true });

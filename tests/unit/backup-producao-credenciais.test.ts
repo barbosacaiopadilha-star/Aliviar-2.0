@@ -3,7 +3,12 @@ import { describe, expect, it } from "vitest";
 // Módulo operacional em .mjs. A função é pura e mora em arquivo próprio
 // justamente para poder ser importada aqui: o configurador é um roteiro que
 // roda ao ser carregado, e importá-lo executaria o roteiro.
-import { conferirCredenciais, descreverFormato, instalarOcultacao } from "../../scripts/backup-credenciais.mjs";
+import {
+  conferirCredenciais,
+  descreverFormato,
+  instalarOcultacao,
+  montarConnectionString,
+} from "../../scripts/backup-credenciais.mjs";
 
 // REC-01 · as conferências do configurador de backup de produção.
 //
@@ -241,5 +246,43 @@ describe("Diagnóstico da colagem — diz a forma do que chegou, nunca o conteú
     const vazadas = janelas.filter((janela) => mensagem.includes(janela));
 
     expect(vazadas).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+// Montar a URI é o passo que o programa passou a fazer no lugar da pessoa.
+//
+// Antes, o configurador esperava que ela substituísse `[YOUR-PASSWORD]` à mão
+// e colasse o resultado num campo sem eco. Editar texto no escuro e colar sem
+// conferir é o que falhou em 25/08 — e o modo de falhar foi silencioso, que é
+// o pior modo para uma ferramenta de backup.
+describe("Montagem da connection string — o programa substitui, não a pessoa", () => {
+  const URI_DO_PAINEL = `postgresql://postgres:[YOUR-PASSWORD]@db.${REF}.supabase.co:5432/postgres`;
+
+  it("põe a senha no lugar do marcador e o resultado passa na conferência", () => {
+    const montada = montarConnectionString(URI_DO_PAINEL, "umaSenhaQualquer");
+
+    expect(montada).not.toContain("[YOUR-PASSWORD]");
+    expect(conferirCredenciais({ dbUrl: montada, serviceKey: CHAVE_BOA, ref: REF })).toEqual([]);
+  });
+
+  // O caractere que mais dói aqui é o `@`: cru, ele vira o separador de host da
+  // própria URI, e o endereço passa a apontar para outro lugar. Uma senha do
+  // painel pode conter qualquer um destes.
+  it("escapa senha com @ : / ? # — crus, eles reescreveriam o endereço", () => {
+    const montada = montarConnectionString(URI_DO_PAINEL, "p@ss:w/rd?x#y");
+
+    const url = new URL(montada);
+    expect(url.hostname).toBe(`db.${REF}.supabase.co`);
+    expect(decodeURIComponent(url.password)).toBe("p@ss:w/rd?x#y");
+    expect(conferirCredenciais({ dbUrl: montada, serviceKey: CHAVE_BOA, ref: REF })).toEqual([]);
+  });
+
+  // Sem marcador não há o que substituir. Devolver a URI intacta seria pior do
+  // que devolver nada: o chamador acharia que montou algo e seguiria em frente
+  // sem avisar que a senha apareceu na tela.
+  it("devolve null quando não há marcador — quem chama decide, não este módulo", () => {
+    expect(montarConnectionString(`postgresql://postgres:jaTemSenha@db.x.co:5432/p`, "outra")).toBeNull();
   });
 });
