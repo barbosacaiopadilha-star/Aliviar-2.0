@@ -8,6 +8,7 @@ import { PhaseDeclarationWorkspace } from "@/components/curadoria/phase-declarat
 import { ReportEditor } from "@/components/curadoria/report-editor";
 import { ReportStatus } from "@/components/curadoria/report-status";
 import { DevolutivaWorkspace } from "@/components/curadoria/devolutiva-workspace";
+import { EncaminharAoConcierge } from "@/components/curadoria/encaminhar-ao-concierge";
 import { CaseAlert } from "@/components/curadoria/case-alert";
 import { JourneyNavigator } from "@/components/curadoria/journey-navigator";
 import { StepMethodReference } from "@/components/curadoria/step-method-reference";
@@ -20,6 +21,7 @@ import { buildMemory } from "@/modules/curadoria/cos/memory";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRole } from "@/modules/auth/guard";
 import { getSourceStoryText } from "@/modules/cases/repository";
+import { listConcierges } from "@/modules/crm/lead-repository";
 import { loadCuradoriaRecord } from "@/modules/curadoria/cos/repository";
 import { getReportLifecycle } from "@/modules/curadoria/relatorio-assistido";
 import { prontidaoParaEmissao } from "@/modules/curadoria/prontidao-para-emissao";
@@ -87,6 +89,23 @@ export default async function EtapaPage({ params }: { params: Promise<{ id: stri
     stepId === "RELATORIO" && record.curadoriaTecnica.curatedSelectionId
       ? await getReportLifecycle(supabase, record.curadoriaTecnica.curatedSelectionId)
       : null;
+  // A PASSAGEM AO CONCIERGE (achado da curadoria simulada, 25/08): o elo
+  // final do fluxo não tinha superfície nenhuma — a transferência auditada e
+  // o portal do Concierge existiam, e o Case terminava com o Curador para
+  // sempre. Os dados só são buscados onde são lidos (Finalizar).
+  const [conciergesDisponiveis, casoAtual] =
+    stepId === "FINALIZAR"
+      ? await Promise.all([
+          listConcierges(supabase),
+          supabase
+            .schema("curadoria")
+            .from("cases")
+            .select("responsible_role")
+            .eq("id", record.caseId)
+            .maybeSingle()
+            .then(({ data }) => data),
+        ])
+      : [[] as { id: string; name: string }[], null];
   const step = journey.steps.find((entry) => entry.id === stepId)!;
   const stepPhases = definition.phases;
 
@@ -311,6 +330,17 @@ export default async function EtapaPage({ params }: { params: Promise<{ id: stri
                 observations: record.devolutiva.observations,
                 nextSteps: record.devolutiva.nextSteps,
               }}
+            />
+          ) : null}
+
+          {/* O ELO FINAL — só depois da decisão DELA: encaminhar antes seria
+              tirar o Case do Curador com a conversa ainda aberta. */}
+          {stepId === "FINALIZAR" && record.devolutiva.decision ? (
+            <EncaminharAoConcierge
+              caseId={record.caseId}
+              patientFirstName={record.patientFirstName}
+              concierges={conciergesDisponiveis}
+              responsavelAtualRole={(casoAtual?.responsible_role as string | null) ?? null}
             />
           ) : null}
 
