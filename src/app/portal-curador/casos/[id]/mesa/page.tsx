@@ -3,12 +3,15 @@ import { notFound } from "next/navigation";
 
 import type { Metadata } from "next";
 
+import { EligibilityPanel } from "@/components/curadoria/cruzamento-mesa";
 import { ClassificarImportancia } from "@/components/curadoria/mesa-preocupacoes/classificar-importancia";
 import { ComparacaoPorPreocupacoes } from "@/components/curadoria/mesa-preocupacoes/comparacao-por-preocupacoes";
 import { ComporOsTres } from "@/components/curadoria/mesa-preocupacoes/compor-os-tres";
 import { EmitirEEntregar } from "@/components/curadoria/mesa-preocupacoes/emitir-e-entregar";
 import { EscreverORelatorio } from "@/components/curadoria/mesa-preocupacoes/escrever-o-relatorio";
 import { requireAnyRole } from "@/modules/auth/guard";
+import { falhaParaUsuario } from "@/lib/observability/erros";
+import { loadMesaCruzamento } from "@/modules/curadoria/mesa-cruzamento";
 import { carregarMesaPorPreocupacoes } from "@/modules/curadoria/mesa-por-preocupacoes-repository";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -46,13 +49,65 @@ export default async function MesaPorPreocupacoesPage({
 
   if (!caso) notFound();
 
-  // A Rede deste Case. Enquanto a seleção não existe, são os publicados —
-  // que é o universo que a Mesa antiga também considera antes da triagem.
-  const { data: profissionais } = await supabase
-    .from("professional_profiles")
-    .select("id, display_name")
-    .eq("publication_status", "publicado")
-    .order("display_name");
+  // ------------------------------------------------------------------
+  // A REDE — LIDA DE ONDE ELA MORA, NUNCA MONTADA AQUI. `SIM-42`.
+  //
+  // @metodo ADR-088 — só fato verificado elimina; autodeclarado vira ressalva
+  // @metodo ADR-066/11-08 — duas superfícies para o mesmo ato é segunda fonte
+  //
+  // O que havia aqui: uma consulta própria a `professional_profiles` por
+  // `publication_status = 'publicado'`. A Rede canônica exige
+  // `ciclo_de_vida = 'PUBLICADO_ATIVO'`, recusa `is_demo`, casa
+  // `is_test_fixture` com a certificação e **subtrai a lista de bloqueio por
+  // divergência crítica em aberto**. Duas consultas, dois universos, a mesma
+  // pergunta.
+  //
+  // Não era hipótese: esta Mesa já compõe os três e já emite. Um profissional
+  // com divergência crítica aberta, um perfil de demonstração ou uma fixture
+  // de teste entrava como coluna e podia chegar ao relatório da paciente —
+  // e `validateSelection` só confere "três, sem repetido".
+  //
+  // É o `NC-22` de novo, e foi para impedi-lo que `rede-policy.ts` nasceu.
+  // A regra existe uma vez. Quem monta Rede pergunta lá.
+  // ------------------------------------------------------------------
+  let view;
+  try {
+    view = await loadMesaCruzamento(supabase, id, 0);
+  } catch (erro) {
+    // FAIL-CLOSED (gate D17): blocklist inacessível LANÇA, e a falha aparece
+    // como erro dito, com referência. Nunca uma Rede inflada — nem uma Rede
+    // vazia mentirosa.
+    const mensagem = falhaParaUsuario("mesa.preocupacoes.rede", erro, {
+      mensagem: "Não foi possível montar a Mesa deste Case agora.",
+      contexto: { caseId: id },
+    });
+    return (
+      <main className="mx-auto max-w-reading px-6 py-10">
+        <h1 className="text-2xl font-medium text-ink">A Mesa pelas preocupações dela</h1>
+        <p role="alert" className="mt-4 text-sm leading-relaxed text-ink">
+          {mensagem} A Rede deste Case não pôde ser lida — nada foi decidido nem perdido.
+          Recarregue a página; se persistir, informe a referência acima.
+        </p>
+      </main>
+    );
+  }
+
+  // AS COLUNAS SÃO OS ELEGÍVEIS, NÃO A REDE INTEIRA.
+  //
+  // A área é a porta (`applyAreaGate`) e o filtro obrigatório é o único
+  // mecanismo que elimina (ADR-088). Comparar quem não passou pela porta
+  // produziria uma comparação sobre a qual o Curador poderia agir — e a
+  // ADR-042 já fixou que quem aparece para ser selecionado é exatamente quem
+  // a Mesa declarou elegível.
+  //
+  // Quem ainda não passou não some: aparece no painel acima, com o estado, a
+  // razão em uma frase e o ato que falta. É a lacuna virando tarefa.
+  const profissionais = view.professionals
+    .filter((profissional) => profissional.eligibility.state === "ELEGIVEL")
+    .map((profissional) => ({
+      id: profissional.professionalProfileId,
+      display_name: profissional.displayName,
+    }));
 
   // A seleção pende do Perfil de Prioridades: é ele que carrega a autoridade
   // do que ela declarou, e sem ele a Curadoria seria a Aliviar decidindo com
@@ -92,10 +147,7 @@ export default async function MesaPorPreocupacoesPage({
   const mesa = await carregarMesaPorPreocupacoes(
     supabase,
     id,
-    ((profissionais ?? []) as { id: string; display_name: string }[]).map((p) => ({
-      id: p.id,
-      nome: p.display_name,
-    })),
+    profissionais.map((p) => ({ id: p.id, nome: p.display_name })),
   );
 
   const composta = selecao as
@@ -158,8 +210,8 @@ export default async function MesaPorPreocupacoesPage({
             funções". Quem chega e não acha o que procura precisa saber onde
             está, e não desconfiar que quebrou. */}
         <p className="max-w-3xl text-sm text-ink-muted">
-          Quatro coisas continuam só na Mesa atual: declarar a área de cada profissional, os
-          filtros obrigatórios, a Base de Evidências e o painel de atenção.{" "}
+          Duas coisas continuam só na Mesa atual: a Base de Evidências de Prática e o painel
+          de atenção.{" "}
           <Link
             href={`/coa/curadoria/casos/${id}/curadoria_tecnica`}
             className="text-ink underline underline-offset-2"
@@ -169,6 +221,24 @@ export default async function MesaPorPreocupacoesPage({
           .
         </p>
       </header>
+
+      {/* QUEM PODE PARTICIPAR — a porta, antes de tudo o que vem depois.
+          A área é a porta; o filtro obrigatório é o único mecanismo que
+          elimina alguém desta Curadoria (ADR-088), e é o único cujo efeito ela
+          nunca poderá auditar: jamais fica sabendo do caminho que não lhe foi
+          apresentado. Por isso ele fica em cima, à vista, com a procedência de
+          cada fato ao lado do fato.
+
+          O painel é o MESMO da Mesa antiga, de propósito: duas superfícies
+          para o mesmo ato é a segunda fonte que a ADR-066/11-08 proíbe — e foi
+          exatamente assim que o `SIM-42` nasceu. */}
+      <section className="flex flex-col gap-4">
+        <header className="flex flex-col gap-1">
+          <h2 className="text-lg font-medium text-ink">Quem pode participar desta Curadoria</h2>
+          <p className="max-w-3xl text-sm text-ink-muted">{view.nextStep}</p>
+        </header>
+        <EligibilityPanel view={view} />
+      </section>
 
       {/* A classificação vem ANTES da comparação, porque sem ela o Motor não
           cruza nada — e a tabela abaixo mostraria "falta você declarar" em
