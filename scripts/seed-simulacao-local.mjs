@@ -192,6 +192,9 @@ async function remover() {
   await supabase.from("professional_experience").delete().in("professional_profile_id", ids);
   await supabase.from("professional_care_model").delete().in("professional_profile_id", ids);
   await supabase.from("professional_competency_areas").delete().in("professional_profile_id", ids);
+  // O Mapa sai junto: deixá-lo para trás produziria linhas órfãs apontando
+  // para perfis que não existem mais.
+  await supabase.from("professional_subcriterion_map").delete().in("professional_profile_id", ids);
   const { error } = await supabase.from("professional_profiles").delete().in("id", ids);
   if (error) throw new Error(error.message);
 
@@ -283,12 +286,56 @@ async function inserir() {
     });
     if (erroExperiencia) falhas.push(`experiência: ${erroExperiencia.message}`);
 
+    // ------------------------------------------------------------------
+    // O MAPA DO PROFISSIONAL — sem ele, "perfil completo" é meia verdade.
+    //
+    // @metodo ADR-092 — o Mapa pertence à publicação
+    // @metodo ADR-041 — é daqui que o Motor come
+    //
+    // Este seed dizia "três perfis COMPLETOS, sem nenhum buraco" e não
+    // escrevia uma linha de `professional_subcriterion_map`. Nenhum dos dois
+    // seeds escrevia. O efeito é o `SIM-31` reencenado a cada semeadura: a
+    // Curadoria nasce lendo *"0 altas · 0 médias · 23 lacunas"*, e a paciente
+    // recebe uma comparação que não compara nada.
+    //
+    // Os três recebem mapas DIFERENTES de propósito. Um seed que confirmasse
+    // tudo em todo mundo produziria três colunas idênticas — e a Mesa nova
+    // encolheria cada linha como "os três respondem igual aqui", que é o
+    // oposto de ter o que comparar.
+    //
+    // `NAO_INFORMADO` entra de propósito em parte deles: é resposta legítima
+    // do Método ("olhamos e não sabemos"), e uma Rede onde tudo é
+    // `CONFIRMADO` não ensina o Curador a ler lacuna nenhuma.
+    const { data: conceitos } = await supabase
+      .from("method_subcriteria")
+      .select("id, code")
+      .eq("active", true)
+      .order("code");
+
+    const passo = { "SIM-001": 3, "SIM-002": 4, "SIM-003": 5 }[perfil.professional_identifier] ?? 3;
+    const linhasDoMapa = (conceitos ?? []).map((conceito, indice) => ({
+      professional_profile_id: data.id,
+      subcriterion_id: conceito.id,
+      status:
+        indice % passo === 0
+          ? "NAO_INFORMADO"
+          : indice % passo === 1
+            ? "NAO_CONFIRMADO"
+            : "CONFIRMADO",
+      declared_by: adminId,
+    }));
+
+    const { error: erroMapa } = await supabase
+      .from("professional_subcriterion_map")
+      .insert(linhasDoMapa);
+    if (erroMapa) falhas.push(`mapa: ${erroMapa.message}`);
+
     if (falhas.length > 0) {
       console.error(`  ⚠ ${perfil.display_name} — ${falhas.join(" · ")}`);
     } else {
       console.log(
         `  ✓ ${perfil.display_name} — ${competencias.length} competências, ` +
-          `${formacao.length} formações verificadas, experiência e atendimento preenchidos`,
+          `${formacao.length} formações verificadas, experiência, atendimento e Mapa preenchidos`,
       );
     }
   }
