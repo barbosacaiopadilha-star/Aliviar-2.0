@@ -47,7 +47,19 @@ describe("Conferência das credenciais de backup — o que não pode passar", ()
       serviceKey: CHAVE_BOA,
       ref: REF,
     });
-    expect(problemas.join(" ")).toContain("não contém o ref do projeto vinculado");
+    expect(problemas.join(" ")).toContain("não aparece em nenhum dos dois");
+  });
+
+  it("a string do POOLER é aceita — o ref mora no usuário, não no host", () => {
+    // O painel do Supabase oferece o pooler por padrão. A primeira versão
+    // procurava o ref só no host e recusava esta string — travando quem
+    // seguia exatamente a instrução da tela.
+    const problemas = conferirCredenciais({
+      dbUrl: `postgresql://postgres.${REF}:umaSenhaQualquer@aws-0-sa-east-1.pooler.supabase.com:5432/postgres`,
+      serviceKey: CHAVE_BOA,
+      ref: REF,
+    });
+    expect(problemas).toEqual([]);
   });
 
   it("connection string sem senha é recusada", () => {

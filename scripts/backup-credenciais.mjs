@@ -71,9 +71,14 @@ export function conferirCredenciais({ dbUrl, serviceKey, ref }) {
       const host = u.hostname;
       if (host === "localhost" || host === "127.0.0.1") {
         problemas.push("a connection string aponta para o banco LOCAL, não para produção");
-      } else if (ref && !host.includes(ref)) {
+      } else if (ref && !host.includes(ref) && !u.username.includes(ref)) {
+        // O ref pode estar no HOST (conexão direta,
+        // `db.<ref>.supabase.co`) ou no USUÁRIO (pooler,
+        // `postgres.<ref>@aws-0-<regiao>.pooler.supabase.com`). Procurar só no
+        // host recusaria a string do pooler — que é justamente a que o painel
+        // oferece por padrão hoje. Descoberto travando o Fundador em 25/08.
         problemas.push(
-          `a connection string aponta para ${host}, que não contém o ref do projeto vinculado (${ref})`,
+          `a connection string aponta para ${host} com usuário ${u.username}, e o ref do projeto vinculado (${ref}) não aparece em nenhum dos dois`,
         );
       }
     }
