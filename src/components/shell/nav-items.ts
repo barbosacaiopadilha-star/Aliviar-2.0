@@ -83,6 +83,11 @@ export function getNavGroups(role: string, basePath: string): NavGroup[] {
         },
         { label: "Equipe", href: `${basePath}/equipe`, icon: "team" },
         { label: "Casos", href: `${basePath}/casos`, icon: "cases" },
+        // ADR-089 · o item que o comentário abaixo esperava. Não é o painel
+        // do ACE que saiu: é a medição do custo de uma Curadoria, lida do que
+        // o sistema já registrava. Fica no Administrador e NÃO no Curador —
+        // cronômetro à vista de quem exerce juízo clínico pressiona o juízo.
+        { label: "Medição", href: `${basePath}/medicao`, icon: "analytics" },
       ],
     });
     // O grupo "Analytics" levava a `/admin/ace` — o painel de um motor que não

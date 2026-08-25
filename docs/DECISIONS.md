@@ -2004,3 +2004,52 @@ A ADR-073 permite "corrigir defeito visto no uso real". É exatamente esta a lei
 Um Case real for eliminado — ou deixar de ser — por um destes filtros, e o Curador contar o que aconteceu na conversa com o profissional. É o primeiro dado verdadeiro que este desenho vai receber; até lá, ele é a hipótese mais honesta disponível.
 
 ---
+
+## ADR-089 — Medir a Curadoria: instrumento não é funcionalidade
+
+- **Data:** 2026-08-25
+- **Status:** Decidida pelo Fundador na conversa sobre o que melhorar na operação completa ("meça o tempo entao"), depois de eu apresentar a medição como a única melhoria que **transforma as outras quatro de opinião em decisão**.
+- **Dependências:** nasce da Curadoria simulada de 25/08 · responde à pergunta aberta do Fundador de 24/08 ("será que cortando algumas coisas, simplificando, pode ajudar?") · **relação com a ADR-073 tratada explicitamente abaixo, não contornada**.
+
+### Contexto
+
+A operação da Aliviar nunca foi medida. Uma Curadoria completa exige da ordem de 56 atos de juízo — 29 subcritérios do Mapa, 15 conversas do Protocolo da Pessoa, as declarações de área, os juízos técnicos, as justificativas dos três caminhos — e não existe um único número sobre quanto isso custa em tempo.
+
+O efeito prático dessa ausência apareceu numa conversa real: o Fundador perguntou se simplificar ajudaria, e a resposta honesta foi que ninguém sabe. Sem medição, "o Mapa de 29 é demais" e "o Mapa de 29 está certo" são a mesma frase com o sinal trocado. Pior: um corte feito sem medida tem chance alta de acertar a etapa que *parece* longa na tela em vez da que *consome* o tempo.
+
+### Sobre a ADR-073 — dito em voz alta, não contornado
+
+Medir não é conserto de defeito. É construção, e a ADR-073 congela construção. Isto foi dito ao Fundador antes da execução, e a leitura sob a qual se seguiu fica registrada aqui:
+
+**Instrumento não é funcionalidade.** O congelamento existe para que a primeira Curadoria real aconteça e produza evidência. Instrumento que chega *depois* do fato não mede o fato — e a primeira Curadoria real é exatamente o evento que a ADR-073 está esperando. Construir a medição depois dela seria perder a única primeira vez que existe.
+
+O critério que impede esta leitura de virar precedente frouxo: **vale para o que observa a operação sem alterá-la**. Nada aqui muda o que qualquer operador vê, faz ou pode fazer. Se uma construção futura se justificar por "é só instrumento" mas mudar o trabalho de alguém, não é este caso.
+
+### Decisões
+
+1. **Medir é ler, não instrumentar.** Cada ato da Curadoria já datava a si mesmo desde que foi construído: `case_priority_map.created_at` (um por subcritério), `case_needs.declared_at` (uma por conversa), `area_compatibility_declarations`, `criterion_declarations`, `consultation_records.understanding_confirmed_at`, `emitted_at`, `delivered_at`, `decided_at`. **Zero tabela nova, zero coluna nova, zero migration, zero escrita.** É a quarta vez nesta sessão que o banco se prova à frente das telas.
+
+2. **Duas grandezas, nunca uma.** Um número só mentiria de um jeito difícil de perceber.
+   - **Espera** — tempo de relógio entre o fim de uma etapa e o fim da seguinte. Inclui noite, fim de semana e a espera pela paciente. É o tempo que *ela* sente passando; não é esforço de ninguém.
+   - **Janela** — do primeiro ao último registro dentro da etapa. É o mais perto de "quanto tempo alguém ficou nisso" que este dado permite, e é declarado como **piso, nunca medida de esforço**: quem abre a Mesa e almoça infla a janela; quem prepara no papel e registra de uma vez a esvazia.
+   - **Atos** — quantos registros a etapa exigiu. É o único dos três sem ressalva.
+
+3. **Ausência nunca vira zero.** Etapa que não aconteceu, data ilegível e relógio para trás devolvem "sem medida", não um instante plausível. Um relatório de tempo que se apresenta como exato é pior que nenhum — ele autoriza cortar o Método com falsa confiança. Travado em teste.
+
+4. **Isto mede o Método, não a pessoa.** Cada Case tem um Curador, então o dado é inevitavelmente atribuível. As escolhas de desenho que fecham a porta da vigilância: o módulo não carrega autoria, não ordena por duração (ordenar por "quem demorou" é o primeiro passo da deriva) e não produz nenhum agregado por Curador. A pergunta é "quanto custa esta etapa", nunca "quem é lento".
+
+5. **A superfície é do Administrador e NÃO do Curador.** Cronômetro à vista de quem exerce juízo clínico pressiona esse juízo, e pressa é o que o Método menos quer comprar. Além disso corromperia a própria medição: ninguém mede bem o que se sabe medido.
+
+6. **Nenhum conteúdo clínico atravessa o módulo.** Os `select` pedem data e nada mais. A RLS continua sendo a autoridade — quem chama passa o próprio cliente, não há `service_role` e não há capability nova: a medição não enxerga mais do que quem a pediu.
+
+### O que esta decisão NÃO autoriza
+
+- **Não autoriza cortar nada do Método.** Ela produz o número; a decisão de simplificar continua sendo do Fundador, e agora com dado em vez de impressão.
+- **Não é observabilidade de produto.** Não há série temporal, não há gráfico, não há painel — pela mesma régua da ADR-087: com volume próximo de zero, gráfico é decoração.
+- **Não mede o Concierge.** O acompanhamento não tem atos datados suficientes para medir, e inventar marcos seria instrumentar — exatamente o que esta ADR diz que não se fez.
+
+### Revisitar quando
+
+Houver três Curadorias reais medidas. Aí o número deixa de ser anedota e a conversa sobre simplificar o Método pode acontecer de verdade — inclusive a análise de sobreposição entre os 29 do Mapa e as 15 conversas, que hoje é suspeita minha sem nenhuma evidência.
+
+---
