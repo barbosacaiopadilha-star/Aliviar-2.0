@@ -162,6 +162,37 @@ describe("Medição da Curadoria — o que não pode passar", () => {
     expect(medicao.registrosTotais).toBe(56);
   });
 
+  it("etapas intercaladas não fazem o relógio andar mais rápido que o relógio", () => {
+    // O Curador intercalou: registrou Mapa às 10:00 e 11:00, e no meio disso
+    // registrou o Protocolo às 10:20 e 10:40. As duas janelas se sobrepõem.
+    const medicao = medirCuradoria({
+      ...VAZIO,
+      caseAbertoEm: H("09:00"),
+      mapa: [H("10:00"), H("11:00")],
+      protocoloDaPessoa: [H("10:20"), H("10:40")],
+    });
+
+    const mapa = medicao.etapas.find((e) => e.id === "MAPA")!;
+    const protocolo = medicao.etapas.find((e) => e.id === "PROTOCOLO_DA_PESSOA")!;
+    expect(mapa.janelaMs).toBe(HORA);
+    expect(protocolo.janelaMs).toBe(20 * MINUTO);
+
+    // Somar daria 1h20 — mais tempo do que de fato passou entre 10:00 e 11:00.
+    // A união conta o período uma vez só.
+    expect(medicao.janelaTotalMs).toBe(HORA);
+  });
+
+  it("etapas separadas somam, porque não há sobreposição a descontar", () => {
+    const medicao = medirCuradoria({
+      ...VAZIO,
+      caseAbertoEm: H("08:00"),
+      mapa: [H("09:00"), H("09:30")],
+      protocoloDaPessoa: [H("14:00"), H("14:30")],
+    });
+
+    expect(medicao.janelaTotalMs).toBe(HORA);
+  });
+
   it("a medição parcial se declara parcial", () => {
     const medicao = medirCuradoria({
       ...VAZIO,

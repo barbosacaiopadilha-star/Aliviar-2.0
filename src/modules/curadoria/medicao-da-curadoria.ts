@@ -99,6 +99,8 @@ export type AtosDoCase = {
 export type EtapaMedida = {
   id: EtapaId;
   label: string;
+  /** Primeiro registro da etapa. `null` quando a etapa fecha num ato único. */
+  iniciadaEm: string | null;
   /** Quando a etapa se fechou. `null` = ainda não fechou. */
   concluidaEm: string | null;
   /** Relógio desde o fim da etapa anterior. Inclui espera e noite. */
@@ -113,7 +115,11 @@ export type MedicaoDaCuradoria = {
   etapas: EtapaMedida[];
   /** Do Case aberto à decisão dela. `null` enquanto não houver decisão. */
   totalMs: number | null;
-  /** Soma das janelas de registro — o piso do trabalho concentrado. */
+  /**
+   * União das janelas de registro — o piso do trabalho concentrado.
+   * União e não soma: etapas intercaladas se sobrepõem, e somar faria o
+   * relógio andar mais rápido que o relógio.
+   */
   janelaTotalMs: number;
   /** Quantos atos a Curadoria inteira exigiu. É o número da carga. */
   registrosTotais: number;
@@ -164,6 +170,7 @@ function etapaPorRegistros(
   return {
     id,
     label: ETAPA_LABELS[id],
+    iniciadaEm: primeiro === null ? null : new Date(primeiro).toISOString(),
     concluidaEm: ultimo === null ? null : new Date(ultimo).toISOString(),
     esperaMs: intervalo(anterior, ultimo),
     janelaMs: intervalo(primeiro, ultimo),
@@ -182,11 +189,54 @@ function etapaPorMarco(
   return {
     id,
     label: ETAPA_LABELS[id],
+    iniciadaEm: null,
     concluidaEm: t === null ? null : new Date(t).toISOString(),
     esperaMs: intervalo(anterior, t),
     janelaMs: null,
     registros,
   };
+}
+
+/**
+ * A JANELA TOTAL É UNIÃO, NÃO SOMA.
+ *
+ * As etapas da Mesa são modeladas em sequência, mas o Curador pode intercalar
+ * — registrar um subcritério do Mapa, voltar a uma conversa do Protocolo,
+ * declarar uma área. Quando isso acontece, as janelas se SOBREPÕEM, e somá-las
+ * produziria um total maior que o tempo que de fato passou: um relógio que
+ * anda mais rápido que o relógio.
+ *
+ * A união trata o trabalho intercalado pelo que ele é — o mesmo período,
+ * contado uma vez.
+ */
+function uniaoDasJanelas(etapas: readonly EtapaMedida[]): number {
+  const intervalos = etapas
+    .map((e) => [ms(e.iniciadaEm), ms(e.concluidaEm)] as const)
+    .filter((par): par is readonly [number, number] => par[0] !== null && par[1] !== null && par[1] > par[0])
+    .sort((a, b) => a[0] - b[0]);
+
+  let total = 0;
+  let inicioAtual: number | null = null;
+  let fimAtual = 0;
+
+  for (const [inicio, fim] of intervalos) {
+    if (inicioAtual === null) {
+      inicioAtual = inicio;
+      fimAtual = fim;
+      continue;
+    }
+    if (inicio <= fimAtual) {
+      // Sobrepõe ou encosta: estende o bloco corrente em vez de contar de novo.
+      fimAtual = Math.max(fimAtual, fim);
+    } else {
+      total += fimAtual - inicioAtual;
+      inicioAtual = inicio;
+      fimAtual = fim;
+    }
+  }
+
+  if (inicioAtual !== null) total += fimAtual - inicioAtual;
+  return total;
 }
 
 // ---------------------------------------------------------------------------
@@ -243,7 +293,7 @@ export function medirCuradoria(atos: AtosDoCase): MedicaoDaCuradoria {
 
   avancar(etapaPorMarco("DECISAO", atos.decisaoEm, cursor));
 
-  const janelaTotalMs = etapas.reduce((soma, e) => soma + (e.janelaMs ?? 0), 0);
+  const janelaTotalMs = uniaoDasJanelas(etapas);
   const registrosTotais = etapas.reduce((soma, e) => soma + e.registros, 0);
 
   return {
