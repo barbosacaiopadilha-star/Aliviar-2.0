@@ -48,18 +48,18 @@ describe("Medição da Curadoria — as duas grandezas", () => {
     expect(mapa.janelaMs).toBe(30 * MINUTO);
   });
 
-  it("etapa de registro único tem janela nula, não zero", () => {
+  it("etapa de ato único tem janela nula, não zero", () => {
     const medicao = medirCuradoria({
       ...VAZIO,
       caseAbertoEm: H("08:00"),
-      historiaEnviadaEm: H("09:00"),
+      composicaoEm: H("09:00"),
     });
 
-    const entrada = medicao.etapas.find((e) => e.id === "ENTRADA")!;
-    expect(entrada.esperaMs).toBe(HORA);
+    const composicao = medicao.etapas.find((e) => e.id === "COMPOSICAO")!;
+    expect(composicao.esperaMs).toBe(HORA);
     // `null` porque não há janela a medir — dizer "0" afirmaria que foi
     // instantâneo, e ninguém sabe disso.
-    expect(entrada.janelaMs).toBeNull();
+    expect(composicao.janelaMs).toBeNull();
   });
 
   it("etapa que não aconteceu não vira zero — fica sem medida", () => {
@@ -85,7 +85,8 @@ describe("Medição da Curadoria — a cadeia das etapas", () => {
       mapa: [H("11:00")],
     });
 
-    expect(medicao.etapas.find((e) => e.id === "ENTRADA")!.esperaMs).toBe(HORA);
+    // A Entrada é a ORIGEM da jornada: não há etapa anterior de quem esperar.
+    expect(medicao.etapas.find((e) => e.id === "ENTRADA")!.esperaMs).toBeNull();
     // Do fim da Entrada (09:00) ao fim do Acolhimento (10:00) — não das 08:00.
     expect(medicao.etapas.find((e) => e.id === "ACOLHIMENTO")!.esperaMs).toBe(HORA);
     expect(medicao.etapas.find((e) => e.id === "MAPA")!.esperaMs).toBe(HORA);
@@ -158,8 +159,9 @@ describe("Medição da Curadoria — o que não pode passar", () => {
       avaliacao: Array.from({ length: 9 }, (_, i) => H(`12:${String(i).padStart(2, "0")}`)),
     });
 
-    // 29 + 15 + 3 + 9 = 56 atos de juízo, medidos e não estimados.
-    expect(medicao.registrosTotais).toBe(56);
+    // 1 (Case aberto) + 29 + 15 + 3 + 9 = 57 atos registrados, medidos e
+    // não estimados. Os 56 de juízo mais a admissão que os precede.
+    expect(medicao.registrosTotais).toBe(57);
   });
 
   it("etapas intercaladas não fazem o relógio andar mais rápido que o relógio", () => {
@@ -265,5 +267,66 @@ describe("Registro em lote — ausência de medida, nunca medida de zero", () =>
     });
     // Só a Rede tem janela real: 20 minutos.
     expect(medicao.janelaTotalMs).toBe(20 * MINUTO);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// A Entrada tem dois atos, e a ordem entre eles varia — achado de 25/08
+// ---------------------------------------------------------------------------
+//
+// A primeira versão presumia que o Case nasce e a história chega depois.
+// A operação não garante isso: a paciente pode escrever antes de o Atendente
+// abrir o Case, e em produção há histórias enviadas que nunca viraram Case.
+// Com a ordem invertida, o intervalo dava negativo e a tela mostrava "—" —
+// que se lê como "não aconteceu". Dizer isso sobre dois atos que aconteceram
+// é pior do que não medir.
+
+describe("Entrada — ordem observada, nunca presumida", () => {
+  it("com a história ANTES do Case, a Entrada continua medindo", () => {
+    const medicao = medirCuradoria({
+      ...VAZIO,
+      historiaEnviadaEm: H("08:00"),
+      caseAbertoEm: H("09:00"),
+    });
+
+    const entrada = medicao.etapas.find((e) => e.id === "ENTRADA")!;
+    expect(entrada.registros).toBe(2);
+    expect(entrada.janelaMs).toBe(HORA);
+    expect(entrada.concluidaEm).toBe(H("09:00"));
+  });
+
+  it("com o Case ANTES da história, mede igual — a ordem não muda o resultado", () => {
+    const medicao = medirCuradoria({
+      ...VAZIO,
+      caseAbertoEm: H("08:00"),
+      historiaEnviadaEm: H("09:00"),
+    });
+
+    const entrada = medicao.etapas.find((e) => e.id === "ENTRADA")!;
+    expect(entrada.registros).toBe(2);
+    expect(entrada.janelaMs).toBe(HORA);
+  });
+
+  it("a jornada é contada da ORIGEM observada, não da abertura do Case", () => {
+    // Ela escreveu às 08:00; o Case só nasceu às 09:00. O tempo dela começou
+    // às 08:00 — contar do Case esconderia a primeira hora de espera.
+    const medicao = medirCuradoria({
+      ...VAZIO,
+      historiaEnviadaEm: H("08:00"),
+      caseAbertoEm: H("09:00"),
+      decisaoEm: H("12:00"),
+    });
+
+    expect(medicao.totalMs).toBe(4 * HORA);
+    expect(medicao.completa).toBe(true);
+  });
+
+  it("história enviada que nunca virou Case ainda é Entrada medida", () => {
+    const medicao = medirCuradoria({ ...VAZIO, historiaEnviadaEm: H("08:00") });
+    const entrada = medicao.etapas.find((e) => e.id === "ENTRADA")!;
+    expect(entrada.registros).toBe(1);
+    expect(entrada.concluidaEm).toBe(H("08:00"));
+    // Um ato só: não há janela a medir, e isso não é zero.
+    expect(entrada.janelaMs).toBeNull();
   });
 });

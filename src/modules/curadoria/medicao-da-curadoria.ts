@@ -62,7 +62,7 @@ export type EtapaId =
   | "DECISAO";
 
 export const ETAPA_LABELS: Record<EtapaId, string> = {
-  ENTRADA: "Entrada — do Case aberto à história enviada",
+  ENTRADA: "Entrada — Case aberto e história enviada",
   ACOLHIMENTO: "Acolhimento — até ela reconhecer a própria história",
   MAPA: "Mapa de Prioridades — os subcritérios",
   PROTOCOLO_DA_PESSOA: "Protocolo da Pessoa — as conversas",
@@ -267,7 +267,28 @@ function uniaoDasJanelas(etapas: readonly EtapaMedida[]): number {
  */
 export function medirCuradoria(atos: AtosDoCase): MedicaoDaCuradoria {
   const etapas: EtapaMedida[] = [];
-  let cursor = ms(atos.caseAbertoEm);
+
+  // A ENTRADA TEM DOIS ATOS, E A ORDEM ENTRE ELES VARIA.
+  //
+  // A primeira versão assumia que o Case nasce e depois a história chega, e
+  // media a Entrada como o intervalo entre os dois nessa ordem. A operação
+  // real não garante isso: a paciente pode escrever antes de o Atendente abrir
+  // o Case, e em produção há histórias enviadas que nunca viraram Case.
+  //
+  // Quando a ordem se invertia, o intervalo dava negativo, virava `null` — e
+  // a tela mostrava "—", que se lê como "não aconteceu". Dizer "não
+  // aconteceu" sobre dois atos que aconteceram é pior que não medir.
+  //
+  // A Entrada passa a ser o que ela é: a fase de admissão, com dois atos cuja
+  // ordem é observada, não presumida. Ela começa no primeiro deles e fecha no
+  // último, e a jornada inteira é contada a partir daí.
+  const entrada = etapaPorRegistros(
+    "ENTRADA",
+    [atos.caseAbertoEm, atos.historiaEnviadaEm].filter((v): v is string => Boolean(v)),
+    null,
+  );
+  const origem = ms(entrada.iniciadaEm);
+  let cursor = origem;
 
   const avancar = (etapa: EtapaMedida) => {
     etapas.push(etapa);
@@ -275,7 +296,7 @@ export function medirCuradoria(atos: AtosDoCase): MedicaoDaCuradoria {
     if (fim !== null) cursor = fim;
   };
 
-  avancar(etapaPorMarco("ENTRADA", atos.historiaEnviadaEm, cursor));
+  avancar(entrada);
 
   // O Acolhimento tem três atos e fecha no último deles — o reconhecimento da
   // devolução, que é o marco que o Método define como fim da etapa.
@@ -313,7 +334,10 @@ export function medirCuradoria(atos: AtosDoCase): MedicaoDaCuradoria {
 
   return {
     etapas,
-    totalMs: intervalo(ms(atos.caseAbertoEm), ms(atos.decisaoEm)),
+    // Da ORIGEM observada — o primeiro ato de admissão, seja ele qual for —
+    // até a escolha dela. Contar da abertura do Case perderia o tempo em que
+    // ela já esperava, quando a história veio antes.
+    totalMs: intervalo(origem, ms(atos.decisaoEm)),
     janelaTotalMs,
     registrosTotais,
     completa: ms(atos.decisaoEm) !== null,
