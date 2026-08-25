@@ -34,7 +34,7 @@ import {
   AREA_COMPATIBILITY_LABELS,
   type AreaCompatibility,
 } from "@/modules/curadoria/cruzamento";
-import { ELIGIBILITY_LABELS } from "@/modules/curadoria/mesa-cruzamento-view";
+import { ELIGIBILITY_LABELS, FILTER_ORIGIN_LABELS } from "@/modules/curadoria/mesa-cruzamento-view";
 import type { MesaCruzamentoView, MesaProfessional } from "@/modules/curadoria/mesa-cruzamento";
 import { declareAreaAction } from "@/modules/curadoria/cruzamento-actions";
 
@@ -130,6 +130,20 @@ function ProfessionalCard({ view, professional }: { view: MesaCruzamentoView; pr
               <span className="text-ink-muted">
                 {filter.professionalValue} —{" "}
                 {filter.passes === true ? "atende" : filter.passes === false ? "não atende" : "pendente de verificação"}
+                {/*
+                  ADR-088: a origem do fato aparece ao lado do fato. Um "não
+                  atende" verificado e um "não atende" que o profissional disse
+                  de si levam o Curador a atos diferentes — e antes a tela
+                  mostrava os dois com a mesma cara.
+                */}
+                {filter.origin !== "AUSENTE" ? (
+                  <span className="block text-xs">
+                    {FILTER_ORIGIN_LABELS[filter.origin]}
+                    {filter.factDate
+                      ? ` · ${new Date(filter.factDate).toLocaleDateString("pt-BR")}`
+                      : ""}
+                  </span>
+                ) : null}
               </span>
             </li>
           ))}

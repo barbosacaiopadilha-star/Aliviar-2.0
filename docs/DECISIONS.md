@@ -27,6 +27,7 @@ O log é append-only: nenhum verbete é reescrito. Este índice é o mapa que os
 | **ADR-069** item 5 (garantia declarativa do MR1.2) | **Precisão de 2026-08-05 (DT-01)**, no rodapé do próprio verbete | **precisão, não mudança** — a garantia é do **conjunto** trigger de cadeia + índice único parcial; o índice isolado não prova todo o invariante |
 | **ADR-066** §16 (sete condições de existência da ponte) | **Emenda F-2 de 2026-08-05 (DT-01)**, no rodapé do verbete e no §23 do anexo | **acréscimo** — oitava condição: no máximo uma versão de regra vigente por conceito, a cada instante. Complementa MR1.2; **não altera o grafo da ADR-069** |
 | **ADR-066** §16 condição 4 (`MOTOR_PARTICIPATION` ≠ `NUNCA`) | **Emenda F-1 de 2026-08-05 (DT-01)** | **aplicação da ADR-047** — a condição não muda de conteúdo; passa a ser **derivável do Catálogo materializado e imposta pelo banco**, em vez de declarada em `Record` TypeScript |
+| **ADR-079** (o filtro de cuidado contínuo cai para o cadastro quando o levantamento está vazio) | **ADR-088** | **correção pela raiz** — o remendo destravou a Mesa mas deu a uma autodeclaração o poder de eliminar. A queda para o cadastro permanece; o que muda é que autodeclaração não elimina mais, vira ressalva nomeada |
 
 ---
 
@@ -1950,5 +1951,56 @@ O Fundador entregou a fotografia do Início (ela em casa, à noite, ao telefone 
   5. **Na ficha do contato (CRM), Tarefas e Agenda recolhem** em dobras fechadas com contador no título. A garantia da ADR-075 fica intacta — os atos comerciais vivem na ficha; deixam apenas de gritar em toda visita. Registro e Linha do tempo seguem abertos.
 - **Resultado:** a Visão geral responde UMA pergunta — "o que precisa de alguém agora?" — com seis números (histórias aguardando Case, sem responsável, atrasados, tarefas vencidas, compromissos em 7 dias, documentos pendentes), a lista de publicações pendentes e o Kit da Curadoria.
 - **Revisitar quando:** o Observatório tiver série real para desenhar (os gráficos voltam pelo módulo que ficou); ou o volume de leads fizer falta às métricas de aquisição.
+
+---
+
+## ADR-088 — Autodeclaração não elimina: a proveniência do fato entra no filtro obrigatório, e "onde atende" ganha a tela que nunca teve
+
+- **Data:** 2026-08-25
+- **Status:** Decidida pelo Fundador na conversa de fechamento da Curadoria simulada ("oq voce faria se fosse eu?" → recomendação apresentada nas duas frentes → "execute as outras duas"). As duas eram as únicas decisões de Método que a travessia devolveu a ele: os achados **SIM-07** e **SIM-08** do `REGISTRO_UNICO_DE_ACHADOS.md`.
+- **Dependências:** nasce da Curadoria simulada de 25/08 · corrige pela raiz o remendo de 24/08 (ADR-079, que fez o filtro cair para o cadastro quando o levantamento está vazio) · preserva a ADR-041 (a leitura de compatibilidade é do Motor; nada aqui recalcula) e a ADR-042 (não há saldo nem nota) · **não abre a ADR-073**: ver "Sobre o congelamento", abaixo.
+
+### Contexto
+
+O filtro obrigatório da Mesa é o único mecanismo do produto que **elimina** alguém de uma Curadoria. Eliminar é o ato mais pesado que a Mesa pratica, e é o único cujo efeito a paciente nunca pode auditar: ela jamais fica sabendo do caminho que não lhe foi apresentado.
+
+A travessia de 25/08 mostrou duas coisas sobre esse mecanismo, e as duas eram estruturais.
+
+**Primeira (SIM-07): o filtro eliminava com base em autodeclaração, em silêncio.** O fato de "cuidado contínuo" vive em duas camadas — o Protocolo da Prática Profissional (29 perguntas, rico, alimentado, com fonte e nível declarados) e um booleano em `professional_care_model` (pobre, ligado ao filtro, escrito por tela nenhuma). O conserto de 24/08 fez o filtro cair para `professional_profiles.offers_continuous_care` quando o levantamento está vazio — o que destravou a Mesa, mas transferiu para uma autodeclaração o poder de eliminar. A pergunta que sobrou para o Fundador: **um filtro eliminatório pode ser satisfeito pela palavra do próprio profissional?**
+
+**Segunda (SIM-08): "onde atende" não tinha tela.** As colunas `professional_care_model.states` e `.cities` existem desde 27/07, com selo de verificação e tudo. Nenhuma tela do produto as escrevia. Efeito na operação: qualquer Case que exigisse atendimento numa UF específica travava — todos os profissionais em "informação não localizada", para sempre, sem que clique algum pudesse resolver. O `crm_uf` do Cadastro **não** serve de substituto: é o estado do registro no conselho, que é outro fato — um médico registrado em SP pode atender só na Bahia.
+
+### Decisões
+
+1. **Só fato VERIFICADO elimina.** O filtro obrigatório passa a carregar a proveniência do fato que confere (`FilterFactOrigin`: `VERIFICADO` · `AUTODECLARADO` · `AUSENTE`). Eliminação exige fato conferido contra fonte, com proveniência registrada.
+
+2. **Autodeclaração que contraria a exigência vira ressalva nomeada, nunca eliminação.** O profissional continua elegível, comparável e selecionável; a frase de estado diz o que foi declarado, por quem, e devolve o ato a quem é dele: *"o próprio profissional declarou não atender, e ninguém conferiu. Confirme com ele antes de compor, ou deixe de fora com a sua razão escrita."* As duas saídas são legítimas — o que deixa de existir é a terceira, que era sumir com ele sem que ninguém soubesse.
+
+3. **A origem do fato aparece ao lado do fato, na tela do Curador.** Um "não atende" verificado e um "não atende" que o profissional disse de si levam a atos diferentes, e a Mesa mostrava os dois com a mesma cara. É o mesmo princípio que já separa `SEM_REGISTRO` de `NAO_INFORMADO` na comparação: a tela não achata distinção que muda a conduta.
+
+4. **A ausência de informação continua sendo pendência, não ressalva.** Se falta o fato, o estado permanece `PENDENTE_DE_INFORMACAO` com a frase de sempre ("verificar o cadastro, não descartar") — e a ressalva autodeclarada, quando houver, é dita junto. Um verificado que elimina tem precedência sobre qualquer ressalva.
+
+5. **"Onde atende" ganha bloco próprio na etapa Rede do cadastro**, ao lado da Área de Atuação, com UFs, cidades, fonte e selo de verificação. Mesmas duas regras da área: declaração vazia não é declaração (ao menos uma UF), e verificar exige fonte. A gravação é **parcial de propósito** — esta tela é dona de `states`, `cities` e da proveniência, e de mais nada: zerar colunas de outros atos foi exatamente como a edição de profissional apagou competências uma vez (FS-03).
+
+6. **Sem UF, a porta diz o custo — e não tranca.** Igual ao aviso do Mapa (F-9): publicar continua permitido, mas quem publica lê o que isso custa na Mesa, em vez de o Curador descobrir no meio de uma Curadoria que não anda. Nenhuma pendência de publicação nova foi criada: apertar a porta seria decisão de outra natureza, e não foi esta que se tomou.
+
+### Sobre o congelamento (ADR-073)
+
+Nenhum dos dois é construção nova, e o Fundador foi avisado disso antes da execução:
+
+- O item 1–4 **muda uma regra existente** que se provou errada no uso real — o filtro que eliminava por autodeclaração.
+- O item 5 **não cria campo nenhum**: as colunas existem desde julho. O que faltava era a tela, e um dado obrigatório sem superfície de coleta é peça quebrada, não funcionalidade ausente.
+
+A ADR-073 permite "corrigir defeito visto no uso real". É exatamente esta a leitura aplicada, e ela fica registrada aqui para não virar precedente frouxo: **o critério não é "seria útil", é "a operação travou e alguém viu travar"**.
+
+### O que NÃO se decidiu
+
+- **Não se decidiu que autodeclaração vale menos.** O Protocolo continua sendo a camada viva do Método, e é dele que sai a comparação rica. O que se decidiu é que autodeclaração não tem força de **eliminar**.
+- **Não se ligou o Protocolo ao filtro.** Continua havendo dois modelos paralelos da mesma realidade, e a unificação é trabalho de desenho, para o descongelamento.
+- **Não se apertou a porta de publicação.** Ver decisão 6.
+
+### Revisitar quando
+
+Um Case real for eliminado — ou deixar de ser — por um destes filtros, e o Curador contar o que aconteceu na conversa com o profissional. É o primeiro dado verdadeiro que este desenho vai receber; até lá, ele é a hipótese mais honesta disponível.
 
 ---

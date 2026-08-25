@@ -27,6 +27,7 @@ import {
   headerCounts,
   nextStepSentence,
   type ComparisonColumn,
+  type FilterFactOrigin,
   type MandatoryFilterCheck,
   type ProfessionalEligibility,
 } from "./mesa-cruzamento-view";
@@ -234,7 +235,9 @@ export async function loadMesaCruzamento(
       .in("professional_profile_id", providerIds.length > 0 ? providerIds : ["00000000-0000-0000-0000-000000000000"]),
     supabase
       .from("professional_care_model")
-      .select("professional_profile_id, states, cities, offers_continuous_care")
+      .select(
+        "professional_profile_id, states, cities, offers_continuous_care, source, verification_status, verified_at, updated_at",
+      )
       .in("professional_profile_id", providerIds.length > 0 ? providerIds : ["00000000-0000-0000-0000-000000000000"]),
   ]);
 
@@ -250,6 +253,17 @@ export async function loadMesaCruzamento(
     const area = areaByProvider.get(id);
     const care = careByProvider.get(id);
 
+    // ADR-088 — a proveniência do fato viaja junto com o fato.
+    //
+    // O levantamento de atendimento (`professional_care_model`) carrega o
+    // próprio selo de verificação desde 27/07. Quando alguém conferiu contra
+    // fonte, o fato elimina; quando é o profissional dizendo de si, vira
+    // ressalva. Sem esta distinção, a Mesa tratava as duas coisas como uma.
+    const careVerificado = (care?.verification_status as string | undefined) === "verificado";
+    const careFactDate =
+      ((care?.verified_at as string | null | undefined) ??
+        (care?.updated_at as string | null | undefined)) ?? null;
+
     const filters: MandatoryFilterCheck[] = [];
     if (requiredUf) {
       const states = (care?.states as string[] | undefined) ?? [];
@@ -258,6 +272,9 @@ export async function loadMesaCruzamento(
         requirement: requiredUf,
         professionalValue: states.length > 0 ? states.join(", ") : "informação não localizada",
         passes: !care || states.length === 0 ? null : states.includes(requiredUf),
+        origin:
+          states.length === 0 ? "AUSENTE" : careVerificado ? "VERIFICADO" : "AUTODECLARADO",
+        factDate: states.length === 0 ? null : careFactDate,
       });
     }
     if (requiresContinuous) {
@@ -275,15 +292,28 @@ export async function loadMesaCruzamento(
       // O modelo de atendimento continua tendo precedência quando EXISTE e diz
       // algo — ele é o levantamento dedicado. Quando não diz, vale o cadastro.
       // O que não muda: `null` continua sendo "não se sabe", nunca "não atende".
-      const offers =
-        (care?.offers_continuous_care as boolean | null | undefined) ??
-        (row.offers_continuous_care as boolean | null | undefined);
+      //
+      // ADR-088 (25/08): a decisão do Fundador sobre este filtro. O fato é
+      // autodeclaração em qualquer dos dois caminhos — o levantamento e o
+      // cadastro registram o que o profissional diz de si. Só o levantamento
+      // com selo de verificação é fato conferido, e só ele elimina.
+      const doLevantamento = care?.offers_continuous_care as boolean | null | undefined;
+      const doCadastro = row.offers_continuous_care as boolean | null | undefined;
+      const offers = doLevantamento ?? doCadastro;
+      const origem: FilterFactOrigin =
+        offers === null || offers === undefined
+          ? "AUSENTE"
+          : doLevantamento !== null && doLevantamento !== undefined && careVerificado
+            ? "VERIFICADO"
+            : "AUTODECLARADO";
       filters.push({
         label: "Cuidado contínuo",
         requirement: "obrigatório",
         professionalValue:
           offers === true ? "oferece" : offers === false ? "não oferece" : "informação não localizada",
         passes: offers === null || offers === undefined ? null : offers,
+        origin: origem,
+        factDate: origem === "AUSENTE" ? null : careFactDate,
       });
     }
 

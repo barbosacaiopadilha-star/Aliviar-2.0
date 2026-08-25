@@ -13,8 +13,22 @@ import { crossPriorityAndProfessional } from "@/modules/curadoria/motor-compatib
 import { SUBCRITERION_CATALOG } from "@/modules/curadoria/mapa-prioridades";
 
 const FILTROS_OK: MandatoryFilterCheck[] = [
-  { label: "Atendimento em SP", requirement: "SP", professionalValue: "SP", passes: true },
-  { label: "Cuidado contínuo", requirement: "obrigatório", professionalValue: "oferece", passes: true },
+  {
+    label: "Atendimento em SP",
+    requirement: "SP",
+    professionalValue: "SP",
+    passes: true,
+    origin: "VERIFICADO",
+    factDate: "2026-08-01T00:00:00.000Z",
+  },
+  {
+    label: "Cuidado contínuo",
+    requirement: "obrigatório",
+    professionalValue: "oferece",
+    passes: true,
+    origin: "AUTODECLARADO",
+    factDate: "2026-08-01T00:00:00.000Z",
+  },
 ];
 
 // O bloco "Orçamento de pontos" foi removido — ADR-042. Não há mais saldo a
@@ -60,11 +74,20 @@ describe("Elegibilidade — a ordem das perguntas importa", () => {
     expect(result.state).toBe("PENDENTE_DE_INFORMACAO");
   });
 
-  it("filtro obrigatório não atendido elimina, com o filtro nomeado", () => {
+  it("filtro obrigatório não atendido, COM VERIFICAÇÃO, elimina — com o filtro nomeado", () => {
     const result = classifyProfessional(
       "p1",
       { compatibility: "COMPATIVEL", confirmedByCurator: false, rationale: null },
-      [{ label: "Atendimento em SP", requirement: "SP", professionalValue: "RJ", passes: false }],
+      [
+        {
+          label: "Atendimento em SP",
+          requirement: "SP",
+          professionalValue: "RJ",
+          passes: false,
+          origin: "VERIFICADO",
+          factDate: "2026-08-10T00:00:00.000Z",
+        },
+      ],
     );
     expect(result.state).toBe("ELIMINADO");
     expect(result.reason).toContain("Atendimento em SP");
@@ -74,10 +97,120 @@ describe("Elegibilidade — a ordem das perguntas importa", () => {
     const result = classifyProfessional(
       "p1",
       { compatibility: "COMPATIVEL", confirmedByCurator: false, rationale: null },
-      [{ label: "Cuidado contínuo", requirement: "obrigatório", professionalValue: "informação não localizada", passes: null }],
+      [
+        {
+          label: "Cuidado contínuo",
+          requirement: "obrigatório",
+          professionalValue: "informação não localizada",
+          passes: null,
+          origin: "AUSENTE",
+          factDate: null,
+        },
+      ],
     );
     expect(result.state).toBe("PENDENTE_DE_INFORMACAO");
     expect(result.reason).toContain("Verificar o cadastro, não descartar");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// ADR-088 — a decisão do Fundador sobre o filtro obrigatório (25/08/2026)
+// ---------------------------------------------------------------------------
+//
+// A pergunta que a Curadoria simulada levantou: um filtro que ELIMINA alguém
+// pode ser satisfeito pela palavra do próprio profissional? A resposta do
+// Fundador: o fato autodeclarado entra na Mesa, mas não elimina — vira
+// ressalva nomeada, e o juízo é do Curador.
+//
+// Estes casos existem porque a versão anterior eliminava em silêncio: a
+// paciente jamais ficava sabendo do caminho que não lhe foi apresentado.
+describe("Filtro obrigatório — só fato verificado elimina", () => {
+  const compativel = { compatibility: "COMPATIVEL" as const, confirmedByCurator: false, rationale: null };
+
+  it("autodeclaração que contraria a exigência NÃO elimina — vira ressalva", () => {
+    const result = classifyProfessional("p1", compativel, [
+      {
+        label: "Cuidado contínuo",
+        requirement: "obrigatório",
+        professionalValue: "não oferece",
+        passes: false,
+        origin: "AUTODECLARADO",
+        factDate: "2026-08-20T00:00:00.000Z",
+      },
+    ]);
+
+    expect(result.state).toBe("ELEGIVEL");
+    expect(result.reason).toContain("ressalva");
+    expect(result.reason).toContain("Cuidado contínuo");
+    // O Curador precisa saber que o ato é dele, e que há duas saídas legítimas.
+    expect(result.reason).toContain("Confirme com ele antes de compor");
+  });
+
+  it("o mesmo fato, verificado com fonte, elimina", () => {
+    const result = classifyProfessional("p1", compativel, [
+      {
+        label: "Cuidado contínuo",
+        requirement: "obrigatório",
+        professionalValue: "não oferece",
+        passes: false,
+        origin: "VERIFICADO",
+        factDate: "2026-08-20T00:00:00.000Z",
+      },
+    ]);
+
+    expect(result.state).toBe("ELIMINADO");
+    expect(result.reason).toContain("com verificação");
+  });
+
+  it("ressalva não engole a pendência: falta de informação continua sendo a vez do cadastro", () => {
+    const result = classifyProfessional("p1", compativel, [
+      {
+        label: "Atendimento em SP",
+        requirement: "SP",
+        professionalValue: "informação não localizada",
+        passes: null,
+        origin: "AUSENTE",
+        factDate: null,
+      },
+      {
+        label: "Cuidado contínuo",
+        requirement: "obrigatório",
+        professionalValue: "não oferece",
+        passes: false,
+        origin: "AUTODECLARADO",
+        factDate: "2026-08-20T00:00:00.000Z",
+      },
+    ]);
+
+    expect(result.state).toBe("PENDENTE_DE_INFORMACAO");
+    // As duas coisas são ditas: o que falta, e o que foi declarado contra.
+    expect(result.reason).toContain("Verificar o cadastro, não descartar");
+    expect(result.reason).toContain("ressalva autodeclarada");
+  });
+
+  it("um verificado que elimina tem precedência sobre qualquer ressalva", () => {
+    const result = classifyProfessional("p1", compativel, [
+      {
+        label: "Atendimento em SP",
+        requirement: "SP",
+        professionalValue: "RJ",
+        passes: false,
+        origin: "VERIFICADO",
+        factDate: "2026-08-20T00:00:00.000Z",
+      },
+      {
+        label: "Cuidado contínuo",
+        requirement: "obrigatório",
+        professionalValue: "não oferece",
+        passes: false,
+        origin: "AUTODECLARADO",
+        factDate: "2026-08-20T00:00:00.000Z",
+      },
+    ]);
+
+    expect(result.state).toBe("ELIMINADO");
+    expect(result.reason).toContain("Atendimento em SP");
+    expect(result.reason).not.toContain("Cuidado contínuo");
   });
 });
 

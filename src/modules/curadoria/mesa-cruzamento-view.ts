@@ -51,12 +51,37 @@ export const ELIGIBILITY_LABELS: Record<EligibilityState, string> = {
   PENDENTE_DE_INFORMACAO: "Pendente de verificação",
 };
 
+/**
+ * DE ONDE VEM O FATO que um filtro obrigatório confere — ADR-088.
+ *
+ * O filtro obrigatório elimina alguém da Curadoria. Eliminar é o ato mais
+ * pesado da Mesa: a paciente nunca fica sabendo do caminho que não lhe foi
+ * apresentado. Por isso a origem do fato importa tanto quanto o fato.
+ *
+ * - `VERIFICADO` — alguém conferiu contra fonte e registrou a proveniência.
+ *   Só este elimina.
+ * - `AUTODECLARADO` — o fato existe, dito pelo próprio profissional (cadastro
+ *   ou Protocolo), sem conferência. Vira ressalva visível, nunca eliminação.
+ * - `AUSENTE` — não há registro. Continua sendo "não se sabe".
+ */
+export type FilterFactOrigin = "VERIFICADO" | "AUTODECLARADO" | "AUSENTE";
+
+export const FILTER_ORIGIN_LABELS: Record<FilterFactOrigin, string> = {
+  VERIFICADO: "verificado com fonte",
+  AUTODECLARADO: "declarado pelo profissional, sem verificação",
+  AUSENTE: "sem registro",
+};
+
 export type MandatoryFilterCheck = {
   label: string;
   requirement: string;
   professionalValue: string;
   /** null = informação não localizada; nunca vira "não atende". */
   passes: boolean | null;
+  /** De onde vem o fato. Só `VERIFICADO` elimina — ADR-088. */
+  origin: FilterFactOrigin;
+  /** Quando o fato foi registrado, para a tela dizer a idade dele. */
+  factDate: string | null;
 };
 
 export type ProfessionalEligibility = {
@@ -108,22 +133,53 @@ export function classifyProfessional(
     };
   }
 
-  const failing = filters.filter((filter) => filter.passes === false);
+  // ADR-088 — só fato VERIFICADO elimina.
+  //
+  // O que existia antes: qualquer `passes === false` eliminava, viesse o fato
+  // de onde viesse. Como o único fato disponível na prática é autodeclaração
+  // do próprio profissional, a Mesa eliminava candidatos legítimos com base no
+  // que eles mesmos disseram, em silêncio, e a paciente nunca ficava sabendo
+  // do caminho suprimido. Parecia rigor e era acaso.
+  //
+  // Agora a eliminação por filtro exige fato conferido contra fonte. O fato
+  // autodeclarado que contraria a exigência não some: vira ressalva nomeada,
+  // no estado e na frase, e o Curador decide olhando o fato.
+  const failing = filters.filter(
+    (filter) => filter.passes === false && filter.origin === "VERIFICADO",
+  );
   if (failing.length > 0) {
     return {
       professionalProfileId,
       state: "ELIMINADO",
-      reason: `Não atende: ${failing.map((filter) => filter.label).join(", ")}.`,
+      reason: `Não atende, com verificação: ${failing.map((filter) => filter.label).join(", ")}.`,
       filters,
     };
   }
+
+  const ressalvas = filters.filter(
+    (filter) => filter.passes === false && filter.origin === "AUTODECLARADO",
+  );
 
   const unknown = filters.filter((filter) => filter.passes === null);
   if (unknown.length > 0) {
     return {
       professionalProfileId,
       state: "PENDENTE_DE_INFORMACAO",
-      reason: `Sem informação registrada: ${unknown.map((filter) => filter.label).join(", ")}. Verificar o cadastro, não descartar.`,
+      reason:
+        `Sem informação registrada: ${unknown.map((filter) => filter.label).join(", ")}. Verificar o cadastro, não descartar.` +
+        ressalvaSentence(ressalvas),
+      filters,
+    };
+  }
+
+  if (ressalvas.length > 0) {
+    return {
+      professionalProfileId,
+      state: "ELEGIVEL",
+      reason:
+        `Elegível com ressalva — ${ressalvas.map((filter) => filter.label).join(", ")}: ` +
+        "o próprio profissional declarou não atender, e ninguém conferiu. " +
+        "Confirme com ele antes de compor, ou deixe de fora com a sua razão escrita.",
       filters,
     };
   }
@@ -134,6 +190,12 @@ export function classifyProfessional(
     reason: "Área declarada compatível e filtros obrigatórios atendidos.",
     filters,
   };
+}
+
+/** A ressalva dita ao fim de outra frase, sem virar frase solta. */
+function ressalvaSentence(ressalvas: readonly MandatoryFilterCheck[]): string {
+  if (ressalvas.length === 0) return "";
+  return ` E há ressalva autodeclarada em: ${ressalvas.map((filter) => filter.label).join(", ")}.`;
 }
 
 // ---------------------------------------------------------------------------
