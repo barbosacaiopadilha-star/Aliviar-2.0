@@ -6,6 +6,7 @@ import { ErroDaAplicacao, erroDeBanco, falhaParaUsuario } from "@/lib/observabil
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRoleForAction, requireRoleForAction } from "@/modules/auth/guard";
 
+import { veredictoDaEmissaoDoCase } from "./emissao-exige-juizo-repository";
 import { validateSelection } from "./method";
 import * as repository from "./repository";
 import * as reportRepository from "./report-repository";
@@ -710,6 +711,23 @@ export async function emitReportAction(input: unknown): Promise<CuradoriaActionR
           `Escreva sua leitura no campo "Como conversa com a forma como ela quer ser cuidada" ` +
           `de cada opção — o documento que ela relê sozinha não pode prometer uma conversa que não virá.`,
       };
+    }
+
+    // ADR-094 (saída A, decidida em 25/08) · O JUÍZO HUMANO É CONDIÇÃO DE
+    // EMISSÃO. Vem por último entre as guardas de propósito: as anteriores
+    // falam do TEXTO que ela vai ler, e esta fala do ATO que o Método reserva
+    // a uma pessoa. Se o ato não aconteceu, nem vale conferir a redação.
+    //
+    // O `SIM-51` encontrou uma Curadoria emitida e entregue com zero juízos,
+    // onde o Método exigia nove. `lacunasDeJuizo` sabia dizer o que faltava e
+    // tinha um único chamador em todo o `src/`: um painel que só informava.
+    const veredicto = await veredictoDaEmissaoDoCase(
+      supabase,
+      found.selection.caseId,
+      found.selection.id,
+    );
+    if (!veredicto.pode) {
+      return { success: false, error: veredicto.motivo };
     }
 
     await reportRepository.approveReport(supabase, report.id, authState.user.id);

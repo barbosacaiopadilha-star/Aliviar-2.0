@@ -2331,7 +2331,8 @@ Uma Curadoria real mostrar que as preocupações dela não cabem em linhas — q
 ## ADR-094 — O juízo humano é condição de emissão, ou o Método para de chamá-lo de exigido
 
 - **Data:** 2026-08-25
-- **Status:** **Proposta pelo Engenheiro Líder, aguardando decisão do Fundador.** Nasce do `SIM-51`, achado na travessia da ADR-093.
+- **Status:** **DECIDIDA PELO FUNDADOR em 2026-08-25 — saída A.** O juízo humano passa a ser condição de emissão. Nasce do `SIM-51`, achado na travessia da ADR-093.
+- **Congelamento:** a ADR-073 fica suspensa para esta construção, pela mesma razão e no mesmo dia em que foi suspensa para a ADR-093. A suspensão é desta guarda e de mais nada.
 - **Dependências:** **ADR-067 §5** (H8–H10 sempre exigidos; H11 quando o Case declarou grau) · **ADR-065** (condução de notícias difíceis exige cruzamento humano) · **ADR-092** (precedente direto: publicar passou a exigir o Mapa tratado) · **ADR-035** (a seleção é exclusivamente do Curador) · **ADR-073** (congelamento — por isso decide-se agora e constrói-se depois)
 
 ### O fato
@@ -2414,6 +2415,43 @@ aqui, impediria de emitir — Curadorias em curso. É decisão de operação.
 
 O que a ADR-073 permite hoje, e que já foi feito, é a Mesa **dizer** o que
 falta: o painel de atenção nomeia os juízos pendentes por profissional.
+
+
+### Nota de execução (25/08) — a guarda subiu na aplicação, e o item 4 encontrou uma objeção
+
+A saída **A** foi construída no mesmo dia da decisão: `emissao-exige-juizo.ts`
+(regra pura), `emissao-exige-juizo-repository.ts` (os fatos) e a recusa dentro
+de `emitReportAction`, antes de aprovar e de emitir. Onze testes, dois deles
+provados por mutação — um desliga a regra, outro desliga a chamada dela no
+portão, e os dois derrubam a suíte.
+
+**O item 4 desta ADR pedia a guarda também no banco**, com o argumento de que
+"regra que só a aplicação cobra é regra que a próxima tela esquece". O
+argumento continua de pé. A execução encontrou o custo dele:
+
+Para cobrar isto num gatilho, o SQL teria de saber **quais** juízos são
+exigidos — três técnicos sempre, mais os relacionais apenas onde o Case
+declarou grau (ADR-065). Essa regra existe uma vez, em `lacunasDeJuizo`.
+Reescrevê-la em PL/pgSQL criaria **duas implementações da mesma regra do
+Método** — exatamente o que a `ADR-066/11-08` proíbe, e a forma de defeito que
+esta sessão passou o dia inteiro removendo (`SIM-42`).
+
+**Duas saídas, e nenhuma é óbvia:**
+
+- **Backstop fraco, sem duplicar:** o banco recusa emitir quando não há
+  **nenhum** juízo vigente para algum profissional selecionado. Não sabe
+  contar três nem seis, e não precisa — pega o caso que aconteceu de verdade
+  (`SIM-51`: zero) sem virar segunda fonte da regra.
+- **Regra completa no banco, aceitando a duplicação**, com um teste que compare
+  as duas implementações a cada mudança do Catálogo.
+
+**Recomendo o backstop fraco.** Ele fecha o buraco observado, não inventa uma
+segunda verdade, e deixa a regra fina onde ela já mora e é testada. Uma guarda
+que cobre 90% sem mentir é melhor que uma que cobre 100% em dois idiomas que
+vão divergir.
+
+**Enquanto não houver decisão, a guarda é só de aplicação — e isto está dito
+aqui para não virar a próxima linha que alguém acha que já foi feita.**
 
 ### O que fecha esta ADR
 
