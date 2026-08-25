@@ -219,3 +219,51 @@ describe("Duração dita como gente fala", () => {
     expect(duracao(50 * HORA)).toBe("2d 2h");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Etapa salva em lote — o caso que a travessia de 25/08 revelou
+// ---------------------------------------------------------------------------
+//
+// Os 29 subcritérios do Mapa são gravados numa transação só: os 29 carimbos
+// saem IDÊNTICOS. A primeira versão devolvia janela = 0, e a tela leria
+// "classificar 29 subcritérios levou tempo nenhum" — a mesma mentira que a
+// regra do travessão existe para impedir, escapando pelo caso não previsto.
+
+describe("Registro em lote — ausência de medida, nunca medida de zero", () => {
+  it("29 carimbos no mesmo instante não produzem janela de 0s", () => {
+    const instante = H("10:00");
+    const medicao = medirCuradoria({
+      ...VAZIO,
+      caseAbertoEm: H("09:00"),
+      mapa: Array.from({ length: 29 }, () => instante),
+    });
+
+    const mapa = medicao.etapas.find((e) => e.id === "MAPA")!;
+    expect(mapa.registros).toBe(29);
+    // O que se sabe: foram gravados juntos. O que NÃO se sabe: quanto durou.
+    expect(mapa.janelaMs).toBeNull();
+    // A espera continua valendo — é o único sinal que sobra no trabalho em lote.
+    expect(mapa.esperaMs).toBe(HORA);
+  });
+
+  it("um registro único também não vira janela de zero", () => {
+    const medicao = medirCuradoria({
+      ...VAZIO,
+      caseAbertoEm: H("09:00"),
+      rede: [H("09:30")],
+    });
+    expect(medicao.etapas.find((e) => e.id === "REDE")!.janelaMs).toBeNull();
+  });
+
+  it("etapa em lote não infla o total: sem janela, nada a somar na união", () => {
+    const instante = H("10:00");
+    const medicao = medirCuradoria({
+      ...VAZIO,
+      caseAbertoEm: H("09:00"),
+      mapa: Array.from({ length: 29 }, () => instante),
+      rede: [H("11:00"), H("11:20")],
+    });
+    // Só a Rede tem janela real: 20 minutos.
+    expect(medicao.janelaTotalMs).toBe(20 * MINUTO);
+  });
+});

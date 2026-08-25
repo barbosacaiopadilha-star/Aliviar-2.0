@@ -167,13 +167,28 @@ function etapaPorRegistros(
   const primeiro = t.length > 0 ? t[0]! : null;
   const ultimo = t.length > 0 ? t[t.length - 1]! : null;
 
+  // ETAPA SALVA EM LOTE NÃO TEM JANELA — e "0s" seria a pior das respostas.
+  //
+  // Descoberto percorrendo a Mesa em 25/08: os 29 subcritérios do Mapa são
+  // gravados numa transação só (o botão diz "Salvar 29 alterações"), então os
+  // 29 carimbos são IDÊNTICOS. A janela dava zero, e zero na tela lê-se como
+  // "classificar 29 subcritérios levou tempo nenhum" — exatamente a mentira
+  // que a regra do travessão existe para impedir, escapando pelo caso que eu
+  // não tinha previsto.
+  //
+  // Quando todos os registros caem no mesmo instante, o que se sabe é que
+  // foram gravados juntos, e NADA sobre quanto tempo o trabalho levou. Isso é
+  // ausência de medida, não medida de zero. A espera da etapa continua
+  // valendo — ela é o único sinal que sobra para trabalho gravado em lote.
+  const houveIntervalo = primeiro !== null && ultimo !== null && ultimo > primeiro;
+
   return {
     id,
     label: ETAPA_LABELS[id],
     iniciadaEm: primeiro === null ? null : new Date(primeiro).toISOString(),
     concluidaEm: ultimo === null ? null : new Date(ultimo).toISOString(),
     esperaMs: intervalo(anterior, ultimo),
-    janelaMs: intervalo(primeiro, ultimo),
+    janelaMs: houveIntervalo ? intervalo(primeiro, ultimo) : null,
     registros: t.length,
   };
 }
