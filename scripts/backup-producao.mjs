@@ -118,11 +118,21 @@ function lerCredenciais() {
 
   env.SUPABASE_URL_PROD ??= urlDoProjeto();
 
-  const faltando = ["SUPABASE_DB_URL_PROD", "SUPABASE_URL_PROD", "SUPABASE_SERVICE_ROLE_KEY_PROD"].filter(
-    (chave) => !env[chave],
-  );
-  if (faltando.length > 0) {
-    console.error(`.env.backup.local existe mas falta: ${faltando.join(", ")}`);
+  // A CONNECTION STRING É OBRIGATÓRIA; a service role key, NÃO.
+  //
+  // Ela serve a uma coisa só: baixar os bytes dos arquivos. Exigi-la para
+  // tudo transformava "fazer um backup hoje" num problema de dois segredos, e
+  // o resultado prático era ficar sem backup nenhum — que é infinitamente
+  // pior que um backup sem os anexos. Backup parcial declarado vale; backup
+  // adiado não vale nada.
+  if (!env.SUPABASE_DB_URL_PROD) {
+    console.error(".env.backup.local existe mas falta: SUPABASE_DB_URL_PROD");
+    process.exit(1);
+  }
+  if (!env.SUPABASE_URL_PROD) {
+    console.error(
+      ".env.backup.local existe mas falta SUPABASE_URL_PROD, e o projeto não está vinculado.",
+    );
     process.exit(1);
   }
 
@@ -249,7 +259,9 @@ const objetos = JSON.parse(
 
 let baixados = 0;
 const falhas = [];
-for (const objeto of objetos) {
+const semChave = !env.SUPABASE_SERVICE_ROLE_KEY_PROD;
+
+for (const objeto of semChave ? [] : objetos) {
   const url = `${env.SUPABASE_URL_PROD.replace(/\/+$/, "")}/storage/v1/object/${objeto.bucket}/${objeto.nome}`;
   try {
     const resposta = await fetch(url, {
@@ -266,7 +278,13 @@ for (const objeto of objetos) {
     falhas.push({ bucket: objeto.bucket, erro: String(erro?.message ?? erro) });
   }
 }
-console.log(`  storage/ — ${baixados} de ${objetos.length} arquivo(s)`);
+if (semChave) {
+  console.log(
+    `  storage/ — ${objetos.length} arquivo(s) NÃO capturados (sem service role key).`,
+  );
+} else {
+  console.log(`  storage/ — ${baixados} de ${objetos.length} arquivo(s)`);
+}
 
 // O manifesto: o que este backup contém, medido na captura. É contra ele que
 // o restore se verifica — sem manifesto, "restaurou" é afirmação sem prova.
@@ -300,7 +318,8 @@ writeFileSync(
       host,
       capturadoEm: new Date().toISOString(),
       contagens,
-      storage: { esperados: objetos.length, baixados, falhas },
+      storage: { esperados: objetos.length, baixados, falhas, bytesCapturados: !semChave },
+      completo: !semChave && falhas.length === 0,
     },
     null,
     2,
@@ -311,6 +330,20 @@ writeFileSync(
 console.log("\nContagens no instante da captura:");
 for (const [tabela, n] of Object.entries(contagens)) {
   console.log(`  ${tabela.padEnd(34)} ${n ?? "não medido"}`);
+}
+
+if (semChave) {
+  console.log(
+    [
+      "",
+      "ATENÇÃO: este backup é PARCIAL — o banco inteiro veio, os ARQUIVOS não.",
+      `Ficaram de fora ${objetos.length} objeto(s) do storage, porque falta`,
+      "SUPABASE_SERVICE_ROLE_KEY_PROD em .env.backup.local.",
+      "",
+      "O manifesto registra isso (completo: false). Um backup parcial declarado",
+      "vale; o perigo é o parcial que se apresenta como inteiro.",
+    ].join("\n"),
+  );
 }
 
 if (falhas.length > 0) {

@@ -154,3 +154,38 @@ describe("Ocultação da digitação — nada do que é digitado chega à tela",
     expect(controle.estaOculto()).toBe(false);
   });
 });
+
+// ---------------------------------------------------------------------------
+// A chave opcional — para que backup parcial exista em vez de backup nenhum
+// ---------------------------------------------------------------------------
+
+describe("Service role key opcional — o banco não espera pelos anexos", () => {
+  it("com chaveOpcional, a ausência da chave passa", () => {
+    expect(
+      conferirCredenciais({ dbUrl: URL_BOA, serviceKey: "", ref: REF, chaveOpcional: true }),
+    ).toEqual([]);
+  });
+
+  it("sem chaveOpcional, a ausência continua sendo problema", () => {
+    expect(
+      conferirCredenciais({ dbUrl: URL_BOA, serviceKey: "", ref: REF }).join(" "),
+    ).toContain("service role key veio vazia");
+  });
+
+  it("opcional não é o mesmo que sem conferência: chave errada continua recusada", () => {
+    expect(
+      conferirCredenciais({
+        dbUrl: URL_BOA,
+        serviceKey: "sb_publishable_exemplo_de_chave_publica_longa",
+        ref: REF,
+        chaveOpcional: true,
+      }).join(" "),
+    ).toContain("publishable");
+  });
+
+  it("e a connection string continua obrigatória mesmo com a chave opcional", () => {
+    expect(
+      conferirCredenciais({ dbUrl: "", serviceKey: "", ref: REF, chaveOpcional: true }).join(" "),
+    ).toContain("connection string veio vazia");
+  });
+});

@@ -113,10 +113,15 @@ console.log("   Formato: postgresql://postgres:SENHA@db.<ref>.supabase.co:5432/p
 const dbUrl = await perguntarOculto("   >>> COLE A CONNECTION STRING AQUI e tecle Enter: ");
 
 console.log("\n2) Service role key — Project Settings → API → service_role");
-console.log("   (é a chave secreta, não a anon/publishable)\n");
-const serviceKey = await perguntarOculto("   >>> COLE A SERVICE ROLE KEY AQUI e tecle Enter: ");
+console.log("   (é a chave secreta, não a anon/publishable)");
+console.log("");
+console.log("   Ela serve a UMA coisa: baixar os arquivos do storage.");
+console.log("   DÁ PARA PULAR — tecle Enter vazio. O backup sai com o banco inteiro,");
+console.log("   sem os anexos, e o manifesto declara que é parcial. Banco sem anexo");
+console.log("   protege muito; esperar pelos dois segredos costuma virar backup nenhum.\n");
+const serviceKey = await perguntarOculto("   >>> COLE A SERVICE ROLE KEY (ou Enter para pular): ");
 
-const problemas = conferirCredenciais({ dbUrl, serviceKey, ref });
+const problemas = conferirCredenciais({ dbUrl, serviceKey, ref, chaveOpcional: true });
 
 if (problemas.length > 0) {
   console.error("\nNão escrevi o arquivo. Encontrei:");

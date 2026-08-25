@@ -140,6 +140,27 @@ O que o plano pago resolve e o script não:
 
 Há ainda um risco do plano free que não é sobre backup: projetos gratuitos são **pausados por inatividade**. Um projeto pausado não perde dado, mas fica fora do ar até alguém reativá-lo — e descobrir isso pela paciente é diferente de descobrir pelo painel.
 
+### A decisão do plano (Fundador, 2026-08-25)
+
+**Não assina o plano pago agora. O gatilho é a primeira paciente real.**
+
+O raciocínio, registrado para que ninguém o refaça do zero — nem revise por impressão:
+
+- **Hoje o dado quase não muda.** 3 fichas de profissionais reais, 8 contas, 28 arquivos, e nenhuma paciente. Passa semanas parado. Quando o dado não muda, backup manual é quase tão bom quanto automático: se o comando roda depois de cada sessão em que algo mudou, a janela de perda é praticamente zero, porque não houve nada novo entre um e outro.
+- **O que o plano pago compra é uma coisa só:** backups que acontecem **sem ninguém lembrar**, com retenção — vários pontos de retorno em vez do último que alguém rodou. E resolve a pausa por inatividade do plano gratuito (o projeto não perde dado, mas sai do ar até alguém reativar).
+- **O que ele NÃO compra:** PITR é add-on separado e bem mais caro. O plano pago dá *backup de ontem*, não *backup de dez minutos atrás*.
+- **Por que a primeira paciente é o gatilho, e não um volume ou uma data:** a partir dela, três coisas mudam de uma vez — o dado passa a ser informação de saúde de outra pessoa, muda todo dia, e "esqueci de rodar o backup" deixa de ser um problema da Aliviar para virar um problema dela.
+
+**Enquanto isso, `npm run backup:producao` é a ponte — e a única proteção que existe.** Rode depois de cada sessão em que algo mudou em produção.
+
+### A service role key é opcional
+
+Ela serve a uma coisa: baixar os **bytes** dos arquivos. O banco inteiro — dados clínicos, contas, GRANTs, índice do storage — precisa apenas da connection string.
+
+Por isso o configurador aceita **Enter vazio** no segundo valor. Um backup com um segredo só, hoje, vale infinitamente mais que um backup completo adiado por causa do segundo: **backup parcial declarado vale; backup adiado não vale nada.**
+
+O que impede o parcial de virar mentira: o manifesto grava `completo: false` e `bytesCapturados: false`, e o script avisa na tela quantos objetos ficaram de fora. O perigo nunca foi o backup parcial — é o parcial que se apresenta como inteiro.
+
 ### O que fecha o REC-01
 
 1. Decisão do responsável sobre o plano (é compra — não é ato de agente);

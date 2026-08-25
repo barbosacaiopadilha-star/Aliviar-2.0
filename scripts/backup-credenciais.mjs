@@ -47,7 +47,7 @@ export function instalarOcultacao(rl, escreverNaTela) {
   };
 }
 
-export function conferirCredenciais({ dbUrl, serviceKey, ref }) {
+export function conferirCredenciais({ dbUrl, serviceKey, ref, chaveOpcional = false }) {
   const problemas = [];
 
   if (!dbUrl) {
@@ -84,8 +84,11 @@ export function conferirCredenciais({ dbUrl, serviceKey, ref }) {
     }
   }
 
+  // A chave é OPCIONAL quando quem chama diz que é: ela serve só aos bytes do
+  // storage, e exigi-la transformava "fazer um backup hoje" num problema de
+  // dois segredos — cujo resultado prático era ficar sem backup nenhum.
   if (!serviceKey) {
-    problemas.push("a service role key veio vazia");
+    if (!chaveOpcional) problemas.push("a service role key veio vazia");
   } else if (serviceKey.length < 30) {
     problemas.push("a service role key parece curta demais");
   } else if (serviceKey.startsWith("sb_publishable_") || serviceKey.includes('"role":"anon"')) {
