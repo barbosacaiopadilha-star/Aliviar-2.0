@@ -50,6 +50,14 @@ const MENSAGENS: Record<string, string> = {
   PERFIL_INEXISTENTE:
     "O seu Perfil ainda não foi aberto. Ele nasce na Consulta Inicial, junto com a Curadoria.",
   MAPA_INCOMPLETO: DECISION_MESSAGES.MAPA_INCOMPLETO,
+  // FALTAVA (achado da curadoria simulada, 25/08): a RPC devolve este código
+  // desde a ADR-065 — o Perfil que ela reconhece INCLUI o bloco relacional,
+  // as 15 conversas do Protocolo da Pessoa — e o mapa não o conhecia. A
+  // paciente caía na genérica "tente de novo", que MENTE: o estado não é
+  // transitório, e tentar de novo nunca resolveria. Estado do trabalho da
+  // Curadoria, dito como tal — nunca erro dela.
+  BLOCO_RELACIONAL_INCOMPLETO:
+    "Falta uma parte da conversa: como você quer ser cuidada. Seu Curador ainda está registrando essas respostas — quando terminar, este botão passa a funcionar.",
   PERFIL_SUBSTITUIDO: DECISION_MESSAGES.PERFIL_SUBSTITUIDO,
 };
 
