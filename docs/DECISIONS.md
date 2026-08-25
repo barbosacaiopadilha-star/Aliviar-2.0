@@ -17,17 +17,36 @@ O log é append-only: nenhum verbete é reescrito. Este índice é o mapa que os
 | ADR-041 ("nenhum consumidor ligado") · ADR-043 ("incrementos futuros") · ADR-044 ("nada implementado") | ADR-063 | emenda de status (afirmações superadas pela implementação) |
 | ADR-003 · ADR-005 · ADR-009 · ADR-011 (divergências de fato) | ADR-063 | nota de status |
 | Ontologia §6 ONT-30 (escolha imutável) | ADR-063 §6 | emenda (correção em `DECISAO_REGISTRADA` é desenho vigente) |
-| ADR-039 · ADR-040 (Mapas preenchidos por digitação manual) | ADR-066 · ADR-068 | emenda de origem — os Mapas passam a ser confirmação registrada; **as escalas, os estados e a RLS permanecem intactos** |
-| **Invariante I-10** (`CONGELAMENTO_ARQUITETURAL.md` §5) | **ADR-066** | **reabertura substancial** — a distinção formal entre as escalas permanece; a ponte versionada reabre a invariante em substância |
+| ADR-039 · ADR-040 (Mapas preenchidos por digitação manual) | ADR-066 (I) · ADR-068 | emenda de origem — os Mapas passam a ser confirmação registrada; **as escalas, os estados e a RLS permanecem intactos** |
+| **Invariante I-10** (`CONGELAMENTO_ARQUITETURAL.md` §5) | **ADR-066 (I)** | **reabertura substancial** — a distinção formal entre as escalas permanece; a ponte versionada reabre a invariante em substância |
 | ADR-065 (juízo relacional sem lugar de registro) | ADR-067 | complemento — os três conceitos `humano` passam a registrar-se em `curator_judgments` |
 | `MODELO_CURADORIA_V1.md` §7.1–§7.4 e §11 (v2.0) | ADR-067 → **Modelo v3.0** | emenda — remoção de "0–100" e dos percentuais de peso; quitação do achado P17 |
 | ADR-060 ("quem avalia não atesta", inexequível) | ADR-068 item 6 | complemento — a incompatibilidade é declarada e a exceção fica visível até a segunda conta existir |
 | **MR1.2** do Item 2.2A-MR1 (uma linha `VIGENTE` por regra, índice parcial) | **ADR-069** | **reinterpretação** — o invariante passa a ser garantido sobre a **transição**; conteúdo idêntico, sujeito trocado. MR1.1 e MR1.3 permanecem integralmente preservados |
 | **ADR-069** item 3 ("cinco transições permitidas") | **Emenda de 2026-08-05 (DT-01)**, no rodapé do próprio verbete | **emenda aritmética** — leia-se "sete arcos permitidos, incluindo o nascimento em `PROPOSTA`". Enumeração inalterada; nenhuma transição autorizada ou removida |
 | **ADR-069** item 5 (garantia declarativa do MR1.2) | **Precisão de 2026-08-05 (DT-01)**, no rodapé do próprio verbete | **precisão, não mudança** — a garantia é do **conjunto** trigger de cadeia + índice único parcial; o índice isolado não prova todo o invariante |
-| **ADR-066** §16 (sete condições de existência da ponte) | **Emenda F-2 de 2026-08-05 (DT-01)**, no rodapé do verbete e no §23 do anexo | **acréscimo** — oitava condição: no máximo uma versão de regra vigente por conceito, a cada instante. Complementa MR1.2; **não altera o grafo da ADR-069** |
-| **ADR-066** §16 condição 4 (`MOTOR_PARTICIPATION` ≠ `NUNCA`) | **Emenda F-1 de 2026-08-05 (DT-01)** | **aplicação da ADR-047** — a condição não muda de conteúdo; passa a ser **derivável do Catálogo materializado e imposta pelo banco**, em vez de declarada em `Record` TypeScript |
+| **ADR-066 (I)** §16 (sete condições de existência da ponte) | **Emenda F-2 de 2026-08-05 (DT-01)**, no rodapé do verbete e no §23 do anexo | **acréscimo** — oitava condição: no máximo uma versão de regra vigente por conceito, a cada instante. Complementa MR1.2; **não altera o grafo da ADR-069** |
+| **ADR-066 (I)** §16 condição 4 (`MOTOR_PARTICIPATION` ≠ `NUNCA`) | **Emenda F-1 de 2026-08-05 (DT-01)** | **aplicação da ADR-047** — a condição não muda de conteúdo; passa a ser **derivável do Catálogo materializado e imposta pelo banco**, em vez de declarada em `Record` TypeScript |
 | **ADR-079** (o filtro de cuidado contínuo cai para o cadastro quando o levantamento está vazio) | **ADR-088** | **correção pela raiz** — o remendo destravou a Mesa mas deu a uma autodeclaração o poder de eliminar. A queda para o cadastro permanece; o que muda é que autodeclaração não elimina mais, vira ressalva nomeada |
+
+
+### Números duplicados (colisão de numeração — não é supersessão)
+
+Um número atribuído duas vezes não cabe na tabela acima: nenhuma das duas ADRs supersede ou emenda a outra — elas apenas **colidem**. Registrado aqui porque é exatamente o tipo de coisa que o verbete não pode carregar sobre si mesmo, e porque o log é append-only: renumerar quebraria toda citação já feita.
+
+**ADR-066 — duas decisões distintas com o mesmo número.**
+
+| Qual | Data | Assunto | Como citar sem ambiguidade |
+| --- | --- | --- | --- |
+| ADR-066 (I) | 2026-08-04 | Propostas de Derivação e a Ponte entre Declaração e Método (ADR-A da Curadoria 2.0). Conteúdo normativo no anexo `docs/curadoria/ADR_A_PROPOSTAS_DE_DERIVACAO.md` | **ADR-066/04-08 (Derivação)** |
+| ADR-066 (II) | 2026-08-11 | A decisão da paciente é fato próprio, e a conexão trata do começar | **ADR-066/11-08 (Decisão da paciente)** |
+
+Os domínios não se tocam — uma institui a Camada de Derivação, a outra fixa `patient_curadoria_decisions` como fonte única da decisão —, então uma citação errada não troca uma regra por outra: ela manda o leitor ao lugar errado. O dano é de navegação, não de norma.
+
+**Cuidado ao ler citações antigas.** Referências a "ADR-066" escritas antes de 2026-08-25 não distinguem as duas, e há pelo menos uma dentro do próprio log em que a leitura por número não resolve: a ADR-066 (II) declara superseder parcialmente "a ADR do Bloco A que listava `connection_records (+ patient_curadoria_decisions)` como fonte da decisão" — e o anexo da ADR-066 (I), que também se chama ADR-A, **não menciona `connection_records`**. Verificado em 25/08. Ou seja: a "ADR do Bloco A" citada ali é outro documento, e a coincidência de nome só existe por causa desta colisão. Quem precisar resolver essa referência tem de segui-la pelo conteúdo, nunca pelo número.
+
+**Como não repetir.** Antes de lavrar uma ADR nova, conferir que o número está livre — `grep -c "^## ADR-0NN" docs/DECISIONS.md` deve responder `0`. Esta colisão só apareceu em 25/08, ao conferir a numeração de uma ADR nova, e vinha no repositório desde o commit `2a085e5`.
+
 
 ---
 
