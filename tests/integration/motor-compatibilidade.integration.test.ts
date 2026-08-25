@@ -19,6 +19,11 @@ import {
 import { createCuradoriaClient } from "./curadoria-client";
 import { seedPublishedProfessional } from "./rede-fixture";
 
+// A autoria do Mapa vem da sessão em produção; aqui é declarada, para que
+// o teste prove que ela CHEGA ao banco (achado de 25/08: as 29 linhas
+// gravavam sem `declared_by`, e a paciente lia "não consta quem registrou").
+const CURADOR_DO_TESTE = "00000000-0000-0000-0000-000000000001";
+
 /**
  * ITEM 1.1 — o universo do Motor é o Catálogo MENOS os quatro conceitos com
  * `MOTOR_PARTICIPATION = NUNCA`. Os oráculos abaixo fixavam 29 e 28 porque,
@@ -95,7 +100,7 @@ describe("Motor de Compatibilidade (Supabase local)", () => {
       { subcriterionCode: "EXPERIENCIA_NO_TIPO_DE_CASO", importance: "RELEVANTE" },
       { subcriterionCode: "CONTINUIDADE_POS_PROCEDIMENTO", importance: "IMPORTANTE" },
       { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", importance: "NAO_INFLUENCIA" },
-    ]);
+    ], CURADOR_DO_TESTE);
 
     await saveProfessionalMapEntries(service, profissional, [
       { subcriterionCode: "FORMACAO_RESIDENCIA", status: "CONFIRMADO" },
@@ -127,7 +132,7 @@ describe("Motor de Compatibilidade (Supabase local)", () => {
 
     await savePriorityMapEntries(service, caseId, [
       { subcriterionCode: "MODELO_COMUNICACAO", importance: "MUITO_IMPORTANTE" },
-    ]);
+    ], CURADOR_DO_TESTE);
 
     const leitura = await crossCaseWithProfessional(service, caseId, profissional);
     expect(leitura.rows).toHaveLength(1);
@@ -163,7 +168,7 @@ describe("Motor de Compatibilidade (Supabase local)", () => {
 
     await savePriorityMapEntries(service, caseId, [
       { subcriterionCode: "MODELO_COMUNICACAO", importance: "IMPORTANTE" },
-    ]);
+    ], CURADOR_DO_TESTE);
     await saveProfessionalMapEntries(service, profissional, [
       { subcriterionCode: "MODELO_COMUNICACAO", status: "CONFIRMADO" },
     ], adminUserId);
@@ -172,7 +177,7 @@ describe("Motor de Compatibilidade (Supabase local)", () => {
     await expect(
       savePriorityMapEntries(service, caseId, [
         { subcriterionCode: "HISTORICO_ENSINO_E_PESQUISA", importance: "IMPORTANTE" },
-      ]),
+      ], CURADOR_DO_TESTE),
     ).rejects.toThrow(/saiu de circulação/);
     await expect(
       saveProfessionalMapEntries(service, profissional, [
@@ -195,7 +200,7 @@ describe("Motor de Compatibilidade (Supabase local)", () => {
 
     await savePriorityMapEntries(service, caseId, [
       { subcriterionCode: "FORMACAO_RESIDENCIA", importance: "MUITO_IMPORTANTE" },
-    ]);
+    ], CURADOR_DO_TESTE);
     await saveProfessionalMapEntries(service, forte, [
       { subcriterionCode: "FORMACAO_RESIDENCIA", status: "CONFIRMADO" },
     ], adminUserId);
@@ -217,7 +222,7 @@ describe("Motor de Compatibilidade (Supabase local)", () => {
     await savePriorityMapEntries(service, caseId, [
       { subcriterionCode: "ACESSO_DISPONIBILIDADE", importance: "IMPORTANTE" },
       { subcriterionCode: "MODELO_ALTERNATIVAS", importance: "POUCO_IMPORTANTE" },
-    ]);
+    ], CURADOR_DO_TESTE);
     await saveProfessionalMapEntries(service, profissional, [
       { subcriterionCode: "ACESSO_DISPONIBILIDADE", status: "NAO_CONFIRMADO" },
     ], adminUserId);
@@ -233,7 +238,7 @@ describe("Motor de Compatibilidade (Supabase local)", () => {
 
     await savePriorityMapEntries(service, caseId, [
       { subcriterionCode: "MODELO_COMUNICACAO", importance: "IMPORTANTE" },
-    ]);
+    ], CURADOR_DO_TESTE);
 
     const antes = await service
       .from("case_priority_map")
