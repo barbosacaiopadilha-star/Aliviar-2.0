@@ -55,5 +55,8 @@ $$;
 comment on function curadoria.pacientes_dos_meus_casos() is
   'O nome da paciente dos Cases que o chamador já pode abrir — autorizado por can_access_case (responsabilidade ATUAL). Existe para a mesa do Concierge mostrar PESSOA e não UUID. Capability em vez de policy nova em profiles (G-2.6-2); irmã de nome_do_curador_do_caso e equipe_por_papel. Nasceu da curadoria simulada de 25/08.';
 
-revoke execute on function curadoria.pacientes_dos_meus_casos() from anon;
+-- De PUBLIC, não de anon: o Postgres concede EXECUTE a PUBLIC ao criar a
+-- função, e revogar de `anon` não tira isso — `anon` é membro de PUBLIC. É a
+-- convenção dominante do projeto (81 migrations) e o S1 do backlog técnico.
+revoke execute on function curadoria.pacientes_dos_meus_casos() from public;
 grant execute on function curadoria.pacientes_dos_meus_casos() to authenticated;

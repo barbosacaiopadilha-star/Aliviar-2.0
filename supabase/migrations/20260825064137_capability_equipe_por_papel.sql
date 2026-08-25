@@ -75,5 +75,8 @@ $$;
 comment on function curadoria.equipe_por_papel(text) is
   'Quem, na equipe interna, pode receber um Case — id e nome, por papel interno. Gate-first: só equipe interna pergunta; papel não-interno devolve vazio. Irmã de nome_do_curador_do_caso para o lado da operação: capability nomeada em vez de abrir RLS de profiles (G-2.6-2). Nasceu do defeito "não há a quem encaminhar" da curadoria simulada de 25/08.';
 
-revoke execute on function curadoria.equipe_por_papel(text) from anon;
+-- De PUBLIC, não de anon: o Postgres concede EXECUTE a PUBLIC ao criar a
+-- função, e revogar de `anon` não tira isso — `anon` é membro de PUBLIC. É a
+-- convenção dominante do projeto (81 migrations) e o S1 do backlog técnico.
+revoke execute on function curadoria.equipe_por_papel(text) from public;
 grant execute on function curadoria.equipe_por_papel(text) to authenticated;
