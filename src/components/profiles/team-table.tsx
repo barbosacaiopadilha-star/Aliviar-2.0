@@ -17,6 +17,8 @@ import type { ManageableRoleSlug, TeamMember } from "@/modules/team/types";
 const MANAGEABLE_ROLES: { slug: ManageableRoleSlug; label: string }[] = [
   { slug: "administrador", label: "Administrador" },
   { slug: "curador_medico", label: "Curador Médico" },
+  { slug: "atendente", label: "Atendente" },
+  { slug: "concierge", label: "Concierge" },
 ];
 
 // V1 (auditoria 22/08): atendente e concierge apareciam em slug cru — todo
