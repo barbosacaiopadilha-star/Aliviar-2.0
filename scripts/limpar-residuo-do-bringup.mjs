@@ -139,26 +139,74 @@ if (suspeitas.length > 0) {
 console.log(`${candidatas.length} conta(s) sintética(s) sem profile.`);
 
 // --- anexos -----------------------------------------------------------------
+//
+// O BUCKET NÃO TEM DOIS NÍVEIS — e foi isso que abortou a execução de 25/08.
+//
+// A versão anterior listava a raiz, listava uma vez dentro de cada pasta, e
+// tratava TUDO o que voltasse como objeto. Mas o app grava mais fundo:
+// `patient-document-repository.ts` escreve tanto `<profile>/<arquivo>` quanto
+// `<profile>/received/<caseId>/<arquivo>`. Ao encontrar uma PASTA no segundo
+// nível, o script montava o caminho dela e mandava DELETE — e a API devolveu
+// `HTTP 400`, porque pasta não é objeto.
+//
+// O efeito foi o desenho paranoico funcionando: abortou na primeira falha,
+// antes de apagar coisa alguma. Produção ficou intacta, e o ensaio seguinte
+// confirmou os mesmos 39 e 19.
+//
+// Agora a descida é RECURSIVA e não presume profundidade nenhuma.
+//
+// A distinção pasta/objeto é feita pelo FATO, não pela convenção: uma entrada
+// que, usada como prefixo, devolve filhos, é pasta; uma que não devolve nada é
+// objeto. O Storage também marca pseudo-pasta com `id` nulo, e teria sido mais
+// barato ler esse campo — mas convenção de API é coisa que muda de versão sem
+// avisar, e aqui o preço de ler errado é apagar produção. Uma chamada a mais
+// por objeto, num script que roda uma vez, é troco.
+async function objetosSob(bucket, prefixo) {
+  const entradas = await api(`/storage/v1/object/list/${bucket}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prefix: prefixo, limit: 1000 }),
+  });
+
+  const encontrados = [];
+  for (const entrada of entradas) {
+    const caminho = prefixo ? `${prefixo}/${entrada.name}` : entrada.name;
+    const filhos = await objetosSob(bucket, caminho);
+    if (filhos.length > 0) encontrados.push(...filhos);
+    else encontrados.push(caminho);
+  }
+  return encontrados;
+}
+
 const orfaos = [];
 for (const bucket of ["patient-documents", "professional-documents"]) {
-  let pagina = await api(`/storage/v1/object/list/${bucket}`, {
+  const raiz = await api(`/storage/v1/object/list/${bucket}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ prefix: "", limit: 1000 }),
   });
-  for (const pasta of pagina) {
+  for (const pasta of raiz) {
     if (idsProtegidos.has(pasta.name)) continue; // pasta de gente real: nem olha dentro
-    const dentro = await api(`/storage/v1/object/list/${bucket}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prefix: pasta.name, limit: 1000 }),
-    });
-    for (const item of dentro) orfaos.push({ bucket, caminho: `${pasta.name}/${item.name}` });
+    for (const caminho of await objetosSob(bucket, pasta.name)) {
+      orfaos.push({ bucket, caminho });
+    }
   }
 }
 console.log(`${orfaos.length} objeto(s) em pasta que não é de nenhum profile.`);
 
 if (!executar) {
+  // O ENSAIO DIZ O QUE VAI APAGAR, e não só quantos.
+  //
+  // Na tentativa de 25/08 o ensaio disse "19 objetos" e a execução abortou no
+  // primeiro DELETE: o script tinha montado caminho de PASTA e ninguém tinha
+  // como saber, porque o número estava certo e o caminho não aparecia. Contar
+  // não é conferir — quem autoriza apagar produção precisa ver o que assina.
+  console.log("\nOs objetos, um por linha:");
+  for (const { bucket, caminho } of orfaos) console.log(`  ${bucket}/${caminho}`);
+
+  console.log("\nAs contas, uma por linha:");
+  for (const conta of candidatas) console.log(`  ${conta.email}`);
+
   console.log("\nEnsaio terminado. Nada foi apagado.");
   console.log("Para valer:  node scripts/limpar-residuo-do-bringup.mjs --executar\n");
   process.exit(0);
