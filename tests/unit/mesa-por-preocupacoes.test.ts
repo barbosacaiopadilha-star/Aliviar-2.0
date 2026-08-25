@@ -361,42 +361,82 @@ describe("O juízo é do eixo, não do subcritério — 18, nunca 42", () => {
 
 // ---------------------------------------------------------------------------
 
-// A primeira versão da tela pediu 42 juízos onde o Método pede 18: renderizava
-// o pedido em cada SUBCRITÉRIO, e a ADR-067 §5 exige um por EIXO. O
-// agrupamento existe para que a tela não tenha como errar isso de novo.
-describe("O juízo é do eixo, não do subcritério — 18, nunca 42", () => {
-  it("um grupo por eixo, e só os três eixos da ADR-067 pedem juízo", () => {
-    const mesa = montarMesaPorPreocupacoes(entrada());
+// `SIM-43`. Medido na tela, no caso real com três profissionais: o Método
+// exige 18 pontos de juízo e a Mesa oferecia 12. A causa era o encolhimento da
+// linha redundante — ele troca as células por uma frase, e é DENTRO da célula
+// que mora o ato de registrar o juízo. Para conceito fora do Motor o sumiço
+// era estrutural: toda célula sai igual por construção, então a linha
+// encolhia SEMPRE.
+describe("Linha que exige juízo nunca encolhe — os 18 pontos não podem sumir", () => {
+  const DOIS: ProfissionalNaMesa[] = [
+    { id: "helena", nome: "Dra. Helena", estados: {} },
+    { id: "otavio", nome: "Dr. Otávio", estados: {} },
+  ];
 
-    expect(mesa.gruposDeOrfaos.map((g) => g.eixo)).toEqual([
-      "EXPERIENCIA",
-      "PRATICA",
-      "HISTORICO",
-      "FORMACAO",
-    ]);
-    expect(mesa.gruposDeOrfaos.filter((g) => g.juizo === "TECNICO").map((g) => g.eixo)).toEqual([
-      "EXPERIENCIA",
-      "HISTORICO",
-      "FORMACAO",
-    ]);
+  function linhaDe(code: string) {
+    const mesa = montarMesaPorPreocupacoes(entrada({ profissionais: DOIS }));
+    const linha = mesa.linhas.find((l) => l.subcriterionCode === code);
+    if (!linha) throw new Error(`Linha ausente para ${code}`);
+    return linha;
+  }
+
+  // O par que prova a regra: as duas linhas têm células IDÊNTICAS, com o mesmo
+  // `motivo` e a mesma compatibilidade nula. O que as separa é só o Método —
+  // uma pede juízo por profissional, a outra não pede juízo de ninguém.
+  it("o conceito fora do Motor que EXIGE juízo não encolhe, ainda que as células sejam iguais", () => {
+    const notícias = linhaDe("MODELO_CONDUCAO_DE_NOTICIAS_DIFICEIS");
+
+    expect(juizoExigidoEm(notícias.subcriterionCode)).toBe("RELACIONAL");
+    expect(notícias.celulas.map((c) => c.motivo)).toEqual(["FORA_DO_MOTOR", "FORA_DO_MOTOR"]);
+    expect(notícias.todosIguais).toBe(false);
   });
 
-  it("os grupos contêm todos os órfãos, sem perder nem duplicar nenhum", () => {
-    const mesa = montarMesaPorPreocupacoes(entrada());
-    const nosGrupos = mesa.gruposDeOrfaos.flatMap((g) => g.itens.map((i) => i.subcriterionCode));
+  it("o conceito fora do Motor que NÃO exige juízo encolhe, como sempre encolheu", () => {
+    const convênio = linhaDe("VIABILIDADE_COBERTURA_E_CONVENIO");
 
-    expect(nosGrupos.sort()).toEqual(mesa.orfaos.map((o) => o.subcriterionCode).sort());
+    expect(juizoExigidoEm(convênio.subcriterionCode)).toBeNull();
+    expect(convênio.celulas.map((c) => c.motivo)).toEqual(["FORA_DO_MOTOR", "FORA_DO_MOTOR"]);
+    expect(convênio.todosIguais).toBe(true);
   });
 
-  // A conta que a tela faz: 3 eixos técnicos + 3 conceitos relacionais.
-  it("a conta fecha em 6 pontos de juízo por profissional", () => {
+  it("nenhuma linha que exige juízo encolhe — os três relacionais, sem exceção", () => {
+    const mesa = montarMesaPorPreocupacoes(entrada({ profissionais: DOIS }));
+
+    const queExigemJuizo = mesa.linhas.filter(
+      (l) => juizoExigidoEm(l.subcriterionCode) !== null,
+    );
+
+    expect(queExigemJuizo.map((l) => l.subcriterionCode)).toEqual([
+      "MODELO_DECISAO_COMPARTILHADA",
+      "MODELO_PREFERENCIAS_E_RESTRICOES",
+      "MODELO_CONDUCAO_DE_NOTICIAS_DIFICEIS",
+    ]);
+    expect(queExigemJuizo.every((l) => l.todosIguais === false)).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+// `SIM-45`. A tela mostrava "experiencia volume de atuacao" — o código com os
+// underscores trocados por espaço, sem acento e em minúsculas. O rótulo humano
+// sempre existiu no Catálogo; faltava carregá-lo até aqui.
+describe("O órfão tem nome, não código", () => {
+  it("usa o rótulo do Catálogo quando ele vem", () => {
+    const mesa = montarMesaPorPreocupacoes(
+      entrada({ rotulos: { EXPERIENCIA_VOLUME_DE_ATUACAO: "Volume de atuação" } }),
+    );
+    const orfao = mesa.orfaos.find((o) => o.subcriterionCode === "EXPERIENCIA_VOLUME_DE_ATUACAO");
+
+    expect(orfao?.rotulo).toBe("Volume de atuação");
+  });
+
+  // Rótulo faltando devolve o CÓDIGO inteiro, que parece código — porque é.
+  // O "de-underscore" era pior justamente por parecer prosa: quem lia
+  // "experiencia volume de atuacao" não tinha como saber que era defeito.
+  it("sem rótulo, mostra o código como código — nunca fantasiado de prosa", () => {
     const mesa = montarMesaPorPreocupacoes(entrada());
+    const orfao = mesa.orfaos.find((o) => o.subcriterionCode === "EXPERIENCIA_VOLUME_DE_ATUACAO");
 
-    const relacionais = mesa.linhas.filter(
-      (l) => juizoExigidoEm(l.subcriterionCode) === "RELACIONAL",
-    ).length;
-    const tecnicos = mesa.gruposDeOrfaos.filter((g) => g.juizo === "TECNICO").length;
-
-    expect(relacionais + tecnicos).toBe(6);
+    expect(orfao?.rotulo).toBe("EXPERIENCIA_VOLUME_DE_ATUACAO");
   });
 });

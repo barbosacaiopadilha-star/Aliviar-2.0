@@ -125,7 +125,10 @@ export default async function MesaPorPreocupacoesPage({
     })),
     ...mesa.orfaos.map((orfao) => ({
       subcriterionCode: orfao.subcriterionCode,
-      titulo: orfao.subcriterionCode.replace(/_/g, " ").toLowerCase(),
+      // `SIM-45`: o rótulo do Catálogo, não o código com os underscores
+      // trocados por espaço. O Curador classificava "experiencia volume de
+      // atuacao" — código cru fantasiado de prosa.
+      titulo: orfao.rotulo,
       atual: orfao.importancia,
     })),
   ];
@@ -155,9 +158,8 @@ export default async function MesaPorPreocupacoesPage({
             funções". Quem chega e não acha o que procura precisa saber onde
             está, e não desconfiar que quebrou. */}
         <p className="max-w-3xl text-sm text-ink-muted">
-          Cinco coisas continuam só na Mesa atual: classificar a importância dos 29, declarar
-          a área de cada profissional, os filtros obrigatórios, a Base de Evidências e o
-          painel de atenção.{" "}
+          Quatro coisas continuam só na Mesa atual: declarar a área de cada profissional, os
+          filtros obrigatórios, a Base de Evidências e o painel de atenção.{" "}
           <Link
             href={`/coa/curadoria/casos/${id}/curadoria_tecnica`}
             className="text-ink underline underline-offset-2"

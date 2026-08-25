@@ -80,10 +80,18 @@ export async function carregarMesaPorPreocupacoes(
           .select("professional_profile_id, status, method_subcriteria(code)")
           .in("professional_profile_id", ids)
       : Promise.resolve({ data: [] as unknown[] }),
-    supabase.from("method_subcriteria").select("code").eq("active", true),
+    // `name` vem junto desde o `SIM-45`: é o nome humano do conceito, e a
+    // tela mostrava o código cru por ele não estar aqui. Uma coluna a mais na
+    // mesma consulta — nenhuma ida ao banco nova.
+    supabase.from("method_subcriteria").select("code, name").eq("active", true),
   ]);
 
-  const subcriteriosAtivos = ((catalogoRows ?? []) as { code: string }[]).map((r) => r.code);
+  const catalogo = (catalogoRows ?? []) as { code: string; name: string | null }[];
+  const subcriteriosAtivos = catalogo.map((r) => r.code);
+  const rotulos: Record<string, string> = {};
+  for (const conceito of catalogo) {
+    if (conceito.name) rotulos[conceito.code] = conceito.name;
+  }
 
   // Uma resposta por PERGUNTA, e a ponte é o subcritério — que é a mesma
   // chave que o Protocolo e o Motor já usam. Nenhum mapeamento novo.
@@ -133,6 +141,7 @@ export async function carregarMesaPorPreocupacoes(
       importancias,
       profissionais,
       subcriteriosAtivos,
+      rotulos,
     }),
     profissionais: profissionaisDoCase,
   };

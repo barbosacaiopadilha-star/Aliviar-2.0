@@ -81,6 +81,21 @@ export type EntradaDaMesa = {
   profissionais: readonly ProfissionalNaMesa[];
   /** Os subcritérios ativos — vêm do banco, nunca de uma lista aqui. */
   subcriteriosAtivos: readonly string[];
+  /**
+   * O nome humano de cada conceito, como o Catálogo do Método o escreve
+   * (`method_subcriteria.name`) — `SIM-45`.
+   *
+   * A tela mostrava `EXPERIENCIA_VOLUME_DE_ATUACAO` com os underscores
+   * trocados por espaços: *"experiencia volume de atuacao"*, sem acento e em
+   * minúsculas. O Curador lia código cru numa tela cuja tese é falar a língua
+   * de gente. O rótulo sempre existiu no Catálogo; o que faltava era carregá-lo.
+   *
+   * Opcional de propósito: quem monta a Mesa em teste não precisa recitar 29
+   * rótulos para provar cobertura. Faltando o rótulo, o `Orfao` devolve o
+   * CÓDIGO inteiro, em maiúsculas — que parece código, porque é. O
+   * *de-underscore* era pior justamente por parecer prosa.
+   */
+  rotulos?: Readonly<Record<string, string>>;
 };
 
 // ---------------------------------------------------------------------------
@@ -133,6 +148,14 @@ export type Linha = {
 /** Um subcritério que ela não tem como pedir — e que por isso é conferido. */
 export type Orfao = {
   subcriterionCode: string;
+  /**
+   * O nome do conceito como o Catálogo o escreve — o que a tela mostra.
+   *
+   * A linha tem a frase DELA por título; o órfão não tem frase nenhuma,
+   * porque ela não tem como pedir isto. O título dele é o nome que o Método
+   * dá ao conceito — nunca o código (`SIM-45`).
+   */
+  rotulo: string;
   importancia: ImportanceLevel | null;
   celulas: readonly Celula[];
   /**
@@ -250,8 +273,31 @@ export function juizoExigidoEm(subcriterionCode: string): "TECNICO" | "RELACIONA
  * Com menos de dois candidatos a pergunta não faz sentido — uma coluna só
  * nunca "separa" ninguém, e marcar a linha como redundante esconderia a única
  * informação que existe.
+ *
+ * ────────────────────────────────────────────────────────────────────────────
+ * LINHA QUE EXIGE JUÍZO NUNCA É IGUAL — `SIM-43`.
+ *
+ * O que aconteceu: a tela colapsa a linha redundante numa frase só, e o
+ * colapso troca as células por um `colSpan`. Só que é dentro da célula que
+ * mora o ato de registrar o juízo. Resultado medido na Mesa, com três
+ * profissionais: o Método exige 18 pontos de juízo (ADR-067 §5) e a tela
+ * oferecia **12**. Sumiam os relacionais de `MODELO_PREFERENCIAS_E_RESTRICOES`
+ * e `MODELO_CONDUCAO_DE_NOTICIAS_DIFICEIS`, três profissionais cada.
+ *
+ * E para conceito fora do Motor o sumiço era **estrutural, nunca eventual**:
+ * toda célula sai com `motivo: FORA_DO_MOTOR` e `compatibilidade: null`, logo
+ * a igualdade era verdadeira sempre, por construção. A linha do P17 dizia
+ * *"Os três respondem igual aqui: Exige juízo seu. Não separa ninguém"* —
+ * cobrando o ato e retirando o ato, na mesma frase.
+ *
+ * A correção é de domínio, não de layout, e por isso mora aqui: **onde o
+ * Método exige um juízo POR PROFISSIONAL, os candidatos não respondem a mesma
+ * coisa — eles ainda não foram julgados.** A igualdade das células é ausência
+ * de juízo, e chamar ausência de igualdade é afirmar sobre os três algo que
+ * ninguém verificou.
  */
-function saoTodasIguais(celulas: readonly Celula[]): boolean {
+function saoTodasIguais(celulas: readonly Celula[], exigeJuizo: boolean): boolean {
+  if (exigeJuizo) return false;
   if (celulas.length < 2) return false;
   const primeira = celulas[0];
   return celulas.every(
@@ -295,7 +341,7 @@ function ordemDosOrfaos(a: string, b: string): number {
  * deixa a pessoa visível.
  */
 export function montarMesaPorPreocupacoes(entrada: EntradaDaMesa): MesaPorPreocupacoes {
-  const { respostas, importancias, profissionais, subcriteriosAtivos } = entrada;
+  const { respostas, importancias, profissionais, subcriteriosAtivos, rotulos } = entrada;
 
   const respostaPorPergunta = new Map(respostas.map((r) => [r.questionId, r]));
   const ativos = new Set(subcriteriosAtivos);
@@ -317,7 +363,10 @@ export function montarMesaPorPreocupacoes(entrada: EntradaDaMesa): MesaPorPreocu
       reconhecida: dela?.reconhecida ?? false,
       importancia,
       celulas: celulasDaLinha,
-      todosIguais: saoTodasIguais(celulasDaLinha),
+      todosIguais: saoTodasIguais(
+        celulasDaLinha,
+        juizoExigidoEm(pergunta.subcriterionCode) !== null,
+      ),
       opcoesMarcadas: dela?.opcoesMarcadas ?? [],
       opcoes: Object.entries(pergunta.options).map(([codigo, rotulo]) => ({ codigo, rotulo })),
       multi: pergunta.multi,
@@ -334,6 +383,7 @@ export function montarMesaPorPreocupacoes(entrada: EntradaDaMesa): MesaPorPreocu
       const importancia = importancias[code] ?? null;
       return {
         subcriterionCode: code,
+        rotulo: rotulos?.[code] ?? code,
         importancia,
         celulas: celulasDe(code, importancia, profissionais),
         // Um conceito que o Método não cruza não pede conferência de

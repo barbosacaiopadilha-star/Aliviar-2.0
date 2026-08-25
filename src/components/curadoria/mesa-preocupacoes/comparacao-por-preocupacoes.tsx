@@ -76,24 +76,52 @@ type Props = MesaPorPreocupacoes & {
  *   operação  — alguém precisa ir descobrir; não é trabalho de julgar
  *   ninguém   — o Método decidiu não cruzar isto, e está encerrado
  */
-const COR_DA_PENDENCIA: Record<Celula["motivo"], { classe: string; dono: string }> = {
-  CRUZADO: { classe: "", dono: "" },
-  SEM_IMPORTANCIA_DECLARADA: {
-    classe: "border-l-2 border-l-[var(--color-attention)] bg-[var(--color-attention-surface)]",
-    dono: "você",
-  },
-  SEM_ESTADO_DECLARADO: {
-    classe: "border-l-2 border-l-[var(--color-border-strong)]",
-    dono: "operação",
-  },
-  FORA_DO_MOTOR: {
-    classe: "border-l-2 border-l-[var(--color-attention)] bg-[var(--color-attention-surface)]",
-    dono: "você",
-  },
+type Dono = "VOCE" | "OPERACAO" | "NINGUEM";
+
+const CLASSE_DO_DONO: Record<Dono, string> = {
+  VOCE: "border-l-2 border-l-[var(--color-attention)] bg-[var(--color-attention-surface)]",
+  OPERACAO: "border-l-2 border-l-[var(--color-border-strong)]",
+  NINGUEM: "",
 };
 
+/**
+ * O TERCEIRO DONO, QUE ESTAVA ESCRITO AQUI E NUNCA EXISTIU — `SIM-44`.
+ *
+ * A lista acima declarava três donos do próximo passo; o mapa antigo
+ * implementava dois. Todo conceito `FORA_DO_MOTOR` recebia cor de atenção e o
+ * texto *"Exige juízo seu"* — inclusive **convênio (P15) e custo (P16)**, que
+ * o Método classifica como *"condições de possibilidade, não medida de
+ * profissional"* (`participacao-no-motor.ts`) e que a ADR-092 deixa fora da
+ * exigência pela mesma razão que ficam fora do Motor.
+ *
+ * A tela cobrava um ato que ninguém deve — e, pior, não oferecia onde cumpri-lo:
+ * essas linhas não recebem `natureza`, logo nunca tiveram formulário de juízo.
+ *
+ * A regra que faltava já estava aplicada no módulo puro, em `Orfao.conferido`:
+ * *"um conceito que o Método não cruza não pede conferência de ninguém —
+ * cobrá-la seria inventar trabalho."* Aqui ela passa a valer também.
+ *
+ * `exigeJuizo` é a mesma pergunta que decide se a célula ganha formulário
+ * (`juizoExigidoEm`). Uma fonte, duas consequências — nunca duas listas.
+ */
+function donoDoProximoPasso(motivo: Celula["motivo"], exigeJuizo: boolean): Dono {
+  switch (motivo) {
+    case "CRUZADO":
+      return "NINGUEM";
+    case "SEM_IMPORTANCIA_DECLARADA":
+      return "VOCE";
+    case "SEM_ESTADO_DECLARADO":
+      return "OPERACAO";
+    case "FORA_DO_MOTOR":
+      return exigeJuizo ? "VOCE" : "NINGUEM";
+  }
+}
+
 /** O texto de uma célula, e a razão do vazio quando há vazio. */
-function textoDaCelula(celula: Celula): { titulo: string; detalhe: string | null } {
+function textoDaCelula(
+  celula: Celula,
+  exigeJuizo: boolean,
+): { titulo: string; detalhe: string | null } {
   switch (celula.motivo) {
     case "CRUZADO":
       return {
@@ -101,10 +129,15 @@ function textoDaCelula(celula: Celula): { titulo: string; detalhe: string | null
         detalhe: celula.estado ? SUBCRITERION_STATUS_LABELS[celula.estado] : null,
       };
     case "FORA_DO_MOTOR":
-      return {
-        titulo: "Exige juízo seu",
-        detalhe: "O Método não cruza este conceito automaticamente.",
-      };
+      return exigeJuizo
+        ? {
+            titulo: "Exige juízo seu",
+            detalhe: "O Método não cruza este conceito automaticamente.",
+          }
+        : {
+            titulo: "O Método não cruza isto",
+            detalhe: "Condição de possibilidade, não medida de profissional — nada a julgar aqui.",
+          };
     case "SEM_IMPORTANCIA_DECLARADA":
       return {
         titulo: "Falta você declarar",
@@ -136,13 +169,16 @@ function Celulas({
   return (
     <>
       {celulas.map((celula) => {
-        const { titulo, detalhe } = textoDaCelula(celula);
+        const exigeJuizo = natureza !== null;
+        const { titulo, detalhe } = textoDaCelula(celula, exigeJuizo);
+        const dono = donoDoProximoPasso(celula.motivo, exigeJuizo);
         const pendente = celula.motivo !== "CRUZADO";
         return (
           <td
             key={celula.profissionalId}
-            className={`border-b border-border px-4 py-3 align-top ${COR_DA_PENDENCIA[celula.motivo].classe}`}
+            className={`border-b border-border px-4 py-3 align-top ${CLASSE_DO_DONO[dono]}`}
             data-motivo={celula.motivo}
+            data-dono={dono}
           >
             <span
               className={
@@ -169,6 +205,53 @@ function Celulas({
           </td>
         );
       })}
+    </>
+  );
+}
+
+/**
+ * O PONTO DE JUÍZO DO EIXO — que não é uma célula de comparação, e parou de
+ * fingir que era (`SIM-43`).
+ *
+ * Antes, esta linha reaproveitava `Celulas` clonando as células do primeiro
+ * subcritério do grupo com `motivo: "FORA_DO_MOTOR"` forçado, só para obter o
+ * texto "Exige juízo seu". Saía `data-motivo="FORA_DO_MOTOR"` em conceitos que
+ * o Motor CRUZA — `FORMACAO_GRADUACAO` entre eles. Funcionava, e afirmava uma
+ * falsidade sobre o domínio num atributo que um teste futuro acreditaria.
+ *
+ * O juízo do eixo não tem leitura de Motor porque não é cruzamento nenhum: é o
+ * ato que a ADR-067 §5 reserva a uma pessoa. Então ele não empresta a forma da
+ * célula — tem a própria.
+ */
+function JuizoDoEixo({
+  eixo,
+  profissionais,
+  caseId,
+}: {
+  eixo: string;
+  profissionais: readonly { id: string; nome: string }[];
+  caseId: string;
+}) {
+  return (
+    <>
+      {profissionais.map((profissional) => (
+        <td
+          key={profissional.id}
+          className="border-b border-border px-4 py-3 align-top border-l-2 border-l-[var(--color-attention)] bg-[var(--color-attention-surface)]"
+          data-ponto-de-juizo={eixo}
+          data-dono="VOCE"
+        >
+          <span className="block text-sm font-medium text-ink-muted">Exige juízo seu</span>
+          <RegistrarJuizoNaCelula
+            caseId={caseId}
+            professionalProfileId={profissional.id}
+            professionalNome={profissional.nome}
+            subcriterionCode={eixo}
+            natureza="TECNICO"
+            conclusaoVigente={null}
+          />
+        </td>
+      ))}
     </>
   );
 }
@@ -243,9 +326,7 @@ function LinhaOrfa({
   return (
     <tr>
       <th scope="row" className="border-b border-border px-4 py-3 text-left align-top">
-        <span className="block text-sm font-medium text-ink">
-          {orfao.subcriterionCode.replace(/_/g, " ").toLowerCase()}
-        </span>
+        <span className="block text-sm font-medium text-ink">{orfao.rotulo}</span>
         <span className="mt-1 block text-xs text-ink-muted">
           {orfao.importancia
             ? `Você declarou: ${IMPORTANCE_LABELS[orfao.importancia]}`
@@ -336,8 +417,10 @@ export function ComparacaoPorPreocupacoes({
                     className="border-b border-border px-4 py-3 align-top text-sm text-ink-muted"
                   >
                     Os três respondem igual aqui:{" "}
-                    <span className="text-ink">{textoDaCelula(linha.celulas[0]).titulo}</span>. Não
-                    separa ninguém.
+                    {/* `false`: linha que exige juízo NUNCA colapsa (SIM-43),
+                        então aqui nunca há juízo pendente a nomear. */}
+                    <span className="text-ink">{textoDaCelula(linha.celulas[0], false).titulo}</span>.
+                    Não separa ninguém.
                   </td>
                 ) : (
                   <Celulas
@@ -397,31 +480,39 @@ export function ComparacaoPorPreocupacoes({
             <tbody>
               {gruposDeOrfaos.map((grupo) => (
                 <Fragment key={grupo.eixo}>
-                  {grupo.juizo ? (
-                    <tr>
-                      <th
-                        scope="row"
-                        className="border-b border-border bg-canvas px-4 py-3 text-left align-top"
-                      >
-                        <span className="block text-sm font-medium text-ink">
-                          {ROTULO_DO_EIXO[grupo.eixo] ?? grupo.eixo.toLowerCase()}
-                        </span>
-                        <span className="mt-1 block text-xs text-ink-muted">
-                          Um juízo por eixo, não por item — ADR-067 §5.
-                        </span>
-                      </th>
-                      <Celulas
-                        celulas={grupo.itens[0].celulas.map((c) => ({
-                          ...c,
-                          motivo: "FORA_DO_MOTOR" as const,
-                        }))}
+                  {/* O CABEÇALHO DO EIXO NÃO DEPENDE DE HAVER JUÍZO — `SIM-45`.
+                      Ele só era renderizado quando o eixo exigia juízo, e por
+                      isso PRATICA — o único dos quatro que não exige — nunca
+                      mostrava o próprio nome. "Limites — o que declara não
+                      fazer" estava definido logo acima e não aparecia em
+                      lugar nenhum da tela. */}
+                  <tr>
+                    <th
+                      scope="row"
+                      className="border-b border-border bg-canvas px-4 py-3 text-left align-top"
+                    >
+                      <span className="block text-sm font-medium text-ink">
+                        {ROTULO_DO_EIXO[grupo.eixo] ?? grupo.eixo.toLowerCase()}
+                      </span>
+                      <span className="mt-1 block text-xs text-ink-muted">
+                        {grupo.juizo
+                          ? "Um juízo por eixo, não por item — ADR-067 §5."
+                          : "Sem juízo de eixo: o Método não o exige aqui."}
+                      </span>
+                    </th>
+                    {grupo.juizo ? (
+                      <JuizoDoEixo
+                        eixo={grupo.eixo}
+                        profissionais={profissionais}
                         caseId={caseId}
-                        subcriterionCode={grupo.eixo}
-                        nomePorId={nomePorId}
-                        natureza="TECNICO"
                       />
-                    </tr>
-                  ) : null}
+                    ) : (
+                      <td
+                        colSpan={profissionais.length}
+                        className="border-b border-border px-4 py-3 align-top text-sm text-ink-muted"
+                      />
+                    )}
+                  </tr>
                   {grupo.itens.map((orfao) => (
                     <LinhaOrfa
                       key={orfao.subcriterionCode}

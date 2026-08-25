@@ -13,6 +13,10 @@ function linha(parcial: Partial<Linha>): Linha {
     reconhecida: true,
     importancia: "MUITO_IMPORTANTE",
     celulas: [],
+    // `SIM-46`: o campo é obrigatório em `Linha` desde que a linha redundante
+    // passou a encolher, e este helper nunca o preencheu — `npm run typecheck`
+    // ficou vermelho no `main` sem que nada barrasse o commit.
+    todosIguais: false,
     opcoesMarcadas: [],
     opcoes: [],
     multi: false,
