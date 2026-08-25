@@ -30,16 +30,37 @@ import { registrarJulgamentoAction } from "@/modules/curadoria/julgamento-action
 const LIMITE_DA_CONCLUSAO = 280;
 
 /**
- * Começos de frase, sem conteúdo — a diferença que importa.
+ * FORMAS DE COMEÇAR — sete registros, nenhum conteúdo.
  *
- * "Considerando o que está verificado, entendo que…" ajuda a começar sem dizer
- * o que pensar. "Este profissional atende bem a esta necessidade" seria o
- * software emitindo o juízo que a ADR-067 reserva a uma pessoa.
+ * O Fundador pediu (25/08): "nos juízos eu quero respostas humanas e textos bem
+ * formulados; nos casos em que a paciente lê seu juízo, a gente precisa ser bem
+ * versátil".
+ *
+ * A versatilidade tem que estar na FORMA, não no conteúdo — e essa fronteira é
+ * a diferença entre ajudar e substituir. "Considerando o que está verificado,
+ * entendo que…" oferece um jeito de dizer. "Este profissional atende bem a esta
+ * necessidade" seria o software emitindo o juízo que a ADR-067 reserva a uma
+ * pessoa, e o Curador assinaria embaixo sem ter pensado.
+ *
+ * Sete começos porque as situações são diferentes de verdade: julgar com o que
+ * se sabe não é a mesma coisa que julgar com uma lacuna à vista, que não é a
+ * mesma coisa que reconhecer uma contradição entre o que se leu e o que se
+ * ouviu. Três formas obrigavam a torcer a frase; sete deixam escolher a que
+ * cabe.
+ *
+ * O TOM VEM DE ONDE O TEXTO VAI PARAR. Alguns juízos alimentam o relatório que
+ * ELA lê. Por isso nenhum começo aqui é jargão — nem "adequado ao perfil", nem
+ * "compatível com os requisitos". São frases que uma pessoa diria a outra
+ * pessoa sobre uma terceira, com cuidado.
  */
-const COMECOS = [
-  "Considerando o que está verificado, entendo que",
-  "Apesar da lacuna que permanece, entendo que",
-  "O que sei até aqui não me permite concluir mais do que",
+const COMECOS: readonly { rotulo: string; texto: string }[] = [
+  { rotulo: "Com o que se sabe", texto: "Considerando o que está verificado até aqui, entendo que" },
+  { rotulo: "Com a lacuna à vista", texto: "Falta informação sobre este ponto, e mesmo assim entendo que" },
+  { rotulo: "Reservado", texto: "O que sei até aqui não me permite concluir mais do que" },
+  { rotulo: "O que pesa a favor", texto: "O que mais pesa a favor deste caminho, neste ponto, é" },
+  { rotulo: "O que pesa contra", texto: "O que precisa ser dito antes de qualquer escolha é que" },
+  { rotulo: "Divergência", texto: "O que li e o que ouvi não coincidem neste ponto: " },
+  { rotulo: "Para ela ler", texto: "Se você escolher este caminho, sobre este ponto é importante saber que" },
 ];
 
 type Props = {
@@ -117,17 +138,23 @@ export function RegistrarJuizoNaCelula({
         className="rounded-md border border-border bg-surface px-2 py-1.5 text-xs text-ink"
       />
 
+      <p className="text-xs text-ink-muted">
+        Comece de uma destas formas, se ajudar — o que vem depois é seu:
+      </p>
       <div className="flex flex-wrap items-center gap-1.5">
         {/* Estrutura de frase, nunca conteúdo: começar a escrever é o custo,
             e opinar sobre o médico não é trabalho do software. */}
         {COMECOS.map((comeco) => (
           <button
-            key={comeco}
+            key={comeco.rotulo}
             type="button"
-            onClick={() => setConclusao((atual) => (atual.length > 0 ? atual : `${comeco} `))}
+            title={comeco.texto}
+            onClick={() =>
+              setConclusao((atual) => (atual.length > 0 ? atual : `${comeco.texto} `))
+            }
             className="rounded-md border border-border px-2 py-1 text-xs text-ink-muted transition-colors hover:text-ink"
           >
-            {comeco.split(" ").slice(0, 3).join(" ")}…
+            {comeco.rotulo}
           </button>
         ))}
       </div>

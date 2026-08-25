@@ -39,9 +39,57 @@ const ROTULO_DO_EIXO: Record<string, string> = {
   FORMACAO: "Formação — onde estudou",
 };
 
+/**
+ * O peso dela, curto.
+ *
+ * `NEED_DEGREE_LABELS` traz "Essencial — sem isso o cuidado não acontece", que
+ * é o rótulo do FORMULÁRIO: existe para alguém escolher entre quatro opções.
+ * Dentro de uma linha da tabela ele vira ruído, e a linha tem outras cinco
+ * informações competindo. Mesmo erro do "·" e do "preciso de atendimento
+ * presencial era essencial": texto certo, lugar errado.
+ */
+const GRAU_CURTO: Record<string, string> = {
+  ESSENCIAL: "essencial",
+  PESA_MUITO: "pesa muito",
+  DESEJAVEL: "desejável",
+  SEM_PREFERENCIA: "sem preferência",
+};
+
 type Props = MesaPorPreocupacoes & {
   caseId: string;
   profissionais: readonly { id: string; nome: string }[];
+};
+
+/**
+ * A COR DIZ DE QUEM É A PRÓXIMA AÇÃO — nunca quem é melhor.
+ *
+ * A armadilha, nomeada para não ser esquecida: se "Alta compatibilidade"
+ * ficasse verde e "Média" amarela, o Curador passaria a contar verdes. Isso é
+ * ranking com outro nome, e é a única coisa que esta tela não pode fazer — no
+ * dia em que ela ordena, a Aliviar passou a escolher o médico (ADR-041).
+ *
+ * Então os quatro resultados do Motor continuam em TEXTO, sem escala de cor. O
+ * que ganha cor é a pendência, e a cor responde a uma pergunta só: quem deve o
+ * próximo passo?
+ *
+ *   você      — o Curador, agora, nesta tela
+ *   operação  — alguém precisa ir descobrir; não é trabalho de julgar
+ *   ninguém   — o Método decidiu não cruzar isto, e está encerrado
+ */
+const COR_DA_PENDENCIA: Record<Celula["motivo"], { classe: string; dono: string }> = {
+  CRUZADO: { classe: "", dono: "" },
+  SEM_IMPORTANCIA_DECLARADA: {
+    classe: "border-l-2 border-l-[var(--color-attention)] bg-[var(--color-attention-surface)]",
+    dono: "você",
+  },
+  SEM_ESTADO_DECLARADO: {
+    classe: "border-l-2 border-l-[var(--color-border-strong)]",
+    dono: "operação",
+  },
+  FORA_DO_MOTOR: {
+    classe: "border-l-2 border-l-[var(--color-attention)] bg-[var(--color-attention-surface)]",
+    dono: "você",
+  },
 };
 
 /** O texto de uma célula, e a razão do vazio quando há vazio. */
@@ -93,7 +141,7 @@ function Celulas({
         return (
           <td
             key={celula.profissionalId}
-            className="border-b border-border px-4 py-3 align-top"
+            className={`border-b border-border px-4 py-3 align-top ${COR_DA_PENDENCIA[celula.motivo].classe}`}
             data-motivo={celula.motivo}
           >
             <span
@@ -156,7 +204,7 @@ function CabecalhoDaLinha({ linha, caseId }: { linha: Linha; caseId: string }) {
       </span>
       <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-muted">
         <span className="font-mono">{linha.questionId}</span>
-        {linha.grau ? <span>· para ela: {NEED_DEGREE_LABELS[linha.grau]}</span> : null}
+        {linha.grau ? <span>· para ela: {GRAU_CURTO[linha.grau]}</span> : null}
         {linha.importancia ? <span>· você: {IMPORTANCE_LABELS[linha.importancia]}</span> : null}
         {linha.resposta && !linha.reconhecida ? (
           <span className="text-ink-muted">· aguarda o reconhecimento dela</span>
@@ -234,6 +282,26 @@ export function ComparacaoPorPreocupacoes({
         </p>
       </header>
 
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-md border border-border px-4 py-3 text-xs text-ink-muted">
+        <span className="font-medium text-ink">Como ler:</span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-3 w-1 bg-[var(--color-attention)]" aria-hidden="true" />
+          espera <strong className="font-medium text-ink">você</strong>, nesta tela
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span
+            className="inline-block h-3 w-1 bg-[var(--color-border-strong)]"
+            aria-hidden="true"
+          />
+          espera a <strong className="font-medium text-ink">operação</strong> ir descobrir
+        </span>
+        <span>sem marca — nada devido</span>
+        <span className="w-full text-ink-muted">
+          A cor diz de quem é o próximo passo, nunca quem é melhor. Comparar contagens de cor
+          seria ranquear os profissionais — e a escolha é sua, não da tela.
+        </span>
+      </div>
+
       <div className="overflow-x-auto">
         <table className="w-full min-w-[52rem] border-collapse text-left">
           <caption className="sr-only">
@@ -259,13 +327,27 @@ export function ComparacaoPorPreocupacoes({
             {linhas.map((linha) => (
               <tr key={linha.questionId}>
                 <CabecalhoDaLinha linha={linha} caseId={caseId} />
-                <Celulas
-                  celulas={linha.celulas}
-                  caseId={caseId}
-                  subcriterionCode={linha.subcriterionCode}
-                  nomePorId={nomePorId}
-                  natureza={juizoExigidoEm(linha.subcriterionCode)}
-                />
+                {/* Linha em que os três respondem igual não separa ninguém: ela
+                    encolhe para uma frase e devolve o espaço às que separam.
+                    A informação não some — deixa de gritar. */}
+                {linha.todosIguais ? (
+                  <td
+                    colSpan={profissionais.length}
+                    className="border-b border-border px-4 py-3 align-top text-sm text-ink-muted"
+                  >
+                    Os três respondem igual aqui:{" "}
+                    <span className="text-ink">{textoDaCelula(linha.celulas[0]).titulo}</span>. Não
+                    separa ninguém.
+                  </td>
+                ) : (
+                  <Celulas
+                    celulas={linha.celulas}
+                    caseId={caseId}
+                    subcriterionCode={linha.subcriterionCode}
+                    nomePorId={nomePorId}
+                    natureza={juizoExigidoEm(linha.subcriterionCode)}
+                  />
+                )}
               </tr>
             ))}
           </tbody>

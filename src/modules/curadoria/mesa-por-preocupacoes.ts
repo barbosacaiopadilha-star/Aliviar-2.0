@@ -118,6 +118,16 @@ export type Linha = {
   opcoes: readonly { codigo: string; rotulo: string }[];
   multi: boolean;
   origem: PersonMode;
+  /**
+   * Os três respondem a mesma coisa aqui?
+   *
+   * Uma linha em que todos são iguais ocupa espaço e não ajuda a escolher —
+   * ela não distingue ninguém. É da mesma família do `SIM-29`, que a tela
+   * DELA já sofria: a comparação repetia a mesma ausência quinze vezes. A
+   * informação não some; ela para de gritar, e o espaço fica para as linhas
+   * que separam os candidatos.
+   */
+  todosIguais: boolean;
 };
 
 /** Um subcritério que ela não tem como pedir — e que por isso é conferido. */
@@ -235,6 +245,21 @@ export function juizoExigidoEm(subcriterionCode: string): "TECNICO" | "RELACIONA
 }
 
 /**
+ * Todos os candidatos respondem a mesma coisa nesta linha?
+ *
+ * Com menos de dois candidatos a pergunta não faz sentido — uma coluna só
+ * nunca "separa" ninguém, e marcar a linha como redundante esconderia a única
+ * informação que existe.
+ */
+function saoTodasIguais(celulas: readonly Celula[]): boolean {
+  if (celulas.length < 2) return false;
+  const primeira = celulas[0];
+  return celulas.every(
+    (c) => c.motivo === primeira.motivo && c.compatibilidade === primeira.compatibilidade,
+  );
+}
+
+/**
  * A ORDEM DOS DOZE — e por que a formação vem por último.
  *
  * A formação é o que todo mundo quer saber primeiro, e é exatamente por isso
@@ -282,6 +307,7 @@ export function montarMesaPorPreocupacoes(entrada: EntradaDaMesa): MesaPorPreocu
     if (!ativos.has(pergunta.subcriterionCode)) continue;
     const dela = respostaPorPergunta.get(pergunta.id) ?? null;
     const importancia = importancias[pergunta.subcriterionCode] ?? null;
+    const celulasDaLinha = celulasDe(pergunta.subcriterionCode, importancia, profissionais);
     linhas.push({
       questionId: pergunta.id,
       subcriterionCode: pergunta.subcriterionCode,
@@ -290,7 +316,8 @@ export function montarMesaPorPreocupacoes(entrada: EntradaDaMesa): MesaPorPreocu
       grau: dela?.grau ?? null,
       reconhecida: dela?.reconhecida ?? false,
       importancia,
-      celulas: celulasDe(pergunta.subcriterionCode, importancia, profissionais),
+      celulas: celulasDaLinha,
+      todosIguais: saoTodasIguais(celulasDaLinha),
       opcoesMarcadas: dela?.opcoesMarcadas ?? [],
       opcoes: Object.entries(pergunta.options).map(([codigo, rotulo]) => ({ codigo, rotulo })),
       multi: pergunta.multi,
