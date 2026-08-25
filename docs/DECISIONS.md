@@ -2136,3 +2136,55 @@ Isto é **construção**, e o congelamento a barra. A decisão de desenho não �
 A guarda existir e a lista de exceções chegar a zero. Aí esta ADR deixa de ser plano e vira descrição — e a família de defeitos que voltou três vezes deixa de ter por onde voltar.
 
 ---
+
+## ADR-091 — A posição do Case é derivada dos atos; `status` fica com o que só ele sabe dizer
+
+- **Data:** 2026-08-25
+- **Status:** **Decidida pelo Fundador** ("corrija e execute"). **Execução adiada pelo engenheiro**, com o escopo real apurado e registrado abaixo — a decisão está tomada; o que falta é a hora certa de executá-la.
+- **Dependências:** resolve **`FUN-03`** (auditoria de agosto: "`cases.status` desconectado do fluxo real; 100% NEW em dado") e **`SIM-15`** (o mesmo defeito, agora visto acontecendo numa travessia) · aplica a doutrina da **ADR-066/11-08**: *nenhum fato tem duas fontes concorrentes*.
+
+### Contexto
+
+Durante a Curadoria percorrida em 25/08, o Case nasceu `NEW` e permaneceu `NEW` com o Acolhimento concluído, o Mapa dos 29 salvo e a Rede declarada. Não é defeito novo: é o `FUN-03`, que a auditoria de agosto mediu como "100% NEW em dado".
+
+A investigação do mesmo dia mostrou o que faltava saber:
+
+- `changeCaseStatus` existe, valida a transição e **ninguém o chama** durante a jornada;
+- o produto **já deriva a posição dos atos**, e bem: a Fila do Curador agrupa em "Aguarda Acolhimento", "Aguarda o reconhecimento dela", "Curadoria em curso", "Aguarda entrega", "Aguarda a decisão dela", "Com o Concierge" — tudo derivado, e funcionando na tela;
+- portanto `status` é uma **segunda fonte para o mesmo fato**.
+
+E duas fontes para um fato é exatamente o que a ADR-066/11-08 proibiu, com a frase que este projeto já usou uma vez para consertar a decisão da paciente: *"nenhum fato tem duas fontes concorrentes"*. Quando existem duas, uma delas mente — e aqui a que mente é a que ninguém move.
+
+### Decisão
+
+**A posição de um Case na jornada é derivada dos atos do Método. Sempre, e só.** Nenhuma tela, nenhum papel e nenhum relatório lê `cases.status` para saber onde a Curadoria está.
+
+**`status` fica com o que só ele sabe dizer:** os estados administrativos que não correspondem a ato nenhum do Método — o Case encerrado e o Case cancelado. Esses não são deriváveis, porque não nascem de um ato da Curadoria: nascem de uma decisão sobre o Case.
+
+Os estados que espelham a jornada (`IN_REVIEW`, `WAITING_FOR_INFORMATION`, `READY_FOR_CURATION`, `IN_CURATION`, `HUMAN_REVIEW`, `DELIVERED`) saem — não porque estejam errados, mas porque são a segunda cópia de algo que os atos já dizem melhor e sem risco de divergir.
+
+### O escopo real, apurado antes de prometer
+
+A investigação corrigiu a premissa de que isto seria "apagar código morto". **Não é.** O conceito vive em quatro lugares, e a execução precisa tocar os quatro na ordem certa:
+
+| Onde | O que é | Cuidado |
+|---|---|---|
+| Enum `curadoria.case_status` | nove valores | remover rótulo de enum é **migration em produção** |
+| `enforce_case_status_transition_trigger` | o banco garante a máquina | a garantia precisa continuar valendo para o que ficar |
+| `src/modules/cases/state-machine.ts` | a mesma máquina espelhada na aplicação (ADR-019: o banco garante, a aplicação explica) | a tabela de transições encolhe junto |
+| `/admin/casos/[id]` | tela alcançável, com o controle de mudança de status | superfície que **ninguém percorreu**; mexer sem percorrer é consertar no escuro |
+
+Por isso a execução foi adiada mesmo com a decisão tomada e autorizada: ela exige migration em produção e uma travessia da tela do Administrador. É a mesma régua aplicada à ADR-090 no mesmo dia — e aplicá-la aqui, logo depois de o Fundador dizer "execute", é a única forma de a régua valer.
+
+### O que fecha esta ADR
+
+1. A tela de `/admin/casos/[id]` percorrida, para saber o que o controle faz hoje e quem depende dele;
+2. A migration que encolhe o enum, com o rollback escrito;
+3. A máquina de estados e o trigger reduzidos aos estados administrativos;
+4. `FUN-03` e `SIM-15` encerrados no registro, com a evidência.
+
+### Revisitar quando
+
+Aparecer um estado administrativo que os atos não expliquem — e a pergunta a fazer será a mesma: *isto é fato próprio, ou é a segunda cópia de algo que já existe?*
+
+---
