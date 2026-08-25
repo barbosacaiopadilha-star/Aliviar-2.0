@@ -61,6 +61,22 @@ const IMAGEM_PG = process.env.BACKUP_IMAGEM_PG ?? "postgres:17-alpine";
 // Credenciais — lidas de arquivo ignorado, nunca de argumento
 // ---------------------------------------------------------------------------
 
+/**
+ * O endereço do projeto NÃO é segredo e não precisa ser digitado: sai do
+ * `project-ref` que a CLI já gravou ao vincular. Cada campo a menos no
+ * formulário é uma chance a menos de erro de digitação num arquivo que
+ * ninguém relê.
+ */
+function urlDoProjeto() {
+  const declarado = process.env.SUPABASE_URL_PROD?.trim();
+  if (declarado) return declarado;
+
+  const caminho = join(projectRoot, "supabase", ".temp", "project-ref");
+  if (!existsSync(caminho)) return null;
+  const ref = readFileSync(caminho, "utf8").trim();
+  return ref ? `https://${ref}.supabase.co` : null;
+}
+
 function lerCredenciais() {
   if (!existsSync(ARQUIVO_DE_CREDENCIAIS)) {
     console.error(
@@ -68,18 +84,23 @@ function lerCredenciais() {
         "",
         "Falta o arquivo .env.backup.local (ignorado pelo Git).",
         "",
-        "Crie-o na raiz do projeto com estas três linhas, copiadas do painel do",
-        "Supabase — projeto aliviar-2-prod:",
+        "O jeito curto — um comando, no SEU terminal, com a digitação oculta:",
+        "",
+        "  npm run backup:producao:configurar",
+        "",
+        "Ele pede dois valores e escreve o arquivo. O endereço do projeto ele",
+        "descobre sozinho.",
+        "",
+        "O jeito manual, se preferir: crie .env.backup.local na raiz com",
         "",
         "  SUPABASE_DB_URL_PROD=postgresql://postgres:SENHA@db.<ref>.supabase.co:5432/postgres",
-        "  SUPABASE_URL_PROD=https://<ref>.supabase.co",
         "  SUPABASE_SERVICE_ROLE_KEY_PROD=<a service role key>",
         "",
-        "Onde encontrar: a URL e a senha do banco em Project Settings → Database;",
+        "Onde encontrar: a connection string em Project Settings → Database;",
         "a service role key em Project Settings → API.",
         "",
         "NUNCA cole esses valores num chat, num commit ou numa mensagem. Este",
-        "arquivo é o lugar deles.",
+        "arquivo é o lugar deles — e ele é ignorado pelo Git.",
         "",
       ].join("\n"),
     );
@@ -94,6 +115,8 @@ function lerCredenciais() {
     if (igual < 0) continue;
     env[limpa.slice(0, igual).trim()] = limpa.slice(igual + 1).trim();
   }
+
+  env.SUPABASE_URL_PROD ??= urlDoProjeto();
 
   const faltando = ["SUPABASE_DB_URL_PROD", "SUPABASE_URL_PROD", "SUPABASE_SERVICE_ROLE_KEY_PROD"].filter(
     (chave) => !env[chave],

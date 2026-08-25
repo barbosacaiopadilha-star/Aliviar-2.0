@@ -24,6 +24,7 @@
     "supabase:reset": "node scripts/guard-db-reset.mjs",
     "supabase:env": "node scripts/generate-local-env.mjs",
     "backup:producao": "node scripts/backup-producao.mjs",
+    "backup:producao:configurar": "node scripts/backup-producao-configurar.mjs",
     "supabase:ledger:check": "node scripts/with-local-supabase.mjs node scripts/check-migration-ledger.mjs",
     "supabase:ledger:check:remoto": "node scripts/check-migration-ledger-remoto.mjs",
     "bootstrap:test-users": "npm run supabase:ledger:check && node scripts/with-local-supabase.mjs node scripts/bootstrap-local-test-users.mjs",

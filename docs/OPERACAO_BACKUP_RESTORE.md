@@ -95,7 +95,17 @@ npm run backup:producao
 
 Produz, numa pasta datada em `.backups/` (fora do Git): `curadoria.sql` (com GRANTs), `auth.sql`, `storage-index.sql`, os bytes em `storage/`, e `manifesto.json` com as contagens da captura.
 
-**Credenciais.** Vêm de `.env.backup.local`, na raiz, ignorado pelo Git. O script recusa rodar sem ele e imprime exatamente o que falta e onde encontrar no painel. Nunca por argumento de linha de comando: argumento vaza para o histórico do shell e para a lista de processos.
+**Credenciais — dois valores, uma vez.**
+
+```
+npm run backup:producao:configurar
+```
+
+Pede a connection string do banco e a service role key, **com a digitação oculta**, e escreve `.env.backup.local` (permissão 600, ignorado pelo Git). O endereço do projeto ele descobre sozinho, do `project-ref` que a CLI já gravou — um campo a menos é uma chance a menos de erro de digitação num arquivo que ninguém relê.
+
+O configurador **recusa rodar fora de um terminal de verdade**. Aceitar entrada redirecionada convidaria `echo "$SENHA" | npm run …`, que joga o segredo no histórico do shell — exatamente o que ele existe para evitar.
+
+E confere antes de escrever, porque erro de colagem aqui falha em silêncio: marcador `[YOUR-PASSWORD]` do painel, connection string sem senha, alvo local, host de outro projeto, chave publishable no lugar da service_role. As conferências são função pura em `scripts/backup-credenciais.mjs`, com teste próprio — a lógica não podia viver dentro de um roteiro que roda ao ser carregado.
 
 **PostgreSQL 17.** O servidor hospedado é 17.6 e o `pg_dump` da stack local é 15.8 — e `pg_dump` recusa servidor mais novo que ele. Por isso o dump roda numa imagem `postgres:17-alpine` descartável. Se um dia produção subir de versão, é esta linha que muda.
 
