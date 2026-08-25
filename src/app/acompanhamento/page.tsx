@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { erroDeBanco } from "@/lib/observability/erros";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAnyRole } from "@/modules/auth/guard";
 import { CASE_STATUS_LABELS, type CaseStatus } from "@/modules/cases/types";
@@ -48,11 +49,27 @@ export default async function AcompanhamentoPage() {
 
   // V3 (auditoria 22/08): o Concierge acompanha PESSOAS — o rótulo é o nome
   // da paciente, nunca o UUID truncado do Case.
-  const patientIds = [...new Set(cases.map((c) => c.patient_profile_id).filter(Boolean))];
-  const { data: perfis } = patientIds.length
-    ? await supabase.schema("curadoria").from("profiles").select("id, display_name").in("id", patientIds)
-    : { data: [] as { id: string; display_name: string | null }[] };
-  const nomePorPaciente = new Map((perfis ?? []).map((p) => [p.id as string, (p.display_name as string | null) ?? null]));
+  //
+  // PELA CAPABILITY, NÃO PELA TABELA (conserto de 25/08 — a mesa do Concierge
+  // mostrava "Case 1a1dd209" na curadoria simulada). A leitura direta de
+  // `profiles` só responde a administrador e ao Curador designado; o
+  // Concierge, responsável ATUAL depois da transferência, não estava em
+  // nenhuma das duas — e abrir policy nova em `profiles` é o que a guarda
+  // G-2.6-2 proíbe. `pacientes_dos_meus_casos` devolve o nome apenas dos
+  // Cases que quem chama já tem autoridade para abrir.
+  const { data: nomes, error: erroNomes } = await supabase
+    .schema("curadoria")
+    .rpc("pacientes_dos_meus_casos");
+
+  // Falha de consulta é dita, nunca convertida em lista sem nome (ETAPA 7).
+  if (erroNomes) throw erroDeBanco("Não foi possível carregar quem você acompanha.", erroNomes);
+
+  const nomePorCase = new Map(
+    ((nomes ?? []) as { case_id: string; display_name: string | null }[]).map((linha) => [
+      linha.case_id,
+      linha.display_name,
+    ]),
+  );
 
   // D4 (auditoria 22/08): a RLS dá ao administrador a visão GLOBAL — todos
   // os Cases, em qualquer etapa. A descrição da tela dizia a promessa do
@@ -119,7 +136,7 @@ export default async function AcompanhamentoPage() {
                   <TableRow key={c.id}>
                     <TableCell>
                       <span className="font-medium text-ink">
-                        {nomePorPaciente.get(c.patient_profile_id) ?? `Case ${c.id.slice(0, 8)}`}
+                        {nomePorCase.get(c.id) ?? `Case ${c.id.slice(0, 8)}`}
                       </span>
                     </TableCell>
                     <TableCell>{CASE_STATUS_LABELS[c.status as CaseStatus] ?? c.status}</TableCell>
