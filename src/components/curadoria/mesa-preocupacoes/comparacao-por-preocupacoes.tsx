@@ -14,6 +14,9 @@
  * informação" — que não é acionável porque não diz de quem é a próxima ação.
  */
 
+import { Fragment } from "react";
+
+import { juizoExigidoEm } from "@/modules/curadoria/mesa-por-preocupacoes";
 import type {
   Celula,
   Linha,
@@ -25,7 +28,16 @@ import { IMPORTANCE_LABELS } from "@/modules/curadoria/mapa-prioridades";
 import { NEED_DEGREE_LABELS } from "@/modules/curadoria/protocolos";
 import { SUBCRITERION_STATUS_LABELS } from "@/modules/curadoria/mapa-profissional";
 
+import { RegistrarJuizoNaCelula } from "./registrar-juizo-na-celula";
 import { RegistrarRespostaDela } from "./registrar-resposta-dela";
+
+/** O eixo dito como gente fala. O código cru não é para ser lido na tela. */
+const ROTULO_DO_EIXO: Record<string, string> = {
+  EXPERIENCIA: "Experiência — o que já fez",
+  PRATICA: "Limites — o que declara não fazer",
+  HISTORICO: "Histórico — por onde passou",
+  FORMACAO: "Formação — onde estudou",
+};
 
 type Props = MesaPorPreocupacoes & {
   caseId: string;
@@ -58,7 +70,21 @@ function textoDaCelula(celula: Celula): { titulo: string; detalhe: string | null
   }
 }
 
-function Celulas({ celulas }: { celulas: readonly Celula[] }) {
+function Celulas({
+  celulas,
+  caseId,
+  subcriterionCode,
+  nomePorId,
+  natureza = null,
+}: {
+  celulas: readonly Celula[];
+  caseId: string;
+  subcriterionCode: string;
+  nomePorId: ReadonlyMap<string, string>;
+  /** Quando o juízo pertence a este ponto. `null` = não pedir aqui. */
+  natureza?: "TECNICO" | "RELACIONAL" | null;
+}) {
+
   return (
     <>
       {celulas.map((celula) => {
@@ -81,6 +107,16 @@ function Celulas({ celulas }: { celulas: readonly Celula[] }) {
             </span>
             {detalhe ? (
               <span className="mt-0.5 block text-xs text-ink-muted">{detalhe}</span>
+            ) : null}
+            {natureza ? (
+              <RegistrarJuizoNaCelula
+                caseId={caseId}
+                professionalProfileId={celula.profissionalId}
+                professionalNome={nomePorId.get(celula.profissionalId) ?? "este profissional"}
+                subcriterionCode={subcriterionCode}
+                natureza={natureza}
+                conclusaoVigente={null}
+              />
             ) : null}
           </td>
         );
@@ -147,7 +183,15 @@ function CabecalhoDaLinha({ linha, caseId }: { linha: Linha; caseId: string }) {
   );
 }
 
-function LinhaOrfa({ orfao }: { orfao: Orfao }) {
+function LinhaOrfa({
+  orfao,
+  caseId,
+  nomePorId,
+}: {
+  orfao: Orfao;
+  caseId: string;
+  nomePorId: ReadonlyMap<string, string>;
+}) {
   return (
     <tr>
       <th scope="row" className="border-b border-border px-4 py-3 text-left align-top">
@@ -160,7 +204,12 @@ function LinhaOrfa({ orfao }: { orfao: Orfao }) {
             : "Ela não tem como pedir isto — a classificação é sua."}
         </span>
       </th>
-      <Celulas celulas={orfao.celulas} />
+      <Celulas
+        celulas={orfao.celulas}
+        caseId={caseId}
+        subcriterionCode={orfao.subcriterionCode}
+        nomePorId={nomePorId}
+      />
     </tr>
   );
 }
@@ -169,10 +218,13 @@ export function ComparacaoPorPreocupacoes({
   caseId,
   linhas,
   orfaos,
+  gruposDeOrfaos,
   pendentesDeConferencia,
   conferenciaCompleta,
   profissionais,
 }: Props) {
+  const nomePorId = new Map(profissionais.map((p) => [p.id, p.nome]));
+
   return (
     <section className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
@@ -207,7 +259,13 @@ export function ComparacaoPorPreocupacoes({
             {linhas.map((linha) => (
               <tr key={linha.questionId}>
                 <CabecalhoDaLinha linha={linha} caseId={caseId} />
-                <Celulas celulas={linha.celulas} />
+                <Celulas
+                  celulas={linha.celulas}
+                  caseId={caseId}
+                  subcriterionCode={linha.subcriterionCode}
+                  nomePorId={nomePorId}
+                  natureza={juizoExigidoEm(linha.subcriterionCode)}
+                />
               </tr>
             ))}
           </tbody>
@@ -255,8 +313,42 @@ export function ComparacaoPorPreocupacoes({
               </tr>
             </thead>
             <tbody>
-              {orfaos.map((orfao) => (
-                <LinhaOrfa key={orfao.subcriterionCode} orfao={orfao} />
+              {gruposDeOrfaos.map((grupo) => (
+                <Fragment key={grupo.eixo}>
+                  {grupo.juizo ? (
+                    <tr>
+                      <th
+                        scope="row"
+                        className="border-b border-border bg-canvas px-4 py-3 text-left align-top"
+                      >
+                        <span className="block text-sm font-medium text-ink">
+                          {ROTULO_DO_EIXO[grupo.eixo] ?? grupo.eixo.toLowerCase()}
+                        </span>
+                        <span className="mt-1 block text-xs text-ink-muted">
+                          Um juízo por eixo, não por item — ADR-067 §5.
+                        </span>
+                      </th>
+                      <Celulas
+                        celulas={grupo.itens[0].celulas.map((c) => ({
+                          ...c,
+                          motivo: "FORA_DO_MOTOR" as const,
+                        }))}
+                        caseId={caseId}
+                        subcriterionCode={grupo.eixo}
+                        nomePorId={nomePorId}
+                        natureza="TECNICO"
+                      />
+                    </tr>
+                  ) : null}
+                  {grupo.itens.map((orfao) => (
+                    <LinhaOrfa
+                      key={orfao.subcriterionCode}
+                      orfao={orfao}
+                      caseId={caseId}
+                      nomePorId={nomePorId}
+                    />
+                  ))}
+                </Fragment>
               ))}
             </tbody>
           </table>

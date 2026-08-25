@@ -44,6 +44,10 @@ import {
   type CompatibilityResult,
 } from "./motor-compatibilidade";
 import { participaDoMotor } from "./participacao-no-motor";
+import {
+  CONCEITOS_RELACIONAIS_HUMANOS,
+  JULGAMENTOS_TECNICOS_EXIGIDOS,
+} from "./julgamentos";
 import { PERSON_PROTOCOL, type NeedDegree, type PersonMode } from "./protocolos";
 
 // ---------------------------------------------------------------------------
@@ -129,9 +133,26 @@ export type Orfao = {
   conferido: boolean;
 };
 
+/**
+ * Os órfãos agrupados pelo EIXO — porque o juízo é do eixo, não do subcritério.
+ *
+ * A ADR-067 §5 exige UM juízo de formação por profissional. Renderizar o
+ * pedido em cada subcritério cobraria cinco, e foi exatamente o que a primeira
+ * versão desta tela fez: 42 botões onde o Método pede 18. O agrupamento existe
+ * para que a tela não tenha como errar isso de novo.
+ */
+export type GrupoDeOrfaos = {
+  eixo: string;
+  /** `TECNICO` quando a ADR-067 exige juízo deste eixo; `null` quando não. */
+  juizo: "TECNICO" | null;
+  itens: readonly Orfao[];
+};
+
 export type MesaPorPreocupacoes = {
   linhas: readonly Linha[];
   orfaos: readonly Orfao[];
+  /** Os mesmos órfãos, agrupados por eixo — é assim que a tela os desenha. */
+  gruposDeOrfaos: readonly GrupoDeOrfaos[];
   /** Os órfãos que ainda esperam a conferência do Curador. */
   pendentesDeConferencia: readonly string[];
   /**
@@ -184,6 +205,33 @@ function celulasDe(
       motivo: "CRUZADO",
     };
   });
+}
+
+/**
+ * ONDE CADA JUÍZO PERTENCE — e por que isto é regra do Método, não layout.
+ *
+ * A ADR-067 §5 exige três juízos técnicos por profissional (H8–H10: formação,
+ * experiência, histórico) e três relacionais (H11) quando o Case os declarou.
+ * A Mesa antiga empilhava os seis num bloco, longe do fato que os justificava.
+ *
+ * Aqui eles caem sozinhos no lugar certo, e o encaixe não foi arranjado: os
+ * três relacionais SÃO perguntas feitas a ela (P11, P14, P17), e os três
+ * técnicos SÃO os eixos que ela não tem como pedir. Quando se para de
+ * organizar a tela pela taxonomia, a estrutura do Método aparece.
+ *
+ * Devolve `null` quando o conceito não pede juízo — a maioria deles.
+ */
+export function juizoExigidoEm(subcriterionCode: string): "TECNICO" | "RELACIONAL" | null {
+  if ((CONCEITOS_RELACIONAIS_HUMANOS as readonly string[]).includes(subcriterionCode)) {
+    return "RELACIONAL";
+  }
+  // Os técnicos são declarados por EIXO ("FORMACAO"), e o Mapa fala em
+  // subcritérios ("FORMACAO_GRADUACAO"). O juízo é do eixo inteiro: pedi-lo
+  // por subcritério seria cobrar cinco juízos de formação onde a ADR-067
+  // exige um.
+  const eixo = subcriterionCode.split("_")[0];
+  if ((JULGAMENTOS_TECNICOS_EXIGIDOS as readonly string[]).includes(eixo)) return "TECNICO";
+  return null;
 }
 
 /**
@@ -267,9 +315,25 @@ export function montarMesaPorPreocupacoes(entrada: EntradaDaMesa): MesaPorPreocu
       };
     });
 
+  const gruposDeOrfaos: GrupoDeOrfaos[] = [];
+  for (const orfao of orfaos) {
+    const eixo = orfao.subcriterionCode.split("_")[0];
+    const ultimo = gruposDeOrfaos[gruposDeOrfaos.length - 1];
+    if (ultimo && ultimo.eixo === eixo) {
+      (ultimo.itens as Orfao[]).push(orfao);
+      continue;
+    }
+    gruposDeOrfaos.push({
+      eixo,
+      juizo: juizoExigidoEm(orfao.subcriterionCode) === "TECNICO" ? "TECNICO" : null,
+      itens: [orfao],
+    });
+  }
+
   return {
     linhas,
     orfaos,
+    gruposDeOrfaos,
     pendentesDeConferencia: orfaos.filter((o) => !o.conferido).map((o) => o.subcriterionCode),
     conferenciaCompleta: linhas.length + orfaos.length === ativos.size,
   };

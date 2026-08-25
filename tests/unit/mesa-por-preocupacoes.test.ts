@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  juizoExigidoEm,
   montarMesaPorPreocupacoes,
   type EntradaDaMesa,
   type ProfissionalNaMesa,
@@ -266,5 +267,136 @@ describe("A ordem dos doze — do que ela vive para o que ela não alcança", ()
       codigos.indexOf("FORMACAO_GRADUACAO"),
     );
     expect(mesa.conferenciaCompleta).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+// A Mesa antiga empilhava os seis juízos num bloco só, longe do fato que os
+// justificava. Eles caem sozinhos no lugar certo — e o encaixe não foi
+// arranjado por mim: os três relacionais SÃO perguntas feitas a ela, e os três
+// técnicos SÃO os eixos que ela não tem como pedir.
+describe("Onde cada juízo pertence — a estrutura do Método, não o layout", () => {
+  it("os três relacionais caem em perguntas feitas A ELA", () => {
+    const mesa = montarMesaPorPreocupacoes(entrada());
+    const comJuizoRelacional = mesa.linhas
+      .filter((l) => juizoExigidoEm(l.subcriterionCode) === "RELACIONAL")
+      .map((l) => l.questionId);
+
+    // P11 (decisão compartilhada), P14 (preferências e restrições),
+    // P17 (condução de notícias difíceis — ADR-065).
+    expect(comJuizoRelacional.sort()).toEqual(["P11", "P14", "P17"]);
+  });
+
+  it("os três técnicos caem nos eixos que ela não tem como pedir", () => {
+    const mesa = montarMesaPorPreocupacoes(entrada());
+    const eixos = new Set(
+      mesa.orfaos
+        .filter((o) => juizoExigidoEm(o.subcriterionCode) === "TECNICO")
+        .map((o) => o.subcriterionCode.split("_")[0]),
+    );
+
+    expect(eixos).toEqual(new Set(["FORMACAO", "EXPERIENCIA", "HISTORICO"]));
+  });
+
+  // A ADR-067 §5 exige UM juízo de formação, não cinco. O Mapa fala em
+  // subcritérios; o juízo é do eixo inteiro.
+  it("nenhum juízo é exigido fora dos seis conceitos do Método", () => {
+    const mesa = montarMesaPorPreocupacoes(entrada());
+    const exigidos = [...mesa.linhas, ...mesa.orfaos]
+      .map((item) => ("questionId" in item ? item.subcriterionCode : item.subcriterionCode))
+      .filter((code) => juizoExigidoEm(code) !== null);
+
+    // 5 de formação + 3 de experiência + 3 de histórico + os 3 relacionais.
+    // Os de PRATICA e os de ACESSO/CONTINUIDADE/VIABILIDADE não pedem juízo.
+    expect(exigidos).not.toContain("PRATICA_LIMITES_DE_ATUACAO");
+    expect(exigidos).not.toContain("ACESSO_MODALIDADE");
+    expect(exigidos).toContain("MODELO_DECISAO_COMPARTILHADA");
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+// A primeira versão da tela pediu 42 juízos onde o Método pede 18: ela
+// renderizava o pedido em cada SUBCRITÉRIO, e a ADR-067 §5 exige um por EIXO.
+// O agrupamento existe para que a tela não tenha como errar isso de novo — e
+// esta é a conta que prova.
+describe("O juízo é do eixo, não do subcritério — 18, nunca 42", () => {
+  it("um grupo por eixo, e só os três eixos da ADR-067 pedem juízo", () => {
+    const mesa = montarMesaPorPreocupacoes(entrada());
+
+    expect(mesa.gruposDeOrfaos.map((g) => g.eixo)).toEqual([
+      "EXPERIENCIA",
+      "PRATICA",
+      "HISTORICO",
+      "FORMACAO",
+    ]);
+    expect(mesa.gruposDeOrfaos.filter((g) => g.juizo === "TECNICO").map((g) => g.eixo)).toEqual([
+      "EXPERIENCIA",
+      "HISTORICO",
+      "FORMACAO",
+    ]);
+  });
+
+  it("os grupos contêm todos os órfãos, sem perder nem duplicar nenhum", () => {
+    const mesa = montarMesaPorPreocupacoes(entrada());
+    const nosGrupos = mesa.gruposDeOrfaos.flatMap((g) => g.itens.map((i) => i.subcriterionCode));
+
+    expect(nosGrupos.sort()).toEqual(mesa.orfaos.map((o) => o.subcriterionCode).sort());
+  });
+
+  // A conta que a tela faz: 3 eixos técnicos + 3 conceitos relacionais,
+  // vezes o número de profissionais.
+  it("a conta fecha em 6 pontos de juízo por profissional", () => {
+    const mesa = montarMesaPorPreocupacoes(entrada());
+
+    const relacionais = mesa.linhas.filter(
+      (l) => juizoExigidoEm(l.subcriterionCode) === "RELACIONAL",
+    ).length;
+    const tecnicos = mesa.gruposDeOrfaos.filter((g) => g.juizo === "TECNICO").length;
+
+    expect(relacionais + tecnicos).toBe(6);
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+// A primeira versão da tela pediu 42 juízos onde o Método pede 18: renderizava
+// o pedido em cada SUBCRITÉRIO, e a ADR-067 §5 exige um por EIXO. O
+// agrupamento existe para que a tela não tenha como errar isso de novo.
+describe("O juízo é do eixo, não do subcritério — 18, nunca 42", () => {
+  it("um grupo por eixo, e só os três eixos da ADR-067 pedem juízo", () => {
+    const mesa = montarMesaPorPreocupacoes(entrada());
+
+    expect(mesa.gruposDeOrfaos.map((g) => g.eixo)).toEqual([
+      "EXPERIENCIA",
+      "PRATICA",
+      "HISTORICO",
+      "FORMACAO",
+    ]);
+    expect(mesa.gruposDeOrfaos.filter((g) => g.juizo === "TECNICO").map((g) => g.eixo)).toEqual([
+      "EXPERIENCIA",
+      "HISTORICO",
+      "FORMACAO",
+    ]);
+  });
+
+  it("os grupos contêm todos os órfãos, sem perder nem duplicar nenhum", () => {
+    const mesa = montarMesaPorPreocupacoes(entrada());
+    const nosGrupos = mesa.gruposDeOrfaos.flatMap((g) => g.itens.map((i) => i.subcriterionCode));
+
+    expect(nosGrupos.sort()).toEqual(mesa.orfaos.map((o) => o.subcriterionCode).sort());
+  });
+
+  // A conta que a tela faz: 3 eixos técnicos + 3 conceitos relacionais.
+  it("a conta fecha em 6 pontos de juízo por profissional", () => {
+    const mesa = montarMesaPorPreocupacoes(entrada());
+
+    const relacionais = mesa.linhas.filter(
+      (l) => juizoExigidoEm(l.subcriterionCode) === "RELACIONAL",
+    ).length;
+    const tecnicos = mesa.gruposDeOrfaos.filter((g) => g.juizo === "TECNICO").length;
+
+    expect(relacionais + tecnicos).toBe(6);
   });
 });

@@ -2295,12 +2295,27 @@ Nada do Método. O Motor continua cruzando `Importância × Estado` com as mesma
 
 **Esta ADR muda a superfície, não a doutrina.**
 
+### O material: papel aqui, vidro lá
+
+Perguntado em 25/08 se o vidro da **ADR-084** valia para esta tela, o Fundador
+respondeu: *"na Mesa do Curador não, somente na visão do paciente"*.
+
+A ADR-084 fica como está. O vidro é da casa dela — a área autenticada da
+paciente é "a continuação da landing", e por isso reabriu o Sistema Visual §3.
+**A Mesa do Curador é instrumento de trabalho: papel opaco, alto contraste, sem
+efeito.** Isso não é omissão a corrigir depois; é a regra.
+
+O que esta ADR passa a dever, e está no fechamento abaixo: quando a Mesa nova
+chegar aos três caminhos, **o que ela produz para ela sai em vidro** — porque
+aquilo já é a casa dela, e a ADR-084 vale inteira ali.
+
 ### O que fecha esta ADR
 
 1. As linhas derivadas do Protocolo da Pessoa, com a frase dela visível em cada uma;
 2. A conferência final de `NAO_INFLUENCIA` sobre os subcritérios órfãos, com teste que prove que nenhum dos 29 escapa da cobertura;
 3. A Mesa antiga removida — não mantida em paralelo: duas superfícies para o mesmo ato é a segunda fonte que a ADR-066/11-08 proíbe;
-4. Uma travessia completa na Mesa nova, com o resultado comparado ao que a Mesa velha produziria.
+4. Os três caminhos que ela lê saindo em vidro (ADR-084), com a Mesa em papel;
+5. Uma travessia completa na Mesa nova, com o resultado comparado ao que a Mesa velha produziria.
 
 ### Revisitar quando
 
