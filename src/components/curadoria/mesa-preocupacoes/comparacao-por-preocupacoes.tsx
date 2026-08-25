@@ -25,7 +25,10 @@ import { IMPORTANCE_LABELS } from "@/modules/curadoria/mapa-prioridades";
 import { NEED_DEGREE_LABELS } from "@/modules/curadoria/protocolos";
 import { SUBCRITERION_STATUS_LABELS } from "@/modules/curadoria/mapa-profissional";
 
+import { RegistrarRespostaDela } from "./registrar-resposta-dela";
+
 type Props = MesaPorPreocupacoes & {
+  caseId: string;
   profissionais: readonly { id: string; nome: string }[];
 };
 
@@ -93,7 +96,7 @@ function Celulas({ celulas }: { celulas: readonly Celula[] }) {
  * porque quem lê a linha precisa saber o que foi perguntado, mas o que ela
  * respondeu é que manda.
  */
-function CabecalhoDaLinha({ linha }: { linha: Linha }) {
+function CabecalhoDaLinha({ linha, caseId }: { linha: Linha; caseId: string }) {
   // Sem resposta dela, a PERGUNTA vira o título — e não uma repetição de
   // "ela ainda não respondeu" dezessete vezes seguidas, que foi o primeiro
   // desenho e ficava pior que a taxonomia: pelo menos a taxonomia nomeia o
@@ -123,6 +126,23 @@ function CabecalhoDaLinha({ linha }: { linha: Linha }) {
           <span className="text-ink-muted">· aguarda o reconhecimento dela</span>
         ) : null}
       </span>
+
+      {/* Registrar acontece NA LINHA — é o ponto da ADR-093. Na Mesa antiga a
+          conversa vivia noutra tela, com dezessete fichas recolhidas, longe da
+          consequência que ela produz. */}
+      {caseId && linha.opcoes.length > 0 ? (
+        <RegistrarRespostaDela
+          caseId={caseId}
+          questionId={linha.questionId}
+          subcriterionCode={linha.subcriterionCode}
+          pergunta={linha.pergunta}
+          opcoes={linha.opcoes}
+          multi={linha.multi}
+          origem={linha.origem}
+          opcoesJaMarcadas={linha.opcoesMarcadas}
+          grauJaDeclarado={linha.grau}
+        />
+      ) : null}
     </th>
   );
 }
@@ -146,6 +166,7 @@ function LinhaOrfa({ orfao }: { orfao: Orfao }) {
 }
 
 export function ComparacaoPorPreocupacoes({
+  caseId,
   linhas,
   orfaos,
   pendentesDeConferencia,
@@ -185,7 +206,7 @@ export function ComparacaoPorPreocupacoes({
           <tbody>
             {linhas.map((linha) => (
               <tr key={linha.questionId}>
-                <CabecalhoDaLinha linha={linha} />
+                <CabecalhoDaLinha linha={linha} caseId={caseId} />
                 <Celulas celulas={linha.celulas} />
               </tr>
             ))}

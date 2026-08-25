@@ -44,7 +44,7 @@ import {
   type CompatibilityResult,
 } from "./motor-compatibilidade";
 import { participaDoMotor } from "./participacao-no-motor";
-import { PERSON_PROTOCOL, type NeedDegree } from "./protocolos";
+import { PERSON_PROTOCOL, type NeedDegree, type PersonMode } from "./protocolos";
 
 // ---------------------------------------------------------------------------
 // Entrada
@@ -53,6 +53,8 @@ import { PERSON_PROTOCOL, type NeedDegree } from "./protocolos";
 /** O que ela respondeu numa pergunta do Protocolo. */
 export type RespostaDaPessoa = {
   questionId: string;
+  /** Os CÓDIGOS que ela marcou — a edição precisa deles, a leitura não. */
+  opcoesMarcadas?: readonly string[];
   /** O rótulo da opção que ela escolheu, nas palavras do Catálogo. */
   resposta: string | null;
   /** O peso que ELA deu — não o que o Curador declarou depois. */
@@ -107,6 +109,11 @@ export type Linha = {
   reconhecida: boolean;
   importancia: ImportanceLevel | null;
   celulas: readonly Celula[];
+  /** O que a linha precisa para virar editável, sem uma segunda consulta. */
+  opcoesMarcadas: readonly string[];
+  opcoes: readonly { codigo: string; rotulo: string }[];
+  multi: boolean;
+  origem: PersonMode;
 };
 
 /** Um subcritério que ela não tem como pedir — e que por isso é conferido. */
@@ -180,6 +187,37 @@ function celulasDe(
 }
 
 /**
+ * A ORDEM DOS DOZE — e por que a formação vem por último.
+ *
+ * A formação é o que todo mundo quer saber primeiro, e é exatamente por isso
+ * que ela não pode vir primeiro. O diploma é o atalho que qualquer pessoa
+ * usaria sozinha, em casa, sem curadoria nenhuma — e é o mais fácil de
+ * confundir com resposta. Aberta a tela pela formação, todo o resto passa a ser
+ * lido como nota de rodapé de um currículo.
+ *
+ * Então os doze descem do mais próximo da experiência dela para o mais
+ * distante: o que a pessoa já fez (experiência), o que ela declara NÃO fazer
+ * (limites — que é o que protege de indicação fora de alcance), onde já
+ * esteve (histórico), e só então onde estudou.
+ *
+ * Ordem pedida pelo Fundador em 25/08. Ela não muda cálculo nenhum: o Motor
+ * cruza cada célula do mesmo jeito, e nenhum conceito sai da conferência.
+ */
+const EIXOS_EM_ORDEM = ["EXPERIENCIA", "PRATICA", "HISTORICO", "FORMACAO"] as const;
+
+function ordemDosOrfaos(a: string, b: string): number {
+  const posicao = (code: string) => {
+    const indice = EIXOS_EM_ORDEM.findIndex((eixo) => code.startsWith(`${eixo}_`));
+    // Eixo desconhecido não vai para o fim em silêncio: cai ANTES da formação,
+    // onde alguém o vê. Sumir no rodapé é como um conceito novo passa
+    // despercebido por meses.
+    return indice === -1 ? EIXOS_EM_ORDEM.length - 1 : indice;
+  };
+  const diferenca = posicao(a) - posicao(b);
+  return diferenca !== 0 ? diferenca : a.localeCompare(b);
+}
+
+/**
  * Monta a Mesa. Não decide nada: organiza o que já foi declarado, do jeito que
  * deixa a pessoa visível.
  */
@@ -205,6 +243,10 @@ export function montarMesaPorPreocupacoes(entrada: EntradaDaMesa): MesaPorPreocu
       reconhecida: dela?.reconhecida ?? false,
       importancia,
       celulas: celulasDe(pergunta.subcriterionCode, importancia, profissionais),
+      opcoesMarcadas: dela?.opcoesMarcadas ?? [],
+      opcoes: Object.entries(pergunta.options).map(([codigo, rotulo]) => ({ codigo, rotulo })),
+      multi: pergunta.multi,
+      origem: pergunta.mode,
     });
   }
 
@@ -212,6 +254,7 @@ export function montarMesaPorPreocupacoes(entrada: EntradaDaMesa): MesaPorPreocu
 
   const orfaos: Orfao[] = subcriteriosAtivos
     .filter((code) => !cobertos.has(code))
+    .sort(ordemDosOrfaos)
     .map((code) => {
       const importancia = importancias[code] ?? null;
       return {

@@ -232,3 +232,39 @@ describe("A conferência final — o que ela não pediu ainda precisa de respost
     expect(mesa.pendentesDeConferencia).toEqual([]);
   });
 });
+
+// ---------------------------------------------------------------------------
+
+// A formação é o que todo mundo quer saber primeiro — e é por isso que ela vem
+// por último. O diploma é o atalho que qualquer pessoa usaria sozinha, sem
+// curadoria nenhuma, e é o mais fácil de confundir com resposta. Aberta a tela
+// pela formação, todo o resto vira nota de rodapé de um currículo.
+describe("A ordem dos doze — do que ela vive para o que ela não alcança", () => {
+  it("a formação vem por último, depois de experiência, limites e histórico", () => {
+    const mesa = montarMesaPorPreocupacoes(entrada());
+    const eixos = mesa.orfaos.map((o) => o.subcriterionCode.split("_")[0]);
+
+    const primeiroDe = (eixo: string) => eixos.indexOf(eixo);
+    expect(primeiroDe("EXPERIENCIA")).toBeLessThan(primeiroDe("PRATICA"));
+    expect(primeiroDe("PRATICA")).toBeLessThan(primeiroDe("HISTORICO"));
+    expect(primeiroDe("HISTORICO")).toBeLessThan(primeiroDe("FORMACAO"));
+
+    // Os cinco de formação ficam juntos, no fim, sem nada depois deles.
+    const depoisDaFormacao = eixos.slice(primeiroDe("FORMACAO"));
+    expect(new Set(depoisDaFormacao)).toEqual(new Set(["FORMACAO"]));
+  });
+
+  // Um eixo novo que ninguém previu não pode ir para o rodapé em silêncio:
+  // é assim que um conceito passa meses sem ser visto por ninguém.
+  it("eixo desconhecido aparece ANTES da formação, onde alguém o vê", () => {
+    const mesa = montarMesaPorPreocupacoes(
+      entrada({ subcriteriosAtivos: [...ATIVOS, "EIXO_QUE_NINGUEM_PREVIU"] }),
+    );
+    const codigos = mesa.orfaos.map((o) => o.subcriterionCode);
+
+    expect(codigos.indexOf("EIXO_QUE_NINGUEM_PREVIU")).toBeLessThan(
+      codigos.indexOf("FORMACAO_GRADUACAO"),
+    );
+    expect(mesa.conferenciaCompleta).toBe(true);
+  });
+});

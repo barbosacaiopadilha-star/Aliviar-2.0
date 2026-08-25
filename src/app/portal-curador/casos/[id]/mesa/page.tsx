@@ -72,7 +72,7 @@ export default async function MesaPorPreocupacoesPage({
         </p>
       </header>
 
-      <ComparacaoPorPreocupacoes {...mesa} />
+      <ComparacaoPorPreocupacoes caseId={id} {...mesa} />
     </main>
   );
 }
