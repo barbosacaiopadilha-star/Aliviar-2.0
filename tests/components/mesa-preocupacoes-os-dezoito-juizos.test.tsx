@@ -5,6 +5,18 @@
  *   relacionais que o Case declarou
  * @metodo ADR-093 — o juízo mora na célula, junto do fato que o justifica
  *
+ * PRECISÃO QUE ESTE ARQUIVO DEVE, e que eu escrevi errado na primeira
+ * redação: 18 é o que a tela precisa OFERECER, não o que o Método sempre
+ * EXIGE. Exigidos são os três técnicos por profissional (H8–H10, sempre) mais
+ * os relacionais para os quais o Case declarou grau (H11, ADR-065) — no caso
+ * real de 25/08, nove exigidos e dezoito oferecidos.
+ *
+ * A distinção não é preciosismo: foi confundir conceito com juízo que produziu
+ * o `SIM-40`, e um teste que afirma Método errado ensina o erro a quem o ler.
+ * O que este arquivo prova é que **nenhum ponto some da tela** — porque o
+ * Curador não pode registrar o que a tela não oferece, e o Case que declarar
+ * os três relacionais precisa dos dezoito disponíveis.
+ *
  * POR QUE ESTE TESTE EXISTE, E POR QUE ELE NÃO PODE SER DE MÓDULO.
  *
  * `mesa-por-preocupacoes.test.ts` já prova que *"a conta fecha em 6 pontos de
@@ -14,7 +26,7 @@
  * que mora o ato de registrar.
  *
  * Medido na Mesa em 25/08, com três profissionais reais: 12 botões onde o
- * Método pede 18. Nenhum teste olhava para a tela, então nada caiu.
+ * Método precisa oferecer 18. Nenhum teste olhava para a tela, então nada caiu.
  *
  * Este olha. Se um ponto de juízo sumir da renderização, ele cai — e é a única
  * coisa que ele faz.
@@ -58,8 +70,8 @@ function montar(rotulos: Record<string, string> = {}) {
   );
 }
 
-describe("Os 18 pontos de juízo — contados na tela, não no módulo", () => {
-  it("a tela oferece 6 pontos de juízo por profissional, e são 18 com três", () => {
+describe("Os 18 pontos de juízo oferecidos — contados na tela, não no módulo", () => {
+  it("a tela oferece 6 pontos por profissional — 18 com três, e nenhum some", () => {
     montar();
 
     const botoes = screen.getAllByRole("button", { name: /Registrar juízo/i });

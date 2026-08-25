@@ -338,3 +338,48 @@ describe("S-4 · a redação da contagem, sem tocar a contagem", () => {
     expect(aplicarFiltros(rede, ["INSUFICIENTE"]).map((p) => p.id)).toEqual(["um", "muitos"]);
   });
 });
+
+// ---------------------------------------------------------------------------
+
+// O JUÍZO PENDENTE — o alimento que a Mesa nova traz e a antiga não tinha
+// (ADR-093, painel de atenção).
+//
+// A Mesa antiga alimenta `criteriosPendentes` com `criterion_declarations`, do
+// regime `LEGADO_6XN` que hoje vive atrás de flag. No regime padrão quem
+// conclui a etapa são os JUÍZOS da ADR-067 §5. São unidades diferentes do
+// Método, e somá-las repetiria o `SIM-40` — que confundiu conceito com juízo e
+// ensinou "três" onde o Método exige seis.
+describe("Juízo pendente é contado como juízo, nunca como critério", () => {
+  it("o juízo que falta vira item próprio, com a palavra certa", () => {
+    const [item] = itensDeAtencao([profissional({ id: "a", juizosPendentes: 3 })]);
+
+    expect(item!.tipo).toBe("JUIZO");
+    expect(item!.frase).toBe("3 juízos seus ainda não foram registrados.");
+    // A palavra "critério" não pode aparecer aqui: é outra unidade do Método.
+    expect(item!.frase).not.toMatch(/critério/i);
+  });
+
+  it("juízo e critério legado convivem como DOIS itens, nunca somados num só", () => {
+    const itens = itensDeAtencao([
+      profissional({ id: "a", juizosPendentes: 3, criteriosPendentes: 2 }),
+    ]);
+
+    expect(itens.map((i) => i.tipo)).toEqual(["JUIZO", "AVALIACAO"]);
+    expect(itens.find((i) => i.tipo === "JUIZO")!.frase).toContain("3 juízos");
+    expect(itens.find((i) => i.tipo === "AVALIACAO")!.frase).toContain("2 critérios");
+  });
+
+  it("o juízo só é cobrado de quem é elegível — de quem não passou pela porta, não se cobra", () => {
+    const itens = itensDeAtencao([
+      profissional({ id: "a", estado: "AGUARDANDO_DECLARACAO", areaDeclarada: false, juizosPendentes: 3 }),
+    ]);
+
+    expect(itens.some((i) => i.tipo === "JUIZO")).toBe(false);
+  });
+
+  // A Mesa antiga não alimenta o campo. Ausente tem de significar "nada a
+  // dizer", e não um item fantasma com "undefined juízos".
+  it("sem o campo, nenhum item de juízo aparece", () => {
+    expect(itensDeAtencao([profissional({ id: "a" })])).toEqual([]);
+  });
+});

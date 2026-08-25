@@ -90,10 +90,27 @@ export type InvestigacaoProfissional = {
   temDivergencia: boolean;
   /** Filtros obrigatórios cuja informação não foi localizada. */
   filtrosSemInformacao: number;
-  /** Critérios ainda sem declaração do Curador. */
+  /** Critérios ainda sem declaração do Curador — regime `LEGADO_6XN`. */
   criteriosPendentes: number;
   /** Critérios declarados como informação insuficiente. */
   criteriosInsuficientes: number;
+  /**
+   * JUÍZOS que a ADR-067 §5 exige e ainda não têm versão vigente.
+   *
+   * Por que é um campo PRÓPRIO, e não um número somado a `criteriosPendentes`:
+   * são duas coisas do Método, e confundi-las já custou caro uma vez. O
+   * `SIM-40` nasceu exatamente de alguém escrever "três conceitos" onde o
+   * Método exige seis juízos — critério e juízo não são a mesma unidade, e
+   * uma frase que diz "N critérios sem avaliação" para contar juízos ensina o
+   * erro de novo.
+   *
+   * `criteriosPendentes` conta `criterion_declarations`, do regime `LEGADO_6XN`
+   * (atrás de flag). Este conta o que o regime `JUIZO` — o padrão — exige.
+   *
+   * Opcional porque a Mesa antiga não o alimenta: ela sai com a ADR-093, e
+   * fazê-la calcular isto agora seria construir sobre o que vai ser demolido.
+   */
+  juizosPendentes?: number;
 };
 
 /** Já avaliado = nenhum critério sem declaração, e há algo a avaliar. */
@@ -182,7 +199,13 @@ export function recorteSentence(exibidos: number, total: number, ativos: number)
 // Painel inteligente — só o que ainda merece atenção
 // ---------------------------------------------------------------------------
 
-export type AtencaoTipo = "DIVERGENCIA" | "INSUFICIENTE" | "DECLARACAO" | "AVALIACAO";
+export type AtencaoTipo =
+  | "DIVERGENCIA"
+  | "INSUFICIENTE"
+  | "DECLARACAO"
+  | "AVALIACAO"
+  /** Juízo humano exigido pela ADR-067 §5 e ainda sem versão vigente. */
+  | "JUIZO";
 
 export type AtencaoItem = {
   id: string;
@@ -258,6 +281,25 @@ export function itensDeAtencao(profissionais: InvestigacaoProfissional[]): Atenc
         quem: profissional.nome,
         frase: "A compatibilidade de área ainda não foi declarada.",
         etapa: "REDE",
+      });
+    }
+  }
+
+  // O JUÍZO vem antes da avaliação legada de propósito: no regime `JUIZO` —
+  // o padrão — é ele que conclui a etapa, e é dele que a paciente lê o
+  // resultado. A avaliação 6×N sobrevive atrás de flag.
+  for (const profissional of profissionais) {
+    const pendentes = profissional.juizosPendentes ?? 0;
+    if (profissional.estado === "ELEGIVEL" && pendentes > 0) {
+      itens.push({
+        id: `${profissional.id}:juizo`,
+        tipo: "JUIZO",
+        quem: profissional.nome,
+        frase:
+          pendentes === 1
+            ? "1 juízo seu ainda não foi registrado."
+            : `${pendentes} juízos seus ainda não foram registrados.`,
+        etapa: "AVALIACAO",
       });
     }
   }

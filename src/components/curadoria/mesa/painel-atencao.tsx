@@ -23,6 +23,7 @@ const MARCA: Record<AtencaoTipo, string> = {
   INSUFICIENTE: "◌",
   DECLARACAO: "●",
   AVALIACAO: "●",
+  JUIZO: "●",
 };
 
 const TIPO_LABEL: Record<AtencaoTipo, string> = {
@@ -30,17 +31,33 @@ const TIPO_LABEL: Record<AtencaoTipo, string> = {
   INSUFICIENTE: "informação insuficiente",
   DECLARACAO: "declaração pendente",
   AVALIACAO: "avaliação pendente",
+  JUIZO: "juízo pendente",
 };
 
 export function PainelAtencao({
   itens,
   onIr,
+  rotuloDoDestino,
 }: {
   itens: AtencaoItem[];
   onIr?: (etapa: MesaEtapaId) => void;
+  /**
+   * Como esta superfície NOMEIA o lugar onde o item se resolve.
+   *
+   * A Mesa antiga tem etapas, e o destino é o nome da etapa. A Mesa nova
+   * (ADR-093) não tem etapa nenhuma — é um documento contínuo, com seções.
+   * Dizer "Resolver em Avaliação técnica" lá mandaria o Curador para uma
+   * geografia que não existe.
+   *
+   * O item continua sabendo A QUE ETAPA ele pertence: isso é vocabulário do
+   * Método e não muda. O que muda é o mapa de cada tela — e o mapa é de quem
+   * desenha a tela, não de quem deriva a pendência.
+   */
+  rotuloDoDestino?: (etapa: MesaEtapaId) => string;
 }) {
   const doAmbiente = useMesaNavegacao();
   const ir = onIr ?? doAmbiente;
+  const nomeDoDestino = rotuloDoDestino ?? ((etapa: MesaEtapaId) => MESA_ETAPA_LABELS[etapa]);
 
   if (itens.length === 0) {
     return (
@@ -68,7 +85,7 @@ export function PainelAtencao({
                 clique trocava de assunto. */}
             {ir ? (
               <button type="button" className="mesa-atencao__ir" onClick={() => ir(item.etapa)}>
-                Resolver em {MESA_ETAPA_LABELS[item.etapa]}
+                Resolver em {nomeDoDestino(item.etapa)}
               </button>
             ) : null}
           </div>

@@ -10,6 +10,7 @@ import { ComparacaoPorPreocupacoes } from "@/components/curadoria/mesa-preocupac
 import { ComporOsTres } from "@/components/curadoria/mesa-preocupacoes/compor-os-tres";
 import { EmitirEEntregar } from "@/components/curadoria/mesa-preocupacoes/emitir-e-entregar";
 import { EscreverORelatorio } from "@/components/curadoria/mesa-preocupacoes/escrever-o-relatorio";
+import { OQueDependeDeVoce } from "@/components/curadoria/mesa-preocupacoes/o-que-depende-de-voce";
 import { requireAnyRole } from "@/modules/auth/guard";
 import { getAuthState } from "@/modules/auth/session";
 import { falhaParaUsuario } from "@/lib/observability/erros";
@@ -18,7 +19,11 @@ import {
   loadCurrentPracticeEvidence,
   loadEvidenceDivergences,
 } from "@/modules/curadoria/evidencias-pratica-repository";
+import { lacunasDeJuizo } from "@/modules/curadoria/julgamentos";
+import { loadJulgamentosDaAvaliacao } from "@/modules/curadoria/julgamentos-repository";
 import { loadMesaCruzamento } from "@/modules/curadoria/mesa-cruzamento";
+import { itensDeAtencao, type InvestigacaoProfissional } from "@/modules/curadoria/mesa-investigacao";
+import { crossCaseRelationalForProfessionals } from "@/modules/curadoria/motor-relacional-repository";
 import { carregarMesaPorPreocupacoes } from "@/modules/curadoria/mesa-por-preocupacoes-repository";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -215,6 +220,74 @@ export default async function MesaPorPreocupacoesPage({
     })),
   ];
 
+  // ------------------------------------------------------------------
+  // O QUE AINDA DEPENDE DE VOCÊ — derivado, nunca digitado.
+  //
+  // @metodo ADR-067 §5 — H8–H10 sempre; H11 quando o Case declarou o grau
+  // @metodo ADR-093 — a lacuna vira tarefa nomeada, não "23 lacunas"
+  //
+  // O motor de alertas (`itensDeAtencao`) é o mesmo da Mesa antiga. O que
+  // NÃO é o mesmo é o alimento — e foi por isto que este painel não era
+  // ligação de fio:
+  //
+  // A Mesa antiga alimenta `criteriosPendentes` com `criterion_declarations`,
+  // do regime `LEGADO_6XN`, que hoje vive atrás de flag. No regime padrão
+  // (`JUIZO`) quem conclui a etapa são os JUÍZOS da ADR-067 §5 — e é deles
+  // que a paciente lê o resultado. Somar as duas coisas no mesmo número
+  // repetiria o erro do `SIM-40`, que confundiu conceito com juízo e ensinou
+  // "três" onde o Método exige seis.
+  //
+  // Aqui a Mesa nova conta o que ela própria mostra: os juízos que faltam, e
+  // as células que dizem "Falta descobrir".
+  // ------------------------------------------------------------------
+  const idsElegiveis = profissionais.map((p) => p.id);
+
+  // O H11 só é exigido quando o Case declarou grau para o conceito relacional
+  // (ADR-065). Cobrá-lo sem isso seria inventar pendência.
+  const relacional =
+    idsElegiveis.length > 0
+      ? await crossCaseRelationalForProfessionals(supabase, id, idsElegiveis)
+      : { byProfessional: [], relationalNeedsCount: 0 };
+  const relacionalPorId = new Map(
+    relacional.byProfessional.map((leitura) => [leitura.professionalProfileId, leitura]),
+  );
+
+  const juizosPendentesPorId = new Map(
+    await Promise.all(
+      idsElegiveis.map(async (professionalProfileId): Promise<[string, number]> => {
+        const julgamentos = await loadJulgamentosDaAvaliacao(supabase, id, professionalProfileId);
+        const declarados = (relacionalPorId.get(professionalProfileId)?.readings ?? [])
+          .filter((reading) => reading.kind === "JUIZO_HUMANO")
+          .map((reading) => reading.code);
+        return [professionalProfileId, lacunasDeJuizo(julgamentos, declarados).length];
+      }),
+    ),
+  );
+
+  // "Falta descobrir" — a célula cuja cor aponta a operação. Sai da própria
+  // Mesa, sem segunda consulta: é literalmente o que a tabela está exibindo.
+  const semEstadoPorId = new Map<string, number>();
+  for (const celula of [...mesa.linhas, ...mesa.orfaos].flatMap((entrada) => entrada.celulas)) {
+    if (celula.motivo !== "SEM_ESTADO_DECLARADO") continue;
+    semEstadoPorId.set(celula.profissionalId, (semEstadoPorId.get(celula.profissionalId) ?? 0) + 1);
+  }
+
+  const paraOAlerta: InvestigacaoProfissional[] = view.professionals.map((profissional) => ({
+    id: profissional.professionalProfileId,
+    nome: profissional.displayName,
+    estado: profissional.eligibility.state,
+    areaDeclarada: Boolean(profissional.declaration),
+    temDivergencia: profissional.areaVerificationStatus === "divergente",
+    filtrosSemInformacao: profissional.eligibility.filters.filter((f) => f.passes === null).length,
+    // O regime 6×N não vive nesta Mesa: zero não é omissão, é a ausência de
+    // um regime que ela nunca implementou.
+    criteriosPendentes: 0,
+    criteriosInsuficientes: semEstadoPorId.get(profissional.professionalProfileId) ?? 0,
+    juizosPendentes: juizosPendentesPorId.get(profissional.professionalProfileId) ?? 0,
+  }));
+
+  const atencao = itensDeAtencao(paraOAlerta);
+
   const nomes = new Map(mesa.profissionais.map((p) => [p.id, p.nome]));
   const escolhidos = [...(composta?.curated_selection_options ?? [])]
     .sort((a, b) => a.position - b.position)
@@ -240,7 +313,8 @@ export default async function MesaPorPreocupacoesPage({
             funções". Quem chega e não acha o que procura precisa saber onde
             está, e não desconfiar que quebrou. */}
         <p className="max-w-3xl text-sm text-ink-muted">
-          Uma coisa continua só na Mesa atual: o painel de atenção.{" "}
+          A Mesa atual não tem mais nada que esta não tenha. Ela continua no ar até a
+          travessia completa da ADR-093 confirmar que nada se perdeu.{" "}
           <Link
             href={`/coa/curadoria/casos/${id}/curadoria_tecnica`}
             className="text-ink underline underline-offset-2"
@@ -261,7 +335,13 @@ export default async function MesaPorPreocupacoesPage({
           O painel é o MESMO da Mesa antiga, de propósito: duas superfícies
           para o mesmo ato é a segunda fonte que a ADR-066/11-08 proíbe — e foi
           exatamente assim que o `SIM-42` nasceu. */}
-      <section className="flex flex-col gap-4">
+      {/* O ÍNDICE DAS PENDÊNCIAS vem primeiro porque a página tem onze telas
+          e ninguém segura isso na cabeça. Não é o espelho que a auditoria F-6
+          encolheu na Mesa antiga: lá ele repetia a etapa em foco; aqui não
+          existe etapa em foco, e o que ele faz é dar o todo em um lugar. */}
+      <OQueDependeDeVoce itens={atencao} />
+
+      <section id="quem-pode-participar" className="flex flex-col gap-4">
         <header className="flex flex-col gap-1">
           <h2 className="text-lg font-medium text-ink">Quem pode participar desta Curadoria</h2>
           <p className="max-w-3xl text-sm text-ink-muted">{view.nextStep}</p>
@@ -272,9 +352,13 @@ export default async function MesaPorPreocupacoesPage({
       {/* A classificação vem ANTES da comparação, porque sem ela o Motor não
           cruza nada — e a tabela abaixo mostraria "falta você declarar" em
           cada célula. A ordem da tela é a ordem do trabalho. */}
-      <ClassificarImportancia caseId={id} itens={paraClassificar} />
+      <div id="quanto-importa" className="scroll-mt-4">
+        <ClassificarImportancia caseId={id} itens={paraClassificar} />
+      </div>
 
-      <ComparacaoPorPreocupacoes caseId={id} {...mesa} />
+      <div id="o-que-ela-pediu" className="scroll-mt-4">
+        <ComparacaoPorPreocupacoes caseId={id} {...mesa} />
+      </div>
 
       {/* A BASE DE EVIDÊNCIAS vem DEPOIS da comparação, e a ordem é o
           raciocínio: é a comparação que revela as lacunas — as células que
@@ -321,19 +405,23 @@ export default async function MesaPorPreocupacoesPage({
         />
       </section>
 
-      <ComporOsTres
-        priorityProfileId={(perfil as { id: string } | null)?.id ?? null}
-        linhas={mesa.linhas}
-        profissionais={mesa.profissionais}
-      />
+      <div id="compor-os-tres" className="scroll-mt-4">
+        <ComporOsTres
+          priorityProfileId={(perfil as { id: string } | null)?.id ?? null}
+          linhas={mesa.linhas}
+          profissionais={mesa.profissionais}
+        />
+      </div>
 
-      <EscreverORelatorio
-        priorityProfileId={(perfil as { id: string } | null)?.id ?? null}
-        linhas={mesa.linhas}
-        profissionais={mesa.profissionais}
-        escolhidos={escolhidos}
-        composicaoJaEscrita={composta?.composition_rationale ?? ""}
-      />
+      <div id="o-relatorio" className="scroll-mt-4">
+        <EscreverORelatorio
+          priorityProfileId={(perfil as { id: string } | null)?.id ?? null}
+          linhas={mesa.linhas}
+          profissionais={mesa.profissionais}
+          escolhidos={escolhidos}
+          composicaoJaEscrita={composta?.composition_rationale ?? ""}
+        />
+      </div>
 
       <EmitirEEntregar
         priorityProfileId={(perfil as { id: string } | null)?.id ?? null}
