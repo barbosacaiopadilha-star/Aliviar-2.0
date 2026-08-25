@@ -73,7 +73,6 @@ export function ProfessionalProfileForm({
   }, [destino]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const parsed = professionalProfileSchema.safeParse({
       displayName: formData.get("displayName"),
@@ -115,30 +114,19 @@ export function ProfessionalProfileForm({
 
     setFormError(null);
     setFieldErrors({});
-    // SEM `startTransition` em volta. A dispatch de `useActionState` já roda
-    // em transição própria; envolvê-la numa segunda deixava a transição
-    // externa pendente para sempre — `isPending` ficava `true` e o estado
-    // NUNCA era comitado. Na tela: o botão girava sem parar e nenhuma
-    // mensagem aparecia, embora a gravação tivesse acontecido.
-    //
-    // 2026-08-20 — CONFERIDO OUTRA VEZ, e o custo foi um deploy quebrado.
-    // O React registra "called outside of a transition" a cada envio e o
-    // `isPending` não atualiza; é tentador "consertar". As duas saídas que a
-    // própria mensagem sugere foram testadas e AS DUAS quebram esta tela:
-    //   · `startTransition(() => formAction(fd))` — pendura a transição. Na
-    //     edição, que não navega, o botão fica "Carregando… Aguarde…" para
-    //     sempre com a gravação feita. Foi publicado em `21d0da7` e revertido.
-    //   · `action={handleSubmit}` no `<form>` — pendura igual, e ainda limpa os
-    //     campos não controlados quando a action termina: uma recusa de
-    //     validação apagava o formulário inteiro.
-    // A causa provável é a revalidação da action, que não liquida no cliente e
-    // deixa qualquer transição em volta pendurada. Quem pega isso é o
-    // `admin-professionals.spec.ts` — rode-o antes de tocar aqui.
-    formAction(formData);
+    // O DISPATCH É DO FORM, NÃO NOSSO (conserto de 25/08 — curadoria
+    // simulada; o Fundador ficou preso na tela de Entrar). Chamar
+    // `formAction(formData)` na mão, fora de transição, é o que o React 19
+    // não garante: o resultado da action pode nunca comitar, e o clique
+    // "não faz nada", sem erro, de forma intermitente — era o aviso
+    // `useActionState ... outside of a transition` no console. A action
+    // vive no atributo `action` do form (o React a despacha na transição
+    // correta) e este onSubmit SÓ VALIDA: bloqueia com preventDefault
+    // apenas quando o zod reprova.
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-5">
+    <form action={formAction} onSubmit={handleSubmit} noValidate className="space-y-5">
       <Input
         name="displayName"
         type="text"

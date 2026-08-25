@@ -28,23 +28,27 @@ export function UpdatePasswordForm() {
   }, [state, router]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const parsed = updatePasswordSchema.safeParse({
       password: formData.get("password"),
     });
 
     if (!parsed.success) {
+      event.preventDefault();
       setFieldErrors(mapZodFieldErrors(parsed.error));
       return;
     }
 
     setFieldErrors({});
-    // SEM `startTransition` em volta: a dispatch de `useActionState` já roda
-    // em transição própria, e a segunda ficava pendente para sempre —
-    // `isPending` travado em `true`, estado nunca comitado. Na tela: botão
-    // girando sem parar e nenhuma mensagem, com a escrita já feita.
-    formAction(formData);
+    // O DISPATCH É DO FORM, NÃO NOSSO (conserto de 25/08 — curadoria
+    // simulada; o Fundador ficou preso na tela de Entrar). Chamar
+    // `formAction(formData)` na mão, fora de transição, é o que o React 19
+    // não garante: o resultado da action pode nunca comitar, e o clique
+    // "não faz nada", sem erro, de forma intermitente — era o aviso
+    // `useActionState ... outside of a transition` no console. A action
+    // vive no atributo `action` do form (o React a despacha na transição
+    // correta) e este onSubmit SÓ VALIDA: bloqueia com preventDefault
+    // apenas quando o zod reprova.
   }
 
   return (
@@ -60,7 +64,7 @@ export function UpdatePasswordForm() {
         </Link>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <form action={formAction} onSubmit={handleSubmit} className="space-y-4" noValidate>
         <Input
           name="password"
           type="password"
