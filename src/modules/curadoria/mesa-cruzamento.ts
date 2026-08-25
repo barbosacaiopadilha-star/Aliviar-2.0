@@ -207,7 +207,7 @@ export async function loadMesaCruzamento(
   const [{ data: providerRows, error: providerError }, bloqueados] = await Promise.all([
     supabase
       .from("professional_profiles")
-      .select("id, display_name")
+      .select("id, display_name, offers_continuous_care")
       // OPS-G5 C7R: quem compõe é quem está PUBLICADO_ATIVO, não quem tem os
       // campos antigos numa certa combinação. Os dois eixos discordavam — foi o
       // achado que reprovou o Corte 7 —, e agora `status` e `publication_status`
@@ -261,7 +261,23 @@ export async function loadMesaCruzamento(
       });
     }
     if (requiresContinuous) {
-      const offers = care?.offers_continuous_care as boolean | null | undefined;
+      // DE ONDE VEM O FATO (conserto de 24/08, achado na simulação do Fundador).
+      //
+      // Este filtro lia SÓ `professional_care_model` — uma tabela que NENHUMA
+      // tela do produto escreve. Varredura de "quem escreve o que o Motor lê":
+      // zero escritores no app, zero no banco; só fixtures e seeds. Efeito: todo
+      // profissional cadastrado pelo caminho normal ficava para sempre em
+      // "informação não localizada", nunca virava elegível, e a Mesa parava na
+      // etapa 2 — sem que nenhum clique pudesse resolver.
+      //
+      // O cadastro do Administrador preenche este mesmo fato em
+      // `professional_profiles.offers_continuous_care`, com mão humana (ADR-079).
+      // O modelo de atendimento continua tendo precedência quando EXISTE e diz
+      // algo — ele é o levantamento dedicado. Quando não diz, vale o cadastro.
+      // O que não muda: `null` continua sendo "não se sabe", nunca "não atende".
+      const offers =
+        (care?.offers_continuous_care as boolean | null | undefined) ??
+        (row.offers_continuous_care as boolean | null | undefined);
       filters.push({
         label: "Cuidado contínuo",
         requirement: "obrigatório",

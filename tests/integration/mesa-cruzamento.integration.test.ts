@@ -255,4 +255,76 @@ describe("Mesa do Cruzamento — banco e montagem (Supabase local)", () => {
     expect(mesa.counts.selected).toBe(3);
     expect(mesa.nextStep).toContain("Relatório");
   });
+
+  /**
+   * O CUIDADO CONTÍNUO VEM DE ONDE A MÃO HUMANA ESCREVEU.
+   *
+   * Defeito achado na simulação do Fundador (24/08), e ele era bloqueador:
+   * este filtro lia SÓ `professional_care_model` — tabela que NENHUMA tela do
+   * produto escreve (varredura "quem escreve o que o Motor lê": zero
+   * escritores no app, zero no banco, só fixtures e seeds).
+   *
+   * Efeito em produção: todo profissional cadastrado pelo caminho normal
+   * ficava para sempre em "informação não localizada", nunca virava elegível,
+   * e a Mesa parava na etapa 2 — o painel dizia "a investigação abre quando
+   * houver ao menos um profissional elegível", e nenhum clique resolvia. O
+   * único botão da tela declarava a ÁREA, que é outro fato.
+   *
+   * O que este oráculo guarda: sem linha no modelo de atendimento, o fato
+   * ainda chega — do cadastro, que é onde o Administrador o escreve.
+   */
+  it("sem modelo de atendimento, o cuidado contínuo vem do cadastro", async () => {
+    const alvo = professionalIds["fixture-a"]!;
+
+    const { data: original } = await service
+      .schema("curadoria")
+      .from("professional_care_model")
+      .select("*")
+      .eq("professional_profile_id", alvo)
+      .maybeSingle();
+
+    // O cenário real: profissional cadastrado pelo produto — tem o fato na
+    // ficha, não tem levantamento dedicado.
+    const { data: fichaOriginal } = await service
+      .schema("curadoria")
+      .from("professional_profiles")
+      .select("offers_continuous_care")
+      .eq("id", alvo)
+      .single();
+
+    await service.schema("curadoria").from("professional_care_model").delete().eq("professional_profile_id", alvo);
+    await service.schema("curadoria").from("professional_profiles").update({ offers_continuous_care: true }).eq("id", alvo);
+
+    try {
+      const mesa = await loadMesaCruzamento(curador.client, caseId, 3);
+      const prof = mesa.professionals.find((entry) => entry.professionalProfileId === alvo)!;
+      const filtro = prof.eligibility.filters.find((f) => f.label === "Cuidado contínuo")!;
+
+      expect(filtro.passes, "o fato do cadastro tem de chegar ao filtro").toBe(true);
+      expect(filtro.professionalValue).toBe("oferece");
+
+      // A METADE QUE AINDA NÃO TEM CONSERTO HONESTO, e este oráculo a mantém
+      // à vista: o filtro de UF lê `professional_care_model.states` — "onde
+      // atende" —, e o cadastro do produto NÃO coleta isso. `crm_uf` é o
+      // estado do registro no CRM, que é outro fato; usá-lo faria o Motor
+      // afirmar o que ninguém verificou, contra o próprio comentário do
+      // schema ("null é não se sabe, false é não atende"). Resolver exige
+      // campo novo no cadastro — construção, barrada pela ADR-073.
+      //
+      // Enquanto isso: se um dia sobrar OUTRO filtro sem informação além da
+      // UF, esta linha cai e alguém vai olhar.
+      const semInformacao = prof.eligibility.filters.filter((f) => f.passes === null);
+      expect(semInformacao.map((f) => f.label)).toEqual(
+        expect.arrayContaining(semInformacao.map((f) => f.label).filter((l) => l.startsWith("Atendimento em"))),
+      );
+      expect(semInformacao.every((f) => f.label.startsWith("Atendimento em"))).toBe(true);
+    } finally {
+      if (original) await service.schema("curadoria").from("professional_care_model").insert(original);
+      await service
+        .schema("curadoria")
+        .from("professional_profiles")
+        .update({ offers_continuous_care: fichaOriginal?.offers_continuous_care ?? null })
+        .eq("id", alvo);
+    }
+  });
 });
