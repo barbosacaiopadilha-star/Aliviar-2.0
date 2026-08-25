@@ -23,6 +23,7 @@
     "supabase:status": "supabase status",
     "supabase:reset": "node scripts/guard-db-reset.mjs",
     "supabase:env": "node scripts/generate-local-env.mjs",
+    "inventario:alcance": "node scripts/with-local-supabase.mjs node scripts/inventario-de-alcance.mjs",
     "backup:producao": "node scripts/backup-producao.mjs",
     "backup:producao:configurar": "node scripts/backup-producao-configurar.mjs",
     "supabase:ledger:check": "node scripts/with-local-supabase.mjs node scripts/check-migration-ledger.mjs",
