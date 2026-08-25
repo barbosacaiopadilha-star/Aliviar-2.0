@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 
 import { ComparacaoPorPreocupacoes } from "@/components/curadoria/mesa-preocupacoes/comparacao-por-preocupacoes";
 import { ComporOsTres } from "@/components/curadoria/mesa-preocupacoes/compor-os-tres";
+import { EmitirEEntregar } from "@/components/curadoria/mesa-preocupacoes/emitir-e-entregar";
 import { EscreverORelatorio } from "@/components/curadoria/mesa-preocupacoes/escrever-o-relatorio";
 import { requireAnyRole } from "@/modules/auth/guard";
 import { carregarMesaPorPreocupacoes } from "@/modules/curadoria/mesa-por-preocupacoes-repository";
@@ -70,6 +71,22 @@ export default async function MesaPorPreocupacoesPage({
     .limit(1)
     .maybeSingle();
 
+  const { data: relatorio } = await supabase
+    .from("curadoria_reports")
+    .select("id, emitted_at, delivered_at")
+    .eq("case_id", id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  // O nome dela vem do Case — a tela de entrega diz a quem está entregando, e
+  // "a paciente" não é ninguém.
+  const { data: pessoa } = await supabase
+    .from("cases")
+    .select("profiles:patient_profile_id(display_name)")
+    .eq("id", id)
+    .maybeSingle();
+
   const mesa = await carregarMesaPorPreocupacoes(
     supabase,
     id,
@@ -89,6 +106,10 @@ export default async function MesaPorPreocupacoesPage({
         }[];
       }
     | null;
+
+  const perfilDela = (pessoa as { profiles: { display_name: string } | { display_name: string }[] | null } | null)?.profiles;
+  const nomeDaPaciente =
+    (Array.isArray(perfilDela) ? perfilDela[0]?.display_name : perfilDela?.display_name) ?? "ela";
 
   const nomes = new Map(mesa.profissionais.map((p) => [p.id, p.nome]));
   const escolhidos = [...(composta?.curated_selection_options ?? [])]
@@ -126,6 +147,15 @@ export default async function MesaPorPreocupacoesPage({
         profissionais={mesa.profissionais}
         escolhidos={escolhidos}
         composicaoJaEscrita={composta?.composition_rationale ?? ""}
+      />
+
+      <EmitirEEntregar
+        priorityProfileId={(perfil as { id: string } | null)?.id ?? null}
+        curatedSelectionId={(selecao as { id: string } | null)?.id ?? null}
+        nomeDaPaciente={nomeDaPaciente}
+        emitido={Boolean((relatorio as { emitted_at: string | null } | null)?.emitted_at)}
+        entregue={Boolean((relatorio as { delivered_at: string | null } | null)?.delivered_at)}
+        temRelatorio={Boolean(relatorio)}
       />
     </main>
   );

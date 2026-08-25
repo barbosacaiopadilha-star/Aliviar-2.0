@@ -206,7 +206,7 @@ export function EscreverORelatorio({
       })}
 
       <label className="flex flex-col gap-1 text-sm font-medium text-ink">
-        Por que estes três, juntos
+        Por que estes três, juntos — escreva para ela, não sobre ela
         <textarea
           value={composicao}
           onChange={(e) => {

@@ -2305,18 +2305,22 @@ paciente é "a continuação da landing", e por isso reabriu o Sistema Visual §
 **A Mesa do Curador é instrumento de trabalho: papel opaco, alto contraste, sem
 efeito.** Isso não é omissão a corrigir depois; é a regra.
 
-O que esta ADR passa a dever, e está no fechamento abaixo: quando a Mesa nova
-chegar aos três caminhos, **o que ela produz para ela sai em vidro** — porque
-aquilo já é a casa dela, e a ADR-084 vale inteira ali.
+Eu escrevi aqui, na primeira redação, que esta ADR "passava a dever" o vidro na
+saída da paciente. **Não devia: já estava feito.** `carta-caminho.tsx` monta
+cada um dos três caminhos com `patient-carta patient-veu` desde a ADR-084.
+
+Fica registrado porque o erro é do tipo que se repete: eu supus a dívida em vez
+de conferir, e só fui olhar o arquivo quando chegou a hora de pagá-la. Conferir
+custou uma consulta; construir por cima do que já existia teria custado uma
+segunda superfície para o mesmo ato — exatamente o que a ADR-066/11-08 proíbe.
 
 ### O que fecha esta ADR
 
 1. As linhas derivadas do Protocolo da Pessoa, com a frase dela visível em cada uma;
 2. A conferência final de `NAO_INFLUENCIA` sobre os subcritérios órfãos, com teste que prove que nenhum dos 29 escapa da cobertura;
 3. A Mesa antiga removida — não mantida em paralelo: duas superfícies para o mesmo ato é a segunda fonte que a ADR-066/11-08 proíbe;
-4. Os três caminhos que ela lê saindo em vidro (ADR-084), com a Mesa em papel;
-5. **Os cinco guias operacionais reescritos** — eles ensinam a Mesa antiga passo a passo, e um guia que descreve uma tela que não existe mais é pior que guia nenhum: quem o segue conclui que o software quebrou. A revisão de 25/08 já achou um erro anterior a esta ADR (`SIM-40`);
-6. Uma travessia completa na Mesa nova, com o resultado comparado ao que a Mesa velha produziria.
+4. **Os cinco guias operacionais reescritos** — eles ensinam a Mesa antiga passo a passo, e um guia que descreve uma tela que não existe mais é pior que guia nenhum: quem o segue conclui que o software quebrou. A revisão de 25/08 já achou um erro anterior a esta ADR (`SIM-40`);
+5. Uma travessia completa na Mesa nova, com o resultado comparado ao que a Mesa velha produziria.
 
 ### Revisitar quando
 

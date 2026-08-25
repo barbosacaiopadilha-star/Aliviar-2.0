@@ -150,10 +150,21 @@ describe("As razões sugeridas — resumem fato, não emitem opinião", () => {
     },
   };
 
-  it("cita as frases dela, em vez de resumir em adjetivo", () => {
+  // Esta razão vai para o PORTAL DELA, embaixo do nome de cada profissional.
+  // A primeira versão dizia "responde ao que ELA chamou de essencial" — texto
+  // do Curador falando sobre ela — e foi assim que chegou à tela dela na
+  // travessia de 25/08: ela leu sobre si mesma na terceira pessoa, como se não
+  // estivesse na sala. Nenhum teste pegaria; só atravessar até o portal.
+  it("fala com ela, não sobre ela — quem lê isto é a paciente", () => {
     const [primeira] = razoesSugeridas(comCusto);
-    expect(primeira.texto).toContain("explicação sem termos técnicos");
-    expect(primeira.texto).toContain("sair com o retorno já marcado");
+    expect(primeira.texto).toContain("ao que você chamou de essencial");
+    expect(primeira.texto).not.toContain("ela chamou");
+  });
+
+  it("cita as frases dela entre aspas, em vez de resumir em adjetivo", () => {
+    const [primeira] = razoesSugeridas(comCusto);
+    expect(primeira.texto).toContain("“Explicação sem termos técnicos”");
+    expect(primeira.texto).toContain("“Sair com o retorno já marcado”");
   });
 
   // Uma razão que só enumera acertos esconde o custo — e é por isso que o
@@ -161,7 +172,8 @@ describe("As razões sugeridas — resumem fato, não emitem opinião", () => {
   it("oferece também a razão que encara o que ele NÃO atende", () => {
     const comOCusto = razoesSugeridas(comCusto).find((r) => r.rotulo === "Com o custo à vista");
     expect(comOCusto).toBeDefined();
-    expect(comOCusto!.texto).toContain("apesar de não responder a preciso de atendimento presencial");
+    expect(comOCusto!.texto).toContain("apesar de não responder a “Preciso de atendimento presencial”");
+    expect(comOCusto!.texto).toContain("que você declarou essencial");
     // Termina em aberto de propósito: quem completa é o Curador.
     expect(comOCusto!.texto.trim().endsWith("O que compensa isso é")).toBe(true);
   });
@@ -213,7 +225,7 @@ describe("A frase entra na prosa, não como rótulo", () => {
     const [primeira] = razoesSugeridas(resumo);
 
     expect(primeira.texto).toContain(
-      "sair com o retorno já marcado, quero orientação escrita após a consulta",
+      "“Sair com o retorno já marcado, Quero orientação escrita após a consulta”",
     );
     expect(primeira.texto).not.toContain("·");
   });

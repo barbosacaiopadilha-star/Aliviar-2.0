@@ -160,7 +160,7 @@ export function ComporOsTres({ priorityProfileId, linhas, profissionais }: Props
               {escolhido ? (
                 <div className="flex flex-col gap-2 pl-6">
                   <label className="flex flex-col gap-1 text-xs font-medium text-ink">
-                    Por que este caminho está aqui
+                    Por que este caminho está aqui — ela lê este texto
                     <textarea
                       value={dele.rationale}
                       onChange={(e) => escrever(resumo.profissionalId, "rationale", e.target.value)}
@@ -206,7 +206,7 @@ export function ComporOsTres({ priorityProfileId, linhas, profissionais }: Props
       </div>
 
       <label className="flex flex-col gap-1 text-sm font-medium text-ink">
-        Por que estes três, juntos, fazem sentido para ela
+        Por que estes três, juntos — ela vai ler isto, escreva para ela
         <textarea
           value={composicao}
           onChange={(e) => {

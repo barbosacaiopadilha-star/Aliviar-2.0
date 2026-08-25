@@ -152,8 +152,13 @@ export function resumirCandidatos(
 
 export type RazaoSugerida = { rotulo: string; texto: string };
 
+/**
+ * As escolhas dela, entre aspas — mesma razão do rascunho do relatório: os
+ * rótulos do Catálogo são escritos na primeira pessoa dela ("Preciso de…"), e
+ * sem aspas a frase mistura duas pessoas gramaticais na mesma oração.
+ */
 function lista(itens: readonly string[]): string {
-  const limpos = itens.map((i) => i.trim().toLowerCase()).filter(Boolean);
+  const limpos = itens.map((i) => i.trim()).filter(Boolean).map((i) => `“${i}”`);
   if (limpos.length === 0) return "";
   if (limpos.length === 1) return limpos[0];
   return `${limpos.slice(0, -1).join(", ")} e ${limpos[limpos.length - 1]}`;
@@ -161,6 +166,18 @@ function lista(itens: readonly string[]): string {
 
 /**
  * Começos de razão montados do que foi declarado — nunca de opinião.
+ *
+ * ────────────────────────────────────────────────────────────────────────────
+ * SEGUNDA PESSOA, PORQUE QUEM LÊ É ELA
+ *
+ * Esta `rationale` não fica na Mesa: ela vai para o portal da paciente, embaixo
+ * do nome de cada profissional. A primeira versão escrevia "responde ao que ELA
+ * chamou de essencial" — texto do Curador falando sobre ela — e foi assim que
+ * chegou à tela dela na travessia de 25/08. Ela leu sobre si mesma na terceira
+ * pessoa, como se não estivesse na sala.
+ *
+ * Nenhum teste pegaria: o texto estava correto, gravado, auditável. Só
+ * atravessar até o portal dela mostrou.
  *
  * A diferença com o juízo é real: lá a conclusão é do Curador SOBRE um médico,
  * e sugerir frase seria o software opinando. Aqui a razão explica uma escolha
@@ -177,7 +194,7 @@ export function razoesSugeridas(resumo: ResumoDoCandidato): readonly RazaoSugeri
     sugestoes.push({
       rotulo: "Pelo que ela chamou de essencial",
       texto:
-        `Está aqui porque responde ao que ela chamou de essencial em ` +
+        `Está aqui porque responde ao que você chamou de essencial em ` +
         `${resumo.essenciais.atende} de ${resumo.essenciais.atende + resumo.essenciais.naoAtende + resumo.essenciais.semInformacao} pontos: ` +
         `${lista(resumo.essenciais.frasesQueAtende)}.`,
     });
@@ -188,7 +205,7 @@ export function razoesSugeridas(resumo: ResumoDoCandidato): readonly RazaoSugeri
       rotulo: "Com o custo à vista",
       texto:
         `Está aqui apesar de não responder a ${lista(resumo.essenciais.frasesQueNaoAtende)}, ` +
-        `que ela declarou essencial. O que compensa isso é `,
+        `que você declarou essencial. O que compensa isso é `,
     });
   }
 
@@ -197,7 +214,7 @@ export function razoesSugeridas(resumo: ResumoDoCandidato): readonly RazaoSugeri
       rotulo: "Com a lacuna nomeada",
       texto:
         `Está aqui com ${resumo.essenciais.semInformacao} ponto(s) essencial(is) que ninguém ` +
-        `verificou sobre ele. Escolhi mesmo assim porque `,
+        `verificou sobre este profissional. Escolhi mesmo assim porque `,
     });
   }
 
