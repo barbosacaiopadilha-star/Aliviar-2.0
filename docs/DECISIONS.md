@@ -28,6 +28,7 @@ O log é append-only: nenhum verbete é reescrito. Este índice é o mapa que os
 | **ADR-066 (I)** §16 (sete condições de existência da ponte) | **Emenda F-2 de 2026-08-05 (DT-01)**, no rodapé do verbete e no §23 do anexo | **acréscimo** — oitava condição: no máximo uma versão de regra vigente por conceito, a cada instante. Complementa MR1.2; **não altera o grafo da ADR-069** |
 | **ADR-066 (I)** §16 condição 4 (`MOTOR_PARTICIPATION` ≠ `NUNCA`) | **Emenda F-1 de 2026-08-05 (DT-01)** | **aplicação da ADR-047** — a condição não muda de conteúdo; passa a ser **derivável do Catálogo materializado e imposta pelo banco**, em vez de declarada em `Record` TypeScript |
 | **ADR-079** (o filtro de cuidado contínuo cai para o cadastro quando o levantamento está vazio) | **ADR-088** | **correção pela raiz** — o remendo destravou a Mesa mas deu a uma autodeclaração o poder de eliminar. A queda para o cadastro permanece; o que muda é que autodeclaração não elimina mais, vira ressalva nomeada |
+| **FS-02** · **FS-07** (a família "a tela não conta a verdade", tratada caso-a-caso em agosto) | **ADR-090** | **supersessão em substância** — os consertos pontuais permanecem válidos; o que muda é que a garantia deixa de ser por formulário e passa a ser contrato com guarda. A família voltou três vezes porque não havia contrato |
 
 
 ### Números duplicados (colisão de numeração — não é supersessão)
@@ -2070,5 +2071,68 @@ O critério que impede esta leitura de virar precedente frouxo: **vale para o qu
 ### Revisitar quando
 
 Houver três Curadorias reais medidas. Aí o número deixa de ser anedota e a conversa sobre simplificar o Método pode acontecer de verdade — inclusive a análise de sobreposição entre os 29 do Mapa e as 15 conversas, que hoje é suspeita minha sem nenhuma evidência.
+
+---
+
+## ADR-090 — O contrato único de formulário: a tela conta a verdade sobre o que acabou de acontecer
+
+- **Data:** 2026-08-25
+- **Status:** **Decisão de desenho, aprovada pelo Fundador; execução adiada por escolha do engenheiro.** Ele autorizou ("pode alterar o que quiser se achar que vai ficar melhor"); a execução fica para sessão fresca, pelo motivo registrado em "Por que decidir hoje e construir depois".
+- **Dependências:** nasce da Curadoria simulada de 25/08 · **supersede em substância** o tratamento caso-a-caso que `FS-02` e `FS-07` deram à mesma família em agosto · consome os achados **SIM-03** (7 formulários que não disparavam) e **SIM-22** (a recusa apaga o que foi digitado).
+
+### Contexto — o defeito que já voltou três vezes
+
+Em 25/08, quatro defeitos diferentes apareceram em quatro telas diferentes:
+
+1. sete formulários cujo envio não fazia nada, sem erro (manhã);
+2. o juízo técnico falhando com "não foi possível concluir o ato agora", enquanto a ação devolvia o motivo e a tela o descartava;
+3. o limite de 280 caracteres da conclusão parando a digitação sem contador nem aviso — parede muda;
+4. a recusa do "onde atende" apagando as UFs, as cidades e a fonte que o Administrador tinha acabado de digitar.
+
+São quatro sintomas de **uma coisa só**: a tela não conta a verdade sobre o que acabou de acontecer.
+
+E não é a primeira vez. A auditoria de agosto varreu esta família duas vezes — `FS-02` (autosave mentindo em sessão expirada) e `FS-07` (controle de fluxo por substring de mensagem) — e marcou as duas como resolvidas. Voltou.
+
+**Quando o mesmo defeito volta pela terceira vez, não é descuido: é ausência de contrato.** Hoje o produto tem **18 formulários em 14 arquivos**, e cada um inventa como envia, como espera, como falha e como avisa. São dezoito invenções, cada uma com sua chance de errar — e o custo de cada erro recai sobre quem está operando, não sobre quem programou.
+
+### Decisão — as cinco garantias
+
+Fica instituído um contrato único de formulário. Todo formulário do produto passa a garantir, sem exceção:
+
+1. **A recusa preserva o que foi digitado.** Campos controlados por padrão. `<form action>` do React 19 reseta campos não-controlados depois da ação — dê certo ou dê errado —, e isso transforma "corrija um campo" em "redigite tudo". O projeto já tinha essa doutrina escrita em outro lugar ("erro preserva o contexto: a escolha e a nota dela ficam onde estão"); ela passa a valer em todo lugar.
+
+2. **A falha diz o motivo.** Quando a ação devolve uma causa sanitizada, a tela a mostra. Mensagem genérica sozinha é beco sem saída: quem opera perde o ato, não sabe o que corrigir e não sabe a quem recorrer. O motivo aparece **só na falha** — nos desfechos que não são erro, detalhe técnico é ruído.
+
+3. **Todo limite é contado antes de ser atingido.** Campo com regra mostra a regra: contador desde o início, e no limite uma frase que diz **de quem é a regra**. Saber quanto cabe muda o que se escreve, e essa informação chega tarde demais no último caractere. Uma tela que tem regra e não a conta faz a regra parecer defeito de teclado.
+
+4. **O estado de espera é um só, e termina.** Nenhum botão parado em "Aguarde…" para sempre. Sucesso, falha e espera são três estados nomeados — nunca a ausência de um deles.
+
+5. **Sucesso idempotente não parece falha.** "Já estava gravado" é sucesso e se apresenta como tal.
+
+### O que faz a decisão durar: a guarda
+
+O componente não é a decisão — a **guarda** é. Um contrato sem teste que o imponha dura até a próxima pressa.
+
+A guarda recusa formulário fora do contrato, no mesmo espírito das nove que barraram o engenheiro em 25/08 (publicação sem autoria, transição sem ator, policy larga, história enviada, devolução reconhecida, acoplamento ao Método, paleta, rastreabilidade). Nenhuma delas foi contornada, e é por isso que elas funcionam.
+
+**Adoção incremental, com a lista explícita:** a guarda nasce com a relação dos formulários já conformes e falha quando um formulário NOVO aparece fora do contrato. Isso congela o problema no tamanho de hoje sem exigir que os 18 sejam migrados de uma vez — e cada migração remove uma linha da lista de exceções, que é o placar visível do trabalho.
+
+### Por que decidir hoje e construir depois
+
+A execução foi autorizada e mesmo assim adiada, e o motivo fica registrado porque ele vale mais que a pressa:
+
+- São **18 formulários em 14 arquivos**, e cada um exige verificação na tela — não só suíte verde. Foi exatamente uma suíte verde que deixou passar os quatro defeitos acima.
+- A decisão foi tomada no fim de uma sessão longa, em que o engenheiro errou várias vezes (todas apanhadas por guarda, banco ou pelo próprio Fundador). Erros se agrupam com cansaço, e esta refatoração toca **justamente a camada onde os defeitos nascem**.
+- Um contrato mal executado é pior que nenhum: ele dá a sensação de proteção sem a proteção — que é o defeito que este produto combate desde o Bloco D.
+
+O que esta ADR entrega é o que torna a construção barata e segura: o desenho decidido. Quem executar não começa explorando.
+
+### Sobre a ADR-073
+
+Isto é **construção**, e o congelamento a barra. A decisão de desenho não é construção e pode ser lavrada agora; a execução exige que o Fundador suspenda a ADR-073 para esta fatia, ou que ela aconteça já no descongelamento — que é o que se recomenda, por ser a primeira coisa a fazer quando ele vier.
+
+### Revisitar quando
+
+A guarda existir e a lista de exceções chegar a zero. Aí esta ADR deixa de ser plano e vira descrição — e a família de defeitos que voltou três vezes deixa de ter por onde voltar.
 
 ---
