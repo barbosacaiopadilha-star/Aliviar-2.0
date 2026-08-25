@@ -119,21 +119,50 @@ async function attachCases(client: SupabaseClient, leads: LeadListItem[]): Promi
   }));
 }
 
-/** Quem pode receber o Case como Curador. Papel real, não indicação. */
-export async function listCurators(
+/**
+ * QUEM PODE RECEBER UM CASE — pela capability, nunca por leitura direta.
+ *
+ * Nasceu de um defeito da curadoria simulada (25/08): a ficha do Atendente
+ * dizia "Nenhuma pessoa com o papel de Curador está cadastrada" com o Curador
+ * cadastrado, e o Case parava na entrega. Eram TRÊS defeitos empilhados:
+ *
+ * 1 · o embed `profiles!inner(...)` era AMBÍGUO — `user_roles` referencia
+ *     `profiles` duas vezes (profile_id e granted_by) — e o PostgREST
+ *     recusava a consulta para todo mundo, administrador incluído;
+ * 2 · `if (error) return []` engolia a recusa, e a tela concluía com uma
+ *     frase falsa — violação da ETAPA 7: exceção nunca vira lista vazia;
+ * 3 · a RLS de `user_roles` e `profiles` só responde a administrador, e o
+ *     ator padrão do fluxo é o Atendente.
+ *
+ * O remédio do (3) NÃO é abrir RLS: a guarda G-2.6-2 (CONTRATO_2_6 §16)
+ * proíbe policy nova de SELECT em `profiles`, e o instrumento do regime é
+ * uma capability com gate interno. `curadoria.equipe_por_papel` devolve id e
+ * nome dos papéis INTERNOS para quem é equipe interna — e nada mais.
+ */
+async function equipePorPapel(
   client: SupabaseClient,
+  slug: "curador_medico" | "concierge" | "atendente" | "administrador",
 ): Promise<{ id: string; name: string }[]> {
-  const { data, error } = await client
-    .schema("curadoria")
-    .from("user_roles")
-    .select("profile_id, roles!inner(slug), profiles!inner(display_name)")
-    .eq("roles.slug", "curador_medico");
+  const { data, error } = await client.schema("curadoria").rpc("equipe_por_papel", { _slug: slug });
 
-  if (error) return [];
-  return ((data ?? []) as unknown as { profile_id: string; profiles: { display_name: string } | { display_name: string }[] }[]).map(
-    (row) => ({
-      id: row.profile_id,
-      name: Array.isArray(row.profiles) ? (row.profiles[0]?.display_name ?? "Curador") : row.profiles.display_name,
-    }),
-  );
+  if (error) throw erroDeBanco("Não foi possível listar quem pode receber o Case.", error, { slug });
+
+  return ((data ?? []) as { profile_id: string; display_name: string | null }[]).map((linha) => ({
+    id: linha.profile_id,
+    name: linha.display_name ?? "Sem nome",
+  }));
+}
+
+/** Quem pode receber o Case como Curador. Papel real, não indicação. */
+export async function listCurators(client: SupabaseClient): Promise<{ id: string; name: string }[]> {
+  return equipePorPapel(client, "curador_medico");
+}
+
+/**
+ * Quem pode receber o acompanhamento como Concierge — o destino da passagem
+ * de bastão DEPOIS da Curadoria (Correção de Domínio §2). A transferência
+ * auditada e o portal do Concierge já existiam; faltava a lista.
+ */
+export async function listConcierges(client: SupabaseClient): Promise<{ id: string; name: string }[]> {
+  return equipePorPapel(client, "concierge");
 }
