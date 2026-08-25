@@ -175,10 +175,21 @@ const supabase = createClient(env("NEXT_PUBLIC_SUPABASE_URL"), env("SUPABASE_SER
 });
 
 async function remover() {
+  // SÓ OS QUE ESTE SEED CRIOU — nunca "tudo que começa com SIM-".
+  //
+  // O filtro era `like("professional_identifier", "SIM-%")`, e isso apaga
+  // qualquer perfil que alguém tenha criado À MÃO seguindo a convenção. Foi o
+  // que aconteceu em 25/08: um profissional cadastrado pela tela, com Mapa
+  // completo, sumiu num `--remove` que só devia limpar a semeadura.
+  //
+  // Um script de limpeza que apaga além do que semeou é a mesma classe de
+  // defeito do `SIM-42`: dois universos para a mesma pergunta, e o mais largo
+  // ganhando em silêncio.
+  const identificadores = REDE.map((perfil) => perfil.professional_identifier);
   const { data } = await supabase
     .from("professional_profiles")
     .select("id")
-    .like("professional_identifier", "SIM-%");
+    .in("professional_identifier", identificadores);
 
   const ids = (data ?? []).map((linha) => linha.id);
   if (ids.length === 0) {
@@ -228,8 +239,28 @@ async function inserir() {
         ...campos,
         professional_summary: `${resumo}\n\n${MARCA}`,
         status: "ativo",
-        // Perfil completo é perfil PUBLICADO — senão ele não chega à Mesa.
-        publication_status: "publicado",
+        // NÃO se nasce publicado — e este seed vinha tentando.
+        //
+        // Ele gravava `publication_status: "publicado"` direto, com o comentário
+        // certo ("perfil completo é perfil publicado, senão não chega à Mesa") e
+        // o mecanismo errado. Desde o `OPS-G5 C7R`, `publication_status` é
+        // ESPELHO: quem manda é `ciclo_de_vida`, e `assert_nascimento_do_ciclo`
+        // faz todo perfil nascer em `PREPARACAO`. O espelho voltava sozinho para
+        // `nao_publicado`, e o seed imprimia "todos publicados e sem lacuna"
+        // sobre três perfis que nunca chegaram a Rede nenhuma.
+        //
+        // Publicar é ATO, com autor e motivo — e é assim que se faz aqui agora,
+        // na transição logo abaixo. Escrever no espelho era pedir ao reflexo
+        // que mudasse a pessoa.
+        publication_status: "nao_publicado",
+        // Sem isto, `assert_publication_requirements` recusa: "publicação exige
+        // registro profissional verificado como regular no conselho". O seed
+        // nunca escreveu estes três campos — terceira razão pela qual ele
+        // vinha entregando perfis que não chegavam a Rede nenhuma.
+        registration_status: "regular",
+        registration_source: "Semeadura de simulação local — não houve consulta a conselho.",
+        registration_verified_at: agora,
+        registration_verified_by: adminId,
         created_by: adminId,
         updated_by: adminId,
       })
@@ -286,6 +317,22 @@ async function inserir() {
     });
     if (erroExperiencia) falhas.push(`experiência: ${erroExperiencia.message}`);
 
+    // A ÁREA DE ATUAÇÃO, VERIFICADA — quarta lacuna do seed.
+    //
+    // `assert_publication_requirements` exige área verificada, e este seed
+    // nunca escreveu uma linha de `professional_practice_areas`. Ele criava
+    // competências (que são outra coisa) e parava aí.
+    const { error: erroArea } = await supabase.from("professional_practice_areas").insert({
+      professional_profile_id: data.id,
+      raw_text: perfil.experiencia.main_areas.join(", "),
+      tags: perfil.experiencia.main_areas.map((a) => a.replace(/ /g, "_")),
+      source: "Semeadura de simulação local — não houve verificação real.",
+      verification_status: "verificado",
+      verified_at: agora,
+      verified_by: adminId,
+    });
+    if (erroArea) falhas.push(`área: ${erroArea.message}`);
+
     // ------------------------------------------------------------------
     // O MAPA DO PROFISSIONAL — sem ele, "perfil completo" é meia verdade.
     //
@@ -330,6 +377,26 @@ async function inserir() {
       .insert(linhasDoMapa);
     if (erroMapa) falhas.push(`mapa: ${erroMapa.message}`);
 
+    // A PUBLICAÇÃO, como transição — depois de tudo estar no lugar.
+    //
+    // Vem por último de propósito: `assert_publication_requirements` confere
+    // registro, área e divergências no momento da gravação, e publicar antes
+    // de preencher seria pedir para o banco recusar (ou, pior, aceitar).
+    // A PUBLICAÇÃO PASSA PELA PORTA QUE O BANCO ABRIU PARA SERVIÇOS.
+    //
+    // Escrever direto em `ciclo_de_vida` é recusado: "transição por serviço
+    // exige ator técnico". A recusa está certa — publicar torna alguém
+    // oferecível a quem decide sobre a própria saúde, e o banco quer saber de
+    // quem é o ato mesmo quando quem age é um script.
+    const { error: erroPublicacao } = await supabase.rpc("transicionar_ciclo_como_servico", {
+      p_profissional: data.id,
+      p_para: "PUBLICADO_ATIVO",
+      p_motivo: "CADASTRO_VALIDADO",
+      p_ator: adminId,
+      p_nota: "Semeadura de simulação local — perfil fictício.",
+    });
+    if (erroPublicacao) falhas.push(`publicação: ${erroPublicacao.message}`);
+
     if (falhas.length > 0) {
       console.error(`  ⚠ ${perfil.display_name} — ${falhas.join(" · ")}`);
     } else {
@@ -340,7 +407,20 @@ async function inserir() {
     }
   }
 
-  console.log(`\n${REDE.length} perfis de SIMULAÇÃO inseridos, todos publicados e sem lacuna.`);
+  // A FRASE FINAL OLHA O RESULTADO.
+  //
+  // Ela dizia "todos publicados e sem lacuna" SEMPRE — inclusive nas três
+  // rodadas de 25/08 em que os três falharam na publicação, uma por vez, por
+  // razões diferentes. É a mesma família do `SIM-37`: o instrumento
+  // confirmando o que não aconteceu.
+  const { count } = await supabase
+    .from("professional_profiles")
+    .select("id", { count: "exact", head: true })
+    .in("professional_identifier", REDE.map((p) => p.professional_identifier))
+    .eq("ciclo_de_vida", "PUBLICADO_ATIVO");
+  console.log(
+    `\n${count ?? 0} de ${REDE.length} perfis de SIMULAÇÃO publicados, com Mapa preenchido.`,
+  );
   console.log("Para remover: node scripts/with-local-supabase.mjs node scripts/seed-simulacao-local.mjs --remove");
 }
 
