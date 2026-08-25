@@ -2327,3 +2327,199 @@ segunda superfície para o mesmo ato — exatamente o que a ADR-066/11-08 proíb
 Uma Curadoria real mostrar que as preocupações dela não cabem em linhas — que a pessoa não trouxe frases, e sim silêncio. Aí a pergunta muda: **o que a Mesa mostra quando ela não sabe o que pedir?**
 
 ---
+
+## ADR-094 — O juízo humano é condição de emissão, ou o Método para de chamá-lo de exigido
+
+- **Data:** 2026-08-25
+- **Status:** **Proposta pelo Engenheiro Líder, aguardando decisão do Fundador.** Nasce do `SIM-51`, achado na travessia da ADR-093.
+- **Dependências:** **ADR-067 §5** (H8–H10 sempre exigidos; H11 quando o Case declarou grau) · **ADR-065** (condução de notícias difíceis exige cruzamento humano) · **ADR-092** (precedente direto: publicar passou a exigir o Mapa tratado) · **ADR-035** (a seleção é exclusivamente do Curador) · **ADR-073** (congelamento — por isso decide-se agora e constrói-se depois)
+
+### O fato
+
+Na travessia de 25/08, o caso `f347924a` estava assim:
+
+| | |
+| --- | --- |
+| Relatório emitido | 25/08, 16:50 |
+| Relatório entregue à paciente | 25/08, 16:51 |
+| `curator_judgments` | **vazia** |
+
+A ADR-067 §5 exige três juízos técnicos por profissional, **sempre**. Com três
+profissionais, eram nove. Nenhum foi registrado, e a Curadoria chegou à
+paciente.
+
+**Não é regressão da Mesa nova, e isso foi verificado antes de escrever esta
+ADR.** `validateMesaClosure`, a regra de encerramento da Mesa antiga — lida de
+`HEAD~1` porque o arquivo já saiu —, exigia três opções, os pareceres de cada
+uma e a razão da composição. **Nunca os juízos.** `emitReportAction` também não
+os consulta. E `lacunasDeJuizo`, a função que sabe dizer o que falta, tem **um
+único chamador em todo o `src/`**: o painel de atenção, nascido em 25/08.
+
+O buraco é anterior às duas Mesas e sobreviveu a nove auditorias. Ele não foi
+introduzido: foi **nunca fechado**, porque a regra vivia no Método e nada no
+software a lia.
+
+### Por que isto não é detalhe
+
+A Curadoria Aliviar não vende uma lista de médicos. Vende **uma curadoria
+explicada e validada por humano** — é o que a `ARCHITECTURE.md` afirma na
+primeira linha do produto, e é a única coisa que a distingue de um diretório.
+
+O juízo humano é onde essa promessa se materializa. Sem ele, o que a paciente
+recebe são três nomes escolhidos por uma pessoa que não registrou por que — e
+o Motor, que organiza e não escolhe, aparece como se tivesse escolhido.
+
+**É pior do que uma lacuna: é a lacuna exatamente no lugar onde o produto
+afirma que não há uma.**
+
+### As duas saídas honestas
+
+**A — O juízo passa a ser condição de emissão.** `emitReportAction` recusa
+enquanto houver lacuna de juízo entre os três selecionados, com a frase
+nomeando quem e o quê. É o desenho da ADR-092 aplicado ao outro portão: lá,
+publicar exige o Mapa tratado; aqui, emitir exige o juízo dado.
+
+**B — O Método deixa de chamá-los de "sempre exigidos".** A ADR-067 §5 é
+emendada, os juízos viram recomendação, e o painel de atenção passa a dizer
+"sugerido" em vez de "pendente".
+
+**O que não é saída: continuar como está.** Hoje o Método afirma uma exigência
+que o software não cobra e a operação não cumpriu nem uma vez. Isso não é
+flexibilidade — é uma regra que existe só no papel, e regra assim ensina que as
+outras também podem ser opcionais.
+
+### Recomendação
+
+**A.** E com um recorte, para não repetir o erro que a ADR-092 evitou:
+
+1. **A exigência é sobre os TRÊS SELECIONADOS, não sobre a Rede inteira.**
+   Julgar quem não foi escolhido é trabalho que não chega à paciente.
+2. **Vale para os exigidos, não para os oferecidos.** Três técnicos sempre; os
+   relacionais só onde o Case declarou grau (ADR-065). No caso da travessia,
+   nove — não dezoito.
+3. **`NAO_INFORMADO` do juízo não existe, e não deve passar a existir.** O
+   equivalente honesto já é possível: o Curador escreve *"o que sei até aqui
+   não me permite concluir mais do que…"* — que é um dos sete começos que a
+   tela oferece. Juízo reservado é juízo; ausência de juízo não é.
+4. **A guarda vive no banco, não só na action.** A fronteira real de
+   autorização deste projeto é a RLS/gatilho, e uma regra que só a aplicação
+   cobra é uma regra que a próxima tela esquece — que é exatamente a história
+   deste achado.
+
+### Sobre o congelamento (ADR-073)
+
+Esta ADR **decide e não constrói**. A construção é a mesma natureza da ADR-092
+item 3: acrescentar exigência a um portão exige migration, e despublicaria —
+aqui, impediria de emitir — Curadorias em curso. É decisão de operação.
+
+O que a ADR-073 permite hoje, e que já foi feito, é a Mesa **dizer** o que
+falta: o painel de atenção nomeia os juízos pendentes por profissional.
+
+### O que fecha esta ADR
+
+1. Decisão do Fundador entre **A** e **B**;
+2. Se **A**: a exigência em `emitReportAction` **e** no banco, com teste
+   provado por mutação de que um relatório sem juízo não emite;
+3. A frase da recusa nomeando quem e o quê — nunca "faltam requisitos";
+4. O caso `f347924a` regularizado, ou declarado como o que é: um ensaio.
+
+### Revisitar quando
+
+A primeira Curadoria real for emitida e alguém contar quanto tempo os nove
+juízos levaram de verdade. Se for caro a ponto de o Curador escrever frase de
+fachada para passar do portão, a exigência estará produzindo o oposto do que
+pretende — e é a ADR-073 que manda decidir isso com uso, não com suposição.
+
+---
+
+## ADR-095 — O tamanho da Mesa: a decisão que espera uso, e o que se faz enquanto ela espera
+
+- **Data:** 2026-08-25
+- **Status:** **Proposta pelo Engenheiro Líder, aguardando decisão do Fundador.** Responde ao `SIM-13`, que a ADR-093 herdou agravado.
+- **Dependências:** **ADR-093** (consertou a ordem da Mesa e não o tamanho) · **ADR-073** (a ordem depois do descongelamento é a dor, não o plano) · `SIM-13` · `SIM-56`
+
+### A medição
+
+A Mesa nova, no caso real, com os quatro painéis dentro:
+
+| | |
+| --- | --- |
+| Altura | **11.865px** |
+| Telas (viewport 960) | **~12** |
+| Linhas de tabela | 32 |
+| Botões | 178+ |
+| Seções | 4, mais classificar, compor, relatório e entrega |
+
+A Mesa antiga gerou o `SIM-13` com ~8.000px — **e ela tinha régua de etapas.**
+A nova é rolagem contínua.
+
+### A tentação, e por que ela está errada
+
+A saída óbvia é voltar a paginar por etapas, como a Mesa antiga. **Não.** As
+etapas antigas não eram navegação: eram a taxonomia mandando na tela, que é
+exatamente o que a ADR-093 desfez. Reintroduzi-las traria de volta a ordem que
+fazia a pessoa desaparecer atrás do Método.
+
+A segunda tentação é partir em duas rotas. Também não, e a razão tem nome:
+**foi ter duas superfícies para o mesmo ato que produziu o `SIM-42`.** Uma
+Curadoria, uma URL, uma verdade.
+
+### O que já foi feito, e é mitigação e não solução
+
+O painel *"O que ainda depende de você"* entrou no topo como **índice das
+pendências**, com salto por âncora para a seção onde cada uma se resolve —
+medido: de `scrollY 0` para `4076`, com a seção a 16px do topo, nunca em região
+vazia.
+
+Isso responde *"o que falta"* e *"onde fica"*. **Não responde "onde estou"**, e
+é essa a pergunta que doze telas tornam impossível.
+
+### A proposta, se for para fazer agora
+
+**Colapso por seção, com a seção da vez aberta** — e uma regra dura junto:
+
+1. **Seção fechada nunca esconde em silêncio.** Cada uma mostra, na barra
+   fechada, o próprio estado numa linha: quantos elegíveis, quantos juízos
+   faltam, quantas linhas separam os candidatos. É a mesma regra do recorte da
+   Rede, que nunca some com alguém sem dizer o número.
+2. **O padrão de abertura é derivado, não decorado:** abre a seção da primeira
+   pendência — a mesma derivação que já alimenta o índice do topo.
+3. **Nada é bloqueado.** O Curador abre o que quiser, quando quiser: a
+   investigação é dele. Colapso é economia de rolagem, nunca porta fechada.
+
+Custo estimado: pequeno. Toda a informação de estado já é derivada e já está
+na página — é apresentação, não domínio.
+
+### Recomendação: decidir depois da primeira Curadoria real
+
+E a razão é a própria ADR-073.
+
+**O `SIM-13` nunca machucou ninguém.** Ele foi medido por mim, em travessia,
+com uma paciente de teste. Nenhum Curador real percorreu doze telas ainda, e
+"onde estou" é uma dor que só quem trabalha oito horas na tela sabe descrever.
+Desenhar o colapso agora é decidir por suposição o formato de um alívio que
+ninguém pediu — e a ADR-073 existe porque este projeto já tem três construções
+corretas e desligadas por ter feito exatamente isso.
+
+**O que a primeira Curadoria real precisa devolver sobre esta tela:** onde ele
+rolou procurando, o que ele não achou, se abriu duas abas do mesmo Case, e se
+usou o índice do topo ou ignorou. Quatro observações que valem mais que
+qualquer maquete.
+
+**Se o Fundador preferir fazer agora, a proposta acima está pronta e é
+pequena.** Esta ADR não recomenda esperar por cautela — recomenda esperar
+porque o dado que falta é barato e chega logo.
+
+### O que fecha esta ADR
+
+1. Decisão do Fundador: fazer agora, ou esperar a primeira Curadoria real;
+2. Se esperar: as quatro observações acima anotadas durante ela;
+3. Se fazer: o colapso com a regra 1 provada por teste — **nenhuma seção
+   fechada sem dizer o que tem dentro**.
+
+### Revisitar quando
+
+A Mesa passar de quinze telas, ou um Curador real disser que se perdeu. O
+primeiro é medida e eu aviso; o segundo é o que importa.
+
+---
