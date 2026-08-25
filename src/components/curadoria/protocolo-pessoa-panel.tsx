@@ -232,7 +232,19 @@ function NeedRow({
 
       {question.mode !== "DECLARACAO_CLINICA" ? (
         <Button type="button" variant="ghost" size="sm" onClick={onToggle}>
-          {open ? "Fechar" : need ? "Atualizar registro" : "Registrar conversa"}
+          {/*
+            O RÓTULO DIZ QUAL CONVERSA — achado da travessia de 25/08.
+
+            Eram treze botões idênticos ("Atualizar registro") na mesma tela, e
+            o mesmo rótulo ainda aparece em outras seções da Mesa. Quem lê não
+            tem como saber a qual conversa cada um pertence: na travessia,
+            cliquei em treze deles achando que eram de outra etapa.
+
+            O identificador da pergunta (P1…P16) já titula cada ficha logo
+            acima. Repeti-lo aqui custa cinco caracteres e devolve ao botão a
+            única coisa que faltava: dizer sobre o que ele age.
+          */}
+          {open ? "Fechar" : need ? `Atualizar ${question.id}` : `Registrar ${question.id}`}
         </Button>
       ) : null}
 

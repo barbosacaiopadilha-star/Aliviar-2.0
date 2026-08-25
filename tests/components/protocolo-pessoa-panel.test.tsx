@@ -1,4 +1,9 @@
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
+// O rótulo do botão passou a nomear a pergunta ("Registrar P1") em 25/08:
+// treze botões idênticos na mesma tela não diziam sobre o que agiam, e o
+// mesmo texto ainda aparece em outras seções da Mesa. O que estes testes
+// PROVAM não mudou — mudou só como encontram o botão.
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ProtocoloPessoaPanel } from "@/components/curadoria/protocolo-pessoa-panel";
@@ -94,13 +99,13 @@ describe("ProtocoloPessoaPanel", () => {
   it("declaração clínica não oferece formulário de conversa", () => {
     render(<ProtocoloPessoaPanel caseId="case-1" needs={[]} />);
 
-    expect(screen.queryByRole("button", { name: "Registrar conversa" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Registrar P\d+$/ })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Abrir protocolo completo (15 conversas)" }));
 
     const badges = screen.getAllByText("Declaração clínica do Curador");
     expect(badges).toHaveLength(2); // P8 e P9
     // Os botões de registrar existem só para as 15 conversas da pessoa.
-    expect(screen.getAllByRole("button", { name: "Registrar conversa" })).toHaveLength(15);
+    expect(screen.getAllByRole("button", { name: /^Registrar P\d+$/ })).toHaveLength(15);
   });
 
   it("recolhe fichas vazias por padrão, sem esconder conversas já registradas", () => {
@@ -110,7 +115,7 @@ describe("ProtocoloPessoaPanel", () => {
       screen.getByRole("button", { name: "Abrir protocolo completo (15 conversas)" }),
     ).toHaveAttribute("aria-expanded", "false");
     expect(screen.getByText(/Leitura proposta: Pelo que você me contou/)).toBeInTheDocument();
-    expect(screen.queryAllByRole("button", { name: "Registrar conversa" })).toHaveLength(0);
+    expect(screen.queryAllByRole("button", { name: /^Registrar P\d+$/ })).toHaveLength(0);
   });
 
   it("a contagem é de conversas — sem percentual", () => {

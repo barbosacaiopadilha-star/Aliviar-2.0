@@ -366,7 +366,7 @@ describe("B2/B3 · proveniência entregue pronta, e ausência declarada", () => 
   it("a declaração dela carrega quem a registrou, além do grau e da data", async () => {
     darDados([need(COM_PESSOA)], [item(COM_PESSOA)]);
 
-    const [linha] = (await loadModeloDoReconhecimento(SUPABASE, CASE_ID)).linhas;
+    const [linha] = (await loadModeloDoReconhecimento(SUPABASE, CASE_ID, "a pessoa")).linhas;
 
     expect(linha!.declaracao!.autor).toBe("a pessoa");
     expect(linha!.declaracao!.em).toBe("2026-08-01T10:00:00.000Z");
@@ -375,7 +375,7 @@ describe("B2/B3 · proveniência entregue pronta, e ausência declarada", () => 
   it("o registro carrega autor E data — os dois, ou o que houver", async () => {
     darDados([need(COM_PESSOA)], [item(COM_PESSOA)]);
 
-    const [linha] = (await loadModeloDoReconhecimento(SUPABASE, CASE_ID)).linhas;
+    const [linha] = (await loadModeloDoReconhecimento(SUPABASE, CASE_ID, "Curador")).linhas;
 
     expect(linha!.registro!.autor).toBe("Curador");
     expect(linha!.registro!.registradoEm).toBe("2026-08-02T12:00:00.000Z");
@@ -384,7 +384,7 @@ describe("B2/B3 · proveniência entregue pronta, e ausência declarada", () => 
   it("o bloco técnico carrega procedência quando ela existe", async () => {
     darDados([], [item(TECNICO)]);
 
-    const [tecnico] = (await loadModeloDoReconhecimento(SUPABASE, CASE_ID)).tecnicos;
+    const [tecnico] = (await loadModeloDoReconhecimento(SUPABASE, CASE_ID, "Curador")).tecnicos;
 
     expect(tecnico!.autor).toBe("Curador");
     expect(tecnico!.registradoEm).toBe("2026-08-02T12:00:00.000Z");
@@ -566,5 +566,50 @@ describe("MR-01 · o que ela disse, dito como ela disse", () => {
     expect(modelo).toContain("PERSON_QUESTIONS_BY_CODE.get(subcriterionCode)?.options[valor]");
     // Nenhum mapa novo nasceu aqui (M1).
     expect(modelo).not.toMatch(/const [A-Z_]*LABELS[A-Z_]* *[:=] *\{/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// O autor é um NOME, nunca um identificador — achado da travessia de 25/08
+// ---------------------------------------------------------------------------
+//
+// `declaredBy` guarda o id do perfil. Enquanto ninguém o gravava, a tela dela
+// dizia "não consta quem registrou" — falso. Ao passar a gravá-lo (SIM-27), a
+// procedência exibiu o UUID CRU para a paciente: a mesma família do SIM-06,
+// quando o Concierge lia "Case 1a1dd209" onde a tela prometia uma pessoa.
+//
+// O modelo passou a traduzir. Estes casos existem para que o id não volte a
+// vazar — nem quando há nome, nem quando não há.
+
+describe("O autor exibido é nome, nunca identificador", () => {
+  const UUID = "e8fd393e-f921-46e8-af95-04d8715a97d1";
+
+  it("com nome, a procedência que ela lê mostra a pessoa — nunca o id", async () => {
+    darDados([need(COM_PESSOA, { declaredBy: UUID })], [item(COM_PESSOA, { declaredBy: UUID })]);
+
+    const modelo = await loadModeloDoReconhecimento(SUPABASE, CASE_ID, "Dra. Ana");
+
+    expect(modelo.linhas[0]!.registro!.autor).toBe("Dra. Ana");
+    expect(modelo.linhas[0]!.declaracao!.autor).toBe("Dra. Ana");
+
+    // ESCOPO DESTE CONSERTO: a PROCEDÊNCIA — a frase "Registrado por … em …"
+    // que a paciente lê em cada linha. Era ela que exibia o UUID.
+    //
+    // O id ainda vive na CADEIA (`cadeia.ramos[].elos[].autor`), que é outra
+    // estrutura, com outro público: a prova de origem, hoje não renderizada
+    // nesta tela. Afirmar aqui sobre o objeto inteiro faria este teste falhar
+    // por um motivo que ele não trata — e teste que falha pelo motivo errado
+    // ensina a ignorá-lo. O restante está registrado como SIM-28.
+  });
+
+  it("SEM nome, vira ausência declarada — o id não passa como se fosse gente", async () => {
+    darDados([], [item(TECNICO, { declaredBy: UUID })]);
+
+    const modelo = await loadModeloDoReconhecimento(SUPABASE, CASE_ID, null);
+
+    // A frase de procedência dirá "não consta quem registrou" — que é
+    // verdadeiro. Mostrar o código seria pior que a ausência: diz nada, e
+    // parece que diz algo.
+    expect(modelo.tecnicos[0]!.autor).toBeNull();
   });
 });

@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
 
 import { BarraCompatibilidade } from "@/components/paciente/caminhos/barra-compatibilidade";
-import { PATIENT_DIMENSIONS } from "@/modules/paciente/experiencia";
+import { PATIENT_DIMENSIONS, fraseDoQueNaoSabemos } from "@/modules/paciente/experiencia";
 import type { PatientCuradoriaOption } from "@/modules/curadoria/patient-curadoria";
 
 /**
@@ -75,9 +75,38 @@ export function ComparacaoCaminhos({ options }: { options: PatientCuradoriaOptio
       >
         <h3 className="font-serif text-lg text-[var(--patient-ink)]">{dimensao.label}</h3>
 
+        {/*
+          A AUSÊNCIA É DITA UMA VEZ, TAMBÉM AQUI — achado de 25/08.
+
+          A carta já aplicava a regra (`dimensoesConhecidas` +
+          `fraseDoQueNaoSabemos`): o que se sabe aparece linha a linha, o que
+          não se sabe é dito uma vez, nomeando as dimensões. Esta comparação
+          não aplicava — e com a Rede sem Protocolo respondido, a paciente
+          lia "Ainda não foi possível confirmar" repetido para cada
+          profissional, em cada aspecto.
+
+          A ausência era verdadeira; repeti-la é que não era informação.
+        */}
+        {options.every((option) =>
+          option.dimensions.find((d) => d.criterion === dimensao.criterion)?.level === "A_CONFIRMAR",
+        ) ? (
+          <p className="text-sm leading-relaxed text-[var(--patient-ink-muted)]">
+            Sobre {dimensao.label.toLowerCase()}, ainda não foi possível confirmar informação de
+            nenhum dos três — nem para diferenciá-los, nem para descartar qualquer um. Se este
+            aspecto for decisivo para você, vale pedir à sua Curadoria que busque antes de decidir.
+          </p>
+        ) : null}
+
         {options.map((option) => {
           const entrada = option.dimensions.find((d) => d.criterion === dimensao.criterion);
           if (!entrada) return null;
+          // Quando NINGUÉM tem informação, a frase única acima já contou —
+          // as linhas viram repetição. Quando ALGUÉM tem, todos aparecem: é
+          // a comparação existindo, e a lacuna de um diz algo sobre ele.
+          const todosAConfirmar = options.every(
+            (o) => o.dimensions.find((d) => d.criterion === dimensao.criterion)?.level === "A_CONFIRMAR",
+          );
+          if (todosAConfirmar) return null;
           return (
             <div key={option.id} className="border-t border-[var(--color-border)] pt-3 first:border-t-0 first:pt-0">
               <p className="text-sm font-medium text-[var(--patient-ink)]">{option.professionalName}</p>

@@ -47,7 +47,10 @@ export default async function PatientProfilePage() {
     ? await Promise.all([
         nomeDoCuradorDoCaso(supabase, record.caseId),
         loadComoQuerSerCuidada(supabase, record.caseId),
-        loadModeloDoReconhecimento(supabase, record.caseId),
+        // O nome vai junto: o modelo o exibe, mas nunca o busca.
+        nomeDoCuradorDoCaso(supabase, record.caseId).then((nome) =>
+          loadModeloDoReconhecimento(supabase, record.caseId, nome),
+        ),
       ])
     : [null, [], null];
 

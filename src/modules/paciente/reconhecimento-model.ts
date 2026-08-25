@@ -84,9 +84,32 @@ function rotuloDaOpcao(subcriterionCode: string, valor: string): string {
   return PERSON_QUESTIONS_BY_CODE.get(subcriterionCode)?.options[valor] ?? OPCAO_SEM_ROTULO;
 }
 
+/**
+ * O AUTOR CHEGA COMO NOME — achado da travessia de 25/08.
+ *
+ * `declaredBy` guarda o id do perfil. Enquanto ninguém o gravava, a tela
+ * dela dizia "não consta quem registrou" — falso. Ao passar a gravá-lo, ela
+ * exibiu o UUID cru para a PACIENTE: a mesma família do SIM-06, quando o
+ * Concierge lia "Case 1a1dd209" onde a tela prometia uma pessoa.
+ *
+ * O nome vem POR PARÂMETRO, resolvido por quem chama. Três guardas deste
+ * projeto explicam por que não pode ser de outro jeito:
+ *
+ *  · "o loader lê as MESMAS duas fontes — nenhuma terceira apareceu":
+ *    buscar o nome aqui seria a terceira leitura;
+ *  · a rota "repassa linhas e tecnicos ao painel, SEM TOCAR em nenhum dos
+ *    dois": traduzir na página quebraria isso;
+ *  · o componente sempre recebeu nome (os testes passam "Dra. Ana") — o
+ *    contrato dele nunca esteve errado; errada era a origem.
+ *
+ * Sem nome, o id NÃO passa: vira ausência, e a procedência diz a verdade em
+ * vez de mostrar um código que não diz nada a ninguém.
+ */
 export async function loadModeloDoReconhecimento(
   supabase: SupabaseClient,
   caseId: string,
+  /** Já resolvido por quem chama. Nunca um identificador. */
+  nomeDoCurador: string | null = null,
 ): Promise<ModeloDoReconhecimento> {
   const [needs, mapa] = await Promise.all([
     loadCaseNeeds(supabase, caseId),
@@ -122,7 +145,7 @@ export async function loadModeloDoReconhecimento(
           subcriterionCode: code,
           label,
           importancia: IMPORTANCE_LABELS[importancia.importance],
-          autor: importancia.declaredBy ?? null,
+          autor: importancia.declaredBy ? nomeDoCurador : null,
           registradoEm: importancia.registradoEm ?? null,
         });
       }
@@ -140,13 +163,13 @@ export async function loadModeloDoReconhecimento(
             // MR-01 — rótulo humano, nunca o código com que se armazena.
             opcoes: declaracao.options.map((valor) => rotuloDaOpcao(code, valor)),
             em: declaracao.declaredAt,
-            autor: declaracao.declaredBy,
+            autor: declaracao.declaredBy ? nomeDoCurador : null,
           }
         : null,
       registro: importancia
         ? {
             importancia: IMPORTANCE_LABELS[importancia.importance],
-            autor: importancia.declaredBy ?? null,
+            autor: importancia.declaredBy ? nomeDoCurador : null,
             registradoEm: importancia.registradoEm ?? null,
           }
         : null,
