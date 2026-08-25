@@ -46,18 +46,8 @@ export async function savePriorityImportancesAction(input: {
   caseId: string;
   entries: { subcriterionCode: string; importance: string }[];
 }): Promise<{ success: true } | { success: false; error: string }> {
-  // A AUTORIA VEM DA SESSÃO, e sempre veio — só era descartada.
-  //
-  // `requireRoleForAction` já devolve quem está agindo. O repositório
-  // gravava `case_priority_map` sem `declared_by`, e a coluna existe desde
-  // que a tabela nasceu. Efeito, visto pela paciente na travessia de 25/08:
-  // ela abria "O que mais importa para o seu caso" e lia, 29 vezes,
-  // "não consta quem registrou" — num produto cujo texto promete o oposto.
-  //
-  // Nunca vem do cliente: quem grava é quem a sessão diz que é.
-  let autor;
   try {
-    autor = await requireRoleForAction("curador_medico");
+    await requireRoleForAction("curador_medico");
   } catch {
     return {
       success: false,
@@ -93,7 +83,7 @@ export async function savePriorityImportancesAction(input: {
   const supabase = await createServerSupabaseClient();
 
   try {
-    await savePriorityMapEntries(supabase, input.caseId, entries, autor.user.id);
+    await savePriorityMapEntries(supabase, input.caseId, entries);
   } catch (erro) {
     return {
       success: false,

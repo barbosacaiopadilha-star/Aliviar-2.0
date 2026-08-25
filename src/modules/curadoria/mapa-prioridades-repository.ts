@@ -108,8 +108,6 @@ export async function savePriorityMapEntries(
   supabase: SupabaseClient,
   caseId: string,
   entries: readonly PriorityMapEntry[],
-  /** Quem está registrando. Vem da sessão — nunca do cliente. */
-  declaredBy: string,
 ): Promise<CasePriorityMap> {
   if (entries.length === 0) return loadCasePriorityMap(supabase, caseId);
 
@@ -129,7 +127,6 @@ export async function savePriorityMapEntries(
       case_id: caseId,
       subcriterion_id: idPorCodigo.get(entry.subcriterionCode)!,
       importance: entry.importance,
-      declared_by: declaredBy,
       updated_at: new Date().toISOString(),
     })),
     { onConflict: "case_id,subcriterion_id" },

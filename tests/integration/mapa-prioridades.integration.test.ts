@@ -16,11 +16,6 @@ import {
 
 import { createCuradoriaClient } from "./curadoria-client";
 
-// A autoria do Mapa vem da sessão em produção; aqui é declarada, para que
-// o teste prove que ela CHEGA ao banco (achado de 25/08: as 29 linhas
-// gravavam sem `declared_by`, e a paciente lia "não consta quem registrou").
-const CURADOR_DO_TESTE = "00000000-0000-0000-0000-000000000001";
-
 /**
  * MAPA DE PRIORIDADES — o que o banco garante.
  *
@@ -140,35 +135,6 @@ describe("Mapa de Prioridades do Case (Supabase local)", () => {
   // Escrita
   // -------------------------------------------------------------------------
 
-  // A AUTORIA DO MAPA — achado da travessia de 25/08.
-  //
-  // O `upsert` gravava case_id, subcriterion_id, importance e updated_at, e
-  // NUNCA `declared_by` — coluna que existe desde que a tabela nasceu e que a
-  // tela da paciente lê. Efeito: ela abria "O que mais importa para o seu
-  // caso" e lia 29 vezes "não consta quem registrou", num produto cujo texto
-  // promete o oposto (AU-02).
-  //
-  // Este teste existe para que a autoria não suma de novo numa refatoração.
-  it("cada classificação do Mapa carrega quem a registrou", async () => {
-    const { caseId } = await casoNovo();
-
-    await savePriorityMapEntries(service, caseId, [
-      { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", importance: "MUITO_IMPORTANTE" },
-      { subcriterionCode: "MODELO_COMUNICACAO", importance: "RELEVANTE" },
-    ], CURADOR_DO_TESTE);
-
-    const { data } = await service
-      .from("case_priority_map")
-      .select("declared_by")
-      .eq("case_id", caseId);
-
-    expect(data).toHaveLength(2);
-    // Nenhuma linha sem autor: é o que a paciente lê na tela dela.
-    for (const linha of data ?? []) {
-      expect(linha.declared_by).toBe(CURADOR_DO_TESTE);
-    }
-  });
-
   it("o Case aceita uma classificação válida e a completude anda sozinha", async () => {
     const { caseId } = await casoNovo();
 
@@ -178,7 +144,7 @@ describe("Mapa de Prioridades do Case (Supabase local)", () => {
     const parcial = await savePriorityMapEntries(service, caseId, [
       { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", importance: "MUITO_IMPORTANTE" },
       { subcriterionCode: "MODELO_COMUNICACAO", importance: "RELEVANTE" },
-    ], CURADOR_DO_TESTE);
+    ]);
 
     expect(parcial.completion.status).toBe("IN_PROGRESS");
     expect(parcial.completion.completed).toBe(2);
@@ -238,13 +204,13 @@ describe("Mapa de Prioridades do Case (Supabase local)", () => {
 
     await savePriorityMapEntries(service, caseId, [
       { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", importance: "MUITO_IMPORTANTE" },
-    ], CURADOR_DO_TESTE);
+    ]);
     await savePriorityMapEntries(service, caseId, [
       { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", importance: "MUITO_IMPORTANTE" },
-    ], CURADOR_DO_TESTE);
+    ]);
     const depois = await savePriorityMapEntries(service, caseId, [
       { subcriterionCode: "ACESSO_LOCAL_DE_ATENDIMENTO", importance: "POUCO_IMPORTANTE" },
-    ], CURADOR_DO_TESTE);
+    ]);
 
     const doCriterio = depois.items.filter((i) => i.subcriterionCode === "ACESSO_LOCAL_DE_ATENDIMENTO");
     expect(doCriterio, "uma linha, não três").toHaveLength(1);
@@ -330,7 +296,7 @@ describe("Mapa de Prioridades do Case (Supabase local)", () => {
     await expect(
       savePriorityMapEntries(service, caseId, [
         { subcriterionCode: "ACESSO_LOCALIZACAO", importance: "IMPORTANTE" },
-      ], CURADOR_DO_TESTE),
+      ]),
     ).rejects.toThrow(/saiu de circulação/);
   });
 
