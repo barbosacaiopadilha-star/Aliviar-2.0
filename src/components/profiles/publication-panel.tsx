@@ -63,8 +63,26 @@ type PublicationPanelProps = {
    * botão continua disponível.
    */
   mapaAviso: string | null;
+  /**
+   * ONDE ATENDE — ADR-088, achado SIM-08 da Curadoria simulada de 25/08.
+   *
+   * A coluna existia desde 27/07 e nenhuma tela a escrevia. Efeito na
+   * operação: um Case que exige atendimento numa UF não conseguia avaliar
+   * profissional nenhum — todos em "informação não localizada", para sempre.
+   * Não é campo novo; é a tela que faltava.
+   */
+  careLocation: {
+    states: string[];
+    cities: string[];
+    source: string | null;
+    verified: boolean;
+    verifiedAt: string | null;
+  } | null;
+  /** O custo dito na porta: sem UF, este perfil não atravessa Case com exigência de estado. */
+  ondeAtendeAviso: string | null;
   verifyRegistrationAction: StatefulAction;
   savePracticeAreaAction: StatefulAction;
+  saveCareLocationAction: StatefulAction;
   publishAction: StatefulAction;
 };
 
@@ -82,8 +100,11 @@ export function PublicationPanel({
   registration,
   practiceArea,
   mapaAviso,
+  careLocation,
+  ondeAtendeAviso,
   verifyRegistrationAction,
   savePracticeAreaAction,
+  saveCareLocationAction,
   publishAction,
 }: PublicationPanelProps) {
   /**
@@ -109,9 +130,11 @@ export function PublicationPanel({
   const router = useRouter();
   const [registroState, setRegistroState] = useState<ActionResult | undefined>();
   const [areaState, setAreaState] = useState<ActionResult | undefined>();
+  const [localState, setLocalState] = useState<ActionResult | undefined>();
   const [publishState, setPublishState] = useState<ActionResult | undefined>();
   const [registroPending, iniciarRegistro] = useTransition();
   const [areaPending, iniciarArea] = useTransition();
+  const [localPending, iniciarLocal] = useTransition();
   const [publishPending, iniciarPublicacao] = useTransition();
 
   function executar(
@@ -148,6 +171,7 @@ export function PublicationPanel({
 
   const registroFormAction = executar(verifyRegistrationAction, setRegistroState, iniciarRegistro);
   const areaFormAction = executar(savePracticeAreaAction, setAreaState, iniciarArea);
+  const localFormAction = executar(saveCareLocationAction, setLocalState, iniciarLocal);
   const publishFormAction = executar(publishAction, setPublishState, iniciarPublicacao, true);
 
   // A régua é a mesma que a porta do banco usa (`assert_publication_requirements`,
@@ -243,6 +267,71 @@ export function PublicationPanel({
         />
         <Button type="submit" variant="secondary" isLoading={areaPending}>
           Salvar área de atuação
+        </Button>
+      </form>
+
+      {/*
+        ONDE ATENDE — ADR-088 (achado SIM-08).
+
+        Fica ao lado da Área de Atuação de propósito: são os dois fatos que a
+        Mesa confere antes de comparar qualquer coisa. Separado do `crm_uf` do
+        Cadastro, também de propósito — aquele é o estado do REGISTRO no
+        conselho, e um médico registrado em SP pode atender só na Bahia.
+      */}
+      <form action={localFormAction} className="space-y-3 border-t border-border pt-5">
+        <p className="text-sm font-semibold text-ink">Onde atende</p>
+        <p className="text-sm text-ink-muted">
+          Os estados em que este profissional atende de fato — não o estado do registro no
+          conselho, que é outro fato e já vive no Cadastro.
+        </p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Input
+            name="careStates"
+            type="text"
+            label="UFs de atendimento (siglas separadas por vírgula)"
+            defaultValue={careLocation?.states.join(", ") ?? ""}
+            placeholder="ex.: SP, RJ"
+          />
+          <Input
+            name="careCities"
+            type="text"
+            label="Cidades (opcional, separadas por vírgula)"
+            defaultValue={careLocation?.cities.join(", ") ?? ""}
+            placeholder="ex.: São Paulo, Campinas"
+          />
+        </div>
+        <Input
+          name="careSource"
+          type="text"
+          label="Fonte"
+          defaultValue={careLocation?.source ?? ""}
+          placeholder="ex.: site institucional, entrevista"
+        />
+        <Checkbox
+          name="careVerify"
+          label="Marcar como verificada (exige fonte)"
+          defaultChecked={careLocation?.verified ?? false}
+        />
+        <p className="text-xs text-ink-muted">
+          Sem verificação, o fato entra na Mesa como declaração do próprio profissional: aparece
+          na comparação com essa origem à vista e <strong>não elimina ninguém</strong>. Verificado,
+          ele passa a valer como filtro.
+        </p>
+        {ondeAtendeAviso ? (
+          <p className="text-sm text-ink" role="status">
+            {ondeAtendeAviso}
+          </p>
+        ) : null}
+        {localState && !localState.success ? (
+          <FormMessage variant="error">{localState.error}</FormMessage>
+        ) : null}
+        <SeloDeVerificacao
+          rotulo="Onde atende salvo"
+          feito={(careLocation?.states.length ?? 0) > 0}
+          em={careLocation?.verifiedAt ?? null}
+        />
+        <Button type="submit" variant="secondary" isLoading={localPending}>
+          Salvar onde atende
         </Button>
       </form>
 

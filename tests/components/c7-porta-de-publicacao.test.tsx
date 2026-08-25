@@ -43,8 +43,11 @@ function montar(sobre: { isPublished: boolean; pendencies: PublicationPendency[]
       registration={{ status: null, source: null, verifiedAt: null }}
       practiceArea={null}
       mapaAviso={null}
+      careLocation={null}
+      ondeAtendeAviso={null}
       verifyRegistrationAction={NADA}
       savePracticeAreaAction={NADA}
+      saveCareLocationAction={NADA}
       publishAction={NADA}
     />,
   );

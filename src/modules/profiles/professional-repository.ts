@@ -420,6 +420,81 @@ export async function upsertPracticeArea(
   if (error) throw erroDeBanco("Não foi possível salvar a área de atuação.", error);
 }
 
+// ---------------------------------------------------------------------------
+// ONDE ATENDE — ADR-088
+// ---------------------------------------------------------------------------
+//
+// A coluna existia desde 27/07 (`professional_care_model.states/cities`) e
+// NENHUMA tela a escrevia. A Curadoria simulada de 25/08 encontrou o efeito:
+// um Case que exige atendimento numa UF não conseguia avaliar profissional
+// nenhum — todos ficavam em "informação não localizada", para sempre, sem que
+// clique algum pudesse resolver.
+//
+// Não é campo novo: é a tela que faltava para um campo que sempre esteve lá.
+// O `crm_uf` do cadastro NÃO serve aqui — é o estado do registro no conselho,
+// que é outro fato. Um médico registrado em SP pode atender só na Bahia.
+
+export type CareLocationRow = {
+  states: string[];
+  cities: string[];
+  source: string | null;
+  verificationStatus: "nao_verificado" | "verificado" | "divergente" | "desatualizado";
+  verifiedAt: string | null;
+};
+
+export async function getCareLocation(
+  supabase: SupabaseClient,
+  professionalProfileId: string,
+): Promise<CareLocationRow | null> {
+  const { data, error } = await supabase
+    .from("professional_care_model")
+    .select("states, cities, source, verification_status, verified_at")
+    .eq("professional_profile_id", professionalProfileId)
+    .maybeSingle();
+
+  if (error) throw erroDeBanco("Não foi possível carregar onde o profissional atende.", error);
+  if (!data) return null;
+
+  return {
+    states: (data.states as string[]) ?? [],
+    cities: (data.cities as string[]) ?? [],
+    source: (data.source as string | null) ?? null,
+    verificationStatus: data.verification_status as CareLocationRow["verificationStatus"],
+    verifiedAt: (data.verified_at as string | null) ?? null,
+  };
+}
+
+/**
+ * Grava onde o profissional atende (uma linha por profissional — PK no banco).
+ *
+ * `upsert` parcial de propósito: esta tela é dona de `states`, `cities` e da
+ * proveniência, e de mais nada. As outras colunas do levantamento
+ * (`offers_continuous_care`, `avg_days_to_first_appointment`, …) pertencem a
+ * outros atos e não podem ser zeradas por um salvamento daqui — foi
+ * exatamente assim que a edição de profissional apagou competências uma vez
+ * (FS-03), e a lição não se repete.
+ */
+export async function upsertCareLocation(
+  supabase: SupabaseClient,
+  professionalProfileId: string,
+  input: { states: string[]; cities: string[]; source: string | null; verify: boolean; adminId: string },
+): Promise<void> {
+  const { error } = await supabase.from("professional_care_model").upsert(
+    {
+      professional_profile_id: professionalProfileId,
+      states: input.states,
+      cities: input.cities,
+      source: input.source,
+      verification_status: input.verify ? "verificado" : "nao_verificado",
+      verified_at: input.verify ? new Date().toISOString() : null,
+      verified_by: input.verify ? input.adminId : null,
+    },
+    { onConflict: "professional_profile_id" },
+  );
+
+  if (error) throw erroDeBanco("Não foi possível salvar onde o profissional atende.", error);
+}
+
 /**
  * Registra o resultado da verificação do registro no conselho. O CHECK do
  * banco exige fonte, data e autor sempre que um status é declarado — nunca

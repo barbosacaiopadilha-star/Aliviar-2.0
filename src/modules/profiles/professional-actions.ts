@@ -9,6 +9,7 @@ import { requireRoleForAction } from "@/modules/auth/guard";
 import { professionalProfileSchema, professionalRegistrationStatusSchema } from "./professional-schema";
 import {
   setRegistrationVerification,
+  upsertCareLocation,
   upsertPracticeArea,
   createProfessionalProfile,
   replaceCompetencyDomains,
@@ -110,6 +111,92 @@ export async function savePracticeAreaAction(
       success: false,
       error: falhaParaUsuario("profiles.areaDeAtuacao", erro, {
         mensagem: "Não foi possível salvar a área de atuação.",
+        contexto: { profissionalId: id },
+      }),
+    };
+  }
+
+  revalidatePath(`/admin/profissionais/${id}/rede`);
+  return { success: true };
+}
+
+/**
+ * ONDE ATENDE — ADR-088.
+ *
+ * A UF é o fato que decide se um Case com exigência de estado consegue sequer
+ * avaliar este profissional. Duas regras, herdadas da área de atuação:
+ * pelo menos uma UF (declaração vazia não é declaração), e verificar exige
+ * fonte — verificação sem proveniência não existe.
+ */
+export async function saveCareLocationAction(
+  id: string,
+  _prevState: ActionResult | undefined,
+  formData: FormData,
+): Promise<ActionResult> {
+  let authState;
+  try {
+    authState = await requireRoleForAction("administrador");
+  } catch {
+    return { success: false, error: "Não autorizado." };
+  }
+
+  // UFs em maiúsculas e sem repetição: o filtro da Mesa compara string exata,
+  // e "sp" que não bate com "SP" seria eliminação por digitação.
+  const states = [
+    ...new Set(
+      String(formData.get("careStates") ?? "")
+        .split(",")
+        .map((uf) => uf.trim().toUpperCase())
+        .filter(Boolean),
+    ),
+  ];
+  const cities = [
+    ...new Set(
+      String(formData.get("careCities") ?? "")
+        .split(",")
+        .map((city) => city.trim())
+        .filter(Boolean),
+    ),
+  ];
+  const source = String(formData.get("careSource") ?? "").trim() || null;
+  const verify = formData.get("careVerify") === "on";
+
+  if (states.length === 0) {
+    return {
+      success: false,
+      error: "Informe ao menos uma UF de atendimento — é o que decide se um Case com exigência de estado consegue avaliar este profissional.",
+    };
+  }
+
+  const invalidas = states.filter((uf) => !/^[A-Z]{2}$/.test(uf));
+  if (invalidas.length > 0) {
+    return {
+      success: false,
+      error: `UF inválida: ${invalidas.join(", ")}. Use a sigla de duas letras (SP, RJ, BA), separando por vírgula.`,
+    };
+  }
+
+  if (verify && !source) {
+    return {
+      success: false,
+      error: "Verificar exige a fonte (site institucional, entrevista, documento) — verificação sem proveniência não existe.",
+    };
+  }
+
+  const supabase = await createServerSupabaseClient();
+  try {
+    await upsertCareLocation(supabase, id, {
+      states,
+      cities,
+      source,
+      verify,
+      adminId: authState.user.id,
+    });
+  } catch (erro) {
+    return {
+      success: false,
+      error: falhaParaUsuario("profiles.ondeAtende", erro, {
+        mensagem: "Não foi possível salvar onde o profissional atende.",
         contexto: { profissionalId: id },
       }),
     };

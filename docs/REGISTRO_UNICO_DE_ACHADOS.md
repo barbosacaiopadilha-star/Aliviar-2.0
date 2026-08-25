@@ -291,8 +291,6 @@ Nota de reescopo aprovada na sessão (2026-08-02): **PAP-02** (Profissional) rec
 
 | ID | Achado | Gravidade | Camada | Critério de encerramento |
 | --- | --- | --- | --- | --- |
-| **SIM-07** | Filtro obrigatório da Mesa lê `professional_care_model` (tabela morta, nunca escrita por tela alguma) enquanto o **Protocolo da Prática Profissional** — 29 perguntas de múltipla escolha, vivas e alimentadas — não o alimenta. Dois modelos paralelos da mesma realidade | **P1** | banco/Método | **Decisão de Método pendente do Fundador:** um filtro *eliminatório* pode ser satisfeito por **autodeclaração**? Mitigado por ora: `mesa-cruzamento.ts` cai para o registro do profissional quando o `care_model` está vazio |
-| **SIM-08** | **"Onde atende" não existe no cadastro.** `crm_uf` é o estado do registro no conselho — outro fato. Qualquer Case que exija atendimento numa UF específica trava sem saída | **P1** | produto/banco | **Decisão do Fundador:** criar o campo é construção, barrada pela ADR-073. Ou se suspende a ADR para esta fatia, ou se registra `crm_uf` como proxy aceito por escrito |
 | **SIM-09** | Formulário salvo **em branco não avisa** — nem erro, nem validação: silêncio. Confirmado em ≥2 blocos da etapa Rede; padrão possivelmente mais amplo | P2 | cliente | Validação de campo obrigatório nos blocos de evidência, com varredura das demais telas do mesmo padrão |
 | **SIM-10** | Leitura do Motor mostra **"25 lacunas de informação"** quando o profissional foi publicado sem o Protocolo respondido — o Curador compara lacunas, não pessoas | P2 | produto | Gate de publicação exigindo Protocolo, **ou** aviso na Rede elegível nomeando o cadastro incompleto. Mitigado hoje pelos guias (Administrador §1 e Curador §2.3) |
 | **SIM-11** | Aviso de área na Rede elegível **não muda de estado** depois da declaração — continua pedindo o que já foi feito | P3 | cliente | Aviso reativo ao estado da declaração vigente |
@@ -316,3 +314,15 @@ Vale registrar o que isso significa. A arquitetura **barrou o engenheiro cinco v
 ### O risco que a simulação revelou e nenhum achado captura
 
 A Curadoria completa exige da ordem de **50 atos de juízo** do Curador (29 subcritérios do Mapa + 15 conversas do Protocolo da Pessoa + 3 declarações de área + 9 juízos técnicos + 3 justificativas de caminho + a composição). Isso não é defeito de software e não tem ID acima: é **carga operacional não medida**. O que os primeiros casos reais precisam produzir é o tempo de relógio de cada etapa — sem esse número, qualquer decisão sobre simplificar o Método é opinião, não medição.
+
+
+### Encerrados em 2026-08-25 — as duas decisões de Método (ADR-088)
+
+O Fundador decidiu as duas perguntas que a travessia devolveu a ele. A decisão inteira, com o que NÃO se decidiu junto, está na **ADR-088**.
+
+| ID | Decisão | Evidência do encerramento |
+| --- | --- | --- |
+| **SIM-07** | Um filtro eliminatório **não** pode ser satisfeito por autodeclaração — mas o fato autodeclarado também não desaparece: vira ressalva nomeada, e o juízo volta a ser do Curador | `FilterFactOrigin` (VERIFICADO · AUTODECLARADO · AUSENTE) em `mesa-cruzamento-view.ts`; `classifyProfessional` só elimina com fato verificado; a origem e a data do fato aparecem ao lado do fato na Mesa. Quatro casos novos em `tests/unit/mesa-cruzamento-view.test.ts`, incluindo a precedência do verificado sobre a ressalva |
+| **SIM-08** | O campo não precisou ser criado: `professional_care_model.states/cities` existe desde 27/07 e nunca teve tela. Construir a tela é conserto, não construção — a ADR-073 permanece em vigor | Bloco "Onde atende" na etapa Rede (`publication-panel.tsx`), com UFs, cidades, fonte e selo; `saveCareLocationAction` + `upsertCareLocation` (upsert parcial, para não repetir o FS-03); aviso de custo na porta quando a UF falta, sem trancar a publicação |
+
+**Zero migrations.** Nenhum dos dois exigiu mudança de esquema — o banco já tinha tudo, incluindo o selo de verificação que a decisão do SIM-07 passou a usar como critério.

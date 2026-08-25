@@ -12,11 +12,13 @@ import {
 } from "@/modules/profiles";
 import {
   publishProfessionalAction,
+  saveCareLocationAction,
   savePracticeAreaAction,
   verifyRegistrationAction,
 } from "@/modules/profiles/professional-actions";
 import {
   countOpenCriticalDivergences,
+  getCareLocation,
   getPracticeArea,
 } from "@/modules/profiles/professional-repository";
 import { listPublicationPendencies } from "@/modules/profiles/publication-pendencies";
@@ -315,10 +317,11 @@ async function renderEtapa({
   // ("status e publication_status apenas a espelham"). A etapa "Rede" junta
   // as verificações da porta e a máquina que a move.
   if (etapa === "rede") {
-    const [practiceArea, criticalDivergences, mapaDoProfissional] = await Promise.all([
+    const [practiceArea, criticalDivergences, mapaDoProfissional, careLocation] = await Promise.all([
       getPracticeArea(supabase, id),
       countOpenCriticalDivergences(supabase, id),
       loadProfessionalMap(supabase, id),
+      getCareLocation(supabase, id),
     ]);
     // F-9 · a porta diz o custo. Publicar sem Mapa continua permitido — mas
     // quem publica fica sabendo com quantas lacunas este perfil chega à Mesa,
@@ -327,6 +330,15 @@ async function renderEtapa({
       mapaDoProfissional.completion.pending > 0
         ? `Este perfil entra na Mesa com ${mapaDoProfissional.completion.pending} de ${mapaDoProfissional.completion.total} subcritérios sem tratamento no Mapa — cada um vira lacuna na comparação. Dá para publicar assim; a etapa "Mapa" é onde isso se resolve.`
         : null;
+    // ADR-088 · a porta diz o custo, como no aviso do Mapa (F-9) — e pelo mesmo
+    // motivo: informação, nunca trava. Publicar sem UF continua permitido; o que
+    // muda é que quem publica sabe o que isso custa na Mesa, em vez de o Curador
+    // descobrir no meio de uma Curadoria que não anda.
+    const ondeAtendeAviso =
+      (careLocation?.states.length ?? 0) === 0
+        ? "Onde este profissional atende ainda não foi registrado. Um Case que exija atendimento numa UF específica não conseguirá avaliá-lo — ele aparece como \"informação não localizada\" e a Mesa fica sem o que declarar."
+        : null;
+
     const pendencies = listPublicationPendencies({
       professional,
       practiceArea: practiceArea
@@ -375,8 +387,21 @@ async function renderEtapa({
                   }
                 : null
             }
+            careLocation={
+              careLocation && careLocation.states.length > 0
+                ? {
+                    states: careLocation.states,
+                    cities: careLocation.cities,
+                    source: careLocation.source,
+                    verified: careLocation.verificationStatus === "verificado",
+                    verifiedAt: careLocation.verifiedAt,
+                  }
+                : null
+            }
+            ondeAtendeAviso={ondeAtendeAviso}
             verifyRegistrationAction={verifyRegistrationAction.bind(null, id)}
             savePracticeAreaAction={savePracticeAreaAction.bind(null, id)}
+            saveCareLocationAction={saveCareLocationAction.bind(null, id)}
             publishAction={publishProfessionalAction.bind(
               null,
               id,
