@@ -10,7 +10,8 @@ function linha(parcial: Partial<Linha>): Linha {
     pergunta: "O que te ajudaria a entender melhor o que for explicado?",
     resposta: "Explicação sem termos técnicos",
     grau: "ESSENCIAL",
-    reconhecida: true,
+    reconhecimento: "RECONHECIDA",
+    correcao: null,
     importancia: "MUITO_IMPORTANTE",
     celulas: [],
     // `SIM-46`: o campo é obrigatório em `Linha` desde que a linha redundante

@@ -191,7 +191,7 @@ describe.skipIf(!process.env.SEED_MESA)("seed — validação de usabilidade da 
     const linhas = [
       "",
       "=== SESSÃO PRONTA ===",
-      `Mesa do Curador: http://localhost:3000/coa/curadoria/casos/${caseId}/curadoria_tecnica`,
+      `Mesa do Curador: http://localhost:3000/coa/curadoria/casos/${caseId}/mesa`,
       "  entrar como curador_medico (test-users.local.json)",
       "",
       "Dashboard do Paciente: http://localhost:3000/paciente",

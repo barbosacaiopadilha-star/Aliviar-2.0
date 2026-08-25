@@ -92,9 +92,19 @@ describe("nenhuma rota herdada morre", () => {
     }
   });
 
+  // "mesa" ERA o exemplo de slug inexistente. Virou o slug real da etapa
+  // COMPARAR quando a Mesa antiga saiu (ADR-093) e a rota `curadoria_tecnica`
+  // deu lugar a `mesa` — trocar o exemplo é o que mantém o teste mordendo.
   it("slug desconhecido não vira etapa por engano", () => {
-    expect(resolveJourneyStep("mesa")).toBeNull();
+    // `curadoria_tecnica` NÃO serve de exemplo: continua resolvendo, e com
+    // razão — é o slug da FASE do Método, que não saiu porque a rota saiu.
+    // Endereço herdado nunca morre (o teste acima prova isso).
+    expect(resolveJourneyStep("bancada")).toBeNull();
     expect(resolveJourneyStep("")).toBeNull();
+  });
+
+  it("a etapa COMPARAR leva à Mesa nova", () => {
+    expect(resolveJourneyStep("mesa")).toBe("COMPARAR");
   });
 
   it("cada etapa tem um endereço, e nenhum se repete", () => {

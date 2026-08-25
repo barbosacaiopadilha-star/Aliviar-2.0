@@ -106,7 +106,7 @@ describe("O vocabulário do orçamento saiu do código operacional", () => {
       "src/modules/curadoria/cos/conduction.ts",
       "src/modules/curadoria/cos/phases.ts",
       "src/modules/curadoria/relatorio-inteligente.ts",
-      "src/components/curadoria/mesa/comparacao-premium.tsx",
+      "src/components/curadoria/mesa-preocupacoes/comparacao-por-preocupacoes.tsx",
     ]) {
       const texto = ler(relativo);
       for (const termo of PROIBIDOS) {
@@ -121,8 +121,8 @@ describe("O vocabulário do orçamento saiu do código operacional", () => {
     for (const relativo of [
       "src/modules/curadoria/mesa-cruzamento.ts",
       "src/modules/curadoria/mesa-cruzamento-view.ts",
-      "src/components/curadoria/mesa/comparacao-premium.tsx",
-      "src/components/curadoria/mesa-workspace.tsx",
+      "src/components/curadoria/mesa-preocupacoes/comparacao-por-preocupacoes.tsx",
+      "src/components/curadoria/mesa-preocupacoes/compor-os-tres.tsx",
       "src/modules/curadoria/cos/conduction.ts",
     ]) {
       expect(ler(relativo), relativo).not.toMatch(/100 pontos|de 100\b/);
@@ -131,8 +131,8 @@ describe("O vocabulário do orçamento saiu do código operacional", () => {
 
   it("nenhuma superfície da Mesa exibe score ou nota", () => {
     for (const relativo of [
-      "src/components/curadoria/mesa/comparacao-premium.tsx",
-      "src/components/curadoria/mesa-workspace.tsx",
+      "src/components/curadoria/mesa-preocupacoes/comparacao-por-preocupacoes.tsx",
+      "src/components/curadoria/mesa-preocupacoes/compor-os-tres.tsx",
       "src/components/curadoria/cruzamento-mesa.tsx",
     ]) {
       expect(ler(relativo), relativo).not.toContain("internalScore");
@@ -143,7 +143,7 @@ describe("O vocabulário do orçamento saiu do código operacional", () => {
 describe("A Mesa consome o Motor central, sem reproduzi-lo", () => {
   const mesa = ler("src/modules/curadoria/mesa-cruzamento.ts");
   const view = ler("src/modules/curadoria/mesa-cruzamento-view.ts");
-  const matriz = ler("src/components/curadoria/mesa/comparacao-premium.tsx");
+  const matriz = ler("src/components/curadoria/mesa-preocupacoes/comparacao-por-preocupacoes.tsx");
 
   it("o loader chama o Motor e os Mapas", () => {
     expect(mesa).toContain("crossPriorityAndProfessional");

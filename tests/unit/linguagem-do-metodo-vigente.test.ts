@@ -119,11 +119,25 @@ describe("Metadados das fases exibidos ao Curador (NC-21)", () => {
  * usa vocabulário interno"), que passou a varrer `src/app/paciente`.
  */
 describe("Estados vazios e rótulos do Curador", () => {
-  it("nenhum vazio da Mesa promete dois resultados ou dois cruzamentos", () => {
-    const vazios = ler("src/components/curadoria/mesa/mesa-vazios.tsx");
-    expect(vazios).not.toContain("dois resultados");
-    expect(vazios).not.toContain("dois cruzamentos");
-    expect(vazios).toContain("A compatibilidade ainda não tem o que mostrar.");
+  // `mesa-vazios.tsx` saiu com a Mesa antiga (ADR-093): a Mesa nova diz seus
+  // vazios na própria linha, dentro de cada painel. A guarda ficou MAIOR em
+  // vez de menor — em vez de um arquivo de estados vazios, ela varre a Mesa
+  // inteira. O que ela protege é o M4/ADR-042: existe UMA leitura de
+  // compatibilidade, e nenhuma tela pode voltar a prometer duas.
+  it("nenhuma superfície da Mesa promete dois resultados ou dois cruzamentos", () => {
+    const superficies = [
+      "src/app/portal-curador/casos/[id]/mesa/page.tsx",
+      "src/components/curadoria/mesa-preocupacoes/comparacao-por-preocupacoes.tsx",
+      "src/components/curadoria/mesa-preocupacoes/classificar-importancia.tsx",
+      "src/components/curadoria/mesa-preocupacoes/compor-os-tres.tsx",
+      "src/components/curadoria/cruzamento-mesa.tsx",
+    ];
+
+    for (const relativo of superficies) {
+      const fonte = ler(relativo);
+      expect(fonte, relativo).not.toContain("dois resultados");
+      expect(fonte, relativo).not.toContain("dois cruzamentos");
+    }
   });
 
   it("os rótulos do Relatório falam prioridades, não pesos", () => {

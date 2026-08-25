@@ -18,8 +18,6 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ReportEditor, type ReportOptionDraft } from "@/components/curadoria/report-editor";
-import { MesaEstadoProvider } from "@/components/curadoria/mesa/mesa-estado";
-import { MesaWorkspace } from "@/components/curadoria/mesa-workspace";
 
 const {
   saveReportActionMock,
@@ -250,73 +248,6 @@ describe("FRENTE D3 — o editor do Relatório preserva coleções item a item",
   });
 });
 
-// ---------------------------------------------------------------------------
-// A MESMA regra na rota da Mesa (curadoria_tecnica → MesaWorkspace).
-// ---------------------------------------------------------------------------
-
-describe("FRENTE D3 — a Mesa fala o mesmo contrato ao encerrar", () => {
-  const IDS = [
-    "00000000-0000-0000-0000-0000000000d1",
-    "00000000-0000-0000-0000-0000000000d2",
-    "00000000-0000-0000-0000-0000000000d3",
-  ] as const;
-
-  function candidato(id: string, nome: string) {
-    return { professionalProfileId: id, nome, resumo: "Leitura do Motor.", celulas: [] };
-  }
-
-  function parecer(professionalId: string) {
-    return {
-      professionalId,
-      whyIncluded: "Responde ao critério dela.",
-      prioritiesServed: "Cobre a continuidade que ela pediu.",
-      // Como a página monta hoje: itensParaTextarea — um item por linha.
-      limitations: "Ponto de atenção um.\nPonto de atenção dois.",
-      questions: "",
-      observations: "",
-    };
-  }
-
-  it("dois itens exibidos como duas linhas voltam como DOIS itens — e favorablePoints vai AUSENTE, nunca []", async () => {
-    saveSelectionActionMock.mockResolvedValue({ success: true });
-    saveReportActionMock.mockResolvedValue({ success: true });
-
-    render(
-      <MesaEstadoProvider
-        caseId={CASE_ID}
-        persisted={{
-          selectedIds: [...IDS],
-          pareceres: IDS.map(parecer),
-          compositionRationale: "Juntas, cobrem o que ela pediu de formas diferentes.",
-          closed: false,
-        }}
-      >
-      <MesaWorkspace
-        caseId={CASE_ID}
-        candidatos={IDS.map((id, i) => candidato(id, `Profissional ${i + 1}`))}
-        excluidos={[]}
-        curatorName="Dr. Curador"
-        patientFirstName="Maria"
-        priorityProfileId="00000000-0000-0000-0000-0000000000b1"
-        reportHref="/relatorio"
-      />
-      </MesaEstadoProvider>,
-    );
-
-    const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "Encerrar e gerar o Relatório" }));
-
-    expect(saveReportActionMock).toHaveBeenCalledTimes(1);
-    const payload = saveReportActionMock.mock.calls[0]![0] as {
-      options: Record<string, unknown>[];
-    };
-
-    for (const option of payload.options) {
-      expect(option.attentionPoints).toEqual(["Ponto de atenção um.", "Ponto de atenção dois."]);
-      // A Mesa não edita pontos favoráveis: ausência = "não mexi" (D21a) —
-      // a gravação preserva o que o rascunho assistido escreveu.
-      expect("favorablePoints" in option).toBe(false);
-      expect(option.suggestedQuestions).toEqual([]);
-    }
-  });
-});
+// O bloco que provava a MESMA regra dentro da Mesa antiga saiu com ela
+// (ADR-093). Não se perdeu contrato: a serialização item-a-item é do editor do
+// Relatório, provada acima, e a Mesa nova escreve pelo mesmo editor.

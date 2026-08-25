@@ -82,7 +82,20 @@ export function RegistrarJuizoNaCelula({
   conclusaoVigente,
 }: Props) {
   const [aberto, setAberto] = useState(false);
-  const [conclusao, setConclusao] = useState(conclusaoVigente ?? "");
+  /**
+   * A CONCLUSÃO NASCE VAZIA — G-2.3-5, zero minuta, zero carry-forward.
+   *
+   * Aqui havia `useState(conclusaoVigente ?? "")`, e o campo se abriria com o
+   * juízo anterior dentro. A rota só passa `null` hoje, então nada acontecia
+   * na prática — mas a capacidade estava escrita, e a guarda existe contra a
+   * capacidade, não contra o acidente: um campo que chega preenchido é
+   * assinado sem ser pensado.
+   *
+   * `conclusaoVigente` continua servindo para NOMEAR o ato ("Rever juízo" em
+   * vez de "Registrar juízo"): saber que já existe um juízo é informação; começar
+   * a escrita a partir dele é outra coisa.
+   */
+  const [conclusao, setConclusao] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, iniciar] = useTransition();
 

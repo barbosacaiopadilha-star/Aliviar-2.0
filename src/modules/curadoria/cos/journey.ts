@@ -87,7 +87,7 @@ export const CURATOR_JOURNEY_DEFINITIONS: Record<CuratorJourneyStepId, StepDefin
     label: "Mesa de Curadoria",
     completionSentence: "Escolhi, como humano, os três caminhos legítimos.",
     phases: ["FILTROS", "PRIORIDADES", "VALIDACAO", "CURADORIA_TECNICA"],
-    slug: "curadoria_tecnica",
+    slug: "mesa",
   },
   RELATORIO: {
     id: "RELATORIO",

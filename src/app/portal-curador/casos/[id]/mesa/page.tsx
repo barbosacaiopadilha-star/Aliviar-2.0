@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { EligibilityPanel } from "@/components/curadoria/cruzamento-mesa";
+import { MandatoryFilters } from "@/components/curadoria/mandatory-filters";
 import { MesaEvidenciasPanel } from "@/components/curadoria/mesa-evidencias-panel";
+import { StartPriorityProfile } from "@/components/curadoria/start-priority-profile";
 import { ClassificarImportancia } from "@/components/curadoria/mesa-preocupacoes/classificar-importancia";
 import { ComparacaoPorPreocupacoes } from "@/components/curadoria/mesa-preocupacoes/comparacao-por-preocupacoes";
 import { ComporOsTres } from "@/components/curadoria/mesa-preocupacoes/compor-os-tres";
@@ -21,6 +23,8 @@ import {
 } from "@/modules/curadoria/evidencias-pratica-repository";
 import { lacunasDeJuizo } from "@/modules/curadoria/julgamentos";
 import { loadJulgamentosDaAvaliacao } from "@/modules/curadoria/julgamentos-repository";
+import { getActivePriorityProfile } from "@/modules/curadoria/repository";
+import { MANDATORY_FILTER_LABELS, type MandatoryFilterKind } from "@/modules/curadoria/types";
 import { loadMesaCruzamento } from "@/modules/curadoria/mesa-cruzamento";
 import { itensDeAtencao, type InvestigacaoProfissional } from "@/modules/curadoria/mesa-investigacao";
 import { crossCaseRelationalForProfessionals } from "@/modules/curadoria/motor-relacional-repository";
@@ -288,6 +292,42 @@ export default async function MesaPorPreocupacoesPage({
 
   const atencao = itensDeAtencao(paraOAlerta);
 
+  // ------------------------------------------------------------------
+  // O QUE ELIMINA — os filtros obrigatórios do Perfil desta pessoa.
+  //
+  // @metodo Ontologia §3.7 — restrição elimina opções e nunca recebe peso
+  // @metodo Fundamentos §13 — P5: nenhum filtro é inferido; vem da fala dela
+  // @metodo ADR-088 — só fato verificado elimina; a proveniência é lida acima
+  //
+  // Esta superfície veio da Mesa antiga na remoção dela, e não por inércia:
+  // é a ÚNICA do produto onde um requisito inegociável é registrado. Sem ela,
+  // toda a maquinaria da ADR-088 que o painel de elegibilidade lê não teria o
+  // que avaliar — e a fase Filtros voltaria a se dar por concluída sozinha,
+  // porque "todo filtro tem motivo" é verdade quando não há filtro nenhum.
+  //
+  // O `GAP-D-1` é a memória disto: o componente já existiu órfão uma vez, com
+  // três actions e RLS prontas e nenhuma rota que o renderizasse.
+  //
+  // Depois do reconhecimento dela, o Perfil é imutável e o painel lê.
+  // ------------------------------------------------------------------
+  const perfilAtivo = perfil ? await getActivePriorityProfile(supabase, id) : null;
+
+  const filtrosDoPerfil = (perfilAtivo?.mandatoryFilters ?? []).map((filtro) => ({
+    id: filtro.id,
+    kind: filtro.kind,
+    label: MANDATORY_FILTER_LABELS[filtro.kind as MandatoryFilterKind] ?? filtro.kind,
+    value: filtro.value,
+    reason: filtro.note ?? "",
+  }));
+
+  const preferenciasDoPerfil = (perfilAtivo?.preferences ?? []).map((filtro) => ({
+    id: filtro.id,
+    value: filtro.value,
+    reason: filtro.note ?? "",
+  }));
+
+  const primeiroNome = nomeDaPaciente.split(" ")[0] ?? nomeDaPaciente;
+
   const nomes = new Map(mesa.profissionais.map((p) => [p.id, p.nome]));
   const escolhidos = [...(composta?.curated_selection_options ?? [])]
     .sort((a, b) => a.position - b.position)
@@ -301,27 +341,13 @@ export default async function MesaPorPreocupacoesPage({
     <main className="mx-auto flex max-w-[80rem] flex-col gap-8 px-6 py-10">
       <header className="flex flex-col gap-2">
         <p className="text-xs uppercase tracking-wide text-ink-muted">
-          Mesa em construção · ADR-093
+          Mesa de Curadoria · ADR-093
         </p>
         <h1 className="text-2xl font-medium text-ink">A Mesa pelas preocupações dela</h1>
         <p className="max-w-3xl text-sm text-ink-muted">
-          Em construção. Aqui já dá para registrar o que ela disse, julgar, compor os três
-          caminhos, escrever o relatório e entregar.
-        </p>
-
-        {/* O que AINDA não mora aqui, dito por nome — e não como "algumas
-            funções". Quem chega e não acha o que procura precisa saber onde
-            está, e não desconfiar que quebrou. */}
-        <p className="max-w-3xl text-sm text-ink-muted">
-          A Mesa atual não tem mais nada que esta não tenha. Ela continua no ar até a
-          travessia completa da ADR-093 confirmar que nada se perdeu.{" "}
-          <Link
-            href={`/coa/curadoria/casos/${id}/curadoria_tecnica`}
-            className="text-ink underline underline-offset-2"
-          >
-            Ir para a Mesa atual
-          </Link>
-          .
+          Cada linha é uma coisa que {primeiroNome} disse. Aqui se registra o que ela contou,
+          se julga o que ela não tem como pedir, se compõem os três caminhos e se escreve o
+          que ela vai reler sozinha.
         </p>
       </header>
 
@@ -341,11 +367,44 @@ export default async function MesaPorPreocupacoesPage({
           existe etapa em foco, e o que ele faz é dar o todo em um lugar. */}
       <OQueDependeDeVoce itens={atencao} />
 
+      {/* SEM PERFIL, NADA DISTO EXISTE — e a tela precisa oferecer a saída.
+          Um aviso que anuncia o que não resolve é beco sem saída, e beco sem
+          saída é a forma mais cara de carga cognitiva: a pessoa procura em
+          todo lugar antes de concluir que não existe.
+
+          Abrir a Consulta Inicial é ato DELE, com autor registrado — o
+          sistema não cria o Perfil sozinho ao abrir a tela (UX_PRINCIPLES P5). */}
+      {!perfil ? (
+        <section className="flex flex-col gap-3 rounded-md border border-border px-4 py-4">
+          <h2 className="text-lg font-medium text-ink">Esta Curadoria ainda não começou</h2>
+          <p className="max-w-3xl text-sm text-ink-muted">
+            O Perfil de Prioridades é onde tudo abaixo se apoia: sem ele não há onde gravar o
+            que importa para {primeiroNome}, nem o que elimina alguém desta Curadoria.
+          </p>
+          <StartPriorityProfile caseId={id} patientFirstName={primeiroNome} />
+        </section>
+      ) : null}
+
       <section id="quem-pode-participar" className="flex flex-col gap-4">
         <header className="flex flex-col gap-1">
           <h2 className="text-lg font-medium text-ink">Quem pode participar desta Curadoria</h2>
           <p className="max-w-3xl text-sm text-ink-muted">{view.nextStep}</p>
         </header>
+
+        {/* O QUE ELIMINA vem ANTES de quem sobrou, porque é o que produz o
+            "quem sobrou". Na Mesa antiga ele morava na etapa do Perfil, longe
+            do efeito; aqui fica onde a consequência é lida — mesmo princípio
+            que trouxe o juízo para dentro da célula (ADR-093). */}
+        {perfil ? (
+          <MandatoryFilters
+            priorityProfileId={(perfil as { id: string }).id}
+            patientFirstName={primeiroNome}
+            readOnly={view.profileAcknowledged}
+            filters={filtrosDoPerfil}
+            preferences={preferenciasDoPerfil}
+          />
+        ) : null}
+
         <EligibilityPanel view={view} />
       </section>
 

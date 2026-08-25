@@ -122,7 +122,8 @@ describe("A linha carrega a voz dela, não só o código", () => {
             questionId: "P10",
             resposta: "Quero entender o suficiente para conseguir escolher.",
             grau: "ESSENCIAL",
-            reconhecida: true,
+            reconhecimento: "RECONHECIDA",
+            correcao: null,
           },
         ],
         // O Curador declarou MUITO_IMPORTANTE. São dois fatos distintos, de
@@ -134,7 +135,7 @@ describe("A linha carrega a voz dela, não só o código", () => {
     const linha = mesa.linhas.find((l) => l.questionId === "P10")!;
     expect(linha.resposta).toBe("Quero entender o suficiente para conseguir escolher.");
     expect(linha.grau).toBe("ESSENCIAL");
-    expect(linha.reconhecida).toBe(true);
+    expect(linha.reconhecimento).toBe("RECONHECIDA");
     expect(linha.importancia).toBe("MUITO_IMPORTANTE");
     expect(linha.pergunta.length).toBeGreaterThan(0);
   });
@@ -145,7 +146,7 @@ describe("A linha carrega a voz dela, não só o código", () => {
 
     expect(linha.resposta).toBeNull();
     expect(linha.grau).toBeNull();
-    expect(linha.reconhecida).toBe(false);
+    expect(linha.reconhecimento).toBe("PENDENTE");
   });
 });
 
@@ -438,5 +439,57 @@ describe("O órfão tem nome, não código", () => {
     const orfao = mesa.orfaos.find((o) => o.subcriterionCode === "EXPERIENCIA_VOLUME_DE_ATUACAO");
 
     expect(orfao?.rotulo).toBe("EXPERIENCIA_VOLUME_DE_ATUACAO");
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+// `SIM-48`. A Mesa antiga tinha um painel só para isto — `respostas-que-exigem-
+// revisao.ts` —, porque desde o PP-03C a paciente discorda e corrige por conta
+// própria, e uma discordância no fim de uma lista de dezessete podia atravessar
+// a Curadoria sem ninguém ver. A Mesa nova nasceu com `reconhecida: boolean`,
+// que achatava três coisas diferentes num "não" só.
+describe("Os quatro desfechos do reconhecimento — silêncio não é discordância", () => {
+  function comDesfecho(reconhecimento: string, correcao: string | null = null) {
+    const mesa = montarMesaPorPreocupacoes(
+      entrada({
+        respostas: [
+          {
+            questionId: "P10",
+            resposta: "Quero entender o suficiente para conseguir escolher.",
+            grau: "ESSENCIAL",
+            reconhecimento: reconhecimento as never,
+            correcao,
+          },
+        ],
+      }),
+    );
+    return mesa.linhas.find((l) => l.questionId === "P10")!;
+  }
+
+  it("guarda os quatro desfechos, sem achatar nenhum em booleano", () => {
+    expect(comDesfecho("PENDENTE").reconhecimento).toBe("PENDENTE");
+    expect(comDesfecho("RECONHECIDA").reconhecimento).toBe("RECONHECIDA");
+    expect(comDesfecho("CORRIGIDA").reconhecimento).toBe("CORRIGIDA");
+    expect(comDesfecho("RECUSADA").reconhecimento).toBe("RECUSADA");
+  });
+
+  // O texto é DELA (DT-22). Perdê-lo transformaria a correção num selo — o
+  // registro de que ela falou, sem o que ela falou.
+  it("carrega as palavras dela quando ela corrigiu ou recusou", () => {
+    expect(comDesfecho("CORRIGIDA", "Não é bem isso: eu quero as opções.").correcao).toBe(
+      "Não é bem isso: eu quero as opções.",
+    );
+    expect(comDesfecho("RECUSADA", "Isso não é o que eu disse.").correcao).toBe(
+      "Isso não é o que eu disse.",
+    );
+  });
+
+  it("quem não respondeu fica PENDENTE — e isso não é discordância", () => {
+    const mesa = montarMesaPorPreocupacoes(entrada());
+    const linha = mesa.linhas.find((l) => l.questionId === "P10")!;
+
+    expect(linha.reconhecimento).toBe("PENDENTE");
+    expect(linha.correcao).toBeNull();
   });
 });

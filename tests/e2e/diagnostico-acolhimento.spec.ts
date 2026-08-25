@@ -132,7 +132,7 @@ test.describe("diagnóstico do Acolhimento (Case existente)", () => {
 
     // E a Mesa abre.
     await page.getByRole("link", { name: "Abrir a Mesa de Curadoria" }).click();
-    await page.waitForURL(/curadoria_tecnica/);
+    await page.waitForURL(/mesa/);
     await expect(page.getByText("Mesa de Curadoria").first()).toBeVisible();
     marca("MESA ABERTA");
 

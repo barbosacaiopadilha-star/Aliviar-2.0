@@ -138,7 +138,7 @@ export function ReportStatus({
         )}
 
         <Link
-          href={`/coa/curadoria/casos/${caseId}/curadoria_tecnica`}
+          href={`/coa/curadoria/casos/${caseId}/mesa`}
           className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-md bg-brand-primary px-4 py-2.5 text-sm font-medium text-surface transition-colors duration-fast ease-standard hover:bg-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
         >
           Escrever na Mesa de Curadoria

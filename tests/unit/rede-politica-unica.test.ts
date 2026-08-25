@@ -141,7 +141,7 @@ describe("A Mesa aplica a política na construção da Rede", () => {
 describe("Os três consumidores herdam o mesmo universo", () => {
   it("CAMINHOS e COS leem a Rede pela Mesa, sem consulta própria", () => {
     const cos = ler("src/modules/curadoria/cos/repository.ts");
-    const page = ler("src/app/portal-curador/casos/[id]/curadoria_tecnica/page.tsx");
+    const page = ler("src/app/portal-curador/casos/[id]/mesa/page.tsx");
 
     // O COS consulta `professional_profiles` só para resolver nome canônico de
     // quem já saiu da Rede (M3) — nunca para montar universo. Quem monta Rede
@@ -153,6 +153,6 @@ describe("Os três consumidores herdam o mesmo universo", () => {
     expect(page).toContain("loadMesaCruzamento");
     expect(page.includes('from("professional_profiles")'), "página monta Rede própria").toBe(false);
     // A seleção nasce da comparação, que nasce dos elegíveis já filtrados.
-    expect(page).toContain("candidatosDaSelecao(view.comparison");
+    expect(page).toContain('eligibility.state === "ELEGIVEL"');
   });
 });

@@ -91,6 +91,6 @@ export async function savePriorityImportancesAction(input: {
     };
   }
 
-  revalidatePath(`/coa/curadoria/casos/${input.caseId}/curadoria_tecnica`);
+  revalidatePath(`/coa/curadoria/casos/${input.caseId}/mesa`);
   return { success: true };
 }

@@ -48,7 +48,7 @@ import {
   CONCEITOS_RELACIONAIS_HUMANOS,
   JULGAMENTOS_TECNICOS_EXIGIDOS,
 } from "./julgamentos";
-import { PERSON_PROTOCOL, type NeedDegree, type PersonMode } from "./protocolos";
+import { PERSON_PROTOCOL, type AcknowledgmentState, type NeedDegree, type PersonMode } from "./protocolos";
 
 // ---------------------------------------------------------------------------
 // Entrada
@@ -63,8 +63,24 @@ export type RespostaDaPessoa = {
   resposta: string | null;
   /** O peso que ELA deu — não o que o Curador declarou depois. */
   grau: NeedDegree | null;
-  /** Ela reconheceu a leitura do Curador? Ato exclusivo dela. */
-  reconhecida: boolean;
+  /**
+   * O DESFECHO DO RECONHECIMENTO — os quatro do Método, não um booleano.
+   *
+   * @metodo M-001 §6.2.1 — os quatro desfechos
+   * @metodo DT-22 — `CORRIGIDA` e `RECUSADA` guardam o texto DELA
+   *
+   * Aqui havia `reconhecida: boolean`, e ele achatava três coisas que não são
+   * a mesma: ela ainda não viu (`PENDENTE`), ela corrigiu (`CORRIGIDA`) e ela
+   * recusou (`RECUSADA`). A tela dizia "aguarda o reconhecimento dela" nos
+   * três casos — dizendo que ela está calada exatamente quando ela falou.
+   *
+   * Desde o PP-03C a paciente discorda e corrige por conta própria. Uma
+   * discordância que a tela chama de silêncio atravessa a Curadoria inteira
+   * sem ninguém ver, e o produto passa a ouvi-la sem ter onde escutá-la.
+   */
+  reconhecimento: AcknowledgmentState;
+  /** O que ela escreveu ao corrigir ou recusar — as palavras dela. */
+  correcao: string | null;
 };
 
 export type ProfissionalNaMesa = {
@@ -125,7 +141,9 @@ export type Linha = {
   /** A resposta dela — o que dá o título humano da linha. */
   resposta: string | null;
   grau: NeedDegree | null;
-  reconhecida: boolean;
+  /** O desfecho do reconhecimento, com as palavras dela quando houve. */
+  reconhecimento: AcknowledgmentState;
+  correcao: string | null;
   importancia: ImportanceLevel | null;
   celulas: readonly Celula[];
   /** O que a linha precisa para virar editável, sem uma segunda consulta. */
@@ -360,7 +378,8 @@ export function montarMesaPorPreocupacoes(entrada: EntradaDaMesa): MesaPorPreocu
       pergunta: pergunta.question,
       resposta: dela?.resposta ?? null,
       grau: dela?.grau ?? null,
-      reconhecida: dela?.reconhecida ?? false,
+      reconhecimento: dela?.reconhecimento ?? "PENDENTE",
+      correcao: dela?.correcao ?? null,
       importancia,
       celulas: celulasDaLinha,
       todosIguais: saoTodasIguais(

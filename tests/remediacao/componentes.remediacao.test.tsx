@@ -124,7 +124,7 @@ describe("GATE-D21b [Bloco D] round-trip do parecer pelo editor do Relatório", 
     const enviado = await salvarPeloEditor();
 
     // Hoje: a página junta com "\n" e o editor reenvia `[string única]` —
-    // dois pontos de atenção viram um; a página da Mesa (curadoria_tecnica)
+    // dois pontos de atenção viram um; a página da Mesa
     // junta com " " e nem o "\n" sobrevive à segunda passada.
     expect(
       enviado.attentionPoints,

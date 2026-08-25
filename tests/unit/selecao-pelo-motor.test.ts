@@ -30,9 +30,9 @@ function semComentarios(fonte: string): string {
 const ler = (relativo: string) =>
   semComentarios(readFileSync(join(process.cwd(), relativo), "utf8"));
 
-const PAGE = "src/app/portal-curador/casos/[id]/curadoria_tecnica/page.tsx";
-const WORKSPACE = "src/components/curadoria/mesa-workspace.tsx";
-const SELECAO = "src/modules/curadoria/mesa-selecao.ts";
+const PAGE = "src/app/portal-curador/casos/[id]/mesa/page.tsx";
+const COMPOR = "src/components/curadoria/mesa-preocupacoes/compor-os-tres.tsx";
+const SELECAO = "src/modules/curadoria/composicao-dos-tres.ts";
 
 describe("A etapa CAMINHOS não depende do pipeline legado", () => {
   const page = ler(PAGE);
@@ -47,18 +47,18 @@ describe("A etapa CAMINHOS não depende do pipeline legado", () => {
     expect(page).not.toContain("record.curadoriaTecnica.analyses");
   });
 
-  it("a página monta a seleção a partir dos elegíveis da Mesa e da leitura do Motor", () => {
-    expect(page).toContain("candidatosDaSelecao(view.comparison");
-    expect(page).toContain("foraDaSelecao(view.professionals)");
-  });
-
-  it("Case sem candidatos abre com explicação, nunca com tela quebrada", () => {
-    expect(page).toContain("A seleção ainda não tem candidatos.");
+  // A Mesa nova (ADR-093) não tem `candidatosDaSelecao`: ela filtra os
+  // elegíveis da leitura canônica da Rede e passa esses — e só esses — para
+  // compor. Quem não passou pela porta não some: aparece no painel de
+  // elegibilidade, com o estado e o ato que falta.
+  it("a página monta a seleção a partir dos elegíveis da Rede canônica", () => {
+    expect(page).toContain("loadMesaCruzamento");
+    expect(page).toContain('eligibility.state === "ELEGIVEL"');
   });
 });
 
-describe("MesaWorkspace consome o Motor, não o motor antigo", () => {
-  const workspace = ler(WORKSPACE);
+describe("Compor os três consome o Motor, não o motor antigo", () => {
+  const workspace = ler(COMPOR);
 
   it("nenhum vestígio operacional do pipeline legado", () => {
     for (const proibido of [
@@ -76,8 +76,10 @@ describe("MesaWorkspace consome o Motor, não o motor antigo", () => {
     }
   });
 
-  it("a comparação da seleção é a mesma matriz do Motor (ComparacaoPremium)", () => {
-    expect(workspace).toContain("ComparacaoPremium");
+  // A matriz premium saiu com a Mesa antiga (ADR-093). Na Mesa nova o
+  // candidato aparece resumido pelas FRASES DELA — contagens, nunca notas.
+  it("a comparação da seleção sai do resumo pelas preocupações dela", () => {
+    expect(workspace).toContain("resumirCandidatos");
   });
 
   it("não ordena candidato por chave nenhuma", () => {
@@ -90,16 +92,27 @@ describe("MesaWorkspace consome o Motor, não o motor antigo", () => {
     }
   });
 
-  it("pareceres, composição, encerramento e reabertura permanecem", () => {
+  /**
+   * O QUE A COMPOSIÇÃO PRECISA CONTINUAR TENDO.
+   *
+   * A lista anterior era do vocabulário da máquina de estados da Mesa antiga
+   * (`SET_COMPOSITION`, `MOVE_SELECTION`, `REOPEN`, `validateMesaClosure`).
+   * Ela saiu com a Mesa (ADR-093), e o que sobrevive é o CONTRATO do Método,
+   * que nunca dependeu daquela máquina: exatamente três, cada um com razão
+   * escrita, mais a razão da COMPOSIÇÃO — por que estes três, juntos, para
+   * esta pessoa.
+   *
+   * `REOPEN` NÃO foi substituído, e isso está registrado como `SIM-49` em vez
+   * de sumir aqui: a Mesa nova não mostra a composição já feita ao reabrir o
+   * painel. A gravação é upsert, então recompor funciona — o que falta é a
+   * tela dizer o que já foi decidido.
+   */
+  it("o contrato da composição permanece: três, com razão de cada um e do conjunto", () => {
     for (const preservado of [
-      "PARECER_PROMPTS",
-      "validateMesaClosure",
-      "SET_COMPOSITION",
-      "MOVE_SELECTION",
-      "REOPEN",
       "saveSelectionAction",
-      "saveReportAction",
-      "Reabrir para corrigir",
+      "compositionRationale",
+      "razoesSugeridas",
+      "tradeOff",
     ]) {
       expect(workspace.includes(preservado), preservado).toBe(true);
     }

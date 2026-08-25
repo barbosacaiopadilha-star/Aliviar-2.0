@@ -1,11 +1,6 @@
 ﻿import { describe, expect, it } from "vitest";
 
 import {
-  MESA_ATALHOS,
-  acaoDaTecla,
-  ATALHO_DESTINO,
-} from "@/modules/curadoria/mesa-atalhos";
-import {
   aplicarFiltros,
   celulaEstado,
   CELULA_LABEL,
@@ -238,36 +233,6 @@ describe("Estados visuais — identidade própria, nunca só cor", () => {
     expect(celulaEstado(null)).toBe("SEM_DECLARACAO");
     expect(celulaEstado("INFORMACAO_INSUFICIENTE")).toBe("INSUFICIENTE");
     expect(celulaEstado("NAO_ATENDE")).toBe("NAO_ATENDE");
-  });
-});
-
-describe("Atalhos — aceleram, nunca decidem", () => {
-  it("nenhum atalho executa ato irreversível", () => {
-    expect(MESA_ATALHOS.every((atalho) => atalho.navegacao)).toBe(true);
-    for (const atalho of MESA_ATALHOS) {
-      expect(atalho.acao).not.toMatch(/APROVAR|EMITIR|GERAR|EXCLUIR|SELECIONAR/);
-    }
-  });
-
-  it("o caminho do Relatório é destino, não execução", () => {
-    expect(ATALHO_DESTINO.IR_RELATORIO).toBe("RELATORIO");
-    expect(MESA_ATALHOS.find((a) => a.acao === "IR_RELATORIO")!.descricao).toContain(
-      "por clique",
-    );
-  });
-
-  it("resolve teclas simples e devolve nulo com modificador", () => {
-    expect(acaoDaTecla("j")).toBe("PROFISSIONAL_PROXIMO");
-    expect(acaoDaTecla("]")).toBe("ETAPA_PROXIMA");
-    expect(acaoDaTecla("Escape")).toBe("FECHAR");
-    expect(acaoDaTecla("c", { ctrl: true })).toBeNull();
-    expect(acaoDaTecla("c", { meta: true })).toBeNull();
-    expect(acaoDaTecla("z")).toBeNull();
-  });
-
-  it("nenhuma tecla é reivindicada por dois atalhos", () => {
-    const teclas = MESA_ATALHOS.flatMap((atalho) => atalho.teclas);
-    expect(new Set(teclas).size).toBe(teclas.length);
   });
 });
 

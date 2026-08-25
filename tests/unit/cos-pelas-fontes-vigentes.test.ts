@@ -125,8 +125,8 @@ describe("Superfícies do Curador sem o legado", () => {
   // CORTE DE 24/08 · o MesaPriorityPanel saiu com substituto vivo: ele
   // duplicava, no aside, a etapa Mapa de Prioridades da própria Mesa. A
   // guarda contra pesos passa a valer sobre quem ficou com o papel.
-  it("MapaPrioridadesPanel não lê nem exibe pesos", () => {
-    const painel = ler("src/components/curadoria/mesa/mapa-prioridades-panel.tsx");
+  it("a classificação de importância não lê nem exibe pesos", () => {
+    const painel = ler("src/components/curadoria/mesa-preocupacoes/classificar-importancia.tsx");
     for (const proibido of ["weight", "priority_weights", "PesoRecord", "pontos"]) {
       expect(painel.includes(proibido), proibido).toBe(false);
     }
@@ -136,7 +136,7 @@ describe("Superfícies do Curador sem o legado", () => {
     for (const relativo of [
       "src/app/portal-curador/casos/[id]/page.tsx",
       "src/app/portal-curador/casos/[id]/[etapa]/page.tsx",
-      "src/app/portal-curador/casos/[id]/curadoria_tecnica/page.tsx",
+      "src/app/portal-curador/casos/[id]/mesa/page.tsx",
     ]) {
       expect(ler(relativo), relativo).not.toContain(".analyses");
     }

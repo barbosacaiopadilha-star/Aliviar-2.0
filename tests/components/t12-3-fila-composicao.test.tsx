@@ -157,7 +157,7 @@ describe("T-12-3 · a Fila não cria autoridade que não existe", () => {
     render(<FilaPorAtoDevido casos={DEZ} />);
     const destinos: Record<string, string> = {
       "Aguarda Acolhimento": "/acolhimento",
-      "Curadoria em curso": "/curadoria_tecnica",
+      "Curadoria em curso": "/mesa",
       "Aguarda entrega": "/relatorio",
     };
     for (const [titulo, destino] of Object.entries(destinos)) {

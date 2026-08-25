@@ -30,7 +30,7 @@ const sql = sqlBruto
   .filter((linha) => !linha.trimStart().startsWith("--"))
   .join("\n");
 
-const painel = readFileSync(join(RAIZ, "src/components/curadoria/mesa/painel-de-juizo.tsx"), "utf8");
+const painel = readFileSync(join(RAIZ, "src/components/curadoria/mesa-preocupacoes/registrar-juizo-na-celula.tsx"), "utf8");
 
 function varrer(dir: string): string[] {
   return readdirSync(join(RAIZ, dir), { withFileTypes: true }).flatMap((entrada) => {

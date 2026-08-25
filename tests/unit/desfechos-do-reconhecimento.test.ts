@@ -101,7 +101,9 @@ describe("PP-03C · o desfecho tem um escritor só", () => {
   });
 
   it("nenhuma superfície do Curador oferece os três desfechos", () => {
-    const painel = ler("src/components/curadoria/protocolo-pessoa-panel.tsx");
+    // O painel do Protocolo saiu com a Mesa antiga (ADR-093). O ato de
+    // registrar o que ela disse mora agora na LINHA da própria frase.
+    const painel = ler("src/components/curadoria/mesa-preocupacoes/registrar-resposta-dela.tsx");
 
     for (const botao of ["Reconheceu", "Corrigiu", "Recusou"]) {
       expect(painel.includes(`>\n          ${botao}`) || painel.includes(`>${botao}<`), botao).toBe(
@@ -113,13 +115,24 @@ describe("PP-03C · o desfecho tem um escritor só", () => {
   });
 
   it("o Curador continua registrando a tradução e a leitura proposta", () => {
-    const painel = ler("src/components/curadoria/protocolo-pessoa-panel.tsx");
+    const painel = ler("src/components/curadoria/mesa-preocupacoes/registrar-resposta-dela.tsx");
 
     expect(painel).toContain("registerPersonNeedAction");
     expect(painel).toContain("proposedReading");
-    expect(painel).toContain('aria-label="Leitura proposta"');
-    // E continua LENDO o que ela respondeu — ler é dele, escrever não.
-    expect(painel).toContain("Correção dela");
+    // A leitura nasce PENDENTE — o reconhecimento é ato dela, na jornada dela.
+    expect(painel).toContain("O reconhecimento é ato dela");
+  });
+
+  // E ele continua LENDO a discordância dela: ler é dele, escrever não. Desde
+  // o `SIM-48` isso mora na linha da própria frase, e não num painel separado.
+  it("a discordância dela aparece ao Curador, com as palavras dela", () => {
+    const comparacao = ler(
+      "src/components/curadoria/mesa-preocupacoes/comparacao-por-preocupacoes.tsx",
+    );
+
+    expect(comparacao).toContain("Ela recusou esta leitura.");
+    expect(comparacao).toContain("Ela corrigiu esta leitura.");
+    expect(comparacao).toContain("linha.correcao");
   });
 
   it("a paciente continua com o caminho dela intacto", () => {

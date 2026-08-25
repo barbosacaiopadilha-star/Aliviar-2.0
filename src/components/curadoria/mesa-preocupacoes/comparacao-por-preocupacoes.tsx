@@ -257,6 +257,47 @@ function JuizoDoEixo({
 }
 
 /**
+ * O DESFECHO DO RECONHECIMENTO, dito pelo nome — `SIM-48`.
+ *
+ * @metodo M-001 §6.2.1 — os quatro desfechos
+ * @metodo DT-22 — `CORRIGIDA` e `RECUSADA` guardam o texto DELA
+ *
+ * Desde o PP-03C a paciente discorda e corrige por conta própria. A Mesa
+ * antiga tinha um painel só para isso, porque uma discordância no fim de uma
+ * lista de dezessete podia atravessar a Curadoria sem ninguém ver.
+ *
+ * Aqui ela não precisa de painel: mora na linha da própria frase, que é onde a
+ * ADR-093 diz que as coisas moram. E quando ela escreveu, o que aparece é o
+ * que ELA escreveu — não um selo dizendo que houve escrita.
+ */
+function Reconhecimento({ linha }: { linha: Linha }) {
+  if (linha.reconhecimento === "RECONHECIDA") return null;
+
+  if (linha.reconhecimento === "PENDENTE") {
+    return (
+      <span className="mt-1 block text-xs text-ink-muted">Aguarda o reconhecimento dela.</span>
+    );
+  }
+
+  const recusou = linha.reconhecimento === "RECUSADA";
+
+  return (
+    <span className="mt-1.5 block border-l-2 border-l-[var(--color-attention)] bg-[var(--color-attention-surface)] px-2 py-1 text-xs">
+      <strong className="block font-medium text-ink">
+        {recusou ? "Ela recusou esta leitura." : "Ela corrigiu esta leitura."}
+      </strong>
+      {linha.correcao ? (
+        <span className="mt-0.5 block text-ink">“{linha.correcao}”</span>
+      ) : (
+        <span className="mt-0.5 block text-ink-muted">
+          {recusou ? "Sem texto: procure-a antes de usar esta linha." : "Sem texto registrado."}
+        </span>
+      )}
+    </span>
+  );
+}
+
+/**
  * A coluna da esquerda: ela.
  *
  * A frase dela é o título. A pergunta que a provocou fica abaixo, menor —
@@ -289,10 +330,14 @@ function CabecalhoDaLinha({ linha, caseId }: { linha: Linha; caseId: string }) {
         <span className="font-mono">{linha.questionId}</span>
         {linha.grau ? <span>· para ela: {GRAU_CURTO[linha.grau]}</span> : null}
         {linha.importancia ? <span>· você: {IMPORTANCE_LABELS[linha.importancia]}</span> : null}
-        {linha.resposta && !linha.reconhecida ? (
-          <span className="text-ink-muted">· aguarda o reconhecimento dela</span>
-        ) : null}
       </span>
+
+      {/* O QUE ELA FEZ COM A LEITURA QUE FIZERAM DELA.
+          Quatro desfechos, não um booleano (M-001 §6.2.1). Chamar de "aguarda
+          o reconhecimento" uma recusa é dizer que ela está calada exatamente
+          quando ela falou — e uma discordância que a tela chama de silêncio
+          atravessa a Curadoria inteira sem ninguém ver. */}
+      {linha.resposta ? <Reconhecimento linha={linha} /> : null}
 
       {/* Registrar acontece NA LINHA — é o ponto da ADR-093. Na Mesa antiga a
           conversa vivia noutra tela, com dezessete fichas recolhidas, longe da

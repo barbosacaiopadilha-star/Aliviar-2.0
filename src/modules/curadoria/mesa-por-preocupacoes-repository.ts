@@ -104,7 +104,8 @@ export async function carregarMesaPorPreocupacoes(
       opcoesMarcadas: dela.options,
       resposta: respostaEmTexto(pergunta.subcriterionCode, dela.options, dela.guidedText),
       grau: dela.degree,
-      reconhecida: dela.acknowledgment === "RECONHECIDA",
+      reconhecimento: dela.acknowledgment,
+      correcao: dela.correction,
     });
   }
 

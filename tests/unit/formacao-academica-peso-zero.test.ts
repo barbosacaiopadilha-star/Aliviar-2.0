@@ -21,7 +21,9 @@ const MODULOS_DE_RANKING = [
   "src/modules/curadoria/motor-relacional.ts",
   "src/modules/curadoria/mesa-cruzamento.ts",
   "src/modules/curadoria/mesa-cruzamento-view.ts",
-  "src/modules/curadoria/mesa-selecao.ts",
+  // A seleção passou a nascer do resumo pelas frases dela (ADR-093): é ali
+  // que um ranking entraria disfarçado de "resumo".
+  "src/modules/curadoria/composicao-dos-tres.ts",
   "src/modules/curadoria/cruzamento.ts",
   "src/modules/curadoria/mapa-prioridades.ts",
 ];

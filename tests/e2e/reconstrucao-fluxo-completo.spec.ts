@@ -322,7 +322,7 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
     await loginAs(page, curador.email, curador.password);
 
     const caseId = caseUrl.match(/casos\/([0-9a-f-]+)/)![1];
-    await page.goto(`/coa/curadoria/casos/${caseId}/curadoria_tecnica`);
+    await page.goto(`/coa/curadoria/casos/${caseId}/mesa`);
 
     // O beco sem saída original: agora a Mesa oferece abrir o Perfil.
     await page.getByRole("button", { name: "Abrir o Perfil de Prioridades" }).click();
@@ -457,11 +457,11 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
     const curador = loadTestAccounts().find((a) => a.role === "curador_medico")!;
     await loginAs(page, curador.email, curador.password);
     const caseId = caseUrl.match(/casos\/([0-9a-f-]+)/)![1];
-    await page.goto(`/coa/curadoria/casos/${caseId}/curadoria_tecnica`);
+    await page.goto(`/coa/curadoria/casos/${caseId}/mesa`);
 
     // ETAPA 7 — a Rede enxerga os cinco publicados; os não publicados não entram.
     // A declaração de área mora na etapa REDE: "Avaliação técnica" mostra o
-    // estado vazio enquanto eligible === 0 (curadoria_tecnica/page.tsx) — o
+    // estado vazio enquanto eligible === 0 (mesa/page.tsx) — o
     // botão "Declarar área" nunca existiria lá antes das declarações.
     // Só o botão de ETAPA da Mesa COMEÇA com o rótulo ("Rede elegível,
     // aguarda…"); os itens do painel de atenção são "Resolver em Rede
@@ -505,7 +505,7 @@ test.describe("Release de Reconstrução — fluxo completo com dados novos", ()
     const curador = loadTestAccounts().find((a) => a.role === "curador_medico")!;
     await loginAs(page, curador.email, curador.password);
     const caseId = caseUrl.match(/casos\/([0-9a-f-]+)/)![1];
-    await page.goto(`/coa/curadoria/casos/${caseId}/curadoria_tecnica`);
+    await page.goto(`/coa/curadoria/casos/${caseId}/mesa`);
 
     // Âncora no início: o botão da etapa "Relatório" cita "Três caminhos" no texto de dependência.
     await page.getByRole("button", { name: /^Três caminhos/ }).click();

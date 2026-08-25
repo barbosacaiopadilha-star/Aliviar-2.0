@@ -554,7 +554,11 @@ describe("MR-01 · o que ela disse, dito como ela disse", () => {
 
   it("o mapa é o MESMO do painel do Curador — os dois lados verbalizam igual", () => {
     const painel = readFileSync(
-      join(process.cwd(), "src/components/curadoria/protocolo-pessoa-panel.tsx"),
+      // O painel do Protocolo saiu com a Mesa antiga (ADR-093). Quem
+      // verbaliza a opção do lado do Curador agora é o carregador da Mesa —
+      // e a regra que este teste guarda é a mesma: os dois lados leem o
+      // rótulo do MESMO Catálogo, nunca cada um o seu.
+      join(process.cwd(), "src/modules/curadoria/mesa-por-preocupacoes-repository.ts"),
       "utf8",
     );
     const modelo = readFileSync(
@@ -562,7 +566,7 @@ describe("MR-01 · o que ela disse, dito como ela disse", () => {
       "utf8",
     );
 
-    expect(painel).toContain("question.options[option]");
+    expect(painel).toContain("pergunta.options[codigo]");
     expect(modelo).toContain("PERSON_QUESTIONS_BY_CODE.get(subcriterionCode)?.options[valor]");
     // Nenhum mapa novo nasceu aqui (M1).
     expect(modelo).not.toMatch(/const [A-Z_]*LABELS[A-Z_]* *[:=] *\{/);
