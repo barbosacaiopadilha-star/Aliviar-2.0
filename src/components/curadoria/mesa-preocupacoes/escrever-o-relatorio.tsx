@@ -32,6 +32,27 @@ type Props = {
   /** Os três já compostos, na ordem em que ela vai ler. */
   escolhidos: readonly { id: string; nome: string; rationale: string }[];
   composicaoJaEscrita: string;
+  /**
+   * O RELATÓRIO QUE JÁ EXISTE — `SIM-52`.
+   *
+   * O editor abria sempre em branco. Numa Curadoria já ENTREGUE ele mostrava
+   * os três campos de cada opção vazios e dizia "falta preencher" — sobre um
+   * documento que a paciente já estava lendo, e que está íntegro no banco.
+   *
+   * Não havia risco de perda: `protect_delivered_report_options` recusa a
+   * escrita depois da entrega. O custo era outro — o Curador não conseguia
+   * reler o que entregou sem abrir o portal dela, e descobria a regra por erro
+   * de banco, depois de digitar. A Mesa antiga tinha essa guarda na interface
+   * (`T-11-6 · C8`) e ela saiu junto com o `MesaWorkspace`.
+   */
+  jaEscrito?: readonly {
+    id: string;
+    justification: string;
+    relationToWeights: string;
+    attentionPoints: readonly string[];
+  }[];
+  /** Entregue: vira leitura, e a razão é dita antes de a pessoa tentar. */
+  entregue?: boolean;
 };
 
 type Campos = { justification: string; relationToWeights: string; attentionPoints: string };
@@ -42,13 +63,29 @@ export function EscreverORelatorio({
   profissionais,
   escolhidos,
   composicaoJaEscrita,
+  jaEscrito,
+  entregue = false,
 }: Props) {
   const rascunhos = useMemo(() => {
     const resumos = resumirCandidatos({ linhas, profissionais });
     return rascunharRelatorio(resumos, escolhidos.map((e) => e.id));
   }, [linhas, profissionais, escolhidos]);
 
-  const [campos, setCampos] = useState<Record<string, Campos>>({});
+  // `SIM-52`: abre com o que já foi escrito. Os pontos de atenção são uma
+  // coleção no banco e um item por linha na tela — a mesma serialização que o
+  // editor do Relatório já usa, e que tem inversa definida.
+  const [campos, setCampos] = useState<Record<string, Campos>>(() =>
+    Object.fromEntries(
+      (jaEscrito ?? []).map((opcao) => [
+        opcao.id,
+        {
+          justification: opcao.justification,
+          relationToWeights: opcao.relationToWeights,
+          attentionPoints: opcao.attentionPoints.join("\n"),
+        },
+      ]),
+    ),
+  );
   const [composicao, setComposicao] = useState(composicaoJaEscrita);
   const [erro, setErro] = useState<string | null>(null);
   const [salvo, setSalvo] = useState(false);
@@ -142,8 +179,9 @@ export function EscreverORelatorio({
       <header className="flex flex-col gap-1">
         <h3 className="text-base font-medium text-ink">O relatório</h3>
         <p className="max-w-3xl text-sm text-ink-muted">
-          O texto que ela vai ler. Cada opção precisa dizer por que está aqui, como conversa
-          com o que ela declarou, e o que custa — o contrato não aceita opção sem custo.
+          {entregue
+            ? "Este é o texto que ela recebeu. Depois da entrega o Relatório não muda — corrigir exige compor uma nova Curadoria, e ela ficaria sabendo."
+            : "O texto que ela vai ler. Cada opção precisa dizer por que está aqui, como conversa com o que ela declarou, e o que custa — o contrato não aceita opção sem custo."}
         </p>
       </header>
 
@@ -226,21 +264,31 @@ export function EscreverORelatorio({
         </p>
       ) : null}
 
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={gravar}
-          disabled={!prontos || salvando}
-          className="rounded-md border border-border px-4 py-2 text-sm font-medium text-ink disabled:opacity-50"
-        >
-          {salvando ? "Salvando…" : "Salvar o relatório"}
-        </button>
-        {!prontos ? (
-          <span className="text-xs text-ink-muted">
-            Falta preencher os três campos de alguma opção, ou a razão da composição.
-          </span>
-        ) : null}
-      </div>
+      {/* `SIM-52` · ENTREGUE ⇒ AÇÃO INDISPONÍVEL, COM MOTIVO — o C8 de volta.
+          O banco já recusava a escrita (`protect_delivered_report_options`),
+          mas o Curador só descobria a regra pelo erro, depois de digitar. Uma
+          regra aprendida por erro é uma regra que a interface escondeu. */}
+      {entregue ? (
+        <p className="text-xs text-ink-muted">
+          Entregue — não há o que salvar. O documento acima é o que ela está lendo.
+        </p>
+      ) : (
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={gravar}
+            disabled={!prontos || salvando}
+            className="rounded-md border border-border px-4 py-2 text-sm font-medium text-ink disabled:opacity-50"
+          >
+            {salvando ? "Salvando…" : "Salvar o relatório"}
+          </button>
+          {!prontos ? (
+            <span className="text-xs text-ink-muted">
+              Falta preencher os três campos de alguma opção, ou a razão da composição.
+            </span>
+          ) : null}
+        </div>
+      )}
     </section>
   );
 }

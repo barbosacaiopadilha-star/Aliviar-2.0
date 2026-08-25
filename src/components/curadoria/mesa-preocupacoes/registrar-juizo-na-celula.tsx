@@ -30,6 +30,45 @@ import { registrarJulgamentoAction } from "@/modules/curadoria/julgamento-action
 const LIMITE_DA_CONCLUSAO = 280;
 
 /**
+ * O DESFECHO DITO EM PORTUGUÊS — `SIM-54`.
+ *
+ * A travessia de 25/08 devolveu, na célula, a palavra `CONFLITO_DE_VERSAO`:
+ * constante em caixa alta, sem frase, sem `role="alert"`. O código fazia
+ * `setErro(desfecho.detalhe ?? desfecho.desfecho)` e caía no enum em cinco dos
+ * seis desfechos — enquanto o comentário logo acima dizia a regra certa:
+ * *"um 'não deu certo' sem razão obriga a pessoa a adivinhar"*.
+ *
+ * A intenção estava certa e a execução não. É a mesma família do `SIM-04`
+ * (mensagem que não nomeia a causa) e do `SIM-45` (código cru na tela), e o
+ * conserto é o que o `reconhecimento-actions.ts` já fazia: um mapa de
+ * desfecho para frase.
+ *
+ * `ERRO_TECNICO` continua mostrando o detalhe sanitizado — ali o detalhe é a
+ * informação, e escondê-lo faria a pessoa adivinhar de novo.
+ */
+const FRASES: Record<string, string> = {
+  VERSAO_JA_GRAVADA:
+    "Este juízo já estava gravado, igual a este. Nada mudou — e nada se perdeu.",
+  CONFLITO_DE_VERSAO:
+    "Alguém registrou um juízo neste ponto enquanto você escrevia. Recarregue a página para ver o que está valendo antes de escrever por cima.",
+  SEM_AUTORIDADE:
+    "Você não tem autoridade para registrar juízo neste Case. Se isso parece errado, fale com quem administra.",
+  JUIZO_RETIRADO: "Este juízo foi retirado. Escreva um novo para colocá-lo de volta.",
+};
+
+export function fraseDoDesfecho(desfecho: { desfecho: string; detalhe?: string }): string {
+  if (desfecho.desfecho === "ERRO_TECNICO") {
+    return desfecho.detalhe
+      ? `Não foi possível gravar: ${desfecho.detalhe}`
+      : "Não foi possível gravar o juízo. Nada foi registrado — tente de novo.";
+  }
+  return (
+    FRASES[desfecho.desfecho] ??
+    "Não foi possível gravar o juízo. Nada foi registrado — tente de novo."
+  );
+}
+
+/**
  * FORMAS DE COMEÇAR — sete registros, nenhum conteúdo.
  *
  * O Fundador pediu (25/08): "nos juízos eu quero respostas humanas e textos bem
@@ -115,10 +154,7 @@ export function RegistrarJuizoNaCelula({
         setAberto(false);
         return;
       }
-      // O detalhe técnico aparece: um "não deu certo" sem razão obriga a
-      // pessoa a adivinhar, e foi assim que um erro de gravação passou
-      // despercebido antes.
-      setErro(desfecho.detalhe ?? desfecho.desfecho);
+      setErro(fraseDoDesfecho(desfecho));
     });
   }
 
@@ -143,7 +179,10 @@ export function RegistrarJuizoNaCelula({
         seu nome.
       </p>
 
+      {/* SIM-54: campo sem rótulo acessível — leitor de tela anunciava "caixa
+          de texto" e mais nada. O rótulo é a própria frase acima. */}
       <textarea
+        aria-label={`Seu juízo sobre ${professionalNome} neste ponto`}
         value={conclusao}
         onChange={(evento) => setConclusao(evento.target.value)}
         rows={3}
@@ -176,7 +215,12 @@ export function RegistrarJuizoNaCelula({
         {conclusao.length} de {LIMITE_DA_CONCLUSAO}
       </span>
 
-      {erro ? <p className="text-xs text-ink">{erro}</p> : null}
+      {erro ? (
+        // `role="alert"`: a recusa precisa ser ANUNCIADA, não só desenhada.
+        <p role="alert" className="text-xs text-ink">
+          {erro}
+        </p>
+      ) : null}
 
       <div className="flex items-center gap-2">
         <button

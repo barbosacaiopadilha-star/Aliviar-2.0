@@ -55,9 +55,21 @@ const GRAU_CURTO: Record<string, string> = {
   SEM_PREFERENCIA: "sem preferência",
 };
 
+/** O juízo vigente de cada profissional, por conceito. */
+export type JuizoVigente = Readonly<Record<string, Readonly<Record<string, string>>>>;
+
 type Props = MesaPorPreocupacoes & {
   caseId: string;
   profissionais: readonly { id: string; nome: string }[];
+  /**
+   * O que JÁ FOI JULGADO — `SIM-53`.
+   *
+   * A página já lia os julgamentos para contar as pendências do painel de
+   * atenção, e descartava o conteúdo. A célula continuava pedindo o juízo que
+   * já estava dado, enquanto o painel ao lado sabia que não estava pendente:
+   * duas verdades sobre o mesmo fato, na mesma tela.
+   */
+  juizoVigente?: JuizoVigente;
 };
 
 /**
@@ -157,11 +169,13 @@ function Celulas({
   subcriterionCode,
   nomePorId,
   natureza = null,
+  juizoVigente,
 }: {
   celulas: readonly Celula[];
   caseId: string;
   subcriterionCode: string;
   nomePorId: ReadonlyMap<string, string>;
+  juizoVigente?: JuizoVigente;
   /** Quando o juízo pertence a este ponto. `null` = não pedir aqui. */
   natureza?: "TECNICO" | "RELACIONAL" | null;
 }) {
@@ -170,8 +184,14 @@ function Celulas({
     <>
       {celulas.map((celula) => {
         const exigeJuizo = natureza !== null;
+        // `SIM-53`: o juízo já dado muda o que a célula DEVE. Ela deixa de
+        // cobrar e passa a mostrar — e o dono do próximo passo deixa de ser
+        // "você", porque não há próximo passo neste ponto.
+        const jaJulgado = juizoVigente?.[celula.profissionalId]?.[subcriterionCode] ?? null;
         const { titulo, detalhe } = textoDaCelula(celula, exigeJuizo);
-        const dono = donoDoProximoPasso(celula.motivo, exigeJuizo);
+        const dono = jaJulgado
+          ? "NINGUEM"
+          : donoDoProximoPasso(celula.motivo, exigeJuizo);
         const pendente = celula.motivo !== "CRUZADO";
         return (
           <td
@@ -179,17 +199,20 @@ function Celulas({
             className={`border-b border-border px-4 py-3 align-top ${CLASSE_DO_DONO[dono]}`}
             data-motivo={celula.motivo}
             data-dono={dono}
+            data-julgado={jaJulgado ? "sim" : undefined}
           >
             <span
               className={
-                pendente
+                pendente && !jaJulgado
                   ? "block text-sm font-medium text-ink-muted"
                   : "block text-sm font-medium text-ink"
               }
             >
-              {titulo}
+              {jaJulgado && exigeJuizo ? "Você já julgou" : titulo}
             </span>
-            {detalhe ? (
+            {jaJulgado && exigeJuizo ? (
+              <span className="mt-0.5 block text-xs text-ink">“{jaJulgado}”</span>
+            ) : detalhe ? (
               <span className="mt-0.5 block text-xs text-ink-muted">{detalhe}</span>
             ) : null}
             {natureza ? (
@@ -199,7 +222,7 @@ function Celulas({
                 professionalNome={nomePorId.get(celula.profissionalId) ?? "este profissional"}
                 subcriterionCode={subcriterionCode}
                 natureza={natureza}
-                conclusaoVigente={null}
+                conclusaoVigente={jaJulgado}
               />
             ) : null}
           </td>
@@ -227,31 +250,54 @@ function JuizoDoEixo({
   eixo,
   profissionais,
   caseId,
+  juizoVigente,
 }: {
   eixo: string;
   profissionais: readonly { id: string; nome: string }[];
   caseId: string;
+  juizoVigente?: JuizoVigente;
 }) {
   return (
     <>
-      {profissionais.map((profissional) => (
-        <td
-          key={profissional.id}
-          className="border-b border-border px-4 py-3 align-top border-l-2 border-l-[var(--color-attention)] bg-[var(--color-attention-surface)]"
-          data-ponto-de-juizo={eixo}
-          data-dono="VOCE"
-        >
-          <span className="block text-sm font-medium text-ink-muted">Exige juízo seu</span>
-          <RegistrarJuizoNaCelula
-            caseId={caseId}
-            professionalProfileId={profissional.id}
-            professionalNome={profissional.nome}
-            subcriterionCode={eixo}
-            natureza="TECNICO"
-            conclusaoVigente={null}
-          />
-        </td>
-      ))}
+      {profissionais.map((profissional) => {
+        // `SIM-53` — a mesma regra da célula: julgado, mostra; não julgado, pede.
+        const jaJulgado = juizoVigente?.[profissional.id]?.[eixo] ?? null;
+        return (
+          <td
+            key={profissional.id}
+            className={
+              "border-b border-border px-4 py-3 align-top " +
+              (jaJulgado
+                ? ""
+                : "border-l-2 border-l-[var(--color-attention)] bg-[var(--color-attention-surface)]")
+            }
+            data-ponto-de-juizo={eixo}
+            data-dono={jaJulgado ? "NINGUEM" : "VOCE"}
+            data-julgado={jaJulgado ? "sim" : undefined}
+          >
+            <span
+              className={
+                jaJulgado
+                  ? "block text-sm font-medium text-ink"
+                  : "block text-sm font-medium text-ink-muted"
+              }
+            >
+              {jaJulgado ? "Você já julgou" : "Exige juízo seu"}
+            </span>
+            {jaJulgado ? (
+              <span className="mt-0.5 block text-xs text-ink">“{jaJulgado}”</span>
+            ) : null}
+            <RegistrarJuizoNaCelula
+              caseId={caseId}
+              professionalProfileId={profissional.id}
+              professionalNome={profissional.nome}
+              subcriterionCode={eixo}
+              natureza="TECNICO"
+              conclusaoVigente={jaJulgado}
+            />
+          </td>
+        );
+      })}
     </>
   );
 }
@@ -396,6 +442,7 @@ export function ComparacaoPorPreocupacoes({
   pendentesDeConferencia,
   conferenciaCompleta,
   profissionais,
+  juizoVigente,
 }: Props) {
   const nomePorId = new Map(profissionais.map((p) => [p.id, p.nome]));
 
@@ -474,6 +521,7 @@ export function ComparacaoPorPreocupacoes({
                     subcriterionCode={linha.subcriterionCode}
                     nomePorId={nomePorId}
                     natureza={juizoExigidoEm(linha.subcriterionCode)}
+                    juizoVigente={juizoVigente}
                   />
                 )}
               </tr>
@@ -550,6 +598,7 @@ export function ComparacaoPorPreocupacoes({
                         eixo={grupo.eixo}
                         profissionais={profissionais}
                         caseId={caseId}
+                        juizoVigente={juizoVigente}
                       />
                     ) : (
                       <td

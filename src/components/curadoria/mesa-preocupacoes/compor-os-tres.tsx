@@ -34,6 +34,22 @@ type Props = {
   priorityProfileId: string | null;
   linhas: readonly Linha[];
   profissionais: readonly { id: string; nome: string }[];
+  /**
+   * A COMPOSIÇÃO QUE JÁ EXISTE — `SIM-49`.
+   *
+   * Este painel nascia sempre em branco. Depois de compor, reabrir a Mesa
+   * mostrava tudo vazio: a gravação é `upsert`, então recompor funcionava —
+   * mas o Curador via o branco e não sabia se tinha perdido, ou recompunha por
+   * engano algo que já estava decidido.
+   *
+   * A Mesa antiga tinha "Reabrir para corrigir"; a nova não tinha substituto.
+   */
+  jaComposta?: {
+    escolhidos: readonly { id: string; rationale: string; tradeOff: string }[];
+    composicao: string;
+    /** Entregue: a paciente já está lendo. Vira leitura, com a razão dita. */
+    entregue: boolean;
+  } | null;
 };
 
 type Escrita = { rationale: string; tradeOff: string };
@@ -60,15 +76,36 @@ function Contagem({ resumo }: { resumo: ResumoDoCandidato }) {
   );
 }
 
-export function ComporOsTres({ priorityProfileId, linhas, profissionais }: Props) {
+export function ComporOsTres({
+  priorityProfileId,
+  linhas,
+  profissionais,
+  jaComposta = null,
+}: Props) {
   const resumos = useMemo(
     () => resumirCandidatos({ linhas, profissionais }),
     [linhas, profissionais],
   );
 
-  const [escolhidos, setEscolhidos] = useState<string[]>([]);
-  const [escrita, setEscrita] = useState<Record<string, Escrita>>({});
-  const [composicao, setComposicao] = useState("");
+  // `SIM-49`: abre com o que já foi decidido, não em branco.
+  //
+  // Aqui o pré-preenchimento é CERTO, e a diferença em relação ao juízo
+  // (G-2.3-5, que exige nascer vazio) não é inconsistência: lá o campo é uma
+  // conclusão nova sobre uma pessoa, e chegar preenchido faz assinar sem
+  // pensar; aqui o campo é a decisão que o próprio Curador já tomou e
+  // registrou. Mostrar o que ele escreveu não é sugerir — é lembrar.
+  const [escolhidos, setEscolhidos] = useState<string[]>(
+    () => jaComposta?.escolhidos.map((e) => e.id) ?? [],
+  );
+  const [escrita, setEscrita] = useState<Record<string, Escrita>>(() =>
+    Object.fromEntries(
+      (jaComposta?.escolhidos ?? []).map((e) => [
+        e.id,
+        { rationale: e.rationale, tradeOff: e.tradeOff },
+      ]),
+    ),
+  );
+  const [composicao, setComposicao] = useState(() => jaComposta?.composicao ?? "");
   const [erro, setErro] = useState<string | null>(null);
   const [salvo, setSalvo] = useState(false);
   const [salvando, iniciar] = useTransition();
@@ -127,8 +164,11 @@ export function ComporOsTres({ priorityProfileId, linhas, profissionais }: Props
       <header className="flex flex-col gap-1">
         <h3 className="text-base font-medium text-ink">Os três caminhos</h3>
         <p className="max-w-3xl text-sm text-ink-muted">
-          Escolha três e escreva por que cada um está aqui. Nenhuma ordem é sugerida — os
-          cartões saem na ordem em que os profissionais entraram na Rede deste Case.
+          {jaComposta?.entregue
+            ? "Esta Curadoria já foi entregue — o que está abaixo é o que ela recebeu, e não muda mais. Corrigir depois da entrega exige compor uma nova."
+            : jaComposta
+              ? "Estes três já foram compostos. O que está escrito é o seu, e você pode revisar antes de emitir."
+              : "Escolha três e escreva por que cada um está aqui. Nenhuma ordem é sugerida — os cartões saem na ordem em que os profissionais entraram na Rede deste Case."}
         </p>
       </header>
 

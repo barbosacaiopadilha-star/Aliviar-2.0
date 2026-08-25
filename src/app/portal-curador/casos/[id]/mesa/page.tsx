@@ -21,7 +21,7 @@ import {
   loadCurrentPracticeEvidence,
   loadEvidenceDivergences,
 } from "@/modules/curadoria/evidencias-pratica-repository";
-import { lacunasDeJuizo } from "@/modules/curadoria/julgamentos";
+import { juizosVigentesPorConceito, lacunasDeJuizo } from "@/modules/curadoria/julgamentos";
 import { loadJulgamentosDaAvaliacao } from "@/modules/curadoria/julgamentos-repository";
 import { getActivePriorityProfile } from "@/modules/curadoria/repository";
 import { MANDATORY_FILTER_LABELS, type MandatoryFilterKind } from "@/modules/curadoria/types";
@@ -161,7 +161,7 @@ export default async function MesaPorPreocupacoesPage({
   // ordem em que ela lê é a que o Curador decidiu ao compor.
   const { data: selecao } = await supabase
     .from("curated_selections")
-    .select("id, composition_rationale, curated_selection_options(professional_profile_id, rationale, position)")
+    .select("id, composition_rationale, curated_selection_options(professional_profile_id, rationale, trade_off, position)")
     .eq("case_id", id)
     .order("created_at", { ascending: false })
     .limit(1)
@@ -195,6 +195,7 @@ export default async function MesaPorPreocupacoesPage({
         curated_selection_options: {
           professional_profile_id: string;
           rationale: string;
+          trade_off: string | null;
           position: number;
         }[];
       }
@@ -256,16 +257,36 @@ export default async function MesaPorPreocupacoesPage({
     relacional.byProfessional.map((leitura) => [leitura.professionalProfileId, leitura]),
   );
 
+  // Uma leitura só, dois consumidores. `SIM-53`: a página já carregava os
+  // julgamentos para CONTAR as pendências do painel de atenção, e jogava fora
+  // o conteúdo — então a célula continuava pedindo o juízo que já estava dado,
+  // enquanto o painel ao lado sabia que não estava. Duas verdades sobre o
+  // mesmo fato, na mesma tela, por falta de passar adiante o que já se tinha.
+  const juizosPorProfissional = await Promise.all(
+    idsElegiveis.map(async (professionalProfileId) => {
+      const julgamentos = await loadJulgamentosDaAvaliacao(supabase, id, professionalProfileId);
+      const declarados = (relacionalPorId.get(professionalProfileId)?.readings ?? [])
+        .filter((reading) => reading.kind === "JUIZO_HUMANO")
+        .map((reading) => reading.code);
+      return { professionalProfileId, julgamentos, declarados };
+    }),
+  );
+
   const juizosPendentesPorId = new Map(
-    await Promise.all(
-      idsElegiveis.map(async (professionalProfileId): Promise<[string, number]> => {
-        const julgamentos = await loadJulgamentosDaAvaliacao(supabase, id, professionalProfileId);
-        const declarados = (relacionalPorId.get(professionalProfileId)?.readings ?? [])
-          .filter((reading) => reading.kind === "JUIZO_HUMANO")
-          .map((reading) => reading.code);
-        return [professionalProfileId, lacunasDeJuizo(julgamentos, declarados).length];
-      }),
-    ),
+    juizosPorProfissional.map(({ professionalProfileId, julgamentos, declarados }) => [
+      professionalProfileId,
+      lacunasDeJuizo(julgamentos, declarados).length,
+    ]),
+  );
+
+  // O juízo VIGENTE por (profissional × conceito) — o que a célula precisa
+  // para dizer "Rever juízo" em vez de "Registrar juízo", e para mostrar o que
+  // já foi dito. `SUPERADO` e `RETIRADO` não entram: o que vale é o vigente.
+  const juizoVigente: Record<string, Record<string, string>> = Object.fromEntries(
+    juizosPorProfissional.map(({ professionalProfileId, julgamentos }) => [
+      professionalProfileId,
+      juizosVigentesPorConceito(julgamentos),
+    ]),
   );
 
   // "Falta descobrir" — a célula cuja cor aponta a operação. Sai da própria
@@ -336,6 +357,49 @@ export default async function MesaPorPreocupacoesPage({
       nome: nomes.get(opcao.professional_profile_id) ?? "profissional",
       rationale: opcao.rationale,
     }));
+
+  // `SIM-52`: o editor do Relatório abre com o que já foi escrito. Sem isto,
+  // uma Curadoria ENTREGUE aparecia com os campos vazios e a frase "falta
+  // preencher" — sobre o documento que a paciente já está lendo.
+  const { data: opcoesDoRelatorio } = relatorio
+    ? await supabase
+        .from("curadoria_report_options")
+        .select("professional_profile_id, justification, relation_to_weights, attention_points")
+        .eq("report_id", (relatorio as { id: string }).id)
+    : { data: null };
+
+  const jaEscrito = (opcoesDoRelatorio ?? []).map((opcao) => {
+    const linha = opcao as {
+      professional_profile_id: string;
+      justification: string | null;
+      relation_to_weights: string | null;
+      attention_points: string[] | null;
+    };
+    return {
+      id: linha.professional_profile_id,
+      justification: linha.justification ?? "",
+      relationToWeights: linha.relation_to_weights ?? "",
+      attentionPoints: linha.attention_points ?? [],
+    };
+  });
+
+  const entregue = Boolean((relatorio as { delivered_at: string | null } | null)?.delivered_at);
+
+  // `SIM-49`: o painel de composição abre com o que já foi decidido. A ordem é
+  // a que o Curador escolheu ao compor — `position`, nunca a de chegada.
+  const jaComposta = composta
+    ? {
+        escolhidos: [...composta.curated_selection_options]
+          .sort((a, b) => a.position - b.position)
+          .map((opcao) => ({
+            id: opcao.professional_profile_id,
+            rationale: opcao.rationale,
+            tradeOff: opcao.trade_off ?? "",
+          })),
+        composicao: composta.composition_rationale ?? "",
+        entregue,
+      }
+    : null;
 
   return (
     <main className="mx-auto flex max-w-[80rem] flex-col gap-8 px-6 py-10">
@@ -416,7 +480,7 @@ export default async function MesaPorPreocupacoesPage({
       </div>
 
       <div id="o-que-ela-pediu" className="scroll-mt-4">
-        <ComparacaoPorPreocupacoes caseId={id} {...mesa} />
+        <ComparacaoPorPreocupacoes caseId={id} {...mesa} juizoVigente={juizoVigente} />
       </div>
 
       {/* A BASE DE EVIDÊNCIAS vem DEPOIS da comparação, e a ordem é o
@@ -469,6 +533,7 @@ export default async function MesaPorPreocupacoesPage({
           priorityProfileId={(perfil as { id: string } | null)?.id ?? null}
           linhas={mesa.linhas}
           profissionais={mesa.profissionais}
+          jaComposta={jaComposta}
         />
       </div>
 
@@ -479,6 +544,8 @@ export default async function MesaPorPreocupacoesPage({
           profissionais={mesa.profissionais}
           escolhidos={escolhidos}
           composicaoJaEscrita={composta?.composition_rationale ?? ""}
+          jaEscrito={jaEscrito}
+          entregue={entregue}
         />
       </div>
 
@@ -487,7 +554,7 @@ export default async function MesaPorPreocupacoesPage({
         curatedSelectionId={(selecao as { id: string } | null)?.id ?? null}
         nomeDaPaciente={nomeDaPaciente}
         emitido={Boolean((relatorio as { emitted_at: string | null } | null)?.emitted_at)}
-        entregue={Boolean((relatorio as { delivered_at: string | null } | null)?.delivered_at)}
+        entregue={entregue}
         temRelatorio={Boolean(relatorio)}
       />
     </main>

@@ -149,3 +149,28 @@ export type RegimeDaAvaliacao = "JUIZO" | "LEGADO_6XN";
 export function regimeDaAvaliacao(flagLegado: string | undefined): RegimeDaAvaliacao {
   return flagLegado === "1" || flagLegado?.toUpperCase() === "LEGADO_6XN" ? "LEGADO_6XN" : "JUIZO";
 }
+
+/**
+ * O JUÍZO VIGENTE DE CADA CONCEITO — a leitura que a célula da Mesa mostra.
+ *
+ * @metodo ADR-067 §13 · CONTRATO_2_4 §12 — "a versão mais recente em VIGENTE"
+ *
+ * Por que mora AQUI e não na rota: em `curator_judgments` o `state` é o estado
+ * corrente por contrato, arbitrado por índice único parcial no banco — e esse
+ * privilégio é deste módulo. A guarda `C-05` isenta este arquivo por nome, e
+ * fez bem: quando a leitura foi escrita dentro da rota da Mesa (`SIM-53`), a
+ * guarda a acusou na hora. Ela estava certa — a regra de "o que é o juízo de
+ * agora" é domínio, e domínio não mora dentro de uma página.
+ *
+ * Puro: sem React, sem banco.
+ */
+export function juizosVigentesPorConceito(
+  julgamentos: readonly JulgamentoLido[],
+): Record<string, string> {
+  const vigentes: Record<string, string> = {};
+  for (const julgamento of julgamentos) {
+    if (julgamento.state !== "VIGENTE") continue;
+    vigentes[julgamento.subcriterionCode] = julgamento.conclusao;
+  }
+  return vigentes;
+}
