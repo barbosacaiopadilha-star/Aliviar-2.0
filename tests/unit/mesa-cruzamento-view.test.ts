@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildComparison,
+  ELIGIBILITY_LABELS,
   classifyProfessional,
   headerCounts,
   nextStepSentence,
@@ -347,5 +348,57 @@ describe("Comparação — explica, não elege", () => {
     expect(stateSentence("NAO_CONFIRMADO")).toBe("Não confirmado");
     expect(stateSentence("NAO_INFORMADO")).toBe("Analisado, mas sem informação suficiente");
     expect(stateSentence(null)).toBe("Ainda não investigado");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// O rótulo não nomeia a causa — achado da travessia de 25/08
+// ---------------------------------------------------------------------------
+//
+// "Eliminado pela área" era verdade quando a área era a única porta. Desde a
+// ADR-088 o filtro obrigatório também elimina, e o selo passou a contradizer a
+// frase logo abaixo dele: uma profissional com área COMPATÍVEL saiu pelo
+// filtro de cuidado contínuo e apareceu como "eliminado pela área".
+//
+// Duas afirmações contrárias sobre o mesmo fato, na mesma ficha.
+
+describe("Rótulo de eliminação — o selo diz o estado, a frase diz a causa", () => {
+  it("o rótulo não atribui a eliminação à área", () => {
+    expect(ELIGIBILITY_LABELS.ELIMINADO).toBe("Eliminado");
+    expect(ELIGIBILITY_LABELS.ELIMINADO).not.toContain("área");
+  });
+
+  it("eliminado por FILTRO tem área compatível — e a frase é quem explica", () => {
+    const resultado = classifyProfessional(
+      "p1",
+      { compatibility: "COMPATIVEL", confirmedByCurator: false, rationale: null },
+      [
+        {
+          label: "Cuidado contínuo",
+          requirement: "obrigatório",
+          professionalValue: "não oferece",
+          passes: false,
+          origin: "VERIFICADO",
+          factDate: "2026-08-25T00:00:00.000Z",
+        },
+      ],
+    );
+
+    expect(resultado.state).toBe("ELIMINADO");
+    // A causa está na frase, nomeada e completa…
+    expect(resultado.reason).toContain("Cuidado contínuo");
+    expect(resultado.reason).toContain("com verificação");
+    // …e o selo não inventa uma causa que não é a dela.
+    expect(ELIGIBILITY_LABELS[resultado.state]).not.toContain("área");
+  });
+
+  it("eliminado pela ÁREA continua explicado pela frase, sem depender do selo", () => {
+    const resultado = classifyProfessional(
+      "p1",
+      { compatibility: "INCOMPATIVEL", confirmedByCurator: false, rationale: "Atua em joelho." },
+      [],
+    );
+    expect(resultado.state).toBe("ELIMINADO");
+    expect(resultado.reason).toContain("incompatível");
   });
 });

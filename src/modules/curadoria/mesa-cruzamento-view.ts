@@ -47,7 +47,18 @@ export type EligibilityState =
 export const ELIGIBILITY_LABELS: Record<EligibilityState, string> = {
   AGUARDANDO_DECLARACAO: "Aguardando declaração",
   ELEGIVEL: "Elegível",
-  ELIMINADO: "Eliminado pela área",
+  // O RÓTULO NÃO NOMEIA A CAUSA — achado da travessia de 25/08.
+  //
+  // Ele dizia "Eliminado pela área", e essa era a única causa possível quando
+  // foi escrito. Desde que o filtro obrigatório passou a eliminar (ADR-088), o
+  // selo mente em parte dos casos: na travessia, uma profissional com a área
+  // declarada COMPATÍVEL saiu pelo filtro de cuidado contínuo e apareceu como
+  // "eliminado pela área" — com a frase logo abaixo dizendo a causa certa.
+  //
+  // Duas afirmações contrárias sobre o mesmo fato, na mesma ficha. O selo
+  // passa a dizer só o ESTADO; a causa é da frase, que já a diz por inteiro e
+  // sabe distinguir área de filtro, verificado de autodeclarado.
+  ELIMINADO: "Eliminado",
   PENDENTE_DE_INFORMACAO: "Pendente de verificação",
 };
 
