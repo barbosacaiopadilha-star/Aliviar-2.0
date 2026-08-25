@@ -117,7 +117,15 @@ export function EmitirEEntregar({
         </p>
       </header>
 
-      {erro ? <p className="text-sm text-ink">{erro}</p> : null}
+      {/* `role="alert"` — a recusa da emissão precisa ser ANUNCIADA.
+          Este é o ponto onde a guarda da ADR-094 fala, e ela fala uma frase
+          longa que nomeia quem e o quê. Sem isto, quem usa leitor de tela
+          clica em "Emitir", nada acontece, e nada é dito. */}
+      {erro ? (
+        <p role="alert" className="text-sm text-ink">
+          {erro}
+        </p>
+      ) : null}
 
       {!jaEmitido ? (
         <div className="flex items-center gap-3">

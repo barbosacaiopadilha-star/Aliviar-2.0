@@ -2453,6 +2453,39 @@ vão divergir.
 **Enquanto não houver decisão, a guarda é só de aplicação — e isto está dito
 aqui para não virar a próxima linha que alguém acha que já foi feita.**
 
+
+### A guarda exercitada (25/08) — Case novo, de ponta a ponta
+
+A saída **A** foi testada no caminho real, num Case criado para isso: paciente
+nova, história semeada e marcada como semeada, Case aberto pela tela do
+Administrador, seis profissionais na Rede, quatro áreas declaradas, as 29
+importâncias classificadas, três caminhos compostos com razão escrita, e o
+relatório salvo — **com zero juízos registrados**, confirmado no banco antes do
+clique.
+
+A emissão recusou, e recusou dizendo:
+
+> O Relatório não pode ser emitido: falta o seu juízo sobre **Dra. Helena
+> Vasconcelos** (Formação Profissional, Experiência Profissional e Histórico
+> Profissional), **Dra. Cecilia Andrade** (…) e **Dr. Otavio Lemos** (…). A
+> ADR-067 §5 exige o juízo humano de cada caminho que ela vai receber — e se o
+> que você sabe não permite concluir, isso também é juízo, e pode ser escrito
+> assim.
+
+Os quatro recortes da ADR se confirmaram na prática: **só os três
+selecionados** (o quarto elegível não foi cobrado), **só os exigidos** (três
+técnicos por profissional, e nenhum relacional — este Case não declarou grau
+para eles), **nome humano do conceito** e **nada de código cru**.
+
+E o estado depois da recusa: `emitted_at` nulo, `delivered_at` nulo, e
+`approved_at` **também nulo** — a conferência roda antes de `approveReport`,
+então a assinatura do Curador nem chegou a ser aplicada a um documento que não
+podia sair.
+
+**Um defeito encontrado no mesmo ato, e corrigido:** a recusa aparecia sem
+`role="alert"`. Quem usa leitor de tela clicava em "Emitir", nada acontecia, e
+nada era dito — justamente na frase mais importante que esta tela produz.
+
 ### O que fecha esta ADR
 
 1. Decisão do Fundador entre **A** e **B**;
