@@ -1001,10 +1001,44 @@
   opacity: var(--veu-gravacao-forca, 0);
   -webkit-mask-image: var(--veu-gravacao, none);
   mask-image: var(--veu-gravacao, none);
-  -webkit-mask-size: cover;
-  mask-size: cover;
+  -webkit-mask-size: var(--veu-gravacao-tamanho, cover);
+  mask-size: var(--veu-gravacao-tamanho, cover);
+  -webkit-mask-position: var(--veu-gravacao-posicao, center);
+  mask-position: var(--veu-gravacao-posicao, center);
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
+}
+
+/* --------------------------------------------------------------------------
+   O VIDRO GRAVADO — a marca d'água que só a luz revela (27/08)
+
+   Acende a camada acima usando o PRÓPRIO arquivo do símbolo como máscara:
+   onde ele é opaco o vidro fica fosco, onde é transparente fica liso. O
+   desenho nasce da diferença de ACABAMENTO, nunca de tinta — que é o ponto
+   do vidro jateado, e a ideia do Fundador registrada no `SIM-41`.
+
+   TRÊS REGRAS, e as três vêm de defeito já cometido nesta casa:
+
+   1 · UM cartão só. São cinco vidros na Landing; gravar a marca em todos é
+       o 'papel de parede corporativo' que o próprio SIM-41 nomeia como o
+       oposto do que se quer. Fica na Recepção, que é a chegada.
+   2 · NO CANTO, longe do texto. O véu de 42% dá às letras um fundo
+       UNIFORME; uma gravação por baixo criaria manchas de luminosidade
+       atrás delas — o `SIM-61` em miniatura, e aquilo custou a sessão
+       inteira para morrer.
+   3 · ADITIVA, nunca subtrativa. O fosco é linho, ou seja, CLAREIA. Sobre
+       tinta escura isso só aumenta contraste: no pior caso ajuda, nunca
+       atrapalha.
+
+   A força é 0.10 de propósito. Marca d'água em papel bom se vê quando a luz
+   bate e desaparece quando não bate — se ela se impõe, virou logotipo
+   grande, que é outra coisa e já existe no cabeçalho.
+   -------------------------------------------------------------------------- */
+.landing-editorial .landing-card-gravado {
+  --veu-gravacao: url("/brand/aliviar-simbolo.png");
+  --veu-gravacao-forca: 0.1;
+  --veu-gravacao-tamanho: 42%;
+  --veu-gravacao-posicao: right -8% bottom -6%;
 }
 
 .landing-editorial .landing-veu > * {

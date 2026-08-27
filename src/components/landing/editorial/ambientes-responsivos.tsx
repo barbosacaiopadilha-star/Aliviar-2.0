@@ -105,8 +105,11 @@ export function AmbienteRecepcao() {
     >
       {/* A Recepção fica com UM card só: a promessa, os três passos e a
           porta. O vídeo desceu para o topo livre da sala de curadoria
-          (risco do Fundador, 23/08) — pousa onde o trabalho acontece. */}
-      <div className="landing-veu landing-card-vidro">
+          (risco do Fundador, 23/08) — pousa onde o trabalho acontece.
+
+          `landing-card-gravado` (27/08): é o ÚNICO cartão com a marca
+          jateada no vidro. Um só, e de propósito — ver a doutrina no CSS. */}
+      <div className="landing-veu landing-card-vidro landing-card-gravado">
         <h1 className="landing-hero-title text-[1.5rem] sm:text-4xl lg:text-[3.25rem]">
           Uma decisão de saúde importante.
           <br />
