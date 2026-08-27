@@ -45,11 +45,18 @@ export function ConviteDeEntender() {
       variant="secondary"
       className="mt-4 w-auto self-start px-6"
     >
+      {/* `priority` porque este botão vive na PRIMEIRA TELA. O padrão do
+          `next/image` é `loading="lazy"`, e medido na página no ar era isso
+          que acontecia: o botão desenhava primeiro e o símbolo entrava
+          depois — pop-in bem no herói, na única imagem da marca que a
+          pessoa vê junto do convite. O cabeçalho já trata o mesmo arquivo
+          assim, pelo mesmo motivo. */}
       <Image
         src="/brand/aliviar-simbolo.png"
         alt=""
         width={256}
         height={266}
+        priority
         className="h-5 w-auto"
       />
       O que é a Aliviar
