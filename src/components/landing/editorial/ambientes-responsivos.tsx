@@ -51,6 +51,7 @@ function AmbienteSection({
   prioridade,
   posicaoCard,
   children,
+  objetoDaCena,
   rotulo,
   posicaoMobile,
   posicaoDesktop,
@@ -65,6 +66,20 @@ function AmbienteSection({
    */
   posicaoCard: "inferior" | "superior" | "entre";
   children: React.ReactNode;
+  /**
+   * Objeto que pousa na CENA, não no fluxo do conteúdo — entra como filho
+   * direto da `<section>`, que é quem tem a fotografia e o
+   * `position: relative`.
+   *
+   * Existe porque a primeira versão do Livro da Casa foi posicionada dentro
+   * de `.landing-ambiente-conteudo`, e aquele container NÃO cobre a seção:
+   * ele é dimensionado pelo próprio conteúdo. O efeito, medido em produção,
+   * foi que `top: 5rem` virou 169px na tela e o livro encostou no cartão da
+   * promessa — folga de -1px, em 375×812 e em 357×415. Ancorado aqui, a
+   * distância passa a ser da borda da cena, que é o que o desenho quer
+   * dizer.
+   */
+  objetoDaCena?: React.ReactNode;
   rotulo: string;
   posicaoMobile?: string;
   posicaoDesktop?: string;
@@ -77,6 +92,7 @@ function AmbienteSection({
         posicaoMobile={posicaoMobile}
         posicaoDesktop={posicaoDesktop}
       />
+      {objetoDaCena}
       <div className={`landing-ambiente-conteudo landing-ambiente-conteudo--${posicaoCard}`}>
         {children}
       </div>
@@ -102,15 +118,14 @@ export function AmbienteRecepcao() {
       rotulo="Recepção"
       posicaoMobile="center 22%"
       posicaoDesktop="center"
+      /* O LIVRO DA CASA (27/08) · pousa no vão acima das pessoas — a
+         "parede de cima" que o Fundador apontou. É o degrau para quem quer
+         entender antes de topar uma conversa, e leva à `/o-que-e`.
+         Entra por `objetoDaCena`, e não no fluxo do conteúdo: ele pertence
+         à FOTOGRAFIA, não ao cartão. Ver a nota naquela prop — a primeira
+         versão morava aqui dentro e encostava no cartão da promessa. */
+      objetoDaCena={<LivroDaCasa />}
     >
-      {/* O LIVRO DA CASA (27/08) · pousa no vão acima das pessoas — a
-          "parede de cima" que o Fundador apontou. É o degrau para quem
-          quer entender antes de topar uma conversa, e leva à `/o-que-e`.
-          Fica FORA do card de propósito: o card é a promessa; o livro é o
-          convite a saber mais, e os dois não disputam a mesma superfície.
-          Doutrina de movimento e legibilidade em `livro-da-casa.tsx`. */}
-      <LivroDaCasa />
-
       {/* A Recepção fica com UM card só: a promessa, os três passos e a
           porta. O vídeo desceu para o topo livre da sala de curadoria
           (risco do Fundador, 23/08) — pousa onde o trabalho acontece. */}

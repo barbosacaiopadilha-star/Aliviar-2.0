@@ -1802,3 +1802,13 @@
     display: none;
   }
 }
+
+/* Onde não há parede, não há convite. Em telas muito baixas (celular
+   deitado, janela espremida) a cena não tem vão acima das pessoas: o
+   livro sairia por cima delas ou encostaria no cartão da promessa.
+   Ele some, e ninguém perde caminho — `/o-que-e` continua no rodapé. */
+@media (max-height: 620px) {
+  .landing-editorial .landing-livro {
+    display: none;
+  }
+}
