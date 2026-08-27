@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 
 import { CenaResponsiva } from "@/components/landing/editorial/cena-responsiva";
+import { LivroDaCasa } from "@/components/landing/editorial/livro-da-casa";
 import { VideoDaCasa } from "@/components/landing/editorial/video-da-casa";
 import { LinkButton } from "@/components/landing/link-button";
 
@@ -102,6 +103,14 @@ export function AmbienteRecepcao() {
       posicaoMobile="center 22%"
       posicaoDesktop="center"
     >
+      {/* O LIVRO DA CASA (27/08) · pousa no vão acima das pessoas — a
+          "parede de cima" que o Fundador apontou. É o degrau para quem
+          quer entender antes de topar uma conversa, e leva à `/o-que-e`.
+          Fica FORA do card de propósito: o card é a promessa; o livro é o
+          convite a saber mais, e os dois não disputam a mesma superfície.
+          Doutrina de movimento e legibilidade em `livro-da-casa.tsx`. */}
+      <LivroDaCasa />
+
       {/* A Recepção fica com UM card só: a promessa, os três passos e a
           porta. O vídeo desceu para o topo livre da sala de curadoria
           (risco do Fundador, 23/08) — pousa onde o trabalho acontece. */}
