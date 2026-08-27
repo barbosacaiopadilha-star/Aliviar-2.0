@@ -22,9 +22,20 @@ const FOOTER_LINKS = [
   // conferência do deploy de 23/08 o pegou apontando para o vazio. As
   // dúvidas passam a viver na conversa, que é o destino abaixo.
   { label: "Nossa curadoria", href: "#como-funciona" },
+  // 27/08 · O DEGRAU QUE FALTAVA. A Landing ia de quatro ambientes direto
+  // para a conversa; quem queria entender antes de topar uma ligação não
+  // tinha para onde ir. A página é aditiva — nenhum ambiente foi tocado.
+  { label: "O que é a Aliviar", href: "/o-que-e" },
   // C1 (auditoria 22/08): a mesma porta do Hero e do convite — a conversa.
   { label: "Solicitar atendimento", href: "/solicitar-atendimento" },
   { label: "Entrar", href: "/login" },
+  // 27/08 · As duas estavam ÓRFÃS: as páginas existiam e estavam no ar, e
+  // nenhuma navegação levava a elas. Quando a política for publicada, ela
+  // nasceria invisível. Hoje as páginas dizem honestamente que o documento
+  // ainda não foi publicado — o que também é informação, e é melhor que
+  // não haver caminho nenhum.
+  { label: "Privacidade", href: "/privacidade" },
+  { label: "Termos de uso", href: "/termos" },
 ] as const;
 
 export function PublicFooter() {

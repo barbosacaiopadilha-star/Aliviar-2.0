@@ -47,6 +47,14 @@ const PUBLIC_PATHS = new Set([
   // o aplicativo não guarda IP, nem bruto nem derivado.
   "/solicitar-atendimento",
   "/api/solicitacoes-atendimento",
+  // 27/08 · "O que é a Aliviar" — a página para quem quer entender ANTES de
+  // topar uma conversa. Ela hoje passaria de qualquer forma, porque não cai
+  // em nenhum `PROTECTED_PREFIXES` e o middleware só desvia o que é
+  // explicitamente protegido. Está declarada assim mesmo, e de propósito:
+  // depender de uma omissão é o mesmo desenho que produziu o `FUN-01`, em
+  // que uma rota pública fora desta lista devolvia 302 para o login e o dado
+  // morria em silêncio. Público por declaração, nunca por descuido.
+  "/o-que-e",
 ]);
 
 // Os Portais SAÍRAM daqui na MISSÃO 209, Fase 4: agora leem o banco de
