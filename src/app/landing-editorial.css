@@ -1012,7 +1012,7 @@
 /* --------------------------------------------------------------------------
    O VIDRO GRAVADO — a marca d'água que só a luz revela (27/08)
 
-   Acende a camada acima usando o PRÓPRIO arquivo do símbolo como máscara:
+   Acende a camada acima usando o PRÓPRIO arquivo da marca como máscara:
    onde ele é opaco o vidro fica fosco, onde é transparente fica liso. O
    desenho nasce da diferença de ACABAMENTO, nunca de tinta — que é o ponto
    do vidro jateado, e a ideia do Fundador registrada no `SIM-41`.
@@ -1035,10 +1035,25 @@
    grande, que é outra coisa e já existe no cabeçalho.
    -------------------------------------------------------------------------- */
 .landing-editorial .landing-card-gravado {
-  --veu-gravacao: url("/brand/aliviar-simbolo.png");
-  --veu-gravacao-forca: 0.1;
-  --veu-gravacao-tamanho: 42%;
-  --veu-gravacao-posicao: right -8% bottom -6%;
+  /* A MARCA INTEIRA, não só o símbolo (decisão do Fundador, 27/08).
+     `aliviar-logo.png` é o lockup completo — símbolo, nome e assinatura —
+     em 640×606 com alfa. Para máscara só o alfa importa; a cor do arquivo
+     é irrelevante, e por isso a gravação nunca briga com a paleta. */
+  --veu-gravacao: url("/brand/aliviar-logo.png");
+
+  /* 0.13 e não 0.10: o lockup tem TRAÇO FINO — os fios que cercam
+     'CURADORIA MÉDICA' e 'INDEPENDENTE' têm um ou dois pixels. Na força do
+     símbolo sozinho eles simplesmente sumiam, e a marca gravada aparecia
+     pela metade, que é pior que não aparecer. Ainda é marca d'água: some
+     quando a luz não bate. */
+  --veu-gravacao-forca: 0.13;
+
+  /* Maior que a versão do símbolo pelo mesmo motivo: a assinatura só se
+     insinua se houver tamanho. Continua sangrando pela borda — marca
+     d'água inteira e centrada viraria logotipo grande, que é outra coisa
+     e já existe no cabeçalho. */
+  --veu-gravacao-tamanho: 62%;
+  --veu-gravacao-posicao: right -10% bottom -8%;
 }
 
 .landing-editorial .landing-veu > * {
