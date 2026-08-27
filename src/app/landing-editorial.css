@@ -545,12 +545,12 @@
   display: none;
 }
 
-/* 27/08 · A navegação aparece a partir do TABLET, não só no computador.
-   Eram 1024px para dois rótulos curtos ("Nossa curadoria" e "A escolha"):
-   entre 768 e 1023px sobrava largura e mesmo assim a pessoa recebia um
-   hambúrguer — um toque a mais para chegar ao que já cabia na barra. O
-   ponto de troca acompanha o CONTEÚDO, não o rótulo do dispositivo. */
-@media (min-width: 768px) {
+/* O ponto de troca é 1024px. Chegou a ir para 768 em 27/08 — a ideia era
+   que dois rótulos curtos cabiam na barra do tablet e o hambúrguer ali era
+   um toque desnecessário. O Fundador reverteu no mesmo dia, vendo a barra
+   montada. Fica registrado para ninguém refazer o mesmo caminho achando
+   que é melhoria não tentada. */
+@media (min-width: 1024px) {
   .landing-nav {
     display: flex;
     align-items: center;
@@ -597,7 +597,7 @@
 }
 
 /* Par do ponto de troca da navegação: onde ela entra, o menu sai. */
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .landing-drawer-botao {
     display: none;
   }
