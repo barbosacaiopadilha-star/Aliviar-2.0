@@ -1688,9 +1688,26 @@
   padding: 0 0.25rem;
   margin-left: -0.25rem;
 
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
   color: var(--color-brand-primary);
-  text-decoration: none;
+
+  /* SUBLINHADO PERMANENTE, e a razão é dura. A primeira versão usava o
+     `link-underline` da fundação, que cresce do zero NO HOVER — e no
+     celular não existe hover. Visto na tela, o link virava texto azul
+     claro solto, indistinguível de uma legenda, justamente para a maioria
+     de quem chega. Um convite que não parece clicável não é convite.
+     A linha fica sempre lá, a 40%, e o hover a INTENSIFICA em vez de
+     revelar o que não estava. */
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--color-brand-primary) 40%, transparent);
+  text-underline-offset: 4px;
+  transition: text-decoration-color var(--duration-fast, 160ms) var(--ease-natural);
+}
+
+.landing-editorial .landing-convite:hover,
+.landing-editorial .landing-convite:focus-visible {
+  text-decoration-color: var(--color-brand-primary);
 }
 
 .landing-editorial .landing-convite:focus-visible {

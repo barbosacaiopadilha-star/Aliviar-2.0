@@ -22,16 +22,21 @@ import Link from "next/link";
  * nenhum mente para quem ler o código depois, e esta casa já rejeitou uma
  * palavra hoje pelo mesmo motivo.
  *
- * MOVIMENTO. O sublinhado é o `link-underline` da fundação — a linha que
- * cresce do zero quando alguém chega. É a única animação aqui, ela responde
- * a interação, e por isso passa pelo §230: *movimento existe para explicar
- * de onde algo veio, nunca para chamar atenção*. A seta desloca um fio no
- * mesmo gesto, dizendo a direção. Nada pulsa, nada se repete sozinho.
+ * O SUBLINHADO É PERMANENTE, e isso foi decidido olhando a tela. A versão
+ * anterior usava o `link-underline` da fundação, que cresce do zero no
+ * hover — e no CELULAR não existe hover. O link virava texto azul claro
+ * solto, indistinguível de legenda, para a maioria de quem chega. Agora a
+ * linha está sempre lá, a 40%, e o hover a intensifica.
+ *
+ * MOVIMENTO. A seta desloca 2px quando alguém chega, dizendo a direção, e
+ * a linha muda de tom. As duas respondem a interação e passam pelo §230:
+ * *movimento existe para explicar de onde algo veio, nunca para chamar
+ * atenção*. Nada pulsa, nada se repete sozinho.
  */
 export function ConviteDeEntender() {
   return (
     <Link href="/o-que-e" className="landing-convite">
-      <span className="link-underline">O que é a Aliviar</span>
+      <span>O que é a Aliviar</span>
       {/* A seta é decorativa: o destino já está dito na palavra ao lado, e
           um leitor de tela não ganha nada ouvindo "seta para a direita". */}
       <span aria-hidden="true" className="landing-convite-seta">
