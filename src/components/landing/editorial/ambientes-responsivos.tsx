@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 
 import { CenaResponsiva } from "@/components/landing/editorial/cena-responsiva";
-import { LivroDaCasa } from "@/components/landing/editorial/livro-da-casa";
+import { ConviteDeEntender } from "@/components/landing/editorial/convite-de-entender";
 import { VideoDaCasa } from "@/components/landing/editorial/video-da-casa";
 import { LinkButton } from "@/components/landing/link-button";
 
@@ -134,13 +134,13 @@ export function AmbienteRecepcao() {
 
         <p className="landing-microtexto">Sem dados de saúde agora.</p>
 
-        {/* O LIVRO DA CASA (27/08) · a saída de quem NÃO está pronto para
+        {/* O CONVITE DE ENTENDER (27/08) · a saída de quem NÃO está pronto para
             conversar. Fica logo abaixo da porta, e de propósito: é ali que a
             hesitação acontece — a pessoa lê a promessa, chega no botão, não
             se sente pronta, e precisa de um lugar para entender antes.
             Um degrau abaixo do convite principal em peso visual, nunca ao
             lado: são gestos diferentes, e um deles é o da casa. */}
-        <LivroDaCasa />
+        <ConviteDeEntender />
       </div>
     </AmbienteSection>
   );
