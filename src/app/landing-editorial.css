@@ -1758,3 +1758,32 @@
   }
 }
 
+
+/* --------------------------------------------------------------------------
+   A CENA PASSA POR TRÁS DA CÁPSULA (27/08 · ADR-098)
+
+   Medido em produção logo depois de publicar o cabeçalho novo: a fotografia
+   começava em y=80, exatamente onde o cabeçalho terminava. Havia uma faixa de
+   linho de 80px acima dela, e a cápsula flutuava sobre ESSA faixa — ou seja, o
+   vidro não tinha o que atravessar. Todo o sentido da mudança se perdia.
+
+   A causa é que o cabeçalho fica no fluxo (`sticky` ocupa espaço), e a regra
+   acima já compensava isso encolhendo TODAS as seções em 4,25rem.
+
+   Só a PRIMEIRA precisa de tratamento: as demais já passam por baixo do
+   cabeçalho enquanto a pessoa rola. Ela sobe a altura do trilho e cresce a
+   mesma medida — o resultado é a cena começando em y=0, com o card
+   permanecendo exatamente onde estava em relação à dobra.
+   -------------------------------------------------------------------------- */
+.landing-editorial .landing-ambiente:first-of-type {
+  --altura-do-trilho: 5rem;
+  margin-top: calc(-1 * var(--altura-do-trilho));
+  min-height: calc(100svh + var(--altura-do-trilho) - 4.25rem);
+  padding-top: calc(var(--altura-do-trilho) + 0.5rem);
+}
+
+@media (min-width: 1024px) {
+  .landing-editorial .landing-ambiente:first-of-type {
+    --altura-do-trilho: 5.25rem;
+  }
+}
