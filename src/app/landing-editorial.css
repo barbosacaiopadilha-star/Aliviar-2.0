@@ -1675,15 +1675,16 @@
    ========================================================================== */
 
 .landing-editorial .landing-livro {
-  position: absolute;
-  /* Abaixo do cabeçalho: a barra é sticky e flutua sobre o topo da cena
-     (4,25rem sem rolagem). Em 1,25rem o livro nascia escondido atrás
-     dela — visível só depois que a pessoa rolasse, que é o oposto de um
-     convite de chegada. */
-  top: 5.75rem;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
+  /* 27/08 · O livro DESCEU da parede para dentro do cartão, logo abaixo da
+     porta (pedido do Fundador, com o lugar marcado em vermelho na tela).
+     Deixa de flutuar sobre a cena e passa a ser elemento de FLUXO: não
+     disputa espaço com ninguém na fotografia, e some o risco de colisão
+     que a versão anterior tinha com o cartão da promessa.
+     A posição também é melhor por função: é logo abaixo do convite que a
+     hesitação acontece — quem não se sente pronto para conversar precisa,
+     ali mesmo, de um lugar para entender antes. */
+  align-self: flex-start;
+  margin-top: 1rem;
 
   display: inline-flex;
   align-items: center;
@@ -1708,7 +1709,7 @@
    explica que o objeto se pega, nunca chama atenção sozinho. */
 .landing-editorial .landing-livro:hover,
 .landing-editorial .landing-livro:focus-visible {
-  transform: translateX(-50%) translateY(-3px);
+  transform: translateY(-3px);
   box-shadow: var(--shadow-md);
 }
 
@@ -1726,7 +1727,7 @@
   }
   .landing-editorial .landing-livro:hover,
   .landing-editorial .landing-livro:focus-visible {
-    transform: translateX(-50%);
+    transform: none;
   }
 }
 
@@ -1786,11 +1787,10 @@
   color: var(--color-ink-muted);
 }
 
-/* No celular o vão de cima é menor e o cartão sobe: o livro encolhe e
+/* No celular o cartão é mais estreito: o livro encolhe e
    perde a chamada, ficando com o título — que é o que precisa ser lido. */
 @media (max-width: 639px) {
   .landing-editorial .landing-livro {
-    top: 5rem;
     padding: 0.5rem 0.75rem 0.5rem 0.625rem;
     gap: 0.5rem;
   }
@@ -1803,12 +1803,3 @@
   }
 }
 
-/* Onde não há parede, não há convite. Em telas muito baixas (celular
-   deitado, janela espremida) a cena não tem vão acima das pessoas: o
-   livro sairia por cima delas ou encostaria no cartão da promessa.
-   Ele some, e ninguém perde caminho — `/o-que-e` continua no rodapé. */
-@media (max-height: 620px) {
-  .landing-editorial .landing-livro {
-    display: none;
-  }
-}
