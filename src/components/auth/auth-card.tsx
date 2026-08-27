@@ -1,5 +1,9 @@
+import "@/app/landing-editorial.css";
+
 import Image from "next/image";
 import type { ReactNode } from "react";
+
+import { CenaResponsiva } from "@/components/landing/editorial/cena-responsiva";
 
 type AuthCardProps = {
   title: string;
@@ -15,7 +19,33 @@ export function AuthCard({
   footer,
 }: AuthCardProps) {
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-canvas px-4 py-10">
+    /* A ENTRADA GANHA A CENA — 27/08.
+       A ADR-031 autorizou "continuidade visual entre PortalExperience →
+       Login → Sua História", e o que chegou aqui foi só o `ambient-warmth`:
+       dois gradientes a 10% e 12%, invisíveis na prática. Quem atravessava
+       quatro ambientes fotográficos batia numa sala branca na porta.
+       Agora a porta é a MESMA Recepção da Landing — mesmo componente
+       (`CenaResponsiva`), mesmo arquivo de imagem, mesma decisão de
+       enquadramento. A ADR-031 é explícita sobre o método: editar o que
+       existe, "nunca criando segunda Landing, navegação, Design System ou
+       componente paralelo" — por isso nada aqui é cópia.
+       O `landing-editorial` vem junto porque é onde `.landing-cena` vive; ele
+       traz também o linho e o grão de papel da casa, que É a continuidade
+       pedida. */
+    <div className="landing-editorial relative flex min-h-screen items-center justify-center overflow-hidden bg-canvas px-4 py-10">
+      <CenaResponsiva cena="recepcao" prioridade posicaoMobile="center 22%" />
+
+      {/* O VÉU DA ENTRADA. A cena fica presente e recuada — quem chega precisa
+          ler um formulário, não admirar uma fotografia. Sem isto a foto
+          disputaria com os campos, e a lição do `SIM-61` vale aqui também:
+          nada de texto sobre imagem crua. O cartão em si é opaco, então a
+          legibilidade do formulário não depende deste véu — ele serve ao
+          sossego, não ao contraste. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[color-mix(in_srgb,var(--color-bg-canvas)_72%,transparent)]"
+      />
+
       {/* Calor ambiente da PortalExperience — continuidade de iluminação
           na entrada do produto (ADR-031). Decorativo, atrás do cartão. */}
       <div

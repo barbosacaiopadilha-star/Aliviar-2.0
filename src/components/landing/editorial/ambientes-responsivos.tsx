@@ -195,7 +195,7 @@ export function AmbienteCuradoria() {
 export function AmbienteEscolha() {
   return (
     <AmbienteSection
-      id="quem-somos"
+      id="a-escolha"
       cena="tres-medicos"
       posicaoCard="inferior"
       rotulo="A escolha"

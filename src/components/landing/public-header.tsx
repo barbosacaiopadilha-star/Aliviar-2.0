@@ -40,8 +40,19 @@ const NAV_LINKS = [
   // ADR-081 (23/08): "Para quem é" e "Concierge" saíram junto com as seções
   // que apontavam — Prioridades e Concierge deixaram a composição na vitrine
   // enxuta (uma ideia por bloco). Link sem destino é porta pintada.
+  // 27/08 · "Quem somos" apontava para `#quem-somos`, que é o `id` da seção
+  // **A escolha** — o card dos três caminhos. Quem clicava querendo saber
+  // quem está por trás caía num texto sobre como a escolha funciona. É a
+  // mesma família da ADR-064: a superfície promete uma coisa e entrega
+  // outra, e aqui a promessa quebrada é justamente a de confiança, na
+  // página que pede para confiar uma decisão de saúde.
+  //
+  // O rótulo passa a dizer o que a seção é — o mesmo nome que ela já usa
+  // como `aria-label`. **Não existe conteúdo sobre quem a Aliviar é em
+  // lugar nenhum da Landing**; enquanto não existir, um link com esse nome
+  // é porta pintada, que é o que a regra acima já proíbe.
   { href: "#como-funciona", label: "Nossa curadoria" },
-  { href: "#quem-somos", label: "Quem somos" },
+  { href: "#a-escolha", label: "A escolha" },
 ] as const;
 
 export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
@@ -101,8 +112,25 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
   return (
     <header
       className={cn(
+        // 27/08 · TENTATIVA REVERTIDA, e a nota fica porque a próxima pessoa
+        // vai ter a mesma ideia.
+        //
+        // A barra é creme SÓLIDO e, sobre o herói fotográfico, isso lê como
+        // uma faixa atravessada na imagem. A correção "óbvia" é fazer dela um
+        // véu que cristaliza na rolagem — a gramática do `.landing-veu`.
+        //
+        // NÃO SE FAZ. A guarda `sistema-visual-consolidado` reprova, e o
+        // motivo está escrito nela: os cinco SHELLS — a moldura que a pessoa
+        // vê em toda superfície — não usam vidro. O vidro é dos cartões de
+        // conteúdo (ADR-084), nunca da moldura. A distinção é o que impede a
+        // casa inteira de virar vidro por somatório de decisões locais
+        // razoáveis; o próprio teste nomeia esta tentação como
+        // "só um blurzinho no header".
+        //
+        // A faixa sólida não é descuido: é a moldura sendo moldura.
         "sticky top-0 z-sticky-header border-b border-[var(--color-border)] bg-[var(--color-bg-canvas)] transition-[box-shadow,background-color] duration-[480ms] ease-[cubic-bezier(0.25,0.1,0.25,1)]",
-        scrolled && "bg-[color-mix(in_srgb,var(--color-bg-canvas)_92%,transparent)] shadow-[0_1px_0_rgba(183,154,91,0.12),0_4px_20px_rgba(70,55,35,0.04)]",
+        scrolled &&
+          "bg-[color-mix(in_srgb,var(--color-bg-canvas)_92%,transparent)] shadow-[0_1px_0_rgba(183,154,91,0.12),0_4px_20px_rgba(70,55,35,0.04)]",
       )}
     >
       <div

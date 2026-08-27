@@ -545,7 +545,12 @@
   display: none;
 }
 
-@media (min-width: 1024px) {
+/* 27/08 · A navegação aparece a partir do TABLET, não só no computador.
+   Eram 1024px para dois rótulos curtos ("Nossa curadoria" e "A escolha"):
+   entre 768 e 1023px sobrava largura e mesmo assim a pessoa recebia um
+   hambúrguer — um toque a mais para chegar ao que já cabia na barra. O
+   ponto de troca acompanha o CONTEÚDO, não o rótulo do dispositivo. */
+@media (min-width: 768px) {
   .landing-nav {
     display: flex;
     align-items: center;
@@ -591,7 +596,8 @@
   box-shadow: 0 0 0 2px var(--color-focus);
 }
 
-@media (min-width: 1024px) {
+/* Par do ponto de troca da navegação: onde ela entra, o menu sai. */
+@media (min-width: 768px) {
   .landing-drawer-botao {
     display: none;
   }
@@ -948,10 +954,57 @@
      o clarear anda no tempo da caminhada da casa — 1,1s, curva humana. */
   /* De volta à versão aprovada: o clarear acompanha a rolagem (a transição
      curta só amacia os frames); o branco para em 84%. */
+  /* O PISO DO VIDRO — 27/08, e é correção de defeito, não estética.
+     ANTES: `calc(var(--veu-solidez, 0) * 0.84)`. Em repouso isso é ZERO, e
+     o fundo do card (9%/4%) não protege nada — o texto ficava direto sobre
+     a fotografia. Medido atrás de cada linha, amostrando a própria imagem:
+     "Você não precisa escolher sozinho." saía com contraste médio 3,62 e o
+     parágrafo do Curador com 4,66 (o mínimo AA para corpo é 4,5), com
+     manchas escuras chegando a 1,46 dentro da caixa do próprio texto.
+     Reproduzido em tela: o cartão estável, sem cristalizar, com metade da
+     frase sumindo na mesa e no notebook.
+     A causa era estrutural: NÃO HAVIA PISO. Toda a legibilidade dependia
+     da cristalização, que é dirigida pela rolagem e não dispara em toda
+     posição nem em todo tamanho de tela.
+     AGORA o véu nasce em 42% e cristaliza até os mesmos 84% — o teto que o
+     Fundador calibrou em 23/08 fica INTACTO, e o realce continua vindo do
+     contraste entre repouso e sólido. O que muda é que o repouso deixa de
+     ser zero. */
   background: var(--landing-linen);
-  opacity: calc(var(--veu-solidez, 0) * 0.84);
+  opacity: calc(0.42 + var(--veu-solidez, 0) * 0.42);
   transition: opacity 140ms linear;
   pointer-events: none;
+}
+
+/* A CAMADA DA GRAVAÇÃO — vidro jateado desenhado (SIM-41, ideia do Fundador).
+   ENTRA INERTE, DE PROPÓSITO: hoje ela não pinta nada. Existe para que o
+   desenho não exija refazer o piso quando chegar.
+   COMO ACENDER: dar forma a `--veu-gravacao` (uma máscara — SVG embutido,
+   gradiente cônico, o que for) e opacidade a `--veu-gravacao-forca`. Onde a
+   máscara é opaca o vidro fica FOSCO; onde é transparente, fica LISO. O
+   desenho nasce da diferença de acabamento, nunca de tinta — que é o ponto
+   do vidro jateado.
+   UMA REGRA QUE MUDOU, e precisa estar aqui: o `SIM-41` dizia que o padrão
+   devia "dissolver onde o card cristaliza, para nunca disputar com a
+   leitura". Isso valia quando ninguém sabia do problema de legibilidade.
+   Agora que o fosco É o que sustenta o texto, ele não pode sumir sob a
+   palavra: o gravado é ornamento nas margens e nos vãos, e proteção sob o
+   texto. Denso onde se lê, desenho onde não se lê. */
+.landing-editorial .landing-veu::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: var(--landing-linen);
+  opacity: var(--veu-gravacao-forca, 0);
+  -webkit-mask-image: var(--veu-gravacao, none);
+  mask-image: var(--veu-gravacao, none);
+  -webkit-mask-size: cover;
+  mask-size: cover;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
 }
 
 .landing-editorial .landing-veu > * {
