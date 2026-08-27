@@ -1,4 +1,6 @@
-import Link from "next/link";
+import Image from "next/image";
+
+import { LinkButton } from "@/components/landing/link-button";
 
 /**
  * O CONVITE DE ENTENDER — a saída de quem não está pronto para conversar.
@@ -9,39 +11,48 @@ import Link from "next/link";
  * um lugar para entender antes. Sem isso a Landing só oferecia duas saídas:
  * aceitar a conversa, ou ir embora.
  *
- * POR QUE NÃO É MAIS UM LIVRO. A primeira versão desenhava um volume
- * fechado, com lombada e fecho, para render a ideia de "abrir e descobrir".
- * Vista na tela, a capa media 22×28px — nesse tamanho a lombada vira ruído
- * e o que se lê é um retângulo com um ponto. A metáfora não chegava, e um
- * objeto que se anuncia como coisa e não é lido como coisa gasta atenção
- * sem entregar nada.
+ * TRÊS VERSÕES ATÉ AQUI, e cada uma morreu de um jeito diferente na tela:
  *
- * Então ele assume o que é: **um link**. Segunda ação, um degrau abaixo do
- * convite principal — a porta é o botão; isto é a janela. E o nome do
- * arquivo mudou junto: uma classe chamada `livro` que não desenha livro
- * nenhum mente para quem ler o código depois, e esta casa já rejeitou uma
- * palavra hoje pelo mesmo motivo.
+ * 1 · Um LIVRO desenhado, com lombada e fecho, para render "abrir e
+ *     descobrir". Na tela a capa media 22×28px: lombada virava ruído e o
+ *     fecho virava um ponto. Lia-se um retângulo azul, nunca um volume.
+ * 2 · Um LINK puro, sem caixa. Sumiu — e pior no celular, onde não existe
+ *     hover e o sublinhado da fundação (que cresce do zero) nunca aparecia.
+ *     Virava texto azul solto, indistinguível de legenda.
+ * 3 · Esta: o BOTÃO SECUNDÁRIO da casa. Nem armadura nem sombra de si.
  *
- * O SUBLINHADO É PERMANENTE, e isso foi decidido olhando a tela. A versão
- * anterior usava o `link-underline` da fundação, que cresce do zero no
- * hover — e no CELULAR não existe hover. O link virava texto azul claro
- * solto, indistinguível de legenda, para a maioria de quem chega. Agora a
- * linha está sempre lá, a 40%, e o hover a intensifica.
+ * POR QUE O `secondary` E NÃO UM DESENHO NOVO. Ele já é exatamente o que se
+ * pedia de acabamento: fundo transparente, fio DOURADO na borda, e no hover
+ * a borda acende com um véu de 7% de ouro, junto do erguer de meio pixel que
+ * todos os botões da casa têm. Inventar outro botão sofisticado ao lado de
+ * um botão sofisticado que já existe é como a casa acumula dialetos.
  *
- * MOVIMENTO. A seta desloca 2px quando alguém chega, dizendo a direção, e
- * a linha muda de tom. As duas respondem a interação e passam pelo §230:
- * *movimento existe para explicar de onde algo veio, nunca para chamar
- * atenção*. Nada pulsa, nada se repete sozinho.
+ * A HIERARQUIA É O PONTO. O primário é sólido, azul, largura cheia: a porta.
+ * Este é vazado, dourado, largura do conteúdo: a janela. Se os dois tivessem
+ * o mesmo peso, seriam duas portas — e duas portas é nenhuma.
+ *
+ * O SÍMBOLO ENTRA PEQUENO, A 20px, e é decisão, não descuido. Ele já está no
+ * cabeçalho, uns 200px acima: em tamanho de assinatura, seria a marca duas
+ * vezes na mesma tela — o "papel de parede corporativo" que o `SIM-41`
+ * registrou como a coisa a evitar. Pequeno, ele lê como detalhe de
+ * acabamento, que é o papel que tem aqui. `alt` vazio porque o texto ao lado
+ * já diz tudo: um leitor de tela não ganha nada ouvindo a marca duas vezes.
  */
 export function ConviteDeEntender() {
   return (
-    <Link href="/o-que-e" className="landing-convite">
-      <span>O que é a Aliviar</span>
-      {/* A seta é decorativa: o destino já está dito na palavra ao lado, e
-          um leitor de tela não ganha nada ouvindo "seta para a direita". */}
-      <span aria-hidden="true" className="landing-convite-seta">
-        →
-      </span>
-    </Link>
+    <LinkButton
+      href="/o-que-e"
+      variant="secondary"
+      className="mt-4 w-auto self-start px-6"
+    >
+      <Image
+        src="/brand/aliviar-simbolo.png"
+        alt=""
+        width={256}
+        height={266}
+        className="h-5 w-auto"
+      />
+      O que é a Aliviar
+    </LinkButton>
   );
 }
