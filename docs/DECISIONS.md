@@ -2595,3 +2595,56 @@ A Mesa passar de quinze telas, ou um Curador real disser que se perdeu. O
 primeiro é medida e eu aviso; o segundo é o que importa.
 
 ---
+
+## ADR-096 — Adiamento formal da base de privacidade, assinado pelo responsável por LGPD
+
+- **Data:** 2026-08-27
+- **Status:** **Decidida pelo Fundador**, em conversa direta nesta data, na qualidade de **responsável por LGPD interino** (ADR-055, item 1) — que é exatamente a assinatura que o critério de encerramento do `PRIV-01` exige.
+- **Dependências:** `PRIV-01` (P0) · **ADR-055** (nomeação do responsável) · **ADR-056** item 1 (Anthropic a declarar na política) · **ADR-073** (congelamento; "o que a lei exigir" é exceção permitida) · `GO_NO_GO_FINAL.md` (🔴 NO-GO de privacidade) · `SIM-60`
+
+### O que existe, e é preciso dizer para não parecer omissão
+
+A lacuna do `PRIV-01` **não é de engenharia**, e a formulação original do achado ("rota inexistente") está vencida:
+
+1. **A infraestrutura está pronta e no ar.** `/privacidade`, `/termos`, `/consentimentos` e `/legal/[slug]/v/[versao]` existem. Os documentos não moram no código: moram em `legal_documents` com versão e vigência, de modo que o jurídico publica sem tocar em código e o aceite aponta para exatamente o que foi lido. Sem documento publicado, a página diz a verdade — que ele não existe.
+2. **O texto está redigido.** `docs/privacidade/POLITICA_DE_PRIVACIDADE_RASCUNHO.md` (19/08), escrito a partir do código e do banco verificados, com o que não pôde ser verificado marcado entre colchetes.
+3. **O que falta é decisão jurídica, e está com o advogado desde 03/08** — sete pontos reunidos na seção "Para o advogado" do rascunho, dos quais três travam de fato: base legal de cada tratamento (o sistema trata dado de saúde, art. 11), prazos de retenção (hoje não existe rotina de descarte, e o rascunho proíbe publicar prazo que o sistema não cumpre) e dados de terceiros no fluxo "para outra pessoa".
+4. **Dois fatos dependem só do Fundador:** o e-mail do encarregado (hoje `[a confirmar]`) e a região de execução da Vercel. O repouso já está confirmado no Brasil (`sa-east-1`).
+
+### A decisão
+
+**A publicação da base de privacidade fica adiada.** Não há data.
+
+Esta ADR é o **adiamento formal** previsto no critério de encerramento do `PRIV-01` — *"política publicada **ou adiamento formal assinado pelo responsável por LGPD**"*. Ela converte uma lacuna em decisão consciente, datada e assinada.
+
+**Ela não torna a lacuna inexistente, e não é isso que se está afirmando aqui.**
+
+### O risco aceito, nomeado
+
+Enquanto durar: não há política, não há termos, não há consentimento colhido e não há canal de encarregado publicado. Toda pessoa atendida neste período tem dado pessoal — e, a partir da Curadoria, **dado de saúde** — tratado sem base informacional publicada. Pedido de titular que chegue neste período não tem superfície nem canal formal para ser atendido (`PRIV-05`).
+
+Coerente com isso, e **de propósito**: o gate de aceite permanece desligado (`SIM-60`). Ligá-lo sem documento publicado cobraria aceite de coisa nenhuma, e o `redirect` dele aponta hoje para `/aceites`, que não existe. O gate e a publicação entram juntos ou não entram.
+
+### O ponto que esta ADR NÃO decide, e que precisa ser decidido antes da primeira sessão
+
+**Quem é a primeira paciente real.** O Fundador não se pronunciou sobre isto, e o registro não vai supor.
+
+A distinção é material, e é ela que determina se este adiamento se sustenta:
+
+- **paciente da própria equipe** — a exposição é interna, conhecida e consentida de fato; o adiamento se sustenta com folga;
+- **pessoa de fora** — o tratamento de dado de saúde de terceiro sem base publicada é o cenário que o `GO_NO_GO_FINAL.md` marca como 🔴 NO-GO.
+
+Este adiamento **não autoriza, por si só, o segundo caso.** Ele registra a decisão de não publicar ainda; não decide de quem serão os dados tratados enquanto não se publica.
+
+### Revisitar quando — e qualquer um destes basta
+
+1. O parecer do advogado chegar (é o caminho esperado e o mais curto);
+2. Uma pessoa **de fora da equipe** for atendida — aí o adiamento deixa de se sustentar e a publicação volta a ser condição, não escolha;
+3. Chegar pedido de titular (acesso, correção, exclusão ou portabilidade);
+4. A primeira Curadoria real ser entregue — porque é o marco que a ADR-073 já usa para retomar tudo.
+
+### O sinal de que esta ADR falhou
+
+O adiamento durar por inércia, e não por decisão: nenhum dos quatro gatilhos disparar e a ausência de política simplesmente deixar de ser notada. Um adiamento formal que ninguém revisita é a mesma lacuna de antes, com assinatura.
+
+---

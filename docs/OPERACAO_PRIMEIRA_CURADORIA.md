@@ -16,6 +16,40 @@
 | Pesos do cruzamento (Modelo v1.0) | 0 — o Curador distribui na sessão (2×100) |
 | Declarações de área / paciente | 0 — acontecem na sessão |
 
+## Pré-voo — reverificado em 2026-08-27
+
+A tabela de 27/07 acima fica como está: ela é o registro do que era verdade
+naquela data, e o bloqueador que ela nomeia **caiu**. O estado atual:
+
+| Item | Estado |
+|---|---|
+| Profissionais reais publicados na Rede | **3** — Guilher Rossoni · Salassie A. Mansur · Saul Dalla de Oliveira |
+| Mapa do Profissional dos três | **Completo em produção** — 29/29 subcritérios, zero em "ainda não avaliado" (`SIM-31`, encerrado) |
+| Motor | Alimentado: com Mapa preenchido saiu de *"0 altas · 0 médias · 23 lacunas"* para leitura com altas e médias |
+| Perfis de demonstração | Fora da Rede publicada — **conferir no dia**, porque a ADR-057 fez "nenhum perfil de teste sem marcação" item de NO GO |
+| Base de privacidade | **Ausente por decisão** — o Fundador determinou em 27/08 não publicar ainda. Ver o aviso abaixo |
+| Gate de aceite | Não ligado (`SIM-60`): a guarda existe, não tem chamador, e aponta para `/aceites`, que não existe |
+
+### O aviso que precisa estar aqui, e não em outro documento
+
+Sem política publicada, **não há termos, não há consentimento colhido e não há
+canal de encarregado** — e a primeira Curadoria trata dado de saúde de uma
+pessoa real. O `GO_NO_GO_FINAL.md` marca isso como 🔴 NO-GO de privacidade, e
+o critério de encerramento do `PRIV-01` prevê a saída: *"política publicada
+**ou adiamento formal assinado pelo responsável por LGPD**"* — que é o próprio
+Fundador (ADR-055).
+
+**Enquanto o adiamento não estiver registrado, a lacuna não é decisão: é
+lacuna.** Duas formas de abrir sem isso pendurado:
+
+1. registrar o adiamento formal, com risco aceito e gatilho de revisitar; ou
+2. a primeira Curadoria ser conduzida com **paciente da própria equipe**, e
+   não com pessoa de fora — a exposição é outra e a publicação pode esperar.
+
+Isto não bloqueia o runbook. Está aqui para que a escolha seja feita **antes**
+da sessão, e não descoberta no meio dela.
+
+
 ---
 
 ## ETAPA 1 — Cadastro dos três profissionais reais
