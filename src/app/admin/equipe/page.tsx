@@ -47,7 +47,7 @@ export default async function TeamPage() {
         <h1 className="font-sans text-2xl font-semibold text-ink">Equipe</h1>
         <p className="text-sm text-ink-muted">
           Conceda ou revogue os papéis internos (Administrador, Curador Médico, Atendente, Concierge) de qualquer pessoa
-          já cadastrada. Papéis de paciente e profissional continuam com fluxo próprio de criação.
+          já cadastrada. Papéis de assistido e profissional continuam com fluxo próprio de criação.
         </p>
       </div>
 

@@ -105,7 +105,7 @@ export function LeadWorkspace({
 
       {credenciais ? (
         <div className="rounded-md border border-brand-gold bg-canvas px-3 py-3 text-sm">
-          <p className="font-medium text-ink">Acesso do paciente — anote agora</p>
+          <p className="font-medium text-ink">Acesso do assistido — anote agora</p>
           <p className="mt-1 text-ink-muted">
             Esta senha aparece uma única vez e não pode ser recuperada depois.
           </p>
@@ -160,7 +160,7 @@ export function LeadWorkspace({
               onChange={(e) => setDuplicatasConfirmadas(e.target.checked)}
               className="mt-1"
             />
-            <span>Conferi e não é a mesma pessoa. Pode criar um paciente novo.</span>
+            <span>Conferi e não é a mesma pessoa. Pode criar um assistido novo.</span>
           </label>
         </section>
       ) : null}
@@ -194,7 +194,7 @@ export function LeadWorkspace({
 
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <label className="text-sm">
-                <span className="block text-ink-muted">Nome do paciente</span>
+                <span className="block text-ink-muted">Nome do assistido</span>
                 <input value={nome} onChange={(e) => setNome(e.target.value)} className={campo} />
               </label>
               <label className="text-sm">

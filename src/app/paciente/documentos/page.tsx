@@ -53,7 +53,7 @@ export default async function PatientDocumentsPage() {
         UMA folha, não uma caixa por item. O PatientShell tem arquitetura ao
         fundo, e ela não pode competir com a leitura de uma lista de exames
         (§15). Uma superfície só resolve isso sem virar grade de arquivos: o
-        que a paciente vê é um dossiê, não um gerenciador.
+        que o assistido vê é um dossiê, não um gerenciador.
       */}
       <PatientCard className="lg:p-12">
         <CentralDeDocumentos itens={itens} />

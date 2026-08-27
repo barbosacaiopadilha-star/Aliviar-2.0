@@ -50,7 +50,11 @@ function formatRoleLabel(role: string): string {
   const labels: Record<string, string> = {
     administrador: "Administrador",
     profissional: "Profissional",
-    paciente: "Paciente",
+    // 27/08 · O SLUG FICA, O NOME MUDA. `paciente` é papel em `user_roles`,
+    // RLS e capabilities — dado, nunca texto. O que se LÊ passa a ser
+    // "Assistido" (ADR-097). A palavra clínica "paciente" permanece onde ela
+    // é do médico: os pacientes DELE, na entrevista do profissional.
+    paciente: "Assistido",
     curador_medico: "Curador Médico",
     concierge: "Concierge",
   };

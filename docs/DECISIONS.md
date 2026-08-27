@@ -2683,3 +2683,42 @@ com pessoa de fora — que, por sua vez, exige a política publicada.
 O adiamento durar por inércia, e não por decisão: nenhum dos quatro gatilhos disparar e a ausência de política simplesmente deixar de ser notada. Um adiamento formal que ninguém revisita é a mesma lacuna de antes, com assinatura.
 
 ---
+
+## ADR-097 — A pessoa que a Aliviar acompanha chama-se assistido
+
+- **Data:** 2026-08-27
+- **Status:** **Decidida pelo Fundador**, em conversa direta nesta data, após ressalva registrada e mantida (ver "A ressalva" abaixo).
+- **Dependências:** `LANDING_UX_WRITING.md` §190 (vocabulário canônico) · **ADR-064** (nenhuma superfície afirma o que o sistema não garante) · **ADR-073** (o congelamento; esta ADR não constrói nada — troca texto)
+
+### A decisão
+
+A pessoa que a Aliviar acompanha passa a se chamar **assistido** em tudo o que se lê. Não "paciente".
+
+**Onde ela flexiona, e onde não flexiona.** "Paciente" é epiceno — *a paciente* e *o paciente* são a mesma palavra. "Assistido" não é. A regra, decidida junto:
+
+1. **Substantivo só quando o texto precisa nomear o papel** — títulos, rótulos, colunas de tabela, filas do time: *"Assistido"*, *"Novo assistido"*, *"Dados do assistido"*.
+2. **Onde a tela fala COM a pessoa, usa-se "você"** — que não tem gênero, e que o vocabulário canônico já preferia (§190: *"Pessoa/você (nunca 'usuário')"*).
+
+Isso evita escolher um gênero genérico para toda a copy da casa — e a escolha era real: o código tinha **138 ocorrências no feminino contra 225 no masculino**, ou seja, já falava da mesma pessoa em dois gêneros. Com "paciente" isso passava despercebido, porque a palavra não denuncia.
+
+### Três fronteiras que a troca NÃO atravessa
+
+1. **O slug do papel `paciente` fica.** Ele é dado — vive em `user_roles`, em policies de RLS, em capabilities e em migrations. Renomeá-lo é mexer em banco, não em vocabulário, e não entrega nada a ninguém: nenhum assistido lê o nome de uma coluna.
+2. **As rotas `/paciente/*` ficam**, e as tabelas `patient_*` também. Mesma razão.
+3. **A palavra clínica "paciente" permanece onde ela é do médico.** Na entrevista do profissional, *"Como você costuma conduzir seus pacientes?"* continua certo: são os pacientes DELE, na relação clínica dele. "Assistido" é o nome de quem a **Aliviar** acompanha, não um sinônimo universal. Confundir os dois apagaria uma distinção real.
+
+### A ressalva, registrada porque foi feita e mantida
+
+O Engenheiro Líder apontou que o Método existe para **devolver a decisão** — *"a escolha continua sendo sua"* — e que "assistido" é gramaticalmente passivo (particípio: quem *é* assistido), com eco de assistencialismo em português; "a pessoa" entregaria agência melhor. **O Fundador manteve "assistido".** Fica registrado que a ressalva foi feita, ouvida e superada por decisão de quem responde pelo produto — não esquecida.
+
+### O que foi trocado nesta rodada
+
+Texto de tela em `src/**/*.tsx` e os três mapas de rótulo de papel (`display-identity.ts`, `team-table.tsx`, `app-shell.tsx`). **Não** foram tocados: `src/modules/**` (domínio), comentários de código (são para quem programa e documentam história), a documentação interna e os ADRs — este log é append-only por força da **ADR-062**, e verbete antigo não se reescreve.
+
+**Uma pendência conhecida:** o PDF `/rede/Ficha-da-Paciente-Curadoria-Aliviar.pdf` teve o rótulo trocado para *"Ficha do Assistido"*, mas **o arquivo continua com o nome antigo**. Renomear ativo é outra tarefa; até lá, o rótulo e o arquivo divergem de propósito e por escrito.
+
+### Revisitar quando
+
+Alguém de fora da equipe — um assistido, um profissional — estranhar a palavra em voz alta. É o único teste que importa, e ele só existe depois da primeira Curadoria real.
+
+---

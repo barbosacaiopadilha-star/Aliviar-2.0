@@ -29,7 +29,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ResetPatientPasswordButton } from "@/components/profiles/reset-patient-password-button";
 
 export const metadata: Metadata = {
-  title: "Gerenciar paciente",
+  title: "Gerenciar assistido",
   robots: { index: false, follow: false },
 };
 
@@ -107,7 +107,7 @@ export default async function PatientDetailPage({
       <Card>
         <CardHeader>
           <h2 className="font-sans text-lg font-semibold text-ink">
-            Dados do paciente
+            Dados do assistido
           </h2>
         </CardHeader>
 
@@ -128,7 +128,7 @@ export default async function PatientDetailPage({
 
         {storiesWithCase.length === 0 ? (
           <EmptyState
-            title="Este paciente ainda não enviou nenhuma história."
+            title="Este assistido ainda não enviou nenhuma história."
             description="Um caso só pode ser iniciado a partir de uma história já enviada."
           />
         ) : (
@@ -173,7 +173,7 @@ export default async function PatientDetailPage({
 
         <AuditLogList
           entries={history}
-          emptyMessage="Ainda não há histórico para este paciente."
+          emptyMessage="Ainda não há histórico para este assistido."
         />
       </Card>
     </div>

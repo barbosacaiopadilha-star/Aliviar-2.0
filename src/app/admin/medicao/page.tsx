@@ -48,7 +48,7 @@ export default async function MedicaoPage() {
           <p className="font-semibold">Como ler estes números — as duas colunas medem coisas diferentes</p>
           <p>
             <strong>Espera</strong> é tempo de relógio entre o fim de uma etapa e o fim da
-            seguinte. Inclui noite, fim de semana e o tempo em que se aguardou a paciente. É o
+            seguinte. Inclui noite, fim de semana e o tempo em que se aguardou o assistido. É o
             tempo que <em>ela</em> sente passando — não é esforço de ninguém.
           </p>
           <p>

@@ -76,8 +76,8 @@ function quickActionsForRole(role: string, basePath: string): CommandAction[] {
   if (role === "administrador") {
     actions.push({
       id: "create-patient",
-      label: "Cadastrar paciente",
-      keywords: ["novo", "paciente"],
+      label: "Cadastrar assistido",
+      keywords: ["novo", "assistido", "paciente"],
       href: `${basePath}/pacientes/novo`,
       group: "Ações rápidas",
       icon: iconMap.create,

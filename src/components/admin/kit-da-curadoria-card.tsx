@@ -19,7 +19,7 @@ export const KIT_DA_CURADORIA = [
   },
   {
     href: "/rede/Ficha-da-Paciente-Curadoria-Aliviar.pdf",
-    titulo: "Ficha da Paciente",
+    titulo: "Ficha do Assistido",
     descricao: "A Consulta Inicial no papel — a história nas palavras dela, até o reconhecimento assinado.",
   },
   {

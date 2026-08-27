@@ -88,7 +88,7 @@ export default async function AdminCaseDetailPage({
 
       <Card>
         <CardHeader>
-          <h2 className="font-sans text-lg font-semibold text-ink">Paciente</h2>
+          <h2 className="font-sans text-lg font-semibold text-ink">Assistido</h2>
         </CardHeader>
         <dl className="grid gap-3 sm:grid-cols-2">
           <div>
@@ -154,7 +154,7 @@ export default async function AdminCaseDetailPage({
             História original
           </h2>
           <p className="text-sm text-ink-muted">
-            Somente leitura — o caso nunca altera a história do paciente.
+            Somente leitura — o caso nunca altera a história do assistido.
           </p>
         </CardHeader>
         {story ? (

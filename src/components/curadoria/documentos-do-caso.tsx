@@ -64,7 +64,7 @@ export function DocumentosDoCaso({
 
         <dl className="documento-campos">
           <div>
-            <dt>Paciente</dt>
+            <dt>Assistido</dt>
             <dd>{patientName}</dd>
           </div>
           <div>
@@ -103,7 +103,7 @@ export function DocumentosDoCaso({
           <div>
             <span className="documento-linha" />
             <p>{patientName}</p>
-            <p className="documento-legenda">Assinatura da paciente · data</p>
+            <p className="documento-legenda">Assinatura do assistido · data</p>
           </div>
           <div>
             <span className="documento-linha" />
@@ -117,12 +117,12 @@ export function DocumentosDoCaso({
       <article className="documento-do-caso">
         <header className="documento-cabecalho">
           <p className="documento-marca">Aliviar — Curadoria Médica Independente</p>
-          <h2 className="documento-titulo">Ficha da Paciente — Consulta Inicial</h2>
+          <h2 className="documento-titulo">Ficha do Assistido — Consulta Inicial</h2>
         </header>
 
         <dl className="documento-campos">
           <div>
-            <dt>Paciente</dt>
+            <dt>Assistido</dt>
             <dd>{patientName}</dd>
           </div>
           <div>

@@ -59,7 +59,7 @@ export function CasesTable({ cases, curators, basePath }: CasesTableProps) {
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-3">
         <SearchField
-          label="Buscar por paciente"
+          label="Buscar por assistido"
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
@@ -110,7 +110,7 @@ export function CasesTable({ cases, curators, basePath }: CasesTableProps) {
           <Table>
             <TableHead>
               <TableRow>
-                <TableHeaderCell>Paciente</TableHeaderCell>
+                <TableHeaderCell>Assistido</TableHeaderCell>
                 <TableHeaderCell>Status</TableHeaderCell>
                 <TableHeaderCell>Curador médico</TableHeaderCell>
                 <TableHeaderCell>Atualizado</TableHeaderCell>

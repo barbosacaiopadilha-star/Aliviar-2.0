@@ -107,7 +107,7 @@ export default async function PacienteHomePage() {
   const pending = derivePatientPending({ leitura, jornada });
 
   const saudacao = greetingFor(currentHourInBrazil());
-  const displayName = authState.profile?.displayName ?? "Paciente";
+  const displayName = authState.profile?.displayName ?? "Assistido";
   const firstName = displayName.split(/\s+/)[0] ?? displayName;
 
   // Sem Case ainda: a jornada não começou, e a home diz isso sem simular

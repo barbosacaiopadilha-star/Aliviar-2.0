@@ -73,7 +73,7 @@ const CENARIOS: ReadonlyArray<{ nome: string; fatos: FatosDoCaso }> = [
     },
   },
   {
-    nome: "pendência aguarda a paciente",
+    nome: "pendência aguarda o assistido",
     fatos: {
       historia: { existe: true, enviadaEm: "2026-07-01T10:00:00Z" },
       caso: { curadorResponsavel: "curador-1", encerradoEm: null, cancelado: false },
@@ -196,7 +196,7 @@ export default function FoundationShowcasePage() {
       <Bloco
         id="ev-fnd-004"
         titulo="EV-FND-004 · Contrato de estado"
-        nota="O mesmo conjunto de fatos, lido uma vez. Paciente e Curador leem traduções diferentes do MESMO estado — e é isso que impede duas telas de se contradizerem."
+        nota="O mesmo conjunto de fatos, lido uma vez. Assistido e Curador leem traduções diferentes do MESMO estado — e é isso que impede duas telas de se contradizerem."
       >
         <div className="overflow-x-auto">
           <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
@@ -204,7 +204,7 @@ export default function FoundationShowcasePage() {
               <tr className="border-b border-border text-xs uppercase tracking-wide text-ink-muted">
                 <th className="py-2 pr-4 font-medium">cenário</th>
                 <th className="py-2 pr-4 font-medium">estado</th>
-                <th className="py-2 pr-4 font-medium">paciente lê</th>
+                <th className="py-2 pr-4 font-medium">assistido lê</th>
                 <th className="py-2 pr-4 font-medium">Curador lê</th>
                 <th className="py-2 font-medium">de quem é a vez</th>
               </tr>
