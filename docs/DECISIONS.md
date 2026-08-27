@@ -2722,3 +2722,47 @@ Texto de tela em `src/**/*.tsx` e os três mapas de rótulo de papel (`display-i
 Alguém de fora da equipe — um assistido, um profissional — estranhar a palavra em voz alta. É o único teste que importa, e ele só existe depois da primeira Curadoria real.
 
 ---
+
+## ADR-098 — O vidro entra na Fachada, e só no cabeçalho dela
+
+- **Data:** 2026-08-27
+- **Status:** **Decidida pelo Fundador**, em conversa direta nesta data, com a ressalva do Engenheiro Líder registrada e superada (ver abaixo).
+- **Dependências:** **Sistema Visual §63** (vidro proibido como material) · **ADR-084** (a reabertura do §3 para a casa da pessoa atendida) · guarda `tests/unit/sistema-visual-consolidado.test.ts` · `SIM-61`
+
+### O que muda
+
+O **cabeçalho público da Fachada** — e nenhuma outra moldura — passa a poder usar vidro: transparência com desfoque de fundo.
+
+Ele deixa de ser uma faixa creme colada no topo e passa a flutuar como **cápsula recuada e arredondada**, com a cena aparecendo em volta e através dele.
+
+### Por quê
+
+A Landing é fotográfica de tela cheia, e a tese do desenho é a cena atravessar o conteúdo (ADR-080/084). Uma barra opaca de ponta a ponta **corta a fotografia** logo na chegada — é a primeira coisa que se vê, e ela contradiz o que a página inteira tenta dizer.
+
+A borda inferior contínua era o pior detalhe: uma linha horizontal atravessando a imagem de lado a lado.
+
+### A ressalva, registrada porque foi feita e superada
+
+O Engenheiro Líder tentou exatamente esta mudança na manhã de 27/08, **por conta própria**, e a guarda o barrou — corretamente. O teste chega a nomear a tentação: *"só um blurzinho no header"*. A regra existe para impedir que a casa inteira vire vidro por **somatório de decisões locais razoáveis**, cada uma defensável sozinha.
+
+Ele propôs então a **cápsula sólida** — mesma silhueta, sem tocar na regra — argumentando que a forma agradava sem depender do material, e que só depois de a versão sólida falhar valeria reabrir o §63. **O Fundador decidiu pelo vidro direto.** Fica registrado que a alternativa conservadora existia, foi oferecida, e foi descartada por quem responde pelo produto.
+
+### A fronteira, que é o que impede a exceção de dissolver a regra
+
+1. **Um shell, nomeado.** Só `public-header.tsx`. Os outros quatro — `patient-shell`, `app-shell`, `portal-shell` e `mesa-curador.css` — continuam proibidos, e a guarda continua vigiando os quatro.
+2. **A guarda ganhou um caso novo**, não perdeu um: `"a exceção de vidro é uma só, e é a que a ADR-098 nomeia"` afirma que a lista tem exatamente quatro shells e que o cabeçalho **usa** o vidro. Abrir a segunda exceção passa a exigir editar aquele teste — ou seja, passar por uma decisão, nunca por descuido.
+3. **A exceção também se fecha sozinha:** se o vidro sair do cabeçalho, o teste falha e cobra o fechamento. Exceção que ninguém usa é dívida.
+
+### O que a mudança NÃO pode custar
+
+A legibilidade. O `SIM-61` foi encontrado nesta mesma data: texto sobre fotografia sem piso, sumindo nas manchas escuras. O cabeçalho carrega a marca e dois botões, e **não pode depender do enquadramento da foto** para ser lido. Por isso o vidro tem piso — 72% de linho em repouso, 88% ao rolar — e o descolamento vem também do fio dourado e da sombra, nunca só da transparência.
+
+### Nota sobre as outras superfícies
+
+O mesmo cabeçalho serve `/o-que-e`, `/privacidade` e `/termos`, que são linho liso. O desfoque de uma cor chapada devolve a mesma cor chapada: ali ele fica **neutro**, nunca turvo. Nenhum estado condicional foi necessário — o Engenheiro Líder levantou este risco e ele não se confirmou.
+
+### Revisitar quando
+
+Alguém pedir a segunda exceção. O pedido em si é o sinal: se o vidro começar a parecer necessário em outra moldura, a pergunta não é sobre aquela moldura — é sobre o §63 inteiro, e aí a decisão é de Sistema Visual, não de componente.
+
+---

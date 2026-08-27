@@ -36,14 +36,24 @@ function walk(dir: string, acc: string[] = []): string[] {
   return acc;
 }
 
-/** Os cinco shells vivos — a moldura que a pessoa vê em toda superfície. */
+/**
+ * Os shells vivos — a moldura que a pessoa vê em toda superfície.
+ *
+ * ERAM CINCO. A **ADR-098** abriu UMA exceção, nomeada e estreita: o cabeçalho
+ * público da Fachada passa a poder usar vidro, porque ele flutua sobre
+ * fotografia de tela cheia e a moldura opaca cortava a cena. Os quatro abaixo
+ * continuam proibidos — e é justamente por isso que a exceção não dissolve a
+ * regra: ela tem nome, motivo e fronteira.
+ */
 const SHELLS = [
   "src/components/paciente/patient-shell.tsx",
   "src/components/shell/app-shell.tsx",
   "src/components/curadoria/portal-shell.tsx",
-  "src/components/landing/public-header.tsx",
   "src/app/mesa-curador.css",
 ];
+
+/** A única superfície de moldura autorizada a usar vidro (ADR-098). */
+const SHELL_DE_VIDRO_AUTORIZADO = "src/components/landing/public-header.tsx";
 
 describe("Materiais — nenhum vidro na casa", () => {
   it("nenhum shell vivo usa blur de fundo", () => {
@@ -51,6 +61,23 @@ describe("Materiais — nenhum vidro na casa", () => {
       const fonte = semComentarios(read(shell));
       expect(fonte, `blur residual em ${shell}`).not.toMatch(/backdrop-blur|backdrop-filter/);
     }
+  });
+
+  /**
+   * A exceção da ADR-098 é UMA. Este caso existe para que abrir a segunda
+   * exija passar por aqui — e por uma decisão registrada — em vez de acontecer
+   * por somatório de escolhas locais razoáveis, que é exatamente como uma casa
+   * inteira vira vidro sem ninguém ter decidido isso.
+   */
+  it("a exceção de vidro é uma só, e é a que a ADR-098 nomeia", () => {
+    expect(SHELLS).not.toContain(SHELL_DE_VIDRO_AUTORIZADO);
+    expect(SHELLS).toHaveLength(4);
+
+    const fachada = semComentarios(read(SHELL_DE_VIDRO_AUTORIZADO));
+    expect(
+      fachada,
+      "a exceção existe para ser usada; se o vidro saiu do cabeçalho, feche a exceção",
+    ).toMatch(/backdrop-blur|backdrop-filter/);
   });
 
   it("o cartão da paciente é papel opaco, nunca vidro", () => {

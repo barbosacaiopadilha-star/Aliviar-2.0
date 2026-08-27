@@ -32,18 +32,29 @@ afterEach(() => {
 describe("PublicHeader consumindo o Motor de Compactação", () => {
   it("estado inicial (scrollY = 0, abaixo do limiar): expandido", () => {
     const { container } = render(<PublicHeader />);
-    const header = container.querySelector("header");
-    expect(header?.className).not.toContain("shadow-[0_1px_0_rgba(183,154,91,0.12)");
-    expect(header?.querySelector("div")?.className).toContain("min-h-[4.25rem]");
+    const capsula = container.querySelector("header")?.querySelector("div");
+    expect(capsula?.className).toContain("min-h-[4.25rem]");
+    expect(capsula?.className).not.toContain("min-h-[3.25rem]");
   });
 
+  /**
+   * A régua da compactação passou a ser a ALTURA, não a sombra.
+   *
+   * Até 27/08 o `<header>` era a própria barra, e ganhava sombra ao rolar. Com
+   * a cápsula da ADR-098 ele virou só o TRILHO: quem desenha — fundo, borda e
+   * sombra — é o invólucro de dentro. O comportamento não mudou; mudou o
+   * elemento que o carrega.
+   *
+   * Medir pela altura é melhor do que era antes: ela é o efeito que a pessoa
+   * de fato percebe, e não muda quando o acabamento for recalibrado.
+   */
   it("scroll real além do limiar compacta o header", () => {
     const { container } = render(<PublicHeader />);
     scrollTo(50);
 
-    const header = container.querySelector("header");
-    expect(header?.className).toContain("shadow-[0_1px_0_rgba(183,154,91,0.12)");
-    expect(header?.querySelector("div")?.className).toContain("min-h-[3.25rem]");
+    const capsula = container.querySelector("header")?.querySelector("div");
+    expect(capsula?.className).toContain("min-h-[3.25rem]");
+    expect(capsula?.className).not.toContain("min-h-[4.25rem]");
   });
 
   it("scroll de volta ao topo reverte para expandido — sem histerese", () => {
@@ -51,9 +62,9 @@ describe("PublicHeader consumindo o Motor de Compactação", () => {
     scrollTo(50);
     scrollTo(0);
 
-    const header = container.querySelector("header");
-    expect(header?.className).not.toContain("shadow-[0_1px_0_rgba(183,154,91,0.12)");
-    expect(header?.querySelector("div")?.className).toContain("min-h-[4.25rem]");
+    const capsula = container.querySelector("header")?.querySelector("div");
+    expect(capsula?.className).toContain("min-h-[4.25rem]");
+    expect(capsula?.className).not.toContain("min-h-[3.25rem]");
   });
 
   it("desligamento simétrico: mount registra um listener de scroll, unmount o remove", () => {

@@ -51,8 +51,14 @@ const NAV_LINKS = [
   // como `aria-label`. **Não existe conteúdo sobre quem a Aliviar é em
   // lugar nenhum da Landing**; enquanto não existir, um link com esse nome
   // é porta pintada, que é o que a regra acima já proíbe.
-  { href: "#como-funciona", label: "Nossa curadoria" },
-  { href: "#a-escolha", label: "A escolha" },
+  // 27/08 · versalete curto, no lugar de rótulos por extenso. A barra é
+  // estreita e o nome longo competia com a marca ao lado.
+  { href: "#como-funciona", label: "Curadoria" },
+  { href: "#a-escolha", label: "Escolha" },
+  // O Concierge volta à navegação: a ADR-081 o tirou porque a seção dele
+  // tinha saído da página ("link sem destino é porta pintada"). O ambiente
+  // existe de novo, então o link tem para onde levar.
+  { href: "#concierge", label: "Concierge" },
 ] as const;
 
 export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
@@ -112,25 +118,23 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
   return (
     <header
       className={cn(
-        // 27/08 · TENTATIVA REVERTIDA, e a nota fica porque a próxima pessoa
-        // vai ter a mesma ideia.
+        // A CÁPSULA DE VIDRO (27/08) · o cabeçalho deixa de ser uma faixa
+        // colada no topo e passa a flutuar, recuado e arredondado, com a
+        // cena aparecendo em volta E através dele.
         //
-        // A barra é creme SÓLIDO e, sobre o herói fotográfico, isso lê como
-        // uma faixa atravessada na imagem. A correção "óbvia" é fazer dela um
-        // véu que cristaliza na rolagem — a gramática do `.landing-veu`.
+        // ISTO REABRE O SISTEMA VISUAL §63, e foi decisão do Fundador — ver
+        // a ADR-098. De manhã eu tentei a mesma coisa por conta própria e a
+        // guarda me barrou, corretamente: a regra existe para impedir que a
+        // casa inteira vire vidro por somatório de decisões locais. A
+        // exceção agora é NOMEADA e estreita — só este cabeçalho, só na
+        // Fachada. Os outros quatro shells continuam proibidos, e a guarda
+        // continua vigiando os quatro.
         //
-        // NÃO SE FAZ. A guarda `sistema-visual-consolidado` reprova, e o
-        // motivo está escrito nela: os cinco SHELLS — a moldura que a pessoa
-        // vê em toda superfície — não usam vidro. O vidro é dos cartões de
-        // conteúdo (ADR-084), nunca da moldura. A distinção é o que impede a
-        // casa inteira de virar vidro por somatório de decisões locais
-        // razoáveis; o próprio teste nomeia esta tentação como
-        // "só um blurzinho no header".
-        //
-        // A faixa sólida não é descuido: é a moldura sendo moldura.
-        "sticky top-0 z-sticky-header border-b border-[var(--color-border)] bg-[var(--color-bg-canvas)] transition-[box-shadow,background-color] duration-[480ms] ease-[cubic-bezier(0.25,0.1,0.25,1)]",
-        scrolled &&
-          "bg-[color-mix(in_srgb,var(--color-bg-canvas)_92%,transparent)] shadow-[0_1px_0_rgba(183,154,91,0.12),0_4px_20px_rgba(70,55,35,0.04)]",
+        // O `<header>` vira só o trilho: quem desenha é o invólucro abaixo.
+        // Sem borda inferior — a linha que atravessava a fotografia de ponta
+        // a ponta era o que mais cortava a cena.
+        "sticky top-0 z-sticky-header transition-[padding] duration-[480ms] ease-[cubic-bezier(0.25,0.1,0.25,1)]",
+        scrolled ? "px-3 pt-2" : "px-3 pt-3 sm:px-5 lg:pt-4",
       )}
     >
       <div
@@ -138,8 +142,20 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
           // `gap-3`: a 375px o logotipo terminava em 113px e o botão começava
           // em 113px — encostados, sem um pixel de respiro. `justify-between`
           // não protege quando o conteúdo ocupa a linha inteira.
-          "mx-auto flex w-full max-w-content items-center justify-between gap-3 px-5 transition-[min-height] duration-[480ms] ease-[cubic-bezier(0.25,0.1,0.25,1)] lg:px-10",
-          scrolled ? "min-h-[3.25rem]" : "min-h-[4.25rem]",
+          "mx-auto flex w-full max-w-content items-center justify-between gap-3 px-4 transition-[min-height,box-shadow,background-color] duration-[480ms] ease-[cubic-bezier(0.25,0.1,0.25,1)] sm:px-6 lg:px-8",
+
+          // O VIDRO. Sobre a cena, ela atravessa; sobre as páginas de linho
+          // liso (`/o-que-e`, `/privacidade`, `/termos`) o desfoque de uma
+          // cor chapada devolve a mesma cor chapada — fica neutro, nunca
+          // turvo. Por isso não precisa de estado condicional.
+          //
+          // O fio dourado e a sombra fazem o descolamento; o vidro sozinho
+          // deixaria a marca à mercê do enquadramento da foto, que é o
+          // defeito do `SIM-61`. 72% em repouso é o piso de legibilidade.
+          "rounded-[1.75rem] border border-[color-mix(in_srgb,var(--color-brand-gold)_30%,transparent)] backdrop-blur-md",
+          scrolled
+            ? "min-h-[3.25rem] bg-[color-mix(in_srgb,var(--color-bg-canvas)_88%,transparent)] shadow-[0_2px_10px_rgba(70,55,35,0.07)]"
+            : "min-h-[4.25rem] bg-[color-mix(in_srgb,var(--color-bg-canvas)_72%,transparent)] shadow-[0_6px_28px_rgba(70,55,35,0.12)]",
         )}
       >
         <Link
@@ -166,8 +182,12 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
           />
           <span
             className={cn(
-              "font-serif font-medium tracking-[-0.02em] text-[var(--color-brand-primary)] transition-[font-size] duration-[480ms]",
-              scrolled ? "text-base" : "text-lg lg:text-xl",
+              // VERSALETE ESPAÇADO: era caixa mista com `tracking` NEGATIVO
+              // — letra apertada lê como palavra. Em caixa alta com
+              // espaçamento generoso lê como MARCA, que é o papel dela aqui.
+              // Continua texto real, nunca imagem: escala e permanece nítido.
+              "font-serif font-medium uppercase text-[var(--color-brand-primary)] transition-[font-size] duration-[480ms]",
+              scrolled ? "text-sm tracking-[0.16em]" : "text-base tracking-[0.18em] lg:text-lg",
             )}
           >
             Aliviar
@@ -183,6 +203,14 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
         </nav>
 
         <div className="flex items-center gap-2 lg:gap-3">
+          {/* 27/08 · O Fundador pediu "Minha Jornada" no lugar de "Entrar", a
+              partir de uma maquete. NÃO SE FAZ, e o motivo é que o rótulo JÁ
+              EXISTE logo abaixo: é o `portalCta`, mostrado a quem tem sessão,
+              apontando para `/paciente`. Usá-lo também no estado anônimo faria
+              a página prometer "sua jornada" a quem ainda não tem nenhuma —
+              família da ADR-064 — e apagaria a distinção que o comentário
+              seguinte protege. A maquete provavelmente desenhava o estado
+              logado. */}
           {/* `Começar` é a porta pública, e `Entrar` continua sendo o
               reconhecimento de quem já mora aqui. São gestos diferentes e
               nunca se substituem — foi por confundir os dois que a Landing

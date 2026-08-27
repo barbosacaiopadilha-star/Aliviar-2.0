@@ -109,7 +109,7 @@ export function AmbienteRecepcao() {
 
           `landing-card-gravado` (27/08): é o ÚNICO cartão com a marca
           jateada no vidro. Um só, e de propósito — ver a doutrina no CSS. */}
-      <div className="landing-veu landing-card-vidro landing-card-gravado">
+      <div className="landing-veu landing-card-vidro landing-card-gravado landing-card-gravado--acolhimento">
         <h1 className="landing-hero-title text-[1.5rem] sm:text-4xl lg:text-[3.25rem]">
           Uma decisão de saúde importante.
           <br />
@@ -177,7 +177,7 @@ export function AmbienteCuradoria() {
         <div aria-hidden="true" />
       )}
 
-      <div className="landing-veu landing-card-vidro">
+      <div className="landing-veu landing-card-vidro landing-card-gravado landing-card-gravado--ramifica">
         <h2 className="landing-heading text-2xl lg:text-[2.25rem]">
           Você não precisa escolher sozinho.
         </h2>
@@ -213,7 +213,7 @@ export function AmbienteEscolha() {
       rotulo="A escolha"
       posicaoMobile="center 18%"
     >
-      <div className="landing-veu landing-card-vidro">
+      <div className="landing-veu landing-card-vidro landing-card-gravado landing-card-gravado--tres">
         <h2 className="landing-heading text-2xl lg:text-[2.25rem]">
           Três caminhos, explicados. A escolha continua sendo sua.
         </h2>
@@ -230,12 +230,13 @@ export function AmbienteEscolha() {
 export function AmbienteConcierge() {
   return (
     <AmbienteSection
+      id="concierge"
       cena="concierge"
       posicaoCard="superior"
       rotulo="Concierge"
       posicaoMobile="center 62%"
     >
-      <div className="landing-veu landing-card-vidro">
+      <div className="landing-veu landing-card-vidro landing-card-gravado landing-card-gravado--converge">
         <h2 className="landing-heading text-2xl lg:text-[2.25rem]">
           Depois da escolha, continuamos com você.
         </h2>

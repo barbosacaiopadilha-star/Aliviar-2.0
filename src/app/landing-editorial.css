@@ -1005,8 +1005,8 @@
   mask-size: var(--veu-gravacao-tamanho, cover);
   -webkit-mask-position: var(--veu-gravacao-posicao, center);
   mask-position: var(--veu-gravacao-posicao, center);
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
+  -webkit-mask-repeat: var(--veu-gravacao-repeticao, no-repeat);
+  mask-repeat: var(--veu-gravacao-repeticao, no-repeat);
 }
 
 /* --------------------------------------------------------------------------
@@ -1034,26 +1034,69 @@
    bate e desaparece quando não bate — se ela se impõe, virou logotipo
    grande, que é outra coisa e já existe no cabeçalho.
    -------------------------------------------------------------------------- */
+/* UM MOTIVO POR AMBIENTE (27/08, decisão do Fundador).
+
+   Não é a marca repetida — isso é o 'papel de parede corporativo' que o
+   próprio SIM-41 nomeia como a coisa a evitar. É a GRAMÁTICA NARRATIVA que
+   a casa já usa entre os ambientes, no `fio-de-cuidado.tsx`, agora gravada
+   no material:
+
+     Recepção  · o coração de mãos — a essência do símbolo, em linha
+     Curadoria · ramifica — os muitos caminhos se organizam em três
+     Escolha   · três — paralelos e iguais, nenhum em destaque
+     Concierge · converge — os três viram um, e a casa segue junto
+
+   Cada cartão diz, no vidro, o que aquele momento é. Quatro desenhos
+   diferentes não viram papel de parede: viram narrativa.
+
+   LINHA ESPARSA, sempre. O Sistema Visual abre com 'o luxo está no vazio',
+   e padrão denso atrás de texto recria a mancha de luminosidade que o
+   SIM-61 custou uma sessão para matar. Ladrilho de 300px com muito vidro
+   liso entre os traços, e nenhum traço cruzando a borda — sem emenda. */
 .landing-editorial .landing-card-gravado {
-  /* A MARCA INTEIRA, não só o símbolo (decisão do Fundador, 27/08).
-     `aliviar-logo.png` é o lockup completo — símbolo, nome e assinatura —
-     em 640×606 com alfa. Para máscara só o alfa importa; a cor do arquivo
-     é irrelevante, e por isso a gravação nunca briga com a paleta. */
-  --veu-gravacao: url("/brand/aliviar-logo.png");
+  /* UM símbolo por cartão, NÃO padrão repetido (decisão do Fundador,
+     27/08). Padrão que cobre a peça inteira passa por trás de cada linha
+     de texto; um símbolo só pousa onde há vidro livre e deixa a leitura
+     em paz. É também o que separa isto de papel de parede: um desenho
+     que significa, não uma textura que preenche. */
+  --veu-gravacao-repeticao: no-repeat;
 
-  /* 0.13 e não 0.10: o lockup tem TRAÇO FINO — os fios que cercam
-     'CURADORIA MÉDICA' e 'INDEPENDENTE' têm um ou dois pixels. Na força do
-     símbolo sozinho eles simplesmente sumiam, e a marca gravada aparecia
-     pela metade, que é pior que não aparecer. Ainda é marca d'água: some
-     quando a luz não bate. */
-  --veu-gravacao-forca: 0.13;
+  /* Canto inferior direito: é o vazio de todos os quatro cartões. O texto
+     alinha à esquerda e os botões param antes da borda — sobra vidro
+     justamente ali. O leve sangramento evita que o símbolo pareça um
+     adesivo centrado num quadrado. */
+  --veu-gravacao-posicao: right -6% bottom -6%;
+  --veu-gravacao-tamanho: 38%;
 
-  /* Maior que a versão do símbolo pelo mesmo motivo: a assinatura só se
-     insinua se houver tamanho. Continua sangrando pela borda — marca
-     d'água inteira e centrada viraria logotipo grande, que é outra coisa
-     e já existe no cabeçalho. */
-  --veu-gravacao-tamanho: 62%;
-  --veu-gravacao-posicao: right -10% bottom -8%;
+  /* 0.12: mais alto que a versão em padrão, porque agora é UM desenho e
+     não uma trama somando superfície. Se sumir, sobe; se pesar, desce. */
+  --veu-gravacao-forca: 0.12;
+}
+
+/* No celular o cartão é estreito e o texto ocupa quase toda a largura: o
+   único vidro livre é o canto de baixo. O símbolo encolhe para caber nele
+   sem encostar na última linha. */
+@media (max-width: 639px) {
+  .landing-editorial .landing-card-gravado {
+    --veu-gravacao-tamanho: 30%;
+    --veu-gravacao-posicao: right -4% bottom -4%;
+  }
+}
+
+.landing-editorial .landing-card-gravado--acolhimento {
+  --veu-gravacao: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'300'%20height%3D'300'%20viewBox%3D'0%200%20300%20300'%3E%3Cg%20fill%3D'none'%20stroke%3D'%23ffffff'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cpath%20d%3D'M150%20196%20C%20116%20168%2C%20108%20130%2C%20128%20116%20C%20142%20106%2C%20152%20118%2C%20152%20130'%2F%3E%3Cpath%20d%3D'M150%20196%20C%20184%20168%2C%20192%20130%2C%20172%20116%20C%20158%20106%2C%20148%20118%2C%20148%20130'%2F%3E%3Ccircle%20cx%3D'150'%20cy%3D'92'%20r%3D'9'%2F%3E%3Cpath%20d%3D'M52%2066%20C%2038%2054%2C%2035%2038%2C%2043%2032%20C%2049%2028%2C%2053%2033%2C%2053%2038'%2F%3E%3Cpath%20d%3D'M52%2066%20C%2066%2054%2C%2069%2038%2C%2061%2032%20C%2055%2028%2C%2051%2033%2C%2051%2038'%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+}
+
+.landing-editorial .landing-card-gravado--ramifica {
+  --veu-gravacao: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'300'%20height%3D'300'%20viewBox%3D'0%200%20300%20300'%3E%3Cg%20fill%3D'none'%20stroke%3D'%23ffffff'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cpath%20d%3D'M36%2040%20C%2036%20118%2C%2090%20142%2C%2090%20256'%2F%3E%3Cpath%20d%3D'M114%2040%20C%20114%20112%2C%2090%20130%2C%2090%20256'%2F%3E%3Cpath%20d%3D'M186%2040%20C%20186%20112%2C%20210%20130%2C%20210%20256'%2F%3E%3Cpath%20d%3D'M264%2040%20C%20264%20118%2C%20210%20142%2C%20210%20256'%2F%3E%3Cpath%20d%3D'M150%2040%20L%20150%20256'%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+}
+
+.landing-editorial .landing-card-gravado--tres {
+  --veu-gravacao: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'300'%20height%3D'300'%20viewBox%3D'0%200%20300%20300'%3E%3Cg%20fill%3D'none'%20stroke%3D'%23ffffff'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cpath%20d%3D'M90%2040%20L%2090%20260'%2F%3E%3Cpath%20d%3D'M150%2040%20L%20150%20260'%2F%3E%3Cpath%20d%3D'M210%2040%20L%20210%20260'%2F%3E%3Ccircle%20cx%3D'90'%20cy%3D'150'%20r%3D'6'%2F%3E%3Ccircle%20cx%3D'150'%20cy%3D'150'%20r%3D'6'%2F%3E%3Ccircle%20cx%3D'210'%20cy%3D'150'%20r%3D'6'%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+}
+
+.landing-editorial .landing-card-gravado--converge {
+  --veu-gravacao: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'300'%20height%3D'300'%20viewBox%3D'0%200%20300%20300'%3E%3Cg%20fill%3D'none'%20stroke%3D'%23ffffff'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cpath%20d%3D'M90%2040%20C%2090%20160%2C%20150%20160%2C%20150%20260'%2F%3E%3Cpath%20d%3D'M150%2040%20L%20150%20260'%2F%3E%3Cpath%20d%3D'M210%2040%20C%20210%20160%2C%20150%20160%2C%20150%20260'%2F%3E%3Ccircle%20cx%3D'150'%20cy%3D'260'%20r%3D'7'%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
 }
 
 .landing-editorial .landing-veu > * {
