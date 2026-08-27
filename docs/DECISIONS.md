@@ -1388,6 +1388,7 @@ Novo agregado `approach_attempts` · nova estrutura `team_notifications` · proj
 - **Decisão:** (1) **Anthropic permanece** como suboperadora e **deverá ser documentada** na política de privacidade (Bloco H), com a mitigação existente mantida (prompt nunca logado); (2) **o analytics deverá ser removido das rotas autenticadas (Bloco H)** — permanecerá apenas na landing pública, preservando a métrica de aquisição sem tocar dado de quem já é paciente.
 - **Consequência:** os três processadores reais (Supabase, Vercel, Anthropic) ficarão declarados com a publicação da política (Bloco H); o rastreamento de navegação clínica deixará de existir.
 - **Registro de implementação (item 2, 2026-08-26) — não altera esta decisão.** O item 2 está **cumprido**. Até esta data o `<Analytics/>` seguia no **layout raiz** (`src/app/layout.tsx`), isto é, em toda rota do produto — `/paciente/*`, `/portal-curador/*`, `/coa/*`, `/admin/*` e o wizard de `/sua-historia`. A decisão é de 02/08 e a execução estava endereçada ao Bloco H, que não aconteceu: ficou vinte e quatro dias decidida e não aplicada. Agora o componente vive em `src/components/landing/analytics-gate.tsx`, montado só no layout de `(public)`, **sob lista de permissão** — a Landing, `/solicitar-atendimento` e o portal legal (`/privacidade`, `/termos`, `/consentimentos`, `/legal`). **A lista é de permissão, e não de exclusão, de propósito:** o erro simétrico de um gate por exclusão seria rastrear navegação clínica em silêncio, então o padrão passa a ser não medir, e rota nova só é medida se alguém a escrever ali. **`/sua-historia` ficou de fora** embora seja rota pública — é onde a pessoa escreve a própria história de saúde, e a URL do passo já é indício. Trava: `tests/unit/adr056-analytics-fora-da-casa.test.ts` (7 casos), provada mordendo contra o `HEAD` anterior. **Uma ampliação a declarar:** a ADR diz "apenas na landing pública", e a lista inclui o pedido e o portal legal — são Fachada, nenhuma revela condição de saúde pela URL, e sem `/solicitar-atendimento` não há métrica de aquisição. Se o Fundador quiser a leitura literal, tirar as cinco rotas é uma linha. **O item 1 (Anthropic na política) segue aberto:** depende da publicação do texto, que é o `PRIV-01`.
+- **Verificado em PRODUÇÃO (2026-08-27).** Commit `452b68e` publicado a partir de `255419e`; deployment `dpl_4kLoMyMgFjncXNucBb9hv7fmVPpJ`, target production, `READY`. Conferência feita pelas requisições de rede reais em `https://aliviar-2-0.vercel.app`, e o par que prova a decisão é este: **`/` carrega** o analytics (`script.js` + `POST /view`) e **`/login` não carrega** — antes desta mudança as duas carregavam, porque a montagem era no layout raiz. Também medidos: **`/sua-historia` → 200 sem analytics** (é a rota que mais importa: está dentro de `(public)` e mesmo assim a lista de permissão a deixou de fora, que é exatamente o desenho) e **`/privacidade` → 200 com analytics**, exibindo corretamente *"O documento ainda não foi publicado"* — coerente com a ADR-096. Nenhum asset quebrado em nenhuma das quatro. Ponto de rollback registrado: `255419e`.
 - **Revisitar quando:** a política de privacidade for publicada (o texto final pode exigir ajustes), ou o assistido for descontinuado.
 
 ---
@@ -2642,6 +2643,40 @@ Este adiamento **não autoriza, por si só, o segundo caso.** Ele registra a dec
 2. Uma pessoa **de fora da equipe** for atendida — aí o adiamento deixa de se sustentar e a publicação volta a ser condição, não escolha;
 3. Chegar pedido de titular (acesso, correção, exclusão ou portabilidade);
 4. A primeira Curadoria real ser entregue — porque é o marco que a ADR-073 já usa para retomar tudo.
+
+### Decisão complementar de 2026-08-27 — o ponto em aberto foi fechado no mesmo dia
+
+O verbete acima registrou que esta ADR **não** decidia quem seria a primeira
+paciente real. **O Fundador decidiu, horas depois, nesta mesma data: a primeira
+Curadoria real será conduzida com uma pessoa da própria equipe Aliviar.**
+
+**Consequência direta:** o adiamento se sustenta. Não há tratamento de dado de
+saúde de terceiro sem base publicada — que era o único cenário em que este
+adiamento deixaria de valer, e é o que o `GO_NO_GO_FINAL.md` marca como
+🔴 NO-GO. O gatilho 2 de "revisitar quando" (*"uma pessoa de fora da equipe
+for atendida"*) permanece armado para a segunda Curadoria em diante.
+
+**O limite que isto impõe à observação, e que precisa estar escrito antes da
+sessão para não ser esquecido depois.** A ADR-073 encomendou cinco observações,
+e esta escolha **não** as devolve com o mesmo peso:
+
+| O que a ADR-073 quer observar | Vale com paciente interna? |
+| --- | --- |
+| Onde o Curador improvisa por fora do sistema | **Sim, integralmente** — o trabalho do Curador é o mesmo |
+| Quanto tempo cada ato leva de verdade | **Sim** |
+| As quatro perguntas da Mesa (ADR-095) | **Sim** — quem trabalha na tela é o Curador, não a paciente |
+| O que a equipe precisou explicar por fora da tela | **Parcialmente** — quem já conhece o produto não pergunta o que uma estranha perguntaria |
+| **Onde a paciente hesita, relê ou pergunta** | **Não** — é a observação que esta escolha sacrifica |
+
+Ou seja: **a primeira Curadoria devolve o lado do Curador com força total e o
+lado da paciente enfraquecido.** Isso não a invalida — o gargalo que a ADR-073
+nomeia é sobretudo operacional, e ele será medido. Mas significa que
+**descongelar decisões sobre a experiência da paciente com base só nesta
+sessão seria repetir o erro que a ADR-073 combate**, agora com evidência de
+qualidade errada em vez de nenhuma evidência.
+
+As decisões que dependem da hesitação da paciente esperam a primeira Curadoria
+com pessoa de fora — que, por sua vez, exige a política publicada.
 
 ### O sinal de que esta ADR falhou
 

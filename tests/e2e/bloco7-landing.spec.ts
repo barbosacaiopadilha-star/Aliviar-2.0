@@ -320,7 +320,7 @@ test.describe("Bloco 7 · a Landing pública", () => {
     await page.getByRole("link", { name: "Quem somos" }).first().click();
     await expect(page.locator("#quem-somos")).toBeInViewport({ timeout: 10_000 });
     await expect(
-      page.getByRole("heading", { name: "Três médicos selecionados. A escolha continua sendo sua." }),
+      page.getByRole("heading", { name: "Três caminhos, explicados. A escolha continua sendo sua." }),
     ).toBeVisible();
 
     await page.getByRole("link", { name: "Nossa curadoria" }).first().click();

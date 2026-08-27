@@ -189,7 +189,7 @@ describe("T-7-6 · hierarquia de cabeçalhos", () => {
     const h2 = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
     expect(h2).toEqual([
       "Você não precisa escolher sozinho.",
-      "Três médicos selecionados. A escolha continua sendo sua.",
+      "Três caminhos, explicados. A escolha continua sendo sua.",
       "Depois da escolha, continuamos com você.",
     ]);
   });
@@ -206,7 +206,7 @@ describe("A copy é a do dossiê, palavra por palavra", () => {
     "O curador Aliviar escuta a sua história, compreende suas necessidades e avalia cada possibilidade com cuidado e independência.",
     "Sem indicações automáticas.",
     "Sem pressão.",
-    "Sem interesses escondidos.",
+    "Nenhum médico paga para aparecer aqui.",
     "Apenas uma orientação humana, criteriosa e transparente para ajudar você a encontrar o cuidado certo com segurança e confiança.",
     // Escolha
     "A Aliviar apresenta três opções compatíveis com a sua necessidade e explica os pontos importantes de cada uma. Você decide com clareza, sem pressão e sem favorecimentos.",

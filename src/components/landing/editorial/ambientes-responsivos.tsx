@@ -10,14 +10,34 @@ import { LinkButton } from "@/components/landing/link-button";
  * 23/08). A narrativa tem exatamente quatro seções fotográficas —
  * Recepção, Curadoria, Escolha médica e Concierge — e nenhuma quinta.
  *
- * A copy é a do dossiê, palavra por palavra, com UMA exceção lavrada: o
- * Card 4 dizia "A Aliviar organiza consultas" e "Agenda e confirmações".
- * O domínio da casa registra o contrário — *"a aproximação intermediada
- * não existe"*: nenhum contato é feito pela Aliviar, e a decisão sobre
- * intermediação segue aberta. Prometer agenda seria vender o que não há
- * (contrato 34 §4.1; guarda automática proíbe "agendamos" no Concierge).
- * O card fala do que a casa faz de verdade: organizar documentos e etapas,
- * responder dúvidas e acompanhar.
+ * A copy é a do dossiê, palavra por palavra, com TRÊS exceções lavradas.
+ *
+ * 1 · O Card 4 dizia "A Aliviar organiza consultas" e "Agenda e
+ * confirmações". O domínio da casa registra o contrário — *"a aproximação
+ * intermediada não existe"*: nenhum contato é feito pela Aliviar, e a
+ * decisão sobre intermediação segue aberta. Prometer agenda seria vender o
+ * que não há (contrato 34 §4.1; guarda automática proíbe "agendamos" no
+ * Concierge). O card fala do que a casa faz de verdade: organizar
+ * documentos e etapas, responder dúvidas e acompanhar.
+ *
+ * 2 · O Card 3 dizia "Três médicos selecionados" — e o objeto da Curadoria
+ * não é o médico. O `MANUAL_CURADOR.md` é literal: *"o propósito não é
+ * encontrar 'o melhor médico'. É identificar três caminhos de cuidado...
+ * o objeto do seu trabalho é o caminho de cuidado; o médico é quem o
+ * materializa"*. "Caminho" está no vocabulário canônico do
+ * `LANDING_UX_WRITING.md` §190, e "três médicos" já constava do
+ * `DOMAIN_RELATIONSHIP_SPECIFICATION.md` como termo sem base no domínio.
+ * A troca corrige uma expectativa que a Landing criava e o Curador tinha
+ * de desfazer na conversa: a pessoa vinha esperando uma lista de nomes e
+ * recebia três caminhos explicados, que é mais — a copy antiga vendia a
+ * casa abaixo do que ela entrega.
+ *
+ * 3 · O Card 2 dizia "Sem interesses escondidos", que é o que toda empresa
+ * diz, inclusive as que têm. O fato concreto e verificável é mais forte, e
+ * é a promessa fundadora do produto (README: *"nunca por posição paga"*):
+ * nenhum profissional paga para estar na Rede. A anáfora dos três "Sem"
+ * se quebra de propósito — a linha mais forte da página não devia estar
+ * disfarçada de terceira repetição.
  *
  * Sem texto dentro das fotografias: tudo aqui é HTML.
  */
@@ -159,7 +179,7 @@ export function AmbienteCuradoria() {
         <ul className="landing-marcadores">
           <li>Sem indicações automáticas.</li>
           <li>Sem pressão.</li>
-          <li>Sem interesses escondidos.</li>
+          <li>Nenhum médico paga para aparecer aqui.</li>
         </ul>
 
         <p className="landing-body mt-4 text-base text-[var(--color-ink-muted)]">
@@ -183,7 +203,7 @@ export function AmbienteEscolha() {
     >
       <div className="landing-veu landing-card-vidro">
         <h2 className="landing-heading text-2xl lg:text-[2.25rem]">
-          Três médicos selecionados. A escolha continua sendo sua.
+          Três caminhos, explicados. A escolha continua sendo sua.
         </h2>
         <p className="landing-body mt-5 text-base text-[var(--color-ink-muted)]">
           A Aliviar apresenta três opções compatíveis com a sua necessidade e explica os pontos
