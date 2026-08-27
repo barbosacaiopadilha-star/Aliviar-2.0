@@ -1,5 +1,6 @@
 import "@/app/landing-editorial.css";
 
+import { AnalyticsGate } from "@/components/landing/analytics-gate";
 import { PublicFooterGate } from "@/components/landing/public-footer-gate";
 import { PublicHeaderContainer } from "@/components/landing/public-header-container";
 import { PublicHeaderGate } from "@/components/landing/public-header-gate";
@@ -30,6 +31,10 @@ export default function PublicLayout({
       </main>
 
       <PublicFooterGate />
+
+      {/* ADR-056 (D-10) item 2 · o analytics saiu do layout raiz e passa a
+          viver aqui, sob lista de permissão. Ver `analytics-gate.tsx`. */}
+      <AnalyticsGate />
     </div>
   );
 }

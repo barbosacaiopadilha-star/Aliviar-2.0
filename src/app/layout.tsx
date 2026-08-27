@@ -1,4 +1,3 @@
-import { Analytics } from "@vercel/analytics/next";
 import { Fraunces, Inter } from "next/font/google";
 
 import type { Metadata } from "next";
@@ -64,7 +63,6 @@ export default function RootLayout({
     <html lang="pt-BR" className={`${fraunces.variable} ${inter.variable}`}>
       <body>
         <AppProviders>{children}</AppProviders>
-        <Analytics />
       </body>
     </html>
   );
