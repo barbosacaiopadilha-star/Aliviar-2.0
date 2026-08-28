@@ -554,15 +554,31 @@
   .landing-nav {
     display: flex;
     align-items: center;
-    gap: 1.75rem;
+    gap: 0;
   }
 }
 
 /* 27/08 · TINTA CLARA. Estes links vivem dentro da cápsula, e a cápsula
    passou a ser vidro AZUL (ADR-098). Tinta escura sobre azul é ilegível —
    a inversão de polaridade é obrigatória, não estética. */
+/* Os PONTOS DOURADOS entre os itens (27/08, referência do Fundador). O
+   separador é o mesmo latão do resto da casa e vive no `::before`, não no
+   HTML: é ornamento, e ornamento não entra no que um leitor de tela
+   anuncia. O primeiro item não recebe — ponto antes do primeiro não separa
+   nada, só decora a borda. */
+.landing-nav-link + .landing-nav-link::before {
+  content: "·";
+  margin-right: 1.75rem;
+  color: color-mix(in srgb, var(--color-brand-gold) 70%, transparent);
+}
+
 .landing-nav-link {
-  font-size: 0.875rem;
+  /* Versalete espaçado, como a marca ao lado — a barra inteira fala a
+     mesma tipografia. */
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin-left: 1.75rem;
   color: var(--color-on-dark-muted);
   text-underline-offset: 4px;
   transition: color var(--duration-fast) var(--ease-natural);

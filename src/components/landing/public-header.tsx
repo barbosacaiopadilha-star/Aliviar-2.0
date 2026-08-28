@@ -142,7 +142,7 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
           // `gap-3`: a 375px o logotipo terminava em 113px e o botão começava
           // em 113px — encostados, sem um pixel de respiro. `justify-between`
           // não protege quando o conteúdo ocupa a linha inteira.
-          "mx-auto flex w-full max-w-content items-center justify-between gap-3 px-4 transition-[min-height,box-shadow,background-color] duration-[480ms] ease-[cubic-bezier(0.25,0.1,0.25,1)] sm:px-6 lg:px-8",
+          "mx-auto flex w-full max-w-[min(96rem,100%)] items-center justify-between gap-3 px-4 transition-[min-height,box-shadow,background-color] duration-[480ms] ease-[cubic-bezier(0.25,0.1,0.25,1)] sm:px-6 lg:px-10",
 
           // O VIDRO. Sobre a cena, ela atravessa; sobre as páginas de linho
           // liso (`/o-que-e`, `/privacidade`, `/termos`) o desfoque de uma
@@ -271,7 +271,7 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
             <LinkButton
               href={portalCta.href}
               variant="secondary"
-              className="hidden min-h-11 px-5 py-2 text-sm text-[var(--color-on-dark)] hover:bg-[color-mix(in_srgb,var(--color-bg-canvas)_12%,transparent)] sm:inline-flex"
+              className="hidden min-h-11 px-5 py-2 text-sm text-[var(--color-on-dark)] hover:bg-[color-mix(in_srgb,var(--color-bg-canvas)_12%,transparent)] min-[480px]:inline-flex"
             >
               {portalCta.label}
             </LinkButton>
@@ -279,7 +279,7 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
             <LinkButton
               href="/login"
               variant="secondary"
-              className="hidden min-h-11 px-5 py-2 text-sm text-[var(--color-on-dark)] hover:bg-[color-mix(in_srgb,var(--color-bg-canvas)_12%,transparent)] sm:inline-flex"
+              className="hidden min-h-11 px-5 py-2 text-sm text-[var(--color-on-dark)] hover:bg-[color-mix(in_srgb,var(--color-bg-canvas)_12%,transparent)] min-[480px]:inline-flex"
             >
               Entrar
             </LinkButton>
