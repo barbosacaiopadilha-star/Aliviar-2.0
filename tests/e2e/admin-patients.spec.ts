@@ -35,10 +35,10 @@ test.describe("gestão administrativa de pacientes (correção de regra de negó
     await loginAs(page, account);
 
     await page.goto("/admin/pacientes");
-    await expect(page.getByRole("heading", { name: "Pacientes" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Assistidos" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Cadastre-se" })).toHaveCount(0);
 
-    await page.getByRole("link", { name: "Novo paciente" }).click();
+    await page.getByRole("link", { name: "Novo assistido" }).click();
     await expect(page).toHaveURL("/admin/pacientes/novo");
 
     const email = `e2e-paciente-${Date.now()}@aliviar-conexao.local`;

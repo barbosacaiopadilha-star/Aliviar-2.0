@@ -18,7 +18,7 @@ export const KIT_DA_CURADORIA = [
     descricao: "A declaração assinada do médico — preenchida na entrevista, com o Termo de Veracidade.",
   },
   {
-    href: "/rede/Ficha-da-Paciente-Curadoria-Aliviar.pdf",
+    href: "/rede/Ficha-do-Assistido-Curadoria-Aliviar.pdf",
     titulo: "Ficha do Assistido",
     descricao: "A Consulta Inicial no papel — a história nas palavras dela, até o reconhecimento assinado.",
   },

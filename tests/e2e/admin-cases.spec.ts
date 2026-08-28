@@ -188,7 +188,7 @@ test.describe("Portal Administrativo — Casos (ÉPICO 1/SPRINT 2)", () => {
     // num banco recém-reconstruído, caía.
     await expect(page.getByRole("heading", { name: "Casos", exact: true })).toBeVisible();
 
-    await page.getByLabel("Buscar por paciente").fill("pessoa-que-nao-existe-e2e");
+    await page.getByLabel("Buscar por assistido").fill("pessoa-que-nao-existe-e2e");
     await expect(page.getByText("Nenhum caso encontrado.")).toBeVisible();
   });
 
@@ -207,6 +207,6 @@ test.describe("Portal Administrativo — Casos — mobile", () => {
     const admin = loadTestAccounts().find((a) => a.role === "administrador")!;
     await loginAs(page, admin);
     await page.goto("/admin/casos");
-    await expect(page.getByLabel("Buscar por paciente")).toBeVisible();
+    await expect(page.getByLabel("Buscar por assistido")).toBeVisible();
   });
 });

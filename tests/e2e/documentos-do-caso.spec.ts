@@ -70,14 +70,14 @@ test("o Curador gera as peças do caso já com os dados da paciente", async ({ p
     page.getByRole("heading", { name: "Consentimento e uso de informações" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Ficha da Paciente — Consulta Inicial" }),
+    page.getByRole("heading", { name: "Ficha do Assistido — Consulta Inicial" }),
   ).toBeVisible();
 
   const nomeDaPaciente = await page
     .locator(".documento-campos dd")
     .first()
     .textContent();
-  expect(nomeDaPaciente?.trim().length, "o nome da paciente saiu em branco").toBeGreaterThan(2);
+  expect(nomeDaPaciente?.trim().length, "o nome do assistido saiu em branco").toBeGreaterThan(2);
 
   // 3 · os campos da conversa continuam em branco, com pauta para a mão
   await expect(page.getByRole("heading", { name: "O que trouxe você até aqui" })).toBeVisible();

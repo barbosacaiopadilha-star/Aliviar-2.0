@@ -161,9 +161,17 @@ havia defeito. Se o número parecer bom demais, confira o que ele mediu.
    publicada**.
 5. **`PRIV-04`** — a exclusão não alcança o storage. P0 real, depende da D-08,
    não trava a primeira Curadoria.
-6. **Pendência menor:** o PDF `/rede/Ficha-da-Paciente-Curadoria-Aliviar.pdf`
+6. ~~**Pendência menor:** o PDF `/rede/Ficha-da-Paciente-Curadoria-Aliviar.pdf`
    teve o rótulo trocado para "Ficha do Assistido", mas o **arquivo** continua
-   com o nome antigo.
+   com o nome antigo.~~ **FECHADO em 28/08 pela sessão seguinte** — e era maior
+   que o nome: o documento que a pessoa assina se intitulava "Ficha da
+   Paciente", três peças-irmãs o citavam por esse nome, e a passagem da
+   ADR-097 tinha deixado **quatro pontos de E2E cobrando texto de tela que não
+   existe mais** (`SIM-62`). As peças de `docs/rede/` ganharam gerador
+   (`scripts/gerar-rede-pdf.mjs`), que é o que faltava para o ativo não
+   divergir do fonte outra vez. **Fica aberto no `SIM-62`** um segundo grupo,
+   anterior e independente: `admin-dashboard.spec.ts` exige cinco indicadores
+   removidos de propósito em 24/08.
 
 ---
 
