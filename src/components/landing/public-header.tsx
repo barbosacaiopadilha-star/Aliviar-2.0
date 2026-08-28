@@ -190,16 +190,21 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
               segue em texto real ao lado: mais nítido que qualquer
               imagem, e escala sozinho. */}
           <Image
-            /* A variante MONOCROMÁTICA CLARA, que já existia no repositório
-               para fundo escuro — é a mesma que o rodapé usa. O símbolo
-               colorido tem azul dentro: sobre a cápsula azul ele empastava. */
-            src="/brand/aliviar-logo-clara.png"
+            /* O SÍMBOLO PURO, clareado por filtro.
+               Tentei antes o `aliviar-logo-clara.png` achando que era só o
+               símbolo: é o LOCKUP INTEIRO — símbolo mais a palavra "Aliviar" —,
+               e espremido em 20px ao lado do versalete o nome aparecia DUAS
+               VEZES, uma delas ilegível. Visto na tela, e revertido.
+               O arquivo do símbolo é bicolor (azul e sálvia) e empastaria sobre
+               a cápsula azul; o filtro o resolve em silhueta clara, que é o
+               tratamento correto de marca sobre fundo escuro. */
+            src="/brand/aliviar-simbolo.png"
             alt="Aliviar — Curadoria Médica Independente"
             width={256}
             height={266}
             priority
             className={cn(
-              "w-auto transition-[height] duration-[480ms] ease-[cubic-bezier(0.25,0.1,0.25,1)]",
+              "w-auto brightness-0 invert transition-[height] duration-[480ms] ease-[cubic-bezier(0.25,0.1,0.25,1)]",
               scrolled ? "h-8" : "h-9 lg:h-10",
             )}
           />
