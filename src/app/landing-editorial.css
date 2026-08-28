@@ -1616,6 +1616,21 @@
        tela: o card desce até o piso livre, sem tapar as pessoas. */
     padding-top: 30svh;
   }
+
+  /* ...MENOS quando o ambiente é um formulário (28/08). A regra acima mira a
+     Recepção, mas o seletor é `:first-of-type` — e em qualquer OUTRA página
+     que use o padrão de ambiente o primeiro também é o único, então ela
+     vazava para lá. `/solicitar-atendimento` foi a primeira a esbarrar: o
+     card descia 30% da tela por causa de uma decisão sobre uma fotografia
+     que não é a dela. O formulário é alto e precisa da tela inteira.
+
+     O seletor precisa PESAR MAIS que o de cima — `:first-of-type` conta como
+     classe, então repetir `.landing-ambiente` e o próprio pseudo aqui é o que
+     faz esta regra valer, não capricho. */
+  .landing-editorial .landing-ambiente.landing-ambiente--formulario:first-of-type
+    .landing-ambiente-conteudo {
+    padding-top: 0.75rem;
+  }
 }
 
 /* O card de ABERTURA (fusão distribuída, 23/08): a promessa e o convite do

@@ -24,9 +24,33 @@ export const CENAS = {
      é ela que torna possível o cartão de vidro com texto claro — sobre as
      quatro cenas diurnas, texto claro seria ilegível. */
   entrada: "entrada",
+  /* 28/08 · O ATENDIMENTO. A sala de espera com as duas poltronas, o telefone
+     e a marca na parede — gerada pelo Fundador para `/solicitar-atendimento`.
+     É cena CLARA, então o cartão dela é o da Landing (letra escura sobre vidro
+     claro), nunca o da porta de acesso: o `cbdb794` já registrou que texto
+     claro só sobrevive sobre a cena escura do terraço. */
+  atendimento: "atendimento",
 } as const;
 
 export type CenaKey = (typeof CENAS)[keyof typeof CENAS];
+
+/**
+ * O retrato do celular tem 852×1846 em todas as cenas do dossiê de 23/08.
+ * O Atendimento nasceu depois, em 941×1672 — o enquadramento é do Fundador, e
+ * recortá-lo para caber na medida antiga trocaria composição por uniformidade.
+ * Declarar a medida real importa: é dela que o navegador tira a proporção
+ * antes da imagem chegar, e proporção errada é salto de layout.
+ *
+ * Fica registrado que uma extensão mecânica da parede (941×2572) foi tentada
+ * em 28/08 e DESCARTADA: esticar uma faixa de 140px para 900px amplificou o
+ * gradiente e trocou o creme da sala por um caramelo amadeirado — a sala
+ * deixava de ser a mesma sala. O que resolvia o problema que ela tentava
+ * resolver era o vidro escovado, que já existia.
+ */
+const RETRATO: Partial<Record<CenaKey, { largura: number; altura: number }>> = {
+  atendimento: { largura: 941, altura: 1672 },
+};
+const RETRATO_PADRAO = { largura: 852, altura: 1846 };
 
 export function CenaResponsiva({
   cena,
@@ -43,6 +67,7 @@ export function CenaResponsiva({
   posicaoDesktop?: string;
 }) {
   const base = `/landing/v2/${cena}`;
+  const retrato = RETRATO[cena] ?? RETRATO_PADRAO;
   return (
     <picture aria-hidden="true" className={cn("landing-cena", className)}>
       <source
@@ -59,15 +84,20 @@ export function CenaResponsiva({
         width={1672}
         height={941}
       />
-      <source type="image/webp" srcSet={`${base}-mobile.webp`} width={852} height={1846} />
+      <source
+        type="image/webp"
+        srcSet={`${base}-mobile.webp`}
+        width={retrato.largura}
+        height={retrato.altura}
+      />
       {/* eslint-disable-next-line @next/next/no-img-element -- fotografia de
           ambiente servida por <picture>: o next/image não expressa a troca
           por breakpoint com dois arquivos de proporções diferentes. */}
       <img
         src={`${base}-mobile.jpg`}
         alt=""
-        width={852}
-        height={1846}
+        width={retrato.largura}
+        height={retrato.altura}
         decoding="async"
         loading={prioridade ? "eager" : "lazy"}
         fetchPriority={prioridade ? "high" : "auto"}
