@@ -10,6 +10,7 @@ Novo no projeto? Vá direto para **[ONBOARDING.md](ONBOARDING.md)**, que já tra
 | ------------------------------------ | -------------------------------------------------------------------------------------- |
 | [`../README.md`](../README.md)       | Ponto de entrada: o que é o produto, status da versão.                                 |
 | [`ONBOARDING.md`](ONBOARDING.md)     | Ordem de leitura para quem chega agora, humano ou agente de IA.                        |
+| [`CONTINUIDADE_2026-08-27.md`](CONTINUIDADE_2026-08-27.md) | Onde retomar: estado real, decisões esperando o Fundador, e as lições que custaram tempo. |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | Histórico de entregas por sprint.                                                      |
 | [`AGENTS.md`](AGENTS.md)             | Documento canônico de governança dos agentes de IA — leia antes de qualquer alteração. |
 
