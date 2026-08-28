@@ -2766,3 +2766,59 @@ O mesmo cabeçalho serve `/o-que-e`, `/privacidade` e `/termos`, que são linho 
 Alguém pedir a segunda exceção. O pedido em si é o sinal: se o vidro começar a parecer necessário em outra moldura, a pergunta não é sobre aquela moldura — é sobre o §63 inteiro, e aí a decisão é de Sistema Visual, não de componente.
 
 ---
+
+## ADR-099 — A casa escurece: a Fachada passa ao entardecer, e o vidro vira a linguagem única
+
+- **Data:** 2026-08-27
+- **Status:** **Decidida pelo Fundador**, em conversa direta nesta data, escolhendo entre três caminhos que o Engenheiro Líder apresentou com o custo de cada um.
+- **Dependências:** **Sistema Visual** (materiais: papel algodão, pedra clara, linho) · **ADR-080/084** (os quatro ambientes, e o vidro na casa da pessoa atendida) · **ADR-098** (o vidro no cabeçalho) · `SIM-61` · **ADR-073**
+
+### O que muda
+
+A Landing passa do **dia para o entardecer**, e os cartões passam de papel claro com tinta escura para **vidro com tinta clara** — o mesmo material da porta de acesso. Uma casa, uma linguagem.
+
+### Como se chegou aqui, porque o caminho é o argumento
+
+O Fundador pediu, a partir de uma referência de vidro jateado, que o cartão da porta de acesso valesse para todos. A resposta honesta era que **não valia** — e a razão apareceu medida, três vezes seguidas na mesma sessão:
+
+1. **No cabeçalho:** vidro creme sobre teto claro e uniforme. A transparência existia (`blur(12px)`, cena atrás) e **não se via** — o que passava era mais creme.
+2. **No cartão do herói:** mesmo efeito sobre parede clara. Abrir o vidro não revelava nada, porque não havia nada distinto atrás.
+3. **Na comparação com a referência:** ela funciona porque o fundo é folhagem escura ao entardecer — textura, contraste, cor.
+
+A conclusão não é de gosto: **vidro só se vê contra fundo que tenha o que mostrar, e texto claro só é legível sobre fundo escuro.** O tratamento que o Fundador queria não é um estilo de cartão — é um **par cartão-claro + cena-escura**, e um não vive sem o outro.
+
+### A escolha, entre três
+
+Foram oferecidas: (a) escurecer a casa inteira; (b) copiar só a forma, mantendo tinta escura; (c) aplicar em um ambiente e olhar antes. **O Fundador escolheu (a).**
+
+### O véu, e por que não fotografias novas
+
+O mesmo recurso que a porta de acesso usou enquanto a cena do terraço não existia: um **véu quente** sobre cada cena, transformando-a em entardecer sem trocar um arquivo. Quente e nunca neutro — cinza sobre fotografia mata a cor e a cena vira chumbo; o verde profundo preserva o ouro das luzes e aprofunda os fundos.
+
+### A medição, que é o que autoriza a decisão
+
+Texto claro sobre o composto cena + véu + piso do cartão:
+
+| Estado | Média | Pior ponto |
+| --- | --- | --- |
+| Repouso, base da cena | 11,61 | 5,03 |
+| Repouso, topo da cena (véu a 34%) | 11,04 | **3,54** |
+| Cristalizado | 12,5 | 8,56 |
+
+O pior ponto no topo reprovava — e é justamente onde pousa o **cartão do Concierge**, o único com `posicaoCard="superior"`. O gradiente subiu para **44%→58%** e o piso do cartão para **24%→62%**: pior ponto medido **4,53**, e a área inteira passa.
+
+**E o ganho é maior do que o empate:** o cartão claro anterior tinha pior ponto entre **1,66 e 2,70**, porque tinta escura sumia nas manchas escuras da foto — que foi o `SIM-61`. Escurecer a casa **melhorou a legibilidade**, não só a aparência. A decisão estética e a decisão de acessibilidade apontaram para o mesmo lado, o que é raro e vale registrar.
+
+### O que a inversão obrigou, e não é cosmético
+
+Tudo que vivia dentro do cartão nasceu para papel claro e precisou virar: a tinta do corpo e dos títulos, os **números dos passos** (círculo azul sobre vidro escuro afunda — vira linho cheio com algarismo azul), o **botão principal** (azul cheio vira linho cheio, a mesma inversão do cabeçalho), o **botão secundário**, o cartão do vídeo, e a **gravação do vidro**, que passa a clarear em vez de escurecer.
+
+### O que esta ADR NÃO faz
+
+Não toca nas superfícies internas — `/paciente`, `/coa`, os portais. A casa da pessoa atendida e os fundos operacionais continuam claros. Isto é decisão de **Fachada**.
+
+### Revisitar quando
+
+A primeira Curadoria real acontecer. Nenhuma pessoa percorreu esta Landing ainda, clara ou escura — e a ADR-073 diz que a ordem depois do descongelamento é a dor, não o plano. Se alguém disser que a página ficou pesada ou fúnebre, o véu é uma variável e volta em uma linha.
+
+---

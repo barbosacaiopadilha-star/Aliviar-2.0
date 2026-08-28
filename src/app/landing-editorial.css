@@ -1915,3 +1915,126 @@
   border-radius: 0.875rem;
   min-height: 3rem;
 }
+
+/* ==========================================================================
+   A CASA ESCURECE (27/08 · decisão do Fundador, ADR-099)
+
+   A Landing passa do dia para o ENTARDECER, e os cartões passam de papel
+   claro com tinta escura para VIDRO com tinta clara — o mesmo material da
+   porta de acesso. Uma casa, uma linguagem.
+
+   POR QUE O VÉU, e não fotografias novas. O cartão de vidro com texto claro
+   só é legível sobre fundo escuro: foi o que a medição desta sessão mostrou
+   três vezes seguidas. As quatro cenas da Landing são diurnas. O véu quente
+   transforma cada uma em entardecer sem trocar um arquivo sequer — e é
+   exatamente o recurso que a porta de acesso usou enquanto a cena do terraço
+   não existia.
+
+   QUENTE, NUNCA NEUTRO. Cinza sobre fotografia mata a cor e a cena vira
+   chumbo; o verde profundo da casa preserva o ouro das luzes e aprofunda os
+   fundos. Mais forte embaixo, onde os cartões pousam.
+   ========================================================================== */
+
+.landing-editorial .landing-ambiente::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    /* 44% no topo e 58% na base. Os números vêm de medição, não de
+       gosto: com 34% no topo, o pior ponto do cartão do Concierge — o
+       único que pousa na parte ALTA — dava 3,54, abaixo do mínimo de 4,5.
+       A 44% ele sobe para 4,53 e a área inteira passa. */
+    color-mix(in srgb, var(--landing-forest-deep) 44%, transparent) 0%,
+    color-mix(in srgb, var(--landing-forest-deep) 58%, transparent) 100%
+  );
+}
+
+/* --------------------------------------------------------------------------
+   O CARTÃO INVERTE
+
+   O piso do véu deixa de ser LINHO e passa a ser o verde profundo: com tinta
+   clara, um piso claro faria o oposto do que o piso existe para fazer. A
+   cristalização continua — só muda de direção, escurecendo em vez de clarear.
+   -------------------------------------------------------------------------- */
+
+.landing-editorial .landing-veu::before {
+  background: var(--landing-forest-deep);
+  /* Piso 24%, teto 62%. Ver a nota do gradiente acima — o par foi
+     calibrado junto, e o pior ponto medido da combinacao e 4,53. */
+  opacity: calc(0.24 + var(--veu-solidez, 0) * 0.38);
+}
+
+.landing-editorial .landing-veu {
+  border-color: color-mix(in srgb, var(--color-bg-canvas) 26%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-bg-canvas) 22%, transparent),
+    var(--shadow-lg);
+}
+
+/* A tinta de dentro do vidro, toda de uma vez. O `.landing-body` tinha regra
+   própria apontando para a tinta escura — ela some junto. */
+.landing-editorial .landing-veu,
+.landing-editorial .landing-veu .landing-body,
+.landing-editorial .landing-veu .landing-heading,
+.landing-editorial .landing-veu .landing-hero-title,
+.landing-editorial .landing-veu p,
+.landing-editorial .landing-veu li,
+.landing-editorial .landing-veu dt,
+.landing-editorial .landing-veu dd {
+  color: var(--color-on-dark);
+}
+
+.landing-editorial .landing-veu .landing-microtexto,
+.landing-editorial .landing-veu .text-\[var\(--color-ink-muted\)\] {
+  color: var(--color-on-dark-muted);
+}
+
+/* A gravação do vidro clareia em vez de escurecer: sobre cartão escuro, um
+   fosco de linho é o que faz o desenho aparecer. */
+.landing-editorial .landing-veu::after {
+  background: var(--color-bg-canvas);
+}
+
+/* O botão principal era azul cheio — sobre vidro escuro ele afunda. Vira
+   linho cheio com tinta azul, a mesma inversão que o cabeçalho fez. */
+.landing-editorial .landing-veu .landing-porta {
+  background-color: var(--landing-linen);
+  border-color: transparent;
+  color: var(--color-brand-primary);
+}
+
+.landing-editorial .landing-veu .landing-porta:hover {
+  background-color: var(--color-bg-surface);
+}
+
+/* Os três últimos ficariam invisíveis sobre o vidro escuro — cada um por um
+   motivo diferente, e todos encontrados varrendo o que vive DENTRO do card. */
+
+/* 1 · Os números dos passos: círculo azul sobre vidro escuro some. Invertem
+       junto com o botão — linho cheio, algarismo azul. */
+.landing-editorial .landing-veu .landing-passos-curtos li::before {
+  background: var(--landing-linen);
+  color: var(--color-brand-primary);
+}
+
+/* 2 · O botão SECUNDÁRIO da casa traz tinta escura por padrão (ele nasceu
+       para viver sobre linho). Dentro do vidro escuro, herda a tinta clara e
+       o fio dourado ganha presença. */
+.landing-editorial .landing-veu a[class*="border-\[color-mix"],
+.landing-editorial .landing-veu a[class*="border-"][class*="brand-gold"] {
+  color: var(--color-on-dark);
+  border-color: color-mix(in srgb, var(--color-brand-gold) 62%, transparent);
+}
+
+.landing-editorial .landing-veu a[class*="brand-gold"]:hover {
+  background-color: color-mix(in srgb, var(--color-bg-canvas) 12%, transparent);
+}
+
+/* 3 · O cartão do vídeo é um cartão dentro do cartão: mesma inversão. */
+.landing-editorial .landing-veu .landing-card-video,
+.landing-editorial .landing-veu .landing-acao-secundaria {
+  color: var(--color-on-dark);
+}
