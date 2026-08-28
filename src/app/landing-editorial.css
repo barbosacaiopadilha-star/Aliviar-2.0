@@ -990,7 +990,25 @@
      contraste entre repouso e sólido. O que muda é que o repouso deixa de
      ser zero. */
   background: var(--landing-linen);
-  opacity: calc(0.42 + var(--veu-solidez, 0) * 0.42);
+  /* 27/08 · O PISO ABRE DE 42% PARA 30%, a pedido do Fundador: mais vidro,
+     mantendo LETRA ESCURA em vez de tingir o material. Medido na própria
+     fotografia, atrás das linhas de texto do cartão:
+
+       veu 42% → media 10,09 · pior ponto 2,70
+       veu 30% → media  9,50 · pior ponto 1,72
+       veu 22% → media  9,13 · pior ponto 1,27
+       veu 15% → media  8,82 · pior ponto 1,01
+
+     A MÉDIA quase não se mexe, porque atrás do cartão a cena é
+     predominantemente clara e tinta escura sobre claro tem folga enorme. O
+     que degrada é o PIOR PONTO — as manchas escuras da foto (os quadros na
+     parede, a mobília), que é onde o SIM-61 aconteceu.
+
+     30% é o ponto escolhido: deixa passar 70% da cena em vez de 58%, mantém
+     a média em 9,5 e concentra o risco em manchas pequenas. Abaixo disso o
+     pior ponto entra em território de letra sumindo, que já custou caro uma
+     vez. O teto de 84% na cristalização não muda. */
+  opacity: calc(0.3 + var(--veu-solidez, 0) * 0.54);
   transition: opacity 140ms linear;
   pointer-events: none;
 }
