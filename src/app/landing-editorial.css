@@ -826,11 +826,29 @@
     color-mix(in srgb, var(--color-bg-surface) 9%, transparent) 0%,
     color-mix(in srgb, var(--landing-linen) 4%, transparent) 60%
   );
-  /* Vidro LISO (3ª rodada): o Fundador tirou o "escovado" — desfoque quase
-     zero; a cena fica reconhecível através do card. A dosagem do capítulo é
-     quem protege a leitura, não o embaçado. */
-  backdrop-filter: blur(2px) saturate(1.12);
-  -webkit-backdrop-filter: blur(2px) saturate(1.12);
+  /* VIDRO ESCOVADO — reposto em 27/08, a pedido do Fundador, a partir da
+     referência de vidro jateado que ele enviou.
+
+     A 3ª rodada de 23/08 havia TIRADO o escovado, e a nota antiga dizia que
+     a dosagem do capítulo protegia a leitura, não o embaçado. A medição de
+     hoje mostra o contrário: o borrão é justamente o que PROTEGE, porque
+     dissolve as manchas escuras da fotografia — que foram o SIM-61.
+
+     Medido atrás das linhas de texto do cartão, variando desfoque e véu:
+
+       blur  2px · véu 30% → média 9,50 · pior ponto 1,66
+       blur 32px · véu 30% → média 9,44 · pior ponto 2,62
+       blur 32px · véu 15% → média 8,72 · pior ponto 1,64
+
+     A última linha é a descoberta: com desfoque forte, METADE da opacidade
+     entrega o mesmo pior ponto que hoje. Dá para dobrar a transparência sem
+     piorar a leitura — e ainda ganhar o fosco que a referência pedia.
+
+     30px é o ponto escolhido: fosco de verdade, cena reconhecível em massa
+     e cor, sem virar leitosa. A saturação desce de 1.12 para 1.06 porque
+     borrão espalha cor, e o excesso saturava o pouco que sobrava. */
+  backdrop-filter: blur(30px) saturate(1.06);
+  -webkit-backdrop-filter: blur(30px) saturate(1.06);
   border-radius: var(--radius-card);
   border: 1px solid color-mix(in srgb, var(--color-bg-surface) 78%, transparent);
   box-shadow:
@@ -1008,7 +1026,9 @@
      a média em 9,5 e concentra o risco em manchas pequenas. Abaixo disso o
      pior ponto entra em território de letra sumindo, que já custou caro uma
      vez. O teto de 84% na cristalização não muda. */
-  opacity: calc(0.3 + var(--veu-solidez, 0) * 0.54);
+  /* 18% agora, e não 30%: o desfoque de 30px assumiu o trabalho que a tinta
+     fazia. Mesmo pior ponto, quase o dobro de cena atravessando. */
+  opacity: calc(0.18 + var(--veu-solidez, 0) * 0.66);
   transition: opacity 140ms linear;
   pointer-events: none;
 }
