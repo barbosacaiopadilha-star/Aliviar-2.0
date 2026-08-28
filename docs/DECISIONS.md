@@ -2822,3 +2822,28 @@ Não toca nas superfícies internas — `/paciente`, `/coa`, os portais. A casa 
 A primeira Curadoria real acontecer. Nenhuma pessoa percorreu esta Landing ainda, clara ou escura — e a ADR-073 diz que a ordem depois do descongelamento é a dor, não o plano. Se alguém disser que a página ficou pesada ou fúnebre, o véu é uma variável e volta em uma linha.
 
 ---
+
+### Reversão de 2026-08-27, no mesmo dia
+
+**O Fundador viu a Landing escura no ar e recusou.** A decisão acima fica no
+log porque o log é append-only (ADR-062) e porque o caminho vale mais que o
+resultado — mas **está revertida**: a Fachada volta ao dia, e os cartões
+voltam a ser papel claro com tinta escura.
+
+**O que a medição acertou e o que ela não alcançava.** Os números continuam
+verdadeiros: escurecer melhorava a legibilidade (pior ponto de 1,66 para
+4,53), e a decisão de acessibilidade apontava mesmo para o entardecer. O que
+nenhuma medição diz é se quatro cenas escuras em sequência acolhem ou
+pesam — e essa era a pergunta que importava. **Contraste não é clima.**
+
+**Fica aprendido, e é o que sobra de útil:** a ADR-098 (o vidro no cabeçalho)
+e a porta de acesso continuam de pé, porque ali o escuro tem função e não é
+ambiente. O entardecer serve à **chegada** — uma tela, uma vez —, não à
+travessia inteira.
+
+**Revisitar quando:** houver fotografias de entardecer geradas de propósito,
+e não um véu por cima de cenas diurnas. O véu simula penumbra; ele não
+simula a luz que uma cena noturna teria de verdade, e pode ter sido essa
+diferença que o Fundador viu.
+
+---
