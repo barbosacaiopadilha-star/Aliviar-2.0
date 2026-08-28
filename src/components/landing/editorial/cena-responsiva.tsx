@@ -19,6 +19,11 @@ export const CENAS = {
   curadoria: "curadoria",
   tresMedicos: "tres-medicos",
   concierge: "concierge",
+  /* 27/08 · A ENTRADA. O terraço ao entardecer, gerado pelo Fundador para a
+     porta de acesso. É a primeira cena ESCURA da casa, e isso não é detalhe:
+     é ela que torna possível o cartão de vidro com texto claro — sobre as
+     quatro cenas diurnas, texto claro seria ilegível. */
+  entrada: "entrada",
 } as const;
 
 export type CenaKey = (typeof CENAS)[keyof typeof CENAS];

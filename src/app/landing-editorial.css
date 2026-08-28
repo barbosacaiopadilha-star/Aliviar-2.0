@@ -1900,3 +1900,18 @@
   background-color: color-mix(in srgb, var(--color-bg-canvas) 92%, transparent);
   color: var(--color-ink);
 }
+
+/* Os campos da maquete são mais altos e mais arredondados que o padrão da
+   casa — sobre vidro, caixa baixa some. Só geometria; a tinta e o foco
+   continuam vindo das regras acima. */
+.auth-vidro input {
+  min-height: 3rem;
+  border-radius: 0.875rem;
+}
+
+/* O "Entrar" da maquete ocupa a largura toda e tem o mesmo raio dos campos:
+   a coluna inteira fala a mesma forma. */
+.auth-vidro button[type="submit"] {
+  border-radius: 0.875rem;
+  min-height: 3rem;
+}

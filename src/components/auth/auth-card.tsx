@@ -20,29 +20,36 @@ type AuthCardProps = {
  * A ADR-031 já autorizava a continuidade visual entre Portal, Login e Sua
  * História; o que chegava aqui era só um gradiente invisível.
  *
- * POR QUE O VÉU ESCURO, e é a decisão que sustenta todo o resto. A maquete
- * tem texto CLARO, e texto claro só é legível sobre fundo escuro. A cena de
- * entardecer que ela usa ainda não existe no repositório; a que temos é a
- * recepção, clara. O véu quente resolve os dois momentos: dá o clima de
- * entardecer sobre qualquer fotografia hoje, e quando a cena escura chegar
- * ele só precisa diminuir. Sem ele, esta tela nasceria ilegível — que é o
- * `SIM-61` de novo, e nesta sessão ele já custou caro uma vez.
+ * A CENA É A ENTRADA — o terraço ao entardecer, gerado pelo Fundador para
+ * esta tela, em corte próprio para o computador e outro para o celular. É a
+ * primeira cena ESCURA da casa, e é ela que torna o cartão possível: texto
+ * claro sobre vidro só é legível quando o que está atrás é escuro. Sobre as
+ * quatro cenas diurnas o mesmo cartão sumiria — foi o que a medição desta
+ * sessão mostrou três vezes, e é a razão de a Landing não receber este
+ * tratamento sem antes trocar as fotografias.
  *
- * O vidro é `blur(30px)`, o mesmo dos cartões da Landing depois de 27/08 —
+ * O véu por cima da cena é LEVE. Ele não fabrica noite (a fotografia já a
+ * traz): assenta o contraste onde a luz quente estoura, e nada mais.
+ *
+ * O vidro é `blur(26px)`, irmão do `blur(30px)` dos cartões da Landing —
  * uma casa, um material.
  */
 export function AuthCard({ title, description, children, footer }: AuthCardProps) {
   return (
     <div className="landing-editorial relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10">
-      <CenaResponsiva cena="recepcao" prioridade posicaoMobile="center 30%" />
+      <CenaResponsiva cena="entrada" prioridade posicaoMobile="center 45%" />
 
-      {/* O VÉU DA NOITE. Quente, não neutro: cinza sobre fotografia mata a cor
-          e a cena vira chumbo. O gradiente escurece mais embaixo, onde o
-          cartão pousa, e alivia em cima — a luz continua vindo de algum
-          lugar, que é o que separa penumbra de apagão. */}
+      {/* O VÉU, agora LEVE. Quando esta tela nasceu, horas atrás, a única cena
+          disponível era a recepção — clara — e o véu precisava de 58% a 72%
+          para o texto claro sobreviver. A cena da entrada já é um entardecer:
+          ela traz a penumbra pronta, e o véu volta ao papel que devia ter
+          desde o começo — assentar o contraste onde a luz quente estoura,
+          não fabricar noite.
+          Quente, e não neutro: cinza sobre fotografia mata a cor e a cena
+          vira chumbo. Um pouco mais forte embaixo, onde o cartão pousa. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--landing-forest-deep)_58%,transparent)_0%,color-mix(in_srgb,var(--landing-forest-deep)_72%,transparent)_100%)]"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--landing-forest-deep)_22%,transparent)_0%,color-mix(in_srgb,var(--landing-forest-deep)_38%,transparent)_100%)]"
       />
 
       {/* Calor ambiente da PortalExperience — continuidade de iluminação na
@@ -50,7 +57,7 @@ export function AuthCard({ title, description, children, footer }: AuthCardProps
       <div aria-hidden="true" className="ambient-warmth pointer-events-none absolute inset-0" />
 
       <div className="animate-fade-up relative w-full max-w-md">
-        <div className="auth-vidro rounded-[1.75rem] border border-[color-mix(in_srgb,var(--color-bg-canvas)_38%,transparent)] bg-[color-mix(in_srgb,var(--color-bg-canvas)_14%,transparent)] p-7 shadow-[0_18px_60px_rgba(0,0,0,0.28)] backdrop-blur-[30px] sm:p-9">
+        <div className="auth-vidro rounded-[2rem] border border-[color-mix(in_srgb,var(--color-bg-canvas)_42%,transparent)] bg-[color-mix(in_srgb,var(--color-bg-canvas)_11%,transparent)] p-7 shadow-[0_22px_70px_rgba(0,0,0,0.32)] backdrop-blur-[26px] sm:p-9">
           <header className="space-y-3 text-center">
             {/* A marca INTEIRA, em silhueta clara: aqui ela é a assinatura da
                 casa, não um detalhe de acabamento como no cabeçalho. O
@@ -61,10 +68,13 @@ export function AuthCard({ title, description, children, footer }: AuthCardProps
               width={640}
               height={606}
               priority
-              className="mx-auto h-20 w-auto brightness-0 invert"
+              className="mx-auto h-24 w-auto brightness-0 invert"
             />
 
-            <h1 className="font-serif text-[1.75rem] font-normal leading-tight text-[var(--color-on-dark)]">
+            {/* Azul CLARO, como na maquete — não branco puro. O branco chapado sobre
+                vidro lê como aviso de sistema; o azul da casa, clareado, mantém a
+                marca falando mesmo no título. */}
+            <h1 className="font-serif text-[1.75rem] font-normal leading-tight text-[color-mix(in_srgb,var(--color-bg-canvas)_66%,var(--color-brand-primary))]">
               {title}
             </h1>
 
