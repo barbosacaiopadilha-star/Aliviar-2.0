@@ -558,15 +558,18 @@
   }
 }
 
+/* 27/08 · TINTA CLARA. Estes links vivem dentro da cápsula, e a cápsula
+   passou a ser vidro AZUL (ADR-098). Tinta escura sobre azul é ilegível —
+   a inversão de polaridade é obrigatória, não estética. */
 .landing-nav-link {
   font-size: 0.875rem;
-  color: var(--color-ink-muted);
+  color: var(--color-on-dark-muted);
   text-underline-offset: 4px;
   transition: color var(--duration-fast) var(--ease-natural);
 }
 
 .landing-nav-link:hover {
-  color: var(--color-ink);
+  color: var(--color-on-dark);
   text-decoration: underline;
 }
 
@@ -587,7 +590,7 @@
   min-height: 2.75rem;
   min-width: 2.75rem;
   border-radius: var(--radius-md, 0.5rem);
-  color: var(--color-ink);
+  color: var(--color-on-dark);
   font-size: 1.125rem;
 }
 

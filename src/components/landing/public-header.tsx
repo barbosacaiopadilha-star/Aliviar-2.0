@@ -152,10 +152,30 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
           // O fio dourado e a sombra fazem o descolamento; o vidro sozinho
           // deixaria a marca à mercê do enquadramento da foto, que é o
           // defeito do `SIM-61`. 72% em repouso é o piso de legibilidade.
-          "rounded-[1.75rem] border border-[color-mix(in_srgb,var(--color-brand-gold)_30%,transparent)] backdrop-blur-md",
+          // VIDRO TINGIDO NO AZUL DA MARCA (27/08). O creme a 72% estava
+          // tecnicamente correto — `blur(12px)`, cena atrás — e mesmo assim
+          // lia como opaco. A razão, medida: atrás do cabeçalho há teto
+          // claro e quase uniforme. Vidro CREME sobre foto CREME não tem o
+          // que mostrar; a transparência existia e não se via.
+          //
+          // Tingir resolve nas duas frentes ao mesmo tempo. Medido sobre a
+          // própria fotografia, com texto claro:
+          //
+          //   azul 60% → contraste 4,59 · deixa passar 40% da cena
+          //   creme 72% → contraste 5,40 · deixa passar só 28%
+          //   azul 50% → 3,73, abaixo do mínimo de 4,5
+          //   verde 60% → 3,80, também abaixo
+          //
+          // Ou seja: o azul passa MAIS cena e continua legível. E um painel
+          // azul sobre foto clara se vê como material, que é o que o creme
+          // não conseguia.
+          //
+          // Ao rolar sobe para 82%: ali embaixo pode haver qualquer coisa
+          // atrás — cena escura, texto, o que for — e o piso protege.
+          "rounded-[1.75rem] border border-[color-mix(in_srgb,var(--color-brand-gold)_45%,transparent)] backdrop-blur-md",
           scrolled
-            ? "min-h-[3.25rem] bg-[color-mix(in_srgb,var(--color-bg-canvas)_88%,transparent)] shadow-[0_2px_10px_rgba(70,55,35,0.07)]"
-            : "min-h-[4.25rem] bg-[color-mix(in_srgb,var(--color-bg-canvas)_72%,transparent)] shadow-[0_6px_28px_rgba(70,55,35,0.12)]",
+            ? "min-h-[3.25rem] bg-[color-mix(in_srgb,var(--color-brand-primary)_82%,transparent)] shadow-[0_2px_12px_rgba(18,59,103,0.18)]"
+            : "min-h-[4.25rem] bg-[color-mix(in_srgb,var(--color-brand-primary)_60%,transparent)] shadow-[0_6px_28px_rgba(18,59,103,0.20)]",
         )}
       >
         <Link
@@ -170,7 +190,10 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
               segue em texto real ao lado: mais nítido que qualquer
               imagem, e escala sozinho. */}
           <Image
-            src="/brand/aliviar-simbolo.png"
+            /* A variante MONOCROMÁTICA CLARA, que já existia no repositório
+               para fundo escuro — é a mesma que o rodapé usa. O símbolo
+               colorido tem azul dentro: sobre a cápsula azul ele empastava. */
+            src="/brand/aliviar-logo-clara.png"
             alt="Aliviar — Curadoria Médica Independente"
             width={256}
             height={266}
@@ -186,7 +209,7 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
               // — letra apertada lê como palavra. Em caixa alta com
               // espaçamento generoso lê como MARCA, que é o papel dela aqui.
               // Continua texto real, nunca imagem: escala e permanece nítido.
-              "font-serif font-medium uppercase text-[var(--color-brand-primary)] transition-[font-size] duration-[480ms]",
+              "font-serif font-medium uppercase text-[var(--color-on-dark)] transition-[font-size] duration-[480ms]",
               scrolled ? "text-sm tracking-[0.16em]" : "text-base tracking-[0.18em] lg:text-lg",
             )}
           >
@@ -230,7 +253,10 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
           <LinkButton
             href="/solicitar-atendimento"
             variant="primary"
-            className="min-h-11 whitespace-nowrap px-4 py-2 text-sm sm:px-5"
+            /* Invertido: linho cheio com tinta azul. Sobre a cápsula azul, um
+               botão azul desapareceria — o peso do convite se mantém trocando
+               a polaridade, não reduzindo a presença. */
+            className="min-h-11 whitespace-nowrap border-transparent bg-[var(--landing-linen)] px-4 py-2 text-sm text-[var(--color-brand-primary)] hover:bg-white sm:px-5"
           >
             <span className="sm:hidden">Começar</span>
             <span className="hidden sm:inline">Solicitar atendimento</span>
@@ -240,7 +266,7 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
             <LinkButton
               href={portalCta.href}
               variant="secondary"
-              className="hidden min-h-11 px-5 py-2 text-sm sm:inline-flex"
+              className="hidden min-h-11 px-5 py-2 text-sm text-[var(--color-on-dark)] hover:bg-[color-mix(in_srgb,var(--color-bg-canvas)_12%,transparent)] sm:inline-flex"
             >
               {portalCta.label}
             </LinkButton>
@@ -248,7 +274,7 @@ export function PublicHeader({ portalCta = null }: PublicHeaderProps) {
             <LinkButton
               href="/login"
               variant="secondary"
-              className="hidden min-h-11 px-5 py-2 text-sm sm:inline-flex"
+              className="hidden min-h-11 px-5 py-2 text-sm text-[var(--color-on-dark)] hover:bg-[color-mix(in_srgb,var(--color-bg-canvas)_12%,transparent)] sm:inline-flex"
             >
               Entrar
             </LinkButton>
