@@ -58,28 +58,21 @@ export function LoginForm() {
 
   return (
     <AuthCard
-      title="Entrar"
-      description="Acesse sua conta na Aliviar Curadoria Médica."
+      /* Copy da maquete do Fundador (27/08). O título deixa de ser o verbo
+         seco e passa a nomear o lugar: quem chega aqui volta para a PRÓPRIA
+         área, não executa uma operação. */
+      title="Entre na sua área Aliviar"
+      description="Acompanhe sua curadoria, consultas e próximos passos."
       footer={
-        // min-h-11: o alvo de toque media 17px — abaixo até do mínimo AA de
-        // 24px (WCAG 2.5.8), num link crítico de recuperação de acesso.
-        // Achado da auditoria de interação, 2026-07-24.
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
-          {/* OPS-R3A1 · quem ainda não tem acesso não tem senha a recuperar. A
-              porta pública fica ao lado, com o mesmo CTA canônico das demais. */}
-          <Link
-            href="/solicitar-atendimento"
-            className="inline-flex min-h-11 items-center font-medium text-brand-primary transition-colors hover:text-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
-          >
-            Solicitar atendimento
-          </Link>
-          <Link
-            href="/recuperar-senha"
-            className="inline-flex min-h-11 items-center font-medium text-brand-primary transition-colors hover:text-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
-          >
-            Esqueci minha senha
-          </Link>
-        </div>
+        /* Só o caminho de volta. Na maquete o rodapé tem uma linha, e as duas
+           ações — entrar e pedir acesso — vivem no corpo, empilhadas.
+           "Esqueci minha senha" também subiu, para junto do campo de senha,
+           que é onde a dúvida acontece.
+           min-h-11: o alvo de toque media 17px — abaixo até do mínimo de 24px
+           (WCAG 2.5.8). Achado da auditoria de interação, 2026-07-24. */
+        <Link href="/" className="inline-flex min-h-11 items-center">
+          Voltar ao site
+        </Link>
       }
     >
       <form action={formAction} onSubmit={handleSubmit} className="space-y-4" noValidate>
@@ -100,11 +93,34 @@ export function LoginForm() {
           error={fieldErrors.password}
         />
 
+        <div className="flex justify-end">
+          <Link href="/recuperar-senha" className="inline-flex min-h-11 items-center text-sm">
+            Esqueci minha senha
+          </Link>
+        </div>
+
         {state && !state.success ? <FormMessage variant="error">{state.error}</FormMessage> : null}
 
-        <Button type="submit" isLoading={isPending}>
+        <Button type="submit" isLoading={isPending} className="w-full">
           Entrar
         </Button>
+
+        {/* A segunda ação da maquete dizia "Primeiro acesso". NÃO uso essa
+            palavra: ela promete uma ativação de conta que não existe. Na
+            Aliviar quem cria o acesso é a equipe, e o "primeiro acesso" de
+            quem já tem conta é simplesmente entrar (ADR-064).
+            Cheguei a escrever "Ainda não tenho acesso" — e a guarda T-A-1
+            recusou, com razão: as QUATRO superfícies públicas dizem o mesmo
+            convite, para a pessoa reconhecer a porta em qualquer lugar onde
+            a encontre. Inventar um rótulo só aqui quebraria isso, e o texto
+            canônico já resolve o que eu queria: não promete ativação
+            nenhuma. A casa deu resposta melhor que a minha. */}
+        <Link
+          href="/solicitar-atendimento"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-[0.875rem] border border-[color-mix(in_srgb,var(--color-bg-canvas)_38%,transparent)] px-5 text-sm font-medium transition-colors hover:bg-[color-mix(in_srgb,var(--color-bg-canvas)_10%,transparent)]"
+        >
+          Solicitar atendimento
+        </Link>
       </form>
     </AuthCard>
   );
