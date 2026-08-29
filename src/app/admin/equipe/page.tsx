@@ -32,7 +32,7 @@ export default async function TeamPage() {
   // precisa enxergar para corrigir.
   const porPapel = (["atendente", "curador_medico", "concierge", "administrador"] as const).map((slug) => ({
     slug,
-    label: { atendente: "Atendente", curador_medico: "Curador", concierge: "Concierge", administrador: "Administrador" }[
+    label: { atendente: "Supervisor", curador_medico: "Curador", concierge: "Concierge", administrador: "Administrador" }[
       slug
     ],
     count: members.filter((m) => m.roles.includes(slug)).length,
@@ -46,7 +46,7 @@ export default async function TeamPage() {
       <div>
         <h1 className="font-sans text-2xl font-semibold text-ink">Equipe</h1>
         <p className="text-sm text-ink-muted">
-          Conceda ou revogue os papéis internos (Administrador, Curador Médico, Atendente, Concierge) de qualquer pessoa
+          Conceda ou revogue os papéis internos (Administrador, Curador Médico, Supervisor, Concierge) de qualquer pessoa
           já cadastrada. Papéis de assistido e profissional continuam com fluxo próprio de criação.
         </p>
       </div>
@@ -72,8 +72,9 @@ export default async function TeamPage() {
           {acumulamNiveis.length > 0 ? (
             <p className="mt-3 rounded-md border border-warning bg-warning-surface px-3 py-2 text-xs text-ink">
               {acumulamNiveis.length === 1 ? "Uma pessoa acumula" : `${acumulamNiveis.length} pessoas acumulam`} mais de
-              um nível operacional. O Case passa de nível sem trocar de gente — a separação entre Atendente, Curador e
-              Concierge existe no sistema, mas não na prática.
+              um nível operacional. Desde a ADR-100 o Supervisor acompanha o Case por todos os níveis de propósito — não
+              é disso que este aviso trata. O que ele acusa é a mesma pessoa EXECUTANDO níveis que nenhuma decisão
+              unificou: enquanto durar, o isolamento por papel existe no sistema e não se exercita na prática.
             </p>
           ) : null}
         </section>

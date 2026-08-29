@@ -17,7 +17,7 @@ import type { ManageableRoleSlug, TeamMember } from "@/modules/team/types";
 const MANAGEABLE_ROLES: { slug: ManageableRoleSlug; label: string }[] = [
   { slug: "administrador", label: "Administrador" },
   { slug: "curador_medico", label: "Curador Médico" },
-  { slug: "atendente", label: "Atendente" },
+  { slug: "atendente", label: "Supervisor" },
   { slug: "concierge", label: "Concierge" },
 ];
 
@@ -32,7 +32,7 @@ const ROLE_LABELS: Record<string, string> = {
   // "Assistido" (ADR-097). A palavra clínica "paciente" permanece onde ela
   // é do médico: os pacientes DELE, na entrevista do profissional.
   paciente: "Assistido",
-  atendente: "Atendente",
+  atendente: "Supervisor",
   concierge: "Concierge",
 };
 

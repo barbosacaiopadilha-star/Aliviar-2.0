@@ -20,10 +20,31 @@ Encerra a tensão registrada cinco vezes em `docs/OPERATIONAL_ROLES_MODEL.md` se
 
 ## 2. Os três níveis humanos
 
-### Nível 1 — Atendente
-Recebe o contato · acolhe · registra · qualifica · **abre o Case** · encaminha ao Curador.
+### Nível 1 — Supervisor do processo (papel `atendente` no banco)
+Recebe o contato · acolhe · registra · **abre o Case** · entrega ao Curador — **e continua.**
 
-**É quem inicia o Case.**
+**É quem inicia o Case, e é quem responde por ele do primeiro contato ao encerramento.**
+
+> **Emendado pela ADR-100 (28/08).** Até aqui este nível era uma **etapa**:
+> recebia, qualificava, encaminhava e saía. Passa a ser uma **espinha** — o
+> Supervisor atravessa os três níveis. O Case continua mudando de nível; o que
+> deixa de mudar é a pessoa responsável por quem o Case é. Não há triagem antes
+> de a pessoa conhecer quem vai acompanhá-la: quem atende o primeiro contato é
+> quem estará lá no fim.
+>
+> **O que ele registra no primeiro contato:** como procurar a pessoa, o que ela
+> veio buscar em uma frase, e o combinado prático (preço e próximo passo).
+> **Nunca a história clínica** — ela é do Curador, na Consulta Inicial, com a
+> Ficha do Assistido. A vitrine já promete isso na tela: *"nada sobre saúde
+> nesta página — isso a gente conversa depois, com uma pessoa"*.
+>
+> **O preço é fixo e ele não ganha por conversão.** Com o papel unificado, quem
+> comunica o preço é quem depois acompanha a decisão; sem essas duas regras a
+> unificação colocaria interesse comercial dentro da relação que existe para
+> não ter nenhum.
+>
+> O **slug `atendente`** e a rota `/atendimento` ficam: são dado, não
+> vocabulário (fronteira 1 da ADR-097).
 
 ### Nível 2 — Curador
 Recebe **o mesmo Case**. Conduz a Consulta Inicial, analisa, define critérios, conduz a Curadoria Técnica, valida artefatos, produz o Relatório, encaminha ao Concierge.
@@ -44,10 +65,15 @@ Existe **apenas `Case`**. Proibido `crm_case`, `curadoria_case`, `case_curador`,
 O mesmo Case percorre a jornada inteira. **Muda de responsável, nunca de identidade.**
 
 ```
-Contato → Atendente → Qualificação → Abertura do Case → Curador →
+Contato → Supervisor → Abertura do Case → Curador →
 Consulta Inicial → Curadoria → Relatório → Concierge →
 Escolha do médico → Agendamento → Acompanhamento → Encerramento
+   └──────────── o Supervisor acompanha a linha inteira ────────────┘
 ```
+
+A "Qualificação" saiu da linha com a **ADR-100**: ela era o ato da recepção —
+decidir, antes de acolher, se o contato merecia seguir. Com o primeiro contato
+já sendo o de quem acompanha, não há a quem qualificar antes de escutar.
 
 ---
 

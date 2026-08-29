@@ -176,7 +176,7 @@ describe("Cases por responsável", () => {
       ],
     };
     const fatias = casesByRole(source)!;
-    expect(fatias.map((f) => f.label)).toEqual(["Atendente", "Curador", "Concierge", "Sem responsável"]);
+    expect(fatias.map((f) => f.label)).toEqual(["Supervisor", "Curador", "Concierge", "Sem responsável"]);
     expect(fatias.find((f) => f.label === "Curador")!.value).toBe(2);
     expect(fatias.some((f) => /crm/i.test(f.label))).toBe(false);
   });

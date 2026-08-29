@@ -244,7 +244,7 @@ export function casesByRole(source: DashboardSource): Slice[] | null {
   if (source.cases === null) return null;
   const open = source.cases.filter((c) => !CLOSED_STATUSES.includes(c.status));
   const labels: Record<ResponsibleRole, string> = {
-    atendente: "Atendente",
+    atendente: "Supervisor",
     curador_medico: "Curador",
     concierge: "Concierge",
   };

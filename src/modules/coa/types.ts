@@ -15,7 +15,7 @@ export const COA_RESPONSIBLE_ROLES = ["atendente", "curador", "concierge"] as co
 export type CoaResponsibleRole = (typeof COA_RESPONSIBLE_ROLES)[number];
 
 export const COA_RESPONSIBLE_LABELS: Record<CoaResponsibleRole, string> = {
-  atendente: "Atendente",
+  atendente: "Supervisor",
   curador: "Curador",
   concierge: "Concierge",
 };

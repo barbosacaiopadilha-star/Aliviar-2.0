@@ -19,7 +19,7 @@ export const RESPONSIBLE_ROLES = ["atendente", "curador_medico", "concierge"] as
 export type ResponsibleRole = (typeof RESPONSIBLE_ROLES)[number];
 
 export const RESPONSIBLE_ROLE_LABELS: Record<ResponsibleRole, string> = {
-  atendente: "Atendente",
+  atendente: "Supervisor",
   curador_medico: "Curador",
   concierge: "Concierge",
 };

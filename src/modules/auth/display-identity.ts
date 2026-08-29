@@ -4,7 +4,7 @@ const ROLE_LABELS: Record<string, string> = {
   administrador: "Administrador",
   // Polimento 2026-07-24: `atendente` faltava aqui — um Atendente logado era
   // rotulado "Usuário", com o papel real disponível na sessão.
-  atendente: "Atendente",
+  atendente: "Supervisor",
   curador_medico: "Curador Médico",
   concierge: "Concierge",
   // 27/08 · O SLUG FICA, O NOME MUDA. `paciente` é papel em `user_roles`,

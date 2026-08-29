@@ -51,7 +51,7 @@ type HandoffRow = {
 };
 
 const ROLE_LABELS: Record<string, string> = {
-  atendente: "Atendente",
+  atendente: "Supervisor",
   curador_medico: "Curador",
   concierge: "Concierge",
 };
