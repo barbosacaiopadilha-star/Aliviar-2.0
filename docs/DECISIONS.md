@@ -2847,3 +2847,64 @@ simula a luz que uma cena noturna teria de verdade, e pode ter sido essa
 diferença que o Fundador viu.
 
 ---
+
+## ADR-100 — O Atendente deixa de ser recepção e vira o Supervisor do processo
+
+- **Data:** 2026-08-28
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data.
+- **Dependências:** emenda o **Nível 1** de [`CORRECAO_DOMINIO_PAPEIS_E_CASE.md`](CORRECAO_DOMINIO_PAPEIS_E_CASE.md) · aplica do lado do assistido o princípio que a **ADR-076** aplicou ao profissional · respeita a fronteira 1 da **ADR-097** (o slug do papel é dado, não vocabulário) · não altera a **ADR-073**: troca a definição de um papel, não constrói nada.
+
+### A decisão
+
+O **Atendente deixa de existir como etapa de recepção.** O papel passa a ser o **Supervisor do processo de cada assistido**: o primeiro contato já é com ele, e ele **não desaparece no repasse** — supervisiona do primeiro oi ao encerramento.
+
+Não há triagem antes de conhecer quem acompanha. Quem atende o primeiro contato é quem estará lá no fim.
+
+**O Curador continua conduzindo a Consulta Inicial** e a Curadoria. O Supervisor entrega o Case a ele — mas entrega dentro de um processo que segue sendo supervisionado, não para fora dele.
+
+### A diferença entre etapa e espinha
+
+O Nível 1 da Correção de Domínio era uma **etapa**: recebe, qualifica, abre o Case, encaminha — e sai. O Supervisor é uma **espinha**: atravessa os três níveis. O Case continua passando de nível; o que deixa de passar é a pessoa responsável por quem o Case é.
+
+O `/admin/equipe` avisa hoje, em amarelo, quando alguém acumula níveis: *"o Case passa de nível sem trocar de gente — a separação entre Atendente, Curador e Concierge existe no sistema, mas não na prática."* Esse aviso descrevia um defeito. A partir daqui ele descreve, em parte, o desenho — e precisa ser reescrito para acusar só o que continua sendo acúmulo indevido.
+
+### O que o Supervisor registra no primeiro contato — e o que ele NÃO registra
+
+**Registra:** como procurar a pessoa, o que ela veio buscar em uma frase, e o combinado prático (o preço e o próximo passo).
+
+**Não registra a história clínica.** Ela é colhida pelo Curador, na Consulta Inicial, com a Ficha do Assistido.
+
+Isto não é preferência: é o que a própria vitrine promete. A `/solicitar-atendimento` diz, na tela, *"Conte só o essencial para a gente procurar você. Nada sobre saúde nesta página — isso a gente conversa depois, com uma pessoa."* O Supervisor **é** essa pessoa, e a conversa de saúde continua sendo depois.
+
+E é o que a Ficha exige: *"a ficha só vale depois que ela reconhecer que é dela"*, *"a frase dela vale mais que a opção marcada"*, *"o que não foi dito fica em branco — nunca se presume"*. Um resumo clínico escrito no primeiro contato chegaria ao Curador como versão pronta, e ele passaria a **conferir** uma história em vez de ouvi-la.
+
+### A ressalva, registrada porque foi feita antes da decisão
+
+O Engenheiro Líder argumentou que o ganho maior da mudança seria acabar com **contar a história duas vezes** — e que isso só aconteceria se o Supervisor também conduzisse a Consulta Inicial. **O Fundador decidiu que ele entrega ao Curador.**
+
+Fica dito, então, que a mudança **não resolve o segundo relato**: a pessoa continua contando ao Supervisor por que procurou a Aliviar, e depois contando a história ao Curador. O que ela entrega é outra coisa, e é o que o Fundador quis: **continuidade** — uma pessoa com nome que atende, acompanha e responde do começo ao fim, em vez de três desconhecidos em sequência.
+
+A regra da seção anterior é o que mantém o segundo relato inofensivo: não são duas versões da mesma coisa, são duas conversas diferentes.
+
+### O dinheiro, e por que ele entra nesta ADR
+
+O Roteiro de Atendimento (`docs/guias/6-roteiro-de-atendimento.html`) carrega o preço, as parcelas e oito objeções. Com o papel unificado, **quem comunica o preço passa a ser a mesma pessoa que depois acompanha a decisão** — e o diferencial inteiro da Aliviar é independência (*"nenhum médico paga para aparecer aqui"*).
+
+**O conflito não está em quem diz o número; está em quem ganha com a resposta.** Portanto, junto com a mudança de papel:
+
+1. **Preço fixo**, sem margem de desconto dentro da conversa.
+2. **Sem comissão por conversão** para o Supervisor.
+
+Com as duas, o Supervisor **comunica** um preço; não vende um. Sem elas, a unificação coloca interesse comercial dentro da relação que existe justamente para não ter nenhum.
+
+### O que NÃO se decidiu junto
+
+- **O slug `atendente` fica**, e a rota `/atendimento` também. São dado: vivem em `user_roles`, em policies de RLS, em `RESPONSIBLE_ROLES` e `COA_RESPONSIBLE_ROLES`. É a fronteira 1 da ADR-097 — nenhum assistido lê o nome de uma coluna.
+- **Se uma pessoa pode acumular Supervisor e Curador.** Hoje uma acumula os três, por falta de gente. Esta ADR decide o desenho dos papéis, não a escala da equipe.
+- **Os números do parcelamento.** Continuam em branco no roteiro e continuam com o Fundador. Esta decisão só mudou de quem é o roteiro.
+
+### Revisitar quando
+
+O volume crescer a ponto de o Supervisor gastar tempo em contatos que não viram Case — a triagem era o que a recepção comprava, e ela volta a valer alguma coisa quando houver fila. Ou quando o Ensaio Geral medir o tempo de relógio do papel unificado: pode ser que primeiro contato, supervisão e preço não caibam na mesma pessoa que já carrega o acompanhamento.
+
+---
