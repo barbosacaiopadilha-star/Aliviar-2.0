@@ -327,6 +327,30 @@ alta. No mesmo passe: vocabulário ADR-097 residual nas peças, carimbos
 atrasados, e a pasta da mesa atualizada **no mesmo commit** (regra do §7,
 cumprida na primeira vez em que foi testada).
 
+**A VERIFICAÇÃO DE SENTIDO** (30/08, `1c0c5b4`) — terceira e última passada:
+não o que os documentos dizem, mas se **fazem sentido lidos juntos**, que é como
+serão usados na mesa. Quatro achados, quatro correções:
+
+- **O observador estava escalado para a sala de onde a ADR-104 o tirou.**
+  Quando os quatro atos do Ensaio viraram cinco, a linha do elenco não foi
+  renumerada: "FORA da Consulta Inicial — entra nos atos 2, 3 e 4", sendo que no
+  elenco novo a Consulta É o ato 2. Quem obedecesse a tabela violaria a ADR-104
+  achando que a cumpria. Agora: atos 3, 4 e 5.
+- **A ordem divergente, agora dita:** o Guia manda "os médicos antes do
+  assistido"; o Ensaio os entrevista depois da Consulta. Nota no ato 3 do
+  Ensaio, com a regra que vale nos dois: **sem formulário assinado, ninguém
+  entra na Mesa**.
+- **A medição sem onde ser escrita:** a tabela de Tempos do Diário não tinha
+  linha para o primeiro contato — o ato que a ADR-100 criou e cuja carga o
+  próprio Diário manda medir. Linha adicionada.
+- **O guia citava a tela com uma frase a mais** ("Você não precisa fazer mais
+  nada agora", que a `MENSAGEM_DE_SUCESSO` não diz). A regra do próprio guia
+  decidiu: a tela está certa. Aparado.
+
+Conferido limpo: Acompanhamento pós-ADR-106, wizard vs guia ("cinco passos"),
+números cruzados (nove passos · cinco atos · três folhas · 29 subcritérios), e
+nenhuma objeção prometendo o que a ADR-064 proíbe.
+
 ---
 
 ## 6 · As lições desta sessão
@@ -392,6 +416,14 @@ outra frase do mesmo documento nega só cai com **leitura dirigida por quem
 conhece a doutrina** — foi o Fundador quem apontou a classe do erro, e os
 autômatos todos estavam verdes. Auditoria de conteúdo não se automatiza; se
 agenda.
+
+**11 · Renumerar uma lista quebra em silêncio toda referência numérica a ela.**
+O Ensaio ganhou um ato no começo e a linha do observador — escrita quando a
+Consulta Inicial era o ato 1 — passou a mandá-lo para dentro da sala proibida,
+citando a ADR certa. Referência por número não sobrevive a inserção: ao inserir
+item em lista numerada, **grep pelos números antigos em tudo que a cita**. E é o
+segundo parente do `SIM-57` em dois dias: a linha parecia certa porque citava a
+regra certa — o defeito estava no que o número passou a apontar.
 
 ---
 
