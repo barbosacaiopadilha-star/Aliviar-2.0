@@ -2998,3 +2998,57 @@ A Ficha do Assistido exige que o Curador **leia de volta** o que entendeu: *"a f
 O Curador virar o gargalo — o tempo dele é o recurso escasso da operação, e a Consulta Inicial é a parte mais longa do que ele faz. Ou quando o Ensaio Geral medir o relógio e mostrar que a Consulta Inicial não cabe junto com o Mapa, o Protocolo e a Mesa na mesma pessoa. **Nesse dia a pergunta certa não é "quem conduz", é "o que sai da mão do Curador"** — e nenhuma das três razões acima autoriza tirar dele justamente a escuta.
 
 ---
+
+## ADR-103 — O Supervisor assiste à Consulta Inicial, calado e com autorização da pessoa
+
+- **Data:** 2026-08-28
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data. Responde a pergunta que a **ADR-102** deixou nomeada e não decidida.
+- **Dependências:** completa a continuidade prometida pela **ADR-100** · **não altera** a **ADR-102** (a Consulta Inicial continua sendo conduzida pelo Curador) · a forma é imposta pelo **critério 20 do Formulário do Profissional** · toca a postura de privacidade da **ADR-096** e o custo está dito abaixo · não altera a **ADR-073**.
+
+### A decisão
+
+**O Supervisor assiste à Consulta Inicial**, presente e **calado**, desde que a pessoa autorize. Ele pode sair a qualquer momento, a pedido dela, sem que ela precise explicar por quê.
+
+### Por que isto não contraria a ADR-102
+
+Porque **ouvir não é colher.** As três razões da ADR-102 tratam de quem **colhe** e de quem **usa**: a Ficha continua na mão do Curador, a devolução — *"a ficha só vale depois que ela reconhecer que é dela"* — continua sendo dele, e o dado clínico continua sendo registrado por médico. Nada disso muda com um ouvinte na sala.
+
+O que muda é o outro lado: **a história passa a ser contada uma vez só, para as duas pessoas que vão acompanhá-la.** É a tensão da ADR-100 resolvida sem quebrar a ADR-102 — e sem que ninguém tenha de repetir a parte difícil.
+
+### O que a presença resolve
+
+**A continuidade deixa de ser promessa e vira coisa vista.** A ADR-100 trocou a recepção pelo acompanhamento contínuo, mas um Supervisor que entrega o caso e reaparece semanas depois é continuidade no papel. Estar na sala no momento em que a pessoa conta o que a trouxe é onde a continuidade se torna visível **para ela**.
+
+**E o Supervisor passa a acompanhar sabendo.** Ele vai destravar, responder e organizar o resto da jornada. Sem ter ouvido, faria isso a partir de um resumo — e quem trabalha por resumo ou pergunta duas vezes, ou inventa.
+
+### A forma não foi escolhida: foi imposta pela própria régua da casa
+
+O **critério 20 do Formulário do Profissional** — *"Participação de acompanhantes: como você conduz a presença de acompanhantes?"* — tem entre as respostas aceitas *"acompanhante mediante autorização da pessoa"*. A Aliviar **avalia médicos por isso**.
+
+Não é possível cobrar de um profissional que peça autorização para uma terceira pessoa na sala e, na própria Consulta Inicial, colocar uma sem perguntar. Daí as regras:
+
+1. **A pessoa autoriza, antes.** O Curador pergunta — e pergunta **explicando quem é**: não "posso trazer um colega", e sim *"quem vai te acompanhar do começo ao fim é [nome]; ela pode ouvir com a gente, se você quiser"*. Perguntar sem isso é pedir uma decisão que a pessoa não tem como tomar.
+2. **Não é o padrão silencioso.** Presença não autorizada por omissão. Se ela não quiser, a Consulta acontece sem o Supervisor, e **ninguém pede justificativa**.
+3. **Ele pode sair depois de ter entrado**, a qualquer momento, a pedido dela.
+
+### O que "calado" quer dizer, exatamente
+
+**Não pergunta, não corrige, não preenche, não registra.** Se tiver dúvida, leva ao Curador **depois**. Assunto prático — agenda, documento, próximo passo — também depois: dentro da Consulta, quem conduz é um só.
+
+**É apresentado uma vez, por nome e papel, no começo** — e volta a ficar em silêncio. Pessoa na sala sem nome é vigilância; pessoa apresentada é companhia.
+
+### O custo, dito porque é real
+
+**O círculo de quem conhece a história de saúde cresce em uma pessoa** — e cresce enquanto a base de privacidade está **adiada** (ADR-096). Isso empurra na direção contrária da razão 2 da ADR-102, que argumentou concentrar o dado sensível em quem tem dever profissional de sigilo. Fica registrado que a decisão **aceita esse custo**, e que ele é mitigado, não eliminado: o Supervisor **ouve, não registra** — o registro continua sendo a Ficha, na mão do Curador.
+
+**E é mais uma hora do Supervisor por Curadoria**, somada ao primeiro contato, ao preço e ao acompanhamento que a ADR-100 já lhe deu. Carga que ninguém mediu.
+
+### A ressalva, registrada porque foi feita hoje e superada hoje
+
+Vinte minutos antes desta decisão, na **ADR-102**, o Engenheiro Líder nomeou esta mesma pergunta e recomendou **não decidi-la**: *"presença muda a conversa, e ninguém sabe ainda se muda para melhor. É pergunta para o Diário de Observação do Ensaio."*
+
+**O Fundador decidiu antes do teste.** Fica dito que o risco não foi medido: uma segunda pessoa na sala pode calar alguém que ia contar o que mais importa, e **isso não aparece em lugar nenhum** — a pessoa não reclama, ela só não conta. É exatamente o tipo de defeito que o Ensaio existe para pegar.
+
+### Revisitar quando
+
+**No primeiro "não".** A primeira pessoa que recusar a presença é o dado mais valioso desta decisão — e ela precisa ser registrada, não só respeitada. Ou no Diário do Ensaio, que agora tem uma pergunta a mais para responder: **com o Supervisor na sala, a pessoa contou menos?**
