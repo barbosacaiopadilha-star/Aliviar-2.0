@@ -351,6 +351,25 @@ Conferido limpo: Acompanhamento pós-ADR-106, wizard vs guia ("cinco passos"),
 números cruzados (nove passos · cinco atos · três folhas · 29 subcritérios), e
 nenhuma objeção prometendo o que a ADR-064 proíbe.
 
+**O SUBLINHADO DO FUNDADOR, e a quarta passada** (30/08, `4655997` e
+`5dded42`) — ele sublinhou "Um médico" na frase-resumo de `/o-que-e`, e tinha
+razão onde a minha auditoria de sentido tinha APROVADO: aprovei a página pelo
+passo 3, que amarra o vínculo ("Um médico — o seu Curador"), sem notar que a
+frase-resumo, a meta description, o "lê e assina" e a FAQ diziam a forma solta.
+**Quatro ocorrências, simétricas no site e no guia 10**, todas agora em "um
+curador — que é médico". O leitor não lê a página inteira — lê a frase-resumo.
+
+Na sequência, a **quarta passada** (classes ainda não caçadas): contagens
+internas (Ficha 29/29, Formulário 29, grade da Folha 152 células ✓),
+referências a partes ("assinar a Parte 6" → a Ficha TEM a Parte 6 ✓),
+promessas de tela do documento do assistido (WhatsApp, PDF e "Meus dados"
+existem no código ✓), e gênero por documento (cada um internamente consistente
+✓). **Uma correção:** o campo "Paciente:" na Folha da Mesa — sobreviveu a tudo
+porque os greps rodaram case-sensitive em minúscula, e ele tem P maiúsculo.
+**Um achado anotado sem toque:** "Você não faz isso sozinha" vive na
+`ConciergeSection`, que é código morto (ninguém a importa; a página monta
+`AmbienteConcierge`) — órfã para uma futura limpeza, não defeito de uso.
+
 ---
 
 ## 6 · As lições desta sessão
@@ -360,7 +379,11 @@ reportado.** A inércia do Motor da Caminhada faz a tela ficar atrás do
 `scrollY`: capturas pegaram os cartões em branco e o rodapé vazio, e o DOM
 dizia opacidade 1 nas duas vezes. **Nesta página, espere 3 segundos antes de
 capturar** — e confira o `scrollY` antes de concluir qualquer coisa sobre
-posição. É o `SIM-57` de novo, com outro instrumento.
+posição. É o `SIM-57` de novo, com outro instrumento. **E ele voltou mais duas
+vezes em 30/08:** greps case-sensitive deixaram "Paciente:" (P maiúsculo) vivo
+na Folha através de QUATRO auditorias, e um contador de linhas de arquivo disse
+"8" para uma grade de 152 células. **Grep de vocabulário roda com `-i`; contar
+célula é contar `<td`, não linhas.**
 
 **2 · Medir contra a régua certa, e a régua está escrita no arquivo.** Reportei
 os links do rodapé como alvos de toque pequenos demais (29px contra 44). A
