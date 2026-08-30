@@ -232,6 +232,20 @@ descrever a operação anterior. O que apareceu no caminho vale mais que o texto
 - **Concierge → Acompanhamento** nos dois documentos; **Curador** ganhou a porta
   da ADR-103 nos dois, com a frase pronta e o motivo (critério 20).
 
+**A GUARDA DE VOCABULÁRIO, que encerra o `SIM-63`** —
+`tests/unit/vocabulario-dos-guias.test.ts` varre as duas pastas e reprova
+quando um termo aposentado por decisão sobrevive num documento que alguém vai
+imprimir. **A regra tem forma própria, e é o miolo dela:** o termo só pode
+aparecer na linha que também cita a ADR que o aposentou — é o que separa menção
+histórica deliberada (que tem valor) de sobra.
+
+**Achou seis sobras no minuto em que nasceu**, e a pior era minha: o `<title>`
+do roteiro publicado ainda dizia "Roteiro de Atendimento" — troquei o `<h1>` e
+esqueci a aba. Entre as outras, um bloco DOUTRINÁRIO inteiro do Roteiro do
+Curador comparando o papel dele com o do "Atendente" — que, ao ser consertado,
+ganhou o que faltava: o Supervisor **comunica** um preço fixo sem ganhar por
+conversão, e depois da apresentação **também não opina**.
+
 **Cada uma chegou ao papel no mesmo commit em que foi decidida** — o rótulo nas
 telas, a fronteira nova na seção 8 do Roteiro, a instrução de autorização no
 bloco de abertura da Ficha. É a disciplina que o `SIM-62` cobrou de manhã:
@@ -277,6 +291,17 @@ Recepção e valia para qualquer página que usasse o padrão de ambiente.
 `/solicitar-atendimento` foi a primeira a esbarrar. Cuidado com `:first-of-type`
 em CSS compartilhado — e note que ele **pesa como classe** na especificidade.
 
+**6 · Trocar o título visível não troca o nome do documento.** Renomeei o `<h1>`
+do roteiro publicado e deixei para trás o `<title>` — a aba do navegador e o
+nome que vai para o PDF. É a mesma família da Ficha, de manhã: **um documento
+tem mais de um lugar onde se chama.** Ao renomear peça de papel, confira os
+quatro: `<title>`, `<h1>`, o nome do arquivo e o nome do PDF no gerador.
+
+**7 · Guarda que nunca dispara não vale nada.** Depois de escrever o teste de
+vocabulário, reintroduzi uma violação de propósito para ver se ele reprovava —
+e reprovou, nomeando arquivo e linha. **Teste novo que nasce verde precisa ser
+provado vermelho antes de merecer confiança**, senão é decoração.
+
 ---
 
 ## 7 · Fatos operacionais
@@ -304,6 +329,11 @@ em CSS compartilhado — e note que ele **pesa como classe** na especificidade.
   Supabase inexistente, não defeito — em produção respondem 200 com "ainda não
   publicado").
 - **Não crie `.env.local`** para isso: injete as variáveis no processo.
+- **Existe guarda de vocabulário, e ela cobra a ADR na linha.** Se você
+  aposentar um termo numa decisão, `tests/unit/vocabulario-dos-guias.test.ts`
+  passa a reprovar cada sobra dele em `docs/guias/**` e `docs/rede/**`. Menção
+  histórica é permitida — **desde que a linha cite a ADR que aposentou o
+  termo**. Termo novo aposentado entra na lista `APOSENTADOS` do próprio teste.
 - **DOIS lugares guardam roteiro, e a diferença importa:** `docs/guias/` são os
   guias de leitura (PDF **ignorado** pelo Git, ninguém baixa); `docs/rede/` são
   as **peças de papel da operação** — PDF versionado, publicado em
