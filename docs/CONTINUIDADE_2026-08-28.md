@@ -279,6 +279,11 @@ Duas escolhas ficaram no código: a saída do gerador virou **determinística**
 leitura, mas quem baixa quer `Guia-do-Supervisor-Aliviar.pdf`. **A ordem passou
 a viver no cartão**, que é onde ela é lida.
 
+**E uma cópia foi para a Área de Trabalho do Fundador** — os dezesseis
+documentos, organizados por uso, com um `LEIA-ME` que abre pelo preço vigente.
+Antes de copiar, os dois geradores rodaram e o `git status` voltou vazio: o que
+está na pasta é o que está no repositório e no ar. **O risco dela está no §7.**
+
 **Cada uma chegou ao papel no mesmo commit em que foi decidida** — o rótulo nas
 telas, a fronteira nova na seção 8 do Roteiro, a instrução de autorização no
 bloco de abertura da Ficha. É a disciplina que o `SIM-62` cobrou de manhã:
@@ -379,6 +384,18 @@ provado vermelho antes de merecer confiança**, senão é decoração.
   `public/rede/` e oferecido no Kit da Curadoria em `/admin`. **Editar um não
   edita o outro**, e foi assim que eu renomeei o roteiro errado em 28/08.
   Antes de mexer em roteiro, pergunte qual dos dois alguém vai imprimir.
+- **EXISTE UMA CÓPIA FORA DO REPOSITÓRIO, e ela é o risco desta entrega.**
+  A pedido do Fundador (28/08), os dezesseis documentos foram copiados para
+  `Área de Trabalho › Aliviar - Kit da Curadoria`, em duas subpastas ("Para
+  preencher na sala" e "Para ler antes", esta com os guias renumerados na ordem
+  de leitura). **Ela é um retrato e não se atualiza sozinha.** Daqui a algumas
+  semanas alguém imprime de lá e opera com preço velho — que é exatamente o
+  defeito do `SIM-63`, agora fora do alcance de qualquer guarda: **o teste de
+  vocabulário só enxerga o repositório.**
+  Mitigado com um `LEIA-ME.txt` que abre pelo preço vigente e fecha dizendo que
+  a versão certa está em `/admin` — mas mitigação por texto depende de alguém
+  ler. **Se o preço ou um papel mudar de novo, refaça a pasta no mesmo commit**,
+  ou apague-a.
 - **TRÊS destinos de PDF, e a diferença é o que se publica** (atualizado em
   28/08, quando os guias entraram no Kit):
   `docs/guias/pdf/` **ignorado** pelo Git — cópia local de trabalho;
