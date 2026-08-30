@@ -23,9 +23,10 @@ está de fato no ar — o deploy leva cerca de um minuto depois do `push`.
 
 ## 2 · O que mudou de regra nesta sessão
 
-**Seis ADRs, e juntas elas redesenham a operação humana da Curadoria.** Leia as
-seis antes de mexer em papel, guia ou tela — elas se apoiam, e cada uma das
-três últimas responde a uma pergunta que a anterior deixou aberta.
+**Sete ADRs, e juntas elas redesenham a operação humana da Curadoria.** Leia as
+sete antes de mexer em papel, guia ou tela — elas se apoiam, e cada uma responde
+a uma pergunta que a anterior deixou aberta. **Os documentos operacionais já
+foram reescritos para elas** (ver §5): o que estiver em papel confere.
 
 ### ADR-100 · o Atendente vira o Supervisor do processo
 
@@ -124,6 +125,34 @@ anotando enquanto fala passa a editar o que fala**. Só o tempo pode ser marcado
 discretamente durante. A exceção está no Guia, logo abaixo do título que ela
 contraria.
 
+### ADR-106 · a Aliviar tem dois rostos
+
+**O assistido conhece duas pessoas, e só duas: o Supervisor e o Curador.** Não é
+constatação de falta de gente — é desenho, e continua valendo quando houver
+equipe.
+
+Fecha a colisão que a ADR-100 abriu: o Guia do Concierge dizia *"acompanhar a
+pessoa até o encerramento"*, e a ADR-100 já tinha prometido que quem atende é
+quem fica. **Duas pessoas acompanhando a mesma pessoa até o mesmo lugar.**
+
+**O Concierge vira função, não rosto.** O Supervisor cuida da relação, o
+Concierge da logística — e a logística acontece **atrás** dele. Os papéis
+**não se fundem** mesmo sendo hoje a mesma pessoa, porque **quebram diferente**:
+logística falhando é consulta marcada errado; relação falhando é a pessoa se
+sentindo abandonada. Papel único esconde qual das duas quebrou.
+
+**Duas bordas ditas:** o Administrador *pode* tecnicamente criar o acesso — a
+porta fica como rede de segurança, o uso vira exceção com motivo no Case; e o
+observador das primeiras rodadas é uma terceira pessoa que ela **vai** ver, e é
+avisada antes.
+
+**A regra para o futuro:** todo papel novo que quiser falar com o assistido
+precisa provar por que precisa de um terceiro rosto. A pergunta não é *"esse
+papel é útil?"*, é *"o que ele faz não cabe atrás de quem ela já conhece?"*.
+
+**E ela passa a saber:** o documento que ela recebe ganhou o bloco *"Quem você
+vai conhecer: duas pessoas, e só duas"*.
+
 **A ADR-073 segue em vigor**, e foi atravessada duas vezes nesta sessão a
 pedido explícito do Fundador (a cena nova em `/solicitar-atendimento`). Dito em
 voz alta antes e registrado no commit, que é o padrão a manter.
@@ -181,6 +210,27 @@ resume as seis, na ordem em que uma abriu a pergunta da outra.
 
 **E o Ensaio Geral foi atualizado para essa operação** — cinco atos, elenco com
 Supervisor e observador, e as regras novas nas duas peças de papel.
+
+**A REESCRITA OPERACIONAL, em quatro rodadas** — os roteiros e guias deixaram de
+descrever a operação anterior. O que apareceu no caminho vale mais que o texto:
+
+- **Havia DOIS roteiros de atendimento**, e eu tinha renomeado o errado. O de
+  `docs/guias/` tem o PDF ignorado pelo Git; o de `docs/rede/` é o que vira PDF
+  no Kit e alguém baixa em `/admin` para imprimir — e era o intocado. Rótulo
+  trocado num lugar e não no outro: a família do `SIM-62`, repetida no mesmo dia
+  em que eu a registrei. Agora é `roteiro-do-supervisor.html` →
+  `Roteiro-do-Supervisor-Aliviar.pdf`, com gerador, cartão e teste acompanhando.
+- **O Guia do Supervisor estava errado sobre o SOFTWARE**, não só sobre a
+  doutrina: dizia que ao entregar ao Curador *"você deixa de ver o caso na sua
+  fila"*, e `listLeadsForAtendente` lista todos os contatos não arquivados —
+  sempre listou. Conferido no código antes de reescrever.
+- **A seção 1 do Roteiro do Concierge era o retrato do problema que a ADR-106
+  resolveu.** Ensinava uma TERCEIRA pessoa a dizer *"a partir de agora eu sou a
+  sua pessoa aqui"*, e justificava o remendo admitindo que *"a pessoa acabou de
+  contar a história inteira duas vezes"*. Remendo bom para desenho ruim: agora
+  não há passagem, e a seção ficou com duas frases.
+- **Concierge → Acompanhamento** nos dois documentos; **Curador** ganhou a porta
+  da ADR-103 nos dois, com a frase pronta e o motivo (critério 20).
 
 **Cada uma chegou ao papel no mesmo commit em que foi decidida** — o rótulo nas
 telas, a fronteira nova na seção 8 do Roteiro, a instrução de autorização no
@@ -254,6 +304,12 @@ em CSS compartilhado — e note que ele **pesa como classe** na especificidade.
   Supabase inexistente, não defeito — em produção respondem 200 com "ainda não
   publicado").
 - **Não crie `.env.local`** para isso: injete as variáveis no processo.
+- **DOIS lugares guardam roteiro, e a diferença importa:** `docs/guias/` são os
+  guias de leitura (PDF **ignorado** pelo Git, ninguém baixa); `docs/rede/` são
+  as **peças de papel da operação** — PDF versionado, publicado em
+  `public/rede/` e oferecido no Kit da Curadoria em `/admin`. **Editar um não
+  edita o outro**, e foi assim que eu renomeei o roteiro errado em 28/08.
+  Antes de mexer em roteiro, pergunte qual dos dois alguém vai imprimir.
 - **Os PDFs de `docs/guias/pdf` são ignorados pelo Git**; os de `docs/rede/` e
   `public/rede/` são versionados e têm gerador.
 - Rodam aqui: `typecheck`, `test` (2.656), `test:components` (624),
