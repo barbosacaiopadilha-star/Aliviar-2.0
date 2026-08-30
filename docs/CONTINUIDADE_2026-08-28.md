@@ -19,6 +19,13 @@ em `C:\Users\barbo\OneDrive\Desktop\PROJETOS DO CLAUDE\aliviar`.
 pendente. O commit vigente se confere em `/api/build-info`, que devolve o que
 está de fato no ar — o deploy leva cerca de um minuto depois do `push`.
 
+**E O SÁBADO ESTÁ VERIFICADO PRONTO** (verificação final de 30/08, rodada — não
+afirmada): repo = produção, pasta da mesa **18/18** byte a byte, conteúdo
+crítico **12/12**, R$ 450 morto em toda superfície, 13 guardas verdes, Kit
+**14/14** no ar. O que resta para o Ensaio de 05/09 é humano e está no PRE-VOO
+da pasta da mesa: as quatro pessoas, a impressão com a separação das folhas, e
+telefone-relógio-canetas.
+
 ---
 
 ## 2 · O que mudou de regra nesta sessão
@@ -382,6 +389,16 @@ carrega as fichas SECRETAS da Dra. Marta e do Dr. Paulo no mesmo arquivo das
 regras — quem imprime as 11 páginas e deixa o maço na mesa entrega ao Curador as
 respostas das entrevistas, e o ato 3 morre. A instrução de separar as folhas
 pelas capas, com o destino de cada parte, está escrita ANTES de acontecer.
+
+**A VERIFICAÇÃO FINAL** (30/08, a pedido do Fundador) — treze checagens rodadas
+de novo, do zero: repo/produção, os 18 arquivos da mesa byte a byte, os 12
+conteúdos críticos nos fontes (data, cinco atos, observador 3–5, ADR-103 na
+Ficha e no Ensaio, Parte 6, linha do primeiro contato, exceção ADR-105, campo
+"Assistido:", preço nos dois roteiros), o R$ 450 morto, as guardas, os 14
+downloads. **A única "falha" era do instrumento:** o padrão de busca da exceção
+ADR-105 não atravessou um `<strong>` no meio da frase — conferido na fonte
+antes de reportar, e o placar real fechou **12/12**. É a lição 1 aplicada em vez
+de reaprendida.
 Também fixado: o roteiro do ato 1 é o da LIGAÇÃO (pasta 2, nº 2), não a peça de
 WhatsApp; e o Guia sai em duas cópias — uma é roteiro, a outra é o Diário
 partilhado.
