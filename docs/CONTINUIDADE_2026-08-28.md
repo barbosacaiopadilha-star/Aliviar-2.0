@@ -370,6 +370,22 @@ porque os greps rodaram case-sensitive em minúscula, e ele tem P maiúsculo.
 `ConciergeSection`, que é código morto (ninguém a importa; a página monta
 `AmbienteConcierge`) — órfã para uma futura limpeza, não defeito de uso.
 
+**O PRÉ-VOO DO SÁBADO** (30/08, `70dd525`) — em dois lugares: na pasta da mesa
+("PRE-VOO - sabado 05-09.txt", onde será usado) e em
+`docs/rede/ensaio/pre-voo-2026-09-05.txt` (onde vira registro). A metade
+verificável foi **verificada por máquina na hora**, não afirmada: fonte, PDF,
+produção e mesa na mesma versão byte a byte; data no papel; preço único; Kit
+respondendo. A metade humana virou checklist com caixas.
+
+**O item que justifica o documento: a pegadinha da impressão.** O PDF do Ensaio
+carrega as fichas SECRETAS da Dra. Marta e do Dr. Paulo no mesmo arquivo das
+regras — quem imprime as 11 páginas e deixa o maço na mesa entrega ao Curador as
+respostas das entrevistas, e o ato 3 morre. A instrução de separar as folhas
+pelas capas, com o destino de cada parte, está escrita ANTES de acontecer.
+Também fixado: o roteiro do ato 1 é o da LIGAÇÃO (pasta 2, nº 2), não a peça de
+WhatsApp; e o Guia sai em duas cópias — uma é roteiro, a outra é o Diário
+partilhado.
+
 ---
 
 ## 6 · As lições desta sessão
@@ -497,7 +513,10 @@ regra certa — o defeito estava no que o número passou a apontar.
   Mitigado com um `LEIA-ME.txt` que abre pelo preço vigente e fecha dizendo que
   a versão certa está em `/admin` — mas mitigação por texto depende de alguém
   ler. **Se o preço ou um papel mudar de novo, refaça a pasta no mesmo commit**,
-  ou apague-a.
+  ou apague-a. **Histórico:** a primeira cópia foi apagada pelo Fundador em
+  30/08 e refeita no mesmo dia (o LEIA-ME registra); a pasta atual carrega
+  também o **PRE-VOO do sábado**. Antes de confiar nela, o teste é o de sempre:
+  byte a byte contra o repositório.
 - **TRÊS destinos de PDF, e a diferença é o que se publica** (atualizado em
   28/08, quando os guias entraram no Kit):
   `docs/guias/pdf/` **ignorado** pelo Git — cópia local de trabalho;
@@ -525,6 +544,10 @@ regra certa — o defeito estava no que o número passou a apontar.
    interpreta o assistido (pessoa de confiança), quem faz o Supervisor (segunda
    pessoa da equipe), quem atende os telefones dos dois médicos, e o observador
    que não trabalha. Imprimir da pasta da mesa ou do `/admin`. Nada de código.
+   **O pré-voo está pronto e entregue** ("PRE-VOO - sabado 05-09.txt", na pasta
+   da mesa): o que era verificável por máquina já está [OK]; as caixas vazias
+   são as quatro pessoas, a impressão (com a pegadinha das fichas secretas) e a
+   logística. As três perguntas do Diário estão no rodapé dele.
 
 2. **Quem é a primeira pessoa** — a decisão que destrava mais coisa e que o
    Fundador toma sozinho.
