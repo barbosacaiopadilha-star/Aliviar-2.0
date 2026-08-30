@@ -246,6 +246,19 @@ Curador comparando o papel dele com o do "Atendente" — que, ao ser consertado,
 ganhou o que faltava: o Supervisor **comunica** um preço fixo sem ganhar por
 conversão, e depois da apresentação **também não opina**.
 
+**OS DEZ GUIAS ENTRARAM NO KIT DA CURADORIA** (`/admin`), a pedido do Fundador
+— **construção nova sob a ADR-073, dita em voz alta e registrada no commit**.
+Até aqui eles não existiam em lugar nenhum além do disco de quem rodava o
+gerador. O cartão passou a ter **duas seções**: *"Para preencher na sala"* (as
+quatro peças de rede) e *"Para ler antes — na ordem"* (os dez guias, em pares
+por papel). Conferido em produção: os downloads respondem 200.
+
+Duas escolhas ficaram no código: a saída do gerador virou **determinística**
+(sem isso, cada corrida sujaria o Git com dez binários), e os arquivos ganharam
+**nome de gente** — o fonte é `2-supervisor.html` porque o número é a ordem de
+leitura, mas quem baixa quer `Guia-do-Supervisor-Aliviar.pdf`. **A ordem passou
+a viver no cartão**, que é onde ela é lida.
+
 **Cada uma chegou ao papel no mesmo commit em que foi decidida** — o rótulo nas
 telas, a fronteira nova na seção 8 do Roteiro, a instrução de autorização no
 bloco de abertura da Ficha. É a disciplina que o `SIM-62` cobrou de manhã:
@@ -297,7 +310,13 @@ nome que vai para o PDF. É a mesma família da Ficha, de manhã: **um documento
 tem mais de um lugar onde se chama.** Ao renomear peça de papel, confira os
 quatro: `<title>`, `<h1>`, o nome do arquivo e o nome do PDF no gerador.
 
-**7 · Guarda que nunca dispara não vale nada.** Depois de escrever o teste de
+**7 · `npm run test` verde não quer dizer tipo certo.** O teste do Kit passou
+com um `new Set(...)` que herdava a união literal de um `as const` — o `has()`
+recusava, em tempo de TIPO, exatamente o que o caso queria conferir. O vitest
+não typecheca; quem pegou foi o `tsc`. **Rode os dois antes de acreditar num
+caso novo.**
+
+**8 · Guarda que nunca dispara não vale nada.** Depois de escrever o teste de
 vocabulário, reintroduzi uma violação de propósito para ver se ele reprovava —
 e reprovou, nomeando arquivo e linha. **Teste novo que nasce verde precisa ser
 provado vermelho antes de merecer confiança**, senão é decoração.
@@ -340,9 +359,17 @@ provado vermelho antes de merecer confiança**, senão é decoração.
   `public/rede/` e oferecido no Kit da Curadoria em `/admin`. **Editar um não
   edita o outro**, e foi assim que eu renomeei o roteiro errado em 28/08.
   Antes de mexer em roteiro, pergunte qual dos dois alguém vai imprimir.
-- **Os PDFs de `docs/guias/pdf` são ignorados pelo Git**; os de `docs/rede/` e
-  `public/rede/` são versionados e têm gerador.
-- Rodam aqui: `typecheck`, `test` (2.656), `test:components` (624),
+- **TRÊS destinos de PDF, e a diferença é o que se publica** (atualizado em
+  28/08, quando os guias entraram no Kit):
+  `docs/guias/pdf/` **ignorado** pelo Git — cópia local de trabalho;
+  `public/guias/` **versionado e publicado** — os dez guias, baixáveis no Kit;
+  `docs/rede/` + `public/rede/` **versionados e publicados** — as peças de
+  papel. Os dois geradores publicam: `gerar-guias-pdf.mjs` pelo mapa
+  `PUBLICADOS`, `gerar-rede-pdf.mjs` pela lista `PECAS`. **Guia novo só aparece
+  no Kit se entrar no mapa E na lista `GUIAS_DE_LEITURA` do cartão** — o teste
+  `kit-da-curadoria` reprova link morto, mas não adivinha o que você esqueceu
+  de acrescentar.
+- Rodam aqui: `typecheck`, `test` (2.661), `test:components` (624),
   `npx eslint <arquivos>`. Não rodam: `lint`, `build`, integração e E2E.
 
 ---
