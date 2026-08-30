@@ -3086,3 +3086,54 @@ A ADR-103 aceitou, **sem medir**, o risco de que a presença do Supervisor faça
 ### Revisitar quando
 
 O Ensaio responder a pergunta da pessoa de confiança. Se ela disser que teria contado mais sozinha, é a **ADR-103** que volta à mesa, não esta.
+
+## ADR-105 — O Supervisor anota no Diário: o processo, nunca a conversa
+
+- **Data:** 2026-08-28
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data. Fecha o que a **ADR-104** deixou explicitamente em aberto.
+- **Dependências:** convive com a **ADR-103** (*ele ouve, não registra*) · preenche o vazio de medição que a **ADR-104** criou · **abre uma exceção** à regra do Guia da Primeira Rodada (*"Diário de Observação — preencher DURANTE, não depois"*) · não altera a **ADR-073**.
+
+### A decisão
+
+**O Supervisor anota no Diário de Observação.** O que ele anota é **o processo**: tempo, travas, o que faltou, o que precisou ser perguntado duas vezes, o que o roteiro não previu.
+
+**Nunca o conteúdo da conversa.** Não o que a pessoa disse, não a história dela, não a condição, não as reações dela.
+
+### Por que ele precisa anotar
+
+A **ADR-104** tirou o observador da Consulta Inicial — e com isso **o ato mais longo da Curadoria passou a não produzir medição nenhuma**. Os ~50 atos de juízo que o `REGISTRO_UNICO_DE_ACHADOS` nomeia como carga não medida são mais densos justamente ali.
+
+E há uma razão que só vale para ele: **é o único na sala com as mãos livres.** O Curador está conduzindo e preenchendo a Ficha — ele não pode observar a si mesmo enquanto escuta. O Supervisor está calado por definição. É o único que pode olhar o relógio e notar o atrito.
+
+### Por que isto não contraria a ADR-103
+
+A ADR-103 disse que ele *"ouve, não registra"*, e aquilo era sobre **o dado da pessoa**: o registro clínico é a Ficha, na mão do Curador. O Diário é outro objeto inteiramente.
+
+**A Ficha é sobre a pessoa. O Diário é sobre a Aliviar.** Enquanto o Supervisor só escrever no segundo, a mitigação da ADR-103 continua de pé.
+
+### A linha, e como conferir se ela foi cruzada
+
+**O que ele escreve tem de ser verdade sem a pessoa dentro.**
+
+Teste prático, para usar na hora: *esta anotação faria sentido sobre qualquer Consulta Inicial?* Se fizer, é processo. Se só fizer sentido por causa **desta** pessoa — do que ela contou, de como reagiu, do que ela tem —, é conteúdo, e não entra.
+
+- ✅ *"A Parte 4 levou 22 minutos; o Curador voltou três vezes ao mesmo conceito porque a pergunta do formulário é ambígua."*
+- ❌ *"Ela pareceu desconfortável ao falar da família."*
+
+A segunda é observação disfarçada, e é exatamente o que a ADR-104 recusou.
+
+### Ele anota DEPOIS, e isto contraria uma regra escrita
+
+O Guia da Primeira Rodada manda, em título: *"Diário de Observação — preencher **DURANTE**, não depois"*. **Para esta sala, e só para ela, a regra se inverte.**
+
+A regra existe por exatidão — memória inventa. Mas aqui ela custaria mais do que entrega: **uma pessoa que vê alguém anotando enquanto ela fala passa a editar o que fala.** É o mesmo risco que a ADR-103 aceitou sem medir, amplificado por um bloco de notas visível. Trocar um pouco de exatidão por não estragar o que se está medindo é a troca certa.
+
+**Duas mitigações:** ele escreve **imediatamente ao sair**, antes de qualquer outra coisa; e o que ele registra resiste bem à memória curta — o relógio está no relógio, e atrito se lembra. **O tempo pode ser marcado discretamente durante**, que é o que o Guia já autoriza ao Curador (*"cronometrar discretamente"*).
+
+### O que NÃO se decidiu
+
+**Se ele anota também nos outros atos.** Nos atos 3, 4 e 5 há observador, e dois cadernos sobre a mesma cena produzem versão, não medida. Fica em aberto; a resposta provável é que o Diário da Consulta Inicial seja dele e o dos outros atos seja do observador, **cada folha assinada por quem escreveu**.
+
+### Revisitar quando
+
+Uma anotação dele cruzar a linha — é o sinal de que o teste acima é fino demais e precisa de exemplo, não de princípio. Ou quando o Ensaio mostrar que ele **não teve nada que escrever**: aí a sala não tem atrito que valha medir, e ele volta a só ouvir.
