@@ -313,6 +313,20 @@ E confere o destino. Dois cosméticos anotados sem correção no commit
 `b013e14`: o fallback do Suspense do `/login` com o título antigo, e a frase
 truncada de `/sua-historia`.
 
+**A AUDITORIA DE CONTEÚDO, e o `SIM-65` que ela achou** (30/08) — pedida pelo
+Fundador depois da auditoria do site: não onde os documentos se chamam, mas **o
+que eles afirmam** contra a doutrina. A suspeita dele (*"o médico indica 3
+caminhos"*) apontou a classe certa: **os dois roteiros do Supervisor mandavam
+dizer "a gente não indica um" e, três linhas depois, fechavam o preço com
+"honesta sobre quem INDICAR"** — o verbo proibido, dentro do documento que o
+nega, incluindo o impresso do Kit. O site já usava a forma certa (*"quem
+apresentar"*). Junto: *"até três opções"* onde a Mesa entrega **exatamente
+três** (o banco recusa ≠3). **Os passo a passo do site e do guia 10 estavam
+certos** — o defeito morava nos roteiros de conversa, onde alguém lê em voz
+alta. No mesmo passe: vocabulário ADR-097 residual nas peças, carimbos
+atrasados, e a pasta da mesa atualizada **no mesmo commit** (regra do §7,
+cumprida na primeira vez em que foi testada).
+
 ---
 
 ## 6 · As lições desta sessão
@@ -370,6 +384,14 @@ componente é usado**.
 vocabulário, reintroduzi uma violação de propósito para ver se ele reprovava —
 e reprovou, nomeando arquivo e linha. **Teste novo que nasce verde precisa ser
 provado vermelho antes de merecer confiança**, senão é decoração.
+
+**10 · A guarda pega termo aposentado — não contradição.** "Indicar" nunca
+poderia entrar na lista de aposentados: ele aparece legitimamente NEGADO ("a
+gente não indica um") a três linhas do uso proibido. Frase que afirma o que
+outra frase do mesmo documento nega só cai com **leitura dirigida por quem
+conhece a doutrina** — foi o Fundador quem apontou a classe do erro, e os
+autômatos todos estavam verdes. Auditoria de conteúdo não se automatiza; se
+agenda.
 
 ---
 
