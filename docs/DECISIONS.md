@@ -3052,3 +3052,37 @@ Vinte minutos antes desta decisão, na **ADR-102**, o Engenheiro Líder nomeou e
 ### Revisitar quando
 
 **No primeiro "não".** A primeira pessoa que recusar a presença é o dado mais valioso desta decisão — e ela precisa ser registrada, não só respeitada. Ou no Diário do Ensaio, que agora tem uma pergunta a mais para responder: **com o Supervisor na sala, a pessoa contou menos?**
+
+## ADR-104 — A Consulta Inicial não se observa
+
+- **Data:** 2026-08-28
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data.
+- **Dependências:** limita o observador previsto no pré-voo de `OPERACAO_PRIMEIRA_CURADORIA.md` · convive com a **ADR-103**, e a tensão entre as duas está dita abaixo · mantém a doutrina da Ficha (*a conversa em si não se grava*, P12) · não altera a **ADR-073**.
+
+### A decisão
+
+**O observador fica fora da Consulta Inicial.** Ele observa os outros atos — a entrevista do profissional, a Mesa, a apresentação — e não entra na conversa em que a pessoa conta a história dela.
+
+### Por que
+
+A **ADR-103** já colocou uma segunda pessoa da Aliviar naquela sala. Com o observador seriam **três estranhos e a pessoa**, na conversa mais íntima do processo inteiro — alguém contando dor, medo e história de família para uma plateia.
+
+A Ficha já protege esse momento de outra forma: *"a conversa em si não se grava"* (P12). Um observador é uma gravação com olhos. **Observar a Consulta Inicial custaria exatamente o que ela existe para dar.**
+
+### A tensão com a ADR-103, dita porque é séria
+
+A ADR-103 aceitou, **sem medir**, o risco de que a presença do Supervisor faça a pessoa contar menos. Esta ADR tira da sala justamente quem teria por função notar isso.
+
+**Juntas, as duas produzem isto: a regra mais nova e menos testada da operação vale na única sala que ninguém observa.** Não é motivo para reverter nenhuma das duas — é motivo para o risco ser medido por outro instrumento, e o instrumento existe:
+
+**No Ensaio Geral, quem interpreta a pessoa é uma pessoa de confiança — e pode ser perguntada.** Um assistido real nunca vai dizer "eu ia contar mais se ele não estivesse ali"; uma pessoa que está atuando, sim. O **Diário de Observação** passa a exigir uma conversa com ela **depois** da Consulta Inicial simulada, com uma pergunta direta: *o que você teria dito se estivesse sozinha com o Curador?*
+
+É a única leitura possível desse risco antes de ele custar alguém — e ela só existe porque o Ensaio é ensaio.
+
+### O que NÃO se decidiu
+
+**Se o Supervisor escreve algo no Diário sobre a Consulta Inicial.** Ele está na sala e ouviu; pedir que ele registre o que percebeu é tentador e perigoso — vira observação disfarçada, e a ADR-103 o definiu como quem **não registra**. Fica em aberto, e a resposta provável é que qualquer anotação dele seja sobre o **processo** (tempo, travas, o que faltou), nunca sobre o conteúdo da conversa.
+
+### Revisitar quando
+
+O Ensaio responder a pergunta da pessoa de confiança. Se ela disser que teria contado mais sozinha, é a **ADR-103** que volta à mesa, não esta.
