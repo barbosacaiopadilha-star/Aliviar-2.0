@@ -181,9 +181,11 @@ voz alta antes e registrado no commit, que é o padrão a manter.
 
 ## 3 · O estado real, em uma frase
 
-**Continua sendo a operação, não o código** — e agora com uma evidência a mais:
-a Landing foi revisada inteira nesta sessão, medida em notebook e celular, e
-não tinha nada para consertar.
+**Continua sendo a operação, não o código** — e a evidência agora é dupla: a
+Landing foi revisada inteira (notebook e celular, nada a consertar), e uma
+**auditoria fina de todo o site público** fechou com **um** defeito real — as
+âncoras da navegação (`SIM-64`), corrigido e com guarda endurecida no mesmo
+commit. Vocabulário, promessas, rotas, links, alt de imagem e console: limpos.
 
 ---
 
@@ -295,6 +297,22 @@ via porque E2E não roda no ambiente local. Quatro pontos corrigidos.
 `admin-dashboard.spec.ts` exige cinco indicadores removidos de propósito em
 24/08 — consertá-lo é reescrever o teste, não trocar uma palavra.
 
+**A AUDITORIA FINA DO SITE, e o `SIM-64` que ela achou** — varredura das rotas
+públicas (status, `h1`, meta, `alt`, saltos de cabeçalho), vocabulário da
+ADR-097, promessas da ADR-064, links internos, console; e o olho, em notebook e
+celular. **O achado real:** os três links do cabeçalho e o "Nossa curadoria" do
+rodapé eram `#ancora` nua — porta pintada em TODA página fora da Landing,
+inclusive na gaveta do celular. Corrigido para `/#ancora` e **provado com
+clique real** nos dois sentidos: de `/o-que-e` navega e desce à seção; na
+Landing segue fragmento do mesmo documento.
+
+**A ironia registrada no `SIM-64`:** existia guarda para link morto no header —
+mas ela validava só contra a Landing e, ao filtrar por `startsWith("#")`,
+**exigia a forma quebrada**. Foi endurecida nas duas pontas: reprova âncora nua
+E confere o destino. Dois cosméticos anotados sem correção no commit
+`b013e14`: o fallback do Suspense do `/login` com o título antigo, e a frase
+truncada de `/sua-historia`.
+
 ---
 
 ## 6 · As lições desta sessão
@@ -341,7 +359,14 @@ recusava, em tempo de TIPO, exatamente o que o caso queria conferir. O vitest
 não typecheca; quem pegou foi o `tsc`. **Rode os dois antes de acreditar num
 caso novo.**
 
-**8 · Guarda que nunca dispara não vale nada.** Depois de escrever o teste de
+**8 · Teste que valida contra UM contexto autoriza o defeito em todos os
+outros.** A guarda de link morto do header conferia as âncoras contra os ids da
+Landing — a única página onde elas funcionavam — e exigia a forma nua que
+quebrava nas demais. É o viés do `SIM-57` vestido de teste: o instrumento olhava
+um lugar só. Ao escrever guarda de navegação, pergunte **de onde mais este
+componente é usado**.
+
+**9 · Guarda que nunca dispara não vale nada.** Depois de escrever o teste de
 vocabulário, reintroduzi uma violação de propósito para ver se ele reprovava —
 e reprovou, nomeando arquivo e linha. **Teste novo que nasce verde precisa ser
 provado vermelho antes de merecer confiança**, senão é decoração.
