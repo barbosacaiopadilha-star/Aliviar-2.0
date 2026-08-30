@@ -81,7 +81,13 @@ describe("O que é a Aliviar — a porta de quem só olha", () => {
   it("diz o preço inteiro: o valor, o que cobre, e o que fica de fora", () => {
     const pagina = semComentarios(ler("src/app/(public)/o-que-e/page.tsx"));
 
-    expect(pagina).toContain("R$ 450");
+    // ADR-107 (28/08): o valor passou de R$ 450 para R$ 500, em até 12× sem
+    // entrada. Este caso é a razão de o preço da vitrine não poder mudar em
+    // silêncio — ele reprovou no minuto em que o número trocou, que é o que se
+    // espera dele.
+    expect(pagina).toContain("R$ 500");
+    expect(pagina).not.toContain("R$ 450");
+    expect(pagina).toMatch(/parcelado em até 12 vezes/);
     expect(pagina).toMatch(/à parte/);
     expect(pagina).toMatch(/não recebe nada dessa consulta/i);
   });

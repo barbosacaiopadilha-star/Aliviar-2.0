@@ -3187,3 +3187,49 @@ Para quem já contou a mesma história em três consultórios diferentes, isto �
 A operação crescer a ponto de o Supervisor não dar conta de ser o único canal — e aí a pergunta certa não é *"quem mais fala com ela?"*, é *"quantos assistidos cabem por Supervisor?"*. Contratar o segundo rosto é a última saída, não a primeira.
 
 ---
+
+## ADR-107 — O preço passa a R$ 500 por ano, em 12× de R$ 41,67, sem entrada
+
+- **Data:** 2026-08-28
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data.
+- **Dependências:** exerce o mecanismo previsto na **ADR-101** (*"o número muda por decisão do Fundador, para todos, ou não muda"*) · preenche a lacuna que a ADR-101 tinha transformado em bloqueador de operação · não altera a **ADR-073**.
+
+### A decisão
+
+**R$ 500 por um ano de contrato**, no lugar dos R$ 450 anteriores. **Parcelável em até 12 vezes de R$ 41,67, sem entrada** — a primeira na contratação.
+
+O preço continua **fixo** nos termos da ADR-101: sem margem para desconto na conversa, sem outro parcelamento, e sem comissão por conversão para ninguém.
+
+**Não há preço à vista diferente.** R$ 500 é o valor, pago de uma vez ou em doze.
+
+### O que isto destrava
+
+A ADR-101 tinha deixado um buraco e o nomeado: com o preço fixo e sem desconto, **o parcelamento é a única resposta possível a "não cabe no meu bolso"** — e os números estavam em branco no roteiro, com um aviso proibindo improvisar na ligação. O roteiro não podia ser usado.
+
+Agora pode. Era o terceiro item do trabalho aberto e sai da lista.
+
+### Os quatro centavos, ditos porque dinheiro se diz inteiro
+
+12 × R$ 41,67 = **R$ 500,04**. A diferença de quatro centavos é do arredondamento da parcela, e o valor falado continua sendo R$ 500. Se algum dia isso precisar fechar exato, a forma é **11× R$ 41,67 + 1× R$ 41,63** — fica registrado para ninguém redescobrir a conta.
+
+### Onde o número mudou, e o alerta que isso deixou
+
+O R$ 450 vivia em **quatro lugares**, e um deles é público:
+
+1. **`/o-que-e`, no site** — a vitrine dizia R$ 450 em produção. É o mais urgente dos quatro, e o único que estranhos leem.
+2. O Roteiro do Supervisor publicado no Kit.
+3. O roteiro de ligação, em três pontos (o valor, a frase-âncora e o carimbo de vigência).
+4. O guia "O que é a Aliviar".
+
+**Três desses ninguém teria conferido ao trocar um preço.** Por isso o `R$ 450` entrou na guarda de vocabulário (`tests/unit/vocabulario-dos-guias.test.ts`) como termo aposentado: a partir daqui, preço velho sobrevivente **reprova a suíte**, com arquivo e linha. É o mesmo mecanismo do `SIM-63`, aplicado ao item mais caro que um documento pode carregar — **termo velho num guia constrange; preço velho num roteiro que alguém lê em voz alta vira compromisso.**
+
+### O que NÃO se decidiu
+
+- **Se R$ 500 é o valor certo.** Esta ADR fixa o número, não o calibra.
+- **Desconto à vista.** Não existe hoje; criar um é decisão nova, e ela precisaria ser uma condição publicada e igual para todos — nunca um abatimento concedido na conversa, que é o que a ADR-101 proíbe.
+
+### Revisitar quando
+
+As primeiras Curadorias reais mostrarem gente recusando **no preço** — e aí a pergunta é sobre o número, nunca sobre abrir exceção. Ou quando o custo real de uma Curadoria for medido pelo Ensaio: hoje ninguém sabe quantas horas ela consome, então **R$ 500 é um preço decidido sem custo conhecido**, e isso está dito.
+
+---

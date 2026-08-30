@@ -206,12 +206,12 @@ export default function OQueEPage() {
       <section className="mt-16">
         <h2 className="landing-heading text-2xl">Quanto custa</h2>
         <p className="landing-body mt-4 text-lg text-ink">
-          <strong>R$ 450 por um ano.</strong>
+          <strong>R$ 500 por um ano.</strong>
         </p>
         <p className="landing-body mt-3 text-[var(--color-ink-muted)]">
           Cobre a curadoria inteira, o relatório com os três caminhos, e o acompanhamento durante o
           ano todo — alguém da Aliviar com você para organizar documentos, próximos passos e
-          dúvidas. Pode ser parcelado.
+          dúvidas. Pode ser parcelado em até 12 vezes.
         </p>
         <p className="landing-body mt-3 text-[var(--color-ink-muted)]">
           A consulta com o médico que você escolher é <strong>à parte</strong>, paga direto com ele.

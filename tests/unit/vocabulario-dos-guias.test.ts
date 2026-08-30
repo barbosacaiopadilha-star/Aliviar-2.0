@@ -48,6 +48,11 @@ const APOSENTADOS: ReadonlyArray<{ termo: string; adr: string; virou: string }> 
   // "Atendente" solto vem por último: é o mais amplo, e por isso o mais
   // propenso a voltar sem que ninguém repare.
   { termo: "Atendente", adr: "ADR-100", virou: "Supervisor" },
+  // 28/08 · O PREÇO ENTRA NA MESMA GUARDA, e é o item mais caro da lista: um
+  // termo velho num guia constrange, um PREÇO velho num roteiro que alguém lê
+  // em voz alta vira compromisso. O R$ 450 vivia em quatro lugares, incluindo
+  // a página pública `/o-que-e` — e três deles ninguém teria conferido.
+  { termo: "R$ 450", adr: "ADR-107", virou: "R$ 500" },
 ];
 
 function arquivosHtml(pasta: string): string[] {

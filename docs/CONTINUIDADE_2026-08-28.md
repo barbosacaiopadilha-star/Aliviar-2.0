@@ -23,8 +23,8 @@ está de fato no ar — o deploy leva cerca de um minuto depois do `push`.
 
 ## 2 · O que mudou de regra nesta sessão
 
-**Sete ADRs, e juntas elas redesenham a operação humana da Curadoria.** Leia as
-sete antes de mexer em papel, guia ou tela — elas se apoiam, e cada uma responde
+**Oito ADRs, e juntas elas redesenham a operação humana da Curadoria.** Leia as
+oito antes de mexer em papel, guia ou tela — elas se apoiam, e cada uma responde
 a uma pergunta que a anterior deixou aberta. **Os documentos operacionais já
 foram reescritos para elas** (ver §5): o que estiver em papel confere.
 
@@ -153,6 +153,26 @@ papel é útil?"*, é *"o que ele faz não cabe atrás de quem ela já conhece?"
 **E ela passa a saber:** o documento que ela recebe ganhou o bloco *"Quem você
 vai conhecer: duas pessoas, e só duas"*.
 
+### ADR-107 · o preço passa a R$ 500, em 12× de R$ 41,67, sem entrada
+
+Exerce o mecanismo que a ADR-101 previu — *"o número muda por decisão do
+Fundador, para todos, ou não muda"* — e **destrava o roteiro**, que não podia ser
+usado com o parcelamento em branco.
+
+**Não há preço à vista diferente:** R$ 500 é o valor, de uma vez ou em doze. Os
+quatro centavos do arredondamento (12 × 41,67 = R$ 500,04) estão ditos na ADR,
+com a forma exata registrada para ninguém refazer a conta.
+
+**O alerta que ele deixou:** o R$ 450 vivia em **quatro** lugares, e um deles é a
+página pública `/o-que-e` — a vitrine dizia o preço velho em produção. Três
+desses ninguém teria conferido. Por isso o `R$ 450` entrou na guarda de
+vocabulário: **termo velho num guia constrange; preço velho num roteiro que
+alguém lê em voz alta vira compromisso.**
+
+**E uma guarda que eu não conhecia me pegou:** o `o-que-e-a-porta-de-quem-so-olha`
+cobrava "R$ 450" no fonte da página e reprovou no minuto em que o número trocou.
+É exatamente o que se espera dela — **o preço da vitrine não muda em silêncio.**
+
 **A ADR-073 segue em vigor**, e foi atravessada duas vezes nesta sessão a
 pedido explícito do Fundador (a cena nova em `/solicitar-atendimento`). Dito em
 voz alta antes e registrado no commit, que é o padrão a manter.
@@ -171,7 +191,7 @@ não tinha nada para consertar.
 
 | O quê | Situação em 28/08 |
 | --- | --- |
-| **Entrada e parcelas** | **Subiu de prioridade com a ADR-101.** O preço JÁ está definido — **R$ 450 pelo ano**, no roteiro — e agora é **fixo, sem desconto na conversa**. Isso torna o parcelamento a **única** saída para quem disser que não cabe: deixou de ser pendência menor e virou bloqueador de operação. Em branco só a entrada e o número de parcelas. |
+| ~~**Entrada e parcelas**~~ | **DECIDIDO — ADR-107.** R$ 500 pelo ano, em até **12× de R$ 41,67, sem entrada**. Sai da lista. O R$ 450 anterior vivia em quatro lugares, um deles a página pública `/o-que-e`, e agora está na guarda de vocabulário: preço velho sobrevivente reprova a suíte. |
 | **Quem é a primeira pessoa** | A ADR-096 só se sustenta se for alguém de dentro. **Decidida ela, o Case sai por consequência** — e o `61da4e7e`, herdado de julho, para de ser pergunta. É dado de produção; o repositório não sabe de quem ele é. |
 | **Quem conduz** | **As ADR-100 a 105 já dizem o que cada um faz, e quem entra em qual sala — falta dizer QUEM é cada um.** Curador, Supervisor, Concierge e um observador que não trabalhe, com nome, antes do dia. Na Consulta Inicial ficam **duas** pessoas da Aliviar (Curador conduzindo, Supervisor calado e só se ela autorizar); o observador entra nos outros atos. |
 | **Onde a jornada para** | Os três profissionais da Rede são reais. Decidir **antes**. |
@@ -399,13 +419,9 @@ provado vermelho antes de merecer confiança**, senão é decoração.
    desfaz sozinha, e ele volta a só ouvir.
 2. **Quem é a primeira pessoa** — a decisão que destrava mais coisa e que o
    Fundador toma sozinho.
-3. **A entrada e as parcelas.** Com a **ADR-101** o preço virou fixo e sem
-   desconto na conversa, então o parcelamento é a única resposta possível a
-   "não cabe no meu bolso". Sem os dois números, o Roteiro do Supervisor não
-   pode ser usado numa ligação real — e o aviso dentro dele proíbe improvisar.
-4. **`SIM-62` grupo (b)** — `admin-dashboard.spec.ts` vermelho desde 24/08.
-5. **`SIM-60`** — o gate de aceite, mina registrada, não pedido de obra.
-6. **`PRIV-04`** — a exclusão não alcança o storage. P0, depende da D-08.
+3. **`SIM-62` grupo (b)** — `admin-dashboard.spec.ts` vermelho desde 24/08.
+4. **`SIM-60`** — o gate de aceite, mina registrada, não pedido de obra.
+5. **`PRIV-04`** — a exclusão não alcança o storage. P0, depende da D-08.
 
 ---
 
