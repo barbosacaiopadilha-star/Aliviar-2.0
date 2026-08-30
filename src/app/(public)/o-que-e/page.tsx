@@ -33,7 +33,7 @@ import { LinkButton } from "@/components/landing/link-button";
 export const metadata: Metadata = {
   title: "O que é a Aliviar",
   description:
-    "Um médico estuda o seu caso e volta com três caminhos, explicando cada um — e você escolhe. Como funciona, quanto custa, e o que a Aliviar não é.",
+    "Um curador — que é médico — estuda o seu caso e volta com três caminhos, explicando cada um — e você escolhe. Como funciona, quanto custa, e o que a Aliviar não é.",
 };
 
 const PASSOS = [
@@ -73,7 +73,7 @@ const DIFERENCAS = [
   {
     titulo: "Quem analisa é uma pessoa, não um algoritmo",
     texto:
-      "Um médico lê o seu caso e assina o que escreveu. Tem nome e responde pelo que disse. Nada é gerado automaticamente.",
+      "Um curador — que é médico — lê o seu caso e assina o que escreveu. Tem nome e responde pelo que disse. Nada é gerado automaticamente.",
   },
   {
     titulo: "A escolha continua sendo sua",
@@ -95,7 +95,7 @@ const NAO_SOMOS = [
 const DUVIDAS = [
   [
     "Por que eu não procuro sozinho?",
-    "Pode, e muita gente faz. A diferença é o que você tem na mão para decidir: sozinho, você compara pelo que está no site de cada um. Aqui, um médico estuda os três e explica em que eles diferem para o seu caso.",
+    "Pode, e muita gente faz. A diferença é o que você tem na mão para decidir: sozinho, você compara pelo que está no site de cada um. Aqui, um curador — que é médico — estuda os três e explica em que eles diferem para o seu caso.",
   ],
   [
     "E se eu não gostar de nenhum dos três?",
@@ -154,7 +154,7 @@ export default function OQueEPage() {
       <section className="mt-16">
         <h2 className="landing-heading text-2xl">O que a gente faz, em uma frase</h2>
         <p className="landing-body mt-4 text-lg text-ink">
-          Um médico estuda o seu caso e volta com <strong>três caminhos</strong>, explicando cada um
+          Um curador — que é médico — estuda o seu caso e volta com <strong>três caminhos</strong>, explicando cada um
           — e você escolhe.
         </p>
       </section>
