@@ -23,23 +23,68 @@ está de fato no ar — o deploy leva cerca de um minuto depois do `push`.
 
 ## 2 · O que mudou de regra nesta sessão
 
-A **ADR-100** redefiniu um papel: o **Atendente deixou de ser recepção e virou o
-Supervisor do processo**. O primeiro contato já é com ele, e ele não desaparece
-no repasse — acompanha até o encerramento. O Curador continua conduzindo a
-Consulta Inicial.
+**Quatro ADRs, e juntas elas redesenham a operação humana da Curadoria.** Leia
+as quatro antes de mexer em papel, guia ou tela de papel — elas se apoiam.
 
-Três regras entraram junto, e elas não são detalhe:
+### ADR-100 · o Atendente vira o Supervisor do processo
+
+O **Atendente deixou de ser recepção**. O primeiro contato já é com ele, e ele
+não desaparece no repasse — acompanha até o encerramento. Era uma **etapa**;
+virou uma **espinha**.
+
+Duas regras nasceram dentro dela e continuam sendo dela:
 
 1. **O Supervisor não colhe história clínica no primeiro contato.** Ela é do
    Curador, com a Ficha. Um resumo clínico escrito antes chegaria ao Curador
    como versão pronta, e ele passaria a conferir uma história em vez de ouvi-la.
-2. **Preço fixo, sem comissão por conversão** — promovida a decisão própria na
-   **ADR-101**, porque é política comercial e não corolário de um papel. Com o
-   papel unificado, quem comunica o preço é quem depois acompanha a decisão. O
-   conflito não está em quem diz o número — está em quem ganha com a resposta.
-3. **Depois que o Curador assume, o Supervisor nunca opina sobre qual dos três
+2. **Depois que o Curador assume, o Supervisor nunca opina sobre qual dos três
    caminhos.** Esta só apareceu ao editar o guia, e é a que protege o produto:
    antes, quem convenceu ia embora; agora fica na sala.
+
+### ADR-101 · preço fixo, e ninguém ganha por conversão
+
+Promovida a decisão própria porque é **política comercial**, não corolário de
+papel. Sem margem para desconto na conversa, e **nenhum dos três papéis** ganha
+por contrato fechado, Case aberto ou caminho escolhido.
+
+O conflito nunca esteve em quem diz o número — **está em quem ganha com a
+resposta**. E ela depende da ADR-083, que tirou o preço da vitrine: preço que só
+existe na conversa precisa ser o mesmo em todas as conversas, ou vira preço por
+freguês.
+
+**Consequência prática:** o parcelamento virou a única resposta a "não cabe no
+meu bolso", e por isso subiu no trabalho aberto.
+
+### ADR-102 · a Consulta Inicial é do Curador, sempre
+
+Três razões, e **a primeira corrige um erro meu da ADR-100**: eu li o princípio
+da ADR-076 (*"quem colhe é quem usa"*) como se falasse de ordem de chegada, e
+ele fala de **uso** — quem usa a história é o Curador, que a pesa contra os 29
+subcritérios e assina o Relatório. As outras duas: **é dado de saúde e o Curador
+é médico** (promessa escrita à pessoa em dois guias), e **a devolução só fecha
+com quem ouviu**.
+
+### ADR-103 · o Supervisor assiste, calado e autorizado
+
+Responde a pergunta que a ADR-102 tinha deixado em aberto. Ele assiste, **desde
+que a pessoa autorize**, e sai quando ela quiser sem precisar explicar.
+
+**Não contraria a ADR-102 porque ouvir não é colher** — a Ficha, a devolução e
+o registro continuam com o Curador. O que muda é que a história é contada **uma
+vez só**, às duas pessoas que vão acompanhá-la.
+
+**A forma foi imposta pela régua da casa:** o critério 20 do Formulário do
+Profissional avalia médicos por *"acompanhante mediante autorização da pessoa"*
+— a Aliviar não pode cobrar isso e não fazer. A pergunta explica **quem ele é**,
+porque perguntar sem isso é pedir uma decisão que a pessoa não tem como tomar.
+A instrução, com a frase pronta, está no bloco de abertura da **Ficha do
+Assistido** — regra que só vive em ADR não acontece na sala.
+
+**Dois custos registrados:** o círculo de quem conhece a história de saúde
+cresce em uma pessoa, enquanto a privacidade está adiada (ADR-096); e eu havia
+recomendado **não decidir antes do Ensaio**, porque presença muda a conversa. O
+Fundador decidiu antes do teste, e o risco é do tipo invisível — a pessoa não
+reclama de alguém a mais na sala, **ela só conta menos**.
 
 **A ADR-073 segue em vigor**, e foi atravessada duas vezes nesta sessão a
 pedido explícito do Fundador (a cena nova em `/solicitar-atendimento`). Dito em
@@ -61,7 +106,7 @@ não tinha nada para consertar.
 | --- | --- |
 | **Entrada e parcelas** | **Subiu de prioridade com a ADR-101.** O preço JÁ está definido — **R$ 450 pelo ano**, no roteiro — e agora é **fixo, sem desconto na conversa**. Isso torna o parcelamento a **única** saída para quem disser que não cabe: deixou de ser pendência menor e virou bloqueador de operação. Em branco só a entrada e o número de parcelas. |
 | **Quem é a primeira pessoa** | A ADR-096 só se sustenta se for alguém de dentro. **Decidida ela, o Case sai por consequência** — e o `61da4e7e`, herdado de julho, para de ser pergunta. É dado de produção; o repositório não sabe de quem ele é. |
-| **Quem conduz** | Curador, Supervisor e Concierge com nome, antes do dia. E um observador que não trabalhe. |
+| **Quem conduz** | Curador, Supervisor e Concierge com nome, antes do dia. E um observador que não trabalhe. **As ADR-100/102/103 já dizem o que cada um faz** — falta dizer quem é cada um. E note: com a ADR-103, o Supervisor **também** estará na Consulta Inicial, então são duas pessoas da Aliviar na sala mais o observador. |
 | **Onde a jornada para** | Os três profissionais da Rede são reais. Decidir **antes**. |
 | **ADR-095** — tamanho da Mesa | Esperar o uso real. |
 | **Domínio próprio** | Serve para estranhos. A primeira Curadoria não tem estranhos. |
@@ -88,9 +133,17 @@ de 11 páginas para 9.
 Aliviar", com o retrato dele **intacto**. Cartão claro, não o escuro da porta de
 acesso: cena clara pede letra escura.
 
-**A ADR-100 e a sua chegada aos documentos** (`e032b63`, `3a96e01`) — Correção
+**As quatro ADRs da operação humana** (`e032b63`, `3a96e01`, `5df6e81`,
+`8dab10b`, `36b6735`) — a **ADR-100** e a sua chegada aos documentos (Correção
 de Domínio emendada, o aviso do `/admin/equipe` corrigido, o rótulo de tela
-virando "Supervisor" em oito mapas, e os dois guias reescritos.
+virando "Supervisor" em oito mapas, os dois guias reescritos), mais a
+**ADR-101** (preço), a **ADR-102** (a Consulta Inicial é do Curador) e a
+**ADR-103** (o Supervisor assiste, autorizado). O §2 resume as quatro.
+
+**Cada uma chegou ao papel no mesmo commit em que foi decidida** — o rótulo nas
+telas, a fronteira nova na seção 8 do Roteiro, a instrução de autorização no
+bloco de abertura da Ficha. É a disciplina que o `SIM-62` cobrou de manhã:
+decisão que não chega ao documento vira divergência em dias.
 
 **`SIM-62`** — a suíte E2E cobrava texto de tela que não existe mais, e ninguém
 via porque E2E não roda no ambiente local. Quatro pontos corrigidos.
@@ -174,6 +227,19 @@ em CSS compartilhado — e note que ele **pesa como classe** na especificidade.
    repositório. Não depende de nenhuma decisão pendente — ninguém paga, os três
    médicos são fictícios em papel, nada entra no sistema. Entrega o número que
    ninguém tem: o tempo de relógio dos ~50 atos de juízo do Curador.
+
+   **O Ensaio ganhou papéis e perguntas nesta sessão, e o texto dele ainda não
+   sabe disso.** O `ensaio-geral.html` foi escrito antes das quatro ADRs: ele
+   não tem Supervisor no elenco, e a Consulta Inicial dele acontece só com o
+   Curador. Duas perguntas novas para o Diário de Observação:
+   **(a)** com o Supervisor na sala, a pessoa contou menos? — é o risco que a
+   ADR-103 aceitou sem medir; e **(b)** quanto tempo o Supervisor gastou, somando
+   primeiro contato, preço e Consulta Inicial? — é a carga que a ADR-100 criou.
+
+   **E uma conta que ninguém fez:** com a ADR-103 são **duas** pessoas da
+   Aliviar na Consulta Inicial, mais o observador que o pré-voo pede. São três
+   estranhos e a pessoa. Decidir antes se o observador entra nessa sala ou fica
+   nas outras — senão o Ensaio testa uma sala que a operação real nunca terá.
 2. **Quem é a primeira pessoa** — a decisão que destrava mais coisa e que o
    Fundador toma sozinho.
 3. **A entrada e as parcelas.** Com a **ADR-101** o preço virou fixo e sem
