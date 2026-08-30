@@ -53,12 +53,18 @@ const NAV_LINKS = [
   // é porta pintada, que é o que a regra acima já proíbe.
   // 27/08 · versalete curto, no lugar de rótulos por extenso. A barra é
   // estreita e o nome longo competia com a marca ao lado.
-  { href: "#como-funciona", label: "Curadoria" },
-  { href: "#a-escolha", label: "Escolha" },
+  /* 28/08 · auditoria: com "#ancora" puro, estes três links eram PORTA
+     PINTADA em toda página fora da Landing — /o-que-e, /solicitar-atendimento —
+     porque as seções só existem lá. Clicar não levava a lugar nenhum, no
+     cabeçalho, no rodapé e na gaveta do celular. Com "/#ancora" eles voltam
+     para a Landing e descem à seção; na própria Landing o navegador trata como
+     fragmento do mesmo documento e nada muda. */
+  { href: "/#como-funciona", label: "Curadoria" },
+  { href: "/#a-escolha", label: "Escolha" },
   // O Concierge volta à navegação: a ADR-081 o tirou porque a seção dele
   // tinha saído da página ("link sem destino é porta pintada"). O ambiente
   // existe de novo, então o link tem para onde levar.
-  { href: "#concierge", label: "Concierge" },
+  { href: "/#concierge", label: "Concierge" },
 ] as const;
 
 export function PublicHeader({ portalCta = null }: PublicHeaderProps) {

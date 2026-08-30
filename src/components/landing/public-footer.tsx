@@ -21,7 +21,7 @@ const FOOTER_LINKS = [
   // landing responsiva (ADR-083) e o link virou porta pintada — a
   // conferência do deploy de 23/08 o pegou apontando para o vazio. As
   // dúvidas passam a viver na conversa, que é o destino abaixo.
-  { label: "Nossa curadoria", href: "#como-funciona" },
+  { label: "Nossa curadoria", href: "/#como-funciona" },
   // 27/08 · O DEGRAU QUE FALTAVA. A Landing ia de quatro ambientes direto
   // para a conversa; quem queria entender antes de topar uma ligação não
   // tinha para onde ir. A página é aditiva — nenhum ambiente foi tocado.

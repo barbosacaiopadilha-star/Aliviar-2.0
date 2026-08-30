@@ -89,14 +89,20 @@ describe("T-7-2 · a navegação aponta para ids que existem", () => {
     cleanup();
 
     render(<PublicHeader />);
+    // 28/08 (auditoria): as âncoras passam a ser "/#secao", nunca "#secao". A
+    // forma nua era porta pintada em toda página FORA da Landing — /o-que-e,
+    // /solicitar-atendimento —, onde as seções não existem e o clique não leva
+    // a lugar nenhum. Este caso agora guarda as duas pontas: o destino existe
+    // NA Landing, e o caminho volta para ela de onde quer que se esteja.
     const ancoras = screen
       .getAllByRole("link")
       .map((a) => a.getAttribute("href") ?? "")
-      .filter((href) => href.startsWith("#"));
+      .filter((href) => href.includes("#"));
 
     expect(ancoras.length, "o header ficou sem navegação").toBeGreaterThanOrEqual(2);
     for (const href of ancoras) {
-      expect(ids, `${href} não corresponde a nenhum id da página`).toContain(href.slice(1));
+      expect(href.startsWith("/#"), `${href} é âncora nua — quebra fora da Landing`).toBe(true);
+      expect(ids, `${href} não corresponde a nenhum id da página`).toContain(href.slice(2));
     }
   });
 });
