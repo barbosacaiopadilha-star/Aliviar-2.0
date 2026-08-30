@@ -28,9 +28,9 @@ export const KIT_DA_CURADORIA = [
     descricao: "O roteiro dos nove passos e o Diário de Observação — preenchido durante, nunca de memória.",
   },
   {
-    href: "/rede/Roteiro-de-Atendimento-Aliviar.pdf",
-    titulo: "Roteiro de Atendimento",
-    descricao: "Do primeiro contato no WhatsApp à Consulta Inicial marcada.",
+    href: "/rede/Roteiro-do-Supervisor-Aliviar.pdf",
+    titulo: "Roteiro do Supervisor",
+    descricao: "Do primeiro contato à conversa marcada — e ele não sai depois (ADR-100).",
   },
 ] as const;
 

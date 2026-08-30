@@ -49,7 +49,7 @@ const PECAS = [
   { fonte: "folha-da-mesa.html", pdf: "Folha-da-Mesa-Curadoria-Aliviar.pdf", publica: false },
   { fonte: "formulario-do-profissional.html", pdf: "Formulario-do-Profissional-Rede-Aliviar.pdf", publica: true },
   { fonte: "guia-da-primeira-rodada.html", pdf: "Guia-da-Primeira-Rodada-Curadoria-Aliviar.pdf", publica: true },
-  { fonte: "roteiro-de-atendimento.html", pdf: "Roteiro-de-Atendimento-Aliviar.pdf", publica: true },
+  { fonte: "roteiro-do-supervisor.html", pdf: "Roteiro-do-Supervisor-Aliviar.pdf", publica: true },
   {
     fonte: "ensaio/ensaio-geral.html",
     pdf: "ensaio/Ensaio-Geral-Curadoria-Aliviar.pdf",
