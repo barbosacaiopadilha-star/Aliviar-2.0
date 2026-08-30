@@ -23,8 +23,9 @@ está de fato no ar — o deploy leva cerca de um minuto depois do `push`.
 
 ## 2 · O que mudou de regra nesta sessão
 
-**Quatro ADRs, e juntas elas redesenham a operação humana da Curadoria.** Leia
-as quatro antes de mexer em papel, guia ou tela de papel — elas se apoiam.
+**Seis ADRs, e juntas elas redesenham a operação humana da Curadoria.** Leia as
+seis antes de mexer em papel, guia ou tela — elas se apoiam, e cada uma das
+três últimas responde a uma pergunta que a anterior deixou aberta.
 
 ### ADR-100 · o Atendente vira o Supervisor do processo
 
@@ -86,6 +87,43 @@ recomendado **não decidir antes do Ensaio**, porque presença muda a conversa. 
 Fundador decidiu antes do teste, e o risco é do tipo invisível — a pessoa não
 reclama de alguém a mais na sala, **ela só conta menos**.
 
+### ADR-104 · a Consulta Inicial não se observa
+
+O observador fica **fora** dela; entra nos outros atos. Com a ADR-103 já eram
+duas pessoas da Aliviar na sala — com ele seriam **três estranhos e a pessoa**,
+na conversa mais íntima do processo. A Ficha já protege esse momento por outro
+lado (*"a conversa em si não se grava"*, P12), e **um observador é uma gravação
+com olhos**.
+
+**A tensão está escrita na ADR, porque é séria:** a regra mais nova e menos
+testada da operação (ADR-103) vale na única sala que ninguém observa.
+
+**O instrumento que sobra só existe no Ensaio**, e é bom: quem interpreta o
+assistido é pessoa de confiança e **pode ser perguntada** — *"o que você teria
+dito se estivesse sozinha com o Curador?"*. Um assistido real nunca diria isso.
+Já entrou nas regras do `ensaio-geral.html`.
+
+### ADR-105 · o Supervisor anota o processo, nunca a conversa
+
+Fecha o que a ADR-104 deixou aberto. Ele anota **tempo, travas, o que faltou, o
+que precisou ser perguntado duas vezes** — nunca o que a pessoa disse.
+
+**Por que ele:** sem isso a Consulta Inicial não produz medição nenhuma (a
+ADR-104 tirou o observador), e ela é o ato mais longo. E ele é **o único na sala
+com as mãos livres** — o Curador conduz e preenche a Ficha, não pode observar a
+si mesmo.
+
+**A linha, com teste de bolso:** *esta anotação faria sentido sobre qualquer
+Consulta Inicial?* Se só fizer sentido por causa desta pessoa, é conteúdo e não
+entra. A ADR traz um exemplo de cada lado — princípio sem exemplo não se aplica
+com a folha na mão.
+
+**Inverte uma regra escrita, e diz por quê:** o Guia manda "preencher DURANTE,
+não depois"; nesta sala ele anota **depois**, ao sair, porque **quem vê alguém
+anotando enquanto fala passa a editar o que fala**. Só o tempo pode ser marcado
+discretamente durante. A exceção está no Guia, logo abaixo do título que ela
+contraria.
+
 **A ADR-073 segue em vigor**, e foi atravessada duas vezes nesta sessão a
 pedido explícito do Fundador (a cena nova em `/solicitar-atendimento`). Dito em
 voz alta antes e registrado no commit, que é o padrão a manter.
@@ -106,7 +144,7 @@ não tinha nada para consertar.
 | --- | --- |
 | **Entrada e parcelas** | **Subiu de prioridade com a ADR-101.** O preço JÁ está definido — **R$ 450 pelo ano**, no roteiro — e agora é **fixo, sem desconto na conversa**. Isso torna o parcelamento a **única** saída para quem disser que não cabe: deixou de ser pendência menor e virou bloqueador de operação. Em branco só a entrada e o número de parcelas. |
 | **Quem é a primeira pessoa** | A ADR-096 só se sustenta se for alguém de dentro. **Decidida ela, o Case sai por consequência** — e o `61da4e7e`, herdado de julho, para de ser pergunta. É dado de produção; o repositório não sabe de quem ele é. |
-| **Quem conduz** | Curador, Supervisor e Concierge com nome, antes do dia. E um observador que não trabalhe. **As ADR-100/102/103 já dizem o que cada um faz** — falta dizer quem é cada um. E note: com a ADR-103, o Supervisor **também** estará na Consulta Inicial, então são duas pessoas da Aliviar na sala mais o observador. |
+| **Quem conduz** | **As ADR-100 a 105 já dizem o que cada um faz, e quem entra em qual sala — falta dizer QUEM é cada um.** Curador, Supervisor, Concierge e um observador que não trabalhe, com nome, antes do dia. Na Consulta Inicial ficam **duas** pessoas da Aliviar (Curador conduzindo, Supervisor calado e só se ela autorizar); o observador entra nos outros atos. |
 | **Onde a jornada para** | Os três profissionais da Rede são reais. Decidir **antes**. |
 | **ADR-095** — tamanho da Mesa | Esperar o uso real. |
 | **Domínio próprio** | Serve para estranhos. A primeira Curadoria não tem estranhos. |
@@ -133,12 +171,16 @@ de 11 páginas para 9.
 Aliviar", com o retrato dele **intacto**. Cartão claro, não o escuro da porta de
 acesso: cena clara pede letra escura.
 
-**As quatro ADRs da operação humana** (`e032b63`, `3a96e01`, `5df6e81`,
-`8dab10b`, `36b6735`) — a **ADR-100** e a sua chegada aos documentos (Correção
-de Domínio emendada, o aviso do `/admin/equipe` corrigido, o rótulo de tela
-virando "Supervisor" em oito mapas, os dois guias reescritos), mais a
-**ADR-101** (preço), a **ADR-102** (a Consulta Inicial é do Curador) e a
-**ADR-103** (o Supervisor assiste, autorizado). O §2 resume as quatro.
+**As SEIS ADRs da operação humana** — a **ADR-100** e a sua chegada aos
+documentos (Correção de Domínio emendada, o aviso do `/admin/equipe` corrigido,
+o rótulo de tela virando "Supervisor" em oito mapas, os dois guias reescritos),
+mais a **101** (preço fixo, sem comissão), a **102** (a Consulta Inicial é do
+Curador), a **103** (o Supervisor assiste, autorizado), a **104** (o observador
+fica fora) e a **105** (o Supervisor anota o processo, nunca a conversa). O §2
+resume as seis, na ordem em que uma abriu a pergunta da outra.
+
+**E o Ensaio Geral foi atualizado para essa operação** — cinco atos, elenco com
+Supervisor e observador, e as regras novas nas duas peças de papel.
 
 **Cada uma chegou ao papel no mesmo commit em que foi decidida** — o rótulo nas
 telas, a fronteira nova na seção 8 do Roteiro, a instrução de autorização no
@@ -228,18 +270,20 @@ em CSS compartilhado — e note que ele **pesa como classe** na especificidade.
    médicos são fictícios em papel, nada entra no sistema. Entrega o número que
    ninguém tem: o tempo de relógio dos ~50 atos de juízo do Curador.
 
-   **O Ensaio ganhou papéis e perguntas nesta sessão, e o texto dele ainda não
-   sabe disso.** O `ensaio-geral.html` foi escrito antes das quatro ADRs: ele
-   não tem Supervisor no elenco, e a Consulta Inicial dele acontece só com o
-   Curador. Duas perguntas novas para o Diário de Observação:
-   **(a)** com o Supervisor na sala, a pessoa contou menos? — é o risco que a
-   ADR-103 aceitou sem medir; e **(b)** quanto tempo o Supervisor gastou, somando
-   primeiro contato, preço e Consulta Inicial? — é a carga que a ADR-100 criou.
+   **O texto do Ensaio JÁ FOI ATUALIZADO para a operação nova** (28/08). Ele
+   tinha sido escrito em 21/08 e ensaiava a operação anterior — sem Supervisor.
+   Agora tem **cinco atos**: o primeiro contato entrou como ato 1, e cada papel
+   traz o próprio limite escrito na linha do elenco (o Supervisor assiste **se
+   autorizado**; o observador fica **fora** da Consulta Inicial).
 
-   **E uma conta que ninguém fez:** com a ADR-103 são **duas** pessoas da
-   Aliviar na Consulta Inicial, mais o observador que o pré-voo pede. São três
-   estranhos e a pessoa. Decidir antes se o observador entra nessa sala ou fica
-   nas outras — senão o Ensaio testa uma sala que a operação real nunca terá.
+   **Três perguntas novas para o Diário**, e a primeira é a que mais importa:
+   **(a)** *"o que você teria dito se estivesse sozinha com o Curador?"* —
+   perguntada a quem interpretou o assistido, **depois** da Consulta Inicial. É
+   a única leitura possível do risco que a ADR-103 aceitou sem medir, e ela só
+   existe porque isto é ensaio; **(b)** quanto tempo o Supervisor gastou,
+   somando primeiro contato, preço e Consulta Inicial — a carga que a ADR-100
+   criou; **(c)** o Supervisor teve o que anotar? Se não teve, a ADR-105 se
+   desfaz sozinha, e ele volta a só ouvir.
 2. **Quem é a primeira pessoa** — a decisão que destrava mais coisa e que o
    Fundador toma sozinho.
 3. **A entrada e as parcelas.** Com a **ADR-101** o preço virou fixo e sem
