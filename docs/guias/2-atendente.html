@@ -21,7 +21,13 @@
   <p>Na landing ela conta <strong>só o essencial</strong>: nome, e-mail ou telefone, e se a busca é para ela ou para outra pessoa. <strong>Nada sobre saúde</strong> — isso é conversado depois, com gente. Não peça informação clínica por escrito nesta fase.</p>
 </div>
 
-<h2>Os quatro gestos, em ordem</h2>
+<div class="doutrina">
+  <span class="rotulo">Antes dos gestos no sistema: você não é recepção (ADR-100)</span>
+  <p>Você é o <strong>Supervisor do processo</strong> dela. O primeiro contato é seu, a conversa do preço é sua, e você <strong>não sai quando o Curador entra</strong> — acompanha até o encerramento. Os gestos abaixo são o que o sistema pede; a conversa está no <strong>Roteiro do Supervisor</strong>.</p>
+  <p><strong>O que você NÃO faz no primeiro contato:</strong> colher história clínica. Você registra como procurá-la e o que ela veio buscar em uma frase. A história é do Curador, na Consulta Inicial, porque é ele quem vai usá-la contra os 29 subcritérios (ADR-102).</p>
+</div>
+
+<h2>Os quatro gestos no sistema, em ordem</h2>
 
 <ol class="passos">
   <li><strong>Registrar o acolhimento.</strong> Você conversou com a pessoa e o pedido faz sentido para a Aliviar. Sem isso o contato não vira assistido.
@@ -32,7 +38,8 @@
 
   <li><strong>Abrir o atendimento.</strong> Escreva "o que a pessoa contou" e abra o Case. É <em>este mesmo Case</em> que vai percorrer toda a jornada: ele muda de responsável, nunca de identidade.</li>
 
-  <li><strong>Encaminhar ao Curador</strong>, com motivo. A partir daí ele conduz, você deixa de ver o caso na sua fila, e o histórico da passagem fica registrado.</li>
+  <li><strong>Entregar ao Curador</strong>, com motivo. A partir daí <strong>ele conduz</strong> — mas o caso <strong>continua na sua fila</strong>, e continua sendo seu. O histórico da passagem fica registrado.
+    <span class="onde">Correção de 28/08: até aqui este guia dizia que você "deixava de ver o caso na sua fila". Era errado nos dois sentidos — contraria a ADR-100, e nunca foi verdade no software: a fila lista todos os contatos não arquivados, e sempre listou.</span></li>
 </ol>
 
 <div class="aviso">
@@ -44,6 +51,15 @@
   <span class="rotulo">Se disser que não há a quem encaminhar</span>
   <p>Significa que <strong>ninguém tem o papel de Curador</strong> — não que os Curadores estejam ocupados. Peça ao Administrador para conceder o papel em <code>/admin/equipe</code>. Sem isso o Case fica parado com você.</p>
 </div>
+
+<h2>Depois de entregar — o que continua sendo seu</h2>
+
+<ol class="passos">
+  <li><strong>A Consulta Inicial, se ela autorizar.</strong> Você pode assistir, <strong>calado</strong> — não pergunta, não corrige, não preenche (ADR-103). Quem pergunta se você pode entrar é o <strong>Curador</strong>, na hora, explicando quem você é. Se ela não quiser, a conversa acontece sem você e <strong>ninguém pede explicação</strong>. Não combine isso com ela por mensagem antes.</li>
+  <li><strong>O Diário, ao sair da sala.</strong> Se você assistiu, anota <strong>o processo</strong>: tempo, travas, o que faltou, o que precisou ser perguntado duas vezes. <strong>Nunca o que ela disse.</strong> Teste antes de escrever: <em>esta anotação faria sentido sobre qualquer Consulta Inicial?</em> Se só fizer sentido por causa dela, é conteúdo e não entra (ADR-105). E anota DEPOIS, nunca durante — quem vê alguém anotando enquanto fala passa a editar o que fala.</li>
+  <li><strong>A logística, até o encerramento.</strong> Documentos, agendamento, próximos passos e retorno. É a função que este projeto chama de <strong>Concierge</strong> — e ela acontece <em>atrás</em> de você, não ao lado: <strong>a pessoa não conhece um terceiro nome</strong> (ADR-106). Hoje é você mesmo quem faz; quando houver alguém só para isso, ela continua falando com você.</li>
+  <li><strong>Qualquer coisa, menos opinar.</strong> Depois que o Curador apresenta os três caminhos, você acompanha, destrava e responde — e <strong>nunca diz qual é o melhor</strong>. Se ela perguntar, devolve ao Curador. No minuto em que você tem preferência, a promessa de independência cai.</li>
+</ol>
 
 <h2>O que também vive na ficha</h2>
 
@@ -64,6 +80,7 @@
 
 <table>
   <tr><th>O que verificar</th><th>Por quê</th></tr>
+  <tr><td><strong>A entrada e as parcelas</strong> estão preenchidas no Roteiro do Supervisor?</td><td>O preço é fixo e você não tem margem para desconto (ADR-101), então o parcelamento é a ÚNICA resposta a "não cabe no meu bolso". Em branco, você não tem o que responder — e improvisar na ligação vira compromisso.</td></tr>
   <tr><td>Existe alguém com papel de <strong>Curador</strong>?</td><td>É a condição para o passo 4 existir.</td></tr>
   <tr><td>Você sabe como <strong>entregar a senha</strong> com segurança?</td><td>Ela aparece uma vez só. Combine o canal antes, não na hora.</td></tr>
   <tr><td>A <strong>política de privacidade</strong> está publicada?</td><td>A pessoa autoriza o contato na landing citando um documento que hoje ainda não existe publicado.</td></tr>
