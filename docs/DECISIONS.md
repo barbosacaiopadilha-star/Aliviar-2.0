@@ -3137,3 +3137,53 @@ A regra existe por exatidão — memória inventa. Mas aqui ela custaria mais do
 ### Revisitar quando
 
 Uma anotação dele cruzar a linha — é o sinal de que o teste acima é fino demais e precisa de exemplo, não de princípio. Ou quando o Ensaio mostrar que ele **não teve nada que escrever**: aí a sala não tem atrito que valha medir, e ele volta a só ouvir.
+
+## ADR-106 — A Aliviar tem dois rostos: o Supervisor e o Curador
+
+- **Data:** 2026-08-28
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data.
+- **Dependências:** fecha a colisão que a **ADR-100** abriu com o Concierge · dá forma durável ao acúmulo que a Correção de Domínio registrava como defeito · desbloqueia a reescrita dos roteiros operacionais · não altera a **ADR-073**.
+
+### A decisão
+
+**O assistido conhece duas pessoas da Aliviar, e só duas: o Supervisor e o Curador.**
+
+Não é uma constatação de escassez de equipe — é **desenho**, e continua valendo quando houver gente.
+
+### O Concierge deixa de ser um rosto e vira uma função
+
+A **ADR-100** prometeu que quem atende é quem fica até o fim. Só que o Guia do Concierge dizia, no próprio subtítulo, *"acompanhar a pessoa até o encerramento"* — **duas pessoas acompanhando a mesma pessoa até o mesmo lugar.**
+
+A partir daqui: **o Supervisor cuida da relação; o Concierge cuida da logística — e a logística acontece ATRÁS do Supervisor, não ao lado dele.** Documento, agendamento, retorno e próximo passo continuam existindo como trabalho; o que deixa de existir é a **apresentação de um terceiro nome** à pessoa.
+
+Hoje é o mesmo humano — o repositório registra que *"há uma única pessoa operacional, e ela acumula os três níveis"*. **Mas "mesma pessoa" e "mesmo papel" não são a mesma coisa, e por isso os papéis não se fundem.** Se fundissem, a distinção se perderia no dia da segunda contratação, e recuperá-la custaria `user_roles`, RLS, `RESPONSIBLE_ROLES` e todos os documentos outra vez.
+
+**As duas funções quebram diferente, e é isso que justifica mantê-las separadas:** logística falhando é consulta marcada errado; relação falhando é a pessoa se sentindo abandonada. Papel único esconde qual das duas quebrou — e os consertos não têm nada a ver um com o outro.
+
+Quando houver alguém contratado só para a logística, **a pessoa continua falando com o Supervisor**, e nem fica sabendo que existe outra.
+
+### Por que dois é uma promessa, e não um detalhe de organograma
+
+Numa clínica ela fala com recepção, enfermagem, médico e faturamento: **quatro estranhos, cada um sabendo um pedaço.** Na Aliviar são dois, e os dois conhecem a história inteira — o Curador porque a colheu (ADR-102), o Supervisor porque estava na sala (ADR-103).
+
+Para quem já contou a mesma história em três consultórios diferentes, isto é do tamanho do produto. **Por isso passa a ser dito a ela**, no documento que ela recebe.
+
+### As duas bordas, ditas porque são reais
+
+**1 · O Administrador pode, tecnicamente.** A rota `/admin/pacientes/novo` existe e `conversion-actions` aceita `administrador` ao lado de `atendente`. **A porta técnica fica** — é rede de segurança operacional —, **mas o uso não**: no fluxo desenhado quem cria o acesso é o Supervisor. Administrador que fala com o assistido é exceção que precisa de motivo, e o motivo fica registrado no Case.
+
+**2 · O observador, nas primeiras rodadas.** A ADR-104 o tirou da Consulta Inicial, mas ele fica nos atos seguintes: ela **vai** ver uma terceira pessoa calada. É temporário e é do Ensaio e das primeiras Curadorias. **Ela é avisada antes, nunca descobre na hora** — e o aviso diz que ele não trabalha no caso dela, está ali para observar a Aliviar, não ela.
+
+### A regra que isto cria para o futuro
+
+**Todo papel novo que quiser falar com o assistido precisa provar por que precisa de um terceiro rosto.** O padrão é passar por trás do Supervisor. A pergunta não é *"esse papel é útil?"* — é *"o que ele faz não cabe atrás de quem ela já conhece?"*.
+
+### Consequência para os roteiros operacionais
+
+**O Roteiro do Concierge deixa de ser roteiro de conversa e vira lista de logística.** O que ele tinha de falar com a pessoa migra para o Roteiro do Supervisor. Não é renomear: é redistribuir conteúdo entre dois documentos, e é o que desbloqueia a reescrita inteira.
+
+### Revisitar quando
+
+A operação crescer a ponto de o Supervisor não dar conta de ser o único canal — e aí a pergunta certa não é *"quem mais fala com ela?"*, é *"quantos assistidos cabem por Supervisor?"*. Contratar o segundo rosto é a última saída, não a primeira.
+
+---
