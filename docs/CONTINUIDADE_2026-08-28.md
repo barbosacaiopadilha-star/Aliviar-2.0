@@ -15,9 +15,9 @@ em `C:\Users\barbo\OneDrive\Desktop\PROJETOS DO CLAUDE\aliviar`.
 
 **Leia `docs/AGENTS.md` integralmente antes de alterar qualquer coisa.**
 
-**Os 6 commits desta sessão FORAM A PRODUÇÃO.** `origin/main` está em
-`fa02544`, e `/api/build-info` confirmou o mesmo commit no ar cerca de um
-minuto depois do `push`. Árvore limpa, nada pendente.
+**Tudo o que esta sessão produziu FOI A PRODUÇÃO.** Árvore limpa, nada
+pendente. O commit vigente se confere em `/api/build-info`, que devolve o que
+está de fato no ar — o deploy leva cerca de um minuto depois do `push`.
 
 ---
 
@@ -33,9 +33,10 @@ Três regras entraram junto, e elas não são detalhe:
 1. **O Supervisor não colhe história clínica no primeiro contato.** Ela é do
    Curador, com a Ficha. Um resumo clínico escrito antes chegaria ao Curador
    como versão pronta, e ele passaria a conferir uma história em vez de ouvi-la.
-2. **Preço fixo, sem comissão por conversão.** Com o papel unificado, quem
-   comunica o preço é quem depois acompanha a decisão. O conflito não está em
-   quem diz o número — está em quem ganha com a resposta.
+2. **Preço fixo, sem comissão por conversão** — promovida a decisão própria na
+   **ADR-101**, porque é política comercial e não corolário de um papel. Com o
+   papel unificado, quem comunica o preço é quem depois acompanha a decisão. O
+   conflito não está em quem diz o número — está em quem ganha com a resposta.
 3. **Depois que o Curador assume, o Supervisor nunca opina sobre qual dos três
    caminhos.** Esta só apareceu ao editar o guia, e é a que protege o produto:
    antes, quem convenceu ia embora; agora fica na sala.
@@ -58,7 +59,7 @@ não tinha nada para consertar.
 
 | O quê | Situação em 28/08 |
 | --- | --- |
-| **Entrada e parcelas** | **Menos aberto do que parecia.** O preço JÁ está definido no roteiro: **R$ 450 pelo ano**. Em branco está só a divisão da entrada e das parcelas. |
+| **Entrada e parcelas** | **Subiu de prioridade com a ADR-101.** O preço JÁ está definido — **R$ 450 pelo ano**, no roteiro — e agora é **fixo, sem desconto na conversa**. Isso torna o parcelamento a **única** saída para quem disser que não cabe: deixou de ser pendência menor e virou bloqueador de operação. Em branco só a entrada e o número de parcelas. |
 | **Quem é a primeira pessoa** | A ADR-096 só se sustenta se for alguém de dentro. **Decidida ela, o Case sai por consequência** — e o `61da4e7e`, herdado de julho, para de ser pergunta. É dado de produção; o repositório não sabe de quem ele é. |
 | **Quem conduz** | Curador, Supervisor e Concierge com nome, antes do dia. E um observador que não trabalhe. |
 | **Onde a jornada para** | Os três profissionais da Rede são reais. Decidir **antes**. |
@@ -175,9 +176,13 @@ em CSS compartilhado — e note que ele **pesa como classe** na especificidade.
    ninguém tem: o tempo de relógio dos ~50 atos de juízo do Curador.
 2. **Quem é a primeira pessoa** — a decisão que destrava mais coisa e que o
    Fundador toma sozinho.
-3. **`SIM-62` grupo (b)** — `admin-dashboard.spec.ts` vermelho desde 24/08.
-4. **`SIM-60`** — o gate de aceite, mina registrada, não pedido de obra.
-5. **`PRIV-04`** — a exclusão não alcança o storage. P0, depende da D-08.
+3. **A entrada e as parcelas.** Com a **ADR-101** o preço virou fixo e sem
+   desconto na conversa, então o parcelamento é a única resposta possível a
+   "não cabe no meu bolso". Sem os dois números, o Roteiro do Supervisor não
+   pode ser usado numa ligação real — e o aviso dentro dele proíbe improvisar.
+4. **`SIM-62` grupo (b)** — `admin-dashboard.spec.ts` vermelho desde 24/08.
+5. **`SIM-60`** — o gate de aceite, mina registrada, não pedido de obra.
+6. **`PRIV-04`** — a exclusão não alcança o storage. P0, depende da D-08.
 
 ---
 

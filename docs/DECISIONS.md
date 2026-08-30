@@ -2908,3 +2908,49 @@ Com as duas, o Supervisor **comunica** um preço; não vende um. Sem elas, a uni
 O volume crescer a ponto de o Supervisor gastar tempo em contatos que não viram Case — a triagem era o que a recepção comprava, e ela volta a valer alguma coisa quando houver fila. Ou quando o Ensaio Geral medir o tempo de relógio do papel unificado: pode ser que primeiro contato, supervisão e preço não caibam na mesma pessoa que já carrega o acompanhamento.
 
 ---
+
+## ADR-101 — O preço é fixo, e ninguém na operação ganha por conversão
+
+- **Data:** 2026-08-28
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data. Promove a regra 2 da **ADR-100** a decisão própria, porque ela é política comercial e não corolário de um papel.
+- **Dependências:** nasce da **ADR-100** (o Supervisor acompanha depois de comunicar o preço) · depende da **ADR-083 §1878**, que tirou o preço da vitrine e o mandou viver na conversa · protege a promessa da **ADR-064** (nenhuma superfície afirma o que o sistema não garante) e a frase canônica *"nenhum médico paga para aparecer aqui"* · não altera a **ADR-073**: decide política, não constrói.
+
+### A decisão
+
+**1 · O preço é fixo.** Quem conduz a conversa **não tem margem para desconto**. O número não se negocia dentro da ligação; ele muda por decisão do Fundador, para todo mundo, ou não muda.
+
+**2 · Ninguém na operação ganha por conversão.** Não há comissão por contrato fechado, por Case aberto, nem por caminho escolhido — **para nenhum dos três papéis**, não só para o Supervisor.
+
+### Por que isto é decisão, e não detalhe administrativo
+
+A Aliviar vende uma coisa só: **que ninguém aqui ganha com a sua escolha.** É o que a Fachada afirma em voz alta — *"nenhum médico paga para aparecer aqui"*, *"a escolha continua sendo sua"* — e é o que o Roteiro do Curador protege quando manda apresentar três caminhos sem preferência e sair da sala.
+
+A **ADR-100** mudou uma peça desse arranjo: quem comunica o preço passou a ser **quem depois acompanha a decisão**. Antes, quem convenceu ia embora antes da escolha existir. Agora fica na sala.
+
+**O conflito nunca esteve em quem diz o número. Está em quem ganha com a resposta.** Sem estas duas regras, a unificação de papéis da ADR-100 colocaria interesse comercial dentro da única relação que existe para não ter nenhum — e a promessa da vitrine passaria a depender do caráter de quem está na ligação, em vez de depender do desenho.
+
+Com as duas, **o Supervisor comunica um preço; não vende um.** É uma diferença de gênero de conversa, como a que o Roteiro já traça entre ele e o Curador.
+
+### O que a decisão custa, dito antes de custar
+
+**Ela perde vendas.** Alguém vai dizer que R$ 450 não cabe, e quem estiver na ligação **não vai poder ceder**. Isso é intencional, e a saída não é o desconto: é o **parcelamento** — que é exatamente por que os números da entrada e das parcelas, ainda em branco no Roteiro, deixam de ser pendência menor e viram bloqueador de operação.
+
+E se o preço estiver errado, ele **muda como decisão**, registrada, valendo para todos — nunca como exceção concedida a quem insistiu mais. Preço que cede para quem insiste ensina a insistir, e cobra mais caro de quem não insistiu.
+
+### Onde o número mora
+
+Hoje, num lugar só: `docs/guias/6-roteiro-de-atendimento.html`, que declara a oferta vigente — **R$ 450 por um ano**, cobrindo a Curadoria, o Relatório e o acompanhamento; consulta com o profissional paga à parte, direto com ele. O próprio documento já carrega a guarda certa: *"se a oferta mudar, este documento muda no mesmo dia — um roteiro com preço velho é pior que roteiro nenhum."*
+
+**O preço não está na vitrine por decisão da ADR-083**, que o mandou viver na conversa. Esta ADR é o que torna essa escolha sustentável: preço que só existe na conversa precisa ser o mesmo em todas as conversas, ou vira preço por freguês.
+
+### O que NÃO se decide aqui
+
+- **Se R$ 450 é o valor certo.** Esta ADR decide que ele não se negocia, não que ele está calibrado.
+- **A entrada e as parcelas.** Continuam em branco e continuam com o Fundador.
+- **Como se remunera quem opera.** Decide-se apenas que **não é por conversão**. Salário, pró-labore ou qualquer outro arranjo fica em aberto.
+
+### Revisitar quando
+
+As primeiras Curadorias reais mostrarem gente recusando **no preço** — e aí a pergunta é sobre o número ou sobre o parcelamento, nunca sobre abrir exceção. Ou quando a operação crescer a ponto de entrar alguém cuja função é vender: aí a regra 2 deixa de ser óbvia e passa a ser cara, e é exatamente nesse dia que ela mais vale.
+
+---
