@@ -34,6 +34,91 @@ export const KIT_DA_CURADORIA = [
   },
 ] as const;
 
+/**
+ * OS GUIAS DE LEITURA — 28/08, a pedido do Fundador.
+ *
+ * Até aqui os dez guias só existiam como PDF local: `docs/guias/pdf/` é
+ * ignorado pelo Git, então quem não rodasse o gerador não tinha como lê-los.
+ *
+ * **A ordem aqui é a ordem de leitura, e é por isso que ela vive no cartão e
+ * não no nome do arquivo.** Cada papel vem em par — o guia trata do sistema, o
+ * roteiro trata da conversa —, e os três de contexto fecham a lista.
+ */
+export const GUIAS_DE_LEITURA = [
+  {
+    href: "/guias/Guia-do-Supervisor-Aliviar.pdf",
+    titulo: "Guia do Supervisor",
+    descricao: "O sistema: os quatro gestos, e o que continua sendo dele depois de entregar ao Curador.",
+  },
+  {
+    href: "/guias/Roteiro-do-Supervisor-Conversa-Aliviar.pdf",
+    titulo: "Roteiro do Supervisor — a conversa",
+    descricao: "A ligação: escutar, explicar, dizer o preço e combinar o começo. Com as oito objeções.",
+  },
+  {
+    href: "/guias/Guia-do-Curador-Aliviar.pdf",
+    titulo: "Guia do Curador",
+    descricao: "Acolhimento, Mesa, Relatório e entrega — e quem mais pode estar na sala.",
+  },
+  {
+    href: "/guias/Roteiro-do-Curador-Aliviar.pdf",
+    titulo: "Roteiro do Curador",
+    descricao: "As três conversas, e a pergunta de autorização que abre a Consulta Inicial.",
+  },
+  {
+    href: "/guias/Guia-do-Acompanhamento-Aliviar.pdf",
+    titulo: "Guia do Acompanhamento",
+    descricao: "A fase de logística depois da escolha — conduzida pelo Supervisor, não por um rosto novo.",
+  },
+  {
+    href: "/guias/Roteiro-do-Acompanhamento-Aliviar.pdf",
+    titulo: "Roteiro do Acompanhamento",
+    descricao: "O ano depois da escolha: o ritmo, o que dizer quando dá errado, e o que anotar.",
+  },
+  {
+    href: "/guias/Para-Voce-Que-Comecou-Aliviar.pdf",
+    titulo: "Para você que começou",
+    descricao: "O documento que o assistido recebe. Diz quantas pessoas ele vai conhecer: duas.",
+  },
+  {
+    href: "/guias/Guia-do-Administrador-Aliviar.pdf",
+    titulo: "Guia do Administrador",
+    descricao: "Papéis, equipe e o que trava a operação quando um nível fica em zero.",
+  },
+  {
+    href: "/guias/Guia-do-Assistido-Aliviar.pdf",
+    titulo: "Guia do Assistido",
+    descricao: "A jornada pelo lado de dentro — o que ele vê, e em que ordem.",
+  },
+  {
+    href: "/guias/O-Que-E-a-Aliviar.pdf",
+    titulo: "O que é a Aliviar",
+    descricao: "O documento de contexto: para quem chega novo na operação.",
+  },
+] as const;
+
+function ListaDePecas({ pecas }: { pecas: ReadonlyArray<{ href: string; titulo: string; descricao: string }> }) {
+  return (
+    <ul className="divide-y divide-border">
+      {pecas.map((peca) => (
+        <li key={peca.href} className="flex items-center justify-between gap-3 py-3 text-sm">
+          <div className="min-w-0">
+            <p className="font-medium text-ink">{peca.titulo}</p>
+            <p className="text-ink-muted">{peca.descricao}</p>
+          </div>
+          <a
+            href={peca.href}
+            download
+            className="inline-flex min-h-11 shrink-0 items-center font-medium text-brand-primary underline-offset-4 hover:underline"
+          >
+            Baixar PDF
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function KitDaCuradoriaCard() {
   return (
     <Card>
@@ -43,23 +128,16 @@ export function KitDaCuradoriaCard() {
           O papel da primeira rodada (ADR-075) — imprima daqui, sempre na versão vigente.
         </p>
       </CardHeader>
-      <ul className="divide-y divide-border">
-        {KIT_DA_CURADORIA.map((peca) => (
-          <li key={peca.href} className="flex items-center justify-between gap-3 py-3 text-sm">
-            <div className="min-w-0">
-              <p className="font-medium text-ink">{peca.titulo}</p>
-              <p className="text-ink-muted">{peca.descricao}</p>
-            </div>
-            <a
-              href={peca.href}
-              download
-              className="inline-flex min-h-11 shrink-0 items-center font-medium text-brand-primary underline-offset-4 hover:underline"
-            >
-              Baixar PDF
-            </a>
-          </li>
-        ))}
-      </ul>
+
+      <p className="pt-1 text-xs font-medium uppercase tracking-[0.12em] text-ink-subtle">
+        Para preencher na sala
+      </p>
+      <ListaDePecas pecas={KIT_DA_CURADORIA} />
+
+      <p className="pt-6 text-xs font-medium uppercase tracking-[0.12em] text-ink-subtle">
+        Para ler antes — na ordem
+      </p>
+      <ListaDePecas pecas={GUIAS_DE_LEITURA} />
     </Card>
   );
 }

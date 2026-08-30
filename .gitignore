@@ -100,3 +100,7 @@ evidencias/
 # O PDF é produto — regenerável por `node scripts/gerar-guias-pdf.mjs`, e por
 # isso fora do Git: binário que muda a cada regeração polui o histórico.
 docs/guias/pdf/
+
+# `public/guias/` NÃO é ignorado (28/08): os dez guias passaram a ser
+# baixáveis no Kit da Curadoria, então o PDF deles é ativo publicado — como o
+# de `public/rede/` — e a Vercel serve o que está no repositório.
