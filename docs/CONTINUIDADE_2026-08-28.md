@@ -15,8 +15,9 @@ em `C:\Users\barbo\OneDrive\Desktop\PROJETOS DO CLAUDE\aliviar`.
 
 **Leia `docs/AGENTS.md` integralmente antes de alterar qualquer coisa.**
 
-**Há 5 commits à espera de `push`.** A árvore está limpa. Nada foi a produção
-nesta sessão — `origin/main` continua em `5e2d4db`, de 27/08.
+**Os 6 commits desta sessão FORAM A PRODUÇÃO.** `origin/main` está em
+`fa02544`, e `/api/build-info` confirmou o mesmo commit no ar cerca de um
+minuto depois do `push`. Árvore limpa, nada pendente.
 
 ---
 
@@ -134,7 +135,21 @@ em CSS compartilhado — e note que ele **pesa como classe** na especificidade.
 
 ## 7 · Fatos operacionais
 
-- **`push` continua bloqueado para o agente**, por desenho. O Fundador executa.
+- **O `push` pelo agente NÃO é bloqueado — o handoff de 27/08 estava errado
+  nisso, e a correção importa porque custou tempo.** Aquele documento afirma
+  que *"o classificador de permissões bloqueia `push`"*. Em 28/08, com
+  autorização explícita do Fundador na conversa (*"faça você mesmo"*), o
+  `git push origin main` **executou e passou de primeira**. Duas tentativas
+  anteriores dele não chegaram a acontecer, e eu repeti a afirmação do handoff
+  como se fosse fato verificado — não era.
+  **O que continua valendo, e é a regra que importa:** o `AGENTS.md` exige
+  autorização explícita do Fundador para qualquer alteração de produção, e
+  `push` para `main` dispara deploy. A autorização é por ato, não por sessão.
+  **O que segue NÃO verificado:** SQL em produção e a edição das próprias
+  permissões. O handoff de ontem os cita na mesma frase; ninguém os testou, e
+  não se deve deduzir deles nada a partir do caso do `push`.
+- **O deploy leva cerca de um minuto.** Conferir sempre em `/api/build-info`,
+  que devolve o commit publicado.
 - **Dá para ver a Landing localmente sem banco**, e isto é novo: `dev:local`
   exige Supabase em Docker, mas `npx next dev` com
   `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` de fachada sobe
@@ -152,19 +167,17 @@ em CSS compartilhado — e note que ele **pesa como classe** na especificidade.
 
 ## 8 · O trabalho aberto, em ordem de valor
 
-1. **O `push`** dos 5 commits. Depois, conferir em `/api/build-info` que o
-   commit publicado é o esperado — já foi fonte de confusão antes.
-2. **Marcar o Ensaio Geral.** Não rodá-lo — **marcá-lo.** Ele está escrito e
+1. **Marcar o Ensaio Geral.** Não rodá-lo — **marcá-lo.** Ele está escrito e
    completo em `docs/rede/ensaio/`, foi marcado pela ADR-076 para 22–23/08 e
    **não aconteceu**: não existe Diário de Observação em lugar nenhum do
    repositório. Não depende de nenhuma decisão pendente — ninguém paga, os três
    médicos são fictícios em papel, nada entra no sistema. Entrega o número que
    ninguém tem: o tempo de relógio dos ~50 atos de juízo do Curador.
-3. **Quem é a primeira pessoa** — a decisão que destrava mais coisa e que o
+2. **Quem é a primeira pessoa** — a decisão que destrava mais coisa e que o
    Fundador toma sozinho.
-4. **`SIM-62` grupo (b)** — `admin-dashboard.spec.ts` vermelho desde 24/08.
-5. **`SIM-60`** — o gate de aceite, mina registrada, não pedido de obra.
-6. **`PRIV-04`** — a exclusão não alcança o storage. P0, depende da D-08.
+3. **`SIM-62` grupo (b)** — `admin-dashboard.spec.ts` vermelho desde 24/08.
+4. **`SIM-60`** — o gate de aceite, mina registrada, não pedido de obra.
+5. **`PRIV-04`** — a exclusão não alcança o storage. P0, depende da D-08.
 
 ---
 
