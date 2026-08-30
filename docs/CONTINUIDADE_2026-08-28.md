@@ -492,27 +492,17 @@ regra certa — o defeito estava no que o número passou a apontar.
 
 ## 8 · O trabalho aberto, em ordem de valor
 
-1. **Marcar o Ensaio Geral.** Não rodá-lo — **marcá-lo.** Ele está escrito e
-   completo em `docs/rede/ensaio/`, foi marcado pela ADR-076 para 22–23/08 e
-   **não aconteceu**: não existe Diário de Observação em lugar nenhum do
-   repositório. Não depende de nenhuma decisão pendente — ninguém paga, os três
-   médicos são fictícios em papel, nada entra no sistema. Entrega o número que
-   ninguém tem: o tempo de relógio dos ~50 atos de juízo do Curador.
+1. ~~Marcar o Ensaio Geral~~ — **MARCADO pelo Fundador em 30/08: sábado,
+   05/09/2026.** A data está carimbada no próprio `ensaio-geral.html` (e no PDF
+   que vai para a mesa). É a **segunda** marcação — a primeira (ADR-076,
+   22–23/08) não aconteceu, e a diferença desta é que agora o Ensaio testa a
+   operação certa, conferida três vezes.
 
-   **O texto do Ensaio JÁ FOI ATUALIZADO para a operação nova** (28/08). Ele
-   tinha sido escrito em 21/08 e ensaiava a operação anterior — sem Supervisor.
-   Agora tem **cinco atos**: o primeiro contato entrou como ato 1, e cada papel
-   traz o próprio limite escrito na linha do elenco (o Supervisor assiste **se
-   autorizado**; o observador fica **fora** da Consulta Inicial).
+   **O que a data cobra até sexta, e é pouco:** confirmar as pessoas — quem
+   interpreta o assistido (pessoa de confiança), quem faz o Supervisor (segunda
+   pessoa da equipe), quem atende os telefones dos dois médicos, e o observador
+   que não trabalha. Imprimir da pasta da mesa ou do `/admin`. Nada de código.
 
-   **Três perguntas novas para o Diário**, e a primeira é a que mais importa:
-   **(a)** *"o que você teria dito se estivesse sozinha com o Curador?"* —
-   perguntada a quem interpretou o assistido, **depois** da Consulta Inicial. É
-   a única leitura possível do risco que a ADR-103 aceitou sem medir, e ela só
-   existe porque isto é ensaio; **(b)** quanto tempo o Supervisor gastou,
-   somando primeiro contato, preço e Consulta Inicial — a carga que a ADR-100
-   criou; **(c)** o Supervisor teve o que anotar? Se não teve, a ADR-105 se
-   desfaz sozinha, e ele volta a só ouvir.
 2. **Quem é a primeira pessoa** — a decisão que destrava mais coisa e que o
    Fundador toma sozinho.
 3. **`SIM-62` grupo (b)** — `admin-dashboard.spec.ts` vermelho desde 24/08.
