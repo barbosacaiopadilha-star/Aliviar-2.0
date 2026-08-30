@@ -2954,3 +2954,47 @@ Hoje, num lugar só: `docs/guias/6-roteiro-de-atendimento.html`, que declara a o
 As primeiras Curadorias reais mostrarem gente recusando **no preço** — e aí a pergunta é sobre o número ou sobre o parcelamento, nunca sobre abrir exceção. Ou quando a operação crescer a ponto de entrar alguém cuja função é vender: aí a regra 2 deixa de ser óbvia e passa a ser cara, e é exatamente nesse dia que ela mais vale.
 
 ---
+
+## ADR-102 — A Consulta Inicial é conduzida pelo Curador, sempre
+
+- **Data:** 2026-08-28
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data. Promove a decisão implícita na **ADR-100** a verbete próprio — e **corrige o argumento com que ela foi registrada lá**.
+- **Dependências:** aplica o princípio da **ADR-076** (*"quem colhe a informação passa a ser quem vai usá-la"*) · é a outra face da regra da **ADR-100** sobre o que o Supervisor não registra · respeita a cadeia de entrada da **ADR-075** (*"qualificar É marcar a conversa"*) · sustenta a postura de privacidade da **ADR-096** enquanto a política não existe · não altera a **ADR-073**.
+
+### A decisão
+
+**A Consulta Inicial é conduzida pelo Curador. Sempre.** O Supervisor não a conduz, não a antecipa e não a resume.
+
+### Três razões, e a primeira corrige o que eu escrevi na ADR-100
+
+**1 · Quem colhe é quem usa — e aqui quem usa é o Curador.**
+
+A **ADR-076** fixou o princípio do outro lado da Mesa: o Curador passou a entrevistar o profissional porque é ele quem vai usar aquela informação. O mesmo princípio, aplicado ao lado do assistido, aponta para a **mesma pessoa**: é o Curador quem pesa a história contra os 29 subcritérios do Mapa, quem conduz as conversas do Protocolo e quem assina o Relatório. Uma história colhida por outro chega a ele como **resumo que ele teria de confiar**, e não como matéria-prima que ele ouviu.
+
+**Fica registrado que o Engenheiro Líder usou este mesmo princípio, na ADR-100, para argumentar o contrário** — e errou o alvo. Ele leu "quem colhe é quem usa" como "quem fala primeiro deve colher tudo", quando a regra fala de **uso**, não de ordem de chegada. A ADR-100 registrou esta decisão como um custo que o Fundador aceitou. Não é custo: é a aplicação correta de uma decisão que a casa já tinha tomado. A correção fica aqui porque o log de decisões é onde o raciocínio se mantém honesto, e verbete antigo não se reescreve (ADR-062).
+
+**2 · É dado de saúde, e o Curador é médico.**
+
+A Consulta Inicial colhe a história clínica. O Curador é médico — e isso não é detalhe interno: é **promessa escrita à pessoa**, em dois guias. O `9-para-voce-que-comecou.html` diz *"Seu Curador lê e conversa com você. **Ele é médico.**"*, e o Roteiro promete *"um curador — que é médico — vai sentar com você"*.
+
+Concentrar a coleta de dado de saúde em quem tem dever profissional de sigilo é a escolha certa em qualquer cenário, e é especialmente a certa **enquanto a base de privacidade estiver adiada** (ADR-096): menos gente tocando o dado sensível, e a pessoa que toca sendo a que responde por ele.
+
+**3 · A devolução só fecha com quem ouviu.**
+
+A Ficha do Assistido exige que o Curador **leia de volta** o que entendeu: *"a ficha só vale depois que ela reconhecer que é dela"*. Ouvir e devolver são o mesmo ato, separados por minutos. Partir esse ato entre duas pessoas quebraria o reconhecimento — quem devolve estaria repetindo a leitura de outro.
+
+### O que a decisão custa
+
+**O segundo relato continua existindo**, como a ADR-100 já registrou: a pessoa conta ao Supervisor por que procurou a Aliviar, e conta a história ao Curador. A regra da ADR-100 — o Supervisor não colhe história clínica — é o que mantém isso inofensivo: **não são duas versões da mesma coisa, são duas conversas de gênero diferente.**
+
+**E carrega o Curador.** Os ~50 atos de juízo por Curadoria, que o `REGISTRO_UNICO_DE_ACHADOS` já nomeia como carga operacional **não medida**, incluem a Consulta Inicial inteira. Esta ADR não aumenta a carga — ela confirma quem a leva, e torna a medição do Ensaio Geral mais necessária, não menos.
+
+### O que NÃO se decidiu
+
+**Se o Supervisor pode estar presente na Consulta Inicial, calado.** É o caminho do meio que ninguém testou: daria continuidade — a pessoa vê o mesmo rosto — sem mover a colheita para quem não vai usá-la. Fica **nomeado e não decidido**, porque presença muda a conversa, e ninguém sabe ainda se muda para melhor. É pergunta para o Diário de Observação do Ensaio.
+
+### Revisitar quando
+
+O Curador virar o gargalo — o tempo dele é o recurso escasso da operação, e a Consulta Inicial é a parte mais longa do que ele faz. Ou quando o Ensaio Geral medir o relógio e mostrar que a Consulta Inicial não cabe junto com o Mapa, o Protocolo e a Mesa na mesma pessoa. **Nesse dia a pergunta certa não é "quem conduz", é "o que sai da mão do Curador"** — e nenhuma das três razões acima autoriza tirar dele justamente a escuta.
+
+---
