@@ -531,9 +531,18 @@ regra certa — o defeito estava no que o número passou a apontar.
   a versão certa está em `/admin` — mas mitigação por texto depende de alguém
   ler. **Se o preço ou um papel mudar de novo, refaça a pasta no mesmo commit**,
   ou apague-a. **Histórico:** a primeira cópia foi apagada pelo Fundador em
-  30/08 e refeita no mesmo dia (o LEIA-ME registra); a pasta atual carrega
-  também o **PRE-VOO do sábado**. Antes de confiar nela, o teste é o de sempre:
-  byte a byte contra o repositório.
+  30/08 e refeita no mesmo dia (o LEIA-ME registra); a pasta carrega também o
+  **PRE-VOO do sábado**. **Estado em 31/08: 18/18 arquivos, byte a byte com o
+  repositório** — refeita depois das correções da auditoria de conteúdo, do
+  preço e da data do Ensaio.
+  **O procedimento, e a ordem importa:** rode os DOIS geradores primeiro e
+  confirme `git status` vazio; só então copie. Sem esse passo você espalha um
+  PDF velho com a confiança de estar atualizando — o gerador é que prova que o
+  PDF confere com o fonte, não a data do arquivo.
+  **É a única cópia fora do repositório que resta**, agora que as de
+  `Documentos` foram apagadas. Enquanto for refeita a cada mudança é
+  ferramenta; no dia em que parar, vira a armadilha que a limpeza de 31/08
+  tirou dali.
 - **NÃO EXISTEM MAIS CÓPIAS SOLTAS FORA DO REPOSITÓRIO** (limpeza de 31/08), e
   vale saber o que havia para ninguém procurá-las: em
   `Documentos › Aliviar - material` viviam um **worktree órfão** de 22/08 (1.690
