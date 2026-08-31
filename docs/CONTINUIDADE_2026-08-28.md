@@ -204,6 +204,9 @@ commit. Vocabulário, promessas, rotas, links, alt de imagem e console: limpos.
 | **Quem é a primeira pessoa** | A ADR-096 só se sustenta se for alguém de dentro. **Decidida ela, o Case sai por consequência** — e o `61da4e7e`, herdado de julho, para de ser pergunta. É dado de produção; o repositório não sabe de quem ele é. |
 | **Quem conduz** | **As ADR-100 a 105 já dizem o que cada um faz, e quem entra em qual sala — falta dizer QUEM é cada um.** Curador, Supervisor, Concierge e um observador que não trabalhe, com nome, antes do dia. Na Consulta Inicial ficam **duas** pessoas da Aliviar (Curador conduzindo, Supervisor calado e só se ela autorizar); o observador entra nos outros atos. |
 | **Onde a jornada para** | Os três profissionais da Rede são reais. Decidir **antes**. |
+| **A resposta do advogado** | **Novo item, e é o gargalo de tudo que envolve dinheiro e estranho.** Os cinco documentos CHEGARAM em 31/08 e estão em `docs/juridico/` — o que falta são as respostas às perguntas enviadas em **03/08**, quatro semanas paradas. Sem elas: sem contrato assinável, sem aceite, sem cobrança legítima, sem pessoa de fora. Prioridade: **D-6** (as testemunhas) e os campos em branco. |
+| **Como se cobra** | **Não existe cobrança nenhuma no código** — nem gateway, nem assinatura, nem link. O preço está decidido até os centavos e não há como recebê-lo. Decisão + link, FORA da plataforma (ver §2 da conversa de 31/08: construir isso agora é congelar em código regras que ninguém tem opinião para dar). |
+| **Conta PJ, contador, nota fiscal** | **Não há traço disso no repositório.** Se não existir, vem antes do link de pagamento — receber sem poder emitir nota é problema guardado, não começo. |
 | **ADR-095** — tamanho da Mesa | Esperar o uso real. |
 | **Domínio próprio** | Serve para estranhos. A primeira Curadoria não tem estranhos. |
 | **"Quem somos"** | **Não pode ser escrito pelo agente.** Precisa de fatos que só o Fundador tem: quem está por trás, com que formação, por quê. Preencher por conta própria seria afirmar o que o sistema não garante (ADR-064) — numa página sobre confiança, o pior lugar possível. |
@@ -479,6 +482,14 @@ conhece a doutrina** — foi o Fundador quem apontou a classe do erro, e os
 autômatos todos estavam verdes. Auditoria de conteúdo não se automatiza; se
 agenda.
 
+**12 · Ler o resumo não é ler o documento.** Escrevi a leitura técnica das
+pendências jurídicas a partir do documento de PERGUNTAS, sem os cinco
+instrumentos em mãos — e o único ponto onde levantei alarme foi justamente o que
+o texto real já resolvia. As análises que descrevem um documento são boas o
+bastante para dar confiança falsa. **Quando a conclusão for "há um risco aqui",
+abra a fonte primária antes de dizê-lo** — e se não puder abrir, diga que não
+pôde.
+
 **11 · Renumerar uma lista quebra em silêncio toda referência numérica a ela.**
 O Ensaio ganhou um ato no começo e a linha do observador — escrita quando a
 Consulta Inicial era o ato 1 — passou a mandá-lo para dentro da sala proibida,
@@ -567,6 +578,16 @@ regra certa — o defeito estava no que o número passou a apontar.
   ensaiaria a operação de agosto.
   **A pasta continua existindo** com o que é legítimo: 246 fotos originais, o
   backup de schema de 21/08 e um documento de modelo de dados.
+- **OS CINCO DOCUMENTOS JURÍDICOS VIVEM NO REPOSITÓRIO** (31/08), em
+  `docs/juridico/`: os `.docx` originais em `originais/` e a extração em texto
+  ao lado, por `scripts/extrair-docx.mjs`. **Nenhum está publicado**, e nenhum
+  pode ser: todos têm campos em branco. Quando as respostas chegarem, é daqui
+  que o texto vai para `legal_documents`.
+  **A leitura deles confirmou o documento de perguntas em cada citação** — e
+  **corrigiu uma leitura minha**: eu apontara a cláusula de foro como risco de
+  abusividade, e o texto real já termina com *"sem prejuízo das regras
+  protetivas eventualmente aplicáveis ao consumidor"*. **Levantei alarme sobre
+  cláusula que não tinha lido**, e a emenda está no topo da leitura técnica.
 - **TRÊS GERADORES DE PDF, e cada um serve a um público.** `gerar-rede-pdf`
   (peças de papel, versionadas e publicadas), `gerar-guias-pdf` (os dez guias,
   publicados em `public/guias/`) e `gerar-doc-pdf` — este último converte
