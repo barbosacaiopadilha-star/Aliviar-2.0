@@ -416,7 +416,13 @@ posição. É o `SIM-57` de novo, com outro instrumento. **E ele voltou mais dua
 vezes em 30/08:** greps case-sensitive deixaram "Paciente:" (P maiúsculo) vivo
 na Folha através de QUATRO auditorias, e um contador de linhas de arquivo disse
 "8" para uma grade de 152 células. **Grep de vocabulário roda com `-i`; contar
-célula é contar `<td`, não linhas.**
+célula é contar `<td`, não linhas.** E em 31/08 apareceu a terceira roupa: a
+guarda de PDF reprovou duas frases que estavam presentes, porque o texto
+extraído traz as quebras de linha da PÁGINA e a frase sai partida no meio.
+**Dessa vez o conserto ficou no instrumento** — a busca passou a normalizar
+espaço antes de comparar. Guarda que dá falso negativo custa a mesma confiança
+que guarda que não dispara, e as duas primeiras roupas só viraram lição; esta
+virou código.
 
 **2 · Medir contra a régua certa, e a régua está escrita no arquivo.** Reportei
 os links do rodapé como alvos de toque pequenos demais (29px contra 44). A
@@ -561,6 +567,17 @@ regra certa — o defeito estava no que o número passou a apontar.
   ensaiaria a operação de agosto.
   **A pasta continua existindo** com o que é legítimo: 246 fotos originais, o
   backup de schema de 21/08 e um documento de modelo de dados.
+- **TRÊS GERADORES DE PDF, e cada um serve a um público.** `gerar-rede-pdf`
+  (peças de papel, versionadas e publicadas), `gerar-guias-pdf` (os dez guias,
+  publicados em `public/guias/`) e `gerar-doc-pdf` — este último converte
+  qualquer `.md` de `docs/` em PDF apresentável, e existe para falar com quem
+  está FORA da casa: advogado, contador, parceiro. Os três normalizam o carimbo
+  de hora (saída determinística).
+  **E há guarda para o que eles produzem:** `scripts/conferir-pdf.mjs` extrai o
+  texto do PDF de volta e reprova barra invertida crua, negrito quebrado e termo
+  esperado ausente. **Use-a sempre que um PDF sair para fora** — foi ela que
+  pegou o primeiro documento enviado ao advogado com seis asteriscos crus.
+  **Contar páginas não é conferir.**
 - **TRÊS destinos de PDF, e a diferença é o que se publica** (atualizado em
   28/08, quando os guias entraram no Kit):
   `docs/guias/pdf/` **ignorado** pelo Git — cópia local de trabalho;
@@ -588,10 +605,12 @@ regra certa — o defeito estava no que o número passou a apontar.
    interpreta o assistido (pessoa de confiança), quem faz o Supervisor (segunda
    pessoa da equipe), quem atende os telefones dos dois médicos, e o observador
    que não trabalha. Imprimir da pasta da mesa ou do `/admin`. Nada de código.
-   **O pré-voo está pronto e entregue** ("PRE-VOO - sabado 05-09.txt", na pasta
-   da mesa): o que era verificável por máquina já está [OK]; as caixas vazias
-   são as quatro pessoas, a impressão (com a pegadinha das fichas secretas) e a
-   logística. As três perguntas do Diário estão no rodapé dele.
+   **O pré-voo está pronto, em duas formas na pasta da mesa:** o `.pdf`
+   (3 páginas, para imprimir e riscar) e o `.txt` (abre sem leitor, serve no
+   celular). O fonte é `docs/rede/ensaio/pre-voo-2026-09-05.md`. O que era
+   verificável por máquina está **OK**; as caixas vazias são as quatro pessoas,
+   a impressão — **com a pegadinha das fichas secretas em destaque** — e a
+   logística. As três perguntas do Diário estão no rodapé.
 
 2. **Quem é a primeira pessoa** — a decisão que destrava mais coisa e que o
    Fundador toma sozinho.
