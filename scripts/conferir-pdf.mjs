@@ -33,6 +33,20 @@ const linha = (ok, rot) => { if (!ok) falhas += 1; console.log(`  ${ok ? "OK   "
 console.log(`${arquivo} — ${totalPages} página(s), ${text.length} caracteres`);
 linha(barras === 0, `nenhuma barra invertida crua (achadas: ${barras})`);
 linha(negritoQuebrado === 0, `nenhum negrito quebrado (achados: ${negritoQuebrado})`);
-for (const termo of process.argv.slice(3)) linha(text.includes(termo), `contém "${termo}"`);
+/**
+ * A busca normaliza espaço em branco antes de comparar.
+ *
+ * O texto extraído de um PDF traz as quebras de linha da PÁGINA, não as do
+ * documento: uma frase pode sair partida no meio ("teria dito se\nestivesse
+ * sozinha"). Sem normalizar, um termo perfeitamente presente é reprovado — o
+ * que aconteceu duas vezes em 31/08 e me fez caçar defeito que não existia.
+ * Guarda que dá falso negativo custa a mesma confiança que guarda que não
+ * dispara.
+ */
+const achatar = (t) => t.replace(/\s+/g, " ");
+const textoPlano = achatar(text);
+for (const termo of process.argv.slice(3)) {
+  linha(textoPlano.includes(achatar(termo)), `contém "${termo}"`);
+}
 
 process.exit(falhas ? 1 : 0);
