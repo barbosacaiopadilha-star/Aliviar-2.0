@@ -482,7 +482,7 @@ conhece a doutrina** — foi o Fundador quem apontou a classe do erro, e os
 autômatos todos estavam verdes. Auditoria de conteúdo não se automatiza; se
 agenda.
 
-**12 · Ler o resumo não é ler o documento.** Escrevi a leitura técnica das
+**11 · Ler o resumo não é ler o documento.** Escrevi a leitura técnica das
 pendências jurídicas a partir do documento de PERGUNTAS, sem os cinco
 instrumentos em mãos — e o único ponto onde levantei alarme foi justamente o que
 o texto real já resolvia. As análises que descrevem um documento são boas o
@@ -490,7 +490,7 @@ bastante para dar confiança falsa. **Quando a conclusão for "há um risco aqui
 abra a fonte primária antes de dizê-lo** — e se não puder abrir, diga que não
 pôde.
 
-**11 · Renumerar uma lista quebra em silêncio toda referência numérica a ela.**
+**12 · Renumerar uma lista quebra em silêncio toda referência numérica a ela.**
 O Ensaio ganhou um ato no começo e a linha do observador — escrita quando a
 Consulta Inicial era o ato 1 — passou a mandá-lo para dentro da sala proibida,
 citando a ADR certa. Referência por número não sobrevive a inserção: ao inserir
