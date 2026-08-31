@@ -30,7 +30,14 @@ o que aquele número contava, então troquei pelo total da suíte, que é medido
 alteram o que se faz na sala: a ADR-108 (o Curador não fala de dinheiro), o
 endereço canônico nos três papéis do cruzamento, e o rótulo da Parte 5 — mais
 **três guardas novas** que as travam. **O `LEIA-ME.txt` da pasta abre com as
-três** — quem imprimiu antes de 31/08 precisa imprimir de novo. O que resta para o Ensaio de 05/09 é humano e está no PRE-VOO
+três** — quem imprimiu antes de 31/08 precisa imprimir de novo.
+
+**A pasta tem dois arquivos que não são documentos da operação** e por isso
+ficam fora do 18/18: o `LEIA-ME.txt`, que é dela, e o
+`MENSAGENS - convite das quatro pessoas.txt`, escrito em 31/08 — **a fonte dele
+está em `docs/rede/ensaio/mensagens-2026-09-05.txt`**, idêntica byte a byte,
+porque material operacional que só existe na área de trabalho é a classe de
+defeito que este dia inteiro tratou. O que resta para o Ensaio de 05/09 é humano e está no PRE-VOO
 da pasta da mesa: as quatro pessoas, a impressão com a separação das folhas, e
 telefone-relógio-canetas.
 
@@ -580,6 +587,48 @@ canonical e sitemap apontavam para página morta, lendo a linha 5 do arquivo num
 resultado de `grep` — aquela linha é o comentário explicando que ele **parou**
 de usar o domínio. **A produção publica `aliviar-2-0.vercel.app` corretamente.**
 
+### As quatro mensagens de convite (31/08)
+
+**Escritas porque a data já caiu uma vez.** O Ensaio foi marcado antes
+(ADR-076, 22–23/08) e não aconteceu; o que faz uma data cair pela segunda vez
+não é o instrumento — é gente não confirmada, e um "não posso" descoberto na
+sexta adia o sábado inteiro. As quatro estão em
+`docs/rede/ensaio/mensagens-2026-09-05.txt` e na pasta da mesa, prontas para
+encaminhar: trocar o `[nome]` e enviar.
+
+**Como foram escritas, e o porquê de cada escolha:**
+
+- **Sem jargão nenhum.** Nenhuma diz "ADR", "conceito", "assistido" ou
+  "Método". São pessoas sendo convidadas para um sábado.
+- **Nenhuma promete duração.** O Ensaio **mede** os tempos, não os prescreve —
+  procurei estimativa nos guias e a única que existe é um `[tempo]` em branco
+  no roteiro. Todas pedem a manhã e dizem a verdade: *"não sei quanto dura, e
+  descobrir isso é metade do motivo"*. Inventar um número teria sido mais
+  cômodo e menos honesto.
+- **Duas guardam segredo do Curador** — a paciente (que não lê nada e não conta
+  a história antes) e quem faz os dois médicos (fichas que o Curador não pode
+  ler). A mensagem diz o motivo, para o segredo não parecer capricho: se ele
+  souber antes, o ensaio mede a memória dele, não o instrumento.
+- **A do supervisor carrega a ADR-108 em linguagem de quem vai viver a regra:**
+  *"as duas perguntas de dinheiro são só suas — se você não perguntar, ninguém
+  pergunta."* Traz também o preço com os centavos e a autorização da ADR-103
+  dita como gesto, não como norma.
+- **A do observador abre com o requisito**, que é o que ele tem de mais
+  estranho: *"preciso de alguém para NÃO trabalhar."*
+
+**Uma coisa foi verificada antes de escrever, e é o tipo de detalhe que estraga
+um ensaio:** o observador fica FORA da Consulta Inicial (ADR-104), e o Diário
+pergunta em qual item a pessoa hesitou. Quem escreve isso é o **Supervisor, ao
+sair da sala, antes de qualquer outra coisa** — está no Guia da Primeira
+Rodada, e o motivo é que o Curador conduz e não consegue observar a si mesmo.
+**Consequência que o sábado pode revelar:** se ela NÃO autorizar o Supervisor
+na sala, essa medição simplesmente não existe. É o risco que a ADR-103 aceitou
+sem medir, e agora se sabe onde ele aparece.
+
+**Ao enviar:** o supervisor precisa dos PDFs nº 1 e nº 2 da pasta *"2 - Para ler
+antes"*; quem faz os médicos precisa **só das Partes 2 e 3** do Ensaio Geral —
+o PDF inteiro entrega o resto do dia junto.
+
 ---
 
 ## 6 · As lições desta sessão
@@ -856,7 +905,14 @@ o erro mora no espaço ENTRE dois artefatos que ninguém compara.**
    celular). O fonte é `docs/rede/ensaio/pre-voo-2026-09-05.md`. O que era
    verificável por máquina está **OK**; as caixas vazias são as quatro pessoas,
    a impressão — **com a pegadinha das fichas secretas em destaque** — e a
-   logística. As três perguntas do Diário estão no rodapé.
+   logística. As quatro perguntas do Diário estão no rodapé.
+
+   **E as quatro mensagens de convite já estão escritas** (31/08), em
+   `docs/rede/ensaio/mensagens-2026-09-05.txt` e na pasta da mesa: uma por
+   papel, sem jargão, prontas para encaminhar. **A recomendação registrada é
+   enviar no mesmo dia, não na sexta** — um "não posso" descoberto na sexta não
+   se ajusta, adia. É a única coisa que separa a data de acontecer, e a primeira
+   marcação (ADR-076) caiu exatamente aqui.
 
 2. **Quem é a primeira pessoa** — a decisão que destrava mais coisa e que o
    Fundador toma sozinho.
