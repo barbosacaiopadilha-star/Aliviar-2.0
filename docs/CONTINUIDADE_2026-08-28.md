@@ -204,7 +204,7 @@ commit. Vocabulário, promessas, rotas, links, alt de imagem e console: limpos.
 | **Quem é a primeira pessoa** | A ADR-096 só se sustenta se for alguém de dentro. **Decidida ela, o Case sai por consequência** — e o `61da4e7e`, herdado de julho, para de ser pergunta. É dado de produção; o repositório não sabe de quem ele é. |
 | **Quem conduz** | **As ADR-100 a 105 já dizem o que cada um faz, e quem entra em qual sala — falta dizer QUEM é cada um.** Curador, Supervisor, Concierge e um observador que não trabalhe, com nome, antes do dia. Na Consulta Inicial ficam **duas** pessoas da Aliviar (Curador conduzindo, Supervisor calado e só se ela autorizar); o observador entra nos outros atos. |
 | **Onde a jornada para** | Os três profissionais da Rede são reais. Decidir **antes**. |
-| **A resposta do advogado** | **Novo item, e é o gargalo de tudo que envolve dinheiro e estranho.** Os cinco documentos CHEGARAM em 31/08 e estão em `docs/juridico/` — o que falta são as respostas às perguntas enviadas em **03/08**, quatro semanas paradas. Sem elas: sem contrato assinável, sem aceite, sem cobrança legítima, sem pessoa de fora. Prioridade: **D-6** (as testemunhas) e os campos em branco. |
+| **A resposta do advogado** | **Novo item, e é o gargalo de tudo que envolve dinheiro e estranho.** Os cinco documentos CHEGARAM em 31/08 e estão em `docs/juridico/` — o que falta são as respostas às perguntas enviadas em **03/08**, quatro semanas paradas. Sem elas: sem contrato assinável, sem aceite, sem cobrança legítima, sem pessoa de fora. Prioridade: **D-6** (as testemunhas) e os campos em branco. **Já adiantado para acelerar a resposta:** a leitura técnica de cada pendência e a Política de Privacidade escrita — os dois em PDF, prontos para anexar. O pedido a ele passa a ser *confirmar ou corrigir*, não redigir. |
 | **Como se cobra** | **Não existe cobrança nenhuma no código** — nem gateway, nem assinatura, nem link. O preço está decidido até os centavos e não há como recebê-lo. Decisão + link, FORA da plataforma (ver §2 da conversa de 31/08: construir isso agora é congelar em código regras que ninguém tem opinião para dar). |
 | **Conta PJ, contador, nota fiscal** | **Não há traço disso no repositório.** Se não existir, vem antes do link de pagamento — receber sem poder emitir nota é problema guardado, não começo. |
 | **ADR-095** — tamanho da Mesa | Esperar o uso real. |
@@ -588,6 +588,25 @@ regra certa — o defeito estava no que o número passou a apontar.
   abusividade, e o texto real já termina com *"sem prejuízo das regras
   protetivas eventualmente aplicáveis ao consumidor"*. **Levantei alarme sobre
   cláusula que não tinha lido**, e a emenda está no topo da leitura técnica.
+- **A POLÍTICA DE PRIVACIDADE ESTÁ ESCRITA** (31/08, `docs/privacidade/POLITICA_DE_PRIVACIDADE.md`,
+  v1.1). Termina o rascunho de 19/08 em vez de recomeçar — a estrutura dele era
+  boa. **Vai ao advogado para REVISÃO, não redação**, e pode ir na mesma
+  mensagem das perguntas.
+  **Três seções novas, e duas nascem das decisões desta semana:** *"Duas
+  pessoas, e só duas"* (a ADR-106 dita para quem ela protege — o melhor
+  argumento de privacidade da casa, que não estava dito à assistida em lugar
+  nenhum), *"O que NÃO medimos"* (o analytics fora das rotas privadas, com o
+  desenho por lista de permissão — verificado em `analytics-gate.tsx`, não
+  afirmado), e *"Quando compartilhamos com alguém de fora"* (o rascunho dizia
+  "ninguém mais" e parava; faltavam a representação com procuração e a
+  obrigação legal).
+  **Um colchete saiu por honestidade, não por preenchimento:** a região da
+  Vercel. Não há `vercel.json` fixando região — afirmar uma seria inventar num
+  documento que promete precisão.
+  **Sobram quatro decisões, isoladas no fim, e TRÊS SÃO DO FUNDADOR:** o e-mail
+  do encarregado (hoje um Gmail pessoal; recomendado `privacidade@` no domínio),
+  o prazo de retenção, o prazo de resposta (proposto: 15 dias corridos, com
+  fundamento) e a validação de quem pede por outra pessoa.
 - **TRÊS GERADORES DE PDF, e cada um serve a um público.** `gerar-rede-pdf`
   (peças de papel, versionadas e publicadas), `gerar-guias-pdf` (os dez guias,
   publicados em `public/guias/`) e `gerar-doc-pdf` — este último converte
