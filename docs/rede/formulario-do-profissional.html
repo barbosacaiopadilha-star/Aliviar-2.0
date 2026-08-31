@@ -17,6 +17,8 @@
   .bloco { page-break-inside: avoid; margin: 0 0 10pt; padding: 7pt 9pt; border: .75pt solid #D8CFC0; border-radius: 4pt; }
   .bloco h4 { margin: 0 0 2pt; font-size: 10.5pt; color: #24466B; }
   .num { display: inline-block; min-width: 16pt; color: #A8813F; }
+  .cod { float: right; font-family: Consolas, "Courier New", monospace; font-size: 6.6pt;
+         color: #A79C88; letter-spacing: .02em; font-weight: normal; padding-top: 2pt; }
   .pergunta { margin: 1pt 0 2pt; font-style: italic; }
   .dica { margin: 0 0 4pt; font-size: 8.5pt; color: #5A6670; }
   ul.opcoes { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 14pt; }
@@ -67,7 +69,7 @@
 <p class="sub" style="margin-bottom:8pt">Estas são as perguntas que toda Curadoria consulta primeiro. São as únicas que pedimos que você não deixe em branco — mesmo que a resposta seja "não se aplica".</p>
 
   <section class="bloco">
-    <h4><span class="num">1</span> Modalidade de atendimento</h4>
+    <h4><span class="num">1</span> Modalidade de atendimento<span class="cod">ACESSO_MODALIDADE</span></h4>
     <p class="pergunta">Em quais formatos você atende hoje?</p>
     <p class="dica">Marque todas as opções que valem para você.</p>
     <ul class="opcoes">
@@ -82,7 +84,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">2</span> Disponibilidade</h4>
+    <h4><span class="num">2</span> Disponibilidade<span class="cod">ACESSO_DISPONIBILIDADE</span></h4>
     <p class="pergunta">Em quais janelas você atende habitualmente?</p>
     <p class="dica">Marque todas as opções que valem para você.</p>
     <ul class="opcoes">
@@ -98,7 +100,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">3</span> Prazo para a primeira consulta</h4>
+    <h4><span class="num">3</span> Prazo para a primeira consulta<span class="cod">ACESSO_PRAZO_PARA_CONSULTA</span></h4>
     <p class="pergunta">Qual o prazo habitual para a primeira consulta?</p>
     <p class="dica">Marque a opção que melhor descreve a sua prática.</p>
     <ul class="opcoes">
@@ -114,7 +116,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">4</span> Local de atendimento</h4>
+    <h4><span class="num">4</span> Local de atendimento<span class="cod">ACESSO_LOCAL_DE_ATENDIMENTO</span></h4>
     <p class="pergunta">Em quais endereços você atende presencialmente?</p>
     
     <p class="extra-titulo">Tipo de local:</p><ul class="opcoes"><li><span class="caixa"></span> Consultório</li><li><span class="caixa"></span> Hospital</li><li><span class="caixa"></span> Clínica</li><li><span class="caixa"></span> Ambulatório</li></ul>
@@ -122,7 +124,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">5</span> Limites de atuação</h4>
+    <h4><span class="num">5</span> Limites de atuação<span class="cod">PRATICA_LIMITES_DE_ATUACAO</span></h4>
     <p class="pergunta">Quais situações você não atende e encaminha?</p>
     
     <p class="extra-titulo">Encaminhamento:</p><ul class="opcoes"><li><span class="caixa"></span> Encaminha com indicação</li><li><span class="caixa"></span> Encaminha sem indicação</li></ul>
@@ -130,7 +132,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">6</span> Cobertura e convênio</h4>
+    <h4><span class="num">6</span> Cobertura e convênio<span class="cod">VIABILIDADE_COBERTURA_E_CONVENIO</span></h4>
     <p class="pergunta">Por quais formas de cobertura você atende hoje?</p>
     <p class="dica">Marque todas as opções que valem para você.</p>
     <ul class="opcoes">
@@ -151,7 +153,7 @@
   <h3 class="grupo">Formação</h3>
   
   <section class="bloco">
-    <h4><span class="num">7</span> Graduação</h4>
+    <h4><span class="num">7</span> Graduação<span class="cod">FORMACAO_GRADUACAO</span></h4>
     <p class="pergunta">Instituição e ano de graduação</p>
     
     
@@ -159,7 +161,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">8</span> Residência médica</h4>
+    <h4><span class="num">8</span> Residência médica<span class="cod">FORMACAO_RESIDENCIA</span></h4>
     <p class="pergunta">Residências concluídas</p>
     
     
@@ -167,7 +169,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">9</span> Especialização</h4>
+    <h4><span class="num">9</span> Especialização<span class="cod">FORMACAO_ESPECIALIZACAO</span></h4>
     <p class="pergunta">Títulos de especialista</p>
     
     
@@ -175,7 +177,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">10</span> Fellowship</h4>
+    <h4><span class="num">10</span> Fellowship<span class="cod">FORMACAO_FELLOWSHIP</span></h4>
     <p class="pergunta">Fellowships realizados</p>
     
     
@@ -183,7 +185,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">11</span> Formação complementar</h4>
+    <h4><span class="num">11</span> Formação complementar<span class="cod">FORMACAO_COMPLEMENTAR</span></h4>
     <p class="pergunta">Outras formações relevantes</p>
     
     
@@ -193,7 +195,7 @@
   <h3 class="grupo">Experiência</h3>
   
   <section class="bloco">
-    <h4><span class="num">12</span> Tempo de prática</h4>
+    <h4><span class="num">12</span> Tempo de prática<span class="cod">EXPERIENCIA_TEMPO_DE_PRATICA</span></h4>
     <p class="pergunta">Há quanto tempo atua na especialidade?</p>
     <p class="dica">Marque a opção que melhor descreve a sua prática.</p>
     <ul class="opcoes">
@@ -208,7 +210,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">13</span> Volume de atuação</h4>
+    <h4><span class="num">13</span> Volume de atuação<span class="cod">EXPERIENCIA_VOLUME_DE_ATUACAO</span></h4>
     <p class="pergunta">Com que frequência atende esse tipo de caso?</p>
     <p class="dica">Marque a opção que melhor descreve a sua prática.</p>
     <ul class="opcoes">
@@ -222,7 +224,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">14</span> Experiência no tipo de caso</h4>
+    <h4><span class="num">14</span> Experiência no tipo de caso<span class="cod">EXPERIENCIA_NO_TIPO_DE_CASO</span></h4>
     <p class="pergunta">Com quais condições e procedimentos você tem prática regular?</p>
     
     
@@ -232,7 +234,7 @@
   <h3 class="grupo">Histórico e trajetória</h3>
   
   <section class="bloco">
-    <h4><span class="num">15</span> Trajetória institucional</h4>
+    <h4><span class="num">15</span> Trajetória institucional<span class="cod">HISTORICO_TRAJETORIA_INSTITUCIONAL</span></h4>
     <p class="pergunta">Vínculos institucionais atuais e anteriores</p>
     
     
@@ -240,7 +242,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">16</span> Atividade acadêmica</h4>
+    <h4><span class="num">16</span> Atividade acadêmica<span class="cod">HISTORICO_ATIVIDADE_ACADEMICA</span></h4>
     <p class="pergunta">Atividade acadêmica</p>
     <p class="dica">Marque todas as opções que valem para você.</p>
     <ul class="opcoes">
@@ -255,7 +257,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">17</span> Áreas de atuação</h4>
+    <h4><span class="num">17</span> Áreas de atuação<span class="cod">HISTORICO_AREAS_DE_ATUACAO</span></h4>
     <p class="pergunta">Áreas em que atua hoje</p>
     
     
@@ -265,7 +267,7 @@
   <h3 class="grupo">Modelo de atendimento</h3>
   
   <section class="bloco">
-    <h4><span class="num">18</span> Como explica</h4>
+    <h4><span class="num">18</span> Como explica<span class="cod">MODELO_COMUNICACAO</span></h4>
     <p class="pergunta">Ao explicar um diagnóstico ou tratamento, quais dessas ações você costuma realizar?</p>
     <p class="dica">Marque todas as opções que valem para você.</p>
     <ul class="opcoes">
@@ -282,7 +284,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">19</span> Como conduz decisões</h4>
+    <h4><span class="num">19</span> Como conduz decisões<span class="cod">MODELO_DECISAO_COMPARTILHADA</span></h4>
     <p class="pergunta">Quando existem duas ou mais opções clinicamente adequadas, quais ações você costuma realizar antes da decisão?</p>
     <p class="dica">Marque todas as opções que valem para você.</p>
     <ul class="opcoes">
@@ -299,7 +301,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">20</span> Participação de acompanhantes</h4>
+    <h4><span class="num">20</span> Participação de acompanhantes<span class="cod">MODELO_PARTICIPACAO_FAMILIAR</span></h4>
     <p class="pergunta">Como você conduz a presença de acompanhantes?</p>
     <p class="dica">Marque todas as opções que valem para você.</p>
     <ul class="opcoes">
@@ -314,7 +316,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">21</span> Explicação de alternativas</h4>
+    <h4><span class="num">21</span> Explicação de alternativas<span class="cod">MODELO_ALTERNATIVAS</span></h4>
     <p class="pergunta">Ao propor uma conduta, quais dessas você costuma apresentar?</p>
     <p class="dica">Marque todas as opções que valem para você.</p>
     <ul class="opcoes">
@@ -330,7 +332,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">22</span> Respeito a recusas e restrições</h4>
+    <h4><span class="num">22</span> Respeito a recusas e restrições<span class="cod">MODELO_PREFERENCIAS_E_RESTRICOES</span></h4>
     <p class="pergunta">Quando a pessoa recusa uma conduta ou tem restrição pessoal, religiosa ou cultural, o que você costuma fazer?</p>
     <p class="dica">Marque todas as opções que valem para você.</p>
     <ul class="opcoes">
@@ -345,7 +347,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">23</span> Condução de notícias difíceis</h4>
+    <h4><span class="num">23</span> Condução de notícias difíceis<span class="cod">MODELO_CONDUCAO_DE_NOTICIAS_DIFICEIS</span></h4>
     <p class="pergunta">Ao comunicar um diagnóstico grave ou uma notícia difícil, quais dessas condutas você costuma adotar?</p>
     <p class="dica">Marque todas as opções que valem para você.</p>
     <ul class="opcoes">
@@ -362,7 +364,7 @@
   <h3 class="grupo">Continuidade do cuidado</h3>
   
   <section class="bloco">
-    <h4><span class="num">24</span> Retornos</h4>
+    <h4><span class="num">24</span> Retornos<span class="cod">CONTINUIDADE_RETORNOS</span></h4>
     <p class="pergunta">Após a primeira consulta, quais dessas condutas você costuma adotar?</p>
     <p class="dica">Marque todas as opções que valem para você.</p>
     <ul class="opcoes">
@@ -377,7 +379,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">25</span> Acompanhamento pós-procedimento</h4>
+    <h4><span class="num">25</span> Acompanhamento pós-procedimento<span class="cod">CONTINUIDADE_POS_PROCEDIMENTO</span></h4>
     <p class="pergunta">Após um procedimento que você realiza, quais condutas são habituais?</p>
     <p class="dica">Marque todas as opções que valem para você.</p>
     <ul class="opcoes">
@@ -392,7 +394,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">26</span> Equipe de apoio</h4>
+    <h4><span class="num">26</span> Equipe de apoio<span class="cod">CONTINUIDADE_EQUIPE_DE_APOIO</span></h4>
     <p class="pergunta">Quem mais acompanha as pessoas que você atende?</p>
     <p class="dica">Marque todas as opções que valem para você.</p>
     <ul class="opcoes">
@@ -410,7 +412,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">27</span> Coordenação com outros profissionais</h4>
+    <h4><span class="num">27</span> Coordenação com outros profissionais<span class="cod">CONTINUIDADE_COORDENACAO</span></h4>
     <p class="pergunta">Quando a pessoa já é acompanhada por outros profissionais, o que você costuma fazer?</p>
     <p class="dica">Marque todas as opções que valem para você.</p>
     <ul class="opcoes">
@@ -425,7 +427,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">28</span> Canais entre consultas</h4>
+    <h4><span class="num">28</span> Canais entre consultas<span class="cod">CONTINUIDADE_CANAIS</span></h4>
     <p class="pergunta">Entre uma consulta e outra, como a pessoa consegue contato?</p>
     <p class="dica">Marque todas as opções que valem para você.</p>
     <ul class="opcoes">
@@ -444,7 +446,7 @@
   <h3 class="grupo">Viabilidade</h3>
   
   <section class="bloco">
-    <h4><span class="num">29</span> Custo e pagamento</h4>
+    <h4><span class="num">29</span> Custo e pagamento<span class="cod">VIABILIDADE_CUSTO_E_PAGAMENTO</span></h4>
     <p class="pergunta">Qual o custo da primeira consulta e como pode ser pago?</p>
     
     <p class="extra-titulo">Custos adicionais:</p><ul class="opcoes"><li><span class="caixa"></span> Exames não inclusos</li><li><span class="caixa"></span> Retorno cobrado à parte</li><li><span class="caixa"></span> Taxa de procedimento</li><li><span class="caixa"></span> Sem custos adicionais conhecidos</li><li><span class="caixa"></span> Não informado</li></ul><p class="extra-titulo">Faixa de valor da primeira consulta:</p><ul class="opcoes"><li><span class="caixa"></span> Até R$ 300</li><li><span class="caixa"></span> De R$ 301 a R$ 600</li><li><span class="caixa"></span> De R$ 601 a R$ 1.000</li><li><span class="caixa"></span> De R$ 1.001 a R$ 2.000</li><li><span class="caixa"></span> Acima de R$ 2.000</li><li><span class="caixa"></span> Sujeito a confirmação <span class="detalhe">— qual? <span class="linha-curta"></span></span></li><li><span class="caixa"></span> Não informado</li></ul><p class="extra-titulo">Formas de pagamento aceitas:</p><ul class="opcoes"><li><span class="caixa"></span> Dinheiro ou Pix</li><li><span class="caixa"></span> Cartão à vista</li><li><span class="caixa"></span> Cartão parcelado <span class="detalhe">— qual? <span class="linha-curta"></span></span></li><li><span class="caixa"></span> Transferência</li><li><span class="caixa"></span> Boleto</li></ul>

@@ -15,6 +15,8 @@
   .bloco { page-break-inside: avoid; margin: 0 0 9pt; padding: 6pt 9pt; border: .75pt solid #D8CFC0; border-radius: 4pt; }
   .bloco h4 { margin: 0 0 2pt; font-size: 10.5pt; color: #24466B; }
   .num { display: inline-block; min-width: 16pt; color: #A8813F; }
+  .cod { float: right; font-family: Consolas, "Courier New", monospace; font-size: 6.6pt;
+         color: #A79C88; letter-spacing: .02em; font-weight: normal; padding-top: 2pt; }
   .pergunta { margin: 1pt 0 3pt; font-style: italic; }
   .fonte { font-size: 8.2pt; color: #8A6A2F; background: #FBF6EA; border-left: 2pt solid #A8813F; padding: 3pt 6pt; margin: 0 0 4pt; }
   ul.opcoes { list-style: none; margin: 0 0 3pt; padding: 0; columns: 2; column-gap: 14pt; }
@@ -58,7 +60,7 @@
 </header>
 
 <div class="instrucoes">
-  <strong>Para o Curador:</strong> esta ficha é apoio de escuta, não interrogatório. Comece pela história — deixe a pessoa contar. As perguntas existem para os buracos que a história não cobriu. Ao final, leia de volta o que entendeu: a ficha só vale depois que ela reconhecer que é dela.<br>
+  <strong>Para o Curador:</strong> esta ficha é apoio de escuta, não interrogatório. Comece pela história — deixe a pessoa contar. As perguntas existem para os buracos que a história não cobriu. Ao final, leia de volta o que entendeu: a ficha só vale depois que ela reconhecer que é dela. <b>O código cinza ao lado de cada conceito é o endereço dele no Catálogo</b> — o mesmo nos três documentos. É por ele que se acha a mesma linha no Formulário do médico e na Folha da Mesa.<br>
   <strong>Antes de começar, se o Supervisor for assistir (ADR-103):</strong> pergunte a ela, explicando quem ele é — <em>"quem vai te acompanhar do começo ao fim é [nome]; ele pode ouvir com a gente, se você quiser"</em>. Se ela não quiser, a conversa acontece sem ele e ninguém pede explicação; ela pode mudar de ideia no meio. Presente, ele fica calado: não pergunta, não corrige, não preenche.
 </div>
 
@@ -81,7 +83,7 @@
 <p class="sub" style="margin-bottom:8pt">As perguntas que têm voz dela no Método. Marque o que ela escolheu e circule quanto importa. <b>Os conceitos 15 e 16 são exceção: quem pergunta é o Supervisor (ADR-108) — aqui você só transcreve.</b></p>
 
   <section class="bloco">
-    <h4><span class="num">1</span> Modalidade de atendimento</h4>
+    <h4><span class="num">1</span> Modalidade de atendimento<span class="cod">ACESSO_MODALIDADE</span></h4>
     <p class="pergunta">Como você consegue ser atendida?</p>
     <ul class="opcoes"><li><span class="caixa"></span> Preciso de atendimento remoto</li><li><span class="caixa"></span> Prefiro remoto</li><li><span class="caixa"></span> Preciso de atendimento presencial</li><li><span class="caixa"></span> Prefiro presencial</li><li><span class="caixa"></span> Tanto faz</li><li><span class="caixa"></span> Não sei informar</li></ul>
     <p class="palavras">Nas palavras dela: <span class="linha"></span></p>
@@ -89,7 +91,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">2</span> Disponibilidade</h4>
+    <h4><span class="num">2</span> Disponibilidade<span class="cod">ACESSO_DISPONIBILIDADE</span></h4>
     <p class="pergunta">Quando você consegue ser atendida?</p>
     <ul class="opcoes"><li><span class="caixa"></span> Manhã em dias úteis</li><li><span class="caixa"></span> Tarde em dias úteis</li><li><span class="caixa"></span> Noite, após as 18h</li><li><span class="caixa"></span> Sábado</li><li><span class="caixa"></span> Domingo ou feriado</li></ul>
     <p class="palavras">Nas palavras dela: <span class="linha"></span></p>
@@ -97,7 +99,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">3</span> Prazo para a primeira consulta</h4>
+    <h4><span class="num">3</span> Prazo para a primeira consulta<span class="cod">ACESSO_PRAZO_PARA_CONSULTA</span></h4>
     <p class="pergunta">Em quanto tempo você precisa ser atendida?</p>
     <ul class="opcoes"><li><span class="caixa"></span> Em até 7 dias</li><li><span class="caixa"></span> Em até 15 dias</li><li><span class="caixa"></span> Em até 30 dias</li><li><span class="caixa"></span> Sem urgência declarada</li></ul>
     <p class="palavras">Nas palavras dela: <span class="linha"></span></p>
@@ -105,15 +107,15 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">4</span> Local de atendimento</h4>
+    <h4><span class="num">4</span> Local de atendimento<span class="cod">ACESSO_LOCAL_DE_ATENDIMENTO</span></h4>
     <p class="pergunta">De onde você pode se deslocar, e até onde?</p>
-    
+    <ul class="opcoes"><li><span class="caixa"></span> Até 30 minutos</li><li><span class="caixa"></span> Até 1 hora</li><li><span class="caixa"></span> Até 2 horas</li><li><span class="caixa"></span> Qualquer distância</li><li><span class="caixa"></span> Não posso me deslocar</li></ul>
     <p class="palavras">Nas palavras dela: <span class="linha"></span></p>
     <p class="grau"><b>Quanto isto importa para ela?</b> (circule) <span class="escala"><span>Muito importante</span><span>Importante</span><span>Relevante</span><span>Pouco importante</span><span>Não influencia</span></span></p>
   </section>
 
   <section class="bloco">
-    <h4><span class="num">5</span> Retornos</h4>
+    <h4><span class="num">5</span> Retornos<span class="cod">CONTINUIDADE_RETORNOS</span></h4>
     <p class="pergunta">Como você gostaria que fosse o acompanhamento depois da primeira consulta?</p>
     <ul class="opcoes"><li><span class="caixa"></span> Sair com o retorno já marcado</li><li><span class="caixa"></span> Retorno conforme eu evoluir</li><li><span class="caixa"></span> Prefiro procurar quando precisar</li><li><span class="caixa"></span> Quero orientação escrita após a consulta</li><li><span class="caixa"></span> Não tenho preferência</li></ul>
     <p class="palavras">Nas palavras dela: <span class="linha"></span></p>
@@ -121,7 +123,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">6</span> Equipe de apoio</h4>
+    <h4><span class="num">6</span> Equipe de apoio<span class="cod">CONTINUIDADE_EQUIPE_DE_APOIO</span></h4>
     <p class="pergunta">Você precisa de acompanhamento de mais de um tipo de profissional?</p>
     
     <p class="palavras">Nas palavras dela: <span class="linha"></span></p>
@@ -129,7 +131,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">7</span> Coordenação com outros profissionais</h4>
+    <h4><span class="num">7</span> Coordenação com outros profissionais<span class="cod">CONTINUIDADE_COORDENACAO</span></h4>
     <p class="pergunta">Você já é acompanhada por outros profissionais que precisariam conversar entre si?</p>
     <ul class="opcoes"><li><span class="caixa"></span> Sim</li><li><span class="caixa"></span> Não</li><li><span class="caixa"></span> Não sei informar</li></ul>
     <p class="palavras">Nas palavras dela: <span class="linha"></span></p>
@@ -137,7 +139,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">8</span> Canais entre consultas</h4>
+    <h4><span class="num">8</span> Canais entre consultas<span class="cod">CONTINUIDADE_CANAIS</span></h4>
     <p class="pergunta">Você precisa conseguir falar com alguém entre as consultas?</p>
     <ul class="opcoes"><li><span class="caixa"></span> Poder mandar mensagem</li><li><span class="caixa"></span> Um telefone para ligar</li><li><span class="caixa"></span> Contato para urgência fora do horário</li><li><span class="caixa"></span> Basta poder reagendar</li><li><span class="caixa"></span> Não tenho preferência</li></ul>
     <p class="palavras">Nas palavras dela: <span class="linha"></span></p>
@@ -145,7 +147,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">9</span> Como explica</h4>
+    <h4><span class="num">9</span> Como explica<span class="cod">MODELO_COMUNICACAO</span></h4>
     <p class="pergunta">O que te ajudaria a entender melhor o que for explicado?</p>
     <ul class="opcoes"><li><span class="caixa"></span> Explicação sem termos técnicos</li><li><span class="caixa"></span> Que confirmem se eu entendi</li><li><span class="caixa"></span> Algo escrito para levar</li><li><span class="caixa"></span> Desenho ou imagem</li><li><span class="caixa"></span> Tempo para perguntar</li><li><span class="caixa"></span> Poder gravar a conversa</li></ul>
     <p class="palavras">Nas palavras dela: <span class="linha"></span></p>
@@ -153,7 +155,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">10</span> Como conduz decisões</h4>
+    <h4><span class="num">10</span> Como conduz decisões<span class="cod">MODELO_DECISAO_COMPARTILHADA</span></h4>
     <p class="pergunta">Quando houver mais de um caminho possível, como você gostaria de participar da decisão?</p>
     <ul class="opcoes"><li><span class="caixa"></span> Quero decidir, com orientação</li><li><span class="caixa"></span> Quero que o médico recomende e eu confirmo</li><li><span class="caixa"></span> Prefiro que o médico decida</li><li><span class="caixa"></span> Não sei ainda</li></ul>
     <p class="palavras">Nas palavras dela: <span class="linha"></span></p>
@@ -161,7 +163,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">11</span> Participação de acompanhantes</h4>
+    <h4><span class="num">11</span> Participação de acompanhantes<span class="cod">MODELO_PARTICIPACAO_FAMILIAR</span></h4>
     <p class="pergunta">Você quer que alguém participe das conversas?</p>
     <ul class="opcoes"><li><span class="caixa"></span> Quero acompanhante sempre</li><li><span class="caixa"></span> Em algumas conversas</li><li><span class="caixa"></span> Prefiro sozinha</li><li><span class="caixa"></span> Não tenho preferência</li></ul>
     <p class="palavras">Nas palavras dela: <span class="linha"></span></p>
@@ -169,7 +171,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">12</span> Explicação de alternativas</h4>
+    <h4><span class="num">12</span> Explicação de alternativas<span class="cod">MODELO_ALTERNATIVAS</span></h4>
     <p class="pergunta">O que você precisa saber antes de aceitar um tratamento?</p>
     <ul class="opcoes"><li><span class="caixa"></span> Todas as opções disponíveis</li><li><span class="caixa"></span> A opção de não fazer nada</li><li><span class="caixa"></span> Os riscos de cada caminho</li><li><span class="caixa"></span> Os custos de cada caminho</li></ul>
     <p class="palavras">Nas palavras dela: <span class="linha"></span></p>
@@ -177,7 +179,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">13</span> Respeito a recusas e restrições</h4>
+    <h4><span class="num">13</span> Respeito a recusas e restrições<span class="cod">MODELO_PREFERENCIAS_E_RESTRICOES</span></h4>
     <p class="pergunta">Existe algo que você não aceita, ou que precisa ser respeitado no seu cuidado?</p>
     
     <p class="palavras">Nas palavras dela: <span class="linha"></span></p>
@@ -185,7 +187,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">14</span> Condução de notícias difíceis</h4>
+    <h4><span class="num">14</span> Condução de notícias difíceis<span class="cod">MODELO_CONDUCAO_DE_NOTICIAS_DIFICEIS</span></h4>
     <p class="pergunta">Se houver uma notícia difícil, como você prefere recebê-la?</p>
     <ul class="opcoes"><li><span class="caixa"></span> De forma direta e completa</li><li><span class="caixa"></span> No meu ritmo, conforme eu perguntar</li><li><span class="caixa"></span> Com alguém que eu escolher junto</li><li><span class="caixa"></span> Junto com o que pode ser feito a respeito</li><li><span class="caixa"></span> Não sei ainda</li></ul>
     <p class="palavras">Nas palavras dela: <span class="linha"></span></p>
@@ -193,7 +195,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">15</span> Cobertura e convênio</h4>
+    <h4><span class="num">15</span> Cobertura e convênio<span class="cod">VIABILIDADE_COBERTURA_E_CONVENIO</span></h4>
     <p class="fonte">Colhido pelo <b>Supervisor</b> no primeiro contato (ADR-108). Transcreva — <b>não pergunte de novo.</b></p>
     <ul class="opcoes"><li><span class="caixa"></span> Preciso usar este convênio <span class="detalhe">— qual? <span class="linha-curta"></span></span></li><li><span class="caixa"></span> Posso usar reembolso</li><li><span class="caixa"></span> Aceito atendimento particular</li><li><span class="caixa"></span> Preciso confirmar minha cobertura</li><li><span class="caixa"></span> Sem restrição declarada</li><li><span class="caixa"></span> Não se aplica</li></ul>
     <p class="palavras">Nas palavras dela, ao Supervisor: <span class="linha"></span></p>
@@ -201,7 +203,7 @@
   </section>
 
   <section class="bloco">
-    <h4><span class="num">16</span> Custo e pagamento</h4>
+    <h4><span class="num">16</span> Custo e pagamento<span class="cod">VIABILIDADE_CUSTO_E_PAGAMENTO</span></h4>
     <p class="fonte">Colhido pelo <b>Supervisor</b> no primeiro contato (ADR-108). Transcreva — <b>não pergunte de novo.</b></p>
     <ul class="opcoes"><li><span class="caixa"></span> Tenho limite financeiro <span class="detalhe">— qual? <span class="linha-curta"></span></span></li><li><span class="caixa"></span> Preciso saber o valor antes de escolher</li><li><span class="caixa"></span> Aceito até esta faixa <span class="detalhe">— qual? <span class="linha-curta"></span></span></li><li><span class="caixa"></span> Preciso de parcelamento</li><li><span class="caixa"></span> Não declarei restrição</li><li><span class="caixa"></span> Prefiro não informar</li><li><span class="caixa"></span> Não se aplica</li></ul>
     <p class="palavras">Nas palavras dela, ao Supervisor: <span class="linha"></span></p>
@@ -212,91 +214,91 @@
 <p class="sub" style="margin-bottom:8pt">Estes conceitos não têm pergunta direta — a importância vem da leitura da história e da conversa. Circule.</p>
 
   <section class="bloco">
-    <h4><span class="num">17</span> Acompanhamento pós-procedimento</h4>
+    <h4><span class="num">17</span> Acompanhamento pós-procedimento<span class="cod">CONTINUIDADE_POS_PROCEDIMENTO</span></h4>
     <p class="pergunta">O que acontece depois do procedimento, e por quanto tempo.</p>
     <p class="grau"><b>Quanto isto importa para ela?</b> (circule) <span class="escala"><span>Muito importante</span><span>Importante</span><span>Relevante</span><span>Pouco importante</span><span>Não influencia</span></span></p>
     <p class="palavras">Se ela disse algo: <span class="linha"></span></p>
   </section>
 
   <section class="bloco">
-    <h4><span class="num">18</span> Tempo de prática</h4>
+    <h4><span class="num">18</span> Tempo de prática<span class="cod">EXPERIENCIA_TEMPO_DE_PRATICA</span></h4>
     <p class="pergunta">Há quanto tempo atua na especialidade.</p>
     <p class="grau"><b>Quanto isto importa para ela?</b> (circule) <span class="escala"><span>Muito importante</span><span>Importante</span><span>Relevante</span><span>Pouco importante</span><span>Não influencia</span></span></p>
     <p class="palavras">Se ela disse algo: <span class="linha"></span></p>
   </section>
 
   <section class="bloco">
-    <h4><span class="num">19</span> Volume de atuação</h4>
+    <h4><span class="num">19</span> Volume de atuação<span class="cod">EXPERIENCIA_VOLUME_DE_ATUACAO</span></h4>
     <p class="pergunta">Com que frequência atende esse tipo de caso.</p>
     <p class="grau"><b>Quanto isto importa para ela?</b> (circule) <span class="escala"><span>Muito importante</span><span>Importante</span><span>Relevante</span><span>Pouco importante</span><span>Não influencia</span></span></p>
     <p class="palavras">Se ela disse algo: <span class="linha"></span></p>
   </section>
 
   <section class="bloco">
-    <h4><span class="num">20</span> Experiência no tipo de caso</h4>
+    <h4><span class="num">20</span> Experiência no tipo de caso<span class="cod">EXPERIENCIA_NO_TIPO_DE_CASO</span></h4>
     <p class="pergunta">Experiência na condição/procedimento e em casos semelhantes. Fusão de EXPERIENCIA_CASOS_SEMELHANTES e EXPERIENCIA_CONDICAO_OU_PROCEDIMENTO.</p>
     <p class="grau"><b>Quanto isto importa para ela?</b> (circule) <span class="escala"><span>Muito importante</span><span>Importante</span><span>Relevante</span><span>Pouco importante</span><span>Não influencia</span></span></p>
     <p class="palavras">Se ela disse algo: <span class="linha"></span></p>
   </section>
 
   <section class="bloco">
-    <h4><span class="num">21</span> Limites de atuação</h4>
+    <h4><span class="num">21</span> Limites de atuação<span class="cod">PRATICA_LIMITES_DE_ATUACAO</span></h4>
     <p class="pergunta">O que o profissional NÃO atende e quando encaminha. Protege o assistido: sem ele, a incompatibilidade só aparece na consulta — depois da espera, do deslocamento e do custo. É a Área de Atuação em negativo, e alimenta o filtro eliminatório da Curadoria.</p>
     <p class="grau"><b>Quanto isto importa para ela?</b> (circule) <span class="escala"><span>Muito importante</span><span>Importante</span><span>Relevante</span><span>Pouco importante</span><span>Não influencia</span></span></p>
     <p class="palavras">Se ela disse algo: <span class="linha"></span></p>
   </section>
 
   <section class="bloco">
-    <h4><span class="num">22</span> Graduação</h4>
+    <h4><span class="num">22</span> Graduação<span class="cod">FORMACAO_GRADUACAO</span></h4>
     <p class="pergunta">Onde e quando se formou em medicina.</p>
     <p class="grau"><b>Quanto isto importa para ela?</b> (circule) <span class="escala"><span>Muito importante</span><span>Importante</span><span>Relevante</span><span>Pouco importante</span><span>Não influencia</span></span></p>
     <p class="palavras">Se ela disse algo: <span class="linha"></span></p>
   </section>
 
   <section class="bloco">
-    <h4><span class="num">23</span> Residência médica</h4>
+    <h4><span class="num">23</span> Residência médica<span class="cod">FORMACAO_RESIDENCIA</span></h4>
     <p class="pergunta">Residência concluída na especialidade em questão.</p>
     <p class="grau"><b>Quanto isto importa para ela?</b> (circule) <span class="escala"><span>Muito importante</span><span>Importante</span><span>Relevante</span><span>Pouco importante</span><span>Não influencia</span></span></p>
     <p class="palavras">Se ela disse algo: <span class="linha"></span></p>
   </section>
 
   <section class="bloco">
-    <h4><span class="num">24</span> Especialização</h4>
+    <h4><span class="num">24</span> Especialização<span class="cod">FORMACAO_ESPECIALIZACAO</span></h4>
     <p class="pergunta">Título de especialista ou especialização formal na área.</p>
     <p class="grau"><b>Quanto isto importa para ela?</b> (circule) <span class="escala"><span>Muito importante</span><span>Importante</span><span>Relevante</span><span>Pouco importante</span><span>Não influencia</span></span></p>
     <p class="palavras">Se ela disse algo: <span class="linha"></span></p>
   </section>
 
   <section class="bloco">
-    <h4><span class="num">25</span> Fellowship</h4>
+    <h4><span class="num">25</span> Fellowship<span class="cod">FORMACAO_FELLOWSHIP</span></h4>
     <p class="pergunta">Formação avançada em subárea, no país ou fora.</p>
     <p class="grau"><b>Quanto isto importa para ela?</b> (circule) <span class="escala"><span>Muito importante</span><span>Importante</span><span>Relevante</span><span>Pouco importante</span><span>Não influencia</span></span></p>
     <p class="palavras">Se ela disse algo: <span class="linha"></span></p>
   </section>
 
   <section class="bloco">
-    <h4><span class="num">26</span> Formação complementar</h4>
+    <h4><span class="num">26</span> Formação complementar<span class="cod">FORMACAO_COMPLEMENTAR</span></h4>
     <p class="pergunta">Pós-graduação e cursos relevantes.</p>
     <p class="grau"><b>Quanto isto importa para ela?</b> (circule) <span class="escala"><span>Muito importante</span><span>Importante</span><span>Relevante</span><span>Pouco importante</span><span>Não influencia</span></span></p>
     <p class="palavras">Se ela disse algo: <span class="linha"></span></p>
   </section>
 
   <section class="bloco">
-    <h4><span class="num">27</span> Trajetória institucional</h4>
+    <h4><span class="num">27</span> Trajetória institucional<span class="cod">HISTORICO_TRAJETORIA_INSTITUCIONAL</span></h4>
     <p class="pergunta">Serviços e instituições em que atuou.</p>
     <p class="grau"><b>Quanto isto importa para ela?</b> (circule) <span class="escala"><span>Muito importante</span><span>Importante</span><span>Relevante</span><span>Pouco importante</span><span>Não influencia</span></span></p>
     <p class="palavras">Se ela disse algo: <span class="linha"></span></p>
   </section>
 
   <section class="bloco">
-    <h4><span class="num">28</span> Atividade acadêmica</h4>
+    <h4><span class="num">28</span> Atividade acadêmica<span class="cod">HISTORICO_ATIVIDADE_ACADEMICA</span></h4>
     <p class="pergunta">Produção científica, ensino e formação de outros. Fusão de HISTORICO_PRODUCAO_ACADEMICA e HISTORICO_ENSINO_E_PESQUISA.</p>
     <p class="grau"><b>Quanto isto importa para ela?</b> (circule) <span class="escala"><span>Muito importante</span><span>Importante</span><span>Relevante</span><span>Pouco importante</span><span>Não influencia</span></span></p>
     <p class="palavras">Se ela disse algo: <span class="linha"></span></p>
   </section>
 
   <section class="bloco">
-    <h4><span class="num">29</span> Áreas de atuação</h4>
+    <h4><span class="num">29</span> Áreas de atuação<span class="cod">HISTORICO_AREAS_DE_ATUACAO</span></h4>
     <p class="pergunta">Áreas em que atua hoje. Formalização: já existia como professional_practice_areas; passa a ser conceito do catálogo.</p>
     <p class="grau"><b>Quanto isto importa para ela?</b> (circule) <span class="escala"><span>Muito importante</span><span>Importante</span><span>Relevante</span><span>Pouco importante</span><span>Não influencia</span></span></p>
     <p class="palavras">Se ela disse algo: <span class="linha"></span></p>

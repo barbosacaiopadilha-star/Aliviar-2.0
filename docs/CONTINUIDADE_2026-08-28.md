@@ -477,6 +477,45 @@ com a mesma classe `pergunta` das perguntas de verdade. Não muda o que a pessoa
 lê — o texto ali é definição, não pergunta —, mas foi o que fez a primeira
 versão do teste contar 27 onde eu esperava 14. Ficou anotado no teste.
 
+### A simetria dos três papéis, e o endereço que faltava (31/08)
+
+**Análise conjunta da Ficha dela, do Formulário dele e da Folha da Mesa**, pedida
+pelo Fundador com uma condição: mudar sem a Mesa endoidar. Seis achados
+registrados, `SIM-66` a `SIM-71`; **dois corrigidos, e só os que custam papel.**
+
+**O que estava debaixo de tudo (`SIM-66`, aberto):** cada opção do médico tem no
+Catálogo o campo `satisfiedBy` — *"esta resposta dele atende àquele pedido
+dela"*. **Está nulo nas 139.** E 20 dos 29 conceitos se dizem
+`cruzamento: "automatico"` sem nada com que automatizar. **O cruzamento inteiro
+mora hoje na cabeça do Curador, na mesa, 29 linhas × 3 médicos.**
+
+**Corrigido 1 — o endereço canônico (`SIM-67`).** Os três papéis numeravam os
+mesmos 29 de três formas: o **5** dele era o **21** dela, o **6** dele era o
+**15** dela, e a Folha agrupava numa sétima ordem. Montar a Folha custava
+**116 buscas por nome** em cinco papéis. **As três ordens estão certas** — cada
+uma serve ao seu leitor; o que faltava era um **endereço**, e ele já existia: o
+`code` do Catálogo. Os três passam a imprimi-lo, com legenda na Ficha e na Folha
+(no formulário do médico fica marca discreta, sem legenda: para ele é ruído,
+para o Curador é ferramenta). Páginas intactas — 9, 10 e 3.
+
+**Corrigido 2 — a Ficha tinha perdido opções do Catálogo (`SIM-68`).** Conferidas
+as 16 perguntas dela contra a fonte: quinze batiam, uma não.
+`ACESSO_LOCAL_DE_ATENDIMENTO` tem cinco opções — **em tempo de viagem**, que é
+como as pessoas medem distância — e o papel mostrava só uma linha aberta. Era
+exatamente a pergunta que a revisão da manhã tinha apontado como a pior da ficha:
+**a resposta certa já existia e o papel a perdera.**
+
+**Guarda nova, `tests/unit/enderecos-do-catalogo.test.ts`, e a forma dela importa:**
+**lê o próprio Catálogo**, não uma lista. Conceito novo reprova o papel que ainda
+não o tem — o `SIM-63` resolvido pela raiz em vez de por vigilância.
+
+**Aberto, com fundamento escrito** (`SIM-69`/`SIM-70`/`SIM-71`): nove pares fora
+do mesmo eixo; o conceito 13, onde o silêncio provável dela apaga a opção mais
+eliminatória dele (*"não acompanha quem recusa a conduta indicada"*); e a revisão
+das 16 do lugar de quem responde. **A regra de projeto que sai disso, e vale para
+toda mudança futura: nunca mexer num lado só.** Tudo isso custa migration +
+regeneração do Catálogo + paridade, e espera a primeira Curadoria real (ADR-073).
+
 ---
 
 ## 6 · As lições desta sessão
@@ -579,6 +618,17 @@ divergem, quem vence é o formulário, porque é ele que está na mão na hora. 
 auditar doutrina, ler os dois, e cruzar: **todo campo do formulário tem que ter
 uma linha de roteiro que o mande preencher.** Campo órfão é regra que ninguém
 decidiu.
+
+**14 · Documento gerado à mão a partir de uma fonte viva diverge em silêncio.**
+A Ficha impressa perdeu as cinco opções que o Catálogo dá a ela no conceito 4, e
+ninguém viu — quatro auditorias de conteúdo e uma revisão inteira das perguntas
+passaram por cima, porque **todas leram o papel contra si mesmo**, nunca contra a
+fonte. O papel não estava errado por dentro: estava **desatualizado por fora**, e
+isso é invisível a qualquer leitura que não abra os dois. **A guarda tem que ler
+a fonte**, não uma cópia da lista — foi assim que o `enderecos-do-catalogo` ficou
+capaz de acusar um conceito que ainda nem existe. É irmã da lição 13: lá o defeito
+estava entre roteiro e formulário, aqui está entre papel e banco. **Nos dois casos,
+o erro mora no espaço ENTRE dois artefatos que ninguém compara.**
 
 ---
 
