@@ -15,6 +15,14 @@
 
 **Data:** 2026-08-31 · **Autor:** Engenheiro Líder (Claude) · **Decide:** o Fundador, com o advogado.
 
+> **EMENDA DO MESMO DIA — leia antes do resto.** Esta leitura foi escrita a
+> partir do *documento de perguntas*, **sem os cinco documentos em mãos**. Horas
+> depois eles chegaram e entraram no repositório (`docs/juridico/`). **Uma das
+> minhas observações caiu ao confronto com o texto real** — a do foro, corrigida
+> na seção 7. As demais se sustentaram. Fica registrado que ler o resumo não é
+> ler o documento, e que eu levantei alarme sobre uma cláusula que não tinha
+> lido.
+
 ---
 
 ## Sumário da leitura
@@ -28,7 +36,7 @@
 | **D-8** prazo do DSR | 15 dias corridos | **Alta** |
 | **[19]** precedência Anexo × Procuração | O sistema não precisa da resposta para ser seguro | **Alta** |
 | **C11** preço no contrato | Respondido pela ADR-107 | **Certa** |
-| **[5] / C-foro** comarca | **Risco: cláusula de foro pode ser abusiva** | **Alta** |
+| ~~**[5] / C-foro** comarca~~ | **Alarme meu, retirado em 31/08** — a cláusula já ressalva o consumidor | **Alta** |
 | **C8** renovação automática | Evitar na V1 | **Média-alta** |
 | **[9]** Política e Termos do site | Não é trabalho do advogado; é nosso | **Alta** |
 
@@ -295,21 +303,26 @@ campo é **fixo no modelo**, não variável por pessoa. Isso simplifica a geraç
 
 ## O campo que esconde um risco — o foro
 
-**`[5]` (cláusula 15.1) está em branco, e a resposta óbvia é a errada.**
+**CORRIGIDO em 31/08, ao ler o contrato real. Eu estava errado, e vale dizer
+como.**
 
-A tentação é eleger a comarca da sede — **Areial/PB**. Mas esta é **relação de
-consumo**: o CDC (art. 101, I) assegura ao consumidor propor ação **no seu
-próprio domicílio**, e cláusula de eleição de foro que dificulta a defesa do
-consumidor é passível de nulidade (art. 51, IV e §1º; e o próprio CPC permite ao
-juiz reconhecer de ofício a abusividade em contrato de adesão).
+Escrevi que a cláusula de foro seria um risco de abusividade — que eleger a
+comarca da sede (Areial/PB) faria a cláusula cair perante uma assistida de São
+Paulo, pelo CDC (art. 101, I; art. 51, IV). **O raciocínio está certo; o alarme
+não, porque a cláusula já se protege.** O texto real, que eu não tinha lido:
 
-**Concretamente:** uma assistida de São Paulo, com contrato de adesão eletrônico,
-não seria obrigada a litigar em Areial. A cláusula tende a cair, e ter uma
-cláusula que cai é pior que não tê-la — comunica desatenção no documento que a
-pessoa lê antes de confiar.
+> *"15.1. Fica eleito o foro da comarca de [cidade/UF], com renúncia a qualquer
+> outro, por mais privilegiado que seja, **sem prejuízo das regras protetivas
+> eventualmente aplicáveis ao consumidor**."*
 
-**Leitura: eleger o foro do domicílio do consumidor, ou não eleger foro.**
-É pergunta objetiva e direta ao advogado. **Confiança: alta.**
+A ressalva final é exatamente a proteção que eu disse faltar. O advogado
+antecipou o ponto. **O que resta é só preencher a comarca** — e a escolha de
+Areial/PB não cria o risco que eu apontei, porque a própria cláusula cede às
+regras do consumidor quando elas incidirem.
+
+**Fica como pergunta menor, não como risco:** vale confirmar se ele prefere a
+comarca da sede ou a do domicílio do contratante — mas nenhuma das duas quebra o
+instrumento. **Confiança: alta**, agora com o texto na mão.
 
 ## Os que faltam e são do Fundador, não do advogado
 
