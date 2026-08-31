@@ -164,3 +164,63 @@ describe("Quem colhe o quê — ADR-108", () => {
     contem("docs/guias/2-supervisor.html", "conceitos 15 e 16");
   });
 });
+
+/**
+ * DE QUEM É O JUÍZO — guarda do rótulo da Parte 5.
+ *
+ * A escala perguntava, nos vinte e nove conceitos, **"Quanto isto importa para
+ * ela?"** — e a Folha da Mesa copiava isso numa coluna chamada **"Importância
+ * (dela)"**. Mas em **treze deles a pessoa não é perguntada**: a Parte 5 diz,
+ * na própria abertura, que ali a importância vem da leitura da história. Era
+ * juízo do Curador rotulado como declaração dela, e cruzado na Mesa como se
+ * fosse — dez dos treze sendo credenciais do médico (graduação, residência,
+ * fellowship, produção acadêmica), sobre as quais ela nunca abriu a boca.
+ *
+ * O produto inteiro se apoia em *"o critério é dela, não nosso"*. Um
+ * instrumento que atribui a ela treze critérios que ela não declarou desmente
+ * essa frase todo dia, em papel, na frente de quem assina embaixo. É a mesma
+ * família do `SIM-55` e do `SIM-28`: **autoria atribuída errado**.
+ *
+ * A regra é de contagem, e é o que a torna verificável: a Parte 4 tem 16
+ * rótulos com a voz dela, a Parte 5 tem 13 com a leitura dele, e **nenhuma das
+ * duas tem o rótulo da outra**. Mover um conceito de parte sem trocar o rótulo
+ * quebra este teste antes de imprimir.
+ */
+describe("De quem é o juízo — o rótulo da Parte 5", () => {
+  const ficha = readFileSync(path.join(RAIZ, "docs/rede/ficha-do-assistido.html"), "utf-8");
+  const folha = readFileSync(path.join(RAIZ, "docs/rede/folha-da-mesa.html"), "utf-8");
+
+  const DELA = "Quanto isto importa para ela?";
+  const DELE = "Quanto isto pesa neste caso?";
+
+  const partes = () => {
+    const i5 = ficha.indexOf("Parte 5 —");
+    const i6 = ficha.indexOf("Parte 6 —");
+    expect(i5, "a Parte 5 sumiu da Ficha").toBeGreaterThan(-1);
+    expect(i6, "a Parte 6 sumiu da Ficha").toBeGreaterThan(i5);
+    return { parte4: ficha.slice(0, i5), parte5: ficha.slice(i5, i6) };
+  };
+  const contar = (texto: string, agulha: string) => texto.split(agulha).length - 1;
+
+  it("a Parte 4 pergunta a ela, e só a ela — os 16 conceitos com voz dela", () => {
+    const { parte4 } = partes();
+    expect(contar(parte4, DELA), "a Parte 4 deixou de ter 16 rótulos com a voz dela").toBe(16);
+    expect(contar(parte4, DELE), "rótulo de leitura do Curador vazou para a Parte 4").toBe(0);
+  });
+
+  it("a Parte 5 não atribui a ela o que é leitura do Curador — os 13", () => {
+    const { parte5 } = partes();
+    expect(contar(parte5, DELE), "a Parte 5 deixou de ter 13 rótulos de leitura do Curador").toBe(13);
+    expect(contar(parte5, DELA), "a Parte 5 voltou a chamar de dela o juízo do Curador").toBe(0);
+    expect(parte5, "a abertura da Parte 5 parou de dizer que ela não é perguntada").toContain(
+      "a pessoa não é perguntada sobre nenhum deles",
+    );
+  });
+
+  it("a Folha da Mesa não chama de dela a coluna que mistura as duas origens", () => {
+    expect(folha, 'a coluna voltou a se chamar "Importância (dela)"').not.toContain("Importância (dela)");
+    expect(folha, "a legenda parou de explicar a marca °").toContain("as linhas com °");
+    // Uma marca por conceito da Parte 5 — nem a mais, nem a menos.
+    expect(folha.split(" <b>°</b>").length - 1, "as 13 linhas de leitura do Curador perderam a marca").toBe(13);
+  });
+});

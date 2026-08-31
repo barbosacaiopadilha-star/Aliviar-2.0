@@ -439,14 +439,18 @@ Curador circula a importância a partir da leitura da história, e dez dos treze
 são credenciais do médico (graduação, residência, fellowship, produção
 acadêmica).
 
-**Achado ainda aberto, com o Fundador:** a escala dos 29 pergunta *"Quanto isto
+**Corrigido no fim do dia (`SIM-73`), por decisão do Fundador:** a escala dos 29 perguntava *"Quanto isto
 importa **para ela**?"* e a Folha da Mesa copia isso numa coluna chamada
 **"Importância (dela)"**. Mas em **13 dos 29 ela não disse nada** — é juízo do
 Curador rotulado como declaração dela, e cruzado na Mesa como se fosse. Mesma
 família do `SIM-55` e do `SIM-28`: autoria atribuída errado. **O conserto é de
-rótulo, não de método** — na Parte 5 a escala deveria dizer *"quanto isto pesa
-neste caso (leitura do Curador)"*. Não foi feito: o Fundador respondeu sobre o
-dinheiro, não sobre isto.
+rótulo, não de método** — e foi exatamente isso: a Parte 5 passa a dizer
+*"Quanto isto pesa neste caso? — leitura do Curador, ela não é perguntada"*, a
+abertura da Parte 5 nomeia a consequência, e na Folha a coluna vira
+**"Importância"** com as treze linhas marcadas com **°**. Os cinco níveis ficam
+como estavam: mexer neles quebraria a cópia para a Folha. Guarda por contagem —
+16 rótulos com a voz dela, 13 com a leitura dele, nenhuma parte com o rótulo da
+outra.
 
 **Outros dois achados, não corrigidos de propósito** (mexem em pergunta, e
 pergunta alterada às vésperas do Ensaio é instrumento que ninguém leu):
