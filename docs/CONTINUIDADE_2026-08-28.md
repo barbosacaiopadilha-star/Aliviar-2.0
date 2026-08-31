@@ -19,10 +19,18 @@ em `C:\Users\barbo\OneDrive\Desktop\PROJETOS DO CLAUDE\aliviar`.
 pendente. O commit vigente se confere em `/api/build-info`, que devolve o que
 está de fato no ar — o deploy leva cerca de um minuto depois do `push`.
 
-**E O SÁBADO ESTÁ VERIFICADO PRONTO** (verificação final de 30/08, rodada — não
-afirmada): repo = produção, pasta da mesa **18/18** byte a byte, conteúdo
-crítico **12/12**, R$ 450 morto em toda superfície, 13 guardas verdes, Kit
-**14/14** no ar. O que resta para o Ensaio de 05/09 é humano e está no PRE-VOO
+**E O SÁBADO ESTÁ VERIFICADO PRONTO** (verificação de 30/08, **refeita em
+31/08 depois das mudanças do dia** — rodada, não afirmada): repo = produção,
+pasta da mesa **18/18 byte a byte**, conteúdo crítico **12/12**, R$ 450 morto em
+toda superfície, **2672 testes verdes** (era 2664 antes do dia), Kit **14/14** no
+ar. *O handoff de 30/08 dizia aqui "13 guardas verdes"; não consegui reconstruir
+o que aquele número contava, então troquei pelo total da suíte, que é medido.*
+
+**Oito dos dezoito documentos foram regravados em 31/08**, por três mudanças que
+alteram o que se faz na sala: a ADR-108 (o Curador não fala de dinheiro), o
+endereço canônico nos três papéis do cruzamento, e o rótulo da Parte 5 — mais
+**três guardas novas** que as travam. **O `LEIA-ME.txt` da pasta abre com as
+três** — quem imprimiu antes de 31/08 precisa imprimir de novo. O que resta para o Ensaio de 05/09 é humano e está no PRE-VOO
 da pasta da mesa: as quatro pessoas, a impressão com a separação das folhas, e
 telefone-relógio-canetas.
 
@@ -219,6 +227,14 @@ Landing foi revisada inteira (notebook e celular, nada a consertar), e uma
 âncoras da navegação (`SIM-64`), corrigido e com guarda endurecida no mesmo
 commit. Vocabulário, promessas, rotas, links, alt de imagem e console: limpos.
 
+**E em 31/08 a evidência virou tripla, na direção que importa: o defeito parou
+de estar na tela e passou a estar nos INSTRUMENTOS.** Os três papéis que a Mesa
+cruza levaram três correções num dia — o Curador perguntava o orçamento dela
+(ADR-108), os 29 conceitos não tinham endereço comum (`SIM-67`), e treze
+critérios do Curador eram rotulados como declaração dela (`SIM-73`). Nenhum
+apareceu em auditoria de tela, porque **nenhum estava na tela.** Tudo em
+produção e conferido no PDF baixado de lá.
+
 ---
 
 ## 4 · Decisões que estão com o Fundador
@@ -233,7 +249,7 @@ commit. Vocabulário, promessas, rotas, links, alt de imagem e console: limpos.
 | **Como se cobra** | **Não existe cobrança nenhuma no código** — nem gateway, nem assinatura, nem link. O preço está decidido até os centavos e não há como recebê-lo. Decisão + link, FORA da plataforma (ver §2 da conversa de 31/08: construir isso agora é congelar em código regras que ninguém tem opinião para dar). |
 | **Conta PJ, contador, nota fiscal** | **Não há traço disso no repositório.** Se não existir, vem antes do link de pagamento — receber sem poder emitir nota é problema guardado, não começo. |
 | **ADR-095** — tamanho da Mesa | Esperar o uso real. |
-| **Domínio próprio** | Serve para estranhos. A primeira Curadoria não tem estranhos. |
+| **Domínio próprio** | **MUDOU EM 31/08 (`SIM-72`): a Aliviar TEM o domínio, e o código dizia que não.** No RDAP do registro.br, `aliviarcuradoriamedica.com.br` está `active`, **em nome de Caio Padilha, pago até 13/07/2027**, e o DNS na Hostinger já aponta para a Vercel. Só não está ligado a projeto nenhum — ficou com o `aliviar-curadoria-medica-prod`, que foi apagado. **Dois passos, os dois do Fundador:** painel da Vercel → projeto `aliviar` → *Domains* → adicionar o domínio e o `www.`; depois definir `NEXT_PUBLIC_SITE_URL`. **Nenhuma linha de código muda** — o `site-url.ts` já lê a variável primeiro. Continua verdade que a primeira Curadoria não tem estranhos; o que deixou de ser verdade é que o domínio não existe, e o site se anuncia como `aliviar-2-0.vercel.app` por causa dessa frase errada. **Vigiar: 13/07/2027.** |
 | **"Quem somos"** | **Não pode ser escrito pelo agente.** Precisa de fatos que só o Fundador tem: quem está por trás, com que formação, por quê. Preencher por conta própria seria afirmar o que o sistema não garante (ADR-064) — numa página sobre confiança, o pior lugar possível. |
 
 ---
@@ -520,6 +536,50 @@ das 16 do lugar de quem responde. **A regra de projeto que sai disso, e vale par
 toda mudança futura: nunca mexer num lado só.** Tudo isso custa migration +
 regeneração do Catálogo + paridade, e espera a primeira Curadoria real (ADR-073).
 
+### A medição do Motor, e o que ela agravou (31/08)
+
+Perguntado pelo Fundador se todas as questões somam no Motor, medi o Catálogo:
+**11 `DIRETO` · 14 `INDIRETO` · 4 `NUNCA`.** Só onze dos vinte e nove entram na
+conta. **As cinco de Formação são todas `INDIRETO`** — credencial não vira
+ponto, e isso é a doutrina *"nós não ranqueamos"* escrita no banco, não só no
+roteiro.
+
+Dois fatos disso agravaram achados do mesmo dia, e as emendas estão no registro:
+
+- **`MODELO_PREFERENCIAS_E_RESTRICOES` é `NUNCA`** — e é o único dos quatro
+  `NUNCA` com **zero opções do lado dela**. O único conceito que **elimina
+  caminhos** não entra no Motor de forma alguma. Contra o médico que declara
+  *"não acompanha quem recusa a conduta indicada"*, **a única proteção que
+  existe é o Curador ter perguntado bem e ter lembrado na hora da Mesa** (`SIM-70`).
+- **`CONTINUIDADE_EQUIPE_DE_APOIO` é `automatico` E `DIRETO`** — soma no Motor
+  sozinho — **e tem zero opções do lado dela.** É o único dos onze que soma com
+  um dos lados vazio. É o `SIM-66` na forma mais concreta (`SIM-66`).
+
+**Um comentário errado ficou anotado, não consertado:** o `catalogo-gerado.ts`
+diz, no bloco que define `motorParticipation`, que *"entre os `humano` há dois
+`NUNCA` e um `INDIRETO`"*. A medição dá **4 e 9**. É de uma versão anterior do
+Catálogo, no arquivo que todo mundo lê para entender a semântica. Corrigir exige
+mexer no gerador e regenerar com o Supabase local.
+
+### O domínio que a Aliviar tinha e o código dizia que não (`SIM-72`, 31/08)
+
+Conferindo o deploy, `www.aliviarcuradoriamedica.com.br` respondia
+**`DEPLOYMENT_NOT_FOUND`**. **O domínio está vivo e é dele** — `active` no RDAP,
+em nome de Caio Padilha, pago até 13/07/2027, DNS já apontando para a Vercel. O
+que sumiu foi o projeto `aliviar-curadoria-medica-prod`, que segurava a ligação.
+
+**O comentário do `src/lib/site-url.ts` afirmava como fato *"domínio que a
+Aliviar não tem mais"* — e é essa premissa falsa que mantém o site se anunciando
+como `aliviar-2-0.vercel.app`.** Reescrito com a medição e com o caminho de
+volta. **A resolução por ambiente fica:** foi um endereço fixo em três arquivos
+que sobreviveu, em silêncio, ao dia em que o domínio parou de responder — o
+mecanismo estava certo, só a razão registrada estava errada.
+
+**E eu errei no meio disso, do jeito que a lição 11 descreve.** Anunciei que
+canonical e sitemap apontavam para página morta, lendo a linha 5 do arquivo num
+resultado de `grep` — aquela linha é o comentário explicando que ele **parou**
+de usar o domínio. **A produção publica `aliviar-2-0.vercel.app` corretamente.**
+
 ---
 
 ## 6 · As lições desta sessão
@@ -603,6 +663,16 @@ o texto real já resolvia. As análises que descrevem um documento são boas o
 bastante para dar confiança falsa. **Quando a conclusão for "há um risco aqui",
 abra a fonte primária antes de dizê-lo** — e se não puder abrir, diga que não
 pôde.
+
+**E aconteceu DE NOVO em 31/08, o que muda o peso da lição.** Anunciei que o
+`site-url.ts` fazia canonical e sitemap apontarem para um domínio morto. A prova
+que eu tinha era **uma linha de `grep`** — a linha 5 do arquivo, que é o
+comentário explicando que ele **parou** de usar aquele domínio. Bastavam trinta
+linhas de leitura. **O padrão comum às duas vezes não é preguiça, é o formato:
+grep e resumo entregam a menção sem o contexto que a nega**, e uma menção
+parece confirmação. **Regra prática, já que a lição sozinha não bastou: alarme
+de produção não sai sem eu ter aberto o arquivo inteiro — e a frase que anuncia
+o alarme diz de onde veio a evidência.**
 
 **12 · Renumerar uma lista quebra em silêncio toda referência numérica a ela.**
 O Ensaio ganhou um ato no começo e a linha do observador — escrita quando a
@@ -792,7 +862,13 @@ o erro mora no espaço ENTRE dois artefatos que ninguém compara.**
    Fundador toma sozinho.
 3. **`SIM-62` grupo (b)** — `admin-dashboard.spec.ts` vermelho desde 24/08.
 4. **`SIM-60`** — o gate de aceite, mina registrada, não pedido de obra.
-5. **`PRIV-04`** — a exclusão não alcança o storage. P0, depende da D-08.
+5. **O domínio próprio, dois cliques (`SIM-72`)** — ligar
+   `aliviarcuradoriamedica.com.br` ao projeto `aliviar` no painel da Vercel e
+   definir `NEXT_PUBLIC_SITE_URL`. **Nenhuma linha de código.** Está aqui, e não
+   mais abaixo, porque o domínio **já está pago até 13/07/2027** e o site se
+   anuncia como `aliviar-2-0.vercel.app` — numa empresa cujo produto é
+   confiança, isso não é cosmético.
+6. **`PRIV-04`** — a exclusão não alcança o storage. P0, depende da D-08.
 
 ---
 
