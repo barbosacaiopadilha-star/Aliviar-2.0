@@ -1,8 +1,8 @@
- Convite das quatro pessoas — Ensaio Geral de 05/09/2026
+# Convite das quatro pessoas — Ensaio Geral de 05/09/2026
 
-Escritas em 31/08. Copie, troque o [nome] e envie.
+Escritas em 31/08. Copie, troque o `[nome]` e envie.
 
-Uma coisa vale para as quatro: não sabemos quanto dura. Descobrir isso é
+Uma coisa vale para as quatro: **não sabemos quanto dura.** Descobrir isso é
 metade do motivo do ensaio. Por isso todas pedem a manhã inteira — é melhor
 reservar demais do que interromper no meio.
 
@@ -12,7 +12,7 @@ instrumento.
 
 ---
 
- 1 · Para quem vai interpretar a paciente
+## 1 · Para quem vai interpretar a paciente
 
 Oi, [nome]! Preciso de você num sábado, e é o papel mais importante do dia.
 
@@ -36,7 +36,7 @@ justamente parte do que a gente vai fazer.
 
 ---
 
- 2 · Para quem vai fazer o supervisor
+## 2 · Para quem vai fazer o supervisor
 
 Oi, [nome]! No sábado 5/9, de manhã, a gente vai ensaiar um atendimento inteiro
 da Aliviar, e eu queria você no papel do supervisor.
@@ -65,7 +65,7 @@ Roteiro do Supervisor. Reserva a manhã?
 
 ---
 
- 3 · Para quem vai atender o telefone dos dois médicos
+## 3 · Para quem vai atender o telefone dos dois médicos
 
 Oi, [nome]! Preciso de uma ajuda sua no sábado 5/9, de manhã — e é um papel
 divertido.
@@ -91,7 +91,7 @@ exatamente a que horas — os tempos são justamente o que a gente vai medir.
 
 ---
 
- 4 · Para o observador
+## 4 · Para o observador
 
 Oi, [nome]! Tenho um convite meio estranho para o sábado 5/9, de manhã: eu
 preciso de alguém para não trabalhar.
@@ -115,10 +115,10 @@ Reserva a manhã?
 
 ---
 
- Ao enviar
+## Ao enviar
 
-- O supervisor precisa dos PDFs nº 1 e nº 2 da pasta "2 - Para ler antes".
-- Quem faz os médicos precisa só das Partes 2 e 3 do Ensaio Geral. O PDF
+- **O supervisor precisa dos PDFs nº 1 e nº 2** da pasta *"2 - Para ler antes"*.
+- **Quem faz os médicos precisa só das Partes 2 e 3** do Ensaio Geral. O PDF
   inteiro entrega o resto do dia junto, e aí o segredo acaba.
-- Envie no mesmo dia, não na sexta. Um "não posso" descoberto na sexta não se
+- **Envie no mesmo dia, não na sexta.** Um "não posso" descoberto na sexta não se
   ajusta: adia. A primeira marcação do Ensaio caiu exatamente aqui.

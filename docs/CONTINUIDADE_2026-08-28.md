@@ -594,7 +594,7 @@ de usar o domínio. **A produção publica `aliviar-2-0.vercel.app` corretamente
 não é o instrumento — é gente não confirmada, e um "não posso" descoberto na
 sexta adia o sábado inteiro. As quatro estão em
 `docs/rede/ensaio/mensagens-2026-09-05.txt` e na pasta da mesa, prontas para
-encaminhar: trocar o `[nome]` e enviar.
+encaminhar: trocar o `[nome]` e enviar. **A fonte é o `.md`**, e dele saem o `.txt` (para copiar do celular) e o `.pdf` (3 páginas, na pasta da mesa) — o mesmo padrão do pré-voo, **para os dois nunca divergirem.** Escrever o texto à mão num `.txt` e gerar um PDF à parte teria criado a classe de defeito do `SIM-68`, em que a Ficha impressa perdeu opções que o Catálogo tinha.
 
 **Como foram escritas, e o porquê de cada escolha:**
 
