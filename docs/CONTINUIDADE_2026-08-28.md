@@ -255,6 +255,7 @@ produção e conferido no PDF baixado de lá.
 | **A resposta do advogado** | **Novo item, e é o gargalo de tudo que envolve dinheiro e estranho.** Os cinco documentos CHEGARAM em 31/08 e estão em `docs/juridico/` — o que falta são as respostas às perguntas enviadas em **03/08**, quatro semanas paradas. Sem elas: sem contrato assinável, sem aceite, sem cobrança legítima, sem pessoa de fora. Prioridade: **D-6** (as testemunhas) e os campos em branco. **Já adiantado para acelerar a resposta:** a leitura técnica de cada pendência e a Política de Privacidade escrita — os dois em PDF, prontos para anexar. O pedido a ele passa a ser *confirmar ou corrigir*, não redigir. |
 | **Como se cobra** | **Não existe cobrança nenhuma no código** — nem gateway, nem assinatura, nem link. O preço está decidido até os centavos e não há como recebê-lo. Decisão + link, FORA da plataforma (ver §2 da conversa de 31/08: construir isso agora é congelar em código regras que ninguém tem opinião para dar). |
 | **Conta PJ, contador, nota fiscal** | **Não há traço disso no repositório.** Se não existir, vem antes do link de pagamento — receber sem poder emitir nota é problema guardado, não começo. |
+| **A agregação do Motor: `E` ou `OU`, por conceito** | **Novo em 31/08, da auditoria do Motor — e é bloqueador de qualquer correspondência nova.** O motor exige que **toda** opção marcada por ela seja satisfeita. Está certo para os três conceitos de hoje (quem pede explicação sem jargão **e** algo escrito quer as duas). **Disponibilidade é o contrário:** ela marca as janelas em que consegue, e basta ele atender **uma** — com a regra atual, o médico que atende de manhã sai `NAO_CONFIRMADO` para quem pode de manhã. Não se resolve com `satisfied_by`: exige o Catálogo declarar a agregação e o motor lê-la. Junto vem a decisão **ordinal vs enumeração** para faixas de prazo. Ficha em `docs/curadoria/PROPOSTA_CORRESPONDENCIA_DOS_TRES_HIBRIDOS.md` |
 | **ADR-095** — tamanho da Mesa | Esperar o uso real. |
 | **Domínio próprio** | **MUDOU EM 31/08 (`SIM-72`): a Aliviar TEM o domínio, e o código dizia que não.** No RDAP do registro.br, `aliviarcuradoriamedica.com.br` está `active`, **em nome de Caio Padilha, pago até 13/07/2027**, e o DNS na Hostinger já aponta para a Vercel. Só não está ligado a projeto nenhum — ficou com o `aliviar-curadoria-medica-prod`, que foi apagado. **Dois passos, os dois do Fundador:** painel da Vercel → projeto `aliviar` → *Domains* → adicionar o domínio e o `www.`; depois definir `NEXT_PUBLIC_SITE_URL`. **Nenhuma linha de código muda** — o `site-url.ts` já lê a variável primeiro. Continua verdade que a primeira Curadoria não tem estranhos; o que deixou de ser verdade é que o domínio não existe, e o site se anuncia como `aliviar-2-0.vercel.app` por causa dessa frase errada. **Vigiar: 13/07/2027.** |
 | **"Quem somos"** | **Não pode ser escrito pelo agente.** Precisa de fatos que só o Fundador tem: quem está por trás, com que formação, por quê. Preencher por conta própria seria afirmar o que o sistema não garante (ADR-064) — numa página sobre confiança, o pior lugar possível. |
@@ -629,6 +630,63 @@ sem medir, e agora se sabe onde ele aparece.
 antes"*; quem faz os médicos precisa **só das Partes 2 e 3** do Ensaio Geral —
 o PDF inteiro entrega o resto do dia junto.
 
+### A auditoria do Motor — compatibilidade e simetria (31/08)
+
+**Pedida pelo Fundador no fim do dia. Dois defeitos corrigidos, um achado meu
+corrigido, e um limite de mecanismo que eu não tinha visto.**
+
+**A arquitetura, para quem chegar depois.** São **dois** motores.
+`motor-compatibilidade.ts` é a matriz absoluta 5×3 — importância dela × um
+tri-estado dele (`CONFIRMADO`/`NAO_CONFIRMADO`/`NAO_INFORMADO`), quinze células,
+nove definidas e seis derivadas de três princípios escritos. `motor-relacional.ts`
+é o cruzamento **por identidade de opção** (`satisfied_by`), e é a simetria de
+verdade — mas fixa `RELATIONAL_AXIS = "MODELO_DE_ATENDIMENTO"` (ADR-065):
+**3 conceitos produzem célula, de 29.**
+
+**`SIM-74` — verdade vácua, provada rodando o motor.** Opções da pessoa sem
+correspondência declarada saem antes da derivação. Se ela marcava **só** essas,
+`matches` ficava vazio — e `[].some(...)` é `false`, então o estado caía em
+`CONFIRMADO` por vacuidade. Com grau `ESSENCIAL`: **`ALTA_COMPATIBILIDADE` com
+zero frases de apoio.** E o pior detalhe: **sem** declaração do médico dava
+lacuna, **com** declaração dava alta — quem declarava mais ganhava leitura melhor
+num conceito onde ela não pediu nada. O teste existente cobria a opção
+**acompanhada** de outra; sozinha, ninguém tinha olhado.
+
+**A correção que eu quase fiz e estava errada, e vale mais que o conserto:** eu
+ia dar `*` ao `NAO_TENHO_PREFERENCIA`, como tem o `PREFIRO_SOZINHA`. Seria
+**repor o defeito por outra porta** — `*` produz `CONFIRMADO`, logo `ALTA`.
+**`PREFIRO_SOZINHA` pede algo** (ficar sozinha, que qualquer conduta respeita);
+**`NAO_TENHO_PREFERENCIA` não pede nada.** Parecem iguais e não são. Ganho de
+brinde: sem migration, sem regenerar Catálogo, sem paridade.
+
+**`SIM-75` — a guarda que faltava.** O motor absoluto recusa por nome o conceito
+`MOTOR_PARTICIPATION = NUNCA`, e o comentário diz por quê: *"a segunda barreira
+existe justamente para o dia em que a primeira falhar."* O relacional não tinha
+nenhuma. Sem defeito vivo — nenhum conceito é `automatico` **e** `NUNCA` hoje —,
+mas era a porta por onde o achado P15 voltaria pelo outro motor.
+
+**`SIM-66` corrigido, e ficou horas errado no ar.** Eu escrevi que o
+`satisfiedBy` estava *"nulo nas 139"*. **Medi só o lado do profissional e
+generalizei.** Ele mora do lado **dela** (13 de 69) e, onde existe, está
+**completo**. O achado verdadeiro é de **alcance**, não de vazio — e traz o fato
+que mais importa saber: **as 139 caixas do médico não alimentam o Motor em 26
+dos 29 conceitos; um humano lê o formulário e declara o estado.** Não é defeito,
+é o desenho — mas é o oposto do que "cruzamento automático" sugere.
+
+**E a análise de como estender já existia**, num documento que eu não tinha
+lido: `CLASSIFICACAO_DOS_NOVE_AUTOMATICOS.md` (08/08) nomeia **três** conceitos
+que precisam de `satisfied_by` — Modalidade, Disponibilidade, Prazo. **Não 26.**
+A proposta dos três ficou escrita em
+`docs/curadoria/PROPOSTA_CORRESPONDENCIA_DOS_TRES_HIBRIDOS.md`, no rito da
+ADR-070, para lavratura do DT-01 — **e foi montando as tabelas que apareceu a
+questão `E`/`OU` da §4**, que é maior que a da faixa.
+
+**Um alarme que NÃO saiu.** No caminho achei que `derivacao-do-mapa-profissional.ts`
+era código morto: nenhum arquivo de `src/` o importa. Fui verificar antes de
+dizer, e existe um teste chamado **`G-2 · zero chamadores`** que **exige** que
+seja assim — *"o 1.A é mecânica à espera do 2.C, nunca superfície"*. Isolamento
+deliberado e guardado, não abandono.
+
 ---
 
 ## 6 · As lições desta sessão
@@ -752,6 +810,19 @@ a fonte**, não uma cópia da lista — foi assim que o `enderecos-do-catalogo` 
 capaz de acusar um conceito que ainda nem existe. É irmã da lição 13: lá o defeito
 estava entre roteiro e formulário, aqui está entre papel e banco. **Nos dois casos,
 o erro mora no espaço ENTRE dois artefatos que ninguém compara.**
+
+**15 · Medir um lado e concluir sobre o todo é a lição 11 com número no meio —
+e o número é o que torna o erro convincente.** Contei `satisfiedBy` nas 139
+opções do profissional, achei zero, e registrei que *"o cruzamento formal existe
+e está vazio"*. A contagem estava certa; a conclusão, errada — o campo mora do
+lado **dela**, e está preenchido. **A cifra deu à afirmação uma solidez que a
+frase sozinha não teria**, e eu a escrevi num achado que ficou horas no ar.
+**Regra: antes de dizer "está vazio", contar o outro lado** — e, na dúvida sobre
+o que uma medida abrange, dizer o que foi medido, não o que se concluiu ("nulo
+nas 139 opções do profissional", não "nulo"). No mesmo dia, a mesma disciplina
+funcionou: suspeitei de código morto, fui ao teste antes de anunciar, e o
+isolamento era deliberado e guardado. **O que separou os dois casos foi um passo
+de verificação, não uma intuição melhor.**
 
 ---
 
