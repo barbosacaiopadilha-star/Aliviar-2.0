@@ -122,23 +122,30 @@ describe("Vocabulário das peças de papel — SIM-63", () => {
  * (`class="pergunta"`). Quem reescrever o bloco e devolver a pergunta ao
  * Curador quebra este teste antes de imprimir.
  */
-const VIABILIDADE = ["15", "16"] as const;
+const VIABILIDADE = [
+  "VIABILIDADE_COBERTURA_E_CONVENIO",
+  "VIABILIDADE_CUSTO_E_PAGAMENTO",
+] as const;
 
 describe("Quem colhe o quê — ADR-108", () => {
   const ficha = readFileSync(path.join(RAIZ, "docs/rede/ficha-do-assistido.html"), "utf-8");
 
-  /** O bloco de um conceito, do <section> que o abre ao </section> que o fecha. */
-  const bloco = (num: string): string => {
-    const i = ficha.indexOf(`<span class="num">${num}</span>`);
-    expect(i, `conceito ${num} sumiu da Ficha`).toBeGreaterThan(-1);
+  /**
+   * O bloco de um conceito, achado pelo ENDEREÇO canônico impresso (o
+   * `<span class="cod">`), nunca pelo número — número quebra quando a lista
+   * reordena (lição 12), e reordenar a Parte 4 é pauta aberta.
+   */
+  const bloco = (code: string): string => {
+    const i = ficha.indexOf(`<span class="cod">${code}</span>`);
+    expect(i, `conceito ${code} sumiu da Ficha (ou perdeu o endereço impresso)`).toBeGreaterThan(-1);
     return ficha.slice(ficha.lastIndexOf("<section", i), ficha.indexOf("</section>", i));
   };
 
-  it("os conceitos 15 e 16 são transcrição, não pergunta do Curador", () => {
-    for (const num of VIABILIDADE) {
-      const b = bloco(num);
-      expect(b, `conceito ${num} sem a marca de origem`).toContain("Colhido pelo <b>Supervisor</b>");
-      expect(b, `conceito ${num} voltou a ser pergunta do Curador (ADR-108)`).not.toContain('class="pergunta"');
+  it("a dupla de Viabilidade é transcrição, não pergunta do Curador", () => {
+    for (const code of VIABILIDADE) {
+      const b = bloco(code);
+      expect(b, `${code} sem a marca de origem`).toContain("Colhido pelo <b>Supervisor</b>");
+      expect(b, `${code} voltou a ser pergunta do Curador (ADR-108)`).not.toContain('class="pergunta"');
     }
   });
 
@@ -159,9 +166,24 @@ describe("Quem colhe o quê — ADR-108", () => {
     contem("docs/guias/7-roteiro-do-curador.html", "ADR-108");
     contem("docs/guias/3-curador.html", "ADR-108");
     // E ele precisa saber que, se não perguntar, ninguém pergunta.
-    contem("docs/guias/6-roteiro-do-supervisor.html", "conceitos 15 e 16");
-    contem("docs/rede/roteiro-do-supervisor.html", "conceitos 15 e 16");
-    contem("docs/guias/2-supervisor.html", "conceitos 15 e 16");
+    // Pelo NOME do conceito, nunca pelo número da Ficha — a Ficha pode ser
+    // reordenada, e citação por posição é a lição 12 esperando de novo.
+    contem("docs/guias/6-roteiro-do-supervisor.html", "Cobertura e convênio");
+    contem("docs/rede/roteiro-do-supervisor.html", "Cobertura e convênio");
+    contem("docs/guias/2-supervisor.html", "Cobertura e convênio");
+  });
+
+  /**
+   * ADR-109 — a resposta nasce de pergunta. A regra só existe se estiver
+   * impressa onde o Curador lê na hora: a instrução de abertura (todas as
+   * catorze, âncora, nada por inferência) e a Parte 5 fora da sala.
+   */
+  it("a ADR-109 está impressa onde o Curador lê", () => {
+    expect(ficha).toContain("a história não responde pergunta nenhuma");
+    expect(ficha).toContain("âncora, não resposta");
+    expect(ficha).toContain("DEPOIS que ela sair da sala (ADR-109)");
+    const diario = readFileSync(path.join(RAIZ, "docs/rede/guia-da-primeira-rodada.html"), "utf-8");
+    expect(diario, "o Diário perdeu a medida do preço da regra").toContain("O preço de não inferir (ADR-109)");
   });
 });
 

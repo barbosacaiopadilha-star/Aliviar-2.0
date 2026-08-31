@@ -3280,3 +3280,31 @@ No Roteiro do Curador, em *O que você não faz*:
 ### O que isto não muda
 
 A Mesa continua cruzando os 29. A Folha continua com a coluna de importância dos 29. O assistido continua declarando o peso de 15 e 16 — só que ao Supervisor, no dia em que o assunto já estava aberto.
+
+---
+
+## ADR-109 — A resposta nasce de pergunta: a história não preenche a Ficha, e a Parte 5 se preenche sem ela na sala
+
+- **Data:** 2026-08-31
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data (*"a minha história não deve colaborar pra responder pergunta nenhuma; os cruzamentos têm que ser feitos todos pelo Motor"*).
+- **Dependências:** leva à sala a **ADR-039** (o Case DECLARA quanto importa) · mesma disciplina da **ADR-105** (anotar depois, nunca diante de quem fala) · fecha pela raiz a família `SIM-28`/`SIM-55`/`SIM-73` (autoria atribuída errado) · não altera a **ADR-065** nem a **ADR-073**.
+
+### A decisão
+
+**1 · O Curador faz todas as catorze perguntas da Parte 4. Sempre.** A história dela não responde pergunta nenhuma: **o que cruza na Mesa é o que ela declarou, nunca o que a conversa sugere.** Marcar caixa por inferência é atribuir a ela uma escolha que ela não fez.
+
+**2 · A âncora paga o custo da regra.** Perguntar o que ela acabou de contar produz *"isso eu já falei"* — o gesto que mais desmonta a promessa de escuta. A pergunta então se ancora na frase dela: *"você falou que o médico não te explicava nada — então me diz: o que te ajudaria a entender melhor?"*. **Confirmar com ela é desejável; inferir por ela, proibido.**
+
+**3 · A Parte 5 se preenche depois que ela sai da sala.** Ela não é perguntada sobre nada dali, e circular juízo na frente de quem fala é o que a ADR-105 já proibiu para o Diário: *quem vê alguém anotando enquanto fala passa a editar o que fala*. Bônus de autoria: **a assinatura dela na Parte 6 passa a cobrir exatamente o que é dela** — as declarações —, e não treze juízos feitos diante dela.
+
+### O que estava errado no instrumento
+
+A instrução impressa dizia: *"As perguntas existem para os buracos que a história não cobriu."* A frase permite duas leituras — **registrar a frase que ela disse** (legítimo) e **marcar o que a história sugere** (inferência) — e não distingue as duas. Na sala, às onze da noite, ninguém distingue. É o `SIM-76`.
+
+### O limite, dito para ninguém superestimar
+
+*"Todo cruzamento pelo Motor"* hoje alcança **3 de 29** (ADR-065); estender é a pauta da `PROPOSTA_CORRESPONDENCIA_DOS_TRES_HIBRIDOS` e da decisão E/OU. E **quatro conceitos nunca vão ao Motor** por razões que protegem os dois lados (`participacao-no-motor.ts`) — esta ADR não os move.
+
+### O que o sábado mede
+
+O Diário ganha a medida do preço da regra: **quantas vezes ela reagiu com "isso eu já falei"** — cada uma é uma âncora que faltou — e **o tempo da Parte 4 inteira**.

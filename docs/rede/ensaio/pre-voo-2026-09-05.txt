@@ -14,7 +14,8 @@ que está em branco só o Fundador fecha. Imprima e risque.
  OK  Preço vigente em todo o papel: R$ 500 · 12× de R$ 41,67 · sem entrada. Nenhum documento diz outro número. 
  OK  Quatro auditorias de conteúdo passadas: vocabulário, doutrina, sentido e contagens. 
  OK  O Ensaio testa a operação VIGENTE (ADR-100 a 108): cinco atos, Supervisor no elenco, observador fora da Consulta Inicial. 
- OK  O Curador não fala de dinheiro (ADR-108, 31/08). Convênio e limite de custo — conceitos 15 e 16 — são colhidos pelo Supervisor, no primeiro contato. A Ficha traz a marca de origem nesses dois blocos; o Curador transcreve. 
+ OK  O Curador não fala de dinheiro (ADR-108, 31/08). Convênio e limite de custo — a dupla de Viabilidade — são colhidos pelo Supervisor, no primeiro contato. A Ficha traz a marca de origem nesses dois blocos; o Curador transcreve. 
+ OK  Nada se marca por inferência (ADR-109, 31/08). As catorze perguntas da Parte 4 se fazem sempre — ancoradas na frase dela quando ela já tocou no assunto — e a Parte 5 se preenche depois que ela sai da sala. 
  OK  Cópias velhas eliminadas da máquina (31/08). A pasta da mesa é a única fora do repositório. 
  OK  Os três papéis do cruzamento trazem o endereço canônico (31/08). Cada conceito leva, em cinza, o código do Catálogo — o mesmo na Ficha dela, no Formulário dele e na Folha da Mesa. Na hora de cruzar, confira o código, não a posição: os três documentos numeram em ordens diferentes, e o 5 dele é o 21 dela. 
 
@@ -65,12 +66,13 @@ Curador: Caio.
 
 ---
 
- As quatro perguntas que o sábado responde — não saia sem elas
+ As cinco perguntas que o sábado responde — não saia sem elas
 
 1. Ao fim da Consulta Inicial, perguntar a quem interpretou o assistido: "o que você teria dito se estivesse sozinha com o Curador?" — é a única medição do risco que a ADR-103 aceitou sem medir.
 2. Quanto tempo o Supervisor gastou no total — primeiro contato + preço + Consulta. É a carga que a ADR-100 criou.
 3. O Supervisor teve o que anotar? Se não teve, a ADR-105 se desfaz sozinha e ele volta a só ouvir.
-4. Os conceitos 15 e 16 chegaram preenchidos à Consulta Inicial? É o primeiro teste da ADR-108. Em branco significa que o Supervisor não perguntou — e a Mesa cruza com dois buracos que ninguém percebe até o fim.
+4. Cobertura e convênio e Custo e pagamento chegaram preenchidos à Consulta Inicial? É o primeiro teste da ADR-108. Em branco significa que o Supervisor não perguntou — e a Mesa cruza com dois buracos que ninguém percebe até o fim.
+5. Quantas vezes ela reagiu com "isso eu já falei"? É o preço da ADR-109 (as catorze se perguntam sempre; nada se infere) — e cada uma é uma âncora que faltou. Junto: o tempo da Parte 4 inteira, do primeiro conceito à última resposta.
 
 ---
 

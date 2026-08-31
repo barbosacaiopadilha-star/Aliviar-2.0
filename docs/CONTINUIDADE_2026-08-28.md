@@ -26,11 +26,12 @@ toda superfície, **2672 testes verdes** (era 2664 antes do dia), Kit **14/14** 
 ar. *O handoff de 30/08 dizia aqui "13 guardas verdes"; não consegui reconstruir
 o que aquele número contava, então troquei pelo total da suíte, que é medido.*
 
-**Oito dos dezoito documentos foram regravados em 31/08**, por três mudanças que
-alteram o que se faz na sala: a ADR-108 (o Curador não fala de dinheiro), o
-endereço canônico nos três papéis do cruzamento, e o rótulo da Parte 5 — mais
-**três guardas novas** que as travam. **O `LEIA-ME.txt` da pasta abre com as
-três** — quem imprimiu antes de 31/08 precisa imprimir de novo.
+**Os documentos da sala foram regravados em 31/08**, por quatro mudanças que
+alteram o que se faz nela: a ADR-108 (o Curador não fala de dinheiro), o
+endereço canônico nos três papéis do cruzamento, o rótulo da Parte 5, e a
+ADR-109 (nada por inferência; Parte 5 fora da sala) — com guardas novas que as
+travam. **O `LEIA-ME.txt` da pasta abre com as quatro** — quem imprimiu antes
+de 31/08 precisa imprimir de novo.
 
 **A pasta tem dois arquivos que não são documentos da operação** e por isso
 ficam fora do 18/18: o `LEIA-ME.txt`, que é dela, e o
@@ -45,8 +46,8 @@ telefone-relógio-canetas.
 
 ## 2 · O que mudou de regra nesta sessão
 
-**Nove ADRs, e juntas elas redesenham a operação humana da Curadoria.** Leia as
-nove antes de mexer em papel, guia ou tela — elas se apoiam, e cada uma responde
+**Dez ADRs, e juntas elas redesenham a operação humana da Curadoria.** Leia as
+dez antes de mexer em papel, guia ou tela — elas se apoiam, e cada uma responde
 a uma pergunta que a anterior deixou aberta. **Os documentos operacionais já
 foram reescritos para elas** (ver §5): o que estiver em papel confere.
 
@@ -219,6 +220,32 @@ carrega `class="fonte"` e **não** `class="pergunta"`. Quem devolver a pergunta 
 Curador quebra o teste antes de imprimir.
 
 ---
+
+### ADR-109 · a resposta nasce de pergunta (31/08)
+
+**Do Fundador, com estas palavras: *"a minha história não deve colaborar pra
+responder pergunta nenhuma; os cruzamentos têm que ser feitos todos pelo
+Motor."*** Três consequências, todas impressas na Ficha:
+
+1. **As catorze perguntas da Parte 4 se fazem sempre.** Nada se marca por
+   inferência — o que cruza na Mesa é o que ela DECLAROU. A instrução antiga
+   (*"as perguntas existem para os buracos que a história não cobriu"*)
+   permitia deduzir sem perguntar, e virou o `SIM-76`.
+2. **A âncora paga o custo:** *"você falou que o médico não te explicava nada —
+   então me diz: o que te ajudaria a entender melhor?"*. Confirmar com ela é
+   desejável; inferir por ela, proibido. O Diário mede o preço: contagem de
+   *"isso eu já falei"* e o tempo da Parte 4.
+3. **A Parte 5 se preenche depois que ela sai da sala** — os 13 círculos de
+   juízo do Curador saem de diante dela (eram 29 gestos na sala; viram 16), e
+   **a assinatura dela na Parte 6 passa a cobrir só o que é dela.**
+
+Da revisão pedida pelo Fundador (*"o que melhora para o cliente se sentir
+feliz"*) saíram ainda: a frase de abertura que o Curador DIZ a ela (*"cada
+resposta sua vira um critério da busca — é assim que a escolha continua sendo
+sua"*), a linha *"a ordem é a da conversa, não a do papel"* (a versão barata da
+reordenação), e a **de-numeração**: nenhum documento operacional cita mais
+conceito pelo número da Ficha — citam pelo nome, e a guarda acha blocos pelo
+código canônico. **A Ficha ficou livre para ser reordenada.**
 
 **A ADR-073 segue em vigor**, e foi atravessada duas vezes nesta sessão a
 pedido explícito do Fundador (a cena nova em `/solicitar-atendimento`). Dito em
@@ -976,7 +1003,7 @@ de verificação, não uma intuição melhor.**
    celular). O fonte é `docs/rede/ensaio/pre-voo-2026-09-05.md`. O que era
    verificável por máquina está **OK**; as caixas vazias são as quatro pessoas,
    a impressão — **com a pegadinha das fichas secretas em destaque** — e a
-   logística. As quatro perguntas do Diário estão no rodapé.
+   logística. As cinco perguntas do Diário estão no rodapé.
 
    **E as quatro mensagens de convite já estão escritas** (31/08), em
    `docs/rede/ensaio/mensagens-2026-09-05.txt` e na pasta da mesa: uma por
