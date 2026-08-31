@@ -30,8 +30,8 @@ telefone-relógio-canetas.
 
 ## 2 · O que mudou de regra nesta sessão
 
-**Oito ADRs, e juntas elas redesenham a operação humana da Curadoria.** Leia as
-oito antes de mexer em papel, guia ou tela — elas se apoiam, e cada uma responde
+**Nove ADRs, e juntas elas redesenham a operação humana da Curadoria.** Leia as
+nove antes de mexer em papel, guia ou tela — elas se apoiam, e cada uma responde
 a uma pergunta que a anterior deixou aberta. **Os documentos operacionais já
 foram reescritos para elas** (ver §5): o que estiver em papel confere.
 
@@ -179,6 +179,31 @@ alguém lê em voz alta vira compromisso.**
 **E uma guarda que eu não conhecia me pegou:** o `o-que-e-a-porta-de-quem-so-olha`
 cobrava "R$ 450" no fonte da página e reprovou no minuto em que o número trocou.
 É exatamente o que se espera dela — **o preço da vitrine não muda em silêncio.**
+
+### ADR-108 · o Curador não fala de dinheiro (31/08)
+
+**Achada pela análise dos questionários, e é a mais barata de consertar e a mais
+cara de deixar.** A Ficha do Assistido pedia ao Curador, na Consulta Inicial:
+*"Tenho limite financeiro — qual?"*, *"Aceito até esta faixa — qual?"*,
+*"Preciso de parcelamento"*. Ou seja, **o médico que precisa estar livre de
+interesse comercial perguntava o orçamento da pessoa** — depois de o Supervisor
+já ter combinado preço no primeiro contato.
+
+**Os conceitos 15 e 16 passam a ser colhidos pelo Supervisor.** Continuam no
+catálogo e continuam chegando à Mesa; o Curador **transcreve** e circula a
+importância, com a marca de origem impressa no bloco.
+
+**O agravante que fechou o diagnóstico:** nem o Guia do Curador nem o Roteiro do
+Curador mencionavam dinheiro em lugar nenhum. Os dois blocos **nunca foram
+instruídos a ninguém** — existiam só no papel que ele preenche. Não era regra em
+disputa; era resto. Resto sem dono não aparece em releitura: aparece na frente
+da pessoa, tarde demais.
+
+**A guarda é de forma, e por isso é testável:** nos conceitos 15 e 16 a Ficha
+carrega `class="fonte"` e **não** `class="pergunta"`. Quem devolver a pergunta ao
+Curador quebra o teste antes de imprimir.
+
+---
 
 **A ADR-073 segue em vigor**, e foi atravessada duas vezes nesta sessão a
 pedido explícito do Fundador (a cena nova em `/solicitar-atendimento`). Dito em
@@ -406,6 +431,52 @@ Também fixado: o roteiro do ato 1 é o da LIGAÇÃO (pasta 2, nº 2), não a pe
 WhatsApp; e o Guia sai em duas cópias — uma é roteiro, a outra é o Diário
 partilhado.
 
+### A análise dos questionários, e a ADR-108 que saiu dela (31/08)
+
+**A Ficha tem duas metades que se parecem e não são.** Parte 4 (conceitos 1–16)
+são perguntas com voz dela. **Parte 5 (17–29) não tem pergunta nenhuma** — o
+Curador circula a importância a partir da leitura da história, e dez dos treze
+são credenciais do médico (graduação, residência, fellowship, produção
+acadêmica).
+
+**Achado ainda aberto, com o Fundador:** a escala dos 29 pergunta *"Quanto isto
+importa **para ela**?"* e a Folha da Mesa copia isso numa coluna chamada
+**"Importância (dela)"**. Mas em **13 dos 29 ela não disse nada** — é juízo do
+Curador rotulado como declaração dela, e cruzado na Mesa como se fosse. Mesma
+família do `SIM-55` e do `SIM-28`: autoria atribuída errado. **O conserto é de
+rótulo, não de método** — na Parte 5 a escala deveria dizer *"quanto isto pesa
+neste caso (leitura do Curador)"*. Não foi feito: o Fundador respondeu sobre o
+dinheiro, não sobre isto.
+
+**Outros dois achados, não corrigidos de propósito** (mexem em pergunta, e
+pergunta alterada às vésperas do Ensaio é instrumento que ninguém leu):
+
+- **Conceito 12** — *"O que você precisa saber antes de aceitar um tratamento?"*
+  com as opções *todas as opções · a de não fazer nada · os riscos · os custos*.
+  Todo mundo marca tudo. Pergunta que não discrimina ocupa o tempo das que
+  discriminam.
+- **Conceito 7** — *"outros profissionais que **precisariam** conversar entre
+  si?"*. O "precisariam" é juízo clínico. Ela sabe quem a acompanha; não sabe
+  quem deveria conversar com quem.
+
+**As três apostas para o sábado conferir** (o Diário já pergunta em que item ela
+travou): ela trava no 16, marca tudo no 12, e não sabe responder o 7. Se
+baterem, deixa de ser opinião.
+
+**O que foi feito**, além da ADR-108: Ficha (blocos 15/16 viram transcrição e a
+nota da Parte 4 nomeia a exceção), Roteiro do Supervisor publicado e do Kit (as
+duas perguntas de viabilidade, com o alerta de não confundir com o preço da
+Aliviar), Guia do Supervisor (linha na tabela do que ele registra), Guia e
+Roteiro do Curador (a proibição, e o que fazer se ela puxar o assunto), Ensaio
+Geral (ato 1 colhe 15 e 16), pré-voo (quarta pergunta do sábado), teste-guarda
+novo em `vocabulario-dos-guias.test.ts`, seis PDFs regravados e copiados para a
+pasta da mesa. **2664 testes verdes, `tsc` limpo.**
+
+**Uma medida colhida no caminho:** a Parte 5 marca as **descrições** de conceito
+com a mesma classe `pergunta` das perguntas de verdade. Não muda o que a pessoa
+lê — o texto ali é definição, não pergunta —, mas foi o que fez a primeira
+versão do teste contar 27 onde eu esperava 14. Ficou anotado no teste.
+
 ---
 
 ## 6 · As lições desta sessão
@@ -497,6 +568,17 @@ citando a ADR certa. Referência por número não sobrevive a inserção: ao ins
 item em lista numerada, **grep pelos números antigos em tudo que a cita**. E é o
 segundo parente do `SIM-57` em dois dias: a linha parecia certa porque citava a
 regra certa — o defeito estava no que o número passou a apontar.
+
+**13 · O que nenhum roteiro manda fazer é o que ninguém audita.** Os blocos 15 e
+16 pediam o orçamento da pessoa ao Curador, e **nem o Guia nem o Roteiro dele
+mencionavam dinheiro** — a instrução existia só no formulário, sem dono em lugar
+nenhum. Quatro auditorias de conteúdo passaram por cima: todas leram os
+documentos que *dizem* o que se faz, e o defeito estava no papel que se
+*preenche*. **Instrumento é doutrina executável** — quando roteiro e formulário
+divergem, quem vence é o formulário, porque é ele que está na mão na hora. Ao
+auditar doutrina, ler os dois, e cruzar: **todo campo do formulário tem que ter
+uma linha de roteiro que o mande preencher.** Campo órfão é regra que ninguém
+decidiu.
 
 ---
 

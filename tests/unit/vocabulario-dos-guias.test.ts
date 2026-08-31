@@ -102,3 +102,65 @@ describe("Vocabulário das peças de papel — SIM-63", () => {
     }
   });
 });
+
+/**
+ * QUEM COLHE O QUÊ — guarda da ADR-108.
+ *
+ * A Ficha do Assistido pedia ao Curador, na Consulta Inicial, o limite
+ * financeiro e a faixa aceitável da pessoa. Ou seja: **o médico que precisa
+ * estar livre de interesse comercial perguntava o orçamento dela** — depois de
+ * o Supervisor já ter combinado preço no primeiro contato.
+ *
+ * O que torna isso um caso para teste, e não para uma linha de roteiro: **os
+ * blocos 15 e 16 nunca foram instruídos a ninguém.** Nem o Guia do Curador nem
+ * o Roteiro do Curador mencionavam dinheiro; a pergunta existia só no papel que
+ * ele preenche. Um resto sem dono não é achado por releitura — é achado por
+ * quem o executa, tarde demais, na frente da pessoa.
+ *
+ * A regra é de forma, e é o que a torna verificável: nos conceitos 15 e 16 a
+ * Ficha carrega a marca de origem (`class="fonte"`) e **não** uma pergunta
+ * (`class="pergunta"`). Quem reescrever o bloco e devolver a pergunta ao
+ * Curador quebra este teste antes de imprimir.
+ */
+const VIABILIDADE = ["15", "16"] as const;
+
+describe("Quem colhe o quê — ADR-108", () => {
+  const ficha = readFileSync(path.join(RAIZ, "docs/rede/ficha-do-assistido.html"), "utf-8");
+
+  /** O bloco de um conceito, do <section> que o abre ao </section> que o fecha. */
+  const bloco = (num: string): string => {
+    const i = ficha.indexOf(`<span class="num">${num}</span>`);
+    expect(i, `conceito ${num} sumiu da Ficha`).toBeGreaterThan(-1);
+    return ficha.slice(ficha.lastIndexOf("<section", i), ficha.indexOf("</section>", i));
+  };
+
+  it("os conceitos 15 e 16 são transcrição, não pergunta do Curador", () => {
+    for (const num of VIABILIDADE) {
+      const b = bloco(num);
+      expect(b, `conceito ${num} sem a marca de origem`).toContain("Colhido pelo <b>Supervisor</b>");
+      expect(b, `conceito ${num} voltou a ser pergunta do Curador (ADR-108)`).not.toContain('class="pergunta"');
+    }
+  });
+
+  it("os outros catorze conceitos da Parte 4 continuam sendo pergunta dela", () => {
+    // Só a Parte 4: a Parte 5 usa a mesma classe para DESCRIÇÕES de conceito,
+    // que não são perguntas a ninguém — ali o Curador lê e circula, não pergunta.
+    const parte4 = ficha.slice(ficha.indexOf("Parte 4 —"), ficha.indexOf("Parte 5 —"));
+    const perguntas = (parte4.match(/class="pergunta"/g) ?? []).length;
+    expect(perguntas, "a Parte 4 deixou de ter 14 perguntas com voz dela").toBe(14);
+  });
+
+  it("a proibição está escrita para o Curador, e a coleta para o Supervisor", () => {
+    const contem = (arquivo: string, trecho: string) => {
+      const texto = readFileSync(path.join(RAIZ, arquivo), "utf-8");
+      expect(texto, `${arquivo} não diz "${trecho}"`).toContain(trecho);
+    };
+    // Ele precisa saber que não pergunta.
+    contem("docs/guias/7-roteiro-do-curador.html", "ADR-108");
+    contem("docs/guias/3-curador.html", "ADR-108");
+    // E ele precisa saber que, se não perguntar, ninguém pergunta.
+    contem("docs/guias/6-roteiro-do-supervisor.html", "conceitos 15 e 16");
+    contem("docs/rede/roteiro-do-supervisor.html", "conceitos 15 e 16");
+    contem("docs/guias/2-supervisor.html", "conceitos 15 e 16");
+  });
+});

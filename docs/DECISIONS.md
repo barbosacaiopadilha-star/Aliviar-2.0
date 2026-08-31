@@ -3233,3 +3233,50 @@ O R$ 450 vivia em **quatro lugares**, e um deles é público:
 As primeiras Curadorias reais mostrarem gente recusando **no preço** — e aí a pergunta é sobre o número, nunca sobre abrir exceção. Ou quando o custo real de uma Curadoria for medido pelo Ensaio: hoje ninguém sabe quantas horas ela consome, então **R$ 500 é um preço decidido sem custo conhecido**, e isso está dito.
 
 ---
+
+---
+
+## ADR-108 — Dinheiro e cobertura são colhidos pelo Supervisor; o Curador nunca pergunta
+
+- **Data:** 2026-08-31
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data.
+- **Dependências:** fecha a separação que as **ADR-100**, **ADR-101** e **ADR-106** desenharam e que a Ficha do Assistido desfazia · não altera o catálogo de 29 conceitos · não altera a **ADR-073**.
+
+### A decisão
+
+**O Curador não fala de dinheiro com o assistido. Em nenhum momento.** Preço, limite financeiro, faixa aceitável, parcelamento e cobertura são assunto do **Supervisor**, que já os trata no primeiro contato.
+
+Os conceitos **15 (Cobertura e convênio)** e **16 (Custo e pagamento)** continuam no catálogo e continuam chegando à Mesa. O que muda é **quem os colhe**: o Supervisor pergunta, e o Curador **transcreve** para a Ficha o que já foi registrado — sem reabrir o assunto na Consulta Inicial.
+
+### O que estava errado
+
+A Ficha do Assistido pedia ao Curador, em plena Consulta Inicial:
+
+> *"Tenho limite financeiro — qual?"* · *"Aceito até esta faixa — qual?"* · *"Preciso de parcelamento"*
+
+Ou seja: **o médico que deve estar livre de interesse comercial perguntava o orçamento da pessoa** — depois de ela ter contado a história inteira, e depois de o Supervisor já ter falado de preço no primeiro contato. Dois problemas em um só bloco:
+
+1. **A pessoa falava de dinheiro duas vezes**, com duas pessoas diferentes, sendo que a primeira já tinha a informação.
+2. **A independência do Curador ficava borrada na prática** — a ADR-101 tirou dele qualquer comissão, e a Ficha o punha para negociar valores. Uma regra escrita não sobrevive a um instrumento que a contradiz todo dia.
+
+O achado é da análise dos questionários de 31/08, e tem um agravante que o confirma: **nem o Guia do Curador nem o Roteiro do Curador mencionam dinheiro em lugar nenhum.** Os blocos 15 e 16 nunca foram instruídos a ele — estavam na Ficha e em nenhum roteiro. Não era uma regra em disputa; era um resto.
+
+### Por que o 15 vai junto com o 16
+
+O Fundador disse *"dinheiro"*, e "Cobertura e convênio" não é literalmente dinheiro. Vai junto por três razões:
+
+- **É a mesma conversa.** *"Como você vai pagar"* e *"com que cobertura"* se respondem no mesmo fôlego. Partir a dupla obriga a pessoa a voltar ao assunto com a outra pessoa.
+- **É a mesma família no catálogo.** No Formulário do Profissional, 15 e 16 são o par de **Viabilidade** — administrativo, não clínico.
+- **O Supervisor ganha com isso.** Sabendo o convênio antes da Curadoria, a incompatibilidade de cobertura aparece **antes** da Mesa, e não depois de três nomes escolhidos.
+
+Se o Fundador preferir manter o 15 com o Curador, é reverter só esse bloco.
+
+### O que fica proibido, com estas palavras
+
+No Roteiro do Curador, em *O que você não faz*:
+
+> **Você não pergunta de dinheiro.** Nem valor, nem limite, nem parcelamento, nem convênio. Isso já foi conversado com o Supervisor e está na Ficha antes de você sentar. Se ela trouxer o assunto, você escuta, registra na frase dela e devolve ao Supervisor — **você não negocia, não confirma valor e não dá desconto.**
+
+### O que isto não muda
+
+A Mesa continua cruzando os 29. A Folha continua com a coluna de importância dos 29. O assistido continua declarando o peso de 15 e 16 — só que ao Supervisor, no dia em que o assunto já estava aberto.
