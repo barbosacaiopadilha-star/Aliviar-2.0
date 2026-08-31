@@ -2,7 +2,11 @@
 <html lang="pt-BR"><head><meta charset="utf-8">
 <title>Folha da Mesa — Curadoria Aliviar</title>
 <style>
-  @page { size: A4; margin: 15mm 13mm; }
+  /* 12mm no topo/base, não 15: o conteúdo mede 2,78 páginas e cabe em 3, mas
+     os três blocos de caminho são page-break-inside: avoid e empurram inteiros.
+     A folga de 3mm por página absorve o empurrão — medido em 31/08, quando as
+     duas eliminações da ADR-110 levaram a folha a 4 páginas. */
+  @page { size: A4; margin: 12mm 13mm; }
   * { box-sizing: border-box; }
   body { font-family: Georgia, "Times New Roman", serif; color: #1E2A32; font-size: 10.5pt; line-height: 1.45; margin: 0; }
   header.doc { border-bottom: 2.5pt solid #A8813F; padding-bottom: 8pt; margin-bottom: 12pt; }
@@ -59,14 +63,14 @@
 </header>
 
 <div class="instrucoes">
-  <strong>Como usar:</strong> copie da Ficha do Assistido a importância de cada conceito. Para cada médico (do formulário assinado dele), marque em cada linha: <b>A</b> = atende bem · <b>M</b> = atende em parte · <b>L</b> = lacuna (ele não informou — nunca conte lacuna como defeito) · <b>—</b> = não relevante para ela. Nada aqui soma pontos: a folha organiza a evidência para VOCÊ decidir. Área incompatível elimina antes de qualquer linha. <b>O código cinza sob cada conceito é o endereço dele no Catálogo</b> — o mesmo na Ficha dela e no Formulário assinado dele. Confira o código, não a posição: os três documentos numeram em ordens diferentes.
+  <strong>Como usar:</strong> copie da Ficha a importância de cada conceito e marque cada linha com o formulário assinado dele à vista — a legenda de <b>A · M · L · —</b> está logo acima da tabela, e <b>lacuna nunca se conta como defeito</b>. Nada aqui soma pontos: a folha organiza a evidência para VOCÊ decidir. <b>Duas coisas eliminam antes de qualquer linha</b>, e se eliminam não se cruzam: área incompatível, e — se ela declarou restrição — quem marcou <b>“não acompanha quem recusa a conduta indicada”</b> (ADR-110). <b>O código cinza sob cada conceito é o endereço dele no Catálogo</b> — o mesmo na Ficha dela e no Formulário assinado dele. Confira o código, não a posição: os três documentos numeram em ordens diferentes.
 </div>
 
 <h2>1 · Quem está na Mesa</h2>
 <div class="duas"><p class="campo">Assistido: <span class="linha-media"></span></p><p class="campo">Data: <span class="linha-media"></span></p></div>
-<div class="duas"><p class="campo">Médico A (nome + CRM): <span class="linha-media"></span></p><p class="campo">Área compatível com o caso? (sim / parcial / não): <span class="linha-media"></span></p></div>
-<div class="duas"><p class="campo">Médico B (nome + CRM): <span class="linha-media"></span></p><p class="campo">Área compatível com o caso? (sim / parcial / não): <span class="linha-media"></span></p></div>
-<div class="duas"><p class="campo">Médico C (nome + CRM): <span class="linha-media"></span></p><p class="campo">Área compatível com o caso? (sim / parcial / não): <span class="linha-media"></span></p></div>
+<div class="duas"><p class="campo">Médico A (nome + CRM): <span class="linha-media"></span></p><p class="campo">Elimina? (área / recusa): <span class="linha-media"></span></p></div>
+<div class="duas"><p class="campo">Médico B (nome + CRM): <span class="linha-media"></span></p><p class="campo">Elimina? (área / recusa): <span class="linha-media"></span></p></div>
+<div class="duas"><p class="campo">Médico C (nome + CRM): <span class="linha-media"></span></p><p class="campo">Elimina? (área / recusa): <span class="linha-media"></span></p></div>
 
 <h2>2 · O cruzamento</h2>
 <p class="legenda"><b>A</b> atende bem · <b>M</b> em parte · <b>L</b> lacuna de informação · <b>—</b> não relevante. Coluna "Importância": copie da Ficha (MI · I · R · PI · NI); <b>as linhas com °</b> são <b>leitura sua</b>, não declaração dela — salvo onde a Ficha marca <b>“declarado por ela”</b> — aí risque o °.</p>

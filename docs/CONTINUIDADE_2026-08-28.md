@@ -46,8 +46,8 @@ telefone-relógio-canetas.
 
 ## 2 · O que mudou de regra nesta sessão
 
-**Dez ADRs, e juntas elas redesenham a operação humana da Curadoria.** Leia as
-dez antes de mexer em papel, guia ou tela — elas se apoiam, e cada uma responde
+**Onze ADRs, e juntas elas redesenham a operação humana da Curadoria.** Leia as
+onze antes de mexer em papel, guia ou tela — elas se apoiam, e cada uma responde
 a uma pergunta que a anterior deixou aberta. **Os documentos operacionais já
 foram reescritos para elas** (ver §5): o que estiver em papel confere.
 
@@ -752,6 +752,46 @@ acadêmico na vitrine. E fica pendurada, para o pacote do advogado, **uma
 pergunta a mais**: *"podemos publicar fatos acadêmicos verificáveis com fonte,
 ligados ao caso, sem ranking?"*.
 
+### ADR-110 · oito decisões de Método, confirmadas de uma vez (31/08)
+
+**O padrão do dia funcionou de novo:** eu propus um default para cada questão
+aberta da auditoria, o Fundador respondeu *"tudo confirmado"*, e sete viraram
+decisão registrada esperando a primeira Curadoria. **Duas produziram trabalho
+imediato, e as duas são papel e teste.**
+
+**A que mais importa (§1):** a agregação passa a ser declarada por conceito, e
+**a pergunta dela decide qual** — *capacidade* (*"como/quando você consegue"*)
+enumera alternativas, basta uma → `OU`; *desejo* (*"o que te ajudaria"*)
+enumera coisas que ela quer juntas → `E`. Sem isso, **o médico que atende de
+manhã sairia `NAO_CONFIRMADO` para quem pode de manhã.**
+
+**A reversão (§6), e ela é minha:** horas antes eu propus mover *Experiência no
+tipo de caso*, *Volume* e *Limites* para a Parte 4. Testada contra o `SIM-71`, a
+proposta não passa — *"quanto importa a experiência dele no seu tipo de caso?"*
+tem uma resposta só, e as três saturariam como o conceito 12 satura hoje.
+**O que serve já tinha sido construído no mesmo dia: a caixa ☐ declarado por
+ela.** Declaração espontânea discrimina; resposta induzida, não.
+
+**O que foi escrito (§2 e §8):**
+
+- **A guarda de cobertura** — `tests/unit/cobertura-das-regras.test.ts`. É o que
+  a ADR comprou junto com a escolha da enumeração: **opção nova que ninguém
+  citou em regra reprova a suíte com o nome da opção.** É teste de
+  caracterização, com linha de base datada e **um motivo escrito por ausência**
+  (motivo em branco também reprova). Construí-la achou o `SIM-78`.
+- **A segunda eliminação, na Folha** — *restrição declarada por ela + "não
+  acompanha quem recusa a conduta indicada" = elimina antes de qualquer linha*.
+  Fecha o `SIM-70` **fora do Motor**, que é onde ele sempre pertenceu: o
+  problema nunca foi de cruzamento, era de eliminação.
+
+**E a Folha cobrou concisão pela quarta vez no dia.** As duas eliminações a
+levaram a 4 páginas; eu enxuguei texto três vezes **sem medir**, e só então fui
+ver: o conteúdo mede **2,78 páginas** e cabe em 3 — o que estoura são os três
+blocos `page-break-inside: avoid` empurrando inteiros. **A folga certa era de
+margem** (15mm → 12mm), e o porquê ficou escrito no fonte para ninguém a
+desfazer. *Cortar texto que estava certo, três vezes, porque eu não medi onde a
+quebra caía.*
+
 ---
 
 ## 6 · As lições desta sessão
@@ -888,6 +928,19 @@ nas 139 opções do profissional", não "nulo"). No mesmo dia, a mesma disciplin
 funcionou: suspeitei de código morto, fui ao teste antes de anunciar, e o
 isolamento era deliberado e guardado. **O que separou os dois casos foi um passo
 de verificação, não uma intuição melhor.**
+
+**16 · Antes de encurtar, meça onde a quebra cai.** A Folha da Mesa passou de 3
+para 4 páginas e eu enxuguei texto três vezes seguidas, tentando adivinhar o que
+pesava — perdendo redação boa a cada tentativa. Quando finalmente medi, o
+conteúdo cabia: **2,78 páginas** de altura para 3 disponíveis. O que estourava
+eram blocos `page-break-inside: avoid` sendo empurrados inteiros, e a correção
+certa era **3mm de margem**, não texto. **Sintoma de página é layout até prova
+em contrário** — e a prova custa uma medição de trinta segundos. No mesmo dia,
+a mesma disciplina salvou a guarda nova: ela passou de primeira, e eu **fiz a
+mutação para vê-la reprovar** antes de acreditar nela — a primeira tentativa de
+mutação nem pegou, e o script disse "removida" sem conferir. **Guarda que nunca
+foi vista reprovando não é guarda; script que não confere o próprio efeito
+mente com educação.**
 
 ---
 

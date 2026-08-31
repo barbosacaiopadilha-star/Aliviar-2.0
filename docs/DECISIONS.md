@@ -3308,3 +3308,61 @@ A instrução impressa dizia: *"As perguntas existem para os buracos que a hist�
 ### O que o sábado mede
 
 O Diário ganha a medida do preço da regra: **quantas vezes ela reagiu com "isso eu já falei"** — cada uma é uma âncora que faltou — e **o tempo da Parte 4 inteira**.
+
+---
+
+## ADR-110 — Oito decisões de Método sobre o Motor, confirmadas de uma vez
+
+- **Data:** 2026-08-31
+- **Status:** Decididas pelo Fundador (DT-01), em conversa direta, sobre padrões propostos pelo agente — *"tudo confirmado"*.
+- **Dependências:** nasce da auditoria do Motor (`SIM-66` a `SIM-77`) · prepara a `PROPOSTA_CORRESPONDENCIA_DOS_TRES_HIBRIDOS` sem lavrá-la · não emenda a **ADR-065** · respeita a **ADR-073**.
+
+**Nenhuma destas oito altera o Catálogo hoje.** Sete são decisões registradas, prontas para virar escrita quando a primeira Curadoria real acontecer; **duas produziram trabalho imediato**, e as duas são de papel e teste (§4 e §9).
+
+### 1 · A agregação é declarada por conceito, e a pergunta dela decide qual
+
+Pergunta de **capacidade** (*"como você **consegue** ser atendida"*, *"**quando** você consegue"*) enumera **alternativas que servem**: basta uma → **`OU`**. Pergunta de **desejo** (*"o que te **ajudaria**"*, *"o que você **precisa** saber"*) enumera coisas que ela quer juntas → **`E`**.
+
+Aplicado: **`OU`** em Modalidade, Disponibilidade, Prazo, Local e Canais; **`E`** em Como explica, Alternativas, Retornos e Acompanhantes — o comportamento de hoje, preservado.
+
+**O motivo de existir:** o motor relacional fecha o estado com `matches.some(m => !m.satisfied)` — conjunção pura. Disponibilidade é disjunção, e sem esta decisão **o médico que atende de manhã sairia `NAO_CONFIRMADO` para quem pode de manhã.**
+
+### 2 · Faixa: enumeração, protegida por guarda de cobertura
+
+Ordinal declarado é estruturalmente mais certo, mas mexe no esquema do Catálogo e no motor. A enumeração fica segura com um teste: **toda opção nova que ninguém citou em regra reprova a suíte, com o nome da opção.** **Ordinal quando um terceiro conceito precisar** (candidatos: Prazo, a frequência de Retornos, a duração do Pós-procedimento).
+
+**Escrito hoje:** `tests/unit/cobertura-das-regras.test.ts`.
+
+### 3 · Os três híbridos se lavram DEPOIS da primeira Curadoria real
+
+O mecanismo se decide agora (§1 e §2); a lavratura espera. **O motivo é empírico:** os três conceitos que já têm regra nunca produziram uma célula para uma pessoa real, e **um deles carregava o `SIM-74` desde que foi escrito.** Dobrar de três para seis antes de ver o primeiro funcionar multiplica um erro que ainda não se conhece.
+
+### 4 · `NAO_SEI_INFORMAR` devolve `NAO_RELEVANTE`
+
+Com a frase dela registrada. `LACUNA` culparia o profissional pela incerteza dela; tirar do cruzamento esconderia que ela foi perguntada. **Condição:** se o uso mostrar `"não sei"` frequente, **o defeito é a pergunta, não o tratamento** — e vira caso do `SIM-71`.
+
+### 5 · *"Preciso presencial"* é satisfeito por *"primeira presencial, retornos remotos"*
+
+**Porque a célula mostra QUAL conduta satisfez.** Ela e o Curador leem a frase e julgam. Não satisfazer reprovaria um profissional que atende a primeira consulta exatamente como ela precisa; satisfazer não esconde nada.
+
+### 6 · Experiência no tipo de caso, Volume e Limites NÃO viram pergunta a ela
+
+**Reversão de uma proposta do próprio agente, feita horas antes.** Testada contra o `SIM-71`, ela não passa: *"quanto importa a experiência dele no seu tipo de caso?"* tem uma resposta só — ninguém diz "pouco". As três saturariam como o conceito 12 satura hoje: custo de conversa sem poder de separar.
+
+**O que serve já existe:** a caixa **☐ declarado por ela** (ADR-109/`SIM-77`). **Declaração espontânea discrimina; resposta induzida, não** — só quem realmente se importa traz o assunto sozinha. *Se um dia se quiser perguntar, o desenho certo não é escala: é escolha forçada.*
+
+### 7 · Os quatro conceitos `NUNCA` continuam fora do Motor
+
+As razões escritas em `participacao-no-motor.ts` seguem válidas: três protegem a assistida, uma protege o profissional de nota injusta.
+
+### 8 · A recusa passa a eliminar, FORA do Motor
+
+O problema real do `SIM-70` não é de cruzamento, é de **eliminação**: o profissional que declara *"não acompanha quem recusa a conduta indicada"* passava invisível. A Folha já tem a forma — *"Área incompatível elimina antes de qualquer linha"* —, e ganha a segunda:
+
+> **Restrição declarada por ela + *"não acompanha quem recusa"* = elimina antes de qualquer linha.**
+
+**Escrito hoje**, na Folha da Mesa.
+
+### E uma que ficou como estava
+
+**Cobertura e convênio continua com o Supervisor** (ADR-108): é a mesma conversa do dinheiro, é o par de Viabilidade no formulário do profissional, e saber o convênio antes da Mesa faz a incompatibilidade aparecer **antes** de três nomes serem escolhidos.
