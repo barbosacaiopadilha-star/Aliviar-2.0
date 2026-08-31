@@ -44,6 +44,7 @@ const PUBLICADOS = {
   "8-roteiro-do-acompanhamento.html": "Roteiro-do-Acompanhamento-Aliviar.pdf",
   "9-para-voce-que-comecou.html": "Para-Voce-Que-Comecou-Aliviar.pdf",
   "10-o-que-e-a-aliviar.html": "O-Que-E-a-Aliviar.pdf",
+  "11-como-ler-o-curriculo.html": "Como-Ler-o-Curriculo-de-um-Medico-Aliviar.pdf",
 };
 
 /** Carimbo fixo — mesma razão do gerador de rede: saída determinística. */

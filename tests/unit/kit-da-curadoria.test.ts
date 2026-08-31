@@ -41,7 +41,7 @@ describe("Kit da Curadoria — links vivos, lista decidida", () => {
   });
 
   it("são os dez guias, na ordem de leitura — e nenhum repetido", () => {
-    expect(GUIAS_DE_LEITURA).toHaveLength(10);
+    expect(GUIAS_DE_LEITURA).toHaveLength(11);
     const hrefs = GUIAS_DE_LEITURA.map((g) => g.href);
     expect(new Set(hrefs).size, "há guia repetido no cartão").toBe(hrefs.length);
   });

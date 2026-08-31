@@ -714,6 +714,44 @@ dizer, e existe um teste chamado **`G-2 · zero chamadores`** que **exige** que
 seja assim — *"o 1.A é mecânica à espera do 2.C, nunca superfície"*. Isolamento
 deliberado e guardado, não abandono.
 
+### A caixa "declarado por ela" e o guia do currículo (31/08)
+
+**Da pergunta do Fundador: *"e se for critério do paciente estar procurando
+médicos pelo currículo, como posso ajudá-los?"*** — e a resposta começou por um
+defeito meu, do mesmo dia.
+
+**O defeito (`SIM-77`).** O conserto do `SIM-73` deixou o rótulo da Parte 5
+honesto para o caso comum e **errado para o caso dela**: os blocos já tinham a
+linha *"Se ela disse algo"*, então o papel **registrava a frase dela e a
+desmentia duas vezes** — no rótulo (*"ela não é perguntada"*) e no **°** da
+Folha. **Conserto: uma caixa por bloco — ☐ Declarado por ela** — que devolve o
+círculo a ela e manda riscar o °. Não fere a ADR-109: ela proíbe **deduzir**, e
+manda **registrar** o que foi declarado.
+
+**O guia novo: `11-como-ler-o-curriculo.html`**, publicado no Kit como
+*Como ler o currículo de um médico* (11 guias agora; a guarda do Kit
+acompanhou). É a peça que ajuda a assistida **antes de contratar**, e a mais
+segura juridicamente que a casa tem: **sem nome, sem nota, sem ranking** — só o
+que cada palavra significa. O conteúdo que mais entrega: **RQE é o piso e se
+confere de graça em segundos**; *fellowship diz sobre o quê, não quão bom*;
+*publicar não é tratar bem*; *tempo de formado sem volume no seu tipo de caso
+diz pouco*; e **as duas perguntas que valem mais que o currículo inteiro** —
+*"quantos casos como o meu o senhor atende por mês?"* e *"o que o senhor não
+atende, e quando encaminha?"*.
+
+**O achado de Método que ficou aberto, e é o mais interessante:** quem procura
+por currículo está perguntando *"ele sabe cuidar do MEU caso?"* — e as três
+respostas honestas (**Experiência no tipo de caso, Volume de atuação, Limites de
+atuação**) estão **todas na Parte 5, onde ela nunca é perguntada**. Dar opções
+de paciente a essas três é Catálogo, espera a primeira Curadoria, e sábado pode
+confirmá-la.
+
+**O que eu recomendei NÃO fazer:** peso automático de credencial no Motor
+(`INDIRETO` por doutrina — *credencial não vira ponto*) e qualquer selo
+acadêmico na vitrine. E fica pendurada, para o pacote do advogado, **uma
+pergunta a mais**: *"podemos publicar fatos acadêmicos verificáveis com fonte,
+ligados ao caso, sem ranking?"*.
+
 ---
 
 ## 6 · As lições desta sessão

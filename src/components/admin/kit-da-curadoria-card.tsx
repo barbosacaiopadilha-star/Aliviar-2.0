@@ -95,6 +95,12 @@ export const GUIAS_DE_LEITURA = [
     titulo: "O que é a Aliviar",
     descricao: "O documento de contexto: para quem chega novo na operação.",
   },
+  {
+    href: "/guias/Como-Ler-o-Curriculo-de-um-Medico-Aliviar.pdf",
+    titulo: "Como ler o currículo de um médico",
+    descricao:
+      "Para a assistida que procura por formação: o que cada título garante, o que não garante, e as duas perguntas que valem mais. Sem nome, sem nota, sem ranking.",
+  },
 ] as const;
 
 function ListaDePecas({ pecas }: { pecas: ReadonlyArray<{ href: string; titulo: string; descricao: string }> }) {
