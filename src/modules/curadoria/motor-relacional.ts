@@ -26,6 +26,10 @@ import { CATALOGO_GERADO, type CatalogoConceito } from "./catalogo-gerado";
 import {
   type CompatibilityResult,
 } from "./motor-compatibilidade";
+import {
+  ConceitoForaDoMotorError,
+  participaDoMotor,
+} from "./participacao-no-motor";
 import { NEED_DEGREES, type NeedDegree } from "./protocolos";
 
 // ---------------------------------------------------------------------------
@@ -189,12 +193,31 @@ function opcoesDaPessoaDoConceito(concept: CatalogoConceito): Map<string, { labe
  *      respondida, a conduta não marcada é fato declarado, não lacuna);
  *   3. toda opção pedida com correspondência → CONFIRMADO.
  * O detalhe opção-a-opção é preservado — o agregado nunca apaga o par.
+ *
+ * **O caso zero, e por que ele não é CONFIRMADO.** Opções sem correspondência
+ * declarada saem antes da derivação (`NAO_TENHO_PREFERENCIA` é a única hoje).
+ * Se ela marcou SÓ essas, não sobra pedido nenhum — e `[].some(...)` é
+ * `false`, o que fazia o estado cair em CONFIRMADO por **verdade vácua**:
+ * *"nenhum pedido dela ficou insatisfeito"* porque não havia pedido. O efeito
+ * medido em 31/08 era `ALTA_COMPATIBILIDADE` **com zero frases de apoio** — e,
+ * pior, o profissional que declarava MAIS recebia leitura melhor num conceito
+ * onde ela não pediu nada, enquanto o que não declarava nada recebia lacuna.
+ *
+ * `semPedidoMensuravel` marca esse caso, e quem cruza devolve NAO_RELEVANTE
+ * sem consultar a matriz. É o P1 do próprio motor aplicado com honestidade:
+ * **sem pedido, o assunto está encerrado** — não confirmado, e também não em
+ * falta, porque não há o que faltar.
  */
 export function deriveRelationalState(
   concept: CatalogoConceito,
   personOptions: readonly string[],
   evidence: RelationalEvidence | null,
-): { state: RelationalState; matches: RelationalOptionMatch[] } {
+): {
+  state: RelationalState;
+  matches: RelationalOptionMatch[];
+  /** Ela não marcou nenhuma opção com correspondência declarada. */
+  semPedidoMensuravel: boolean;
+} {
   const catalogoDaPessoa = opcoesDaPessoaDoConceito(concept);
   const pedidas = personOptions.filter((value) => {
     const opcao = catalogoDaPessoa.get(value);
@@ -204,8 +227,15 @@ export function deriveRelationalState(
     return opcao !== undefined && opcao.satisfiedBy !== null;
   });
 
+  // Antes da evidência: sem pedido mensurável não há estado a derivar, e
+  // tampouco lacuna — nada foi pedido, logo nada pode estar faltando.
+  if (pedidas.length === 0) {
+    return { state: "NAO_INFORMADO", matches: [], semPedidoMensuravel: true };
+  }
+
   if (!evidence) {
     return {
+      semPedidoMensuravel: false,
       state: "NAO_INFORMADO",
       matches: pedidas.map((value) => ({
         personOption: value,
@@ -237,7 +267,7 @@ export function deriveRelationalState(
   });
 
   const state: RelationalState = matches.some((m) => !m.satisfied) ? "NAO_CONFIRMADO" : "CONFIRMADO";
-  return { state, matches };
+  return { state, matches, semPedidoMensuravel: false };
 }
 
 // ---------------------------------------------------------------------------
@@ -311,14 +341,33 @@ export function crossRelationalConcept(
     };
   }
 
-  const { state, matches } = deriveRelationalState(concept, need.options, evidence);
+  /**
+   * GUARDA DE PARTICIPAÇÃO — segundo nível, espelhando `celulaDoMotor`.
+   *
+   * O motor absoluto recusa por nome o conceito `MOTOR_PARTICIPATION = NUNCA`,
+   * e diz por quê: a segunda barreira existe para o dia em que a primeira
+   * falhar. Este motor não tinha nenhuma — decidia só por `cruzamento`. Hoje os
+   * dados são consistentes (nenhum conceito é `automatico` **e** `NUNCA`), então
+   * não havia defeito vivo; havia a porta por onde um conceito novo entraria.
+   */
+  if (!participaDoMotor(concept.code)) {
+    throw new ConceitoForaDoMotorError(concept.code);
+  }
+
+  const { state, matches, semPedidoMensuravel } = deriveRelationalState(
+    concept,
+    need.options,
+    evidence,
+  );
   return {
     kind: "CELULA",
     code: concept.code,
     conceptName: concept.name,
     degree: need.degree,
     state,
-    result: MATRIZ_RELACIONAL[need.degree][state],
+    // Sem pedido mensurável a matriz não se aplica: nada que ele declare muda
+    // um conceito que ela não pediu (P1). Ver o caso zero em deriveRelationalState.
+    result: semPedidoMensuravel ? "NAO_RELEVANTE" : MATRIZ_RELACIONAL[need.degree][state],
     matches,
     declaredConducts: evidence ? [...evidence.options] : [],
   };

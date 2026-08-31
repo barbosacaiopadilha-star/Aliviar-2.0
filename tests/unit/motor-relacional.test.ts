@@ -22,6 +22,7 @@ import {
   relationalSummarySentence,
   type RelationalNeed,
 } from "@/modules/curadoria/motor-relacional";
+import { ConceitoForaDoMotorError } from "@/modules/curadoria/participacao-no-motor";
 import { NEED_DEGREES } from "@/modules/curadoria/protocolos";
 
 const COMUNICACAO = RELATIONAL_CONCEPTS.find((c) => c.code === "MODELO_COMUNICACAO")!;
@@ -284,5 +285,115 @@ describe("O cruzamento completo e o resumo — conta ocorrências e nada mais", 
     expect(readings.map((r) => r.code)).toEqual(
       RELATIONAL_CONCEPTS.filter((c) => needs.some((n) => n.subcriterionCode === c.code)).map((c) => c.code),
     );
+  });
+});
+
+/**
+ * O CASO ZERO — a verdade vácua que dava ALTA sem uma frase de apoio.
+ *
+ * Medido em 31/08, rodando o motor: ela marcava SÓ `NAO_TENHO_PREFERENCIA`
+ * (a única opção sem correspondência declarada no Catálogo), grau ESSENCIAL,
+ * e o profissional tinha qualquer declaração. As opções sem regra saem antes
+ * da derivação, `matches` ficava vazio, e **`[].some(...)` é `false`** — o
+ * estado caía em CONFIRMADO por vacuidade: *"nenhum pedido dela ficou
+ * insatisfeito"* porque não havia pedido nenhum. Resultado:
+ * **ALTA_COMPATIBILIDADE com zero frases de apoio.**
+ *
+ * O detalhe que mostra o tamanho do erro: **sem** declaração do profissional
+ * dava LACUNA; **com** declaração dava ALTA. Quem declarava mais recebia
+ * leitura melhor num conceito onde ela não pediu nada.
+ *
+ * O teste que existia cobria `NAO_TENHO_PREFERENCIA` **acompanhada** de outra
+ * opção — o caminho que sempre funcionou. Sozinha, ninguém tinha olhado.
+ */
+describe("O caso zero — sem pedido mensurável, o assunto está encerrado", () => {
+  const SOZINHA = ["NAO_TENHO_PREFERENCIA"];
+
+  it("a derivação marca o caso e não inventa CONFIRMADO", () => {
+    const { matches, semPedidoMensuravel } = deriveRelationalState(FAMILIAR, SOZINHA, {
+      subcriterionCode: FAMILIAR.code,
+      options: ["ATENDIMENTO_APENAS_INDIVIDUAL"],
+    });
+    expect(semPedidoMensuravel).toBe(true);
+    expect(matches).toEqual([]);
+  });
+
+  it("NAO_RELEVANTE mesmo em grau ESSENCIAL — a matriz não se aplica a pedido que não houve", () => {
+    for (const degree of NEED_DEGREES) {
+      const leitura = crossRelationalConcept(
+        FAMILIAR,
+        need({ subcriterionCode: FAMILIAR.code, options: SOZINHA, degree }),
+        { subcriterionCode: FAMILIAR.code, options: ["ATENDIMENTO_APENAS_INDIVIDUAL"] },
+      );
+      expect(leitura, `grau ${degree}`).not.toBeNull();
+      expect(leitura!.kind).toBe("CELULA");
+      expect((leitura as { result: string }).result, `grau ${degree}`).toBe("NAO_RELEVANTE");
+    }
+  });
+
+  it("nenhuma célula do caso zero carrega frase de apoio — alta sem prova não volta", () => {
+    const leitura = crossRelationalConcept(
+      FAMILIAR,
+      need({ subcriterionCode: FAMILIAR.code, options: SOZINHA }),
+      { subcriterionCode: FAMILIAR.code, options: ["ACOMPANHANTE_BEM_VINDO_SEMPRE"] },
+    ) as { result: string; matches: unknown[] };
+    expect(leitura.result).toBe("NAO_RELEVANTE");
+    expect(leitura.matches).toEqual([]);
+  });
+
+  it("declarar mais não pode valer mais que declarar nada, onde ela não pediu", () => {
+    const comEvidencia = crossRelationalConcept(
+      FAMILIAR,
+      need({ subcriterionCode: FAMILIAR.code, options: SOZINHA }),
+      { subcriterionCode: FAMILIAR.code, options: ["ACOMPANHANTE_BEM_VINDO_SEMPRE"] },
+    ) as { result: string };
+    const semEvidencia = crossRelationalConcept(
+      FAMILIAR,
+      need({ subcriterionCode: FAMILIAR.code, options: SOZINHA }),
+      null,
+    ) as { result: string };
+    expect(comEvidencia.result).toBe(semEvidencia.result);
+  });
+
+  it("o caminho que sempre funcionou continua igual — a opção sem regra ao lado de uma com regra", () => {
+    const { state, matches, semPedidoMensuravel } = deriveRelationalState(
+      FAMILIAR,
+      ["NAO_TENHO_PREFERENCIA", "QUERO_ACOMPANHANTE_SEMPRE"],
+      { subcriterionCode: FAMILIAR.code, options: ["ACOMPANHANTE_BEM_VINDO_SEMPRE"] },
+    );
+    expect(semPedidoMensuravel).toBe(false);
+    expect(state).toBe("CONFIRMADO");
+    expect(matches.map((m) => m.personOption)).toEqual(["QUERO_ACOMPANHANTE_SEMPRE"]);
+  });
+});
+
+/**
+ * A GUARDA DE PARTICIPAÇÃO — segundo nível, que este motor não tinha.
+ *
+ * O motor absoluto recusa por nome (`celulaDoMotor` → `ConceitoForaDoMotorError`)
+ * e explica: a segunda barreira existe para o dia em que a primeira falhar.
+ * O relacional decidia só por `cruzamento`. Hoje nenhum conceito é `automatico`
+ * **e** `NUNCA`, então não havia defeito vivo — havia a porta.
+ */
+describe("A guarda de participação no motor relacional", () => {
+  it("os dois conceitos NUNCA do eixo seguem pelo juízo humano, sem lançar", () => {
+    for (const conceito of [PREFERENCIAS, NOTICIAS]) {
+      const leitura = crossRelationalConcept(
+        conceito,
+        need({ subcriterionCode: conceito.code }),
+        null,
+      );
+      expect(leitura, conceito.code).not.toBeNull();
+      expect(leitura!.kind, conceito.code).toBe("JUIZO_HUMANO");
+    }
+  });
+
+  it("um conceito NUNCA que chegasse ao caminho de célula é recusado pelo nome", () => {
+    // Só se alcança forjando o `cruzamento` — que é exatamente o cenário da
+    // guarda: dado inconsistente, ou código novo que contornou a entrada.
+    const forjado = { ...PREFERENCIAS, cruzamento: "automatico" as const };
+    expect(() =>
+      crossRelationalConcept(forjado, need({ subcriterionCode: forjado.code }), null),
+    ).toThrow(ConceitoForaDoMotorError);
   });
 });
