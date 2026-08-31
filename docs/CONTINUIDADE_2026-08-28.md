@@ -534,6 +534,24 @@ regra certa — o defeito estava no que o número passou a apontar.
   30/08 e refeita no mesmo dia (o LEIA-ME registra); a pasta atual carrega
   também o **PRE-VOO do sábado**. Antes de confiar nela, o teste é o de sempre:
   byte a byte contra o repositório.
+- **NÃO EXISTEM MAIS CÓPIAS SOLTAS FORA DO REPOSITÓRIO** (limpeza de 31/08), e
+  vale saber o que havia para ninguém procurá-las: em
+  `Documentos › Aliviar - material` viviam um **worktree órfão** de 22/08 (1.690
+  arquivos, 28 MB, apontando para `Desktop/curadoria-2-0`, que não existe mais —
+  git nem abria) e **três PDFs operacionais de 22/08**. Os dois foram apagados
+  com autorização do Fundador.
+  **O worktree não tinha trabalho perdido, apesar do nome "não commitado":** ele
+  parava na ADR-066 (o repo já ia na 107), e cada um dos seus 180 arquivos
+  exclusivos foi conferido no histórico — todos já estiveram no `main` e saíram
+  por commit com motivo (a Mesa antiga, o ACE, as seis telas da ADR-07x). Era o
+  estado ANTERIOR às remoções, não trabalho perdido.
+  **Os três PDFs eram o risco de verdade:** um deles era o
+  `Roteiro-de-Atendimento` — nome aposentado, sem "R$ 500" e sem "Supervisor" —
+  e os outros dois estavam desatualizados. **A guarda de vocabulário não os
+  alcançava: ela só enxerga o repositório.** Quem imprimisse dali no sábado
+  ensaiaria a operação de agosto.
+  **A pasta continua existindo** com o que é legítimo: 246 fotos originais, o
+  backup de schema de 21/08 e um documento de modelo de dados.
 - **TRÊS destinos de PDF, e a diferença é o que se publica** (atualizado em
   28/08, quando os guias entraram no Kit):
   `docs/guias/pdf/` **ignorado** pelo Git — cópia local de trabalho;
