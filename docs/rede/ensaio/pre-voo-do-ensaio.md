@@ -1,4 +1,9 @@
-# Pré-voo do Ensaio Geral — sábado, 05/09/2026
+# Pré-voo do Ensaio Geral
+
+> **Sem data marcada.** A marcação de 05/09/2026 foi desfeita em 31/08. Esta
+> lista não envelhece com a data: o que está **OK** continua OK, e as caixas
+> vazias continuam sendo as mesmas quatro pessoas e a impressão. **Ao remarcar,
+> confira só o bloco do topo** — ele diz o que já estava pronto e quando.
 
 **Conferido em 31/08.** O que está marcado **OK** foi verificado por máquina; o
 que está em branco só o Fundador fecha. Imprima e risque.
@@ -10,7 +15,7 @@ que está em branco só o Fundador fecha. Imprima e risque.
 | | Item |
 |---|---|
 | **OK** | **Documentos**: fonte, PDF, produção e a pasta da mesa são a MESMA versão — 18/18 byte a byte. |
-| **OK** | **A data do sábado** está impressa no cabeçalho do Ensaio. |
+| **—** | **Sem data.** O cabeçalho do Ensaio traz *“pronto, sem data marcada”*. **Este é o primeiro item a resolver ao retomar.** |
 | **OK** | **Preço vigente em todo o papel**: R$ 500 · 12× de R$ 41,67 · sem entrada. Nenhum documento diz outro número. |
 | **OK** | **Quatro auditorias** de conteúdo passadas: vocabulário, doutrina, sentido e contagens. |
 | **OK** | **O Ensaio testa a operação VIGENTE** (ADR-100 a **108**): cinco atos, Supervisor no elenco, observador fora da Consulta Inicial. |
@@ -23,7 +28,7 @@ que está em branco só o Fundador fecha. Imprima e risque.
 
 ---
 
-## As quatro pessoas — sem os nomes, não há sábado
+## As quatro pessoas — sem os nomes, não há Ensaio
 
 - [ ] **ASSISTIDO** — pessoa de confiança. Ela inventa a própria história; só a âncora é combinada: **dor crônica de coluna, há mais de um ano, já viu pelo menos um médico**. Não deixe ela ler as Partes 2 e 3 do Ensaio.
 - [ ] **SUPERVISOR** — segunda pessoa da equipe. Lê antes: o *Guia do Supervisor* e o *Roteiro do Supervisor (a conversa)*.
@@ -68,7 +73,7 @@ que está em branco só o Fundador fecha. Imprima e risque.
 
 ---
 
-## As cinco perguntas que o sábado responde — não saia sem elas
+## As cinco perguntas que o Ensaio responde — não saia sem elas
 
 1. **Ao fim da Consulta Inicial**, perguntar a quem interpretou o assistido: ***"o que você teria dito se estivesse sozinha com o Curador?"*** — é a única medição do risco que a ADR-103 aceitou sem medir.
 2. **Quanto tempo o Supervisor gastou no total** — primeiro contato + preço + Consulta. É a carga que a ADR-100 criou.
@@ -78,7 +83,7 @@ que está em branco só o Fundador fecha. Imprima e risque.
 
 ---
 
-## O que o sábado NÃO é
+## O que o Ensaio NÃO é
 
 Nada entra no sistema. Produção não é tocada. **Não precisa de `/admin`, de backup nem de internet** — só de papel, gente e relógio.
 

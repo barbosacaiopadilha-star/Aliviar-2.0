@@ -1,8 +1,13 @@
-# Convite das quatro pessoas — Ensaio Geral de 05/09/2026
+ Convite das quatro pessoas — Ensaio Geral
 
-Escritas em 31/08. Copie, troque o `[nome]` e envie.
+Escritas em 31/08. Copie, troque o [nome] e o [dia], e envie.
 
-Uma coisa vale para as quatro: **não sabemos quanto dura.** Descobrir isso é
+A data está como [dia] de propósito: a marcação de 05/09 foi desfeita, e o
+convite não deve carregar um dia que ainda não existe. Ao remarcar, troque os
+quatro [dia] e envie no mesmo dia — um “não posso” descoberto na véspera
+adia o Ensaio inteiro.
+
+Uma coisa vale para as quatro: não sabemos quanto dura. Descobrir isso é
 metade do motivo do ensaio. Por isso todas pedem a manhã inteira — é melhor
 reservar demais do que interromper no meio.
 
@@ -12,12 +17,12 @@ instrumento.
 
 ---
 
-## 1 · Para quem vai interpretar a paciente
+ 1 · Para quem vai interpretar a paciente
 
 Oi, [nome]! Preciso de você num sábado, e é o papel mais importante do dia.
 
-No dia 5/9, de manhã, a Aliviar vai ensaiar um atendimento inteiro do começo ao
-fim. Você seria a paciente.
+No dia [dia], de manhã, a Aliviar vai ensaiar um atendimento inteiro do
+começo ao fim. Você seria a paciente.
 
 Não precisa estudar nada — ao contrário: não leia nada e não combine nada comigo
 antes. A única coisa combinada é o ponto de partida: você tem dor nas costas há
@@ -36,10 +41,10 @@ justamente parte do que a gente vai fazer.
 
 ---
 
-## 2 · Para quem vai fazer o supervisor
+ 2 · Para quem vai fazer o supervisor
 
-Oi, [nome]! No sábado 5/9, de manhã, a gente vai ensaiar um atendimento inteiro
-da Aliviar, e eu queria você no papel do supervisor.
+Oi, [nome]! No dia [dia], de manhã, a gente vai ensaiar um atendimento
+inteiro da Aliviar, e eu queria você no papel do supervisor.
 
 O que você faz: é o primeiro contato com a pessoa. Você escuta, explica o que a
 Aliviar é, diz o preço (R$ 500 por um ano, em até 12x de R$ 41,67, sem entrada),
@@ -65,9 +70,9 @@ Roteiro do Supervisor. Reserva a manhã?
 
 ---
 
-## 3 · Para quem vai atender o telefone dos dois médicos
+ 3 · Para quem vai atender o telefone dos dois médicos
 
-Oi, [nome]! Preciso de uma ajuda sua no sábado 5/9, de manhã — e é um papel
+Oi, [nome]! Preciso de uma ajuda sua no dia [dia], de manhã — e é um papel
 divertido.
 
 A Aliviar vai ensaiar um atendimento inteiro. Numa parte do dia eu ligo para dois
@@ -91,9 +96,9 @@ exatamente a que horas — os tempos são justamente o que a gente vai medir.
 
 ---
 
-## 4 · Para o observador
+ 4 · Para o observador
 
-Oi, [nome]! Tenho um convite meio estranho para o sábado 5/9, de manhã: eu
+Oi, [nome]! Tenho um convite meio estranho para o dia [dia], de manhã: eu
 preciso de alguém para não trabalhar.
 
 A Aliviar vai ensaiar um atendimento inteiro, e eu preciso de uma pessoa de fora,
@@ -115,10 +120,10 @@ Reserva a manhã?
 
 ---
 
-## Ao enviar
+ Ao enviar
 
-- **O supervisor precisa dos PDFs nº 1 e nº 2** da pasta *"2 - Para ler antes"*.
-- **Quem faz os médicos precisa só das Partes 2 e 3** do Ensaio Geral. O PDF
+- O supervisor precisa dos PDFs nº 1 e nº 2 da pasta "2 - Para ler antes".
+- Quem faz os médicos precisa só das Partes 2 e 3 do Ensaio Geral. O PDF
   inteiro entrega o resto do dia junto, e aí o segredo acaba.
-- **Envie no mesmo dia, não na sexta.** Um "não posso" descoberto na sexta não se
-  ajusta: adia. A primeira marcação do Ensaio caiu exatamente aqui.
+- Envie no mesmo dia em que remarcar. Um "não posso" descoberto na véspera
+  não se ajusta: adia. Duas marcações do Ensaio já caíram aqui.

@@ -36,9 +36,9 @@ de 31/08 precisa imprimir de novo.
 **A pasta tem dois arquivos que não são documentos da operação** e por isso
 entram na conta dos 22: o `LEIA-ME.txt`, que é da própria pasta, e o
 `MENSAGENS - convite das quatro pessoas.txt`, escrito em 31/08 — **a fonte dele
-está em `docs/rede/ensaio/mensagens-2026-09-05.txt`**, idêntica byte a byte,
+está em `docs/rede/ensaio/mensagens-de-convite.txt`**, idêntica byte a byte,
 porque material operacional que só existe na área de trabalho é a classe de
-defeito que este dia inteiro tratou. O que resta para o Ensaio de 05/09 é humano e está no PRE-VOO
+defeito que este dia inteiro tratou. O que resta para o Ensaio é humano e está no PRE-VOO
 da pasta da mesa: as quatro pessoas, a impressão com a separação das folhas, e
 telefone-relógio-canetas.
 
@@ -457,8 +457,8 @@ porque os greps rodaram case-sensitive em minúscula, e ele tem P maiúsculo.
 `AmbienteConcierge`) — órfã para uma futura limpeza, não defeito de uso.
 
 **O PRÉ-VOO DO SÁBADO** (30/08, `70dd525`) — em dois lugares: na pasta da mesa
-("PRE-VOO - sabado 05-09.txt", onde será usado) e em
-`docs/rede/ensaio/pre-voo-2026-09-05.txt` (onde vira registro). A metade
+("PRE-VOO do Ensaio.txt", onde será usado) e em
+`docs/rede/ensaio/pre-voo-do-ensaio.txt` (onde vira registro). A metade
 verificável foi **verificada por máquina na hora**, não afirmada: fonte, PDF,
 produção e mesa na mesma versão byte a byte; data no papel; preço único; Kit
 respondendo. A metade humana virou checklist com caixas.
@@ -621,7 +621,7 @@ de usar o domínio. **A produção publica `aliviar-2-0.vercel.app` corretamente
 (ADR-076, 22–23/08) e não aconteceu; o que faz uma data cair pela segunda vez
 não é o instrumento — é gente não confirmada, e um "não posso" descoberto na
 sexta adia o sábado inteiro. As quatro estão em
-`docs/rede/ensaio/mensagens-2026-09-05.txt` e na pasta da mesa, prontas para
+`docs/rede/ensaio/mensagens-de-convite.txt` e na pasta da mesa, prontas para
 encaminhar: trocar o `[nome]` e enviar. **A fonte é o `.md`**, e dele saem o `.txt` (para copiar do celular) e o `.pdf` (3 páginas, na pasta da mesa) — o mesmo padrão do pré-voo, **para os dois nunca divergirem.** Escrever o texto à mão num `.txt` e gerar um PDF à parte teria criado a classe de defeito do `SIM-68`, em que a Ficha impressa perdeu opções que o Catálogo tinha.
 
 **Como foram escritas, e o porquê de cada escolha:**
@@ -1133,11 +1133,25 @@ de distância, e eu o deixei para depois por três horas.
 
 ## 8 · O trabalho aberto, em ordem de valor
 
-1. ~~Marcar o Ensaio Geral~~ — **MARCADO pelo Fundador em 30/08: sábado,
-   05/09/2026.** A data está carimbada no próprio `ensaio-geral.html` (e no PDF
-   que vai para a mesa). É a **segunda** marcação — a primeira (ADR-076,
-   22–23/08) não aconteceu, e a diferença desta é que agora o Ensaio testa a
-   operação certa, conferida três vezes.
+1. **Marcar o Ensaio Geral — DESMARCADO pelo Fundador em 31/08**
+   (*"não vou ensaiar agora"*), depois de marcado em 30/08 para 05/09. **É a
+   segunda marcação que não acontece** — a primeira foi a ADR-076 (22–23/08).
+
+   **A data foi retirada de tudo, por decisão dele (opção A):** o
+   `ensaio-geral.html` agora diz *"pronto, sem data marcada"*, o pré-voo abre
+   com a nota de que não envelhece, as quatro mensagens trazem `[dia]` no lugar
+   do dia, e os arquivos perderam a data do nome (`pre-voo-do-ensaio`,
+   `mensagens-de-convite`, `PRE-VOO do Ensaio.pdf`). **O material está inteiro
+   e nada nele depende de data** — ao remarcar, o primeiro item do pré-voo é
+   justamente marcar.
+
+   **O que isso muda nas deferências, e é o que mais importa:** eu vinha parando
+   coisas com a frase *"espera o sábado"* (`SIM-69`, `SIM-70`, `SIM-71`, a
+   reordenação da Parte 4, a lavratura dos três híbridos, a separação dos
+   downloads). **A ADR-073 nunca falou do Ensaio** — ela congela até a
+   **primeira Curadoria real**. As deferências seguem válidas; mudaram só de
+   nome: não é *"depois do sábado"*, é **"depois da primeira pessoa de
+   verdade"**.
 
    **O que a data cobra até sexta, e é pouco:** confirmar as pessoas — quem
    interpreta o assistido (pessoa de confiança), quem faz o Supervisor (segunda
@@ -1145,13 +1159,13 @@ de distância, e eu o deixei para depois por três horas.
    que não trabalha. Imprimir da pasta da mesa ou do `/admin`. Nada de código.
    **O pré-voo está pronto, em duas formas na pasta da mesa:** o `.pdf`
    (3 páginas, para imprimir e riscar) e o `.txt` (abre sem leitor, serve no
-   celular). O fonte é `docs/rede/ensaio/pre-voo-2026-09-05.md`. O que era
+   celular). O fonte é `docs/rede/ensaio/pre-voo-do-ensaio.md`. O que era
    verificável por máquina está **OK**; as caixas vazias são as quatro pessoas,
    a impressão — **com a pegadinha das fichas secretas em destaque** — e a
    logística. As cinco perguntas do Diário estão no rodapé.
 
    **E as quatro mensagens de convite já estão escritas** (31/08), em
-   `docs/rede/ensaio/mensagens-2026-09-05.txt` e na pasta da mesa: uma por
+   `docs/rede/ensaio/mensagens-de-convite.txt` e na pasta da mesa: uma por
    papel, sem jargão, prontas para encaminhar. **A recomendação registrada é
    enviar no mesmo dia, não na sexta** — um "não posso" descoberto na sexta não
    se ajusta, adia. É a única coisa que separa a data de acontecer, e a primeira
