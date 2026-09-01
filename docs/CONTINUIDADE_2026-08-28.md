@@ -897,6 +897,38 @@ descrevendo as quatro seções. **O total da pasta não muda: 35 arquivos**, por
 nada saiu — só mudou de prateleira. O Kit continua **15/15** (4 peças + 8 guias
 + 3 de entrega).
 
+### A auditoria dos oito guias operacionais (01/09)
+
+**O Fundador perguntou se os guias operacionais já tinham sido auditados para
+ter certeza de que estão atualizados e coerentes. A resposta era NÃO**, e eu
+rodei a auditoria em vez de responder de memória.
+
+**Por que era não:** em 31/08 eu editei só os quatro guias que as ADR-108/109/110
+atingiam diretamente. **Os outros quatro não eram tocados desde 30/08** — antes
+das três decisões — e eu tinha presumido o resto.
+
+**Achado 1 — a de-numeração deixou um para trás.** O `3-curador` ainda dizia
+*"**15** (Cobertura e convênio) e **16** (Custo e pagamento) chegam prontos"*. A
+varredura de 31/08 procurou `"conceitos 15 e 16"` e **essa forma não casava**.
+Varri o padrão certo (`\b1[0-9] \(`) e era a última: **nenhum documento
+operacional cita mais conceito por número.**
+
+**Achado 2 — `SIM-81`, e nenhum `grep` acharia.** O Roteiro do Acompanhamento
+afirmava que o Supervisor *"estava na Consulta Inicial"*. A primeira metade da
+frase é sempre verdade (ADR-100); **a segunda é condicional** — a ADR-103 põe
+aquela presença na mão dela. **E o risco não é cosmético:** o roteiro manda ele
+*continuar* a conversa sem se apresentar, e um Supervisor que **não** esteve na
+sala, falando como se tivesse, pode citar algo que ela contou **a portas
+fechadas, a quem ela pediu para não entrar**. O conserto separa as duas coisas:
+a regra de não se apresentar vale igual, mas ficou escrito que **o que muda é a
+fonte do que ele sabe** — e que frase daquela conversa não se cita como ouvida.
+
+**O que passou limpo:** contagens e datas nos oito (zero *"dez guias"*, zero
+`05/09`), e as menções a dinheiro estão todas nos quatro guias certos, do lado
+certo da ADR-108. Os quatro intocados quase não descrevem a Consulta Inicial —
+**é por isso que as ADR-109 e 110 não os alcançavam**, e é a razão de o estrago
+ter sido pequeno.
+
 ---
 
 ## 6 · As lições desta sessão
@@ -1073,6 +1105,21 @@ um arquivo de script e roda por caminho — nunca por `-e` entre aspas duplas.**
 E a checagem que salvou: **conferir o efeito por `grep` depois de gravar**, em
 vez de confiar no `✓` que o próprio script imprime. É a irmã da lição 16 — script
 que não confere o próprio efeito mente com educação.
+
+**19 · Depois de uma decisão, o perímetro não é "os documentos que a decisão
+menciona" — é TODOS, e a diferença se mede pela data de cada um.** Em 31/08
+apliquei quatro decisões editando os quatro guias que elas citavam, e presumi os
+outros quatro. Quando o Fundador perguntou se estavam auditados, o `git log -1`
+por arquivo respondeu em três segundos: **metade parada em 30/08, antes das
+decisões.** Um dos dois defeitos ali só aparece lendo — o Supervisor que *"estava
+na Consulta Inicial"* não tem termo aposentado, número velho nem contagem
+errada; **`grep` nenhum o acha.** Regra: ao fechar uma decisão, **liste os
+documentos por data de última alteração** e leia os que ficaram atrás — a lista
+é curta e o custo é minutos. E a companheira, que também se provou hoje:
+**varredura por padrão só encontra a forma que você imaginou** — `"conceitos 15
+e 16"` não casa com `"15 (Cobertura e convênio) e 16 (…)"`. Quando varrer para
+eliminar algo, **varra a forma geral** (`\b1[0-9] \(`), não a frase que você se
+lembra de ter escrito.
 
 ---
 
