@@ -63,6 +63,19 @@ if (arquivos.length === 0) {
   process.exit(1);
 }
 
+/**
+ * Quantos foram REGRAVADOS — não quantos foram conferidos.
+ *
+ * Até 01/09 este gerador imprimia `✓` para os onze, tivessem mudado ou não.
+ * Ele já gravava só o que mudou; o que faltava era **dizer**. O efeito prático
+ * apareceu numa pergunta do Fundador — *"todos os guias e seus PDFs foram
+ * atualizados?"* —: o `✓` não servia de resposta, e a prova teve de vir do
+ * `git status`. **Ferramenta que não distingue "fiz" de "conferi" convida a
+ * acreditar em trabalho que não aconteceu** (lição 16). O gerador de rede já
+ * reportava assim; este passa a reportar igual.
+ */
+let mudaram = 0;
+
 const navegador = await chromium.launch();
 const pagina = await navegador.newPage();
 
@@ -88,15 +101,22 @@ for (const nome of arquivos) {
     bruto.toString("latin1").replace(/D:\d{14}\+00'00'/g, CARIMBO),
     "latin1",
   );
-  gravarSeMudou(destino, conteudo);
+  // O destino local e a cópia publicada são dois arquivos: qualquer um dos
+  // dois fora de dia já conta como regravação — senão o relatório diria
+  // "sem mudança" com a cópia de `public/` atrasada.
+  const mudouLocal = gravarSeMudou(destino, conteudo);
   const publicado = PUBLICADOS[nome];
-  if (publicado) gravarSeMudou(resolve(PUBLICO, publicado), conteudo);
+  const mudouPublicado = publicado ? gravarSeMudou(resolve(PUBLICO, publicado), conteudo) : false;
+  const mudou = mudouLocal || mudouPublicado;
+  if (mudou) mudaram += 1;
+
+  const paginas = (conteudo.toString("latin1").match(/\/Type\s*\/Page[^s]/g) ?? []).length;
   console.log(
-    "  ✓ " +
-      nome.replace(/\.html$/, ".pdf") +
-      (publicado ? " · publicado como " + publicado : " · só local"),
+    `  ${mudou ? "✓" : "·"} ${nome.replace(/\.html$/, ".pdf")} — ${paginas} página(s)` +
+      (publicado ? ` · publicado como ${publicado}` : " · só local") +
+      (mudou ? "" : " · sem mudança"),
   );
 }
 
 await navegador.close();
-console.log(`\n${arquivos.length} guia(s) em docs/guias/pdf/`);
+console.log(`\n${arquivos.length} guia(s) conferido(s) · ${mudaram} regravado(s) · saída em ${SAIDA}`);
