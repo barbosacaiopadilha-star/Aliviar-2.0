@@ -162,7 +162,22 @@ test.describe("dashboard administrativo (SPRINT OPERACIONAL 1 + RELEASE GATE 4)"
     }
   });
 
-  test("mostra indicadores, pendências e atividade recente reais, não o placeholder genérico", async ({
+  /**
+   * REESCRITO EM 01/09 — `SIM-62` grupo (b).
+   *
+   * Este teste exigia cinco indicadores que a **2ª passada de 24/08 removeu de
+   * propósito**, com o motivo escrito em `src/app/admin/page.tsx`: *"'Cases
+   * abertos' e 'Pacientes ativos' eram contagens das listas que o menu já abre
+   * — lista disfarçada de indicador"*, e *"média com n=1 é ruído estatístico
+   * vestido de gestão"*. **O teste estava vermelho desde então**, cobrando a
+   * volta de algo que ninguém quer de volta.
+   *
+   * Agora ele faz o contrário: **guarda a decisão.** Afirma o que o painel é —
+   * uma pergunta só, *"o que precisa de alguém agora?"* — e afirma que o que
+   * saiu **continua fora**. Assim a remoção deliberada fica protegida em vez de
+   * contestada, e quem a desfizer sem decidir de novo reprova aqui.
+   */
+  test("o painel responde UMA pergunta — e o que saiu em 24/08 continua fora", async ({
     page,
   }) => {
     const admin = loadTestAccounts().find((a) => a.role === "administrador")!;
@@ -170,19 +185,59 @@ test.describe("dashboard administrativo (SPRINT OPERACIONAL 1 + RELEASE GATE 4)"
 
     await page.goto("/admin");
 
-    await expect(page.getByText("Leads novos", { exact: true })).toBeVisible();
-    await expect(page.getByText("Em qualificação", { exact: true })).toBeVisible();
-    await expect(page.getByText("Conversão lead → paciente", { exact: true })).toBeVisible();
-    await expect(page.getByText("Pacientes ativos", { exact: true })).toBeVisible();
-    await expect(page.getByText("De Curadoria até o Concierge", { exact: true })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Pessoas por papel" })).toBeVisible();
+    // O que o painel É hoje: onde agir, o que está pendente, e o Kit.
+    await expect(page.getByRole("heading", { name: "Onde agir agora" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Pendências" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Atividade recente" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Kit da Curadoria" })).toBeVisible();
+
+    // Os indicadores que sobreviveram são pendência de verdade, não contagem.
+    for (const rotulo of ["Sem responsável", "Cases atrasados", "Documentos pendentes"]) {
+      await expect(page.getByText(rotulo, { exact: true })).toBeVisible();
+    }
+
+    // O que a 2ª passada apagou não pode voltar sem uma decisão nova.
+    for (const removido of [
+      "Leads novos",
+      "Em qualificação",
+      "Conversão lead → paciente",
+      "Pacientes ativos",
+      "Cases abertos",
+      "De Curadoria até o Concierge",
+    ]) {
+      await expect(
+        page.getByText(removido, { exact: true }),
+        `"${removido}" voltou ao painel — foi removido em 24/08 por ser lista disfarçada de indicador`,
+      ).toHaveCount(0);
+    }
+
+    // "Pessoas por papel" e "Atividade recente" migraram para /admin/equipe.
+    await expect(page.getByRole("heading", { name: "Pessoas por papel" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Atividade recente" })).toHaveCount(0);
 
     await expect(page.getByText("Ainda não há informações para exibir.")).toHaveCount(0);
   });
 
-  test("Release Gate 4 — o indicador de handoff carrega a fonte real, não a degradação honesta", async ({
+  /**
+   * RE-ALVEJADO EM 01/09 — `SIM-62` grupo (b).
+   *
+   * O princípio deste gate continua inteiro: **onde há dado real, a
+   * "degradação honesta" não pode aparecer no lugar dele** — nem o travessão
+   * do `formatMetric(null)`, nem a legenda de indisponibilidade. O que mudou
+   * foi o alvo: o cartão *"De Curadoria até o Concierge"* saiu na 2ª passada de
+   * 24/08 (média com n=1 é ruído estatístico vestido de gestão), e o teste
+   * ficou apontando para um elemento que não existe.
+   *
+   * Agora o gate mira **os indicadores que sobreviveram** — os de "Onde agir
+   * agora", que são pendência de verdade e vêm do mesmo `indicators`. Zero é
+   * um valor legítimo e aparece como `0`; travessão e "indisponível" não.
+   *
+   * **Dívida anotada, e é honesto dizer:** o `beforeAll` deste describe semeia
+   * um Case com transferência ao Concierge só para dar substância ao cartão que
+   * saiu. Com o novo alvo, esse seed não serve mais a nada — **pode ser
+   * removido por quem conseguir rodar a suíte E2E para confirmar.** Não o
+   * removi agora porque não teria como verificar.
+   */
+  test("Release Gate 4 — os indicadores carregam a fonte real, não a degradação honesta", async ({
     page,
   }) => {
     const admin = loadTestAccounts().find((a) => a.role === "administrador")!;
@@ -193,22 +248,45 @@ test.describe("dashboard administrativo (SPRINT OPERACIONAL 1 + RELEASE GATE 4)"
     // A página inteira não pode ter caído no error boundary.
     await expect(page.getByText("Algo não saiu como esperado")).toHaveCount(0);
 
-    // O card, pelo contêiner mais interno que contém o rótulo — o mesmo
-    // padrão de desambiguação dos demais specs.
-    const card = page
-      .locator("div")
-      .filter({ has: page.getByText("De Curadoria até o Concierge", { exact: true }) })
+    const onde = page
+      .locator("section, div")
+      .filter({ has: page.getByRole("heading", { name: "Onde agir agora" }) })
       .last();
 
-    // Com o seed garantindo ao menos um par (started_at → handoff), a
-    // degradação é PROIBIDA: nem o travessão do formatMetric(null), nem a
-    // legenda de indisponibilidade podem aparecer neste card.
-    await expect(card).not.toContainText("Informação indisponível");
-    await expect(card).not.toContainText("—");
+    // Cada indicador COM FONTE mostra número — zero inclusive, porque zero é
+    // um fato, não uma ausência.
+    for (const rotulo of ["Sem responsável", "Cases atrasados", "Tarefas vencidas"]) {
+      const card = onde
+        .locator("div")
+        .filter({ has: page.getByText(rotulo, { exact: true }) })
+        .last();
+      await expect(card, `"${rotulo}" caiu na degradação em vez de mostrar o número`).toContainText(
+        /\d/,
+      );
+      await expect(card).not.toContainText("Sem dados neste período");
+    }
 
-    // E o valor é um número em horas, compatível com o cenário semeado
-    // (started_at e transferência a segundos de distância → "0 h"; a
-    // asserção aceita qualquer número pt-BR, nunca texto de degradação).
-    await expect(card).toContainText(/\d+(,\d+)?\s*h/);
+    /**
+     * **"Documentos pendentes" fica de fora, e a ausência dele é o ACERTO.**
+     *
+     * `dashboard-repository` devolve `pendingDocuments: null` de propósito, com
+     * o motivo escrito: *"`patient_documents` guarda documentos ENVIADOS, não
+     * documentos pendentes — não existe no banco a noção de 'faltando'. Derivar
+     * um número daqui seria inventar."* O travessão ali é a degradação honesta
+     * **funcionando**, não falhando.
+     *
+     * Descoberto em 01/09: a primeira versão deste re-alvo exigia número dos
+     * três e reprovou — e a reprovação estava certa sobre mim, não sobre o
+     * produto. Fica a asserção invertida: enquanto o domínio não tiver a noção
+     * de documento faltando, este card **não pode** exibir um número inventado.
+     */
+    const documentos = onde
+      .locator("div")
+      .filter({ has: page.getByText("Documentos pendentes", { exact: true }) })
+      .last();
+    await expect(
+      documentos,
+      "'Documentos pendentes' passou a exibir um número — o domínio ganhou a noção de pendência, ou alguém inventou o dado",
+    ).not.toContainText(/\d/);
   });
 });
