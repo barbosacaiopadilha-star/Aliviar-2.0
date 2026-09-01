@@ -839,7 +839,8 @@ pasta nova — **estendi a que existe.** Uma segunda na área de trabalho é
 exatamente a divergência silenciosa que este dia inteiro tratou: em uma semana
 uma estaria velha e ninguém saberia qual.
 
-`Aliviar - Kit da Curadoria` passa a ter **três seções e 35 arquivos**:
+`Aliviar - Kit da Curadoria` passa a ter **três seções e 35 arquivos** (e vira
+`Aliviar - Operação` em 01/09, quando ganha a quarta):
 *1 - Para preencher na sala* (6), *2 - Para ler antes* (11) e a nova
 **`3 - Documentos da empresa`** — os cinco instrumentos do advogado em PDF mais
 os `.docx` originais, a Política de Privacidade, a leitura técnica das
@@ -960,6 +961,32 @@ idêntico, e o *"sem mudança"* estava certo. Depois restaurei um **backup que e
 tinha copiado do arquivo atual**, idêntico por construção. Só na terceira, com
 mutação de verdade (cópia publicada corrompida, depois o `<h1>` alterado), os
 dois caminhos acusaram `✓ · 1 regravado`. Árvore restaurada limpa.
+
+### A pasta vira `Aliviar - Operação`, e os três de entrega são conferidos (01/09)
+
+**Renomeada a pedido do Fundador.** O nome *Kit da Curadoria* descrevia bem as
+seções 1 e 2 — **o que se imprime para trabalhar** —, e deixou de descrever a
+pasta quando ela ganhou a papelada jurídica (seção 3) e o que se entrega à
+assistida (seção 4). **Os 35 arquivos foram preservados**, e o `LEIA-ME` abre
+explicando a troca. **O termo continua vivo onde é preciso:** o cartão do
+`/admin` se chama Kit da Curadoria e oferece só as seções 1 e 2.
+
+**E a pergunta que veio junto — *"todos os guias já revisados, certo?"* — tinha
+um buraco de escopo que eu mesmo criei.** A auditoria de mais cedo cobriu **os
+oito operacionais**; os **três de entrega** ficaram de fora, e eles são
+justamente os que a assistida lê. Conferidos agora:
+
+- **`11-como-ler-o-curriculo`** — escrito hoje, corrente por construção.
+- **`9-para-voce-que-comecou`** (29/08) e **`10-o-que-e-a-aliviar`** (30/08) —
+  **coerentes.** Nenhum diz quem pergunta sobre dinheiro, então a ADR-108 não os
+  contradiz; e a descrição do fluxo bate com a ADR-109 (*"seu Curador vai querer
+  entender seu caso a fundo"*, *"nada avança sem a sua confirmação — o critério
+  é seu"*). O preço citado no `10` é o vigente: **R$ 500, 12× de R$ 41,67.**
+
+**Por que passaram intactos, e vale saber:** eles descrevem **a experiência
+dela**, não o procedimento da equipe — e as três ADRs de 31/08 mexeram em quem
+faz o quê **dentro** da operação. **Documento escrito do ponto de vista de quem
+recebe envelhece menos** que o escrito do ponto de vista de quem executa.
 
 ---
 
@@ -1205,7 +1232,8 @@ de confiar no teste que ela alimenta** — `grep` o efeito, não o `✓`.
   Antes de mexer em roteiro, pergunte qual dos dois alguém vai imprimir.
 - **EXISTE UMA CÓPIA FORA DO REPOSITÓRIO, e ela é o risco desta entrega.**
   A pedido do Fundador (28/08), os dezesseis documentos foram copiados para
-  `Área de Trabalho › Aliviar - Kit da Curadoria`, em duas subpastas ("Para
+  `Área de Trabalho › Aliviar - Operação` (chamava-se *Kit da Curadoria* até
+  01/09), em subpastas ("Para
   preencher na sala" e "Para ler antes", esta com os guias renumerados na ordem
   de leitura). **Ela é um retrato e não se atualiza sozinha.** Daqui a algumas
   semanas alguém imprime de lá e opera com preço velho — que é exatamente o
