@@ -273,7 +273,8 @@ export type CatalogoConceito = {
    * de o atributo existir.
    *
    * NÃO confundir com \`cruzamento\`, que diz QUEM JULGA: entre os \`humano\` há
-   * dois \`NUNCA\` e um \`INDIRETO\`. E \`INDIRETO\` não é \`NUNCA\`.
+   * **4 \`NUNCA\` e 9 \`INDIRETO\`** (medido em 31/08; o texto anterior dizia
+   * "dois e um", de uma versão anterior do Catálogo). E \`INDIRETO\` não é \`NUNCA\`.
    */
   motorParticipation: string | null;
   required: boolean;

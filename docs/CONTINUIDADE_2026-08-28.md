@@ -21,8 +21,8 @@ está de fato no ar — o deploy leva cerca de um minuto depois do `push`.
 
 **E O SÁBADO ESTÁ VERIFICADO PRONTO** (verificação de 30/08, **refeita em
 31/08 depois das mudanças do dia** — rodada, não afirmada): repo = produção,
-pasta da mesa **18/18 byte a byte**, conteúdo crítico **12/12**, R$ 450 morto em
-toda superfície, **2672 testes verdes** (era 2664 antes do dia), Kit **14/14** no
+pasta da mesa **22/22 byte a byte**, conteúdo crítico **12/12**, R$ 450 morto em
+toda superfície, **2672 testes verdes** (era 2664 antes do dia), Kit **15/15** no
 ar. *O handoff de 30/08 dizia aqui "13 guardas verdes"; não consegui reconstruir
 o que aquele número contava, então troquei pelo total da suíte, que é medido.*
 
@@ -34,7 +34,7 @@ travam. **O `LEIA-ME.txt` da pasta abre com as quatro** — quem imprimiu antes
 de 31/08 precisa imprimir de novo.
 
 **A pasta tem dois arquivos que não são documentos da operação** e por isso
-ficam fora do 18/18: o `LEIA-ME.txt`, que é dela, e o
+entram na conta dos 22: o `LEIA-ME.txt`, que é da própria pasta, e o
 `MENSAGENS - convite das quatro pessoas.txt`, escrito em 31/08 — **a fonte dele
 está em `docs/rede/ensaio/mensagens-2026-09-05.txt`**, idêntica byte a byte,
 porque material operacional que só existe na área de trabalho é a classe de
@@ -358,7 +358,7 @@ conversão, e depois da apresentação **também não opina**.
 — **construção nova sob a ADR-073, dita em voz alta e registrada no commit**.
 Até aqui eles não existiam em lugar nenhum além do disco de quem rodava o
 gerador. O cartão passou a ter **duas seções**: *"Para preencher na sala"* (as
-quatro peças de rede) e *"Para ler antes — na ordem"* (os dez guias, em pares
+quatro peças de rede) e *"Para ler antes — na ordem"* (os onze guias, em pares
 por papel). Conferido em produção: os downloads respondem 200.
 
 Duas escolhas ficaram no código: a saída do gerador virou **determinística**
@@ -993,7 +993,7 @@ mente com educação.**
   ler. **Se o preço ou um papel mudar de novo, refaça a pasta no mesmo commit**,
   ou apague-a. **Histórico:** a primeira cópia foi apagada pelo Fundador em
   30/08 e refeita no mesmo dia (o LEIA-ME registra); a pasta carrega também o
-  **PRE-VOO do sábado**. **Estado em 31/08: 18/18 arquivos, byte a byte com o
+  **PRE-VOO do sábado**. **Estado em 31/08: 22/22 arquivos, byte a byte com o
   repositório** — refeita depois das correções da auditoria de conteúdo, do
   preço e da data do Ensaio.
   **O procedimento, e a ordem importa:** rode os DOIS geradores primeiro e
@@ -1052,7 +1052,7 @@ mente com educação.**
   o prazo de retenção, o prazo de resposta (proposto: 15 dias corridos, com
   fundamento) e a validação de quem pede por outra pessoa.
 - **TRÊS GERADORES DE PDF, e cada um serve a um público.** `gerar-rede-pdf`
-  (peças de papel, versionadas e publicadas), `gerar-guias-pdf` (os dez guias,
+  (peças de papel, versionadas e publicadas), `gerar-guias-pdf` (os onze guias,
   publicados em `public/guias/`) e `gerar-doc-pdf` — este último converte
   qualquer `.md` de `docs/` em PDF apresentável, e existe para falar com quem
   está FORA da casa: advogado, contador, parceiro. Os três normalizam o carimbo
@@ -1065,7 +1065,7 @@ mente com educação.**
 - **TRÊS destinos de PDF, e a diferença é o que se publica** (atualizado em
   28/08, quando os guias entraram no Kit):
   `docs/guias/pdf/` **ignorado** pelo Git — cópia local de trabalho;
-  `public/guias/` **versionado e publicado** — os dez guias, baixáveis no Kit;
+  `public/guias/` **versionado e publicado** — os onze guias, baixáveis no Kit;
   `docs/rede/` + `public/rede/` **versionados e publicados** — as peças de
   papel. Os dois geradores publicam: `gerar-guias-pdf.mjs` pelo mapa
   `PUBLICADOS`, `gerar-rede-pdf.mjs` pela lista `PECAS`. **Guia novo só aparece

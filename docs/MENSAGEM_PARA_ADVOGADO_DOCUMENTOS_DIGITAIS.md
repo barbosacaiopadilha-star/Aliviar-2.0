@@ -80,3 +80,34 @@ E se ele só puder responder **uma** pergunta, que seja esta:
 > **O nosso modelo de assinatura — documento gerado com os dados da pessoa, rolagem obrigatória até o fim, nome digitado e conferido com o cadastro, registro de quem/quando/de onde e uma impressão digital do texto exato — é suficiente para o Contrato, e dispensa as duas testemunhas do fecho?**
 
 Ela carrega a forma de assinatura e as testemunhas juntas, e é a única cuja resposta muda o **tamanho** da implementação, não só o conteúdo dela.
+
+---
+
+## Uma pergunta à parte, que não bloqueia nada
+
+Esta não trava documento nenhum — pode vir depois das outras, e é a única de
+**produto**, não de contrato:
+
+> **Podemos publicar, sobre cada profissional da Rede, fatos acadêmicos e de
+> formação verificáveis — com a fonte e a data da conferência ao lado —, ligados
+> ao caso da pessoa, sem ranking, sem nota e sem adjetivo?**
+
+O contexto, para a resposta sair direta:
+
+- **O que queremos publicar:** *"residência em ortopedia (CRM-PB, conferido em
+  01/09/2026)"*, *"orienta residentes em cirurgia de coluna (Lattes, link)"*,
+  *"publicou sobre hérnia discal em 2024 (DOI)"*.
+- **O que NÃO queremos, e já é proibido pela nossa própria doutrina:** superlativo
+  (*"referência nacional"*), ordenação entre profissionais, nota, selo, e título
+  de especialista sem RQE registrado.
+- **A origem do dado:** o próprio profissional declara num formulário que ele
+  **assina** (Termo de Veracidade), e nós conferimos contra fonte pública —
+  CRM/RQE, Lattes, DOI. **Toda informação chega ao assistido com origem e data**,
+  e o que não deu para confirmar é dito como não confirmado, nunca preenchido.
+- **Por que perguntamos:** a Resolução CFM 2.336/2023 trata de publicidade médica,
+  e queremos saber **onde fica a linha** entre *informar fato verificável* e
+  *fazer publicidade de terceiro* — e se há algo que o **nosso** contrato com o
+  profissional precisa dizer para autorizar essa publicação.
+
+**Se a resposta for "sim, com condições", as condições viram regra da casa** — é
+assim que trabalhamos com todas as outras.

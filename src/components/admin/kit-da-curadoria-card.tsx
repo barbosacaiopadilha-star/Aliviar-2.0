@@ -37,7 +37,7 @@ export const KIT_DA_CURADORIA = [
 /**
  * OS GUIAS DE LEITURA — 28/08, a pedido do Fundador.
  *
- * Até aqui os dez guias só existiam como PDF local: `docs/guias/pdf/` é
+ * Até aqui os guias de leitura só existiam como PDF local: `docs/guias/pdf/` é
  * ignorado pelo Git, então quem não rodasse o gerador não tinha como lê-los.
  *
  * **A ordem aqui é a ordem de leitura, e é por isso que ela vive no cartão e
