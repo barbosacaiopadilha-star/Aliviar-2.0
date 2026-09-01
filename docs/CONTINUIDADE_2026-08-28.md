@@ -868,6 +868,35 @@ hora antes. Regerado e conferido por extração.
 os quatro que são dela, tirar os sete internos de `public/`. **Não fiz**: mexe
 em rota de produção, e a metade jurídica depende do advogado de qualquer jeito.
 
+### O Kit fica só com guia operacional (31/08)
+
+**Decisão do Fundador: *"no Kit da Curadoria só quero guia operacional".*** É a
+primeira metade do `SIM-80` andando.
+
+**Três dos onze guias não eram de operação** e saíram: *Como funciona daqui em
+diante*, *O que é a Aliviar* e *Como ler o currículo*. **Os operacionais caem de
+11 para 8.**
+
+**O quarto candidato ficou, e é o achado do gesto.** Eu ia tirar quatro — o
+*Guia do Assistido* parece dela pelo nome. Fui ler o subtítulo antes de mover:
+*"o que ela vê, o que ela faz… **para que a equipe saiba explicar sem
+inventar**"*. **É operacional.** Tirá-lo teria sido erro, e o único custo de
+evitá-lo foi abrir o arquivo.
+
+**Não os removi para lugar nenhum, de propósito.** Sem destino, ficariam
+servidos em `public/` sem nada apontando — **órfãos**, que é exatamente a metade
+do `SIM-80` ainda aberta. Foram para uma lista própria,
+`PARA_ENTREGAR_AO_ASSISTIDO`, num bloco separado do cartão com o rótulo *"não é
+material de operação"*. **O Kit é o que se imprime para trabalhar; aquilo é o
+que se dá a ela** — e enquanto o site não tem uma área onde ela mesma baixe,
+**quem entrega é a equipe, e é do cartão que ela baixa.**
+
+Na pasta da área de trabalho, o mesmo corte: nova seção **`4 - Para entregar ao
+assistido`**, a seção 2 **renumerada de 1 a 8 sem buracos**, e o `LEIA-ME`
+descrevendo as quatro seções. **O total da pasta não muda: 35 arquivos**, porque
+nada saiu — só mudou de prateleira. O Kit continua **15/15** (4 peças + 8 guias
++ 3 de entrega).
+
 ---
 
 ## 6 · As lições desta sessão
@@ -1031,6 +1060,19 @@ escrito ANTES da última decisão do dia. E quando uma correção for adiada por
 custo presumido (*"isso exige o Supervisor local"*), **confira o custo antes de
 registrar a desculpa**: o comentário do Catálogo estava a um `grep` com escape
 de distância, e eu o deixei para depois por três horas.
+
+**18 · Backtick dentro de aspas duplas no bash é substituição de comando — e me
+mordeu três vezes no mesmo dia.** A terceira gravou o `SIM-80` **sem dois
+termos**: o shell executou `PARA_ENTREGAR_AO_ASSISTIDO` e `public/` como
+comandos e pôs vazio no lugar. O texto ficou gramaticalmente plausível — *"numa
+lista própria, , num bloco"* —, que é o que torna o defeito perigoso: **não
+parece corrompido, parece mal escrito**. As três vezes tinham a mesma forma
+(`node --input-type=module -e "…"` com crase dentro), e as três eram evitáveis
+pela mesma regra, que passa a valer: **texto com crase, cifrão ou aspas vai para
+um arquivo de script e roda por caminho — nunca por `-e` entre aspas duplas.**
+E a checagem que salvou: **conferir o efeito por `grep` depois de gravar**, em
+vez de confiar no `✓` que o próprio script imprime. É a irmã da lição 16 — script
+que não confere o próprio efeito mente com educação.
 
 ---
 
