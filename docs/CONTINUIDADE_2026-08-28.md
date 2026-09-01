@@ -792,6 +792,46 @@ margem** (15mm → 12mm), e o porquê ficou escrito no fonte para ninguém a
 desfazer. *Cortar texto que estava certo, três vezes, porque eu não medi onde a
 quebra caía.*
 
+### A revisão geral do fim do dia (31/08)
+
+**Pedida pelo Fundador — *"revise tudo para ver se esquecemos algo"*. O
+mecânico passou limpo; o que faltava era coerência, e eram seis.**
+
+**Passou:** geradores idempotentes (**0 regravadas** — nada ficou por gerar),
+pasta da mesa **22/22 byte a byte nos dois sentidos** (nada divergente lá, nada
+esquecido aqui), `.txt` derivados batendo com os `.md`, git sincronizado,
+**2685 testes verdes** e `tsc` limpo.
+
+**Faltava, e foi corrigido:**
+
+1. **O `LEIA-ME.txt` dizia *"os três últimos são contexto"*** — são quatro
+   desde o guia 11, que **não tinha nome em lugar nenhum da pasta**. Quem
+   abrisse veria um PDF a mais sem saber o que era.
+2. **O pré-voo não citava a caixa ☐ declarado por ela (`SIM-77`) nem a segunda
+   eliminação (ADR-110 §8).** As duas nasceram DEPOIS de o pré-voo ser escrito,
+   no mesmo dia — **o Curador chegaria no sábado sem saber das duas**, e a
+   segunda é a que impede o profissional que abandona quem recusa de passar
+   invisível.
+3. **O comentário errado do Catálogo estava no gerador, com escape** — por isso
+   o grep da manhã só o achou no arquivo gerado, e eu concluí, errado, que
+   corrigi-lo exigia o Supabase local. **Não exigia.** Corrigido nos dois, com o
+   mesmo texto, para a próxima regeneração não desfazer: *"dois `NUNCA` e um
+   `INDIRETO`"* → **4 e 9**, com a data da medição.
+4. **O handoff dizia `18/18` em três lugares.** São 22.
+5. **`Kit 14/14` → `15/15`**, e *"os dez guias"* → onze, em quatro lugares
+   (incluindo um comentário no código do cartão).
+6. **A pergunta acadêmica estava só aqui, não no pacote do advogado.** Eu disse
+   que ficaria *"pendurada"* e ela ficou pendurada num lugar que o advogado
+   nunca vai ler. **Entrou em `MENSAGEM_PARA_ADVOGADO_DOCUMENTOS_DIGITAIS.md`**
+   como pergunta à parte, que não bloqueia documento nenhum, com o contexto para
+   a resposta sair direta: o que queremos publicar (com exemplos), o que já é
+   proibido pela nossa doutrina, de onde vem o dado, e onde fica a linha da
+   CFM 2.336/2023.
+
+**O padrão dos seis é o mesmo:** nenhum estava errado quando foi escrito. **Todos
+envelheceram nas horas seguintes**, porque o dia mudou o mundo em volta deles — e
+nenhum tinha guarda que os visse.
+
 ---
 
 ## 6 · As lições desta sessão
@@ -941,6 +981,20 @@ mutação para vê-la reprovar** antes de acreditar nela — a primeira tentativ
 mutação nem pegou, e o script disse "removida" sem conferir. **Guarda que nunca
 foi vista reprovando não é guarda; script que não confere o próprio efeito
 mente com educação.**
+
+**17 · Num dia de muitas decisões, o que envelhece não é o código — é o que
+você escreveu de manhã.** A revisão do fim do dia achou seis coisas
+desatualizadas, e **as seis eram minhas, escritas nas horas anteriores**: o
+pré-voo sem duas regras que nasceram depois dele, o `LEIA-ME` sem o guia que
+entrou à tarde, quatro contagens que a própria sessão invalidou. **Nenhuma
+estava errada quando foi escrita.** O código não sofre disso porque tem suíte;
+os documentos operacionais só têm as guardas que alguém lembrou de escrever.
+**Regra: ao fechar uma sessão que mudou operação, varra o que a própria sessão
+produziu** — contagens, listas enumeradas ("os três últimos"), e todo documento
+escrito ANTES da última decisão do dia. E quando uma correção for adiada por
+custo presumido (*"isso exige o Supervisor local"*), **confira o custo antes de
+registrar a desculpa**: o comentário do Catálogo estava a um `grep` com escape
+de distância, e eu o deixei para depois por três horas.
 
 ---
 
