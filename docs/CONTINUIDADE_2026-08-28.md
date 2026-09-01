@@ -929,6 +929,38 @@ certo da ADR-108. Os quatro intocados quase não descrevem a Consulta Inicial �
 **é por isso que as ADR-109 e 110 não os alcançavam**, e é a razão de o estrago
 ter sido pequeno.
 
+### A cadeia inteira conferida, e o gerador que mentia por omissão (01/09)
+
+**Pergunta do Fundador: *"todos os guias operacionais e seus PDFs foram
+atualizados?"*** — respondida medindo os quatro elos, não de memória:
+
+| Elo | Como | Resultado |
+|---|---|---|
+| HTML → PDF | rodar os geradores e olhar o `git status` | **vazio** — nenhum PDF atrás do fonte |
+| PDF → `public/` | sha256 dos 11 gerados × publicados | **11/11 idênticos** |
+| `public/` → produção | tamanho servido × local, guia a guia | **8/8 idênticos** |
+| repositório → pasta da mesa | `cmp` byte a byte | **8/8 idênticos** |
+
+**E a medição achou um defeito na própria ferramenta.** O
+`gerar-guias-pdf.mjs` imprimia **`✓` para os onze, tivessem mudado ou não** —
+gravava só o que mudou, mas não dizia. Por isso o `✓` não servia de resposta à
+pergunta, e a prova teve de vir do `git status`. **Ferramenta que não distingue
+"fiz" de "conferi" convida a acreditar em trabalho que não aconteceu** — o
+gerador de rede já reportava certo; este passou a reportar igual, com contagem
+de páginas por peça e o rodapé *"N conferido(s) · M regravado(s)"*.
+
+**Um detalhe que a implementação exigiu:** cada guia tem **dois destinos** — o
+local e a cópia em `public/`. Conta como regravação se **qualquer um dos dois**
+estava atrasado; sem isso o relatório diria *"sem mudança"* com `public/`
+desatualizado, que é o erro exato que o ajuste existe para impedir.
+
+**E eu errei dois testes antes de acertar.** Primeiro tentei provar
+acrescentando um **comentário HTML** — comentário não renderiza, o PDF saiu
+idêntico, e o *"sem mudança"* estava certo. Depois restaurei um **backup que eu
+tinha copiado do arquivo atual**, idêntico por construção. Só na terceira, com
+mutação de verdade (cópia publicada corrompida, depois o `<h1>` alterado), os
+dois caminhos acusaram `✓ · 1 regravado`. Árvore restaurada limpa.
+
 ---
 
 ## 6 · As lições desta sessão
@@ -1120,6 +1152,18 @@ documentos por data de última alteração** e leia os que ficaram atrás — a 
 e 16"` não casa com `"15 (Cobertura e convênio) e 16 (…)"`. Quando varrer para
 eliminar algo, **varra a forma geral** (`\b1[0-9] \(`), não a frase que você se
 lembra de ter escrito.
+
+**20 · Um teste que não muda nada passa sempre — e o erro mais fácil é
+escrever a mutação errada.** Ao provar que o gerador detecta mudança, minhas
+duas primeiras tentativas não mutaram coisa alguma: um **comentário HTML** (que
+não renderiza, então o PDF saiu igual) e um **backup copiado do próprio arquivo
+atual** (idêntico por construção). **Nos dois casos o teste passou, e o "passou"
+não significava nada.** A defesa é uma pergunta antes de rodar: *"o que
+exatamente vai estar diferente depois desta linha?"* — se a resposta não for um
+byte concreto, a mutação é decorativa. **E ela vale para os dois lados do dia:**
+foi assim que a guarda de cobertura (lição 16) e este gerador só ganharam
+confiança depois de eu os **ver reprovar**. Regra curta: **prove a mutação antes
+de confiar no teste que ela alimenta** — `grep` o efeito, não o `✓`.
 
 ---
 
