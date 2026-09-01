@@ -36,6 +36,70 @@ const RAIZ = path.resolve(__dirname, "../..");
 const PASTAS = ["docs/guias", "docs/rede"];
 
 /**
+ * O CÓDIGO TAMBÉM CARREGA VOCABULÁRIO — extensão de 01/09 (`SIM-84`).
+ *
+ * A guarda nasceu varrendo só `docs/`, e a travessia mostrou o buraco: três
+ * mensagens em `src/` ainda diziam **"Atendente"**, papel que a ADR-100
+ * extinguiu. Nenhuma delas chegava à tela — eram razões internas —, mas
+ * **nada impedia a próxima de ser um rótulo de botão.**
+ *
+ * **A regra é a mesma, e o passe também:** termo aposentado só sobrevive na
+ * linha que cita a ADR que o aposentou. O que muda é o alcance.
+ *
+ * **O que NÃO se varre, e a fronteira é deliberada:**
+ *
+ * - **Comentários.** `* Superfície do Atendente — Nível 1` é contexto
+ *   histórico dentro do código, e exigir citação de ADR em cada um seria
+ *   ruído. Comentário errado constrange; **rótulo errado desinforma quem opera.**
+ * - **Identificadores.** `listLeadsForAtendente`, a role `atendente` no banco.
+ *   Renomear coluna, enum e função é migration com risco próprio, e o texto que
+ *   a pessoa lê já diz Supervisor. **A fronteira é a tela, não o nome.**
+ */
+const PASTAS_DE_CODIGO = ["src"];
+
+/**
+ * Quais linhas do arquivo são comentário — rastreado, não adivinhado.
+ *
+ * Prefixo não basta: a **continuação** de um bloco não começa com `*` em JSX,
+ * e `{/*` do JSX não casa com `/*`. Percorrer o arquivo mantendo o estado
+ * "dentro de bloco" é o que acerta os dois. Custou uma volta: a primeira versão
+ * deixava passar um comentário JSX no `portal-shell`.
+ */
+function linhasDeComentario(fonte: string): boolean[] {
+  let dentro = false;
+  return fonte.split("\n").map((linha) => {
+    const eraDentro = dentro;
+    const abre = linha.lastIndexOf("/*");
+    const fecha = linha.lastIndexOf("*/");
+    if (!dentro && abre >= 0 && fecha < abre) dentro = true;
+    else if (dentro && fecha > (abre < 0 ? -1 : abre)) dentro = false;
+    const soLinha = linha.trimStart().startsWith("//");
+    return eraDentro || dentro || soLinha || (abre >= 0 && fecha > abre);
+  });
+}
+
+/** `listLeadsForAtendente` é nome, não frase: letra colada antes do termo. */
+function ehIdentificador(linha: string, termo: string): boolean {
+  const i = linha.indexOf(termo);
+  if (i <= 0) return false;
+  return /[A-Za-z0-9_]/.test(linha[i - 1]);
+}
+
+function arquivosDeCodigo(pasta: string): string[] {
+  const base = path.join(RAIZ, pasta);
+  const achados: string[] = [];
+  const andar = (dir: string) => {
+    for (const nome of readdirSync(dir)) {
+      const alvo = path.join(dir, nome);
+      if (statSync(alvo).isDirectory()) andar(alvo);
+      else if (/\.tsx?$/.test(alvo)) achados.push(alvo);
+    }
+  };
+  andar(base);
+  return achados;
+}
+
+/**
  * Termo aposentado → a decisão que o aposentou. A ADR é o passe: citá-la na
  * mesma linha autoriza a menção, porque prova que quem escreveu sabia.
  */
@@ -93,6 +157,30 @@ describe("Vocabulário das peças de papel — SIM-63", () => {
       }
     }
 
+    expect(sobras, `\n${sobras.join("\n")}\n`).toEqual([]);
+  });
+
+  it("nenhum termo aposentado sobrevive no código das telas (SIM-84)", () => {
+    const sobras: string[] = [];
+    for (const pasta of PASTAS_DE_CODIGO) {
+      for (const arquivo of arquivosDeCodigo(pasta)) {
+        const relativo = path.relative(RAIZ, arquivo).replace(/\\/g, "/");
+        const fonte = readFileSync(arquivo, "utf-8");
+        const comentario = linhasDeComentario(fonte);
+        fonte.split("\n").forEach((linha, i) => {
+          for (const { termo, adr, virou } of APOSENTADOS) {
+            if (!linha.includes(termo)) continue;
+            if (linha.includes(adr)) return;
+            if (comentario[i] || ehIdentificador(linha, termo)) return;
+            sobras.push(
+              `${relativo}:${i + 1} — "${termo}" (${adr} trocou por "${virou}"). ` +
+                "Identificador de banco pode ficar; TEXTO não.",
+            );
+            return;
+          }
+        });
+      }
+    }
     expect(sobras, `\n${sobras.join("\n")}\n`).toEqual([]);
   });
 

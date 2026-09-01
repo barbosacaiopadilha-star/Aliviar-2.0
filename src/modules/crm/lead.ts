@@ -193,7 +193,9 @@ export function evaluateLeadConversion(input: ConversionInput): ConversionVerdic
   if (!isAtendente && !isAdmin) {
     return {
       outcome: "rejected",
-      reason: "Só o Atendente converte lead em paciente. O Curador conduz o Case; o Concierge acompanha depois.",
+      // O papel no banco continua `atendente` (renomeá-lo é migration); o
+      // TEXTO diz Supervisor, que é como a operação o chama desde a ADR-100.
+      reason: "Só o Supervisor converte lead em paciente. O Curador conduz o Case; o Concierge cuida da logística depois.",
     };
   }
 

@@ -61,7 +61,7 @@ export function projectPipelineStage(caseFacts: CaseProjectionFacts | null): Pip
   if (!caseFacts) {
     return {
       kind: "lead",
-      reason: "Sem Case aberto: a etapa é o estado próprio do lead, editável pelo Atendente.",
+      reason: "Sem Case aberto: a etapa é o estado próprio do lead, editável pelo Supervisor.",
     };
   }
 
@@ -96,7 +96,7 @@ export function projectPipelineStage(caseFacts: CaseProjectionFacts | null): Pip
   if (responsibleRole === "atendente") {
     return {
       kind: "lead",
-      reason: "Case aberto e ainda com o Atendente: a etapa segue a fase de lead até o encaminhamento.",
+      reason: "Case aberto e ainda com o Supervisor: a etapa segue a fase de lead até o encaminhamento.",
     };
   }
 
