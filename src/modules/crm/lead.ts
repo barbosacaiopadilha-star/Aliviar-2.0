@@ -18,10 +18,22 @@
  * **Patient** — pessoa formalmente vinculada ao atendimento. Pode ter Case
  * aberto e acessar a Área do Paciente.
  */
-export const LEAD_SOURCES = ["site", "whatsapp", "indicacao", "campanha", "outro"] as const;
+/**
+ * `porta_publica` é o que a MIGRATION escreve — não é decorativo.
+ *
+ * O formulário de `/solicitar-atendimento` insere `source = 'porta_publica'`
+ * (migration 20260812210000). Enquanto esse valor não constava aqui,
+ * `normalizeLeadSource` o derrubava em `"outro"` e a fila do Supervisor
+ * mostrava **"Outro"** para toda pessoa que entrou pela porta da frente — que
+ * é, hoje, a única origem que o sistema sabe produzir. Achado na travessia de
+ * 01/09 (`SIM-82`): fallback silencioso mapeando um valor CONHECIDO para
+ * "desconhecido".
+ */
+export const LEAD_SOURCES = ["porta_publica", "site", "whatsapp", "indicacao", "campanha", "outro"] as const;
 export type LeadSource = (typeof LEAD_SOURCES)[number];
 
 export const LEAD_SOURCE_LABELS: Record<LeadSource, string> = {
+  porta_publica: "Pedido pelo site",
   site: "Site",
   whatsapp: "WhatsApp",
   indicacao: "Indicação",

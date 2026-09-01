@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createContactAction } from "@/modules/crm/actions";
-import { CONTACT_SOURCE_LABELS } from "@/modules/crm/types";
+import { CONTACT_SOURCE_LABELS, CONTACT_SOURCES_MANUAIS } from "@/modules/crm/types";
 
 export function CrmNewContactForm() {
   const router = useRouter();
@@ -64,9 +64,9 @@ export function CrmNewContactForm() {
             Origem
           </label>
           <Select id="source" name="source" defaultValue="outro" required>
-            {Object.entries(CONTACT_SOURCE_LABELS).map(([value, label]) => (
+            {CONTACT_SOURCES_MANUAIS.map((value) => (
               <option key={value} value={value}>
-                {label}
+                {CONTACT_SOURCE_LABELS[value]}
               </option>
             ))}
           </Select>

@@ -11,10 +11,14 @@ export const CONTACT_SOURCES = [
   "email",
   "presencial",
   "outro",
+  // Escrita pela migration da porta pública, nunca escolhida à mão — por isso
+  // fica FORA de CONTACT_SOURCES_MANUAIS, que é o que o formulário oferece.
+  "porta_publica",
 ] as const;
 export type ContactSource = (typeof CONTACT_SOURCES)[number];
 
 export const CONTACT_SOURCE_LABELS: Record<ContactSource, string> = {
+  porta_publica: "Pedido pelo site",
   site: "Site",
   whatsapp: "WhatsApp",
   indicacao: "Indicação",
@@ -23,6 +27,17 @@ export const CONTACT_SOURCE_LABELS: Record<ContactSource, string> = {
   presencial: "Presencial",
   outro: "Outro",
 };
+
+/**
+ * As origens que uma PESSOA escolhe ao cadastrar um contato à mão.
+ *
+ * `porta_publica` não está aqui de propósito: quem a escreve é a migration da
+ * porta pública, e oferecê-la num seletor deixaria alguém marcar "pedido pelo
+ * site" para um contato que veio por telefone. **Rotular, sim; oferecer, não.**
+ */
+export const CONTACT_SOURCES_MANUAIS = CONTACT_SOURCES.filter(
+  (origem) => origem !== "porta_publica",
+);
 
 export const CONTACT_STATUSES = ["ativo", "arquivado"] as const;
 export type ContactStatus = (typeof CONTACT_STATUSES)[number];
