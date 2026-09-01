@@ -289,8 +289,15 @@ export function LeadWorkspace({
         {etapa === "encaminhar" ? (
           <>
             <p className="mt-1 text-sm text-ink-muted">
-              Encaminhar entrega este mesmo Case ao Curador. A partir daí ele conduz — e você deixa de ser o
-              responsável.
+              {/* A frase antiga dizia "e você deixa de ser o responsável". Era
+                  verdade sobre o CAMPO (a responsabilidade do Case migra) e
+                  falsa sobre o PAPEL: a ADR-100 promete que "quem atende o
+                  primeiro contato é quem estará lá no fim". Lida no instante
+                  do gesto, ela dispensava o Supervisor de um caso que
+                  continua sendo dele — SIM-83, achado na travessia de 01/09. */}
+              Encaminhar entrega este mesmo Case ao Curador: a <strong>condução</strong> passa a ser dele, e é
+              ele quem responde pelo Case daqui em diante. <strong>Você não sai</strong> — continua sendo a
+              pessoa dela, e volta a conduzir depois da escolha.
             </p>
 
             {curators.length === 0 ? (
