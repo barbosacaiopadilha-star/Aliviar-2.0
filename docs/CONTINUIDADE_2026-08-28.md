@@ -1024,6 +1024,43 @@ rota que abre**, os três comandos na ordem e onde achar as senhas. Diz também
 conta: quem abrir a folha em dezembro precisa saber que não são papéis
 diferentes.
 
+### A travessia de ponta a ponta, a auditoria visual, e o `SIM-62` fechado (01/09)
+
+**A primeira travessia desde as ADR-100 a 110** — e o ambiente que ela exigiu é
+o mesmo que o `SIM-62` apontava como causa raiz: Docker, Supabase local, as seis
+contas de teste. Subir para simular **destravou de brinde a suíte E2E**.
+
+**Quatro defeitos reais, todos de texto ou de dado — nenhum de layout:**
+
+- **`SIM-82`** — a migration da porta pública grava `source = 'porta_publica'`, e
+  nenhum mapa de rótulo conhecia o valor: **100% dos contatos apareciam ao
+  Supervisor como origem "Outro"**, com *"Site"* ali ao lado sem uso.
+- **`SIM-83`** — no instante de encaminhar, a tela dizia *"você deixa de ser o
+  responsável"*. Verdade sobre o campo, **falsa sobre o papel** (ADR-100: *"quem
+  atende o primeiro contato é quem estará lá no fim"*).
+- **`SIM-84`** — a guarda de vocabulário varria `docs/` e nunca `src/`.
+- **`SIM-85`** — **a ADR-109 chegou ao papel e não à tela:** a Mesa ainda mandava
+  classificar pelo que o Curador *"entendeu da conversa"*, na tela onde a
+  classificação vira o que o Motor cruza.
+
+**A auditoria visual (`SIM-86`) fechou limpa:** doze telas, desktop e celular,
+**zero transbordo horizontal e zero erro de página**. O `SIM-13` **não regrediu**
+— a Mesa foi de ~8.000 para **10.411px**, e os saltos testados aterrissam com o
+título no topo e 14–15 elementos à vista.
+
+**E o `SIM-62` grupo (b) foi fechado**, verde pela primeira vez desde 24/08. Os
+dois testes foram **invertidos, não remendados**: um passa a guardar a remoção
+deliberada de 24/08; o outro mantém o princípio do *Release Gate 4* e muda de
+alvo. **A ausência de "Documentos pendentes" virou asserção** — enquanto o
+domínio não tiver a noção de documento faltando, aquele cartão **não pode**
+exibir número.
+
+**O que a travessia NÃO percorreu:** declarar as áreas, registrar as respostas
+dela (P1…P29), compor os três caminhos, emitir e entregar. Parei porque meus
+seletores passaram a custar mais do que rendiam — **problema da minha
+automação, não do produto**. O ambiente está de pé e semeado; esses passos são
+mais rápidos no navegador do que por script.
+
 ---
 
 ## 6 · As lições desta sessão
@@ -1239,6 +1276,24 @@ pedido que não se deve atender na forma pedida, **procure a forma que atende o
 propósito** — e traga-a pronta, não como sugestão. E o corolário que também vale:
 **afirmar que algo é seguro exige medir.** Eu não disse "a folha não tem senha":
 extraí o texto do PDF e do `.txt` e comparei com as seis senhas reais.
+
+**22 · Numa travessia, o que mais rende não são os defeitos achados — é a
+quantidade de suspeitas que morrem na verificação.** Foram **quatro defeitos
+reais e seis alarmes que eu não dei**, cada um dissolvido por um passo de
+checagem antes de escrever: *"Com o Concierge"* parecia termo aposentado (a
+ADR-106 diz *"não é renomear, é redistribuir"*); a área da assistida parecia ter
+uma emenda dura (a camada é `position: fixed` — **artefato da captura
+`fullPage`**); as 29 classificações pareciam não persistir (**faltava eu clicar
+em "Salvar N alterações"**); a Mesa parecia não achar profissional (**eu tinha
+semeado o seed das lacunas deliberadas**); *"Documentos pendentes"* parecia
+degradação quebrada (**é `null` por decisão escrita — derivar número dali seria
+inventar**); e o *"Declarar área"* que não respondia era **seletor meu**. **A
+proporção importa: se eu tivesse reportado por impressão, seis dos dez seriam
+falsos** — e cada falso teria custado uma correção que estragaria algo certo.
+**Regra: numa travessia, a pergunta antes de cada achado é "o que eu ainda não
+abri?"** — a ADR, o componente, o seed, o CSS computado. E a de hoje mais cara
+de aprender: **um teste que reprova pode estar certo sobre VOCÊ**, não sobre o
+produto.
 
 ---
 
