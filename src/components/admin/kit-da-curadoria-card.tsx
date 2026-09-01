@@ -76,11 +76,6 @@ export const GUIAS_DE_LEITURA = [
     descricao: "O ano depois da escolha: o ritmo, o que dizer quando dá errado, e o que anotar.",
   },
   {
-    href: "/guias/Para-Voce-Que-Comecou-Aliviar.pdf",
-    titulo: "Para você que começou",
-    descricao: "O documento que o assistido recebe. Diz quantas pessoas ele vai conhecer: duas.",
-  },
-  {
     href: "/guias/Guia-do-Administrador-Aliviar.pdf",
     titulo: "Guia do Administrador",
     descricao: "Papéis, equipe e o que trava a operação quando um nível fica em zero.",
@@ -89,6 +84,31 @@ export const GUIAS_DE_LEITURA = [
     href: "/guias/Guia-do-Assistido-Aliviar.pdf",
     titulo: "Guia do Assistido",
     descricao: "A jornada pelo lado de dentro — o que ele vê, e em que ordem.",
+  },
+] as const;
+
+/**
+ * **O que se ENTREGA, e não o que se usa para operar.** Estes três foram
+ * escritos para a assistida, não para a equipe: um explica a Aliviar a quem
+ * está só olhando, outro é o mapa que ela leva depois de começar, e o terceiro
+ * a ajuda a ler um currículo médico.
+ *
+ * **Por que saíram do Kit** (decisão do Fundador, 31/08 — *"no Kit da Curadoria
+ * só quero guia operacional"*): o Kit é o que se imprime para trabalhar. Papel
+ * que se entrega a ela não é ferramenta de operação, e misturar os dois faz a
+ * lista de leitura obrigatória parecer maior do que é.
+ *
+ * **Ficam aqui, e não em lugar nenhum, por um motivo:** removê-los sem destino
+ * os deixaria servidos em `public/` sem nada apontando para eles — órfãos, que
+ * é a metade do `SIM-80` que ainda espera uma superfície própria para ela.
+ * Enquanto essa superfície não existe, **quem entrega é a equipe**, e é daqui
+ * que ela baixa.
+ */
+export const PARA_ENTREGAR_AO_ASSISTIDO = [
+  {
+    href: "/guias/Para-Voce-Que-Comecou-Aliviar.pdf",
+    titulo: "Para você que começou",
+    descricao: "O documento que o assistido recebe. Diz quantas pessoas ele vai conhecer: duas.",
   },
   {
     href: "/guias/O-Que-E-a-Aliviar.pdf",
@@ -144,6 +164,11 @@ export function KitDaCuradoriaCard() {
         Para ler antes — na ordem
       </p>
       <ListaDePecas pecas={GUIAS_DE_LEITURA} />
+
+      <p className="pt-6 text-xs font-medium uppercase tracking-[0.12em] text-ink-subtle">
+        Para entregar ao assistido — não é material de operação
+      </p>
+      <ListaDePecas pecas={PARA_ENTREGAR_AO_ASSISTIDO} />
     </Card>
   );
 }

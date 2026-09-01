@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { GUIAS_DE_LEITURA, KIT_DA_CURADORIA } from "@/components/admin/kit-da-curadoria-card";
+import { GUIAS_DE_LEITURA, PARA_ENTREGAR_AO_ASSISTIDO, KIT_DA_CURADORIA } from "@/components/admin/kit-da-curadoria-card";
 
 /**
  * O cartão do Kit na Visão geral do admin não pode oferecer link morto:
@@ -41,7 +41,10 @@ describe("Kit da Curadoria — links vivos, lista decidida", () => {
   });
 
   it("são os dez guias, na ordem de leitura — e nenhum repetido", () => {
-    expect(GUIAS_DE_LEITURA).toHaveLength(11);
+    // Oito operacionais. Os três que se ENTREGAM à assistida saíram em 31/08,
+    // por decisão do Fundador: o Kit é o que se imprime para trabalhar.
+    expect(GUIAS_DE_LEITURA).toHaveLength(8);
+    expect(PARA_ENTREGAR_AO_ASSISTIDO).toHaveLength(3);
     const hrefs = GUIAS_DE_LEITURA.map((g) => g.href);
     expect(new Set(hrefs).size, "há guia repetido no cartão").toBe(hrefs.length);
   });
