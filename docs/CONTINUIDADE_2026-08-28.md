@@ -21,7 +21,7 @@ está de fato no ar — o deploy leva cerca de um minuto depois do `push`.
 
 **E O SÁBADO ESTÁ VERIFICADO PRONTO** (verificação de 30/08, **refeita em
 31/08 depois das mudanças do dia** — rodada, não afirmada): repo = produção,
-pasta da mesa **22/22 byte a byte**, conteúdo crítico **12/12**, R$ 450 morto em
+pasta da mesa **35/35 byte a byte**, conteúdo crítico **12/12**, R$ 450 morto em
 toda superfície, **2672 testes verdes** (era 2664 antes do dia), Kit **15/15** no
 ar. *O handoff de 30/08 dizia aqui "13 guardas verdes"; não consegui reconstruir
 o que aquele número contava, então troquei pelo total da suíte, que é medido.*
@@ -33,7 +33,7 @@ ADR-109 (nada por inferência; Parte 5 fora da sala) — com guardas novas que a
 travam. **O `LEIA-ME.txt` da pasta abre com as quatro** — quem imprimiu antes
 de 31/08 precisa imprimir de novo.
 
-**A pasta tem dois arquivos que não são documentos da operação** e por isso
+**A pasta ganhou uma terceira seção em 31/08 — `3 - Documentos da empresa`** (os cinco instrumentos do advogado em PDF, os `.docx` originais, a Política de Privacidade, a leitura técnica das pendências e as perguntas ao advogado). **Nada dali se usa na sala.** E ela tem dois arquivos que não são documentos da operação, por isso
 entram na conta dos 22: o `LEIA-ME.txt`, que é da própria pasta, e o
 `MENSAGENS - convite das quatro pessoas.txt`, escrito em 31/08 — **a fonte dele
 está em `docs/rede/ensaio/mensagens-de-convite.txt`**, idêntica byte a byte,
@@ -798,7 +798,7 @@ quebra caía.*
 mecânico passou limpo; o que faltava era coerência, e eram seis.**
 
 **Passou:** geradores idempotentes (**0 regravadas** — nada ficou por gerar),
-pasta da mesa **22/22 byte a byte nos dois sentidos** (nada divergente lá, nada
+pasta da mesa **35/35 byte a byte nos dois sentidos** (nada divergente lá, nada
 esquecido aqui), `.txt` derivados batendo com os `.md`, git sincronizado,
 **2685 testes verdes** e `tsc` limpo.
 
@@ -831,6 +831,42 @@ esquecido aqui), `.txt` derivados batendo com os `.md`, git sincronizado,
 **O padrão dos seis é o mesmo:** nenhum estava errado quando foi escrito. **Todos
 envelheceram nas horas seguintes**, porque o dia mudou o mundo em volta deles — e
 nenhum tinha guarda que os visse.
+
+### A pasta ganha a papelada da empresa, e dois achados sobre os downloads (31/08)
+
+**Pedido do Fundador: uma pasta com tudo o que a operação precisa.** Não criei
+pasta nova — **estendi a que existe.** Uma segunda na área de trabalho é
+exatamente a divergência silenciosa que este dia inteiro tratou: em uma semana
+uma estaria velha e ninguém saberia qual.
+
+`Aliviar - Kit da Curadoria` passa a ter **três seções e 35 arquivos**:
+*1 - Para preencher na sala* (6), *2 - Para ler antes* (11) e a nova
+**`3 - Documentos da empresa`** — os cinco instrumentos do advogado em PDF mais
+os `.docx` originais, a Política de Privacidade, a leitura técnica das
+pendências e as perguntas ao advogado. O `LEIA-ME` abre descrevendo as três e
+avisa o que a seção 3 significa hoje: **nada dali está publicado, e por isso o
+item 8 é o mais urgente da pasta inteira.**
+
+**E apareceu o sétimo caso do padrão do dia:** o PDF das perguntas ao advogado
+estava velho — **não trazia a pergunta acadêmica** acrescentada ao `.md` uma
+hora antes. Regerado e conferido por extração.
+
+**Os dois achados, respondendo à pergunta dele sobre os downloads do site:**
+
+- **`SIM-79`** — os onze guias vivem em `public/` e são baixáveis por quem
+  souber a URL. Conferido em produção: *Roteiro do Curador* e *Guia do
+  Administrador* devolvem **200 sem autenticação**. O cartão está protegido no
+  `/admin`; **os arquivos, não.** Não vaza dado de pessoa nenhuma, mas o roteiro
+  com o preço e as objeções está buscável.
+- **`SIM-80`** — **nem o médico nem o assistido têm um único documento para
+  baixar.** As três páginas legais dizem, corretamente, que o documento não foi
+  publicado. E os **quatro escritos para ela** — *Guia do Assistido*, *Para você
+  que começou*, *O que é a Aliviar*, *Como ler o currículo* — só existem no Kit
+  do `/admin`: varri `src/` e **nenhuma tela dela aponta para eles**.
+
+**A correção dos dois é a mesma: separar por destinatário** — publicar e linkar
+os quatro que são dela, tirar os sete internos de `public/`. **Não fiz**: mexe
+em rota de produção, e a metade jurídica depende do advogado de qualquer jeito.
 
 ---
 
@@ -1047,7 +1083,7 @@ de distância, e eu o deixei para depois por três horas.
   ler. **Se o preço ou um papel mudar de novo, refaça a pasta no mesmo commit**,
   ou apague-a. **Histórico:** a primeira cópia foi apagada pelo Fundador em
   30/08 e refeita no mesmo dia (o LEIA-ME registra); a pasta carrega também o
-  **PRE-VOO do sábado**. **Estado em 31/08: 22/22 arquivos, byte a byte com o
+  **PRE-VOO do sábado**. **Estado em 31/08: 35/35 arquivos, byte a byte com o
   repositório** — refeita depois das correções da auditoria de conteúdo, do
   preço e da data do Ensaio.
   **O procedimento, e a ordem importa:** rode os DOIS geradores primeiro e
