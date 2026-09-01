@@ -94,8 +94,16 @@ export function ClassificarImportancia({ caseId, itens }: Props) {
         titulo="Quanto cada coisa importa para ela"
       >
         <p className="max-w-3xl text-sm text-ink-muted">
-          O Motor não cruza nada sem isto. Classificar não é opinar sobre ela: é registrar o
-          que você entendeu da conversa, e ela reconhece depois, no portal dela.
+          {/* A frase antiga terminava em "registrar o que você entendeu da
+              conversa" — a mesma ambiguidade que a ADR-109 tirou da Ficha
+              (SIM-76): "o que você entendeu" tanto lê como *o que ela
+              respondeu* quanto como *o que a história sugere*. Na tela onde a
+              classificação acontece, a segunda leitura é a inferência que a
+              ADR proíbe. SIM-85, achado na travessia de 01/09. */}
+          O Motor não cruza nada sem isto. Classificar não é opinar sobre ela, nem deduzir da
+          história: é registrar <strong>o que ela respondeu quando você perguntou</strong> (ADR-109).
+          O que ela contou por conta própria vira âncora da pergunta, nunca a resposta. Ela
+          reconhece depois, no portal dela.
         </p>
       </MomentoDaMesa>
 
