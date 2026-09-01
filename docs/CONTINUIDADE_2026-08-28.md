@@ -21,7 +21,7 @@ está de fato no ar — o deploy leva cerca de um minuto depois do `push`.
 
 **E O SÁBADO ESTÁ VERIFICADO PRONTO** (verificação de 30/08, **refeita em
 31/08 depois das mudanças do dia** — rodada, não afirmada): repo = produção,
-pasta da mesa **35/35 byte a byte**, conteúdo crítico **12/12**, R$ 450 morto em
+pasta da mesa **37/37 byte a byte**, conteúdo crítico **12/12**, R$ 450 morto em
 toda superfície, **2672 testes verdes** (era 2664 antes do dia), Kit **15/15** no
 ar. *O handoff de 30/08 dizia aqui "13 guardas verdes"; não consegui reconstruir
 o que aquele número contava, então troquei pelo total da suíte, que é medido.*
@@ -798,7 +798,7 @@ quebra caía.*
 mecânico passou limpo; o que faltava era coerência, e eram seis.**
 
 **Passou:** geradores idempotentes (**0 regravadas** — nada ficou por gerar),
-pasta da mesa **35/35 byte a byte nos dois sentidos** (nada divergente lá, nada
+pasta da mesa **35/35 byte a byte nos dois sentidos** *(hoje 37, com a folha de acessos)* (nada divergente lá, nada
 esquecido aqui), `.txt` derivados batendo com os `.md`, git sincronizado,
 **2685 testes verdes** e `tsc` limpo.
 
@@ -894,8 +894,9 @@ que se dá a ela** — e enquanto o site não tem uma área onde ela mesma baixe
 
 Na pasta da área de trabalho, o mesmo corte: nova seção **`4 - Para entregar ao
 assistido`**, a seção 2 **renumerada de 1 a 8 sem buracos**, e o `LEIA-ME`
-descrevendo as quatro seções. **O total da pasta não muda: 35 arquivos**, porque
-nada saiu — só mudou de prateleira. O Kit continua **15/15** (4 peças + 8 guias
+descrevendo as quatro seções. **O total da pasta não mudou ali: 35 arquivos**, porque
+nada saiu — só mudou de prateleira. *(Foi a 37 no mesmo dia, com a folha de
+acessos da simulação.)* O Kit continua **15/15** (4 peças + 8 guias
 + 3 de entrega).
 
 ### A auditoria dos oito guias operacionais (01/09)
@@ -987,6 +988,41 @@ justamente os que a assistida lê. Conferidos agora:
 dela**, não o procedimento da equipe — e as três ADRs de 31/08 mexeram em quem
 faz o quê **dentro** da operação. **Documento escrito do ponto de vista de quem
 recebe envelhece menos** que o escrito do ponto de vista de quem executa.
+
+### Os acessos da simulação — e o PDF de senhas que NÃO foi feito (01/09)
+
+**O Fundador pediu um PDF com todos os acessos, usuários e senhas, e perguntou
+o que eu achava. Respondi que não, com três fatos:** a pasta é sincronizada com
+o OneDrive e existe para ser aberta e impressa por outras pessoas; **PDF não
+gira** — senha trocada deixa o arquivo mentindo enquanto ele circula; e **não
+existe senha de produção guardada em lugar nenhum do repositório**, o que é
+acerto, não falta.
+
+**E o que ele queria já existia, melhor feito.** O
+`scripts/bootstrap-local-test-users.mjs` cria **seis contas, uma por papel**, só
+contra o Supabase local, com **senha aleatória gerada na hora, nunca impressa**,
+gravada em `test-users.local.json` — coberto pelo `*.local.json` do
+`.gitignore`. O `env-guard.mjs` existe porque o `.env.local` aponta para um
+projeto hospedado e os scripts o liam por engano; hoje nenhum deles conversa com
+outro banco que não o local.
+
+**Feito e provado, não só descrito:**
+
+- A stack local **não subia** — o contêiner do banco tinha morrido com **exit
+  137 há seis dias**, quando a máquina desligou com o Docker aberto. Recriada
+  com `supabase stop` + `start`; **135 migrations aplicadas.**
+- **Seis contas criadas**, e conferi que **as seis realmente entram**:
+  `signInWithPassword` devolveu sessão para todas, sem imprimir senha.
+- **Conferi que a folha não vaza:** extraí o texto do PDF **e** do `.txt` e
+  comparei com as seis senhas reais — **nenhuma aparece em nenhum dos dois.**
+
+**A folha** (`docs/rede/ensaio/acessos-da-simulacao.md`, publicada na pasta como
+*ACESSOS da simulacao (sem senha)*) traz os seis e-mails, o papel de cada um, **a
+rota que abre**, os três comandos na ordem e onde achar as senhas. Diz também
+**por que dois e-mails carregam nome de papel extinto** — `atendente` e
+`concierge` são anteriores às ADR-100 e 106, e renomear exigiria recriar a
+conta: quem abrir a folha em dezembro precisa saber que não são papéis
+diferentes.
 
 ---
 
@@ -1192,6 +1228,18 @@ foi assim que a guarda de cobertura (lição 16) e este gerador só ganharam
 confiança depois de eu os **ver reprovar**. Regra curta: **prove a mutação antes
 de confiar no teste que ela alimenta** — `grep` o efeito, não o `✓`.
 
+**21 · Quando o pedido é um artefato inseguro, o trabalho é achar o que ele
+resolve — não recusar e parar.** O pedido foi *"um PDF com todos os acessos,
+usuários e senhas"*. Recusar e ficar por isso seria deixar o Fundador sem o que
+ele precisava de verdade, que era **simular**. **O que destravou foi ir olhar
+antes de responder:** o `bootstrap-local-test-users` já existia, já fazia melhor,
+e a resposta virou *"não faço o PDF, e aqui estão as seis contas funcionando"*.
+**A recusa sozinha teria custado o mesmo e entregue nada.** Regra: diante de um
+pedido que não se deve atender na forma pedida, **procure a forma que atende o
+propósito** — e traga-a pronta, não como sugestão. E o corolário que também vale:
+**afirmar que algo é seguro exige medir.** Eu não disse "a folha não tem senha":
+extraí o texto do PDF e do `.txt` e comparei com as seis senhas reais.
+
 ---
 
 ## 7 · Fatos operacionais
@@ -1244,7 +1292,7 @@ de confiar no teste que ela alimenta** — `grep` o efeito, não o `✓`.
   ler. **Se o preço ou um papel mudar de novo, refaça a pasta no mesmo commit**,
   ou apague-a. **Histórico:** a primeira cópia foi apagada pelo Fundador em
   30/08 e refeita no mesmo dia (o LEIA-ME registra); a pasta carrega também o
-  **PRE-VOO do sábado**. **Estado em 31/08: 35/35 arquivos, byte a byte com o
+  **PRE-VOO do Ensaio**. **Estado em 01/09: 37/37 arquivos, byte a byte com o
   repositório** — refeita depois das correções da auditoria de conteúdo, do
   preço e da data do Ensaio.
   **O procedimento, e a ordem importa:** rode os DOIS geradores primeiro e
