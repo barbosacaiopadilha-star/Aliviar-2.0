@@ -22,8 +22,10 @@ está de fato no ar — o deploy leva cerca de um minuto depois do `push`.
 **E O SÁBADO ESTÁ VERIFICADO PRONTO** (verificação de 30/08, **refeita em
 31/08 depois das mudanças do dia** — rodada, não afirmada): repo = produção,
 pasta da mesa **37/37 byte a byte**, conteúdo crítico **12/12**, R$ 450 morto em
-toda superfície, **2672 testes verdes** (era 2664 antes do dia), Kit **15/15** no
-ar. *O handoff de 30/08 dizia aqui "13 guardas verdes"; não consegui reconstruir
+toda superfície, Kit **15/15** no ar. **A suíte está em 2718 testes verdes
+em 193 arquivos** (medido em 01/09; eram 2672 em 31/08).
+
+*O handoff de 30/08 dizia aqui "13 guardas verdes"; não consegui reconstruir
 o que aquele número contava, então troquei pelo total da suíte, que é medido.*
 
 **Os documentos da sala foram regravados em 31/08**, por quatro mudanças que
@@ -253,6 +255,30 @@ voz alta antes e registrado no commit, que é o padrão a manter.
 
 ---
 
+### ADR-111 · o WhatsApp oficial passa a ser (11) 97098-1354 (01/09)
+
+Substitui o número que a MISSÃO 205 fixou. **A troca foi uma linha**, e é o
+retorno do desenho daquela missão: `ALIVIAR_WHATSAPP` em
+`whatsapp-contact.tsx` é fonte única, e as sete superfícies da área da
+assistida mudaram por consequência, nenhuma tocada.
+
+**O que a troca revelou:** a guarda que protegia a fonte única **era ela mesma
+uma segunda fonte** — fixava o literal no próprio teste. Corrigido junto: a
+guarda agora lê o valor da constante, e ganhou uma asserção nova — **o número
+exibido tem de ser o mesmo do link**.
+
+**O que NÃO mudou, de propósito:** a doutrina do canal (contextualizado por
+tópico fechado, sem texto livre, nunca menu principal); os telefones de exemplo
+em `lead.ts`, que são dado de teste do algoritmo; e a ata das missões passadas
+em `docs/repaginacao/` — reescrever ata é apagar história.
+
+**A parte pública do site não mostra o número** — conferido em produção. Ele
+aparece só depois de a pessoa ter acesso. Se algum dia for para a vitrine, é
+decisão à parte: **o repositório é público no GitHub, e número em página
+pública é número raspado.**
+
+---
+
 ## 3 · O estado real, em uma frase
 
 **Continua sendo a operação, não o código** — e a evidência agora é dupla: a
@@ -268,6 +294,16 @@ cruza levaram três correções num dia — o Curador perguntava o orçamento de
 critérios do Curador eram rotulados como declaração dela (`SIM-73`). Nenhum
 apareceu em auditoria de tela, porque **nenhum estava na tela.** Tudo em
 produção e conferido no PDF baixado de lá.
+
+**E em 01/09 a evidência ganhou uma quarta forma, a mais desconfortável: o
+defeito estava no que o site DIZ DE SI para fora, onde nenhuma tela mostra.**
+Uma varredura do site inteiro — 34 rotas, público e logado, desktop e celular —
+achou **zero erro de console, zero transbordo, zero página quebrada** (`SIM-90`)
+e, ao mesmo tempo, quatro defeitos que nenhum olho pega: **nenhuma página tinha
+`og:image`**, o sitemap tinha duas URLs, não havia canônico, e as quatro
+páginas jurídicas vazias eram indexáveis (`SIM-87`). **O primeiro é o que mais
+custava:** o WhatsApp acabara de virar o canal (ADR-111), e todo link que o
+Supervisor mandasse apareceria como um retângulo cinza.
 
 ---
 
@@ -1061,6 +1097,66 @@ seletores passaram a custar mais do que rendiam — **problema da minha
 automação, não do produto**. O ambiente está de pé e semeado; esses passos são
 mais rápidos no navegador do que por script.
 
+### O WhatsApp vira canal, e as mensagens do Supervisor saem da pasta (01/09)
+
+**ADR-111**: o número passa a **(11) 97098-1354**. Uma linha no código, seis
+specs que repetiam o literal passaram a importá-lo, e a guarda deixou de ser
+uma segunda fonte.
+
+**As mensagens do atendimento estão escritas**, em três formatos na pasta
+`Aliviar - Operação` — `.md` (fonte), `.txt` e `.pdf` (3 páginas). Trazem as
+três mensagens do Roteiro do Supervisor prontas para copiar, o preço da
+ADR-101, as duas perguntas de viabilidade da ADR-108 (*"se você não perguntar,
+ninguém pergunta"*), a lista do que nunca sai do teclado, e o aviso de que **dá
+para conversar e marcar, mas não dá para fechar contrato** — não há gateway, e
+`/termos` e `/privacidade` continuam sem texto.
+
+**O arquivo NÃO está no repositório, e é de propósito:** o código é público no
+GitHub, e número em repositório público é número raspado por robô em uma
+semana.
+
+**Três passos de configuração antes do primeiro atendimento**, e um deles é uma
+recusa: perfil comercial preenchido com horário real; mensagem de ausência
+ligada com a verdade; e **nenhuma saudação automática que finja ser pessoa** —
+a primeira frase da Aliviar é *"eu sou [nome], vou te acompanhar daqui até o
+fim"*, e um robô dizendo isso quebra a promessa antes dela começar. **Se já
+existe saudação configurada no aparelho é coisa que só o Fundador vê**
+(WhatsApp Business → Ferramentas comerciais); o repositório não sabe nada
+disso, e nada na Aliviar cria, lê ou dispara mensagem — o site só monta um link
+`wa.me` com texto pronto, e quem envia é a pessoa.
+
+---
+
+### A varredura do site inteiro, e os quatro defeitos que nenhuma tela mostra (01/09)
+
+**34 rotas** — 12 públicas em produção, 22 logadas no ambiente local, cada uma
+em desktop (1440) e celular (390), com captura de página inteira, console,
+rede, contraste medido e geometria conferida.
+
+**O placar visual é limpo** (`SIM-90`): todas 200, **zero erro de console em
+qualquer papel**, zero rolagem horizontal, um `<h1>` por página, contraste
+aprovado sobre fundo chapado, cabeçalhos de segurança completos.
+
+**E quatro defeitos reais, todos na mesma classe: o que o site diz de si para
+fora** (`SIM-87`, corrigidos e em produção no `584d583`) — sem `og:image`,
+sitemap com duas URLs, sem canônico, páginas jurídicas vazias indexáveis. **A
+correção do quarto é a que vale reler:** a regra de indexação **nasce do
+banco** — sem versão vigente, `noindex`; quando o jurídico publicar, indexável
+sozinha. Um `noindex` cravado manteria o contrato fora da busca para sempre.
+
+**Guarda nova: `tests/unit/enderecos-publicos.test.ts`**, 26 casos, lendo o
+**sistema de arquivos de rotas** e não uma lista copiada. Ele já me corrigiu
+duas vezes enquanto eu o escrevia: reprovava porque lia meus **comentários**
+como se fossem URLs do sitemap, e porque eu tinha esquecido os sete passos do
+formulário da assistida.
+
+**Seis observações ficaram abertas** (`SIM-89`), todas medidas: 1.181px de
+branco no cartão *"Pendências"* do `/admin`; 5 de 10 itens do menu lateral sem
+ícone; dois textos do `/login` abaixo do mínimo de contraste; links de 29px no
+rodapé do celular; o *"Nenhuma Curadoria esperando"* que contradiz o *"1 Caso
+ativo"* logo acima; e os cinco *"Salvar"* do `/profissional` sem indicador de
+progresso.
+
 ---
 
 ## 6 · As lições desta sessão
@@ -1295,6 +1391,37 @@ abri?"** — a ADR, o componente, o seed, o CSS computado. E a de hoje mais cara
 de aprender: **um teste que reprova pode estar certo sobre VOCÊ**, não sobre o
 produto.
 
+**23 · O instrumento mentiu de três jeitos num dia só, e cada mentira era
+plausível.** *(a)* O painel do navegador embutido **não pinta enquanto está
+oculto** — capturas saíram em branco e eu quase reportei "a home tem faixas
+vazias". *(b)* A captura `fullPage` do Chromium **não acompanha camada
+`position: fixed`**: a área da assistida pareceu ter uma emenda dura, de novo,
+pelo mesmo motivo do `SIM-86`. *(c)* Meu medidor de contraste lia
+`color(srgb 0.98 0.97 0.95)` — **floats de 0 a 1** — como se fosse 0–255,
+**transformando branco em preto**: reprovou meia dúzia de textos do rodapé que
+estão perfeitos. **A regra que sobra: antes de reportar o que a ferramenta
+mostra, pergunte o que a ferramenta NÃO consegue ver.** O DOM desempatou as
+três — `getComputedStyle`, `elementFromPoint` e a cor resolvida por canvas
+valem mais que qualquer captura.
+
+**24 · Herança de configuração é a armadilha que parece conserto.** O metadata
+do Next é herdado pelo layout **e misturado de forma rasa**. As duas metades
+disso me pegaram no mesmo conserto (`SIM-88`): subir o canônico para o layout
+raiz declararia todas as páginas como cópias da home; e escrever
+`openGraph: { url }` numa página **troca o objeto inteiro** em vez de
+acrescentar, levando a imagem junto. **O segundo desfez o primeiro conserto do
+mesmo dia, em silêncio.** O que salvou não foi cuidado — foi **medir o HTML que
+o servidor entrega**, e não o código que eu tinha escrito. **Onde há herança,
+verifique no produto final, nunca na fonte.**
+
+**25 · Um "noindex" cravado é uma bomba de efeito retardado.** A tentação, nas
+quatro páginas jurídicas vazias, era escrever `noindex` e seguir. Isso
+funcionaria hoje e **falharia no dia mais importante**: publicado o contrato,
+ninguém lembraria de virar a chave, e o documento ficaria fora da busca para
+sempre — sem erro, sem aviso. **Toda regra que depende de um estado futuro deve
+LER esse estado**, não fotografá-lo. A mesma leitura que a página usa para
+escolher o que mostrar decide se ela é indexável.
+
 ---
 
 ## 7 · Fatos operacionais
@@ -1473,7 +1600,8 @@ produto.
 
 2. **Quem é a primeira pessoa** — a decisão que destrava mais coisa e que o
    Fundador toma sozinho.
-3. **`SIM-62` grupo (b)** — `admin-dashboard.spec.ts` vermelho desde 24/08.
+3. ~~**`SIM-62` grupo (b)**~~ — **FECHADO em 01/09**, verde pela primeira vez
+   desde 24/08. Os dois testes foram invertidos, não remendados.
 4. **`SIM-60`** — o gate de aceite, mina registrada, não pedido de obra.
 5. **O domínio próprio, dois cliques (`SIM-72`)** — ligar
    `aliviarcuradoriamedica.com.br` ao projeto `aliviar` no painel da Vercel e
@@ -1482,6 +1610,16 @@ produto.
    anuncia como `aliviar-2-0.vercel.app` — numa empresa cujo produto é
    confiança, isso não é cosmético.
 6. **`PRIV-04`** — a exclusão não alcança o storage. P0, depende da D-08.
+7. **`SIM-89`** — as seis observações da varredura de 01/09, nenhuma
+   bloqueante e todas medidas. **A de maior retorno é a primeira:** o cartão
+   *"Pendências"* do `/admin` com **1.181px de branco**, na primeira tela que o
+   administrador vê. Depois: os 5 itens do menu sem ícone, os dois textos do
+   `/login` abaixo do contraste mínimo, os alvos de 29px no rodapé do celular,
+   o título que contradiz a contagem no `/portal-curador`, e o
+   `/profissional` sem indicador de progresso.
+8. **A saudação automática do WhatsApp** — só o Fundador consegue olhar
+   (WhatsApp Business → Ferramentas comerciais). **A recomendação escrita é
+   ligar a de ausência e deixar a de saudação DESLIGADA**, pelo motivo do §5.
 
 ---
 
