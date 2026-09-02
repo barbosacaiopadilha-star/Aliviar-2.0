@@ -1,9 +1,17 @@
 # Acessos da simulação — as seis contas, e onde cada uma entra
 
-> **Nenhuma senha nesta folha, de propósito.** As contas são criadas por um
-> comando, com senha aleatória gerada na hora, e ela fica num arquivo do seu
-> computador — nunca num documento que se imprime, se sincroniza ou se manda
-> por mensagem. Como abrir esse arquivo está no fim.
+> **Nenhuma senha NESTA folha, e a razão é o lugar em que ela está.** Este
+> arquivo vive no repositório da Aliviar, que é **público no GitHub** — senha
+> aqui é senha publicada. As contas são criadas por um comando, com senha
+> aleatória gerada na hora, e ela fica num arquivo do seu computador. Como
+> abrir esse arquivo está no fim.
+>
+> **Existe uma versão COM as senhas, e ela é deliberada** (02/09, decisão do
+> Fundador): `ACESSOS da simulacao` na pasta *Aliviar - Operação*, na Área de
+> Trabalho. É a folha que se usa na simulação, quando quatro pessoas precisam
+> entrar. Ela pode carregar as senhas porque **não está no repositório** e
+> porque elas só abrem o banco local desta máquina. **As duas não se
+> confundem: a de lá é para usar, esta é para versionar.**
 
 **Isto é o ambiente LOCAL**, na sua máquina. Não é a produção, não toca no que
 está no ar, e nada do que você fizer aqui chega a pessoa nenhuma. É por isso
@@ -58,9 +66,10 @@ Abre em `http://localhost:3000`.
 No arquivo **`test-users.local.json`**, na raiz do repositório. Ele nasce do
 comando do passo 2, com uma senha aleatória por conta.
 
-**Ele nunca sai da sua máquina:** está coberto pelo `.gitignore`, não vai para o
-GitHub, não entra em PDF nenhum e não é sincronizado com a pasta da área de
-trabalho. Se precisar de senha nova, rode o passo 2 outra vez.
+**Ele nunca entra no Git:** está coberto pelo `*.local.json` do `.gitignore` e
+nunca apareceu no histórico. Se precisar de senha nova, rode o passo 2 outra
+vez — e lembre que isso deixa a folha da Área de Trabalho velha, porque ela
+carrega os valores.
 
 ---
 
