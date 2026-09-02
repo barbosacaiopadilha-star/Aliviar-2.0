@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { LinkButton } from "@/components/landing/link-button";
+import { metadataPublica } from "@/lib/metadata-publica";
 
 /**
  * "O QUE É A ALIVIAR" — o degrau que faltava na Fachada.
@@ -34,6 +35,15 @@ export const metadata: Metadata = {
   title: "O que é a Aliviar",
   description:
     "Um curador — que é médico — estuda o seu caso e volta com três caminhos, explicando cada um — e você escolhe. Como funciona, quanto custa, e o que a Aliviar não é.",
+  // Canônico + Open Graph vêm juntos, de uma fonte só: escrever só a `url`
+  // aqui trocaria o objeto `openGraph` inteiro herdado do layout e a página
+  // perderia a imagem do link. Ver src/lib/metadata-publica.ts.
+  ...metadataPublica({
+    rota: "/o-que-e",
+    titulo: "O que é a Aliviar",
+    descricao:
+      "Um curador — que é médico — estuda o seu caso e volta com três caminhos, explicando cada um — e você escolhe.",
+  }),
 };
 
 const PASSOS = [

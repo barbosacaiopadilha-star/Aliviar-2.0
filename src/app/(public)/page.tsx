@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { metadataPublica } from "@/lib/metadata-publica";
+
 import {
   AmbienteConcierge,
   AmbienteCuradoria,
@@ -12,6 +14,14 @@ import { VidroDinamico } from "@/components/landing/editorial/vidro-dinamico";
 export const metadata: Metadata = {
   title: { absolute: "Aliviar Curadoria Médica — Uma decisão de saúde importante" },
   description: "Com você em cada etapa. Da sua história até uma decisão que é sua.",
+  // Canônico + Open Graph vêm juntos, de uma fonte só: escrever só a `url`
+  // aqui trocaria o objeto `openGraph` inteiro herdado do layout e a página
+  // perderia a imagem do link. Ver src/lib/metadata-publica.ts.
+  ...metadataPublica({
+    rota: "/",
+    titulo: "Aliviar Curadoria Médica — Uma decisão de saúde importante",
+    descricao: "Com você em cada etapa. Da sua história até uma decisão que é sua.",
+  }),
 };
 
 /**

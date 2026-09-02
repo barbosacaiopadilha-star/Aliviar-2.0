@@ -11,6 +11,11 @@ import { getAuthState } from "@/modules/auth/session";
 
 export const metadata: Metadata = {
   title: "Entrar",
+  // Fora da busca, junto com a saída do sitemap (01/09): quem precisa do
+  // login já sabe onde ele fica. Indexá-lo só coloca uma porta fechada na
+  // frente de quem procurava a Aliviar. `follow` fica: os links daqui para
+  // /solicitar-atendimento continuam valendo.
+  robots: { index: false, follow: true },
 };
 
 type LoginPageProps = {

@@ -3,10 +3,11 @@ import type { Metadata } from "next";
 import { DocumentoLegalView } from "@/components/governanca/documento-legal";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { carregarDocumentoPublico } from "@/modules/governanca/repository";
+import { metadataDeDocumento } from "@/modules/governanca/metadata";
 
-export const metadata: Metadata = {
-  title: "Política de Privacidade",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return metadataDeDocumento("privacidade", "Política de Privacidade");
+}
 
 // A página não guarda o texto: ela SERVE a versão vigente que está no banco.
 // É o que permite ao jurídico publicar sem tocar em código, e ao aceite

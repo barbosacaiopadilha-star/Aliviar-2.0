@@ -6,8 +6,7 @@ import "./globals.css";
 import { AppProviders } from "@/components/providers/app-providers";
 
 import { SITE_URL } from "@/lib/site-url";
-
-const SITE_NAME = "Aliviar Curadoria Médica";
+import { DESCRICAO_PADRAO, OG_IMAGE, SITE_NAME } from "@/lib/metadata-publica";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -29,7 +28,13 @@ export const metadata: Metadata = {
     default: SITE_NAME,
     template: `%s — ${SITE_NAME}`,
   },
-  description: "Curadoria médica e de cuidado independente — conectando pessoas a profissionais de confiança, sem posição paga.",
+  description: DESCRICAO_PADRAO,
+  // NÃO declare `alternates.canonical` aqui. O metadata do layout é herdado
+  // por toda página que não o sobrescreve — um canônico "/" na raiz diria ao
+  // buscador que /o-que-e e /solicitar-atendimento são cópias da home, e o
+  // efeito de um canônico errado é justamente tirar a página do índice. Cada
+  // página indexável declara o seu, ao lado do próprio título.
+
   // O ícone era um placeholder: um quadrado verde-azulado com as letras
   // "AC" — a aba do navegador de todo visitante mostrava isso em vez da
   // marca (achado da varredura de 23/08). Agora é o símbolo da Aliviar
@@ -46,7 +51,15 @@ export const metadata: Metadata = {
     locale: "pt_BR",
     siteName: SITE_NAME,
     title: SITE_NAME,
-    description: "Curadoria médica e de cuidado independente — conectando pessoas a profissionais de confiança, sem posição paga.",
+    description: DESCRICAO_PADRAO,
+    // Sem `url` pela mesma razão do canônico: seria herdado por todas.
+    images: [OG_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_NAME,
+    description: DESCRICAO_PADRAO,
+    images: [OG_IMAGE.url],
   },
   robots: {
     index: true,

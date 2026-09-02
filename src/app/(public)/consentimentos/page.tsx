@@ -4,8 +4,12 @@ import Link from "next/link";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { listarDocumentosAtivos, listarVersoes } from "@/modules/governanca/repository";
 import { permalinkDaVersao, versaoVigente } from "@/modules/governanca/documentos";
+import { metadataDoIndiceDeConsentimentos } from "@/modules/governanca/metadata";
 
-export const metadata: Metadata = { title: "Consentimentos" };
+export async function generateMetadata(): Promise<Metadata> {
+  return metadataDoIndiceDeConsentimentos("Consentimentos");
+}
+
 export const dynamic = "force-dynamic";
 
 /**

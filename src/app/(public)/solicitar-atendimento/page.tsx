@@ -2,10 +2,19 @@ import type { Metadata } from "next";
 
 import { CenaResponsiva } from "@/components/landing/editorial/cena-responsiva";
 import { SolicitarAtendimentoForm } from "@/components/publico/solicitar-atendimento-form";
+import { metadataPublica } from "@/lib/metadata-publica";
 
 export const metadata: Metadata = {
   title: "Fale com a Aliviar",
   description: "Peça atendimento à Aliviar. Uma pessoa entra em contato com você.",
+  // Canônico + Open Graph vêm juntos, de uma fonte só: escrever só a `url`
+  // aqui trocaria o objeto `openGraph` inteiro herdado do layout e a página
+  // perderia a imagem do link. Ver src/lib/metadata-publica.ts.
+  ...metadataPublica({
+    rota: "/solicitar-atendimento",
+    titulo: "Fale com a Aliviar",
+    descricao: "Peça atendimento à Aliviar. Uma pessoa entra em contato com você.",
+  }),
 };
 
 /**
