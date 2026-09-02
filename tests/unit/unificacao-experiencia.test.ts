@@ -2,6 +2,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
+import { ALIVIAR_WHATSAPP } from "@/components/curadoria/whatsapp-contact";
 
 // MISSÃO 206 — guardas de unificação.
 //
@@ -111,7 +112,7 @@ describe("uma linguagem só", () => {
       .filter((file) => file.endsWith(".tsx"))
       .map((file) => `src/components/curadoria/${file}`);
 
-    const withLiteral = sources.filter((file) => read(file).includes("5511979037133"));
+    const withLiteral = sources.filter((file) => read(file).includes(ALIVIAR_WHATSAPP));
     expect(
       withLiteral,
       "o número oficial deve viver em um lugar só — qualquer outra superfície importa a constante",

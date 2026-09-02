@@ -18,14 +18,21 @@
 import { cn } from "@/components/ui/cn";
 
 /**
- * Número oficial da Aliviar, fornecido pelo responsável do projeto na
- * MISSÃO 205. Até então nenhum número existia em documento aprovado, e por
- * isso `docs/LANDING_CREATIVE_DIRECTION.md` §8 proibia inventar um — esta
- * constante fecha aquela lacuna. Fonte única: qualquer superfície que precise
- * do número importa daqui, nunca reescreve o literal.
+ * Número oficial da Aliviar. **Fonte única:** qualquer superfície que precise
+ * do número importa daqui e nunca reescreve o literal — há guarda para isso
+ * (`track-c-contato-oficial`, T-C-4), e ela lê o valor DAQUI, então trocar o
+ * número é editar só estas duas linhas.
+ *
+ * O primeiro número veio do responsável na MISSÃO 205, fechando a lacuna que
+ * `docs/LANDING_CREATIVE_DIRECTION.md` §8 registrava ao proibir inventar um.
+ * **Trocado em 01/09/2026 por decisão do Fundador (ADR-111)**, quando o canal
+ * de atendimento passou a ser operado noutro aparelho.
+ *
+ * As sete superfícies da área da assistida mudam juntas por consequência —
+ * é o que a fonte única compra.
  */
-export const ALIVIAR_WHATSAPP = "5511979037133";
-export const ALIVIAR_WHATSAPP_DISPLAY = "(11) 97903-7133";
+export const ALIVIAR_WHATSAPP = "5511970981354";
+export const ALIVIAR_WHATSAPP_DISPLAY = "(11) 97098-1354";
 
 export type WhatsappTopic = "duvida" | "documento" | "curador" | "jornada" | "curadoria";
 

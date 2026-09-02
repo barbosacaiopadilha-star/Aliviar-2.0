@@ -1,5 +1,6 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ALIVIAR_WHATSAPP } from "@/components/curadoria/whatsapp-contact";
 
 /**
  * T-C-5 e T-C-6 · AS SETE INSERÇÕES, PELA COMPOSIÇÃO REAL DAS ROTAS.
@@ -13,7 +14,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  * renderizamos o JSX que ela devolve, com as fontes de dados controladas.
  */
 
-const NUMERO_OFICIAL = "5511979037133";
+// O número vem da FONTE ÚNICA, nunca repetido aqui: até 01/09 cada spec
+// carregava o literal, e trocá-lo (ADR-111) obrigaria a caçar todos.
+const NUMERO_OFICIAL = ALIVIAR_WHATSAPP;
 
 const listCaseIds = vi.fn();
 const loadCuradoriaRecord = vi.fn();

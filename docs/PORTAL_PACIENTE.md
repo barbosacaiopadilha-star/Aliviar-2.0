@@ -66,7 +66,7 @@ Fecha com "três coisas que nunca mudam": ninguém paga para entrar, a seleção
 
 ## WhatsApp
 
-Número oficial **(11) 97903-7133**, fornecido pelo responsável na MISSÃO 205. Isso **fecha uma lacuna documentada**: `LANDING_CREATIVE_DIRECTION.md` §8 proibia inventar um número porque nenhum oficial existia em documento aprovado.
+Número oficial **(11) 97098-1354** (ADR-111, 01/09). O primeiro foi o `(11) 97903-7133`, fornecido pelo responsável na MISSÃO 205. Isso **fecha uma lacuna documentada**: `LANDING_CREATIVE_DIRECTION.md` §8 proibia inventar um número porque nenhum oficial existia em documento aprovado.
 
 Vive como fonte única em `whatsapp-contact.tsx` (`ALIVIAR_WHATSAPP`) — nenhuma superfície reescreve o literal. Cada ponto de contato chega com o assunto já escrito, e nunca é navegação principal.
 

@@ -3366,3 +3366,31 @@ O problema real do `SIM-70` não é de cruzamento, é de **eliminação**: o pro
 ### E uma que ficou como estava
 
 **Cobertura e convênio continua com o Supervisor** (ADR-108): é a mesma conversa do dinheiro, é o par de Viabilidade no formulário do profissional, e saber o convênio antes da Mesa faz a incompatibilidade aparecer **antes** de três nomes serem escolhidos.
+
+---
+
+## ADR-111 — O WhatsApp oficial passa a ser (11) 97098-1354
+
+- **Data:** 2026-09-01
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data.
+- **Dependências:** substitui o número que a **MISSÃO 205** fixou · exerce a fonte única que aquela missão construiu · não altera a doutrina do canal (contextualizado, sem texto livre, nunca menu principal).
+
+### A decisão
+
+O canal de atendimento da Aliviar passa a ser **(11) 97098-1354**. O número anterior, **(11) 97903-7133**, deixa de ser oficial.
+
+### Por que isto é uma linha, e não uma caçada
+
+A MISSÃO 205 construiu a **fonte única**: `ALIVIAR_WHATSAPP` em `whatsapp-contact.tsx`, com uma guarda (`track-c-contato-oficial`, T-C-4) que proíbe o literal aparecer em qualquer outro arquivo de `src/`. **As sete superfícies da área da assistida mudaram por consequência** — documentos, linha do tempo, perfil, o bloco da Curadoria e o painel de decisão. Nenhuma delas foi tocada.
+
+**O que a troca revelou:** a guarda que protegia a fonte única **era ela mesma uma segunda fonte** — fixava o literal no próprio teste. Trocar o número obrigava a editar os dois, e esquecer um quebraria a suíte por um motivo que não era o defeito. **Corrigido junto:** a guarda agora lê o valor da constante, e ganhou uma asserção nova — o número exibido tem de ser o mesmo do link, para ninguém trocar um e esquecer o outro. Seis specs que repetiam o literal passaram a importá-lo.
+
+### O que NÃO mudou, de propósito
+
+- **A doutrina do canal.** Continua contextualizado por tópico fechado, sem texto livre, sem diagnóstico, sem nome de paciente — e nunca como menu principal.
+- **Os telefones de exemplo** em `lead.ts` e nos testes de normalização. Ali o número é **dado de teste do algoritmo**, não canal; trocá-los não teria sentido.
+- **Os registros históricos** em `docs/repaginacao/`. São ata de missões passadas: a MISSÃO 205 registrou o número daquele dia, e reescrever ata é apagar história.
+
+### Onde ele NÃO está, e por quê
+
+**A parte pública do site não mostra o número** — conferido em produção. Ele aparece só na área da assistida, depois de ela ter acesso. **Se algum dia for para a vitrine, é decisão à parte:** o repositório é público no GitHub, e número em página pública é número raspado.

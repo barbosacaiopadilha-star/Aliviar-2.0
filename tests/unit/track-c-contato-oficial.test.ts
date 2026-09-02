@@ -149,15 +149,33 @@ describe("T-C-3 · não existe caminho para texto livre", () => {
 });
 
 describe("T-C-4 · o número tem fonte única", () => {
+  /**
+   * A guarda LÊ o número da constante, em vez de repeti-lo.
+   *
+   * Até 01/09 ela fixava `"5511979037133"` no próprio teste — o que fazia dela
+   * **a segunda fonte** daquilo que ela existe para manter único. Trocar o
+   * número (ADR-111) obrigava a editar os dois, e esquecer um quebraria a
+   * suíte por um motivo que não era o defeito. Agora o valor vem de
+   * `whatsapp-contact.tsx`, e a asserção continua sendo a mesma: **este literal
+   * não pode aparecer em mais nenhum arquivo de `src/`.**
+   */
   it("o literal aparece uma única vez em src/, e é a constante oficial", () => {
-    const comNumero = arquivos(SRC).filter((arquivo) =>
-      readFileSync(arquivo, "utf8").includes("5511979037133"),
-    );
+    const declarado = fonte.match(/export const ALIVIAR_WHATSAPP = "(\d+)"/)?.[1];
+    expect(declarado, "a constante oficial sumiu ou mudou de forma").toMatch(/^55\d{10,11}$/);
 
+    const comNumero = arquivos(SRC).filter((arquivo) =>
+      readFileSync(arquivo, "utf8").includes(declarado!),
+    );
     expect(
       comNumero.map(relativo),
       "duplicar o número quebra a fonte única — importe ALIVIAR_WHATSAPP",
     ).toEqual(["src/components/curadoria/whatsapp-contact.tsx"]);
-    expect(fonte).toContain('export const ALIVIAR_WHATSAPP = "5511979037133"');
+
+    // E o formato de exibição precisa ser o MESMO número, só vestido.
+    const exibido = fonte.match(/export const ALIVIAR_WHATSAPP_DISPLAY = "([^"]+)"/)?.[1];
+    expect(
+      exibido?.replace(/\D/g, ""),
+      "o número exibido não é o mesmo que o do link — alguém trocou um e esqueceu o outro",
+    ).toBe(declarado!.slice(2));
   });
 });

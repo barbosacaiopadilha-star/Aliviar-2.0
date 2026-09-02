@@ -10,6 +10,7 @@ import {
   seedDeliveredCase,
   type DeliveredFixture,
 } from "../apoio/apoio-curadoria-entregue";
+import { ALIVIAR_WHATSAPP } from "@/components/curadoria/whatsapp-contact";
 
 /**
  * TRACK C · T-C-7, T-C-8 e T-C-9 — a porta, medida na rota real.
@@ -25,7 +26,9 @@ import {
  * As capturas ficam atrás de `CAPTURA=1`; os testes, não. Medir é permanente.
  */
 
-const NUMERO_OFICIAL = "5511979037133";
+// O número vem da FONTE ÚNICA, nunca repetido aqui: até 01/09 cada spec
+// carregava o literal, e trocá-lo (ADR-111) obrigaria a caçar todos.
+const NUMERO_OFICIAL = ALIVIAR_WHATSAPP;
 const DESTINO = process.env.CAPTURA_DIR ?? path.resolve(__dirname, "../../evidencias/c");
 const CAPTURANDO = Boolean(process.env.CAPTURA);
 

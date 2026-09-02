@@ -116,7 +116,7 @@ Redirects legados (`next.config.ts`):
 - COS, nove fases e Motor de Condução: **intactos**
 - Perfil de Prioridades, validação do paciente, três opções: **intactos**
 - Jornada como projeção da Memória da Curadoria: **intacta**, com responsável dinâmico
-- WhatsApp único: `whatsapp-contact.tsx` — fonte canônica `(11) 97903-7133`
+- WhatsApp único: `whatsapp-contact.tsx` — fonte canônica `(11) 97098-1354` (ADR-111; era `(11) 97903-7133` até 01/09)
 - Separação de filas por nível: **implementada** nos dashboards COA
 
 ## Homologação pendente

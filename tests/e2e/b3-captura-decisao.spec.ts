@@ -34,6 +34,7 @@ import {
 } from "../apoio/apoio-curadoria-entregue";
 import { createCuradoriaClient } from "../integration/curadoria-client";
 import { seedPublishedProfessional } from "../integration/rede-fixture";
+import { ALIVIAR_WHATSAPP } from "@/components/curadoria/whatsapp-contact";
 
 const URL_LOCAL = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const ANON_LOCAL = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
@@ -333,7 +334,7 @@ test.describe("B3 · evidências da decisão", () => {
     const cta = page.getByRole("link", { name: "Falar com a Aliviar" });
     await expect(cta).toBeVisible();
     const href = await cta.getAttribute("href");
-    expect(href, "o canal precisa ser o oficial").toContain("wa.me/5511979037133");
+    expect(href, "o canal precisa ser o oficial").toContain("wa.me/${ALIVIAR_WHATSAPP}");
     expect(href, "o tópico é `duvida`, pré-escrito").toContain("Curadoria");
 
     await capturar(page, "EV-B3-003-estado-duravel-desktop");
@@ -670,7 +671,7 @@ test.describe("B3 · fechamento (EV-C2)", () => {
       // O canal oficial, com nome acessível e destino legíveis.
       const whatsapp = page.getByRole("link", { name: "Falar com a Aliviar" });
       await expect(whatsapp).toBeVisible();
-      expect(await whatsapp.getAttribute("href")).toContain("wa.me/5511979037133");
+      expect(await whatsapp.getAttribute("href")).toContain("wa.me/${ALIVIAR_WHATSAPP}");
 
       // Alvos e rolagem, medidos em 390px.
       const medidas = await page.evaluate(() => {

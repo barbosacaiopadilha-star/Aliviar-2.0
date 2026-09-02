@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CuradoriaDecisionPanel } from "@/components/patient/curadoria-decision-panel";
+import { ALIVIAR_WHATSAPP } from "@/components/curadoria/whatsapp-contact";
 
 /**
  * B3-UI · O SILÊNCIO DEPOIS DA DECISÃO.
@@ -150,7 +151,7 @@ describe("B3-UI · a decisão da paciente", () => {
 
       const link = screen.getByRole("link", { name: "Falar com a Aliviar" });
       // O número vem da fonte única aprovada (MISSÃO 205), nunca reescrito aqui.
-      expect(link).toHaveAttribute("href", expect.stringContaining("wa.me/5511979037133"));
+      expect(link).toHaveAttribute("href", expect.stringContaining("wa.me/${ALIVIAR_WHATSAPP}"));
       expect(link).toHaveAttribute("rel", expect.stringContaining("noopener"));
     });
   });

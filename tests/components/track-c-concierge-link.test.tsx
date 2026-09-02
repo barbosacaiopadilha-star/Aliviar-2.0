@@ -4,6 +4,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { ConciergeLink } from "@/components/paciente/concierge-link";
+import { ALIVIAR_WHATSAPP } from "@/components/curadoria/whatsapp-contact";
 
 /**
  * T-C-1 · O RÓTULO, O DESTINO E O AVISO.
@@ -59,7 +60,7 @@ describe("T-C-1 · ConciergeLink", () => {
     const href = screen
       .getByRole("link", { name: /Falar com a Aliviar/ })
       .getAttribute("href")!;
-    expect(href).toContain("wa.me/5511979037133");
+    expect(href).toContain("wa.me/${ALIVIAR_WHATSAPP}");
     expect(decodeURIComponent(href)).toContain(
       "Oi! Gostaria de conversar sobre a minha Curadoria.",
     );
