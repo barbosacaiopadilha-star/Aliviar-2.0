@@ -1989,6 +1989,23 @@ são do sistema; prefixar (`PID_LGPD`) custa nada.
 
 ## 8 · O trabalho aberto, em ordem de valor
 
+1. **O e-mail de autenticação não sai para fora da equipe (`SIM-105`) — NOVO
+   em 03/09, e é bloqueador da primeira pessoa real.** Medido no painel: o
+   **SMTP personalizado está desligado**, então produção usa o serviço embutido
+   do Supabase — que, pela documentação vigente da própria Supabase, **recusa
+   entregar a endereços que não são da equipe do projeto**. E o `/auth/v1/settings`
+   de produção diz `disable_signup: false` com `mailer_autoconfirm: false`:
+   cadastro público aberto **e** confirmação por e-mail exigida. Quem entrar
+   pela porta pública fica com uma conta que não confirma e não recupera senha.
+   **O domínio já tem Resend verificado no DNS** (DKIM, SPF de envelope e MX de
+   bounce), configurado por alguém e registrado em lugar nenhum — ligar o SMTP
+   apontando para ele é o conserto. **Dois passos, os dois do Fundador**, e o
+   segundo é o que prova: ligar o SMTP, e **medir a entrega com um endereço de
+   fora da equipe** — um teste com o e-mail dele passa mesmo com tudo quebrado,
+   porque ele é membro. **Fica junto:** o `_dmarc` é `p=none` sem `rua=`, e a
+   lista de redirecionamentos permitidos não foi medida (a página do painel não
+   renderizou).
+
 1. **Marcar o Ensaio Geral — DESMARCADO pelo Fundador em 31/08**
    (*"não vou ensaiar agora"*), depois de marcado em 30/08 para 05/09. **É a
    segunda marcação que não acontece** — a primeira foi a ADR-076 (22–23/08).
