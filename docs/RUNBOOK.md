@@ -4,10 +4,12 @@ Documento de operação, não de engenharia. Complementa `docs/OPERATIONS.md` (d
 
 **Operação de produção (leia junto):** `DEPLOY_RUNBOOK.md` (publicação do release), `RECOVERY.md` (restauração em falha, ex.: 3h da manhã), `COMMAND_CENTER.md` (dashboard/daily/incidentes/critérios de encerramento do Shadow Launch). Um operador novo assume a operação lendo estes quatro documentos + `OPERATIONS.md`.
 
+> **Estado em 2026-09-03.** Este runbook foi escrito em julho para a V1 com o motor ACE. O motor saiu do código na simplificação operacional de 21/08 — `src/modules/concierge/`, `/admin/ace` e `/admin/ace/[executionId]` não existem — e o `@anthropic-ai/sdk` saiu do `package.json` em 03/09 (ADR-056, registro de implementação). O que dependia dele está marcado *(histórico)* abaixo. O fluxo humano da primeira Curadoria real é o **Guia da Primeira Rodada** em `docs/rede/` (nove passos, ADR-073/074/075), com o Roteiro do Supervisor e a Folha da Mesa. Este documento não consta do `docs/INDEX.md`; a auditoria de agosto registrou cinco runbooks sobrepostos (`AUDITORIA_08_HISTORICO.md`).
+
 ## 1. Abertura da operação
 
-1. Confirmar que o bloqueio do ACE (integração Anthropic, bug de plataforma da Vercel) foi resolvido — ver `docs/DEBUGGING.md` §2 e o Health Check em `/admin/ace`. **Não abrir operação com o Health Check mostrando `MODEL_NOT_CONFIGURED`.**
-2. Confirmar que o Supabase de produção está acessível e que todas as migrations em `supabase/migrations/` foram aplicadas (`supabase db push` ou equivalente do fluxo já usado em produção) — nenhuma execução real deve rodar contra um schema desatualizado.
+1. *(histórico)* A abertura exigia resolver o bloqueio do ACE (integração Anthropic, bug da Vercel) e um Health Check verde em `/admin/ace`. Não há mais modelo de linguagem a configurar nem Health Check: nada bloqueia a abertura por esse lado.
+2. Confirmar que o Supabase de produção está acessível e que todas as migrations em `supabase/migrations/` foram aplicadas — hoje o `git push` de `main` as aplica pela integração GitHub do Supabase (`SIM-97` no registro de achados), sem passo manual; conferir o ledger antes de qualquer Curadoria real.
 3. Confirmar RLS ativa nas tabelas sensíveis (`professional_profiles`, `patient_profiles`, `cases`, `human_review_results` e demais) — nenhuma policy desabilitada manualmente para depuração e esquecida.
 4. Remover todo dado de teste do banco de produção (ver §7 — Limpeza).
 5. Confirmar que o administrador consegue logar em `/admin` com a conta real.
@@ -16,13 +18,13 @@ Documento de operação, não de engenharia. Complementa `docs/OPERATIONS.md` (d
 
 ## 2. Cadastro do primeiro profissional
 
-Feito pelo Administrador em `/admin/profissionais/novo`. Campos obrigatórios para o profissional ser elegível a qualquer Shortlist (sem eles, o ACE nunca o inclui — o Método recusando inventar dado, não um bug, ver `docs/DEBUGGING.md` §2):
+Feito pelo Administrador em `/admin/profissionais/novo`. Campos mínimos para o profissional entrar na Mesa — o Método recusa inventar dado. Na rodada real a porta é o **Formulário do Profissional** assinado (`docs/rede/`, passo 2 do Guia da Primeira Rodada): sem ele o médico não entra na Mesa.
 
 - Nome, identificador profissional, resumo profissional.
 - Nível de experiência, abordagem de intake, disponibilidade.
 - Ao menos uma área de competência.
 
-Recomendado: **ao menos 3 profissionais reais** cadastrados antes do primeiro paciente — é o mínimo que o P008 (Shortlist Builder) precisa para compor uma Shortlist sem bloquear por insuficiência.
+Recomendado: **ao menos 3 profissionais reais** cadastrados antes do primeiro paciente — a Curadoria entrega três caminhos, e sem três legítimos a Mesa para (passo 6 do Guia: parar e anotar por quê é um achado, não um fracasso).
 
 ## 3. Cadastro do primeiro paciente
 
@@ -30,12 +32,13 @@ Feito pelo Administrador em `/admin/pacientes/novo`, com o e-mail real da pessoa
 
 ## 4. Primeira curadoria
 
-1. Paciente loga com a própria conta e preenche "Sua História" até o fim.
-2. Administrador ou Curador Médico cria o Caso a partir dessa história e avança o status: Novo → Em Revisão → Pronto para curadoria.
-3. Iniciar a execução do ACE no Caso (`/admin/casos/[id]`).
-4. Confirmar em `/admin/ace/[executionId]` que todos os protocolos completaram (`COMPLETED`), sem `FAILED`. Se houver `FAILED`, ver §6.1 para distinguir o tipo de falha antes de decidir se reexecuta.
-5. Curador Médico revisa a Shortlist em Human Review e registra a decisão com justificativa genuína. Regras de Human Review: no máximo uma decisão `VALIDATED` por Caso (garantido pelo banco, ADR-025 — uma segunda tentativa é rejeitada com mensagem clara, nunca sobrescreve a primeira); o histórico de decisões é append-only, nunca editável; não existe hoje fluxo de revalidação de um Caso já `VALIDATED` (reabrir uma curadoria já aprovada exige decisão de produto própria, fora do escopo desta versão).
-6. Entregar a Curadoria Final. Confirmar que o paciente acessa em `/paciente/curadoria`, incluindo "Baixar em PDF".
+A primeira Curadoria real segue o **Guia da Primeira Rodada** (`docs/rede/`), em papel, nove passos: o contato, os médicos antes do assistido, a Consulta Inicial, o reconhecimento, a Mesa, os três caminhos, a apresentação, a decisão — dela — e a ata. O sistema entra na ata (passo 9) e no que ele já sabe fazer:
+
+1. O Supervisor abre o Case a partir do lead (conversão no CRM) e o transfere ao Curador — cada troca de responsável é auditada.
+2. O Curador registra a Mesa em `/portal-curador/casos/[id]` (etapas) e o Mapa de Prioridades; a assistida reconhece o próprio perfil quando ele é apresentado.
+3. A entrega fica em `/paciente/curadoria`, incluindo "Baixar em PDF". Confirmar que a pessoa acessa com a própria conta.
+
+*(histórico)* Os passos antigos — Caso "Pronto para curadoria", execução do ACE em `/admin/casos/[id]`, confirmação de `COMPLETED` em `/admin/ace/[executionId]`, Human Review com uma única decisão `VALIDATED` (ADR-025) — descreviam o motor e a revisão dele; não existem mais no produto.
 
 ## 5. Acompanhamento
 
@@ -43,37 +46,29 @@ Fora do sistema (processo da equipe, não uma funcionalidade do produto, ver `do
 
 ## 6. Tratamento de incidentes
 
-| Sintoma                                    | Onde olhar primeiro                                                                                                 | Ação                                                             |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| ACE não avança / trava                     | `/admin/ace` → execução em `RUNNING` há +30min                                                                      | `docs/DEBUGGING.md` §1 — reexecutar é seguro (idempotente)       |
-| Health Check mostra `MODEL_NOT_CONFIGURED` | `/admin/ace`                                                                                                        | Não iniciar/retomar execuções novas até resolver — ver §8 abaixo |
-| Paciente não vê algo que deveria           | Confirmar papel efetivo (`user_roles`) e RLS — `docs/DEBUGGING.md` §4                                               | Nunca é a aplicação decidindo, é a policy do Postgres            |
-| Erro genérico na tela do paciente          | Entrar como Admin/Curador, ver o Caso e a mensagem interna sanitizada + `failureCode` em `/admin/ace/[executionId]` | `docs/DEBUGGING.md` §3                                           |
-| Suspeita de dado sensível em log           | Tratar como incidente de segurança, não como debug                                                                  | `docs/DEBUGGING.md` §7 — nunca prompt/resposta/chave em log      |
+| Sintoma | Onde olhar primeiro | Ação |
+| --- | --- | --- |
+| Paciente não vê algo que deveria | Confirmar papel efetivo (`user_roles`) e RLS — `docs/DEBUGGING.md` §4 | Nunca é a aplicação decidindo, é a policy do Postgres |
+| Erro genérico na tela do paciente | Entrar como Admin/Curador, abrir o Caso e ler a mensagem interna | A regra segue: o paciente nunca vê detalhe técnico. Não há mais `failureCode` novo — `docs/DEBUGGING.md` §1–3 é histórico |
+| Suspeita de dado sensível em log | Tratar como incidente de segurança, não como debug | `docs/DEBUGGING.md` §7 — nunca dado clínico, senha ou chave em log |
+| *(histórico)* ACE não avança / Health Check `MODEL_NOT_CONFIGURED` | `/admin/ace` — não existe mais | Nenhuma ação: não há motor a travar nem modelo a configurar |
 
-## 6.1 Distinção entre tipos de falha do ACE
+## 6.1 *(histórico)* Distinção entre tipos de falha do ACE
 
-Nem toda execução `FAILED` é o mesmo tipo de problema — a ação correta depende de qual é:
-
-| `failureCode` (ou situação)                                                               | O que significa                                                                                                                                  | Reexecutar automaticamente?                                                                                                                                                                                                  |
-| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Falha técnica (`ACE_MODEL_TIMEOUT`, `ACE_MODEL_RATE_LIMITED`, `ACE_MODEL_NOT_CONFIGURED`) | Problema de infraestrutura/conectividade com o provedor do modelo — nenhum julgamento do Método envolvido                                        | Sim, reexecução manual é segura e idempotente                                                                                                                                                                                |
-| `CASE_AUDIT_BLOCKED` (P003)                                                               | O Caso genuinamente carece de informação essencial (decisão/objetivo ausente, contradição real) — o Método está funcionando corretamente         | Não é uma falha para "reexecutar" — o Caso vai para `WAITING_FOR_INFORMATION`, aguardando o paciente                                                                                                                         |
-| `CONTENT_INVARIANT_VIOLATION` (P003, ADR-024)                                             | O modelo classificou uma restrição prática opcional como bloqueante, violando uma regra fechada do Método — rejeitado antes de virar `CaseAudit` | Reexecução manual é segura (o Caso permanece no status anterior, nunca é movido para `WAITING_FOR_INFORMATION` por um problema que não é do paciente) — se persistir, é sinal de calibração, registrar como incidente (§6.2) |
-| Human Review pendente                                                                     | Não é falha — o Caso está corretamente aguardando decisão humana (P009)                                                                          | N/A — ação é do Curador, não reexecução                                                                                                                                                                                      |
+A tabela de `failureCode` que vivia aqui (`ACE_MODEL_TIMEOUT`, `ACE_MODEL_RATE_LIMITED`, `ACE_MODEL_NOT_CONFIGURED`, `CASE_AUDIT_BLOCKED`, `CONTENT_INVARIANT_VIOLATION`, Human Review pendente) descrevia o motor. Nenhum desses códigos é gravado hoje; o histórico fica em `docs/DEBUGGING.md` §1–3. O que sobreviveu é de gente, não de motor: `WAITING_FOR_INFORMATION` segue existindo como status de Case, para quando falta informação essencial da assistida — não é falha, é espera.
 
 ## 6.2 Como registrar um incidente
 
-1. Categorizar primeiro: infraestrutura (ex.: chave não injetada, Vercel/Supabase fora do ar), regra de negócio do Método (ex.: `CASE_AUDIT_BLOCKED` genuíno) ou erro de comportamento do modelo (ex.: `CONTENT_INVARIANT_VIOLATION` recorrente) — nunca misturar as três num único registro.
-2. Evidência mínima: `failureCode`, timestamp, `executionId`, e a mensagem sanitizada já exibida em `/admin/ace/[executionId]` — nunca prompt bruto, resposta bruta do modelo, ou chave.
-3. Registrar em um documento próprio (padrão já usado: `docs/INCIDENT_*.md`), nunca misturado a `docs/ace/CALIBRATION_REPORT.md` (que é só para calibração de comportamento do Método, não infraestrutura) nem a este Runbook.
-4. Critério de bloqueio da operação: qualquer incidente de infraestrutura que impeça configuração do modelo (`MODEL_NOT_CONFIGURED`) bloqueia a abertura/continuidade da operação até resolvido (§1); um `CONTENT_INVARIANT_VIOLATION` ou `CASE_AUDIT_BLOCKED` isolado não bloqueia a operação como um todo, só aquele Caso específico.
+1. Categorizar primeiro: infraestrutura (Vercel/Supabase fora do ar, variável não injetada), regra do Método (Case parado por falta de informação genuína) ou defeito do produto — nunca misturar os três num único registro.
+2. Evidência mínima: id do Case, tela, hora, papel de quem viu e a mensagem exibida — nunca dado clínico da assistida, senha ou chave.
+3. Registrar no `docs/REGISTRO_UNICO_DE_ACHADOS.md` (uma linha `SIM-*`) ou, se for incidente de segurança, em documento próprio (`docs/INCIDENT_*.md`) — nunca misturado a este Runbook.
+4. Critério de bloqueio da operação: infraestrutura fora do ar bloqueia a operação inteira até resolver; um Case parado por falta de informação bloqueia só aquele Case.
 
 ## 7. Limpeza de dados de teste (bloqueio operacional atual)
 
 Antes do primeiro paciente real, remover do banco de produção:
 
-- 3 profissionais de teste publicados (nomes fictícios) — hoje elegíveis para aparecer numa Shortlist real assim que o ACE voltar a funcionar.
+- 3 profissionais de teste publicados (nomes fictícios). *(histórico: "elegíveis numa Shortlist real assim que o ACE voltar a funcionar".)* O estado real dos dados de produção está no registro de achados (`SIM-99`, `SIM-101`), não aqui.
 - 1 paciente de teste com Caso aberto.
 
 Isso ainda não foi executado — pendente de confirmação explícita antes da abertura da operação (ver checklist §9).
@@ -82,7 +77,7 @@ Isso ainda não foi executado — pendente de confirmação explícita antes da 
 
 | Situação                                          | Ação                                                                                                                                                                                                                                  |
 | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ACE falhando em produção                          | Não é reversível por deploy — é bloqueio de infraestrutura externa (Vercel). Pausar novos Casos até resolução; Casos já em andamento ficam retomáveis sem perda de dado (artefatos são imutáveis e reaproveitados).                   |
+| *(histórico)* ACE falhando em produção | Era bloqueio de infraestrutura externa (Vercel), não reversível por deploy. Não existe mais motor a falhar. |
 | Deploy ruim                                       | Vercel → Deployments → **Instant Rollback** para o deploy anterior (`docs/OPERATIONS.md` §13).                                                                                                                                        |
 | Variável de ambiente errada                       | Corrigir no painel da Vercel e fazer **Redeploy** — não precisa reverter código.                                                                                                                                                      |
 | Dado incorreto cadastrado (profissional/paciente) | Editar/desativar via painel administrativo; exclusão de conta segue o procedimento de cascade já documentado nesta sessão (ordem: `user_roles` antes de `auth.users`, e `patient_story_versions` antes se o paciente tiver história). |
@@ -91,6 +86,7 @@ Regra fixa mantida: nenhum agente de IA executa comando destrutivo contra produ�
 
 ## 8.1 Golden Set (`tests/golden/`)
 
+- *(estado em 2026-09-03)* A suíte não tem nenhum arquivo `*.golden.test.ts`: `npm run test:golden` roda vazio. O que ficou é o guard (`tests/golden/real-model-call-guard.ts`) e o teste unitário dele, mantidos por decisão de governança (ADR-022) e para nunca autorizar chamada real por engano. `CLAUDE_API_KEY` está aposentada (`docs/ENVIRONMENT_VARIABLES.md`, seção Histórico). Os itens abaixo descrevem como a suíte operava:
 - Bloqueado por padrão — `CLAUDE_API_KEY` presente sozinha nunca autoriza uma execução real (ADR-022, `docs/ace/05-knowledge/golden-set-testing.md`).
 - Comando autorizado para rodar de fato: `ALLOW_REAL_MODEL_CALLS=true npm run test:golden` (PowerShell: `$env:ALLOW_REAL_MODEL_CALLS = "true"; npm run test:golden`).
 - Nunca rodar por curiosidade — tem custo real de API. Rodar apenas depois de editar `prompt.md` de P002/P003/P004/P010, trocar versão/modelo, ou como auditoria periódica deliberada.
@@ -102,7 +98,7 @@ Regra fixa mantida: nenhum agente de IA executa comando destrutivo contra produ�
 - Nunca versionar `.env.local` ou qualquer arquivo de credencial.
 - Nunca usar o cliente `service_role` no frontend — só em código server-side já auditado (`createAdminSupabaseClient`).
 - Nunca alterar produção (dado, config, deploy) sem autorização explícita, específica, por ação (§8).
-- Remover a variável órfã `ANTHROPIC_API_KEY` do painel da Vercel quando conveniente — não é usada pelo código, mas é resíduo de um incidente já resolvido (`docs/INCIDENT_CLAUDE_API_KEY_PRODUCTION.md`) e pode confundir um diagnóstico futuro.
+- Remover do painel da Vercel as variáveis órfãs `ANTHROPIC_API_KEY` (resíduo do incidente `docs/INCIDENT_CLAUDE_API_KEY_PRODUCTION.md`) e `CLAUDE_API_KEY` (aposentada em 03/09, sem consumidor no código), e revogar a chave no painel da Anthropic se não tiver outro uso — pendência do proprietário, registrada em `docs/CREDENTIALS.md`.
 
 ## 9. Contatos e responsabilidades
 
@@ -112,7 +108,7 @@ Estrutura atual (uma só pessoa, dois papéis — registrar aqui como realidade 
 | ------------------------------------ | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Administrador                        | Caio (`barbosacaiopadilha@gmail.com`) | Único administrador cadastrado hoje                                                                                                 |
 | Curador Médico                       | Caio (mesma conta)                    | Sem segregação entre quem administra o sistema e quem revisa curadorias — risco operacional de ponto único, registrado no checklist |
-| Suporte de infraestrutura (Vercel)   | Caso aberto, aguardando resposta      | Ver `docs/DEBUGGING.md`                                                                                                             |
+| Suporte de infraestrutura (Vercel)   | Nenhum caso aberto                    | O caso do bug da variável (`docs/INCIDENT_CLAUDE_API_KEY_PRODUCTION.md`) está resolvido, e a integração que dependia dele foi aposentada |
 | Suporte de infraestrutura (Supabase) | Não há caso aberto no momento         | —                                                                                                                                   |
 
 ## 10. Histórico
@@ -121,3 +117,4 @@ Estrutura atual (uma só pessoa, dois papéis — registrar aqui como realidade 
 | ------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 0.1    | 2026-07-14 | Primeira versão — runbook operacional para a abertura da V1 com o primeiro paciente real.                                                                                                                                                                                                                                                                                                         |
 | 0.2    | 2026-07-15 | Auditoria de documentação pendente: adiciona checagem de Supabase/migrations/RLS/backup à abertura (§1); distinção entre tipos de falha do ACE e como registrar incidente (§6.1, §6.2); regras de Human Review — unicidade, concorrência, append-only, sem revalidação (§4); seção de Golden Set operacional (§8.1); seção de Segurança (§8.2). Nenhuma mudança de código, arquitetura ou Método. |
+| 0.3    | 2026-09-03 | O motor ACE saiu do produto (21/08) e a chave da Anthropic foi aposentada (03/09): §1.1, §1.2, §2, §4, §6, §6.1, §6.2, §7, §8, §8.1, §8.2 e §9 corrigidos ou marcados como histórico; nota de estado no topo apontando para o Guia da Primeira Rodada em `docs/rede/`. Nenhuma mudança de código. |
