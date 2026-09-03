@@ -1,0 +1,189 @@
+# SENTINELA DE PRODUÇÃO — SIM-106.
+#
+# O achado que motivou: a Aliviar ficou 43 dias com o e-mail quebrado e ~36 h
+# com o CI vermelho sem que nada avisasse. Não faltava sinal — faltava alguém
+# olhando. O `/api/health` já existia, já tocava banco e auth de verdade e já
+# devolvia 503 quando alguma dependência caía. Ninguém o chamava.
+#
+# POR QUE AQUI, e não num serviço de monitoramento: um monitor externo exige
+# conta nova e credencial de terceiro. Este roda no repositório que já existe,
+# não usa nenhum segredo (o `/api/health` é público por natureza e não conta
+# nada sobre quem está lá dentro) e avisa pelo mesmo caminho que já foi visto
+# funcionar — issue aberta, que dispara a notificação padrão do GitHub.
+#
+# O SEGUNDO TRABALHO, que é o menos óbvio e talvez o mais importante: a
+# organização está no plano FREE do Supabase, e a documentação diz que o
+# projeto é pausado após 7 dias de pouca atividade — bastando "a few user
+# requests to the database each day" para evitar. Cada batida desta sentinela
+# faz uma leitura REAL de tabela através do `/api/health`. Ou seja: além de
+# detectar a queda, ela é o que impede a pausa que derrubaria tudo.
+#
+# LIMITES, ditos aqui para ninguém confiar demais:
+#  · o `schedule` do GitHub NÃO é pontual — atrasos de vários minutos são
+#    normais em runner compartilhado, e execuções podem ser puladas em pico.
+#    Serve para "a Aliviar está de pé?", não para medir disponibilidade fina.
+#  · se o GitHub estiver fora, não há aviso. Um serviço dedicado cobriria
+#    isso; a troca é consciente, e o custo era uma conta nova.
+#  · o GitHub desativa workflows agendados em repositório sem atividade por
+#    60 dias. Se a Aliviar ficar dois meses parada, a sentinela dorme junto.
+
+name: sentinela
+
+on:
+  schedule:
+    # De cinco em cinco minutos é o piso do GitHub. O que vai acontecer de
+    # fato é menos frequente que isso, e está tudo bem — ver LIMITES.
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+    inputs:
+      alvo:
+        description: "URL de saúde a sondar. Em branco = produção. Serve para provar a sentinela apontando-a para um endereço quebrado."
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: sentinela
+  cancel-in-progress: false
+
+jobs:
+  sonda:
+    name: a Aliviar está de pé?
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # TRÊS TENTATIVAS ANTES DE ACUSAR. Uma falha isolada é quase sempre um
+      # soluço de rede, e uma sentinela que grita a cada soluço ensina a
+      # ignorá-la — que é exatamente o defeito que ela veio corrigir.
+      - name: Sondar a saúde, três vezes antes de acusar
+        id: sonda
+        env:
+          # Por env, nunca interpolado direto no shell: entrada de workflow
+          # dentro de `run:` é injeção de comando esperando acontecer.
+          ALVO_INFORMADO: ${{ inputs.alvo }}
+        run: |
+          ALVO="${ALVO_INFORMADO:-}"
+          if [ -z "$ALVO" ]; then
+            ALVO="https://aliviar-2-0.vercel.app/api/health"
+          fi
+          echo "alvo=$ALVO" >> "$GITHUB_OUTPUT"
+          echo "Sondando $ALVO"
+
+          ok=nao
+          codigo=000
+          corpo=""
+          for tentativa in 1 2 3; do
+            codigo=$(curl -s -m 20 -o /tmp/corpo.txt -w '%{http_code}' "$ALVO" || echo 000)
+            corpo=$(head -c 500 /tmp/corpo.txt 2>/dev/null || true)
+            echo "tentativa $tentativa -> HTTP $codigo"
+            if [ "$codigo" = "200" ]; then
+              ok=sim
+              break
+            fi
+            [ "$tentativa" -lt 3 ] && sleep 20
+          done
+
+          {
+            echo "ok=$ok"
+            echo "codigo=$codigo"
+            echo "corpo<<CORPO_FIM"
+            echo "$corpo"
+            echo "CORPO_FIM"
+          } >> "$GITHUB_OUTPUT"
+
+      # O AVISO. Abre UMA issue e comenta nela nas quedas seguintes — sete
+      # issues idênticas escondem tão bem quanto o silêncio. E FECHA sozinha
+      # quando a saúde volta, dizendo quanto tempo durou: um alarme que só
+      # uma pessoa consegue desligar vira alarme que ninguém desliga.
+      - name: Avisar, ou dar por encerrado
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          OK: ${{ steps.sonda.outputs.ok }}
+          CODIGO: ${{ steps.sonda.outputs.codigo }}
+          CORPO: ${{ steps.sonda.outputs.corpo }}
+          ALVO: ${{ steps.sonda.outputs.alvo }}
+        with:
+          script: |
+            const titulo = "Produção fora do ar: a sentinela não obteve resposta saudável";
+            const { OK, CODIGO, CORPO, ALVO } = process.env;
+            const saudavel = OK === "sim";
+            const execucao = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const agora = new Date();
+
+            const abertas = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              per_page: 100,
+            });
+            const existente = abertas.data.find((i) => i.title === titulo && !i.pull_request);
+
+            if (!saudavel) {
+              const corpo = [
+                `A sonda tentou **três vezes** e não obteve \`200\`.`,
+                "",
+                `- Alvo: ${ALVO}`,
+                `- Último código: \`${CODIGO}\`` + (CODIGO === "000" ? " (sem resposta / tempo esgotado)" : ""),
+                `- Quando: ${agora.toISOString()}`,
+                `- Execução: ${execucao}`,
+                "",
+                "Resposta recebida:",
+                "```",
+                (CORPO || "(vazia)").slice(0, 500),
+                "```",
+                "",
+                "O `/api/health` devolve **503 dizendo QUAL dependência caiu** — se houver corpo acima, ele aponta para onde correr.",
+                "Esta issue se fecha sozinha quando a saúde voltar.",
+              ].join("\n");
+
+              if (existente) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: existente.number,
+                  body: corpo,
+                });
+                core.setFailed(`Produção sem resposta saudável (HTTP ${CODIGO}) — comentado na issue #${existente.number}.`);
+              } else {
+                const criada = await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: titulo,
+                  body: corpo,
+                });
+                core.setFailed(`Produção sem resposta saudável (HTTP ${CODIGO}) — issue #${criada.data.number} aberta.`);
+              }
+              return;
+            }
+
+            if (existente) {
+              const desde = new Date(existente.created_at);
+              const minutos = Math.max(1, Math.round((agora - desde) / 60000));
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existente.number,
+                body: [
+                  `**Voltou.** O \`${ALVO}\` respondeu \`200\`.`,
+                  "",
+                  `- Duração do alarme: ~${minutos} min (desde ${desde.toISOString()})`,
+                  `- Execução: ${execucao}`,
+                  "",
+                  "Fechando sozinha. O histórico fica aqui.",
+                ].join("\n"),
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existente.number,
+                state: "closed",
+              });
+              core.notice(`Saúde restabelecida — issue #${existente.number} fechada.`);
+              return;
+            }
+
+            core.notice(`Saudável (HTTP ${CODIGO}).`);
