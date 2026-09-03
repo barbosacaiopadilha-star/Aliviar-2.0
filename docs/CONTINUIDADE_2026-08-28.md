@@ -1582,19 +1582,32 @@ diferença é grande (6,28:1 de média contra 5,47:1 no pior ponto, e casos com
 retângulo inteiro, **mas mudou o que eu sei**: sobre foto, o contraste é uma
 faixa, não um número. **Quem relata só a média está relatando o melhor caso.**
 
-**28 · `taskkill /F` no Docker economiza dez segundos e custa uma hora**
-(`SIM-92`). Matar o Docker à força deixa sockets AF_UNIX órfãos em
-`AppData\Local`, com handle preso no kernel — **não se apagam nem por
-administrador**, e a inicialização seguinte aborta ao tentar recriá-los. **O
-sintoma engana:** processos no ar, WSL íntegra e iniciável à mão, motor mudo. O
-motivo real só está em `Docker\backend.error.json`, que a interface não mostra.
-**Conserto: renomear os DIRETÓRIOS** (`Docker\run`, `docker-secrets-engine`),
-que o Docker recria limpos — e foram duas rodadas, porque o segundo órfão só
-aparece depois que o primeiro sai do caminho. **Para derrubar, `docker desktop
-stop` ou o menu do aplicativo.** E a lição maior, que não é sobre Docker:
-**quando um serviço não sobe e a interface não explica, o arquivo de erro do
-próprio serviço costuma dizer em uma linha o que meia hora de dedução não
-acha.**
+**28 · Causa atribuída sem medição é palpite com cara de diagnóstico — e eu
+escrevi uma neste mesmo dia** (`SIM-92`).
+
+O Docker parou de subir, e eu concluí que a culpa era do meu `taskkill /F`:
+matar à força deixaria sockets AF_UNIX órfãos, e a subida seguinte abortaria ao
+tentar recriá-los. **A mecânica estava certa. A causa, não.** Horas depois,
+derrubando de novo pelo caminho correto — `docker desktop stop`, saída limpa,
+zero processos —, **os quatro sockets continuaram presos**, e uma subida de
+teste **falhou igual**, com o `backend.error.json` reescrito no mesmo minuto.
+Um `wsl --shutdown` também não libera. **Acontece em toda parada; o `taskkill`
+foi só a primeira vez que eu vi.**
+
+**O que salva é o hábito, não a esperteza:** eu só descobri porque, depois de
+parar o Docker a pedido, **fui conferir se ele voltava** em vez de dar a
+tarefa por encerrada. Sem isso, a lição errada teria ficado no repositório e o
+Fundador acharia o Docker quebrado amanhã, sem aviso.
+
+**O que fazer, na prática:** com o Docker parado, **renomear os DIRETÓRIOS**
+`Docker\run` e `docker-secrets-engine` — ele os recria limpos; duas rodadas
+quando os dois estão sujos. **O conserto de verdade é reiniciar a máquina**,
+que libera os handles, e aí dá para apagar as pastas `*.orfao-*`.
+
+**E a lição que não é sobre Docker: quando um serviço não sobe e a interface
+não explica, o arquivo de erro do próprio serviço diz em uma linha o que meia
+hora de dedução não acha.** Foi o `backend.error.json` que resolveu, depois de
+eu ter checado processos, serviços, WSL e distro sem chegar a lugar nenhum.
 
 ---
 
