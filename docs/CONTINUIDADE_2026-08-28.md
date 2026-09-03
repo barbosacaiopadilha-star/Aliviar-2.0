@@ -2002,9 +2002,14 @@ são do sistema; prefixar (`PID_LGPD`) custa nada.
    apontando para ele é o conserto. **Dois passos, os dois do Fundador**, e o
    segundo é o que prova: ligar o SMTP, e **medir a entrega com um endereço de
    fora da equipe** — um teste com o e-mail dele passa mesmo com tudo quebrado,
-   porque ele é membro. **Fica junto:** o `_dmarc` é `p=none` sem `rua=`, e a
-   lista de redirecionamentos permitidos não foi medida (a página do painel não
-   renderizou).
+   porque ele é membro. **Fica junto:** o `_dmarc` é `p=none` sem `rua=`; e a
+   lista de redirecionamentos **foi medida pelo próprio GoTrue** (a página do
+   painel não renderiza) e está **verde para hoje** — `aliviar-2-0.vercel.app`
+   é honrado, `example.com` cai na Site URL, então a sonda distingue. **Mas o
+   domínio próprio não está na lista:** os "dois cliques" do `SIM-72` são três
+   — ligar na Vercel, definir `NEXT_PUBLIC_SITE_URL` e **acrescentar o domínio
+   à Site URL e às Redirect URLs do Supabase**, ou trocar o endereço quebra
+   confirmação e redefinição de senha no mesmo instante.
 
 1. **Marcar o Ensaio Geral — DESMARCADO pelo Fundador em 31/08**
    (*"não vou ensaiar agora"*), depois de marcado em 30/08 para 05/09. **É a
