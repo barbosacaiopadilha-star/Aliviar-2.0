@@ -2,19 +2,8 @@ import Link from "next/link";
 
 import type { Metadata } from "next";
 
-import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import {
-  PERIODS,
-  buildFunnel,
-  buildTimeSeries,
-  casesByRole,
-  casesByStatus,
-  computeIndicators,
-  leadsBySource,
-  type Metric,
-  type PeriodKey,
-} from "@/modules/admin/dashboard-metrics";
+import { computeIndicators, type Metric } from "@/modules/admin/dashboard-metrics";
 import { loadDashboardSource } from "@/modules/admin/dashboard-repository";
 import { requireRole } from "@/modules/auth/guard";
 import { listProfessionalProfiles } from "@/modules/profiles";
