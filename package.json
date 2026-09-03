@@ -46,7 +46,6 @@
     "start:local": "node scripts/with-local-supabase.mjs next start -p 3001"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.111.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.8",
     "@vercel/analytics": "^2.0.1",
