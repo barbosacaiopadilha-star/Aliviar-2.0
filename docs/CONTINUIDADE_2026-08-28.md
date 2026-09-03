@@ -28,6 +28,17 @@ em 193 arquivos** (medido em 01/09; eram 2672 em 31/08).
 *O handoff de 30/08 dizia aqui "13 guardas verdes"; não consegui reconstruir
 o que aquele número contava, então troquei pelo total da suíte, que é medido.*
 
+**O estado em 03/09, depois de duas auditorias de segurança:** `main` =
+produção = `70f1ca8`. **Duas migrations do dia estão em produção**, as duas
+aplicadas pela integração GitHub do Supabase no `git push` — a
+`20260903020000` (predicado nulo-seguro da transferência, `SIM-93`) e a
+`20260903040000` (eliminação do titular, `SIM-99`). O CI está verde de ponta
+a ponta pela primeira vez desde 01/09, com a CLI do Supabase pinada em
+2.109.1 (`SIM-98`). **O que muda para quem chega agora:** migration commitada
+em `main` é produção (`AGENTS.md`); o check-run do commit é a última linha
+de qualquer relatório; e a folha de acessos da pasta envelhece a cada
+`bootstrap:test-users` — quem rodar o bootstrap regrava a folha.
+
 **Os documentos da sala foram regravados em 31/08**, por quatro mudanças que
 alteram o que se faz nela: a ADR-108 (o Curador não fala de dinheiro), o
 endereço canônico nos três papéis do cruzamento, o rótulo da Parte 5, e a
@@ -1347,17 +1358,23 @@ grava o pedido e ninguém o executa.** Em produção não há vítima ainda (0
 pedidos, 3 assistidas) — **mas a primeira pessoa real que pedir "apaguem meus
 dados" vai receber um 500.**
 
-**Depois, a pedido dele, a migration e o teste foram escritos** — e ficaram
-**commitados sem push**, porque push de migration é produção (`SIM-97`).
+**Depois, a pedido dele, a migration e o teste foram escritos — e, com a
+autorização dele, EMPURRADOS: estão em produção desde o `70f1ca8`.**
 `20260903040000_eliminacao_do_titular`: 24 FKs de proveniência → `SET NULL`,
 o trigger de papel que não aponta mais para quem está sumindo, o lead do CRM
 em `CASCADE`, e a porta `eliminar_titular` — só por serviço, administrador
 verificado, auditoria primeiro, cerca dos julgamentos respeitada, storage
 devolvido a quem chama. **O teste monta a pessoa inteira e prova que nada
-sobra** além da auditoria. **Regressão:** `db reset` com a migration nova e a suíte de integração inteira contra ela — **1052 verdes**, inclusive `descarte-de-case`, `case-responsibility-grants`, a auditoria de acesso e a sentinela; o único vermelho foi a cerca G-2.4-7 derrubando a primeira versão da função (que lia `curator_judgments`) — corrigida e reconfirmada: cerca, eliminação (**4/4** + 1 todo) e sentinela, **66/66**; unit 2718. **O que fica para ele decidir: subir.**
-Depois disso, o que falta é a tela do administrador que executa
-`data_subject_requests` no prazo — e a decisão de domínio sobre julgamento ×
-eliminação.
+sobra** além da auditoria. **A regressão fez o trabalho dela duas vezes antes
+do push:** a cerca dos julgamentos (`G-2.4-7`) derrubou a primeira versão da
+função, que LIA `curator_judgments` para recusar cedo — e derrubou de novo
+porque o comentário dentro do corpo citava a tabela (`prosrc` guarda
+comentário). A explicação foi para fora do `$…$`. **Conferido em produção
+depois do push, no banco:** 34 FKs em `SET NULL`, trigger nulo-seguro, porta
+só por serviço, dados reais intactos; CI verde nos três checks. **Regressão:** `db reset` com a migration nova e a suíte de integração inteira contra ela — **1052 verdes**, inclusive `descarte-de-case`, `case-responsibility-grants`, a auditoria de acesso e a sentinela; o único vermelho foi a cerca G-2.4-7 derrubando a primeira versão da função (que lia `curator_judgments`) — corrigida e reconfirmada: cerca, eliminação (**4/4** + 1 todo) e sentinela, **66/66**; unit 2718. **O que falta agora é a tela do administrador** que executa
+`data_subject_requests` no prazo chamando a porta — e a decisão de domínio
+sobre julgamento × eliminação (hoje a cerca recusa por si, com a mensagem
+dela, e a transação inteira volta).
 
 **O harness desta auditoria não persiste** — viveu em script temporário e foi
 apagado. O que fica de reutilizável é o método: *montar a pessoa inteira,
@@ -1744,6 +1761,18 @@ E a segunda metade, que é sobre a casa e não sobre mim: **existia uma
 automação ligada a produção que nenhum documento do repositório descrevia.**
 Um agente novo faria exatamente o que eu fiz. Agora está no §7 e no AGENTS.md.
 
+**35 · Uma guarda que lê `prosrc` lê comentários — e a explicação de por que
+uma função NÃO toca uma tabela não pode citar a tabela dentro do corpo.** A
+cerca `G-2.4-7` derrubou `eliminar_titular` duas vezes: primeiro porque a
+função lia `curator_judgments` para recusar cedo (ler não é julgar, mas a
+cerca é literal e está certa em ser — e a casa tem precedente para count
+puro com justificativa, que eu preferi não abrir); depois porque o comentário
+que explicava a remoção da leitura citava o nome da tabela, e `prosrc` guarda
+comentário. **Regra: o que explica uma cerca vai no cabeçalho da migration,
+fora do `$…$`; dentro do corpo, nem o nome.** E o corolário: **rodar a
+suíte inteira antes do push é o que pega isso** — a suíte da função sozinha
+passou as duas vezes.
+
 **33 · O erro cru do banco vale mais que a resposta da API — e a primeira causa
 que eu nomeei estava errada.** O `deleteUser` devolvia `{}` e HTTP 500. Pela
 tabela de cascatas eu "sabia" que o bloqueio era o `crm_contacts`; apaguei o
@@ -1980,12 +2009,13 @@ são do sistema; prefixar (`PID_LGPD`) custa nada.
    Supabase no `git push` do `7ad8855`, e conferida no ledger e no corpo da
    função em produção. Ver §7: **push de migration para `main` É alteração de
    produção.**
-10. **A eliminação de titular (`SIM-99`) — ESCRITA, TESTADA, NÃO EMPURRADA.**
-   A migration `20260903040000` e o teste estão no commit local; **o push é a
-   decisão de produção** e é do Fundador. Depois do push: a tela do
-   administrador para executar `data_subject_requests` no prazo de 15 dias, e
-   a decisão de domínio sobre julgamento do Curador × direito à eliminação
-   (hoje a porta recusa com mensagem clara).
+10. ~~**A eliminação de titular (`SIM-99`)**~~ — **EM PRODUÇÃO** (`70f1ca8`,
+   migration `20260903040000`), conferida no banco. **Aberto, e é o próximo
+   passo natural:** a tela do administrador que executa
+   `data_subject_requests` no prazo de 15 dias chamando `eliminar_titular` e
+   removendo os `storage_paths` devolvidos pela API — hoje a porta existe e
+   ninguém a chama. E a decisão de domínio julgamento do Curador × direito à
+   eliminação (a cerca recusa por si).
 11. **Uma varredura de acesso durável** — a de 03/09 viveu em scripts
    temporários. Vale virar `scripts/auditoria-rls-varredura.mjs` (local-only,
    env-guard, sem uuids fixos): 92 tabelas × papéis, com atribuição de dono.
