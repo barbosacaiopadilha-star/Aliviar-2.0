@@ -26,6 +26,13 @@ concurrency:
   group: remediacao-${{ github.ref }}
   cancel-in-progress: true
 
+# O mínimo necessário para o aviso do gate vermelho abrir issue (SIM-106).
+# Declarado aqui de propósito: sem este bloco o token herda a permissão
+# padrão do repositório, que muda no painel sem passar por revisão de código.
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   estaveis:
     name: gates estáveis (devem passar)
@@ -91,6 +98,62 @@ jobs:
         run: npx playwright install chromium --with-deps
       - name: Smoke E2E — porteiro de ambiente
         run: node scripts/with-local-supabase.mjs npx playwright test --project=porteiro-ambiente
+
+      # AVISO DO GATE VERMELHO (SIM-106, e o defeito é o SIM-98).
+      #
+      # O gate estável já ficou vermelho por sete commits (~36 h) sem que
+      # ninguém olhasse: o CI dizia a verdade e não tinha para quem dizer.
+      # Este passo transforma o vermelho em issue aberta — que aparece na
+      # aba do repositório e dispara a notificação padrão do GitHub.
+      #
+      # É UMA issue, não uma por falha: um segundo vermelho vira comentário
+      # na que já está aberta. Sete issues idênticas seriam a mesma coisa que
+      # nenhuma — o ruído esconde tão bem quanto o silêncio.
+      #
+      # Só o job estável avisa. O `gates` é vermelho POR DESENHO até B/C/D,
+      # e avisar sobre ele treinaria a equipe a ignorar o aviso.
+      - name: Abrir aviso quando o gate estável fica vermelho
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const titulo = "CI vermelho: o gate estável não passou";
+            const execucao = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const corpo = [
+              `O job **gates estáveis (devem passar)** falhou em \`${context.sha.slice(0, 7)}\`.`,
+              "",
+              `- Execução: ${execucao}`,
+              `- Ref: \`${context.ref}\``,
+              "",
+              "Este aviso existe por causa do `SIM-98`: o gate ficou vermelho por sete commits",
+              "seguidos, cerca de 36 horas, sem que ninguém percebesse.",
+              "",
+              "**Feche esta issue quando o gate voltar a ficar verde.**",
+            ].join("\n");
+
+            const abertas = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              per_page: 100,
+            });
+            const existente = abertas.data.find((i) => i.title === titulo && !i.pull_request);
+
+            if (existente) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existente.number,
+                body: corpo,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: titulo,
+                body: corpo,
+              });
+            }
 
   gates:
     name: gates de remediação (vermelhos até B/C/D)
