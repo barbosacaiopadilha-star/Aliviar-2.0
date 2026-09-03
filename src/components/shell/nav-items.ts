@@ -13,7 +13,8 @@ export type NavItem = {
     | "cases"
     | "team"
     | "professionals"
-    | "analytics";
+    | "analytics"
+    | "requests";
 };
 
 export type NavGroup = {
@@ -88,6 +89,13 @@ export function getNavGroups(role: string, basePath: string): NavGroup[] {
         // o sistema já registrava. Fica no Administrador e NÃO no Curador —
         // cronômetro à vista de quem exerce juízo clínico pressiona o juízo.
         { label: "Medição", href: `${basePath}/medicao`, icon: "analytics" },
+        // PEDIDOS DO TITULAR (03/09) · o `SIM-99` fechou a porta de eliminação
+        // no banco e o buraco que sobrou era este: nenhuma superfície a
+        // chamava, e um pedido com prazo que ninguém vê é um prazo perdido.
+        // Fica em Administração, e não no Centro de Operações, porque exercer
+        // direito de titular é ato de governança — não é etapa da jornada de
+        // ninguém.
+        { label: "Pedidos do titular", href: `${basePath}/pedidos`, icon: "requests" },
       ],
     });
     // O grupo "Analytics" levava a `/admin/ace` — o painel de um motor que não

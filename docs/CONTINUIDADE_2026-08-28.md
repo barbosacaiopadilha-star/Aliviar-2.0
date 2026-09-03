@@ -1381,6 +1381,47 @@ apagado. O que fica de reutilizável é o método: *montar a pessoa inteira,
 tentar apagar, varrer 92 tabelas + storage pelo uuid, e-mail, nome e telefone,
 e ler o erro cru do Postgres, não o `{}` da API*.
 
+### A tela que executa os pedidos do titular (03/09)
+
+**O `SIM-99` terminou com um buraco nomeado — *"a porta existe e ninguém a
+chama"* — e o Fundador mandou fechá-lo.** `/admin/pedidos` é a fila dos cinco
+direitos da LGPD: lista por **pressão de prazo**, executa a eliminação pela
+porta do banco, e registra o desfecho dos outros quatro.
+
+**Três decisões de desenho valem mais que o código** (`SIM-103`):
+
+1. **O relógio aparece sem prazo fixado, e a tela chama a referência de
+   referência.** `prazo_em` é nulo porque a decisão jurídica não veio;
+   `pedidos-prazo.ts` devolve `fixado: false` e a tela escreve que os 15 dias
+   são a proposta da Política, pendente. Sem relógio o prazo se perde; com um
+   prazo inventado passando por prazo, a tela mente.
+2. **Executar e registrar são atos diferentes.** Só `exclusao` tem porta no
+   banco. Acesso, correção, portabilidade e revogação são cumpridos por uma
+   pessoa fora do sistema — a tela registra a resposta em vez de fingir.
+3. **A eliminação exige o nome digitado, e o SERVIDOR confere contra o nome do
+   banco.** Conferir contra o nome postado tornaria a confirmação decorativa.
+
+**A fronteira de privilégio:** lê pelo cliente autenticado com RLS, escreve por
+service role — porque `authenticated` não tem UPDATE na tabela. Há teste de
+integração que reprova se alguém conceder esse UPDATE "para simplificar a tela".
+
+**E o storage não é dado por removido porque não deu erro:** a ação compara o
+que o `remove()` devolveu com o que pediu; o que sobra vira
+`patient_document_orphaned` na auditoria com os caminhos, mais aviso na tela.
+
+**Entrou um contador na Visão geral**, com ênfase e link: a tela resolvia o
+alcance, não a atenção. Um prazo que ninguém vê é um prazo perdido.
+
+**E a construção achou uma contradição estrutural** (`SIM-104`): a tabela
+`data_subject_request_items`, feita para provar item a item que a eliminação
+aconteceu, **morre por cascata junto com o pedido e com a pessoa** — nunca
+sobrevive para provar nada. Ou o pedido passa a sobreviver anonimizado, ou a
+tabela é código morto. **Decisão de domínio, não implementada.**
+
+**Ainda aberto:** um pedido de `correcao` ou `portabilidade` não avisa
+ninguém quando chega — a tela precisa ser aberta, ou o contador visto. Um
+alerta ativo (e-mail ao administrador) é o passo seguinte natural.
+
 ---
 
 ## 6 · As lições desta sessão
@@ -2010,12 +2051,13 @@ são do sistema; prefixar (`PID_LGPD`) custa nada.
    função em produção. Ver §7: **push de migration para `main` É alteração de
    produção.**
 10. ~~**A eliminação de titular (`SIM-99`)**~~ — **EM PRODUÇÃO** (`70f1ca8`,
-   migration `20260903040000`), conferida no banco. **Aberto, e é o próximo
-   passo natural:** a tela do administrador que executa
-   `data_subject_requests` no prazo de 15 dias chamando `eliminar_titular` e
-   removendo os `storage_paths` devolvidos pela API — hoje a porta existe e
-   ninguém a chama. E a decisão de domínio julgamento do Curador × direito à
-   eliminação (a cerca recusa por si).
+   migration `20260903040000`), conferida no banco. ~~**E a tela que a
+   chama**~~ — **FEITA em 03/09** (`SIM-103`): `/admin/pedidos`, com contador
+   na Visão geral. **O que sobrou deste item:** *(a)* a decisão de domínio
+   julgamento do Curador × direito à eliminação — a cerca recusa por si, com a
+   mensagem dela; *(b)* a contradição da tabela de inventário (`SIM-104`);
+   *(c)* nenhum **alerta ativo** quando um pedido chega — a tela precisa ser
+   aberta ou o contador visto, e um e-mail ao administrador é o passo natural.
 11. **Uma varredura de acesso durável** — a de 03/09 viveu em scripts
    temporários. Vale virar `scripts/auditoria-rls-varredura.mjs` (local-only,
    env-guard, sem uuids fixos): 92 tabelas × papéis, com atribuição de dono.

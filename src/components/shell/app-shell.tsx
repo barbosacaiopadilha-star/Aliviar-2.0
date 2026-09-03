@@ -5,6 +5,7 @@ import {
   Calendar,
   ChevronLeft,
   Contact,
+  FileClock,
   Filter,
   FolderOpen,
   Home,
@@ -70,6 +71,7 @@ const navIcons: Record<
   team: UserCog,
   professionals: Stethoscope,
   analytics: BarChart3,
+  requests: FileClock,
 };
 
 function formatRoleLabel(role: string): string {

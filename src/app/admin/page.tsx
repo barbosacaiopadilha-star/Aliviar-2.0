@@ -7,6 +7,7 @@ import { computeIndicators, type Metric } from "@/modules/admin/dashboard-metric
 import { loadDashboardSource } from "@/modules/admin/dashboard-repository";
 import { requireRole } from "@/modules/auth/guard";
 import { listProfessionalProfiles } from "@/modules/profiles";
+import { contarPedidosEmAberto } from "@/modules/governanca/pedidos-repository";
 
 import { KitDaCuradoriaCard } from "@/components/admin/kit-da-curadoria-card";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -113,9 +114,10 @@ export default async function AdminDashboardPage() {
   const regularClient = await createServerSupabaseClient();
   const now = new Date();
 
-  const [source, professionals] = await Promise.all([
+  const [source, professionals, pedidosEmAberto] = await Promise.all([
     loadDashboardSource(regularClient),
     listProfessionalProfiles(regularClient),
+    contarPedidosEmAberto(regularClient),
   ]);
 
   // CORTE DE 24/08 (auditoria do Fundador) · o seletor de período saiu com
@@ -170,6 +172,21 @@ export default async function AdminDashboardPage() {
           <StatCard label="Tarefas vencidas" value={indicators.tarefasVencidas} emphasis />
           <StatCard label="Compromissos em 7 dias" value={indicators.compromissosProximos} />
           <StatCard label="Documentos pendentes" value={indicators.documentosPendentes} emphasis />
+          {/* PEDIDOS DO TITULAR (03/09) · o único indicador desta tela com
+              PRAZO LEGAL atrás dele. Entrou porque a tela `/admin/pedidos`
+              resolvia metade do `SIM-99` — a porta passou a ter quem a
+              chamasse, mas um pedido só aparecia para quem lembrasse de abrir
+              o menu. Um prazo que ninguém vê é um prazo perdido.
+              Vem do banco direto, e não de `computeIndicators`: é uma
+              contagem de governança, não uma métrica da operação, e enfiá-la
+              no módulo de métricas misturaria as duas coisas. */}
+          <StatCard
+            label="Pedidos do titular"
+            value={pedidosEmAberto}
+            href="/admin/pedidos"
+            emphasis
+            detail={pedidosEmAberto > 0 ? "com prazo de resposta" : undefined}
+          />
         </div>
       </section>
 
