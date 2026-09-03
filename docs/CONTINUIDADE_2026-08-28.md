@@ -1240,6 +1240,46 @@ filmes — creme, madeira, planta, três dossiês verdes. Extrair um quadro cust
 zero e casaria por construção. **A pega:** os quadros dos filmes trazem a frase
 em baixo-relevo na parede, e na cena do site não pode haver letra na imagem.
 
+### O resto do `SIM-89`: quatro consertos medidos e dois achados devolvidos (02/09)
+
+**Quatro consertados, cada um com número antes e depois** — commit `a0a5805`,
+conferido em produção:
+
+| | antes | depois |
+|---|---|---|
+| `/admin` — cartão "Pendências" | 1.586px de altura, **1.181px de branco** | 442px, sobra de **37px** |
+| `/admin` — menu lateral | 5 dos 10 itens sem ícone | **os 10 com ícone** |
+| `/login` — "Voltar ao site" | 3,47:1 | **6,28:1** |
+| `/login` — botão "Solicitar atendimento" | 4,10:1 | **6,83:1** |
+| `/portal-curador` | o título contradizia a contagem | seção nomeada nos dois estados |
+
+**O conserto do menu vale mais que o ícone.** Os cinco itens **já declaravam**
+ícone em `nav-items.ts`; o mapa `navIcons` é que não conhecia quatro nomes, e
+por ser `Record<string, …>` devolvia `undefined` calado. Agora é
+`Record<NonNullable<NavItem["icon"]>, …>`: **nome novo não compila até ganhar
+desenho.** O compilador virou a guarda, sem teste nenhum.
+
+**No `/login` o cartão passou a fabricar o próprio fundo.** Era vidro CLARO
+carregando texto CLARO, e quem segurava o contraste era a penumbra da
+fotografia — que varia de canto a canto. O vidro passa a tingir de
+verde-profundo, a mesma cor do véu. Medidos os **oito** textos do cartão, não
+só os dois que falhavam: todos passam, entre 6,3 e 11,4:1. E olhei a tela —
+continua lendo como vidro, a cena ainda aparece atrás.
+
+**Na fila do Curador saiu um papel extinto de brinde:** *"quando o Atendimento
+abrir"* virou *"quando o Supervisor abrir"* (ADR-100).
+
+**E dois achados foram DEVOLVIDOS, por serem erro meu** (`SIM-91`): os alvos de
+toque do rodapé **passam no WCAG AA** — eu tinha citado os 44px do AAA como se
+fossem o mínimo, e os 29px são deliberados com razão escrita; e o
+`/profissional` **tem** indicador de progresso — em palavras, não em fração, e
+a recusa da fração está escrita em `capture-state.ts` com citação de Método.
+
+**Uma consequência operacional a lembrar:** o `bootstrap:test-users` rodou
+nesta sessão e **gerou senhas novas**, envelhecendo a folha da Área de
+Trabalho. Ela foi regravada, e as seis foram testadas entrando de verdade —
+**lendo as senhas da própria folha**, não do JSON.
+
 ---
 
 ## 6 · As lições desta sessão
@@ -1521,6 +1561,41 @@ sempre — sem erro, sem aviso. **Toda regra que depende de um estado futuro dev
 LER esse estado**, não fotografá-lo. A mesma leitura que a página usa para
 escolher o que mostrar decide se ela é indexável.
 
+**26 · `Record<string, …>` é um buraco com cara de tipo.** A barra lateral
+tinha 5 de 10 itens sem ícone, e o defeito não estava em nenhum dos cinco: eles
+**declaravam** o ícone corretamente. O mapa é que não conhecia quatro nomes — e
+por ser indexado por `string`, `navIcons[item.icon]` devolvia `undefined` sem
+que nada reclamasse, nem o compilador nem o teste. **Duas listas que precisam
+concordar, e nada obrigando.** O conserto não foi acrescentar quatro ícones:
+foi fechar o `Record` na união de nomes, e aí o compilador passa a recusar
+lista incompleta. **Regra: quando duas listas precisam concordar, faça o tipo
+de uma ser a chave da outra — é mais barato que qualquer guarda, e não
+esquece.**
+
+**27 · A média esconde o pior pixel, e num texto sobre fotografia é o pior
+pixel que reprova.** Ao medir contraste sobre foto eu tirava a **média** da
+caixa do texto. É a aproximação certa para decidir, mas ela é otimista por
+construção: a fotografia tem cantos claros, e a média os dilui. Nesta rodada
+passei a imprimir **os dois números** — média e pixel mais claro — e a
+diferença é grande (6,28:1 de média contra 5,47:1 no pior ponto, e casos com
+2,19:1). **Não mudou o veredito**, porque WCAG fala do fundo do glifo e não do
+retângulo inteiro, **mas mudou o que eu sei**: sobre foto, o contraste é uma
+faixa, não um número. **Quem relata só a média está relatando o melhor caso.**
+
+**28 · `taskkill /F` no Docker economiza dez segundos e custa uma hora**
+(`SIM-92`). Matar o Docker à força deixa sockets AF_UNIX órfãos em
+`AppData\Local`, com handle preso no kernel — **não se apagam nem por
+administrador**, e a inicialização seguinte aborta ao tentar recriá-los. **O
+sintoma engana:** processos no ar, WSL íntegra e iniciável à mão, motor mudo. O
+motivo real só está em `Docker\backend.error.json`, que a interface não mostra.
+**Conserto: renomear os DIRETÓRIOS** (`Docker\run`, `docker-secrets-engine`),
+que o Docker recria limpos — e foram duas rodadas, porque o segundo órfão só
+aparece depois que o primeiro sai do caminho. **Para derrubar, `docker desktop
+stop` ou o menu do aplicativo.** E a lição maior, que não é sobre Docker:
+**quando um serviço não sobe e a interface não explica, o arquivo de erro do
+próprio serviço costuma dizer em uma linha o que meia hora de dedução não
+acha.**
+
 ---
 
 ## 7 · Fatos operacionais
@@ -1709,13 +1784,10 @@ escolher o que mostrar decide se ela é indexável.
    anuncia como `aliviar-2-0.vercel.app` — numa empresa cujo produto é
    confiança, isso não é cosmético.
 6. **`PRIV-04`** — a exclusão não alcança o storage. P0, depende da D-08.
-7. **`SIM-89`** — as seis observações da varredura de 01/09, nenhuma
-   bloqueante e todas medidas. **A de maior retorno é a primeira:** o cartão
-   *"Pendências"* do `/admin` com **1.181px de branco**, na primeira tela que o
-   administrador vê. Depois: os 5 itens do menu sem ícone, os dois textos do
-   `/login` abaixo do contraste mínimo, os alvos de 29px no rodapé do celular,
-   o título que contradiz a contagem no `/portal-curador`, e o
-   `/profissional` sem indicador de progresso.
+7. ~~**`SIM-89`**~~ — **FECHADO em 02/09.** Quatro consertados e medidos
+   (o branco do cartão do `/admin`, os ícones do menu, o contraste do
+   `/login`, o título da fila do Curador), e **dois devolvidos por serem erro
+   meu** — ver `SIM-91`. Em produção no `a0a5805`.
 8. **A saudação automática do WhatsApp** — só o Fundador consegue olhar
    (WhatsApp Business → Ferramentas comerciais). **A recomendação escrita é
    ligar a de ausência e deixar a de saudação DESLIGADA**, pelo motivo do §5.
