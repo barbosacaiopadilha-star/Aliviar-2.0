@@ -21,7 +21,8 @@
 # LIMITES, ditos aqui para ninguém confiar demais:
 #  · o `schedule` do GitHub NÃO é pontual — atrasos de vários minutos são
 #    normais em runner compartilhado, e execuções podem ser puladas em pico.
-#    Serve para "a Aliviar está de pé?", não para medir disponibilidade fina.
+#    Medido aqui mesmo: com `*/5` não veio NENHUMA em 1h47. Serve para "a
+#    Aliviar está de pé?", não para medir disponibilidade fina.
 #  · se o GitHub estiver fora, não há aviso. Um serviço dedicado cobriria
 #    isso; a troca é consciente, e o custo era uma conta nova.
 #  · o GitHub desativa workflows agendados em repositório sem atividade por
@@ -31,9 +32,14 @@ name: sentinela
 
 on:
   schedule:
-    # De cinco em cinco minutos é o piso do GitHub. O que vai acontecer de
-    # fato é menos frequente que isso, e está tudo bem — ver LIMITES.
-    - cron: "*/5 * * * *"
+    # MINUTOS ÍMPARES E ESPAÇADOS — e isto é medição, não gosto. A primeira
+    # versão usava `*/5`, o piso do GitHub, e ficou **1h47 sem UMA única
+    # execução agendada** em 03/09 (deveriam ser ~21; as 3 que existiam eram
+    # todas manuais). Múltiplo de 5 é o horário mais disputado da plataforma:
+    # execução agendada em runner compartilhado é atrasada — e, sob carga,
+    # **descartada**. Sair da fila de todo mundo não custa nada, e dez
+    # minutos de detecção é de sobra para "a Aliviar está de pé?".
+    - cron: "3,13,23,33,43,53 * * * *"
   workflow_dispatch:
     inputs:
       alvo:
