@@ -39,6 +39,7 @@ O usuário não deve precisar criar manualmente contas de teste, usuários admin
 - Credenciais temporárias de desenvolvimento ficam apenas em arquivos locais ignorados pelo Git.
 - `docs/CREDENTIALS.md` registra apenas identificador, finalidade, ambiente e local de armazenamento — nunca valores.
 - **Produção só pode ser alterada mediante autorização explícita do usuário.** Nenhuma automação deste projeto cria recursos com cobrança, altera produção ou faz deploy sem confirmação explícita.
+- **`git push` de um arquivo em `supabase/migrations/` para `main` É alteração de produção.** A integração GitHub do Supabase (configurada no painel, invisível neste repositório) aplica a migration no banco de produção no momento do push — sem `db push`, sem MCP, sem confirmação. Descoberto em 03/09 (`SIM-97`). Portanto: **migration só se commita em `main` com autorização para produção já dada**, e o ledger de produção se confere antes e depois.
 - Nenhum recurso de outro projeto (ex.: `aliviar-app`) é reutilizado, copiado ou modificado sem análise e autorização técnica específica.
 
 ## Relatório obrigatório por ciclo

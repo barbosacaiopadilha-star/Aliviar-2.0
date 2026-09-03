@@ -1304,10 +1304,19 @@ executável por anônimo (`SIM-94`) e a própria pessoa reescrevendo
 `auditoria-rls-transferencia-null-safe.integration.test.ts`, com Cases criados
 de propósito no formato legado. **Verificação:** `supabase db reset` com a migration nova, e a suíte de integração inteira contra ela — **1048 verdes em 82 arquivos**. O único vermelho foi o próprio teste do §2 (`SIM-94`): o `revoke … from anon` da primeira versão era um no-op, porque o acesso do anônimo vinha do EXECUTE padrão a PUBLIC — corrigido para `revoke … from public` + `grant … to authenticated`, e a suíte da auditoria fecha **9/9**.
 
-**A migration está aplicada só no LOCAL.** Produção exige autorização
-explícita (AGENTS.md); o caminho padronizado é `supabase db push`. Enquanto
-não subir, **o defeito está vivo em produção** — mitigado apenas por exigir
-sessão autenticada e o uuid do Case.
+**A migration chegou a produção NO `git push` — e eu não sabia.** Escrevi aqui,
+uma hora antes, que ela estava "só no local" e que produção exigiria um
+`db push` explícito. **Era falso no instante em que escrevi.** Quando o
+Fundador autorizou e eu fui conferir o ledger de produção antes de aplicar,
+`20260903020000` já estava lá: predicado nulo-seguro, ACL corrigida, trigger
+criado. **Quem aplicou foi a integração GitHub do Supabase**, configurada no
+painel e invisível no repositório — provado pelo ledger: `created_by` nulo e a
+versão do arquivo preservada (as duas migrations de 25/08, aplicadas à mão, têm
+`created_by = barbosacaiopadilha@gmail.com`; a de 21/08 já entrou pelo mesmo
+caminho silencioso). **O desfecho é o que ele autorizou; a sequência não foi.**
+Ver §7 e a lição 31. **Em produção não existia Case com `responsible_id` nulo**
+(0 de 3), então o portão aberto não tinha alvo lá — mas isso é sorte, não
+defesa.
 
 **O que a auditoria não cobre, e fica escrito:** a varredura viveu em scripts
 temporários desta sessão e foi apagada; o que persiste é o teste de integração
@@ -1661,9 +1670,36 @@ o que denunciou** — "a paciente baixa o próprio arquivo" reprovou, e aí eu
 soube que o resto era ruído. **Regra: toda sonda negativa vem acompanhada da
 positiva correspondente; sem ela, "negado" e "não existe" são indistinguíveis.**
 
+**31 · "Está só no local" é uma afirmação sobre produção — e eu a fiz sem
+olhar produção.** Escrevi no handoff, no registro e na mensagem ao Fundador
+que a migration esperava um `db push`. Uma hora depois, ao ir aplicá-la, o
+ledger de produção já a tinha. **Não houve dano — o desfecho é o que ele
+autorizou —, mas a sequência foi invertida, e a afirmação era falsa.** O que
+salvou foi o hábito de **conferir o alvo antes de mudar o alvo**: eu li o
+ledger de produção antes de aplicar, em vez de aplicar e ler depois. **Regra:
+antes de afirmar o estado de um ambiente que eu não acabei de medir, medir.**
+E a segunda metade, que é sobre a casa e não sobre mim: **existia uma
+automação ligada a produção que nenhum documento do repositório descrevia.**
+Um agente novo faria exatamente o que eu fiz. Agora está no §7 e no AGENTS.md.
+
 ---
 
 ## 7 · Fatos operacionais
+
+- **PUSH DE MIGRATION PARA `main` APLICA EM PRODUÇÃO — sem `db push`, sem
+  MCP, sem ninguém apertar nada (descoberto em 03/09).** A integração GitHub
+  do Supabase está ligada a este repositório, configurada no painel do
+  Supabase e **invisível aqui**: nenhum workflow, nenhum script, nenhum
+  `vercel.json` a menciona (o `remediacao.yml` usa só a stack local efêmera).
+  **Prova no ledger de produção:** as migrations aplicadas à mão levam
+  `created_by = barbosacaiopadilha@gmail.com`; as que entram pela integração
+  levam `created_by` nulo e a versão exata do arquivo — foi assim com a
+  `20260821210000` e com a `20260903020000`. **Consequência para a regra do
+  AGENTS.md ("produção só com autorização explícita"): ela vale para o
+  `git push` de qualquer arquivo em `supabase/migrations/`.** Commitar
+  migration sem autorização para produção é alterar produção. O handoff de
+  27/08 dizia que o push era bloqueado; o de 28/08 corrigiu para "o push
+  executa"; **agora se sabe o que o push executa.**
 
 - **O `push` pelo agente NÃO é bloqueado — o handoff de 27/08 estava errado
   nisso, e a correção importa porque custou tempo.** Aquele documento afirma
@@ -1856,9 +1892,10 @@ positiva correspondente; sem ela, "negado" e "não existe" são indistinguíveis
 8. **A saudação automática do WhatsApp** — só o Fundador consegue olhar
    (WhatsApp Business → Ferramentas comerciais). **A recomendação escrita é
    ligar a de ausência e deixar a de saudação DESLIGADA**, pelo motivo do §5.
-9. **`SIM-93` em produção** — a migration `20260903020000` está aplicada só
-   no local. **Subir é `supabase db push` com autorização explícita.** Até lá
-   o predicado nulo continua vivo lá.
+9. ~~**`SIM-93` em produção**~~ — **APLICADA**, pela integração GitHub do
+   Supabase no `git push` do `7ad8855`, e conferida no ledger e no corpo da
+   função em produção. Ver §7: **push de migration para `main` É alteração de
+   produção.**
 10. **Uma varredura de acesso durável** — a de 03/09 viveu em scripts
    temporários. Vale virar `scripts/auditoria-rls-varredura.mjs` (local-only,
    env-guard, sem uuids fixos): 92 tabelas × papéis, com atribuição de dono.
