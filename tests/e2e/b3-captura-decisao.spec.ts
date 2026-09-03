@@ -16,37 +16,19 @@
  * a confirmação nunca aparecia. Render direto não o teria mostrado, e uma
  * captura com estado montado à mão pareceria correta provando nada.
  */
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import path from "node:path";
 
 import { expect, test, type Page } from "@playwright/test";
 
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
-import { changeCaseStatus, createCase } from "@/modules/cases/repository";
-import { createPatientAccount } from "@/modules/profiles/patient-account-repository";
-import { getOrCreateActiveStory, saveStoryDraft, submitStory } from "@/modules/story/repository";
 
 import {
   cleanupFixture,
-  removerPacienteSintetico,
   seedDeliveredCase,
   type DeliveredFixture,
 } from "../apoio/apoio-curadoria-entregue";
-import { createCuradoriaClient } from "../integration/curadoria-client";
-import { seedPublishedProfessional } from "../integration/rede-fixture";
 import { ALIVIAR_WHATSAPP } from "@/components/curadoria/whatsapp-contact";
-
-const URL_LOCAL = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-const ANON_LOCAL = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-
-/** Contas fixas locais — mesma convenção dos demais specs de e2e. */
-function loadTestAccounts(): Array<{ role: string; email: string; password: string }> {
-  const arquivo = path.resolve(__dirname, "../../test-users.local.json");
-  if (!existsSync(arquivo)) {
-    throw new Error("test-users.local.json ausente — rode bootstrap:test-users:local.");
-  }
-  return JSON.parse(readFileSync(arquivo, "utf-8"));
-}
 
 const DESTINO = process.env.CAPTURA_DIR ?? path.resolve(__dirname, "../../evidencias/b3");
 
