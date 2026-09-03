@@ -57,7 +57,17 @@ export function AuthCard({ title, description, children, footer }: AuthCardProps
       <div aria-hidden="true" className="ambient-warmth pointer-events-none absolute inset-0" />
 
       <div className="animate-fade-up relative w-full max-w-md">
-        <div className="auth-vidro rounded-[2rem] border border-[color-mix(in_srgb,var(--color-bg-canvas)_42%,transparent)] bg-[color-mix(in_srgb,var(--color-bg-canvas)_11%,transparent)] p-7 shadow-[0_22px_70px_rgba(0,0,0,0.32)] backdrop-blur-[26px] sm:p-9">
+        {/* O VIDRO ESCURECEU (02/09, `SIM-89`). Era creme a 11% sobre a foto —
+            vidro CLARO carregando texto CLARO, e o que segurava o contraste
+            era a penumbra do entardecer, que varia de canto a canto da cena.
+            Medido: "Voltar ao site" a 3,47:1 e o botão "Solicitar atendimento"
+            a 4,10:1, contra o mínimo de 4,5:1 para 14px — e essas são médias
+            da caixa, então nos pixels mais claros era pior.
+            Agora o vidro tinge de verde-profundo, a mesma cor do véu: o cartão
+            passa a fabricar o próprio fundo em vez de depender de onde a foto
+            estava escura. A borda continua clara, que é o que mantém a peça
+            lendo como vidro e não como caixa. */}
+        <div className="auth-vidro rounded-[2rem] border border-[color-mix(in_srgb,var(--color-bg-canvas)_42%,transparent)] bg-[color-mix(in_srgb,var(--landing-forest-deep)_46%,transparent)] p-7 shadow-[0_22px_70px_rgba(0,0,0,0.32)] backdrop-blur-[26px] sm:p-9">
           <header className="space-y-3 text-center">
             {/* A marca INTEIRA, em silhueta clara: aqui ela é a assinatura da
                 casa, não um detalhe de acabamento como no cabeçalho. O

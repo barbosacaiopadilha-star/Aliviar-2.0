@@ -1,15 +1,19 @@
 "use client";
 
 import {
+  BarChart3,
   Calendar,
   ChevronLeft,
   Contact,
   Filter,
+  FolderOpen,
   Home,
   LayoutDashboard,
   Menu,
   Search,
   Settings,
+  Stethoscope,
+  UserCog,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -23,7 +27,7 @@ import { IconButton } from "@/components/ads/icon-button";
 import { cn } from "@/components/ui/cn";
 import { Drawer } from "@/components/ui/drawer";
 
-import { getNavGroups, isNavItemActive, type NavGroup } from "./nav-items";
+import { getNavGroups, isNavItemActive, type NavGroup, type NavItem } from "./nav-items";
 
 type AppShellProps = {
   role: string;
@@ -35,7 +39,25 @@ type AppShellProps = {
 
 const SIDEBAR_COLLAPSED_KEY = "aliviar-sidebar-collapsed";
 
-const navIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+/**
+ * O ÍCONE DE CADA ITEM DO MENU — e o tipo é a guarda.
+ *
+ * `Record<NomeDeIcone, ...>` em vez de `Record<string, ...>`: era o `string`
+ * que deixava o mapa ficar para trás do tipo em silêncio. Em 02/09 (`SIM-89`)
+ * a barra lateral do Administrador tinha **5 dos 10 itens sem ícone** —
+ * Curadoria, Profissionais, Equipe, Casos e Medição. Todos os cinco
+ * DECLARAVAM ícone em `nav-items.ts`; `navIcons` é que não conhecia
+ * `cases`, `team`, `professionals` nem `analytics`, e `navIcons[item.icon]`
+ * devolvia `undefined` sem reclamar de nada.
+ *
+ * Com o `Record` fechado no tipo, **nome novo em `NavItem["icon"]` não
+ * compila até ganhar desenho aqui.** É o compilador fazendo o trabalho que
+ * um teste faria pior.
+ */
+const navIcons: Record<
+  NonNullable<NavItem["icon"]>,
+  React.ComponentType<{ className?: string }>
+> = {
   home: Home,
   dashboard: LayoutDashboard,
   contacts: Contact,
@@ -44,6 +66,10 @@ const navIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   agenda: Calendar,
   patients: Users,
   settings: Settings,
+  cases: FolderOpen,
+  team: UserCog,
+  professionals: Stethoscope,
+  analytics: BarChart3,
 };
 
 function formatRoleLabel(role: string): string {

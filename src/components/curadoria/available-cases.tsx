@@ -37,17 +37,29 @@ export function AvailableCases({
   /** Vem do servidor. O banco confere que é o próprio ator, de qualquer forma. */
   curatorProfileId: string;
 }) {
+  /* O CABEÇALHO FICA NOS DOIS ESTADOS (02/09, `SIM-89`). Antes, com a fila
+     vazia, a seção perdia o título "Curadorias esperando um Curador" e sobrava
+     só o do cartão: **"Nenhuma Curadoria esperando"** — três linhas abaixo de
+     "1 Caso ativo". Lido de relance, um desmentia o outro. As duas frases eram
+     verdadeiras e falavam de filas diferentes; o que faltava era a que nomeia
+     a fila. Com o cabeçalho sempre à vista, a contradição não tem como
+     existir. */
   if (cases.length === 0) {
     return (
-      <Card className="max-w-reading space-y-2">
-        <CardHeader>
-          <CardTitle>Nenhuma Curadoria esperando</CardTitle>
-          <CardDescription>
-            Todo Case aberto já tem alguém responsável. Quando o Atendimento abrir um novo sem
-            destinatário, ele aparece aqui.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      <section aria-labelledby="disponiveis-heading" className="space-y-4">
+        <h2 id="disponiveis-heading" className="font-sans text-xl font-semibold text-ink">
+          Curadorias esperando um Curador
+        </h2>
+        <Card className="max-w-reading space-y-2">
+          <CardHeader>
+            <CardTitle>Nenhuma no momento</CardTitle>
+            <CardDescription>
+              Todo Case aberto já tem alguém responsável — inclusive os seus, acima. Quando o
+              Supervisor abrir um novo sem destinatário, ele aparece aqui.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </section>
     );
   }
 

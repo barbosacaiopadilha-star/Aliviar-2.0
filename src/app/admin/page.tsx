@@ -191,7 +191,13 @@ export default async function AdminDashboardPage() {
           lista disfarçada de indicador. "Documentos pendentes", que é
           pendência de verdade, subiu para "Onde agir agora". */}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* items-start (02/09, `SIM-89`): sem isto o grid estica as duas colunas
+          para a mesma altura, e a esquerda ficava com 1.181px de branco —
+          medido: cartão de 1.586px para 405px de conteúdo, porque o Kit ao
+          lado tem 1.529px. É a primeira tela que o Administrador vê. Duas
+          colunas de alturas diferentes é o desenho honesto: cada cartão ocupa
+          o que tem. */}
+      <div className="grid items-start gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <h2 className="font-sans text-lg font-semibold text-ink">Pendências</h2>
