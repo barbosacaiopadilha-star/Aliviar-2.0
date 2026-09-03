@@ -39,9 +39,16 @@ jobs:
           cache: npm
       - name: Instalação reproduzível
         run: npm ci
+      # VERSÃO PINADA (03/09, SIM-98). Com `version: latest` a action resolve
+      # "latest" na API de releases do GitHub SEM token, e o runner leva
+      # `rate limit exceeded` — foi assim que este job ficou vermelho em sete
+      # commits seguidos (de 6d05f48 a dc8ee3e) sem que nenhum teste tivesse
+      # rodado. O pino tira a chamada à API e faz o CI instalar a mesma CLI
+      # que a máquina de desenvolvimento roda. Subir a versão é decisão
+      # explícita, aqui e no local, nunca um "latest" que muda sozinho.
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.109.1
       - name: Supabase local efêmero (aplica as migrations do ledger)
         run: supabase start
       # B-2: as suítes de integração/remediação/E2E autenticam com as contas
@@ -96,9 +103,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Mesma versão pinada do job estável (SIM-98) — ver o comentário lá.
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.109.1
       - run: supabase start
       # B-2: mesma dependência do job estável — a suíte autentica com as
       # contas permanentes.
