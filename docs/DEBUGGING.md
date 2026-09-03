@@ -2,32 +2,17 @@
 
 Pontos de partida para diagnosticar os problemas mais prováveis em operação. Não repete `docs/ace/` (o que cada protocolo faz) nem `docs/DATABASE.md` (schema) — aqui é **por onde começar quando algo parece errado**.
 
-## 1. "A execução do ACE não avança" ou "o paciente está preso em um estado"
+## 1–3. Histórico — o motor ACE não executa mais
 
-1. Abra `/admin/ace` (dashboard de observabilidade) — mostra execuções em `RUNNING` há mais de 30 minutos (`stuckRunningExecutions` em `getAceHealthCheck()`, `src/modules/concierge/execution-repository.ts`) — sintoma típico de reinício do servidor a meio da execução.
-2. Abra `/admin/ace/[executionId]` para essa execução — a timeline (`ace_execution_events`) mostra exatamente em qual protocolo parou e o último evento (`STARTED`/`RESUMED`/`PROTOCOL_STARTED`/`PROTOCOL_COMPLETED`/`ARTIFACT_REUSED`/`BLOCKED`/`FAILED`/`COMPLETED` — `AceExecutionEventType`, `src/modules/concierge/types.ts`).
-3. Reexecutar a mesma ação de "rodar ACE" na página do Caso é seguro — o orquestrador (`orchestrator.ts`) reaproveita artefatos já persistidos por protocolo (idempotência/retomada) em vez de recomeçar do zero.
-4. Se o evento mais recente é `FAILED`, veja o `failureCode` do `ace_executions` — tabela abaixo.
+As três primeiras seções deste guia ("a execução do ACE não avança", "falhas do modelo de linguagem" e "o paciente vê um erro genérico na Curadoria") descreviam o diagnóstico de um motor que saiu do código na simplificação operacional de 2026-08-21: `src/modules/concierge/` não existe, `/admin/ace` e `/admin/ace/[executionId]` não existem, e o `@anthropic-ai/sdk` saiu do `package.json` em 2026-09-03 (ADR-056, registro de implementação). Não há modelo de linguagem, real ou fake, em nenhum caminho do produto.
 
-## 2. Falhas do modelo de linguagem (`failureCode`)
+O que ficou, e por quê:
 
-Todos definidos em `src/modules/concierge/anthropic-language-model.ts` (classificação) e propagados por `src/modules/concierge/orchestrator.ts`/`delivery-repository.ts`. Nunca expõem a mensagem crua do provedor — sempre uma mensagem fixa e sanitizada, tanto para o Curador quanto (nunca em detalhe técnico) para o paciente.
+- **O histórico no banco.** `curadoria.ace_executions`, `curadoria.ace_execution_events` e `curadoria.ace_artifacts` continuam íntegras, por decisão (DP-2): saiu a vitrine, não o dado. Nada novo é gravado nelas; o que existir é anterior à aposentadoria.
+- **Os `failureCode` antigos**, para quem ler esse histórico: `ACE_MODEL_NOT_CONFIGURED` (chave ausente em produção), `ACE_MODEL_AUTHENTICATION_FAILED`, `ACE_MODEL_RATE_LIMITED`, `ACE_MODEL_TIMEOUT`, `ACE_MODEL_UNAVAILABLE`, `ACE_MODEL_INVALID_RESPONSE` e `ACE_MODEL_EXECUTION_FAILED`. Nenhum é acionável hoje: não há variável a configurar na Vercel (`CLAUDE_API_KEY` está aposentada — ver `docs/ENVIRONMENT_VARIABLES.md`) nem execução a retomar.
+- **A regra de produto** da antiga seção 3 segue valendo e nunca dependeu do motor: o paciente não vê detalhe técnico de falha nenhuma (`docs/PRODUCT_ARCHITECTURE.md`, Princípio 5). Para saber a causa real de um erro, entre como Administrador ou Curador e abra o Caso.
 
-| `failureCode` | Causa | Onde olhar |
-|---|---|---|
-| `ACE_MODEL_NOT_CONFIGURED` | `CLAUDE_API_KEY` ausente em produção | `docs/ENVIRONMENT_VARIABLES.md` — configurar a variável na Vercel. |
-| `ACE_MODEL_AUTHENTICATION_FAILED` | Chave inválida/revogada (`Anthropic.AuthenticationError`) | Verificar a chave no painel da Anthropic. |
-| `ACE_MODEL_RATE_LIMITED` | Limite de requisições excedido (`RateLimitError`) | Aguardar/verificar plano da conta Anthropic. |
-| `ACE_MODEL_TIMEOUT` | Timeout de conexão (`APIConnectionTimeoutError`) | Geralmente transitório — retomar a execução. |
-| `ACE_MODEL_UNAVAILABLE` | Provedor indisponível (`APIConnectionError`, `InternalServerError`) | Checar status da Anthropic — geralmente transitório. |
-| `ACE_MODEL_INVALID_RESPONSE` | Resposta sem o `tool_use` esperado (saída estruturada falhou) | Não é transitório — indica incompatibilidade entre o schema esperado e a resposta real; investigar o `prompt.md` do protocolo envolvido. |
-| `ACE_MODEL_EXECUTION_FAILED` | Qualquer outro erro não classificado do SDK | Ver logs do servidor (nunca contêm prompt nem segredo — `docs/AGENTS.md`). |
-
-Health Check (`/admin/ace`, `AceHealthCheckCard`) mostra o estado agregado do modelo — `ANTHROPIC_CONFIGURED` / `FAKE_MODEL_NON_PRODUCTION` / `MODEL_NOT_CONFIGURED` (`AceLanguageModelHealthStatus`, `src/modules/concierge/language-model.ts`). `MODEL_NOT_CONFIGURED` só é saudável dizer "ok" fora de produção — em produção é sempre tratado como não saudável.
-
-## 3. "O paciente vê um erro genérico na Curadoria"
-
-Por design, o paciente nunca vê `failureCode`, prompt, nome de modelo ou detalhe técnico (`docs/PRODUCT_ARCHITECTURE.md`, Princípio 5). Para saber a causa real: entre como Administrador/Curador Médico, abra o Caso e veja a mensagem interna (sanitizada, mas com mais contexto que a do paciente) e o `failureCode` na observabilidade (`/admin/ace/[executionId]`).
+Se um erro em operação parecer "do ACE", a suspeita está no lugar errado: olhe o Caso, o papel efetivo (seção 4) e o ambiente (seção 5).
 
 ## 4. RLS negando acesso inesperadamente
 
