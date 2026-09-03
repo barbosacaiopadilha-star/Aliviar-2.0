@@ -1323,6 +1323,39 @@ temporários desta sessão e foi apagada; o que persiste é o teste de integraç
 dos três consertos. **Uma versão durável da varredura** (`scripts/`, local-only,
 sem uuids fixos) é trabalho aberto — ver §8.
 
+### A auditoria 2 — ciclo de vida do dado — e a pessoa que não pode ser apagada (03/09)
+
+**O Fundador mandou fazer a segunda da lista.** Duas metades: **o que existe**
+(agregados em produção — contagens e chaves, nunca valores) e **o que
+acontece** (uma pessoa sintética completa no local, e o único caminho de
+eliminação que existe).
+
+**O que existe está melhor do que o handoff de julho dizia** (`SIM-101`,
+`SIM-102`): as 40 contas órfãs viraram 1, os 20 objetos sem dono viraram 0,
+os logs não carregam nome nem e-mail, o analytics só mede a Fachada, a
+Anthropic não é mais chamada. **Sobram três leads sem prazo** (40 dias) e **três
+consentimentos a um documento que não existe** (`SIM-100`) — que é o advogado,
+de novo, agora como achado de LGPD.
+
+**O que acontece é o achado grave** (`SIM-99`): **a eliminação de uma pessoa é
+impossível**. `auth.admin.deleteUser` falha com erro vazio, por três bloqueios
+estruturais, cada um suficiente — as versões da história seguram o perfil por
+uma FK `NO ACTION` que dispara antes da cascata; o trigger de auditoria de
+papel insere apontando para o perfil que está sumindo; o lead convertido
+segura o perfil. E o storage não é alcançado por nada. **O fluxo do titular
+grava o pedido e ninguém o executa.** Em produção não há vítima ainda (0
+pedidos, 3 assistidas) — **mas a primeira pessoa real que pedir "apaguem meus
+dados" vai receber um 500.**
+
+**Nada foi consertado, de propósito.** Cada conserto é migration, e migration
+chega a produção no `git push` (`SIM-97`). A proposta está no `SIM-99`, em
+quatro itens; **é decisão do Fundador, e o primeiro item toca dezenas de FKs.**
+
+**O harness desta auditoria não persiste** — viveu em script temporário e foi
+apagado. O que fica de reutilizável é o método: *montar a pessoa inteira,
+tentar apagar, varrer 92 tabelas + storage pelo uuid, e-mail, nome e telefone,
+e ler o erro cru do Postgres, não o `{}` da API*.
+
 ---
 
 ## 6 · As lições desta sessão
@@ -1703,6 +1736,22 @@ E a segunda metade, que é sobre a casa e não sobre mim: **existia uma
 automação ligada a produção que nenhum documento do repositório descrevia.**
 Um agente novo faria exatamente o que eu fiz. Agora está no §7 e no AGENTS.md.
 
+**33 · O erro cru do banco vale mais que a resposta da API — e a primeira causa
+que eu nomeei estava errada.** O `deleteUser` devolvia `{}` e HTTP 500. Pela
+tabela de cascatas eu "sabia" que o bloqueio era o `crm_contacts`; apaguei o
+contato e falhou igual. **Só o `DELETE` direto no psql, dentro de uma
+transação com `ROLLBACK`, nomeou a constraint** — e era outra
+(`patient_story_versions_created_by_fkey`). E na tentativa seguinte, outra
+ainda (o trigger de auditoria). **Regra: diante de um erro opaco da camada de
+cima, reproduzir a operação na camada de baixo, com rollback, e ler a mensagem
+inteira.** Cada camada que traduz um erro apaga o nome do culpado.
+
+**34 · `UID` é somente-leitura no bash.** Uma linha de limpeza rodou com o id
+numérico do usuário do sistema no lugar do uuid da pessoa, e o erro
+(*"invalid input syntax for type uuid: 197609"*) parecia outro problema. Nomes
+de variável curtos e comuns em shell — `UID`, `PATH`, `HOME`, `SHELL` —
+são do sistema; prefixar (`PID_LGPD`) custa nada.
+
 ---
 
 ## 7 · Fatos operacionais
@@ -1923,7 +1972,12 @@ Um agente novo faria exatamente o que eu fiz. Agora está no §7 e no AGENTS.md.
    Supabase no `git push` do `7ad8855`, e conferida no ledger e no corpo da
    função em produção. Ver §7: **push de migration para `main` É alteração de
    produção.**
-10. **Uma varredura de acesso durável** — a de 03/09 viveu em scripts
+10. **A eliminação de titular (`SIM-99`) — decisão do Fundador.** Quatro
+   itens propostos no registro; o primeiro (FKs de proveniência → `SET NULL`)
+   é o mais largo e o mais importante. Sem ele, o primeiro pedido real de
+   eliminação termina em 500. **Antes da primeira pessoa de verdade, ou junto
+   com a publicação da Política** — os dois se encontram no advogado.
+11. **Uma varredura de acesso durável** — a de 03/09 viveu em scripts
    temporários. Vale virar `scripts/auditoria-rls-varredura.mjs` (local-only,
    env-guard, sem uuids fixos): 92 tabelas × papéis, com atribuição de dono.
 11. **A cena da `/o-que-e`** — pedido pronto para o Codex na pasta
