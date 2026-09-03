@@ -2,6 +2,8 @@
 
 Documento de planejamento operacional, não normativo. Não altera código, banco de dados, protocolos do ACE ou especificações. É uma simulação de um dia de operação, pensada do ponto de vista de Diretor de Operações — o que quebra, o que gera atrito, o que falta, antes de qualquer paciente real.
 
+> **Estado em 2026-09-03 — documento histórico.** Simulação de julho de 2026 sobre a jornada com o motor ACE (`Sua História → Caso → ACE → Human Review → Entrega`). O Shadow Launch assim desenhado não aconteceu, e a jornada mudou: o motor saiu do produto em 21/08, e desde as ADR-100 a 107 o primeiro contato é do Supervisor, a história é colhida na Consulta Inicial pelo Curador, e a Mesa é de gente (Guia da Primeira Rodada, `docs/rede/`). O texto abaixo fica como está, porque as cinco pessoas sintéticas e os atritos que elas expõem (titularidade de menor, "para outra pessoa", prazo invisível, portal vazio em espera) continuam sendo perguntas boas. Tudo o que cita ACE, protocolos `P00x`, Golden Set, Health Check ou Human Review descreve um produto que não existe mais.
+
 ## 0. Correção de premissa (achado antes mesmo de simular)
 
 O enunciado da missão presume a jornada `Landing → Cadastro → Sua História → ...`. **Essa jornada não existe hoje como fluxo público.** A rota pública `/sua-historia` diz, literalmente, ao visitante:
@@ -134,7 +136,9 @@ Jornada real (corrigida): **Contato humano → Admin cria conta → Login → Su
 
 ---
 
-## CHECKLIST DE GO LIVE
+## CHECKLIST DE GO LIVE *(histórico — julho de 2026)*
+
+Os itens de Curadoria, de Observabilidade, de Human Review e o de artefato interno do ACE perderam o objeto com a aposentadoria do motor. Os demais (Produto, Operação, Experiência, RLS "para outra pessoa", Paciente) seguem válidos como perguntas — conferir contra o produto atual antes de reutilizar qualquer um.
 
 ### Produto
 - [ ] Decidir e documentar como um visitante sem conta descobre o canal de contato (telefone/WhatsApp/e-mail) a partir da Landing e de `/sua-historia`.
