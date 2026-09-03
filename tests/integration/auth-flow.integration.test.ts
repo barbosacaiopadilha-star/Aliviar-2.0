@@ -49,7 +49,9 @@ describe("fluxo de autenticação (Supabase local)", () => {
   ];
 
   it("existe exatamente uma conta de bootstrap por papel, sem duplicidade", () => {
-    const roles = accounts.map((a) => a.role);
+    // Contas auxiliares de cenários adversariais têm identidade própria e não
+    // alteram o contrato de uma conta canônica por papel humano.
+    const roles = accounts.filter((a) => BOOTSTRAP_ROLES.includes(a.role)).map((a) => a.role);
     expect(roles.sort()).toEqual(BOOTSTRAP_ROLES);
     expect(new Set(roles).size).toBe(roles.length);
   });

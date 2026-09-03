@@ -25,6 +25,13 @@ const TEST_ACCOUNTS = [
   { role: "administrador", email: "admin.teste@aliviar-conexao.local", displayName: "Admin Teste" },
   { role: "profissional", email: "profissional.teste@aliviar-conexao.local", displayName: "Profissional Teste" },
   { role: "paciente", email: "paciente.teste@aliviar-conexao.local", displayName: "Paciente Teste" },
+  // Segundo titular real para provas cross-tenant; permanece na baseline local.
+  {
+    role: "paciente_g0_r1",
+    databaseRole: "paciente",
+    email: "paciente2.teste@aliviar-conexao.local",
+    displayName: "Paciente Teste 2",
+  },
   { role: "curador_medico", email: "curador.teste@aliviar-conexao.local", displayName: "Curador Teste" },
   // Acrescentados na captura do Briefing (ACE Missão 3): a RLS das tabelas de
   // alinhamento precisa ser provada contra TODOS os papéis humanos, não só os
@@ -118,6 +125,7 @@ async function main() {
   const listData = { users: usuariosExistentes };
 
   const results = [];
+  let adminUserId = "";
 
   for (const account of TEST_ACCOUNTS) {
     const password = generatePassword();
@@ -145,9 +153,12 @@ async function main() {
       userId = data.user.id;
     }
 
-    const roleId = roleIdBySlug[account.role];
+    if (account.role === "administrador") adminUserId = userId;
+
+    const databaseRole = account.databaseRole ?? account.role;
+    const roleId = roleIdBySlug[databaseRole];
     if (!roleId) {
-      console.error(`Papel "${account.role}" não encontrado no catálogo curadoria.roles.`);
+      console.error(`Papel "${databaseRole}" não encontrado no catálogo curadoria.roles.`);
       process.exit(1);
     }
 
@@ -156,11 +167,41 @@ async function main() {
       .upsert({ profile_id: userId, role_id: roleId }, { onConflict: "profile_id,role_id" });
 
     if (roleError) {
-      console.error(`Falha ao atribuir papel a "${account.role}":`, roleError.message);
+      console.error(`Falha ao atribuir papel a "${databaseRole}":`, roleError.message);
       process.exit(1);
     }
 
     results.push({ role: account.role, email: account.email, password });
+  }
+
+  if (!adminUserId) {
+    console.error("Conta administradora permanente não foi resolvida.");
+    process.exit(1);
+  }
+
+  // A suíte G0-R1 precisa provar o isolamento de instrumentos pertencentes a
+  // profissionais. Esta linha nasce antes da captura do baseline da integração,
+  // portanto não é resíduo e pode ser reutilizada idempotentemente.
+  const professionalIdentifier = "TESTE-PROFISSIONAL-PERMANENTE";
+  const { data: professionalExists, error: professionalLookupError } = await admin
+    .from("professional_profiles")
+    .select("id")
+    .eq("professional_identifier", professionalIdentifier)
+    .maybeSingle();
+  if (professionalLookupError) {
+    console.error("Falha ao localizar profissional permanente:", professionalLookupError.message);
+    process.exit(1);
+  }
+  if (!professionalExists) {
+    const { error: professionalError } = await admin.from("professional_profiles").insert({
+      display_name: "Profissional Teste Permanente",
+      professional_identifier: professionalIdentifier,
+      created_by: adminUserId,
+    });
+    if (professionalError) {
+      console.error("Falha ao criar profissional permanente:", professionalError.message);
+      process.exit(1);
+    }
   }
 
   const outputPath = resolve(projectRoot, "test-users.local.json");
