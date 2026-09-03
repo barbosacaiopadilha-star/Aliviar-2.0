@@ -1280,6 +1280,40 @@ nesta sessão e **gerou senhas novas**, envelhecendo a folha da Área de
 Trabalho. Ela foi regravada, e as seis foram testadas entrando de verdade —
 **lendo as senhas da própria folha**, não do JSON.
 
+### A primeira auditoria adversarial de acesso — e o portão que a lógica de três valores deixava aberto (03/09)
+
+**O Fundador perguntou quais auditorias faltavam; a primeira da lista era esta,
+e ele mandou fazer.** Cada papel entrou com o **próprio token e a chave
+pública** — nunca a service role — e tentou cada leitura e escrita que não
+deveria conseguir. 92 tabelas × 7 atores na varredura, 82 sondas dirigidas,
+dois buckets, todas as funções `security definer`. **O resultado geral é bom**
+(`SIM-96`): nenhuma tabela vaza linha de outra pessoa, nenhuma escrita cruzada
+passa, ninguém escala papel, o storage segura pasta por pasta, as capabilities
+respondem gate-first.
+
+**E um defeito grave** (`SIM-93`): `transfer_case_responsibility`, a única
+porta para mudar o responsável por um Case, tinha o predicado de autoridade
+`if not (… or responsible_id = actor or …)`. **Com `responsible_id` nulo —
+o formato dos Cases legados —, a comparação é NULA, `not null` é NULO, e o
+`if` não dispara o RAISE.** Provado com o token de uma paciente sem Case:
+ela redirecionou o Case de outra paciente, atribuído a outro curador, para um
+terceiro — e o banco gravou. **Consertado** com comparações nulas-seguras
+(migration `20260903020000`), junto com dois menores: `relational_needs_pending`
+executável por anônimo (`SIM-94`) e a própria pessoa reescrevendo
+`created_at`/`deleted_at` do perfil (`SIM-95`). **Guarda:**
+`auditoria-rls-transferencia-null-safe.integration.test.ts`, com Cases criados
+de propósito no formato legado. **Verificação:** `supabase db reset` com a migration nova, e a suíte de integração inteira contra ela — **1048 verdes em 82 arquivos**. O único vermelho foi o próprio teste do §2 (`SIM-94`): o `revoke … from anon` da primeira versão era um no-op, porque o acesso do anônimo vinha do EXECUTE padrão a PUBLIC — corrigido para `revoke … from public` + `grant … to authenticated`, e a suíte da auditoria fecha **9/9**.
+
+**A migration está aplicada só no LOCAL.** Produção exige autorização
+explícita (AGENTS.md); o caminho padronizado é `supabase db push`. Enquanto
+não subir, **o defeito está vivo em produção** — mitigado apenas por exigir
+sessão autenticada e o uuid do Case.
+
+**O que a auditoria não cobre, e fica escrito:** a varredura viveu em scripts
+temporários desta sessão e foi apagada; o que persiste é o teste de integração
+dos três consertos. **Uma versão durável da varredura** (`scripts/`, local-only,
+sem uuids fixos) é trabalho aberto — ver §8.
+
 ---
 
 ## 6 · As lições desta sessão
@@ -1609,6 +1643,24 @@ não explica, o arquivo de erro do próprio serviço diz em uma linha o que meia
 hora de dedução não acha.** Foi o `backend.error.json` que resolveu, depois de
 eu ter checado processos, serviços, WSL e distro sem chegar a lugar nenhum.
 
+**29 · Em SQL, `if not (a or b or c)` com um `b` nulo não é "falso" — é
+"não executa".** Foi assim que uma paciente transferiu o Case de outra
+(`SIM-93`). A regra estava certa; a **linguagem** tem três valores e o código
+assumia dois. **Onde há comparação com coluna que pode ser nula dentro de um
+predicado de autoridade, cada termo leva `coalesce(…, false)`** — ou o portão
+vale só para os Cases modernos e fica aberto justamente para os legados.
+E o corolário: **o teste que existia cobria a tabela, não a função** — guarda
+de privilégio não é guarda de predicado.
+
+**30 · Um "NEGADO" só vale se o "PERMITIDO" de controle também aparecer.** Duas
+vezes nesta auditoria o harness me deu resultados que pareciam limpos e eram
+vazios: o storage negava tudo porque o upload da fixture tinha falhado em
+silêncio (MIME), e a transferência dava ERRO porque meu reset via service role
+tinha sido barrado por trigger sem eu conferir. **Os controles positivos foram
+o que denunciou** — "a paciente baixa o próprio arquivo" reprovou, e aí eu
+soube que o resto era ruído. **Regra: toda sonda negativa vem acompanhada da
+positiva correspondente; sem ela, "negado" e "não existe" são indistinguíveis.**
+
 ---
 
 ## 7 · Fatos operacionais
@@ -1804,7 +1856,13 @@ eu ter checado processos, serviços, WSL e distro sem chegar a lugar nenhum.
 8. **A saudação automática do WhatsApp** — só o Fundador consegue olhar
    (WhatsApp Business → Ferramentas comerciais). **A recomendação escrita é
    ligar a de ausência e deixar a de saudação DESLIGADA**, pelo motivo do §5.
-9. **A cena da `/o-que-e`** — pedido pronto para o Codex na pasta
+9. **`SIM-93` em produção** — a migration `20260903020000` está aplicada só
+   no local. **Subir é `supabase db push` com autorização explícita.** Até lá
+   o predicado nulo continua vivo lá.
+10. **Uma varredura de acesso durável** — a de 03/09 viveu em scripts
+   temporários. Vale virar `scripts/auditoria-rls-varredura.mjs` (local-only,
+   env-guard, sem uuids fixos): 92 tabelas × papéis, com atribuição de dono.
+11. **A cena da `/o-que-e`** — pedido pronto para o Codex na pasta
    `Aliviar - Operação`. **A forma já está decidida** (herói no alto, não fundo
    atrás do texto; escritório de estudo vazio; cartão claro de letra escura), e
    é a parte que importa. **Depende de imagem**, seja gerada pelo Codex, pelo
