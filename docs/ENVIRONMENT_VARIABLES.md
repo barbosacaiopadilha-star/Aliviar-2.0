@@ -34,22 +34,13 @@ Nomes documentados em `.env.example` (nunca valores). Preencha `.env.local` (ign
 | `NEXT_PUBLIC_SUPABASE_URL` | Sim | `src/lib/supabase/env.ts`, `src/lib/supabase/admin.ts` | URL do projeto Supabase. Prefixo `NEXT_PUBLIC_` é intencional — não é segredo, mas nunca deve ser confundida com a service role key. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Sim | `src/lib/supabase/env.ts` | Chave anônima do Supabase, usada pelos clients de browser/server autenticados por sessão de usuário — toda autorização real continua sendo aplicada por RLS, nunca por esta chave. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Sim | `src/lib/supabase/admin.ts` (server-only) | Bypassa RLS. **Nunca prefixar com `NEXT_PUBLIC_`, nunca usar no cliente.** Usada apenas para operações administrativas de conta (criação de paciente pela equipe Aliviar, redefinição de senha). |
-| `CLAUDE_API_KEY` | Condicional — obrigatória em produção | `src/modules/concierge/anthropic-language-model.ts`, selecionada por `getAceLanguageModel()` (`src/modules/concierge/language-model.ts`) | Ver seção "Seleção do modelo de linguagem" abaixo — o comportamento na ausência desta chave **depende do ambiente**, não é uniforme. |
-| `ANTHROPIC_MODEL` | Não | `anthropic-language-model.ts` | Sobrescreve o modelo padrão (`claude-sonnet-5`) sem alterar código. |
-| `NODE_ENV` | Definida pelo runtime, nunca manual | `src/modules/concierge/language-model.ts` (`isProductionEnvironment()`) | Fonte única da verdade de "estamos em produção?" em todo o repositório — nunca reimplementada em outro arquivo. |
+| `NODE_ENV` | Definida pelo runtime, nunca manual | `src/app/foundation/page.tsx`, `src/components/curadoria/portal-shell.tsx` | Esconde superfícies de construção em produção: a bancada `/foundation` responde 404 (salvo `NEXT_PUBLIC_FOUNDATION_PREVIEW=1`) e o rodapé "dados de demonstração" do portal não é renderizado. Nunca decide comportamento clínico. |
 
-`CLAUDE_API_KEY`, não `ANTHROPIC_API_KEY`: contorno de um bug confirmado da própria Vercel (caso aberto no suporte deles) — uma variável chamada `ANTHROPIC_API_KEY` ficava registrada corretamente no painel, mas chegava como string vazia em `process.env` em runtime, enquanto uma variável irmã (`SUPABASE_SERVICE_ROLE_KEY`) funcionava normalmente na mesma implantação. Confirmado via log de diagnóstico temporário (`Object.keys(process.env)` continha o nome da chave, mas o valor era vazio). Nunca renomear de volta para `ANTHROPIC_API_KEY` sem antes confirmar com o suporte da Vercel que o bug foi corrigido.
+## Histórico — `CLAUDE_API_KEY` e `ANTHROPIC_MODEL` (aposentadas em 2026-09-03)
 
-## Seleção do modelo de linguagem do ACE (GO LIVE #2)
+Serviam ao `AceLanguageModel` do ACE, em `src/modules/concierge/`, que não existe mais: a chave selecionava o modelo real da Anthropic e, ausente, o sistema caía no `FakeAceLanguageModel` em dev/teste ou falhava explicitamente em produção (`ACE_MODEL_NOT_CONFIGURED`). Com a aposentadoria do ACE não há mais modelo real nem fake no código, e o `@anthropic-ai/sdk` saiu do `package.json` (ADR-056, registro de implementação de 03/09). Nada em `src/`, `scripts/` ou `tests/` lê essas variáveis; só o guard do Golden Set (`tests/golden/real-model-call-guard.ts`, ADR-022) cita o nome, por desenho, para nunca autorizar chamada real. Se `CLAUDE_API_KEY` ainda existir no painel da Vercel, é resíduo a remover pelo proprietário — ver `docs/CREDENTIALS.md`.
 
-Esta é a variável com comportamento mais fácil de interpretar errado — leia antes de mexer em qualquer coisa relacionada ao ACE em produção.
-
-| Ambiente | `CLAUDE_API_KEY` presente | `CLAUDE_API_KEY` ausente |
-|---|---|---|
-| Desenvolvimento/teste (`NODE_ENV` ≠ `production`) | `AnthropicAceLanguageModel` (real) | `FakeAceLanguageModel` (determinístico, seguro para dev/teste/CI) |
-| Produção (`NODE_ENV === "production"`) | `AnthropicAceLanguageModel` (real) | **Falha explícita** — `AceLanguageModelConfigurationError`, propagada como execução `FAILED` com `failureCode: "ACE_MODEL_NOT_CONFIGURED"`. **Nunca** cai no modelo fake. |
-
-Ou seja: a chave presente **sempre** vence, independente do ambiente. A chave ausente é o único caso em que o ambiente muda o comportamento — e só em produção isso é tratado como erro. Ver `docs/DEBUGGING.md` para os demais `failureCode` do modelo de linguagem, e `tests/unit/language-model-selection.test.ts` para os 5 cenários cobertos por teste.
+Fica registrado porque pode voltar a importar se um fornecedor de modelo entrar de novo: o nome era `CLAUDE_API_KEY`, e não `ANTHROPIC_API_KEY`, por contorno de um bug da própria Vercel (caso aberto no suporte deles) em que uma variável chamada `ANTHROPIC_API_KEY` ficava registrada no painel mas chegava como string vazia em `process.env` em runtime, enquanto uma variável irmã funcionava na mesma implantação. Não reutilizar `ANTHROPIC_API_KEY` sem antes confirmar com o suporte da Vercel que o bug foi corrigido.
 
 ## Adicionando uma variável nova
 
