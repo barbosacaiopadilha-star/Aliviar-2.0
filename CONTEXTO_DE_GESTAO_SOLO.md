@@ -50,7 +50,7 @@ O cliente é o paciente, o Curador e a equipe — nunca o código.
 | **Supabase (produção)** | projeto `aliviar-2-prod`, ref `awdlmeykminwyifnygkm`, região `sa-east-1`, Postgres 17 |
 | **Schema do produto** | **`curadoria`** — o `public` do mesmo banco pertence à **AliCIA**, outro produto. Nunca escrever no `public` daqui. |
 | **Supabase local** | stack Docker em `127.0.0.1:54321`, **compartilhada** entre repo e worktrees |
-| **Segredo do ACE** | `CLAUDE_API_KEY` (nome atual; já se chamou `ANTHROPIC_API_KEY`), só no painel da Vercel |
+| **Segredo do ACE** | *(histórico)* `CLAUDE_API_KEY` (já se chamou `ANTHROPIC_API_KEY`) deixou de ter consumidor no código em 2026-09-03 — o ACE foi aposentado e o `@anthropic-ai/sdk` saiu do `package.json` (ADR-056, registro de implementação). Se ainda constar no painel da Vercel, é resíduo a remover pelo Caio; não há acesso a isso pelo repositório. |
 
 **Não existe staging.** Operar sem staging na v1 é decisão formal aceita (ADR-058), com mitigações. Preview da Vercel é o que há.
 
@@ -173,7 +173,7 @@ Adaptações para operação solo:
 - `docs/CREDENTIALS.md` registra identificador/finalidade/ambiente/local — **nunca valores**.
 - Credencial temporária só é criada quando já existe mecanismo real que a consome. Nunca "por precaução", nunca pedindo ao Caio para inventar senha.
 - **O repositório é público.** Tratar todo conteúdo como leitura de estranhos.
-- **Ausência do `CLAUDE_API_KEY` em produção falha explicitamente.** O modelo fake determinístico é permitido em dev/teste e **vedado em produção** — nunca cair nele em silêncio.
+- *(histórico)* **Ausência do `CLAUDE_API_KEY` em produção falha explicitamente** era regra do ACE, já aposentado: desde 2026-09-03 não há modelo real nem fake no código (ADR-056, registro de implementação). Fica registrada só para ninguém recriá-la por engano.
 - Recurso de outro projeto (`aliviar-app`, AliCIA) não é reutilizado, copiado nem alterado daqui (ADR-001).
 - **Dado clínico.** ADR-054 (documentos clínicos), ADR-055 (LGPD e retenção), ADR-056 (suboperadores: Anthropic documentada, analytics fora das rotas autenticadas). Qualquer coisa que amplie coleta ou exposição volta para o Caio.
 
