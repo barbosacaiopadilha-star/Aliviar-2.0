@@ -151,7 +151,7 @@ describe("B3-UI · a decisão da paciente", () => {
 
       const link = screen.getByRole("link", { name: "Falar com a Aliviar" });
       // O número vem da fonte única aprovada (MISSÃO 205), nunca reescrito aqui.
-      expect(link).toHaveAttribute("href", expect.stringContaining("wa.me/${ALIVIAR_WHATSAPP}"));
+      expect(link).toHaveAttribute("href", expect.stringContaining(`wa.me/${ALIVIAR_WHATSAPP}`));
       expect(link).toHaveAttribute("rel", expect.stringContaining("noopener"));
     });
   });

@@ -60,7 +60,7 @@ describe("T-C-1 · ConciergeLink", () => {
     const href = screen
       .getByRole("link", { name: /Falar com a Aliviar/ })
       .getAttribute("href")!;
-    expect(href).toContain("wa.me/${ALIVIAR_WHATSAPP}");
+    expect(href).toContain(`wa.me/${ALIVIAR_WHATSAPP}`);
     expect(decodeURIComponent(href)).toContain(
       "Oi! Gostaria de conversar sobre a minha Curadoria.",
     );
