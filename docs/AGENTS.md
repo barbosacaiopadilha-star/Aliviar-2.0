@@ -40,6 +40,7 @@ O usuário não deve precisar criar manualmente contas de teste, usuários admin
 - `docs/CREDENTIALS.md` registra apenas identificador, finalidade, ambiente e local de armazenamento — nunca valores.
 - **Produção só pode ser alterada mediante autorização explícita do usuário.** Nenhuma automação deste projeto cria recursos com cobrança, altera produção ou faz deploy sem confirmação explícita.
 - **`git push` de um arquivo em `supabase/migrations/` para `main` É alteração de produção.** A integração GitHub do Supabase (configurada no painel, invisível neste repositório) aplica a migration no banco de produção no momento do push — sem `db push`, sem MCP, sem confirmação. Descoberto em 03/09 (`SIM-97`). Portanto: **migration só se commita em `main` com autorização para produção já dada**, e o ledger de produção se confere antes e depois.
+- **Depois de cada `git push`, o check-run do commit é a última linha do relatório.** O repositório é público: `api.github.com/repos/barbosacaiopadilha-star/aliviar/commits/<sha>/check-runs` responde sem login com o veredito de cada job, e `…/check-runs/<id>/annotations` traz o erro. "Testes verdes" medidos só na máquina local não são o verde do projeto — em 03/09 o gate estável esteve vermelho por sete commits seguidos sem ninguém olhar (`SIM-98`).
 - Nenhum recurso de outro projeto (ex.: `aliviar-app`) é reutilizado, copiado ou modificado sem análise e autorização técnica específica.
 
 ## Relatório obrigatório por ciclo

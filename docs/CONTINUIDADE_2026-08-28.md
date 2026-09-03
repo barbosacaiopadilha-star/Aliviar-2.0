@@ -1670,6 +1670,27 @@ o que denunciou** — "a paciente baixa o próprio arquivo" reprovou, e aí eu
 soube que o resto era ruído. **Regra: toda sonda negativa vem acompanhada da
 positiva correspondente; sem ela, "negado" e "não existe" são indistinguíveis.**
 
+**32 · Um sinal vermelho que ninguém lê não é um sinal** (`SIM-98`). O gate
+estável do CI ficou vermelho por **sete commits seguidos, ~36 horas** — seis
+deles meus —, e eu reportei "verde" o tempo todo, porque media na minha
+máquina e nunca olhei o CI. **O CI não estava testando nada:** falhava na
+instalação da CLI, antes do primeiro teste. Só vi porque fui aos check-runs
+procurar outra coisa (o rastro da integração do Supabase). **Regra: depois de
+cada push, o check-run do commit é a última linha do relatório** — é público,
+custa um `curl`, e é o único "verde" que não sou eu dizendo que está verde.
+E a segunda metade: **`latest` sem token em CI é um dado que muda sozinho** —
+pinar é o padrão, subir é decisão.
+
+**E o que o pino destampou vale uma terceira metade:** com a CLI instalada, a
+esteira chegou ao passo *Componentes* pela primeira vez desde a ADR-111 — e ele
+estava vermelho desde lá, **por um erro meu** (aspas retas em vez de crase ao
+trocar o número do WhatsApp nos testes). Eu não vi em dezenas de rodadas porque
+**`npx vitest run` não inclui `tests/components`** — é outra config,
+`npm run test:components`, que eu nunca rodei. **"Rodei a suíte" só vale se eu
+souber quais suítes existem:** unit, componentes, integração, remediação, E2E
+— cinco configs, e eu contava uma. A lista está no `package.json`; o CI roda
+todas; a minha máquina roda o que eu lembro.
+
 **31 · "Está só no local" é uma afirmação sobre produção — e eu a fiz sem
 olhar produção.** Escrevi no handoff, no registro e na mensagem ao Fundador
 que a migration esperava um `db push`. Uma hora depois, ao ir aplicá-la, o
@@ -1686,6 +1707,12 @@ Um agente novo faria exatamente o que eu fiz. Agora está no §7 e no AGENTS.md.
 
 ## 7 · Fatos operacionais
 
+- **OS CHECK-RUNS DO CI SÃO PÚBLICOS E CUSTAM UM `curl`** — o repositório é
+  público, então `api.github.com/repos/…/commits/<sha>/check-runs` responde
+  sem login, com o veredito de cada job, e `…/check-runs/<id>/annotations`
+  traz a mensagem de erro. Foi assim que o `SIM-97` e o `SIM-98` apareceram.
+  **A CLI do Supabase está pinada em 2.109.1 nos dois jobs** (`SIM-98`); a
+  máquina de desenvolvimento roda a mesma. Subir é junto, e de propósito.
 - **PUSH DE MIGRATION PARA `main` APLICA EM PRODUÇÃO — sem `db push`, sem
   MCP, sem ninguém apertar nada (descoberto em 03/09).** A integração GitHub
   do Supabase está ligada a este repositório, configurada no painel do
