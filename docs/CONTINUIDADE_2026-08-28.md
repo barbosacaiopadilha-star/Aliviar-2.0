@@ -1347,9 +1347,17 @@ grava o pedido e ninguém o executa.** Em produção não há vítima ainda (0
 pedidos, 3 assistidas) — **mas a primeira pessoa real que pedir "apaguem meus
 dados" vai receber um 500.**
 
-**Nada foi consertado, de propósito.** Cada conserto é migration, e migration
-chega a produção no `git push` (`SIM-97`). A proposta está no `SIM-99`, em
-quatro itens; **é decisão do Fundador, e o primeiro item toca dezenas de FKs.**
+**Depois, a pedido dele, a migration e o teste foram escritos** — e ficaram
+**commitados sem push**, porque push de migration é produção (`SIM-97`).
+`20260903040000_eliminacao_do_titular`: 24 FKs de proveniência → `SET NULL`,
+o trigger de papel que não aponta mais para quem está sumindo, o lead do CRM
+em `CASCADE`, e a porta `eliminar_titular` — só por serviço, administrador
+verificado, auditoria primeiro, cerca dos julgamentos respeitada, storage
+devolvido a quem chama. **O teste monta a pessoa inteira e prova que nada
+sobra** além da auditoria. **Regressão:** `db reset` com a migration nova e a suíte de integração inteira contra ela — **1052 verdes**, inclusive `descarte-de-case`, `case-responsibility-grants`, a auditoria de acesso e a sentinela; o único vermelho foi a cerca G-2.4-7 derrubando a primeira versão da função (que lia `curator_judgments`) — corrigida e reconfirmada: cerca, eliminação (**4/4** + 1 todo) e sentinela, **66/66**; unit 2718. **O que fica para ele decidir: subir.**
+Depois disso, o que falta é a tela do administrador que executa
+`data_subject_requests` no prazo — e a decisão de domínio sobre julgamento ×
+eliminação.
 
 **O harness desta auditoria não persiste** — viveu em script temporário e foi
 apagado. O que fica de reutilizável é o método: *montar a pessoa inteira,
@@ -1972,11 +1980,12 @@ são do sistema; prefixar (`PID_LGPD`) custa nada.
    Supabase no `git push` do `7ad8855`, e conferida no ledger e no corpo da
    função em produção. Ver §7: **push de migration para `main` É alteração de
    produção.**
-10. **A eliminação de titular (`SIM-99`) — decisão do Fundador.** Quatro
-   itens propostos no registro; o primeiro (FKs de proveniência → `SET NULL`)
-   é o mais largo e o mais importante. Sem ele, o primeiro pedido real de
-   eliminação termina em 500. **Antes da primeira pessoa de verdade, ou junto
-   com a publicação da Política** — os dois se encontram no advogado.
+10. **A eliminação de titular (`SIM-99`) — ESCRITA, TESTADA, NÃO EMPURRADA.**
+   A migration `20260903040000` e o teste estão no commit local; **o push é a
+   decisão de produção** e é do Fundador. Depois do push: a tela do
+   administrador para executar `data_subject_requests` no prazo de 15 dias, e
+   a decisão de domínio sobre julgamento do Curador × direito à eliminação
+   (hoje a porta recusa com mensagem clara).
 11. **Uma varredura de acesso durável** — a de 03/09 viveu em scripts
    temporários. Vale virar `scripts/auditoria-rls-varredura.mjs` (local-only,
    env-guard, sem uuids fixos): 92 tabelas × papéis, com atribuição de dono.
