@@ -30,6 +30,10 @@ export const CENAS = {
      claro), nunca o da porta de acesso: o `cbdb794` já registrou que texto
      claro só sobrevive sobre a cena escura do terraço. */
   atendimento: "atendimento",
+  /* 04/09 · O QUE É A ALIVIAR. A mesma recepção da Landing, num momento cheio
+     de gente (parte pública da casa), para a página /o-que-e. Cena CLARA:
+     card denso da Landing. Gerada como novo take do mesmo ambiente (v1.1). */
+  oQueE: "o-que-e",
 } as const;
 
 export type CenaKey = (typeof CENAS)[keyof typeof CENAS];
@@ -49,6 +53,7 @@ export type CenaKey = (typeof CENAS)[keyof typeof CENAS];
  */
 const RETRATO: Partial<Record<CenaKey, { largura: number; altura: number }>> = {
   atendimento: { largura: 941, altura: 1672 },
+  "o-que-e": { largura: 941, altura: 1672 },
 };
 const RETRATO_PADRAO = { largura: 852, altura: 1846 };
 

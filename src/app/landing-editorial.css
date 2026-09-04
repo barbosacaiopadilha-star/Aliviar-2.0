@@ -1631,6 +1631,13 @@
     .landing-ambiente-conteudo {
     padding-top: 0.75rem;
   }
+  /* 04/09 · "O que é a Aliviar": a parede livre da cena fica EM CIMA (a
+     recepção cheia de gente ocupa o pé da foto), então o card também sobe,
+     pelo mesmo mecanismo do formulário. */
+  .landing-editorial .landing-ambiente.landing-ambiente--o-que-e:first-of-type
+    .landing-ambiente-conteudo {
+    padding-top: 0.75rem;
+  }
 }
 
 /* O card de ABERTURA (fusão distribuída, 23/08): a promessa e o convite do

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { CenaResponsiva } from "@/components/landing/editorial/cena-responsiva";
 import { LinkButton } from "@/components/landing/link-button";
 import { metadataPublica } from "@/lib/metadata-publica";
 
@@ -130,18 +131,8 @@ const DUVIDAS = [
 ] as const;
 
 export default function OQueEPage() {
-  return (
+  const corpo = (
     <article className="mx-auto max-w-reading px-6 py-20 lg:py-28">
-      <header>
-        <h1 className="landing-heading text-3xl leading-tight lg:text-[2.75rem]">
-          O que é a Aliviar
-        </h1>
-        <p className="landing-body mt-5 text-lg text-[var(--color-ink-muted)]">
-          Explicado do começo, sem termo difícil — para quem está só olhando e quer entender antes
-          de falar com alguém. Você não precisa decidir nada lendo isto.
-        </p>
-      </header>
-
       <section className="mt-16">
         <h2 className="landing-heading text-2xl">O problema que a gente resolve</h2>
         <p className="landing-body mt-4 text-[var(--color-ink-muted)]">
@@ -260,4 +251,38 @@ export default function OQueEPage() {
       </section>
     </article>
   );
+
+  return (
+    <>
+      {/* 04/09 · A CENA DA PÁGINA (pedido do Fundador): a mesma recepção da
+          Landing, com uma família sendo recebida — a parte pública da casa tem
+          gente. O cabeçalho pousa no card de vidro denso sobre a parede livre,
+          como em /solicitar-atendimento; o texto longo segue abaixo, fora da
+          fotografia. */}
+      <section
+        className="landing-ambiente landing-ambiente--o-que-e"
+        aria-label="O que é a Aliviar"
+      >
+        <CenaResponsiva
+          cena="o-que-e"
+          prioridade
+          posicaoDesktop="right center"
+          posicaoMobile="64% 75%"
+        />
+        <div className="landing-ambiente-conteudo landing-ambiente-conteudo--superior">
+          <header className="landing-veu landing-veu--denso landing-card-vidro">
+            <h1 className="landing-heading text-3xl leading-tight lg:text-[2.75rem]">
+              O que é a Aliviar
+            </h1>
+            <p className="landing-body mt-5 text-lg text-[var(--color-ink-muted)]">
+              Explicado do começo, sem termo difícil — para quem está só olhando e quer entender antes
+              de falar com alguém. Você não precisa decidir nada lendo isto.
+            </p>
+          </header>
+        </div>
+      </section>
+      {corpo}
+    </>
+  );
 }
+
