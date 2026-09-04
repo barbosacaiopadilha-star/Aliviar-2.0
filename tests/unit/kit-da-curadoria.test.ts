@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -60,5 +60,63 @@ describe("Kit da Curadoria — links vivos, lista decidida", () => {
     for (const peca of KIT_DA_CURADORIA) {
       expect(peca.href.startsWith("/rede/"), `${peca.href} não vive em /rede/`).toBe(true);
     }
+  });
+});
+
+/**
+ * O ALCANCE DO SUPERVISOR DE JORNADA — ADR-114.
+ *
+ * Esta guarda existe por causa da forma de defeito que a ADR-114 registrou, e
+ * que já apareceu três vezes neste projeto: **construção correta, completa e
+ * desligada de quem precisa dela.** O Kit tinha os quinze documentos e vivia
+ * só na Visão geral do `/admin`, cujo guard admite `administrador` ou
+ * `concierge` — o Supervisor batia em `/acesso-negado`. O `/api/health` media
+ * a saúde para um monitor externo que não existia. A ponte grau→importância
+ * está no banco desde agosto sem uma linha de `src/` que a use.
+ *
+ * O conserto de 04/09 é uma linha de import e um item de navegação — e é
+ * exatamente por ser pequeno que ele se perde numa refatoração distraída, sem
+ * que nenhum outro teste reclame. Um teste que só provasse "o link não está
+ * morto" continuaria verde com a tela inteira fora do alcance dele.
+ */
+describe("O Supervisor de Jornada alcança a documentação (ADR-114)", () => {
+  const raiz = process.cwd();
+  const paginaDoSupervisor = join(raiz, "src", "app", "atendimento", "documentos", "page.tsx");
+  const layoutDoAtendimento = join(raiz, "src", "app", "atendimento", "layout.tsx");
+
+  it("a página de documentos do Supervisor existe", () => {
+    expect(
+      existsSync(paginaDoSupervisor),
+      "sumiu a tela que a ADR-114 exige: o Supervisor voltou a não ter documentação",
+    ).toBe(true);
+  });
+
+  it("ela serve o MESMO Kit do admin — nunca uma segunda lista", () => {
+    const fonte = readFileSync(paginaDoSupervisor, "utf8");
+    expect(
+      fonte.includes("KitDaCuradoriaCard"),
+      "a tela do Supervisor deixou de renderizar o Kit — ou alguém criou uma segunda fonte da verdade sobre quais documentos são os vigentes",
+    ).toBe(true);
+  });
+
+  it("o Supervisor chega lá pela navegação, não por adivinhação de URL", () => {
+    const layout = readFileSync(layoutDoAtendimento, "utf8");
+    expect(
+      layout.includes(`"/atendimento/documentos"`),
+      // Com as aspas: sem elas, `/atendimento/documentosXX` passaria, porque
+      // um href é substring do outro. Descoberto quebrando de propósito.
+      "o item de navegação sumiu: a tela existe e ninguém a encontra, que é o mesmo que não existir",
+    ).toBe(true);
+  });
+
+  it("o guard da área continua admitindo o papel do Supervisor", () => {
+    const layout = readFileSync(layoutDoAtendimento, "utf8");
+    // `atendente` é o slug do Supervisor de Jornada no banco (ADR-097
+    // fronteira 1: o slug é dado, não vocabulário). Se ele sair daqui, a
+    // tela existe, o link existe, e a pessoa cai em /acesso-negado.
+    expect(
+      layout.includes('"atendente"'),
+      "o papel do Supervisor saiu do guard de /atendimento",
+    ).toBe(true);
   });
 });

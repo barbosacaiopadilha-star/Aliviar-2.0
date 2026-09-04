@@ -35,7 +35,14 @@ export default async function AtendimentoLayout({ children }: Readonly<{ childre
     <PortalShellContainer
       homeHref="/atendimento"
       subtitle="Atendimento"
-      nav={[{ href: "/atendimento", label: "Quem chegou" }]}
+      nav={[
+        { href: "/atendimento", label: "Quem chegou" },
+        // 04/09 · "Documentos" entra pela ADR-114: o Supervisor de Jornada
+        // tem de dispor de toda a documentação, e ela morava só no /admin,
+        // onde ele não entra. É o segundo item e não o primeiro de
+        // propósito — a fila de quem chegou continua sendo a home do dia.
+        { href: "/atendimento/documentos", label: "Documentos" },
+      ]}
     >
       {children}
     </PortalShellContainer>
