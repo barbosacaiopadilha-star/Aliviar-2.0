@@ -41,6 +41,9 @@ export const CENAS = {
   oQueEComo: "o-que-e-como",
   oQueEDiferencas: "o-que-e-diferencas",
   oQueECusto: "o-que-e-custo",
+  /* 04/09 · A recepção pública de /sua-historia, sobre a chapa da escuta do
+     filme (o dossiê aberto sendo construído). Mesmo mecanismo dos capítulos. */
+  suaHistoria: "sua-historia",
 } as const;
 
 export type CenaKey = (typeof CENAS)[keyof typeof CENAS];
@@ -65,6 +68,7 @@ const RETRATO: Partial<Record<CenaKey, { largura: number; altura: number }>> = {
   "o-que-e-como": { largura: 941, altura: 1672 },
   "o-que-e-diferencas": { largura: 941, altura: 1672 },
   "o-que-e-custo": { largura: 941, altura: 1672 },
+  "sua-historia": { largura: 941, altura: 1672 },
 };
 const RETRATO_PADRAO = { largura: 852, altura: 1846 };
 

@@ -1640,6 +1640,18 @@
   }
 }
 
+/* 04/09 · /sua-historia: o passo do assistente dentro do card. O contêiner do
+   passo traz o próprio respiro de página; dentro do vidro ele vira recuo
+   duplo, então zera aqui. Card mais largo, como nos capítulos de texto. */
+.landing-editorial .landing-ambiente--historia .landing-card-vidro > section {
+  padding: 0;
+}
+@media (min-width: 768px) {
+  .landing-editorial .landing-ambiente--historia .landing-card-vidro {
+    max-width: 40rem;
+  }
+}
+
 /* 04/09 · CAPÍTULOS DE TEXTO LONGO sobre chapa (/o-que-e). A foto fica presa
    à altura de UMA tela enquanto o card rola por cima — a mesma tese do
    Edifício (a cena nunca estica). O recuo de cima tira o card de baixo do
