@@ -34,6 +34,13 @@ export const CENAS = {
      de gente (parte pública da casa), para a página /o-que-e. Cena CLARA:
      card denso da Landing. Gerada como novo take do mesmo ambiente (v1.1). */
   oQueE: "o-que-e",
+  /* 04/09 · Os capítulos de /o-que-e sobre CHAPAS DOS FILMES (sem gente, sem
+     texto, parede livre): a vertical é a chapa inteira; a de computador é o
+     recorte central 16:9 da mesma chapa. Nenhuma imagem gerada. */
+  oQueEProblema: "o-que-e-problema",
+  oQueEComo: "o-que-e-como",
+  oQueEDiferencas: "o-que-e-diferencas",
+  oQueECusto: "o-que-e-custo",
 } as const;
 
 export type CenaKey = (typeof CENAS)[keyof typeof CENAS];
@@ -54,6 +61,10 @@ export type CenaKey = (typeof CENAS)[keyof typeof CENAS];
 const RETRATO: Partial<Record<CenaKey, { largura: number; altura: number }>> = {
   atendimento: { largura: 941, altura: 1672 },
   "o-que-e": { largura: 941, altura: 1672 },
+  "o-que-e-problema": { largura: 941, altura: 1672 },
+  "o-que-e-como": { largura: 941, altura: 1672 },
+  "o-que-e-diferencas": { largura: 941, altura: 1672 },
+  "o-que-e-custo": { largura: 941, altura: 1672 },
 };
 const RETRATO_PADRAO = { largura: 852, altura: 1846 };
 

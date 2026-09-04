@@ -131,126 +131,172 @@ const DUVIDAS = [
 ] as const;
 
 export default function OQueEPage() {
-  const corpo = (
-    <article className="mx-auto max-w-reading px-6 py-20 lg:py-28">
-      <section className="mt-16">
-        <h2 className="landing-heading text-2xl">O problema que a gente resolve</h2>
-        <p className="landing-body mt-4 text-[var(--color-ink-muted)]">
-          Você, ou alguém que você ama, precisa de um médico. E aí começa a parte que ninguém conta:
-          você pergunta para conhecidos, pesquisa na internet e acha listas que parecem propaganda,
-          ouve três opiniões diferentes e não sabe em qual confiar. Marca uma consulta, espera três
-          semanas, sai de lá com mais dúvida do que entrou. E recomeça.
-        </p>
-        <p className="landing-body mt-5 text-[var(--color-ink-muted)]">
-          A pergunta que fica sem resposta não é{" "}
-          <em>“quem é o melhor médico?”</em>. É{" "}
-          <strong className="text-ink">
-            “qual desses faz sentido para o meu caso, para a minha vida, e para o que eu aguento
-            agora?”
-          </strong>{" "}
-          Nenhuma lista responde isso.
-        </p>
-      </section>
-
-      <section className="mt-16">
-        <h2 className="landing-heading text-2xl">O que a gente faz, em uma frase</h2>
-        <p className="landing-body mt-4 text-lg text-ink">
-          Um curador — que é médico — estuda o seu caso e volta com <strong>três caminhos</strong>, explicando cada um
-          — e você escolhe.
-        </p>
-      </section>
-
-      <section className="mt-16">
-        <h2 className="landing-heading text-2xl">Como funciona</h2>
-        <ol className="mt-6 space-y-6">
-          {PASSOS.map((passo, i) => (
-            <li key={passo.titulo} className="flex gap-4">
-              <span
-                aria-hidden="true"
-                className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-primary)] text-sm font-medium text-[var(--landing-linen)]"
-              >
-                {i + 1}
-              </span>
-              <div>
-                <h3 className="landing-heading text-lg">{passo.titulo}</h3>
-                <p className="landing-body mt-1 text-[var(--color-ink-muted)]">{passo.texto}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section className="mt-16">
-        <h2 className="landing-heading text-2xl">Três coisas que nos tornam diferentes</h2>
-        <div className="mt-6 space-y-8">
-          {DIFERENCAS.map((d) => (
-            <div key={d.titulo} className="border-t border-[var(--color-border)] pt-5">
-              <h3 className="landing-heading text-lg">{d.titulo}</h3>
-              <p className="landing-body mt-2 text-[var(--color-ink-muted)]">{d.texto}</p>
+  /* 04/09 · OS CAPÍTULOS (decisão do Fundador): depois do herói, o texto longo
+     deixa de correr sobre o linho e passa a viver em quatro capítulos, cada um
+     sobre uma CHAPA DOS FILMES (sem gente, sem texto, parede livre), no card de
+     vidro denso da página de atendimento. Sete seções viram quatro capítulos
+     para a leitura não virar carrossel. A copy é a mesma, palavra por palavra. */
+  const capitulos = [
+    {
+      cena: "o-que-e-problema" as const,
+      rotulo: "O problema que a gente resolve",
+      // o corredor de portas: muitos nomes, pouca clareza
+      conteudo: (
+        <>
+          <section>
+            <h2 className="landing-heading text-2xl">O problema que a gente resolve</h2>
+            <p className="landing-body mt-4 text-[var(--color-ink-muted)]">
+              Você, ou alguém que você ama, precisa de um médico. E aí começa a parte que ninguém conta:
+              você pergunta para conhecidos, pesquisa na internet e acha listas que parecem propaganda,
+              ouve três opiniões diferentes e não sabe em qual confiar. Marca uma consulta, espera três
+              semanas, sai de lá com mais dúvida do que entrou. E recomeça.
+            </p>
+            <p className="landing-body mt-5 text-[var(--color-ink-muted)]">
+              A pergunta que fica sem resposta não é{" "}
+              <em>“quem é o melhor médico?”</em>. É{" "}
+              <strong className="text-ink">
+                “qual desses faz sentido para o meu caso, para a minha vida, e para o que eu aguento
+                agora?”
+              </strong>{" "}
+              Nenhuma lista responde isso.
+            </p>
+          </section>
+          <section className="mt-16">
+            <h2 className="landing-heading text-2xl">O que a gente faz, em uma frase</h2>
+            <p className="landing-body mt-4 text-lg text-ink">
+              Um curador — que é médico — estuda o seu caso e volta com <strong>três caminhos</strong>, explicando cada um
+              — e você escolhe.
+            </p>
+          </section>
+        </>
+      ),
+    },
+    {
+      cena: "o-que-e-como" as const,
+      rotulo: "Como funciona",
+      // os três nichos: o caso estudado antes de qualquer indicação
+      conteudo: (
+        <>
+          <section>
+            <h2 className="landing-heading text-2xl">Como funciona</h2>
+            <ol className="mt-6 space-y-6">
+              {PASSOS.map((passo, i) => (
+                <li key={passo.titulo} className="flex gap-4">
+                  <span
+                    aria-hidden="true"
+                    className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-primary)] text-sm font-medium text-[var(--landing-linen)]"
+                  >
+                    {i + 1}
+                  </span>
+                  <div>
+                    <h3 className="landing-heading text-lg">{passo.titulo}</h3>
+                    <p className="landing-body mt-1 text-[var(--color-ink-muted)]">{passo.texto}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </section>
+        </>
+      ),
+    },
+    {
+      cena: "o-que-e-diferencas" as const,
+      rotulo: "O que nos torna diferentes",
+      // os três cadernos na mesa do curador
+      conteudo: (
+        <>
+          <section>
+            <h2 className="landing-heading text-2xl">Três coisas que nos tornam diferentes</h2>
+            <div className="mt-6 space-y-8">
+              {DIFERENCAS.map((d) => (
+                <div key={d.titulo} className="border-t border-[var(--color-border)] pt-5">
+                  <h3 className="landing-heading text-lg">{d.titulo}</h3>
+                  <p className="landing-body mt-2 text-[var(--color-ink-muted)]">{d.texto}</p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="mt-16">
-        <h2 className="landing-heading text-2xl">O que a Aliviar não é</h2>
-        <dl className="mt-6 space-y-5">
-          {NAO_SOMOS.map(([o_que, porque]) => (
-            <div key={o_que} className="border-t border-[var(--color-border)] pt-4">
-              <dt className="landing-heading text-base">{o_que}</dt>
-              <dd className="landing-body mt-1 text-[var(--color-ink-muted)]">{porque}</dd>
+          </section>
+          <section className="mt-16">
+            <h2 className="landing-heading text-2xl">O que a Aliviar não é</h2>
+            <dl className="mt-6 space-y-5">
+              {NAO_SOMOS.map(([o_que, porque]) => (
+                <div key={o_que} className="border-t border-[var(--color-border)] pt-4">
+                  <dt className="landing-heading text-base">{o_que}</dt>
+                  <dd className="landing-body mt-1 text-[var(--color-ink-muted)]">{porque}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        </>
+      ),
+    },
+    {
+      cena: "o-que-e-custo" as const,
+      rotulo: "Quanto custa e perguntas",
+      // a jornada organizada em quatro etapas
+      conteudo: (
+        <>
+          <section>
+            <h2 className="landing-heading text-2xl">Quanto custa</h2>
+            <p className="landing-body mt-4 text-lg text-ink">
+              <strong>R$ 500 por um ano.</strong>
+            </p>
+            <p className="landing-body mt-3 text-[var(--color-ink-muted)]">
+              Cobre a curadoria inteira, o relatório com os três caminhos, e o acompanhamento durante o
+              ano todo — alguém da Aliviar com você para organizar documentos, próximos passos e
+              dúvidas. Pode ser parcelado em até 12 vezes.
+            </p>
+            <p className="landing-body mt-3 text-[var(--color-ink-muted)]">
+              A consulta com o médico que você escolher é <strong>à parte</strong>, paga direto com ele.
+              A Aliviar não recebe nada dessa consulta — e é justamente por isso que a gente pode ser
+              honesta sobre quem apresentar.
+            </p>
+          </section>
+          <section className="mt-16">
+            <h2 className="landing-heading text-2xl">Perguntas que todo mundo faz</h2>
+            <dl className="mt-6 space-y-6">
+              {DUVIDAS.map(([pergunta, resposta]) => (
+                <div key={pergunta} className="border-t border-[var(--color-border)] pt-4">
+                  <dt className="landing-heading text-base">{pergunta}</dt>
+                  <dd className="landing-body mt-2 text-[var(--color-ink-muted)]">{resposta}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+          <section className="mt-20 border-t border-[var(--color-border)] pt-10">
+            <h2 className="landing-heading text-2xl">Se quiser conversar</h2>
+            <p className="landing-body mt-4 text-[var(--color-ink-muted)]">
+              O primeiro passo é uma conversa, e ela não compromete você a nada. A gente escuta o que
+              está acontecendo, explica como funciona, diz quanto custa — e você decide depois, com
+              calma.
+            </p>
+            <div className="mt-8">
+              <LinkButton href="/solicitar-atendimento" variant="primary" className="landing-porta">
+                Quero conversar com a Aliviar
+              </LinkButton>
+              <p className="landing-body mt-3 text-sm text-[var(--color-ink-muted)]">
+                Sem dados de saúde agora.
+              </p>
             </div>
-          ))}
-        </dl>
-      </section>
+          </section>
+        </>
+      ),
+    },
+  ];
 
-      <section className="mt-16">
-        <h2 className="landing-heading text-2xl">Quanto custa</h2>
-        <p className="landing-body mt-4 text-lg text-ink">
-          <strong>R$ 500 por um ano.</strong>
-        </p>
-        <p className="landing-body mt-3 text-[var(--color-ink-muted)]">
-          Cobre a curadoria inteira, o relatório com os três caminhos, e o acompanhamento durante o
-          ano todo — alguém da Aliviar com você para organizar documentos, próximos passos e
-          dúvidas. Pode ser parcelado em até 12 vezes.
-        </p>
-        <p className="landing-body mt-3 text-[var(--color-ink-muted)]">
-          A consulta com o médico que você escolher é <strong>à parte</strong>, paga direto com ele.
-          A Aliviar não recebe nada dessa consulta — e é justamente por isso que a gente pode ser
-          honesta sobre quem apresentar.
-        </p>
-      </section>
+  const corpo = capitulos.map((c) => (
+    <section
+      key={c.cena}
+      className="landing-ambiente landing-ambiente--o-que-e landing-ambiente--capitulo"
+      aria-label={c.rotulo}
+    >
+      <CenaResponsiva cena={c.cena} posicaoDesktop="center" posicaoMobile="center" />
+      <div className="landing-ambiente-conteudo landing-ambiente-conteudo--superior">
+        <div className="landing-veu landing-veu--denso landing-card-vidro">{c.conteudo}</div>
+      </div>
+    </section>
+  ));
 
-      <section className="mt-16">
-        <h2 className="landing-heading text-2xl">Perguntas que todo mundo faz</h2>
-        <dl className="mt-6 space-y-6">
-          {DUVIDAS.map(([pergunta, resposta]) => (
-            <div key={pergunta} className="border-t border-[var(--color-border)] pt-4">
-              <dt className="landing-heading text-base">{pergunta}</dt>
-              <dd className="landing-body mt-2 text-[var(--color-ink-muted)]">{resposta}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-
-      <section className="mt-20 border-t border-[var(--color-border)] pt-10">
-        <h2 className="landing-heading text-2xl">Se quiser conversar</h2>
-        <p className="landing-body mt-4 text-[var(--color-ink-muted)]">
-          O primeiro passo é uma conversa, e ela não compromete você a nada. A gente escuta o que
-          está acontecendo, explica como funciona, diz quanto custa — e você decide depois, com
-          calma.
-        </p>
-        <div className="mt-8">
-          <LinkButton href="/solicitar-atendimento" variant="primary" className="landing-porta">
-            Quero conversar com a Aliviar
-          </LinkButton>
-          <p className="landing-body mt-3 text-sm text-[var(--color-ink-muted)]">
-            Sem dados de saúde agora.
-          </p>
-        </div>
-      </section>
-    </article>
-  );
 
   return (
     <>

@@ -1640,6 +1640,39 @@
   }
 }
 
+/* 04/09 · CAPÍTULOS DE TEXTO LONGO sobre chapa (/o-que-e). A foto fica presa
+   à altura de UMA tela enquanto o card rola por cima — a mesma tese do
+   Edifício (a cena nunca estica). O recuo de cima tira o card de baixo do
+   cabeçalho fixo; o card é um pouco mais largo porque aqui o texto é longo. */
+.landing-editorial .landing-ambiente--capitulo {
+  display: block;
+}
+.landing-editorial .landing-ambiente--capitulo .landing-cena {
+  position: sticky;
+  top: 0;
+  inset: auto;
+  height: 100svh;
+  margin-bottom: -100svh;
+}
+.landing-editorial .landing-ambiente--capitulo .landing-ambiente-conteudo {
+  position: relative;
+  z-index: 2;
+  min-height: 100svh;
+  padding-top: 5.5rem;
+  padding-bottom: 3rem;
+  align-items: flex-start;
+}
+@media (min-width: 768px) {
+  .landing-editorial .landing-ambiente--capitulo .landing-ambiente-conteudo {
+    padding-top: 6.5rem;
+    padding-bottom: 4rem;
+    align-items: flex-start;
+  }
+  .landing-editorial .landing-ambiente--capitulo .landing-card-vidro {
+    max-width: 40rem;
+  }
+}
+
 /* O card de ABERTURA (fusão distribuída, 23/08): a promessa e o convite do
    vídeo na primeira dobra; o conteúdo no card de baixo. */
 .landing-editorial .landing-card-abertura {
