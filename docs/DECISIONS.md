@@ -3484,3 +3484,65 @@ O **Supervisor de Jornada** tem de dispor de **toda a documentação necessária
 **Baixar** — existe, e está no lugar errado. Levar o Kit a uma superfície que o Supervisor alcança é **corrigir alcance**, não construir função nova; cabe na exceção da ADR-073.
 
 **Enviar** — **não existe em forma nenhuma.** O produto não manda e-mail: até 03/09 nem o de redefinição de senha saía para quem não fosse da equipe (`SIM-105`). Enviar documento a alguém depende de a entrega estar provada primeiro. Antes disso, "enviar" é o Supervisor anexando à mão no WhatsApp — que é como funciona hoje, e é o que a distribuição por pacotes atende.
+
+---
+
+## ADR-115 — Onde há juízo do Curador, o direito à eliminação se cumpre por anonimização
+
+- **Data:** 2026-09-04
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data — adotando a proposta que ele pediu, leu e mandou decidir (`docs/privacidade/PROPOSTA_ANONIMIZACAO.md`).
+- **Dependências:** nasce do `SIM-109`, de uma tentativa real de eliminação que **falhou em produção** · concilia a cerca `curator_judgments_sem_delete` com o direito do titular · **emenda na prática o critério de encerramento do `SIM-99`**, que dava a porta por pronta · conversa com a **ADR-096** (adiamento da base de privacidade) e com a **ADR-055** (responsável por LGPD) · **não altera a ADR-073**: o que a lei exige é exceção permitida ao congelamento.
+
+### A decisão
+
+**Quando o Case tem julgamento do Curador, o direito à eliminação se cumpre por ANONIMIZAÇÃO, não por exclusão do Case.**
+
+A pessoa some por inteiro. O Case sobrevive como **casca anônima**, e os julgamentos continuam apontando para ele.
+
+### As três camadas, porque a decisão está nelas e não na palavra
+
+1. **Identidade direta — elimina.** Conta, nome, telefone, cidade e estado, documentos e os **bytes no storage**, contato de CRM, notificações. Não se mascara: some.
+2. **A narrativa dela — elimina.** `patient_stories` são as palavras dela sobre si mesma. **Não existe anonimizar um relato** — tirar o que identifica é destruir o que ele é.
+3. **O juízo do Curador — preserva, órfão.** `curator_judgments` e o que descreve critério e compatibilidade.
+
+### Por que isto não é uma exceção à imutabilidade, e sim o contrário
+
+A alternativa óbvia seria abrir uma brecha no `curator_judgments_sem_delete`. **Ela foi recusada.** Um juízo médico que pode ser apagado depois não é juízo, é rascunho — e a cerca existe por isso.
+
+**Esta decisão corta o VÍNCULO, não o CONTEÚDO.** Nenhum julgamento é editado, nenhum é apagado, nenhum gatilho ganha exceção. O que muda é que o Case deixa de ter dono.
+
+### A medição que sustentou a escolha, e ela é o coração da ADR
+
+A pergunta que decidia tudo era: **o julgamento é sobre a pessoa ou sobre o médico?** Se fosse sobre ela, preservá-lo enquanto se apaga a pessoa seria maquiagem com nome técnico.
+
+**As colunas respondem:** `professional_profile_id`, `subcriterion_code`, `natureza`, `state`, `conclusao`, `motivo`. O Curador diz **se aquele profissional confirma tal subcritério e por qual razão**. A assistida entra apenas como `case_id` — vínculo, não conteúdo. E o nome e a cidade dela aparecem **zero vezes** no texto livre dos nove julgamentos, da observação, das quatro necessidades e do contexto clínico.
+
+Anonimizado, o registro passa a dizer *"num caso de ortopedia de coluna, este profissional confirmou tal subcritério por tal razão"* — que é verdade, é útil à Rede, e não é sobre ninguém.
+
+### O que esta ADR NÃO decide, e é preciso dizer com todas as letras
+
+**Se a Aliviar PODE reter.** Preservar juízo clínico depois de um pedido de eliminação pode exigir base legal do art. 16 da LGPD. **Isso é do advogado**, e a pergunta se soma às enviadas em 03/08.
+
+**E o que acontece se ele responder que não pode:** então a camada 3 também é eliminada, e a cerca da imutabilidade **cede à lei** — porque direito de titular não se negocia com decisão de arquitetura. Nesse caso o `curator_judgments_sem_delete` ganha exceção **auditada e nomeada**, exclusiva da porta de eliminação, e nunca disponível a nenhum outro caminho.
+
+### A transparência que a decisão obriga
+
+Quem pede eliminação **é informada de que um juízo sobre profissionais sobrevive sem ela**, em linguagem de gente e antes do ato — não numa cláusula. Anonimizar sem contar é decidir pela pessoa aquilo que é dela decidir saber.
+
+### O que precisa ser construído, e sob qual disciplina
+
+Uma porta `anonimizar_titular`, irmã da `eliminar_titular`, com a mesma disciplina: **motivo obrigatório** (anonimização sem motivo não é auditável), **executor verificado com papel de administrador**, **auditoria antes do ato**, e o **storage devolvido a quem chama** para conferência do que sobrou.
+
+E **o Curador lê e confirma** que os textos preservados não identificam ninguém. A checagem por nome e cidade que sustentou esta ADR é *checagem*, não *prova*: ausência de nome não é ausência de identificabilidade — condição rara mais cidade pequena identificam sem citar. Só quem escreveu sabe o que escreveu.
+
+### Uma consequência incômoda, registrada em vez de escondida
+
+**Anonimato depende de volume.** Com três Cases no banco, um Case de ortopedia de coluna em São Paulo identifica por singularidade, mesmo sem um nome. **A anonimização de hoje é mais fraca do que a de amanhã** — e isso não é motivo para não fazer, é motivo para não prometer mais do que se entrega.
+
+### O sinal de que esta ADR falhou
+
+Alguém usar a anonimização como **atalho para não apagar**. Ela existe para cumprir o direito quando a eliminação total destruiria juízo médico legítimo — nunca para reter o que dá trabalho perder. Se um pedido de titular sem julgamento nenhum for "anonimizado" em vez de eliminado, esta ADR virou desculpa.
+
+### Revisitar quando
+
+O parecer do advogado chegar · a primeira anonimização real acontecer · ou o volume de Cases crescer a ponto de mudar o que "anônimo" significa na prática.
