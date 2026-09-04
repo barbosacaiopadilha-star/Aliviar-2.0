@@ -61,10 +61,17 @@ const NAV_LINKS = [
      fragmento do mesmo documento e nada muda. */
   { href: "/#como-funciona", label: "Curadoria" },
   { href: "/#a-escolha", label: "Escolha" },
-  // O Concierge volta à navegação: a ADR-081 o tirou porque a seção dele
-  // tinha saído da página ("link sem destino é porta pintada"). O ambiente
-  // existe de novo, então o link tem para onde levar.
-  { href: "/#concierge", label: "Concierge" },
+  // O quarto ambiente volta à navegação: a ADR-081 o tirou porque a seção
+  // dele tinha saído da página ("link sem destino é porta pintada"). O
+  // ambiente existe de novo, então o link tem para onde levar.
+  //
+  // 04/09 · deixou de se chamar "Concierge" (ADR-106: o Concierge deixa de
+  // ser um rosto e vira função — "o que deixa de existir é a apresentação
+  // de um terceiro nome à pessoa"). Este item e o `aria-label` da seção
+  // eram os DOIS únicos lugares onde a palavra alcançava alguém: aqui pelos
+  // olhos, lá pelo leitor de tela. O nome novo é o do estágio, em paralelo
+  // com "Curadoria" e "Escolha" — não o de uma pessoa.
+  { href: "/#acompanhamento", label: "Acompanhamento" },
 ] as const;
 
 export function PublicHeader({ portalCta = null }: PublicHeaderProps) {

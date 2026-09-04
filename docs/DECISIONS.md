@@ -3395,3 +3395,92 @@ A MISSÃO 205 construiu a **fonte única**: `ALIVIAR_WHATSAPP` em `whatsapp-cont
 ### Onde ele NÃO está, e por quê
 
 **A parte pública do site não mostra o número** — conferido em produção. Ele aparece só na área da assistida, depois de ela ter acesso. **Se algum dia for para a vitrine, é decisão à parte:** o repositório é público no GitHub, e número em página pública é número raspado.
+
+---
+
+## ADR-112 — O Supervisor passa a se chamar Supervisor de Jornada
+
+- **Data:** 2026-09-04
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data.
+- **Dependências:** **emenda o nome** fixado pela **ADR-100** e usado pela **ADR-106** ("Supervisor") · executa a consequência que a **ADR-106** deixou escrita e não aplicada · respeita a fronteira 1 da **ADR-097** (o slug é dado, não vocabulário) · não altera a **ADR-073**: troca uma palavra, não constrói nada.
+
+### A decisão
+
+O papel se chama **Supervisor de Jornada**, por extenso, em toda superfície onde uma pessoa o lê. E **o Concierge deixa de ser apresentado**: a palavra some do que o público lê, como a ADR-106 já havia decidido e ninguém havia executado.
+
+### O que a medição mostrou, e por que ela encolheu a obra
+
+O código tinha **148 ocorrências** de "Concierge" em `src/`. Parecia uma caçada. Medindo o **HTML que a produção entrega** — e não o repositório — a palavra alcançava uma pessoa em **exatamente dois lugares**:
+
+1. o **item de menu** `Concierge`, presente em toda página pública;
+2. o **`aria-label` da quarta seção** da Landing — que é para onde vai a prop `rotulo`, e que **não é texto na tela**.
+
+O segundo é o que interessa: a palavra sobrevivia sobretudo **em voz alta, para quem usa leitor de tela** — o lugar onde ninguém tinha ido conferir. As outras 146 ocorrências são identificador de componente, chave de cena, nome de arquivo de imagem e o payload do Next.
+
+**A copy da seção já estava limpa** desde sempre: o título é *"Depois da escolha, continuamos com você"* e o corpo diz "a Aliviar", nunca "o Concierge". Não havia promessa a reescrever — havia um rótulo a trocar.
+
+### O que mudou, e o que NÃO mudou de propósito
+
+**Mudou:** o item de menu passa a ser **"Acompanhamento"** apontando para `/#acompanhamento`, e o `aria-label` da seção idem. É o nome do estágio, em paralelo com "Curadoria" e "Escolha" — nunca o nome de uma pessoa.
+
+**Não mudou:** `cena="concierge"`, a função `AmbienteConcierge` e os arquivos `/landing/v2/concierge-*.webp`. São chave de asset e identificador de código, e a **fronteira 1 da ADR-097** é explícita: o slug é dado, não vocabulário — o mesmo motivo pelo qual a assistida continua sendo `paciente` no banco. Renomear arquivo de imagem não tira uma palavra dos olhos de ninguém; só produz diff.
+
+**Também não mudou** a copy congelada em `editorial-sections.tsx`, que contém *"Concierge é tranquilidade."* Aquele arquivo **não é importado por página nenhuma** — é copy congelada por decisão da ADR-081, guardada como ata do que já esteve no ar. Reescrever ata é apagar história.
+
+### A pendência que esta ADR abre, e não fecha
+
+**A Landing não menciona "Supervisor" uma única vez.** A ADR-106 diz que a pessoa conhece **exatamente dois rostos** — o Supervisor e o Curador. Hoje a página pública apresenta um e nunca o outro. Tirar o Concierge sem apresentar o Supervisor de Jornada deixa a promessa de que alguém continua junto **depois da escolha** sem dono visível.
+
+O lugar natural é um marcador que já existe na quarta seção: *"Alguém da Aliviar para responder"*. **Fica registrado como pendência de copy, do Fundador** — não se muda texto de Landing por dedução.
+
+---
+
+## ADR-113 — Existe o Gerente: abaixo do dono, acima do Curador e do Supervisor de Jornada
+
+- **Data:** 2026-09-04
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data. **Decisão registrada, construção suspensa.**
+- **Dependências:** cria um nível que a **Correção de Domínio** não previa · convive com a **ADR-100** (o Supervisor é espinha, não etapa) e com a **ADR-106** (dois rostos para o assistido) · **submetida à ADR-073**: nada disto é implementado antes da primeira Curadoria real.
+
+### A decisão
+
+A Aliviar passa a ter o cargo de **Gerente**: **abaixo do dono**, e com autoridade **sobre o Curador e sobre o Supervisor de Jornada**.
+
+### O que isto muda no desenho, e o que ainda não está decidido
+
+Hoje o sistema tem seis papéis — `administrador`, `curador_medico`, `atendente`, `concierge`, `profissional`, `paciente` — e **`administrador` acumula dono e gerência numa coisa só**. O Gerente separa as duas: quem é dono da empresa e quem responde pela operação do dia.
+
+**O que fica decidido aqui:** o cargo existe, a quem ele se subordina e sobre quem ele manda.
+
+**O que NÃO está decidido, e é preciso antes de construir:** *manda em quê, exatamente*. Reatribuir Case entre Curadores? Ver todo Case, inclusive os que não são dele? Aprovar entrega? Encerrar? Cada uma dessas respostas é uma política de acesso diferente, e escrevê-las por suposição é construir a autoridade errada — que em produto de saúde é o pior erro possível.
+
+### Por que nada é construído agora
+
+Um papel novo não é uma linha: é uma linha em `curadoria.roles`, políticas de RLS em dezenas de tabelas, guardas de rota e a tela de equipe. A **ADR-073** congela construção nova até a primeira Curadoria real, e a razão dela se aplica inteira aqui: **a autoridade de um Gerente sobre uma operação que nunca operou é suposição.** A primeira Curadoria responde em uma semana o que este texto levaria um mês supondo.
+
+**O Gerente também não tem documento.** Os guias cobrem Supervisor, Curador, Acompanhamento, Administrador e Assistido. Ou o "Guia do Administrador" passa a ser dele, ou falta um — decisão para quando o cargo for construído.
+
+---
+
+## ADR-114 — O Supervisor de Jornada dispõe de toda a documentação, para baixar ou enviar
+
+- **Data:** 2026-09-04
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data.
+- **Dependências:** exerce a **ADR-100** (quem atende é quem fica até o fim — e por isso precisa de tudo em mãos) · a metade "enviar" depende da entrega de e-mail do **SIM-105** · a construção da tela está sob a **ADR-073**; a correção de alcance, não.
+
+### A decisão
+
+O **Supervisor de Jornada** tem de dispor de **toda a documentação necessária**, disponível para **baixar ou enviar**.
+
+### O achado que motivou, medido em 04/09
+
+**A documentação existe e está completa** — quinze documentos no Kit da Curadoria: guias e roteiros de cada papel, Ficha do Assistido, Folha da Mesa, Formulário do Profissional, os três de entregar à assistida.
+
+**E o Supervisor não alcança nenhum deles.** O Kit é renderizado em `/admin`, cujo guard admite `administrador` **ou** `concierge`. Quem tem o papel do Supervisor bate em `/acesso-negado`. É a mesma forma de defeito do `/api/health` e da ponte grau→importância: **construção correta, completa e desligada de quem precisa dela.**
+
+**Segundo achado, do mesmo caminho:** os PDFs são servidos **sem sessão**. Medido em produção, `Guia-do-Supervisor-Aliviar.pdf` responde `HTTP 200` para qualquer pessoa com o link. Não vaza dado de ninguém — são modelos em branco —, mas **é uma decisão que nunca foi tomada por escrito**, e precisa ser: ou os guias operacionais são públicos por escolha, ou passam a exigir sessão.
+
+### As duas metades, e elas têm maturidades diferentes
+
+**Baixar** — existe, e está no lugar errado. Levar o Kit a uma superfície que o Supervisor alcança é **corrigir alcance**, não construir função nova; cabe na exceção da ADR-073.
+
+**Enviar** — **não existe em forma nenhuma.** O produto não manda e-mail: até 03/09 nem o de redefinição de senha saía para quem não fosse da equipe (`SIM-105`). Enviar documento a alguém depende de a entrega estar provada primeiro. Antes disso, "enviar" é o Supervisor anexando à mão no WhatsApp — que é como funciona hoje, e é o que a distribuição por pacotes atende.

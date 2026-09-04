@@ -226,14 +226,30 @@ export function AmbienteEscolha() {
   );
 }
 
-/** CARD 4 · Concierge — o depois, sem prometer o que a casa não faz. */
+/**
+ * CARD 4 · o depois da escolha, sem prometer o que a casa não faz.
+ *
+ * 04/09 · o ambiente deixou de se chamar "Concierge" para quem lê. A ADR-106
+ * decidiu que **o Concierge deixa de ser um rosto e vira uma função** — "o que
+ * deixa de existir é a apresentação de um terceiro nome à pessoa" —, e medindo
+ * o HTML de produção a palavra alcançava alguém em exatamente dois lugares: o
+ * item de menu e o `rotulo` daqui, que **não é texto na tela: vira o
+ * `aria-label` da seção**. Ou seja, ela sobrevivia sobretudo em voz alta, para
+ * quem usa leitor de tela — o lugar onde ninguém tinha ido conferir.
+ *
+ * O que NÃO mudou, de propósito: `cena` e o nome desta função. São chave de
+ * asset e identificador de código, e a fronteira 1 da ADR-097 é explícita em
+ * que o slug é **dado, não vocabulário** — o mesmo motivo pelo qual a
+ * assistida continua sendo `paciente` no banco. Renomear arquivo de imagem
+ * não tira uma palavra dos olhos de ninguém; só produz diff.
+ */
 export function AmbienteConcierge() {
   return (
     <AmbienteSection
-      id="concierge"
+      id="acompanhamento"
       cena="concierge"
       posicaoCard="superior"
-      rotulo="Concierge"
+      rotulo="Acompanhamento"
       posicaoMobile="center 62%"
     >
       <div className="landing-veu landing-card-vidro landing-card-gravado landing-card-gravado--converge">
