@@ -3546,3 +3546,45 @@ Alguém usar a anonimização como **atalho para não apagar**. Ela existe para 
 ### Revisitar quando
 
 O parecer do advogado chegar · a primeira anonimização real acontecer · ou o volume de Cases crescer a ponto de mudar o que "anônimo" significa na prática.
+
+---
+
+## ADR-116 — A quarta camada: conexão e relacionamento são trajetória, não pessoa
+
+- **Data:** 2026-09-04
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data.
+- **Dependências:** **emenda a ADR-115**, que classificou três camadas e deixou esta de fora · nasce de uma tentativa real de anonimização que falhou em produção · não altera a **ADR-073** (o que a lei exige é exceção permitida).
+
+### O que a ADR-115 não previu
+
+Ela separou o dado em **identidade direta** (elimina), **narrativa dela** (elimina) e **juízo do Curador** (preserva órfão). Ao executar a anonimização em produção, a porta travou em duas tabelas que **nenhuma das três camadas classifica**: `connection_records` e `relationship_records`, mais os eventos de cada uma.
+
+São o registro de que **aquela pessoa se aproximou de um profissional, e de que um relacionamento nasceu** — o Nível 3 do Método, o depois da escolha.
+
+### A decisão
+
+**Conexão e relacionamento são TRAJETÓRIA.** Seguem o mesmo destino do juízo do Curador: **sobrevivem órfãos**, apontando para um Case que virou casca anônima.
+
+Anonimizado, o registro passa a dizer *"neste caso houve aproximação com este profissional, e dela nasceu um relacionamento"* — que é verdade, é o que a Rede precisa aprender sobre si mesma, e não é sobre ninguém.
+
+### Por que trajetória e não pessoa
+
+O registro é sobre **o par**, não sobre um dos lados. Tirada a pessoa, o que resta é sobre o **profissional e o encontro** — a mesma razão pela qual o juízo do Curador sobrevive.
+
+E há uma razão de produto: **é exatamente esse dado que diz se a Curadoria funcionou.** Quantas aproximações viraram relacionamento é a medida do que a Aliviar promete. Apagá-la a cada pedido de eliminação cegaria a casa sobre o próprio método, sem proteger ninguém — porque, sem a pessoa, a linha não identifica.
+
+### O que muda no esquema, e a garantia que substitui o `NOT NULL`
+
+Quatro colunas hoje `NOT NULL` passam a aceitar nulo: `connection_records.patient_profile_id`, `relationship_records.patient_profile_id`, `connection_events.actor_id` e `relationship_events.actor_id`.
+
+**Soltar o `NOT NULL` sozinho enfraqueceria a invariante para todo mundo** — um defeito passaria a criar conexão sem dono em silêncio. No lugar dele entra uma **guarda de nascimento**: gatilho que recusa `INSERT` com nulo. A linha **nasce com dono e pode perder o dono** — que é precisamente a diferença entre anonimizar e ter defeito.
+
+É a mesma disciplina da ADR-115 para `cases`, adaptada: lá a restrição amarra o nulo ao carimbo `anonimizado_em`; aqui o carimbo mora no Case ao qual a conexão pertence, e a garantia se faz na criação.
+
+### O que esta ADR NÃO decide
+
+**Se a Aliviar pode reter** — continua sendo art. 16 e continua sendo do advogado, agora com a segunda leva de perguntas escrita e pronta para enviar.
+
+### O sinal de que esta ADR falhou
+
+Alguém olhar um `connection_record` órfão e conseguir dizer de quem era. Se o volume for tão baixo que a singularidade identifique, a anonimização é nominal — e a ADR-115 já registra que **anonimato depende de volume**.
