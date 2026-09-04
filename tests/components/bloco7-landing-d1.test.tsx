@@ -117,10 +117,12 @@ describe("T-7-3 · a porta única, e o reconhecimento de quem já mora aqui", ()
     expect(convite.textContent).toContain("Começar");
   });
 
-  it("os dois CTAs da página levam à MESMA porta", () => {
+  // 04/09 · decisão do Fundador: a porta saiu do card da Recepção; fica só a do
+  // Acompanhamento, no fim da travessia. A guarda passa a exigir UMA porta.
+  it("o CTA da página leva à porta única", () => {
     render(<PaginaPublica />);
     const portas = screen.getAllByRole("link", { name: "Quero conversar com a Aliviar" });
-    expect(portas.length, "a página precisa dos dois convites").toBe(2);
+    expect(portas.length, "a página precisa do convite do Acompanhamento").toBe(1);
     for (const porta of portas) {
       expect(porta).toHaveAttribute("href", "/solicitar-atendimento");
     }
@@ -229,9 +231,10 @@ describe("A copy é a do dossiê, palavra por palavra", () => {
     expect(screen.getByText(frase)).toBeInTheDocument();
   });
 
-  it("o microtexto de segurança acompanha os dois convites", () => {
+  it("o microtexto de segurança acompanha o convite", () => {
     render(<PaginaPublica />);
-    expect(screen.getAllByText("Sem dados de saúde agora.")).toHaveLength(2);
+    // 04/09 · com a porta fora do card da Recepção, o microtexto sobra só no Acompanhamento.
+    expect(screen.getAllByText("Sem dados de saúde agora.")).toHaveLength(1);
   });
 });
 

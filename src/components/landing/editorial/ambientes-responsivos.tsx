@@ -125,18 +125,9 @@ export function AmbienteRecepcao() {
           <li>Apresenta três opções</li>
         </ol>
 
-        <div className="landing-acoes">
-          <LinkButton
-            href="/solicitar-atendimento"
-            variant="primary"
-            className="landing-porta w-full sm:w-auto"
-          >
-            Quero conversar com a Aliviar
-          </LinkButton>
-        </div>
-
-        <p className="landing-microtexto">Sem dados de saúde agora.</p>
-
+        {/* 04/09 · A porta "Quero conversar com a Aliviar" saiu do card da
+            Recepção por decisão do Fundador. A porta única segue no card do
+            Acompanhamento, no fim da travessia; aqui fica o Convite de Entender. */}
         {/* O CONVITE DE ENTENDER (27/08) · a saída de quem NÃO está pronto para
             conversar. Fica logo abaixo da porta, e de propósito: é ali que a
             hesitação acontece — a pessoa lê a promessa, chega no botão, não
