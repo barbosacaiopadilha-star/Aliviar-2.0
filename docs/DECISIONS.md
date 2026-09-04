@@ -3588,3 +3588,63 @@ Quatro colunas hoje `NOT NULL` passam a aceitar nulo: `connection_records.patien
 ### O sinal de que esta ADR falhou
 
 Alguém olhar um `connection_record` órfão e conseguir dizer de quem era. Se o volume for tão baixo que a singularidade identifique, a anonimização é nominal — e a ADR-115 já registra que **anonimato depende de volume**.
+
+---
+
+## ADR-117 — O modo de anonimização: uma exceção nomeada, em vez de cinco furos
+
+- **Data:** 2026-09-04
+- **Status:** Decidida pelo Fundador, em conversa direta, nesta data.
+- **Dependências:** fecha o problema que a **ADR-115** abriu e a **ADR-116** não resolveu · nasce de **cinco tentativas reais de anonimização que falharam em produção** (`SIM-109`) · não altera a **ADR-073**: o que a lei exige é exceção permitida.
+
+### O problema, dito com precisão
+
+A Aliviar foi construída sobre **imutabilidade em toda parte**. O direito à eliminação exige **mudança em toda parte**. Cinco camadas dizem não, e **cada uma tem razão**:
+
+| cerca | o que ela protege |
+|---|---|
+| `curator_judgments_sem_delete` | juízo médico não se apaga |
+| `enforce_legal_append_only` | prova de consentimento não se apaga |
+| `cases_source_story_id_fkey` | o Case tem origem |
+| FK de conexão e relacionamento | trajetória tem dono |
+| `assert_relationship_immutable_fields` | relacionamento não muda de pessoa |
+
+**As cinco foram descobertas uma a uma, tropeçando.** Duas migrations já entraram em produção consertando as primeiras, e a cada conserto apareceu a seguinte. O erro de processo está nomeado no `SIM-109`: eu mapeei as chaves estrangeiras, disse que ia parar de tropeçar, e **não mapeei os gatilhos** — mesma falha, outra dimensão.
+
+### Por que continuar consertando é o caminho errado
+
+Cada correção abre um buraco pontual numa guarda que alguém escreveu de propósito. Cinco correções produzem **um queijo suíço de exceções**, cada uma invisível para quem ler a próxima — e quem revisar a sexta guarda daqui a um ano não vai saber que existem cinco irmãs.
+
+### A decisão
+
+Cria-se **um modo de anonimização**: um estado **nomeado, transacional e auditado**, que as guardas de imutabilidade **reconhecem por uma cláusula única cada**.
+
+Em vez de cinco furos anônimos, **uma exceção com nome** — que aparece no código de cada cerca e diz de onde veio.
+
+### As cinco propriedades que a tornam segura, e nenhuma é dispensável
+
+1. **Transacional.** O modo é ligado por `set_config(..., is_local => true)` dentro da porta. **Morre com a transação** — não há como esquecê-lo ligado, nem como vazá-lo para outra sessão.
+2. **Só a porta liga.** `anonimizar_titular` é `SECURITY DEFINER` e só `service_role` a executa. O modo não é alcançável pelo cliente autenticado nem pelo anônimo.
+3. **Cada guarda abre UMA porta, para UMA coluna, para UM valor.** `assert_relationship_immutable_fields` passa a admitir `patient_profile_id → NULL` **e nada mais**. Não é um bypass: é uma exceção com endereço.
+4. **A auditoria vem antes.** A porta grava a linha de auditoria antes de tocar em qualquer coisa; o modo só existe depois disso. **Não há anonimização sem rastro**, nem que a transação caia depois.
+5. **Cada guarda cita esta ADR no próprio corpo.** Quem ler a cerca vê a exceção, o motivo e o número. A regra da casa vale aqui: *"antes de consertar, procure o comentário que explica"* — então o comentário tem de existir.
+
+### A alternativa preguiçosa, e por que ela é recusada
+
+Existe um caminho de uma linha: `set session_replication_role = replica`, que **desliga todos os gatilhos** de uma vez. Ele funcionaria hoje e seria um desastre — desligaria junto **as guardas de auditoria, as de coerência de estado e as de proveniência**, e a anonimização passaria a poder gravar qualquer coisa sem deixar rastro. É a diferença entre **abrir uma porta** e **derrubar a parede**.
+
+**Fica recusado por escrito**, para que ninguém o proponha de novo achando que economiza trabalho.
+
+### O sinal de que esta ADR falhou
+
+Uma guarda que, no modo de anonimização, admite **mais do que a coluna e o valor previstos**. No dia em que uma cerca disser apenas *"se estou anonimizando, deixa passar"*, sem nomear o quê, a exceção virou bypass — e o que a ADR-115 protegia deixou de estar protegido.
+
+O segundo sinal: **o modo ser ligado por qualquer coisa que não seja a porta.** Se aparecer um `set_config` do modo fora de `anonimizar_titular`, é defeito, não conveniência.
+
+### O que NÃO é decidido aqui
+
+**Se a Aliviar pode reter** — art. 16, do advogado, com a segunda leva de perguntas escrita desde 04/09 e ainda não enviada. E **a cerca do aceite** (`legal_acceptances`) **continua de pé de propósito**: a porta recusa em voz alta quando há aceite, e essa recusa **não** é levantada por esta ADR. O modo de anonimização atravessa imutabilidade de dado clínico; **prova de consentimento é outra conversa**, e ela é do advogado.
+
+### A condição de execução, e ela é inegociável
+
+**Nenhuma linha desta ADR é implementada antes de existir um ponto de recuperação.** Mexer em guardas de imutabilidade de dado de saúde sem backup é a única coisa que este registro recusa por conta própria — e, em 04/09, duas migrations já entraram em produção sem ele.
