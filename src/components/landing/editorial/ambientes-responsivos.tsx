@@ -264,9 +264,18 @@ export function AmbienteConcierge() {
         {/* Marcadores do dossiê, menos "Agenda e confirmações": a
             aproximação intermediada não existe no produto (F9) e a
             decisão sobre intermediação segue aberta. */}
+        {/* 04/09 · "Alguém da Aliviar" virou "O seu Supervisor de Jornada"
+            (ADR-112). A ADR-106 diz que a pessoa conhece EXATAMENTE dois
+            rostos — o Supervisor e o Curador —, e a Landing apresentava um
+            e nunca o outro: o Curador é nomeado na seção da Curadoria, e
+            quem continua junto depois da escolha era "alguém". A promessa
+            de que ninguém some no repasse (ADR-100) precisa de um nome, ou
+            não é promessa. Este é o único lugar da página pública onde o
+            segundo rosto aparece — e é aqui de propósito, porque é aqui
+            que ele passa a fazer falta. */}
         <ul className="landing-marcadores">
           <li>Documentos e etapas num lugar só</li>
-          <li>Alguém da Aliviar para responder</li>
+          <li>O seu Supervisor de Jornada para responder</li>
           <li>Acompanhamento dos próximos passos</li>
         </ul>
 

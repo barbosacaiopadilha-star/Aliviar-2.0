@@ -216,9 +216,11 @@ describe("A copy é a do dossiê, palavra por palavra", () => {
     "Apenas uma orientação humana, criteriosa e transparente para ajudar você a encontrar o cuidado certo com segurança e confiança.",
     // Escolha
     "A Aliviar apresenta três opções compatíveis com a sua necessidade e explica os pontos importantes de cada uma. Você decide com clareza, sem pressão e sem favorecimentos.",
-    // Concierge
+    // Acompanhamento — o quarto ambiente deixou de se chamar Concierge em
+    // 04/09 (ADR-112), e o marcador do meio ganhou o nome do segundo rosto:
+    // a ADR-106 diz que a pessoa conhece dois, e a página nomeava só um.
     "Documentos e etapas num lugar só",
-    "Alguém da Aliviar para responder",
+    "O seu Supervisor de Jornada para responder",
     "Acompanhamento dos próximos passos",
   ];
 
